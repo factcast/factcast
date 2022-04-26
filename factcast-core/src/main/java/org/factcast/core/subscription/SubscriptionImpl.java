@@ -68,39 +68,9 @@ public class SubscriptionImpl implements InternalSubscription {
 
   @Override
   public Subscription awaitCatchup() throws SubscriptionClosedException {
-    return await(catchup::get);
-  }
-
-  @Override
-  public Subscription awaitCatchup(long waitTimeInMillis)
-      throws SubscriptionClosedException, TimeoutException {
-    return awaitTimed(() -> catchup.get(waitTimeInMillis, TimeUnit.MILLISECONDS));
-  }
-
-  @Override
-  public Subscription awaitComplete() throws SubscriptionClosedException {
-    return await(complete::get);
-  }
-
-  @Override
-  public Subscription awaitComplete(long waitTimeInMillis)
-      throws SubscriptionClosedException, TimeoutException {
-    return awaitTimed(() -> complete.get(waitTimeInMillis, TimeUnit.MILLISECONDS));
-  }
-
-  @FunctionalInterface
-  private interface ThrowingRunnable {
-    void run() throws InterruptedException, ExecutionException;
-  }
-
-  @FunctionalInterface
-  private interface ThrowingTimedRunnable {
-    void run() throws InterruptedException, ExecutionException, TimeoutException;
-  }
-
-  private Subscription await(ThrowingRunnable o) {
+    // TODO cover & extract exception handling
     try {
-      o.run();
+      catchup.get();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new SubscriptionClosedException(e);
@@ -110,9 +80,38 @@ public class SubscriptionImpl implements InternalSubscription {
     return this;
   }
 
-  private Subscription awaitTimed(ThrowingTimedRunnable o) throws TimeoutException {
+  @Override
+  public Subscription awaitCatchup(long waitTimeInMillis)
+      throws SubscriptionClosedException, TimeoutException {
     try {
-      o.run();
+      catchup.get(waitTimeInMillis, TimeUnit.MILLISECONDS);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new SubscriptionClosedException(e);
+    } catch (ExecutionException e) {
+      throw ExceptionHelper.toRuntime(e.getCause());
+    }
+    return this;
+  }
+
+  @Override
+  public Subscription awaitComplete() throws SubscriptionClosedException {
+    try {
+      complete.get();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new SubscriptionClosedException(e);
+    } catch (ExecutionException e) {
+      throw ExceptionHelper.toRuntime(e.getCause());
+    }
+    return this;
+  }
+
+  @Override
+  public Subscription awaitComplete(long waitTimeInMillis)
+      throws SubscriptionClosedException, TimeoutException {
+    try {
+      complete.get(waitTimeInMillis, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new SubscriptionClosedException(e);
