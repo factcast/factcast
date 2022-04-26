@@ -31,6 +31,7 @@ import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 import org.factcast.client.grpc.ResilientGrpcSubscription.DelegatingFactObserver;
+import org.factcast.client.grpc.ResilientGrpcSubscription.SubscriptionHolder;
 import org.factcast.client.grpc.ResilientGrpcSubscription.ThrowingBiConsumer;
 import org.factcast.core.Fact;
 import org.factcast.core.store.RetryableException;
@@ -287,6 +288,34 @@ class ResilientGrpcSubscriptionTest {
       @NonNull FactStreamInfo info = new FactStreamInfo(1, 10);
       dfo.onFactStreamInfo(info);
       verify(obs).onFactStreamInfo(info);
+    }
+  }
+
+  @Nested
+  class SubscriptionHolderTest {
+    private SubscriptionHolder sh;
+
+    @BeforeEach
+    public void setup() {
+      // order is important here, you have been warned
+      when(store.internalSubscribe(any(), observerAC.capture())).thenReturn(subscription);
+      uut = new ResilientGrpcSubscription(store, req, obs, config);
+      when(store.subscribe(any(), observerAC.capture())).thenReturn(uut);
+      sh = uut.new SubscriptionHolder();
+    }
+
+    @Test
+    void blocksUntilSubscriptionAvailable() {}
+
+    @Test
+    @Disabled
+    // question if timeout is a good idea here.
+    void blocksUntilTimeroutReached() {
+      assertThatThrownBy(
+              () -> {
+                sh.getAndBlock(10);
+              })
+          .isInstanceOf(TimeoutException.class);
     }
   }
 }

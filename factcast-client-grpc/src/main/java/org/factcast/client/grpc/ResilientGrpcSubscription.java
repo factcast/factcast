@@ -249,7 +249,9 @@ public class ResilientGrpcSubscription implements Subscription {
           assertSubscriptionStateNotClosed();
           if (currentSubscription.get() == null) {
             try {
-              currentSubscription.wait(maxPause == 0 ? 0 : end - System.currentTimeMillis());
+              long waitTime =
+                  maxPause == 0 ? 0 : Math.min(Math.abs(end - System.currentTimeMillis()), 1);
+              currentSubscription.wait(waitTime);
             } catch (InterruptedException ignore) {
               // can be ignored
               Thread.currentThread().interrupt();
