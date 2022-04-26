@@ -112,7 +112,7 @@ public class FactSpec {
   public static List<FactSpec> from(Class<?>... clazz) {
     return from(Arrays.asList(clazz));
   }
-  // TODO cover
+
   public FactSpec copy() {
     FactSpec fs =
         FactSpec.ns(ns).type(type).version(version).aggId(aggId).filterScript(filterScript);

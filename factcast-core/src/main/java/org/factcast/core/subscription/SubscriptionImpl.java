@@ -68,50 +68,51 @@ public class SubscriptionImpl implements InternalSubscription {
 
   @Override
   public Subscription awaitCatchup() throws SubscriptionClosedException {
-    // TODO cover & extract exception handling
-    try {
-      catchup.get();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new SubscriptionClosedException(e);
-    } catch (ExecutionException e) {
-      throw ExceptionHelper.toRuntime(e.getCause());
-    }
-    return this;
+    return await(catchup::get);
   }
 
   @Override
   public Subscription awaitCatchup(long waitTimeInMillis)
       throws SubscriptionClosedException, TimeoutException {
-    try {
-      catchup.get(waitTimeInMillis, TimeUnit.MILLISECONDS);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new SubscriptionClosedException(e);
-    } catch (ExecutionException e) {
-      throw ExceptionHelper.toRuntime(e.getCause());
-    }
-    return this;
+    return awaitTimed(() -> catchup.get(waitTimeInMillis, TimeUnit.MILLISECONDS));
   }
 
   @Override
   public Subscription awaitComplete() throws SubscriptionClosedException {
-    try {
-      complete.get();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new SubscriptionClosedException(e);
-    } catch (ExecutionException e) {
-      throw ExceptionHelper.toRuntime(e.getCause());
-    }
-    return this;
+    return await(complete::get);
   }
 
   @Override
   public Subscription awaitComplete(long waitTimeInMillis)
       throws SubscriptionClosedException, TimeoutException {
+    return awaitTimed(() -> complete.get(waitTimeInMillis, TimeUnit.MILLISECONDS));
+  }
+
+  @FunctionalInterface
+  interface ThrowingRunnable {
+    void run() throws InterruptedException, ExecutionException;
+  }
+
+  @FunctionalInterface
+  interface ThrowingTimedRunnable {
+    void run() throws InterruptedException, ExecutionException, TimeoutException;
+  }
+
+  private Subscription await(ThrowingRunnable o) {
     try {
-      complete.get(waitTimeInMillis, TimeUnit.MILLISECONDS);
+      o.run();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new SubscriptionClosedException(e);
+    } catch (ExecutionException e) {
+      throw ExceptionHelper.toRuntime(e.getCause());
+    }
+    return this;
+  }
+
+  private Subscription awaitTimed(ThrowingTimedRunnable o) throws TimeoutException {
+    try {
+      o.run();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new SubscriptionClosedException(e);
