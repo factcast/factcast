@@ -16,8 +16,8 @@
 package org.factcast.core;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -138,5 +138,19 @@ class DefaultFactCastTest {
         uut.subscribe(SubscriptionRequest.follow(FactSpec.ns("test")).fromScratch(), element -> {});
     s.close();
     verify(sub).close();
+  }
+
+  @Test
+  void testFetchByIdDelegates() throws Exception {
+    UUID id = UUID.randomUUID();
+    uut.fetchById(id);
+    verify(store).fetchById(id);
+  }
+
+  @Test
+  void testFetchAndVersionByIdDelegates() throws Exception {
+    UUID id = UUID.randomUUID();
+    uut.fetchByIdAndVersion(id, 7);
+    verify(store).fetchByIdAndVersion(id, 7);
   }
 }
