@@ -15,23 +15,17 @@
  */
 package org.factcast.core.store;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.assertj.core.util.Lists;
 import org.factcast.core.spec.FactSpec;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -139,7 +133,22 @@ class AbstractFactStoreTest {
   @Test
   void shouldDefaultToAbstractImplementation() {
     List<FactSpec> specs = Lists.list(FactSpec.ns("test"));
+
     uut.getStateFor(specs, 1L);
+
     verify(uut).getStateFor(eq(specs));
+  }
+
+  @Test
+  void getCurrentStateForDelegatesAndStoresState() {
+    List<FactSpec> specs =
+        Arrays.asList(
+            FactSpec.ns("ns").type("foo").version(1), FactSpec.ns("ns").type("bar").version(3));
+    State state = new State().specs(specs).serialOfLastMatchingFact(21);
+    when(uut.getCurrentStateFor(any())).thenReturn(state);
+
+    uut.currentStateFor(specs);
+
+    verify(tokenStore).create(state);
   }
 }
