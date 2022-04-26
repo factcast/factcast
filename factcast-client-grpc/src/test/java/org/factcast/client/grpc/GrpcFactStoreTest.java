@@ -108,7 +108,7 @@ class GrpcFactStoreTest {
   @Test
   void configureCompressionSkipCompression() {
     uut.configureCompressionAndMetaData("zip,lz3,lz4, lz99");
-    verifyNoMoreInteractions(stub);
+    verify(stub, never()).withCompression(anyString());
   }
 
   @Test
