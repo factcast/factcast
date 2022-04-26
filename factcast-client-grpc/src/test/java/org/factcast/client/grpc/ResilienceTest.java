@@ -23,6 +23,7 @@ import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.time.Duration;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 import org.factcast.core.store.RetryableException;
 import org.junit.jupiter.api.*;
@@ -115,6 +116,23 @@ class ResilienceTest {
       config.setRetries(2).setInterval(dur);
       underTest.sleepForInterval();
       assertThat(dur).isLessThan(sw.stop().elapsed());
+    }
+  }
+
+  @Nested
+  class WhenSleepingInterruptKeepsFlag {
+    @SneakyThrows
+    @Test
+    void callsThreadSleep() {
+      var t =
+          new Thread(
+              () -> {
+                Duration dur = Duration.ofMillis(200);
+                underTest.sleepForInterval();
+              });
+      t.start();
+      t.interrupt();
+      assertThat(t.isInterrupted()).isTrue();
     }
   }
 }
