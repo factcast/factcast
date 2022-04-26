@@ -136,19 +136,6 @@ public class FactTest {
   }
 
   @Test
-  void testBuilderNullContracts() {
-
-    assertThrows(NullPointerException.class, () -> Fact.builder().ns(null));
-
-    assertThrows(NullPointerException.class, () -> Fact.builder().type(null));
-    assertThrows(NullPointerException.class, () -> Fact.builder().aggId(null));
-    assertThrows(NullPointerException.class, () -> Fact.builder().meta(null, "x"));
-    assertThrows(NullPointerException.class, () -> Fact.builder().id(null));
-
-    Fact.builder().meta("x", null).build("{}");
-  }
-
-  @Test
   void testOfJsonNodeJsonNodeNull1() {
     Assertions.assertThrows(
         NullPointerException.class, () -> Fact.of(null, Mockito.mock(JsonNode.class)));

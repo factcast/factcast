@@ -119,7 +119,8 @@ public class BlockingStreamObserver<T> implements StreamObserver<T> {
     }
   }
 
-  private void waitForDelegate() {
+  @VisibleForTesting
+  void waitForDelegate() {
     int retry = RETRY_COUNT * batchSize;
     for (int i = 1; i <= retry; i++) {
 

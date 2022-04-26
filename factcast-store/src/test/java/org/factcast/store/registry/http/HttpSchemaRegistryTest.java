@@ -22,7 +22,6 @@ import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Lists;
 import java.io.IOException;
-import java.net.URL;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import org.factcast.store.StoreConfigurationProperties;
@@ -39,9 +38,8 @@ import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.factcast.store.registry.validation.schema.SchemaSource;
 import org.factcast.store.registry.validation.schema.SchemaStore;
 import org.factcast.store.registry.validation.schema.store.InMemSchemaStoreImpl;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -236,52 +234,5 @@ public class HttpSchemaRegistryTest {
     assertThat(transformationStore.get(testSource.toKey()).get(0).transformationCode())
         .isPresent()
         .hasValue("bar");
-  }
-
-  @Test
-  void testNullContracts() throws Exception {
-    assertThrows(
-        NullPointerException.class,
-        () -> {
-          new HttpSchemaRegistry(
-              null,
-              mock(SchemaStore.class),
-              mock(TransformationStore.class),
-              registryMetrics,
-              new StoreConfigurationProperties());
-        });
-
-    assertThrows(
-        NullPointerException.class,
-        () -> {
-          new HttpSchemaRegistry(
-              new URL("http://ibm.com"),
-              null,
-              mock(TransformationStore.class),
-              registryMetrics,
-              new StoreConfigurationProperties());
-        });
-
-    assertThrows(
-        NullPointerException.class,
-        () -> {
-          new HttpSchemaRegistry(
-              new URL("http://ibm.com"),
-              mock(SchemaStore.class),
-              null,
-              registryMetrics,
-              new StoreConfigurationProperties());
-        });
-
-    assertThrows(
-        NullPointerException.class,
-        () -> {
-          new HttpSchemaRegistry(
-              new URL("http://ibm.com"),
-              mock(SchemaStore.class),
-              mock(TransformationStore.class),
-              null,
-              new StoreConfigurationProperties());
-        });
   }
 }
