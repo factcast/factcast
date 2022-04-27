@@ -43,7 +43,6 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.core.util.ExceptionHelper;
 import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.CompressionCodecs;
 import org.factcast.grpc.api.ConditionalPublishRequest;
@@ -178,7 +177,7 @@ public class GrpcFactStore implements FactStore {
       try {
         block.run();
         return;
-      } catch (StatusRuntimeException e) {
+      } catch (Exception e) {
         if (resilience.shouldRetry(e)) {
           log.warn("Temporary failure", e);
           log.info("Retry call to remote server");
@@ -188,8 +187,6 @@ public class GrpcFactStore implements FactStore {
         } else {
           throw ClientExceptionHelper.from(e);
         }
-      } catch (Exception e) {
-        throw ExceptionHelper.toRuntime(e);
       }
     }
   }
@@ -202,7 +199,7 @@ public class GrpcFactStore implements FactStore {
       try {
         T call = block.call();
         return call;
-      } catch (StatusRuntimeException e) {
+      } catch (Exception e) {
         if (resilience.shouldRetry(e)) {
           log.warn("Temporary failure", e);
           log.info("Retry call to remote server");
@@ -212,8 +209,6 @@ public class GrpcFactStore implements FactStore {
         } else {
           throw ClientExceptionHelper.from(e);
         }
-      } catch (Exception e) {
-        throw ExceptionHelper.toRuntime(e);
       }
     }
   }

@@ -16,13 +16,15 @@
 package org.factcast.client.grpc;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Sets;
 import io.grpc.*;
+import java.io.IOException;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.Callable;
 import lombok.NonNull;
@@ -638,6 +640,7 @@ class GrpcFactStoreTest {
   @Nested
   class CallAndHandle {
     @Mock private @NonNull Callable<?> block;
+    @Mock private @NonNull Runnable runnable;
 
     @Test
     void skipsNonSRE() throws Exception {
@@ -657,8 +660,23 @@ class GrpcFactStoreTest {
     }
 
     @Test
-    void translatesSRE() throws Exception {
+    void retriesCall() throws Exception {
+      resilienceConfig.setEnabled(true).setRetries(100).setInterval(Duration.ofMillis(100));
+      when(block.call()).thenThrow(new RetryableException(new IOException())).thenReturn(null);
+      uut.callAndHandle(block);
+      verify(block, times(2)).call();
+    }
 
+    @Test
+    void retriesRun() throws Exception {
+      resilienceConfig.setEnabled(true).setRetries(100).setInterval(Duration.ofMillis(100));
+      doThrow(new RetryableException(new IOException())).doNothing().when(runnable).run();
+      uut.runAndHandle(runnable);
+      verify(runnable, times(2)).run();
+    }
+
+    @Test
+    void translatesSRE() throws Exception {
       String msg = "wrong";
       FactValidationException e = new FactValidationException(msg);
       Metadata metadata = new Metadata();

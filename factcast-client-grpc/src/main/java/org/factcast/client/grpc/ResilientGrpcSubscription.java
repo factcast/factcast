@@ -21,6 +21,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
@@ -44,7 +45,7 @@ public class ResilientGrpcSubscription implements Subscription {
   private final SubscriptionHolder currentSubscription = new SubscriptionHolder();
   private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
-  private final Resilience resilience;
+  @Getter @VisibleForTesting final Resilience resilience;
 
   public ResilientGrpcSubscription(
       @NonNull GrpcFactStore store,
@@ -144,7 +145,8 @@ public class ResilientGrpcSubscription implements Subscription {
     reConnect();
   }
 
-  private synchronized void reConnect() {
+  @VisibleForTesting
+  synchronized void reConnect() {
     log.debug("Reconnecting ({})", originalRequest);
     SubscriptionRequestTO to = SubscriptionRequestTO.forFacts(originalRequest);
     UUID last = lastFactIdSeen.get();

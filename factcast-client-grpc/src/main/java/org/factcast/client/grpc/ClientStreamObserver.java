@@ -74,7 +74,8 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
     subscription.onClose(this::disableKeepalive);
   }
 
-  private void tryShutdown() {
+  @VisibleForTesting
+  void tryShutdown() {
     try {
       clientBoundExecutor.shutdown();
     } catch (Exception e) {
