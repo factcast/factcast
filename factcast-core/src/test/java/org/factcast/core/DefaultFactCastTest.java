@@ -16,8 +16,8 @@
 package org.factcast.core;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -126,6 +126,11 @@ class DefaultFactCastTest {
   @Test
   void testLockNamespaceMustNotBeEmpty() {
     assertThrows(IllegalArgumentException.class, () -> uut.lock(" "));
+  }
+
+  @Test
+  void testLockReturns() {
+    assertThat(uut.lock("foo")).isNotNull().hasFieldOrPropertyWithValue("ns", "foo");
   }
 
   @Test
