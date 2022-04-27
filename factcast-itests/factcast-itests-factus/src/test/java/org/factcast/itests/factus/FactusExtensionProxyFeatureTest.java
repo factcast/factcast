@@ -81,7 +81,7 @@ class FactusExtensionProxyFeatureTest extends AbstractFactCastIntegrationTest {
     long rtWithLatency = sw.stop().elapsed(TimeUnit.MILLISECONDS);
 
     assertThat(rtWithoutLatency).isLessThan(LATENCY);
-    assertThat(rtWithLatency).isGreaterThan(LATENCY);
+    assertThat(rtWithLatency).isGreaterThanOrEqualTo(LATENCY);
   }
 
   @SneakyThrows

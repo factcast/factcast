@@ -62,11 +62,6 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
     fc.publish(facts);
   }
 
-  @AfterEach
-  void tearDown() {
-    FactCastExtension.resetProxy();
-  }
-
   @SneakyThrows
   @Test
   void testRetryBehaviorWithoutResponse() {
