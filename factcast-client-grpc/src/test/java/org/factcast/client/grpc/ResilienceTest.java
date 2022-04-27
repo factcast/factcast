@@ -46,13 +46,12 @@ class ResilienceTest {
   class WhenAttemptsExhausted {
     @BeforeEach
     void setup() {
-      config.setRetries(3).setWindow(Duration.ofMinutes(1));
+      config.setAttempts(3).setWindow(Duration.ofMinutes(1));
     }
 
     @Test
     void exhausts() {
       assertThat(underTest.attemptsExhausted()).isFalse();
-      underTest.registerAttempt();
       underTest.registerAttempt();
       underTest.registerAttempt();
       assertThat(underTest.attemptsExhausted()).isFalse();
@@ -81,12 +80,11 @@ class ResilienceTest {
 
     @BeforeEach
     void setup() {
-      config.setRetries(3).setWindow(Duration.ofMinutes(1));
+      config.setAttempts(3).setWindow(Duration.ofMinutes(1));
     }
 
     @Test
     void deniesWhenExhausted() {
-      underTest.registerAttempt();
       underTest.registerAttempt();
       underTest.registerAttempt();
       assertThat(underTest.shouldRetry(new RetryableException(new IOException()))).isTrue();
@@ -113,7 +111,7 @@ class ResilienceTest {
     void callsThreadSleep() {
       Stopwatch sw = Stopwatch.createStarted();
       Duration dur = Duration.ofMillis(50);
-      config.setRetries(2).setInterval(dur);
+      config.setAttempts(2).setInterval(dur);
       underTest.sleepForInterval();
       assertThat(dur).isLessThan(sw.stop().elapsed());
     }

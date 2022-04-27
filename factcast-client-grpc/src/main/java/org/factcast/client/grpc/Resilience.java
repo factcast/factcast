@@ -30,7 +30,7 @@ class Resilience {
 
   boolean attemptsExhausted() {
     int attempts = numberOfAttemptsInWindow();
-    return attempts > config.getRetries();
+    return attempts >= config.getAttempts();
   }
 
   int numberOfAttemptsInWindow() {

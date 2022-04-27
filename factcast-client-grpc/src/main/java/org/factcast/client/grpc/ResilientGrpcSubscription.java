@@ -142,12 +142,17 @@ public class ResilientGrpcSubscription implements Subscription {
 
   private synchronized void connect() {
     log.debug("Connecting ({})", originalRequest);
-    reConnect();
+    doConnect();
   }
 
   @VisibleForTesting
   synchronized void reConnect() {
     log.debug("Reconnecting ({})", originalRequest);
+    doConnect();
+  }
+
+  private void doConnect() {
+    resilience.registerAttempt();
     SubscriptionRequestTO to = SubscriptionRequestTO.forFacts(originalRequest);
     UUID last = lastFactIdSeen.get();
     if (last != null) {
@@ -217,8 +222,6 @@ public class ResilientGrpcSubscription implements Subscription {
     public void onError(@NonNull Throwable exception) {
       log.info("Closing subscription due to onError triggered.  ({})", originalRequest, exception);
       closeAndDetachSubscription();
-
-      resilience.registerAttempt();
 
       if (resilience.shouldRetry(exception)) {
         log.info("Trying to resubscribe ({})", originalRequest);

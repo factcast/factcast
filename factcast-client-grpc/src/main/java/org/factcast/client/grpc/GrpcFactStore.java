@@ -175,13 +175,13 @@ public class GrpcFactStore implements FactStore {
   void runAndHandle(@NonNull Runnable block) {
     for (; ; ) {
       try {
+        resilience.registerAttempt();
         block.run();
         return;
       } catch (Exception e) {
         if (resilience.shouldRetry(e)) {
           log.warn("Temporary failure", e);
           log.info("Retry call to remote server");
-          resilience.registerAttempt();
           resilience.sleepForInterval();
           // continue and try next attempt
         } else {
@@ -197,13 +197,13 @@ public class GrpcFactStore implements FactStore {
   <T> T callAndHandle(@NonNull Callable<T> block) {
     for (; ; ) {
       try {
+        resilience.registerAttempt();
         T call = block.call();
         return call;
       } catch (Exception e) {
         if (resilience.shouldRetry(e)) {
           log.warn("Temporary failure", e);
           log.info("Retry call to remote server");
-          resilience.registerAttempt();
           resilience.sleepForInterval();
           // continue and try next attempt
         } else {
