@@ -68,7 +68,7 @@ public class FactCastTest {
   @Test
   void lock1Delegates() {
     FactStore store = mock(FactStore.class);
-    FactCast fc = FactCast.from(store);
+    FactCast fc = spy(FactCast.from(store));
     FactSpec fs = FactSpec.ns("foo");
     fc.lock(fs);
     verify(fc).lock(eq(Lists.newArrayList(fs)));
@@ -77,7 +77,7 @@ public class FactCastTest {
   @Test
   void lockArrayDelegates() {
     FactStore store = mock(FactStore.class);
-    FactCast fc = FactCast.from(store);
+    FactCast fc = spy(FactCast.from(store));
     FactSpec fs1 = FactSpec.ns("foo");
     FactSpec fs2 = FactSpec.ns("bar");
     fc.lock(fs1, fs2);
