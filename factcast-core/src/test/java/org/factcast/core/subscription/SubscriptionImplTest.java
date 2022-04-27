@@ -53,8 +53,8 @@ public class SubscriptionImplTest {
     expect(TimeoutException.class, () -> uut.awaitCatchup(10));
     expect(TimeoutException.class, () -> uut.awaitComplete(10));
     uut.close();
-    expect(SubscriptionCancelledException.class, () -> uut.awaitCatchup(10));
-    expect(SubscriptionCancelledException.class, () -> uut.awaitComplete(10));
+    expect(SubscriptionClosedException.class, () -> uut.awaitCatchup(10));
+    expect(SubscriptionClosedException.class, () -> uut.awaitComplete(10));
   }
 
   @Test
@@ -106,11 +106,6 @@ public class SubscriptionImplTest {
     uut.notifyComplete();
     uut.awaitCatchup();
     uut.awaitComplete();
-  }
-
-  @Test
-  void testNullConst() {
-    Assertions.assertThrows(NullPointerException.class, () -> new SubscriptionImpl(null, null));
   }
 
   @Test

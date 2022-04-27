@@ -38,7 +38,7 @@ import org.factcast.core.util.ExceptionHelper;
  */
 @RequiredArgsConstructor
 @Slf4j
-public class SubscriptionImpl implements Subscription {
+public class SubscriptionImpl implements InternalSubscription {
 
   @NonNull final FactObserver observer;
 
@@ -58,8 +58,8 @@ public class SubscriptionImpl implements Subscription {
   @Override
   public void close() {
     if (!closed.getAndSet(true)) {
-      SubscriptionCancelledException closedException =
-          new SubscriptionCancelledException("Client closed the subscription");
+      SubscriptionClosedException closedException =
+          new SubscriptionClosedException("Client closed the subscription");
       catchup.completeExceptionally(closedException);
       complete.completeExceptionally(closedException);
       onClose.run();
@@ -67,55 +67,62 @@ public class SubscriptionImpl implements Subscription {
   }
 
   @Override
-  public Subscription awaitCatchup() throws SubscriptionCancelledException {
-    try {
-      catchup.get();
-    } catch (InterruptedException e) {
-      throw new SubscriptionCancelledException(e);
-    } catch (ExecutionException e) {
-      throw ExceptionHelper.toRuntime(e.getCause());
-    }
-    return this;
+  public Subscription awaitCatchup() throws SubscriptionClosedException {
+    return await(catchup::get);
   }
 
   @Override
   public Subscription awaitCatchup(long waitTimeInMillis)
-      throws SubscriptionCancelledException, TimeoutException {
-    try {
-      catchup.get(waitTimeInMillis, TimeUnit.MILLISECONDS);
-    } catch (InterruptedException e) {
-      throw new SubscriptionCancelledException(e);
-    } catch (ExecutionException e) {
-      throw ExceptionHelper.toRuntime(e.getCause());
-    }
-    return this;
+      throws SubscriptionClosedException, TimeoutException {
+    return awaitTimed(() -> catchup.get(waitTimeInMillis, TimeUnit.MILLISECONDS));
   }
 
   @Override
-  public Subscription awaitComplete() throws SubscriptionCancelledException {
-    try {
-      complete.get();
-    } catch (InterruptedException e) {
-      throw new SubscriptionCancelledException(e);
-    } catch (ExecutionException e) {
-      throw ExceptionHelper.toRuntime(e.getCause());
-    }
-    return this;
+  public Subscription awaitComplete() throws SubscriptionClosedException {
+    return await(complete::get);
   }
 
   @Override
   public Subscription awaitComplete(long waitTimeInMillis)
-      throws SubscriptionCancelledException, TimeoutException {
+      throws SubscriptionClosedException, TimeoutException {
+    return awaitTimed(() -> complete.get(waitTimeInMillis, TimeUnit.MILLISECONDS));
+  }
+
+  @FunctionalInterface
+  interface ThrowingRunnable {
+    void run() throws InterruptedException, ExecutionException;
+  }
+
+  @FunctionalInterface
+  interface ThrowingTimedRunnable {
+    void run() throws InterruptedException, ExecutionException, TimeoutException;
+  }
+
+  private Subscription await(ThrowingRunnable o) {
     try {
-      complete.get(waitTimeInMillis, TimeUnit.MILLISECONDS);
+      o.run();
     } catch (InterruptedException e) {
-      throw new SubscriptionCancelledException(e);
+      Thread.currentThread().interrupt();
+      throw new SubscriptionClosedException(e);
     } catch (ExecutionException e) {
       throw ExceptionHelper.toRuntime(e.getCause());
     }
     return this;
   }
 
+  private Subscription awaitTimed(ThrowingTimedRunnable o) throws TimeoutException {
+    try {
+      o.run();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new SubscriptionClosedException(e);
+    } catch (ExecutionException e) {
+      throw ExceptionHelper.toRuntime(e.getCause());
+    }
+    return this;
+  }
+
+  @Override
   @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
   public void notifyCatchup() {
     if (!closed.get()) {
@@ -126,18 +133,21 @@ public class SubscriptionImpl implements Subscription {
     }
   }
 
+  @Override
   public void notifyFastForward(@NonNull UUID factId) {
     if (!closed.get()) {
       observer.onFastForward(factId);
     }
   }
 
+  @Override
   public void notifyFactStreamInfo(@NonNull FactStreamInfo info) {
     if (!closed.get()) {
       observer.onFactStreamInfo(info);
     }
   }
 
+  @Override
   @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
   public void notifyComplete() {
     if (!closed.get()) {
@@ -152,6 +162,7 @@ public class SubscriptionImpl implements Subscription {
     }
   }
 
+  @Override
   public void notifyError(Throwable e) {
     if (!closed.get()) {
       if (!catchup.isDone()) {
@@ -161,7 +172,6 @@ public class SubscriptionImpl implements Subscription {
         complete.completeExceptionally(e);
       }
       observer.onError(e);
-
       tryClose();
     }
   }
@@ -174,6 +184,7 @@ public class SubscriptionImpl implements Subscription {
     }
   }
 
+  @Override
   public void notifyElement(@NonNull Fact e) throws TransformationException {
     if (!closed.get()) {
       Fact transformed = transformers.transformIfNecessary(e);
@@ -186,6 +197,7 @@ public class SubscriptionImpl implements Subscription {
     }
   }
 
+  @Override
   public SubscriptionImpl onClose(Runnable e) {
     Runnable formerOnClose = onClose;
     onClose =

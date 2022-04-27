@@ -193,4 +193,15 @@ public class FactSpecTest {
         .contains(FactSpec.ns("ns").type("type").version(2))
         .contains(FactSpec.ns("ns").type("type"));
   }
+
+  @Test
+  void testCopy() {
+    var org = FactSpec.from(TestFactWithType.class);
+    var copy = org.copy();
+    assertThat(copy).isEqualTo(org);
+    assertThat(copy).isNotSameAs(org);
+
+    org.meta("foo", "bar");
+    assertThat(copy).isNotEqualTo(org);
+  }
 }

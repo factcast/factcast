@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2022 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core;
+package org.factcast.test.redis;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
+import lombok.NonNull;
+import org.factcast.test.toxi.AbstractToxiProxySupplier;
+import org.testcontainers.containers.ToxiproxyContainer;
 
-import org.factcast.core.store.FactStore;
-import org.junit.jupiter.api.Test;
-
-public class ReadFactCastTest {
-
-  @Test
-  void testRetryValidatesMaxAttempts() {
-    FactStore store = mock(FactStore.class);
-    assertThrows(IllegalArgumentException.class, () -> FactCast.fromReadOnly(store).retry(-42));
+public class RedisProxy extends AbstractToxiProxySupplier {
+  public RedisProxy(@NonNull ToxiproxyContainer.ContainerProxy proxy) {
+    super(proxy);
   }
 }
