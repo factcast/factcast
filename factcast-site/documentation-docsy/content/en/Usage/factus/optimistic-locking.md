@@ -92,8 +92,6 @@ Factus offers a simple syntax:
 
 Applied to our example that would be
 
-//TODO recheck section for deprecated retries
-
 ```java
 
 UserRegistrationCommand cmd=...    // details not important here
