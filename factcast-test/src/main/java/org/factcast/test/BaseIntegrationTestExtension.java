@@ -123,7 +123,6 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
     FactcastTestConfig.Config config = discoverConfig(ctx);
     Containers containers = executions.get(config);
 
-    FactCastExtension.resetProxy();
     ctx.getTestInstance()
         .ifPresent(
             t -> {

@@ -68,6 +68,7 @@ public class FactCastExtension
 
   @Override
   public void afterEach(ExtensionContext context) throws Exception {
+    FactCastExtension.resetProxy();
     for (FactCastIntegrationTestExtension e : reverseExtensions) {
       e.afterEach(context);
     }
