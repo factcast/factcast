@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2022 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.store;
+package org.factcast.test.toxi;
 
-import static org.junit.jupiter.api.Assertions.*;
+import lombok.NonNull;
+import org.testcontainers.containers.ToxiproxyContainer;
 
-import org.junit.jupiter.api.Test;
-
-public class RetryableExceptionTest {
-
-  @Test
-  public void testRetryableExceptionNullContract() throws Exception {
-    assertThrows(
-        NullPointerException.class,
-        () -> {
-          new RetryableException(null);
-        });
+public class PostgresqlProxy extends AbstractToxiProxySupplier {
+  public PostgresqlProxy(@NonNull ToxiproxyContainer.ContainerProxy proxy) {
+    super(proxy);
   }
 }

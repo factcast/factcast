@@ -16,7 +16,6 @@
 package org.factcast.store.rds;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -64,21 +63,6 @@ public class RdsDataSourceFactoryBeanPostProcessorTest {
 
     assertThat(afterInit).isSameAs(instance);
     verify(instance).setDataSourceFactory(any());
-  }
-
-  @Test
-  public void testNullContracts() {
-    assertThrows(NullPointerException.class, () -> new RdsDataSourceFactoryBeanPostProcessor(null));
-
-    RdsDataSourceFactoryBeanPostProcessor uut =
-        new RdsDataSourceFactoryBeanPostProcessor(mock(Environment.class));
-    assertThrows(
-        NullPointerException.class, () -> uut.postProcessBeforeInitialization(null, "foo"));
-    assertThrows(
-        NullPointerException.class, () -> uut.postProcessBeforeInitialization(new Object(), null));
-    assertThrows(NullPointerException.class, () -> uut.postProcessAfterInitialization(null, "foo"));
-    assertThrows(
-        NullPointerException.class, () -> uut.postProcessAfterInitialization(new Object(), null));
   }
 
   @Test

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import lombok.NonNull;
+import net.devh.boot.grpc.client.channelfactory.GrpcChannelConfigurer;
 import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
 import org.factcast.client.grpc.FactCastGrpcClientProperties;
 import org.factcast.client.grpc.GrpcFactStore;
@@ -81,5 +82,10 @@ public class GrpcFactStoreAutoConfiguration {
     }
 
     return new GrpcFactStore(f, credentials, properties, id);
+  }
+
+  @Bean
+  public GrpcChannelConfigurer retryChannelConfigurer() {
+    return (channelBuilder, name) -> channelBuilder.enableRetry().maxRetryAttempts(100);
   }
 }

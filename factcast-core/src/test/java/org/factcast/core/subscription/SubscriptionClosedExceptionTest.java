@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2022 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.lock;
+package org.factcast.core.subscription;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.util.LinkedList;
+import java.io.IOException;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class IntermediatePublishResultTest {
+@ExtendWith(MockitoExtension.class)
+class SubscriptionClosedExceptionTest {
 
   @Test
-  public void testAndThen() {
-    IntermediatePublishResult uut =
-        new IntermediatePublishResult(new LinkedList<>()).andThen(() -> {});
-    assertThat(uut.andThen()).isPresent();
+  void passesException() {
+    IOException e = new IOException();
+    var uut = new SubscriptionClosedException(e);
+    assertThat(uut.getCause()).isSameAs(e);
+  }
+
+  @Test
+  void passesMessage() {
+    var msg = "foo";
+    var uut = new SubscriptionClosedException(msg);
+    assertThat(uut.getMessage()).isSameAs(msg);
   }
 }

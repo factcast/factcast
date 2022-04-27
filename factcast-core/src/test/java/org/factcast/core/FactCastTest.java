@@ -19,6 +19,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.List;
+import org.assertj.core.util.Lists;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
@@ -56,39 +58,29 @@ public class FactCastTest {
   }
 
   @Test
-  void testRetryValidatesMaxAttempts() {
-    FactStore store = mock(FactStore.class);
-    assertThrows(IllegalArgumentException.class, () -> FactCast.from(store).retry(-42));
-  }
-
-  @Test
-  public void testRetryChecksNumberOfAttempts() {
-    FactStore store = mock(FactStore.class);
-    FactCast fc = FactCast.from(store);
-    assertThrows(IllegalArgumentException.class, () -> fc.retry(0));
-    assertThrows(IllegalArgumentException.class, () -> fc.retry(0, 100));
-
-    assertNotNull(fc.retry(10));
-  }
-
-  @Test
-  public void testRetryChecksWaitInterval() {
-
-    FactStore store = mock(FactStore.class);
-    FactCast fc = FactCast.from(store);
-
-    assertThrows(IllegalArgumentException.class, () -> fc.retry(10, -100));
-
-    assertNotNull(fc.retry(10, 0));
-    assertNotNull(fc.retry(10, 1));
-    assertNotNull(fc.retry(10, 100));
-  }
-
-  @Test
   public void testPublishFactNPE() {
     FactStore store = mock(FactStore.class);
     FactCast fc = FactCast.from(store);
     assertThrows(NullPointerException.class, () -> fc.publish((Fact) null));
     assertThrows(NullPointerException.class, () -> fc.publish((List<Fact>) null));
+  }
+
+  @Test
+  void lock1Delegates() {
+    FactStore store = mock(FactStore.class);
+    FactCast fc = spy(FactCast.from(store));
+    FactSpec fs = FactSpec.ns("foo");
+    fc.lock(fs);
+    verify(fc).lock(eq(Lists.newArrayList(fs)));
+  }
+
+  @Test
+  void lockArrayDelegates() {
+    FactStore store = mock(FactStore.class);
+    FactCast fc = spy(FactCast.from(store));
+    FactSpec fs1 = FactSpec.ns("foo");
+    FactSpec fs2 = FactSpec.ns("bar");
+    fc.lock(fs1, fs2);
+    verify(fc).lock(eq(Lists.newArrayList(fs1, fs2)));
   }
 }

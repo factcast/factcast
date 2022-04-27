@@ -40,14 +40,6 @@ public interface ReadFactCast {
   Subscription subscribeEphemeral(
       @NonNull SubscriptionRequest request, @NonNull FactObserver observer);
 
-  @Deprecated
-  // will be removed soon.
-  @NonNull
-  default Subscription subscribeToFacts(
-      @NonNull SubscriptionRequest request, @NonNull FactObserver observer) {
-    return subscribe(request, observer);
-  }
-
   @NonNull
   OptionalLong serialOf(@NonNull UUID id);
 

@@ -22,7 +22,10 @@ import org.factcast.core.lock.DeprecatedLockedOperationBuilder;
 import org.factcast.core.lock.LockedOperationBuilder;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.subscription.*;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
 
 /**
@@ -81,8 +84,7 @@ class DefaultFactCast implements FactCast {
   @Override
   public Subscription subscribe(
       @NonNull SubscriptionRequest request, @NonNull FactObserver observer) {
-    return new ReconnectingFactSubscriptionWrapper(
-        store, SubscriptionRequestTO.forFacts(request), observer);
+    return store.subscribe(SubscriptionRequestTO.forFacts(request), observer);
   }
 
   @Override

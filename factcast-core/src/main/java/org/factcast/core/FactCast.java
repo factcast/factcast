@@ -51,13 +51,15 @@ public interface FactCast extends ReadFactCast {
   }
 
   @Override
+  @Deprecated(since = "0.5.5", forRemoval = true)
   default FactCast retry(int maxAttempts) {
-    return retry(maxAttempts, Retry.DEFAULT_WAIT_TIME_MILLIS);
+    return this;
   }
 
   @Override
+  @Deprecated(since = "0.5.5", forRemoval = true)
   default FactCast retry(int maxAttempts, long minimumWaitIntervalMillis) {
-    return Retry.wrap(this, maxAttempts, minimumWaitIntervalMillis);
+    return this;
   }
 
   LockedOperationBuilder lock(@NonNull List<FactSpec> scope);
@@ -74,11 +76,6 @@ public interface FactCast extends ReadFactCast {
   }
 
   /** @deprecated use lock(FactSpec) instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   DeprecatedLockedOperationBuilder lock(@NonNull String ns);
-
-  // removed from interface as this breaks the updated locking code and
-  // was a bad idea in the first place. See migration guide (0.3.0)
-  //
-  // DeprecatedLockedOperationBuilder lockGlobally();
 }
