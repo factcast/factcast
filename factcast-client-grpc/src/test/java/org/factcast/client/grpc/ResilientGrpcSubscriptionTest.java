@@ -69,7 +69,7 @@ class ResilientGrpcSubscriptionTest {
   public void setup() {
     // order is important here, you have been warned
     when(store.internalSubscribe(any(), observerAC.capture())).thenReturn(subscription);
-    uut = new ResilientGrpcSubscription(store, req, obs, config);
+    uut = spy(new ResilientGrpcSubscription(store, req, obs, config));
     when(store.subscribe(any(), observerAC.capture())).thenReturn(uut);
   }
 
@@ -246,7 +246,7 @@ class ResilientGrpcSubscriptionTest {
     public void setup() {
       // order is important here, you have been warned
       when(store.internalSubscribe(any(), observerAC.capture())).thenReturn(subscription);
-      uut = new ResilientGrpcSubscription(store, req, obs, config);
+      uut = spy(new ResilientGrpcSubscription(store, req, obs, config));
       when(store.subscribe(any(), observerAC.capture())).thenReturn(uut);
       dfo = uut.new DelegatingFactObserver();
     }
@@ -290,6 +290,32 @@ class ResilientGrpcSubscriptionTest {
       @NonNull FactStreamInfo info = new FactStreamInfo(1, 10);
       dfo.onFactStreamInfo(info);
       verify(obs).onFactStreamInfo(info);
+    }
+
+    @SneakyThrows
+    @Test
+    void onErrorFailing() {
+
+      try {
+        dfo.onError(new IOException());
+      } catch (Exception ignore) {
+      }
+
+      verify(subscription).close();
+      assertThat(uut.resilience().numberOfAttemptsInWindow()).isEqualTo(1);
+    }
+
+    @SneakyThrows
+    @Test
+    void onErrorReconnecting() {
+
+      doNothing().when(uut).reConnect();
+
+      dfo.onError(new RetryableException(new IOException()));
+
+      verify(subscription).close();
+      verify(uut).reConnect();
+      assertThat(uut.resilience().numberOfAttemptsInWindow()).isEqualTo(1);
     }
   }
 
