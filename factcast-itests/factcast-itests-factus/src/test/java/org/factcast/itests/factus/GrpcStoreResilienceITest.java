@@ -42,10 +42,10 @@ import org.springframework.test.context.TestPropertySource;
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 @TestPropertySource(
     properties =
-        "factcast.grpc.client.resilience.retries=" + GrpcStoreResilienceITest.NUMBER_OF_RETRIES)
+        "factcast.grpc.client.resilience.attempts=" + GrpcStoreResilienceITest.NUMBER_OF_ATTEMPTS)
 @Slf4j
 class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
-  static final int NUMBER_OF_RETRIES = 99;
+  static final int NUMBER_OF_ATTEMPTS = 99;
 
   private static final int MAX_FACTS = 10000;
   private static final long LATENCY = 2000;
@@ -60,6 +60,11 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
       facts.add(Fact.builder().ns("ns").type("type").buildWithoutPayload());
     }
     fc.publish(facts);
+  }
+
+  @AfterEach
+  void tearDown() {
+    FactCastExtension.resetProxy();
   }
 
   @SneakyThrows
