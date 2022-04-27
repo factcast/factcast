@@ -15,7 +15,9 @@
  */
 package org.factcast.itests.factus;
 
+import static java.util.concurrent.TimeUnit.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.awaitility.Awaitility.*;
 
 import com.google.common.base.Stopwatch;
 import eu.rekawek.toxiproxy.model.ToxicDirection;
@@ -23,6 +25,7 @@ import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.SneakyThrows;
@@ -30,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionClosedException;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
@@ -127,6 +131,26 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
 
   @SneakyThrows
   @Test
+  void followWithReconnectAfterCatchup() {
+    var count = new AtomicInteger();
+
+    try (var ignored = follow(f -> count.incrementAndGet())) {
+
+      await().atMost(3, SECONDS).untilAsserted(() -> assertThat(count.get()).isEqualTo(MAX_FACTS));
+
+      FactCastExtension.setProxyState(proxy.getName(), false);
+      sleep(100);
+      FactCastExtension.setProxyState(proxy.getName(), true);
+      fc.publish(Fact.builder().ns("ns").type("type").buildWithoutPayload());
+
+      await()
+          .atMost(1, SECONDS)
+          .untilAsserted(() -> assertThat(count.get()).isEqualTo(MAX_FACTS + 1));
+    }
+  }
+
+  @SneakyThrows
+  @Test
   void subscribeWithFailingReconnect() {
     try (var spy = SLF4JTestSpy.attach()) {
 
@@ -174,6 +198,16 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
               o.onNext(f);
             })
         .awaitComplete();
+  }
+
+  private Subscription follow(FactObserver o) {
+    log.info("Following");
+    SubscriptionRequest req = SubscriptionRequest.follow(FactSpec.ns("ns")).fromScratch();
+    final var sub = fc.subscribe(req, o::onNext);
+
+    CompletableFuture.runAsync(sub::awaitComplete);
+
+    return sub;
   }
 
   @SneakyThrows
