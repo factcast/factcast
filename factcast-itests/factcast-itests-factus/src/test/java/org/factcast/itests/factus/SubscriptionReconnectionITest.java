@@ -30,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.store.RetryableException;
 import org.factcast.core.subscription.SubscriptionClosedException;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
@@ -50,11 +51,11 @@ import org.springframework.test.context.TestPropertySource;
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 @TestPropertySource(
     properties =
-        "factcast.grpc.client.resilience.retries="
-            + SubscriptionReconnectionITest.NUMBER_OF_RETRIES)
+        "factcast.grpc.client.resilience.attempts="
+            + SubscriptionReconnectionITest.NUMBER_OF_ATTEMPTS)
 @Slf4j
 class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
-  static final int NUMBER_OF_RETRIES = 30;
+  static final int NUMBER_OF_ATTEMPTS = 30;
 
   private static final int MAX_FACTS = 10000;
   private static final long LATENCY = 2000;
@@ -130,17 +131,12 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
   void subscribeWithFailingReconnect() {
     try (var spy = SLF4JTestSpy.attach()) {
 
-      fetchAll();
-      Stopwatch sw = Stopwatch.createStarted();
       var count = new AtomicInteger();
-      fetchAll();
-
-      sw = Stopwatch.createStarted();
       assertThatThrownBy(
               () ->
                   fetchAll(
                       f -> {
-                        if (f.serial() == MAX_FACTS / 8) {
+                        if (f.serial() == MAX_FACTS / 32) {
                           try {
                             // let it repeatedly fail after each 1k sent...
                             proxy.toxics().limitData("limit", ToxicDirection.DOWNSTREAM, 1024);
@@ -152,12 +148,15 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
                         log.info("Got {}", f.serial());
                         count.incrementAndGet();
                       }))
-          .isInstanceOfAny(SubscriptionClosedException.class, StatusRuntimeException.class);
+          .isInstanceOfAny(
+              SubscriptionClosedException.class,
+              StatusRuntimeException.class,
+              RetryableException.class);
       assertThat(count.get()).isLessThan(MAX_FACTS);
 
       assertThat(
               spy.stream().filter(e -> e.getFormattedMessage().contains("Trying to resubscribe")))
-          .hasSize(NUMBER_OF_RETRIES);
+          .hasSize(NUMBER_OF_ATTEMPTS - 1);
     }
   }
 

@@ -16,8 +16,8 @@
 package org.factcast.client.grpc;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -661,7 +661,7 @@ class GrpcFactStoreTest {
 
     @Test
     void retriesCall() throws Exception {
-      resilienceConfig.setEnabled(true).setRetries(100).setInterval(Duration.ofMillis(100));
+      resilienceConfig.setEnabled(true).setAttempts(100).setInterval(Duration.ofMillis(100));
       when(block.call()).thenThrow(new RetryableException(new IOException())).thenReturn(null);
       uut.callAndHandle(block);
       verify(block, times(2)).call();
@@ -669,7 +669,7 @@ class GrpcFactStoreTest {
 
     @Test
     void retriesRun() throws Exception {
-      resilienceConfig.setEnabled(true).setRetries(100).setInterval(Duration.ofMillis(100));
+      resilienceConfig.setEnabled(true).setAttempts(100).setInterval(Duration.ofMillis(100));
       doThrow(new RetryableException(new IOException())).doNothing().when(runnable).run();
       uut.runAndHandle(runnable);
       verify(runnable, times(2)).run();

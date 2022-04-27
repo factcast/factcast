@@ -168,7 +168,7 @@ class ResilientGrpcSubscriptionTest {
   @Test
   void deletegateWithTimeout() {
 
-    config.setEnabled(true).setRetries(100);
+    config.setEnabled(true).setAttempts(100);
 
     ThrowingBiConsumer<Subscription, Long> consumer =
         (s, l) -> {
@@ -184,7 +184,7 @@ class ResilientGrpcSubscriptionTest {
 
   @Test
   void deletegateThrowing() {
-    config.setEnabled(true).setRetries(100);
+    config.setEnabled(true).setAttempts(100);
 
     Consumer<Subscription> consumer = mock(Consumer.class);
     doThrow(
