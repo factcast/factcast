@@ -7,23 +7,14 @@ description: Properties you can use to configure FactCast
 
 ### Schemaregistry
 
-| Property                               | Description                                                                                                    | Default |
-|----------------------------------------|:---------------------------------------------------------------------------------------------------------------|:--------|
-| factcast.store.schemaRegistryUrl       | if a schemaRegistryUrl is defined, FactCast goes into validating mode. The only protocols allowed here are *'  |         | 
-
-http', 'https', 'classpath' and 'file'. Note that http(s) and file always require two slashes after the colon,
-e.g. 'https://someserver/...' or 'file:///root/folder/...'.* |
-| factcast.store.validationEnabled | Can be used for disabling Fact validation if a schemaRegistryUrl is defined. Useful
-for mass data ingestion. | true
-| factcast.store.persistentRegistry | if fetched Schema and Transformation Documents are persisted into Postgres | false
-| factcast.store.allowUnvalidatedPublish | If validation is enabled, this controls if publishing facts, that are **not
-validatable** (due to missing meta-data or due to missing schema in the registry) are allowed to be published or should
-be rejected. | false
-| factcast.store.schemaStoreRefreshCron | defines the cron schedule for refreshing the SchemaRegistry by querying for
-the latest remote changes | <nobr>`*/60 * * * * *`</nobr> (every minute) |
-| factcast.store.allowSchemaReplace | If a schema can be replaced by an updated version from the registry (not a good
-idea in production environments)
-| false
+| Property                               | Description                                                                                                                                                                                                                                                                              | Default
+|----------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-----|
+| factcast.store.schemaRegistryUrl       | if a schemaRegistryUrl is defined, FactCast goes into validating mode. The only protocols allowed here are *'http', 'https', 'classpath' and 'file'. Note that http(s) and file always require two slashes after the colon, e.g. 'https://someserver/...' or 'file:///root/folder/...'.* |
+| factcast.store.validationEnabled       | Can be used for disabling Fact validation if a schemaRegistryUrl is defined. Useful for mass data ingestion.                                                                                                                                                                                              | true
+| factcast.store.persistentRegistry      | if fetched Schema and Transformation Documents are persisted into Postgres                                                                                                                                                                                                               | false
+| factcast.store.allowUnvalidatedPublish | If validation is enabled, this controls if publishing facts, that are **not validatable** (due to missing meta-data or due to missing schema in the registry) are allowed to be published or should be rejected.                                                                         | false
+| factcast.store.schemaStoreRefreshCron  | defines the cron schedule for refreshing the SchemaRegistry by querying for the latest remote changes                                                                                                                                                                                    | <nobr>`*/60 * * * * *`</nobr> (every minute) |
+| factcast.store.allowSchemaReplace      | If a schema can be replaced by an updated version from the registry (not a good idea in production environments)                                                                                                                                                                         | false
 
 ---
 
