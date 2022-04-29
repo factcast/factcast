@@ -19,7 +19,7 @@ Imagine a subscription to particular facts (let's say 10) from scratch, where af
 the network connection fails. Now simply retrying would mean to receive those 5 facts again, which is not only wasteful,
 but also hard to handle, as you'd need to skip those rather than process them a second time.
 Here the FactCast gRPC client keeps track of the facts successfully processed and resubscribes to the ones missing.
-In this example, it'll try to subscribe to the same factstream but starting after the fith fact.
+In this example, it'll try to subscribe to the same factstream but starting after the fifth fact.
 
 Resilience is supposed to "just work" and let you deal with just the non-transient errors.
 This is why it is enabled by default with sane defaults.
