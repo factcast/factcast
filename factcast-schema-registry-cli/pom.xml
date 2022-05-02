@@ -187,7 +187,7 @@
     <dependency>
       <groupId>com.karumi.kotlinsnapshot</groupId>
       <artifactId>core</artifactId>
-      <version>2.2.3</version>
+      <version>2.3.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
