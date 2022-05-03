@@ -113,5 +113,20 @@ class GrpcRequestMetadataTest {
 
       assertThat(underTest.clientId()).isEmpty();
     }
+
+    @Test
+    void testGettingClientIdAsString_noneSet() {
+      Metadata headers = new Metadata();
+      underTest.headers(headers);
+      assertThat(underTest.clientIdAsString()).isEqualTo(underTest.UNKNOWN);
+    }
+
+    @Test
+    void testGettingClientIdAsString_set() {
+      Metadata headers = new Metadata();
+      headers.put(Headers.CLIENT_ID, "narf");
+      underTest.headers(headers);
+      assertThat(underTest.clientIdAsString()).isEqualTo("narf");
+    }
   }
 }
