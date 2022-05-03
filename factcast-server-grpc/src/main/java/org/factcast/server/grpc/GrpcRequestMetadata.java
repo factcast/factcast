@@ -27,7 +27,7 @@ import org.factcast.grpc.api.Headers;
 
 public class GrpcRequestMetadata {
 
-  private static final String UNKNOWN = "unknown";
+  static final String UNKNOWN = "unknown";
 
   @Setter(AccessLevel.PROTECTED)
   Metadata headers;
