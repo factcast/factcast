@@ -26,6 +26,9 @@ import lombok.Setter;
 import org.factcast.grpc.api.Headers;
 
 public class GrpcRequestMetadata {
+
+  private static final String UNKNOWN = "unknown";
+
   @Setter(AccessLevel.PROTECTED)
   Metadata headers;
 
@@ -50,5 +53,9 @@ public class GrpcRequestMetadata {
 
   public Optional<String> clientId() {
     return Optional.ofNullable(headers).map(headers -> headers.get(Headers.CLIENT_ID));
+  }
+
+  public String clientIdAsString() {
+    return clientId().orElse(UNKNOWN);
   }
 }
