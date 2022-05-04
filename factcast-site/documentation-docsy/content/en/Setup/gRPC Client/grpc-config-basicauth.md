@@ -22,7 +22,7 @@ used on every request in a Basic-Auth fashion (added header to request).
 In order to define credentials, just set the appropriate property to a value of the format 'username:password', just as
 you would type them into your browser when a basic-auth popup appears.
 
-```properties
+```
 # if this property is set with a value of the format 'username:password', basicauth will be used.
 grpc.client.factstore.credentials=myUserName:mySecretPassword
 ```
@@ -47,7 +47,7 @@ Example below.
 Now, that you've defined the access configuration, you also need to define the secrets for each account. Again, you can
 do that programmatically by providing a FactCastSecretsProperties, or by defining a property for each account like this:
 
-```properties
+```
 factcast.access.secrets.brain=world
 factcast.access.secrets.pinky=narf
 factcast.access.secrets.snowball=grim

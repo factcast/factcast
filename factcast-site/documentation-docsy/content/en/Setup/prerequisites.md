@@ -10,7 +10,7 @@ weight: 100
 In order to run the FactCast server, you have to provide a Postgres database at least in version 9.4.
 The following example shows the configuration with one user.
 
-```properties
+```
 spring.datasource.username="user" //that user has to be provided
 spring.datasource.password="password"
 ```
