@@ -43,19 +43,6 @@
         "com.google.guava:guava"
       ],
       "automerge": true
-    },
-    {
-      "matchUpdateTypes": [
-        "patch"
-      ],
-      "matchLanguages": [
-        "java"
-      ],
-      "matchPackageNames": [
-        "com.amazonaws:aws-java-sdk-s3",
-        "com.amazonaws:aws-java-sdk-dynamodb"
-      ],
-      "automerge": true
     }
   ],
   "labels": [
