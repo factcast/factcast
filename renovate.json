@@ -44,8 +44,7 @@
         "org.testcontainers:postgresql",
         "org.testcontainers:junit-jupiter"
       ],
-      "automerge": true,
-      "automergeType": "branch"
+      "automerge": true
     },
     {
       "matchDatasources": [
@@ -58,8 +57,7 @@
         "com.amazonaws:aws-java-sdk-s3",
         "com.amazonaws:aws-java-sdk-dynamodb"
       ],
-      "automerge": true,
-      "automergeType": "branch"
+      "automerge": true
     }
   ],
   "labels": [
@@ -71,19 +69,4 @@
 
 
 
-
-
-
-
-
-
-
-{
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "gitlab>prisma-capacity/internal/renovate-config:renovate-self-hosted"
-  ],
-  "packageRules": [
-  ]
-}
 
