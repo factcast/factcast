@@ -135,7 +135,7 @@
     "rollup": "^2.36.1",
     "shelljs": "^0.8.4",
     "sinon": "^7.5.0",
-    "stylelint": "^13.8.0",
+    "stylelint": "^14.0.0",
     "stylelint-config-twbs-bootstrap": "^2.1.0",
     "terser": "5.1.0",
     "vnu-jar": "20.6.30"
