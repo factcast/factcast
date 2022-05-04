@@ -1,9 +1,39 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base",
+    ":automergeMinor",
+    ":label(ready)"
+  ],
+  "stabilityDays": 1,
+  "prCreation": "immediate",
   "packageRules": [
     {
-      "matchDatasources": ["maven"],
-      "matchUpdateTypes": ["minor", "patch"],
+      "packagePatterns": [
+        "^org\\.factcast"
+      ],
+      "allowedVersions": "/^[0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9]+)?$/"
+    },
+    {
+      "updateTypes": [
+        "major"
+      ],
+      "masterIssueApproval": true
+    },
+    {
+      "languages": [
+        "js"
+      ],
+      "enabled": false,
+      "recreateClosed": false
+    },
+    {
+      "matchDatasources": [
+        "maven"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
       "matchPackageNames": [
         "com.diffplug.spotless:spotless-maven-plugin",
         "io.github.hakky54:logcaptor",
@@ -14,18 +44,29 @@
         "org.testcontainers:postgresql",
         "org.testcontainers:junit-jupiter"
       ],
-      "automerge": true,
-      "automergeType": "branch"
+      "automerge": true
     },
     {
-      "matchDatasources": ["maven"],
-      "matchUpdateTypes": ["patch"],
+      "matchDatasources": [
+        "maven"
+      ],
+      "matchUpdateTypes": [
+        "patch"
+      ],
       "matchPackageNames": [
         "com.amazonaws:aws-java-sdk-s3",
         "com.amazonaws:aws-java-sdk-dynamodb"
       ],
-      "automerge": true,
-      "automergeType": "branch"
+      "automerge": true
     }
+  ],
+  "labels": [
+    "dependencies"
   ]
 }
+
+
+
+
+
+
