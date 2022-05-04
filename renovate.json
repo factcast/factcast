@@ -38,7 +38,8 @@
         "org.basepom.maven:duplicate-finder-maven-plugin",
         "org.testcontainers:localstack",
         "org.testcontainers:postgresql",
-        "org.testcontainers:junit-jupiter"
+        "org.testcontainers:junit-jupiter",
+        "org.mockito:mockito-core"
       ],
       "automerge": true
     },
