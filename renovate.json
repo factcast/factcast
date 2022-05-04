@@ -6,6 +6,9 @@
   ],
   "stabilityDays": 1,
   "prCreation": "immediate",
+  "js": {
+    "enabled": false
+  },
   "packageRules": [
     {
       "packagePatterns": [
@@ -20,19 +23,12 @@
       "masterIssueApproval": true
     },
     {
-      "languages": [
-        "js"
-      ],
-      "enabled": false,
-      "recreateClosed": false
-    },
-    {
-      "matchDatasources": [
-        "maven"
-      ],
       "matchUpdateTypes": [
         "minor",
         "patch"
+      ],
+      "matchLanguages": [
+        "java"
       ],
       "matchPackageNames": [
         "com.diffplug.spotless:spotless-maven-plugin",
@@ -47,11 +43,11 @@
       "automerge": true
     },
     {
-      "matchDatasources": [
-        "maven"
-      ],
       "matchUpdateTypes": [
         "patch"
+      ],
+      "matchLanguages": [
+        "java"
       ],
       "matchPackageNames": [
         "com.amazonaws:aws-java-sdk-s3",
