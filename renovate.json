@@ -14,8 +14,7 @@
         "org.testcontainers:postgresql",
         "org.testcontainers:junit-jupiter"
       ],
-      "automerge": true,
-      "automergeType": "branch"
+      "automerge": true
     },
     {
       "matchDatasources": ["maven"],
@@ -24,8 +23,7 @@
         "com.amazonaws:aws-java-sdk-s3",
         "com.amazonaws:aws-java-sdk-dynamodb"
       ],
-      "automerge": true,
-      "automergeType": "branch"
+      "automerge": true
     }
   ]
 }
