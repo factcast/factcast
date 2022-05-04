@@ -1,43 +1,34 @@
 {
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base",
-    ":rebaseStalePrs",
-    ":automergeMinor",
-    ":label(ready)"
+    "gitlab>prisma-capacity/internal/renovate-config:renovate-self-hosted"
   ],
-  "stabilityDays": 1,
-  "prCreation": "immediate",
-  "ignorePaths": ["factcast-itests/factcast-itests-exception-handling-v3-compat"],
   "packageRules": [
     {
-      "packagePatterns": [
-        "^org\\.factcast"
+      "matchDatasources": ["maven"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchPackageNames": [
+        "com.diffplug.spotless:spotless-maven-plugin",
+        "io.github.hakky54:logcaptor",
+        "org.sonarsource.scanner.maven:sonar-maven-plugin",
+        "org.owasp:dependency-check-maven",
+        "org.basepom.maven:duplicate-finder-maven-plugin",
+        "org.testcontainers:localstack",
+        "org.testcontainers:postgresql",
+        "org.testcontainers:junit-jupiter"
       ],
-      "allowedVersions": "/^[0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9]+)?$/"
+      "automerge": true,
+      "automergeType": "branch"
     },
     {
-      "updateTypes": [
-        "major"
+      "matchDatasources": ["maven"],
+      "matchUpdateTypes": ["patch"],
+      "matchPackageNames": [
+        "com.amazonaws:aws-java-sdk-s3",
+        "com.amazonaws:aws-java-sdk-dynamodb"
       ],
-      "masterIssueApproval": true
-    },
-    {
-      "languages": [
-        "js"
-      ],
-      "enabled": false,
-      "recreateClosed": false
-    },
-    {
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
-      "automerge": true
-    },
-    {
-      "matchDepTypes": ["devDependencies"],
-      "automerge": true
+      "automerge": true,
+      "automergeType": "branch"
     }
-  ],
-  "labels": [
-    "dependencies"
   ]
 }
