@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.registry.validation;
+package org.factcast.core.subscription;
 
-import static org.junit.jupiter.api.Assertions.*;
+/**
+ * Signals, that a Subscription.wait* method cannot terminate normally.
+ *
+ * @author <uwe.schaefer@prisma-capacity.eu>
+ */
+public class SubscriptionClosedException extends RuntimeException {
 
-import org.junit.jupiter.api.*;
+  private static final long serialVersionUID = 1L;
 
-public class FactValidationErrorTest {
+  public SubscriptionClosedException(Throwable e) {
+    super(e);
+  }
 
-  @Test
-  void testNullContracts() {
-    assertThrows(NullPointerException.class, () -> new FactValidationError(null));
-
-    assertThrows(NullPointerException.class, () -> new FactValidationError("foo", null));
-
-    assertThrows(NullPointerException.class, () -> new FactValidationError(null, "foo"));
-
-    new FactValidationError("must not throw");
+  public SubscriptionClosedException(String msg) {
+    super(msg);
   }
 }

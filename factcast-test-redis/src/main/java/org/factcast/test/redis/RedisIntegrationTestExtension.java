@@ -18,42 +18,48 @@ package org.factcast.test.redis;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.test.FactCastExtension;
 import org.factcast.test.FactCastIntegrationTestExtension;
 import org.junit.jupiter.api.extension.*;
 import org.redisson.Redisson;
 import org.redisson.config.Config;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.ToxiproxyContainer.ContainerProxy;
 
-@SuppressWarnings("rawtypes")
+@SuppressWarnings({"rawtypes", "resource"})
 @Slf4j
 public class RedisIntegrationTestExtension implements FactCastIntegrationTestExtension {
 
-  private final Map<RedisConfig.Config, GenericContainer> executions = new ConcurrentHashMap<>();
+  public static final int REDIS_PORT = 6379;
+  private final Map<RedisConfig.Config, Containers> executions = new ConcurrentHashMap<>();
 
   @Override
   public boolean initialize(ExtensionContext ctx) {
     final RedisConfig.Config config = discoverConfig(ctx);
-
     startOrReuse(config);
-
     return true;
   }
 
   private void startOrReuse(RedisConfig.Config config) {
-    final GenericContainer container =
+    final Containers container =
         executions.computeIfAbsent(
             config,
             key -> {
               GenericContainer redis =
-                  new GenericContainer<>("redis:" + config.redisVersion()).withExposedPorts(6379);
+                  new GenericContainer<>("redis:" + config.redisVersion())
+                      .withExposedPorts(REDIS_PORT)
+                      .withNetwork(FactCastExtension._docker_network);
               redis.start();
 
-              return redis;
+              return new Containers(
+                  redis, new RedisProxy(FactCastExtension.proxy(redis, REDIS_PORT)));
             });
 
-    System.setProperty("spring.redis.host", container.getHost());
-    System.setProperty("spring.redis.port", String.valueOf(container.getMappedPort(6379)));
+    ContainerProxy redisProxy = container.redisProxy().get();
+    System.setProperty("spring.redis.host", redisProxy.getContainerIpAddress());
+    System.setProperty("spring.redis.port", String.valueOf(redisProxy.getProxyPort()));
   }
 
   @Override
@@ -67,9 +73,10 @@ public class RedisIntegrationTestExtension implements FactCastIntegrationTestExt
   @Override
   public void beforeEach(ExtensionContext ctx) {
     final RedisConfig.Config config = discoverConfig(ctx);
-    final GenericContainer container = executions.get(config);
+    final Containers containers = executions.get(config);
 
-    final var url = "redis://" + container.getHost() + ":" + container.getMappedPort(6379);
+    final var url =
+        "redis://" + containers.redis.getHost() + ":" + containers.redis.getMappedPort(REDIS_PORT);
     log.trace("erasing redis state in between tests for {}", url);
 
     final var clientConfig = new Config().setThreads(1);
@@ -78,6 +85,9 @@ public class RedisIntegrationTestExtension implements FactCastIntegrationTestExt
     final var client = Redisson.create(clientConfig);
     client.getKeys().flushdb();
     client.shutdown();
+
+    ctx.getTestInstance()
+        .ifPresent(t -> FactCastIntegrationTestExtension.inject(t, containers.redisProxy));
   }
 
   private RedisConfig.Config discoverConfig(ExtensionContext ctx) {
@@ -85,5 +95,11 @@ public class RedisIntegrationTestExtension implements FactCastIntegrationTestExt
         .flatMap(x -> Optional.ofNullable(x.getAnnotation(RedisConfig.class)))
         .map(RedisConfig.Config::from)
         .orElse(RedisConfig.Config.defaults());
+  }
+
+  @Value
+  static class Containers {
+    GenericContainer redis;
+    RedisProxy redisProxy;
   }
 }

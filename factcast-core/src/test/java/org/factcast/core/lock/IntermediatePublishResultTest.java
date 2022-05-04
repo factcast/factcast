@@ -16,20 +16,11 @@
 package org.factcast.core.lock;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.LinkedList;
 import org.junit.jupiter.api.*;
 
 public class IntermediatePublishResultTest {
-  @Test
-  public void testNullContracts() {
-    assertThrows(NullPointerException.class, () -> new IntermediatePublishResult(null));
-
-    assertThrows(
-        NullPointerException.class,
-        () -> new IntermediatePublishResult(new LinkedList<>()).andThen(null));
-  }
 
   @Test
   public void testAndThen() {

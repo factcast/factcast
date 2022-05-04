@@ -1,13 +1,14 @@
 {
   "extends": [
     "config:base",
-    ":rebaseStalePrs",
     ":automergeMinor",
     ":label(ready)"
   ],
   "stabilityDays": 1,
   "prCreation": "immediate",
-  "ignorePaths": ["factcast-itests/factcast-itests-exception-handling-v3-compat"],
+  "js": {
+    "enabled": false
+  },
   "packageRules": [
     {
       "packagePatterns": [
@@ -22,18 +23,25 @@
       "masterIssueApproval": true
     },
     {
-      "languages": [
-        "js"
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
       ],
-      "enabled": false,
-      "recreateClosed": false
-    },
-    {
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
-      "automerge": true
-    },
-    {
-      "matchDepTypes": ["devDependencies"],
+      "matchLanguages": [
+        "java"
+      ],
+      "matchPackageNames": [
+        "com.diffplug.spotless:spotless-maven-plugin",
+        "io.github.hakky54:logcaptor",
+        "org.sonarsource.scanner.maven:sonar-maven-plugin",
+        "org.owasp:dependency-check-maven",
+        "org.basepom.maven:duplicate-finder-maven-plugin",
+        "org.testcontainers:localstack",
+        "org.testcontainers:postgresql",
+        "org.testcontainers:junit-jupiter",
+        "org.mockito:mockito-core",
+        "com.google.guava:guava"
+      ],
       "automerge": true
     }
   ],
@@ -41,3 +49,9 @@
     "dependencies"
   ]
 }
+
+
+
+
+
+

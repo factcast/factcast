@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.5.2-SNAPSHOT</version>
+    <version>0.5.6-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <properties>
@@ -169,7 +169,7 @@
     <dependency>
       <groupId>io.kotest.extensions</groupId>
       <artifactId>kotest-assertions-arrow-jvm</artifactId>
-      <version>1.2.4</version>
+      <version>1.2.5</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -187,7 +187,7 @@
     <dependency>
       <groupId>com.karumi.kotlinsnapshot</groupId>
       <artifactId>core</artifactId>
-      <version>2.2.3</version>
+      <version>2.3.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -254,6 +254,7 @@
                   implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
               </transformers>
               <finalName>fc-schema-cli</finalName>
+              <createDependencyReducedPom>false</createDependencyReducedPom>
             </configuration>
           </execution>
         </executions>

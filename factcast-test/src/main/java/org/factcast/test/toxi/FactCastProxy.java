@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2022 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.subscription;
+package org.factcast.test.toxi;
 
-/**
- * Signals, that a Subscription.wait* method cannot terminate normally.
- *
- * @author <uwe.schaefer@prisma-capacity.eu>
- */
-public class SubscriptionCancelledException extends RuntimeException {
+import lombok.NonNull;
+import org.testcontainers.containers.ToxiproxyContainer;
 
-  private static final long serialVersionUID = 1L;
-
-  public SubscriptionCancelledException(Throwable e) {
-    super(e);
-  }
-
-  public SubscriptionCancelledException(String msg) {
-    super(msg);
+public class FactCastProxy extends AbstractToxiProxySupplier {
+  public FactCastProxy(@NonNull ToxiproxyContainer.ContainerProxy proxy) {
+    super(proxy);
   }
 }
