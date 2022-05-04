@@ -16,13 +16,7 @@
 package org.factcast.server.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
-import io.grpc.ForwardingServerCallListener;
-import io.grpc.Metadata;
-import io.grpc.ServerCall;
-import io.grpc.ServerCallHandler;
-import io.grpc.ServerInterceptor;
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
+import io.grpc.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -115,7 +109,8 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
       if (exception instanceof RequestCanceledByClientException) {
         // maybe we can even skip this close call?
         serverCall.close(Status.CANCELLED.withDescription(exception.getMessage()), metadata);
-        log.debug("Connection cancelled by client '{}'.", grpcMetadata.clientId());
+        String clientId = grpcMetadata.clientIdAsString();
+        log.debug("Connection cancelled by client '{}'.", clientId);
         return;
       }
 
@@ -136,10 +131,11 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
 
     @VisibleForTesting
     protected void logIfNecessary(@NonNull Logger logger, @NonNull RuntimeException exception) {
+      String clientId = grpcMetadata.clientIdAsString();
       if (exception instanceof FactValidationException) {
-        logger.warn("Exception triggered by client '{}':", grpcMetadata.clientId(), exception);
+        logger.warn("Exception triggered by client '{}':", clientId, exception);
       } else {
-        logger.error("Exception triggered by client '{}':", grpcMetadata.clientId(), exception);
+        logger.error("Exception triggered by client '{}':", clientId, exception);
       }
     }
   }

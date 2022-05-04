@@ -163,7 +163,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       // pass along and potentially rethrow
       projection.onError(e);
       throw new IllegalArgumentException(e);
-    } catch (Throwable e) {
+    } catch (Exception e) {
 
       // inform the lenses
       lenses.forEach(l -> l.afterFactProcessingFailed(f, e));
@@ -294,8 +294,6 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     @NonNull Method dispatchMethod;
 
     @NonNull ProjectorImpl.TargetObjectResolver objectResolver;
-
-    //    @NonNull ParameterTransformer parameterTransformer;
 
     @NonNull FactSpec spec;
 

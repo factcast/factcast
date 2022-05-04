@@ -35,11 +35,6 @@ public class DefaultFactTest {
   }
 
   @Test
-  void testNullContracts() {
-    Assertions.assertThrows(NullPointerException.class, () -> DefaultFact.of(null, null));
-  }
-
-  @Test
   void testUnparseableHeader() {
     Assertions.assertThrows(
         JsonParseException.class, () -> DefaultFact.of("not json at all", "{}"));

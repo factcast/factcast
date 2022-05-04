@@ -16,14 +16,25 @@
 package org.factcast.test;
 
 import com.google.common.collect.Lists;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpRequest.BodyPublishers;
+import java.net.http.HttpResponse.BodyHandlers;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.*;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
+import org.testcontainers.containers.ToxiproxyContainer;
+import org.testcontainers.containers.ToxiproxyContainer.ContainerProxy;
+import org.testcontainers.utility.DockerImageName;
 
 @Slf4j
 public class FactCastExtension
@@ -33,9 +44,13 @@ public class FactCastExtension
         AfterEachCallback,
         AfterAllCallback {
 
+  public static final Network _docker_network = Network.newNetwork();
+  public static final String TOXIPROXY_NETWORK_ALIAS = "toxiproxy";
+
   private static boolean initialized = false;
   private static final List<FactCastIntegrationTestExtension> extensions = new LinkedList<>();
   private static List<FactCastIntegrationTestExtension> reverseExtensions;
+  private static ToxiproxyContainer toxiProxy;
 
   @Override
   public void beforeEach(ExtensionContext context) throws Exception {
@@ -53,6 +68,7 @@ public class FactCastExtension
 
   @Override
   public void afterEach(ExtensionContext context) throws Exception {
+    FactCastExtension.resetProxy();
     for (FactCastIntegrationTestExtension e : reverseExtensions) {
       e.afterEach(context);
     }
@@ -72,6 +88,9 @@ public class FactCastExtension
   }
 
   private void initialize(ExtensionContext context) {
+
+    initializeProxy();
+
     var discovered =
         Lists.newArrayList(ServiceLoader.load(FactCastIntegrationTestExtension.class).iterator());
     AtomicInteger count = new AtomicInteger(discovered.size());
@@ -97,5 +116,51 @@ public class FactCastExtension
 
     reverseExtensions = Lists.newArrayList(extensions);
     Collections.reverse(reverseExtensions);
+  }
+
+  private static void initializeProxy() {
+    toxiProxy =
+        new ToxiproxyContainer(
+                DockerImageName.parse("ghcr.io/shopify/toxiproxy:2.4.0")
+                    .asCompatibleSubstituteFor("shopify/toxiproxy"))
+            .withNetwork(_docker_network)
+            .withNetworkAliases(TOXIPROXY_NETWORK_ALIAS);
+    toxiProxy.start();
+  }
+
+  public static ContainerProxy proxy(String host, int port) {
+    return toxiProxy.getProxy(host, port);
+  }
+
+  public static ContainerProxy proxy(GenericContainer container, int port) {
+    return toxiProxy.getProxy(container, port);
+  }
+
+  @SneakyThrows
+  public static void resetProxy() {
+    HttpClient cl = HttpClient.newHttpClient();
+    String host = toxiProxy.getHost();
+    int controlPort = toxiProxy.getControlPort();
+    cl.send(
+            HttpRequest.newBuilder()
+                .method("POST", BodyPublishers.noBody())
+                .uri(new URI("http://" + host + ":" + controlPort + "/reset"))
+                .build(),
+            BodyHandlers.ofString())
+        .statusCode();
+  }
+
+  @SneakyThrows
+  public static void setProxyState(String name, boolean shouldBeOn) {
+    HttpClient cl = HttpClient.newHttpClient();
+    String host = toxiProxy.getHost();
+    int controlPort = toxiProxy.getControlPort();
+    cl.send(
+            HttpRequest.newBuilder()
+                .method("POST", BodyPublishers.ofString("{\"enabled\":" + shouldBeOn + "}"))
+                .uri(new URI("http://" + host + ":" + controlPort + "/proxies/" + name))
+                .build(),
+            BodyHandlers.ofString())
+        .statusCode();
   }
 }

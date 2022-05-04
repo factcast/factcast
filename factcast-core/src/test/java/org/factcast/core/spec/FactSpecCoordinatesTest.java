@@ -17,6 +17,7 @@ package org.factcast.core.spec;
 
 import static org.assertj.core.api.Assertions.*;
 
+import org.factcast.core.TestFact;
 import org.factcast.factus.event.Specification;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
@@ -40,6 +41,22 @@ class FactSpecCoordinatesTest {
       assertThatThrownBy(() -> FactSpecCoordinates.from(WhenFroming.class))
           .isInstanceOf(IllegalArgumentException.class)
           .hasMessageStartingWith("Empty namespace encountered on class");
+    }
+
+    @Test
+    void discoversFromFact() {
+      FactSpecCoordinates res = FactSpecCoordinates.from(new SomeFact());
+      assertThat(res.ns()).isEqualTo("some");
+      assertThat(res.type()).isEqualTo("fact");
+      assertThat(res.version()).isEqualTo(9);
+    }
+  }
+
+  static class SomeFact extends TestFact {
+    {
+      ns("some");
+      type("fact");
+      version(9);
     }
   }
 }
