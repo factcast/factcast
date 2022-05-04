@@ -1,8 +1,5 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "gitlab>prisma-capacity/internal/renovate-config:renovate-self-hosted"
-  ],
   "packageRules": [
     {
       "matchDatasources": ["maven"],
