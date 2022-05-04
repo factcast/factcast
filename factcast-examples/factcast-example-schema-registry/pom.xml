@@ -5,7 +5,7 @@
   <parent>
     <artifactId>factcast</artifactId>
     <groupId>org.factcast</groupId>
-    <version>0.5.6-SNAPSHOT</version>
+    <version>195ae24</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
