@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <artifactId>factcast-schema-registry-cli</artifactId>
   <parent>
@@ -133,7 +133,7 @@
     </dependency>
     <dependency>
       <groupId>io.github.microutils</groupId>
-      <artifactId>kotlin-logging</artifactId>
+      <artifactId>kotlin-logging-jvm</artifactId>
       <version>2.1.21</version>
     </dependency>
     <dependency>
@@ -247,11 +247,11 @@
             <configuration>
               <transformers>
                 <transformer
-                  implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <mainClass>${main.class}</mainClass>
                 </transformer>
                 <transformer
-                  implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+                        implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
               </transformers>
               <finalName>fc-schema-cli</finalName>
               <createDependencyReducedPom>false</createDependencyReducedPom>
@@ -465,7 +465,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <ignore />
+                    <ignore/>
                   </action>
                 </pluginExecution>
                 <pluginExecution>
@@ -478,7 +478,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <ignore />
+                    <ignore/>
                   </action>
                 </pluginExecution>
               </pluginExecutions>
