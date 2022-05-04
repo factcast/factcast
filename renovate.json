@@ -39,7 +39,8 @@
         "org.testcontainers:localstack",
         "org.testcontainers:postgresql",
         "org.testcontainers:junit-jupiter",
-        "org.mockito:mockito-core"
+        "org.mockito:mockito-core",
+        "com.google.guava:guava"
       ],
       "automerge": true
     },
