@@ -27,7 +27,7 @@
     "grunt": "^1.0.1",
     "grunt-autoprefixer": "^3.0.4",
     "grunt-cli": "^1.2.0",
-    "grunt-contrib-connect": "^1.0.2",
+    "grunt-contrib-connect": "^3.0.0",
     "grunt-contrib-cssmin": "^2.1.0",
     "grunt-contrib-jshint": "^1.1.0",
     "grunt-contrib-qunit": "~1.2.0",
