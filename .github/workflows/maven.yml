@@ -22,13 +22,13 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - uses: actions/checkout@v2
-      - uses: actions/cache@v1
+      - uses: actions/cache@v3
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
-      - uses: actions/cache@v1
+      - uses: actions/cache@v3
         with:
           path: /var/lib/docker/
           key: factcast-docker-cache-unversioned
