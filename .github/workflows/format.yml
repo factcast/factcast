@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@v3 # v2 minimum required
         with:
           token: ${{ secrets.PAT }}
-      - uses: actions/setup-java@v1
+      - uses: actions/setup-java@v3
         with:
           # Recommended: latest versions of Google Java Format require JDK 11+
           distribution: "corretto"
