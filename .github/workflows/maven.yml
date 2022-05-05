@@ -44,6 +44,6 @@ jobs:
         # jacoco:report-aggregate
       - name: Remove partial execution reports
         run: find -wholename "**/target/jacoco-output" -exec rm -rf {} +
-      - uses: codecov/codecov-action@v1
+      - uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
