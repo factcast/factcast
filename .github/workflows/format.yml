@@ -8,7 +8,7 @@ jobs:
   formatting:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2 # v2 minimum required
+      - uses: actions/checkout@v3 # v2 minimum required
         with:
           token: ${{ secrets.PAT }}
       - uses: actions/setup-java@v1
