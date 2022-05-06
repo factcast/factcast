@@ -19,10 +19,6 @@
       "enabled": false
     },
     {
-      "matchUpdateTypes": [
-        "minor",
-        "patch"
-      ],
       "matchLanguages": [
         "java"
       ],
