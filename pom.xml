@@ -97,7 +97,7 @@
     <!--suppress UnresolvedMavenProperty -->
     <etc>${session.executionRootDirectory}/src/etc</etc>
     <spring-boot.version>2.6.7</spring-boot.version>
-    <spring-cloud.version>2020.0.5</spring-cloud.version>
+    <spring-cloud.version>2021.0.2</spring-cloud.version>
     <spring-grpc.version>2.13.1.RELEASE</spring-grpc.version>
     <grpc.version>1.42.1</grpc.version>
     <testcontainers.version>1.17.1</testcontainers.version>
