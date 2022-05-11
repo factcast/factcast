@@ -15,13 +15,14 @@
  */
 package org.factcast.store.registry.http;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.fge.jsonschema.main.JsonSchemaFactory;
+import com.networknt.schema.*;
+import com.networknt.schema.SpecVersion.VersionFlag;
+import lombok.NonNull;
 import okhttp3.OkHttpClient;
 
 public class ValidationConstants {
-
-  public static final JsonSchemaFactory JSON_SCHEMA_FACTORY = JsonSchemaFactory.byDefault();
 
   public static final ObjectMapper JACKSON = new ObjectMapper();
 
@@ -36,4 +37,18 @@ public class ValidationConstants {
   public static final int HTTP_OK = 200;
 
   public static final int HTTP_NOT_MODIFIED = 304;
+
+  public static JsonSchema fromJsonNode(@NonNull JsonNode jsonNode) {
+    VersionFlag versionFlag;
+    try {
+      versionFlag = SpecVersionDetector.detect(jsonNode);
+    } catch (JsonSchemaException e) {
+      // TODO make configurable?
+      versionFlag = VersionFlag.V7;
+    }
+    JsonSchemaFactory factory = JsonSchemaFactory.getInstance(versionFlag);
+    SchemaValidatorsConfig cfg = new SchemaValidatorsConfig();
+    cfg.setEcma262Validator(true);
+    return factory.getSchema(jsonNode, cfg);
+  }
 }

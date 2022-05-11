@@ -18,7 +18,7 @@ package org.factcast.store.registry.validation;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.github.fge.jsonschema.main.JsonSchema;
+import com.networknt.schema.JsonSchema;
 import io.micrometer.core.instrument.Tags;
 import java.util.Optional;
 import org.factcast.core.Fact;
@@ -29,7 +29,7 @@ import org.factcast.store.registry.http.ValidationConstants;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics.EVENT;
 import org.factcast.store.registry.validation.schema.SchemaKey;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 
 public class FactValidatorTest {
@@ -128,8 +128,7 @@ public class FactValidatorTest {
             + "}";
 
     JsonSchema schema =
-        ValidationConstants.JSON_SCHEMA_FACTORY.getJsonSchema(
-            ValidationConstants.JACKSON.readTree(schemaJson));
+        ValidationConstants.fromJsonNode(ValidationConstants.JACKSON.readTree(schemaJson));
     when(sr.get(Mockito.any(SchemaKey.class))).thenReturn(Optional.of(schema));
 
     FactValidator uut = new FactValidator(props, sr, mock(RegistryMetrics.class));
@@ -178,8 +177,7 @@ public class FactValidatorTest {
             + "}";
 
     JsonSchema schema =
-        ValidationConstants.JSON_SCHEMA_FACTORY.getJsonSchema(
-            ValidationConstants.JACKSON.readTree(schemaJson));
+        ValidationConstants.fromJsonNode(ValidationConstants.JACKSON.readTree(schemaJson));
     when(sr.get(Mockito.any(SchemaKey.class))).thenReturn(Optional.of(schema));
 
     FactValidator uut = new FactValidator(props, sr, registryMetrics);

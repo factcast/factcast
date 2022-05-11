@@ -15,7 +15,7 @@
  */
 package org.factcast.store.registry;
 
-import com.github.fge.jsonschema.main.JsonSchema;
+import com.networknt.schema.JsonSchema;
 import java.util.List;
 import java.util.Optional;
 import org.factcast.store.registry.transformation.Transformation;

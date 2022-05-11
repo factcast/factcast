@@ -15,11 +15,10 @@
  */
 package org.factcast.store.registry;
 
-import com.github.fge.jsonschema.core.exceptions.ProcessingException;
-import com.github.fge.jsonschema.main.JsonSchema;
 import com.google.common.base.Stopwatch;
 import com.google.common.cache.AbstractLoadingCache;
 import com.google.common.cache.LoadingCache;
+import com.networknt.schema.JsonSchema;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -31,12 +30,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.http.ValidationConstants;
 import org.factcast.store.registry.metrics.RegistryMetrics;
-import org.factcast.store.registry.transformation.Transformation;
-import org.factcast.store.registry.transformation.TransformationConflictException;
-import org.factcast.store.registry.transformation.TransformationKey;
-import org.factcast.store.registry.transformation.TransformationSource;
-import org.factcast.store.registry.transformation.TransformationStore;
-import org.factcast.store.registry.transformation.TransformationStoreListener;
+import org.factcast.store.registry.transformation.*;
 import org.factcast.store.registry.validation.schema.SchemaConflictException;
 import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.factcast.store.registry.validation.schema.SchemaSource;
@@ -68,9 +62,8 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
         private Function<? super String, ? extends JsonSchema> createSchema() {
           return s -> {
             try {
-              return ValidationConstants.JSON_SCHEMA_FACTORY.getJsonSchema(
-                  ValidationConstants.JACKSON.readTree(s));
-            } catch (ProcessingException | IOException e) {
+              return ValidationConstants.fromJsonNode(ValidationConstants.JACKSON.readTree(s));
+            } catch (Exception e) {
               throw new IllegalArgumentException("Cannot create schema from : \n " + s, e);
             }
           };
