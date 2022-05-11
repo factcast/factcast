@@ -206,7 +206,7 @@ class SnapshotCacheTest {
             "SELECT last_access FROM snapshot_cache WHERE uuid=? AND cache_key=?",
             Instant.class,
             id.uuid(),
-            id.key()), ZoneId.systemDefault());
-
+            id.key()),
+        ZoneId.systemDefault());
   }
 }
