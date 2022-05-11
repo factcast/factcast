@@ -15,18 +15,18 @@
  */
 package org.factcast.store.registry.validation;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jsonschema.core.exceptions.ProcessingException;
-import com.github.fge.jsonschema.core.report.ProcessingReport;
-import com.github.fge.jsonschema.main.JsonSchema;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
+import com.networknt.schema.JsonSchema;
+import com.networknt.schema.ValidationMessage;
 import io.micrometer.core.instrument.Tags;
-import java.io.IOException;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
 import org.factcast.store.StoreConfigurationProperties;
@@ -71,29 +71,22 @@ public class FactValidator {
     SchemaKey key = SchemaKey.from(fact);
     Optional<JsonSchema> optSchema = registry.get(key);
     if (optSchema.isPresent()) {
-
       JsonSchema jsonSchema = optSchema.get();
-      ProcessingReport report;
+      Set<ValidationMessage> errors;
       try {
         JsonNode toValidate = ValidationConstants.JACKSON.readTree(fact.jsonPayload());
-        report = jsonSchema.validate(toValidate);
-        if (report.isSuccess()) {
+        errors = jsonSchema.validate(toValidate);
+        if (errors.isEmpty()) {
           return VALIDATION_OK;
         } else {
-          List<FactValidationError> ret = new LinkedList<>();
-
-          report.forEach(
-              m -> {
-                ret.add(new FactValidationError(m.getLogLevel().toString(), m.getMessage()));
-              });
-
           registryMetrics.count(
               RegistryMetrics.EVENT.FACT_VALIDATION_FAILED,
               Tags.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()));
-
-          return ret;
+          return errors.stream()
+              .map(m -> new FactValidationError(m.getMessage()))
+              .collect(Collectors.toList());
         } // validateJson(Node) ends
-      } catch (IOException | ProcessingException e) {
+      } catch (JsonProcessingException e) {
         return Lists.newArrayList(
             new FactValidationError("Fact is not parseable. " + e.getMessage()));
       }

@@ -17,8 +17,9 @@ package org.factcast.store.internal.snapcache;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.sql.Timestamp;
-import java.util.Date;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.NonNull;
@@ -26,7 +27,6 @@ import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.test.IntegrationTest;
-import org.joda.time.DateTime;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,7 +65,7 @@ class SnapshotCacheTest {
 
     underTest.setSnapshot(new Snapshot(id, lastFact, "foo".getBytes(), false));
 
-    Timestamp firstAccess = getTimestamp(id);
+    ZonedDateTime firstAccess = getTimestamp(id);
 
     // RUN
     Optional<Snapshot> snapshot = underTest.getSnapshot(id);
@@ -78,7 +78,7 @@ class SnapshotCacheTest {
         .containsExactly(id, lastFact, "foo".getBytes(), false);
 
     // assert that timestamp got updated
-    Timestamp recentAccess = getTimestamp(id);
+    ZonedDateTime recentAccess = getTimestamp(id);
 
     assertThat(recentAccess).isAfter(firstAccess);
 
@@ -86,7 +86,7 @@ class SnapshotCacheTest {
 
     // also make sure the timestamp is properly set to the current time, and
     // not some time in the future / past
-    Date now = new Date();
+    ZonedDateTime now = ZonedDateTime.now();
     assertThat(recentAccess)
         // should not be newer than current time
         .isBefore(now)
@@ -96,8 +96,8 @@ class SnapshotCacheTest {
   }
 
   @NonNull
-  private Date minus5seconds(Date now) {
-    return new Date(now.getTime() - 1000 * 5);
+  private ZonedDateTime minus5seconds(ZonedDateTime now) {
+    return now.minusSeconds(5);
   }
 
   @Test
@@ -184,7 +184,7 @@ class SnapshotCacheTest {
 
     assertThat(snapshot).isNotEmpty();
 
-    Timestamp lastAccess = getTimestamp(id);
+    ZonedDateTime lastAccess = getTimestamp(id);
 
     // RUN
     underTest.compact(plusOneSecond(lastAccess));
@@ -196,15 +196,17 @@ class SnapshotCacheTest {
   }
 
   @NonNull
-  private DateTime plusOneSecond(Date date) {
-    return new DateTime(date).plusSeconds(1);
+  private ZonedDateTime plusOneSecond(ZonedDateTime date) {
+    return date.plusSeconds(1);
   }
 
-  private Timestamp getTimestamp(SnapshotId id) {
-    return jdbcTemplate.queryForObject(
-        "SELECT last_access FROM snapshot_cache WHERE uuid=? AND cache_key=?",
-        Timestamp.class,
-        id.uuid(),
-        id.key());
+  private ZonedDateTime getTimestamp(SnapshotId id) {
+    return ZonedDateTime.ofInstant(
+        jdbcTemplate.queryForObject(
+            "SELECT last_access FROM snapshot_cache WHERE uuid=? AND cache_key=?",
+            Instant.class,
+            id.uuid(),
+            id.key()), ZoneId.systemDefault());
+
   }
 }
