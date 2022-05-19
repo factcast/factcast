@@ -73,7 +73,7 @@ Properties you can use to configure gRPC:
 
 #### gRPC Client recommended settings
 
-```properties
+```
 grpc.client.factstore.enable-keep-alive=true
 grpc.client.factstore.keep-alive-time=300
 grpc.client.factstore.keep-alive-without-calls=true
@@ -107,7 +107,7 @@ Further details can be found here : `net.devh.boot.grpc.client.config.GrpcChanne
 
 #### gRPC Server recommended settings
 
-```properties
+```
 grpc.server.permit-keep-alive-without-calls=true
 grpc.server.permit-keep-alive-time=100
 ```

@@ -195,7 +195,7 @@ Before writing your first integration test
 - to allow TLS free authentication between our test code and the local FactCast server, create
   an `application.properties` file in the project's `resources` directory with the following content:
 
-```properties
+```
 grpc.client.factstore.negotiationType=PLAINTEXT
 ```
 
