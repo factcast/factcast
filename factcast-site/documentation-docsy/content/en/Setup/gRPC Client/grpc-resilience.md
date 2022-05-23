@@ -26,7 +26,7 @@ This is why it is enabled by default with sane defaults.
 
 If you want to disable it completely for any reason, you always can use
 
-```properties
+```
 factcast.grpc.client.resilience.enabled=false
 ```
 See [properties](/setup/properties) for the defaults.
