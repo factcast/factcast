@@ -138,14 +138,12 @@ class ServerExceptionLoggerTest {
     String id = "foo";
     underTest.error(e, id);
 
-    assertThat(logger.lines().size()).isEqualTo(1);
-    assertThat(
-            logger.lines().stream()
-                .anyMatch(
-                    l ->
-                        l.level == LogLevel.ErrorLevel
-                            && l.text.startsWith(id + " onError – sending Error notification")))
-        .isTrue();
+    assertThat(logger.lines().size()).isEqualTo(2);
+    assertThat(logger.lines().stream())
+        .anyMatch(
+            l ->
+                l.level == LogLevel.ErrorLevel
+                    && l.text.startsWith(id + " onError – sending Error notification"));
   }
 
   @Test
@@ -155,14 +153,12 @@ class ServerExceptionLoggerTest {
     String id = "foo";
     underTest.warn(e, id);
 
-    assertThat(logger.lines().size()).isEqualTo(1);
-    assertThat(
-            logger.lines().stream()
-                .anyMatch(
-                    l ->
-                        l.level == LogLevel.WarnLevel
-                            && l.text.startsWith(id + " onError – sending Error notification")))
-        .isTrue();
+    assertThat(logger.lines().size()).isEqualTo(2);
+    assertThat(logger.lines().stream())
+        .anyMatch(
+            l ->
+                l.level == LogLevel.WarnLevel
+                    && l.text.startsWith(id + " onError – sending Error notification"));
   }
 
   @Test
@@ -172,13 +168,11 @@ class ServerExceptionLoggerTest {
     String id = "foo";
     underTest.info(e, id);
 
-    assertThat(logger.lines().size()).isEqualTo(1);
-    assertThat(
-            logger.lines().stream()
-                .anyMatch(
-                    l ->
-                        l.level == LogLevel.InfoLevel
-                            && l.text.startsWith(id + " onError – sending Error notification")))
-        .isTrue();
+    assertThat(logger.lines().size()).isEqualTo(2);
+    assertThat(logger.lines().stream())
+        .anyMatch(
+            l ->
+                l.level == LogLevel.InfoLevel
+                    && l.text.startsWith(id + " onError – sending Error notification"));
   }
 }

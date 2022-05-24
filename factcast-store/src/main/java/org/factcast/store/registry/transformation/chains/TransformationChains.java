@@ -94,7 +94,6 @@ public class TransformationChains implements TransformationStoreListener {
     }
   }
 
-  @SuppressWarnings("unchecked")
   private TransformationChain build(TransformationKey key, int from, int to)
       throws MissingTransformationInformationException {
 
