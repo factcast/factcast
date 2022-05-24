@@ -62,19 +62,6 @@ public class TransformationChains implements TransformationStoreListener {
     r.register(this);
   }
 
-  @Value(staticConstructor = "of")
-  private static class Edge {
-    int fromVersion;
-
-    int toVersion;
-
-    Transformation transformation;
-
-    public static Edge from(Transformation t) {
-      return of(t.fromVersion(), t.toVersion(), t);
-    }
-  }
-
   public TransformationChain get(TransformationKey key, int from, int to)
       throws MissingTransformationInformationException {
 
@@ -94,7 +81,6 @@ public class TransformationChains implements TransformationStoreListener {
     }
   }
 
-  @SuppressWarnings("unchecked")
   private TransformationChain build(TransformationKey key, int from, int to)
       throws MissingTransformationInformationException {
 
