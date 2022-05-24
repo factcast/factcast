@@ -58,6 +58,8 @@ public class ServerExceptionLogger {
         error(e, id);
         break;
       case JUST_SEND_TO_CONSUMER:
+        // TODO remove again
+        info(e, id);
         // do not log
         break;
       default:
