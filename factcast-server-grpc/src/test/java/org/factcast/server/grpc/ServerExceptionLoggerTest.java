@@ -138,7 +138,7 @@ class ServerExceptionLoggerTest {
     String id = "foo";
     underTest.error(e, id);
 
-    assertThat(logger.lines().size()).isEqualTo(2);
+    assertThat(logger.lines()).hasSize(2);
     assertThat(logger.lines().stream())
         .anyMatch(
             l ->
@@ -153,7 +153,7 @@ class ServerExceptionLoggerTest {
     String id = "foo";
     underTest.warn(e, id);
 
-    assertThat(logger.lines().size()).isEqualTo(2);
+    assertThat(logger.lines()).hasSize(2);
     assertThat(logger.lines().stream())
         .anyMatch(
             l ->
@@ -168,7 +168,7 @@ class ServerExceptionLoggerTest {
     String id = "foo";
     underTest.info(e, id);
 
-    assertThat(logger.lines().size()).isEqualTo(2);
+    assertThat(logger.lines()).hasSize(2);
     assertThat(logger.lines().stream())
         .anyMatch(
             l ->
