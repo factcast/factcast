@@ -22,6 +22,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import javax.script.Compilable;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
@@ -52,24 +56,39 @@ public class GraalJsTransformer implements Transformer {
     System.setProperty("polyglot.engine.WarnInterpreterOnly", "false");
   }
 
+  private static final ExecutorService executorService =
+      Executors.newWorkStealingPool((int) (Runtime.getRuntime().availableProcessors() / 1.5));
+
   @Override
   public JsonNode transform(Transformation t, JsonNode input) throws TransformationException {
-    // classloadershifting is necessary for truffle to find its peers
-    ClassLoader oldCl = Thread.currentThread().getContextClassLoader();
-    Thread.currentThread().setContextClassLoader(Truffle.class.getClassLoader());
-    try {
-      if (!t.transformationCode().isPresent()) {
-        return input;
 
-      } else {
-        String js = t.transformationCode().get();
-
-        Invocable invocable = warmEngines.computeIfAbsent(js, this::createAndWarmEngine);
-
-        return runJSTransformation(input, invocable);
+    // trying to move the classloader-exchange busyness to another thread, so that i does not mess
+    // with the current.
+    if (t.transformationCode().isEmpty()) return input;
+    else {
+      String js = t.transformationCode().get();
+      try {
+        return CompletableFuture.supplyAsync(
+                () -> {
+                  // classloadershifting is necessary for truffle to find its peers
+                  ClassLoader oldCl = Thread.currentThread().getContextClassLoader();
+                  Thread.currentThread().setContextClassLoader(Truffle.class.getClassLoader());
+                  try {
+                    Invocable invocable =
+                        warmEngines.computeIfAbsent(js, this::createAndWarmEngine);
+                    return runJSTransformation(input, invocable);
+                  } finally {
+                    Thread.currentThread().setContextClassLoader(oldCl);
+                  }
+                },
+                executorService)
+            .get();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new TransformationException(e);
+      } catch (ExecutionException e) {
+        throw new TransformationException(e);
       }
-    } finally {
-      Thread.currentThread().setContextClassLoader(oldCl);
     }
   }
 
