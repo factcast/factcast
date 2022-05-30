@@ -28,14 +28,14 @@ class SubscriptionClosedExceptionTest {
   @Test
   void passesException() {
     IOException e = new IOException();
-    var uut = new SubscriptionClosedException(e);
+    SubscriptionClosedException uut = new SubscriptionClosedException(e);
     assertThat(uut.getCause()).isSameAs(e);
   }
 
   @Test
   void passesMessage() {
-    var msg = "foo";
-    var uut = new SubscriptionClosedException(msg);
+    String msg = "foo";
+    SubscriptionClosedException uut = new SubscriptionClosedException(msg);
     assertThat(uut.getMessage()).isSameAs(msg);
   }
 }
