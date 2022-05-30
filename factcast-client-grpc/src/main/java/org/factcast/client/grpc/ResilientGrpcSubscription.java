@@ -256,7 +256,7 @@ public class ResilientGrpcSubscription implements Subscription {
           assertSubscriptionStateNotClosed();
           if (currentSubscription.get() == null) {
             try {
-              var now = System.currentTimeMillis();
+              long now = System.currentTimeMillis();
               long waitTime = maxPause == 0 ? 0 : end - now;
               if (maxPause != 0 && waitTime < 1)
                 throw new TimeoutException("Timeout while acquiring subscription");

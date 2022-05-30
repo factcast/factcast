@@ -122,7 +122,7 @@ class ResilienceTest {
     @SneakyThrows
     @Test
     void callsThreadSleep() {
-      var t =
+      Thread t =
           new Thread(
               () -> {
                 Duration dur = Duration.ofMillis(200);
