@@ -450,7 +450,7 @@ class GrpcFactStoreTest {
     resilienceConfig.setEnabled(false);
     SubscriptionRequestTO req =
         new SubscriptionRequestTO(SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch());
-    var s = uut.subscribe(req, element -> {});
+    Subscription s = uut.subscribe(req, element -> {});
 
     assertThat(s).isInstanceOf(Subscription.class).isNotInstanceOf(ResilientGrpcSubscription.class);
   }
@@ -461,7 +461,7 @@ class GrpcFactStoreTest {
     resilienceConfig.setEnabled(true);
     SubscriptionRequestTO req =
         new SubscriptionRequestTO(SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch());
-    var s = uut.subscribe(req, element -> {});
+    Subscription s = uut.subscribe(req, element -> {});
 
     assertThat(s).isInstanceOf(ResilientGrpcSubscription.class);
   }
