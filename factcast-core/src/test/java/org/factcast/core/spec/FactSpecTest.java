@@ -196,8 +196,8 @@ public class FactSpecTest {
 
   @Test
   void testCopy() {
-    var org = FactSpec.from(TestFactWithType.class);
-    var copy = org.copy();
+    FactSpec org = FactSpec.from(TestFactWithType.class);
+    FactSpec copy = org.copy();
     assertThat(copy).isEqualTo(org);
     assertThat(copy).isNotSameAs(org);
 
