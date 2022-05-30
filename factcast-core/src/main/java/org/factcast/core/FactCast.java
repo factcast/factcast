@@ -51,13 +51,15 @@ public interface FactCast extends ReadFactCast {
   }
 
   @Override
-  @Deprecated(since = "0.5.5", forRemoval = true)
+  // @Deprecated(since = "0.5.5", forRemoval = true)
+  @Deprecated
   default FactCast retry(int maxAttempts) {
     return this;
   }
 
   @Override
-  @Deprecated(since = "0.5.5", forRemoval = true)
+  // @Deprecated(since = "0.5.5", forRemoval = true)
+  @Deprecated
   default FactCast retry(int maxAttempts, long minimumWaitIntervalMillis) {
     return this;
   }
@@ -76,6 +78,7 @@ public interface FactCast extends ReadFactCast {
   }
 
   /** @deprecated use lock(FactSpec) instead */
-  @Deprecated(forRemoval = true)
+  // @Deprecated(forRemoval = true)
+  @Deprecated
   DeprecatedLockedOperationBuilder lock(@NonNull String ns);
 }
