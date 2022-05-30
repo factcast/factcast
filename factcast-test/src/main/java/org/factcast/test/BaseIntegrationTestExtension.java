@@ -15,8 +15,10 @@
  */
 package org.factcast.test;
 
+import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
@@ -141,8 +143,8 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
 
     log.trace("erasing postgres state in between tests for {}", url);
 
-    try (var con = DriverManager.getConnection(url, p);
-        var st = con.createStatement()) {
+    try (Connection con = DriverManager.getConnection(url, p);
+        Statement st = con.createStatement()) {
       st.execute(
           "DO $$ DECLARE\n"
               + "    r RECORD;\n"
