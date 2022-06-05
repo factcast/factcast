@@ -129,6 +129,24 @@ public abstract class AbstractTransformationStoreTest {
   }
 
   @Test
+  public void testMultipleStoreAttemptsWithDifferentIds() {
+
+    s.id("http://testMatchingContains");
+    s.hash("123");
+    s.ns("ns");
+    s.type("testMatchingContains");
+    s.from(1);
+    s.to(2);
+    uut.store(s, "{}");
+    s.id("something_different");
+    uut.store(s, "{{}}");
+
+    assertThat(uut.contains(s)).isTrue();
+    assertEquals(1, uut.get(s.toKey()).size());
+    assertThat(uut.get(s.toKey()).get(0).transformationCode()).hasValue("{{}}");
+  }
+
+  @Test
   public void testRegister() throws Exception {
     TransformationStoreListener l = mock(TransformationStoreListener.class);
     uut.register(l);
