@@ -30,7 +30,6 @@ import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.factcast.store.registry.validation.schema.SchemaSource;
 import org.factcast.store.registry.validation.schema.SchemaStore;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.function.*;
 import org.mockito.Spy;
 
 public abstract class AbstractSchemaStoreTest {
@@ -112,18 +111,6 @@ public abstract class AbstractSchemaStoreTest {
 
     assertThat(uut.contains(s)).isTrue();
     assertThat(uut.get(s.toKey())).isPresent().hasValue("{\"a\":1}");
-  }
-
-  @Test
-  void testNullContracts() {
-    assertNpe(() -> uut.contains(null));
-    assertNpe(() -> uut.register(null, "{}"));
-    assertNpe(() -> uut.register(s, null));
-    assertNpe(() -> uut.get(null));
-  }
-
-  private void assertNpe(Executable r) {
-    assertThrows(NullPointerException.class, r);
   }
 
   @Test

@@ -24,7 +24,6 @@ import java.net.URL;
 import lombok.SneakyThrows;
 import okhttp3.*;
 import okhttp3.Response.Builder;
-import org.factcast.core.TestHelper;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.RegistryFileFetchException;
 import org.factcast.store.registry.metrics.RegistryMetrics;
@@ -52,18 +51,6 @@ public class HttpRegistryFileFetcherTest {
     URL createSchemaUrl = new URL(base, id);
 
     assertEquals("https://www.ibm.com/registry/foo.json", createSchemaUrl.toString());
-  }
-
-  @Test
-  public void testNullContracts() {
-    var uut = new HttpRegistryFileFetcher(baseUrl, client, registryMetrics);
-    TestHelper.expectNPE(() -> new HttpRegistryFileFetcher(null, registryMetrics));
-    TestHelper.expectNPE(() -> new HttpRegistryFileFetcher(baseUrl, null));
-    TestHelper.expectNPE(
-        () -> new HttpRegistryFileFetcher(null, new OkHttpClient(), registryMetrics));
-    TestHelper.expectNPE(() -> new HttpRegistryFileFetcher(null, null, registryMetrics));
-    TestHelper.expectNPE(() -> new HttpRegistryFileFetcher(new URL("http://ibm.com"), null));
-    TestHelper.expectNPE(() -> uut.fetchSchema(null));
   }
 
   @Test

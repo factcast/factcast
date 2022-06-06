@@ -29,7 +29,6 @@ import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.*;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.function.*;
 import org.mockito.Spy;
 
 public abstract class AbstractTransformationStoreTest {
@@ -96,24 +95,6 @@ public abstract class AbstractTransformationStoreTest {
         .count(
             RegistryMetrics.EVENT.TRANSFORMATION_CONFLICT,
             Tags.of(Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, conflicting.id())));
-  }
-
-  @Test
-  void testNullContracts() {
-    s.id("http://testContainsSensesConflict");
-    s.hash("123");
-    s.ns("ns");
-    s.type("testContainsSensesConflict");
-    s.from(1);
-    s.to(2);
-
-    assertNpe(() -> uut.contains(null));
-    assertNpe(() -> uut.store(null, "{}"));
-    assertNpe(() -> uut.get(null));
-  }
-
-  private void assertNpe(Executable r) {
-    assertThrows(NullPointerException.class, r);
   }
 
   @Test

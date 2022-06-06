@@ -24,6 +24,7 @@ import org.factcast.test.FactCastExtension;
 import org.factcast.test.FactCastIntegrationTestExtension;
 import org.junit.jupiter.api.extension.*;
 import org.redisson.Redisson;
+import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.ToxiproxyContainer.ContainerProxy;
@@ -75,14 +76,14 @@ public class RedisIntegrationTestExtension implements FactCastIntegrationTestExt
     final RedisConfig.Config config = discoverConfig(ctx);
     final Containers containers = executions.get(config);
 
-    final var url =
+    final String url =
         "redis://" + containers.redis.getHost() + ":" + containers.redis.getMappedPort(REDIS_PORT);
     log.trace("erasing redis state in between tests for {}", url);
 
-    final var clientConfig = new Config().setThreads(1);
+    final Config clientConfig = new Config().setThreads(1);
     clientConfig.useSingleServer().setAddress(url);
 
-    final var client = Redisson.create(clientConfig);
+    final RedissonClient client = Redisson.create(clientConfig);
     client.getKeys().flushdb();
     client.shutdown();
 

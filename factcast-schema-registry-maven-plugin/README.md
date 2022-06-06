@@ -12,14 +12,14 @@ Example Configuration
     <version>0.3.7-SNAPSHOT</version>
     <configuration>
         <sourceDirectory>/path/to/source/</sourceDirectory>
-        <outputDirectory>/path/to/outpud/</outputDirectory>
+        <outputDirectory>/path/to/output/</outputDirectory>
         <includedEvents>
             <includedEvent>/ordering/**</includedEvent>
             <includedEvent>/shipping/ShippingStarted/versions/1</includedEvent>
             <includedEvent>/shipping/ShippingInterupted/**</includedEvent>
         </includedEvents>
         <schemaStripTitles>true</schemaStripTitles>
-</configuration>
+    </configuration>
 </plugin>
 ```
 

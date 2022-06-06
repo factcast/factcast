@@ -26,10 +26,10 @@ import org.junit.jupiter.api.extension.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class SchemaRegistryUnavailableExceptionTest {
+class SchemaRegistryUnavailableExceptionTest {
 
   @Test
-  public void testSchemaRegistryUnavailableExceptionHttpUrlIntString() {
+  void testSchemaRegistryUnavailableExceptionHttpUrlIntString() {
     HttpUrl url =
         new HttpUrl.Builder()
             .scheme("https")
@@ -44,20 +44,10 @@ public class SchemaRegistryUnavailableExceptionTest {
   }
 
   @Test
-  public void testWrapsException() {
+  void testWrapsException() {
     IOException probe = new IOException("probe");
     SchemaRegistryUnavailableException uut = new SchemaRegistryUnavailableException(probe);
 
     assertSame(probe, uut.getCause());
-  }
-
-  @Test
-  public void testNullContracts() {
-    assertThrows(
-        NullPointerException.class, () -> new SchemaRegistryUnavailableException("url", 7, null));
-    assertThrows(
-        NullPointerException.class, () -> new SchemaRegistryUnavailableException(null, 7, ""));
-    assertThrows(
-        NullPointerException.class, () -> new SchemaRegistryUnavailableException(null, 7, null));
   }
 }

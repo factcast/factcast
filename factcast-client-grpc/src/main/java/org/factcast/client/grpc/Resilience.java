@@ -18,18 +18,19 @@ package org.factcast.client.grpc;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 
 @RequiredArgsConstructor
 class Resilience {
-  private final ResilienceConfiguration config;
+  @NonNull private final ResilienceConfiguration config;
   private final List<Long> timestampsOfReconnectionAttempts =
       Collections.synchronizedList(new ArrayList<>());
 
   boolean attemptsExhausted() {
     int attempts = numberOfAttemptsInWindow();
-    return attempts > config.getRetries();
+    return attempts >= config.getAttempts();
   }
 
   int numberOfAttemptsInWindow() {
@@ -44,7 +45,9 @@ class Resilience {
   }
 
   boolean shouldRetry(Throwable exception) {
-    return ClientExceptionHelper.isRetryable(exception) && !attemptsExhausted();
+    return config.isEnabled()
+        && ClientExceptionHelper.isRetryable(exception)
+        && !attemptsExhausted();
   }
 
   void sleepForInterval() {

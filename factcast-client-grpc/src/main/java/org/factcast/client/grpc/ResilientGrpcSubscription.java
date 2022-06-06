@@ -15,11 +15,13 @@
  */
 package org.factcast.client.grpc;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
@@ -36,7 +38,6 @@ public class ResilientGrpcSubscription implements Subscription {
 
   private final GrpcFactStore store;
   private final SubscriptionRequestTO originalRequest;
-  private final ResilienceConfiguration config;
   private final FactObserver originalObserver;
   private final FactObserver delegatingObserver;
 
@@ -44,7 +45,7 @@ public class ResilientGrpcSubscription implements Subscription {
   private final SubscriptionHolder currentSubscription = new SubscriptionHolder();
   private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
-  private final Resilience resilience;
+  @Getter @VisibleForTesting final Resilience resilience;
 
   public ResilientGrpcSubscription(
       @NonNull GrpcFactStore store,
@@ -52,7 +53,6 @@ public class ResilientGrpcSubscription implements Subscription {
       @NonNull FactObserver obs,
       @NonNull ResilienceConfiguration config) {
     this.store = store;
-    this.config = config;
     resilience = new Resilience(config);
     originalObserver = obs;
     originalRequest = req;
@@ -91,7 +91,8 @@ public class ResilientGrpcSubscription implements Subscription {
     }
   }
 
-  private ResilientGrpcSubscription delegate(
+  @VisibleForTesting
+  ResilientGrpcSubscription delegate(
       ThrowingBiConsumer<Subscription, Long> consumer, long waitTimeInMillis)
       throws TimeoutException {
     long startTime = System.currentTimeMillis();
@@ -99,10 +100,12 @@ public class ResilientGrpcSubscription implements Subscription {
       assertSubscriptionStateNotClosed();
       long maxPause = waitTimeInMillis - (System.currentTimeMillis() - startTime);
 
-      Subscription cur = currentSubscription.getAndBlock(maxPause);
       try {
+        Subscription cur = currentSubscription.getAndBlock(maxPause);
         consumer.accept(cur, maxPause);
         return this;
+      } catch (TimeoutException t) {
+        throw t;
       } catch (Exception e) {
         if (!resilience.shouldRetry(e)) {
           throw e;
@@ -114,16 +117,17 @@ public class ResilientGrpcSubscription implements Subscription {
     }
   }
 
-  private ResilientGrpcSubscription delegate(Consumer<Subscription> consumer) {
+  @VisibleForTesting
+  ResilientGrpcSubscription delegate(Consumer<Subscription> consumer) {
     for (; ; ) {
       assertSubscriptionStateNotClosed();
-      Subscription cur = currentSubscription.getAndBlock();
       try {
+        Subscription cur = currentSubscription.getAndBlock();
         consumer.accept(cur);
         return this;
       } catch (Exception e) {
         if (!resilience.shouldRetry(e)) {
-          throw e;
+          throw ExceptionHelper.toRuntime(e);
         }
       }
     }
@@ -138,11 +142,17 @@ public class ResilientGrpcSubscription implements Subscription {
 
   private synchronized void connect() {
     log.debug("Connecting ({})", originalRequest);
-    reConnect();
+    doConnect();
   }
 
-  private synchronized void reConnect() {
+  @VisibleForTesting
+  synchronized void reConnect() {
     log.debug("Reconnecting ({})", originalRequest);
+    doConnect();
+  }
+
+  private void doConnect() {
+    resilience.registerAttempt();
     SubscriptionRequestTO to = SubscriptionRequestTO.forFacts(originalRequest);
     UUID last = lastFactIdSeen.get();
     if (last != null) {
@@ -168,7 +178,8 @@ public class ResilientGrpcSubscription implements Subscription {
     }
   }
 
-  private void fail(Throwable exception) {
+  @VisibleForTesting
+  void fail(Throwable exception) {
     log.error("Too many failures, giving up. ({})", originalRequest);
     close();
     currentSubscription.unblock();
@@ -177,7 +188,7 @@ public class ResilientGrpcSubscription implements Subscription {
   }
 
   @FunctionalInterface
-  private interface ThrowingBiConsumer<T, U> {
+  interface ThrowingBiConsumer<T, U> {
     void accept(T t, U u) throws TimeoutException;
   }
 
@@ -212,8 +223,6 @@ public class ResilientGrpcSubscription implements Subscription {
       log.info("Closing subscription due to onError triggered.  ({})", originalRequest, exception);
       closeAndDetachSubscription();
 
-      resilience.registerAttempt();
-
       if (resilience.shouldRetry(exception)) {
         log.info("Trying to resubscribe ({})", originalRequest);
         resilience.sleepForInterval();
@@ -229,24 +238,30 @@ public class ResilientGrpcSubscription implements Subscription {
     }
   }
 
-  private class SubscriptionHolder {
+  @VisibleForTesting
+  class SubscriptionHolder {
     // even though this is an atomicref, sync is necessary for wait/notify
     private final AtomicReference<Subscription> currentSubscription = new AtomicReference<>();
 
     @NonNull
-    public Subscription getAndBlock() {
+    public Subscription getAndBlock() throws TimeoutException {
       return getAndBlock(0);
     }
 
     @NonNull
-    public Subscription getAndBlock(long maxPause) {
+    public Subscription getAndBlock(long maxPause) throws TimeoutException {
       long end = System.currentTimeMillis() + maxPause;
       synchronized (currentSubscription) {
         do {
           assertSubscriptionStateNotClosed();
           if (currentSubscription.get() == null) {
             try {
-              currentSubscription.wait(maxPause == 0 ? 0 : end - System.currentTimeMillis());
+              long now = System.currentTimeMillis();
+              long waitTime = maxPause == 0 ? 0 : end - now;
+              if (maxPause != 0 && waitTime < 1)
+                throw new TimeoutException("Timeout while acquiring subscription");
+
+              currentSubscription.wait(waitTime);
             } catch (InterruptedException ignore) {
               // can be ignored
               Thread.currentThread().interrupt();

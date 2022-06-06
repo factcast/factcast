@@ -90,16 +90,22 @@ public class ServerExceptionLogger {
 
   @VisibleForTesting
   void info(Throwable e, String id) {
+
+    log.info("exception thrown: ", e);
     log.info(EXCEPTION_MESSAGE, id, e.getMessage());
   }
 
   @VisibleForTesting
   void warn(Throwable e, String id) {
+
+    log.warn("exception thrown: ", e);
     log.warn(EXCEPTION_MESSAGE, id, e.getMessage());
   }
 
   @VisibleForTesting
   void error(Throwable e, String id) {
+
+    log.error("exception thrown: ", e);
     log.error(EXCEPTION_MESSAGE, id, e.getMessage());
   }
 }

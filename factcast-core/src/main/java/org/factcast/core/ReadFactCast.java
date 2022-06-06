@@ -40,14 +40,6 @@ public interface ReadFactCast {
   Subscription subscribeEphemeral(
       @NonNull SubscriptionRequest request, @NonNull FactObserver observer);
 
-  @Deprecated
-  // will be removed soon.
-  @NonNull
-  default Subscription subscribeToFacts(
-      @NonNull SubscriptionRequest request, @NonNull FactObserver observer) {
-    return subscribe(request, observer);
-  }
-
   @NonNull
   OptionalLong serialOf(@NonNull UUID id);
 
@@ -66,8 +58,12 @@ public interface ReadFactCast {
   Set<String> enumerateTypes(@NonNull String ns);
 
   @NonNull
+  // @Deprecated(since = "0.5.6", forRemoval = true)
+  @Deprecated
   ReadFactCast retry(int maxAttempts);
 
   @NonNull
+  // @Deprecated(since = "0.5.6", forRemoval = true)
+  @Deprecated
   ReadFactCast retry(int maxAttempts, long minimumWaitIntervalMillis);
 }

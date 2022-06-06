@@ -43,7 +43,6 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.core.util.ExceptionHelper;
 import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.CompressionCodecs;
 import org.factcast.grpc.api.ConditionalPublishRequest;
@@ -125,7 +124,8 @@ public class GrpcFactStore implements FactStore {
         null);
   }
 
-  private GrpcFactStore(
+  @VisibleForTesting
+  GrpcFactStore(
       @NonNull RemoteFactStoreBlockingStub newBlockingStub,
       @NonNull RemoteFactStoreStub newStub,
       @NonNull Optional<String> credentials,
@@ -137,8 +137,8 @@ public class GrpcFactStore implements FactStore {
     this.clientId = clientId;
 
     // initially use the raw ones...
-    blockingStub = rawBlockingStub;
-    stub = rawStub;
+    blockingStub = rawBlockingStub.withWaitForReady();
+    stub = rawStub.withWaitForReady();
 
     if (credentials.isPresent()) {
       String[] sa = credentials.get().split(":");
@@ -173,10 +173,21 @@ public class GrpcFactStore implements FactStore {
   // GrpcGlobalClientInterceptor was tested but did not work as expected
   @VisibleForTesting
   void runAndHandle(@NonNull Runnable block) {
-    try {
-      block.run();
-    } catch (StatusRuntimeException e) {
-      throw ClientExceptionHelper.from(e);
+    for (; ; ) {
+      try {
+        resilience.registerAttempt();
+        block.run();
+        return;
+      } catch (Exception e) {
+        if (resilience.shouldRetry(e)) {
+          log.warn("Temporary failure", e);
+          log.info("Retry call to remote server");
+          resilience.sleepForInterval();
+          // continue and try next attempt
+        } else {
+          throw ClientExceptionHelper.from(e);
+        }
+      }
     }
   }
 
@@ -186,17 +197,18 @@ public class GrpcFactStore implements FactStore {
   <T> T callAndHandle(@NonNull Callable<T> block) {
     for (; ; ) {
       try {
-        return block.call();
-      } catch (StatusRuntimeException e) {
+        resilience.registerAttempt();
+        T call = block.call();
+        return call;
+      } catch (Exception e) {
         if (resilience.shouldRetry(e)) {
-          resilience.registerAttempt();
+          log.warn("Temporary failure", e);
+          log.info("Retry call to remote server");
           resilience.sleepForInterval();
           // continue and try next attempt
         } else {
           throw ClientExceptionHelper.from(e);
         }
-      } catch (Exception e) {
-        throw ExceptionHelper.toRuntime(e);
       }
     }
   }

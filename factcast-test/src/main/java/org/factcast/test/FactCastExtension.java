@@ -17,18 +17,17 @@ package org.factcast.test;
 
 import com.google.common.collect.Lists;
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpRequest.BodyPublishers;
-import java.net.http.HttpResponse.BodyHandlers;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ServiceLoader;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Request.Builder;
+import okhttp3.RequestBody;
 import org.junit.jupiter.api.extension.*;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
@@ -68,6 +67,7 @@ public class FactCastExtension
 
   @Override
   public void afterEach(ExtensionContext context) throws Exception {
+    FactCastExtension.resetProxy();
     for (FactCastIntegrationTestExtension e : reverseExtensions) {
       e.afterEach(context);
     }
@@ -90,7 +90,7 @@ public class FactCastExtension
 
     initializeProxy();
 
-    var discovered =
+    ArrayList<org.factcast.test.FactCastIntegrationTestExtension> discovered =
         Lists.newArrayList(ServiceLoader.load(FactCastIntegrationTestExtension.class).iterator());
     AtomicInteger count = new AtomicInteger(discovered.size());
     while (!discovered.isEmpty()) {
@@ -135,31 +135,38 @@ public class FactCastExtension
     return toxiProxy.getProxy(container, port);
   }
 
+  private static final OkHttpClient client = new OkHttpClient();
+
   @SneakyThrows
   public static void resetProxy() {
-    HttpClient cl = HttpClient.newHttpClient();
+
     String host = toxiProxy.getHost();
     int controlPort = toxiProxy.getControlPort();
-    cl.send(
-            HttpRequest.newBuilder()
-                .method("POST", BodyPublishers.noBody())
-                .uri(new URI("http://" + host + ":" + controlPort + "/reset"))
-                .build(),
-            BodyHandlers.ofString())
-        .statusCode();
+    URI uri = new URI("http://" + host + ":" + controlPort + "/reset");
+
+    Request request =
+        new Builder()
+            .url(uri.toURL())
+            .method(
+                "POST",
+                RequestBody.create(
+                    MediaType.get("application/json"), "{}".getBytes(StandardCharsets.UTF_8)))
+            .build();
+    client.newCall(request).execute();
   }
 
   @SneakyThrows
   public static void setProxyState(String name, boolean shouldBeOn) {
-    HttpClient cl = HttpClient.newHttpClient();
+
     String host = toxiProxy.getHost();
     int controlPort = toxiProxy.getControlPort();
-    cl.send(
-            HttpRequest.newBuilder()
-                .method("POST", BodyPublishers.ofString("{\"enabled\":" + shouldBeOn + "}"))
-                .uri(new URI("http://" + host + ":" + controlPort + "/proxies/" + name))
-                .build(),
-            BodyHandlers.ofString())
-        .statusCode();
+    URI uri = new URI("http://" + host + ":" + controlPort + "/proxies");
+
+    RequestBody body =
+        RequestBody.create(
+            MediaType.get("application/json"),
+            ("{\"enabled\":" + shouldBeOn + "}").getBytes(StandardCharsets.UTF_8));
+    Request request = new Request.Builder().url(uri.toURL()).method("POST", body).build();
+    client.newCall(request).execute();
   }
 }

@@ -163,14 +163,16 @@ databaseChangeLog:
             splitStatements: false
             stripComments: true
 
+# fix_index_for_enum was removed.
+
   - changeSet:
-      id: fix_index_for_enum
+      id: fix_index_for_enum2
       runInTransaction: false
       author: bresciamattia
       changes:
         - sqlFile:
             encoding: utf8
-            path: factcast/issue1865/fix_index_for_enum.sql
+            path: factcast/issue1865-2/fix_index_for_enum2.sql
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true

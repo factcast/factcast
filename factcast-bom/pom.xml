@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.5.5-SNAPSHOT</version>
+    <version>0.5.7-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-bom</artifactId>
@@ -110,12 +110,12 @@
       <dependency>
         <groupId>org.postgresql</groupId>
         <artifactId>postgresql</artifactId>
-        <version>42.3.4</version>
+        <version>42.3.6</version>
       </dependency>
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>30.1.1-jre</version>
+        <version>31.1-jre</version>
       </dependency>
       <dependency>
         <groupId>net.jpountz.lz4</groupId>
