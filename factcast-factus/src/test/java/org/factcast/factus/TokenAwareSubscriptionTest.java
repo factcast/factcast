@@ -18,7 +18,6 @@ package org.factcast.factus;
 import java.io.IOException;
 import lombok.SneakyThrows;
 import org.factcast.core.subscription.Subscription;
-import org.factcast.factus.FactusImpl.TokenAwareSubscription;
 import org.factcast.factus.projection.WriterToken;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
@@ -29,25 +28,76 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class TokenAwareSubscriptionTest {
+
   @Mock private Subscription sub;
   @Mock private WriterToken tkn;
-  @InjectMocks TokenAwareSubscription uut;
+  @InjectMocks private TokenAwareSubscription uut;
 
-  @SneakyThrows
-  @Test
-  void testCloseAlsoReleasesToken() {
-    uut.close();
-    Mockito.verify(sub).close();
-    Mockito.verify(tkn).close();
+  @Nested
+  class WhenClosing {
+    @BeforeEach
+    void setup() {}
+
+    @SneakyThrows
+    @Test
+    void testCloseAlsoReleasesToken() {
+      uut.close();
+      Mockito.verify(sub).close();
+      Mockito.verify(tkn).close();
+    }
+
+    @SneakyThrows
+    @Test
+    void testCloseAlsoReleasesTokenEvenIfExceptionIsThrown() {
+      Mockito.doThrow(IOException.class).when(sub).close();
+
+      Assertions.assertThrows(Exception.class, () -> uut.close());
+      Mockito.verify(sub).close();
+      Mockito.verify(tkn).close();
+    }
   }
 
-  @SneakyThrows
-  @Test
-  void testCloseAlsoReleasesTokenEvenIfExceptionIsThrown() {
-    Mockito.doThrow(IOException.class).when(sub).close();
+  @Nested
+  class WhenAwaitingCatchup {
 
-    Assertions.assertThrows(Exception.class, () -> uut.close());
-    Mockito.verify(sub).close();
-    Mockito.verify(tkn).close();
+    @Test
+    void delegates() {
+      uut.awaitCatchup();
+      Mockito.verify(sub).awaitCatchup();
+    }
+  }
+
+  @Nested
+  class WhenAwaitingCatchupWithMax {
+    private final long WAIT_TIME_IN_MILLIS = 51;
+
+    @SneakyThrows
+    @Test
+    void delegates() {
+      uut.awaitCatchup(WAIT_TIME_IN_MILLIS);
+      Mockito.verify(sub).awaitCatchup(WAIT_TIME_IN_MILLIS);
+    }
+  }
+
+  @Nested
+  class WhenAwaitingComplete {
+
+    @Test
+    void delegates() {
+      uut.awaitComplete();
+      Mockito.verify(sub).awaitComplete();
+    }
+  }
+
+  @Nested
+  class WhenAwaitingCompleteWithMax {
+    private final long WAIT_TIME_IN_MILLIS = 96;
+
+    @SneakyThrows
+    @Test
+    void delegates() {
+      uut.awaitComplete(WAIT_TIME_IN_MILLIS);
+      Mockito.verify(sub).awaitComplete(WAIT_TIME_IN_MILLIS);
+    }
   }
 }
