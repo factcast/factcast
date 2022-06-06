@@ -522,41 +522,41 @@ public class FactusImpl implements Factus {
       return x;
     };
   }
-}
 
-@RequiredArgsConstructor
-class TokenAwareSubscription implements Subscription {
-  final Subscription delegate;
-  final WriterToken token;
+  @RequiredArgsConstructor
+  static class TokenAwareSubscription implements Subscription {
+    final Subscription delegate;
+    final WriterToken token;
 
-  @Override
-  public void close() throws Exception {
-    try {
-      delegate.close();
-    } finally {
-      token.close();
+    @Override
+    public void close() throws Exception {
+      try {
+        delegate.close();
+      } finally {
+        token.close();
+      }
     }
-  }
 
-  @Override
-  public Subscription awaitCatchup() throws SubscriptionClosedException {
-    return delegate.awaitCatchup();
-  }
+    @Override
+    public Subscription awaitCatchup() throws SubscriptionClosedException {
+      return delegate.awaitCatchup();
+    }
 
-  @Override
-  public Subscription awaitCatchup(long waitTimeInMillis)
-      throws SubscriptionClosedException, TimeoutException {
-    return delegate.awaitCatchup(waitTimeInMillis);
-  }
+    @Override
+    public Subscription awaitCatchup(long waitTimeInMillis)
+        throws SubscriptionClosedException, TimeoutException {
+      return delegate.awaitCatchup(waitTimeInMillis);
+    }
 
-  @Override
-  public Subscription awaitComplete() throws SubscriptionClosedException {
-    return delegate.awaitComplete();
-  }
+    @Override
+    public Subscription awaitComplete() throws SubscriptionClosedException {
+      return delegate.awaitComplete();
+    }
 
-  @Override
-  public Subscription awaitComplete(long waitTimeInMillis)
-      throws SubscriptionClosedException, TimeoutException {
-    return delegate.awaitComplete(waitTimeInMillis);
+    @Override
+    public Subscription awaitComplete(long waitTimeInMillis)
+        throws SubscriptionClosedException, TimeoutException {
+      return delegate.awaitComplete(waitTimeInMillis);
+    }
   }
 }
