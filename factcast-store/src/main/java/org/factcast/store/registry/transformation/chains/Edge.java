@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2022 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.store;
+package org.factcast.store.registry.transformation.chains;
 
-import static org.junit.jupiter.api.Assertions.*;
+import lombok.Value;
+import org.factcast.store.registry.transformation.Transformation;
 
-import org.junit.jupiter.api.Test;
+@Value(staticConstructor = "of")
+class Edge {
+  int fromVersion;
 
-public class RetryableExceptionTest {
+  int toVersion;
 
-  @Test
-  public void testRetryableExceptionNullContract() throws Exception {
-    assertThrows(
-        NullPointerException.class,
-        () -> {
-          new RetryableException(null);
-        });
+  Transformation transformation;
+
+  public static Edge from(Transformation t) {
+    return of(t.fromVersion(), t.toVersion(), t);
   }
 }

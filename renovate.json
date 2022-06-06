@@ -1,39 +1,39 @@
 {
   "extends": [
     "config:base",
-    ":rebaseStalePrs",
     ":automergeMinor",
     ":label(ready)"
   ],
-  "stabilityDays": 1,
-  "prCreation": "immediate",
-  "ignorePaths": ["factcast-itests/factcast-itests-exception-handling-v3-compat"],
+  "js": {
+    "enabled": false
+  },
   "packageRules": [
     {
-      "packagePatterns": [
+      "matchManagers": ["npm"],
+      "enabled": false
+    },
+    {
+      "matchPackagePatterns": [
         "^org\\.factcast"
       ],
-      "allowedVersions": "/^[0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9]+)?$/"
+      "enabled": false
     },
     {
-      "updateTypes": [
-        "major"
+      "matchLanguages": [
+        "java"
       ],
-      "masterIssueApproval": true
-    },
-    {
-      "languages": [
-        "js"
+      "matchPackageNames": [
+        "com.diffplug.spotless:spotless-maven-plugin",
+        "io.github.hakky54:logcaptor",
+        "org.sonarsource.scanner.maven:sonar-maven-plugin",
+        "org.owasp:dependency-check-maven",
+        "org.basepom.maven:duplicate-finder-maven-plugin",
+        "org.testcontainers:localstack",
+        "org.testcontainers:postgresql",
+        "org.testcontainers:junit-jupiter",
+        "org.mockito:mockito-core",
+        "com.google.guava:guava"
       ],
-      "enabled": false,
-      "recreateClosed": false
-    },
-    {
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
-      "automerge": true
-    },
-    {
-      "matchDepTypes": ["devDependencies"],
       "automerge": true
     }
   ],
@@ -41,3 +41,9 @@
     "dependencies"
   ]
 }
+
+
+
+
+
+

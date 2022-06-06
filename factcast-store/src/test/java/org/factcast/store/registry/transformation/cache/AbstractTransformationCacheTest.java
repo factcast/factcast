@@ -26,7 +26,6 @@ import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.function.*;
 import org.mockito.Spy;
 
 public abstract class AbstractTransformationCacheTest {
@@ -77,18 +76,6 @@ public abstract class AbstractTransformationCacheTest {
     Optional<Fact> found = uut.find(fact.id(), fact.version(), chainId);
 
     assertThat(found.isPresent()).isFalse();
-  }
-
-  @Test
-  void testNullContracts() {
-    assertNpe(() -> uut.find(null, 1, "1"));
-    assertNpe(() -> uut.find(UUID.randomUUID(), 1, null));
-    assertNpe(() -> uut.put(null, ""));
-    assertNpe(() -> uut.put(Fact.builder().buildWithoutPayload(), null));
-  }
-
-  private void assertNpe(Executable r) {
-    assertThrows(NullPointerException.class, r);
   }
 
   @Test
