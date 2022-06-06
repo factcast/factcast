@@ -25,6 +25,7 @@ import java.lang.reflect.Constructor;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -44,6 +45,7 @@ import org.factcast.core.event.EventConverter;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionClosedException;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.factus.batch.DefaultPublishBatch;
@@ -181,7 +183,7 @@ public class FactusImpl implements Factus {
                 }
               }
             });
-        return subscription;
+        return new TokenAwareSubscription(subscription, token);
       } else {
         log.trace(
             "failed to acquire writer token for {}. Will keep trying.",
@@ -519,5 +521,42 @@ public class FactusImpl implements Factus {
       c.accept(x);
       return x;
     };
+  }
+}
+
+@RequiredArgsConstructor
+class TokenAwareSubscription implements Subscription {
+  final Subscription delegate;
+  final WriterToken token;
+
+  @Override
+  public void close() throws Exception {
+    try {
+      delegate.close();
+    } finally {
+      token.close();
+    }
+  }
+
+  @Override
+  public Subscription awaitCatchup() throws SubscriptionClosedException {
+    return delegate.awaitCatchup();
+  }
+
+  @Override
+  public Subscription awaitCatchup(long waitTimeInMillis)
+      throws SubscriptionClosedException, TimeoutException {
+    return delegate.awaitCatchup(waitTimeInMillis);
+  }
+
+  @Override
+  public Subscription awaitComplete() throws SubscriptionClosedException {
+    return delegate.awaitComplete();
+  }
+
+  @Override
+  public Subscription awaitComplete(long waitTimeInMillis)
+      throws SubscriptionClosedException, TimeoutException {
+    return delegate.awaitComplete(waitTimeInMillis);
   }
 }
