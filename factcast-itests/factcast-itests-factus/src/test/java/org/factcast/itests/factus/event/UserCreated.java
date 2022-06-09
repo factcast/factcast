@@ -37,4 +37,8 @@ public class UserCreated implements EventObject {
   public Set<UUID> aggregateIds() {
     return Sets.newHashSet(aggregateId);
   }
+
+  public UserCreated(String name) {
+    this(UUID.randomUUID(), name);
+  }
 }

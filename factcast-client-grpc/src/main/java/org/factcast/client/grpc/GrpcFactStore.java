@@ -179,13 +179,14 @@ public class GrpcFactStore implements FactStore {
         block.run();
         return;
       } catch (Exception e) {
-        if (resilience.shouldRetry(e)) {
-          log.warn("Temporary failure", e);
+        RuntimeException decodedException = ClientExceptionHelper.from(e);
+        if (resilience.shouldRetry(decodedException)) {
+          log.warn("Temporary failure", decodedException);
           log.info("Retry call to remote server");
           resilience.sleepForInterval();
           // continue and try next attempt
         } else {
-          throw ClientExceptionHelper.from(e);
+          throw decodedException;
         }
       }
     }
@@ -201,13 +202,14 @@ public class GrpcFactStore implements FactStore {
         T call = block.call();
         return call;
       } catch (Exception e) {
-        if (resilience.shouldRetry(e)) {
-          log.warn("Temporary failure", e);
+        RuntimeException decodedException = ClientExceptionHelper.from(e);
+        if (resilience.shouldRetry(decodedException)) {
+          log.warn("Temporary failure", decodedException);
           log.info("Retry call to remote server");
           resilience.sleepForInterval();
           // continue and try next attempt
         } else {
-          throw ClientExceptionHelper.from(e);
+          throw decodedException;
         }
       }
     }
