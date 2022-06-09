@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.*;
 import config.RedissonProjectionConfiguration;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
+import nl.altindag.console.ConsoleCaptor;
 import org.factcast.core.DuplicateFactException;
 import org.factcast.core.event.EventConverter;
 import org.factcast.factus.Factus;
@@ -64,10 +65,25 @@ class FactusPublishDuplicateTest extends AbstractFactCastIntegrationTest {
     factus.publish(george);
     factus.publish(ringo);
 
-    assertThatThrownBy(
-            () -> {
-              factus.publish(john);
-            })
-        .isInstanceOf(DuplicateFactException.class);
+    try (ConsoleCaptor consoleCaptor = new ConsoleCaptor()) {
+
+      assertThatThrownBy(
+              () -> {
+                factus.publish(john);
+              })
+          .isInstanceOf(DuplicateFactException.class);
+
+      // it should not have retried this several times.
+      assertThat(
+              consoleCaptor.getStandardOutput().stream()
+                  // get the server output from docker
+                  .filter(l -> l.contains("STDOUT:"))
+                  // the actual exception as thrown by the jdbc driver
+                  .filter(
+                      line ->
+                          line.contains(
+                              "org.factcast.core.DuplicateFactException: PreparedStatementCallback; SQL [INSERT INTO fact(header,payload) VALUES")))
+          .hasSize(1);
+    }
   }
 }
