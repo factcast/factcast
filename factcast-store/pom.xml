@@ -78,7 +78,7 @@
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <version>42.3.6</version><!--$NO-MVN-MAN-VER$ -->
+      <version>42.4.0</version><!--$NO-MVN-MAN-VER$ -->
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
@@ -135,7 +135,7 @@
     <dependency>
       <groupId>io.javalin</groupId>
       <artifactId>javalin</artifactId>
-      <version>4.6.0</version>
+      <version>4.6.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>
