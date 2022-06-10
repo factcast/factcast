@@ -42,6 +42,7 @@ public class InMemTransformationStoreImpl extends AbstractTransformationStore {
       id2hashMap.put(source.id(), source.hash());
       List<Transformation> transformations = get(source.toKey());
       var t = SingleTransformation.of(source, transformation);
+      // will replace the entry if (ns,type,from,to) are equal
       var index =
           ListUtils.indexOf(
               transformations,
