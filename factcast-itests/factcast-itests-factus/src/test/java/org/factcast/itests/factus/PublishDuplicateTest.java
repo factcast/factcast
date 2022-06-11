@@ -41,11 +41,7 @@ import org.springframework.test.context.ContextConfiguration;
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j
-class FactusPublishDuplicateTest extends AbstractFactCastIntegrationTest {
-
-  static {
-    System.setProperty("factcast.grpc.client.catchup-batchsize", "100");
-  }
+class PublishDuplicateTest extends AbstractFactCastIntegrationTest {
 
   @Autowired Factus factus;
   @Autowired EventConverter ser;
