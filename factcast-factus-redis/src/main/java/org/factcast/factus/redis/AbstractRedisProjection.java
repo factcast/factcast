@@ -18,6 +18,7 @@ package org.factcast.factus.redis;
 import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import lombok.Getter;
 import lombok.NonNull;
@@ -99,7 +100,12 @@ abstract class AbstractRedisProjection
 
   @Override
   public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
-    lock.lock();
-    return new RedisWriterToken(redisson, lock);
+    try {
+      if (lock.tryLock(maxWait.toMillis(), TimeUnit.MILLISECONDS))
+        return new RedisWriterToken(redisson, lock);
+    } catch (InterruptedException e) {
+      // assume lock unsuccessful
+    }
+    return null;
   }
 }

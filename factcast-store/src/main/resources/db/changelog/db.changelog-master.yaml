@@ -176,3 +176,16 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
+
+
+  - changeSet:
+      id: issue2019
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2019/issue2019.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true

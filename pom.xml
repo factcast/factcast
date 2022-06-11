@@ -86,7 +86,7 @@
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
     <maven.compiler.version>3.10.1</maven.compiler.version>
-    <spotless-maven-plugin.version>2.22.6</spotless-maven-plugin.version>
+    <spotless-maven-plugin.version>2.22.7</spotless-maven-plugin.version>
     <directory-maven-plugin.version>1.0</directory-maven-plugin.version>
     <nexus-staging-maven-plugin.version>1.6.13</nexus-staging-maven-plugin.version>
     <assertj.version>3.23.1</assertj.version>
@@ -104,7 +104,7 @@
     <testcontainers.version>1.17.2</testcontainers.version>
     <arrow.version>1.1.2</arrow.version>
     <micronaut.version>2.5.13</micronaut.version>
-    <kotlin.version>1.6.21</kotlin.version>
+    <kotlin.version>1.7.0</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <kotest.version>4.6.4</kotest.version>
     <redisson.version>3.17.3</redisson.version>
@@ -191,7 +191,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <version>3.0.0</version>
+        <version>3.1.0</version>
         <executions>
           <execution>
             <id>enforce-versions</id>
