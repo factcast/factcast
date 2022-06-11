@@ -35,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Configuration
 @Slf4j
@@ -42,11 +43,12 @@ public class TransformationConfiguration {
   @Bean
   public TransformationStore transformationStore(
       @NonNull JdbcTemplate jdbcTemplate,
+      @NonNull TransactionTemplate txTemplate,
       @NonNull StoreConfigurationProperties props,
       @NonNull RegistryMetrics registryMetrics,
       @Autowired(required = false) SpringLiquibase unused) {
     if (props.isSchemaRegistryConfigured() && props.isPersistentRegistry())
-      return new PgTransformationStoreImpl(jdbcTemplate, registryMetrics);
+      return new PgTransformationStoreImpl(jdbcTemplate, txTemplate, registryMetrics);
 
     // otherwise
     return new InMemTransformationStoreImpl(registryMetrics);
