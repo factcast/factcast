@@ -18,7 +18,7 @@ package org.factcast.store.registry.transformation.store;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.registry.transformation.TransformationStore;
 import org.factcast.store.test.IntegrationTest;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -26,6 +26,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @ContextConfiguration(classes = {PgTestConfiguration.class})
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
@@ -33,10 +34,11 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ExtendWith(MockitoExtension.class)
 @IntegrationTest
 class PgTransformationStoreImplTest extends AbstractTransformationStoreTest {
-  @Autowired private JdbcTemplate tpl;
+  @Autowired private JdbcTemplate jdbcTpl;
+  @Autowired private TransactionTemplate txTpl;
 
   @Override
   protected TransformationStore createUUT() {
-    return new PgTransformationStoreImpl(tpl, registryMetrics);
+    return new PgTransformationStoreImpl(jdbcTpl, txTpl, registryMetrics);
   }
 }

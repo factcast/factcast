@@ -24,37 +24,44 @@ import lombok.RequiredArgsConstructor;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.*;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @RequiredArgsConstructor
 public class PgTransformationStoreImpl extends AbstractTransformationStore {
   @NonNull private final JdbcTemplate jdbcTemplate;
+
+  @NonNull private final TransactionTemplate txTemplate;
 
   @NonNull private final RegistryMetrics registryMetrics;
 
   @Override
   protected void doStore(@NonNull TransformationSource source, String transformation)
       throws TransformationConflictException {
-    jdbcTemplate.update(
-        "INSERT INTO transformationstore (id, hash, ns, type, from_version, to_version,"
-            + " transformation) VALUES (?,?,?,?,?,?,?)ON CONFLICT ON CONSTRAINT"
-            + " transformationstore_pkey DO UPDATE set hash=?,ns=?,type=?,from_version=?,"
-            + " to_version=?, transformation=? WHERE transformationstore.id=?",
-        // INSERT
-        source.id(),
-        source.hash(),
-        source.ns(),
-        source.type(),
-        source.from(),
-        source.to(),
-        transformation,
-        // UPDATE
-        source.hash(),
-        source.ns(),
-        source.type(),
-        source.from(),
-        source.to(),
-        transformation,
-        source.id());
+
+    // transformationstore allows transformations to be updated (use with extreme care)
+    txTemplate.execute(
+        ts -> {
+          // delete all duplicates regarding (ns,type,from,to)
+          // note: the id might have changed, so that ON CONFLICT becomes fiddly.
+          jdbcTemplate.update(
+              "DELETE FROM transformationstore WHERE ns=? AND type=? AND from_version=? AND to_version=?",
+              source.ns(),
+              source.type(),
+              source.from(),
+              source.to());
+
+          jdbcTemplate.update(
+              "INSERT INTO transformationstore (id, hash, ns, type, from_version, to_version,"
+                  + " transformation) VALUES (?,?,?,?,?,?,?)",
+              source.id(),
+              source.hash(),
+              source.ns(),
+              source.type(),
+              source.from(),
+              source.to(),
+              transformation);
+          return null;
+        });
   }
 
   @Override
