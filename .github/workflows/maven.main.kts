@@ -77,8 +77,8 @@ public val workflowMaven: Workflow = workflow(
             ),
         )
         run(
-            name = "Build with Maven",
-            command = "./mvnw -B clean verify --file pom.xml",
+            name = "Build & Test with Maven",
+            command = "./mvnw -T1.5C -B clean test --file pom.xml",
         )
         run(
             name = "Remove partial execution reports",
@@ -89,6 +89,10 @@ public val workflowMaven: Workflow = workflow(
             action = CodecovActionV3(
                 token = "${'$'}{{ secrets.CODECOV_TOKEN }}",
             ),
+        )
+        run(
+            name = "Build & Verify with Maven",
+            command = "./mvnw -B verify -DskipUnit=true --file pom.xml",
         )
     }
 

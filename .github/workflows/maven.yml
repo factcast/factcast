@@ -60,8 +60,8 @@ jobs:
           java-version: 11
           distribution: corretto
       - id: step-5
-        name: Build with Maven
-        run: ./mvnw -B clean verify --file pom.xml
+        name: Build & Test with Maven
+        run: ./mvnw -T1.5C -B clean test --file pom.xml
       - id: step-6
         name: Remove partial execution reports
         run: find -wholename "**/target/jacoco-output" -exec rm -rf {} +
@@ -70,3 +70,6 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+      - id: step-8
+        name: Build & Verify with Maven
+        run: ./mvnw -B verify -DskipUnit=true --file pom.xml
