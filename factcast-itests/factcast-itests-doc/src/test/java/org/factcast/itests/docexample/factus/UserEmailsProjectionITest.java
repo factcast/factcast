@@ -24,13 +24,14 @@ import org.factcast.factus.Factus;
 import org.factcast.itests.docexample.factus.event.UserAdded;
 import org.factcast.itests.docexample.factus.event.UserRemoved;
 import org.factcast.test.FactCastExtension;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
 @ExtendWith(FactCastExtension.class)
+@Tag("integration")
 public class UserEmailsProjectionITest {
 
   @Autowired Factus factus;

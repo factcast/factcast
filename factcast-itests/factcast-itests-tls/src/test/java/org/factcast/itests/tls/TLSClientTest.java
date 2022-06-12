@@ -39,6 +39,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @ContextConfiguration(classes = TLSClient.class)
 @Testcontainers
 @Slf4j
+@Tag("integration")
 public class TLSClientTest {
 
   static final Network _docker_network = Network.newNetwork();

@@ -17,6 +17,7 @@ package org.factcast.itests.factus;
 
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.spring.boot.autoconfigure.core.RedissonSnapshotCacheAutoConfiguration;
+import org.junit.jupiter.api.*;
 import org.redisson.spring.starter.RedissonAutoConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -34,6 +35,7 @@ import org.springframework.test.context.ContextConfiguration;
       DataSourceAutoConfiguration.class
     })
 @ContextConfiguration(classes = Application.class)
+@Tag("integration")
 public class FactCastSnapshotCacheTest extends SnapshotCacheTest {
   @Autowired
   public FactCastSnapshotCacheTest(SnapshotCache repository) {

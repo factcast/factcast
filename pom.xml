@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
@@ -401,7 +401,7 @@
             <licenseHeader>
               <file>file://${etc}/header.txt</file>
             </licenseHeader>
-            <trimTrailingWhitespace/>
+            <trimTrailingWhitespace />
             <googleJavaFormat>
               <version>1.9</version>
               <style>GOOGLE</style>
@@ -411,7 +411,7 @@
             <licenseHeader>
               <file>file://${etc}/header.txt</file>
             </licenseHeader>
-            <trimTrailingWhitespace/>
+            <trimTrailingWhitespace />
             <ktlint>
               <!-- Optional, available versions: https://github.com/shyiko/ktlint/releases -->
               <version>0.42.1</version>
@@ -452,8 +452,8 @@
                 <spaces>true</spaces>
                 <spacesPerTab>2</spacesPerTab>
               </indent>
-              <trimTrailingWhitespace/>
-              <endWithNewline/>
+              <trimTrailingWhitespace />
+              <endWithNewline />
             </format>
           </formats>
         </configuration>
@@ -491,7 +491,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <execute/>
+                    <execute />
                   </action>
                 </pluginExecution>
                 <pluginExecution>
@@ -504,7 +504,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <execute/>
+                    <execute />
                   </action>
                 </pluginExecution>
               </pluginExecutions>

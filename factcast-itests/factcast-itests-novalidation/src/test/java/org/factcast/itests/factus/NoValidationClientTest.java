@@ -40,6 +40,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @ContextConfiguration(classes = NoValidationClient.class)
 @Testcontainers
 @Slf4j
+@Tag("integration")
 public class NoValidationClientTest {
 
   static final Network _docker_network = Network.newNetwork();
