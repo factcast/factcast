@@ -35,6 +35,7 @@ public class GrpcRequestMetadataInterceptor implements ServerInterceptor {
   public <ReqT, RespT> Listener<ReqT> interceptCall(
       ServerCall<ReqT, RespT> call, Metadata headers, ServerCallHandler<ReqT, RespT> next) {
 
+    log.trace("adding headers to request scoped GrpcRequestMetadata");
     // makes headers accessible in service methods
     scopedBean.headers(headers);
 
