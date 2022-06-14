@@ -22,6 +22,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.DuplicateFactException;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
@@ -144,7 +145,7 @@ public class PgFactStore extends AbstractFactStore {
             // adding serials to headers is done via trigger
 
           } catch (DuplicateKeyException dupkey) {
-            throw new IllegalArgumentException(dupkey.getMessage());
+            throw new DuplicateFactException(dupkey.getMessage());
           }
         });
   }
