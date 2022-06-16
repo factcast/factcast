@@ -15,12 +15,12 @@
  */
 package org.factcast.core.spec;
 
-import com.oracle.truffle.js.scriptengine.GraalJSEngineFactory;
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
+
+import com.oracle.truffle.js.scriptengine.GraalJSEngineFactory;
+import org.junit.jupiter.api.Test;
 
 public class JavaScriptEngineSupplierTest {
 
