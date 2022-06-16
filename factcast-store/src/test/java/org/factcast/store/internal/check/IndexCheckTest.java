@@ -15,6 +15,11 @@
  */
 package org.factcast.store.internal.check;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.same;
+import static org.mockito.Mockito.when;
+
 import java.util.Collections;
 import nl.altindag.log.LogCaptor;
 import org.assertj.core.util.Lists;
@@ -27,11 +32,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 import slf4jtest.LogLevel;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.same;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class IndexCheckTest {
