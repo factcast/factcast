@@ -15,9 +15,6 @@
  */
 package org.factcast.store.registry.transformation.chains;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
@@ -28,14 +25,17 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import lombok.SneakyThrows;
+import nl.altindag.log.LogCaptor;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.registry.transformation.Transformation;
-import org.factcast.test.Slf4jHelper;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import slf4jtest.TestLogger;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class GraalJsTransformerTest {
@@ -180,7 +180,7 @@ class GraalJsTransformerTest {
     when(transformation.transformationCode())
         .thenReturn(Optional.of("function transform(e) { \n" + "  br0ken code" + " }\n"));
 
-    TestLogger logger = Slf4jHelper.replaceLogger(uut);
+    LogCaptor logCaptor = LogCaptor.forClass(uut.getClass());
 
     Map<String, Object> d1 = new HashMap<>();
     d1.put("y", "1");
@@ -190,8 +190,8 @@ class GraalJsTransformerTest {
             })
         .isInstanceOf(TransformationException.class);
 
-    assertThat(logger.lines().size()).isGreaterThan(0);
-    assertThat(logger.lines().stream().anyMatch(f -> f.text.contains("during engine creation")))
+    assertThat(logCaptor.getLogs().size()).isGreaterThan(0);
+    assertThat(logCaptor.getLogs().stream().anyMatch(f -> f.contains("during engine creation")))
         .isTrue();
   }
 
@@ -200,7 +200,7 @@ class GraalJsTransformerTest {
     when(transformation.transformationCode())
         .thenReturn(Optional.of("function transform(e) {throw \"fail at runtime\"}"));
 
-    TestLogger logger = Slf4jHelper.replaceLogger(uut);
+    LogCaptor logCaptor = LogCaptor.forClass(uut.getClass());
 
     Map<String, Object> d1 = new HashMap<>();
     d1.put("y", "1");
@@ -210,8 +210,8 @@ class GraalJsTransformerTest {
             })
         .isInstanceOf(TransformationException.class);
 
-    assertThat(logger.lines().size()).isGreaterThan(0);
-    assertThat(logger.lines().stream().anyMatch(f -> f.text.contains("during transformation")))
+    assertThat(logCaptor.getLogs().size()).isGreaterThan(0);
+    assertThat(logCaptor.getLogs().stream().anyMatch(f -> f.contains("during transformation")))
         .isTrue();
   }
 }

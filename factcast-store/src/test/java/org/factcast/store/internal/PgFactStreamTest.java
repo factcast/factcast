@@ -15,6 +15,33 @@
  */
 package org.factcast.store.internal;
 
+import com.google.common.eventbus.EventBus;
+import io.micrometer.core.instrument.DistributionSummary;
+import java.sql.ResultSet;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
+import lombok.SneakyThrows;
+import nl.altindag.log.LogCaptor;
+import org.factcast.core.subscription.SubscriptionImpl;
+import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.store.internal.PgFactStream.RatioLogLevel;
+import org.factcast.store.internal.catchup.PgCatchupFactory;
+import org.factcast.store.internal.query.PgFactIdToSerialMapper;
+import org.factcast.store.internal.query.PgLatestSerialFetcher;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.JdbcTemplate;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -25,34 +52,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-
-import com.google.common.eventbus.EventBus;
-import io.micrometer.core.instrument.DistributionSummary;
-import java.sql.ResultSet;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
-import lombok.SneakyThrows;
-import org.factcast.core.subscription.SubscriptionImpl;
-import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.FastForwardTarget;
-import org.factcast.store.internal.PgFactStream.RatioLogLevel;
-import org.factcast.store.internal.catchup.PgCatchupFactory;
-import org.factcast.store.internal.query.PgFactIdToSerialMapper;
-import org.factcast.store.internal.query.PgLatestSerialFetcher;
-import org.factcast.test.Slf4jHelper;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.jdbc.core.JdbcTemplate;
-import slf4jtest.LogLevel;
 
 @ExtendWith(MockitoExtension.class)
 public class PgFactStreamTest {
@@ -211,7 +210,7 @@ public class PgFactStreamTest {
 
   @Test
   void logsWarnLevel() {
-    final var logger = Slf4jHelper.replaceLogger(uut);
+    LogCaptor logCaptor = LogCaptor.forClass(uut.getClass());
 
     when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
     when(sub.factsTransformed()).thenReturn(new AtomicLong(50L));
@@ -219,13 +218,15 @@ public class PgFactStreamTest {
 
     uut.logCatchupTransformationStats();
 
-    assertThat(logger.contains(LogLevel.WarnLevel, "CatchupTransformationRatio")).isTrue();
+    assertThat(
+        logCaptor.getWarnLogs().stream()
+            .anyMatch(log -> log.contains("CatchupTransformationRatio")));
     verify(distributionSummary).record(50);
   }
 
   @Test
   void logsInfoLevel() {
-    final var logger = Slf4jHelper.replaceLogger(uut);
+    LogCaptor logCaptor = LogCaptor.forClass(uut.getClass());
 
     when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
     when(sub.factsTransformed()).thenReturn(new AtomicLong(10L));
@@ -233,13 +234,15 @@ public class PgFactStreamTest {
 
     uut.logCatchupTransformationStats();
 
-    assertThat(logger.contains(LogLevel.InfoLevel, "CatchupTransformationRatio")).isTrue();
+    assertThat(
+        logCaptor.getInfoLogs().stream()
+            .anyMatch(log -> log.contains("CatchupTransformationRatio")));
     verify(distributionSummary).record(10);
   }
 
   @Test
   void logsDebugLevel() {
-    final var logger = Slf4jHelper.replaceLogger(uut);
+    LogCaptor logCaptor = LogCaptor.forClass(uut.getClass());
 
     when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
     when(sub.factsTransformed()).thenReturn(new AtomicLong(1L));
@@ -247,7 +250,9 @@ public class PgFactStreamTest {
 
     uut.logCatchupTransformationStats();
 
-    assertThat(logger.contains(LogLevel.DebugLevel, "CatchupTransformationRatio")).isTrue();
+    assertThat(
+        logCaptor.getDebugLogs().stream()
+            .anyMatch(log -> log.contains("CatchupTransformationRatio")));
     verify(distributionSummary).record(1);
   }
 
