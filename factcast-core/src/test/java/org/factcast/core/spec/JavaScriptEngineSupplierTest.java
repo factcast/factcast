@@ -15,17 +15,18 @@
  */
 package org.factcast.core.spec;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import com.oracle.truffle.js.scriptengine.GraalJSEngineFactory;
+import org.junit.jupiter.api.Test;
 
-import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
-import org.junit.jupiter.api.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 public class JavaScriptEngineSupplierTest {
 
   @Test
   void testUnavailable() {
-    NashornScriptEngineFactory m = spy(new NashornScriptEngineFactory());
+    GraalJSEngineFactory m = spy(new GraalJSEngineFactory());
     when(m.getScriptEngine()).thenReturn(null);
     JavaScriptEngineSupplier uut = spy(new JavaScriptEngineSupplier(m));
     assertThrows(IllegalStateException.class, uut::get);

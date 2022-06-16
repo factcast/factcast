@@ -15,9 +15,9 @@
  */
 package org.factcast.core.spec;
 
+import com.oracle.truffle.js.scriptengine.GraalJSEngineFactory;
 import java.util.function.Supplier;
 import javax.script.ScriptEngine;
-import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,9 +25,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 class JavaScriptEngineSupplier implements Supplier<ScriptEngine> {
-  private static final NashornScriptEngineFactory staticFactory = new NashornScriptEngineFactory();
+  private static final GraalJSEngineFactory staticFactory = new GraalJSEngineFactory();
 
-  final NashornScriptEngineFactory factory;
+  final GraalJSEngineFactory factory;
 
   public JavaScriptEngineSupplier() {
     this(staticFactory);
