@@ -15,20 +15,26 @@
  */
 package org.factcast.server.grpc;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 import java.io.IOException;
 import java.sql.SQLException;
+import nl.altindag.log.LogCaptor;
 import org.factcast.server.grpc.ServerExceptionLogger.Level;
-import org.factcast.test.Slf4jHelper;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import slf4jtest.LogLevel;
-import slf4jtest.TestLogger;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class ServerExceptionLoggerTest {
@@ -133,46 +139,49 @@ class ServerExceptionLoggerTest {
 
   @Test
   void testError() {
-    TestLogger logger = Slf4jHelper.replaceLogger(underTest);
+    LogCaptor logCaptor = LogCaptor.forClass(underTest.getClass());
     RuntimeException e = new RuntimeException();
     String id = "foo";
     underTest.error(e, id);
 
-    assertThat(logger.lines()).hasSize(2);
-    assertThat(logger.lines().stream())
+    assertThat(logCaptor.getLogs()).hasSize(2);
+    assertThat(logCaptor.getLogEvents().stream())
         .anyMatch(
             l ->
-                l.level == LogLevel.ErrorLevel
-                    && l.text.startsWith(id + " onError – sending Error notification"));
+                l.getLevel() == LogLevel.ErrorLevel.toString()
+                    && l.getFormattedMessage()
+                        .startsWith(id + " onError – sending Error notification"));
   }
 
   @Test
   void testWarn() {
-    TestLogger logger = Slf4jHelper.replaceLogger(underTest);
+    LogCaptor logCaptor = LogCaptor.forClass(underTest.getClass());
     RuntimeException e = new RuntimeException();
     String id = "foo";
     underTest.warn(e, id);
 
-    assertThat(logger.lines()).hasSize(2);
-    assertThat(logger.lines().stream())
+    assertThat(logCaptor.getLogs()).hasSize(2);
+    assertThat(logCaptor.getLogEvents().stream())
         .anyMatch(
             l ->
-                l.level == LogLevel.WarnLevel
-                    && l.text.startsWith(id + " onError – sending Error notification"));
+                l.getLevel() == LogLevel.WarnLevel.toString()
+                    && l.getFormattedMessage()
+                        .startsWith(id + " onError – sending Error notification"));
   }
 
   @Test
   void testInfo() {
-    TestLogger logger = Slf4jHelper.replaceLogger(underTest);
+    LogCaptor logCaptor = LogCaptor.forClass(underTest.getClass());
     RuntimeException e = new RuntimeException();
     String id = "foo";
     underTest.info(e, id);
 
-    assertThat(logger.lines()).hasSize(2);
-    assertThat(logger.lines().stream())
+    assertThat(logCaptor.getLogs()).hasSize(2);
+    assertThat(logCaptor.getLogEvents().stream())
         .anyMatch(
             l ->
-                l.level == LogLevel.InfoLevel
-                    && l.text.startsWith(id + " onError – sending Error notification"));
+                l.getLevel() == LogLevel.InfoLevel.toString()
+                    && l.getFormattedMessage()
+                        .startsWith(id + " onError – sending Error notification"));
   }
 }
