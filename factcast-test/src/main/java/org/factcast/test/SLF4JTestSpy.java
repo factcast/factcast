@@ -26,6 +26,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Deprecated
 public class SLF4JTestSpy implements AutoCloseable {
   private final List<ILoggingEvent> loggingEvents = Collections.synchronizedList(new ArrayList<>());
   private final SpyAppender spyAppender;

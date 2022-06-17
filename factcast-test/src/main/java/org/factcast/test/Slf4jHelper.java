@@ -25,6 +25,7 @@ import slf4jtest.TestLogger;
 import slf4jtest.TestLoggerFactory;
 
 @Value
+@Deprecated
 public class Slf4jHelper {
   @SneakyThrows
   public static TestLogger replaceLogger(@NonNull Object instance) {
