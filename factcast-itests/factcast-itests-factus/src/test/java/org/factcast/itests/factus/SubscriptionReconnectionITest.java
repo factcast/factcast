@@ -15,6 +15,11 @@
  */
 package org.factcast.itests.factus;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
+
 import com.google.common.base.Stopwatch;
 import eu.rekawek.toxiproxy.model.ToxicDirection;
 import io.grpc.StatusRuntimeException;
@@ -46,11 +51,6 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.awaitility.Awaitility.await;
 
 @SpringBootTest
 @ContextConfiguration(classes = {Application.class})

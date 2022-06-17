@@ -15,6 +15,14 @@
  */
 package org.factcast.store.internal.tail;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.factcast.store.internal.PgConstants.INDEX_NAME_COLUMN;
+import static org.factcast.store.internal.PgConstants.IS_INVALID;
+import static org.factcast.store.internal.PgConstants.IS_VALID;
+import static org.factcast.store.internal.PgConstants.LIST_FACT_INDEXES_WITH_VALIDATION;
+import static org.factcast.store.internal.PgConstants.VALID_COLUMN;
+import static org.factcast.store.internal.PgConstants.tailIndexName;
+
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -38,14 +46,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.factcast.store.internal.PgConstants.INDEX_NAME_COLUMN;
-import static org.factcast.store.internal.PgConstants.IS_INVALID;
-import static org.factcast.store.internal.PgConstants.IS_VALID;
-import static org.factcast.store.internal.PgConstants.LIST_FACT_INDEXES_WITH_VALIDATION;
-import static org.factcast.store.internal.PgConstants.VALID_COLUMN;
-import static org.factcast.store.internal.PgConstants.tailIndexName;
 
 @ContextConfiguration(classes = {PgTestConfiguration.class})
 @Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
