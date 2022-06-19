@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import org.factcast.core.DuplicateFactException;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.lock.Attempt;
@@ -109,7 +110,7 @@ public abstract class AbstractFactStoreTest {
         Duration.ofMillis(30000),
         () -> {
           Assertions.assertThrows(
-              IllegalArgumentException.class,
+              DuplicateFactException.class,
               () -> {
                 UUID id = UUID.randomUUID();
                 uut.publish(
