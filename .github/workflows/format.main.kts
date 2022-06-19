@@ -1,6 +1,6 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("it.krzeminski:github-actions-kotlin-dsl:0.18.0")
+@file:DependsOn("it.krzeminski:github-actions-kotlin-dsl:0.19.0")
 
 import it.krzeminski.githubactions.actions.CustomAction
 import it.krzeminski.githubactions.actions.actions.CheckoutV3
@@ -10,15 +10,11 @@ import it.krzeminski.githubactions.domain.Workflow
 import it.krzeminski.githubactions.domain.triggers.Push
 import it.krzeminski.githubactions.dsl.workflow
 import it.krzeminski.githubactions.yaml.writeToFile
-import java.io.File
-import java.io.IOException
-import java.nio.file.Paths
 
 public val workflowFormat: Workflow = workflow(
     name = "Format",
     on = listOf(Push()),
-    sourceFile = Paths.get(".github/workflows/format.main.kts"),
-    targetFileName = "format.yml"
+    sourceFile = __FILE__.toPath()
 ) {
     job(
         id = "formatting",
@@ -55,8 +51,5 @@ public val workflowFormat: Workflow = workflow(
     }
 
 }
-
-if (!File(".github").isDirectory)
-    throw IOException("Run from project root")
 
 workflowFormat.writeToFile()
