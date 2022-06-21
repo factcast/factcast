@@ -15,18 +15,9 @@
  */
 package org.factcast.store.internal.catchup.tmppaged;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.eq;
+import java.util.*;
+import java.util.concurrent.atomic.*;
 
-import io.micrometer.core.instrument.Counter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
-import lombok.NonNull;
-import lombok.SneakyThrows;
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
@@ -37,10 +28,13 @@ import org.factcast.store.internal.PgConstants;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.PgPostQueryMatcher;
 import org.factcast.store.internal.StoreMetrics;
+import org.factcast.store.internal.blacklist.PgBlacklist;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -48,6 +42,14 @@ import org.postgresql.jdbc.PgConnection;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.core.PreparedStatementSetter;
+
+import io.micrometer.core.instrument.Counter;
+
+import lombok.NonNull;
+import lombok.SneakyThrows;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PgTmpPagedCatchupTest {
@@ -60,6 +62,7 @@ class PgTmpPagedCatchupTest {
   @Mock @NonNull AtomicLong serial;
   @Mock @NonNull PgMetrics metrics;
   @Mock @NonNull Counter counter;
+  @Mock @NonNull PgBlacklist blacklist;
   @InjectMocks PgTmpPagedCatchup underTest;
 
   @Nested

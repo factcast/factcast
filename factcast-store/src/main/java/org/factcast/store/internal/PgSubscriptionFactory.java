@@ -15,19 +15,23 @@
  */
 package org.factcast.store.internal;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.eventbus.EventBus;
-import java.util.concurrent.CompletableFuture;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.concurrent.*;
+
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.store.internal.blacklist.PgBlacklist;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.eventbus.EventBus;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 // TODO integrate with PGQuery
 @SuppressWarnings("UnstableApiUsage")
@@ -48,6 +52,7 @@ class PgSubscriptionFactory {
   final FactTransformersFactory transformersFactory;
   final FastForwardTarget target;
   final PgMetrics metrics;
+  final PgBlacklist blacklist;
 
   public Subscription subscribe(SubscriptionRequestTO req, FactObserver observer) {
     SubscriptionImpl subscription =
@@ -61,7 +66,8 @@ class PgSubscriptionFactory {
             fetcher,
             catchupFactory,
             target,
-            metrics);
+            metrics,
+            blacklist);
 
     // when closing the subscription, also close the PgFactStream
     subscription.onClose(pgsub::close);
