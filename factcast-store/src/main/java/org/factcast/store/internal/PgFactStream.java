@@ -19,10 +19,9 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
+import java.util.*;
+import java.util.concurrent.atomic.*;
+import java.util.function.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +31,7 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.store.internal.blacklist.PgBlacklist;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
@@ -67,6 +67,7 @@ public class PgFactStream {
   final PgCatchupFactory pgCatchupFactory;
   final FastForwardTarget ffwdTarget;
   final PgMetrics metrics;
+  final PgBlacklist blacklist;
 
   CondensedQueryExecutor condensedExecutor;
 
@@ -90,7 +91,7 @@ public class PgFactStream {
     PreparedStatementSetter setter = q.createStatementSetter(serial);
     RowCallbackHandler rsHandler =
         new FactRowCallbackHandler(
-            subscription, postQueryMatcher, this::isConnected, serial, request);
+            subscription, postQueryMatcher, this::isConnected, serial, request, blacklist);
     PgSynchronizedQuery query =
         new PgSynchronizedQuery(jdbcTemplate, sql, setter, rsHandler, serial, fetcher);
     catchupAndFollow(request, subscription, query);
@@ -180,11 +181,15 @@ public class PgFactStream {
   void catchup(PgPostQueryMatcher postQueryMatcher) {
     if (isConnected()) {
       log.trace("{} catchup phase1 - historic facts staring with SER={}", request, serial.get());
-      pgCatchupFactory.create(request, postQueryMatcher, subscription, serial, metrics).run();
+      pgCatchupFactory
+          .create(request, postQueryMatcher, subscription, serial, metrics, blacklist)
+          .run();
     }
     if (isConnected()) {
       log.trace("{} catchup phase2 - facts since connect (SER={})", request, serial.get());
-      pgCatchupFactory.create(request, postQueryMatcher, subscription, serial, metrics).run();
+      pgCatchupFactory
+          .create(request, postQueryMatcher, subscription, serial, metrics, blacklist)
+          .run();
     }
   }
 
@@ -263,6 +268,8 @@ public class PgFactStream {
 
     final SubscriptionRequestTO request;
 
+    final PgBlacklist blacklist;
+
     @SuppressWarnings("NullableProblems")
     @Override
     public void processRow(ResultSet rs) throws SQLException {
@@ -273,15 +280,20 @@ public class PgFactStream {
         }
         Fact f = PgFact.from(rs);
         UUID factId = f.id();
+        var skipTesting = postQueryMatcher.canBeSkipped();
+
         try {
-          if (postQueryMatcher.test(f)) {
-            subscription.notifyElement(f);
-            log.trace("{} notifyElement called with id={}", request, factId);
+          if (blacklist.isBlocked(factId)) {
+            log.trace("{} filtered blacklisted id={}", request, factId);
           } else {
-            // TODO add sid
-            log.trace("{} filtered id={}", request, factId);
+            if (skipTesting || postQueryMatcher.test(f)) {
+              subscription.notifyElement(f);
+              log.trace("{} notifyElement called with id={}", request, factId);
+            } else {
+              log.trace("{} filtered id={}", request, factId);
+            }
+            serial.set(rs.getLong(PgConstants.COLUMN_SER));
           }
-          serial.set(rs.getLong(PgConstants.COLUMN_SER));
         } catch (Throwable e) {
           rs.close();
           subscription.notifyError(e);

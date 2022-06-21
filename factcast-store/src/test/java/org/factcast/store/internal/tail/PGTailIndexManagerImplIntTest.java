@@ -16,20 +16,11 @@
 package org.factcast.store.internal.tail;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.factcast.store.internal.PgConstants.INDEX_NAME_COLUMN;
-import static org.factcast.store.internal.PgConstants.IS_INVALID;
-import static org.factcast.store.internal.PgConstants.IS_VALID;
-import static org.factcast.store.internal.PgConstants.LIST_FACT_INDEXES_WITH_VALIDATION;
-import static org.factcast.store.internal.PgConstants.VALID_COLUMN;
-import static org.factcast.store.internal.PgConstants.tailIndexName;
+import static org.factcast.store.internal.PgConstants.*;
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.*;
 import javax.sql.DataSource;
 import lombok.SneakyThrows;
 import org.factcast.core.store.FactStore;
@@ -37,7 +28,8 @@ import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.test.IntegrationTest;
 import org.factcast.test.Slf4jHelper;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.*;
+import org.junit.jupiter.api.condition.DisabledForJreRange;
+import org.junit.jupiter.api.condition.JRE;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -48,9 +40,9 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import slf4jtest.TestLogger;
 
 @ContextConfiguration(classes = {PgTestConfiguration.class})
-@Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
+@Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 class PGTailIndexManagerImplIntTest {
 
   @Autowired FactStore fs;
