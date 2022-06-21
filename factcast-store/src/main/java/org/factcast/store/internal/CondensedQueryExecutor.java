@@ -15,18 +15,15 @@
  */
 package org.factcast.store.internal;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.eventbus.Subscribe;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
-
-import org.factcast.core.spec.FactSpec;
-import org.factcast.store.internal.listen.PgListener.FactInsertionSignal;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.eventbus.Subscribe;
-
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.spec.FactSpec;
+import org.factcast.store.internal.listen.PgListener.FactInsertionSignal;
 
 /**
  * Executes a given runnable if triggered, but ignores all subsequent triggers for maxDelayInMillis.
