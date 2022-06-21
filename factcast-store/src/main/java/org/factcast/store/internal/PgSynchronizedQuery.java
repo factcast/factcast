@@ -16,16 +16,14 @@
 package org.factcast.store.internal;
 
 import java.util.concurrent.atomic.*;
-
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
-
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 
 /**
  * executes a query in a synchronized fashion, to make sure, results are processed in order as well
@@ -64,8 +62,7 @@ class PgSynchronizedQuery {
       @NonNull PreparedStatementSetter setter,
       @NonNull RowCallbackHandler rowHandler,
       @NonNull AtomicLong serialToContinueFrom,
-      @NonNull PgLatestSerialFetcher fetcher
-      ) {
+      @NonNull PgLatestSerialFetcher fetcher) {
     this.serialToContinueFrom = serialToContinueFrom;
     latestFetcher = fetcher;
     this.jdbcTemplate = jdbcTemplate;

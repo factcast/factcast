@@ -16,7 +16,9 @@
 package org.factcast.store.internal.catchup.tmppaged;
 
 import java.util.concurrent.atomic.*;
-
+import lombok.Generated;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
@@ -25,10 +27,6 @@ import org.factcast.store.internal.PgPostQueryMatcher;
 import org.factcast.store.internal.blacklist.PgBlacklist;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
-
-import lombok.Generated;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 // no code in here, just generated @nonnull checks
@@ -48,6 +46,13 @@ public class PgTmpPagedCatchUpFactory implements PgCatchupFactory {
       @NonNull PgMetrics metrics,
       @NonNull PgBlacklist blacklist) {
     return new PgTmpPagedCatchup(
-        connectionSupplier, props, request, postQueryMatcher, subscription, serial, metrics,blacklist);
+        connectionSupplier,
+        props,
+        request,
+        postQueryMatcher,
+        subscription,
+        serial,
+        metrics,
+        blacklist);
   }
 }
