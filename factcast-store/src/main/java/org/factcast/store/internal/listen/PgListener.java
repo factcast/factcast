@@ -15,20 +15,12 @@
  */
 package org.factcast.store.internal.listen;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.eventbus.EventBus;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
+
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
@@ -38,6 +30,16 @@ import org.postgresql.PGNotification;
 import org.postgresql.jdbc.PgConnection;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.eventbus.EventBus;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Listens (sql LISTEN command) to a channel on Postgresql and passes a trigger on an EventBus.
@@ -95,7 +97,7 @@ public class PgListener implements InitializingBean, DisposableBean {
 
           while (running.get()) {
             PGNotification[] notifications = receiveNotifications(pc);
-            informSubscriberOfChannelNotifications(notifications);
+            processNotifications(notifications);
           }
         } catch (Exception e) {
           if (running.get()) {
@@ -126,11 +128,13 @@ public class PgListener implements InitializingBean, DisposableBean {
   // make sure subscribers did not miss anything while we reconnected
   @VisibleForTesting
   protected void informSubscribersAboutFreshConnection() {
-    postEvent(PgConstants.CHANNEL_SCHEDULED_POLL);
+
+    postFactInsertionSignal(PgConstants.CHANNEL_SCHEDULED_POLL);
+    postBlacklistChangeSignal();
   }
 
   @VisibleForTesting
-  protected void informSubscriberOfChannelNotifications(PGNotification[] notifications) {
+  protected void processNotifications(PGNotification[] notifications) {
 
     AtomicBoolean oncePerArray = new AtomicBoolean(false);
 
@@ -138,6 +142,10 @@ public class PgListener implements InitializingBean, DisposableBean {
         .forEach(
             n -> {
               String name = n.getName();
+
+              if (PgConstants.CHANNEL_BLACKLIST_CHANGE.equals(name)) {
+                postBlacklistChangeSignal();
+              }
 
               if (PgConstants.CHANNEL_FACT_INSERT.equals(name)) {
                 String json = n.getParameter();
@@ -148,7 +156,8 @@ public class PgListener implements InitializingBean, DisposableBean {
                   String ns = root.get("ns").asText();
                   String type = root.get("type").asText();
 
-                  postEvent(new Signal(PgConstants.CHANNEL_FACT_INSERT, ns, type));
+                  postFactInsertionSignal(
+                      new FactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT, ns, type));
 
                 } catch (JsonProcessingException | NullPointerException e) {
                   // unparseable, probably longer than 8k ?
@@ -158,13 +167,18 @@ public class PgListener implements InitializingBean, DisposableBean {
                         "Unparesable JSON header from Notification: {}. Notifying everyone - just"
                             + " in case",
                         name);
-                    postEvent(PgConstants.CHANNEL_FACT_INSERT);
+                    postFactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT);
                   }
                 }
               } else if (!PgConstants.CHANNEL_ROUNDTRIP.equals(name)) {
                 log.debug("Ignored notification from unknown channel: {}", name);
               }
             });
+  }
+
+  private void postBlacklistChangeSignal() {
+    log.trace("Potential blacklist change detected");
+    eventBus.post(new BlacklistChangeSignal());
   }
 
   // try to receive Postgres notifications until timeout is over. In case we
@@ -217,13 +231,12 @@ public class PgListener implements InitializingBean, DisposableBean {
   }
 
   @VisibleForTesting
-  protected void postEvent(@NonNull String name) {
-    // don't test against dedup list here!
-    eventBus.post(new Signal(name, null, null));
+  protected void postFactInsertionSignal(@NonNull String name) {
+    postFactInsertionSignal(new FactInsertionSignal(name, null, null));
   }
 
   @VisibleForTesting
-  protected void postEvent(@NonNull PgListener.Signal signal) {
+  protected void postFactInsertionSignal(@NonNull PgListener.FactInsertionSignal signal) {
     if (running.get()) {
       log.trace(
           "notifying consumers for '{}' with ns={}, type={}",
@@ -235,11 +248,14 @@ public class PgListener implements InitializingBean, DisposableBean {
   }
 
   @Value
-  public static class Signal {
+  public static class FactInsertionSignal {
     @NonNull String name;
     String ns;
     String type;
   }
+
+  @Value
+  public static class BlacklistChangeSignal {}
 
   @Override
   public void afterPropertiesSet() {

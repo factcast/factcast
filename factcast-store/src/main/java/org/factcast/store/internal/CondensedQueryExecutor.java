@@ -15,15 +15,18 @@
  */
 package org.factcast.store.internal;
 
+import java.util.*;
+import java.util.concurrent.atomic.*;
+import java.util.function.*;
+
+import org.factcast.core.spec.FactSpec;
+import org.factcast.store.internal.listen.PgListener.FactInsertionSignal;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.Subscribe;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
+
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.spec.FactSpec;
-import org.factcast.store.internal.listen.PgListener.Signal;
 
 /**
  * Executes a given runnable if triggered, but ignores all subsequent triggers for maxDelayInMillis.
@@ -108,7 +111,7 @@ class CondensedQueryExecutor {
 
   // called by the EventBus
   @Subscribe
-  public void onEvent(Signal ev) {
+  public void onEvent(FactInsertionSignal ev) {
 
     String ns = ev.ns();
     String type = ev.type();
