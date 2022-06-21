@@ -15,8 +15,11 @@
  */
 package org.factcast.store.internal;
 
-import java.util.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import java.util.*;
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
@@ -27,11 +30,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-
-import io.micrometer.core.instrument.MeterRegistry;
-
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 @ContextConfiguration(classes = {PgTestConfiguration.class})
 @ExtendWith(SpringExtension.class)

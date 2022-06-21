@@ -15,11 +15,17 @@
  */
 package org.factcast.store.internal.listen;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+import com.google.common.eventbus.EventBus;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.concurrent.*;
 import java.util.function.*;
-
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
 import org.factcast.store.internal.PgMetrics;
@@ -35,14 +41,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.postgresql.PGNotification;
 import org.postgresql.core.Notification;
 import org.postgresql.jdbc.PgConnection;
-
-import com.google.common.eventbus.EventBus;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 @SuppressWarnings("UnstableApiUsage")
 @ExtendWith(MockitoExtension.class)
