@@ -16,7 +16,6 @@
 package org.factcast.store.internal;
 
 import java.util.*;
-
 import org.assertj.core.api.Assertions;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.State;

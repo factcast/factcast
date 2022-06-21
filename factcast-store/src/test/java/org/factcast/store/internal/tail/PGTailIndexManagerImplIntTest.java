@@ -15,12 +15,14 @@
  */
 package org.factcast.store.internal.tail;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.factcast.store.internal.PgConstants.*;
+
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.*;
-
 import javax.sql.DataSource;
-
+import lombok.SneakyThrows;
 import org.factcast.core.store.FactStore;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.test.IntegrationTest;
@@ -35,12 +37,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-
-import lombok.SneakyThrows;
 import slf4jtest.TestLogger;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.factcast.store.internal.PgConstants.*;
 
 @ContextConfiguration(classes = {PgTestConfiguration.class})
 @ExtendWith(SpringExtension.class)

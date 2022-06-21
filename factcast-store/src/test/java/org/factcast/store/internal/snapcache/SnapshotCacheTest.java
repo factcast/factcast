@@ -15,9 +15,11 @@
  */
 package org.factcast.store.internal.snapcache;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.sql.Timestamp;
 import java.util.*;
-
+import lombok.NonNull;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.store.internal.PgTestConfiguration;
@@ -29,10 +31,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-
-import lombok.NonNull;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings("unchecked")
 @ContextConfiguration(classes = {PgTestConfiguration.class})
