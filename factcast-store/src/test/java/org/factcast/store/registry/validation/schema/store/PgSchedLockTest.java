@@ -15,9 +15,13 @@
  */
 package org.factcast.store.registry.validation.schema.store;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
@@ -29,15 +33,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 @ContextConfiguration(classes = {PgTestConfiguration.class, PgSchedLockTestConfiguration.class})
-
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
 public class PgSchedLockTest {
