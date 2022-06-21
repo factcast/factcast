@@ -126,7 +126,12 @@ public class PgListener implements InitializingBean, DisposableBean {
   // make sure subscribers did not miss anything while we reconnected
   @VisibleForTesting
   protected void informSubscribersAboutFreshConnection() {
+<<<<<<< Updated upstream
     postEvent(PgConstants.CHANNEL_SCHEDULED_POLL);
+=======
+    postFactInsertionSignal(PgConstants.CHANNEL_SCHEDULED_POLL);
+    postBlacklistChangeSignal();
+>>>>>>> Stashed changes
   }
 
   @VisibleForTesting

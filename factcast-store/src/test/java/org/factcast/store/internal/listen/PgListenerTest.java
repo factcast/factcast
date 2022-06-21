@@ -23,9 +23,16 @@ import static org.mockito.Mockito.*;
 import com.google.common.eventbus.EventBus;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+<<<<<<< Updated upstream
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+=======
+import java.util.concurrent.*;
+import java.util.function.*;
+import java.util.stream.*;
+
+>>>>>>> Stashed changes
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
 import org.factcast.store.internal.PgMetrics;
@@ -45,8 +52,13 @@ import org.postgresql.jdbc.PgConnection;
 @ExtendWith(MockitoExtension.class)
 public class PgListenerTest {
 
+<<<<<<< Updated upstream
   private static final Predicate<Signal> IS_FACT_INSERT =
       f -> f.name().equals(PgConstants.CHANNEL_FACT_INSERT);
+=======
+  private static final Predicate<Object> IS_FACT_INSERT =
+      f -> ((FactInsertionSignal) f).name().equals(PgConstants.CHANNEL_FACT_INSERT);
+>>>>>>> Stashed changes
 
   @Mock PgConnectionSupplier pgConnectionSupplier;
 
@@ -62,7 +74,11 @@ public class PgListenerTest {
 
   final StoreConfigurationProperties props = new StoreConfigurationProperties();
 
+<<<<<<< Updated upstream
   @Captor ArgumentCaptor<Signal> factCaptor;
+=======
+  @Captor ArgumentCaptor<Object> factCaptor;
+>>>>>>> Stashed changes
 
   @Test
   public void postgresListenersAreSetup() throws SQLException {
@@ -79,8 +95,8 @@ public class PgListenerTest {
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
     pgListener.informSubscribersAboutFreshConnection();
 
-    verify(eventBus, times(1)).post(factCaptor.capture());
-    assertEquals("scheduled-poll", factCaptor.getAllValues().get(0).name());
+    verify(eventBus, atLeastOnce()).post(factCaptor.capture());
+    assertEquals("scheduled-poll", ((FactInsertionSignal) factCaptor.getAllValues().get(0)).name());
   }
 
   @Test
@@ -159,7 +175,9 @@ public class PgListenerTest {
     pgListener.informSubscriberOfChannelNotifications(receivedNotifications);
 
     verify(eventBus, times(1)).post(factCaptor.capture());
-    assertEquals(PgConstants.CHANNEL_FACT_INSERT, factCaptor.getAllValues().get(0).name());
+    assertEquals(
+        PgConstants.CHANNEL_FACT_INSERT,
+        ((FactInsertionSignal) factCaptor.getAllValues().get(0)).name());
   }
 
   @Test
@@ -243,10 +261,14 @@ public class PgListenerTest {
     pgListener.destroy();
 
     verify(eventBus, atLeastOnce()).post(factCaptor.capture());
-    var allEvents = factCaptor.getAllValues();
+    var allEvents =
+        factCaptor.getAllValues().stream()
+            // remove blacklist ones
+            .filter(e -> !(e instanceof PgListener.BlacklistChangeSignal))
+            .collect(Collectors.toList());
 
     // first event is the general wakeup to the subscribers after startup
-    assertEquals("scheduled-poll", allEvents.get(0).name());
+    assertEquals("scheduled-poll", ((FactInsertionSignal) allEvents.get(0)).name());
     // events 2 - incl. 4 are notifies
     assertTrue(allEvents.subList(1, 3).stream().allMatch(IS_FACT_INSERT));
 
