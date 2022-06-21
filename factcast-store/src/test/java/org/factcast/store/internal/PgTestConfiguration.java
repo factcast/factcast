@@ -15,15 +15,13 @@
  */
 package org.factcast.store.internal;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.PgFactStoreConfiguration;
 import org.mockito.Mockito;
 import org.postgresql.Driver;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration;
+import org.springframework.boot.autoconfigure.liquibase.LiquibaseAutoConfiguration;
 import org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,13 +29,19 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.testcontainers.containers.PostgreSQLContainer;
 
+import io.micrometer.core.instrument.MeterRegistry;
+
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
+
 @SuppressWarnings("resource")
 @Configuration
 @Import(PgFactStoreConfiguration.class)
 @ImportAutoConfiguration({
   DataSourceAutoConfiguration.class,
   JdbcTemplateAutoConfiguration.class,
-  TransactionAutoConfiguration.class
+  TransactionAutoConfiguration.class,
+  LiquibaseAutoConfiguration.class
 })
 @Slf4j
 public class PgTestConfiguration {

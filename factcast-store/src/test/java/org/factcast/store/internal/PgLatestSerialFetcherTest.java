@@ -15,12 +15,8 @@
  */
 package org.factcast.store.internal;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import java.util.*;
 
-import java.util.UUID;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
@@ -33,8 +29,12 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+
 @ContextConfiguration(classes = {PgTestConfiguration.class})
-@Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
+@Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
 public class PgLatestSerialFetcherTest {
@@ -57,7 +57,7 @@ public class PgLatestSerialFetcherTest {
             + PgConstants.COLUMN_PAYLOAD
             + ") VALUES('{\"id\":\""
             + UUID.randomUUID()
-            + "\"}','{}') ");
+            + "\", \"ns\":\"hups\"}','{}') ");
     assertEquals(1, uut.retrieveLatestSer());
     jdbcTemplate.execute(
         "INSERT INTO "
@@ -68,7 +68,7 @@ public class PgLatestSerialFetcherTest {
             + PgConstants.COLUMN_PAYLOAD
             + ") VALUES('{\"id\":\""
             + UUID.randomUUID()
-            + "\"}','{}') ");
+            + "\", \"ns\":\"hups\"}','{}') ");
     jdbcTemplate.execute(
         "INSERT INTO "
             + PgConstants.TABLE_FACT
@@ -78,7 +78,7 @@ public class PgLatestSerialFetcherTest {
             + PgConstants.COLUMN_PAYLOAD
             + ") VALUES('{\"id\":\""
             + UUID.randomUUID()
-            + "\"}','{}') ");
+            + "\", \"ns\":\"hups\"}','{}') ");
     assertEquals(3, uut.retrieveLatestSer());
   }
 

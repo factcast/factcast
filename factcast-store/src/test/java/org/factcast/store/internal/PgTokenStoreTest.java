@@ -15,9 +15,8 @@
  */
 package org.factcast.store.internal;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+
 import org.assertj.core.api.Assertions;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.State;
@@ -25,18 +24,15 @@ import org.factcast.core.store.TokenStore;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.test.AbstractTokenStoreTest;
 import org.factcast.store.test.IntegrationTest;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ContextConfiguration(classes = {PgTestConfiguration.class})
-@Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
 public class PgTokenStoreTest extends AbstractTokenStoreTest {

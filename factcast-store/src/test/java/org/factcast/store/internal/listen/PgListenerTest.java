@@ -15,18 +15,11 @@
  */
 package org.factcast.store.internal.listen;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
-import com.google.common.eventbus.EventBus;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.concurrent.*;
 import java.util.function.*;
-import java.util.stream.*;
+
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
 import org.factcast.store.internal.PgMetrics;
@@ -43,12 +36,21 @@ import org.postgresql.PGNotification;
 import org.postgresql.core.Notification;
 import org.postgresql.jdbc.PgConnection;
 
+import com.google.common.eventbus.EventBus;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 @SuppressWarnings("UnstableApiUsage")
 @ExtendWith(MockitoExtension.class)
 public class PgListenerTest {
 
-  private static final Predicate<FactInsertionSignal> IS_FACT_INSERT =
-      f -> f.name().equals(PgConstants.CHANNEL_FACT_INSERT);
+  private static final Predicate<Object> IS_FACT_INSERT = f -> f instanceof FactInsertionSignal;
+  private static final Predicate<Object> NOT_SCHEDULED_POLL =
+      f -> !((FactInsertionSignal) f).name().equals("scheduled-poll");
 
   @Mock PgConnectionSupplier pgConnectionSupplier;
 
@@ -64,7 +66,7 @@ public class PgListenerTest {
 
   final StoreConfigurationProperties props = new StoreConfigurationProperties();
 
-  @Captor ArgumentCaptor<FactInsertionSignal> factCaptor;
+  @Captor ArgumentCaptor<Object> factCaptor;
 
   @Test
   public void postgresListenersAreSetup() throws SQLException {
@@ -81,8 +83,14 @@ public class PgListenerTest {
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
     pgListener.informSubscribersAboutFreshConnection();
 
-    verify(eventBus, times(1)).post(factCaptor.capture());
-    assertEquals("scheduled-poll", factCaptor.getAllValues().get(0).name());
+    verify(eventBus, atLeastOnce()).post(factCaptor.capture());
+    assertThat(
+            factCaptor.getAllValues().stream()
+                .anyMatch(
+                    e ->
+                        e instanceof FactInsertionSignal
+                            && ((FactInsertionSignal) e).name().equals("scheduled-poll")))
+        .isTrue();
   }
 
   @Test
@@ -161,7 +169,8 @@ public class PgListenerTest {
     pgListener.processNotifications(receivedNotifications);
 
     verify(eventBus, times(1)).post(factCaptor.capture());
-    assertEquals(PgConstants.CHANNEL_FACT_INSERT, factCaptor.getAllValues().get(0).name());
+    assertThat(factCaptor.getAllValues().stream().anyMatch(e -> e instanceof FactInsertionSignal))
+        .isTrue();
   }
 
   @Test
@@ -248,16 +257,25 @@ public class PgListenerTest {
     var allEvents = factCaptor.getAllValues();
 
     // first event is the general wakeup to the subscribers after startup
-    assertEquals("scheduled-poll", allEvents.get(0).name());
+    assertThat(
+            factCaptor.getAllValues().stream()
+                .anyMatch(
+                    e ->
+                        e instanceof FactInsertionSignal
+                            && ((FactInsertionSignal) e).name().equals("scheduled-poll")))
+        .isTrue();
     // events 2 - incl. 4 are notifies
-    assertTrue(allEvents.subList(1, 3).stream().allMatch(IS_FACT_INSERT));
+    assertTrue(
+        allEvents.stream()
+            .filter(e -> !(e instanceof PgListener.BlacklistChangeSignal))
+            .allMatch(IS_FACT_INSERT));
 
     // in total there are only 3 notifies
     // TODO delete or assert?
     long totalNotifyCount = allEvents.stream().filter(IS_FACT_INSERT).count();
 
     // grouped by tx id, ns and type
-    assertThat(allEvents.stream().filter(IS_FACT_INSERT))
+    assertThat(allEvents.stream().filter(IS_FACT_INSERT).filter(NOT_SCHEDULED_POLL))
         .containsExactlyInAnyOrder(
             new FactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT, null, null),
             new FactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT, null, null),
