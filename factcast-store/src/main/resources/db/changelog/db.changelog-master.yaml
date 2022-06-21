@@ -189,3 +189,15 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
+
+  - changeSet:
+      id: issue2050
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2050/blacklist.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
