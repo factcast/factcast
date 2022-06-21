@@ -177,7 +177,7 @@ public class PgListener implements InitializingBean, DisposableBean {
   }
 
   private void postBlacklistChangeSignal() {
-    log.trace("Blacklist change detected");
+    log.trace("Potential blacklist change detected");
     eventBus.post(new BlacklistChangeSignal());
   }
 
