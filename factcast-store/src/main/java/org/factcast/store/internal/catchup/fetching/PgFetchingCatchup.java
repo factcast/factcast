@@ -15,12 +15,9 @@
  */
 package org.factcast.store.internal.catchup.fetching;
 
-import com.google.common.annotations.VisibleForTesting;
+import java.util.*;
 import java.util.concurrent.atomic.*;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
+
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -37,6 +34,13 @@ import org.postgresql.jdbc.PgConnection;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -55,6 +59,7 @@ public class PgFetchingCatchup implements PgCatchup {
   @NonNull final AtomicLong serial;
 
   @NonNull final PgMetrics metrics;
+
   @NonNull final PgBlacklist blacklist;
 
   protected long factCounter = 0L;
@@ -98,7 +103,7 @@ public class PgFetchingCatchup implements PgCatchup {
   @VisibleForTesting
   RowCallbackHandler createRowCallbackHandler(boolean skipTesting, PgFactExtractor extractor) {
     return rs -> {
-      Fact f = extractor.mapRow(rs, 0); // does not use the rowNum anyway
+      Fact f = Objects.requireNonNull(extractor.mapRow(rs, 0)); // does not use the rowNum anyway
       if (blacklist.isBlocked(f.id())) {
         log.trace("{} filtered blacklisted id={}", req, f.id());
       } else {
