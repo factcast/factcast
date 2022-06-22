@@ -201,3 +201,17 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
+
+  - changeSet:
+      id: issue2050_removeTails
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2050/removeTails.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+
