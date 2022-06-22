@@ -6,9 +6,9 @@ $$
 DECLARE
     i varchar;
 BEGIN
-    FOR i IN select index_name from stats_index where tablename='fact' and index_name like 'idx_fact_tail_%'
+    FOR i IN select index_name from stats_index where tablename = 'fact' and index_name like 'idx_fact_tail_%'
         LOOP
-            DROP INDEX i;
+            execute format('DROP INDEX %s', i);
         END LOOP;
 END;
 $$
