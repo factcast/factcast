@@ -15,16 +15,12 @@
  */
 package org.factcast.store.internal;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.eventbus.EventBus;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.SubscriptionImpl;
@@ -39,6 +35,15 @@ import org.factcast.store.internal.query.PgQueryBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.eventbus.EventBus;
+
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Creates and maintains a subscription.
@@ -58,6 +63,8 @@ public class PgFactStream {
 
   final SubscriptionImpl subscription;
 
+  @VisibleForTesting
+  @Getter(AccessLevel.PROTECTED)
   final AtomicLong serial = new AtomicLong(0);
 
   final AtomicBoolean disconnected = new AtomicBoolean(false);
@@ -71,7 +78,7 @@ public class PgFactStream {
 
   CondensedQueryExecutor condensedExecutor;
 
-  SubscriptionRequestTO request;
+  @VisibleForTesting protected SubscriptionRequestTO request;
 
   PgPostQueryMatcher postQueryMatcher;
 
@@ -97,8 +104,10 @@ public class PgFactStream {
     catchupAndFollow(request, subscription, query);
   }
 
-  private void initializeSerialToStartAfter() {
-    Long startingSerial = request.startingAfter().map(idToSerMapper::retrieve).orElse(0L);
+  @VisibleForTesting
+  void initializeSerialToStartAfter() {
+    Optional<UUID> idRequestedToStartAfter = request.startingAfter();
+    Long startingSerial = idRequestedToStartAfter.map(idToSerMapper::retrieve).orElse(0L);
     serial.set(startingSerial);
     log.trace("{} setting starting point to SER={}", request, startingSerial);
   }
@@ -240,7 +249,8 @@ public class PgFactStream {
     return level;
   }
 
-  private boolean isConnected() {
+  @VisibleForTesting
+  boolean isConnected() {
     return !disconnected.get();
   }
 

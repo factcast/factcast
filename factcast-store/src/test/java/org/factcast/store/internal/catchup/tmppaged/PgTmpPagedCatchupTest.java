@@ -15,14 +15,9 @@
  */
 package org.factcast.store.internal.catchup.tmppaged;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
-import io.micrometer.core.instrument.Counter;
 import java.util.*;
 import java.util.concurrent.atomic.*;
-import lombok.NonNull;
-import lombok.SneakyThrows;
+
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
@@ -47,6 +42,14 @@ import org.postgresql.jdbc.PgConnection;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.core.PreparedStatementSetter;
+
+import io.micrometer.core.instrument.Counter;
+
+import lombok.NonNull;
+import lombok.SneakyThrows;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PgTmpPagedCatchupTest {
@@ -125,6 +128,31 @@ class PgTmpPagedCatchupTest {
       when(metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT)).thenReturn(mock(Counter.class));
       underTest.fetch(jdbc);
       verify(subscription).notifyElement(testFact);
+    }
+
+    @Test
+    void filtersBlacklisted() {
+      when(jdbc.execute(anyString(), any(PreparedStatementCallback.class))).thenReturn(2L);
+      List<Fact> testFactList = new ArrayList<Fact>();
+      UUID id1 = UUID.randomUUID();
+      UUID id2 = UUID.randomUUID();
+      when(blacklist.isBlocked(id1)).thenReturn(true);
+      when(blacklist.isBlocked(id2)).thenReturn(false);
+      Fact testFact1 = Fact.builder().id(id1).buildWithoutPayload();
+      Fact testFact2 = Fact.builder().id(id2).buildWithoutPayload();
+      testFactList.add(testFact1);
+      testFactList.add(testFact2);
+      when(jdbc.query(
+              eq(PgConstants.SELECT_FACT_FROM_CATCHUP),
+              any(PreparedStatementSetter.class),
+              any(PgFactExtractor.class)))
+          .thenReturn(testFactList)
+          .thenReturn(new ArrayList<Fact>());
+      // stop iteration after first fetch
+      when(metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT)).thenReturn(mock(Counter.class));
+      underTest.fetch(jdbc);
+      verify(subscription, never()).notifyElement(testFact1);
+      verify(subscription, times(1)).notifyElement(testFact2);
     }
 
     @Test
