@@ -15,24 +15,18 @@
  */
 package org.factcast.store.internal;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.*;
-
-import com.google.common.eventbus.EventBus;
-import io.micrometer.core.instrument.DistributionSummary;
 import java.sql.ResultSet;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
-import lombok.SneakyThrows;
+
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.store.internal.PgFactStream.RatioLogLevel;
 import org.factcast.store.internal.blacklist.PgBlacklist;
+import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
@@ -45,7 +39,18 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import com.google.common.eventbus.EventBus;
+
+import io.micrometer.core.instrument.DistributionSummary;
+
+import lombok.SneakyThrows;
 import slf4jtest.LogLevel;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class PgFactStreamTest {
@@ -61,6 +66,7 @@ public class PgFactStreamTest {
   @Mock PgLatestSerialFetcher fetcher;
   @Mock DistributionSummary distributionSummary;
   @Mock PgBlacklist blacklist;
+  @Mock PgCatchupFactory pgCatchupFactory;
   @InjectMocks PgFactStream uut;
 
   @Test
@@ -353,6 +359,65 @@ public class PgFactStreamTest {
       verify(subscription).notifyError(exception);
       verify(rs).close();
       verify(serial, never()).set(10L);
+    }
+  }
+
+  @Nested
+  class WhenCatchingUp {
+    @Test
+    void ifDisconnected_doNothing() {
+      uut = spy(uut);
+      when(uut.isConnected()).thenReturn(false);
+
+      uut.catchup(mock(PgPostQueryMatcher.class));
+
+      verifyNoInteractions(pgCatchupFactory);
+    }
+
+    @Test
+    void ifConnected_catchupTwice() {
+      uut = spy(uut);
+      PgCatchup catchup1 = mock(PgCatchup.class);
+      PgCatchup catchup2 = mock(PgCatchup.class);
+      when(uut.isConnected()).thenReturn(true);
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any(), any()))
+          .thenReturn(catchup1, catchup2);
+
+      uut.catchup(mock(PgPostQueryMatcher.class));
+
+      verify(catchup1, times(1)).run();
+      verify(catchup2, times(1)).run();
+    }
+  }
+
+  @Nested
+  class WhenInitializingSerialToStartAfter {
+    @Test
+    void fromScratch() {
+      when(reqTo.startingAfter()).thenReturn(Optional.empty());
+      uut.request = reqTo;
+      uut.initializeSerialToStartAfter();
+      assertThat(uut.serial()).hasValue(0);
+    }
+
+    @Test
+    void fromId() {
+      UUID id = UUID.randomUUID();
+      when(reqTo.startingAfter()).thenReturn(Optional.of(id));
+      when(id2ser.retrieve(id)).thenReturn(123L);
+      uut.request = reqTo;
+      uut.initializeSerialToStartAfter();
+      assertThat(uut.serial()).hasValue(123L);
+    }
+
+    @Test
+    void fromUnknownId() {
+      UUID id = UUID.randomUUID();
+      when(reqTo.startingAfter()).thenReturn(Optional.of(id));
+      when(id2ser.retrieve(id)).thenReturn(0L);
+      uut.request = reqTo;
+      uut.initializeSerialToStartAfter();
+      assertThat(uut.serial()).hasValue(0);
     }
   }
 }
