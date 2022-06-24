@@ -15,11 +15,11 @@
  */
 package org.factcast.store.internal;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
-import java.util.UUID;
+import java.util.*;
 import lombok.Data;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
@@ -28,8 +28,8 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.store.test.IntegrationTest;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
@@ -41,9 +41,9 @@ import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ContextConfiguration(classes = {PgTestConfiguration.class})
-@Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
+@Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 public class PgQueryTest {
 
   static final FactSpec DEFAULT_SPEC = FactSpec.ns("default-ns").type("type1");

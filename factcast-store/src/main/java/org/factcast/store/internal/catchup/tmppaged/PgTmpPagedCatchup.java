@@ -16,9 +16,8 @@
 package org.factcast.store.internal.catchup.tmppaged;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.*;
+import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -30,6 +29,7 @@ import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.PgPostQueryMatcher;
 import org.factcast.store.internal.StoreMetrics;
+import org.factcast.store.internal.blacklist.PgBlacklist;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -46,6 +46,7 @@ public class PgTmpPagedCatchup implements PgCatchup {
   @NonNull final SubscriptionImpl subscription;
   @NonNull final AtomicLong serial;
   @NonNull final PgMetrics metrics;
+  @NonNull final PgBlacklist blacklist;
 
   @SneakyThrows
   @Override
@@ -80,12 +81,17 @@ public class PgTmpPagedCatchup implements PgCatchup {
         facts = fetch.fetchFacts(serial);
 
         for (Fact f : facts) {
+
           UUID factId = f.id();
-          if (skipTesting || postQueryMatcher.test(f)) {
-            subscription.notifyElement(f);
-            factCounter++;
+          if (blacklist.isBlocked(factId)) {
+            log.trace("{} filtered blacklisted id={}", request, factId);
           } else {
-            log.trace("{} filtered id={}", request, factId);
+            if (skipTesting || postQueryMatcher.test(f)) {
+              subscription.notifyElement(f);
+              factCounter++;
+            } else {
+              log.trace("{} filtered id={}", request, factId);
+            }
           }
         }
       } while (!facts.isEmpty());
