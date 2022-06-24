@@ -21,8 +21,8 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.PgPostQueryMatcher;
-import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.blacklist.PgBlacklist;
+import org.factcast.store.internal.query.CurrentStatementHolder;
 
 public interface PgCatchupFactory {
 
