@@ -48,6 +48,14 @@ public class PgTmpPagedCatchUpFactory implements PgCatchupFactory {
       @NonNull PgBlacklist blacklis,
       @NonNull CurrentStatementHolder statementHolder) {
     return new PgTmpPagedCatchup(
-        connectionSupplier, props, request, postQueryMatcher, subscription, serial, metrics,blacklis,statementHolder);
+        connectionSupplier,
+        props,
+        request,
+        postQueryMatcher,
+        subscription,
+        serial,
+        metrics,
+        blacklis,
+        statementHolder);
   }
 }
