@@ -24,9 +24,6 @@ import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import lombok.AccessLevel;
 import lombok.Getter;
-import java.util.*;
-import java.util.concurrent.atomic.*;
-import java.util.function.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -194,13 +191,15 @@ public class PgFactStream {
     if (isConnected()) {
       log.trace("{} catchup phase1 - historic facts staring with SER={}", request, serial.get());
       pgCatchupFactory
-          .create(request, postQueryMatcher, subscription, serial, metrics, blacklist,statementHolder)
+          .create(
+              request, postQueryMatcher, subscription, serial, metrics, blacklist, statementHolder)
           .run();
     }
     if (isConnected()) {
       log.trace("{} catchup phase2 - facts since connect (SER={})", request, serial.get());
       pgCatchupFactory
-          .create(request, postQueryMatcher, subscription, serial, metrics, blacklist,statementHolder)
+          .create(
+              request, postQueryMatcher, subscription, serial, metrics, blacklist, statementHolder)
           .run();
     }
   }
