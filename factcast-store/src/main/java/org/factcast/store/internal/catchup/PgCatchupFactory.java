@@ -16,12 +16,15 @@
 package org.factcast.store.internal.catchup;
 
 import java.util.concurrent.atomic.*;
-import lombok.NonNull;
+
+import org.factcast.core.store.CascadingDisposal;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.PgPostQueryMatcher;
 import org.factcast.store.internal.blacklist.PgBlacklist;
+
+import lombok.NonNull;
 
 public interface PgCatchupFactory {
 
@@ -31,5 +34,6 @@ public interface PgCatchupFactory {
       @NonNull SubscriptionImpl subscription,
       @NonNull AtomicLong serial,
       @NonNull PgMetrics metrics,
-      @NonNull PgBlacklist blacklist);
+      @NonNull PgBlacklist blacklist,
+      @NonNull CascadingDisposal disposal);
 }

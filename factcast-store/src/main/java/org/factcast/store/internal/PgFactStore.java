@@ -15,28 +15,24 @@
  */
 package org.factcast.store.internal;
 
-import com.google.common.collect.Lists;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
+import java.util.concurrent.atomic.*;
+
 import org.factcast.core.DuplicateFactException;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.store.AbstractFactStore;
-import org.factcast.core.store.State;
-import org.factcast.core.store.StateToken;
-import org.factcast.core.store.TokenStore;
+import org.factcast.core.store.*;
 import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.store.internal.lock.FactTableWriteLock;
+import org.factcast.store.internal.query.CancelStatementListener;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.snapcache.PgSnapshotCache;
@@ -50,6 +46,11 @@ import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.google.common.collect.Lists;
+
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * A PostgreSQL based FactStore implementation
@@ -71,6 +72,7 @@ public class PgFactStore extends AbstractFactStore {
   @NonNull private final PgMetrics metrics;
 
   @NonNull private final PgSnapshotCache snapCache;
+  @NonNull private final CascadingDisposal disposal;
 
   @Autowired
   public PgFactStore(
@@ -81,6 +83,7 @@ public class PgFactStore extends AbstractFactStore {
       @NonNull FactTransformerService factTransformerService,
       @NonNull PgFactIdToSerialMapper pgFactIdToSerialMapper,
       @NonNull PgSnapshotCache snapCache,
+      @NonNull CascadingDisposal disposal,
       @NonNull PgMetrics metrics) {
     super(tokenStore);
 
@@ -91,6 +94,7 @@ public class PgFactStore extends AbstractFactStore {
     this.snapCache = snapCache;
     this.metrics = metrics;
     this.factTransformerService = factTransformerService;
+    this.disposal = disposal;
   }
 
   @Override
@@ -228,7 +232,10 @@ public class PgFactStore extends AbstractFactStore {
     return metrics.time(
         StoreMetrics.OP.GET_STATE_FOR,
         () -> {
-          PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
+          CancelStatementListener listener = new CancelStatementListener();
+          disposal.register(listener);
+
+          PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs, listener);
           String stateSQL = pgQueryBuilder.createStateSQL();
           PreparedStatementSetter statementSetter =
               pgQueryBuilder.createStatementSetter(new AtomicLong(lastMatchingSerial));

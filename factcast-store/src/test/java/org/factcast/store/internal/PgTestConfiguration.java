@@ -15,9 +15,7 @@
  */
 package org.factcast.store.internal;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.store.AbstractCascadingDisposal;
 import org.factcast.store.PgFactStoreConfiguration;
 import org.mockito.Mockito;
 import org.postgresql.Driver;
@@ -31,6 +29,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.testcontainers.containers.PostgreSQLContainer;
+
+import io.micrometer.core.instrument.MeterRegistry;
+
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 @SuppressWarnings("resource")
 @Configuration
@@ -68,4 +71,12 @@ public class PgTestConfiguration {
   public PgMetrics pgMetrics(@NonNull MeterRegistry registry) {
     return Mockito.spy(new PgMetrics(registry));
   }
+
+  @Bean
+  @Primary
+  public TestCascadingDisposal disposal() {
+    return new TestCascadingDisposal();
+  }
+
+  public static class TestCascadingDisposal extends AbstractCascadingDisposal {}
 }

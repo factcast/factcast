@@ -15,23 +15,28 @@
  */
 package org.factcast.server.grpc;
 
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.*;
+
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionRequestTO;
+
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionRequestTO;
 
 @Slf4j
 @RequiredArgsConstructor
 public class OnCancelHandler implements Runnable {
-  @NonNull private final String clientIdPrefix;
+  @NonNull private final GrpcRequestMetadata meta;
   @NonNull private final SubscriptionRequestTO req;
   @NonNull private final AtomicReference<Subscription> subRef;
   @NonNull private final GrpcObserverAdapter observer;
 
   @Override
   public void run() {
+
+    String clientIdPrefix = meta.clientId().map(c -> c + "|").orElse("unknown|");
+
     log.debug(
         "{}got onCancel from stream, closing subscription {}", clientIdPrefix, req.debugInfo());
     try {

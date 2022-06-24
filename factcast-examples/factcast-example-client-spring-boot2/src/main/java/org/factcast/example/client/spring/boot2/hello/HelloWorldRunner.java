@@ -15,16 +15,18 @@
  */
 package org.factcast.example.client.spring.boot2.hello;
 
-import java.util.UUID;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.val;
+import java.util.*;
+
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.val;
 
 @RequiredArgsConstructor
 @Component
@@ -59,15 +61,12 @@ public class HelloWorldRunner implements CommandLineRunner {
     System.out.println(uc3.get().jsonPayload());
 
     fc.subscribe(
-            SubscriptionRequest.catchup(FactSpec.ns("users").type("UserCreated").version(3))
+            SubscriptionRequest.follow(FactSpec.ns("users").type("UserCreated").version(3))
                 .fromScratch(),
             element -> System.out.println(element))
         .awaitCatchup();
 
-    fc.subscribe(
-            SubscriptionRequest.catchup(FactSpec.ns("users").type("UserCreated").version(1))
-                .fromScratch(),
-            element -> System.out.println(element))
-        .awaitCatchup();
+    System.out.println("Mach tüt");
+    Thread.sleep(1000000000);
   }
 }

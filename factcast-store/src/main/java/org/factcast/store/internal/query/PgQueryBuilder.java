@@ -15,17 +15,17 @@
  */
 package org.factcast.store.internal.query;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
+import java.util.*;
+import java.util.Map.*;
+import java.util.concurrent.atomic.*;
+
 import org.factcast.core.spec.FactSpec;
 import org.factcast.store.internal.PgConstants;
 import org.springframework.jdbc.core.PreparedStatementSetter;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Provides {@link PreparedStatementSetter} and the corresponding SQL from a list of {@link
@@ -33,14 +33,12 @@ import org.springframework.jdbc.core.PreparedStatementSetter;
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
+@RequiredArgsConstructor
 @Slf4j
 public class PgQueryBuilder {
 
   final @NonNull List<FactSpec> factSpecs;
-
-  public PgQueryBuilder(@NonNull List<FactSpec> specs) {
-    factSpecs = specs;
-  }
+  final @NonNull CancelStatementListener listener;
 
   public PreparedStatementSetter createStatementSetter(@NonNull AtomicLong serial) {
     return p -> {
@@ -68,6 +66,8 @@ public class PgQueryBuilder {
         }
       }
       p.setLong(++count, serial.get());
+
+      listener.statement(p);
     };
   }
 

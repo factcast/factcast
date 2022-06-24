@@ -15,16 +15,21 @@
  */
 package org.factcast.store.internal.catchup.tmppaged;
 
-import com.google.common.base.Stopwatch;
 import java.sql.SQLException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
+
+import org.factcast.core.store.CascadingDisposal;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.store.internal.query.CancelStatementListener;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
+
+import com.google.common.base.Stopwatch;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Copies all matching SERs from fact to the catchup table, in order to be able to page effectively,
@@ -40,9 +45,15 @@ public class PgCatchUpPrepare {
 
   final SubscriptionRequestTO req;
 
+  final CascadingDisposal disposal;
+
   @SuppressWarnings("ConstantConditions")
   public long prepareCatchup(AtomicLong serial) {
-    PgQueryBuilder b = new PgQueryBuilder(req.specs());
+
+    CancelStatementListener listener = new CancelStatementListener();
+    disposal.register(listener);
+
+    PgQueryBuilder b = new PgQueryBuilder(req.specs(), listener);
 
     String catchupSQL = b.catchupSQL();
     return jdbc.execute(

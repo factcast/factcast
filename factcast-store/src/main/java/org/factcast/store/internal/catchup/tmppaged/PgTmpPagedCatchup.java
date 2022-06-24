@@ -15,14 +15,11 @@
  */
 package org.factcast.store.internal.catchup.tmppaged;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.util.*;
 import java.util.concurrent.atomic.*;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
+
 import org.factcast.core.Fact;
+import org.factcast.core.store.CascadingDisposal;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
@@ -34,6 +31,13 @@ import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -47,6 +51,7 @@ public class PgTmpPagedCatchup implements PgCatchup {
   @NonNull final AtomicLong serial;
   @NonNull final PgMetrics metrics;
   @NonNull final PgBlacklist blacklist;
+  @NonNull final CascadingDisposal disposal;
 
   @SneakyThrows
   @Override
@@ -66,7 +71,7 @@ public class PgTmpPagedCatchup implements PgCatchup {
     long factCounter = 0L;
     jdbc.execute("CREATE TEMPORARY TABLE catchup(ser bigint)");
 
-    PgCatchUpPrepare prep = new PgCatchUpPrepare(jdbc, request);
+    PgCatchUpPrepare prep = new PgCatchUpPrepare(jdbc, request, disposal);
     // first collect all the sers
     var numberOfFactsToCatchUp = prep.prepareCatchup(serial);
     // and AFTERWARDs create the inmem index

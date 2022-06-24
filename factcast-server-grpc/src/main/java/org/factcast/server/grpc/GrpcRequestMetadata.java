@@ -15,18 +15,24 @@
  */
 package org.factcast.server.grpc;
 
+import java.util.*;
+import java.util.stream.*;
+
+import org.factcast.core.store.AbstractCascadingDisposal;
+import org.factcast.grpc.api.Headers;
+import org.springframework.beans.factory.DisposableBean;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+
 import io.grpc.Metadata;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.OptionalInt;
-import java.util.stream.Stream;
+
 import lombok.AccessLevel;
 import lombok.Setter;
-import org.factcast.grpc.api.Headers;
+import lombok.extern.slf4j.Slf4j;
 
-public class GrpcRequestMetadata {
+@Slf4j
+public class GrpcRequestMetadata extends AbstractCascadingDisposal implements DisposableBean {
 
   static final String UNKNOWN = "unknown";
 
@@ -57,10 +63,15 @@ public class GrpcRequestMetadata {
   }
 
   public Optional<String> clientId() {
-    return Optional.ofNullable(headers).map(headers -> headers.get(Headers.CLIENT_ID));
+    return Optional.ofNullable(headers).map(h -> h.get(Headers.CLIENT_ID));
   }
 
   public String clientIdAsString() {
     return clientId().orElse(UNKNOWN);
+  }
+
+  @Override
+  public void destroy() {
+    disposeAll();
   }
 }

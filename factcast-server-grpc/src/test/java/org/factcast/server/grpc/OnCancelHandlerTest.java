@@ -15,23 +15,27 @@
  */
 package org.factcast.server.grpc;
 
-import static org.mockito.Mockito.*;
+import java.util.concurrent.atomic.*;
 
-import java.util.concurrent.atomic.AtomicReference;
-import lombok.NonNull;
-import lombok.SneakyThrows;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import lombok.NonNull;
+import lombok.SneakyThrows;
+
+import static org.mockito.Mockito.*;
+
 @ExtendWith(MockitoExtension.class)
 class OnCancelHandlerTest {
-  private static final String CLIENT_ID_PREFIX = "CLIENT_ID_PREFIX";
   @Mock private @NonNull SubscriptionRequestTO req;
   @Mock private @NonNull GrpcObserverAdapter observer;
+  @Mock private @NonNull GrpcRequestMetadata meta;
 
   @Nested
   class WhenRuning {
@@ -42,7 +46,7 @@ class OnCancelHandlerTest {
     @BeforeEach
     void setup() {
       AtomicReference<Subscription> subRef = new AtomicReference<>(subscription);
-      underTest = spy(new OnCancelHandler("id", req, subRef, observer));
+      underTest = spy(new OnCancelHandler(meta, req, subRef, observer));
     }
 
     @SneakyThrows

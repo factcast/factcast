@@ -15,18 +15,11 @@
  */
 package org.factcast.store.internal;
 
-import com.google.common.eventbus.AsyncEventBus;
-import com.google.common.eventbus.EventBus;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.concurrent.*;
+
 import javax.sql.DataSource;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
-import net.javacrumbs.shedlock.core.LockProvider;
-import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
-import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
-import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMode;
+
+import org.factcast.core.store.CascadingDisposal;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.FactTransformerService;
@@ -59,6 +52,20 @@ import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+
+import com.google.common.eventbus.AsyncEventBus;
+import com.google.common.eventbus.EventBus;
+
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+
+import net.javacrumbs.shedlock.core.LockProvider;
+import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
+import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
+import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMode;
+
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Main @Configuration class for a PGFactStore
@@ -117,7 +124,8 @@ public class PgFactStoreInternalConfiguration {
       FactTransformerService factTransformerService,
       PgFactIdToSerialMapper pgFactIdToSerialMapper,
       PgSnapshotCache snapCache,
-      PgMetrics pgMetrics) {
+      PgMetrics pgMetrics,
+      CascadingDisposal disposal) {
     return new PgFactStore(
         jdbcTemplate,
         subscriptionFactory,
@@ -126,6 +134,7 @@ public class PgFactStoreInternalConfiguration {
         factTransformerService,
         pgFactIdToSerialMapper,
         snapCache,
+        disposal,
         pgMetrics);
   }
 
@@ -139,7 +148,8 @@ public class PgFactStoreInternalConfiguration {
       FactTransformersFactory transformerFactory,
       FastForwardTarget target,
       PgMetrics metrics,
-      PgBlacklist blacklist) {
+      PgBlacklist blacklist,
+      CascadingDisposal disposal) {
     return new PgSubscriptionFactory(
         jdbcTemplate,
         eventBus,
@@ -149,7 +159,8 @@ public class PgFactStoreInternalConfiguration {
         transformerFactory,
         target,
         metrics,
-        blacklist);
+        blacklist,
+        disposal);
   }
 
   @Bean
@@ -197,7 +208,9 @@ public class PgFactStoreInternalConfiguration {
     return new DataSourceTransactionManager(ds);
   }
 
-  /** @return A fallback {@code MeterRegistry} in case none is configured. */
+  /**
+   * @return A fallback {@code MeterRegistry} in case none is configured.
+   */
   @Bean
   @ConditionalOnMissingBean
   public MeterRegistry meterRegistry() {

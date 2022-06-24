@@ -15,19 +15,14 @@
  */
 package org.factcast.store.internal;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.eventbus.EventBus;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.factcast.core.Fact;
+import org.factcast.core.store.CascadingDisposal;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
@@ -35,12 +30,22 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.store.internal.blacklist.PgBlacklist;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
+import org.factcast.store.internal.query.CancelStatementListener;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.eventbus.EventBus;
+
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Creates and maintains a subscription.
@@ -72,6 +77,7 @@ public class PgFactStream {
   final FastForwardTarget ffwdTarget;
   final PgMetrics metrics;
   final PgBlacklist blacklist;
+  final CascadingDisposal disposal;
 
   CondensedQueryExecutor condensedExecutor;
 
@@ -83,7 +89,10 @@ public class PgFactStream {
     this.request = request;
     log.debug("{} connect subscription {}", request, request.dump());
     postQueryMatcher = new PgPostQueryMatcher(request);
-    PgQueryBuilder q = new PgQueryBuilder(request.specs());
+    CancelStatementListener listener = new CancelStatementListener();
+    disposal.register(listener);
+
+    PgQueryBuilder q = new PgQueryBuilder(request.specs(), listener);
     initializeSerialToStartAfter();
 
     if (request.streamInfo()) {
@@ -188,13 +197,13 @@ public class PgFactStream {
     if (isConnected()) {
       log.trace("{} catchup phase1 - historic facts staring with SER={}", request, serial.get());
       pgCatchupFactory
-          .create(request, postQueryMatcher, subscription, serial, metrics, blacklist)
+          .create(request, postQueryMatcher, subscription, serial, metrics, blacklist, disposal)
           .run();
     }
     if (isConnected()) {
       log.trace("{} catchup phase2 - facts since connect (SER={})", request, serial.get());
       pgCatchupFactory
-          .create(request, postQueryMatcher, subscription, serial, metrics, blacklist)
+          .create(request, postQueryMatcher, subscription, serial, metrics, blacklist, disposal)
           .run();
     }
   }

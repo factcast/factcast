@@ -15,17 +15,13 @@
  */
 package org.factcast.store.internal.catchup.tmppaged;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
-import io.micrometer.core.instrument.Counter;
 import java.util.*;
 import java.util.concurrent.atomic.*;
-import lombok.NonNull;
-import lombok.SneakyThrows;
+
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
+import org.factcast.core.store.CascadingDisposal;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
@@ -48,6 +44,14 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 
+import io.micrometer.core.instrument.Counter;
+
+import lombok.NonNull;
+import lombok.SneakyThrows;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 @ExtendWith(MockitoExtension.class)
 class PgTmpPagedCatchupTest {
 
@@ -60,6 +64,7 @@ class PgTmpPagedCatchupTest {
   @Mock @NonNull PgMetrics metrics;
   @Mock @NonNull Counter counter;
   @Mock @NonNull PgBlacklist blacklist;
+  @Mock @NonNull CascadingDisposal disposal;
   @InjectMocks PgTmpPagedCatchup underTest;
 
   @Nested
