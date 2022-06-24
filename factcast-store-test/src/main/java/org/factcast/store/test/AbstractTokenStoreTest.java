@@ -15,13 +15,14 @@
  */
 package org.factcast.store.test;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.UUID;
+import java.util.*;
 import org.factcast.core.store.State;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("ALL")
 public abstract class AbstractTokenStoreTest {

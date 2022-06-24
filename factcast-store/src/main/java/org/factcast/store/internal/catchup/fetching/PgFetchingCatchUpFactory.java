@@ -15,7 +15,7 @@
  */
 package org.factcast.store.internal.catchup.fetching;
 
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.*;
 import lombok.Generated;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +24,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.PgPostQueryMatcher;
+import org.factcast.store.internal.blacklist.PgBlacklist;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 
@@ -42,8 +43,16 @@ public class PgFetchingCatchUpFactory implements PgCatchupFactory {
       @NonNull PgPostQueryMatcher postQueryMatcher,
       @NonNull SubscriptionImpl subscription,
       @NonNull AtomicLong serial,
-      @NonNull PgMetrics metrics) {
+      @NonNull PgMetrics metrics,
+      @NonNull PgBlacklist blacklist) {
     return new PgFetchingCatchup(
-        connectionSupplier, props, request, postQueryMatcher, subscription, serial, metrics);
+        connectionSupplier,
+        props,
+        request,
+        postQueryMatcher,
+        subscription,
+        serial,
+        metrics,
+        blacklist);
   }
 }

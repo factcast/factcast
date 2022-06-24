@@ -15,23 +15,24 @@
  */
 package org.factcast.store.internal.listen;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
+import java.util.concurrent.*;
+import java.util.function.*;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
 import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.listen.PgListener.Signal;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.factcast.store.internal.listen.PgListener.FactInsertionSignal;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -45,8 +46,9 @@ import org.postgresql.jdbc.PgConnection;
 @ExtendWith(MockitoExtension.class)
 public class PgListenerTest {
 
-  private static final Predicate<Signal> IS_FACT_INSERT =
-      f -> f.name().equals(PgConstants.CHANNEL_FACT_INSERT);
+  private static final Predicate<Object> IS_FACT_INSERT = f -> f instanceof FactInsertionSignal;
+  private static final Predicate<Object> NOT_SCHEDULED_POLL =
+      f -> !((FactInsertionSignal) f).name().equals("scheduled-poll");
 
   @Mock PgConnectionSupplier pgConnectionSupplier;
 
@@ -62,7 +64,7 @@ public class PgListenerTest {
 
   final StoreConfigurationProperties props = new StoreConfigurationProperties();
 
-  @Captor ArgumentCaptor<Signal> factCaptor;
+  @Captor ArgumentCaptor<Object> factCaptor;
 
   @Test
   public void postgresListenersAreSetup() throws SQLException {
@@ -79,8 +81,14 @@ public class PgListenerTest {
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
     pgListener.informSubscribersAboutFreshConnection();
 
-    verify(eventBus, times(1)).post(factCaptor.capture());
-    assertEquals("scheduled-poll", factCaptor.getAllValues().get(0).name());
+    verify(eventBus, atLeastOnce()).post(factCaptor.capture());
+    assertThat(
+            factCaptor.getAllValues().stream()
+                .anyMatch(
+                    e ->
+                        e instanceof FactInsertionSignal
+                            && ((FactInsertionSignal) e).name().equals("scheduled-poll")))
+        .isTrue();
   }
 
   @Test
@@ -156,10 +164,11 @@ public class PgListenerTest {
         };
 
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
-    pgListener.informSubscriberOfChannelNotifications(receivedNotifications);
+    pgListener.processNotifications(receivedNotifications);
 
     verify(eventBus, times(1)).post(factCaptor.capture());
-    assertEquals(PgConstants.CHANNEL_FACT_INSERT, factCaptor.getAllValues().get(0).name());
+    assertThat(factCaptor.getAllValues().stream().anyMatch(e -> e instanceof FactInsertionSignal))
+        .isTrue();
   }
 
   @Test
@@ -171,9 +180,9 @@ public class PgListenerTest {
         };
 
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
-    pgListener.informSubscriberOfChannelNotifications(receivedNotifications);
+    pgListener.processNotifications(receivedNotifications);
 
-    verify(eventBus, never()).post(any(Signal.class));
+    verify(eventBus, never()).post(any(FactInsertionSignal.class));
   }
 
   @Test
@@ -246,24 +255,33 @@ public class PgListenerTest {
     var allEvents = factCaptor.getAllValues();
 
     // first event is the general wakeup to the subscribers after startup
-    assertEquals("scheduled-poll", allEvents.get(0).name());
+    assertThat(
+            factCaptor.getAllValues().stream()
+                .anyMatch(
+                    e ->
+                        e instanceof FactInsertionSignal
+                            && ((FactInsertionSignal) e).name().equals("scheduled-poll")))
+        .isTrue();
     // events 2 - incl. 4 are notifies
-    assertTrue(allEvents.subList(1, 3).stream().allMatch(IS_FACT_INSERT));
+    assertTrue(
+        allEvents.stream()
+            .filter(e -> !(e instanceof PgListener.BlacklistChangeSignal))
+            .allMatch(IS_FACT_INSERT));
 
     // in total there are only 3 notifies
     // TODO delete or assert?
     long totalNotifyCount = allEvents.stream().filter(IS_FACT_INSERT).count();
 
     // grouped by tx id, ns and type
-    assertThat(allEvents.stream().filter(IS_FACT_INSERT))
+    assertThat(allEvents.stream().filter(IS_FACT_INSERT).filter(NOT_SCHEDULED_POLL))
         .containsExactlyInAnyOrder(
-            new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, null, null),
-            new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, null, null),
-            new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, null, null),
-            new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theType"),
-            new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theOtherType"),
-            new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theType"),
-            new PgListener.Signal(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theOtherType"));
+            new FactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT, null, null),
+            new FactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT, null, null),
+            new FactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT, null, null),
+            new FactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theType"),
+            new FactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theOtherType"),
+            new FactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theType"),
+            new FactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theOtherType"));
   }
 
   @Test
