@@ -16,9 +16,8 @@
 package org.factcast.store.internal.catchup.tmppaged;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.*;
+import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -32,6 +31,7 @@ import org.factcast.store.internal.PgPostQueryMatcher;
 import org.factcast.store.internal.StoreMetrics;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
+import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
@@ -46,6 +46,7 @@ public class PgTmpPagedCatchup implements PgCatchup {
   @NonNull final SubscriptionImpl subscription;
   @NonNull final AtomicLong serial;
   @NonNull final PgMetrics metrics;
+  @NonNull final CurrentStatementHolder statementHolder;
 
   @SneakyThrows
   @Override
@@ -57,6 +58,7 @@ public class PgTmpPagedCatchup implements PgCatchup {
       fetch(jdbc);
     } finally {
       ds.destroy();
+      statementHolder.statement(null);
     }
   }
 
@@ -65,7 +67,7 @@ public class PgTmpPagedCatchup implements PgCatchup {
     long factCounter = 0L;
     jdbc.execute("CREATE TEMPORARY TABLE catchup(ser bigint)");
 
-    PgCatchUpPrepare prep = new PgCatchUpPrepare(jdbc, request);
+    PgCatchUpPrepare prep = new PgCatchUpPrepare(jdbc, request, statementHolder);
     // first collect all the sers
     var numberOfFactsToCatchUp = prep.prepareCatchup(serial);
     // and AFTERWARDs create the inmem index
@@ -74,7 +76,8 @@ public class PgTmpPagedCatchup implements PgCatchup {
     var skipTesting = postQueryMatcher.canBeSkipped();
 
     if (numberOfFactsToCatchUp > 0) {
-      PgCatchUpFetchTmpPage fetch = new PgCatchUpFetchTmpPage(jdbc, props.getPageSize(), request);
+      PgCatchUpFetchTmpPage fetch =
+          new PgCatchUpFetchTmpPage(jdbc, props.getPageSize(), request, statementHolder);
       List<Fact> facts;
       do {
         facts = fetch.fetchFacts(serial);

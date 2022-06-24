@@ -17,11 +17,12 @@ package org.factcast.store.internal.catchup.tmppaged;
 
 import com.google.common.base.Stopwatch;
 import java.sql.SQLException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
@@ -40,36 +41,41 @@ public class PgCatchUpPrepare {
 
   final SubscriptionRequestTO req;
 
+  final CurrentStatementHolder statementHolder;
+
   @SuppressWarnings("ConstantConditions")
   public long prepareCatchup(AtomicLong serial) {
-    PgQueryBuilder b = new PgQueryBuilder(req.specs());
-
-    String catchupSQL = b.catchupSQL();
-    return jdbc.execute(
-        catchupSQL,
-        (PreparedStatementCallback<Long>)
-            ps -> {
-              log.debug("{} preparing paging for matches after {}", req, serial.get());
-              try {
-                Stopwatch sw = Stopwatch.createStarted();
-                b.createStatementSetter(serial).setValues(ps);
-                long numberOfFactsToCatchup = ps.executeUpdate();
-                sw.stop();
-                if (numberOfFactsToCatchup > 0) {
-                  log.debug(
-                      "{} prepared {} facts in {}ms",
-                      req,
-                      numberOfFactsToCatchup,
-                      sw.elapsed(TimeUnit.MILLISECONDS));
-                  return numberOfFactsToCatchup;
-                } else {
-                  log.debug("{} nothing to catch up", req);
-                  return 0L;
+    PgQueryBuilder b = new PgQueryBuilder(req.specs(), statementHolder);
+    try {
+      String catchupSQL = b.catchupSQL();
+      return jdbc.execute(
+          catchupSQL,
+          (PreparedStatementCallback<Long>)
+              ps -> {
+                log.debug("{} preparing paging for matches after {}", req, serial.get());
+                try {
+                  Stopwatch sw = Stopwatch.createStarted();
+                  b.createStatementSetter(serial).setValues(ps);
+                  long numberOfFactsToCatchup = ps.executeUpdate();
+                  sw.stop();
+                  if (numberOfFactsToCatchup > 0) {
+                    log.debug(
+                        "{} prepared {} facts in {}ms",
+                        req,
+                        numberOfFactsToCatchup,
+                        sw.elapsed(TimeUnit.MILLISECONDS));
+                    return numberOfFactsToCatchup;
+                  } else {
+                    log.debug("{} nothing to catch up", req);
+                    return 0L;
+                  }
+                } catch (SQLException ex) {
+                  log.error(req + " While trying to prepare catchup", ex);
+                  throw ex;
                 }
-              } catch (SQLException ex) {
-                log.error(req + " While trying to prepare catchup", ex);
-                throw ex;
-              }
-            });
+              });
+    } finally {
+      statementHolder.statement(null);
+    }
   }
 }
