@@ -15,13 +15,15 @@
  */
 package org.factcast.store.internal.catchup.fetching;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 import io.micrometer.core.instrument.Counter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.*;
+import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.factcast.core.Fact;
@@ -33,10 +35,13 @@ import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.PgPostQueryMatcher;
 import org.factcast.store.internal.StoreMetrics;
+import org.factcast.store.internal.blacklist.PgBlacklist;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -59,6 +64,7 @@ class PgFetchingCatchupTest {
   @Mock @NonNull PgPostQueryMatcher postQueryMatcher;
   @Mock @NonNull SubscriptionImpl subscription;
   @Mock @NonNull AtomicLong serial;
+  @Mock @NonNull PgBlacklist blacklist;
 
   @Mock(lenient = true)
   @NonNull
@@ -121,7 +127,7 @@ class PgFetchingCatchupTest {
           new PgFactExtractor(new AtomicLong(1L)) {
             @Override
             public @NonNull Fact mapRow(@NonNull ResultSet rs, int rowNum) throws SQLException {
-              return null;
+              return Fact.builder().buildWithoutPayload();
             }
           };
 
@@ -145,6 +151,7 @@ class PgFetchingCatchupTest {
     @SneakyThrows
     @Test
     void skipsPostQueryMatching() {
+      when(extractor.mapRow(any(), anyInt())).thenReturn(Fact.builder().buildWithoutPayload());
       final var cbh = underTest.createRowCallbackHandler(true, extractor);
       cbh.processRow(mock(ResultSet.class));
 
@@ -193,6 +200,26 @@ class PgFetchingCatchupTest {
                 cbh.processRow(rs);
               })
           .isInstanceOf(TransformationException.class);
+    }
+
+    @SneakyThrows
+    @Test
+    void filtersBlacklistedFacts() {
+      final var cbh = underTest.createRowCallbackHandler(false, extractor);
+      ResultSet rs = mock(ResultSet.class);
+      UUID id1 = UUID.randomUUID();
+      UUID id2 = UUID.randomUUID();
+      Fact testFact1 = Fact.builder().id(id1).buildWithoutPayload();
+      Fact testFact2 = Fact.builder().id(id2).buildWithoutPayload();
+      when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact1, testFact2);
+      when(postQueryMatcher.test(any())).thenReturn(true);
+      when(blacklist.isBlocked(id1)).thenReturn(true);
+      when(blacklist.isBlocked(id2)).thenReturn(false);
+      cbh.processRow(rs);
+      cbh.processRow(rs);
+
+      verify(subscription, never()).notifyElement(testFact1);
+      verify(subscription, times(1)).notifyElement(testFact2);
     }
   }
 }

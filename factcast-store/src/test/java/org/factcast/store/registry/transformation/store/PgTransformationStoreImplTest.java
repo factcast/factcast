@@ -18,18 +18,15 @@ package org.factcast.store.registry.transformation.store;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.registry.transformation.TransformationStore;
 import org.factcast.store.test.IntegrationTest;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @ContextConfiguration(classes = {PgTestConfiguration.class})
-@Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @ExtendWith(MockitoExtension.class)
 @IntegrationTest
