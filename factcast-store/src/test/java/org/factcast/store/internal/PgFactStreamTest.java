@@ -18,28 +18,22 @@ package org.factcast.store.internal;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
 import io.micrometer.core.instrument.DistributionSummary;
 import java.sql.ResultSet;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
+import java.util.*;
+import java.util.concurrent.atomic.*;
+import java.util.function.*;
 import lombok.SneakyThrows;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.store.internal.PgFactStream.RatioLogLevel;
+import org.factcast.store.internal.blacklist.PgBlacklist;
+import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
@@ -67,6 +61,8 @@ public class PgFactStreamTest {
   @Mock JdbcTemplate jdbc;
   @Mock PgLatestSerialFetcher fetcher;
   @Mock DistributionSummary distributionSummary;
+  @Mock PgBlacklist blacklist;
+  @Mock PgCatchupFactory pgCatchupFactory;
   @InjectMocks PgFactStream uut;
 
   @Test
@@ -256,15 +252,17 @@ public class PgFactStreamTest {
     @Mock(lenient = true)
     private ResultSet rs;
 
-    @Mock private SubscriptionImpl subscription;
+    @Mock SubscriptionImpl subscription;
 
-    @Mock private PgPostQueryMatcher postQueryMatcher;
+    @Mock PgPostQueryMatcher postQueryMatcher;
 
-    @Mock private Supplier<Boolean> isConnectedSupplier;
+    @Mock Supplier<Boolean> isConnectedSupplier;
 
-    @Mock private AtomicLong serial;
+    @Mock AtomicLong serial;
 
-    @Mock private SubscriptionRequestTO request;
+    @Mock SubscriptionRequestTO request;
+
+    @Mock PgBlacklist blacklist;
 
     @InjectMocks private PgFactStream.FactRowCallbackHandler uut;
 
@@ -292,6 +290,8 @@ public class PgFactStreamTest {
     @Test
     @SneakyThrows
     void test_happyCase() {
+      when(blacklist.isBlocked(any(UUID.class))).thenReturn(false);
+      when(postQueryMatcher.canBeSkipped()).thenReturn(false);
       when(isConnectedSupplier.get()).thenReturn(true);
 
       when(rs.isClosed()).thenReturn(false);
@@ -305,7 +305,28 @@ public class PgFactStreamTest {
 
       uut.processRow(rs);
 
-      verify(postQueryMatcher).test(any());
+      verify(postQueryMatcher, times(1)).test(any());
+      verify(subscription).notifyElement(any());
+      verify(serial).set(10L);
+    }
+
+    @Test
+    @SneakyThrows
+    void test_happyCase_withoutMatching() {
+      when(blacklist.isBlocked(any(UUID.class))).thenReturn(false);
+      when(postQueryMatcher.canBeSkipped()).thenReturn(true);
+      when(isConnectedSupplier.get()).thenReturn(true);
+
+      when(rs.isClosed()).thenReturn(false);
+      when(rs.getString(PgConstants.ALIAS_ID)).thenReturn("550e8400-e29b-11d4-a716-446655440000");
+      when(rs.getString(PgConstants.ALIAS_NS)).thenReturn("foo");
+      when(rs.getString(PgConstants.COLUMN_HEADER)).thenReturn("{}");
+      when(rs.getString(PgConstants.COLUMN_PAYLOAD)).thenReturn("{}");
+      when(rs.getLong(PgConstants.COLUMN_SER)).thenReturn(10L);
+
+      uut.processRow(rs);
+
+      verify(postQueryMatcher, never()).test(any());
       verify(subscription).notifyElement(any());
       verify(serial).set(10L);
     }
@@ -313,6 +334,7 @@ public class PgFactStreamTest {
     @Test
     @SneakyThrows
     void test_exception() {
+      when(blacklist.isBlocked(any())).thenReturn(false);
       when(isConnectedSupplier.get()).thenReturn(true);
 
       when(rs.isClosed()).thenReturn(false);
@@ -333,6 +355,65 @@ public class PgFactStreamTest {
       verify(subscription).notifyError(exception);
       verify(rs).close();
       verify(serial, never()).set(10L);
+    }
+  }
+
+  @Nested
+  class WhenCatchingUp {
+    @Test
+    void ifDisconnected_doNothing() {
+      uut = spy(uut);
+      when(uut.isConnected()).thenReturn(false);
+
+      uut.catchup(mock(PgPostQueryMatcher.class));
+
+      verifyNoInteractions(pgCatchupFactory);
+    }
+
+    @Test
+    void ifConnected_catchupTwice() {
+      uut = spy(uut);
+      PgCatchup catchup1 = mock(PgCatchup.class);
+      PgCatchup catchup2 = mock(PgCatchup.class);
+      when(uut.isConnected()).thenReturn(true);
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any(), any()))
+          .thenReturn(catchup1, catchup2);
+
+      uut.catchup(mock(PgPostQueryMatcher.class));
+
+      verify(catchup1, times(1)).run();
+      verify(catchup2, times(1)).run();
+    }
+  }
+
+  @Nested
+  class WhenInitializingSerialToStartAfter {
+    @Test
+    void fromScratch() {
+      when(reqTo.startingAfter()).thenReturn(Optional.empty());
+      uut.request = reqTo;
+      uut.initializeSerialToStartAfter();
+      assertThat(uut.serial()).hasValue(0);
+    }
+
+    @Test
+    void fromId() {
+      UUID id = UUID.randomUUID();
+      when(reqTo.startingAfter()).thenReturn(Optional.of(id));
+      when(id2ser.retrieve(id)).thenReturn(123L);
+      uut.request = reqTo;
+      uut.initializeSerialToStartAfter();
+      assertThat(uut.serial()).hasValue(123L);
+    }
+
+    @Test
+    void fromUnknownId() {
+      UUID id = UUID.randomUUID();
+      when(reqTo.startingAfter()).thenReturn(Optional.of(id));
+      when(id2ser.retrieve(id)).thenReturn(0L);
+      uut.request = reqTo;
+      uut.initializeSerialToStartAfter();
+      assertThat(uut.serial()).hasValue(0);
     }
   }
 }
