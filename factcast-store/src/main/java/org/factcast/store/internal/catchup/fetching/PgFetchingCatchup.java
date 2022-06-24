@@ -16,7 +16,7 @@
 package org.factcast.store.internal.catchup.fetching;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -30,6 +30,7 @@ import org.factcast.store.internal.PgPostQueryMatcher;
 import org.factcast.store.internal.StoreMetrics.EVENT;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
+import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.postgresql.jdbc.PgConnection;
@@ -55,6 +56,8 @@ public class PgFetchingCatchup implements PgCatchup {
 
   @NonNull final PgMetrics metrics;
 
+  @NonNull final CurrentStatementHolder statementHolder;
+
   protected long factCounter = 0L;
 
   @SneakyThrows
@@ -72,6 +75,7 @@ public class PgFetchingCatchup implements PgCatchup {
       fetch(jdbc);
     } finally {
       ds.destroy();
+      statementHolder.statement(null);
     }
   }
 
@@ -80,14 +84,14 @@ public class PgFetchingCatchup implements PgCatchup {
     jdbc.setFetchSize(props.getPageSize());
     jdbc.setQueryTimeout(0); // disable query timeout
     var skipTesting = postQueryMatcher.canBeSkipped();
-
-    PgQueryBuilder b = new PgQueryBuilder(req.specs());
+    PgQueryBuilder b = new PgQueryBuilder(req.specs(), statementHolder);
     var extractor = new PgFactExtractor(serial);
     String catchupSQL = b.createSQL();
     jdbc.query(
         catchupSQL,
         b.createStatementSetter(serial),
         createRowCallbackHandler(skipTesting, extractor));
+
     metrics
         .counter(EVENT.CATCHUP_FACT)
         .increment(factCounter); // TODO this needs to TAG it for each subscription?
