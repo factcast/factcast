@@ -15,21 +15,24 @@
  */
 package org.factcast.store.internal;
 
-import static org.mockito.Mockito.*;
-
-import com.google.common.eventbus.EventBus;
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import com.google.common.eventbus.EventBus;
+
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PgSubscriptionFactoryTest {
@@ -68,7 +71,7 @@ class PgSubscriptionFactoryTest {
 
     @Test
     void testConnect_transformationException() {
-      final var e = new TransformationException("foo");
+      var e = new TransformationException("foo");
 
       doThrow(e).when(pgsub).connect(req);
 
@@ -80,7 +83,7 @@ class PgSubscriptionFactoryTest {
 
     @Test
     void testConnect_someException() {
-      final var e = new IllegalArgumentException("foo");
+      var e = new IllegalArgumentException("foo");
 
       doThrow(e).when(pgsub).connect(req);
 

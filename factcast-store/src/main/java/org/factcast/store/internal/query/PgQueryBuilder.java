@@ -18,11 +18,13 @@ package org.factcast.store.internal.query;
 import java.util.*;
 import java.util.Map.*;
 import java.util.concurrent.atomic.*;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
+
 import org.factcast.core.spec.FactSpec;
 import org.factcast.store.internal.PgConstants;
 import org.springframework.jdbc.core.PreparedStatementSetter;
+
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Provides {@link PreparedStatementSetter} and the corresponding SQL from a list of {@link
@@ -41,9 +43,9 @@ public class PgQueryBuilder {
     statementHolder = null;
   }
 
-  public PgQueryBuilder(@NonNull List<FactSpec> specs, @NonNull CurrentStatementHolder listener) {
+  public PgQueryBuilder(@NonNull List<FactSpec> specs, @NonNull CurrentStatementHolder holder) {
     factSpecs = specs;
-    this.statementHolder = listener;
+    this.statementHolder = holder;
   }
 
   public PreparedStatementSetter createStatementSetter(@NonNull AtomicLong serial) {
