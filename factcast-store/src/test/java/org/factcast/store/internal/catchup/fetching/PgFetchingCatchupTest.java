@@ -89,13 +89,26 @@ class PgFetchingCatchupTest {
       PgConnection con = mock(PgConnection.class);
       when(connectionSupplier.get()).thenReturn(con);
 
-      final var uut = spy(underTest);
+      var uut = spy(underTest);
       doNothing().when(uut).fetch(any());
 
       uut.run();
 
       verify(con).setAutoCommit(false);
       verify(con).close();
+    }
+
+    @SneakyThrows
+    @Test
+    void removesCurrentStatement() {
+      PgConnection con = mock(PgConnection.class);
+      when(connectionSupplier.get()).thenReturn(con);
+      var uut = spy(underTest);
+      doNothing().when(uut).fetch(any());
+
+      uut.run();
+
+      verify(statementHolder).statement(null);
     }
   }
 
@@ -157,7 +170,7 @@ class PgFetchingCatchupTest {
     @Test
     void skipsPostQueryMatching() {
       when(extractor.mapRow(any(), anyInt())).thenReturn(Fact.builder().buildWithoutPayload());
-      final var cbh = underTest.createRowCallbackHandler(true, extractor);
+      var cbh = underTest.createRowCallbackHandler(true, extractor);
       cbh.processRow(mock(ResultSet.class));
 
       verifyNoInteractions(postQueryMatcher);
@@ -166,7 +179,7 @@ class PgFetchingCatchupTest {
     @SneakyThrows
     @Test
     void filtersInPostQueryMatching() {
-      final var cbh = underTest.createRowCallbackHandler(false, extractor);
+      var cbh = underTest.createRowCallbackHandler(false, extractor);
       ResultSet rs = mock(ResultSet.class);
       Fact testFact = new TestFact();
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
@@ -179,7 +192,7 @@ class PgFetchingCatchupTest {
     @SneakyThrows
     @Test
     void notifies() {
-      final var cbh = underTest.createRowCallbackHandler(false, extractor);
+      var cbh = underTest.createRowCallbackHandler(false, extractor);
       ResultSet rs = mock(ResultSet.class);
       Fact testFact = new TestFact();
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
@@ -192,7 +205,7 @@ class PgFetchingCatchupTest {
     @SneakyThrows
     @Test
     void notifiesTransformationException() {
-      final var cbh = underTest.createRowCallbackHandler(false, extractor);
+      var cbh = underTest.createRowCallbackHandler(false, extractor);
       ResultSet rs = mock(ResultSet.class);
       Fact testFact = new TestFact();
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
@@ -210,7 +223,7 @@ class PgFetchingCatchupTest {
     @SneakyThrows
     @Test
     void filtersBlacklistedFacts() {
-      final var cbh = underTest.createRowCallbackHandler(false, extractor);
+      var cbh = underTest.createRowCallbackHandler(false, extractor);
       ResultSet rs = mock(ResultSet.class);
       UUID id1 = UUID.randomUUID();
       UUID id2 = UUID.randomUUID();

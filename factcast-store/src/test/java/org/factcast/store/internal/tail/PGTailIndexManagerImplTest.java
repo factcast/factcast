@@ -15,34 +15,10 @@
  */
 package org.factcast.store.internal.tail;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.factcast.store.internal.PgConstants.INDEX_NAME_COLUMN;
-import static org.factcast.store.internal.PgConstants.IS_INVALID;
-import static org.factcast.store.internal.PgConstants.IS_VALID;
-import static org.factcast.store.internal.PgConstants.LIST_FACT_INDEXES_WITH_VALIDATION;
-import static org.factcast.store.internal.PgConstants.VALID_COLUMN;
-import static org.factcast.store.internal.PgConstants.dropTailIndex;
-import static org.factcast.store.internal.PgConstants.tailIndexName;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.endsWith;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.startsWith;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-
 import java.sql.ResultSet;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+
 import org.assertj.core.util.Lists;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
@@ -55,6 +31,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.factcast.store.internal.PgConstants.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PGTailIndexManagerImplTest {
@@ -70,7 +50,7 @@ class PGTailIndexManagerImplTest {
 
     @Test
     void returnsIfTailCreationIsDisabled() {
-      final var uut = spy(underTest);
+      var uut = spy(underTest);
       when(props.isTailIndexingEnabled()).thenReturn(false);
 
       uut.triggerTailCreation();
@@ -81,7 +61,7 @@ class PGTailIndexManagerImplTest {
 
     @Test
     void createsTailIfIndexesEmpty() {
-      final var uut = spy(underTest);
+      var uut = spy(underTest);
       when(props.isTailIndexingEnabled()).thenReturn(true);
       when(jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION)).thenReturn(new LinkedList<>());
       doNothing().when(uut).createNewTail();
@@ -93,7 +73,7 @@ class PGTailIndexManagerImplTest {
 
     @Test
     void createsTailIfYoungestIndexTooOld() {
-      final var uut = spy(underTest);
+      var uut = spy(underTest);
       when(props.isTailIndexingEnabled()).thenReturn(true);
       when(jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION))
           .thenReturn(
@@ -112,7 +92,7 @@ class PGTailIndexManagerImplTest {
 
     @Test
     void createsNoTailIfYoungestIndexIsRecent() {
-      final var uut = spy(underTest);
+      var uut = spy(underTest);
       when(props.isTailIndexingEnabled()).thenReturn(true);
       when(props.getMinimumTailAge()).thenReturn(Duration.ofDays(1));
       when(props.getTailGenerationsToKeep()).thenReturn(3);
@@ -130,7 +110,7 @@ class PGTailIndexManagerImplTest {
 
     @Test
     void removesStaleIndexes() {
-      final var uut = spy(underTest);
+      var uut = spy(underTest);
       when(props.isTailIndexingEnabled()).thenReturn(true);
       when(props.getMinimumTailAge()).thenReturn(Duration.ofDays(1));
       when(props.getTailGenerationsToKeep()).thenReturn(2);
@@ -161,7 +141,7 @@ class PGTailIndexManagerImplTest {
 
     @Test
     void removesStaleInvalidIndexes() {
-      final var uut = spy(underTest);
+      var uut = spy(underTest);
       when(props.isTailIndexingEnabled()).thenReturn(true);
       when(props.getMinimumTailAge()).thenReturn(Duration.ofDays(1));
       when(props.getTailGenerationsToKeep()).thenReturn(2);
@@ -209,7 +189,7 @@ class PGTailIndexManagerImplTest {
     @Test
     void dropsIndex() {
 
-      final var uut = spy(underTest);
+      var uut = spy(underTest);
       uut.removeIndex(INDEX_NAME);
 
       verify(jdbc).update("DROP INDEX CONCURRENTLY IF EXISTS INDEX_NAME");
@@ -225,16 +205,16 @@ class PGTailIndexManagerImplTest {
 
     @Test
     void parsesIndexTimestamp() {
-      final var uut = spy(underTest);
+      var uut = spy(underTest);
       when(props.getMinimumTailAge())
           .thenReturn(Duration.ofDays(1), Duration.ofHours(1), Duration.ofMinutes(1));
 
-      final var ts = System.currentTimeMillis() - 1000 * 60 * 30; // half hour before
+      var ts = System.currentTimeMillis() - 1000 * 60 * 30; // half hour before
 
       ArrayList<String> indexes = Lists.newArrayList(PgConstants.TAIL_INDEX_NAME_PREFIX + ts);
-      final var ret1 = uut.timeToCreateANewTail(indexes);
-      final var ret2 = uut.timeToCreateANewTail(indexes);
-      final var ret3 = uut.timeToCreateANewTail(indexes);
+      var ret1 = uut.timeToCreateANewTail(indexes);
+      var ret2 = uut.timeToCreateANewTail(indexes);
+      var ret3 = uut.timeToCreateANewTail(indexes);
 
       assertThat(ret1).isFalse();
       assertThat(ret2).isFalse();
@@ -250,7 +230,7 @@ class PGTailIndexManagerImplTest {
     @Test
     void createsIndex() {
 
-      final var uut = spy(underTest);
+      var uut = spy(underTest);
       when(jdbc.queryForObject(anyString(), eq(Long.class))).thenReturn(118L);
       uut.createNewTail();
 
@@ -264,7 +244,7 @@ class PGTailIndexManagerImplTest {
     @Test
     void dropsIndexUponException() {
 
-      final var uut = spy(underTest);
+      var uut = spy(underTest);
       when(jdbc.queryForObject(anyString(), eq(Long.class))).thenReturn(118L);
       long ts = System.currentTimeMillis() / 10000;
       when(jdbc.update(startsWith("create index concurrently " + tailIndexName(ts))))
@@ -281,7 +261,7 @@ class PGTailIndexManagerImplTest {
     @Test
     void dropsIndexUponException_withAnotherException() {
 
-      final var uut = spy(underTest);
+      var uut = spy(underTest);
       when(jdbc.queryForObject(anyString(), eq(Long.class))).thenReturn(118L);
       long ts = System.currentTimeMillis() / 10000;
       when(jdbc.update(startsWith("create index concurrently " + tailIndexName(ts))))
@@ -311,7 +291,7 @@ class PGTailIndexManagerImplTest {
       UUID id = UUID.randomUUID();
       long ser = 42L;
 
-      final var uut = spy(underTest);
+      var uut = spy(underTest);
       when(jdbc.queryForObject(anyString(), any(RowMapper.class)))
           .thenReturn(new PGTailIndexManagerImpl.HighWaterMark().targetId(id).targetSer(ser));
 
