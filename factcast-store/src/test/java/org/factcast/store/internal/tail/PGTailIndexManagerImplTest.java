@@ -15,10 +15,13 @@
  */
 package org.factcast.store.internal.tail;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.factcast.store.internal.PgConstants.*;
+import static org.mockito.Mockito.*;
+
 import java.sql.ResultSet;
 import java.time.Duration;
 import java.util.*;
-
 import org.assertj.core.util.Lists;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
@@ -31,10 +34,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.factcast.store.internal.PgConstants.*;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PGTailIndexManagerImplTest {
