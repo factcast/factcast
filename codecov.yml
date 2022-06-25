@@ -30,7 +30,10 @@ comment:
 
 ignore:
   - "**/src/test/**/*.java"
+  - "**/src/java/**/Configuration.java"
+  - "**/src/java/**/Properties.java"
   - "**/org/factcast/test/**/*.java"
+  - "**/factcast-examples/**/*.java"
   - "**/src/test/**/*.kt"
   - "**/org/factcast/test/**/*.kt"
 
