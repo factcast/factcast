@@ -16,15 +16,22 @@
 package org.factcast.factus;
 
 import java.io.IOException;
-import lombok.SneakyThrows;
+
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.projection.WriterToken;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import lombok.SneakyThrows;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class TokenAwareSubscriptionTest {
@@ -62,8 +69,9 @@ class TokenAwareSubscriptionTest {
 
     @Test
     void delegates() {
-      uut.awaitCatchup();
+      Subscription subscription = uut.awaitCatchup();
       Mockito.verify(sub).awaitCatchup();
+      assertThat(subscription).isSameAs(uut);
     }
   }
 
@@ -74,8 +82,9 @@ class TokenAwareSubscriptionTest {
     @SneakyThrows
     @Test
     void delegates() {
-      uut.awaitCatchup(WAIT_TIME_IN_MILLIS);
+      Subscription subscription = uut.awaitCatchup(WAIT_TIME_IN_MILLIS);
       Mockito.verify(sub).awaitCatchup(WAIT_TIME_IN_MILLIS);
+      assertThat(subscription).isSameAs(uut);
     }
   }
 
@@ -84,8 +93,9 @@ class TokenAwareSubscriptionTest {
 
     @Test
     void delegates() {
-      uut.awaitComplete();
+      Subscription subscription = uut.awaitComplete();
       Mockito.verify(sub).awaitComplete();
+      assertThat(subscription).isSameAs(uut);
     }
   }
 
@@ -96,8 +106,9 @@ class TokenAwareSubscriptionTest {
     @SneakyThrows
     @Test
     void delegates() {
-      uut.awaitComplete(WAIT_TIME_IN_MILLIS);
+      Subscription subscription = uut.awaitComplete(WAIT_TIME_IN_MILLIS);
       Mockito.verify(sub).awaitComplete(WAIT_TIME_IN_MILLIS);
+      assertThat(subscription).isSameAs(uut);
     }
   }
 }
