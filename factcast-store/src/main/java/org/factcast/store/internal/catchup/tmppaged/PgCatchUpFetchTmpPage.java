@@ -52,6 +52,7 @@ public class PgCatchUpFetchTmpPage {
               statementHolder.statement(ps);
             },
             new PgFactExtractor(serial));
+    statementHolder.statement(null);
     sw.stop();
     log.trace(
         "{} fetched next page of Facts limit={}, ser>{} in {}ms",
