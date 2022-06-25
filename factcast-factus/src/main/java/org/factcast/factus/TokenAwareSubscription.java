@@ -15,16 +15,19 @@
  */
 package org.factcast.factus;
 
-import java.util.concurrent.TimeoutException;
-import lombok.RequiredArgsConstructor;
+import java.util.concurrent.*;
+
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionClosedException;
 import org.factcast.factus.projection.WriterToken;
 
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+
 @RequiredArgsConstructor
 class TokenAwareSubscription implements Subscription {
-  final Subscription delegate;
-  final WriterToken token;
+  @NonNull final Subscription delegate;
+  @NonNull final WriterToken token;
 
   @Override
   public void close() throws Exception {
@@ -37,23 +40,27 @@ class TokenAwareSubscription implements Subscription {
 
   @Override
   public Subscription awaitCatchup() throws SubscriptionClosedException {
-    return delegate.awaitCatchup();
+    delegate.awaitCatchup();
+    return this;
   }
 
   @Override
   public Subscription awaitCatchup(long waitTimeInMillis)
       throws SubscriptionClosedException, TimeoutException {
-    return delegate.awaitCatchup(waitTimeInMillis);
+    delegate.awaitCatchup(waitTimeInMillis);
+    return this;
   }
 
   @Override
   public Subscription awaitComplete() throws SubscriptionClosedException {
-    return delegate.awaitComplete();
+    delegate.awaitComplete();
+    return this;
   }
 
   @Override
   public Subscription awaitComplete(long waitTimeInMillis)
       throws SubscriptionClosedException, TimeoutException {
-    return delegate.awaitComplete(waitTimeInMillis);
+    delegate.awaitComplete(waitTimeInMillis);
+    return this;
   }
 }
