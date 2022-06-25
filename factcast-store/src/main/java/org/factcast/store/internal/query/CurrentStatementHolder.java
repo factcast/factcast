@@ -18,14 +18,12 @@ package org.factcast.store.internal.query;
 import java.io.Closeable;
 import java.sql.SQLException;
 import java.sql.Statement;
-import lombok.Data;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-@Data
 @Slf4j
 public class CurrentStatementHolder implements Closeable {
-
-  private Statement statement;
+  @Setter private Statement statement;
 
   @Override
   public void close() {
