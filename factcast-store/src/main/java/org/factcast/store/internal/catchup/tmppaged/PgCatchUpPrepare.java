@@ -15,20 +15,17 @@
  */
 package org.factcast.store.internal.catchup.tmppaged;
 
+import com.google.common.base.Stopwatch;
 import java.sql.SQLException;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
-
-import com.google.common.base.Stopwatch;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Copies all matching SERs from fact to the catchup table, in order to be able to page effectively,
