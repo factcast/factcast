@@ -1,6 +1,7 @@
 package org.factcast.store.internal.catchup.tmppaged;
 
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.concurrent.atomic.*;
 
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -16,6 +17,7 @@ import org.springframework.jdbc.core.PreparedStatementCallback;
 
 import lombok.SneakyThrows;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.*;
 
@@ -45,9 +47,12 @@ class PgCatchUpPrepareTest {
       verify(statementHolder).statement(null);
 
       PreparedStatement ps = mock(PreparedStatement.class);
+      when(ps.executeUpdate()).thenReturn(0, 3).thenThrow(SQLException.class);
       value.doInPreparedStatement(ps);
+      value.doInPreparedStatement(ps);
+      assertThatThrownBy(() -> value.doInPreparedStatement(ps)).isInstanceOf(SQLException.class);
 
-      verify(statementHolder).statement(same(ps));
+      verify(statementHolder, times(3)).statement(same(ps));
       verifyNoMoreInteractions(statementHolder);
     }
   }
