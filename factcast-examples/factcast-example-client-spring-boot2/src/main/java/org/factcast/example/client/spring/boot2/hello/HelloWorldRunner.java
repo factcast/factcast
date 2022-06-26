@@ -16,17 +16,15 @@
 package org.factcast.example.client.spring.boot2.hello;
 
 import java.util.*;
-
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
-
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.val;
 
 @RequiredArgsConstructor
 @Component

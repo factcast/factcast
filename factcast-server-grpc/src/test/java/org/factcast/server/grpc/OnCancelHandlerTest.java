@@ -15,8 +15,11 @@
  */
 package org.factcast.server.grpc;
 
-import java.util.concurrent.atomic.*;
+import static org.mockito.Mockito.*;
 
+import java.util.concurrent.atomic.*;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,11 +28,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import lombok.NonNull;
-import lombok.SneakyThrows;
-
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OnCancelHandlerTest {

@@ -15,21 +15,17 @@
  */
 package org.factcast.server.grpc;
 
-import java.util.*;
-import java.util.stream.*;
-
-import org.factcast.core.store.AbstractCascadingDisposal;
-import org.factcast.grpc.api.Headers;
-import org.springframework.beans.factory.DisposableBean;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-
 import io.grpc.Metadata;
-
+import java.util.*;
+import java.util.stream.*;
 import lombok.AccessLevel;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.store.AbstractCascadingDisposal;
+import org.factcast.grpc.api.Headers;
+import org.springframework.beans.factory.DisposableBean;
 
 @Slf4j
 public class GrpcRequestMetadata extends AbstractCascadingDisposal implements DisposableBean {

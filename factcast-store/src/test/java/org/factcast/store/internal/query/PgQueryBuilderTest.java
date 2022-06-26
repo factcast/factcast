@@ -15,10 +15,14 @@
  */
 package org.factcast.store.internal.query;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
+
 import java.sql.PreparedStatement;
 import java.util.*;
 import java.util.concurrent.atomic.*;
-
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.assertj.core.util.Lists;
 import org.factcast.core.spec.FactSpec;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,12 +32,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import lombok.NonNull;
-import lombok.SneakyThrows;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PgQueryBuilderTest {

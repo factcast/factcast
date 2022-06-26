@@ -16,13 +16,11 @@
 package org.factcast.server.grpc;
 
 import java.util.concurrent.atomic.*;
-
-import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionRequestTO;
-
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionRequestTO;
 
 @Slf4j
 @RequiredArgsConstructor
