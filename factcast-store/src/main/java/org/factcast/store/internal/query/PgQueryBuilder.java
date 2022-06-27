@@ -20,13 +20,11 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.Map.*;
 import java.util.concurrent.atomic.*;
-
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.store.internal.PgConstants;
 import org.springframework.jdbc.core.PreparedStatementSetter;
-
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Provides {@link PreparedStatementSetter} and the corresponding SQL from a list of {@link
