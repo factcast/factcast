@@ -20,16 +20,14 @@ import lombok.NonNull;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.PgPostQueryMatcher;
-import org.factcast.store.internal.blacklist.PgBlacklist;
+import org.factcast.store.internal.filter.PgFactFilter;
 
 public interface PgCatchupFactory {
 
   PgCatchup create(
       @NonNull SubscriptionRequestTO request,
-      @NonNull PgPostQueryMatcher postQueryMatcher,
+      @NonNull PgFactFilter postQueryMatcher,
       @NonNull SubscriptionImpl subscription,
       @NonNull AtomicLong serial,
-      @NonNull PgMetrics metrics,
-      @NonNull PgBlacklist blacklist);
+      @NonNull PgMetrics metrics);
 }
