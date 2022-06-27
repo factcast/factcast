@@ -31,9 +31,9 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
 import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.PgPostQueryMatcher;
 import org.factcast.store.internal.StoreMetrics;
-import org.factcast.store.internal.blacklist.PgBlacklist;
+import org.factcast.store.internal.filter.PgBlacklist;
+import org.factcast.store.internal.filter.PgFactFilter;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,7 +54,7 @@ class PgTmpPagedCatchupTest {
   @Mock @NonNull PgConnectionSupplier connectionSupplier;
   @Mock @NonNull StoreConfigurationProperties props;
   @Mock @NonNull SubscriptionRequestTO request;
-  @Mock @NonNull PgPostQueryMatcher postQueryMatcher;
+  @Mock @NonNull PgFactFilter filter;
   @Mock @NonNull SubscriptionImpl subscription;
   @Mock @NonNull AtomicLong serial;
   @Mock @NonNull PgMetrics metrics;
@@ -91,8 +91,6 @@ class PgTmpPagedCatchupTest {
     @BeforeEach
     void setup() {
       doNothing().when(jdbc).execute(anyString());
-
-      when(postQueryMatcher.canBeSkipped()).thenReturn(true);
     }
 
     @Test
@@ -111,6 +109,8 @@ class PgTmpPagedCatchupTest {
 
     @Test
     void notifies() {
+      when(filter.test(any(Fact.class))).thenReturn(true);
+
       when(jdbc.execute(anyString(), any(PreparedStatementCallback.class))).thenReturn(1L);
       List<Fact> testFactList = new ArrayList<Fact>();
       Fact testFact = Fact.builder().buildWithoutPayload();
@@ -129,12 +129,11 @@ class PgTmpPagedCatchupTest {
 
     @Test
     void filtersBlacklisted() {
+      when(filter.test(any(Fact.class))).thenReturn(false, true);
       when(jdbc.execute(anyString(), any(PreparedStatementCallback.class))).thenReturn(2L);
       List<Fact> testFactList = new ArrayList<Fact>();
       UUID id1 = UUID.randomUUID();
       UUID id2 = UUID.randomUUID();
-      when(blacklist.isBlocked(id1)).thenReturn(true);
-      when(blacklist.isBlocked(id2)).thenReturn(false);
       Fact testFact1 = Fact.builder().id(id1).buildWithoutPayload();
       Fact testFact2 = Fact.builder().id(id2).buildWithoutPayload();
       testFactList.add(testFact1);
@@ -154,6 +153,7 @@ class PgTmpPagedCatchupTest {
 
     @Test
     void counts() {
+      when(filter.test(any(Fact.class))).thenReturn(true);
       when(metrics.counter(any())).thenReturn(counter);
       when(jdbc.execute(anyString(), any(PreparedStatementCallback.class))).thenReturn(1L);
       List<Fact> testFactList = Lists.newArrayList(new TestFact(), new TestFact());
