@@ -27,10 +27,9 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.PgPostQueryMatcher;
 import org.factcast.store.internal.StoreMetrics;
-import org.factcast.store.internal.blacklist.PgBlacklist;
 import org.factcast.store.internal.catchup.PgCatchup;
+import org.factcast.store.internal.filter.PgFactFilter;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
@@ -42,11 +41,10 @@ public class PgTmpPagedCatchup implements PgCatchup {
   @NonNull final PgConnectionSupplier connectionSupplier;
   @NonNull final StoreConfigurationProperties props;
   @NonNull final SubscriptionRequestTO request;
-  @NonNull final PgPostQueryMatcher postQueryMatcher;
+  @NonNull final PgFactFilter filter;
   @NonNull final SubscriptionImpl subscription;
   @NonNull final AtomicLong serial;
   @NonNull final PgMetrics metrics;
-  @NonNull final PgBlacklist blacklist;
 
   @SneakyThrows
   @Override
@@ -72,26 +70,15 @@ public class PgTmpPagedCatchup implements PgCatchup {
     // and AFTERWARDs create the inmem index
     jdbc.execute("CREATE INDEX catchup_tmp_idx1 ON catchup(ser ASC)"); // improves perf on sorting
 
-    var skipTesting = postQueryMatcher.canBeSkipped();
-
     if (numberOfFactsToCatchUp > 0) {
       PgCatchUpFetchTmpPage fetch = new PgCatchUpFetchTmpPage(jdbc, props.getPageSize(), request);
       List<Fact> facts;
       do {
         facts = fetch.fetchFacts(serial);
-
         for (Fact f : facts) {
-
-          UUID factId = f.id();
-          if (blacklist.isBlocked(factId)) {
-            log.trace("{} filtered blacklisted id={}", request, factId);
-          } else {
-            if (skipTesting || postQueryMatcher.test(f)) {
-              subscription.notifyElement(f);
-              factCounter++;
-            } else {
-              log.trace("{} filtered id={}", request, factId);
-            }
+          if (filter.test(f)) {
+            subscription.notifyElement(f);
+            factCounter++;
           }
         }
       } while (!facts.isEmpty());
