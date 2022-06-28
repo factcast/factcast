@@ -17,14 +17,10 @@ package org.factcast.store.internal;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
+import java.util.stream.*;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
@@ -37,12 +33,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ContextConfiguration(classes = {PgTestConfiguration.class})
-@Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
 public class PgConcurrentTest {

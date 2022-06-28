@@ -18,7 +18,6 @@ package org.factcast.store.registry.transformation.chains;
 import com.google.common.collect.Iterables;
 import es.usc.citius.hipster.algorithm.AStar;
 import es.usc.citius.hipster.algorithm.Algorithm;
-import es.usc.citius.hipster.algorithm.Algorithm.SearchResult;
 import es.usc.citius.hipster.algorithm.Hipster;
 import es.usc.citius.hipster.graph.GraphBuilder;
 import es.usc.citius.hipster.graph.GraphSearchProblem;
@@ -63,19 +62,6 @@ public class TransformationChains implements TransformationStoreListener {
     r.register(this);
   }
 
-  @Value(staticConstructor = "of")
-  private static class Edge {
-    int fromVersion;
-
-    int toVersion;
-
-    Transformation transformation;
-
-    public static Edge from(Transformation t) {
-      return of(t.fromVersion(), t.toVersion(), t);
-    }
-  }
-
   public TransformationChain get(TransformationKey key, int from, int to)
       throws MissingTransformationInformationException {
 
@@ -95,7 +81,6 @@ public class TransformationChains implements TransformationStoreListener {
     }
   }
 
-  @SuppressWarnings("unchecked")
   private TransformationChain build(TransformationKey key, int from, int to)
       throws MissingTransformationInformationException {
 
@@ -128,9 +113,11 @@ public class TransformationChains implements TransformationStoreListener {
                 .build());
 
     // run search
-    SearchResult r = problem.search(to);
+    Algorithm<Edge, Integer, WeightedNode<Edge, Integer, Double>>.SearchResult r =
+        problem.search(to);
 
-    List<Edge> path = Algorithm.recoverActionPath(r.getGoalNode());
+    WeightedNode<Edge, Integer, Double> goalNode = r.getGoalNode();
+    List<Edge> path = Algorithm.recoverActionPath(goalNode);
 
     if (path.isEmpty()
         || Iterables.getLast(path).toVersion() != to

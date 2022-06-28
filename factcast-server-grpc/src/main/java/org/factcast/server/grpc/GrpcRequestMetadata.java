@@ -16,6 +16,7 @@
 package org.factcast.server.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import io.grpc.Metadata;
 import java.util.Objects;
 import java.util.Optional;
@@ -33,6 +34,10 @@ public class GrpcRequestMetadata {
   Metadata headers;
 
   OptionalInt catchupBatch() {
+
+    Preconditions.checkNotNull(
+        headers, "GrpcRequestMetadata has not been provided with headers via Interceptor");
+
     return Stream.of(headers.get(Headers.CATCHUP_BATCHSIZE))
         .filter(Objects::nonNull)
         .mapToInt(Integer::parseInt)

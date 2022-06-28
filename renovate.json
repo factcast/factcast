@@ -4,29 +4,21 @@
     ":automergeMinor",
     ":label(ready)"
   ],
-  "stabilityDays": 1,
-  "prCreation": "immediate",
   "js": {
     "enabled": false
   },
   "packageRules": [
     {
-      "packagePatterns": [
+      "matchManagers": ["npm"],
+      "enabled": false
+    },
+    {
+      "matchPackagePatterns": [
         "^org\\.factcast"
       ],
-      "allowedVersions": "/^[0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9]+)?$/"
+      "enabled": false
     },
     {
-      "updateTypes": [
-        "major"
-      ],
-      "masterIssueApproval": true
-    },
-    {
-      "matchUpdateTypes": [
-        "minor",
-        "patch"
-      ],
       "matchLanguages": [
         "java"
       ],
