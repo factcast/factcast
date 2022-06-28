@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2022 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.registry.http;
+package org.factcast.itests.factus.v3compat;
 
-import io.javalin.Javalin;
+import org.factcast.itests.factus.SpringJdbcTransactionalProjectionExampleITest;
+import org.factcast.test.FactcastTestConfig;
 
-public class TestHttpServer implements AutoCloseable {
-  @lombok.experimental.Delegate final Javalin instance = Javalin.create();
-
-  public TestHttpServer() {
-    instance.start(0);
-  }
-}
+@FactcastTestConfig(factcastVersion = "0.3.9")
+public class SpringJdbcTransactionalProjectionExampleITestCompatV3
+    extends SpringJdbcTransactionalProjectionExampleITest {}
