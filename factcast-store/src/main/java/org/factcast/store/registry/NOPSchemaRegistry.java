@@ -16,7 +16,6 @@
 package org.factcast.store.registry;
 
 import java.util.*;
-
 import org.everit.json.schema.Schema;
 import org.factcast.store.registry.transformation.Transformation;
 import org.factcast.store.registry.transformation.TransformationKey;
