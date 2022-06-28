@@ -34,10 +34,10 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
-import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.filter.PgBlacklist;
 import org.factcast.store.internal.filter.PgFactFilter;
 import org.factcast.store.internal.filter.PgFactFilterImpl;
+import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.query.PgQueryBuilder;
@@ -193,11 +193,15 @@ public class PgFactStream {
   void catchup(PgPostQueryMatcher postQueryMatcher) {
     if (isConnected()) {
       log.trace("{} catchup phase1 - historic facts staring with SER={}", request, serial.get());
-      pgCatchupFactory.create(request, filter, subscription, serial, metrics,statementHolder).run();
+      pgCatchupFactory
+          .create(request, filter, subscription, serial, metrics, statementHolder)
+          .run();
     }
     if (isConnected()) {
       log.trace("{} catchup phase2 - facts since connect (SER={})", request, serial.get());
-      pgCatchupFactory.create(request, filter, subscription, serial, metrics,statementHolder).run();
+      pgCatchupFactory
+          .create(request, filter, subscription, serial, metrics, statementHolder)
+          .run();
     }
   }
 

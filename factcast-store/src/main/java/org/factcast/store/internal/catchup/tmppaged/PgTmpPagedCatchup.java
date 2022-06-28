@@ -17,7 +17,6 @@ package org.factcast.store.internal.catchup.tmppaged;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
