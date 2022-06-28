@@ -16,11 +16,11 @@
 package org.factcast.itests.factus;
 
 import static java.util.UUID.*;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.*;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +50,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 @EnableAutoConfiguration
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @Slf4j
-class GrpcThreadingITest extends AbstractFactCastIntegrationTest {
+public class GrpcThreadingITest extends AbstractFactCastIntegrationTest {
   @Autowired JdbcTemplate jdbcTemplate;
   @Autowired PlatformTransactionManager platformTransactionManager;
   @Autowired Factus factus;

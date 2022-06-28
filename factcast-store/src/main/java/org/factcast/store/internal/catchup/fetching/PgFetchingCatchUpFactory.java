@@ -27,6 +27,7 @@ import org.factcast.store.internal.PgPostQueryMatcher;
 import org.factcast.store.internal.blacklist.PgBlacklist;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
+import org.factcast.store.internal.query.CurrentStatementHolder;
 
 @RequiredArgsConstructor
 // no code in here, just generated @nonnull checks
@@ -44,7 +45,8 @@ public class PgFetchingCatchUpFactory implements PgCatchupFactory {
       @NonNull SubscriptionImpl subscription,
       @NonNull AtomicLong serial,
       @NonNull PgMetrics metrics,
-      @NonNull PgBlacklist blacklist) {
+      @NonNull PgBlacklist blacklist,
+      @NonNull CurrentStatementHolder statementHolder) {
     return new PgFetchingCatchup(
         connectionSupplier,
         props,
@@ -53,6 +55,7 @@ public class PgFetchingCatchUpFactory implements PgCatchupFactory {
         subscription,
         serial,
         metrics,
-        blacklist);
+        blacklist,
+        statementHolder);
   }
 }
