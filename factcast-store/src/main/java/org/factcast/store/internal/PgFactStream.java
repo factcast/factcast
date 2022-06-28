@@ -35,6 +35,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.store.internal.blacklist.PgBlacklist;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
+import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.query.PgQueryBuilder;
@@ -78,12 +79,13 @@ public class PgFactStream {
   @VisibleForTesting protected SubscriptionRequestTO request;
 
   PgPostQueryMatcher postQueryMatcher;
+  final CurrentStatementHolder statementHolder = new CurrentStatementHolder();
 
   void connect(@NonNull SubscriptionRequestTO request) {
     this.request = request;
     log.debug("{} connect subscription {}", request, request.dump());
     postQueryMatcher = new PgPostQueryMatcher(request);
-    PgQueryBuilder q = new PgQueryBuilder(request.specs());
+    PgQueryBuilder q = new PgQueryBuilder(request.specs(), statementHolder);
     initializeSerialToStartAfter();
 
     if (request.streamInfo()) {
@@ -169,8 +171,9 @@ public class PgFactStream {
 
       long startedSer = 0;
       UUID startedId = null;
-      if (request.startingAfter().isPresent()) {
-        startedId = request.startingAfter().get();
+      Optional<UUID> startingAfter = request.startingAfter();
+      if (startingAfter.isPresent()) {
+        startedId = startingAfter.get();
         startedSer = idToSerMapper.retrieve(startedId); // should be cached anyway
       }
 
@@ -188,13 +191,15 @@ public class PgFactStream {
     if (isConnected()) {
       log.trace("{} catchup phase1 - historic facts staring with SER={}", request, serial.get());
       pgCatchupFactory
-          .create(request, postQueryMatcher, subscription, serial, metrics, blacklist)
+          .create(
+              request, postQueryMatcher, subscription, serial, metrics, blacklist, statementHolder)
           .run();
     }
     if (isConnected()) {
       log.trace("{} catchup phase2 - facts since connect (SER={})", request, serial.get());
       pgCatchupFactory
-          .create(request, postQueryMatcher, subscription, serial, metrics, blacklist)
+          .create(
+              request, postQueryMatcher, subscription, serial, metrics, blacklist, statementHolder)
           .run();
     }
   }
@@ -206,6 +211,8 @@ public class PgFactStream {
     WARN
   }
 
+  private static final String ratioMessage = "{} CatchupTransformationRatio: {}%, ({}/{})";
+
   @VisibleForTesting
   void logCatchupTransformationStats() {
     if (subscription.factsTransformed().get() > 0) {
@@ -216,13 +223,13 @@ public class PgFactStream {
 
       switch (level) {
         case DEBUG:
-          log.debug("{} CatchupTransformationRatio: {}%, ({}/{})", request, ratio, transf, sum);
+          log.debug(ratioMessage, request, ratio, transf, sum);
           break;
         case INFO:
-          log.info("{} CatchupTransformationRatio: {}%, ({}/{})", request, ratio, transf, sum);
+          log.info(ratioMessage, request, ratio, transf, sum);
           break;
         case WARN:
-          log.warn("{} CatchupTransformationRatio: {}%, ({}/{})", request, ratio, transf, sum);
+          log.warn(ratioMessage, request, ratio, transf, sum);
           break;
         default:
           throw new IllegalArgumentException("switch fall-through. THIS IS A BUG! " + level);
@@ -259,6 +266,7 @@ public class PgFactStream {
       condensedExecutor.cancel();
       condensedExecutor = null;
     }
+    statementHolder.close();
     log.debug("{} disconnected ", request);
   }
 
