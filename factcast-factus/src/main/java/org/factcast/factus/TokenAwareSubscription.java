@@ -17,14 +17,12 @@ package org.factcast.factus;
 
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
-
-import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionClosedException;
-import org.factcast.factus.projection.WriterToken;
-
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionClosedException;
+import org.factcast.factus.projection.WriterToken;
 
 @RequiredArgsConstructor
 @Slf4j
