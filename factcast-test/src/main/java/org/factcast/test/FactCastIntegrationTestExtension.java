@@ -53,7 +53,7 @@ public interface FactCastIntegrationTestExtension {
   }
 
   @SneakyThrows
-  private static void setFieldValue(Field f, Object t, Object value) {
+  static void setFieldValue(Field f, Object t, Object value) {
     f.setAccessible(true);
     f.set(t, value);
   }
