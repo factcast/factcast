@@ -15,12 +15,12 @@
  */
 package org.factcast.store.registry.validation;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import com.github.fge.jsonschema.main.JsonSchema;
 import io.micrometer.core.instrument.Tags;
-import java.util.Optional;
+import java.util.*;
 import org.factcast.core.Fact;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.NOPRegistryMetrics;
@@ -90,7 +90,7 @@ public class FactValidatorTest {
 
   @Test
   public void testFailsToValidateIfValidatableButMissingSchema() throws Exception {
-    final var registryMetrics = spy(new NOPRegistryMetrics());
+    var registryMetrics = spy(new NOPRegistryMetrics());
 
     StoreConfigurationProperties props = mock(StoreConfigurationProperties.class);
     when(props.isSchemaRegistryConfigured()).thenReturn(true);
@@ -157,7 +157,7 @@ public class FactValidatorTest {
 
   @Test
   public void testFailsToValidateWithMatchingSchemaButNonMatchingFact() throws Exception {
-    final var registryMetrics = spy(new NOPRegistryMetrics());
+    var registryMetrics = spy(new NOPRegistryMetrics());
 
     StoreConfigurationProperties props = mock(StoreConfigurationProperties.class);
     when(props.isSchemaRegistryConfigured()).thenReturn(true);

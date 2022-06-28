@@ -31,6 +31,7 @@ import org.factcast.store.internal.StoreMetrics.EVENT;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.filter.PgFactFilter;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
+import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.postgresql.jdbc.PgConnection;
@@ -56,6 +57,8 @@ public class PgFetchingCatchup implements PgCatchup {
 
   @NonNull final PgMetrics metrics;
 
+  @NonNull final CurrentStatementHolder statementHolder;
+
   protected long factCounter = 0L;
 
   @SneakyThrows
@@ -73,6 +76,7 @@ public class PgFetchingCatchup implements PgCatchup {
       fetch(jdbc);
     } finally {
       ds.destroy();
+      statementHolder.statement(null);
     }
   }
 
@@ -80,8 +84,7 @@ public class PgFetchingCatchup implements PgCatchup {
   void fetch(JdbcTemplate jdbc) {
     jdbc.setFetchSize(props.getPageSize());
     jdbc.setQueryTimeout(0); // disable query timeout
-
-    PgQueryBuilder b = new PgQueryBuilder(req.specs());
+    PgQueryBuilder b = new PgQueryBuilder(req.specs(), statementHolder);
     var extractor = new PgFactExtractor(serial);
     String catchupSQL = b.createSQL();
     jdbc.query(
