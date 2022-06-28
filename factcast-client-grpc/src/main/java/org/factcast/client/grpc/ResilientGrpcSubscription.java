@@ -15,15 +15,11 @@
  */
 package org.factcast.client.grpc;
 
-import com.google.common.annotations.VisibleForTesting;
-import java.util.UUID;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
+import java.util.function.*;
+
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactStreamInfo;
@@ -32,6 +28,12 @@ import org.factcast.core.subscription.SubscriptionClosedException;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.util.ExceptionHelper;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ResilientGrpcSubscription implements Subscription {
@@ -84,10 +86,12 @@ public class ResilientGrpcSubscription implements Subscription {
 
   @Override
   public void close() {
-    try {
-      closeAndDetachSubscription();
-    } finally {
-      isClosed.set(true);
+    if (!isClosed.getAndSet(true)) {
+      try {
+        closeAndDetachSubscription();
+      } finally {
+        isClosed.set(true);
+      }
     }
   }
 
