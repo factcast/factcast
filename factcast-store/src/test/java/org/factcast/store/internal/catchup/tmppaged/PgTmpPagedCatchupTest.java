@@ -35,6 +35,7 @@ import org.factcast.store.internal.PgPostQueryMatcher;
 import org.factcast.store.internal.StoreMetrics;
 import org.factcast.store.internal.blacklist.PgBlacklist;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
+import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -60,6 +61,7 @@ class PgTmpPagedCatchupTest {
   @Mock @NonNull PgMetrics metrics;
   @Mock @NonNull Counter counter;
   @Mock @NonNull PgBlacklist blacklist;
+  @Mock @NonNull CurrentStatementHolder statementHolder;
   @InjectMocks PgTmpPagedCatchup underTest;
 
   @Nested
@@ -73,12 +75,26 @@ class PgTmpPagedCatchupTest {
       PgConnection con = mock(PgConnection.class);
       when(connectionSupplier.get()).thenReturn(con);
 
-      final var uut = spy(underTest);
+      var uut = spy(underTest);
       doNothing().when(uut).fetch(any());
 
       uut.run();
 
       verify(con).close();
+    }
+
+    @SneakyThrows
+    @Test
+    void removesStatement() {
+      PgConnection con = mock(PgConnection.class);
+      when(connectionSupplier.get()).thenReturn(con);
+
+      var uut = spy(underTest);
+      doNothing().when(uut).fetch(any());
+
+      uut.run();
+
+      verify(statementHolder).statement(null);
     }
   }
 

@@ -15,18 +15,20 @@
  */
 package org.factcast.store.internal.query;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.sql.PreparedStatement;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.*;
+import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.assertj.core.util.Lists;
 import org.factcast.core.spec.FactSpec;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -37,6 +39,7 @@ class PgQueryBuilderTest {
   @Nested
   class WhenCreatingStatementSetter {
     @Mock private @NonNull AtomicLong serial;
+    @Mock CurrentStatementHolder holder;
 
     @BeforeEach
     void setup() {}
@@ -45,13 +48,13 @@ class PgQueryBuilderTest {
     @Test
     void happyPath() {
       Mockito.when(serial.get()).thenReturn(120L);
-      final var spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
-      final var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
-      final var spec3 = FactSpec.ns("ns3");
-      final var specs = Lists.newArrayList(spec1, spec2, spec3);
-      final var underTest = new PgQueryBuilder(specs);
-      final var setter = underTest.createStatementSetter(serial);
-      final var ps = mock(PreparedStatement.class);
+      var spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
+      var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
+      var spec3 = FactSpec.ns("ns3");
+      var specs = Lists.newArrayList(spec1, spec2, spec3);
+      var underTest = new PgQueryBuilder(specs);
+      var setter = underTest.createStatementSetter(serial);
+      var ps = mock(PreparedStatement.class);
 
       setter.setValues(ps);
 
@@ -73,6 +76,19 @@ class PgQueryBuilderTest {
       verify(ps).setLong(++index, 120);
       verifyNoMoreInteractions(ps);
     }
+
+    @SneakyThrows
+    @Test
+    void setsCurrentStatement() {
+      Mockito.when(serial.get()).thenReturn(120L);
+      var underTest = new PgQueryBuilder(Lists.newArrayList(FactSpec.ns("ns3")), holder);
+      var setter = underTest.createStatementSetter(serial);
+      var ps = mock(PreparedStatement.class);
+
+      setter.setValues(ps);
+
+      verify(holder).statement(ps);
+    }
   }
 
   @Nested
@@ -82,11 +98,11 @@ class PgQueryBuilderTest {
 
     @Test
     void happyPath() {
-      final var spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
-      final var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
-      final var specs = Lists.newArrayList(spec1, spec2);
-      final var underTest = new PgQueryBuilder(specs);
-      final var sql = underTest.createSQL();
+      var spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
+      var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
+      var specs = Lists.newArrayList(spec1, spec2);
+      var underTest = new PgQueryBuilder(specs);
+      var sql = underTest.createSQL();
 
       // projection
       assertThat(sql)
@@ -96,10 +112,10 @@ class PgQueryBuilderTest {
                   + " FROM fact");
 
       // where clause for two specs
-      final var expectedSpec1 =
+      var expectedSpec1 =
           "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND header @>"
               + " ?::jsonb)";
-      final var expectedSpec2 =
+      var expectedSpec2 =
           "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb)"; // no aggid
       assertThat(sql).contains("( " + expectedSpec1 + " OR " + expectedSpec2 + " )");
       assertThat(sql).endsWith("AND ser>? ORDER BY ser ASC");
@@ -113,20 +129,20 @@ class PgQueryBuilderTest {
 
     @Test
     void happyPath() {
-      final var spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
-      final var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
-      final var specs = Lists.newArrayList(spec1, spec2);
-      final var underTest = new PgQueryBuilder(specs);
-      final var sql = underTest.createStateSQL();
+      var spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
+      var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
+      var specs = Lists.newArrayList(spec1, spec2);
+      var underTest = new PgQueryBuilder(specs);
+      var sql = underTest.createStateSQL();
 
       // projection
       assertThat(sql).startsWith("SELECT ser FROM fact");
 
       // where clause for two specs
-      final var expectedSpec1 =
+      var expectedSpec1 =
           "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND header @>"
               + " ?::jsonb)";
-      final var expectedSpec2 =
+      var expectedSpec2 =
           "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb)"; // no aggid
       assertThat(sql).contains("( " + expectedSpec1 + " OR " + expectedSpec2 + " )");
       assertThat(sql).endsWith(" ORDER BY ser DESC LIMIT 1");
@@ -140,20 +156,20 @@ class PgQueryBuilderTest {
 
     @Test
     void happyPath() {
-      final var spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
-      final var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
-      final var specs = Lists.newArrayList(spec1, spec2);
-      final var underTest = new PgQueryBuilder(specs);
-      final var sql = underTest.catchupSQL();
+      var spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
+      var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
+      var specs = Lists.newArrayList(spec1, spec2);
+      var underTest = new PgQueryBuilder(specs);
+      var sql = underTest.catchupSQL();
 
       // projection
       assertThat(sql).startsWith("INSERT INTO catchup (ser) (SELECT ser FROM fact");
 
       // where clause for two specs
-      final var expectedSpec1 =
+      var expectedSpec1 =
           "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND header @>"
               + " ?::jsonb)";
-      final var expectedSpec2 =
+      var expectedSpec2 =
           "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb)"; // no aggid
       assertThat(sql).contains("( " + expectedSpec1 + " OR " + expectedSpec2 + " )");
     }
