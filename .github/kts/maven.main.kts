@@ -1,6 +1,6 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("it.krzeminski:github-actions-kotlin-dsl:0.18.0")
+@file:DependsOn("it.krzeminski:github-actions-kotlin-dsl:0.20.0")
 
 import it.krzeminski.githubactions.actions.actions.CacheV3
 import it.krzeminski.githubactions.actions.actions.CheckoutV3
@@ -27,8 +27,7 @@ public val workflowMaven: Workflow = workflow(
             branches = listOf("master"),
         ),
     ),
-    sourceFile = Paths.get(".github/workflows/maven.main.kts"),
-    targetFileName = "maven.yml"
+    sourceFile = Paths.get(".github/kts/maven.main.kts"),
 ) {
     job(
         id = "build",
@@ -97,4 +96,4 @@ public val workflowMaven: Workflow = workflow(
 if (!File(".github").isDirectory)
     throw IOException("Run from project root")
 
-workflowMaven.writeToFile()
+workflowMaven.writeToFile(addConsistencyCheck = false)
