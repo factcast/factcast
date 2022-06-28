@@ -24,6 +24,7 @@ import org.postgresql.Driver;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration;
+import org.springframework.boot.autoconfigure.liquibase.LiquibaseAutoConfiguration;
 import org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,7 +38,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
 @ImportAutoConfiguration({
   DataSourceAutoConfiguration.class,
   JdbcTemplateAutoConfiguration.class,
-  TransactionAutoConfiguration.class
+  TransactionAutoConfiguration.class,
+  LiquibaseAutoConfiguration.class
 })
 @Slf4j
 public class PgTestConfiguration {
@@ -46,7 +48,7 @@ public class PgTestConfiguration {
     String url = System.getenv("pg_url");
     if (url == null) {
       log.info("Trying to start postgres testcontainer");
-      PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:11.4");
+      PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:11.5");
       postgres.start();
       url = postgres.getJdbcUrl();
       System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());

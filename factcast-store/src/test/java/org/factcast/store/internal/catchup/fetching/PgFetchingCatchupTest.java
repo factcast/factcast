@@ -15,13 +15,14 @@
  */
 package org.factcast.store.internal.catchup.fetching;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 import io.micrometer.core.instrument.Counter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.factcast.core.Fact;
@@ -31,12 +32,15 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.PgPostQueryMatcher;
 import org.factcast.store.internal.StoreMetrics;
+import org.factcast.store.internal.filter.PgFactFilter;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
+import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -56,9 +60,10 @@ class PgFetchingCatchupTest {
   StoreConfigurationProperties props;
 
   @Mock @NonNull SubscriptionRequestTO req;
-  @Mock @NonNull PgPostQueryMatcher postQueryMatcher;
+  @Mock @NonNull PgFactFilter filter;
   @Mock @NonNull SubscriptionImpl subscription;
   @Mock @NonNull AtomicLong serial;
+  @Mock @NonNull CurrentStatementHolder statementHolder;
 
   @Mock(lenient = true)
   @NonNull
@@ -78,13 +83,26 @@ class PgFetchingCatchupTest {
       PgConnection con = mock(PgConnection.class);
       when(connectionSupplier.get()).thenReturn(con);
 
-      final var uut = spy(underTest);
+      var uut = spy(underTest);
       doNothing().when(uut).fetch(any());
 
       uut.run();
 
       verify(con).setAutoCommit(false);
       verify(con).close();
+    }
+
+    @SneakyThrows
+    @Test
+    void removesCurrentStatement() {
+      PgConnection con = mock(PgConnection.class);
+      when(connectionSupplier.get()).thenReturn(con);
+      var uut = spy(underTest);
+      doNothing().when(uut).fetch(any());
+
+      uut.run();
+
+      verify(statementHolder).statement(null);
     }
   }
 
@@ -121,11 +139,12 @@ class PgFetchingCatchupTest {
           new PgFactExtractor(new AtomicLong(1L)) {
             @Override
             public @NonNull Fact mapRow(@NonNull ResultSet rs, int rowNum) throws SQLException {
-              return null;
+              return Fact.builder().buildWithoutPayload();
             }
           };
 
-      RowCallbackHandler rowCallbackHandler = underTest.createRowCallbackHandler(true, extractor);
+      RowCallbackHandler rowCallbackHandler =
+          underTest.createRowCallbackHandler(f -> true, extractor);
       rowCallbackHandler.processRow(mock(ResultSet.class));
       rowCallbackHandler.processRow(mock(ResultSet.class));
       rowCallbackHandler.processRow(mock(ResultSet.class));
@@ -144,21 +163,12 @@ class PgFetchingCatchupTest {
 
     @SneakyThrows
     @Test
-    void skipsPostQueryMatching() {
-      final var cbh = underTest.createRowCallbackHandler(true, extractor);
-      cbh.processRow(mock(ResultSet.class));
-
-      verifyNoInteractions(postQueryMatcher);
-    }
-
-    @SneakyThrows
-    @Test
     void filtersInPostQueryMatching() {
-      final var cbh = underTest.createRowCallbackHandler(false, extractor);
+      final var cbh = underTest.createRowCallbackHandler(filter, extractor);
       ResultSet rs = mock(ResultSet.class);
       Fact testFact = new TestFact();
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
-      when(postQueryMatcher.test(testFact)).thenReturn(false);
+      when(filter.test(testFact)).thenReturn(false);
       cbh.processRow(rs);
 
       verifyNoInteractions(subscription);
@@ -167,11 +177,11 @@ class PgFetchingCatchupTest {
     @SneakyThrows
     @Test
     void notifies() {
-      final var cbh = underTest.createRowCallbackHandler(false, extractor);
+      final var cbh = underTest.createRowCallbackHandler(filter, extractor);
       ResultSet rs = mock(ResultSet.class);
       Fact testFact = new TestFact();
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
-      when(postQueryMatcher.test(testFact)).thenReturn(true);
+      when(filter.test(testFact)).thenReturn(true);
       cbh.processRow(rs);
 
       verify(subscription).notifyElement(testFact);
@@ -180,11 +190,11 @@ class PgFetchingCatchupTest {
     @SneakyThrows
     @Test
     void notifiesTransformationException() {
-      final var cbh = underTest.createRowCallbackHandler(false, extractor);
+      final var cbh = underTest.createRowCallbackHandler(filter, extractor);
       ResultSet rs = mock(ResultSet.class);
       Fact testFact = new TestFact();
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
-      when(postQueryMatcher.test(testFact)).thenReturn(true);
+      when(filter.test(testFact)).thenReturn(true);
       doThrow(TransformationException.class).when(subscription).notifyElement(testFact);
       // just test that it'll be escalated unchanged from the code,
       // so that it can be handled in PgSubscriptionFactory

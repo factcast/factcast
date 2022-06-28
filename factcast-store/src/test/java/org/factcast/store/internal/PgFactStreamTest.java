@@ -18,29 +18,23 @@ package org.factcast.store.internal;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
 import io.micrometer.core.instrument.DistributionSummary;
 import java.sql.ResultSet;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
+import java.util.*;
+import java.util.concurrent.atomic.*;
+import java.util.function.*;
 import lombok.SneakyThrows;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.store.internal.PgFactStream.RatioLogLevel;
+import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
+import org.factcast.store.internal.filter.PgFactFilter;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.test.Slf4jHelper;
@@ -67,6 +61,8 @@ public class PgFactStreamTest {
   @Mock JdbcTemplate jdbc;
   @Mock PgLatestSerialFetcher fetcher;
   @Mock DistributionSummary distributionSummary;
+  @Mock PgFactFilter filter;
+  @Mock PgCatchupFactory pgCatchupFactory;
   @InjectMocks PgFactStream uut;
 
   @Test
@@ -211,7 +207,7 @@ public class PgFactStreamTest {
 
   @Test
   void logsWarnLevel() {
-    final var logger = Slf4jHelper.replaceLogger(uut);
+    var logger = Slf4jHelper.replaceLogger(uut);
 
     when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
     when(sub.factsTransformed()).thenReturn(new AtomicLong(50L));
@@ -225,7 +221,7 @@ public class PgFactStreamTest {
 
   @Test
   void logsInfoLevel() {
-    final var logger = Slf4jHelper.replaceLogger(uut);
+    var logger = Slf4jHelper.replaceLogger(uut);
 
     when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
     when(sub.factsTransformed()).thenReturn(new AtomicLong(10L));
@@ -239,7 +235,7 @@ public class PgFactStreamTest {
 
   @Test
   void logsDebugLevel() {
-    final var logger = Slf4jHelper.replaceLogger(uut);
+    var logger = Slf4jHelper.replaceLogger(uut);
 
     when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
     when(sub.factsTransformed()).thenReturn(new AtomicLong(1L));
@@ -256,15 +252,14 @@ public class PgFactStreamTest {
     @Mock(lenient = true)
     private ResultSet rs;
 
-    @Mock private SubscriptionImpl subscription;
+    @Mock SubscriptionImpl subscription;
 
-    @Mock private PgPostQueryMatcher postQueryMatcher;
+    @Mock Supplier<Boolean> isConnectedSupplier;
 
-    @Mock private Supplier<Boolean> isConnectedSupplier;
+    @Mock AtomicLong serial;
 
-    @Mock private AtomicLong serial;
-
-    @Mock private SubscriptionRequestTO request;
+    @Mock SubscriptionRequestTO request;
+    @Mock PgFactFilter filter;
 
     @InjectMocks private PgFactStream.FactRowCallbackHandler uut;
 
@@ -275,7 +270,7 @@ public class PgFactStreamTest {
 
       uut.processRow(rs);
 
-      verifyNoInteractions(rs, postQueryMatcher, serial, request);
+      verifyNoInteractions(rs, filter, serial, request);
     }
 
     @Test
@@ -286,12 +281,13 @@ public class PgFactStreamTest {
 
       assertThatThrownBy(() -> uut.processRow(rs)).isInstanceOf(IllegalStateException.class);
 
-      verifyNoInteractions(postQueryMatcher, serial, request);
+      verifyNoInteractions(filter, serial, request);
     }
 
     @Test
     @SneakyThrows
     void test_happyCase() {
+      when(filter.test(any())).thenReturn(true);
       when(isConnectedSupplier.get()).thenReturn(true);
 
       when(rs.isClosed()).thenReturn(false);
@@ -301,11 +297,9 @@ public class PgFactStreamTest {
       when(rs.getString(PgConstants.COLUMN_PAYLOAD)).thenReturn("{}");
       when(rs.getLong(PgConstants.COLUMN_SER)).thenReturn(10L);
 
-      when(postQueryMatcher.test(any())).thenReturn(true);
-
       uut.processRow(rs);
 
-      verify(postQueryMatcher).test(any());
+      verify(filter, times(1)).test(any());
       verify(subscription).notifyElement(any());
       verify(serial).set(10L);
     }
@@ -313,6 +307,7 @@ public class PgFactStreamTest {
     @Test
     @SneakyThrows
     void test_exception() {
+      when(filter.test(any())).thenReturn(true);
       when(isConnectedSupplier.get()).thenReturn(true);
 
       when(rs.isClosed()).thenReturn(false);
@@ -322,17 +317,74 @@ public class PgFactStreamTest {
       when(rs.getString(PgConstants.COLUMN_PAYLOAD)).thenReturn("{}");
       when(rs.getLong(PgConstants.COLUMN_SER)).thenReturn(10L);
 
-      final var exception = new IllegalArgumentException();
+      var exception = new IllegalArgumentException();
       doThrow(exception).when(subscription).notifyElement(any());
-
-      when(postQueryMatcher.test(any())).thenReturn(true);
 
       uut.processRow(rs);
 
-      verify(postQueryMatcher).test(any());
+      verify(filter).test(any());
       verify(subscription).notifyError(exception);
       verify(rs).close();
       verify(serial, never()).set(10L);
+    }
+  }
+
+  @Nested
+  class WhenCatchingUp {
+    @Test
+    void ifDisconnected_doNothing() {
+      uut = spy(uut);
+      when(uut.isConnected()).thenReturn(false);
+
+      uut.catchup(mock(PgPostQueryMatcher.class));
+
+      verifyNoInteractions(pgCatchupFactory);
+    }
+
+    @Test
+    void ifConnected_catchupTwice() {
+      uut = spy(uut);
+      PgCatchup catchup1 = mock(PgCatchup.class);
+      PgCatchup catchup2 = mock(PgCatchup.class);
+      when(uut.isConnected()).thenReturn(true);
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any(), any()))
+          .thenReturn(catchup1, catchup2);
+
+      uut.catchup(mock(PgPostQueryMatcher.class));
+
+      verify(catchup1, times(1)).run();
+      verify(catchup2, times(1)).run();
+    }
+  }
+
+  @Nested
+  class WhenInitializingSerialToStartAfter {
+    @Test
+    void fromScratch() {
+      when(reqTo.startingAfter()).thenReturn(Optional.empty());
+      uut.request = reqTo;
+      uut.initializeSerialToStartAfter();
+      assertThat(uut.serial()).hasValue(0);
+    }
+
+    @Test
+    void fromId() {
+      UUID id = UUID.randomUUID();
+      when(reqTo.startingAfter()).thenReturn(Optional.of(id));
+      when(id2ser.retrieve(id)).thenReturn(123L);
+      uut.request = reqTo;
+      uut.initializeSerialToStartAfter();
+      assertThat(uut.serial()).hasValue(123L);
+    }
+
+    @Test
+    void fromUnknownId() {
+      UUID id = UUID.randomUUID();
+      when(reqTo.startingAfter()).thenReturn(Optional.of(id));
+      when(id2ser.retrieve(id)).thenReturn(0L);
+      uut.request = reqTo;
+      uut.initializeSerialToStartAfter();
+      assertThat(uut.serial()).hasValue(0);
     }
   }
 }
