@@ -13,14 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.registry.http;
+package org.factcast.itests.factus.v3compat;
 
-import io.javalin.Javalin;
+import org.factcast.core.snap.SnapshotCache;
+import org.factcast.itests.factus.FactCastSnapshotCacheTest;
+import org.factcast.test.FactcastTestConfig;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
-public class TestHttpServer implements AutoCloseable {
-  @lombok.experimental.Delegate final Javalin instance = Javalin.create();
-
-  public TestHttpServer() {
-    instance.start(0);
+@SpringBootTest
+@FactcastTestConfig(factcastVersion = "0.3.9")
+public class FactCastSnapshotCacheTestCompatV3 extends FactCastSnapshotCacheTest {
+  @Autowired
+  public FactCastSnapshotCacheTestCompatV3(SnapshotCache repository) {
+    super(repository);
   }
 }

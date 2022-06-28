@@ -35,6 +35,7 @@ import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.StoreMetrics;
 import org.factcast.store.internal.filter.PgFactFilter;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
+import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -62,6 +63,7 @@ class PgFetchingCatchupTest {
   @Mock @NonNull PgFactFilter filter;
   @Mock @NonNull SubscriptionImpl subscription;
   @Mock @NonNull AtomicLong serial;
+  @Mock @NonNull CurrentStatementHolder statementHolder;
 
   @Mock(lenient = true)
   @NonNull
@@ -81,13 +83,26 @@ class PgFetchingCatchupTest {
       PgConnection con = mock(PgConnection.class);
       when(connectionSupplier.get()).thenReturn(con);
 
-      final var uut = spy(underTest);
+      var uut = spy(underTest);
       doNothing().when(uut).fetch(any());
 
       uut.run();
 
       verify(con).setAutoCommit(false);
       verify(con).close();
+    }
+
+    @SneakyThrows
+    @Test
+    void removesCurrentStatement() {
+      PgConnection con = mock(PgConnection.class);
+      when(connectionSupplier.get()).thenReturn(con);
+      var uut = spy(underTest);
+      doNothing().when(uut).fetch(any());
+
+      uut.run();
+
+      verify(statementHolder).statement(null);
     }
   }
 
