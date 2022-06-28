@@ -15,26 +15,28 @@
  */
 package org.factcast.store.registry.validation;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.*;
+
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.factcast.core.Fact;
 import org.factcast.core.FactValidationException;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 @Aspect
 @Slf4j
 @RequiredArgsConstructor
 public class FactValidationAspect {
 
-  public static final int MINIMUM_FACT_LIST_SIZE_TO_GO_PARALLEL = 10;
+  // tests with real live facts show that serial validation of 1000 facts cost about 20ms on
+  // commodity hardware,
+  // so parallelization is probably only worth it when there are huge batches during mass ingestion
+  public static final int MINIMUM_FACT_LIST_SIZE_TO_GO_PARALLEL = 1000;
   private final FactValidator validator;
 
   // not hogging the common FJP. Also limiting parallelism to less of what the common pool has.
@@ -53,14 +55,12 @@ public class FactValidationAspect {
     return joinPoint.proceed();
   }
 
-  private void validate(List<? extends Fact> facts)
-      throws ExecutionException, InterruptedException {
-    List<FactValidationError> errors;
+  private void validate(List<? extends Fact> facts) {
+    Stream<? extends Fact> stream = facts.stream();
     if (facts.size() >= MINIMUM_FACT_LIST_SIZE_TO_GO_PARALLEL) {
-      errors = validationPool.submit(() -> validate(facts.parallelStream())).get();
-    } else {
-      errors = validate(facts.stream());
+      stream = stream.parallel();
     }
+    List<FactValidationError> errors = validate(stream);
 
     if (!errors.isEmpty())
       throw new FactValidationException(

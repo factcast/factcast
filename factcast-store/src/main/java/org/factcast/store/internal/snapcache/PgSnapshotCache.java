@@ -17,6 +17,7 @@ package org.factcast.store.internal.snapcache;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.NonNull;
@@ -26,7 +27,6 @@ import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.StoreMetrics;
-import org.joda.time.DateTime;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @Slf4j
@@ -84,10 +84,10 @@ public class PgSnapshotCache {
         UUID.fromString(resultSet.getString(1)), resultSet.getBytes(2), resultSet.getBoolean(3));
   }
 
-  public void compact(@NonNull DateTime thresholdDate) {
+  public void compact(@NonNull ZonedDateTime thresholdDate) {
     var deleted =
         jdbcTemplate.update(
-            "DELETE FROM snapshot_cache WHERE last_access < ?", thresholdDate.toDate());
+            "DELETE FROM snapshot_cache WHERE last_access < ?", thresholdDate.toOffsetDateTime());
     metrics.distributionSummary(StoreMetrics.VALUE.SNAPSHOTS_COMPACTED).record(deleted);
     log.debug("compaction removed {} stale snapshots from the snapshot_cache", deleted);
   }

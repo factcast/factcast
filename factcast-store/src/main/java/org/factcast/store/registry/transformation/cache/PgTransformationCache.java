@@ -16,6 +16,7 @@
 package org.factcast.store.registry.transformation.cache;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -26,7 +27,6 @@ import org.factcast.core.Fact;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics.EVENT;
 import org.factcast.store.registry.metrics.RegistryMetrics.OP;
-import org.joda.time.DateTime;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 
@@ -99,12 +99,13 @@ public class PgTransformationCache implements TransformationCache {
   }
 
   @Override
-  public void compact(@NonNull DateTime thresholdDate) {
+  public void compact(@NonNull ZonedDateTime thresholdDate) {
     registryMetrics.timed(
         OP.COMPACT_TRANSFORMATION_CACHE,
         () -> {
           jdbcTemplate.update(
-              "DELETE FROM transformationcache WHERE last_access < ?", thresholdDate.toDate());
+              "DELETE FROM transformationcache WHERE last_access < ?",
+              new Date(thresholdDate.toInstant().toEpochMilli()));
         });
   }
 

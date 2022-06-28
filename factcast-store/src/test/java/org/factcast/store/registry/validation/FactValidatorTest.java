@@ -15,12 +15,9 @@
  */
 package org.factcast.store.registry.validation;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
-
-import com.github.fge.jsonschema.main.JsonSchema;
-import io.micrometer.core.instrument.Tags;
 import java.util.*;
+
+import org.everit.json.schema.Schema;
 import org.factcast.core.Fact;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.NOPRegistryMetrics;
@@ -31,6 +28,11 @@ import org.factcast.store.registry.metrics.RegistryMetrics.EVENT;
 import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+
+import io.micrometer.core.instrument.Tags;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
 public class FactValidatorTest {
   @Test
@@ -127,9 +129,7 @@ public class FactValidatorTest {
             + "  \"required\": [\"firstName\"]\n"
             + "}";
 
-    JsonSchema schema =
-        ValidationConstants.JSON_SCHEMA_FACTORY.getJsonSchema(
-            ValidationConstants.JACKSON.readTree(schemaJson));
+    Schema schema = ValidationConstants.jsonString2SchemaV7(schemaJson);
     when(sr.get(Mockito.any(SchemaKey.class))).thenReturn(Optional.of(schema));
 
     FactValidator uut = new FactValidator(props, sr, mock(RegistryMetrics.class));
@@ -177,9 +177,7 @@ public class FactValidatorTest {
             + "  \"required\": [\"firstName\"]\n"
             + "}";
 
-    JsonSchema schema =
-        ValidationConstants.JSON_SCHEMA_FACTORY.getJsonSchema(
-            ValidationConstants.JACKSON.readTree(schemaJson));
+    Schema schema = ValidationConstants.jsonString2SchemaV7(schemaJson);
     when(sr.get(Mockito.any(SchemaKey.class))).thenReturn(Optional.of(schema));
 
     FactValidator uut = new FactValidator(props, sr, registryMetrics);

@@ -15,32 +15,27 @@
  */
 package org.factcast.store.registry;
 
-import com.github.fge.jsonschema.core.exceptions.ProcessingException;
-import com.github.fge.jsonschema.main.JsonSchema;
-import com.google.common.base.Stopwatch;
-import com.google.common.cache.AbstractLoadingCache;
-import com.google.common.cache.LoadingCache;
 import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
+import java.util.*;
+import java.util.concurrent.*;
+
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.everit.json.schema.Schema;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.http.ValidationConstants;
 import org.factcast.store.registry.metrics.RegistryMetrics;
-import org.factcast.store.registry.transformation.Transformation;
-import org.factcast.store.registry.transformation.TransformationConflictException;
-import org.factcast.store.registry.transformation.TransformationKey;
-import org.factcast.store.registry.transformation.TransformationSource;
-import org.factcast.store.registry.transformation.TransformationStore;
-import org.factcast.store.registry.transformation.TransformationStoreListener;
+import org.factcast.store.registry.transformation.*;
 import org.factcast.store.registry.validation.schema.SchemaConflictException;
 import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.factcast.store.registry.validation.schema.SchemaSource;
 import org.factcast.store.registry.validation.schema.SchemaStore;
+
+import com.google.common.base.Stopwatch;
+import com.google.common.cache.AbstractLoadingCache;
+import com.google.common.cache.LoadingCache;
+
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public abstract class AbstractSchemaRegistry implements SchemaRegistry {
@@ -57,29 +52,18 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
 
   protected final Object mutex = new Object();
 
-  private final LoadingCache<SchemaKey, JsonSchema> cache =
-      new AbstractLoadingCache<SchemaKey, JsonSchema>() {
+  private final LoadingCache<SchemaKey, Schema> cache =
+      new AbstractLoadingCache<SchemaKey, Schema>() {
 
         @Override
-        public JsonSchema get(@NonNull SchemaKey key) {
-          return schemaStore.get(key).map(createSchema()).orElse(null);
-        }
-
-        private Function<? super String, ? extends JsonSchema> createSchema() {
-          return s -> {
-            try {
-              return ValidationConstants.JSON_SCHEMA_FACTORY.getJsonSchema(
-                  ValidationConstants.JACKSON.readTree(s));
-            } catch (ProcessingException | IOException e) {
-              throw new IllegalArgumentException("Cannot create schema from : \n " + s, e);
-            }
-          };
+        public Schema get(@NonNull SchemaKey key) {
+          return schemaStore.get(key).map(ValidationConstants.jsonString2SchemaV7()).orElse(null);
         }
 
         @Override
-        public @Nullable JsonSchema getIfPresent(@NonNull Object k) {
+        public @Nullable Schema getIfPresent(@NonNull Object k) {
           SchemaKey key = (SchemaKey) k;
-          return schemaStore.get(key).map(createSchema()).orElse(null);
+          return schemaStore.get(key).map(ValidationConstants.jsonString2SchemaV7()).orElse(null);
         }
       };
 
@@ -209,7 +193,7 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
   }
 
   @Override
-  public Optional<JsonSchema> get(@NonNull SchemaKey key) {
+  public Optional<Schema> get(@NonNull SchemaKey key) {
     return Optional.ofNullable(cache.getIfPresent(key));
   }
 
