@@ -15,8 +15,11 @@
  */
 package org.factcast.store.registry.validation;
 
-import java.util.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
+import io.micrometer.core.instrument.Tags;
+import java.util.*;
 import org.everit.json.schema.Schema;
 import org.factcast.core.Fact;
 import org.factcast.store.StoreConfigurationProperties;
@@ -28,11 +31,6 @@ import org.factcast.store.registry.metrics.RegistryMetrics.EVENT;
 import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-
-import io.micrometer.core.instrument.Tags;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
 
 public class FactValidatorTest {
   @Test
