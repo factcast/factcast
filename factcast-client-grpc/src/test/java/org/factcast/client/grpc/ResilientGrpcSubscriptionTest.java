@@ -49,6 +49,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -74,6 +75,15 @@ class ResilientGrpcSubscriptionTest {
     when(store.internalSubscribe(any(), observerAC.capture())).thenReturn(subscription);
     uut = spy(new ResilientGrpcSubscription(store, req, obs, config));
     when(store.subscribe(any(), observerAC.capture())).thenReturn(uut);
+  }
+
+  @SneakyThrows
+  @Test
+  void testClosesOnlyOnce() {
+    uut.close();
+    Mockito.verify(subscription).close();
+    uut.close();
+    Mockito.verifyNoMoreInteractions(subscription);
   }
 
   @Test
