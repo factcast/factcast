@@ -15,11 +15,8 @@
  */
 package org.factcast.store.registry.validation;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
-
-import io.micrometer.core.instrument.Tags;
 import java.util.*;
+
 import org.everit.json.schema.Schema;
 import org.factcast.core.Fact;
 import org.factcast.store.StoreConfigurationProperties;
@@ -32,6 +29,11 @@ import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+
+import io.micrometer.core.instrument.Tags;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
 public class FactValidatorTest {
   @Test
@@ -87,6 +89,24 @@ public class FactValidatorTest {
         new FactValidator(props, mock(SchemaRegistry.class), mock(RegistryMetrics.class));
     Fact probeFact = Fact.builder().ns("foo").type("bar").buildWithoutPayload();
     assertThat(uut.validate(probeFact)).isEmpty();
+  }
+
+  @Test
+  void testValidateIfNotValidatableAndDisallowed() throws Exception {
+
+    StoreConfigurationProperties props = mock(StoreConfigurationProperties.class);
+    when(props.isSchemaRegistryConfigured()).thenReturn(true);
+    when(props.isValidationEnabled()).thenReturn(true);
+    when(props.isAllowUnvalidatedPublish()).thenReturn(false);
+
+    FactValidator uut =
+        new FactValidator(props, mock(SchemaRegistry.class), mock(RegistryMetrics.class));
+    Fact probeFact = Fact.builder().ns("foo").type("bar").buildWithoutPayload();
+    assertThat(uut.validate(probeFact))
+        .hasSize(1)
+        .first()
+        .extracting(FactValidationError::message)
+        .matches(s -> s.contains("Fact is not validatable"));
   }
 
   @Test
