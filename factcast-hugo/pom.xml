@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.4.4-SNAPSHOT</version>
+    <version>0.5.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-hugo</artifactId>
@@ -14,23 +14,29 @@
     <finalName>factcast</finalName>
     <plugins>
       <plugin>
-        <groupId>com.spotify</groupId>
-        <artifactId>dockerfile-maven-plugin</artifactId>
-        <version>1.4.13</version>
+        <groupId>io.fabric8</groupId>
+        <artifactId>docker-maven-plugin</artifactId>
+        <version>0.40.1</version>
         <executions>
           <execution>
             <id>default</id>
             <goals>
               <goal>build</goal>
             </goals>
-            <configuration>
-              <tag>latest</tag>
-            </configuration>
           </execution>
         </executions>
         <configuration>
-          <repository>factcast/${artifactId}</repository>
-          <tag>latest</tag>
+          <images>
+            <image>
+              <name>factcast/${artifactId}</name>
+              <build>
+                <dockerFileDir>${project.basedir}</dockerFileDir>
+                <tags>
+                  <tag>latest</tag>
+                </tags>
+              </build>
+            </image>
+          </images>
         </configuration>
       </plugin>
     </plugins>
@@ -46,9 +52,9 @@
       <build>
         <plugins>
           <plugin>
-            <groupId>com.spotify</groupId>
-            <artifactId>dockerfile-maven-plugin</artifactId>
-            <version>1.4.13</version>
+            <groupId>io.fabric8</groupId>
+            <artifactId>docker-maven-plugin</artifactId>
+            <version>0.40.1</version>
             <executions>
               <execution>
                 <id>default</id>
@@ -56,14 +62,21 @@
                   <goal>build</goal>
                   <goal>push</goal>
                 </goals>
-                <configuration>
-                  <tag>${project.version}</tag>
-                </configuration>
               </execution>
             </executions>
             <configuration>
-              <repository>factcast/${artifactId}</repository>
-              <tag>latest</tag>
+              <images>
+                <image>
+                  <name>factcast/${artifactId}</name>
+                  <build>
+                    <dockerFileDir>${project.basedir}</dockerFileDir>
+                    <tags>
+                      <tag>latest</tag>
+                      <tag>${project.version}</tag>
+                    </tags>
+                  </build>
+                </image>
+              </images>
             </configuration>
           </plugin>
         </plugins>

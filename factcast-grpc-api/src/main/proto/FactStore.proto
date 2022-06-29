@@ -177,7 +177,7 @@ service RemoteFactStore {
 
   rpc publishConditional (MSG_ConditionalPublishRequest) returns (MSG_ConditionalPublishResult) {}
   rpc invalidate (MSG_UUID) returns (MSG_Empty) {}
-  rpc stateFor (MSG_StateForRequest) returns (MSG_UUID) {} // will be replaced
+  rpc stateFor (MSG_StateForRequest) returns (MSG_UUID) {} // will be removed
   rpc currentTime(MSG_Empty) returns (MSG_CurrentDatabaseTime) {}
   // 1.2
   rpc fetchByIdAndVersion (MSG_UUID_AND_VERSION) returns (MSG_OptionalFact) {}
@@ -186,4 +186,6 @@ service RemoteFactStore {
   rpc setSnapshot (MSG_Snapshot) returns (MSG_Empty) {}
   rpc getSnapshot (MSG_SnapshotId) returns (MSG_OptionalSnapshot) {}
   rpc stateForSpecsJson (MSG_FactSpecsJson) returns (MSG_UUID) {}
+  // perf. opt. for stateForSpecsJson, where the query is replaced by a simple select max(ser)
+  rpc currentStateForSpecsJson (MSG_FactSpecsJson) returns (MSG_UUID) {}
 }

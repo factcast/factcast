@@ -89,7 +89,6 @@ class ClientStreamObserverTest {
     assertThat(uut.clientBoundExecutor().isShutdown()).isTrue();
   }
 
-
   @Test
   void shutsdownOnCompleteRecieved() {
     assertThat(uut.clientBoundExecutor().isShutdown()).isFalse();
@@ -103,8 +102,11 @@ class ClientStreamObserverTest {
 
     Fact f = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
     MSG_Notification n = converter.createNotificationFor(f);
-    assertThatThrownBy( () -> { uut.onNext(n); })
-            .isInstanceOf(UnsupportedOperationException.class);
+    assertThatThrownBy(
+            () -> {
+              uut.onNext(n);
+            })
+        .isInstanceOf(UnsupportedOperationException.class);
   }
 
   @Test

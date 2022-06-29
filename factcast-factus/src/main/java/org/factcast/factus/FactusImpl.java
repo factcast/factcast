@@ -89,7 +89,7 @@ public class FactusImpl implements Factus {
   private final Set<AutoCloseable> managedObjects = new HashSet<>();
 
   @Override
-  public PublishBatch batch() {
+  public @NonNull PublishBatch batch() {
     return new DefaultPublishBatch(fc, eventConverter);
   }
 
@@ -181,7 +181,7 @@ public class FactusImpl implements Factus {
                 }
               }
             });
-        return subscription;
+        return new TokenAwareSubscription(subscription, token);
       } else {
         log.trace(
             "failed to acquire writer token for {}. Will keep trying.",
@@ -241,7 +241,7 @@ public class FactusImpl implements Factus {
 
   @Override
   @SneakyThrows
-  public <P extends SnapshotProjection> P fetch(Class<P> projectionClass) {
+  public <P extends SnapshotProjection> @NonNull P fetch(Class<P> projectionClass) {
     return factusMetrics.timed(
         TimedOperation.FETCH_DURATION,
         Tags.of(Tag.of(CLASS, projectionClass.getName())),
@@ -352,7 +352,7 @@ public class FactusImpl implements Factus {
 
     FactObserver fo =
         new AbstractFactObserver(projection, PROGRESS_INTERVAL, factusMetrics) {
-          @NonNull UUID id = null;
+          UUID id = null;
 
           @Override
           public void onNextFact(@NonNull Fact element) {
@@ -444,7 +444,7 @@ public class FactusImpl implements Factus {
   }
 
   @Override
-  public <M extends ManagedProjection> Locked<M> withLockOn(M managedProjection) {
+  public <M extends ManagedProjection> Locked<M> withLockOn(@NonNull M managedProjection) {
     Projector<M> applier = ehFactory.create(managedProjection);
     List<FactSpec> specs = applier.createFactSpecs();
     return new Locked<>(fc, this, managedProjection, specs, factusMetrics);
@@ -486,13 +486,18 @@ public class FactusImpl implements Factus {
     return new LockedOnSpecs(fc, this, specs, factusMetrics);
   }
 
+  @Override
+  public OptionalLong serialOf(@NonNull UUID factId) {
+    return fc.serialOf(factId);
+  }
+
   abstract static class IntervalSnapshotter<P extends SnapshotProjection>
       implements BiConsumer<P, UUID> {
 
     private final Duration duration;
     private Instant nextSnapshot;
 
-    public IntervalSnapshotter(Duration duration) {
+    IntervalSnapshotter(Duration duration) {
       this.duration = duration;
       nextSnapshot = Instant.now().plus(duration);
     }

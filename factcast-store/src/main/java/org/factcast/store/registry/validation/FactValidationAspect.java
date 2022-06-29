@@ -15,9 +15,12 @@
  */
 package org.factcast.store.registry.validation;
 
-import java.util.LinkedList;
+import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -31,7 +34,12 @@ import org.factcast.core.FactValidationException;
 @RequiredArgsConstructor
 public class FactValidationAspect {
 
+  public static final int MINIMUM_FACT_LIST_SIZE_TO_GO_PARALLEL = 10;
   private final FactValidator validator;
+
+  // not hogging the common FJP. Also limiting parallelism to less of what the common pool has.
+  private static final ForkJoinPool validationPool =
+      new ForkJoinPool((int) Math.abs(Runtime.getRuntime().availableProcessors() / 1.5));
 
   @SuppressWarnings("unchecked")
   @Around("execution(public void org.factcast.core.store.FactStore.publish(*))")
@@ -45,15 +53,22 @@ public class FactValidationAspect {
     return joinPoint.proceed();
   }
 
-  private void validate(List<? extends Fact> facts) {
-
-    List<FactValidationError> errors = new LinkedList<>();
-
-    facts.forEach(f -> errors.addAll(validator.validate(f)));
+  private void validate(List<? extends Fact> facts)
+      throws ExecutionException, InterruptedException {
+    List<FactValidationError> errors;
+    if (facts.size() >= MINIMUM_FACT_LIST_SIZE_TO_GO_PARALLEL) {
+      errors = validationPool.submit(() -> validate(facts.parallelStream())).get();
+    } else {
+      errors = validate(facts.stream());
+    }
 
     if (!errors.isEmpty())
       throw new FactValidationException(
           errors.stream().map(FactValidationError::toString).collect(Collectors.toList()));
+  }
+
+  private List<FactValidationError> validate(Stream<? extends Fact> stream) {
+    return stream.map(validator::validate).flatMap(Collection::stream).collect(Collectors.toList());
   }
 
   @SuppressWarnings("unchecked")

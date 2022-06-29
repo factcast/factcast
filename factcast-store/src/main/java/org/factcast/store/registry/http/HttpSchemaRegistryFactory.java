@@ -16,16 +16,15 @@
 package org.factcast.store.registry.http;
 
 import com.google.common.collect.Lists;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.List;
 import lombok.NonNull;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.SchemaRegistryFactory;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.TransformationStore;
 import org.factcast.store.registry.validation.schema.SchemaStore;
-
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.List;
 
 public class HttpSchemaRegistryFactory implements SchemaRegistryFactory<HttpSchemaRegistry> {
 

@@ -15,11 +15,15 @@
  */
 package org.factcast.client.grpc;
 
+import com.google.common.collect.Sets;
 import io.grpc.Metadata;
 import io.grpc.Status;
+import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import java.lang.reflect.Constructor;
 import java.util.Objects;
+import java.util.Set;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.store.RetryableException;
 import org.factcast.core.util.ExceptionHelper;
@@ -47,22 +51,31 @@ public class ClientExceptionHelper {
             Constructor<?> constructor = exc.getConstructor(String.class);
             String msg = new String(Objects.requireNonNull(msgBytes));
             toReturn = (RuntimeException) constructor.newInstance(msg);
-          } catch (Throwable ex) {
+          } catch (Exception ex) {
             log.warn("Something went wrong materializing an exception of type {}", className, ex);
           }
         }
       }
 
-      Status status = sre.getStatus();
-      if (toReturn == e
-          && (status == Status.ABORTED
-              || status == Status.UNAVAILABLE
-              || status == Status.UNKNOWN
-              || status == Status.DEADLINE_EXCEEDED
-              || status == Status.RESOURCE_EXHAUSTED)) {
-        toReturn = new RetryableException(sre);
-      }
+      if (isRetryable(toReturn)) return new RetryableException(toReturn);
     }
     return ExceptionHelper.toRuntime(toReturn);
+  }
+
+  private static final Set<Code> RETRYABLE_STATUS =
+      Sets.newHashSet(
+          Status.UNKNOWN.getCode(),
+          Status.UNAVAILABLE.getCode(),
+          Status.ABORTED.getCode(),
+          Status.DEADLINE_EXCEEDED.getCode());
+
+  public static boolean isRetryable(@NonNull Throwable exception) {
+    if (exception instanceof RetryableException) return true;
+
+    if (exception instanceof StatusRuntimeException) {
+      Code s = ((StatusRuntimeException) exception).getStatus().getCode();
+      return RETRYABLE_STATUS.contains(s);
+    }
+    return false;
   }
 }

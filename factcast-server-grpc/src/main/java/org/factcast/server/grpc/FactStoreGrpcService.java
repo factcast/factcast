@@ -42,6 +42,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.NonNull;
@@ -70,6 +71,9 @@ import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreImplBase;
 import org.factcast.server.grpc.auth.FactCastAuthority;
 import org.factcast.server.grpc.auth.FactCastUser;
+import org.factcast.server.grpc.metrics.NOPServerMetrics;
+import org.factcast.server.grpc.metrics.ServerMetrics;
+import org.factcast.server.grpc.metrics.ServerMetrics.OP;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.context.SecurityContext;
@@ -95,8 +99,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
   @NonNull final FactStore store;
   @NonNull final GrpcRequestMetadata grpcRequestMetadata;
   @NonNull final GrpcLimitProperties grpcLimitProperties;
-
   @NonNull final FastForwardTarget ffwdTarget;
+  @NonNull final ServerMetrics metrics;
 
   final CompressionCodecs codecs = new CompressionCodecs();
 
@@ -107,21 +111,26 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
   @VisibleForTesting
   @Deprecated
   protected FactStoreGrpcService(FactStore store, GrpcRequestMetadata grpcRequestMetadata) {
-    this(store, grpcRequestMetadata, new GrpcLimitProperties(), FastForwardTarget.forTest());
+    this(
+        store,
+        grpcRequestMetadata,
+        new GrpcLimitProperties(),
+        FastForwardTarget.forTest(),
+        new NOPServerMetrics());
   }
 
   @VisibleForTesting
   @Deprecated
   protected FactStoreGrpcService(
       FactStore store, GrpcRequestMetadata grpcRequestMetadata, GrpcLimitProperties props) {
-    this(store, grpcRequestMetadata, props, FastForwardTarget.forTest());
+    this(store, grpcRequestMetadata, props, FastForwardTarget.forTest(), new NOPServerMetrics());
   }
 
   @VisibleForTesting
   @Deprecated
   protected FactStoreGrpcService(
       FactStore store, GrpcRequestMetadata grpcRequestMetadata, FastForwardTarget target) {
-    this(store, grpcRequestMetadata, new GrpcLimitProperties(), target);
+    this(store, grpcRequestMetadata, new GrpcLimitProperties(), target, new NOPServerMetrics());
   }
 
   @Override
@@ -182,7 +191,10 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
       resetDebugInfo(req, grpcRequestMetadata);
       BlockingStreamObserver<MSG_Notification> resp =
-          new BlockingStreamObserver<>(req.toString(), (ServerCallStreamObserver) responseObserver, grpcRequestMetadata.catchupBatch().orElse(1));
+          new BlockingStreamObserver<>(
+              req.toString(),
+              (ServerCallStreamObserver) responseObserver,
+              grpcRequestMetadata.catchupBatch().orElse(1));
 
       AtomicReference<Subscription> subRef = new AtomicReference();
 
@@ -304,11 +316,15 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
   @Override
   public void handshake(MSG_Empty request, StreamObserver<MSG_ServerConfig> responseObserver) {
-    initialize(responseObserver);
+    metrics.timed(
+        OP.HANDSHAKE,
+        () -> {
+          initialize(responseObserver);
 
-    ServerConfig cfg = ServerConfig.of(PROTOCOL_VERSION, collectProperties());
-    responseObserver.onNext(converter.toProto(cfg));
-    responseObserver.onCompleted();
+          ServerConfig cfg = ServerConfig.of(PROTOCOL_VERSION, collectProperties());
+          responseObserver.onNext(converter.toProto(cfg));
+          responseObserver.onCompleted();
+        });
   }
 
   private Map<String, String> collectProperties() {
@@ -317,17 +333,21 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
     String name = grpcRequestMetadata.clientId().orElse("");
     properties.put(Capabilities.CODECS.toString(), codecs.available());
+    // since 0.5.2
+    properties.put(Capabilities.FAST_STATE_TOKEN.toString(), Boolean.TRUE.toString());
+
     log.info("{}handshake (serverConfig={})", clientIdPrefix(), properties);
     return properties;
   }
 
   @VisibleForTesting
   void retrieveImplementationVersion(HashMap<String, String> properties) {
-    properties.put(Capabilities.FACTCAST_IMPL_VERSION.toString(), getImplVersion().orElse("UNKNOWN"));
+    properties.put(
+        Capabilities.FACTCAST_IMPL_VERSION.toString(), getImplVersion().orElse("UNKNOWN"));
   }
 
   private Optional<String> getImplVersion() {
-    String implVersion=null;
+    String implVersion = null;
 
     URL propertiesUrl = getProjectProperties();
     Properties buildProperties = new Properties();
@@ -436,6 +456,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
     StateForRequest req = converter.fromProto(request);
     String ns = req.ns(); // TODO is this gets null, we're screwed
+    assertCanRead(ns);
     StateToken token =
         store.stateFor(
             req.aggIds().stream()
@@ -448,11 +469,21 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
   @Override
   public void stateForSpecsJson(
       MSG_FactSpecsJson request, StreamObserver<MSG_UUID> responseObserver) {
+    Function<List<FactSpec>, StateToken> tokenSupplier = r -> store.stateFor(r);
+    doStateFor(request, responseObserver, tokenSupplier);
+  }
+
+  private void doStateFor(
+      MSG_FactSpecsJson request,
+      StreamObserver<MSG_UUID> responseObserver,
+      Function<List<FactSpec>, StateToken> tokenSupplier) {
     initialize(responseObserver);
     List<FactSpec> req = converter.fromProto(request);
     if (!req.isEmpty()) {
 
-      StateToken token = store.stateFor(req);
+      assertCanRead(req.stream().map(FactSpec::ns).collect(Collectors.toList()));
+
+      StateToken token = tokenSupplier.apply(req);
       responseObserver.onNext(converter.toProto(token.uuid()));
       responseObserver.onCompleted();
 
@@ -462,6 +493,14 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
           new IllegalArgumentException(
               clientIdPrefix() + "Cannot determine state for empty list of fact specifications"));
     }
+  }
+
+  @Override
+  public void currentStateForSpecsJson(
+      MSG_FactSpecsJson request, StreamObserver<MSG_UUID> responseObserver) {
+    initialize(responseObserver);
+    Function<List<FactSpec>, StateToken> tokenSupplier = r -> store.currentStateFor(r);
+    doStateFor(request, responseObserver, tokenSupplier);
   }
 
   @Override
@@ -550,7 +589,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
     FactCastUser user = getFactcastUser();
     if (!user.canRead(ns)) {
 
-      log.error("{}Not allowed to read from namespace '{}'", clientIdPrefix(), ns);
+      log.warn("{}Not allowed to read from namespace '{}'", clientIdPrefix(), ns);
       throw new StatusRuntimeException(Status.PERMISSION_DENIED, new Metadata());
     }
   }
@@ -565,7 +604,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
     FactCastUser user = getFactcastUser();
     for (String ns : namespaces) {
       if (!user.canWrite(ns)) {
-        log.error("{}Not allowed to write to namespace '{}'", clientIdPrefix(), ns);
+        log.warn("{}Not allowed to write to namespace '{}'", clientIdPrefix(), ns);
         throw new StatusRuntimeException(Status.PERMISSION_DENIED, new Metadata());
       }
     }
@@ -624,6 +663,6 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
   @Override
   public void afterPropertiesSet() throws Exception {
-    log.info("Service version: {}",getImplVersion().orElse("UNKNOWN"));
+    log.info("Service version: {}", getImplVersion().orElse("UNKNOWN"));
   }
 }

@@ -53,21 +53,19 @@ public class SubscriptionImplTest {
     expect(TimeoutException.class, () -> uut.awaitCatchup(10));
     expect(TimeoutException.class, () -> uut.awaitComplete(10));
     uut.close();
-    expect(SubscriptionCancelledException.class, () -> uut.awaitCatchup(10));
-    expect(SubscriptionCancelledException.class, () -> uut.awaitComplete(10));
+    expect(SubscriptionClosedException.class, () -> uut.awaitCatchup(10));
+    expect(SubscriptionClosedException.class, () -> uut.awaitComplete(10));
   }
 
   @Test
   void onCloseStacksUpAndIgnoresException() {
 
-    class DoNothing implements Runnable{
+    class DoNothing implements Runnable {
       @Override
-      public void run() {
-
-      }
+      public void run() {}
     }
 
-    class Fails implements Runnable{
+    class Fails implements Runnable {
       @Override
       public void run() {
         throw new IllegalArgumentException();
@@ -90,8 +88,6 @@ public class SubscriptionImplTest {
     verify(h2).run();
     verify(h3).run();
     verify(h4).run();
-
-
   }
 
   @Test
@@ -110,11 +106,6 @@ public class SubscriptionImplTest {
     uut.notifyComplete();
     uut.awaitCatchup();
     uut.awaitComplete();
-  }
-
-  @Test
-  void testNullConst() {
-    Assertions.assertThrows(NullPointerException.class, () -> new SubscriptionImpl(null, null));
   }
 
   @Test

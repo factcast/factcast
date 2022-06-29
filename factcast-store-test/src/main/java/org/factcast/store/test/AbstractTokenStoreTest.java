@@ -15,14 +15,14 @@
  */
 package org.factcast.store.test;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.UUID;
+import java.util.*;
 import org.factcast.core.store.State;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("ALL")
 public abstract class AbstractTokenStoreTest {
@@ -61,15 +61,5 @@ public abstract class AbstractTokenStoreTest {
   @Test
   public void getStateShouldReturnAbsentForUnknownToken() throws Exception {
     assertThat(uut.get(new StateToken(UUID.randomUUID()))).isNotPresent();
-  }
-
-  @Test
-  public void testCreateNullContract() throws Exception {
-    assertThrows(NullPointerException.class, () -> uut.create(null));
-  }
-
-  @Test
-  public void testInvalidateNullContract() throws Exception {
-    assertThrows(NullPointerException.class, () -> uut.invalidate(null));
   }
 }

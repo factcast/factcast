@@ -16,11 +16,10 @@
 package org.factcast.store.registry;
 
 import io.micrometer.core.instrument.Tags;
+import java.util.function.Supplier;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.metrics.RunnableWithException;
 import org.factcast.store.registry.metrics.SupplierWithException;
-
-import java.util.function.Supplier;
 
 public class NOPRegistryMetrics implements RegistryMetrics {
 

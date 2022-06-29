@@ -16,8 +16,6 @@
 package org.factcast.schema.registry.cli.registry.impl
 
 import com.google.common.annotations.VisibleForTesting
-import java.nio.file.Path
-import javax.inject.Singleton
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.registry.IndexFileCalculator
@@ -28,11 +26,13 @@ import org.factcast.schema.registry.cli.registry.index.Index
 import org.factcast.schema.registry.cli.registry.index.Schema
 import org.factcast.schema.registry.cli.registry.index.SyntheticTransformation
 import org.factcast.schema.registry.cli.utils.ChecksumService
-import org.factcast.schema.registry.cli.utils.filterTitleFrom
+import org.factcast.schema.registry.cli.utils.filterJson
 import org.factcast.schema.registry.cli.utils.mapEventTransformations
 import org.factcast.schema.registry.cli.utils.mapEventVersions
 import org.factcast.schema.registry.cli.utils.mapEvents
 import org.factcast.schema.registry.cli.validation.MissingTransformationCalculator
+import java.nio.file.Path
+import javax.inject.Singleton
 
 @Singleton
 class IndexFileCalculatorImpl(
@@ -40,73 +40,72 @@ class IndexFileCalculatorImpl(
     private val missingTransformationCalculator: MissingTransformationCalculator,
     private val fileSystemService: FileSystemService
 ) : IndexFileCalculator {
-    override fun calculateIndex(project: Project, schemaStripTitles: Boolean): Index {
+    override fun calculateIndex(project: Project, removedSchemaProps: Set<String>): Index {
         val schemas = project
-                .mapEventVersions { namespace, event, version ->
-                    val id =
-                            getEventId(namespace, event, version)
+            .mapEventVersions { namespace, event, version ->
+                val id =
+                    getEventId(namespace, event, version)
 
-                    Schema(
-                            id,
-                            namespace.name,
-                            event.type,
-                            version.version,
-                            createMd5Hash(version.schemaPath, schemaStripTitles)
-                    )
-                }
+                Schema(
+                    id,
+                    namespace.name,
+                    event.type,
+                    version.version,
+                    createMd5Hash(version.schemaPath, removedSchemaProps)
+                )
+            }
 
         val transformations = project
-                .mapEventTransformations { namespace, event, transformation ->
-                    val id = getTransformationId(
-                            namespace,
-                            event,
-                            transformation.from,
-                            transformation.to
-                    )
+            .mapEventTransformations { namespace, event, transformation ->
+                val id = getTransformationId(
+                    namespace,
+                    event,
+                    transformation.from,
+                    transformation.to
+                )
 
-                    FileBasedTransformation(
-                            id,
-                            namespace.name,
-                            event.type,
-                            transformation.from,
-                            transformation.to,
-                            checksumService.createMd5Hash(transformation.transformationPath)
-                    )
-                }
+                FileBasedTransformation(
+                    id,
+                    namespace.name,
+                    event.type,
+                    transformation.from,
+                    transformation.to,
+                    checksumService.createMd5Hash(transformation.transformationPath)
+                )
+            }
 
         val syntheticTransformations = project
-                .mapEvents { namespace, event ->
-                    missingTransformationCalculator.calculateDowncastTransformations(event).map {
-                        val (fromVersion, toVersion) = it
-                        val id = getTransformationId(
-                                namespace,
-                                event,
-                                fromVersion.version,
-                                toVersion.version
-                        )
+            .mapEvents { namespace, event ->
+                missingTransformationCalculator.calculateDowncastTransformations(event).map {
+                    val (fromVersion, toVersion) = it
+                    val id = getTransformationId(
+                        namespace,
+                        event,
+                        fromVersion.version,
+                        toVersion.version
+                    )
 
-                        SyntheticTransformation(
-                                id,
-                                namespace.name,
-                                event.type,
-                                fromVersion.version,
-                                toVersion.version
-                        )
-                    }
-                }.flatten()
+                    SyntheticTransformation(
+                        id,
+                        namespace.name,
+                        event.type,
+                        fromVersion.version,
+                        toVersion.version
+                    )
+                }
+            }.flatten()
 
         return Index(schemas, transformations.plus(syntheticTransformations))
     }
 
-    private fun createMd5Hash(filePath: Path, schemaStripTitles: Boolean): String =
-            if (schemaStripTitles) createTitleFilteredMd5Hash(filePath)
-                else checksumService.createMd5Hash(filePath)
-
+    private fun createMd5Hash(filePath: Path, removedSchemaProps: Set<String>): String =
+        if (removedSchemaProps.isNotEmpty()) createFilteredMd5Hash(filePath, removedSchemaProps)
+        else checksumService.createMd5Hash(filePath)
 
     @VisibleForTesting
-    fun createTitleFilteredMd5Hash(filePath: Path): String {
+    fun createFilteredMd5Hash(filePath: Path, removedSchemaProps: Set<String>): String {
         val jsonNode = fileSystemService.readToJsonNode(filePath)
-                ?: throw IllegalStateException("Loading JSON from $filePath failed")
-        return checksumService.createMd5Hash(filterTitleFrom(jsonNode))
+            ?: throw IllegalStateException("Loading JSON from $filePath failed")
+        return checksumService.createMd5Hash(filterJson(jsonNode, removedSchemaProps))
     }
 }

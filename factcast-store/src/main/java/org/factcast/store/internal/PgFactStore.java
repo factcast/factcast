@@ -22,6 +22,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.DuplicateFactException;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
@@ -39,6 +40,7 @@ import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.snapcache.PgSnapshotCache;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
@@ -143,7 +145,7 @@ public class PgFactStore extends AbstractFactStore {
             // adding serials to headers is done via trigger
 
           } catch (DuplicateKeyException dupkey) {
-            throw new IllegalArgumentException(dupkey.getMessage());
+            throw new DuplicateFactException(dupkey.getMessage());
           }
         });
   }
@@ -214,13 +216,22 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   protected State getStateFor(@NonNull List<FactSpec> specs) {
+    return doGetState(specs, 0);
+  }
+
+  @Override
+  protected State getStateFor(@NonNull List<FactSpec> specs, long lastMatchingSerial) {
+    return doGetState(specs, lastMatchingSerial);
+  }
+
+  private State doGetState(@NotNull List<FactSpec> specs, long lastMatchingSerial) {
     return metrics.time(
         StoreMetrics.OP.GET_STATE_FOR,
         () -> {
           PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
           String stateSQL = pgQueryBuilder.createStateSQL();
           PreparedStatementSetter statementSetter =
-              pgQueryBuilder.createStatementSetter(new AtomicLong(0));
+              pgQueryBuilder.createStatementSetter(new AtomicLong(lastMatchingSerial));
 
           try {
             ResultSetExtractor<Long> rch =
@@ -240,6 +251,18 @@ public class PgFactStore extends AbstractFactStore {
           } catch (EmptyResultDataAccessException lastSerialIs0Then) {
             return State.of(specs, 0);
           }
+        });
+  }
+
+  @Override
+  protected State getCurrentStateFor(List<FactSpec> specs) {
+    return metrics.time(
+        StoreMetrics.OP.GET_STATE_FOR,
+        () -> {
+          long max =
+              Objects.requireNonNull(
+                  jdbcTemplate.queryForObject(PgConstants.LAST_SERIAL_IN_LOG, Long.class));
+          return State.of(specs, max);
         });
   }
 

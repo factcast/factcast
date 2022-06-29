@@ -30,9 +30,9 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactStreamInfo;
+import org.factcast.core.subscription.InternalSubscription;
 import org.factcast.core.subscription.StaleSubscriptionDetectedException;
 import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.util.ExceptionHelper;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto;
@@ -51,16 +51,17 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
 
   private final ProtoConverter converter = new ProtoConverter();
   private final AtomicLong lastNotification = new AtomicLong(0);
+
   @Getter(AccessLevel.PROTECTED)
   private final ExecutorService clientBoundExecutor = Executors.newSingleThreadExecutor();
 
-  @NonNull private final SubscriptionImpl subscription;
+  @NonNull private final InternalSubscription subscription;
 
   @VisibleForTesting
   @Getter(AccessLevel.PACKAGE)
   private final ClientKeepalive keepAlive;
 
-  public ClientStreamObserver(@NonNull SubscriptionImpl subscription, long keepAliveInterval) {
+  public ClientStreamObserver(@NonNull InternalSubscription subscription, long keepAliveInterval) {
     this.subscription = subscription;
 
     if (keepAliveInterval != 0L) {
@@ -71,15 +72,14 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
 
     subscription.onClose(this::tryShutdown);
     subscription.onClose(this::disableKeepalive);
-
   }
 
-  private void tryShutdown() {
-    try{
+  @VisibleForTesting
+  void tryShutdown() {
+    try {
       clientBoundExecutor.shutdown();
-    }catch(Exception e)
-    {
-      log.error("While shutting down executor:",e);
+    } catch (Exception e) {
+      log.error("While shutting down executor:", e);
     }
   }
 
@@ -93,9 +93,12 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
             "Executor for this observer already shut down. THIS IS A BUG!");
 
       clientBoundExecutor.submit(() -> process(f)).get();
-    } catch (ExecutionException | InterruptedException e) {
-        tryShutdown();
-        throw ExceptionHelper.toRuntime(e.getCause());
+    } catch (ExecutionException e) {
+      tryShutdown();
+      throw ExceptionHelper.toRuntime(e.getCause());
+    } catch (InterruptedException e) {
+      tryShutdown();
+      Thread.currentThread().interrupt();
     }
   }
 
@@ -132,7 +135,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
         }
         break;
       case Ffwd:
-        log.debug("received fastfoward signal");
+        log.debug("received fastforward signal");
         subscription.notifyFastForward(converter.fromProto(f.getId()));
         break;
 
@@ -163,7 +166,6 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
   @Override
   public void onCompleted() {
     disableKeepalive();
-    // TODO dont we switch tracks here?
     try {
       subscription.notifyComplete();
     } finally {

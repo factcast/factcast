@@ -19,7 +19,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.util.UUID;
-
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.FactValidationException;

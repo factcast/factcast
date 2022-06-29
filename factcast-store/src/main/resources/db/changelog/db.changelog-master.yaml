@@ -135,5 +135,83 @@ databaseChangeLog:
             splitStatements: false
             stripComments: true
 
+  # this has to be reverted: in high load situations, the alter index might not be able to acquire the necessary locks
+  # so that the server startup hangs, or fails.
+  # we'll have to move it to the documentation
+  #
+  #  - changeSet:
+  #      id: gin_fast_update
+  #      runInTransaction: false
+  #      author: uweschaefer
+  #      changes:
+  #        - sqlFile:
+  #            encoding: utf8
+  #            path: factcast/issue1696/gin_fast_update.sql
+  #            relativeToChangelogFile: true
+  #            splitStatements: false
+  #            stripComments: true
+
+  - changeSet:
+      id: updateNotifyFactInsert_condensed
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue1863/updateNotifyFactInsert_condensed.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+# fix_index_for_enum was removed.
+
+  - changeSet:
+      id: fix_index_for_enum2
+      runInTransaction: false
+      author: bresciamattia
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue1865-2/fix_index_for_enum2.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+
+  - changeSet:
+      id: issue2019
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2019/issue2019.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue2050
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2050/blacklist.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue2050_removeTails
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2050/removeTails.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
 
 

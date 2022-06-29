@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.*;
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.SneakyThrows;
-
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.junit.jupiter.api.*;

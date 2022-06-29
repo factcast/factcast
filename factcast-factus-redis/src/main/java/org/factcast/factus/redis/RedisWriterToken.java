@@ -20,7 +20,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.NonNull;
-
 import org.factcast.factus.projection.WriterToken;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;

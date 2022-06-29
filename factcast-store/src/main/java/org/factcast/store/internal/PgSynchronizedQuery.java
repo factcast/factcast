@@ -15,7 +15,7 @@
  */
 package org.factcast.store.internal;
 
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
@@ -69,6 +69,7 @@ class PgSynchronizedQuery {
     this.sql = sql;
     this.setter = setter;
     this.rowHandler = rowHandler;
+
     // noinspection ConstantConditions
     DataSourceTransactionManager transactionManager =
         new DataSourceTransactionManager(jdbcTemplate.getDataSource());

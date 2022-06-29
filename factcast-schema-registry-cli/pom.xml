@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.4.4-SNAPSHOT</version>
+    <version>0.5.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <properties>
@@ -121,27 +121,24 @@
     <dependency>
       <groupId>com.fasterxml.jackson.module</groupId>
       <artifactId>jackson-module-kotlin</artifactId>
+      <!-- even though all other modules are avail for 2.13.2, this one is missing -->
+      <version>2.13.3</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.2.6</version>
+      <version>1.2.11</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>io.github.microutils</groupId>
-      <artifactId>kotlin-logging</artifactId>
-      <version>1.12.5</version>
+      <artifactId>kotlin-logging-jvm</artifactId>
+      <version>2.1.23</version>
     </dependency>
     <dependency>
       <groupId>io.arrow-kt</groupId>
-      <artifactId>arrow-core</artifactId>
-      <version>${arrow.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.arrow-kt</groupId>
-      <artifactId>arrow-syntax</artifactId>
+      <artifactId>arrow-core-jvm</artifactId>
       <version>${arrow.version}</version>
     </dependency>
     <dependency>
@@ -171,8 +168,8 @@
     </dependency>
     <dependency>
       <groupId>io.kotest.extensions</groupId>
-      <artifactId>kotest-assertions-arrow</artifactId>
-      <version>1.0.3</version>
+      <artifactId>kotest-assertions-arrow-jvm</artifactId>
+      <version>1.2.5</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -184,13 +181,13 @@
     <dependency>
       <groupId>io.mockk</groupId>
       <artifactId>mockk</artifactId>
-      <version>1.12.0</version>
+      <version>1.12.4</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.karumi.kotlinsnapshot</groupId>
       <artifactId>core</artifactId>
-      <version>2.2.3</version>
+      <version>2.3.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -200,12 +197,10 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-annotations</artifactId>
-      <version>2.13.0</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-      <version>2.13.0</version>
     </dependency>
     <dependency>
       <groupId>javax.annotation</groupId>
@@ -233,13 +228,16 @@
             <nonFilteredFileExtension>woff</nonFilteredFileExtension>
             <nonFilteredFileExtension>woff2</nonFilteredFileExtension>
             <nonFilteredFileExtension>png</nonFilteredFileExtension>
+            <nonFilteredFileExtension>mp3</nonFilteredFileExtension>
+            <nonFilteredFileExtension>mp4</nonFilteredFileExtension>
+            <nonFilteredFileExtension>pdf</nonFilteredFileExtension>
           </nonFilteredFileExtensions>
         </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.2.4</version>
+        <version>3.3.0</version>
         <executions>
           <execution>
             <phase>package</phase>
@@ -256,6 +254,7 @@
                   implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
               </transformers>
               <finalName>fc-schema-cli</finalName>
+              <createDependencyReducedPom>false</createDependencyReducedPom>
             </configuration>
           </execution>
         </executions>
@@ -351,7 +350,7 @@
                 <annotationProcessorPath>
                   <groupId>info.picocli</groupId>
                   <artifactId>picocli-codegen</artifactId>
-                  <version>4.6.1</version>
+                  <version>4.6.3</version>
                 </annotationProcessorPath>
                 <annotationProcessorPath>
                   <groupId>io.micronaut</groupId>
@@ -395,7 +394,7 @@
                 <annotationProcessorPath>
                   <groupId>info.picocli</groupId>
                   <artifactId>picocli-codegen</artifactId>
-                  <version>4.6.1</version>
+                  <version>4.6.3</version>
                 </annotationProcessorPath>
                 <annotationProcessorPath>
                   <groupId>io.micronaut</groupId>

@@ -18,9 +18,9 @@ package org.factcast.store.registry.metrics;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.*;
 import java.time.Duration;
 import java.util.function.Supplier;
 import org.junit.jupiter.api.*;

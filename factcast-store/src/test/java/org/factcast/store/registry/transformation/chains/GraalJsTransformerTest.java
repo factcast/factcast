@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2017-2022 factcast.org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.factcast.store.registry.transformation.chains;
 
 import static org.assertj.core.api.Assertions.*;
@@ -60,6 +75,24 @@ class GraalJsTransformerTest {
   }
 
   @Test
+  void testTransform_nestedArray() {
+    when(transformation.transformationCode())
+        .thenReturn(
+            Optional.of(
+                "function transform(e) {e.newMap = {foo: []}; e.newArray = []; e.oldMap.foo = [];}"));
+
+    var data = new HashMap<String, Object>();
+    data.put("oldMap", new HashMap<String, Object>());
+
+    var result = uut.transform(transformation, om.convertValue(data, JsonNode.class));
+
+    assertThat(result.get("newMap").isObject()).isTrue();
+    assertThat(result.get("newArray").isArray()).isTrue();
+    assertThat(result.get("oldMap").get("foo").isArray()).isTrue();
+    assertThat(result.get("newMap").get("foo").isArray()).isTrue();
+  }
+
+  @Test
   @SneakyThrows
   void testParallelAccess() {
     when(transformation.transformationCode())
@@ -101,6 +134,42 @@ class GraalJsTransformerTest {
 
       assertThat(n1.get("x").asText()).isEqualTo("1");
       assertThat(n2.get("x").asText()).isEqualTo("2");
+    } finally {
+      executor.shutdown();
+    }
+  }
+
+  @Test
+  @SneakyThrows
+  void testParallelAccess_modifyingObjects() {
+    when(transformation.transformationCode())
+        .thenReturn(Optional.of("function transform(e) { e.foo = {}; e.foo.bar = e.y; }\n"));
+
+    var d1 = new HashMap<String, Object>();
+    d1.put("y", "1");
+
+    var d2 = new HashMap<String, Object>();
+    d2.put("y", "2");
+
+    // warm up engine
+    uut.transform(transformation, om.convertValue(d1, JsonNode.class));
+
+    Callable<JsonNode> c1 =
+        () -> uut.transform(transformation, om.convertValue(d1, JsonNode.class));
+    Callable<JsonNode> c2 =
+        () -> uut.transform(transformation, om.convertValue(d2, JsonNode.class));
+
+    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(2);
+    try {
+      Future<JsonNode> result1 = executor.submit(c1);
+      Future<JsonNode> result2 = executor.submit(c2);
+      JsonNode n1 = result1.get();
+      JsonNode n2 = result2.get();
+
+      assertThat(n1.get("y").asText()).isEqualTo("1");
+      assertThat(n1.get("foo").get("bar").asText()).isEqualTo("1");
+      assertThat(n2.get("y").asText()).isEqualTo("2");
+      assertThat(n2.get("foo").get("bar").asText()).isEqualTo("2");
     } finally {
       executor.shutdown();
     }

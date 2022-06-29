@@ -23,7 +23,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.FilterByAggId;
-import org.factcast.factus.FilterByMeta;
 import org.factcast.factus.Handler;
 import org.factcast.factus.projection.LocalManagedProjection;
 import org.factcast.factus.serializer.ProjectionMetaData;
@@ -32,7 +31,7 @@ import org.factcast.itests.factus.event.UserCreated;
 @Slf4j
 @ProjectionMetaData(serial = 1)
 public class LocalUserNamesFilterByAggregateId extends LocalManagedProjection {
-    ConcurrentHashMap<UUID, String> map = new ConcurrentHashMap<>();
+  ConcurrentHashMap<UUID, String> map = new ConcurrentHashMap<>();
 
   public Map<UUID, String> userNames() {
     return map;
@@ -62,5 +61,4 @@ public class LocalUserNamesFilterByAggregateId extends LocalManagedProjection {
   protected void apply(UserCreated created) {
     userNames().put(created.aggregateId(), created.userName());
   }
-
 }

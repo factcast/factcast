@@ -15,6 +15,11 @@
  */
 package org.factcast.itests.factus.proj;
 
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.FilterByScript;
@@ -22,12 +27,6 @@ import org.factcast.factus.Handler;
 import org.factcast.factus.projection.LocalManagedProjection;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.factus.event.UserCreated;
-
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @ProjectionMetaData(serial = 1)

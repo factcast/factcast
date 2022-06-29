@@ -16,11 +16,11 @@
 package org.factcast.store.registry.transformation.chains;
 
 import static java.util.Collections.*;
+import static org.factcast.store.registry.transformation.chains.NashornCompatContextBuilder.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
-import java.util.List;
 import java.util.Map;
 import javax.script.Compilable;
 import javax.script.Invocable;
@@ -32,7 +32,6 @@ import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.registry.transformation.Transformation;
-import org.graalvm.polyglot.Value;
 
 @Slf4j
 public class GraalJsTransformer implements Transformer {
@@ -81,13 +80,15 @@ public class GraalJsTransformer implements Transformer {
       @SuppressWarnings("unchecked")
       Map<String, Object> jsonAsMap = FactCastJson.convertValue(input, Map.class);
 
+      // if you have transformations that add new objects like "foo.bar = {}"
+      // this will lead to have PolyglotMap's being created inside jsonAsMap
+      // these Graal maps are bound to a Context which bound to a ScriptEngine in our case
+      // jackson seems somehow to access fields of this map which leads to exceptions like
+      // mentioned in https://github.com/factcast/factcast/issues/1506
       synchronized (invocable) {
         invocable.invokeFunction("transform", jsonAsMap);
+        return FactCastJson.toJsonNode(jsonAsMap);
       }
-
-      fixArrayTransformations(jsonAsMap);
-
-      return FactCastJson.toJsonNode(jsonAsMap);
 
     } catch (RuntimeException | ScriptException | NoSuchMethodException e) {
       // debug level, because it is escalated.
@@ -103,7 +104,7 @@ public class GraalJsTransformer implements Transformer {
     synchronized (ENGINE_MUTEX) {
       // no guarantee is found anywhere, that creating a
       // scriptEngine was supposed to be threadsafe, so...
-      engine = GraalJSScriptEngine.create(null, null);
+      engine = GraalJSScriptEngine.create(null, CTX);
     }
 
     try {
@@ -116,26 +117,6 @@ public class GraalJsTransformer implements Transformer {
       // debug level, because it is escalated.
       log.debug("Exception during engine creation. Escalating.", e);
       throw new TransformationException(e);
-    }
-  }
-
-  void fixArrayTransformations(Map<String, Object> input) {
-    // in order to keep memory footprint low and keep map order, replace in-place on demand
-    for (String key : input.keySet()) {
-      Object value = transformMapValue(input.get(key));
-      input.put(key, value);
-    }
-  }
-
-  private Object transformMapValue(Object input) {
-    var value = Value.asValue(input);
-    if (value.hasArrayElements()) {
-      return value.as(List.class);
-    } else if (input instanceof Map) {
-      fixArrayTransformations((Map<String, Object>) input);
-      return input;
-    } else {
-      return input;
     }
   }
 }

@@ -18,11 +18,14 @@ package org.factcast.store.registry.validation;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.factcast.core.Fact;
 import org.factcast.core.FactValidationException;
+import org.factcast.core.TestFact;
 import org.junit.jupiter.api.*;
 
 public class FactValidationAspectTest {
@@ -44,6 +47,26 @@ public class FactValidationAspectTest {
     uut.interceptPublish(jp);
 
     verify(jp).proceed();
+  }
+
+  @Test
+  void testInterceptPublishInBulk() throws Throwable {
+
+    List<Fact> facts = new ArrayList<>();
+    facts.add(f);
+    for (int i = 0; i < 10; i++) {
+      facts.add(TestFact.copy(f));
+    }
+
+    when(jp.getArgs()).thenReturn(new Object[] {facts});
+    when(v.validate(f)).thenReturn(new LinkedList<>());
+
+    uut.interceptPublish(jp);
+
+    verify(jp).proceed();
+    for (Fact f : facts) {
+      verify(v).validate(f);
+    }
   }
 
   @Test

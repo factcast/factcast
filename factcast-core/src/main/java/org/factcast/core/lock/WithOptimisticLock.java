@@ -18,8 +18,6 @@ package org.factcast.core.lock;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
@@ -54,7 +52,7 @@ public class WithOptimisticLock {
       boolean publishIfUnchanged = false;
 
       // fetch current state
-      StateToken token = store.stateFor(factSpecs);
+      StateToken token = store.currentStateFor(factSpecs);
 
       try {
 
@@ -97,10 +95,6 @@ public class WithOptimisticLock {
     }
 
     throw new OptimisticRetriesExceededException(retry);
-  }
-
-  private List<FactSpec> toFactSpecs(String ns, List<UUID> ids) {
-    return ids.stream().map(id -> FactSpec.ns(ns).aggId(id)).collect(Collectors.toList());
   }
 
   private IntermediatePublishResult runAndWrapException(Attempt operation)
