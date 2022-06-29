@@ -15,12 +15,9 @@
  */
 package org.factcast.store.registry.validation;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
-import io.micrometer.core.instrument.Tags;
 import java.util.*;
 import java.util.stream.*;
-import lombok.RequiredArgsConstructor;
+
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.factcast.core.Fact;
@@ -30,6 +27,13 @@ import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
+
+import io.micrometer.core.instrument.Tags;
+
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class FactValidator {
@@ -70,16 +74,7 @@ public class FactValidator {
       Schema jsonSchema = optSchema.get();
       try {
         JSONObject toValidate = new JSONObject(fact.jsonPayload());
-        try {
-          jsonSchema.validate(toValidate);
-          return VALIDATION_OK;
-        } catch (ValidationException e) {
-          List<String> errors = e.getAllMessages();
-          registryMetrics.count(
-              RegistryMetrics.EVENT.FACT_VALIDATION_FAILED,
-              Tags.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()));
-          return errors.stream().map(FactValidationError::new).collect(Collectors.toList());
-        } // validateJson(Node) ends
+        return tryValidate(key, jsonSchema, toValidate);
       } catch (JSONException e) {
         return Lists.newArrayList(
             new FactValidationError("Fact is not parseable. " + e.getMessage()));
@@ -96,6 +91,19 @@ public class FactValidator {
       } else {
         return VALIDATION_OK;
       }
+    }
+  }
+
+  private List<FactValidationError> tryValidate(SchemaKey key, Schema jsonSchema, JSONObject toValidate) {
+    try {
+      jsonSchema.validate(toValidate);
+      return VALIDATION_OK;
+    } catch (ValidationException e) {
+      List<String> errors = e.getAllMessages();
+      registryMetrics.count(
+          RegistryMetrics.EVENT.FACT_VALIDATION_FAILED,
+          Tags.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()));
+      return errors.stream().map(FactValidationError::new).collect(Collectors.toList());
     }
   }
 
