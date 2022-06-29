@@ -15,8 +15,6 @@
  */
 package org.factcast.store.registry.http;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.loader.SpecificationVersion;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +23,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(MockitoExtension.class)
 class ValidationConstantsTest {
@@ -50,6 +51,17 @@ class ValidationConstantsTest {
     void isV7() {
       assertThat(ValidationConstants.getLoaderBuilder())
           .hasFieldOrPropertyWithValue("specVersion", SpecificationVersion.DRAFT_7);
+    }
+
+    @Test
+    void failsOnBrokenSchema() {
+      assertThatThrownBy(
+              () -> {
+                ValidationConstants.jsonString2SchemaV7("{");
+              })
+          .isInstanceOf(IllegalArgumentException.class)
+          .extracting(Throwable::getMessage)
+          .matches(s -> s.contains("Cannot create schema from"));
     }
   }
 }
