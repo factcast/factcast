@@ -15,6 +15,7 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -26,7 +27,6 @@ import lombok.NonNull;
 import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.core.Fact;
 import org.factcast.store.registry.metrics.RegistryMetrics;
-import org.joda.time.DateTime;
 
 public class InMemTransformationCache implements TransformationCache {
   private final RegistryMetrics registryMetrics;
@@ -61,7 +61,7 @@ public class InMemTransformationCache implements TransformationCache {
     synchronized (cache) {
       cached = Optional.ofNullable(cache.get(key));
     }
-    cached.ifPresent(faat -> faat.accessTime(System.currentTimeMillis()));
+    cached.ifPresent(faat -> faat.accessTimeInMillis(System.currentTimeMillis()));
     registryMetrics.count(
         cached.isPresent()
             ? RegistryMetrics.EVENT.TRANSFORMATION_CACHE_HIT
@@ -70,7 +70,7 @@ public class InMemTransformationCache implements TransformationCache {
   }
 
   @Override
-  public void compact(@NonNull DateTime thresholdDate) {
+  public void compact(@NonNull ZonedDateTime thresholdDate) {
     registryMetrics.timed(
         RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE,
         () -> {
@@ -79,10 +79,12 @@ public class InMemTransformationCache implements TransformationCache {
             copyOfEntries = new HashSet<>(cache.entrySet());
           }
 
+          var thresholdMillis = thresholdDate.toInstant().toEpochMilli();
+
           copyOfEntries.forEach(
               e -> {
                 FactAndAccessTime faat = e.getValue();
-                if (thresholdDate.isAfter(faat.accessTime)) {
+                if (thresholdMillis > faat.accessTimeInMillis) {
                   cache.remove(e.getKey());
                 }
               });
@@ -94,6 +96,6 @@ public class InMemTransformationCache implements TransformationCache {
   private static class FactAndAccessTime {
     Fact fact;
 
-    long accessTime;
+    long accessTimeInMillis;
   }
 }
