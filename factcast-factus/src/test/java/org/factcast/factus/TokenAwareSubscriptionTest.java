@@ -15,10 +15,8 @@
  */
 package org.factcast.factus;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.io.IOException;
-import lombok.SneakyThrows;
+
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.projection.WriterToken;
 import org.junit.jupiter.api.Assertions;
@@ -30,6 +28,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import lombok.SneakyThrows;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class TokenAwareSubscriptionTest {
@@ -49,6 +51,17 @@ class TokenAwareSubscriptionTest {
       uut.close();
       Mockito.verify(sub).close();
       Mockito.verify(tkn).close();
+    }
+
+    @SneakyThrows
+    @Test
+    void testCloseAlsoReleasesTokenOnlyIfClosed() {
+      uut.close();
+      Mockito.verify(sub).close();
+      Mockito.verify(tkn).close();
+      uut.close();
+      Mockito.verifyNoMoreInteractions(sub);
+      Mockito.verifyNoMoreInteractions(tkn);
     }
 
     @SneakyThrows
