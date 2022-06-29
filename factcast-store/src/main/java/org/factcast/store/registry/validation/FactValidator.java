@@ -15,12 +15,9 @@
  */
 package org.factcast.store.registry.validation;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
-import io.micrometer.core.instrument.Tags;
 import java.util.*;
 import java.util.stream.*;
-import lombok.RequiredArgsConstructor;
+
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.factcast.core.Fact;
@@ -31,15 +28,19 @@ import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
+
+import io.micrometer.core.instrument.Tags;
+
+import lombok.RequiredArgsConstructor;
+
 @RequiredArgsConstructor
 public class FactValidator {
 
   private static final List<FactValidationError> VALIDATION_OK = Collections.emptyList();
-
   private final StoreConfigurationProperties props;
-
   private final SchemaRegistry registry;
-
   private final RegistryMetrics registryMetrics;
 
   public List<FactValidationError> validate(Fact fact) {
@@ -51,7 +52,6 @@ public class FactValidator {
           registryMetrics.count(
               RegistryMetrics.EVENT.FACT_VALIDATION_FAILED,
               Tags.of(RegistryMetrics.TAG_IDENTITY_KEY, SchemaKey.from(fact).toString()));
-
           return Lists.newArrayList(
               new FactValidationError(
                   "Fact is not validatable. (usually lacks necessary information like namespace,"
@@ -59,7 +59,6 @@ public class FactValidator {
         }
       }
     }
-
     return VALIDATION_OK;
   }
 
