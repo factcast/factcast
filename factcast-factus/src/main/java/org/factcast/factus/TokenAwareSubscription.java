@@ -16,23 +16,29 @@
 package org.factcast.factus;
 
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionClosedException;
 import org.factcast.factus.projection.WriterToken;
 
 @RequiredArgsConstructor
+@Slf4j
 class TokenAwareSubscription implements Subscription {
   @NonNull final Subscription delegate;
   @NonNull final WriterToken token;
+  private final AtomicBoolean closed = new AtomicBoolean(false);
 
   @Override
   public void close() throws Exception {
-    try {
-      delegate.close();
-    } finally {
-      token.close();
+    if (!closed.getAndSet(true)) {
+      try {
+        delegate.close();
+      } finally {
+        token.close();
+      }
     }
   }
 
