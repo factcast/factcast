@@ -15,20 +15,17 @@
  */
 package org.factcast.store.registry.validation;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.*;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.factcast.core.Fact;
 import org.factcast.core.FactValidationException;
-
-import com.google.common.annotations.VisibleForTesting;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Aspect
 @Slf4j
