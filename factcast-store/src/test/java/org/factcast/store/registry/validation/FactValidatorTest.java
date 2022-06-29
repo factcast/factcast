@@ -222,6 +222,37 @@ public class FactValidatorTest {
   }
 
   @Test
+  void testMissingSchema() {
+    SchemaRegistry registry = mock(SchemaRegistry.class);
+    Fact f = Fact.builder().ns("ns").type("type").version(1).buildWithoutPayload();
+    FactValidator uut =
+        new FactValidator(
+            mock(StoreConfigurationProperties.class), registry, mock(RegistryMetrics.class));
+
+    assertThat(uut.doValidate(f))
+        .first()
+        .extracting(FactValidationError::message)
+        .matches(
+            s -> s.contains("The schema for SchemaKey(ns=ns, type=type, version=1) is missing"));
+  }
+
+  @Test
+  void testBrokenJson() {
+    SchemaRegistry registry = mock(SchemaRegistry.class);
+    Fact f = spy(Fact.builder().ns("ns").type("type").version(1).build("is b0rken}"));
+    when(registry.get(SchemaKey.from(f)))
+        .thenReturn(Optional.of(ValidationConstants.jsonString2SchemaV7("{}")));
+    FactValidator uut =
+        new FactValidator(
+            mock(StoreConfigurationProperties.class), registry, mock(RegistryMetrics.class));
+
+    assertThat(uut.doValidate(f))
+        .first()
+        .extracting(FactValidationError::message)
+        .matches(s -> s.contains("Fact is not parseable"));
+  }
+
+  @Test
   void testTryValidateWithError() {
     SchemaRegistry registry = mock(SchemaRegistry.class);
     FactValidator uut =
