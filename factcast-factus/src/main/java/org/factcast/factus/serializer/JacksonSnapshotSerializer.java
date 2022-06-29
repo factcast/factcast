@@ -17,13 +17,12 @@ package org.factcast.factus.serializer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
+import java.util.function.Function;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.projection.SnapshotProjection;
-
-import java.util.function.Function;
 
 public class JacksonSnapshotSerializer implements SnapshotSerializer {
 

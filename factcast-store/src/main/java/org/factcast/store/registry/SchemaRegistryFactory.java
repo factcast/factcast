@@ -15,14 +15,13 @@
  */
 package org.factcast.store.registry;
 
+import java.net.MalformedURLException;
+import java.util.List;
 import lombok.NonNull;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.TransformationStore;
 import org.factcast.store.registry.validation.schema.SchemaStore;
-
-import java.net.MalformedURLException;
-import java.util.List;
 
 public interface SchemaRegistryFactory<T extends SchemaRegistry> {
 

@@ -1,17 +1,33 @@
+/*
+ * Copyright © 2017-2022 factcast.org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.factcast.factus.redis;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.time.Duration;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import lombok.NonNull;
-
+import lombok.SneakyThrows;
 import org.factcast.factus.redis.batch.RedissonBatchManager;
 import org.factcast.factus.redis.tx.RedissonTxManager;
 import org.factcast.factus.serializer.ProjectionMetaData;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -22,13 +38,14 @@ import org.redisson.config.Config;
 class AbstractRedisManagedProjectionTest {
 
   @Mock private RedissonClient redisson;
-
   @Mock private RLock lock;
+  @Mock private RTransaction tx;
+  @Mock private Config config;
+
   @InjectMocks private TestProjection underTest;
 
   @Nested
   class BucketFromThinAir {
-    @Mock private RTransaction tx;
 
     @Test
     void happyPath() {
@@ -183,20 +200,67 @@ class AbstractRedisManagedProjectionTest {
   @Nested
   class WhenAcquiringWriteToken {
 
-    @Mock private Config config;
-
+    @SneakyThrows
     @Test
     void happyPath() {
 
       when(redisson.getLock(any())).thenReturn(lock);
       when(redisson.getConfig()).thenReturn(config);
       when(config.getLockWatchdogTimeout()).thenReturn(1000L);
+      when(lock.tryLock(anyLong(), any())).thenReturn(true);
       AbstractRedisManagedProjection underTest = new TestProjection(redisson);
 
       AutoCloseable wt = underTest.acquireWriteToken();
 
-      verify(lock).lock();
       assertThat(wt).isNotNull().isInstanceOf(RedisWriterToken.class);
+      verify(lock).tryLock(anyLong(), any(TimeUnit.class));
+    }
+
+    @SneakyThrows
+    @Test
+    void passesWaitTime() {
+
+      when(redisson.getLock(any())).thenReturn(lock);
+      when(redisson.getConfig()).thenReturn(config);
+      when(config.getLockWatchdogTimeout()).thenReturn(1000L);
+      when(lock.tryLock(anyLong(), any())).thenReturn(true);
+      AbstractRedisManagedProjection underTest = new TestProjection(redisson);
+
+      @NonNull Duration dur = Duration.ofMillis(127);
+      AutoCloseable wt = underTest.acquireWriteToken(dur);
+
+      verify(lock).tryLock(dur.toMillis(), TimeUnit.MILLISECONDS);
+      assertThat(wt).isNotNull().isInstanceOf(RedisWriterToken.class);
+    }
+
+    @SneakyThrows
+    @Test
+    void withWaitTimeExpiring() {
+
+      when(redisson.getLock(any())).thenReturn(lock);
+      when(lock.tryLock(anyLong(), any())).thenReturn(false);
+      AbstractRedisManagedProjection underTest = new TestProjection(redisson);
+
+      @NonNull Duration dur = Duration.ofMillis(127);
+      AutoCloseable wt = underTest.acquireWriteToken(dur);
+
+      verify(lock).tryLock(dur.toMillis(), TimeUnit.MILLISECONDS);
+      assertThat(wt).isNull();
+    }
+
+    @SneakyThrows
+    @Test
+    void withWaitInterruption() {
+
+      when(redisson.getLock(any())).thenReturn(lock);
+      when(lock.tryLock(anyLong(), any())).thenThrow(InterruptedException.class);
+      AbstractRedisManagedProjection underTest = new TestProjection(redisson);
+
+      @NonNull Duration dur = Duration.ofMillis(127);
+      AutoCloseable wt = underTest.acquireWriteToken(dur);
+
+      verify(lock).tryLock(dur.toMillis(), TimeUnit.MILLISECONDS);
+      assertThat(wt).isNull();
     }
   }
 
@@ -205,7 +269,7 @@ class AbstractRedisManagedProjectionTest {
 
     @Test
     void happyPath() {
-      assertThatThrownBy(() -> new MissingAnntoationTestProjection(redisson))
+      assertThatThrownBy(() -> new MissingAnnotationTestProjection(redisson))
           .isInstanceOf(IllegalStateException.class);
     }
   }
@@ -218,9 +282,9 @@ class AbstractRedisManagedProjectionTest {
     }
   }
 
-  static class MissingAnntoationTestProjection extends AbstractRedisManagedProjection {
+  static class MissingAnnotationTestProjection extends AbstractRedisManagedProjection {
 
-    public MissingAnntoationTestProjection(@NonNull RedissonClient redisson) {
+    public MissingAnnotationTestProjection(@NonNull RedissonClient redisson) {
       super(redisson);
     }
   }

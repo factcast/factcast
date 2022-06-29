@@ -25,6 +25,7 @@ import io.grpc.stub.ServerCallStreamObserver;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
@@ -40,7 +41,7 @@ public class BlockingStreamObserverTest {
 
   @BeforeEach
   void setUp() {
-    uut = new BlockingStreamObserver<>("foo", delegate,1);
+    uut = new BlockingStreamObserver<>("foo", delegate, 1);
   }
 
   @Test
@@ -48,13 +49,6 @@ public class BlockingStreamObserverTest {
     verify(delegate, never()).onCompleted();
     uut.onCompleted();
     verify(delegate).onCompleted();
-  }
-
-  @Test
-  void testNullContract() {
-    expectNPE(() -> new BlockingStreamObserver(null, mock(ServerCallStreamObserver.class),1));
-    expectNPE(() -> new BlockingStreamObserver(null, null,1));
-    expectNPE(() -> new BlockingStreamObserver("oink", null,1));
   }
 
   @Test
@@ -103,17 +97,36 @@ public class BlockingStreamObserverTest {
 
   @Test
   void testOnNextNotReadyThenCancelled() throws Exception {
+    CountDownLatch waitForDelegate = new CountDownLatch(1);
+    CountDownLatch waitForOnNextToExit = new CountDownLatch(1);
+    uut =
+        new BlockingStreamObserver<>("foo", delegate, 1) {
+          @Override
+          void waitForDelegate() {
+            waitForDelegate.countDown();
+            super.waitForDelegate();
+          }
+        };
+
     AtomicBoolean ready = new AtomicBoolean(false);
     AtomicBoolean cancelled = new AtomicBoolean(false);
+
     when(delegate.isReady()).thenAnswer(i -> ready.get());
     when(delegate.isCancelled()).thenAnswer(i -> cancelled.get());
-    CompletableFuture<Void> onNextCall = CompletableFuture.runAsync(() -> uut.onNext(new Object()));
-    Thread.sleep(100);
-    assertFalse(onNextCall.isDone());
+    CompletableFuture<Void> onNextCall =
+        CompletableFuture.runAsync(
+            () -> {
+              // this will block becaue of not being ready
+              uut.onNext(new Object());
+              // we get here, once woken up after set to cancel
+              waitForOnNextToExit.countDown();
+            });
+    // waiting for onNext to be in blocking state
+    waitForDelegate.await();
     cancelled.set(true);
     uut.wakeup();
-    Thread.sleep(100);
-    assertTrue(onNextCall.isDone());
+    waitForOnNextToExit.await();
+    // onNext must never have been called
     verify(delegate, never()).onNext(any());
   }
 

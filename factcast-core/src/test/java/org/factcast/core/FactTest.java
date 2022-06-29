@@ -15,14 +15,15 @@
  */
 package org.factcast.core;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.util.UUID;
+import java.util.*;
 import org.factcast.core.util.FactCastJson;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 public class FactTest {
@@ -43,10 +44,53 @@ public class FactTest {
   }
 
   @Test
+  void testVersion0() {
+    Assertions.assertThrows(IllegalArgumentException.class, () -> Fact.builder().version(0));
+  }
+
+  @Test
+  void testVersionNegative() {
+    Assertions.assertThrows(IllegalArgumentException.class, () -> Fact.builder().version(-3));
+  }
+
+  @Test
   void testOf() {
     TestFact f = new TestFact();
     Fact f2 = Fact.of(f.jsonHeader(), f.jsonPayload());
     assertEquals(f.id(), f2.id());
+  }
+
+  @Test
+  void testTsMissing() {
+    Fact one =
+        Fact.of(
+            "{"
+                + "\"ns\":\"ns\","
+                + "\"id\":\""
+                + UUID.randomUUID()
+                + "\","
+                + "\"meta\":{ \"_ser\":1 }"
+                + "}",
+            "{}");
+    assertThat(one.timestamp()).isNull();
+  }
+
+  @Test
+  void testTs() {
+    long ts = 1234567;
+    Fact one =
+        Fact.of(
+            "{"
+                + "\"ns\":\"ns\","
+                + "\"id\":\""
+                + UUID.randomUUID()
+                + "\","
+                + "\"meta\":{ \"_ser\":1 , \"_ts\":"
+                + ts
+                + "}"
+                + "}",
+            "{}");
+    assertThat(one.timestamp()).isEqualTo(ts);
   }
 
   @Test
@@ -133,19 +177,6 @@ public class FactTest {
     assertEquals("bar", f.meta("foo"));
     assertEquals("bang", f.meta("buh"));
     assertEquals("{\"a\":2}", f.jsonPayload());
-  }
-
-  @Test
-  void testBuilderNullContracts() {
-
-    assertThrows(NullPointerException.class, () -> Fact.builder().ns(null));
-
-    assertThrows(NullPointerException.class, () -> Fact.builder().type(null));
-    assertThrows(NullPointerException.class, () -> Fact.builder().aggId(null));
-    assertThrows(NullPointerException.class, () -> Fact.builder().meta(null, "x"));
-    assertThrows(NullPointerException.class, () -> Fact.builder().id(null));
-
-    Fact.builder().meta("x", null).build("{}");
   }
 
   @Test

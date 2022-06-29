@@ -15,6 +15,6 @@
   <root level="warn">
     <appender-ref ref="STDOUT" />
   </root>
-  <logger name="org.factcast" level="debug">
+  <logger name="org.factcast" level="INFO">
   </logger>
 </configuration>

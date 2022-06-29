@@ -16,13 +16,16 @@
 package org.factcast.store.test;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -31,7 +34,7 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
-import org.assertj.core.util.Lists;
+import org.factcast.core.DuplicateFactException;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.lock.Attempt;
@@ -43,7 +46,6 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
@@ -108,7 +110,7 @@ public abstract class AbstractFactStoreTest {
         Duration.ofMillis(30000),
         () -> {
           Assertions.assertThrows(
-              IllegalArgumentException.class,
+              DuplicateFactException.class,
               () -> {
                 UUID id = UUID.randomUUID();
                 uut.publish(
@@ -698,24 +700,6 @@ public abstract class AbstractFactStoreTest {
   }
 
   @Test
-  protected void testEnumerateTypesNull() {
-    Assertions.assertThrows(NullPointerException.class, () -> uut.enumerateTypes(null));
-  }
-
-  @Test
-  protected void testInvalidateNullContract() {
-    Assertions.assertThrows(NullPointerException.class, () -> store.invalidate(null));
-  }
-
-  @Test
-  protected void testPublishIfUnchangedNullContract() {
-    Assertions.assertThrows(
-        NullPointerException.class, () -> store.publishIfUnchanged(Lists.emptyList(), null));
-    Assertions.assertThrows(
-        NullPointerException.class, () -> store.publishIfUnchanged(null, Optional.empty()));
-  }
-
-  @Test
   protected void testEnumerateTypes() {
     uut.publish(Fact.builder().ns("ns1").type("t1").build("{}"));
     uut.publish(Fact.builder().ns("ns2").type("t2").build("{}"));
@@ -824,14 +808,6 @@ public abstract class AbstractFactStoreTest {
     s.awaitComplete();
 
     assertEquals(2, toListObserver.list().size());
-  }
-
-  @Test
-  public void testSubscribeToFactsParameterContract() throws Exception {
-    FactObserver observer = mock(FactObserver.class);
-    assertThrows(NullPointerException.class, () -> uut.subscribe(null, observer));
-    assertThrows(
-        NullPointerException.class, () -> uut.subscribe(mock(SubscriptionRequestTO.class), null));
   }
 
   /// optimistic locking
@@ -1146,7 +1122,7 @@ public abstract class AbstractFactStoreTest {
 
     private static final long serialVersionUID = 1L;
 
-    private int i;
+    private final int i;
 
     public MyAbortException(int i) {
       super("nah");
@@ -1251,7 +1227,7 @@ public abstract class AbstractFactStoreTest {
     } catch (AttemptAbortedException expected) {
     }
 
-    verify(store, times(1)).stateFor(any());
+    verify(store, times(1)).currentStateFor(any());
     verify(store, times(1)).invalidate(any());
   }
 
@@ -1264,7 +1240,7 @@ public abstract class AbstractFactStoreTest {
 
     uut.lock(NS).on(agg1).attempt(() -> Attempt.publish(fact(agg1)));
 
-    verify(store, times(1)).stateFor(any());
+    verify(store, times(1)).currentStateFor(any());
     verify(store, times(0)).invalidate(any());
   }
 
@@ -1278,12 +1254,12 @@ public abstract class AbstractFactStoreTest {
     } catch (AttemptAbortedException expected) {
     }
 
-    verify(store, times(1)).stateFor(any());
+    verify(store, times(1)).currentStateFor(any());
     verify(store, times(1)).invalidate(any());
   }
 
   static class ToListObserver implements FactObserver {
-    @Getter private List<Fact> list = new LinkedList<>();
+    @Getter private final List<Fact> list = new LinkedList<>();
 
     @Override
     public void onNext(@NonNull Fact element) {
@@ -1310,25 +1286,6 @@ public abstract class AbstractFactStoreTest {
         }
       }
     }
-  }
-
-  @Test
-  public void nullContracts_publishIfUnchanged() {
-    assertThrows(
-        NullPointerException.class, () -> store.publishIfUnchanged(Lists.emptyList(), null));
-
-    assertThrows(NullPointerException.class, () -> store.publishIfUnchanged(null, null));
-
-    assertThrows(
-        NullPointerException.class, () -> store.publishIfUnchanged(null, Optional.empty()));
-  }
-
-  @Test
-  public void testSubscribeNullContract() throws Exception {
-    assertThrows(NullPointerException.class, () -> store.subscribe(null, mock(FactObserver.class)));
-    assertThrows(NullPointerException.class, () -> store.subscribe(null, null));
-    assertThrows(
-        NullPointerException.class, () -> store.subscribe(mock(SubscriptionRequestTO.class), null));
   }
 
   @Test

@@ -1,14 +1,40 @@
+/*
+ * Copyright © 2017-2022 factcast.org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.factcast.server.grpc;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.same;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
-import io.grpc.*;
+import io.grpc.Metadata;
+import io.grpc.ServerCall;
+import io.grpc.ServerCallHandler;
+import io.grpc.Status;
 import io.grpc.Status.Code;
+import io.grpc.StatusRuntimeException;
 import org.factcast.core.FactValidationException;
 import org.factcast.server.grpc.GrpcServerExceptionInterceptor.ExceptionHandlingServerCallListener;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -16,6 +42,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class GrpcServerExceptionInterceptorTest {
+  @Mock private GrpcRequestMetadata grpcMetadata;
   @InjectMocks private GrpcServerExceptionInterceptor underTest;
 
   @Nested
@@ -38,9 +65,10 @@ class GrpcServerExceptionInterceptorTest {
     @Mock ServerCall.Listener<Req> listener;
     @Mock ServerCall<Req, Res> serverCall;
     @Mock Metadata metadata;
+    @Mock GrpcRequestMetadata grpcMetadata;
 
     @InjectMocks ExceptionHandlingServerCallListener<Req, Res> underTest;
-    ArrayIndexOutOfBoundsException ex = new ArrayIndexOutOfBoundsException("ignore me");
+    final ArrayIndexOutOfBoundsException ex = new ArrayIndexOutOfBoundsException("ignore me");
 
     @Nested
     class onMessage {
@@ -55,12 +83,10 @@ class GrpcServerExceptionInterceptorTest {
         doThrow(ex).when(listener).onMessage(any());
 
         Req msg = null;
-        assertThatThrownBy(
-                () -> {
-                  uut.onMessage(msg);
-                })
-            .isInstanceOf(ArrayIndexOutOfBoundsException.class);
 
+        uut.onMessage(msg);
+        verify(uut).logIfNecessary(any(), same(ex));
+        verify(serverCall).close(eq(Status.UNKNOWN), any(Metadata.class));
         verify(uut).handleException(same(ex), any(), any());
       }
 
@@ -79,10 +105,11 @@ class GrpcServerExceptionInterceptorTest {
         ExceptionHandlingServerCallListener<Req, Res> uut = spy(underTest);
         doThrow(ex).when(listener).onReady();
 
-        Req msg = null;
-        assertThatThrownBy(uut::onReady).isInstanceOf(ArrayIndexOutOfBoundsException.class);
+        uut.onReady();
 
         verify(uut).handleException(same(ex), any(), any());
+        verify(uut).logIfNecessary(any(), same(ex));
+        verify(serverCall).close(eq(Status.UNKNOWN), any(Metadata.class));
       }
 
       @Test
@@ -100,9 +127,10 @@ class GrpcServerExceptionInterceptorTest {
         ExceptionHandlingServerCallListener<Req, Res> uut = spy(underTest);
         doThrow(ex).when(listener).onCancel();
 
-        Req msg = null;
-        assertThatThrownBy(uut::onCancel).isInstanceOf(ArrayIndexOutOfBoundsException.class);
+        uut.onCancel();
 
+        verify(uut).handleException(same(ex), any(), any());
+        verify(serverCall).close(eq(Status.UNKNOWN), any(Metadata.class));
         verify(uut).handleException(same(ex), any(), any());
       }
 
@@ -121,9 +149,10 @@ class GrpcServerExceptionInterceptorTest {
         ExceptionHandlingServerCallListener<Req, Res> uut = spy(underTest);
         doThrow(ex).when(listener).onComplete();
 
-        Req msg = null;
-        assertThatThrownBy(uut::onComplete).isInstanceOf(ArrayIndexOutOfBoundsException.class);
+        uut.onComplete();
 
+        verify(uut).handleException(same(ex), any(), any());
+        verify(serverCall).close(eq(Status.UNKNOWN), any(Metadata.class));
         verify(uut).handleException(same(ex), any(), any());
       }
 

@@ -15,7 +15,11 @@
  */
 package org.factcast.core.store;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.Set;
+import java.util.UUID;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
@@ -59,7 +63,7 @@ public interface FactStore {
       @NonNull List<? extends Fact> factsToPublish, @NonNull Optional<StateToken> token);
 
   @NonNull
-  StateToken stateFor(List<FactSpec> specs);
+  StateToken stateFor(@NonNull List<FactSpec> specs);
 
   void invalidate(@NonNull StateToken token);
 
@@ -78,4 +82,7 @@ public interface FactStore {
   void setSnapshot(@NonNull Snapshot snapshot);
 
   void clearSnapshot(@NonNull SnapshotId id);
+
+  @NonNull
+  StateToken currentStateFor(List<FactSpec> factSpecs);
 }

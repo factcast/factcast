@@ -15,7 +15,6 @@
  */
 package org.factcast.core.subscription;
 
-/** TODO RT or not RT ? */
 public class MissingTransformationInformationException extends TransformationException {
   private static final long serialVersionUID = 1L;
 

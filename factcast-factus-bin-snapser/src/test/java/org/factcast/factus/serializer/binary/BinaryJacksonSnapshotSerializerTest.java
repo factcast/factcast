@@ -29,7 +29,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class BinaryJacksonSnapshotSerializerTest {
 
   private final BinaryJacksonSnapshotSerializer underTest =
-      new BinaryJacksonSnapshotSerializer(BinaryJacksonSnapshotSerializerCustomizer.defaultCustomizer());
+      new BinaryJacksonSnapshotSerializer(
+          BinaryJacksonSnapshotSerializerCustomizer.defaultCustomizer());
 
   @Nested
   class WhenSerializing {

@@ -1,7 +1,7 @@
 package org.factcast.schema.registry.cli.validation.validators.impl
 
-import io.kotest.assertions.arrow.either.shouldBeLeft
-import io.kotest.assertions.arrow.either.shouldBeRight
+import io.kotest.assertions.arrow.core.shouldBeLeft
+import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -22,8 +22,7 @@ class ProjectStructureValidationServiceIntTest(private val uut: ProjectStructure
             val projectFolder = ProjectFolder(dummyPath, null, emptyList())
 
             val result = uut.validateProjectStructure(projectFolder)
-
-            result.shouldBeLeft {
+            result.shouldBeLeft().also {
                 it.filterIsInstance<ProjectError.NoNamespaces>() shouldHaveSize 1
                 it.filterIsInstance<ProjectError.NoDescription>() shouldHaveSize 1
             }
@@ -34,8 +33,7 @@ class ProjectStructureValidationServiceIntTest(private val uut: ProjectStructure
             val projectFolder = ProjectFolder(dummyPath, dummyPath, listOf(namespace))
 
             val result = uut.validateProjectStructure(projectFolder)
-
-            result.shouldBeLeft {
+            result.shouldBeLeft().also {
                 it.filterIsInstance<ProjectError.NoEvents>() shouldHaveSize 1
                 it.filterIsInstance<ProjectError.NoDescription>() shouldHaveSize 1
             }
@@ -48,7 +46,7 @@ class ProjectStructureValidationServiceIntTest(private val uut: ProjectStructure
 
             val result = uut.validateProjectStructure(projectFolder)
 
-            result.shouldBeLeft {
+            result.shouldBeLeft().also {
                 it.filterIsInstance<ProjectError.NoEventVersions>() shouldHaveSize 1
                 it.filterIsInstance<ProjectError.NoDescription>() shouldHaveSize 1
             }
@@ -62,7 +60,7 @@ class ProjectStructureValidationServiceIntTest(private val uut: ProjectStructure
 
             val result = uut.validateProjectStructure(projectFolder)
 
-            result.shouldBeLeft {
+            result.shouldBeLeft().also {
                 it.filterIsInstance<ProjectError.NoSchema>() shouldHaveSize 1
                 it.filterIsInstance<ProjectError.NoDescription>() shouldHaveSize 1
                 it.filterIsInstance<ProjectError.NoExamples>() shouldHaveSize 1
@@ -80,7 +78,7 @@ class ProjectStructureValidationServiceIntTest(private val uut: ProjectStructure
 
             val result = uut.validateProjectStructure(projectFolder)
 
-            result.shouldBeLeft {
+            result.shouldBeLeft().also {
                 it.filterIsInstance<ProjectError.WrongVersionFormat>() shouldHaveSize 1
             }
         }
@@ -99,7 +97,7 @@ class ProjectStructureValidationServiceIntTest(private val uut: ProjectStructure
 
             val result = uut.validateProjectStructure(projectFolder)
 
-            result.shouldBeLeft {
+            result.shouldBeLeft().also {
                 it.filterIsInstance<ProjectError.NoSuchFile>() shouldHaveSize 1
                 it.filterIsInstance<ProjectError.WrongVersionFormat>() shouldHaveSize 1
             }
@@ -116,7 +114,7 @@ class ProjectStructureValidationServiceIntTest(private val uut: ProjectStructure
 
             val result = uut.validateProjectStructure(projectFolder)
 
-            result.shouldBeRight {
+            result.shouldBeRight().also {
                 it.shouldBeInstanceOf<Project>()
             }
         }

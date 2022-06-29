@@ -23,7 +23,7 @@ consists of:
 * a **required** namespace 'ns' of type String
 * an optional set of aggregateIds 'aggId' of type array of UUIDs
 * an optional (but mostly used) Fact-Type 'type' of type String
-* an optional Object 'meta' any number of key-value pairs, where the values are Strings
+* an optional Object 'meta' containing any number of key-value pairs, where the values are Strings
 * any additional information you want to put in a Fact Header
 
 
@@ -84,7 +84,7 @@ When a fact is read from FactCast, it is guaranteed to have two field set in the
 |_ser|long / int64| unique serial number for the fact, that determines a before/after relationship between facts|
 |_ts |long / int64| timestamp in milliseconds, when this fact was published to factcast.|
 
-As you can see, all meta-data attributes prefixed with "_" are supposed to be server created, so please do not use an "_" prefix yourself.
+As you can see, all meta-data attributes prefixed with "\_" are supposed to be server created, so please do not use an "\_" prefix yourself.
   
 
 ### The Payload

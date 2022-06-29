@@ -22,25 +22,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.FilterByMeta;
 import org.factcast.factus.Handler;
 import org.factcast.factus.projection.LocalManagedProjection;
-import org.factcast.factus.redis.AbstractRedisManagedProjection;
-import org.factcast.factus.redis.UUIDCodec;
-import org.factcast.factus.redis.batch.RedisBatched;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.factus.event.UserCreated;
-import org.factcast.itests.factus.event.UserDeleted;
-import org.redisson.api.RBatch;
-import org.redisson.api.RMap;
-import org.redisson.api.RMapAsync;
-import org.redisson.api.RedissonClient;
-import org.redisson.client.codec.Codec;
-import org.redisson.codec.CompositeCodec;
-import org.redisson.codec.LZ4Codec;
-import org.redisson.codec.MarshallingCodec;
 
 @Slf4j
 @ProjectionMetaData(serial = 1)
 public class LocalUserNamesFilterByMeta extends LocalManagedProjection {
-    ConcurrentHashMap<UUID, String> map = new ConcurrentHashMap<>();
+  ConcurrentHashMap<UUID, String> map = new ConcurrentHashMap<>();
 
   public Map<UUID, String> userNames() {
     return map;
@@ -66,10 +54,9 @@ public class LocalUserNamesFilterByMeta extends LocalManagedProjection {
 
   @SneakyThrows
   @Handler
-  @FilterByMeta(key="type",value="customer")
-  @FilterByMeta(key="vip",value="true")
+  @FilterByMeta(key = "type", value = "customer")
+  @FilterByMeta(key = "vip", value = "true")
   protected void apply(UserCreated created) {
     userNames().put(created.aggregateId(), created.userName());
   }
-
 }

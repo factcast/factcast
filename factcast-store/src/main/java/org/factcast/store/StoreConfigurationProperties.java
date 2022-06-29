@@ -16,14 +16,12 @@
 package org.factcast.store;
 
 import java.time.Duration;
-
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @SuppressWarnings("DefaultAnnotationParam")
 @ConfigurationProperties(prefix = StoreConfigurationProperties.PROPERTIES_PREFIX)
@@ -50,6 +48,14 @@ public class StoreConfigurationProperties implements InitializingBean {
    * a spring-only protocol
    */
   String schemaRegistryUrl;
+
+  /**
+   * If a schemaRegistryUrl is set, you can still decide to enable or disable validation based on
+   * the definitions there. This is mostly useful for batch insertions during a bigger migration for
+   * example where your facts are already validated, and you want to reduce load on the FactCast
+   * server.
+   */
+  boolean validationEnabled = true;
 
   /**
    * If validation is enabled, this controls if the local snapshot of the registry is persisted to
@@ -151,7 +157,7 @@ public class StoreConfigurationProperties implements InitializingBean {
    */
   Duration tailCreationTimeout = Duration.ofDays(1).minusMinutes(1);
 
-  public boolean isValidationEnabled() {
+  public boolean isSchemaRegistryConfigured() {
     return schemaRegistryUrl != null;
   }
 
@@ -196,6 +202,19 @@ public class StoreConfigurationProperties implements InitializingBean {
               + "this would be a good time to panic. (See "
               + PROPERTIES_PREFIX
               + ".integrationTestMode) ****");
+    }
+
+    if (!isSchemaRegistryConfigured()) {
+      log.warn(
+          "**** SchemaRegistry-mode is disabled. Fact validation will not happen. This is"
+              + " discouraged for production environments. You have been warned. ****");
+
+    } else {
+      if (!isValidationEnabled()) {
+        log.warn(
+            "**** SchemaRegistry-mode is enabled but validation of Facts is disabled. This is"
+                + " discouraged for production environments. You have been warned. ****");
+      }
     }
   }
 }

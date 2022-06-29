@@ -27,7 +27,7 @@ import org.factcast.factus.event.Specification;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Specification(ns = "test", type="UserCreated")
+@Specification(ns = "test", type = "UserCreated")
 public class UserCreated implements EventObject {
   UUID aggregateId;
 
@@ -36,5 +36,9 @@ public class UserCreated implements EventObject {
   @Override
   public Set<UUID> aggregateIds() {
     return Sets.newHashSet(aggregateId);
+  }
+
+  public UserCreated(String name) {
+    this(UUID.randomUUID(), name);
   }
 }

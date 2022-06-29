@@ -16,14 +16,24 @@
 package org.factcast.test;
 
 import com.google.common.collect.Lists;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ServiceLoader;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Request.Builder;
+import okhttp3.RequestBody;
 import org.junit.jupiter.api.extension.*;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
+import org.testcontainers.containers.ToxiproxyContainer;
+import org.testcontainers.containers.ToxiproxyContainer.ContainerProxy;
+import org.testcontainers.utility.DockerImageName;
 
 @Slf4j
 public class FactCastExtension
@@ -33,9 +43,13 @@ public class FactCastExtension
         AfterEachCallback,
         AfterAllCallback {
 
+  public static final Network _docker_network = Network.newNetwork();
+  public static final String TOXIPROXY_NETWORK_ALIAS = "toxiproxy";
+
   private static boolean initialized = false;
   private static final List<FactCastIntegrationTestExtension> extensions = new LinkedList<>();
   private static List<FactCastIntegrationTestExtension> reverseExtensions;
+  private static ToxiproxyContainer toxiProxy;
 
   @Override
   public void beforeEach(ExtensionContext context) throws Exception {
@@ -53,6 +67,7 @@ public class FactCastExtension
 
   @Override
   public void afterEach(ExtensionContext context) throws Exception {
+    FactCastExtension.resetProxy();
     for (FactCastIntegrationTestExtension e : reverseExtensions) {
       e.afterEach(context);
     }
@@ -72,7 +87,10 @@ public class FactCastExtension
   }
 
   private void initialize(ExtensionContext context) {
-    var discovered =
+
+    initializeProxy();
+
+    ArrayList<org.factcast.test.FactCastIntegrationTestExtension> discovered =
         Lists.newArrayList(ServiceLoader.load(FactCastIntegrationTestExtension.class).iterator());
     AtomicInteger count = new AtomicInteger(discovered.size());
     while (!discovered.isEmpty()) {
@@ -97,5 +115,58 @@ public class FactCastExtension
 
     reverseExtensions = Lists.newArrayList(extensions);
     Collections.reverse(reverseExtensions);
+  }
+
+  private static void initializeProxy() {
+    toxiProxy =
+        new ToxiproxyContainer(
+                DockerImageName.parse("ghcr.io/shopify/toxiproxy:2.4.0")
+                    .asCompatibleSubstituteFor("shopify/toxiproxy"))
+            .withNetwork(_docker_network)
+            .withNetworkAliases(TOXIPROXY_NETWORK_ALIAS);
+    toxiProxy.start();
+  }
+
+  public static ContainerProxy proxy(String host, int port) {
+    return toxiProxy.getProxy(host, port);
+  }
+
+  public static ContainerProxy proxy(GenericContainer container, int port) {
+    return toxiProxy.getProxy(container, port);
+  }
+
+  private static final OkHttpClient client = new OkHttpClient();
+
+  @SneakyThrows
+  public static void resetProxy() {
+
+    String host = toxiProxy.getHost();
+    int controlPort = toxiProxy.getControlPort();
+    URI uri = new URI("http://" + host + ":" + controlPort + "/reset");
+
+    Request request =
+        new Builder()
+            .url(uri.toURL())
+            .method(
+                "POST",
+                RequestBody.create(
+                    MediaType.get("application/json"), "{}".getBytes(StandardCharsets.UTF_8)))
+            .build();
+    client.newCall(request).execute();
+  }
+
+  @SneakyThrows
+  public static void setProxyState(String name, boolean shouldBeOn) {
+
+    String host = toxiProxy.getHost();
+    int controlPort = toxiProxy.getControlPort();
+    URI uri = new URI("http://" + host + ":" + controlPort + "/proxies");
+
+    RequestBody body =
+        RequestBody.create(
+            MediaType.get("application/json"),
+            ("{\"enabled\":" + shouldBeOn + "}").getBytes(StandardCharsets.UTF_8));
+    Request request = new Request.Builder().url(uri.toURL()).method("POST", body).build();
+    client.newCall(request).execute();
   }
 }

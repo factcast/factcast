@@ -47,7 +47,11 @@ Depending on your environment, you may want to roll your own and use a slower, b
 just want to switch to plain Java Serialization. In this case, have a look at `BinarySnapshotSerializer` to explore, how to do it.
 (If you do, please contribute it back - might be worthwhile integrating into factcast)
 
-Should be straightforward and easy. 
+Should be straightforward and easy.
+
+In case you want to configure this serializer, define a `BinaryJacksonSnapshotSerializerCustomizer` bean and
+define the configuration in there. Take a look at `BinaryJacksonSnapshotSerializerCustomizer#defaultCustomizer`
+if you need inspiration. 
 
 ____
 

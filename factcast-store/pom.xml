@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.4.4-SNAPSHOT</version>
+    <version>0.5.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-store</artifactId>
@@ -30,12 +30,12 @@
     <dependency>
       <groupId>net.javacrumbs.shedlock</groupId>
       <artifactId>shedlock-spring</artifactId>
-      <version>4.28.0</version>
+      <version>${shedlock.version}</version>
     </dependency>
     <dependency>
       <groupId>net.javacrumbs.shedlock</groupId>
       <artifactId>shedlock-provider-jdbc-template</artifactId>
-      <version>4.28.0</version>
+      <version>${shedlock.version}</version>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
@@ -67,7 +67,7 @@
     <dependency>
       <groupId>org.liquibase</groupId>
       <artifactId>liquibase-core</artifactId>
-      <version>4.5.0</version><!--$NO-MVN-MAN-VER$ -->
+      <version>4.12.0</version><!--$NO-MVN-MAN-VER$ -->
       <exclusions>
         <exclusion>
           <groupId>ch.qos.logback</groupId>
@@ -78,7 +78,7 @@
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <version>42.2.24</version><!--$NO-MVN-MAN-VER$ -->
+      <version>42.4.0</version><!--$NO-MVN-MAN-VER$ -->
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
@@ -93,12 +93,6 @@
       <artifactId>slf4j-simple</artifactId>
       <scope>test</scope>
     </dependency>
-    <!-- <dependency> -->
-    <!-- <groupId>com.portingle</groupId> -->
-    <!-- <artifactId>slf4jtesting</artifactId> -->
-    <!-- <version>1.1.3</version> -->
-    <!-- <scope>test</scope> -->
-    <!-- </dependency> -->
     <!-- spring -->
     <dependency>
       <groupId>org.springframework</groupId>
@@ -141,7 +135,7 @@
     <dependency>
       <groupId>io.javalin</groupId>
       <artifactId>javalin</artifactId>
-      <version>3.13.12</version>
+      <version>4.6.3</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -157,7 +151,7 @@
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>okhttp</artifactId>
-      <version>4.9.2</version>
+      <version>4.10.0</version>
     </dependency>
     <dependency>
       <groupId>org.graalvm.js</groupId>
@@ -178,6 +172,10 @@
       <groupId>org.graalvm.truffle</groupId>
       <artifactId>truffle-api</artifactId>
       <version>${graaljs.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.retry</groupId>
+      <artifactId>spring-retry</artifactId>
     </dependency>
   </dependencies>
 </project>

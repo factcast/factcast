@@ -15,7 +15,10 @@
  */
 package org.factcast.itests.factus;
 
+import static org.assertj.core.api.Assertions.*;
+
 import config.RedissonProjectionConfiguration;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Factus;
 import org.factcast.itests.factus.proj.UserV1;
@@ -28,10 +31,6 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
-
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})

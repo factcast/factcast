@@ -1,0 +1,16 @@
+{
+  "foo" : {
+    "type" : "string"
+  },
+  "nested" : {
+    "type" : "object",
+    "properties" : {
+      "foo" : {
+        "type" : "string"
+      }
+    }
+  },
+  "type" : {
+    "type" : "string"
+  }
+}

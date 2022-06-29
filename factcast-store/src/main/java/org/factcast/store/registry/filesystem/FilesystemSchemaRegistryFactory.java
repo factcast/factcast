@@ -16,14 +16,13 @@
 package org.factcast.store.registry.filesystem;
 
 import com.google.common.collect.Lists;
+import java.util.List;
 import lombok.NonNull;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.SchemaRegistryFactory;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.TransformationStore;
 import org.factcast.store.registry.validation.schema.SchemaStore;
-
-import java.util.List;
 
 public class FilesystemSchemaRegistryFactory
     implements SchemaRegistryFactory<FilesystemSchemaRegistry> {

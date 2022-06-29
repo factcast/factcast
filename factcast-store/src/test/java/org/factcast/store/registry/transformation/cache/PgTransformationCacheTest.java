@@ -15,10 +15,11 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Date;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.*;
+import lombok.SneakyThrows;
 import org.factcast.core.Fact;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.test.IntegrationTest;
@@ -33,37 +34,83 @@ import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ContextConfiguration(classes = {PgTestConfiguration.class})
-@Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @ExtendWith(MockitoExtension.class)
+@Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 @IntegrationTest
 class PgTransformationCacheTest extends AbstractTransformationCacheTest {
   @Autowired private JdbcTemplate tpl;
 
+  private final List<String> buffer = new ArrayList<String>();
+  private final int maxBufferSize = 10;
+  private final CountDownLatch wasflushed = new CountDownLatch(1);
+
   @Override
   protected TransformationCache createUUT() {
-    return new PgTransformationCache(tpl, registryMetrics);
+    return new PgTransformationCache(tpl, registryMetrics, buffer, maxBufferSize) {
+      @Override
+      public void flush() {
+        super.flush();
+        wasflushed.countDown();
+      }
+    };
   }
 
   @Test
-  void testLastAccessUpdateAfterFind() {
+  void testAddToBatchAfterFind() {
     Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}");
     String chainId = "1-2-3";
-
+    String cacheKey = CacheKey.of(fact, chainId);
     uut.put(fact, chainId);
-
-    Date dateOnInsert = getLastAccessDate();
+    assertThat(buffer).isEmpty(); // not touched by a put
 
     uut.find(fact.id(), fact.version(), chainId);
 
-    Date dateAfterUpdate = getLastAccessDate();
-
-    assertTrue(dateOnInsert.before(dateAfterUpdate));
+    assertThat(buffer).contains(cacheKey);
   }
 
-  private Date getLastAccessDate() {
+  @SneakyThrows
+  @Test
+  void testFlushBatchAfterFind() {
+    for (int i = 0; i < maxBufferSize; i++) {
+      Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}");
+      String chainId = String.valueOf(i);
+      uut.put(fact, chainId);
+
+      uut.find(fact.id(), fact.version(), chainId);
+    }
+    // flush is async
+    wasflushed.await();
+
+    assertThat(buffer).isEmpty();
+  }
+
+  @Test
+  void testBatchUpdateAfterFind() {
+    for (int i = 0; i < maxBufferSize; i++) {
+      Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}");
+      String chainId = String.valueOf(i);
+      uut.put(fact, chainId);
+      buffer.add(CacheKey.of(fact, chainId));
+    }
+    Date maxDateOnInsert = getMaxLastAccessDate();
+
+    ((PgTransformationCache) uut).flush();
+
+    assertThat(getMinLastAccessDate()).isAfter(maxDateOnInsert);
+  }
+
+  private Date getMaxLastAccessDate() {
     return tpl.query(
-            "SELECT last_access FROM transformationcache",
+            "SELECT last_access FROM transformationcache ORDER BY last_access DESC",
+            new Object[] {},
+            (rs, rowNum) -> rs.getObject("last_access", Date.class))
+        .get(0);
+  }
+
+  private Date getMinLastAccessDate() {
+    return tpl.query(
+            "SELECT last_access FROM transformationcache ORDER BY last_access ASC",
             new Object[] {},
             (rs, rowNum) -> rs.getObject("last_access", Date.class))
         .get(0);
