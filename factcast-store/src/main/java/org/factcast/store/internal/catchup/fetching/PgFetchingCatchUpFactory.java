@@ -23,9 +23,8 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.PgPostQueryMatcher;
-import org.factcast.store.internal.blacklist.PgBlacklist;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
+import org.factcast.store.internal.filter.PgFactFilter;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 
@@ -41,21 +40,19 @@ public class PgFetchingCatchUpFactory implements PgCatchupFactory {
   @Override
   public PgFetchingCatchup create(
       @NonNull SubscriptionRequestTO request,
-      @NonNull PgPostQueryMatcher postQueryMatcher,
+      @NonNull PgFactFilter factFilter,
       @NonNull SubscriptionImpl subscription,
       @NonNull AtomicLong serial,
       @NonNull PgMetrics metrics,
-      @NonNull PgBlacklist blacklist,
       @NonNull CurrentStatementHolder statementHolder) {
     return new PgFetchingCatchup(
         connectionSupplier,
         props,
         request,
-        postQueryMatcher,
+        factFilter,
         subscription,
         serial,
         metrics,
-        blacklist,
         statementHolder);
   }
 }

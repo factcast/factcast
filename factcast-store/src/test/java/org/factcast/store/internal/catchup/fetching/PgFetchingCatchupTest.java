@@ -22,7 +22,6 @@ import static org.mockito.Mockito.*;
 import io.micrometer.core.instrument.Counter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
 import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -33,9 +32,8 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.PgPostQueryMatcher;
 import org.factcast.store.internal.StoreMetrics;
-import org.factcast.store.internal.blacklist.PgBlacklist;
+import org.factcast.store.internal.filter.PgFactFilter;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
@@ -62,10 +60,9 @@ class PgFetchingCatchupTest {
   StoreConfigurationProperties props;
 
   @Mock @NonNull SubscriptionRequestTO req;
-  @Mock @NonNull PgPostQueryMatcher postQueryMatcher;
+  @Mock @NonNull PgFactFilter filter;
   @Mock @NonNull SubscriptionImpl subscription;
   @Mock @NonNull AtomicLong serial;
-  @Mock @NonNull PgBlacklist blacklist;
   @Mock @NonNull CurrentStatementHolder statementHolder;
 
   @Mock(lenient = true)
@@ -146,7 +143,8 @@ class PgFetchingCatchupTest {
             }
           };
 
-      RowCallbackHandler rowCallbackHandler = underTest.createRowCallbackHandler(true, extractor);
+      RowCallbackHandler rowCallbackHandler =
+          underTest.createRowCallbackHandler(f -> true, extractor);
       rowCallbackHandler.processRow(mock(ResultSet.class));
       rowCallbackHandler.processRow(mock(ResultSet.class));
       rowCallbackHandler.processRow(mock(ResultSet.class));
@@ -165,22 +163,12 @@ class PgFetchingCatchupTest {
 
     @SneakyThrows
     @Test
-    void skipsPostQueryMatching() {
-      when(extractor.mapRow(any(), anyInt())).thenReturn(Fact.builder().buildWithoutPayload());
-      var cbh = underTest.createRowCallbackHandler(true, extractor);
-      cbh.processRow(mock(ResultSet.class));
-
-      verifyNoInteractions(postQueryMatcher);
-    }
-
-    @SneakyThrows
-    @Test
     void filtersInPostQueryMatching() {
-      var cbh = underTest.createRowCallbackHandler(false, extractor);
+      final var cbh = underTest.createRowCallbackHandler(filter, extractor);
       ResultSet rs = mock(ResultSet.class);
       Fact testFact = new TestFact();
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
-      when(postQueryMatcher.test(testFact)).thenReturn(false);
+      when(filter.test(testFact)).thenReturn(false);
       cbh.processRow(rs);
 
       verifyNoInteractions(subscription);
@@ -189,11 +177,11 @@ class PgFetchingCatchupTest {
     @SneakyThrows
     @Test
     void notifies() {
-      var cbh = underTest.createRowCallbackHandler(false, extractor);
+      final var cbh = underTest.createRowCallbackHandler(filter, extractor);
       ResultSet rs = mock(ResultSet.class);
       Fact testFact = new TestFact();
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
-      when(postQueryMatcher.test(testFact)).thenReturn(true);
+      when(filter.test(testFact)).thenReturn(true);
       cbh.processRow(rs);
 
       verify(subscription).notifyElement(testFact);
@@ -202,11 +190,11 @@ class PgFetchingCatchupTest {
     @SneakyThrows
     @Test
     void notifiesTransformationException() {
-      var cbh = underTest.createRowCallbackHandler(false, extractor);
+      final var cbh = underTest.createRowCallbackHandler(filter, extractor);
       ResultSet rs = mock(ResultSet.class);
       Fact testFact = new TestFact();
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
-      when(postQueryMatcher.test(testFact)).thenReturn(true);
+      when(filter.test(testFact)).thenReturn(true);
       doThrow(TransformationException.class).when(subscription).notifyElement(testFact);
       // just test that it'll be escalated unchanged from the code,
       // so that it can be handled in PgSubscriptionFactory
@@ -215,26 +203,6 @@ class PgFetchingCatchupTest {
                 cbh.processRow(rs);
               })
           .isInstanceOf(TransformationException.class);
-    }
-
-    @SneakyThrows
-    @Test
-    void filtersBlacklistedFacts() {
-      var cbh = underTest.createRowCallbackHandler(false, extractor);
-      ResultSet rs = mock(ResultSet.class);
-      UUID id1 = UUID.randomUUID();
-      UUID id2 = UUID.randomUUID();
-      Fact testFact1 = Fact.builder().id(id1).buildWithoutPayload();
-      Fact testFact2 = Fact.builder().id(id2).buildWithoutPayload();
-      when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact1, testFact2);
-      when(postQueryMatcher.test(any())).thenReturn(true);
-      when(blacklist.isBlocked(id1)).thenReturn(true);
-      when(blacklist.isBlocked(id2)).thenReturn(false);
-      cbh.processRow(rs);
-      cbh.processRow(rs);
-
-      verify(subscription, never()).notifyElement(testFact1);
-      verify(subscription, times(1)).notifyElement(testFact2);
     }
   }
 }
