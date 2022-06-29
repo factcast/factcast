@@ -18,13 +18,17 @@ package org.factcast.store.registry.validation;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.*;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.factcast.core.Fact;
 import org.factcast.core.FactValidationException;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Aspect
 @Slf4j
@@ -55,14 +59,21 @@ public class FactValidationAspect {
 
   private void validate(List<? extends Fact> facts) {
     Stream<? extends Fact> stream = facts.stream();
-    if (facts.size() >= MINIMUM_FACT_LIST_SIZE_TO_GO_PARALLEL) {
-      stream = stream.parallel();
-    }
+    stream = parallelizeIfNecessary(facts, stream);
     List<FactValidationError> errors = validate(stream);
 
     if (!errors.isEmpty())
       throw new FactValidationException(
           errors.stream().map(FactValidationError::toString).collect(Collectors.toList()));
+  }
+
+  @VisibleForTesting
+  Stream<? extends Fact> parallelizeIfNecessary(
+      List<? extends Fact> facts, Stream<? extends Fact> stream) {
+    if (facts.size() >= MINIMUM_FACT_LIST_SIZE_TO_GO_PARALLEL) {
+      stream = stream.parallel();
+    }
+    return stream;
   }
 
   private List<FactValidationError> validate(Stream<? extends Fact> stream) {
