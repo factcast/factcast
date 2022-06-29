@@ -15,9 +15,12 @@
  */
 package org.factcast.store.registry.validation;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
+import io.micrometer.core.instrument.Tags;
 import java.util.*;
 import java.util.stream.*;
-
+import lombok.RequiredArgsConstructor;
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.factcast.core.Fact;
@@ -27,13 +30,6 @@ import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
-
-import io.micrometer.core.instrument.Tags;
-
-import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class FactValidator {
