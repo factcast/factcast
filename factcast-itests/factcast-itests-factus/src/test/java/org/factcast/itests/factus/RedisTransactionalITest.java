@@ -17,19 +17,24 @@ package org.factcast.itests.factus;
 
 import static java.util.UUID.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import config.RedissonProjectionConfiguration;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Factus;
+import org.factcast.factus.Handler;
 import org.factcast.factus.event.EventObject;
+import org.factcast.factus.redis.AbstractRedisManagedProjection;
 import org.factcast.factus.redis.tx.RedisTransactional;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.factus.event.UserCreated;
+import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.TxRedissonManagedUserNames;
 import org.factcast.itests.factus.proj.TxRedissonSubscribedUserNames;
 import org.factcast.test.AbstractFactCastIntegrationTest;
@@ -182,6 +187,19 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
+  @Nested
+  class TxMultipleHandlers {
+    @Test
+    void test() {
+      final var userId = randomUUID();
+
+      factus.publish(List.of(new UserCreated(userId, "hugo"), new UserDeleted(userId)));
+
+      final var proj = new TxMultipleHandler(redissonClient);
+      assertDoesNotThrow(() -> factus.update(proj));
+    }
+  }
+
   static class TrackingTxRedissonManagedUserNames extends TxRedissonManagedUserNames {
     public TrackingTxRedissonManagedUserNames(RedissonClient redisson) {
       super(redisson);
@@ -310,6 +328,26 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
         throw new IllegalStateException("Bad luck");
       }
       super.apply(created, tx);
+    }
+  }
+
+  @ProjectionMetaData(serial = 1)
+  @RedisTransactional
+  static class TxMultipleHandler extends AbstractRedisManagedProjection {
+    public TxMultipleHandler(RedissonClient redisson) {
+      super(redisson);
+    }
+
+    @Handler
+    void apply(UserCreated e, RTransaction tx) {
+      tx.getSet("hugo").add(e.aggregateId());
+    }
+
+    @Handler
+    void apply(UserDeleted e, RTransaction tx) {
+      if (!tx.getSet("hugo").contains(e.aggregateId())) {
+        throw new IllegalArgumentException("user should be in map but wasnt");
+      }
     }
   }
 }
