@@ -15,12 +15,12 @@
  */
 package org.factcast.store.registry;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
-import com.github.fge.jsonschema.main.JsonSchema;
 import com.google.common.cache.LoadingCache;
 import lombok.NonNull;
+import org.everit.json.schema.Schema;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics.EVENT;
@@ -44,7 +44,7 @@ class AbstractSchemaRegistryTest {
   @Mock private @NonNull RegistryMetrics registryMetrics;
   @Mock private @NonNull StoreConfigurationProperties pgConfigurationProperties;
   @Mock private Object mutex;
-  @Mock private LoadingCache<SchemaKey, JsonSchema> cache;
+  @Mock private LoadingCache<SchemaKey, Schema> cache;
   @InjectMocks private SomeSchemaRegistry underTest;
 
   @Nested
