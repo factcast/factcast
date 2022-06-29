@@ -27,10 +27,9 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.PgPostQueryMatcher;
 import org.factcast.store.internal.StoreMetrics.EVENT;
-import org.factcast.store.internal.blacklist.PgBlacklist;
 import org.factcast.store.internal.catchup.PgCatchup;
+import org.factcast.store.internal.filter.PgFactFilter;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgQueryBuilder;
@@ -50,15 +49,13 @@ public class PgFetchingCatchup implements PgCatchup {
 
   @NonNull final SubscriptionRequestTO req;
 
-  @NonNull final PgPostQueryMatcher postQueryMatcher;
+  @NonNull final PgFactFilter factFilter;
 
   @NonNull final SubscriptionImpl subscription;
 
   @NonNull final AtomicLong serial;
 
   @NonNull final PgMetrics metrics;
-
-  @NonNull final PgBlacklist blacklist;
 
   @NonNull final CurrentStatementHolder statementHolder;
 
@@ -87,33 +84,25 @@ public class PgFetchingCatchup implements PgCatchup {
   void fetch(JdbcTemplate jdbc) {
     jdbc.setFetchSize(props.getPageSize());
     jdbc.setQueryTimeout(0); // disable query timeout
-    var skipTesting = postQueryMatcher.canBeSkipped();
     PgQueryBuilder b = new PgQueryBuilder(req.specs(), statementHolder);
     var extractor = new PgFactExtractor(serial);
     String catchupSQL = b.createSQL();
     jdbc.query(
         catchupSQL,
         b.createStatementSetter(serial),
-        createRowCallbackHandler(skipTesting, extractor));
-
+        createRowCallbackHandler(factFilter, extractor));
     metrics
         .counter(EVENT.CATCHUP_FACT)
         .increment(factCounter); // TODO this needs to TAG it for each subscription?
   }
 
   @VisibleForTesting
-  RowCallbackHandler createRowCallbackHandler(boolean skipTesting, PgFactExtractor extractor) {
+  RowCallbackHandler createRowCallbackHandler(PgFactFilter filter, PgFactExtractor extractor) {
     return rs -> {
       Fact f = Objects.requireNonNull(extractor.mapRow(rs, 0)); // does not use the rowNum anyway
-      if (blacklist.isBlocked(f.id())) {
-        log.trace("{} filtered blacklisted id={}", req, f.id());
-      } else {
-        if (skipTesting || postQueryMatcher.test(f)) {
-          subscription.notifyElement(f);
-          factCounter++;
-        } else {
-          log.trace("{} filtered id={}", req, f.id());
-        }
+      if (filter.test(f)) {
+        subscription.notifyElement(f);
+        factCounter++;
       }
     };
   }
