@@ -15,13 +15,17 @@
  */
 package org.factcast.store.registry.http;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.function.*;
-import lombok.NonNull;
-import okhttp3.OkHttpClient;
+
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.loader.SchemaLoader;
 import org.json.JSONObject;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
+
+import lombok.NonNull;
+import okhttp3.OkHttpClient;
 
 public class ValidationConstants {
 
@@ -39,16 +43,20 @@ public class ValidationConstants {
 
   public static final int HTTP_NOT_MODIFIED = 304;
 
-  public static Function<? super String, ? extends Schema> jsonString2SchemaV7() {
+  public static Function<String, Schema> jsonString2SchemaV7() {
     return s -> {
       try {
-        SchemaLoader loader =
-            SchemaLoader.builder().draftV7Support().schemaJson(new JSONObject(s)).build();
+        SchemaLoader loader = getLoaderBuilder().schemaJson(new JSONObject(s)).build();
         return loader.load().build();
       } catch (Exception e) {
         throw new IllegalArgumentException("Cannot create schema from : \n " + s, e);
       }
     };
+  }
+
+  @VisibleForTesting
+  static SchemaLoader.SchemaLoaderBuilder getLoaderBuilder() {
+    return SchemaLoader.builder().draftV7Support();
   }
 
   public static Schema jsonString2SchemaV7(@NonNull String schemaJson) {

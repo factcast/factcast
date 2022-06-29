@@ -67,7 +67,8 @@ public class FactValidator {
     return VALIDATION_OK;
   }
 
-  private List<FactValidationError> doValidate(Fact fact) {
+  @VisibleForTesting
+  List<FactValidationError> doValidate(Fact fact) {
     SchemaKey key = SchemaKey.from(fact);
     Optional<Schema> optSchema = registry.get(key);
     if (optSchema.isPresent()) {
@@ -94,7 +95,8 @@ public class FactValidator {
     }
   }
 
-  private List<FactValidationError> tryValidate(SchemaKey key, Schema jsonSchema, JSONObject toValidate) {
+  @VisibleForTesting
+  List<FactValidationError> tryValidate(SchemaKey key, Schema jsonSchema, JSONObject toValidate) {
     try {
       jsonSchema.validate(toValidate);
       return VALIDATION_OK;

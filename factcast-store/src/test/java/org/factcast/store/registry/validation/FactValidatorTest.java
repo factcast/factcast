@@ -15,11 +15,8 @@
  */
 package org.factcast.store.registry.validation;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
-
-import io.micrometer.core.instrument.Tags;
 import java.util.*;
+
 import org.everit.json.schema.Schema;
 import org.factcast.core.Fact;
 import org.factcast.store.StoreConfigurationProperties;
@@ -29,12 +26,18 @@ import org.factcast.store.registry.http.ValidationConstants;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics.EVENT;
 import org.factcast.store.registry.validation.schema.SchemaKey;
+import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import io.micrometer.core.instrument.Tags;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
+
 public class FactValidatorTest {
   @Test
-  public void testSchemaRegistryDisabled() throws Exception {
+  void testSchemaRegistryDisabled() throws Exception {
 
     StoreConfigurationProperties props = mock(StoreConfigurationProperties.class);
     when(props.isSchemaRegistryConfigured()).thenReturn(false);
@@ -46,7 +49,7 @@ public class FactValidatorTest {
   }
 
   @Test
-  public void testValidationDisabled() throws Exception {
+  void testValidationDisabled() throws Exception {
 
     StoreConfigurationProperties props = mock(StoreConfigurationProperties.class);
     when(props.isSchemaRegistryConfigured()).thenReturn(true);
@@ -59,7 +62,7 @@ public class FactValidatorTest {
   }
 
   @Test
-  public void testFailsToValidateIfNotValidatable() {
+  void testFailsToValidateIfNotValidatable() {
     var registryMetrics = spy(new NOPRegistryMetrics());
 
     StoreConfigurationProperties props = mock(StoreConfigurationProperties.class);
@@ -75,7 +78,7 @@ public class FactValidatorTest {
   }
 
   @Test
-  public void testValidateIfNotValidatableButAllowed() throws Exception {
+  void testValidateIfNotValidatableButAllowed() throws Exception {
 
     StoreConfigurationProperties props = mock(StoreConfigurationProperties.class);
     when(props.isSchemaRegistryConfigured()).thenReturn(true);
@@ -89,7 +92,7 @@ public class FactValidatorTest {
   }
 
   @Test
-  public void testFailsToValidateIfValidatableButMissingSchema() throws Exception {
+  void testFailsToValidateIfValidatableButMissingSchema() throws Exception {
     var registryMetrics = spy(new NOPRegistryMetrics());
 
     StoreConfigurationProperties props = mock(StoreConfigurationProperties.class);
@@ -107,7 +110,7 @@ public class FactValidatorTest {
   }
 
   @Test
-  public void testValidateWithMatchingSchema() throws Exception {
+  void testValidateWithMatchingSchema() throws Exception {
 
     StoreConfigurationProperties props = mock(StoreConfigurationProperties.class);
     when(props.isSchemaRegistryConfigured()).thenReturn(true);
@@ -137,7 +140,7 @@ public class FactValidatorTest {
   }
 
   @Test
-  public void testValidateWithoutMatchingSchema() throws Exception {
+  void testValidateWithoutMatchingSchema() throws Exception {
 
     StoreConfigurationProperties props = mock(StoreConfigurationProperties.class);
     when(props.isSchemaRegistryConfigured()).thenReturn(true);
@@ -154,7 +157,7 @@ public class FactValidatorTest {
   }
 
   @Test
-  public void testFailsToValidateWithMatchingSchemaButNonMatchingFact() throws Exception {
+  void testFailsToValidateWithMatchingSchemaButNonMatchingFact() throws Exception {
     var registryMetrics = spy(new NOPRegistryMetrics());
 
     StoreConfigurationProperties props = mock(StoreConfigurationProperties.class);
@@ -186,20 +189,65 @@ public class FactValidatorTest {
   }
 
   @Test
-  public void testIsValidateable() throws Exception {
+  void testIsValidateable() throws Exception {
     Fact validFact = Fact.builder().ns("ns").type("type").version(1).buildWithoutPayload();
     assertThat(FactValidator.isValidateable(validFact)).isTrue();
   }
 
   @Test
-  public void testIsValidateableWithoutType() throws Exception {
+  void testIsValidateableWithoutType() throws Exception {
     Fact invalidFact = Fact.builder().ns("ns").version(1).buildWithoutPayload();
     assertThat(FactValidator.isValidateable(invalidFact)).isFalse();
   }
 
   @Test
-  public void testIsValidateableWithoutVersion() throws Exception {
+  void testIsValidateableWithoutVersion() throws Exception {
     Fact invalidFact = Fact.builder().ns("ns").type("type").buildWithoutPayload();
     assertThat(FactValidator.isValidateable(invalidFact)).isFalse();
+  }
+
+  @Test
+  void testTryValidateWithoutError() {
+    SchemaRegistry registry = mock(SchemaRegistry.class);
+    FactValidator uut =
+        new FactValidator(
+            mock(StoreConfigurationProperties.class), registry, mock(RegistryMetrics.class));
+
+    assertThat(
+            uut.tryValidate(
+                mock(SchemaKey.class),
+                ValidationConstants.jsonString2SchemaV7("{}"),
+                new JSONObject("{}")))
+        .isEmpty();
+  }
+
+  @Test
+  void testTryValidateWithError() {
+    SchemaRegistry registry = mock(SchemaRegistry.class);
+    FactValidator uut =
+        new FactValidator(
+            mock(StoreConfigurationProperties.class), registry, mock(RegistryMetrics.class));
+
+    List<FactValidationError> errors =
+        uut.tryValidate(
+            mock(SchemaKey.class),
+            ValidationConstants.jsonString2SchemaV7(
+                "{\n"
+                    + "    \"properties\": {\n"
+                    + "        \"bubabi\": {\n"
+                    + "            \"description\": \"A unique identifier\",\n"
+                    + "            \"type\": \"string\"\n"
+                    + "        }\n"
+                    + "    },\n"
+                    + "    \"required\": [\n"
+                    + "        \"bubabi\"  \n"
+                    + "    ]\n"
+                    + "}"),
+            new JSONObject("{}"));
+    assertThat(errors)
+        .hasSize(1)
+        .first()
+        .extracting(FactValidationError::message)
+        .matches(s -> s.contains("required") && s.contains("bubabi"));
   }
 }
