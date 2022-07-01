@@ -16,11 +16,10 @@
 package org.factcast.client.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.util.UUID;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
+import java.util.function.*;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -84,10 +83,12 @@ public class ResilientGrpcSubscription implements Subscription {
 
   @Override
   public void close() {
-    try {
-      closeAndDetachSubscription();
-    } finally {
-      isClosed.set(true);
+    if (!isClosed.getAndSet(true)) {
+      try {
+        closeAndDetachSubscription();
+      } finally {
+        isClosed.set(true);
+      }
     }
   }
 

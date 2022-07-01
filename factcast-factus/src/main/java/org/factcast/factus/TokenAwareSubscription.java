@@ -15,45 +15,56 @@
  */
 package org.factcast.factus;
 
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionClosedException;
 import org.factcast.factus.projection.WriterToken;
 
 @RequiredArgsConstructor
+@Slf4j
 class TokenAwareSubscription implements Subscription {
-  final Subscription delegate;
-  final WriterToken token;
+  @NonNull final Subscription delegate;
+  @NonNull final WriterToken token;
+  private final AtomicBoolean closed = new AtomicBoolean(false);
 
   @Override
   public void close() throws Exception {
-    try {
-      delegate.close();
-    } finally {
-      token.close();
+    if (!closed.getAndSet(true)) {
+      try {
+        delegate.close();
+      } finally {
+        token.close();
+      }
     }
   }
 
   @Override
   public Subscription awaitCatchup() throws SubscriptionClosedException {
-    return delegate.awaitCatchup();
+    delegate.awaitCatchup();
+    return this;
   }
 
   @Override
   public Subscription awaitCatchup(long waitTimeInMillis)
       throws SubscriptionClosedException, TimeoutException {
-    return delegate.awaitCatchup(waitTimeInMillis);
+    delegate.awaitCatchup(waitTimeInMillis);
+    return this;
   }
 
   @Override
   public Subscription awaitComplete() throws SubscriptionClosedException {
-    return delegate.awaitComplete();
+    delegate.awaitComplete();
+    return this;
   }
 
   @Override
   public Subscription awaitComplete(long waitTimeInMillis)
       throws SubscriptionClosedException, TimeoutException {
-    return delegate.awaitComplete(waitTimeInMillis);
+    delegate.awaitComplete(waitTimeInMillis);
+    return this;
   }
 }
