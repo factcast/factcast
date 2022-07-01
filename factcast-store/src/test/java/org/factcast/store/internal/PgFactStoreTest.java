@@ -22,6 +22,7 @@ import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
@@ -52,7 +53,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
-public class PgFactStoreTest extends AbstractFactStoreTest {
+class PgFactStoreTest extends AbstractFactStoreTest {
 
   @Autowired FactStore fs;
 
@@ -72,6 +73,7 @@ public class PgFactStoreTest extends AbstractFactStoreTest {
     Optional<Snapshot> snapshot = store.getSnapshot(SnapshotId.of("xxx", UUID.randomUUID()));
     assertThat(snapshot).isEmpty();
 
+    //noinspection unchecked
     verify(metrics).time(same(OP.GET_SNAPSHOT), any(Supplier.class));
   }
 
@@ -91,22 +93,47 @@ public class PgFactStoreTest extends AbstractFactStoreTest {
     verify(metrics).time(same(OP.SET_SNAPSHOT), any(Runnable.class));
   }
 
+  /** This happens in a trigger */
+  @Test
+  @SneakyThrows
+  void testSerialAndTimestampWereAugmented() {
+    // INIT
+    UUID id = UUID.randomUUID();
+
+    // RUN
+    // we need to check if the timestamp that is added to meta makes sense, hence
+    // capture current millis before and after publishing, and compare against the timestamp
+    // set in meta.
+    var before = System.currentTimeMillis();
+    uut.publish(Fact.builder().ns("augmentation").type("test").id(id).buildWithoutPayload());
+
+    // ASSERT
+    var fact = uut.fetchById(id);
+    // fetching after here, as the trigger seems to be delayed
+    var after = System.currentTimeMillis();
+
+    assertThat(fact).isPresent();
+
+    assertThat(Long.parseLong(fact.get().meta("_ser"))).isPositive();
+
+    assertThat(Long.parseLong(fact.get().meta("_ts")))
+        .isGreaterThanOrEqualTo(before)
+        .isLessThanOrEqualTo(after);
+  }
+
   @Nested
   class FastForward {
     @NonNull final UUID id = UUID.randomUUID();
     @NonNull final UUID id2 = UUID.randomUUID();
     @NonNull final UUID id3 = UUID.randomUUID();
     final AtomicReference<UUID> fwd = new AtomicReference<>();
-    private long lastSer = 0L;
 
     @NonNull
     final FactObserver obs =
         new FactObserver() {
 
           @Override
-          public void onNext(@NonNull Fact element) {
-            lastSer = element.serial();
-          }
+          public void onNext(@NonNull Fact element) {}
 
           @Override
           public void onCatchup() {
@@ -114,7 +141,7 @@ public class PgFactStoreTest extends AbstractFactStoreTest {
           }
 
           @Override
-          public void onFastForward(UUID factIdToFfwdTo) {
+          public void onFastForward(@NonNull UUID factIdToFfwdTo) {
             fwd.set(factIdToFfwdTo);
             System.out.println("ffwd " + factIdToFfwdTo);
           }

@@ -15,21 +15,10 @@
  */
 package org.factcast.store.registry.validation;
 
-import lombok.NonNull;
 import lombok.Value;
 
 @Value
 public class FactValidationError {
-  public FactValidationError(@NonNull String string) {
-    this("error", string);
-  }
-
-  public FactValidationError(@NonNull String level, @NonNull String string) {
-    this.level = level;
-    this.message = string;
-  }
-
-  String level;
 
   String message;
 }

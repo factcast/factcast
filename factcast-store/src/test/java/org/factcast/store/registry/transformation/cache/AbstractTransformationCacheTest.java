@@ -19,12 +19,12 @@ import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import org.factcast.core.Fact;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics;
-import org.joda.time.DateTime;
 import org.junit.jupiter.api.*;
 import org.mockito.Spy;
 
@@ -71,7 +71,7 @@ public abstract class AbstractTransformationCacheTest {
     uut.put(fact, chainId);
 
     // clocks aren't synchronized so Im gonna add an hour here :)
-    uut.compact(DateTime.now().plusHours(1));
+    uut.compact(ZonedDateTime.now().plusHours(1));
 
     Optional<Fact> found = uut.find(fact.id(), fact.version(), chainId);
 

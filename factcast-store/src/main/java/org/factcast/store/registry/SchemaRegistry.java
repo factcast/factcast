@@ -15,9 +15,8 @@
  */
 package org.factcast.store.registry;
 
-import com.github.fge.jsonschema.main.JsonSchema;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import org.everit.json.schema.Schema;
 import org.factcast.store.registry.transformation.Transformation;
 import org.factcast.store.registry.transformation.TransformationKey;
 import org.factcast.store.registry.transformation.TransformationStoreListener;
@@ -25,7 +24,7 @@ import org.factcast.store.registry.validation.schema.SchemaKey;
 
 public interface SchemaRegistry {
 
-  Optional<JsonSchema> get(SchemaKey key);
+  Optional<Schema> get(SchemaKey key);
 
   List<Transformation> get(TransformationKey key);
 

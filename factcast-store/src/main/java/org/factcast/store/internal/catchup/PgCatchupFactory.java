@@ -21,6 +21,7 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.filter.PgFactFilter;
+import org.factcast.store.internal.query.CurrentStatementHolder;
 
 public interface PgCatchupFactory {
 
@@ -29,5 +30,6 @@ public interface PgCatchupFactory {
       @NonNull PgFactFilter postQueryMatcher,
       @NonNull SubscriptionImpl subscription,
       @NonNull AtomicLong serial,
-      @NonNull PgMetrics metrics);
+      @NonNull PgMetrics metrics,
+      @NonNull CurrentStatementHolder statementHolder);
 }

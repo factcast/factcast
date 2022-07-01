@@ -26,6 +26,7 @@ import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.filter.PgFactFilter;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
+import org.factcast.store.internal.query.CurrentStatementHolder;
 
 @RequiredArgsConstructor
 // no code in here, just generated @nonnull checks
@@ -42,8 +43,9 @@ public class PgTmpPagedCatchUpFactory implements PgCatchupFactory {
       @NonNull PgFactFilter filter,
       @NonNull SubscriptionImpl subscription,
       @NonNull AtomicLong serial,
-      @NonNull PgMetrics metrics) {
+      @NonNull PgMetrics metrics,
+      @NonNull CurrentStatementHolder statementHolder) {
     return new PgTmpPagedCatchup(
-        connectionSupplier, props, request, filter, subscription, serial, metrics);
+        connectionSupplier, props, request, filter, subscription, serial, metrics, statementHolder);
   }
 }

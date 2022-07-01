@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.5.8-SNAPSHOT</version>
+    <version>0.5.10-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-store</artifactId>
@@ -85,8 +85,9 @@
       <artifactId>guava</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.github.java-json-tools</groupId>
-      <artifactId>json-schema-validator</artifactId>
+      <groupId>com.github.erosb</groupId>
+      <artifactId>everit-json-schema</artifactId>
+      <version>1.14.1</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
