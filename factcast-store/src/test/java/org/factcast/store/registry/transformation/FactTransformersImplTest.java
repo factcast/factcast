@@ -15,30 +15,33 @@
  */
 package org.factcast.store.registry.transformation;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import java.util.*;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import java.util.HashMap;
-import java.util.Map;
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
-import org.factcast.core.subscription.FactTransformerService;
+import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.internal.RequestedVersions;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.metrics.SupplierWithException;
+import org.factcast.store.registry.transformation.cache.CacheKey;
 import org.factcast.store.registry.transformation.cache.TransformationCache;
 import org.factcast.store.registry.transformation.chains.TransformationChain;
 import org.factcast.store.registry.transformation.chains.TransformationChains;
 import org.factcast.store.registry.transformation.chains.Transformer;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.fasterxml.jackson.databind.JsonNode;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class FactTransformersImplTest {
@@ -63,7 +66,7 @@ public class FactTransformersImplTest {
     FactTransformersImpl uut =
         new FactTransformersImpl(requestedVersions, service, registryMetrics);
 
-    assertThat(uut.transformIfNecessary(probe)).isSameAs(probe);
+    assertThat(uut.prepareTransformation(probe)).isNull();
 
     verifyNoInteractions(registryMetrics);
   }
@@ -81,7 +84,7 @@ public class FactTransformersImplTest {
 
     FactTransformersImpl uut =
         new FactTransformersImpl(requestedVersions, service, registryMetrics);
-    assertThat(uut.transformIfNecessary(probe)).isSameAs(probe);
+    assertThat(uut.prepareTransformation(probe)).isNull();
 
     verifyNoInteractions(registryMetrics);
   }
@@ -101,12 +104,13 @@ public class FactTransformersImplTest {
     FactTransformersImpl uut =
         new FactTransformersImpl(requestedVersions, service, registryMetrics);
 
-    assertThat(uut.transformIfNecessary(probe)).isSameAs(probe);
+    assertThat(uut.prepareTransformation(probe)).isNull();
 
     verifyNoInteractions(registryMetrics);
   }
 
   @Test
+  @SuppressWarnings("ConstantConditions")
   public void testTransform() throws Exception {
     String chainId = "chainId";
     Fact probe = new TestFact().version(1);
@@ -129,10 +133,10 @@ public class FactTransformersImplTest {
     FactTransformersImpl uut =
         new FactTransformersImpl(requestedVersions, service, registryMetrics);
 
-    Fact transformed = uut.transformIfNecessary(probe);
+    Fact transformed = uut.transform(uut.prepareTransformation(probe));
     assertThat(transformed.jsonPayload()).isEqualTo(transformedJsonNode.toString());
 
-    verify(cache).find(eq(probe.id()), eq(33), eq(chainId));
+    verify(cache).find(CacheKey.of(probe.id(), 33, chainId));
 
     verify(registryMetrics)
         .timed(eq(RegistryMetrics.OP.TRANSFORMATION), any(), any(SupplierWithException.class));

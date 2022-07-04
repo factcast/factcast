@@ -16,17 +16,25 @@
 package org.factcast.store.registry.transformation.cache;
 
 import java.time.ZonedDateTime;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+
 import org.factcast.core.Fact;
+
+import lombok.NonNull;
 
 public interface TransformationCache {
 
   // maybe optimize by passing header and payload separately as
   // string/jsonnode?
-  void put(Fact f, String transformationChainId);
+  void put(@NonNull CacheKey key, @NonNull Fact f);
 
-  Optional<Fact> find(UUID eventId, int version, String transformationChainId);
+  default void putAll(Map<CacheKey, Fact> pairs) {
+    pairs.forEach(this::put);
+  }
+
+  Optional<Fact> find(CacheKey key);
+
+  // Collection<Fact> findAll();
 
   void compact(ZonedDateTime thresholdDate);
 }

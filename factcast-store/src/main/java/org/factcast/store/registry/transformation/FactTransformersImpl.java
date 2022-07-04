@@ -15,15 +15,19 @@
  */
 package org.factcast.store.registry.transformation;
 
-import java.util.OptionalInt;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import java.util.*;
+
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.FactTransformerService;
-import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.TransformationException;
+import org.factcast.core.subscription.transformation.FactTransformerService;
+import org.factcast.core.subscription.transformation.FactTransformers;
+import org.factcast.core.subscription.transformation.TransformationRequest;
 import org.factcast.store.internal.RequestedVersions;
 import org.factcast.store.registry.metrics.RegistryMetrics;
+import org.jetbrains.annotations.Nullable;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class FactTransformersImpl implements FactTransformers {
@@ -34,25 +38,32 @@ public class FactTransformersImpl implements FactTransformers {
 
   @NonNull private final RegistryMetrics registryMetrics;
 
+  @Nullable
   @Override
-  public @NonNull Fact transformIfNecessary(@NonNull Fact e) throws TransformationException {
-
+  public TransformationRequest prepareTransformation(@NonNull Fact e) {
     String ns = e.ns();
     String type = e.type();
     int version = e.version();
 
     if (type == null || requested.matches(ns, type, version)) {
-      return e;
+      return null;
     } else {
       OptionalInt max = requested.get(ns, type).stream().mapToInt(v -> v).max();
       int targetVersion =
           max.orElseThrow(
               () -> new IllegalArgumentException("No requested Version !? This must not happen."));
 
-      return registryMetrics.timed(
-          RegistryMetrics.OP.TRANSFORMATION,
-          TransformationException.class,
-          () -> trans.transformIfNecessary(e, targetVersion));
+      return new TransformationRequest(e, targetVersion);
     }
+  }
+
+  @Nullable
+  @Override
+  public Fact transform(@NonNull TransformationRequest req) {
+    // TODO should move
+    return registryMetrics.timed(
+        RegistryMetrics.OP.TRANSFORMATION,
+        TransformationException.class,
+        () -> trans.transform(req));
   }
 }

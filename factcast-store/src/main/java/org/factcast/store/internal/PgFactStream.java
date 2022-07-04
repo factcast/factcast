@@ -15,18 +15,12 @@
  */
 package org.factcast.store.internal;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.eventbus.EventBus;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.SubscriptionImpl;
@@ -44,6 +38,15 @@ import org.factcast.store.internal.query.PgQueryBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.eventbus.EventBus;
+
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Creates and maintains a subscription.
@@ -122,7 +125,6 @@ public class PgFactStream {
       serial.set(fetcher.retrieveLatestSer());
     } else {
       catchup(postQueryMatcher);
-      logCatchupTransformationStats();
     }
 
     fastForward(request, subscription);
@@ -203,55 +205,6 @@ public class PgFactStream {
           .create(request, filter, subscription, serial, metrics, statementHolder)
           .run();
     }
-  }
-
-  @VisibleForTesting
-  enum RatioLogLevel {
-    DEBUG,
-    INFO,
-    WARN
-  }
-
-  private static final String ratioMessage = "{} CatchupTransformationRatio: {}%, ({}/{})";
-
-  @VisibleForTesting
-  void logCatchupTransformationStats() {
-    if (subscription.factsTransformed().get() > 0) {
-      long sum = subscription.factsTransformed().get() + subscription.factsNotTransformed().get();
-      long transf = subscription.factsTransformed().get();
-      long ratio = Math.round(100.0 / sum * transf);
-      RatioLogLevel level = calculateLogLevel(sum, ratio);
-
-      switch (level) {
-        case DEBUG:
-          log.debug(ratioMessage, request, ratio, transf, sum);
-          break;
-        case INFO:
-          log.info(ratioMessage, request, ratio, transf, sum);
-          break;
-        case WARN:
-          log.warn(ratioMessage, request, ratio, transf, sum);
-          break;
-        default:
-          throw new IllegalArgumentException("switch fall-through. THIS IS A BUG! " + level);
-      }
-    }
-  }
-
-  @VisibleForTesting
-  RatioLogLevel calculateLogLevel(long sum, long ratio) {
-    // only bother sending metrics or raising the level if we did some significant catchup
-    RatioLogLevel level = RatioLogLevel.DEBUG;
-    if (sum >= 50) {
-      metrics.distributionSummary(StoreMetrics.VALUE.CATCHUP_TRANSFORMATION_RATIO).record(ratio);
-
-      if (ratio >= 20.0) {
-        level = RatioLogLevel.WARN;
-      } else if (ratio >= 10.0) {
-        level = RatioLogLevel.INFO;
-      }
-    }
-    return level;
   }
 
   @VisibleForTesting

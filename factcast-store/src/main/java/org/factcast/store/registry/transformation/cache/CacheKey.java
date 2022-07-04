@@ -15,16 +15,24 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
-import java.util.UUID;
-import lombok.NonNull;
+import java.util.*;
+
 import org.factcast.core.Fact;
 
-class CacheKey {
-  static String of(@NonNull Fact fact, @NonNull String transformationChainId) {
-    return CacheKey.of(fact.id(), fact.version(), transformationChainId);
+import lombok.NonNull;
+import lombok.Value;
+
+@Value
+public class CacheKey {
+
+  String id;
+
+  public static CacheKey of(@NonNull Fact fact, @NonNull String transformationChainId) {
+    return of(fact.id(), fact.version(), transformationChainId);
   }
 
-  static String of(@NonNull UUID id, int version, @NonNull String transformationChainId) {
-    return String.join("-", id.toString(), String.valueOf(version), transformationChainId);
+  public static CacheKey of(@NonNull UUID id, int version, @NonNull String transformationChainId) {
+    return new CacheKey(
+        String.join("-", id.toString(), String.valueOf(version), transformationChainId));
   }
 }
