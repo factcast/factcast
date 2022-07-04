@@ -15,13 +15,11 @@
  */
 package org.factcast.store.internal;
 
-import com.google.common.collect.Lists;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
+import java.util.concurrent.atomic.*;
+
 import org.factcast.core.DuplicateFactException;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
@@ -31,11 +29,12 @@ import org.factcast.core.store.AbstractFactStore;
 import org.factcast.core.store.State;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
-import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.transformation.FactTransformerService;
+import org.factcast.core.subscription.transformation.TransformationRequest;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
@@ -50,6 +49,11 @@ import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.google.common.collect.Lists;
+
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * A PostgreSQL based FactStore implementation
@@ -115,7 +119,8 @@ public class PgFactStore extends AbstractFactStore {
     var fact = fetchById(id);
     // map does not work here due to checked exception
     if (fact.isPresent()) {
-      return Optional.of(factTransformerService.transformIfNecessary(fact.get(), version));
+      return Optional.of(
+          factTransformerService.transform(new TransformationRequest(fact.get(), version)));
     } else {
       return fact;
     }

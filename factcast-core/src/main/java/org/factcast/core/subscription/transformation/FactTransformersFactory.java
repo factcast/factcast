@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.subscription;
+package org.factcast.core.subscription.transformation;
 
-public class MissingTransformationInformationException extends TransformationException {
-  private static final long serialVersionUID = 1L;
+import org.factcast.core.subscription.SubscriptionRequestTO;
 
-  public MissingTransformationInformationException(String string) {
-    super(string);
-  }
+@FunctionalInterface
+public interface FactTransformersFactory {
+
+  FactTransformers createFor(SubscriptionRequestTO sr);
 }

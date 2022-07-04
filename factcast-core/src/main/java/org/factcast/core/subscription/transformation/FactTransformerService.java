@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.subscription;
+package org.factcast.core.subscription.transformation;
 
-@FunctionalInterface
-public interface FactTransformersFactory {
+import org.factcast.core.Fact;
+import org.factcast.core.subscription.TransformationException;
 
-  FactTransformers createFor(SubscriptionRequestTO sr);
+import lombok.NonNull;
+
+public interface FactTransformerService {
+  Fact transform(@NonNull TransformationRequest req) throws TransformationException;
 }

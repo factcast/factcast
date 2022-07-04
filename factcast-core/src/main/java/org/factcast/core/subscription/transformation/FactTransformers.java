@@ -13,14 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.subscription;
+package org.factcast.core.subscription.transformation;
 
-import lombok.NonNull;
+import javax.annotation.Nullable;
+
 import org.factcast.core.Fact;
 
-@FunctionalInterface
+import lombok.NonNull;
+
 public interface FactTransformers {
 
-  @NonNull
-  Fact transformIfNecessary(@NonNull Fact e) throws TransformationException;
+  /**
+   * @param f fact to be transformed
+   * @return null if no transformation is necessary
+   */
+  @Nullable
+  TransformationRequest prepareTransformation(@NonNull Fact f);
+
+  @Nullable
+  Fact transform(@NonNull TransformationRequest req);
 }

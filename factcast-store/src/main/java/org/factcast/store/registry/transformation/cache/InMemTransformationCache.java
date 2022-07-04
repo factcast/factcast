@@ -16,17 +16,16 @@
 package org.factcast.store.registry.transformation.cache;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.UUID;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NonNull;
+import java.util.*;
+import java.util.Map.*;
+
 import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.core.Fact;
 import org.factcast.store.registry.metrics.RegistryMetrics;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NonNull;
 
 public class InMemTransformationCache implements TransformationCache {
   private final RegistryMetrics registryMetrics;
@@ -34,7 +33,7 @@ public class InMemTransformationCache implements TransformationCache {
   // very low, but ok for tests
   private static final int DEFAULT_CAPACITY = 1000;
 
-  private final Map<String, FactAndAccessTime> cache;
+  private final Map<CacheKey, FactAndAccessTime> cache;
 
   public InMemTransformationCache(RegistryMetrics registryMetrics) {
     this(DEFAULT_CAPACITY, registryMetrics);
@@ -46,17 +45,14 @@ public class InMemTransformationCache implements TransformationCache {
   }
 
   @Override
-  public void put(@NonNull Fact f, @NonNull String transformationChainId) {
-    String key = CacheKey.of(f, transformationChainId);
+  public void put(@NonNull CacheKey key, @NonNull Fact f) {
     synchronized (cache) {
       cache.put(key, new FactAndAccessTime(f, System.currentTimeMillis()));
     }
   }
 
   @Override
-  public Optional<Fact> find(
-      @NonNull UUID eventId, int version, @NonNull String transformationChainId) {
-    String key = CacheKey.of(eventId, version, transformationChainId);
+  public Optional<Fact> find(@NonNull CacheKey key) {
     Optional<FactAndAccessTime> cached;
     synchronized (cache) {
       cached = Optional.ofNullable(cache.get(key));
@@ -74,7 +70,7 @@ public class InMemTransformationCache implements TransformationCache {
     registryMetrics.timed(
         RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE,
         () -> {
-          HashSet<Entry<String, FactAndAccessTime>> copyOfEntries;
+          HashSet<Entry<CacheKey, FactAndAccessTime>> copyOfEntries;
           synchronized (cache) {
             copyOfEntries = new HashSet<>(cache.entrySet());
           }

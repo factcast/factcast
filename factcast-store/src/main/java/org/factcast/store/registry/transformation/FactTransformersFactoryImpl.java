@@ -15,13 +15,14 @@
  */
 package org.factcast.store.registry.transformation;
 
-import lombok.RequiredArgsConstructor;
-import org.factcast.core.subscription.FactTransformerService;
-import org.factcast.core.subscription.FactTransformers;
-import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.transformation.FactTransformerService;
+import org.factcast.core.subscription.transformation.FactTransformers;
+import org.factcast.core.subscription.transformation.FactTransformersFactory;
 import org.factcast.store.internal.RequestedVersions;
 import org.factcast.store.registry.metrics.RegistryMetrics;
+
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class FactTransformersFactoryImpl implements FactTransformersFactory {
@@ -33,16 +34,16 @@ public class FactTransformersFactoryImpl implements FactTransformersFactory {
   @Override
   public FactTransformers createFor(SubscriptionRequestTO sr) {
 
-    RequestedVersions rv = new RequestedVersions();
+    RequestedVersions requestedVersions = new RequestedVersions();
 
     sr.specs()
         .forEach(
             s -> {
               if (s.type() != null) {
-                rv.add(s.ns(), s.type(), s.version());
+                requestedVersions.add(s.ns(), s.type(), s.version());
               }
             });
 
-    return new FactTransformersImpl(rv, trans, registryMetrics);
+    return new FactTransformersImpl(requestedVersions, trans, registryMetrics);
   }
 }

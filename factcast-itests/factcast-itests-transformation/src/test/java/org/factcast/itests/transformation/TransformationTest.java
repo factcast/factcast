@@ -15,20 +15,22 @@
  */
 package org.factcast.itests.transformation;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.*;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import java.util.UUID;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.FactValidationException;
-import org.factcast.core.subscription.MissingTransformationInformationException;
+import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
 import org.factcast.core.util.FactCastJson;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest

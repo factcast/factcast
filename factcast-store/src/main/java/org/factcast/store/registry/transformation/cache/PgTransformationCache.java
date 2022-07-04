@@ -15,20 +15,25 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.concurrent.*;
+import java.util.stream.*;
+
 import org.factcast.core.Fact;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics.EVENT;
 import org.factcast.store.registry.metrics.RegistryMetrics.OP;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -37,44 +42,40 @@ public class PgTransformationCache implements TransformationCache {
 
   private final RegistryMetrics registryMetrics;
 
-  private List<String> cacheKeysBuffer = Collections.synchronizedList(new ArrayList<>());
+  @Getter(AccessLevel.PROTECTED)
+  @VisibleForTesting
+  /** entry of null means read, entry of non-null means write */
+  private final Map<CacheKey, Fact> buffer = Collections.synchronizedMap(new HashMap<>());
+
   private int maxBufferSize = 1000;
 
   @VisibleForTesting
   PgTransformationCache(
-      JdbcTemplate jdbcTemplate,
-      RegistryMetrics registryMetrics,
-      List<String> cacheKeysBatch,
-      int maxBufferSize) {
+      JdbcTemplate jdbcTemplate, RegistryMetrics registryMetrics, int maxBufferSize) {
     this.jdbcTemplate = jdbcTemplate;
     this.registryMetrics = registryMetrics;
-    this.cacheKeysBuffer = cacheKeysBatch;
     this.maxBufferSize = maxBufferSize;
   }
 
   @Override
-  public void put(@NonNull Fact fact, @NonNull String transformationChainId) {
-    String cacheKey = CacheKey.of(fact, transformationChainId);
-
-    // dup-keys can be ignored, in case another node just did the same
-
-    jdbcTemplate.update(
-        "INSERT INTO transformationcache (cache_key, header, payload) VALUES (?, ? :: JSONB, ? ::"
-            + " JSONB) ON CONFLICT(cache_key) DO NOTHING",
-        cacheKey,
-        fact.jsonHeader(),
-        fact.jsonPayload());
+  public void put(@NonNull CacheKey key, @NonNull Fact f) {
+    registerWrite(key, f);
   }
 
   @Override
-  public Optional<Fact> find(
-      @NonNull UUID eventId, int version, @NonNull String transformationChainId) {
-    String cacheKey = CacheKey.of(eventId, version, transformationChainId);
+  public Optional<Fact> find(CacheKey key) {
+
+    Fact factFromBuffer = buffer.get(key);
+    if (factFromBuffer != null) {
+      registerAccess(key);
+      registryMetrics.count(EVENT.TRANSFORMATION_CACHE_HIT);
+      return Optional.of(factFromBuffer);
+    }
 
     List<Fact> facts =
         jdbcTemplate.query(
             "SELECT header, payload FROM transformationcache WHERE cache_key = ?",
-            new Object[] {cacheKey},
+            new Object[] {key.id()},
             ((rs, rowNum) -> {
               String header = rs.getString("header");
               String payload = rs.getString("payload");
@@ -84,22 +85,35 @@ public class PgTransformationCache implements TransformationCache {
 
     if (facts.isEmpty()) {
       registryMetrics.count(EVENT.TRANSFORMATION_CACHE_MISS);
-
       return Optional.empty();
+    } else {
+      registerAccess(key);
+      registryMetrics.count(EVENT.TRANSFORMATION_CACHE_HIT);
+      return Optional.of(facts.get(0));
     }
+  }
 
-    cacheKeysBuffer.add(cacheKey);
-    if (cacheKeysBuffer.size() >= maxBufferSize) {
+  private void registerAccess(CacheKey cacheKey) {
+    synchronized (buffer) {
+      if (!buffer.containsKey(cacheKey)) buffer.put(cacheKey, null);
+    }
+  }
+
+  private void registerWrite(@NonNull CacheKey key, @NonNull Fact f) {
+    buffer.put(key, f);
+    flushIfNecessary();
+  }
+
+  private void flushIfNecessary() {
+    if (buffer.size() >= maxBufferSize) {
       CompletableFuture.runAsync(this::flush);
     }
-
-    registryMetrics.count(EVENT.TRANSFORMATION_CACHE_HIT);
-
-    return Optional.of(facts.get(0));
   }
 
   @Override
   public void compact(@NonNull ZonedDateTime thresholdDate) {
+    flush();
+
     registryMetrics.timed(
         OP.COMPACT_TRANSFORMATION_CACHE,
         () -> {
@@ -111,23 +125,50 @@ public class PgTransformationCache implements TransformationCache {
 
   @Scheduled(fixedRate = 10, timeUnit = TimeUnit.MINUTES)
   public void flush() {
-    List<String> copy;
-    synchronized (cacheKeysBuffer) {
-      copy = new ArrayList<String>(cacheKeysBuffer);
-      cacheKeysBuffer.clear();
+    HashMap<CacheKey, Fact> copy;
+    synchronized (buffer) {
+      copy = new HashMap<>(buffer);
+      buffer.clear();
     }
     if (!copy.isEmpty()) {
       try {
-        jdbcTemplate.batchUpdate(
-            "UPDATE transformationcache SET last_access=now() WHERE cache_key = ?",
-            copy,
-            copy.size(),
-            (ps, arg) -> ps.setString(1, arg));
+        insertBufferedTransformations(copy);
+        insertBufferedAccesses(copy);
+
       } catch (RuntimeException e) {
         log.warn(
-            "Could not complete batch update last_access on transformation cache. Error: {}",
+            "Could not complete batch update of transformations on transformation cache. Error: {}",
             e.getMessage());
       }
     }
+  }
+
+  private void insertBufferedTransformations(HashMap<CacheKey, Fact> copy) {
+    List<Object[]> parameters =
+        copy.entrySet().stream()
+            .filter(e -> e.getValue() != null)
+            .map(
+                p ->
+                    new Object[] {
+                      p.getKey().id(), p.getValue().jsonHeader(), p.getValue().jsonPayload()
+                    })
+            .collect(Collectors.toList());
+
+    // dup-keys can be ignored, in case another node just did the same
+    jdbcTemplate.batchUpdate(
+        "INSERT INTO transformationcache (cache_key, header, payload) VALUES (?, ? :: JSONB, ? ::"
+            + " JSONB) ON CONFLICT(cache_key) DO NOTHING",
+        parameters);
+  }
+
+  private void insertBufferedAccesses(HashMap<CacheKey, Fact> copy) {
+    List<Object[]> parameters =
+        copy.entrySet().stream()
+            .filter(e -> e.getValue() == null)
+            .map(p -> new Object[] {p.getKey().id()})
+            .collect(Collectors.toList());
+
+    jdbcTemplate.batchUpdate(
+        "UPDATE transformationcache SET last_access=now() WHERE cache_key = ?", parameters);
   }
 }

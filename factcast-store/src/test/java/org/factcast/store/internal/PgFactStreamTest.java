@@ -24,19 +24,16 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
-import org.factcast.store.internal.PgFactStream.RatioLogLevel;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.filter.PgFactFilter;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
-import org.factcast.test.Slf4jHelper;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -45,7 +42,6 @@ import com.google.common.eventbus.EventBus;
 import io.micrometer.core.instrument.DistributionSummary;
 
 import lombok.SneakyThrows;
-import slf4jtest.LogLevel;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -169,87 +165,7 @@ public class PgFactStreamTest {
     }
   }
 
-  @Test
-  void logsCatchupTransformationStats() {
-    uut = Mockito.spy(uut);
-    doNothing().when(uut).catchup(any());
-    doNothing().when(uut).logCatchupTransformationStats();
 
-    uut.catchupAndFollow(req, sub, query);
-
-    verify(uut).logCatchupTransformationStats();
-  }
-
-  @Test
-  void debugLevelIfToFewFacts() {
-    assertThat(uut.calculateLogLevel(5, 100)).isSameAs(RatioLogLevel.DEBUG);
-    assertThat(uut.calculateLogLevel(5, 0)).isSameAs(RatioLogLevel.DEBUG);
-    assertThat(uut.calculateLogLevel(32, 80)).isSameAs(RatioLogLevel.DEBUG);
-    verifyNoInteractions(metrics);
-  }
-
-  @Test
-  void debugLevelIfLowRatio() {
-    when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
-    assertThat(uut.calculateLogLevel(1000, 5)).isSameAs(RatioLogLevel.DEBUG);
-    verify(distributionSummary).record(5);
-  }
-
-  @Test
-  void infoLevelIfRatioSignificant() {
-    when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
-    assertThat(uut.calculateLogLevel(1000, 10)).isSameAs(RatioLogLevel.INFO);
-    verify(distributionSummary).record(10);
-  }
-
-  @Test
-  void warnLevelIfRatioTooHigh() {
-    when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
-    assertThat(uut.calculateLogLevel(1000, 20)).isSameAs(RatioLogLevel.WARN);
-    verify(distributionSummary).record(20);
-  }
-
-  @Test
-  void logsWarnLevel() {
-    var logger = Slf4jHelper.replaceLogger(uut);
-
-    when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
-    when(sub.factsTransformed()).thenReturn(new AtomicLong(50L));
-    when(sub.factsNotTransformed()).thenReturn(new AtomicLong(50L));
-
-    uut.logCatchupTransformationStats();
-
-    assertThat(logger.contains(LogLevel.WarnLevel, "CatchupTransformationRatio")).isTrue();
-    verify(distributionSummary).record(50);
-  }
-
-  @Test
-  void logsInfoLevel() {
-    var logger = Slf4jHelper.replaceLogger(uut);
-
-    when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
-    when(sub.factsTransformed()).thenReturn(new AtomicLong(10L));
-    when(sub.factsNotTransformed()).thenReturn(new AtomicLong(90L));
-
-    uut.logCatchupTransformationStats();
-
-    assertThat(logger.contains(LogLevel.InfoLevel, "CatchupTransformationRatio")).isTrue();
-    verify(distributionSummary).record(10);
-  }
-
-  @Test
-  void logsDebugLevel() {
-    var logger = Slf4jHelper.replaceLogger(uut);
-
-    when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
-    when(sub.factsTransformed()).thenReturn(new AtomicLong(1L));
-    when(sub.factsNotTransformed()).thenReturn(new AtomicLong(90L));
-
-    uut.logCatchupTransformationStats();
-
-    assertThat(logger.contains(LogLevel.DebugLevel, "CatchupTransformationRatio")).isTrue();
-    verify(distributionSummary).record(1);
-  }
 
   @Nested
   class FactRowCallbackHandlerTest {
