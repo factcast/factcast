@@ -22,6 +22,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+@Deprecated
 @Slf4j
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 class JavaScriptEngineSupplier implements Supplier<ScriptEngine> {

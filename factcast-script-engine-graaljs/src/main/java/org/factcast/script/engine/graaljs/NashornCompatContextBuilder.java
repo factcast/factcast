@@ -1,19 +1,4 @@
-/*
- * Copyright © 2017-2022 factcast.org
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package org.factcast.store.registry.transformation.chains;
+package org.factcast.script.engine.graaljs;
 
 import java.util.List;
 import lombok.experimental.UtilityClass;
@@ -21,16 +6,20 @@ import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.Value;
 
-/**
- * The context and most of the host access is copied from
- * com.oracle.truffle.js.scriptengine.GraalJSScriptEngine#GraalJSScriptEngine(com.oracle.truffle.js.scriptengine.GraalJSEngineFactory,
- * org.graalvm.polyglot.Engine, org.graalvm.polyglot.Context.Builder) We had to copy it over and add
- * some more targetTypeMappings to make nested arrays work. See #1905
- */
-@Deprecated
 @UtilityClass
 public class NashornCompatContextBuilder {
-  public Context.Builder CTX =
+
+  static {
+    // important property to enable nashorn compat mode within GraalJs
+    // this is necessary for the way we currently do event transformation (in place modification of
+    // event data)
+    System.setProperty("polyglot.js.nashorn-compat", "true");
+
+    // we ignore this because we're not running on graal and its somehow expected
+    System.setProperty("polyglot.engine.WarnInterpreterOnly", "false");
+  }
+
+  static Context.Builder CTX =
       Context.newBuilder("js")
           .allowExperimentalOptions(true)
           .option("js.syntax-extensions", "true")

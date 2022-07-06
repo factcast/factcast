@@ -15,18 +15,17 @@
  */
 package org.factcast.core.spec;
 
-import com.fasterxml.jackson.databind.util.LRUMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.script.ScriptEngine;
 import lombok.Generated;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.factcast.core.Fact;
+import org.factcast.script.engine.Engine;
+import org.factcast.script.engine.graaljs.GraalJSEngineCache;
 
 /**
  * Matches facts against specifications.
@@ -34,8 +33,6 @@ import org.factcast.core.Fact;
  * @author uwe.schaefer@prisma-capacity.eu
  */
 public final class FactSpecMatcher implements Predicate<Fact> {
-
-  private static final LRUMap<FilterScript, ScriptEngine> scriptEngineCache = new LRUMap<>(10, 200);
 
   @NonNull final String ns;
 
@@ -49,10 +46,9 @@ public final class FactSpecMatcher implements Predicate<Fact> {
 
   final FilterScript script;
 
-  final ScriptEngine scriptEngine;
+  final Engine scriptEngine;
 
-  private static final Supplier<ScriptEngine> jsScriptEngineSupplier =
-      new JavaScriptEngineSupplier();
+  private static final GraalJSEngineCache scriptEngineCache = new GraalJSEngineCache();
 
   public FactSpecMatcher(@NonNull FactSpec spec) {
     // opt: prevent method calls by prefetching to final fields.
@@ -125,7 +121,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
 
   @SneakyThrows
   @Generated
-  private static synchronized ScriptEngine getEngine(FilterScript filterScript) {
+  private static synchronized Engine getEngine(FilterScript filterScript) {
     if (filterScript == null) {
       return null;
     }
@@ -133,15 +129,8 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     // TODO: currently only supports language js:
     if ("js".equals(filterScript.languageIdentifier())) {
 
-      ScriptEngine cachedEngine = scriptEngineCache.get(filterScript);
-      if (cachedEngine != null) {
-        return cachedEngine;
-      } else {
-        ScriptEngine engine = jsScriptEngineSupplier.get();
-        engine.eval("var test=" + filterScript.source());
-        scriptEngineCache.put(filterScript, engine);
-        return engine;
-      }
+      Engine cachedEngine = scriptEngineCache.get("var test=" + filterScript.source());
+      return cachedEngine;
     } else {
       // TODO really?
       throw new IllegalArgumentException(

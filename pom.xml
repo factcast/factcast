@@ -45,6 +45,8 @@
     <module>factcast-schema-registry-maven-plugin</module>
     <module>factcast-snapshotcache-redisson</module>
     <module>factcast-hugo</module>
+    <module>factcast-script-engine</module>
+    <module>factcast-script-engine-graaljs</module>
   </modules>
   <url>https://github.com/uweschaefer/factcast/tree/master/</url>
   <licenses>

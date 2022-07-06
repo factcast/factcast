@@ -15,107 +15,54 @@
  */
 package org.factcast.store.registry.transformation.chains;
 
-import static java.util.Collections.*;
-import static org.factcast.store.registry.transformation.chains.NashornCompatContextBuilder.*;
-
 import com.fasterxml.jackson.databind.JsonNode;
-import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
 import java.util.Map;
-import javax.script.Compilable;
-import javax.script.Invocable;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.util.FactCastJson;
+import org.factcast.script.engine.Engine;
+import org.factcast.script.engine.EngineCache;
+import org.factcast.script.engine.exception.ScriptEngineException;
+import org.factcast.script.engine.graaljs.GraalJSEngineCache;
 import org.factcast.store.registry.transformation.Transformation;
 
 @Slf4j
 public class GraalJsTransformer implements Transformer {
 
-  private static final int ENGINE_CACHE_CAPACITY = 128;
-
-  private static final Object ENGINE_MUTEX = new Object();
-  private static final Map<String, Invocable> warmEngines =
-      synchronizedMap(new LRUMap<>(ENGINE_CACHE_CAPACITY));
-
-  static {
-    // important property to enable nashorn compat mode within GraalJs
-    // this is necessary for the way we currently do event transformation (in place modification of
-    // event data)
-    System.setProperty("polyglot.js.nashorn-compat", "true");
-
-    // we ignore this because we're not running on graal and its somehow expected
-    System.setProperty("polyglot.engine.WarnInterpreterOnly", "false");
-  }
+  private static final EngineCache scriptEngineCache = new GraalJSEngineCache();
 
   @Override
   public JsonNode transform(Transformation t, JsonNode input) throws TransformationException {
-    // classloadershifting is necessary for truffle to find its peers
-    ClassLoader oldCl = Thread.currentThread().getContextClassLoader();
-    Thread.currentThread().setContextClassLoader(Truffle.class.getClassLoader());
-    try {
-      if (!t.transformationCode().isPresent()) {
-        return input;
-
-      } else {
-        String js = t.transformationCode().get();
-
-        Invocable invocable = warmEngines.computeIfAbsent(js, this::createAndWarmEngine);
-
-        return runJSTransformation(input, invocable);
-      }
-    } finally {
-      Thread.currentThread().setContextClassLoader(oldCl);
+    if (t.transformationCode().isEmpty()) {
+      return input;
+    } else {
+      String js = t.transformationCode().get();
+      return runJSTransformation(input, getEngine(js));
     }
   }
 
-  @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
-  private JsonNode runJSTransformation(JsonNode input, Invocable invocable) {
-
+  private Engine getEngine(String js) {
     try {
-      @SuppressWarnings("unchecked")
-      Map<String, Object> jsonAsMap = FactCastJson.convertValue(input, Map.class);
-
-      // if you have transformations that add new objects like "foo.bar = {}"
-      // this will lead to have PolyglotMap's being created inside jsonAsMap
-      // these Graal maps are bound to a Context which bound to a ScriptEngine in our case
-      // jackson seems somehow to access fields of this map which leads to exceptions like
-      // mentioned in https://github.com/factcast/factcast/issues/1506
-      synchronized (invocable) {
-        invocable.invokeFunction("transform", jsonAsMap);
-        return FactCastJson.toJsonNode(jsonAsMap);
-      }
-
-    } catch (RuntimeException | ScriptException | NoSuchMethodException e) {
-      // debug level, because it is escalated.
-      log.debug("Exception during transformation. Escalating.", e);
+      Engine cachedEngine = scriptEngineCache.get(js);
+      return cachedEngine;
+    } catch (ScriptEngineException e) {
+      log.debug("Exception during engine creation. Escalating.", e);
       throw new TransformationException(e);
     }
   }
 
-  @NonNull
-  private Invocable createAndWarmEngine(String js) {
-    ScriptEngine engine;
-
-    synchronized (ENGINE_MUTEX) {
-      // no guarantee is found anywhere, that creating a
-      // scriptEngine was supposed to be threadsafe, so...
-      engine = GraalJSScriptEngine.create(null, CTX);
-    }
-
+  @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
+  private JsonNode runJSTransformation(JsonNode input, Engine engine) {
     try {
-      Compilable compilable = (Compilable) engine;
-      compilable.compile(js).eval();
-
-      return (Invocable) engine;
-
-    } catch (RuntimeException | ScriptException e) {
+      @SuppressWarnings("unchecked")
+      Map<String, Object> jsonAsMap = FactCastJson.convertValue(input, Map.class);
+      synchronized (engine) {
+        engine.invoke("transform", jsonAsMap);
+        return FactCastJson.toJsonNode(jsonAsMap);
+      }
+    } catch (RuntimeException e) {
       // debug level, because it is escalated.
-      log.debug("Exception during engine creation. Escalating.", e);
+      log.debug("Exception during transformation. Escalating.", e);
       throw new TransformationException(e);
     }
   }
