@@ -43,7 +43,7 @@ public abstract class AbstractTransformationCacheTest {
 
   @Test
   void testEmptyFind() {
-    Optional<Fact> fact = uut.find(CacheKey.of(UUID.randomUUID(), 1, "1"));
+    Optional<Fact> fact = uut.find(TransformationCache.Key.of(UUID.randomUUID(), 1, "1"));
 
     assertThat(fact.isPresent()).isFalse();
 
@@ -55,9 +55,9 @@ public abstract class AbstractTransformationCacheTest {
     Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}");
     String chainId = "1-2-3";
 
-    uut.put(CacheKey.of(fact, chainId), fact);
+    uut.put(TransformationCache.Key.of(fact, chainId), fact);
 
-    Optional<Fact> found = uut.find(CacheKey.of(fact.id(), fact.version(), chainId));
+    Optional<Fact> found = uut.find(TransformationCache.Key.of(fact.id(), fact.version(), chainId));
 
     assertThat(found.isPresent()).isTrue();
     assertEquals(fact, found.get());
@@ -69,12 +69,12 @@ public abstract class AbstractTransformationCacheTest {
     Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}");
     String chainId = "1-2-3";
 
-    uut.put(CacheKey.of(fact, chainId), fact);
+    uut.put(TransformationCache.Key.of(fact, chainId), fact);
 
     // clocks aren't synchronized so Im gonna add an hour here :)
     uut.compact(ZonedDateTime.now().plusHours(1));
 
-    Optional<Fact> found = uut.find(CacheKey.of(fact.id(), fact.version(), chainId));
+    Optional<Fact> found = uut.find(TransformationCache.Key.of(fact.id(), fact.version(), chainId));
 
     assertThat(found.isPresent()).isFalse();
   }
@@ -83,28 +83,28 @@ public abstract class AbstractTransformationCacheTest {
   void testRespectsChainId() {
     Fact f = Fact.builder().ns("name").type("type").version(1).build("{}");
 
-    uut.put(CacheKey.of(f, "foo"), f);
-    assertThat(uut.find(CacheKey.of(f.id(), 1, "xoo"))).isEmpty();
+    uut.put(TransformationCache.Key.of(f, "foo"), f);
+    assertThat(uut.find(TransformationCache.Key.of(f.id(), 1, "xoo"))).isEmpty();
   }
 
   @Test
   void testDoesNotFindUnknown() {
-    uut.find(CacheKey.of(UUID.randomUUID(), 1, "foo"));
+    uut.find(TransformationCache.Key.of(UUID.randomUUID(), 1, "foo"));
   }
 
   @Test
   void testHappyPath() {
     Fact f = Fact.builder().ns("name").type("type").version(1).build("{}");
 
-    uut.put(CacheKey.of(f, "foo"), f);
-    assertThat(uut.find(CacheKey.of(f.id(), 1, "foo"))).contains(f);
+    uut.put(TransformationCache.Key.of(f, "foo"), f);
+    assertThat(uut.find(TransformationCache.Key.of(f.id(), 1, "foo"))).contains(f);
   }
 
   @Test
   void testRespectsVersion() {
     Fact f = Fact.builder().ns("name").type("type").version(1).build("{}");
 
-    uut.put(CacheKey.of(f, "foo"), f);
-    assertThat(uut.find(CacheKey.of(f.id(), 2, "foo"))).isEmpty();
+    uut.put(TransformationCache.Key.of(f, "foo"), f);
+    assertThat(uut.find(TransformationCache.Key.of(f.id(), 2, "foo"))).isEmpty();
   }
 }

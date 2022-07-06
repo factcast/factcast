@@ -58,10 +58,10 @@ class PgTransformationCacheTest extends AbstractTransformationCacheTest {
   void testAddToBatchAfterFind() {
     Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}");
     String chainId = "1-2-3";
-    CacheKey cacheKey = CacheKey.of(fact, chainId);
+    TransformationCache.Key cacheKey = TransformationCache.Key.of(fact, chainId);
     uut.put(cacheKey, fact);
 
-    uut.find(CacheKey.of(fact.id(), fact.version(), chainId));
+    uut.find(TransformationCache.Key.of(fact.id(), fact.version(), chainId));
 
     assertThat(underTest.buffer()).containsKey(cacheKey);
     assertThat(underTest.buffer().get(cacheKey)).isNotNull();
@@ -82,9 +82,9 @@ class PgTransformationCacheTest extends AbstractTransformationCacheTest {
     for (int i = 0; i < maxBufferSize; i++) {
       Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}");
       String chainId = String.valueOf(i);
-      uut.put(CacheKey.of(fact, chainId), fact);
+      uut.put(TransformationCache.Key.of(fact, chainId), fact);
 
-      uut.find(CacheKey.of(fact.id(), fact.version(), chainId));
+      uut.find(TransformationCache.Key.of(fact.id(), fact.version(), chainId));
     }
     // flush is async
     wasflushed.await();

@@ -16,7 +16,6 @@
 package org.factcast.store.registry.transformation;
 
 import org.factcast.core.subscription.transformation.FactTransformerService;
-import org.factcast.core.subscription.transformation.FactTransformersFactory;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.SchemaRegistry;
 import org.factcast.store.registry.metrics.RegistryMetrics;
@@ -78,12 +77,6 @@ public class TransformationConfiguration {
   @Bean
   public Transformer transformer() {
     return new GraalJsTransformer();
-  }
-
-  @Bean
-  public FactTransformersFactory factTransformersFactory(
-      FactTransformerService trans, RegistryMetrics registryMetrics) {
-    return new FactTransformersFactoryImpl(trans, registryMetrics);
   }
 
   @Bean

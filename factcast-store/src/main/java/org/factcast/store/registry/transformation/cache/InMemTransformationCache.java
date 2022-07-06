@@ -18,6 +18,7 @@ package org.factcast.store.registry.transformation.cache;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.Map.*;
+import java.util.stream.*;
 
 import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.core.Fact;
@@ -33,7 +34,7 @@ public class InMemTransformationCache implements TransformationCache {
   // very low, but ok for tests
   private static final int DEFAULT_CAPACITY = 1000;
 
-  private final Map<CacheKey, FactAndAccessTime> cache;
+  private final Map<Key, FactAndAccessTime> cache;
 
   public InMemTransformationCache(RegistryMetrics registryMetrics) {
     this(DEFAULT_CAPACITY, registryMetrics);
@@ -45,14 +46,14 @@ public class InMemTransformationCache implements TransformationCache {
   }
 
   @Override
-  public void put(@NonNull CacheKey key, @NonNull Fact f) {
+  public void put(@NonNull TransformationCache.Key key, @NonNull Fact f) {
     synchronized (cache) {
       cache.put(key, new FactAndAccessTime(f, System.currentTimeMillis()));
     }
   }
 
   @Override
-  public Optional<Fact> find(@NonNull CacheKey key) {
+  public Optional<Fact> find(@NonNull TransformationCache.Key key) {
     Optional<FactAndAccessTime> cached;
     synchronized (cache) {
       cached = Optional.ofNullable(cache.get(key));
@@ -66,11 +67,20 @@ public class InMemTransformationCache implements TransformationCache {
   }
 
   @Override
+  public Set<Fact> findAll(Collection<Key> keys) {
+    return cache.entrySet().stream()
+        .filter(e -> keys.contains(e.getKey()))
+        .map(Entry::getValue)
+        .map(FactAndAccessTime::fact)
+        .collect(Collectors.toSet());
+  }
+
+  @Override
   public void compact(@NonNull ZonedDateTime thresholdDate) {
     registryMetrics.timed(
         RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE,
         () -> {
-          HashSet<Entry<CacheKey, FactAndAccessTime>> copyOfEntries;
+          HashSet<Entry<Key, FactAndAccessTime>> copyOfEntries;
           synchronized (cache) {
             copyOfEntries = new HashSet<>(cache.entrySet());
           }

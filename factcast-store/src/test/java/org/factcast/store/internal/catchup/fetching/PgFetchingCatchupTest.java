@@ -15,25 +15,19 @@
  */
 package org.factcast.store.internal.catchup.fetching;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
-
-import io.micrometer.core.instrument.Counter;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.concurrent.atomic.*;
-import lombok.NonNull;
-import lombok.SneakyThrows;
+
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.FactInterceptor;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.StoreMetrics;
-import org.factcast.store.internal.filter.PgFactFilter;
+import org.factcast.store.internal.filter.FactFilter;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
@@ -50,6 +44,14 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
 
+import io.micrometer.core.instrument.Counter;
+
+import lombok.NonNull;
+import lombok.SneakyThrows;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
+
 @ExtendWith(MockitoExtension.class)
 class PgFetchingCatchupTest {
 
@@ -60,10 +62,11 @@ class PgFetchingCatchupTest {
   StoreConfigurationProperties props;
 
   @Mock @NonNull SubscriptionRequestTO req;
-  @Mock @NonNull PgFactFilter filter;
+  @Mock @NonNull FactFilter filter;
   @Mock @NonNull SubscriptionImpl subscription;
   @Mock @NonNull AtomicLong serial;
   @Mock @NonNull CurrentStatementHolder statementHolder;
+  @Mock @NonNull FactInterceptor interceptor;
 
   @Mock(lenient = true)
   @NonNull
@@ -124,33 +127,6 @@ class PgFetchingCatchupTest {
       underTest.fetch(jdbc);
       verify(jdbc).setFetchSize(eq(props.getPageSize()));
     }
-
-    @Test
-    void counts() {
-      underTest.factCounter = 7;
-      underTest.fetch(jdbc);
-      verify(counter).increment(7);
-    }
-
-    @SneakyThrows
-    @Test
-    void countsNumberOfFacts() {
-      PgFactExtractor extractor =
-          new PgFactExtractor(new AtomicLong(1L)) {
-            @Override
-            public @NonNull Fact mapRow(@NonNull ResultSet rs, int rowNum) throws SQLException {
-              return Fact.builder().buildWithoutPayload();
-            }
-          };
-
-      RowCallbackHandler rowCallbackHandler =
-          underTest.createRowCallbackHandler(f -> true, extractor);
-      rowCallbackHandler.processRow(mock(ResultSet.class));
-      rowCallbackHandler.processRow(mock(ResultSet.class));
-      rowCallbackHandler.processRow(mock(ResultSet.class));
-
-      assertThat(underTest.factCounter).isEqualTo(3);
-    }
   }
 
   @Nested
@@ -163,41 +139,25 @@ class PgFetchingCatchupTest {
 
     @SneakyThrows
     @Test
-    void filtersInPostQueryMatching() {
-      final var cbh = underTest.createRowCallbackHandler(filter, extractor);
+    void passesFact() {
+      final var cbh = underTest.createRowCallbackHandler(extractor);
       ResultSet rs = mock(ResultSet.class);
       Fact testFact = new TestFact();
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
-      when(filter.test(testFact)).thenReturn(false);
       cbh.processRow(rs);
 
-      verifyNoInteractions(subscription);
+      verify(interceptor).accept(testFact);
     }
 
     @SneakyThrows
     @Test
-    void notifies() {
-      final var cbh = underTest.createRowCallbackHandler(filter, extractor);
+    void passesFactEscalatesException() {
+      final var cbh = underTest.createRowCallbackHandler(extractor);
       ResultSet rs = mock(ResultSet.class);
       Fact testFact = new TestFact();
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
-      when(filter.test(testFact)).thenReturn(true);
-      cbh.processRow(rs);
+      doThrow(TransformationException.class).when(interceptor).accept(testFact);
 
-      verify(subscription).notifyElement(testFact);
-    }
-
-    @SneakyThrows
-    @Test
-    void notifiesTransformationException() {
-      final var cbh = underTest.createRowCallbackHandler(filter, extractor);
-      ResultSet rs = mock(ResultSet.class);
-      Fact testFact = new TestFact();
-      when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
-      when(filter.test(testFact)).thenReturn(true);
-      doThrow(TransformationException.class).when(subscription).notifyElement(testFact);
-      // just test that it'll be escalated unchanged from the code,
-      // so that it can be handled in PgSubscriptionFactory
       assertThatThrownBy(
               () -> {
                 cbh.processRow(rs);

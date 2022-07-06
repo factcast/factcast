@@ -15,29 +15,29 @@
  */
 package org.factcast.store.internal.filter;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
-
 import java.util.*;
+
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.store.internal.PgPostQueryMatcher;
+import org.factcast.store.internal.PostQueryMatcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
+
 @ExtendWith(MockitoExtension.class)
-class PgFactFilterImplTest {
+class FactFilterImplTest {
 
   private static final boolean SKIP_TEST = true;
   @Mock private SubscriptionRequestTO request;
   @Mock private PgBlacklist blacklist;
-  @Mock private PgPostQueryMatcher matcher;
-  @InjectMocks private PgFactFilterImpl underTest;
+  @Mock private PostQueryMatcher matcher;
+
 
   @Nested
   class WhenTesting {
@@ -51,6 +51,8 @@ class PgFactFilterImplTest {
     void filtersBlacklisted() {
       when(fact.id()).thenReturn(id);
       when(blacklist.isBlocked(id)).thenReturn(true);
+      var underTest = new FactFilterImpl(request, blacklist,matcher);
+
       assertThat(underTest.test(fact)).isFalse();
       verify(matcher, never()).test(any());
     }
@@ -61,6 +63,9 @@ class PgFactFilterImplTest {
       when(fact.id()).thenReturn(id);
       when(blacklist.isBlocked(id)).thenReturn(false);
       when(matcher.test(any())).thenReturn(false);
+      when(matcher.canBeSkipped()).thenReturn(false);
+      var underTest = new FactFilterImpl(request, blacklist,matcher);
+
       assertThat(underTest.test(fact)).isFalse();
     }
 
@@ -69,8 +74,10 @@ class PgFactFilterImplTest {
       UUID id = UUID.randomUUID();
       when(fact.id()).thenReturn(id);
       when(blacklist.isBlocked(id)).thenReturn(false);
-      when(matcher.test(any())).thenReturn(true);
+      when(matcher.canBeSkipped()).thenReturn(false);
+      when(matcher.test(fact)).thenReturn(true);
 
+      var underTest = new FactFilterImpl(request, blacklist,matcher);
       assertThat(underTest.test(fact)).isTrue();
     }
   }

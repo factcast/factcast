@@ -15,37 +15,40 @@
  */
 package org.factcast.store.internal.catchup.tmppaged;
 
-import com.google.common.annotations.VisibleForTesting;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
+import java.util.*;
+import java.util.concurrent.atomic.*;
+
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.StoreMetrics;
+import org.factcast.store.internal.FactInterceptor;
 import org.factcast.store.internal.catchup.PgCatchup;
-import org.factcast.store.internal.filter.PgFactFilter;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
 public class PgTmpPagedCatchup implements PgCatchup {
 
   @NonNull final PgConnectionSupplier connectionSupplier;
+
   @NonNull final StoreConfigurationProperties props;
+
   @NonNull final SubscriptionRequestTO request;
-  @NonNull final PgFactFilter filter;
-  @NonNull final SubscriptionImpl subscription;
+
+  @NonNull final FactInterceptor interceptor;
+
   @NonNull final AtomicLong serial;
-  @NonNull final PgMetrics metrics;
+
   @NonNull final CurrentStatementHolder statementHolder;
 
   @SneakyThrows
@@ -64,7 +67,6 @@ public class PgTmpPagedCatchup implements PgCatchup {
 
   @VisibleForTesting
   void fetch(JdbcTemplate jdbc) {
-    long factCounter = 0L;
     jdbc.execute("CREATE TEMPORARY TABLE catchup(ser bigint)");
 
     PgCatchUpPrepare prep = new PgCatchUpPrepare(jdbc, request, statementHolder);
@@ -79,16 +81,8 @@ public class PgTmpPagedCatchup implements PgCatchup {
       List<Fact> facts;
       do {
         facts = fetch.fetchFacts(serial);
-        for (Fact f : facts) {
-          if (filter.test(f)) {
-            subscription.notifyElement(f);
-            factCounter++;
-          }
-        }
+        facts.forEach(interceptor);
       } while (!facts.isEmpty());
-      metrics
-          .counter(StoreMetrics.EVENT.CATCHUP_FACT)
-          .increment(factCounter); // TODO this needs to TAG it for each subscription?
     }
   }
 }

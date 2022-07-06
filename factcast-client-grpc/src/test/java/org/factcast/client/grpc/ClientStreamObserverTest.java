@@ -66,7 +66,7 @@ class ClientStreamObserverTest {
   @BeforeEach
   void setUp() {
     FactTransformers trans = new NullFactTransformer();
-    SubscriptionImpl subscriptionImpl = new SubscriptionImpl(factObserver, trans);
+    SubscriptionImpl subscriptionImpl = new SubscriptionImpl(factObserver);
     subscription = spy(subscriptionImpl);
     uut = new ClientStreamObserver(subscription, 0L);
   }

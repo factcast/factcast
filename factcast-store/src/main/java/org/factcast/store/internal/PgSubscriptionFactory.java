@@ -23,7 +23,6 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.observer.FastForwardTarget;
-import org.factcast.core.subscription.transformation.FactTransformersFactory;
 import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.filter.PgBlacklist;
@@ -54,7 +53,6 @@ class PgSubscriptionFactory {
 
   final PgCatchupFactory catchupFactory;
 
-  final FactTransformersFactory transformersFactory;
   final FastForwardTarget target;
   final PgMetrics metrics;
   final PgBlacklist blacklist;
@@ -70,7 +68,6 @@ class PgSubscriptionFactory {
             fetcher,
             catchupFactory,
             target,
-            metrics,
             blacklist);
 
     // when closing the subscription, also close the PgFactStream

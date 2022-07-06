@@ -15,11 +15,13 @@
  */
 package org.factcast.store.registry;
 
-import io.micrometer.core.instrument.Tags;
-import java.util.function.Supplier;
+import java.util.function.*;
+
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.metrics.RunnableWithException;
 import org.factcast.store.registry.metrics.SupplierWithException;
+
+import io.micrometer.core.instrument.Tags;
 
 public class NOPRegistryMetrics implements RegistryMetrics {
 
@@ -72,4 +74,9 @@ public class NOPRegistryMetrics implements RegistryMetrics {
 
   @Override
   public void count(EVENT event, Tags tags) {}
+
+  @Override
+  public void increase(EVENT transformationCacheHit, int hits) {
+
+  }
 }

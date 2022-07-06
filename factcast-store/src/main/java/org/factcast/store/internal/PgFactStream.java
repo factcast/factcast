@@ -28,9 +28,9 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
+import org.factcast.store.internal.filter.FactFilter;
+import org.factcast.store.internal.filter.FactFilterImpl;
 import org.factcast.store.internal.filter.PgBlacklist;
-import org.factcast.store.internal.filter.PgFactFilter;
-import org.factcast.store.internal.filter.PgFactFilterImpl;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
@@ -76,21 +76,18 @@ public class PgFactStream {
 
   final PgCatchupFactory pgCatchupFactory;
   final FastForwardTarget ffwdTarget;
-  final PgMetrics metrics;
   final PgBlacklist blacklist;
 
   CondensedQueryExecutor condensedExecutor;
 
   @VisibleForTesting protected SubscriptionRequestTO request;
 
-  PgPostQueryMatcher postQueryMatcher;
   final CurrentStatementHolder statementHolder = new CurrentStatementHolder();
-  private PgFactFilter filter;
 
   void connect(@NonNull SubscriptionRequestTO request) {
-    this.request = request;
     log.debug("{} connect subscription {}", request, request.dump());
-    postQueryMatcher = new PgPostQueryMatcher(request);
+    this.request = request;
+    FactFilter filter = new FactFilterImpl(request, blacklist);
     PgQueryBuilder q = new PgQueryBuilder(request.specs(), statementHolder);
     initializeSerialToStartAfter();
 
@@ -101,7 +98,6 @@ public class PgFactStream {
 
     String sql = q.createSQL();
     PreparedStatementSetter setter = q.createStatementSetter(serial);
-    this.filter = new PgFactFilterImpl(request, blacklist, postQueryMatcher);
     RowCallbackHandler rsHandler =
         new FactRowCallbackHandler(subscription, filter, this::isConnected, serial, request);
     PgSynchronizedQuery query =
@@ -124,7 +120,7 @@ public class PgFactStream {
       // just fast forward to the latest event published by now
       serial.set(fetcher.retrieveLatestSer());
     } else {
-      catchup(postQueryMatcher);
+      catchup(new FactFilterImpl(request, blacklist));
     }
 
     fastForward(request, subscription);
@@ -192,18 +188,14 @@ public class PgFactStream {
   }
 
   @VisibleForTesting
-  void catchup(PgPostQueryMatcher postQueryMatcher) {
+  void catchup(@NonNull FactFilter filter) {
     if (isConnected()) {
       log.trace("{} catchup phase1 - historic facts staring with SER={}", request, serial.get());
-      pgCatchupFactory
-          .create(request, filter, subscription, serial, metrics, statementHolder)
-          .run();
+      pgCatchupFactory.create(request, subscription, filter, serial, statementHolder).run();
     }
     if (isConnected()) {
       log.trace("{} catchup phase2 - facts since connect (SER={})", request, serial.get());
-      pgCatchupFactory
-          .create(request, filter, subscription, serial, metrics, statementHolder)
-          .run();
+      pgCatchupFactory.create(request, subscription, filter, serial, statementHolder).run();
     }
   }
 
@@ -229,7 +221,7 @@ public class PgFactStream {
 
     final SubscriptionImpl subscription;
 
-    final PgFactFilter filter;
+    final FactFilter filter;
 
     final Supplier<Boolean> isConnectedSupplier;
 
@@ -247,6 +239,7 @@ public class PgFactStream {
         }
         Fact f = PgFact.from(rs);
         try {
+          // TODO replace by call to factinterceptor
           if (filter.test(f)) {
             subscription.notifyElement(f);
             log.trace("{} notifyElement called with id={}", request, f.id());

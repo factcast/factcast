@@ -21,20 +21,32 @@ import java.util.*;
 import org.factcast.core.Fact;
 
 import lombok.NonNull;
+import lombok.Value;
 
 public interface TransformationCache {
 
   // maybe optimize by passing header and payload separately as
   // string/jsonnode?
-  void put(@NonNull CacheKey key, @NonNull Fact f);
+  void put(@NonNull TransformationCache.Key key, @NonNull Fact f);
 
-  default void putAll(Map<CacheKey, Fact> pairs) {
-    pairs.forEach(this::put);
-  }
+  Optional<Fact> find(Key key);
 
-  Optional<Fact> find(CacheKey key);
-
-  // Collection<Fact> findAll();
+  Set<Fact> findAll(Collection<Key> keys);
 
   void compact(ZonedDateTime thresholdDate);
+
+  @Value
+  class Key {
+
+    String id;
+
+    public static Key of(@NonNull Fact fact, @NonNull String transformationChainId) {
+      return of(fact.id(), fact.version(), transformationChainId);
+    }
+
+    public static Key of(@NonNull UUID id, int version, @NonNull String transformationChainId) {
+      return new Key(
+          String.join("-", id.toString(), String.valueOf(version), transformationChainId));
+    }
+  }
 }
