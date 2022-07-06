@@ -15,17 +15,18 @@
  */
 package org.factcast.store.internal;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
+import java.util.*;
+import java.util.function.*;
+import java.util.stream.*;
+
+import org.factcast.core.Fact;
+import org.factcast.core.spec.FactSpecMatcher;
+import org.factcast.core.subscription.SubscriptionRequest;
+
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.Fact;
-import org.factcast.core.spec.FactSpecMatcher;
-import org.factcast.core.subscription.SubscriptionRequest;
 
 /**
  * Predicate to filter Facts selected by the database query.
@@ -37,7 +38,7 @@ import org.factcast.core.subscription.SubscriptionRequest;
  * @author uwe.schaefer@prisma-capacity.eu
  */
 @Slf4j
-public class PgPostQueryMatcher implements Predicate<Fact> {
+public class PostQueryMatcher implements Predicate<Fact> {
 
   @Getter
   @Accessors(fluent = true)
@@ -45,7 +46,7 @@ public class PgPostQueryMatcher implements Predicate<Fact> {
 
   final List<FactSpecMatcher> matchers = new LinkedList<>();
 
-  PgPostQueryMatcher(@NonNull SubscriptionRequest req) {
+  public PostQueryMatcher(@NonNull SubscriptionRequest req) {
     canBeSkipped = req.specs().stream().noneMatch(s -> s.jsFilterScript() != null);
     if (canBeSkipped) {
       log.trace("{} post query filtering has been disabled", req);

@@ -23,15 +23,15 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class CacheKeyTest {
+class KeyTest {
 
   @Test
   void of() {
     String chainId = "1-2-3";
     Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}");
 
-    var ofFact = CacheKey.of(fact, chainId);
-    var ofId = CacheKey.of(fact.id(), fact.version(), chainId);
+    var ofFact = TransformationCache.Key.of(fact, chainId);
+    var ofId = TransformationCache.Key.of(fact.id(), fact.version(), chainId);
 
     assertEquals(ofFact, ofId);
     assertTrue(ofFact.id().contains(fact.id().toString()));

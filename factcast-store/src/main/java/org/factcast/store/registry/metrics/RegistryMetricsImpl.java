@@ -15,11 +15,15 @@
  */
 package org.factcast.store.registry.metrics;
 
-import com.google.common.base.Stopwatch;
-import io.micrometer.core.instrument.*;
-import java.util.function.Supplier;
-import lombok.NonNull;
+import java.util.function.*;
+
 import org.springframework.beans.factory.InitializingBean;
+
+import com.google.common.base.Stopwatch;
+
+import io.micrometer.core.instrument.*;
+
+import lombok.NonNull;
 
 public class RegistryMetricsImpl implements RegistryMetrics, InitializingBean {
   public static final String METRIC_NAME_TIMINGS = "factcast.registry.timer";
@@ -122,6 +126,12 @@ public class RegistryMetricsImpl implements RegistryMetrics, InitializingBean {
   public void count(@NonNull EVENT event, Tags tags) {
     Counter counter = counter(event, tags);
     counter.increment();
+  }
+
+  @Override
+  public void increase(@NonNull EVENT event, int amount) {
+    Counter counter = counter(event, Tags.empty());
+    counter.increment(amount);
   }
 
   @Override

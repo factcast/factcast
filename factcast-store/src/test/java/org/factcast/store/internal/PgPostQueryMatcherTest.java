@@ -15,14 +15,14 @@
  */
 package org.factcast.store.internal;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
-import org.junit.jupiter.api.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class PgPostQueryMatcherTest {
 
   @Test
   public void testPGPostQueryMatcher() {
-    assertThrows(NullPointerException.class, () -> new PgPostQueryMatcher(null));
+    assertThrows(NullPointerException.class, () -> new PostQueryMatcher(null));
   }
 }

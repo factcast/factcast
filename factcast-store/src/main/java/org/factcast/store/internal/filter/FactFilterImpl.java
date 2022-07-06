@@ -15,37 +15,43 @@
  */
 package org.factcast.store.internal.filter;
 
+import org.factcast.core.Fact;
+import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.store.internal.PostQueryMatcher;
+
+import com.google.common.annotations.VisibleForTesting;
+
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.Fact;
-import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.store.internal.PgPostQueryMatcher;
 
 @Slf4j
-public class PgFactFilterImpl implements PgFactFilter {
-  private final SubscriptionRequestTO request;
+public class FactFilterImpl implements FactFilter {
+  private final SubscriptionRequest request;
   private final PgBlacklist blacklist;
-  private final PgPostQueryMatcher matcher;
-  private final boolean skipTest;
+  private final PostQueryMatcher matcher;
 
-  public PgFactFilterImpl(
-      @NonNull SubscriptionRequestTO request,
+  public FactFilterImpl(@NonNull SubscriptionRequest request, @NonNull PgBlacklist blacklist) {
+    this(request, blacklist, new PostQueryMatcher(request));
+  }
+
+  @VisibleForTesting
+  FactFilterImpl(
+      @NonNull SubscriptionRequest request,
       @NonNull PgBlacklist blacklist,
-      @NonNull PgPostQueryMatcher matcher) {
+      @NonNull PostQueryMatcher matcher) {
     this.request = request;
     this.blacklist = blacklist;
     this.matcher = matcher;
-    this.skipTest = matcher.canBeSkipped();
   }
 
   @Override
-  public boolean test(Fact fact) {
+  public boolean test(@NonNull Fact fact) {
     if (blacklist.isBlocked(fact.id())) {
       log.trace("{} filtered blacklisted id={}", request, fact.id());
       return false;
     }
 
-    if (skipTest) return true;
+    if (matcher.canBeSkipped()) return true;
     else return matcher.test(fact);
   }
 }

@@ -16,14 +16,15 @@
 package org.factcast.store.registry.transformation;
 
 import java.util.*;
+import java.util.stream.*;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.TransformationRequest;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.registry.metrics.RegistryMetrics;
-import org.factcast.store.registry.transformation.cache.CacheKey;
 import org.factcast.store.registry.transformation.cache.TransformationCache;
 import org.factcast.store.registry.transformation.chains.TransformationChain;
 import org.factcast.store.registry.transformation.chains.TransformationChains;
@@ -52,7 +53,7 @@ public class FactTransformerServiceImpl implements FactTransformerService {
 
   @Override
   public Fact transform(@NonNull TransformationRequest req) throws TransformationException {
-    @NonNull Fact e = req.toTransform();
+    Fact e = req.toTransform();
     int targetVersion = req.targetVersion();
     int sourceVersion = e.version();
     if (sourceVersion == targetVersion || targetVersion == 0) {
@@ -64,28 +65,66 @@ public class FactTransformerServiceImpl implements FactTransformerService {
 
     String chainId = chain.id();
 
-    Optional<Fact> cached = cache.find(CacheKey.of(e.id(), targetVersion, chainId));
-    if (cached.isPresent()) {
-      return cached.get();
-    } else {
-      try {
-        JsonNode input = FactCastJson.readTree(e.jsonPayload());
-        JsonNode header = FactCastJson.readTree(e.jsonHeader());
-        ((ObjectNode) header).put("version", targetVersion);
-        JsonNode transformedPayload = trans.transform(chain, input);
-        Fact transformed = Fact.of(header, transformedPayload);
-        // can be optimized by passing jsonnode?
-        cache.put(CacheKey.of(transformed, chainId), transformed);
-        return transformed;
-      } catch (JsonProcessingException e1) {
-        registryMetrics.count(
-            RegistryMetrics.EVENT.TRANSFORMATION_FAILED,
-            Tags.of(
-                Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()),
-                Tag.of("version", String.valueOf(targetVersion))));
+    Optional<Fact> cached = cache.find(TransformationCache.Key.of(e.id(), targetVersion, chainId));
+    return cached.orElseGet(() -> doTransform(e, chain));
+  }
 
-        throw new TransformationException(e1);
-      }
-    }
+  @Override
+  public List<Fact> transform(@NonNull List<TransformationRequest> req)
+      throws TransformationException {
+
+    List<Pair<TransformationRequest, TransformationChain>> chains =
+        req.stream().map(r -> Pair.of(r, toChain(r))).collect(Collectors.toList());
+    List<TransformationCache.Key> keys =
+        chains.stream()
+            .map(p -> TransformationCache.Key.of(p.getLeft().toTransform(), p.getRight().id()))
+            .collect(Collectors.toList());
+
+    LinkedHashMap<UUID, Fact> map = new LinkedHashMap<>();
+    cache.findAll(keys).forEach(found -> map.put(found.id(), found));
+
+    return chains.parallelStream()
+        .map(
+            c -> {
+              Fact e = c.getLeft().toTransform();
+              TransformationChain chain = c.getRight();
+              return map.computeIfAbsent(
+                  c.getLeft().toTransform().id(), uuid -> doTransform(e, chain));
+            })
+        .collect(Collectors.toList());
+  }
+
+  @NonNull
+  public Fact doTransform(@NonNull Fact e, @NonNull TransformationChain chain) {
+    return registryMetrics.timed(
+        RegistryMetrics.OP.TRANSFORMATION,
+        () -> {
+          try {
+            JsonNode input = FactCastJson.readTree(e.jsonPayload());
+            JsonNode header = FactCastJson.readTree(e.jsonHeader());
+            ((ObjectNode) header).put("version", chain.toVersion());
+            JsonNode transformedPayload = trans.transform(chain, input);
+            Fact transformed = Fact.of(header, transformedPayload);
+            // can be optimized by passing jsonnode?
+            cache.put(TransformationCache.Key.of(transformed, chain.id()), transformed);
+            return transformed;
+          } catch (JsonProcessingException e1) {
+            registryMetrics.count(
+                RegistryMetrics.EVENT.TRANSFORMATION_FAILED,
+                Tags.of(
+                    Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, chain.key().toString()),
+                    Tag.of("version", String.valueOf(chain.toVersion()))));
+
+            throw new TransformationException(e1);
+          }
+        });
+  }
+
+  private TransformationChain toChain(TransformationRequest req) {
+    @NonNull Fact e = req.toTransform();
+    int targetVersion = req.targetVersion();
+    int sourceVersion = e.version();
+    TransformationKey key = TransformationKey.of(e.ns(), e.type());
+    return chains.get(key, sourceVersion, targetVersion);
   }
 }

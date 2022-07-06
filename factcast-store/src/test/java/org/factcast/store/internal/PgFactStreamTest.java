@@ -26,7 +26,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
-import org.factcast.store.internal.filter.PgFactFilter;
+import org.factcast.store.internal.filter.FactFilter;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.junit.jupiter.api.Nested;
@@ -61,7 +61,7 @@ public class PgFactStreamTest {
   @Mock JdbcTemplate jdbc;
   @Mock PgLatestSerialFetcher fetcher;
   @Mock DistributionSummary distributionSummary;
-  @Mock PgFactFilter filter;
+  @Mock FactFilter filter;
   @Mock PgCatchupFactory pgCatchupFactory;
   @InjectMocks PgFactStream uut;
 
@@ -165,8 +165,6 @@ public class PgFactStreamTest {
     }
   }
 
-
-
   @Nested
   class FactRowCallbackHandlerTest {
     @Mock(lenient = true)
@@ -179,7 +177,7 @@ public class PgFactStreamTest {
     @Mock AtomicLong serial;
 
     @Mock SubscriptionRequestTO request;
-    @Mock PgFactFilter filter;
+    @Mock FactFilter filter;
 
     @InjectMocks private PgFactStream.FactRowCallbackHandler uut;
 
@@ -256,7 +254,7 @@ public class PgFactStreamTest {
       uut = spy(uut);
       when(uut.isConnected()).thenReturn(false);
 
-      uut.catchup(mock(PgPostQueryMatcher.class));
+      uut.catchup(mock(FactFilter.class));
 
       verifyNoInteractions(pgCatchupFactory);
     }
@@ -267,10 +265,10 @@ public class PgFactStreamTest {
       PgCatchup catchup1 = mock(PgCatchup.class);
       PgCatchup catchup2 = mock(PgCatchup.class);
       when(uut.isConnected()).thenReturn(true);
-      when(pgCatchupFactory.create(any(), any(), any(), any(), any(), any()))
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any()))
           .thenReturn(catchup1, catchup2);
 
-      uut.catchup(mock(PgPostQueryMatcher.class));
+      uut.catchup(mock(FactFilter.class));
 
       verify(catchup1, times(1)).run();
       verify(catchup2, times(1)).run();

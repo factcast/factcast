@@ -15,10 +15,24 @@
  */
 package org.factcast.core.subscription.transformation;
 
-import org.factcast.core.subscription.SubscriptionRequestTO;
+import java.util.*;
 
-@FunctionalInterface
-public interface FactTransformersFactory {
+import lombok.NonNull;
 
-  FactTransformers createFor(SubscriptionRequestTO sr);
+public class RequestedVersions {
+  private final Map<String, Map<String, Set<Integer>>> c = new HashMap<>();
+
+  public void add(@NonNull String ns, @NonNull String type, int version) {
+    get(ns, type).add(version);
+  }
+
+  public Set<Integer> get(@NonNull String ns, String type) {
+    return c.computeIfAbsent(ns, key -> new HashMap<>())
+        .computeIfAbsent(type, k -> new HashSet<>());
+  }
+
+  public boolean matches(@NonNull String ns, String type, int version) {
+    Set<Integer> set = get(ns, type);
+    return set.isEmpty() || set.contains(0) || set.contains(version);
+  }
 }

@@ -25,9 +25,13 @@ import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics.EVENT;
 import org.factcast.store.registry.metrics.RegistryMetrics.OP;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Sets;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -45,7 +49,7 @@ public class PgTransformationCache implements TransformationCache {
   @Getter(AccessLevel.PROTECTED)
   @VisibleForTesting
   /** entry of null means read, entry of non-null means write */
-  private final Map<CacheKey, Fact> buffer = Collections.synchronizedMap(new HashMap<>());
+  private final Map<Key, Fact> buffer = Collections.synchronizedMap(new HashMap<>());
 
   private int maxBufferSize = 1000;
 
@@ -58,12 +62,12 @@ public class PgTransformationCache implements TransformationCache {
   }
 
   @Override
-  public void put(@NonNull CacheKey key, @NonNull Fact f) {
+  public void put(@NonNull TransformationCache.Key key, @NonNull Fact f) {
     registerWrite(key, f);
   }
 
   @Override
-  public Optional<Fact> find(CacheKey key) {
+  public Optional<Fact> find(Key key) {
 
     Fact factFromBuffer = buffer.get(key);
     if (factFromBuffer != null) {
@@ -93,14 +97,44 @@ public class PgTransformationCache implements TransformationCache {
     }
   }
 
-  private void registerAccess(CacheKey cacheKey) {
-    synchronized (buffer) {
-      if (!buffer.containsKey(cacheKey)) buffer.put(cacheKey, null);
-    }
+  @Override
+  public Set<Fact> findAll(Collection<Key> keys) {
+
+    NamedParameterJdbcTemplate named = new NamedParameterJdbcTemplate(jdbcTemplate);
+    SqlParameterSource parameters =
+        new MapSqlParameterSource("ids", keys.stream().map(Key::id).collect(Collectors.toList()));
+    List<Fact> facts =
+        named.query(
+            "SELECT header, payload FROM transformationcache WHERE cache_key IN (:ids)",
+            parameters,
+            ((rs, rowNum) -> {
+              String header = rs.getString("header");
+              String payload = rs.getString("payload");
+
+              return Fact.of(header, payload);
+            }));
+
+    int hits = facts.size();
+    int misses = keys.size() - hits;
+    registryMetrics.increase(EVENT.TRANSFORMATION_CACHE_MISS, misses);
+    registryMetrics.increase(EVENT.TRANSFORMATION_CACHE_HIT, hits);
+
+    CompletableFuture.runAsync(() -> keys.forEach(this::registerAccess));
+    return Sets.newHashSet(facts);
   }
 
-  private void registerWrite(@NonNull CacheKey key, @NonNull Fact f) {
-    buffer.put(key, f);
+  private void registerAccess(Key cacheKey) {
+    synchronized (buffer) {
+      // important to check before in order not to negate writes
+      if (!buffer.containsKey(cacheKey)) buffer.put(cacheKey, null);
+    }
+    flushIfNecessary();
+  }
+
+  private void registerWrite(@NonNull TransformationCache.Key key, @NonNull Fact f) {
+    synchronized (buffer) {
+      buffer.put(key, f);
+    }
     flushIfNecessary();
   }
 
@@ -125,7 +159,7 @@ public class PgTransformationCache implements TransformationCache {
 
   @Scheduled(fixedRate = 10, timeUnit = TimeUnit.MINUTES)
   public void flush() {
-    HashMap<CacheKey, Fact> copy;
+    HashMap<Key, Fact> copy;
     synchronized (buffer) {
       copy = new HashMap<>(buffer);
       buffer.clear();
@@ -143,7 +177,7 @@ public class PgTransformationCache implements TransformationCache {
     }
   }
 
-  private void insertBufferedTransformations(HashMap<CacheKey, Fact> copy) {
+  private void insertBufferedTransformations(HashMap<Key, Fact> copy) {
     List<Object[]> parameters =
         copy.entrySet().stream()
             .filter(e -> e.getValue() != null)
@@ -161,14 +195,16 @@ public class PgTransformationCache implements TransformationCache {
         parameters);
   }
 
-  private void insertBufferedAccesses(HashMap<CacheKey, Fact> copy) {
-    List<Object[]> parameters =
+  private void insertBufferedAccesses(HashMap<Key, Fact> copy) {
+    List<String> keys =
         copy.entrySet().stream()
             .filter(e -> e.getValue() == null)
-            .map(p -> new Object[] {p.getKey().id()})
+            .map(p -> p.getKey().id())
             .collect(Collectors.toList());
 
-    jdbcTemplate.batchUpdate(
-        "UPDATE transformationcache SET last_access=now() WHERE cache_key = ?", parameters);
+    NamedParameterJdbcTemplate named = new NamedParameterJdbcTemplate(jdbcTemplate);
+    SqlParameterSource parameters = new MapSqlParameterSource("ids", keys);
+    named.update(
+        "UPDATE transformationcache SET last_access=now() WHERE cache_key IN (:ids)", parameters);
   }
 }

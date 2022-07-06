@@ -23,7 +23,6 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.core.subscription.transformation.FactTransformerService;
-import org.factcast.core.subscription.transformation.FactTransformersFactory;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.catchup.fetching.PgFetchingCatchUpFactory;
@@ -97,13 +96,13 @@ public class PgFactStoreInternalConfiguration {
   public PgCatchupFactory pgCatchupFactory(
       StoreConfigurationProperties props,
       PgConnectionSupplier supp,
-      PgFactIdToSerialMapper serMapper) {
-    // noinspection SwitchStatementWithTooFewBranches
+      PgMetrics metrics,
+      FactTransformerService transformerService) {
     switch (props.getCatchupStrategy()) {
       case PAGED:
-        return new PgTmpPagedCatchUpFactory(supp, props);
+        return new PgTmpPagedCatchUpFactory(supp, props, metrics, transformerService);
       case FETCHING:
-        return new PgFetchingCatchUpFactory(supp, props);
+        return new PgFetchingCatchUpFactory(supp, props, metrics, transformerService);
       default:
         throw new IllegalArgumentException("Unmapped Strategy: " + props.getCatchupStrategy());
     }
@@ -142,7 +141,6 @@ public class PgFactStoreInternalConfiguration {
       PgFactIdToSerialMapper pgFactIdToSerialMapper,
       PgLatestSerialFetcher pgLatestSerialFetcher,
       PgCatchupFactory pgCatchupFactory,
-      FactTransformersFactory transformerFactory,
       FastForwardTarget target,
       PgMetrics metrics,
       PgBlacklist blacklist) {
@@ -152,7 +150,6 @@ public class PgFactStoreInternalConfiguration {
         pgFactIdToSerialMapper,
         pgLatestSerialFetcher,
         pgCatchupFactory,
-        transformerFactory,
         target,
         metrics,
         blacklist);

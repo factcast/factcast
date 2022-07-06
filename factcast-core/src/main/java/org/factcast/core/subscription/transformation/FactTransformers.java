@@ -15,21 +15,50 @@
  */
 package org.factcast.core.subscription.transformation;
 
+import java.util.*;
+
 import javax.annotation.Nullable;
 
 import org.factcast.core.Fact;
+import org.factcast.core.subscription.SubscriptionRequest;
 
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
-public interface FactTransformers {
-
-  /**
-   * @param f fact to be transformed
-   * @return null if no transformation is necessary
-   */
-  @Nullable
-  TransformationRequest prepareTransformation(@NonNull Fact f);
+@RequiredArgsConstructor
+public class FactTransformers {
+  @NonNull private final RequestedVersions requested;
 
   @Nullable
-  Fact transform(@NonNull TransformationRequest req);
+  public TransformationRequest prepareTransformation(@NonNull Fact e) {
+    String ns = e.ns();
+    String type = e.type();
+    int version = e.version();
+
+    if (type == null || requested.matches(ns, type, version)) {
+      return null;
+    } else {
+      OptionalInt max = requested.get(ns, type).stream().mapToInt(v -> v).max();
+      int targetVersion =
+          max.orElseThrow(
+              () -> new IllegalArgumentException("No requested Version !? This must not happen."));
+
+      return new TransformationRequest(e, targetVersion);
+    }
+  }
+
+  public static FactTransformers createFor(SubscriptionRequest sr) {
+
+    RequestedVersions requestedVersions = new RequestedVersions();
+
+    sr.specs()
+        .forEach(
+            s -> {
+              if (s.type() != null) {
+                requestedVersions.add(s.ns(), s.type(), s.version());
+              }
+            });
+
+    return new FactTransformers(requestedVersions);
+  }
 }
