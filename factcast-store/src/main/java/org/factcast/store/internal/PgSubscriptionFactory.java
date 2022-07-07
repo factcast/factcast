@@ -15,8 +15,12 @@
  */
 package org.factcast.store.internal;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.eventbus.EventBus;
 import java.util.concurrent.*;
-
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -30,13 +34,6 @@ import org.factcast.store.internal.filter.PgBlacklist;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.springframework.jdbc.core.JdbcTemplate;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.eventbus.EventBus;
-
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 // TODO integrate with PGQuery
 @SuppressWarnings("UnstableApiUsage")

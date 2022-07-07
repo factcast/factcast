@@ -16,14 +16,11 @@
 package org.factcast.core.subscription.transformation;
 
 import java.util.*;
-
 import javax.annotation.Nullable;
-
-import org.factcast.core.Fact;
-import org.factcast.core.subscription.SubscriptionRequest;
-
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.factcast.core.Fact;
+import org.factcast.core.subscription.SubscriptionRequest;
 
 @RequiredArgsConstructor
 public class FactTransformers {

@@ -15,8 +15,10 @@
  */
 package org.factcast.store.internal.filter;
 
-import java.util.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
+import java.util.*;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.internal.PostQueryMatcher;
@@ -27,9 +29,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 class FactFilterImplTest {
 
@@ -37,7 +36,6 @@ class FactFilterImplTest {
   @Mock private SubscriptionRequestTO request;
   @Mock private PgBlacklist blacklist;
   @Mock private PostQueryMatcher matcher;
-
 
   @Nested
   class WhenTesting {
@@ -51,7 +49,7 @@ class FactFilterImplTest {
     void filtersBlacklisted() {
       when(fact.id()).thenReturn(id);
       when(blacklist.isBlocked(id)).thenReturn(true);
-      var underTest = new FactFilterImpl(request, blacklist,matcher);
+      var underTest = new FactFilterImpl(request, blacklist, matcher);
 
       assertThat(underTest.test(fact)).isFalse();
       verify(matcher, never()).test(any());
@@ -64,7 +62,7 @@ class FactFilterImplTest {
       when(blacklist.isBlocked(id)).thenReturn(false);
       when(matcher.test(any())).thenReturn(false);
       when(matcher.canBeSkipped()).thenReturn(false);
-      var underTest = new FactFilterImpl(request, blacklist,matcher);
+      var underTest = new FactFilterImpl(request, blacklist, matcher);
 
       assertThat(underTest.test(fact)).isFalse();
     }
@@ -77,7 +75,7 @@ class FactFilterImplTest {
       when(matcher.canBeSkipped()).thenReturn(false);
       when(matcher.test(fact)).thenReturn(true);
 
-      var underTest = new FactFilterImpl(request, blacklist,matcher);
+      var underTest = new FactFilterImpl(request, blacklist, matcher);
       assertThat(underTest.test(fact)).isTrue();
     }
   }

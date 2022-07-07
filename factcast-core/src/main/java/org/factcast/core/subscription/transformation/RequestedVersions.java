@@ -16,7 +16,6 @@
 package org.factcast.core.subscription.transformation;
 
 import java.util.*;
-
 import lombok.NonNull;
 
 public class RequestedVersions {
