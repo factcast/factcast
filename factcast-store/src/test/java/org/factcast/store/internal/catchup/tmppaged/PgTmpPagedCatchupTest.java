@@ -24,7 +24,6 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.FactTransformers;
 import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.store.internal.FactInterceptor;
 import org.factcast.store.internal.PgConstants;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.StoreMetrics;
@@ -66,7 +65,7 @@ class PgTmpPagedCatchupTest {
   @Mock @NonNull PgMetrics metrics;
   @Mock @NonNull Counter counter;
   @Mock @NonNull PgBlacklist blacklist;
-  @Mock @NonNull FactInterceptor interceptor;
+  @Mock @NonNull BufferingFactInterceptor interceptor;
   @Mock @NonNull FactTransformerService service;
   @Mock @NonNull CurrentStatementHolder statementHolder;
   @InjectMocks PgTmpPagedCatchup underTest;

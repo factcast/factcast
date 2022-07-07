@@ -143,7 +143,8 @@ public class PgFactStoreInternalConfiguration {
       PgCatchupFactory pgCatchupFactory,
       FastForwardTarget target,
       PgMetrics metrics,
-      PgBlacklist blacklist) {
+      PgBlacklist blacklist,
+      FactTransformerService transformerService) {
     return new PgSubscriptionFactory(
         jdbcTemplate,
         eventBus,
@@ -152,7 +153,7 @@ public class PgFactStoreInternalConfiguration {
         pgCatchupFactory,
         target,
         metrics,
-        blacklist);
+        blacklist,transformerService);
   }
 
   @Bean
@@ -235,4 +236,5 @@ public class PgFactStoreInternalConfiguration {
   public PgBlacklist blacklist(EventBus bus, PgBlacklist.Fetcher fetcher) {
     return new PgBlacklist(bus, fetcher);
   }
+
 }
