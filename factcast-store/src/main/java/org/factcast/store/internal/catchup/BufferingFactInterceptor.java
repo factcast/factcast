@@ -18,7 +18,7 @@ package org.factcast.store.internal.catchup;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.*;
-import lombok.NonNull;
+
 import org.apache.commons.lang3.tuple.Pair;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
@@ -29,6 +29,8 @@ import org.factcast.core.subscription.transformation.TransformationRequest;
 import org.factcast.store.internal.AbstractFactInterceptor;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.filter.FactFilter;
+
+import lombok.NonNull;
 
 /** this class is NOT Threadsafe! */
 public class BufferingFactInterceptor extends AbstractFactInterceptor {
@@ -121,7 +123,10 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
         p -> {
           try {
             targetSubscription.notifyElement(p.getRight().get());
-          } catch (InterruptedException | ExecutionException e) {
+          } catch (InterruptedException i) {
+            Thread.currentThread().interrupt();
+            throw new TransformationException(i);
+          } catch (ExecutionException e) {
             throw new TransformationException(e);
           }
         });
