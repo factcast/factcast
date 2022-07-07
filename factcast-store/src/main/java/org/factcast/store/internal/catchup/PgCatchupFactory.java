@@ -16,13 +16,11 @@
 package org.factcast.store.internal.catchup;
 
 import java.util.concurrent.atomic.*;
-
+import lombok.NonNull;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.internal.filter.FactFilter;
 import org.factcast.store.internal.query.CurrentStatementHolder;
-
-import lombok.NonNull;
 
 public interface PgCatchupFactory {
 

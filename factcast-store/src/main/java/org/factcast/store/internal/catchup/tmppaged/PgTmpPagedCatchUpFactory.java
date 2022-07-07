@@ -16,7 +16,9 @@
 package org.factcast.store.internal.catchup.tmppaged;
 
 import java.util.concurrent.atomic.*;
-
+import lombok.Generated;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.transformation.FactTransformerService;
@@ -28,10 +30,6 @@ import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.filter.FactFilter;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.query.CurrentStatementHolder;
-
-import lombok.Generated;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 // no code in here, just generated @nonnull checks

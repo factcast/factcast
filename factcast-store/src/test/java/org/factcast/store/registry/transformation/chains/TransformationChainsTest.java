@@ -15,8 +15,16 @@
  */
 package org.factcast.store.registry.transformation.chains;
 
-import java.util.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.*;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.collect.Lists;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import java.util.*;
 import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.registry.NOPRegistryMetrics;
@@ -27,17 +35,6 @@ import org.factcast.store.registry.transformation.Transformation;
 import org.factcast.store.registry.transformation.TransformationKey;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.collect.Lists;
-
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.*;
 
 public class TransformationChainsTest {
   final SchemaRegistry r = mock(SchemaRegistry.class);

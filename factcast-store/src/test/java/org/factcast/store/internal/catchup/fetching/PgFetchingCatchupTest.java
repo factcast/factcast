@@ -15,9 +15,14 @@
  */
 package org.factcast.store.internal.catchup.fetching;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
+
+import io.micrometer.core.instrument.Counter;
 import java.sql.ResultSet;
 import java.util.concurrent.atomic.*;
-
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.factcast.core.subscription.SubscriptionImpl;
@@ -43,14 +48,6 @@ import org.postgresql.jdbc.PgConnection;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
-
-import io.micrometer.core.instrument.Counter;
-
-import lombok.NonNull;
-import lombok.SneakyThrows;
-
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PgFetchingCatchupTest {

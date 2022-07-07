@@ -15,13 +15,12 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
-import java.util.*;
-
-import org.factcast.core.Fact;
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.*;
+import org.factcast.core.Fact;
+import org.junit.jupiter.api.Test;
 
 class KeyTest {
 

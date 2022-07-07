@@ -15,12 +15,11 @@
  */
 package org.factcast.store.internal;
 
-import java.util.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.*;
 import org.factcast.core.subscription.transformation.RequestedVersions;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class RequestedVersionsTest {
 
