@@ -32,6 +32,7 @@ public class SimpleFactInterceptor extends AbstractFactInterceptor {
     if (filter.test(f)) {
 
       TransformationRequest transformationRequest = transformers.prepareTransformation(f);
+
       if (transformationRequest == null) {
         targetSubscription.notifyElement(f);
       } else {

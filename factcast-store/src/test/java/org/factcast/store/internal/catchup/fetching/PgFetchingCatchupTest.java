@@ -24,9 +24,9 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.store.internal.FactInterceptor;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.StoreMetrics;
+import org.factcast.store.internal.catchup.BufferingFactInterceptor;
 import org.factcast.store.internal.filter.FactFilter;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.query.CurrentStatementHolder;
@@ -66,7 +66,7 @@ class PgFetchingCatchupTest {
   @Mock @NonNull SubscriptionImpl subscription;
   @Mock @NonNull AtomicLong serial;
   @Mock @NonNull CurrentStatementHolder statementHolder;
-  @Mock @NonNull FactInterceptor interceptor;
+  @Mock @NonNull BufferingFactInterceptor interceptor;
 
   @Mock(lenient = true)
   @NonNull

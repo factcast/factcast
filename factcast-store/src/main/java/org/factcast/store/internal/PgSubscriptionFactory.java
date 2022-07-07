@@ -23,6 +23,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.filter.PgBlacklist;
@@ -56,6 +57,7 @@ class PgSubscriptionFactory {
   final FastForwardTarget target;
   final PgMetrics metrics;
   final PgBlacklist blacklist;
+  final FactTransformerService transformerService;
 
   public Subscription subscribe(SubscriptionRequestTO req, FactObserver observer) {
     SubscriptionImpl subscription = SubscriptionImpl.on(observer);
@@ -68,7 +70,9 @@ class PgSubscriptionFactory {
             fetcher,
             catchupFactory,
             target,
-            blacklist);
+            blacklist,
+            transformerService,
+            metrics);
 
     // when closing the subscription, also close the PgFactStream
     subscription.onClose(pgsub::close);

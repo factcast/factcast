@@ -15,10 +15,8 @@
  */
 package org.factcast.store.internal;
 
-import java.sql.ResultSet;
 import java.util.*;
 import java.util.concurrent.atomic.*;
-import java.util.function.*;
 
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
@@ -41,10 +39,7 @@ import com.google.common.eventbus.EventBus;
 
 import io.micrometer.core.instrument.DistributionSummary;
 
-import lombok.SneakyThrows;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
@@ -162,88 +157,6 @@ public class PgFactStreamTest {
       underTest.fastForward(request, subscription);
 
       verify(subscription).notifyFastForward(target);
-    }
-  }
-
-  @Nested
-  class FactRowCallbackHandlerTest {
-    @Mock(lenient = true)
-    private ResultSet rs;
-
-    @Mock SubscriptionImpl subscription;
-
-    @Mock Supplier<Boolean> isConnectedSupplier;
-
-    @Mock AtomicLong serial;
-
-    @Mock SubscriptionRequestTO request;
-    @Mock FactFilter filter;
-
-    @InjectMocks private PgFactStream.FactRowCallbackHandler uut;
-
-    @Test
-    @SneakyThrows
-    void test_notConnected() {
-      when(isConnectedSupplier.get()).thenReturn(false);
-
-      uut.processRow(rs);
-
-      verifyNoInteractions(rs, filter, serial, request);
-    }
-
-    @Test
-    @SneakyThrows
-    void test_rsClosed() {
-      when(isConnectedSupplier.get()).thenReturn(true);
-      when(rs.isClosed()).thenReturn(true);
-
-      assertThatThrownBy(() -> uut.processRow(rs)).isInstanceOf(IllegalStateException.class);
-
-      verifyNoInteractions(filter, serial, request);
-    }
-
-    @Test
-    @SneakyThrows
-    void test_happyCase() {
-      when(filter.test(any())).thenReturn(true);
-      when(isConnectedSupplier.get()).thenReturn(true);
-
-      when(rs.isClosed()).thenReturn(false);
-      when(rs.getString(PgConstants.ALIAS_ID)).thenReturn("550e8400-e29b-11d4-a716-446655440000");
-      when(rs.getString(PgConstants.ALIAS_NS)).thenReturn("foo");
-      when(rs.getString(PgConstants.COLUMN_HEADER)).thenReturn("{}");
-      when(rs.getString(PgConstants.COLUMN_PAYLOAD)).thenReturn("{}");
-      when(rs.getLong(PgConstants.COLUMN_SER)).thenReturn(10L);
-
-      uut.processRow(rs);
-
-      verify(filter, times(1)).test(any());
-      verify(subscription).notifyElement(any());
-      verify(serial).set(10L);
-    }
-
-    @Test
-    @SneakyThrows
-    void test_exception() {
-      when(filter.test(any())).thenReturn(true);
-      when(isConnectedSupplier.get()).thenReturn(true);
-
-      when(rs.isClosed()).thenReturn(false);
-      when(rs.getString(PgConstants.ALIAS_ID)).thenReturn("550e8400-e29b-11d4-a716-446655440000");
-      when(rs.getString(PgConstants.ALIAS_NS)).thenReturn("foo");
-      when(rs.getString(PgConstants.COLUMN_HEADER)).thenReturn("{}");
-      when(rs.getString(PgConstants.COLUMN_PAYLOAD)).thenReturn("{}");
-      when(rs.getLong(PgConstants.COLUMN_SER)).thenReturn(10L);
-
-      var exception = new IllegalArgumentException();
-      doThrow(exception).when(subscription).notifyElement(any());
-
-      uut.processRow(rs);
-
-      verify(filter).test(any());
-      verify(subscription).notifyError(exception);
-      verify(rs).close();
-      verify(serial, never()).set(10L);
     }
   }
 

@@ -20,6 +20,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
@@ -46,6 +47,7 @@ class PgSubscriptionFactoryTest {
   @Mock private PgLatestSerialFetcher fetcher;
   @Mock private PgCatchupFactory catchupFactory;
   @Mock private FastForwardTarget target;
+  @Mock private FactTransformerService transformerService;
   @Mock private PgMetrics metrics;
   @InjectMocks private PgSubscriptionFactory underTest;
 

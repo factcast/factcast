@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.*;
 
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.store.internal.FactInterceptor;
+import org.factcast.store.internal.catchup.BufferingFactInterceptor;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.query.CurrentStatementHolder;
@@ -47,7 +47,7 @@ public class PgFetchingCatchup implements PgCatchup {
 
   @NonNull final SubscriptionRequestTO req;
 
-  @NonNull final FactInterceptor interceptor;
+  @NonNull final BufferingFactInterceptor interceptor;
 
   @NonNull final AtomicLong serial;
 
@@ -67,6 +67,7 @@ public class PgFetchingCatchup implements PgCatchup {
       var jdbc = new JdbcTemplate(ds);
       fetch(jdbc);
     } finally {
+      interceptor.flush();
       ds.destroy();
       statementHolder.statement(null);
     }
