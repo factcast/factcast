@@ -15,18 +15,16 @@
  */
 package org.factcast.core.subscription;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
-
-import org.factcast.core.Fact;
-import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.core.util.ExceptionHelper;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.Fact;
+import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.util.ExceptionHelper;
 
 /**
  * Implements a subscription and offers notifyX methods for the Fact Supplier to write to.

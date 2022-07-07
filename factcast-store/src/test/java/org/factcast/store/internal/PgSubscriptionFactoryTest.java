@@ -15,6 +15,9 @@
  */
 package org.factcast.store.internal;
 
+import static org.mockito.Mockito.*;
+
+import com.google.common.eventbus.EventBus;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
@@ -33,10 +36,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
-
-import com.google.common.eventbus.EventBus;
-
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PgSubscriptionFactoryTest {

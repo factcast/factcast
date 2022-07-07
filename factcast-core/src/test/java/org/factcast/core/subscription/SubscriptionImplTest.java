@@ -15,10 +15,15 @@
  */
 package org.factcast.core.subscription;
 
+import static org.factcast.core.TestHelper.expect;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
-
+import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.factcast.core.subscription.observer.FactObserver;
@@ -30,13 +35,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import lombok.NonNull;
-
-import static org.factcast.core.TestHelper.expect;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class SubscriptionImplTest {

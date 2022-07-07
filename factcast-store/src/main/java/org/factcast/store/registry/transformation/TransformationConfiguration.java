@@ -15,6 +15,9 @@
  */
 package org.factcast.store.registry.transformation;
 
+import liquibase.integration.spring.SpringLiquibase;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.SchemaRegistry;
@@ -32,10 +35,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.support.TransactionTemplate;
-
-import liquibase.integration.spring.SpringLiquibase;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 @Slf4j

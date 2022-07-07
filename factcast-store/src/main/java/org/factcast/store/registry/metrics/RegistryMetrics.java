@@ -15,10 +15,8 @@
  */
 package org.factcast.store.registry.metrics;
 
-import java.util.function.*;
-
 import io.micrometer.core.instrument.Tags;
-
+import java.util.function.*;
 import lombok.Getter;
 import lombok.NonNull;
 
