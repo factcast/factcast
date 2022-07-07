@@ -15,15 +15,11 @@
  */
 package org.factcast.store.registry.metrics;
 
-import java.util.function.*;
-
-import org.springframework.beans.factory.InitializingBean;
-
 import com.google.common.base.Stopwatch;
-
 import io.micrometer.core.instrument.*;
-
+import java.util.function.*;
 import lombok.NonNull;
+import org.springframework.beans.factory.InitializingBean;
 
 public class RegistryMetricsImpl implements RegistryMetrics, InitializingBean {
   public static final String METRIC_NAME_TIMINGS = "factcast.registry.timer";

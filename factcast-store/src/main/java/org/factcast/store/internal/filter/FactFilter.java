@@ -16,7 +16,6 @@
 package org.factcast.store.internal.filter;
 
 import java.util.function.*;
-
 import org.factcast.core.Fact;
 
 public interface FactFilter extends Predicate<Fact> {}

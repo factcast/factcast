@@ -16,11 +16,9 @@
 package org.factcast.core.subscription.transformation;
 
 import java.util.*;
-
+import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.TransformationException;
-
-import lombok.NonNull;
 
 public interface FactTransformerService {
   Fact transform(@NonNull TransformationRequest req) throws TransformationException;
