@@ -15,15 +15,9 @@
  */
 package org.factcast.store.registry.transformation;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
 import java.util.*;
 import java.util.stream.*;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+
 import org.apache.commons.lang3.tuple.Pair;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.TransformationException;
@@ -35,6 +29,16 @@ import org.factcast.store.registry.transformation.cache.TransformationCache;
 import org.factcast.store.registry.transformation.chains.TransformationChain;
 import org.factcast.store.registry.transformation.chains.TransformationChains;
 import org.factcast.store.registry.transformation.chains.Transformer;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class FactTransformerServiceImpl implements FactTransformerService {
@@ -69,17 +73,17 @@ public class FactTransformerServiceImpl implements FactTransformerService {
   public List<Fact> transform(@NonNull List<TransformationRequest> req)
       throws TransformationException {
 
-    List<Pair<TransformationRequest, TransformationChain>> chains =
+    List<Pair<TransformationRequest, TransformationChain>> pairs =
         req.stream().map(r -> Pair.of(r, toChain(r))).collect(Collectors.toList());
     List<TransformationCache.Key> keys =
-        chains.stream()
+        pairs.stream()
             .map(p -> TransformationCache.Key.of(p.getLeft().toTransform(), p.getRight().id()))
             .collect(Collectors.toList());
 
     LinkedHashMap<UUID, Fact> map = new LinkedHashMap<>();
     cache.findAll(keys).forEach(found -> map.put(found.id(), found));
 
-    return chains.parallelStream()
+    return pairs.parallelStream()
         .map(
             c -> {
               Fact e = c.getLeft().toTransform();
