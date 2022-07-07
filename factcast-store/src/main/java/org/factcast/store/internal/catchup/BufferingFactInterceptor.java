@@ -69,28 +69,36 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
 
       TransformationRequest transformationRequest = transformers.prepareTransformation(f);
       if (mode == Mode.DIRECT) {
-        if (transformationRequest == null) {
-          // does not need transformation, just pass it down
-          targetSubscription.notifyElement(f);
-          increaseNotifyMetric(1);
-        } else {
-          // needs transformation, so switch to buffering mode
-          mode = Mode.BUFFERING;
-          buffer.add(scheduledTransformation(transformationRequest));
-        }
+        acceptInDirectMode(f, transformationRequest);
       } else if (mode == Mode.BUFFERING) {
-        if (transformationRequest == null) {
-          // does not need transformation, add as completed
-          buffer.add(completedTransformation(f));
-        } else {
-          Pair<TransformationRequest, CompletableFuture<Fact>> scheduledTransformation =
-              scheduledTransformation(transformationRequest);
-          buffer.add(scheduledTransformation);
-          index.put(f.id(), scheduledTransformation.getRight());
-
-          if (buffer.size() >= pageSize) flush();
-        }
+        acceptInBufferingMode(f, transformationRequest);
       }
+    }
+  }
+
+  private void acceptInBufferingMode(@NonNull Fact f, TransformationRequest transformationRequest) {
+    if (transformationRequest == null) {
+      // does not need transformation, add as completed
+      buffer.add(completedTransformation(f));
+    } else {
+      Pair<TransformationRequest, CompletableFuture<Fact>> scheduledTransformation =
+          scheduledTransformation(transformationRequest);
+      buffer.add(scheduledTransformation);
+      index.put(f.id(), scheduledTransformation.getRight());
+
+      if (buffer.size() >= pageSize) flush();
+    }
+  }
+
+  private void acceptInDirectMode(@NonNull Fact f, TransformationRequest transformationRequest) {
+    if (transformationRequest == null) {
+      // does not need transformation, just pass it down
+      targetSubscription.notifyElement(f);
+      increaseNotifyMetric(1);
+    } else {
+      // needs transformation, so switch to buffering mode
+      mode = Mode.BUFFERING;
+      buffer.add(scheduledTransformation(transformationRequest));
     }
   }
 
