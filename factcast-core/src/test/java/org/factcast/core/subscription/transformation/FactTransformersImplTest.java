@@ -15,13 +15,13 @@
  */
 package org.factcast.core.subscription.transformation;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class FactTransformersImplTest {
