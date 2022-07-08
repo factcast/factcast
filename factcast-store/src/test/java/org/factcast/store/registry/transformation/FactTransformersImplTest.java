@@ -40,6 +40,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
+// TODO move to core
 public class FactTransformersImplTest {
 
   @Mock TransformationChains chains;

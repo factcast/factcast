@@ -16,6 +16,7 @@
 package org.factcast.store.registry.transformation.cache;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Predicates;
 import com.google.common.collect.Sets;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -42,6 +43,9 @@ public class PgTransformationCache implements TransformationCache {
   private final JdbcTemplate jdbcTemplate;
 
   private final RegistryMetrics registryMetrics;
+
+  private static final CompletableFuture<Void> COMPLETED_FUTURE =
+      CompletableFuture.completedFuture(null);
 
   @Getter(AccessLevel.PROTECTED)
   @VisibleForTesting
@@ -97,19 +101,24 @@ public class PgTransformationCache implements TransformationCache {
   @Override
   public Set<Fact> findAll(Collection<Key> keys) {
 
-    NamedParameterJdbcTemplate named = new NamedParameterJdbcTemplate(jdbcTemplate);
-    SqlParameterSource parameters =
-        new MapSqlParameterSource("ids", keys.stream().map(Key::id).collect(Collectors.toList()));
     List<Fact> facts =
-        named.query(
-            "SELECT header, payload FROM transformationcache WHERE cache_key IN (:ids)",
-            parameters,
-            ((rs, rowNum) -> {
-              String header = rs.getString("header");
-              String payload = rs.getString("payload");
+        keys.stream().map(buffer::get).filter(Predicates.notNull()).collect(Collectors.toList());
 
-              return Fact.of(header, payload);
-            }));
+    if (facts.size() < keys.size()) {
+      NamedParameterJdbcTemplate named = new NamedParameterJdbcTemplate(jdbcTemplate);
+      SqlParameterSource parameters =
+          new MapSqlParameterSource("ids", keys.stream().map(Key::id).collect(Collectors.toList()));
+      facts.addAll(
+          named.query(
+              "SELECT header, payload FROM transformationcache WHERE cache_key IN (:ids)",
+              parameters,
+              ((rs, rowNum) -> {
+                String header = rs.getString("header");
+                String payload = rs.getString("payload");
+
+                return Fact.of(header, payload);
+              })));
+    }
 
     int hits = facts.size();
     int misses = keys.size() - hits;
@@ -120,24 +129,29 @@ public class PgTransformationCache implements TransformationCache {
     return Sets.newHashSet(facts);
   }
 
-  private void registerAccess(Key cacheKey) {
+  @VisibleForTesting
+  CompletableFuture<Void> registerAccess(Key cacheKey) {
     synchronized (buffer) {
       // important to check before in order not to negate writes
       if (!buffer.containsKey(cacheKey)) buffer.put(cacheKey, null);
     }
-    flushIfNecessary();
+    return flushIfNecessary();
   }
 
-  private void registerWrite(@NonNull TransformationCache.Key key, @NonNull Fact f) {
+  @VisibleForTesting
+  CompletableFuture<Void> registerWrite(@NonNull TransformationCache.Key key, @NonNull Fact f) {
     synchronized (buffer) {
       buffer.put(key, f);
     }
-    flushIfNecessary();
+    return flushIfNecessary();
   }
 
-  private void flushIfNecessary() {
+  @VisibleForTesting
+  CompletableFuture<Void> flushIfNecessary() {
     if (buffer.size() >= maxBufferSize) {
-      CompletableFuture.runAsync(this::flush);
+      return CompletableFuture.runAsync(this::flush);
+    } else {
+      return COMPLETED_FUTURE;
     }
   }
 
@@ -174,7 +188,8 @@ public class PgTransformationCache implements TransformationCache {
     }
   }
 
-  private void insertBufferedTransformations(HashMap<Key, Fact> copy) {
+  @VisibleForTesting
+  void insertBufferedTransformations(HashMap<Key, Fact> copy) {
     List<Object[]> parameters =
         copy.entrySet().stream()
             .filter(e -> e.getValue() != null)
@@ -192,7 +207,8 @@ public class PgTransformationCache implements TransformationCache {
         parameters);
   }
 
-  private void insertBufferedAccesses(HashMap<Key, Fact> copy) {
+  @VisibleForTesting
+  void insertBufferedAccesses(HashMap<Key, Fact> copy) {
     List<String> keys =
         copy.entrySet().stream()
             .filter(e -> e.getValue() == null)
