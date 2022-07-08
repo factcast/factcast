@@ -45,7 +45,6 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -235,24 +234,20 @@ public class PgFactStore extends AbstractFactStore {
           PreparedStatementSetter statementSetter =
               pgQueryBuilder.createStatementSetter(new AtomicLong(lastMatchingSerial));
 
-          try {
-            ResultSetExtractor<Long> rch =
-                new ResultSetExtractor<>() {
-                  @Override
-                  public Long extractData(ResultSet resultSet)
-                      throws SQLException, DataAccessException {
-                    if (!resultSet.next()) {
-                      return 0L;
-                    } else {
-                      return resultSet.getLong(1);
-                    }
+          ResultSetExtractor<Long> rch =
+              new ResultSetExtractor<>() {
+                @Override
+                public Long extractData(ResultSet resultSet)
+                    throws SQLException, DataAccessException {
+                  if (!resultSet.next()) {
+                    return 0L;
+                  } else {
+                    return resultSet.getLong(1);
                   }
-                };
-            long lastSerial = jdbcTemplate.query(stateSQL, statementSetter, rch);
-            return State.of(specs, lastSerial);
-          } catch (EmptyResultDataAccessException lastSerialIs0Then) {
-            return State.of(specs, 0);
-          }
+                }
+              };
+          long lastSerial = jdbcTemplate.query(stateSQL, statementSetter, rch);
+          return State.of(specs, lastSerial);
         });
   }
 

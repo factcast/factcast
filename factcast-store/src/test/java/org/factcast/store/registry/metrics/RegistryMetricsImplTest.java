@@ -15,16 +15,15 @@
  */
 package org.factcast.store.registry.metrics;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
 import java.time.Duration;
-import java.util.function.Supplier;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import java.util.function.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -180,6 +179,13 @@ class RegistryMetricsImplTest {
     uut.count(RegistryMetrics.EVENT.MISSING_TRANSFORMATION_INFO);
 
     verify(counter).increment();
+  }
+
+  @Test
+  void testIncrease() {
+    uut.increase(RegistryMetrics.EVENT.MISSING_TRANSFORMATION_INFO, 17);
+
+    verify(counter).increment(17);
   }
 
   @Test
