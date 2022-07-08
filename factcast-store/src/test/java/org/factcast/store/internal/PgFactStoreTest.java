@@ -236,4 +236,15 @@ class PgFactStoreTest extends AbstractFactStoreTest {
     assertThat(state).isNotEmpty();
     assertThat(state.get()).extracting(State::serialOfLastMatchingFact).isEqualTo(0L);
   }
+
+  @Test
+  void getStateOnEmptyFactTableReturns0() {
+
+    StateToken token = store.stateFor(Lists.newArrayList(FactSpec.ns("foo").type("bar")));
+    assertThat(token).isNotNull();
+
+    Optional<State> state = tokenStore.get(token);
+    assertThat(state).isNotEmpty();
+    assertThat(state.get()).extracting(State::serialOfLastMatchingFact).isEqualTo(0L);
+  }
 }
