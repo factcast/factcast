@@ -20,38 +20,37 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Map;
 import org.assertj.core.util.Maps;
+import org.factcast.script.engine.Argument;
 import org.factcast.script.engine.exception.ScriptEngineException;
 import org.junit.jupiter.api.Test;
 
 class GraalJSEngineTest {
 
-  private GraalJSEngine uut = new GraalJSEngine();
-
   @Test
-  void testWarm_successfullyUsingValidScript() {
+  void testConstructor_successfullyUsingValidScript() {
     String validScript = "var a = 1";
 
-    uut.warm(validScript);
+    GraalJSEngine uut = new GraalJSEngine(validScript);
   }
 
   @Test
-  void testWarm_throwsExceptionUsingBadScript() {
+  void testConstructor_throwsExceptionUsingBadScript() {
     String badScript = "var a = ;";
 
     assertThatThrownBy(
             () -> {
-              uut.warm(badScript);
+              GraalJSEngine uut = new GraalJSEngine(badScript);
             })
         .isInstanceOf(ScriptEngineException.class);
   }
 
   @Test
-  void testInvoke_sideEffectsOnInput() {
+  void testInvoke_inputByReference() {
     String function = "function test(a) { a.key = 'changed' }";
-    Map<String, String> input = Maps.newHashMap("key", "value");
-    uut.warm(function);
+    Map<String, Object> input = Maps.newHashMap("key", "value");
+    GraalJSEngine uut = new GraalJSEngine(function);
 
-    uut.invoke("test", input);
+    uut.invoke("test", Argument.byReference(input));
 
     assertThat(input.get("key").equals("changed"));
   }
@@ -59,7 +58,7 @@ class GraalJSEngineTest {
   @Test
   void testInvoke_throwsExceptionOnInvalidFunctionName() {
     String function = "function test() { return 1 }";
-    uut.warm(function);
+    GraalJSEngine uut = new GraalJSEngine(function);
 
     assertThatThrownBy(
             () -> {
@@ -69,25 +68,13 @@ class GraalJSEngineTest {
   }
 
   @Test
-  void testEval_returnsFromScript() {
-    String function = "function test() { return 1==1 }";
-    uut.warm(function);
+  void testInvoke_returnsFromScript() {
+    String function = "function test() { return 1+1 }";
+    GraalJSEngine uut = new GraalJSEngine(function);
 
-    Object result = uut.eval("test()");
+    Object result = uut.invoke("test");
 
-    assertThat(result).isInstanceOf(Boolean.class);
-    assertThat(result).isEqualTo(true);
-  }
-
-  @Test
-  void testEval_throwsExceptionWhenCodeEvaluationShouldFail() {
-    String function = "function test() { 1 == 1 }";
-    uut.warm(function);
-
-    assertThatThrownBy(
-            () -> {
-              uut.eval("test() should fail");
-            })
-        .isInstanceOf(ScriptEngineException.class);
+    assertThat(result).isInstanceOf(Integer.class);
+    assertThat(result).isEqualTo(2);
   }
 }

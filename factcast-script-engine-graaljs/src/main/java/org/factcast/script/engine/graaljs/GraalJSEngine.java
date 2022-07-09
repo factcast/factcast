@@ -19,8 +19,10 @@ import static org.factcast.script.engine.graaljs.NashornCompatContextBuilder.CTX
 
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
+import java.util.Arrays;
 import javax.script.ScriptException;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.script.engine.Argument;
 import org.factcast.script.engine.Engine;
 import org.factcast.script.engine.exception.ScriptEngineException;
 
@@ -31,18 +33,13 @@ public class GraalJSEngine implements Engine {
 
   private GraalJSScriptEngine engine;
 
-  GraalJSEngine() {
-    // not stated anywhere that engine creation is thread-safe
-    synchronized (ENGINE_CREATION_MUTEX) {
-      this.engine = GraalJSScriptEngine.create(null, CTX);
-    }
-  }
-
-  @Override
-  public Engine warm(String script) throws ScriptEngineException {
+  GraalJSEngine(String script) throws ScriptEngineException {
     try {
-      engine.compile(script).eval();
-      return this;
+      // not stated anywhere that engine creation is thread-safe
+      synchronized (ENGINE_CREATION_MUTEX) {
+        this.engine = GraalJSScriptEngine.create(null, CTX);
+      }
+      this.engine.compile(script).eval();
     } catch (RuntimeException | ScriptException e) {
       log.debug("Exception during engine creation. Escalating.", e);
       throw new ScriptEngineException(e);
@@ -50,7 +47,7 @@ public class GraalJSEngine implements Engine {
   }
 
   @Override
-  public Object invoke(String functionName, Object... input) throws ScriptEngineException {
+  public Object invoke(String functionName, Argument... input) throws ScriptEngineException {
     ClassLoader oldCl = Thread.currentThread().getContextClassLoader();
     Thread.currentThread().setContextClassLoader(Truffle.class.getClassLoader());
     try {
@@ -60,26 +57,11 @@ public class GraalJSEngine implements Engine {
       // jackson seems somehow to access fields of this map which leads to exceptions like
       // mentioned in https://github.com/factcast/factcast/issues/1506
       synchronized (engine) {
-        return engine.invokeFunction(functionName, input);
+        return engine.invokeFunction(
+            functionName, Arrays.stream(input).map(i -> i.get()).toArray());
       }
     } catch (RuntimeException | ScriptException | NoSuchMethodException e) {
       log.debug("Exception during the invocation of '{}'. Escalating.", functionName, e);
-      throw new ScriptEngineException(e);
-    } finally {
-      Thread.currentThread().setContextClassLoader(oldCl);
-    }
-  }
-
-  @Override
-  public Object eval(String script) throws ScriptEngineException {
-    ClassLoader oldCl = Thread.currentThread().getContextClassLoader();
-    Thread.currentThread().setContextClassLoader(Truffle.class.getClassLoader());
-    try {
-      synchronized (engine) {
-        return engine.eval(script);
-      }
-    } catch (RuntimeException | ScriptException e) {
-      log.debug("Exception during the evaluation of '{}'. Escalating.", script, e);
       throw new ScriptEngineException(e);
     } finally {
       Thread.currentThread().setContextClassLoader(oldCl);

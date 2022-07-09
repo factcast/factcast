@@ -22,11 +22,11 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.script.engine.Engine;
-import org.factcast.script.engine.EngineCache;
+import org.factcast.script.engine.EngineFactory;
 import org.factcast.script.engine.exception.ScriptEngineException;
 
 @Slf4j
-public class GraalJSEngineCache implements EngineCache {
+public class GraalJSEngineCache implements EngineFactory {
 
   private static final int ENGINE_CACHE_CAPACITY = 128;
 
@@ -34,12 +34,12 @@ public class GraalJSEngineCache implements EngineCache {
       synchronizedMap(new LRUMap<>(ENGINE_CACHE_CAPACITY));
 
   @Override
-  public Engine get(String script) throws ScriptEngineException {
+  public Engine getOrCreateFor(String script) throws ScriptEngineException {
     return warmEngines.computeIfAbsent(script, this::createAndWarmEngine);
   }
 
   @NonNull
   private Engine createAndWarmEngine(String script) throws ScriptEngineException {
-    return new GraalJSEngine().warm(script);
+    return new GraalJSEngine(script);
   }
 }

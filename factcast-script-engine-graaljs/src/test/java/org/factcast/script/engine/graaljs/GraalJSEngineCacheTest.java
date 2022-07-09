@@ -30,7 +30,7 @@ class GraalJSEngineCacheTest {
   void testGet_createsNewEngineSuccessfully() {
     String validScript = "var a = 1";
 
-    Engine e = uut.get(validScript);
+    Engine e = uut.getOrCreateFor(validScript);
   }
 
   @Test
@@ -39,7 +39,7 @@ class GraalJSEngineCacheTest {
 
     assertThatThrownBy(
             () -> {
-              uut.get(badScript);
+              uut.getOrCreateFor(badScript);
             })
         .isInstanceOf(ScriptEngineException.class);
   }
@@ -48,8 +48,8 @@ class GraalJSEngineCacheTest {
   void testGet_returnsSameEngineFromCache() {
     String validScript = "1 == 1";
 
-    Engine e1 = uut.get(validScript);
-    Engine e2 = uut.get(validScript);
+    Engine e1 = uut.getOrCreateFor(validScript);
+    Engine e2 = uut.getOrCreateFor(validScript);
 
     assertThat(e1 == e2);
   }
@@ -59,8 +59,8 @@ class GraalJSEngineCacheTest {
     String s1 = "1 == 1";
     String s2 = "1 == 2";
 
-    Engine e1 = uut.get(s1);
-    Engine e2 = uut.get(s2);
+    Engine e1 = uut.getOrCreateFor(s1);
+    Engine e2 = uut.getOrCreateFor(s2);
 
     assertThat(e1 != e2);
   }

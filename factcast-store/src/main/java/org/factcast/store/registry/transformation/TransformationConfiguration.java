@@ -20,6 +20,8 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.FactTransformersFactory;
+import org.factcast.script.engine.EngineFactory;
+import org.factcast.script.engine.graaljs.GraalJSEngineCache;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.SchemaRegistry;
 import org.factcast.store.registry.metrics.RegistryMetrics;
@@ -75,8 +77,8 @@ public class TransformationConfiguration {
   }
 
   @Bean
-  public Transformer transformer() {
-    return new GraalJsTransformer();
+  public Transformer transformer(@NonNull EngineFactory engineFactory) {
+    return new GraalJsTransformer(engineFactory);
   }
 
   @Bean
@@ -98,5 +100,10 @@ public class TransformationConfiguration {
   public TransformationCacheCompactor transformationCacheCompactor(
       TransformationCache cache, StoreConfigurationProperties props) {
     return new TransformationCacheCompactor(cache, props.getDeleteTransformationsStaleForDays());
+  }
+
+  @Bean
+  EngineFactory engineFactory() {
+    return new GraalJSEngineCache();
   }
 }

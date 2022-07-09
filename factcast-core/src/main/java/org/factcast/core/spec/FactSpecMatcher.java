@@ -15,6 +15,7 @@
  */
 package org.factcast.core.spec;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -24,7 +25,10 @@ import lombok.Generated;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.factcast.core.Fact;
+import org.factcast.core.util.FactCastJson;
+import org.factcast.script.engine.Argument;
 import org.factcast.script.engine.Engine;
+import org.factcast.script.engine.EngineFactory;
 import org.factcast.script.engine.graaljs.GraalJSEngineCache;
 
 /**
@@ -48,7 +52,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
 
   final Engine scriptEngine;
 
-  private static final GraalJSEngineCache scriptEngineCache = new GraalJSEngineCache();
+  private static final EngineFactory scriptEngineCache = new GraalJSEngineCache();
 
   public FactSpecMatcher(@NonNull FactSpec spec) {
     // opt: prevent method calls by prefetching to final fields.
@@ -116,7 +120,9 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     if (script == null) {
       return true;
     }
-    return (Boolean) scriptEngine.eval("test(" + t.jsonHeader() + "," + t.jsonPayload() + ")");
+    JsonNode headerNode = FactCastJson.readTree(t.jsonHeader());
+    JsonNode payloadNode = FactCastJson.readTree(t.jsonPayload());
+    return (Boolean) scriptEngine.invoke("test", Argument.of(headerNode), Argument.of(payloadNode));
   }
 
   @SneakyThrows
@@ -129,7 +135,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     // TODO: currently only supports language js:
     if ("js".equals(filterScript.languageIdentifier())) {
 
-      Engine cachedEngine = scriptEngineCache.get("var test=" + filterScript.source());
+      Engine cachedEngine = scriptEngineCache.getOrCreateFor("var test=" + filterScript.source());
       return cachedEngine;
     } else {
       // TODO really?

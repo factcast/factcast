@@ -15,10 +15,6 @@
  */
 package org.factcast.store.registry.transformation.chains;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Lists;
 import io.micrometer.core.instrument.Tag;
@@ -26,6 +22,8 @@ import io.micrometer.core.instrument.Tags;
 import java.util.ArrayList;
 import org.factcast.core.subscription.MissingTransformationInformationException;
 import org.factcast.core.util.FactCastJson;
+import org.factcast.script.engine.EngineFactory;
+import org.factcast.script.engine.graaljs.GraalJSEngineCache;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.SchemaRegistry;
 import org.factcast.store.registry.metrics.RegistryMetrics;
@@ -35,6 +33,14 @@ import org.factcast.store.registry.transformation.TransformationKey;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 public class TransformationChainsTest {
   final SchemaRegistry r = mock(SchemaRegistry.class);
 
@@ -43,6 +49,9 @@ public class TransformationChainsTest {
   final TransformationChains uut = new TransformationChains(r, registryMetrics);
 
   final TransformationKey key = TransformationKey.of("ns", "UserCreated");
+
+  final EngineFactory engineFactory = new GraalJSEngineCache();
+  final GraalJsTransformer transformer = new GraalJsTransformer(engineFactory);
 
   @Test
   void testAddingNewArray() throws Exception {
@@ -61,7 +70,7 @@ public class TransformationChainsTest {
     assertThat(chain.transformationCode()).isPresent();
 
     JsonNode input = FactCastJson.readTree("{}");
-    JsonNode actual = new GraalJsTransformer().transform(chain, input);
+    JsonNode actual = transformer.transform(chain, input);
     assertThat(actual.toString()).isEqualTo("{\"arr\":[1,2,3,\"4\"],\"newField\":true}");
   }
 
@@ -87,7 +96,7 @@ public class TransformationChainsTest {
     assertThat(chain.transformationCode()).isPresent();
 
     JsonNode input = FactCastJson.readTree("{}");
-    JsonNode actual = new GraalJsTransformer().transform(chain, input);
+    JsonNode actual = transformer.transform(chain, input);
     assertThat(actual.toString()).isEqualTo("{\"stage2\":true,\"stage3\":true,\"stage4\":true}");
   }
 
@@ -135,7 +144,7 @@ public class TransformationChainsTest {
     assertThat(chain.transformationCode()).isPresent();
 
     JsonNode input = FactCastJson.readTree("{}");
-    JsonNode actual = new GraalJsTransformer().transform(chain, input);
+    JsonNode actual = transformer.transform(chain, input);
     assertThat(actual.toString()).isEqualTo("{\"stage1\":true,\"stage6\":true}");
   }
 
@@ -164,7 +173,7 @@ public class TransformationChainsTest {
     assertThat(chain.transformationCode()).isPresent();
 
     JsonNode input = FactCastJson.readTree("{}");
-    JsonNode actual = new GraalJsTransformer().transform(chain, input);
+    JsonNode actual = transformer.transform(chain, input);
     assertThat(actual.toString())
         .isEqualTo("{\"stage1\":true,\"stage2\":true,\"stage5\":true,\"stage6\":true}");
   }
@@ -205,7 +214,7 @@ public class TransformationChainsTest {
     TransformationChain chain = uut.get(key, 3, 1);
 
     JsonNode input = FactCastJson.readTree("{}");
-    JsonNode actual = new GraalJsTransformer().transform(chain, input);
+    JsonNode actual = transformer.transform(chain, input);
     assertThat(actual.toString()).isEqualTo("{\"stage1\":true}");
   }
 
