@@ -17,19 +17,21 @@ package org.factcast.store.registry.transformation.chains;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.util.FactCastJson;
+import org.factcast.script.engine.Argument;
 import org.factcast.script.engine.Engine;
-import org.factcast.script.engine.EngineCache;
+import org.factcast.script.engine.EngineFactory;
 import org.factcast.script.engine.exception.ScriptEngineException;
-import org.factcast.script.engine.graaljs.GraalJSEngineCache;
 import org.factcast.store.registry.transformation.Transformation;
 
+@RequiredArgsConstructor
 @Slf4j
 public class GraalJsTransformer implements Transformer {
 
-  private static final EngineCache scriptEngineCache = new GraalJSEngineCache();
+  private final EngineFactory scriptEngineCache;
 
   @Override
   public JsonNode transform(Transformation t, JsonNode input) throws TransformationException {
@@ -43,7 +45,7 @@ public class GraalJsTransformer implements Transformer {
 
   private Engine getEngine(String js) {
     try {
-      Engine cachedEngine = scriptEngineCache.get(js);
+      Engine cachedEngine = scriptEngineCache.getOrCreateFor(js);
       return cachedEngine;
     } catch (ScriptEngineException e) {
       log.debug("Exception during engine creation. Escalating.", e);
@@ -57,7 +59,7 @@ public class GraalJsTransformer implements Transformer {
       @SuppressWarnings("unchecked")
       Map<String, Object> jsonAsMap = FactCastJson.convertValue(input, Map.class);
       synchronized (engine) {
-        engine.invoke("transform", jsonAsMap);
+        engine.invoke("transform", Argument.byReference(jsonAsMap));
         return FactCastJson.toJsonNode(jsonAsMap);
       }
     } catch (RuntimeException e) {

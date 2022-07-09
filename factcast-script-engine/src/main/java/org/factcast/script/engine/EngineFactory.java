@@ -17,7 +17,7 @@ package org.factcast.script.engine;
 
 import org.factcast.script.engine.exception.ScriptEngineException;
 
-public interface EngineCache {
+public interface EngineFactory {
 
-  Engine get(String script) throws ScriptEngineException;
+  Engine getOrCreateFor(String script) throws ScriptEngineException;
 }

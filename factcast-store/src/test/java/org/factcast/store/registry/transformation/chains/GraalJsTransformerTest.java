@@ -15,10 +15,6 @@
  */
 package org.factcast.store.registry.transformation.chains;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.when;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
@@ -31,16 +27,21 @@ import java.util.concurrent.ThreadPoolExecutor;
 import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
 import org.factcast.core.subscription.TransformationException;
+import org.factcast.script.engine.graaljs.GraalJSEngineCache;
 import org.factcast.store.registry.transformation.Transformation;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
+
 @ExtendWith(MockitoExtension.class)
 class GraalJsTransformerTest {
 
-  private GraalJsTransformer uut = new GraalJsTransformer();
+  private GraalJsTransformer uut = new GraalJsTransformer(new GraalJSEngineCache());
 
   private ObjectMapper om = new ObjectMapper();
 
