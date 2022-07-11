@@ -16,6 +16,7 @@
 package org.factcast.core.subscription.transformation;
 
 import java.util.*;
+
 import lombok.NonNull;
 
 public class RequestedVersions {
@@ -32,6 +33,6 @@ public class RequestedVersions {
 
   public boolean matches(@NonNull String ns, String type, int version) {
     Set<Integer> set = get(ns, type);
-    return set.isEmpty() || set.contains(0) || set.contains(version);
+    return set.contains(0) || set.contains(version);
   }
 }
