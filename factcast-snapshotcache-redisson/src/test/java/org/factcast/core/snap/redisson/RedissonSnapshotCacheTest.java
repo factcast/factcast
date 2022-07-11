@@ -15,8 +15,11 @@
  */
 package org.factcast.core.snap.redisson;
 
-import java.util.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.*;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.junit.jupiter.api.BeforeAll;
@@ -36,11 +39,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-
-import lombok.NonNull;
-import lombok.SneakyThrows;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ContextConfiguration(classes = {RedissonAutoConfiguration.class, RedisAutoConfiguration.class})
