@@ -15,20 +15,21 @@
  */
 package org.factcast.client.grpc;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeout;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.UUID;
-import java.util.concurrent.TimeoutException;
-import java.util.function.Consumer;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.function.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
@@ -42,10 +43,13 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionClosedException;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -73,6 +77,15 @@ class ResilientGrpcSubscriptionTest {
     when(store.subscribe(any(), observerAC.capture())).thenReturn(uut);
   }
 
+  @SneakyThrows
+  @Test
+  void testClosesOnlyOnce() {
+    uut.close();
+    Mockito.verify(subscription).close();
+    uut.close();
+    Mockito.verifyNoMoreInteractions(subscription);
+  }
+
   @Test
   void testAwaitCompleteDelegatesToSubscription() {
     // needs to return immediately
@@ -93,15 +106,15 @@ class ResilientGrpcSubscriptionTest {
         .thenThrow(TimeoutException.class)
         .then(x -> subscription);
 
-    assertThrows(TimeoutException.class, () -> uut.awaitComplete(51));
+    assertThrows(TimeoutException.class, () -> uut.awaitComplete(551));
 
     assertTimeout(
         Duration.ofMillis(1000),
         () -> {
-          assertThat(uut.awaitComplete(52)).isSameAs(uut);
+          assertThat(uut.awaitComplete(552)).isSameAs(uut);
         });
     // await call was passed
-    verify(subscription).awaitComplete(52);
+    verify(subscription).awaitComplete(552);
   }
 
   @Test
@@ -110,15 +123,15 @@ class ResilientGrpcSubscriptionTest {
         .thenThrow(TimeoutException.class)
         .then(x -> subscription);
 
-    assertThrows(TimeoutException.class, () -> uut.awaitCatchup(51));
+    assertThrows(TimeoutException.class, () -> uut.awaitCatchup(551));
 
     assertTimeout(
         Duration.ofMillis(1000),
         () -> {
-          assertThat(uut.awaitCatchup(52)).isSameAs(uut);
+          assertThat(uut.awaitCatchup(552)).isSameAs(uut);
         });
     // await call was passed
-    verify(subscription).awaitCatchup(52);
+    verify(subscription).awaitCatchup(552);
   }
 
   @Test

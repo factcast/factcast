@@ -15,35 +15,28 @@
  */
 package org.factcast.store.registry.validation;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jsonschema.core.exceptions.ProcessingException;
-import com.github.fge.jsonschema.core.report.ProcessingReport;
-import com.github.fge.jsonschema.main.JsonSchema;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import io.micrometer.core.instrument.Tags;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.*;
 import lombok.RequiredArgsConstructor;
+import org.everit.json.schema.Schema;
+import org.everit.json.schema.ValidationException;
 import org.factcast.core.Fact;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.SchemaRegistry;
-import org.factcast.store.registry.http.ValidationConstants;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.validation.schema.SchemaKey;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 @RequiredArgsConstructor
 public class FactValidator {
 
   private static final List<FactValidationError> VALIDATION_OK = Collections.emptyList();
-
   private final StoreConfigurationProperties props;
-
   private final SchemaRegistry registry;
-
   private final RegistryMetrics registryMetrics;
 
   public List<FactValidationError> validate(Fact fact) {
@@ -55,7 +48,6 @@ public class FactValidator {
           registryMetrics.count(
               RegistryMetrics.EVENT.FACT_VALIDATION_FAILED,
               Tags.of(RegistryMetrics.TAG_IDENTITY_KEY, SchemaKey.from(fact).toString()));
-
           return Lists.newArrayList(
               new FactValidationError(
                   "Fact is not validatable. (usually lacks necessary information like namespace,"
@@ -63,37 +55,19 @@ public class FactValidator {
         }
       }
     }
-
     return VALIDATION_OK;
   }
 
-  private List<FactValidationError> doValidate(Fact fact) {
+  @VisibleForTesting
+  List<FactValidationError> doValidate(Fact fact) {
     SchemaKey key = SchemaKey.from(fact);
-    Optional<JsonSchema> optSchema = registry.get(key);
+    Optional<Schema> optSchema = registry.get(key);
     if (optSchema.isPresent()) {
-
-      JsonSchema jsonSchema = optSchema.get();
-      ProcessingReport report;
+      Schema jsonSchema = optSchema.get();
       try {
-        JsonNode toValidate = ValidationConstants.JACKSON.readTree(fact.jsonPayload());
-        report = jsonSchema.validate(toValidate);
-        if (report.isSuccess()) {
-          return VALIDATION_OK;
-        } else {
-          List<FactValidationError> ret = new LinkedList<>();
-
-          report.forEach(
-              m -> {
-                ret.add(new FactValidationError(m.getLogLevel().toString(), m.getMessage()));
-              });
-
-          registryMetrics.count(
-              RegistryMetrics.EVENT.FACT_VALIDATION_FAILED,
-              Tags.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()));
-
-          return ret;
-        } // validateJson(Node) ends
-      } catch (IOException | ProcessingException e) {
+        JSONObject toValidate = new JSONObject(fact.jsonPayload());
+        return tryValidate(key, jsonSchema, toValidate);
+      } catch (JSONException e) {
         return Lists.newArrayList(
             new FactValidationError("Fact is not parseable. " + e.getMessage()));
       }
@@ -109,6 +83,20 @@ public class FactValidator {
       } else {
         return VALIDATION_OK;
       }
+    }
+  }
+
+  @VisibleForTesting
+  List<FactValidationError> tryValidate(SchemaKey key, Schema jsonSchema, JSONObject toValidate) {
+    try {
+      jsonSchema.validate(toValidate);
+      return VALIDATION_OK;
+    } catch (ValidationException e) {
+      List<String> errors = e.getAllMessages();
+      registryMetrics.count(
+          RegistryMetrics.EVENT.FACT_VALIDATION_FAILED,
+          Tags.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()));
+      return errors.stream().map(FactValidationError::new).collect(Collectors.toList());
     }
   }
 

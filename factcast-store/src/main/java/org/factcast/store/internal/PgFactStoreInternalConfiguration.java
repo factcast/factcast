@@ -19,7 +19,7 @@ import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import javax.sql.DataSource;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +37,7 @@ import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.catchup.fetching.PgFetchingCatchUpFactory;
 import org.factcast.store.internal.catchup.tmppaged.PgTmpPagedCatchUpFactory;
 import org.factcast.store.internal.check.IndexCheck;
+import org.factcast.store.internal.filter.PgBlacklist;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.listen.PgConnectionTester;
 import org.factcast.store.internal.listen.PgListener;
@@ -137,7 +138,8 @@ public class PgFactStoreInternalConfiguration {
       PgCatchupFactory pgCatchupFactory,
       FactTransformersFactory transformerFactory,
       FastForwardTarget target,
-      PgMetrics metrics) {
+      PgMetrics metrics,
+      PgBlacklist blacklist) {
     return new PgSubscriptionFactory(
         jdbcTemplate,
         eventBus,
@@ -146,7 +148,8 @@ public class PgFactStoreInternalConfiguration {
         pgCatchupFactory,
         transformerFactory,
         target,
-        metrics);
+        metrics,
+        blacklist);
   }
 
   @Bean
@@ -216,5 +219,15 @@ public class PgFactStoreInternalConfiguration {
   @Bean
   public IndexCheck indexCheck(JdbcTemplate jdbcTemplate) {
     return new IndexCheck(jdbcTemplate);
+  }
+
+  @Bean
+  public PgBlacklist.Fetcher blacklistFetcher(JdbcTemplate jdbc) {
+    return new PgBlacklist.Fetcher(jdbc);
+  }
+
+  @Bean
+  public PgBlacklist blacklist(EventBus bus, PgBlacklist.Fetcher fetcher) {
+    return new PgBlacklist(bus, fetcher);
   }
 }

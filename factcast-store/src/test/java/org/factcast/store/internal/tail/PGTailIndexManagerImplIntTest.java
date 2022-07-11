@@ -16,20 +16,11 @@
 package org.factcast.store.internal.tail;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.factcast.store.internal.PgConstants.INDEX_NAME_COLUMN;
-import static org.factcast.store.internal.PgConstants.IS_INVALID;
-import static org.factcast.store.internal.PgConstants.IS_VALID;
-import static org.factcast.store.internal.PgConstants.LIST_FACT_INDEXES_WITH_VALIDATION;
-import static org.factcast.store.internal.PgConstants.VALID_COLUMN;
-import static org.factcast.store.internal.PgConstants.tailIndexName;
+import static org.factcast.store.internal.PgConstants.*;
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.*;
 import javax.sql.DataSource;
 import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
@@ -48,9 +39,9 @@ import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ContextConfiguration(classes = {PgTestConfiguration.class})
-@Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
+@Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 class PGTailIndexManagerImplIntTest {
 
   @Autowired FactStore fs;
@@ -167,6 +158,6 @@ class PGTailIndexManagerImplIntTest {
 
   private boolean indexFound(long before) {
     return jdbcTemplate.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION).stream()
-        .anyMatch(m -> m.get(INDEX_NAME_COLUMN).toString().compareTo(tailIndexName(before)) > 0);
+        .anyMatch(m -> m.get(INDEX_NAME_COLUMN).toString().compareTo(tailIndexName(before)) >= 0);
   }
 }

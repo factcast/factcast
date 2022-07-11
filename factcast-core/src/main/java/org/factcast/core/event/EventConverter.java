@@ -15,7 +15,7 @@
  */
 package org.factcast.core.event;
 
-import java.util.UUID;
+import java.util.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
@@ -32,21 +32,17 @@ public class EventConverter {
     return toFact(p, UUID.randomUUID());
   }
 
-  public Fact toFact(@NonNull EventObject p, UUID factId) {
+  public Fact toFact(@NonNull EventObject p, @NonNull UUID factId) {
     FactSpecCoordinates spec = FactSpecCoordinates.from(p.getClass());
 
     Builder b = Fact.builder();
     b.id(factId);
-
     b.ns(spec.ns());
-
     String type = spec.type();
     if (type == null || type.trim().isEmpty()) {
       type = p.getClass().getSimpleName();
     }
-
     b.type(type);
-
     int version = spec.version();
     if (version > 0) // 0 is not allowed on publishing
     {
