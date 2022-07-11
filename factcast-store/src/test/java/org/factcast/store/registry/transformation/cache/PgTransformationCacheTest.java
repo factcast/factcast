@@ -102,6 +102,22 @@ class PgTransformationCacheTest {
           .thenReturn(Collections.singletonList(f));
       assertThat(underTest.find(key).get()).isSameAs(f);
     }
+
+    @Test
+    void registersMiss() {
+      Mockito.when(jdbcTemplate.query(anyString(), any(Object[].class), any(RowMapper.class)))
+          .thenReturn(Collections.emptyList());
+      assertThat(underTest.find(key)).isEmpty();
+      Mockito.verify(registryMetrics).count(RegistryMetrics.EVENT.TRANSFORMATION_CACHE_MISS);
+    }
+
+    @Test
+    void registersHit() {
+      Mockito.when(jdbcTemplate.query(anyString(), any(Object[].class), any(RowMapper.class)))
+          .thenReturn(Collections.singletonList(f));
+      assertThat(underTest.find(key)).isEmpty();
+      Mockito.verify(registryMetrics).count(RegistryMetrics.EVENT.TRANSFORMATION_CACHE_HIT);
+    }
   }
 
   @Nested
