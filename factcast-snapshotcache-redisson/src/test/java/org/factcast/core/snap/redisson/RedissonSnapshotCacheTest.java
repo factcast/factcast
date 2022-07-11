@@ -15,15 +15,15 @@
  */
 package org.factcast.core.snap.redisson;
 
-import static org.assertj.core.api.Assertions.*;
+import java.util.*;
 
-import java.util.UUID;
-import lombok.NonNull;
-import lombok.SneakyThrows;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
@@ -36,6 +36,11 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import lombok.NonNull;
+import lombok.SneakyThrows;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ContextConfiguration(classes = {RedissonAutoConfiguration.class, RedisAutoConfiguration.class})
@@ -128,9 +133,9 @@ class RedissonSnapshotCacheTest {
       Snapshot snap2 = new Snapshot(s2, UUID.randomUUID(), "foo".getBytes(), false);
 
       underTest.setSnapshot(snap1);
-      sleep(10);
+      sleep(2000);
       underTest.setSnapshot(snap2);
-
+      sleep(500); // wait for async op
       {
         // assert all buckets have a ttl
         long ttl1 = redisson.getBucket(underTest.createKeyFor(s1)).remainTimeToLive();
@@ -141,15 +146,17 @@ class RedissonSnapshotCacheTest {
         assertThat(ttl1).isLessThanOrEqualTo(ttl2);
       }
 
-      sleep(500);
+      sleep(2000);
 
       underTest.getSnapshot(s1); // touches it
 
-      sleep(100); // wait fro async op
+      sleep(500); // wait for async op
       {
         long ttl1 = redisson.getBucket(underTest.createKeyFor(s1)).remainTimeToLive();
         long ttl2 = redisson.getBucket(underTest.createKeyFor(s2)).remainTimeToLive();
 
+        assertThat(ttl1).isGreaterThan(7775990000L);
+        assertThat(ttl2).isGreaterThan(7775990000L);
         assertThat(ttl1).isGreaterThan(ttl2);
       }
     }
