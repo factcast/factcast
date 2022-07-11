@@ -16,12 +16,12 @@
 package org.factcast.store.registry.transformation;
 
 import com.google.common.base.Stopwatch;
+import java.time.ZonedDateTime;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.factcast.store.registry.transformation.cache.TransformationCache;
-import org.joda.time.DateTime;
 import org.springframework.scheduling.annotation.Scheduled;
 
 @RequiredArgsConstructor
@@ -41,7 +41,7 @@ public class TransformationCacheCompactor {
     log.debug("Triggering compact on {}", cache.getClass().getSimpleName());
     Stopwatch stopwatch = Stopwatch.createStarted();
     try {
-      cache.compact(DateTime.now().minusDays(days));
+      cache.compact(ZonedDateTime.now().minusDays(days));
     } finally {
       stopwatch.stop();
       log.debug(
