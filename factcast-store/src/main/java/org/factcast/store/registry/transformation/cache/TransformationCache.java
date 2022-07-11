@@ -17,9 +17,11 @@ package org.factcast.store.registry.transformation.cache;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+
+import org.factcast.core.Fact;
+
 import lombok.NonNull;
 import lombok.Value;
-import org.factcast.core.Fact;
 
 public interface TransformationCache {
 
@@ -37,10 +39,6 @@ public interface TransformationCache {
   class Key {
 
     String id;
-
-    public static Key of(@NonNull Fact fact, @NonNull String transformationChainId) {
-      return of(fact.id(), fact.version(), transformationChainId);
-    }
 
     public static Key of(@NonNull UUID id, int version, @NonNull String transformationChainId) {
       return new Key(
