@@ -15,11 +15,9 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.util.*;
 import java.util.concurrent.*;
-import lombok.SneakyThrows;
+
 import org.factcast.core.Fact;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.test.IntegrationTest;
@@ -33,6 +31,10 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import lombok.SneakyThrows;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ContextConfiguration(classes = {PgTestConfiguration.class})
 @ExtendWith(SpringExtension.class)
@@ -56,7 +58,8 @@ class PgTransformationCacheITest extends AbstractTransformationCacheTest {
   void testAddToBatchAfterFind() {
     Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}");
     String chainId = "1-2-3";
-    TransformationCache.Key cacheKey = TransformationCache.Key.of(fact, chainId);
+    TransformationCache.Key cacheKey =
+        TransformationCache.Key.of(fact.id(), fact.version(), chainId);
     uut.put(cacheKey, fact);
 
     uut.find(TransformationCache.Key.of(fact.id(), fact.version(), chainId));
@@ -80,7 +83,7 @@ class PgTransformationCacheITest extends AbstractTransformationCacheTest {
     for (int i = 0; i < maxBufferSize; i++) {
       Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}");
       String chainId = String.valueOf(i);
-      uut.put(TransformationCache.Key.of(fact, chainId), fact);
+      uut.put(TransformationCache.Key.of(fact.id(), fact.version(), chainId), fact);
 
       uut.find(TransformationCache.Key.of(fact.id(), fact.version(), chainId));
     }

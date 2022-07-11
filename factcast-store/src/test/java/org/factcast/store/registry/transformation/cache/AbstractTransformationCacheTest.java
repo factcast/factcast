@@ -15,18 +15,19 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
-
 import java.time.ZonedDateTime;
 import java.util.*;
+
 import org.factcast.core.Fact;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Spy;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
 public abstract class AbstractTransformationCacheTest {
   protected TransformationCache uut;
@@ -54,7 +55,7 @@ public abstract class AbstractTransformationCacheTest {
     Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}");
     String chainId = "1-2-3";
 
-    uut.put(TransformationCache.Key.of(fact, chainId), fact);
+    uut.put(TransformationCache.Key.of(fact.id(), 1, chainId), fact);
 
     Optional<Fact> found = uut.find(TransformationCache.Key.of(fact.id(), fact.version(), chainId));
 
@@ -68,7 +69,7 @@ public abstract class AbstractTransformationCacheTest {
     Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}");
     String chainId = "1-2-3";
 
-    uut.put(TransformationCache.Key.of(fact, chainId), fact);
+    uut.put(TransformationCache.Key.of(fact.id(), 1, chainId), fact);
 
     // clocks aren't synchronized so Im gonna add an hour here :)
     uut.compact(ZonedDateTime.now().plusHours(1));
@@ -80,10 +81,10 @@ public abstract class AbstractTransformationCacheTest {
 
   @Test
   void testRespectsChainId() {
-    Fact f = Fact.builder().ns("name").type("type").version(1).build("{}");
+    Fact fact = Fact.builder().ns("name").type("type").version(1).build("{}");
 
-    uut.put(TransformationCache.Key.of(f, "foo"), f);
-    assertThat(uut.find(TransformationCache.Key.of(f.id(), 1, "xoo"))).isEmpty();
+    uut.put(TransformationCache.Key.of(fact.id(), 1, "foo"), fact);
+    assertThat(uut.find(TransformationCache.Key.of(fact.id(), 1, "xoo"))).isEmpty();
   }
 
   @Test
@@ -95,7 +96,7 @@ public abstract class AbstractTransformationCacheTest {
   void testHappyPath() {
     Fact f = Fact.builder().ns("name").type("type").version(1).build("{}");
 
-    uut.put(TransformationCache.Key.of(f, "foo"), f);
+    uut.put(TransformationCache.Key.of(f.id(), 1, "foo"), f);
     assertThat(uut.find(TransformationCache.Key.of(f.id(), 1, "foo"))).contains(f);
   }
 
@@ -103,7 +104,7 @@ public abstract class AbstractTransformationCacheTest {
   void testRespectsVersion() {
     Fact f = Fact.builder().ns("name").type("type").version(1).build("{}");
 
-    uut.put(TransformationCache.Key.of(f, "foo"), f);
+    uut.put(TransformationCache.Key.of(f.id(), 1, "foo"), f);
     assertThat(uut.find(TransformationCache.Key.of(f.id(), 2, "foo"))).isEmpty();
   }
 }
