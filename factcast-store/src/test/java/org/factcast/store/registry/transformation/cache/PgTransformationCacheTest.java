@@ -17,6 +17,7 @@ package org.factcast.store.registry.transformation.cache;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Lists;
 import java.time.ZonedDateTime;
@@ -44,7 +45,7 @@ class PgTransformationCacheTest {
 
   private static final int MAX_BUFFER_SIZE = 24;
   @Mock private JdbcTemplate jdbcTemplate;
-  RegistryMetrics registryMetrics = new NOPRegistryMetrics();
+  RegistryMetrics registryMetrics = spy(new NOPRegistryMetrics());
 
   @Nested
   class WhenPuting {
@@ -54,7 +55,7 @@ class PgTransformationCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = Mockito.spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 10));
+      underTest = spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 10));
     }
 
     @Test
@@ -85,7 +86,7 @@ class PgTransformationCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = Mockito.spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 10));
+      underTest = spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 10));
     }
 
     @Test
@@ -115,7 +116,7 @@ class PgTransformationCacheTest {
     void registersHit() {
       Mockito.when(jdbcTemplate.query(anyString(), any(Object[].class), any(RowMapper.class)))
           .thenReturn(Collections.singletonList(f));
-      assertThat(underTest.find(key)).isEmpty();
+      assertThat(underTest.find(key)).isNotEmpty();
       Mockito.verify(registryMetrics).count(RegistryMetrics.EVENT.TRANSFORMATION_CACHE_HIT);
     }
   }
@@ -130,7 +131,7 @@ class PgTransformationCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = Mockito.spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 10));
+      underTest = spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 10));
     }
 
     @Test
@@ -152,7 +153,7 @@ class PgTransformationCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = Mockito.spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 10));
+      underTest = spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 10));
     }
 
     @Test
@@ -201,7 +202,7 @@ class PgTransformationCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = Mockito.spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 2));
+      underTest = spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 2));
     }
 
     @SneakyThrows
@@ -223,7 +224,7 @@ class PgTransformationCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = Mockito.spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 2));
+      underTest = spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 2));
     }
 
     @Test
@@ -247,7 +248,7 @@ class PgTransformationCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = Mockito.spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 10));
+      underTest = spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 10));
     }
 
     @Test
@@ -265,6 +266,15 @@ class PgTransformationCacheTest {
       underTest.flush();
       assertThat(underTest.buffer()).isEmpty();
     }
+
+    @Test
+    void logsException() {
+      underTest.registerAccess(key);
+      when(jdbcTemplate.batchUpdate(anyString(), any(List.class)))
+          .thenThrow(IllegalArgumentException.class);
+      // TODO use logcaptor after merge with #2075
+      underTest.flush();
+    }
   }
 
   @Nested
@@ -277,7 +287,7 @@ class PgTransformationCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = Mockito.spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 10));
+      underTest = spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 10));
     }
 
     @Test
@@ -311,7 +321,7 @@ class PgTransformationCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = Mockito.spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 10));
+      underTest = spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 10));
     }
 
     @Test

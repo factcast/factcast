@@ -16,7 +16,6 @@
 package org.factcast.store.registry.transformation.cache;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Predicates;
 import com.google.common.collect.Sets;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -49,7 +48,7 @@ public class PgTransformationCache implements TransformationCache {
 
   @Getter(AccessLevel.PROTECTED)
   @VisibleForTesting
-  /** entry of null means read, entry of non-null means write */
+  /* entry of null means read, entry of non-null means write */
   private final Map<Key, Fact> buffer = Collections.synchronizedMap(new HashMap<>());
 
   private int maxBufferSize = 1000;
@@ -102,7 +101,7 @@ public class PgTransformationCache implements TransformationCache {
   public Set<Fact> findAll(Collection<Key> keys) {
 
     List<Fact> facts =
-        keys.stream().map(buffer::get).filter(Predicates.notNull()).collect(Collectors.toList());
+        keys.stream().map(buffer::get).filter(Objects::nonNull).collect(Collectors.toList());
 
     if (facts.size() < keys.size()) {
       NamedParameterJdbcTemplate named = new NamedParameterJdbcTemplate(jdbcTemplate);
@@ -161,11 +160,10 @@ public class PgTransformationCache implements TransformationCache {
 
     registryMetrics.timed(
         OP.COMPACT_TRANSFORMATION_CACHE,
-        () -> {
-          jdbcTemplate.update(
-              "DELETE FROM transformationcache WHERE last_access < ?",
-              new Date(thresholdDate.toInstant().toEpochMilli()));
-        });
+        () ->
+            jdbcTemplate.update(
+                "DELETE FROM transformationcache WHERE last_access < ?",
+                new Date(thresholdDate.toInstant().toEpochMilli())));
   }
 
   @Scheduled(fixedRate = 10, timeUnit = TimeUnit.MINUTES)
@@ -180,8 +178,8 @@ public class PgTransformationCache implements TransformationCache {
         insertBufferedTransformations(copy);
         insertBufferedAccesses(copy);
 
-      } catch (RuntimeException e) {
-        log.warn(
+      } catch (Exception e) {
+        log.error(
             "Could not complete batch update of transformations on transformation cache. Error: {}",
             e.getMessage());
       }
