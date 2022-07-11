@@ -16,7 +16,6 @@
 package org.factcast.core.subscription.transformation;
 
 import java.util.*;
-
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
