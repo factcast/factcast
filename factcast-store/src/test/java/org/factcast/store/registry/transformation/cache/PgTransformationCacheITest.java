@@ -15,9 +15,11 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.*;
 import java.util.concurrent.*;
-
+import lombok.SneakyThrows;
 import org.factcast.core.Fact;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.test.IntegrationTest;
@@ -31,10 +33,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-
-import lombok.SneakyThrows;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @ContextConfiguration(classes = {PgTestConfiguration.class})
 @ExtendWith(SpringExtension.class)
