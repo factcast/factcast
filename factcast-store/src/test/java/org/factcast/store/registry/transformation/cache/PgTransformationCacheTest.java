@@ -269,6 +269,12 @@ class PgTransformationCacheTest {
     }
 
     @Test
+    void flushOnEmptyBuffer() {
+      underTest.flush();
+      verifyNoInteractions(jdbcTemplate);
+    }
+
+    @Test
     void afterAcess() {
       underTest.registerAccess(key);
       assertThat(underTest.buffer()).isNotEmpty();
