@@ -143,6 +143,15 @@ class PgTransformationCacheTest {
           .hasSize(2)
           .containsExactlyInAnyOrder(f, f2);
     }
+
+    @Test
+    void findsAllInCache() {
+      Mockito.when(jdbcTemplate.query(any(PreparedStatementCreator.class), any(RowMapper.class)))
+          .thenReturn(Lists.newArrayList(f, f2));
+      assertThat(underTest.findAll(Lists.newArrayList(key, key2)))
+          .hasSize(2)
+          .containsExactlyInAnyOrder(f, f2);
+    }
   }
 
   @Nested
