@@ -80,12 +80,7 @@ public class PgTransformationCache implements TransformationCache {
         jdbcTemplate.query(
             "SELECT header, payload FROM transformationcache WHERE cache_key = ?",
             new Object[] {key.id()},
-            ((rs, rowNum) -> {
-              String header = rs.getString("header");
-              String payload = rs.getString("payload");
-
-              return Fact.of(header, payload);
-            }));
+            new FactRowMapper());
 
     if (facts.isEmpty()) {
       registryMetrics.count(EVENT.TRANSFORMATION_CACHE_MISS);
@@ -111,12 +106,7 @@ public class PgTransformationCache implements TransformationCache {
           named.query(
               "SELECT header, payload FROM transformationcache WHERE cache_key IN (:ids)",
               parameters,
-              ((rs, rowNum) -> {
-                String header = rs.getString("header");
-                String payload = rs.getString("payload");
-
-                return Fact.of(header, payload);
-              })));
+              new FactRowMapper()));
     }
 
     int hits = facts.size();
