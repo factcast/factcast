@@ -188,11 +188,13 @@ public class PgTransformationCache implements TransformationCache {
                     })
             .collect(Collectors.toList());
 
-    // dup-keys can be ignored, in case another node just did the same
-    jdbcTemplate.batchUpdate(
-        "INSERT INTO transformationcache (cache_key, header, payload) VALUES (?, ? :: JSONB, ? ::"
-            + " JSONB) ON CONFLICT(cache_key) DO NOTHING",
-        parameters);
+    if (!parameters.isEmpty()) {
+      // dup-keys can be ignored, in case another node just did the same
+      jdbcTemplate.batchUpdate(
+          "INSERT INTO transformationcache (cache_key, header, payload) VALUES (?, ? :: JSONB, ? ::"
+              + " JSONB) ON CONFLICT(cache_key) DO NOTHING",
+          parameters);
+    }
   }
 
   @VisibleForTesting
@@ -203,9 +205,11 @@ public class PgTransformationCache implements TransformationCache {
             .map(p -> p.getKey().id())
             .collect(Collectors.toList());
 
-    NamedParameterJdbcTemplate named = new NamedParameterJdbcTemplate(jdbcTemplate);
-    SqlParameterSource parameters = new MapSqlParameterSource("ids", keys);
-    named.update(
-        "UPDATE transformationcache SET last_access=now() WHERE cache_key IN (:ids)", parameters);
+    if (!keys.isEmpty()) {
+      NamedParameterJdbcTemplate named = new NamedParameterJdbcTemplate(jdbcTemplate);
+      SqlParameterSource parameters = new MapSqlParameterSource("ids", keys);
+      named.update(
+          "UPDATE transformationcache SET last_access=now() WHERE cache_key IN (:ids)", parameters);
+    }
   }
 }
