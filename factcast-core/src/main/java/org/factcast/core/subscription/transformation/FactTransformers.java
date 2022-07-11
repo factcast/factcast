@@ -16,15 +16,25 @@
 package org.factcast.core.subscription.transformation;
 
 import java.util.*;
+
 import javax.annotation.Nullable;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionRequest;
 
+import com.google.common.annotations.VisibleForTesting;
+
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+
 @RequiredArgsConstructor
 public class FactTransformers {
-  @NonNull private final RequestedVersions requested;
+  @Getter(AccessLevel.PROTECTED)
+  @VisibleForTesting
+  @NonNull
+  private final RequestedVersions requested;
 
   @Nullable
   public TransformationRequest prepareTransformation(@NonNull Fact e) {
@@ -35,19 +45,26 @@ public class FactTransformers {
     if (type == null || requested.matches(ns, type, version)) {
       return null;
     } else {
-      OptionalInt max = requested.get(ns, type).stream().mapToInt(v -> v).max();
-      int targetVersion =
-          max.orElseThrow(
-              () -> new IllegalArgumentException("No requested Version !? This must not happen."));
 
-      return new TransformationRequest(e, targetVersion);
+      Set<Integer> versions = requested.get(ns, type);
+      if (versions.isEmpty()) return null;
+      else {
+        int max =
+            versions.stream()
+                .mapToInt(v -> v)
+                .max()
+                .orElseThrow(
+                    () ->
+                        new IllegalArgumentException(
+                            "No requested Version !? This must not happen."));
+
+        return new TransformationRequest(e, max);
+      }
     }
   }
 
   public static FactTransformers createFor(SubscriptionRequest sr) {
-
     RequestedVersions requestedVersions = new RequestedVersions();
-
     sr.specs()
         .forEach(
             s -> {

@@ -16,6 +16,7 @@
 package org.factcast.core.subscription.transformation;
 
 import java.util.*;
+
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -49,8 +50,8 @@ class RequestedVersionsTest {
   }
 
   @Test
-  void testDontCare() {
-    Assertions.assertThat(uut.matches("foo", "bar", 4)).isTrue();
+  void testDontKnow() {
+    Assertions.assertThat(uut.matches("foo", "bar", 4)).isFalse();
   }
 
   @Test
