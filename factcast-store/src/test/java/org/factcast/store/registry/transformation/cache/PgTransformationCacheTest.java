@@ -285,6 +285,7 @@ class PgTransformationCacheTest {
     @Test
     void logsException() {
       underTest.registerAccess(key);
+      underTest.registerWrite(key, f);
       when(jdbcTemplate.batchUpdate(anyString(), any(List.class)))
           .thenThrow(IllegalArgumentException.class);
       // TODO use logcaptor after merge with #2075
