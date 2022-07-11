@@ -53,15 +53,12 @@ public class GraalJsTransformer implements Transformer {
     }
   }
 
-  @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
   private JsonNode runJSTransformation(JsonNode input, Engine engine) {
     try {
       @SuppressWarnings("unchecked")
       Map<String, Object> jsonAsMap = FactCastJson.convertValue(input, Map.class);
-      synchronized (engine) {
-        engine.invoke("transform", Argument.byReference(jsonAsMap));
-        return FactCastJson.toJsonNode(jsonAsMap);
-      }
+      engine.invoke("transform", Argument.byReference(jsonAsMap));
+      return FactCastJson.toJsonNode(jsonAsMap);
     } catch (RuntimeException e) {
       // debug level, because it is escalated.
       log.debug("Exception during transformation. Escalating.", e);
