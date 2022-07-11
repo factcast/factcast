@@ -15,24 +15,20 @@
  */
 package org.factcast.store.registry.transformation.chains;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.*;
+import java.util.concurrent.*;
 import lombok.SneakyThrows;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.registry.transformation.Transformation;
 import org.factcast.test.Slf4jHelper;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import slf4jtest.TestLogger;
@@ -40,9 +36,9 @@ import slf4jtest.TestLogger;
 @ExtendWith(MockitoExtension.class)
 class GraalJsTransformerTest {
 
-  private GraalJsTransformer uut = new GraalJsTransformer();
+  private final GraalJsTransformer uut = new GraalJsTransformer();
 
-  private ObjectMapper om = new ObjectMapper();
+  private final ObjectMapper om = new ObjectMapper();
 
   @Mock Transformation transformation;
 
