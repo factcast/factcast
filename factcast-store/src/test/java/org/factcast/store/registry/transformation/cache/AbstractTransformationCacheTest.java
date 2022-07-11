@@ -15,19 +15,18 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
+
 import java.time.ZonedDateTime;
 import java.util.*;
-
 import org.factcast.core.Fact;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Spy;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
 
 public abstract class AbstractTransformationCacheTest {
   protected TransformationCache uut;
