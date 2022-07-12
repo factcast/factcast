@@ -16,6 +16,7 @@
 package org.factcast.store.registry.transformation.chains;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import es.usc.citius.hipster.algorithm.AStar;
 import es.usc.citius.hipster.algorithm.Algorithm;
@@ -52,8 +53,7 @@ public class TransformationChains implements TransformationStoreListener {
   @Value
   static class VersionPath {
     int fromVersion;
-
-    Set<Integer> toVersions;
+    @NonNull Set<Integer> toVersions;
   }
 
   public TransformationChains(SchemaRegistry r, RegistryMetrics registryMetrics) {
@@ -62,8 +62,10 @@ public class TransformationChains implements TransformationStoreListener {
     r.register(this);
   }
 
-  public TransformationChain get(TransformationKey key, int from, Set<Integer> to)
+  public TransformationChain get(@NonNull TransformationKey key, int from, @NonNull Set<Integer> to)
       throws MissingTransformationInformationException {
+
+    Preconditions.checkState(!to.isEmpty());
 
     Map<VersionPath, TransformationChain> chainsPerKey;
 
@@ -82,8 +84,9 @@ public class TransformationChains implements TransformationStoreListener {
   }
 
   @VisibleForTesting
-  TransformationChain build(TransformationKey key, int from, Set<Integer> to)
+  TransformationChain build(@NonNull TransformationKey key, int from, @NonNull Set<Integer> to)
       throws MissingTransformationInformationException {
+    Preconditions.checkState(!to.isEmpty());
 
     HipsterDirectedGraph<Integer, Edge> g = createGraph(key, from, to);
     AStar<Edge, Integer, Double, WeightedNode<Edge, Integer, Double>> problem =
@@ -125,7 +128,7 @@ public class TransformationChains implements TransformationStoreListener {
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
-  private String toString(List<Edge> finalPath) {
+  private String toString(@NonNull List<Edge> finalPath) {
     if (finalPath.isEmpty()) return "[]";
     else
       return "["
@@ -136,7 +139,9 @@ public class TransformationChains implements TransformationStoreListener {
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @VisibleForTesting
-  List<Edge> pickFinalPath(List<List<Edge>> possiblePaths) {
+  List<Edge> pickFinalPath(@NonNull List<List<Edge>> possiblePaths) {
+    Preconditions.checkState(!possiblePaths.isEmpty());
+
     int minSize = possiblePaths.stream().mapToInt(List::size).min().getAsInt();
     return possiblePaths.stream()
         // just take the shortest
@@ -148,13 +153,16 @@ public class TransformationChains implements TransformationStoreListener {
 
   @NonNull
   private AStar<Edge, Integer, Double, WeightedNode<Edge, Integer, Double>> createProblem(
-      int from, HipsterDirectedGraph<Integer, Edge> g) {
+      int from, @NonNull HipsterDirectedGraph<Integer, Edge> directedGraph) {
     return Hipster.createDijkstra(
-        GraphSearchProblem.startingFrom(from).in(g).extractCostFromEdges(e -> BASE_COST).build());
+        GraphSearchProblem.startingFrom(from)
+            .in(directedGraph)
+            .extractCostFromEdges(e -> BASE_COST)
+            .build());
   }
 
   private HipsterDirectedGraph<Integer, Edge> createGraph(
-      TransformationKey key, int from, Set<Integer> to) {
+      @NonNull TransformationKey key, int from, @NonNull Set<Integer> to) {
     GraphBuilder<Integer, Edge> builder = GraphBuilder.create();
     List<Transformation> all = registry.get(key);
     if (all.isEmpty()) {
@@ -176,12 +184,12 @@ public class TransformationChains implements TransformationStoreListener {
     return g;
   }
 
-  private static <N, E> List<E> map(List<N> list, Function<N, E> f) {
+  private static <N, E> List<E> map(@NonNull List<N> list, @NonNull Function<N, E> f) {
     return list.stream().map(f).collect(Collectors.toList());
   }
 
   @Override
-  public void notifyFor(TransformationKey key) {
+  public void notifyFor(@NonNull TransformationKey key) {
     // invalidate cache for key
     cache.remove(key);
   }
