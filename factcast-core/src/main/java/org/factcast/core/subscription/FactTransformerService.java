@@ -15,10 +15,11 @@
  */
 package org.factcast.core.subscription;
 
+import java.util.*;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 
 public interface FactTransformerService {
-  Fact transformIfNecessary(@NonNull Fact original, int targetVersion)
+  Fact transformIfNecessary(@NonNull Fact original, @NonNull Set<Integer> targetVersions)
       throws TransformationException;
 }

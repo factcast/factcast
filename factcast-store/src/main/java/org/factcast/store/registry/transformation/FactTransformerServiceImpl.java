@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
-import java.util.Optional;
+import java.util.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
@@ -45,26 +45,27 @@ public class FactTransformerServiceImpl implements FactTransformerService {
   @NonNull private final RegistryMetrics registryMetrics;
 
   @Override
-  public Fact transformIfNecessary(Fact e, int targetVersion) throws TransformationException {
+  public Fact transformIfNecessary(Fact e, Set<Integer> targetVersions)
+      throws TransformationException {
 
     int sourceVersion = e.version();
-    if (sourceVersion == targetVersion || targetVersion == 0) {
+    if (targetVersions.contains(sourceVersion) || targetVersions.contains(0)) {
       return e;
     }
 
     TransformationKey key = TransformationKey.of(e.ns(), e.type());
-    TransformationChain chain = chains.get(key, sourceVersion, targetVersion);
+    TransformationChain chain = chains.get(key, sourceVersion, targetVersions);
 
     String chainId = chain.id();
-
-    Optional<Fact> cached = cache.find(e.id(), targetVersion, chainId);
+    // find does not need the target version param
+    Optional<Fact> cached = cache.find(e.id(), chain.toVersion(), chainId);
     if (cached.isPresent()) {
       return cached.get();
     } else {
       try {
         JsonNode input = FactCastJson.readTree(e.jsonPayload());
         JsonNode header = FactCastJson.readTree(e.jsonHeader());
-        ((ObjectNode) header).put("version", targetVersion);
+        ((ObjectNode) header).put("version", chain.toVersion());
         JsonNode transformedPayload = trans.transform(chain, input);
         Fact transformed = Fact.of(header, transformedPayload);
         // can be optimized by passing jsonnode?
@@ -75,7 +76,7 @@ public class FactTransformerServiceImpl implements FactTransformerService {
             RegistryMetrics.EVENT.TRANSFORMATION_FAILED,
             Tags.of(
                 Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()),
-                Tag.of("version", String.valueOf(targetVersion))));
+                Tag.of("version", String.valueOf(targetVersions))));
 
         throw new TransformationException(e1);
       }
