@@ -118,6 +118,7 @@ public class FactTransformersImplTest {
     when(chains.get(eq(TransformationKey.from(probe)), eq(probe.version()), any()))
         .thenReturn(chain);
     when(chain.id()).thenReturn(chainId);
+    when(chain.toVersion()).thenReturn(33);
     Map<String, Object> propertyMap = new HashMap<>();
     JsonNode transformedJsonNode = FactCastJson.toJsonNode(propertyMap);
     when(trans.transform(any(), eq(FactCastJson.readTree(probe.jsonPayload()))))
