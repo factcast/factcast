@@ -15,6 +15,7 @@
  */
 package org.factcast.store.registry.transformation.chains;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
 import es.usc.citius.hipster.algorithm.AStar;
 import es.usc.citius.hipster.algorithm.Algorithm;
@@ -25,11 +26,10 @@ import es.usc.citius.hipster.graph.HipsterDirectedGraph;
 import es.usc.citius.hipster.model.impl.WeightedNode;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.*;
+import java.util.function.*;
+import java.util.stream.*;
+import lombok.NonNull;
 import lombok.Value;
 import org.factcast.core.subscription.MissingTransformationInformationException;
 import org.factcast.store.registry.SchemaRegistry;
@@ -40,7 +40,7 @@ import org.factcast.store.registry.transformation.TransformationStoreListener;
 
 public class TransformationChains implements TransformationStoreListener {
 
-  private static final double BASE_COST = 1_000_000d;
+  private static final double BASE_COST = 1d;
 
   private final SchemaRegistry registry;
 
@@ -53,7 +53,7 @@ public class TransformationChains implements TransformationStoreListener {
   static class VersionPath {
     int fromVersion;
 
-    int toVersion;
+    Set<Integer> toVersions;
   }
 
   public TransformationChains(SchemaRegistry r, RegistryMetrics registryMetrics) {
@@ -62,7 +62,7 @@ public class TransformationChains implements TransformationStoreListener {
     r.register(this);
   }
 
-  public TransformationChain get(TransformationKey key, int from, int to)
+  public TransformationChain get(TransformationKey key, int from, Set<Integer> to)
       throws MissingTransformationInformationException {
 
     Map<VersionPath, TransformationChain> chainsPerKey;
@@ -81,9 +81,80 @@ public class TransformationChains implements TransformationStoreListener {
     }
   }
 
-  private TransformationChain build(TransformationKey key, int from, int to)
+  @VisibleForTesting
+  TransformationChain build(TransformationKey key, int from, Set<Integer> to)
       throws MissingTransformationInformationException {
 
+    HipsterDirectedGraph<Integer, Edge> g = createGraph(key, from, to);
+    AStar<Edge, Integer, Double, WeightedNode<Edge, Integer, Double>> problem =
+        createProblem(from, g);
+
+    // not sure about using a set here... better safe than sorry
+    List<List<Edge>> possiblePaths = new ArrayList<>();
+    to.forEach(
+        targetVersion -> {
+          Algorithm<Edge, Integer, WeightedNode<Edge, Integer, Double>>.SearchResult result =
+              problem.search(targetVersion);
+          if (result != null) {
+            WeightedNode<Edge, Integer, Double> goalNode = result.getGoalNode();
+            List<Edge> path = Algorithm.recoverActionPath(goalNode);
+            if (!path.isEmpty()
+                && to.contains(Iterables.getLast(path).toVersion())
+                && Iterables.getFirst(path, null).fromVersion() == from) {
+              possiblePaths.add(path);
+            }
+          }
+        });
+
+    if (possiblePaths.isEmpty()) {
+      registryMetrics.count(
+          RegistryMetrics.EVENT.MISSING_TRANSFORMATION_INFO,
+          Tags.of(
+              Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()),
+              Tag.of("from", String.valueOf(from)),
+              Tag.of("to", String.valueOf(to))));
+
+      throw new MissingTransformationInformationException(
+          "Cannot reach any version in " + to + " from version " + from + " for " + key);
+    } else {
+      // choose shortest path with bias to later versions
+      List<Edge> finalPath = pickFinalPath(possiblePaths);
+      List<Transformation> steps = map(finalPath, Edge::transformation);
+      return TransformationChain.of(key, steps, toString(finalPath));
+    }
+  }
+
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
+  private String toString(List<Edge> finalPath) {
+    if (finalPath.isEmpty()) return "[]";
+    else
+      return "["
+          + finalPath.stream().findFirst().map(Edge::fromVersion).get()
+          + finalPath.stream().map(Edge::toVersion).map(s -> ", " + s).collect(Collectors.joining())
+          + "]";
+  }
+
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
+  @VisibleForTesting
+  List<Edge> pickFinalPath(List<List<Edge>> possiblePaths) {
+    int minSize = possiblePaths.stream().mapToInt(List::size).min().getAsInt();
+    return possiblePaths.stream()
+        // just take the shortest
+        .filter(l -> l.size() == minSize)
+        // and pick the one with the highes sum of node versions
+        .max(Comparator.comparingInt(a -> a.stream().mapToInt(Edge::toVersion).sum()))
+        .get();
+  }
+
+  @NonNull
+  private AStar<Edge, Integer, Double, WeightedNode<Edge, Integer, Double>> createProblem(
+      int from, HipsterDirectedGraph<Integer, Edge> g) {
+    return Hipster.createDijkstra(
+        GraphSearchProblem.startingFrom(from).in(g).extractCostFromEdges(e -> BASE_COST).build());
+  }
+
+  private HipsterDirectedGraph<Integer, Edge> createGraph(
+      TransformationKey key, int from, Set<Integer> to) {
     GraphBuilder<Integer, Edge> builder = GraphBuilder.create();
     List<Transformation> all = registry.get(key);
     if (all.isEmpty()) {
@@ -102,41 +173,7 @@ public class TransformationChains implements TransformationStoreListener {
       builder.connect(t.fromVersion()).to(t.toVersion()).withEdge(Edge.from(t));
     }
     HipsterDirectedGraph<Integer, Edge> g = builder.createDirectedGraph();
-
-    // create problem
-    AStar<Edge, Integer, Double, WeightedNode<Edge, Integer, Double>> problem =
-        Hipster.createDijkstra(
-            GraphSearchProblem.startingFrom(from)
-                .in(g)
-                .extractCostFromEdges(
-                    e -> e.fromVersion() * (e.toVersion() - e.fromVersion()) + BASE_COST)
-                .build());
-
-    // run search
-    Algorithm<Edge, Integer, WeightedNode<Edge, Integer, Double>>.SearchResult r =
-        problem.search(to);
-
-    WeightedNode<Edge, Integer, Double> goalNode = r.getGoalNode();
-    List<Edge> path = Algorithm.recoverActionPath(goalNode);
-
-    if (path.isEmpty()
-        || Iterables.getLast(path).toVersion() != to
-        || Iterables.getFirst(path, null).fromVersion() != from) {
-      registryMetrics.count(
-          RegistryMetrics.EVENT.MISSING_TRANSFORMATION_INFO,
-          Tags.of(
-              Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()),
-              Tag.of("from", String.valueOf(from)),
-              Tag.of("to", String.valueOf(to))));
-
-      throw new MissingTransformationInformationException(
-          "Cannot reach version " + to + " from version " + from + " for " + key);
-    }
-    List<Transformation> steps = map(path, Edge::transformation);
-    return TransformationChain.of(key, steps, r.getOptimalPaths().get(0).toString());
-
-    // sad: in retrospective, Hipster might not have been the greatest
-    // choice due to lack of proper Generics.
+    return g;
   }
 
   private static <N, E> List<E> map(List<N> list, Function<N, E> f) {
