@@ -15,24 +15,9 @@
  */
 package org.factcast.store.registry.transformation.chains;
 
-import java.util.*;
-import java.util.function.*;
-import java.util.stream.*;
-
-import org.factcast.core.subscription.MissingTransformationInformationException;
-import org.factcast.store.registry.SchemaRegistry;
-import org.factcast.store.registry.metrics.RegistryMetrics;
-import org.factcast.store.registry.transformation.Transformation;
-import org.factcast.store.registry.transformation.TransformationKey;
-import org.factcast.store.registry.transformation.TransformationStoreListener;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
-
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-
 import es.usc.citius.hipster.algorithm.AStar;
 import es.usc.citius.hipster.algorithm.Algorithm;
 import es.usc.citius.hipster.algorithm.Hipster;
@@ -40,8 +25,19 @@ import es.usc.citius.hipster.graph.GraphBuilder;
 import es.usc.citius.hipster.graph.GraphSearchProblem;
 import es.usc.citius.hipster.graph.HipsterDirectedGraph;
 import es.usc.citius.hipster.model.impl.WeightedNode;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import java.util.*;
+import java.util.function.*;
+import java.util.stream.*;
 import lombok.NonNull;
 import lombok.Value;
+import org.factcast.core.subscription.MissingTransformationInformationException;
+import org.factcast.store.registry.SchemaRegistry;
+import org.factcast.store.registry.metrics.RegistryMetrics;
+import org.factcast.store.registry.transformation.Transformation;
+import org.factcast.store.registry.transformation.TransformationKey;
+import org.factcast.store.registry.transformation.TransformationStoreListener;
 
 public class TransformationChains implements TransformationStoreListener {
 
