@@ -15,6 +15,9 @@
  */
 package org.factcast.store.internal;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.PgFactStoreConfiguration;
 import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.script.graaljs.GraalJSEngineFactory;
@@ -30,11 +33,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.testcontainers.containers.PostgreSQLContainer;
-
-import io.micrometer.core.instrument.MeterRegistry;
-
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 
 @SuppressWarnings("resource")
 @Configuration
