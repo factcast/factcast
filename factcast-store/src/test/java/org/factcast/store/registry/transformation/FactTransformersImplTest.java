@@ -16,6 +16,7 @@
 package org.factcast.store.registry.transformation;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -25,6 +26,7 @@ import java.util.*;
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.factcast.core.subscription.FactTransformerService;
+import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.internal.RequestedVersions;
 import org.factcast.store.registry.NOPRegistryMetrics;
@@ -137,5 +139,38 @@ public class FactTransformersImplTest {
 
     verify(registryMetrics)
         .timed(eq(RegistryMetrics.OP.TRANSFORMATION), any(), any(SupplierWithException.class));
+  }
+
+  @Test
+  void registersTransformationFailure() throws Exception {
+    String chainId = "chainId";
+    Fact probe = new TestFact().version(1);
+    String ns = probe.ns();
+    String type = probe.type();
+    RequestedVersions requestedVersions = new RequestedVersions();
+    requestedVersions.add(ns, type, 33);
+
+    when(chains.get(eq(TransformationKey.from(probe)), eq(probe.version()), any()))
+        .thenReturn(chain);
+    when(chain.id()).thenReturn(chainId);
+    when(chain.toVersion()).thenReturn(33);
+    Map<String, Object> propertyMap = new HashMap<>();
+    JsonNode transformedJsonNode = FactCastJson.toJsonNode(propertyMap);
+    when(trans.transform(any(), eq(FactCastJson.readTree(probe.jsonPayload()))))
+        .thenThrow(TransformationException.class);
+
+    FactTransformerService service =
+        new FactTransformerServiceImpl(chains, trans, cache, registryMetrics);
+
+    FactTransformersImpl uut =
+        new FactTransformersImpl(requestedVersions, service, registryMetrics);
+
+    assertThatThrownBy(
+            () -> {
+              uut.transformIfNecessary(probe);
+            })
+        .isInstanceOf(TransformationException.class);
+
+    verify(registryMetrics).count(eq(RegistryMetrics.EVENT.TRANSFORMATION_FAILED), any());
   }
 }

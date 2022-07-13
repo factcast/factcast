@@ -71,14 +71,16 @@ public class FactTransformerServiceImpl implements FactTransformerService {
         // can be optimized by passing jsonnode?
         cache.put(transformed, chainId);
         return transformed;
-      } catch (JsonProcessingException e1) {
+      } catch (TransformationException | JsonProcessingException e1) {
         registryMetrics.count(
             RegistryMetrics.EVENT.TRANSFORMATION_FAILED,
             Tags.of(
                 Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()),
                 Tag.of("version", String.valueOf(targetVersions))));
 
-        throw new TransformationException(e1);
+        if (e1 instanceof TransformationException) {
+          throw (TransformationException) e1;
+        } else throw new TransformationException(e1);
       }
     }
   }
