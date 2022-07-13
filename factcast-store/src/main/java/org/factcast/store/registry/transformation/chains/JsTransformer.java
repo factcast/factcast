@@ -15,10 +15,8 @@
  */
 package org.factcast.store.registry.transformation.chains;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import java.util.Map;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.*;
+
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.script.engine.Argument;
@@ -27,9 +25,14 @@ import org.factcast.script.engine.EngineFactory;
 import org.factcast.script.engine.exception.ScriptEngineException;
 import org.factcast.store.registry.transformation.Transformation;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 @RequiredArgsConstructor
 @Slf4j
-public class GraalJsTransformer implements Transformer {
+public class JsTransformer implements Transformer {
 
   private final EngineFactory scriptEngineCache;
 
@@ -45,8 +48,7 @@ public class GraalJsTransformer implements Transformer {
 
   private Engine getEngine(String js) {
     try {
-      Engine cachedEngine = scriptEngineCache.getOrCreateFor(js);
-      return cachedEngine;
+      return scriptEngineCache.getOrCreateFor(js);
     } catch (ScriptEngineException e) {
       log.debug("Exception during engine creation. Escalating.", e);
       throw new TransformationException(e);

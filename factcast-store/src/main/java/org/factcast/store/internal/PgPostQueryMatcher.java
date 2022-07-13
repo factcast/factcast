@@ -15,17 +15,19 @@
  */
 package org.factcast.store.internal;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
+import java.util.*;
+import java.util.function.*;
+import java.util.stream.*;
+
+import org.factcast.core.Fact;
+import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.script.engine.EngineFactory;
+import org.factcast.store.internal.filter.FactSpecMatcher;
+
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.Fact;
-import org.factcast.core.spec.FactSpecMatcher;
-import org.factcast.core.subscription.SubscriptionRequest;
 
 /**
  * Predicate to filter Facts selected by the database query.
@@ -45,13 +47,13 @@ public class PgPostQueryMatcher implements Predicate<Fact> {
 
   final List<FactSpecMatcher> matchers = new LinkedList<>();
 
-  PgPostQueryMatcher(@NonNull SubscriptionRequest req) {
+  PgPostQueryMatcher(@NonNull SubscriptionRequest req, @NonNull EngineFactory ef) {
     canBeSkipped = req.specs().stream().noneMatch(s -> s.jsFilterScript() != null);
     if (canBeSkipped) {
       log.trace("{} post query filtering has been disabled", req);
     } else {
       this.matchers.addAll(
-          req.specs().stream().map(FactSpecMatcher::new).collect(Collectors.toList()));
+          req.specs().stream().map(s -> new FactSpecMatcher(s, ef)).collect(Collectors.toList()));
     }
   }
 

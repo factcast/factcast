@@ -13,21 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.spec;
+package org.factcast.store.internal.filter;
+
+import java.util.*;
+import java.util.function.*;
+
+import org.factcast.core.Fact;
+import org.factcast.core.TestFact;
+import org.factcast.core.TestHelper;
+import org.factcast.core.spec.FactSpec;
+import org.factcast.script.engine.Engine;
+import org.factcast.script.engine.EngineFactory;
+import org.factcast.script.engine.exception.ScriptEngineException;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Arrays;
-import java.util.UUID;
-import java.util.function.Predicate;
-import org.factcast.core.Fact;
-import org.factcast.core.TestFact;
-import org.factcast.core.TestHelper;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+/** see FactSpecMatcherScriptingTest for more tests including execution of scripts */
+class FactSpecMatcherTest {
 
-public class FactSpecMatcherTest {
+  final EngineFactory ef =
+      s ->
+          (Engine)
+              (s1, arguments) -> {
+                throw new ScriptEngineException("just for testing");
+              };
 
   @Test
   void testMetaMatch() {
@@ -74,53 +85,31 @@ public class FactSpecMatcherTest {
     assertFalse(aggIdMatch(FactSpec.ns("default").aggId(u1), new TestFact()));
   }
 
-  @Test
-  void testScriptMatch() {
-    assertTrue(scriptMatch(FactSpec.ns("default"), new TestFact()));
-    assertFalse(
-        scriptMatch(
-            FactSpec.ns("default").jsFilterScript("function (h,e){ return false }"),
-            new TestFact()));
-    assertTrue(
-        scriptMatch(
-            FactSpec.ns("default").jsFilterScript("function (h,e){ return h.meta.x=='y' }"),
-            new TestFact().meta("x", "y")));
-  }
-
   // ---------------------------
   private boolean nsMatch(FactSpec s, TestFact f) {
-    return new FactSpecMatcher(s).nsMatch(f);
+    return new FactSpecMatcher(s, ef).nsMatch(f);
   }
 
   private boolean typeMatch(FactSpec s, TestFact f) {
-    return new FactSpecMatcher(s).typeMatch(f);
+    return new FactSpecMatcher(s, ef).typeMatch(f);
   }
 
   private boolean versionMatch(FactSpec s, TestFact f) {
-    return new FactSpecMatcher(s).versionMatch(f);
+    return new FactSpecMatcher(s, ef).versionMatch(f);
   }
 
   private boolean aggIdMatch(FactSpec s, TestFact f) {
-    return new FactSpecMatcher(s).aggIdMatch(f);
-  }
-
-  private boolean scriptMatch(FactSpec s, TestFact f) {
-    return new FactSpecMatcher(s).scriptMatch(f);
+    return new FactSpecMatcher(s, ef).aggIdMatch(f);
   }
 
   private boolean metaMatch(FactSpec s, TestFact f) {
-    return new FactSpecMatcher(s).metaMatch(f);
-  }
-
-  @Test
-  void testMatchesAnyOfNull() {
-    Assertions.assertThrows(NullPointerException.class, () -> FactSpecMatcher.matchesAnyOf(null));
+    return new FactSpecMatcher(s, ef).metaMatch(f);
   }
 
   @Test
   void testMatchesAnyOf() {
     Predicate<Fact> p =
-        FactSpecMatcher.matchesAnyOf(Arrays.asList(FactSpec.ns("1"), FactSpec.ns("2")));
+        FactSpecMatcher.matchesAnyOf(Arrays.asList(FactSpec.ns("1"), FactSpec.ns("2")), ef);
     assertTrue(p.test(new TestFact().ns("1")));
     assertTrue(p.test(new TestFact().ns("2")));
     assertFalse(p.test(new TestFact().ns("3")));
@@ -128,35 +117,35 @@ public class FactSpecMatcherTest {
 
   @Test
   void testMatchesByNS() {
-    Predicate<Fact> p = FactSpecMatcher.matches(FactSpec.ns("1"));
+    Predicate<Fact> p = FactSpecMatcher.matches(FactSpec.ns("1"), ef);
     assertTrue(p.test(new TestFact().ns("1")));
     assertFalse(p.test(new TestFact().ns("3")));
   }
 
   @Test
   void testMatchesByType() {
-    Predicate<Fact> p = FactSpecMatcher.matches(FactSpec.ns("1").type("t1"));
+    Predicate<Fact> p = FactSpecMatcher.matches(FactSpec.ns("1").type("t1"), ef);
     assertTrue(p.test(new TestFact().ns("1").type("t1")));
     assertFalse(p.test(new TestFact().ns("1")));
   }
 
   @Test
   void testMatchesByVersion() {
-    Predicate<Fact> p = FactSpecMatcher.matches(FactSpec.ns("1").version(1));
+    Predicate<Fact> p = FactSpecMatcher.matches(FactSpec.ns("1").version(1), ef);
     assertTrue(p.test(new TestFact().ns("1").version(1)));
     assertFalse(p.test(new TestFact().ns("1").version(2)));
   }
 
   @Test
   void testMatchesByAggId() {
-    Predicate<Fact> p = FactSpecMatcher.matches(FactSpec.ns("1").aggId(new UUID(0, 1)));
+    Predicate<Fact> p = FactSpecMatcher.matches(FactSpec.ns("1").aggId(new UUID(0, 1)), ef);
     assertTrue(p.test(new TestFact().ns("1").aggId(new UUID(0, 1))));
     assertFalse(p.test(new TestFact().ns("1").aggId(new UUID(0, 2))));
   }
 
   @Test
   void testMatchesByMeta() {
-    Predicate<Fact> p = FactSpecMatcher.matches(FactSpec.ns("1").meta("foo", "bar"));
+    Predicate<Fact> p = FactSpecMatcher.matches(FactSpec.ns("1").meta("foo", "bar"), ef);
     assertTrue(p.test(new TestFact().ns("1").meta("foo", "bar")));
     assertTrue(p.test(new TestFact().ns("1").meta("poit", "zort").meta("foo", "bar")));
     assertFalse(p.test(new TestFact().ns("1").meta("foo", "baz")));
@@ -166,7 +155,7 @@ public class FactSpecMatcherTest {
   @Test
   void testMatchesByMetaAllMatch() {
     Predicate<Fact> p =
-        FactSpecMatcher.matches(FactSpec.ns("1").meta("foo", "bar").meta("poit", "zort"));
+        FactSpecMatcher.matches(FactSpec.ns("1").meta("foo", "bar").meta("poit", "zort"), ef);
     assertTrue(
         p.test(
             new TestFact().ns("1").meta("some", "other").meta("poit", "zort").meta("foo", "bar")));
@@ -177,16 +166,7 @@ public class FactSpecMatcherTest {
   }
 
   @Test
-  void testMatchesByScript() {
-    String script = "function (h,p) { return p.test == 1 }";
-    Predicate<Fact> p = FactSpecMatcher.matches(FactSpec.ns("1").jsFilterScript(script));
-    assertTrue(p.test(new TestFact().ns("1").jsonPayload("{\"test\":1}")));
-    assertFalse(p.test(new TestFact().ns("1").jsonPayload("{\"test\":2}")));
-    assertFalse(p.test(new TestFact().ns("1")));
-  }
-
-  @Test
   void testMatchesNull() {
-    TestHelper.expectNPE(() -> FactSpecMatcher.matches(null));
+    TestHelper.expectNPE(() -> FactSpecMatcher.matches(null, ef));
   }
 }

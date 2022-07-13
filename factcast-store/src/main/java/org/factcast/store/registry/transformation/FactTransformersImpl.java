@@ -15,7 +15,7 @@
  */
 package org.factcast.store.registry.transformation;
 
-import java.util.OptionalInt;
+import com.google.common.collect.Sets;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
@@ -44,15 +44,11 @@ public class FactTransformersImpl implements FactTransformers {
     if (type == null || requested.matches(ns, type, version)) {
       return e;
     } else {
-      OptionalInt max = requested.get(ns, type).stream().mapToInt(v -> v).max();
-      int targetVersion =
-          max.orElseThrow(
-              () -> new IllegalArgumentException("No requested Version !? This must not happen."));
-
       return registryMetrics.timed(
           RegistryMetrics.OP.TRANSFORMATION,
           TransformationException.class,
-          () -> trans.transformIfNecessary(e, targetVersion));
+          // it is important to use a set here as we need the equality contract later...
+          () -> trans.transformIfNecessary(e, Sets.newHashSet(requested.get(ns, type))));
     }
   }
 }

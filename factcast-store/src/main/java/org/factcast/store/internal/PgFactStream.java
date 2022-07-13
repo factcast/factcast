@@ -15,24 +15,19 @@
  */
 package org.factcast.store.internal;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.eventbus.EventBus;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.script.engine.EngineFactory;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.filter.PgBlacklist;
 import org.factcast.store.internal.filter.PgFactFilter;
@@ -44,6 +39,15 @@ import org.factcast.store.internal.query.PgQueryBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.eventbus.EventBus;
+
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Creates and maintains a subscription.
@@ -75,6 +79,7 @@ public class PgFactStream {
   final FastForwardTarget ffwdTarget;
   final PgMetrics metrics;
   final PgBlacklist blacklist;
+  final EngineFactory ef;
 
   CondensedQueryExecutor condensedExecutor;
 
@@ -87,7 +92,7 @@ public class PgFactStream {
   void connect(@NonNull SubscriptionRequestTO request) {
     this.request = request;
     log.debug("{} connect subscription {}", request, request.dump());
-    postQueryMatcher = new PgPostQueryMatcher(request);
+    postQueryMatcher = new PgPostQueryMatcher(request, ef);
     PgQueryBuilder q = new PgQueryBuilder(request.specs(), statementHolder);
     initializeSerialToStartAfter();
 
