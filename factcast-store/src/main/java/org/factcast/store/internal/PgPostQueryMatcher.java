@@ -18,16 +18,14 @@ package org.factcast.store.internal;
 import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;
-
-import org.factcast.core.Fact;
-import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.store.internal.filter.FactSpecMatcher;
-import org.factcast.store.internal.script.JSEngineFactory;
-
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.Fact;
+import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.store.internal.filter.FactSpecMatcher;
+import org.factcast.store.internal.script.JSEngineFactory;
 
 /**
  * Predicate to filter Facts selected by the database query.

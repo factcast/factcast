@@ -15,10 +15,13 @@
  */
 package org.factcast.store.internal.filter;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;
-
+import lombok.Generated;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.spec.FilterScript;
@@ -26,12 +29,6 @@ import org.factcast.core.util.FactCastJson;
 import org.factcast.store.internal.script.JSArgument;
 import org.factcast.store.internal.script.JSEngine;
 import org.factcast.store.internal.script.JSEngineFactory;
-
-import com.fasterxml.jackson.databind.JsonNode;
-
-import lombok.Generated;
-import lombok.NonNull;
-import lombok.SneakyThrows;
 
 /**
  * Matches facts against specifications.
