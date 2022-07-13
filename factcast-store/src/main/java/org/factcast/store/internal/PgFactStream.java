@@ -27,7 +27,6 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
-import org.factcast.script.engine.EngineFactory;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.filter.PgBlacklist;
 import org.factcast.store.internal.filter.PgFactFilter;
@@ -36,6 +35,7 @@ import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.query.PgQueryBuilder;
+import org.factcast.store.internal.script.JSEngineFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
@@ -79,7 +79,7 @@ public class PgFactStream {
   final FastForwardTarget ffwdTarget;
   final PgMetrics metrics;
   final PgBlacklist blacklist;
-  final EngineFactory ef;
+  final JSEngineFactory ef;
 
   CondensedQueryExecutor condensedExecutor;
 

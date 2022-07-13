@@ -13,31 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.script.engine.graaljs;
+package org.factcast.store.internal.script.graaljs;
 
-import static org.factcast.script.engine.graaljs.NashornCompatContextBuilder.CTX;
+import java.util.*;
+import java.util.function.*;
+
+import javax.script.ScriptException;
+
+import org.factcast.store.internal.script.JSArgument;
+import org.factcast.store.internal.script.JSEngine;
+import org.factcast.store.internal.script.exception.ScriptEngineException;
 
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
-import java.util.Arrays;
-import javax.script.ScriptException;
+
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.script.engine.Argument;
-import org.factcast.script.engine.Engine;
-import org.factcast.script.engine.exception.ScriptEngineException;
 
 @Slf4j
-public class GraalJSEngine implements Engine {
+public class GraalJSEngine implements JSEngine {
 
   private static final Object ENGINE_CREATION_MUTEX = new Object();
 
-  private GraalJSScriptEngine engine;
+  private final GraalJSScriptEngine engine;
 
   GraalJSEngine(String script) throws ScriptEngineException {
     try {
       // not stated anywhere that engine creation is thread-safe
       synchronized (ENGINE_CREATION_MUTEX) {
-        this.engine = GraalJSScriptEngine.create(null, CTX);
+        this.engine = GraalJSScriptEngine.create(null, NashornCompatContextBuilder.CTX);
       }
       this.engine.compile(script).eval();
     } catch (RuntimeException | ScriptException e) {
@@ -47,7 +50,7 @@ public class GraalJSEngine implements Engine {
   }
 
   @Override
-  public Object invoke(String functionName, Argument... input) throws ScriptEngineException {
+  public Object invoke(String functionName, JSArgument<?>... input) throws ScriptEngineException {
     ClassLoader oldCl = Thread.currentThread().getContextClassLoader();
     Thread.currentThread().setContextClassLoader(Truffle.class.getClassLoader());
     try {
@@ -58,7 +61,7 @@ public class GraalJSEngine implements Engine {
       // mentioned in https://github.com/factcast/factcast/issues/1506
       synchronized (engine) {
         return engine.invokeFunction(
-            functionName, Arrays.stream(input).map(i -> i.get()).toArray());
+            functionName, Arrays.stream(input).map(Supplier::get).toArray());
       }
     } catch (RuntimeException | ScriptException | NoSuchMethodException e) {
       log.debug("Exception during the invocation of '{}'. Escalating.", functionName, e);

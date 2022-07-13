@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.script.engine;
+package org.factcast.store.internal.script;
 
-import org.factcast.script.engine.exception.ScriptEngineException;
+import org.factcast.store.internal.script.exception.ScriptEngineException;
 
-public interface EngineFactory {
+public interface JSEngineFactory {
 
-  Engine getOrCreateFor(String script) throws ScriptEngineException;
+  JSEngine getOrCreateFor(String script) throws ScriptEngineException;
 }

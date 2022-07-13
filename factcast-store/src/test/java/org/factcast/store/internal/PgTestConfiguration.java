@@ -15,10 +15,9 @@
  */
 package org.factcast.store.internal;
 
-import org.factcast.script.engine.Engine;
-import org.factcast.script.engine.EngineFactory;
-import org.factcast.script.engine.exception.ScriptEngineException;
 import org.factcast.store.PgFactStoreConfiguration;
+import org.factcast.store.internal.script.JSEngineFactory;
+import org.factcast.store.internal.script.graaljs.GraalJSEngineFactory;
 import org.mockito.Mockito;
 import org.postgresql.Driver;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
@@ -75,11 +74,7 @@ public class PgTestConfiguration {
   }
 
   @Bean
-  EngineFactory engineFactory() {
-    return s ->
-        (Engine)
-            (functionName, input) -> {
-              throw new ScriptEngineException("No scriptEngine available");
-            };
+  JSEngineFactory engineFactory() {
+    return new GraalJSEngineFactory();
   }
 }

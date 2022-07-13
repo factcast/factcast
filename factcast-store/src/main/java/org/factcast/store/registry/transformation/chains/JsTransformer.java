@@ -19,10 +19,10 @@ import java.util.*;
 
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.util.FactCastJson;
-import org.factcast.script.engine.Argument;
-import org.factcast.script.engine.Engine;
-import org.factcast.script.engine.EngineFactory;
-import org.factcast.script.engine.exception.ScriptEngineException;
+import org.factcast.store.internal.script.JSArgument;
+import org.factcast.store.internal.script.JSEngine;
+import org.factcast.store.internal.script.JSEngineFactory;
+import org.factcast.store.internal.script.exception.ScriptEngineException;
 import org.factcast.store.registry.transformation.Transformation;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -34,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class JsTransformer implements Transformer {
 
-  private final EngineFactory scriptEngineCache;
+  private final JSEngineFactory scriptEngineCache;
 
   @Override
   public JsonNode transform(Transformation t, JsonNode input) throws TransformationException {
@@ -42,11 +42,11 @@ public class JsTransformer implements Transformer {
       return input;
     } else {
       String js = t.transformationCode().get();
-      return runJSTransformation(input, getEngine(js));
+      return runJSTransformation(input, js);
     }
   }
 
-  private Engine getEngine(String js) {
+  private JSEngine getEngine(String js) {
     try {
       return scriptEngineCache.getOrCreateFor(js);
     } catch (ScriptEngineException e) {
@@ -55,12 +55,16 @@ public class JsTransformer implements Transformer {
     }
   }
 
-  private JsonNode runJSTransformation(JsonNode input, Engine engine) {
+  private JsonNode runJSTransformation(JsonNode input, String js) {
     try {
-      @SuppressWarnings("unchecked")
-      Map<String, Object> jsonAsMap = FactCastJson.convertValue(input, Map.class);
-      engine.invoke("transform", Argument.byReference(jsonAsMap));
-      return FactCastJson.toJsonNode(jsonAsMap);
+      JSEngine engine = getEngine(js);
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (engine) {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> jsonAsMap = FactCastJson.convertValue(input, Map.class);
+        engine.invoke("transform", JSArgument.byReference(jsonAsMap));
+        return FactCastJson.toJsonNode(jsonAsMap);
+      }
     } catch (RuntimeException e) {
       // debug level, because it is escalated.
       log.debug("Exception during transformation. Escalating.", e);

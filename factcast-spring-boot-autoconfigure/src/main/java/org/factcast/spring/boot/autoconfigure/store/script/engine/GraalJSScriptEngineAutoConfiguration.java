@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.spring.boot.autoconfigure.script.engine;
+package org.factcast.spring.boot.autoconfigure.store.script.engine;
 
-import org.factcast.script.engine.EngineFactory;
-import org.factcast.script.engine.graaljs.GraalJSEngineCache;
+import org.factcast.store.internal.script.JSEngineFactory;
+import org.factcast.store.internal.script.graaljs.GraalJSEngineFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ConditionalOnClass({EngineFactory.class, GraalJSEngineCache.class})
+@ConditionalOnClass({JSEngineFactory.class, GraalJSEngineFactory.class})
 public class GraalJSScriptEngineAutoConfiguration {
 
   @Bean
-  @ConditionalOnMissingBean(EngineFactory.class)
-  public EngineFactory engineCache() {
-    return new GraalJSEngineCache();
+  @ConditionalOnMissingBean(JSEngineFactory.class)
+  public JSEngineFactory jsEngineFactory() {
+    return new GraalJSEngineFactory();
   }
 }

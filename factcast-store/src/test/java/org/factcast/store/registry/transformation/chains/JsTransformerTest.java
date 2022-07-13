@@ -20,7 +20,7 @@ import java.util.concurrent.*;
 
 import org.assertj.core.api.Assertions;
 import org.factcast.core.subscription.TransformationException;
-import org.factcast.script.engine.graaljs.GraalJSEngineCache;
+import org.factcast.store.internal.script.graaljs.GraalJSEngineFactory;
 import org.factcast.store.registry.transformation.Transformation;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,7 +40,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class JsTransformerTest {
 
-  private JsTransformer uut = new JsTransformer(new GraalJSEngineCache());
+  private JsTransformer uut = new JsTransformer(new GraalJSEngineFactory());
 
   private ObjectMapper om = new ObjectMapper();
 

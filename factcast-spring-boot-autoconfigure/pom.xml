@@ -78,16 +78,6 @@
         </dependency>
         <dependency>
             <groupId>org.factcast</groupId>
-            <artifactId>factcast-script-engine-graaljs</artifactId>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.factcast</groupId>
-            <artifactId>factcast-script-engine</artifactId>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.factcast</groupId>
             <artifactId>factcast-core</artifactId>
             <optional>true</optional>
         </dependency>
