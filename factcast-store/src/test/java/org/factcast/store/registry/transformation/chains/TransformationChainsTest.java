@@ -19,8 +19,8 @@ import java.util.*;
 
 import org.factcast.core.subscription.MissingTransformationInformationException;
 import org.factcast.core.util.FactCastJson;
-import org.factcast.script.engine.EngineFactory;
-import org.factcast.script.engine.graaljs.GraalJSEngineCache;
+import org.factcast.store.internal.script.JSEngineFactory;
+import org.factcast.store.internal.script.graaljs.GraalJSEngineFactory;
 import org.factcast.store.registry.SchemaRegistry;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.SingleTransformation;
@@ -51,7 +51,7 @@ class TransformationChainsTest {
 
   final TransformationKey key = TransformationKey.of("ns", "UserCreated");
   // TODO
-  final EngineFactory engineFactory = new GraalJSEngineCache();
+  final JSEngineFactory engineFactory = new GraalJSEngineFactory();
   final JsTransformer transformer = new JsTransformer(engineFactory);
 
   @Test

@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.script.engine.graaljs;
+package org.factcast.store.internal.script.graaljs;
 
-import java.util.List;
-import lombok.experimental.UtilityClass;
+import java.util.*;
+
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.Value;
+
+import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class NashornCompatContextBuilder {

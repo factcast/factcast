@@ -155,9 +155,24 @@
             <version>4.10.0</version>
         </dependency>
         <dependency>
-            <groupId>org.factcast</groupId>
-            <artifactId>factcast-script-engine</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.graalvm.js</groupId>
+            <artifactId>js</artifactId>
+            <version>${graaljs.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.graalvm.js</groupId>
+            <artifactId>js-scriptengine</artifactId>
+            <version>${graaljs.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.graalvm.sdk</groupId>
+            <artifactId>graal-sdk</artifactId>
+            <version>${graaljs.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.graalvm.truffle</groupId>
+            <artifactId>truffle-api</artifactId>
+            <version>${graaljs.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.retry</groupId>

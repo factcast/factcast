@@ -23,9 +23,9 @@ import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.spec.FilterScript;
 import org.factcast.core.util.FactCastJson;
-import org.factcast.script.engine.Argument;
-import org.factcast.script.engine.Engine;
-import org.factcast.script.engine.EngineFactory;
+import org.factcast.store.internal.script.JSArgument;
+import org.factcast.store.internal.script.JSEngine;
+import org.factcast.store.internal.script.JSEngineFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -52,9 +52,9 @@ public final class FactSpecMatcher implements Predicate<Fact> {
 
   final FilterScript script;
 
-  final Engine scriptEngine;
+  final JSEngine scriptEngine;
 
-  public FactSpecMatcher(@NonNull FactSpec spec, @NonNull EngineFactory ef) {
+  public FactSpecMatcher(@NonNull FactSpec spec, @NonNull JSEngineFactory ef) {
     // opt: prevent method calls by prefetching to final fields.
     // yes, they might be inlined at some point, but making decisions based
     // on final fields should help.
@@ -122,13 +122,15 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     }
     JsonNode headerNode = FactCastJson.readTree(t.jsonHeader());
     JsonNode payloadNode = FactCastJson.readTree(t.jsonPayload());
-    return (Boolean) scriptEngine.invoke("test", Argument.of(headerNode), Argument.of(payloadNode));
+    return (Boolean)
+        scriptEngine.invoke(
+            "test", JSArgument.byValue(headerNode), JSArgument.byValue(payloadNode));
   }
 
   @SneakyThrows
   @Generated
-  private static synchronized Engine getEngine(
-      FilterScript filterScript, @NonNull EngineFactory ef) {
+  private static synchronized JSEngine getEngine(
+      FilterScript filterScript, @NonNull JSEngineFactory ef) {
     if (filterScript == null) {
       return null;
     }
@@ -144,13 +146,13 @@ public final class FactSpecMatcher implements Predicate<Fact> {
   }
 
   public static Predicate<Fact> matchesAnyOf(
-      @NonNull List<FactSpec> spec, @NonNull EngineFactory ef) {
+      @NonNull List<FactSpec> spec, @NonNull JSEngineFactory ef) {
     List<FactSpecMatcher> matchers =
         spec.stream().map(s -> new FactSpecMatcher(s, ef)).collect(Collectors.toList());
     return f -> matchers.stream().anyMatch(p -> p.test(f));
   }
 
-  public static Predicate<Fact> matches(@NonNull FactSpec spec, @NonNull EngineFactory ef) {
+  public static Predicate<Fact> matches(@NonNull FactSpec spec, @NonNull JSEngineFactory ef) {
     return new FactSpecMatcher(spec, ef);
   }
 }

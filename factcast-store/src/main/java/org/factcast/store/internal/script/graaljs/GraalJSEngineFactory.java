@@ -13,33 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.script.engine.graaljs;
+package org.factcast.store.internal.script.graaljs;
 
-import static java.util.Collections.synchronizedMap;
+import java.util.*;
 
-import java.util.Map;
+import org.apache.commons.collections4.map.LRUMap;
+import org.factcast.store.internal.script.JSEngine;
+import org.factcast.store.internal.script.JSEngineFactory;
+import org.factcast.store.internal.script.exception.ScriptEngineException;
+
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.map.LRUMap;
-import org.factcast.script.engine.Engine;
-import org.factcast.script.engine.EngineFactory;
-import org.factcast.script.engine.exception.ScriptEngineException;
+
+import static java.util.Collections.*;
 
 @Slf4j
-public class GraalJSEngineCache implements EngineFactory {
+public class GraalJSEngineFactory implements JSEngineFactory {
 
   private static final int ENGINE_CACHE_CAPACITY = 128;
 
-  private static final Map<String, Engine> warmEngines =
+  private static final Map<String, JSEngine> warmEngines =
       synchronizedMap(new LRUMap<>(ENGINE_CACHE_CAPACITY));
 
   @Override
-  public Engine getOrCreateFor(String script) throws ScriptEngineException {
+  public JSEngine getOrCreateFor(String script) throws ScriptEngineException {
     return warmEngines.computeIfAbsent(script, this::createAndWarmEngine);
   }
 
   @NonNull
-  private Engine createAndWarmEngine(String script) throws ScriptEngineException {
+  private JSEngine createAndWarmEngine(String script) throws ScriptEngineException {
     return new GraalJSEngine(script);
   }
 }

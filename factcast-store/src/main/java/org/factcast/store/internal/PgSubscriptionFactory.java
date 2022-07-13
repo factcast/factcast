@@ -20,11 +20,11 @@ import java.util.concurrent.*;
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.observer.FastForwardTarget;
-import org.factcast.script.engine.EngineFactory;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.filter.PgBlacklist;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
+import org.factcast.store.internal.script.JSEngineFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -54,7 +54,7 @@ class PgSubscriptionFactory {
   final FastForwardTarget target;
   final PgMetrics metrics;
   final PgBlacklist blacklist;
-  final EngineFactory ef;
+  final JSEngineFactory ef;
 
   public Subscription subscribe(SubscriptionRequestTO req, FactObserver observer) {
     SubscriptionImpl subscription =

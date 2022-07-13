@@ -28,8 +28,6 @@
         <module>factcast-internal-dep</module>
         <module>factcast-internal-dep-boot</module>
         <module>factcast-spring-boot-autoconfigure</module>
-        <module>factcast-script-engine</module>
-        <module>factcast-script-engine-graaljs</module>
         <module>factcast-factus-event</module>
         <module>factcast-factus-bin-snapser</module>
         <module>factcast-client-grpc</module>
@@ -37,7 +35,6 @@
         <module>factcast-store</module>
         <module>factcast-store-rds</module>
         <module>factcast-store-test</module>
-        <module>factcast-store-ctest</module>
         <module>factcast-core</module>
         <module>factcast-factus</module>
         <module>factcast-factus-redis</module>

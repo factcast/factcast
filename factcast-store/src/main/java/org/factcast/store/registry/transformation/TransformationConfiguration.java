@@ -17,8 +17,8 @@ package org.factcast.store.registry.transformation;
 
 import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.FactTransformersFactory;
-import org.factcast.script.engine.EngineFactory;
 import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.registry.SchemaRegistry;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.cache.InMemTransformationCache;
@@ -77,7 +77,7 @@ public class TransformationConfiguration {
   }
 
   @Bean
-  public Transformer transformer(@NonNull EngineFactory engineFactory) {
+  public Transformer transformer(@NonNull JSEngineFactory engineFactory) {
     return new JsTransformer(engineFactory);
   }
 
@@ -101,4 +101,6 @@ public class TransformationConfiguration {
       TransformationCache cache, StoreConfigurationProperties props) {
     return new TransformationCacheCompactor(cache, props.getDeleteTransformationsStaleForDays());
   }
+  
+ 
 }
