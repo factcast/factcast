@@ -15,22 +15,25 @@
  */
 package org.factcast.store.internal.filter;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Sets;
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.*;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.factcast.store.internal.listen.PgListener;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Sets;
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -76,7 +79,6 @@ public class PgBlacklist implements SmartInitializingSingleton, DisposableBean {
 
     @Override
     public Set<UUID> get() {
-      log.warn("Fetching blacklist");
       return Sets.newHashSet(jdbc.queryForList("SELECT id FROM blacklist", UUID.class));
     }
   }
