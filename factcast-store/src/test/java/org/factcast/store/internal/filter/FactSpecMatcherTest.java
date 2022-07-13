@@ -15,9 +15,11 @@
  */
 package org.factcast.store.internal.filter;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.*;
 import java.util.function.*;
-
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.factcast.core.TestHelper;
@@ -25,9 +27,6 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.script.graaljs.GraalJSEngineFactory;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** see FactSpecMatcherScriptingTest for more tests including execution of scripts */
 class FactSpecMatcherTest {
