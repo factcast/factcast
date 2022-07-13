@@ -19,7 +19,7 @@ import com.google.common.collect.Lists;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.DuplicateFactException;
@@ -113,12 +113,9 @@ public class PgFactStore extends AbstractFactStore {
       throws TransformationException {
 
     var fact = fetchById(id);
-    // map does not work here due to checked exception
-    if (fact.isPresent()) {
-      return Optional.of(factTransformerService.transformIfNecessary(fact.get(), version));
-    } else {
-      return fact;
-    }
+    return fact.map(
+        value ->
+            factTransformerService.transformIfNecessary(value, Collections.singleton(version)));
   }
 
   @Override
