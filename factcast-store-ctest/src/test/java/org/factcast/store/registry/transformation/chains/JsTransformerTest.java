@@ -15,21 +15,10 @@
  */
 package org.factcast.store.registry.transformation.chains;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.when;
+import java.util.*;
+import java.util.concurrent.*;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-import lombok.SneakyThrows;
-import nl.altindag.log.LogCaptor;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.script.engine.graaljs.GraalJSEngineCache;
 import org.factcast.store.registry.transformation.Transformation;
@@ -38,10 +27,20 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-@ExtendWith(MockitoExtension.class)
-class GraalJsTransformerTest {
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-  private GraalJsTransformer uut = new GraalJsTransformer(new GraalJSEngineCache());
+import lombok.SneakyThrows;
+import nl.altindag.log.LogCaptor;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class JsTransformerTest {
+
+  private JsTransformer uut = new JsTransformer(new GraalJSEngineCache());
 
   private ObjectMapper om = new ObjectMapper();
 
@@ -68,11 +67,12 @@ class GraalJsTransformerTest {
 
     var result = uut.transform(transformation, om.convertValue(data, JsonNode.class));
 
-    assertThat(result.get("displayName").asText()).isEqualTo("Hugo 38");
-    assertThat(result.get("hobbies").isArray()).isTrue();
-    assertThat(result.get("hobbies").get(0).asText()).isEqualTo("foo");
-    assertThat(result.get("childMap").get("anotherHobbies").isArray()).isTrue();
-    assertThat(result.get("childMap").get("anotherHobbies").get(0).asText()).isEqualTo("bar");
+    Assertions.assertThat(result.get("displayName").asText()).isEqualTo("Hugo 38");
+    Assertions.assertThat(result.get("hobbies").isArray()).isTrue();
+    Assertions.assertThat(result.get("hobbies").get(0).asText()).isEqualTo("foo");
+    Assertions.assertThat(result.get("childMap").get("anotherHobbies").isArray()).isTrue();
+    Assertions.assertThat(result.get("childMap").get("anotherHobbies").get(0).asText())
+        .isEqualTo("bar");
   }
 
   @Test
@@ -87,10 +87,10 @@ class GraalJsTransformerTest {
 
     var result = uut.transform(transformation, om.convertValue(data, JsonNode.class));
 
-    assertThat(result.get("newMap").isObject()).isTrue();
-    assertThat(result.get("newArray").isArray()).isTrue();
-    assertThat(result.get("oldMap").get("foo").isArray()).isTrue();
-    assertThat(result.get("newMap").get("foo").isArray()).isTrue();
+    Assertions.assertThat(result.get("newMap").isObject()).isTrue();
+    Assertions.assertThat(result.get("newArray").isArray()).isTrue();
+    Assertions.assertThat(result.get("oldMap").get("foo").isArray()).isTrue();
+    Assertions.assertThat(result.get("newMap").get("foo").isArray()).isTrue();
   }
 
   @Test
@@ -191,8 +191,9 @@ class GraalJsTransformerTest {
             })
         .isInstanceOf(TransformationException.class);
 
-    assertThat(logCaptor.getLogs().size()).isGreaterThan(0);
-    assertThat(logCaptor.getLogs().stream().anyMatch(f -> f.contains("during engine creation")))
+    Assertions.assertThat(logCaptor.getLogs().size()).isGreaterThan(0);
+    Assertions.assertThat(
+            logCaptor.getLogs().stream().anyMatch(f -> f.contains("during engine creation")))
         .isTrue();
   }
 
@@ -211,8 +212,9 @@ class GraalJsTransformerTest {
             })
         .isInstanceOf(TransformationException.class);
 
-    assertThat(logCaptor.getLogs().size()).isGreaterThan(0);
-    assertThat(logCaptor.getLogs().stream().anyMatch(f -> f.contains("during transformation")))
+    Assertions.assertThat(logCaptor.getLogs().size()).isGreaterThan(0);
+    Assertions.assertThat(
+            logCaptor.getLogs().stream().anyMatch(f -> f.contains("during transformation")))
         .isTrue();
   }
 }

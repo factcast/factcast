@@ -15,20 +15,16 @@
  */
 package org.factcast.store.registry.transformation;
 
-import liquibase.integration.spring.SpringLiquibase;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.script.engine.EngineFactory;
-import org.factcast.script.engine.graaljs.GraalJSEngineCache;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.SchemaRegistry;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.cache.InMemTransformationCache;
 import org.factcast.store.registry.transformation.cache.PgTransformationCache;
 import org.factcast.store.registry.transformation.cache.TransformationCache;
-import org.factcast.store.registry.transformation.chains.GraalJsTransformer;
+import org.factcast.store.registry.transformation.chains.JsTransformer;
 import org.factcast.store.registry.transformation.chains.TransformationChains;
 import org.factcast.store.registry.transformation.chains.Transformer;
 import org.factcast.store.registry.transformation.store.InMemTransformationStoreImpl;
@@ -38,6 +34,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.support.TransactionTemplate;
+
+import liquibase.integration.spring.SpringLiquibase;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 @Slf4j
@@ -78,7 +78,7 @@ public class TransformationConfiguration {
 
   @Bean
   public Transformer transformer(@NonNull EngineFactory engineFactory) {
-    return new GraalJsTransformer(engineFactory);
+    return new JsTransformer(engineFactory);
   }
 
   @Bean
@@ -100,10 +100,5 @@ public class TransformationConfiguration {
   public TransformationCacheCompactor transformationCacheCompactor(
       TransformationCache cache, StoreConfigurationProperties props) {
     return new TransformationCacheCompactor(cache, props.getDeleteTransformationsStaleForDays());
-  }
-
-  @Bean
-  EngineFactory engineFactory() {
-    return new GraalJSEngineCache();
   }
 }

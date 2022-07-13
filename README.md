@@ -12,6 +12,7 @@ Status](https://github.com/factcast/factcast/workflows/maven/badge.svg?branch=ma
 [![CodeFactor](https://www.codefactor.io/repository/github/factcast/factcast/badge)](https://www.codefactor.io/repository/github/factcast/factcast)
 [![MavenCentral](https://img.shields.io/maven-central/v/org.factcast/factcast/0.5.svg)](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.factcast%22%20v:0.5)
 ![Docker Image Version (latest semver)](https://img.shields.io/docker/v/factcast/factcast?label=dockerhub)
+[![Maintainability](https://api.codeclimate.com/v1/badges/4413635e1732acf913d9/maintainability)](https://codeclimate.com/github/factcast/factcast/maintainability)
 <a href="https://www.apache.org/licenses/LICENSE-2.0">
     <img class="inline" src="https://img.shields.io/badge/license-ASL2-green.svg?style=flat">
 </a>
