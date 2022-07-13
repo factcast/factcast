@@ -15,17 +15,15 @@
  */
 package org.factcast.store.internal.script.graaljs;
 
-import java.util.*;
+import static java.util.Collections.*;
 
+import java.util.*;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.store.internal.script.JSEngine;
 import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.script.exception.ScriptEngineException;
-
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
-
-import static java.util.Collections.*;
 
 @Slf4j
 public class GraalJSEngineFactory implements JSEngineFactory {

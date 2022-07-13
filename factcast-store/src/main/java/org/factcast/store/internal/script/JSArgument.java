@@ -15,15 +15,12 @@
  */
 package org.factcast.store.internal.script;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import java.util.*;
 import java.util.function.*;
-
-import org.factcast.core.util.FactCastJson;
-
-import com.fasterxml.jackson.databind.JsonNode;
-
 import lombok.NonNull;
 import lombok.Value;
+import org.factcast.core.util.FactCastJson;
 
 public interface JSArgument<E> extends Supplier<E> {
 

@@ -15,19 +15,15 @@
  */
 package org.factcast.store.internal.script.graaljs;
 
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
 import java.util.*;
 import java.util.function.*;
-
 import javax.script.ScriptException;
-
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.internal.script.JSArgument;
 import org.factcast.store.internal.script.JSEngine;
 import org.factcast.store.internal.script.exception.ScriptEngineException;
-
-import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
-
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class GraalJSEngine implements JSEngine {
