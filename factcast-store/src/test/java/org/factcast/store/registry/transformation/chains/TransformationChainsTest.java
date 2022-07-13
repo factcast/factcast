@@ -15,15 +15,17 @@
  */
 package org.factcast.store.registry.transformation.chains;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
-import java.util.ArrayList;
+import java.util.*;
 import org.factcast.core.subscription.MissingTransformationInformationException;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.registry.NOPRegistryMetrics;
@@ -35,7 +37,7 @@ import org.factcast.store.registry.transformation.TransformationKey;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-public class TransformationChainsTest {
+class TransformationChainsTest {
   final SchemaRegistry r = mock(SchemaRegistry.class);
 
   final RegistryMetrics registryMetrics = Mockito.spy(new NOPRegistryMetrics());
@@ -52,7 +54,7 @@ public class TransformationChainsTest {
 
     when(r.get(key)).thenReturn(all);
 
-    TransformationChain chain = uut.get(key, 1, 3);
+    TransformationChain chain = uut.get(key, 1, Collections.singleton(3));
 
     assertEquals(1, chain.fromVersion());
     assertEquals(3, chain.toVersion());
@@ -69,16 +71,14 @@ public class TransformationChainsTest {
   void testStraightLine() throws Exception {
 
     ArrayList<Transformation> all = Lists.newArrayList();
-    all.add(SingleTransformation.of(key, 1, 2, js(1)));
-    all.add(SingleTransformation.of(key, 2, 3, js(2)));
-    all.add(SingleTransformation.of(key, 3, 4, js(3)));
-    all.add(SingleTransformation.of(key, 4, 5, js(4)));
-    all.add(SingleTransformation.of(key, 5, 6, js(5)));
-    all.add(SingleTransformation.of(key, 6, 7, js(6)));
+    bidir(all, key, 1, 2);
+    bidir(all, key, 2, 3);
+    bidir(all, key, 3, 4);
+    bidir(all, key, 4, 5);
 
     when(r.get(key)).thenReturn(all);
 
-    TransformationChain chain = uut.get(key, 2, 5);
+    TransformationChain chain = uut.get(key, 2, Collections.singleton(5));
 
     assertEquals(2, chain.fromVersion());
     assertEquals(5, chain.toVersion());
@@ -95,14 +95,17 @@ public class TransformationChainsTest {
   void testUnreachable() {
 
     ArrayList<Transformation> all = Lists.newArrayList();
-    all.add(SingleTransformation.of(key, 1, 2, js(1)));
-    all.add(SingleTransformation.of(key, 2, 3, js(2)));
-    all.add(SingleTransformation.of(key, 5, 6, js(5)));
-    all.add(SingleTransformation.of(key, 6, 7, js(6)));
+
+    bidir(all, key, 1, 2);
+    bidir(all, key, 2, 3);
+    unidir(all, key, 5, 6);
+    unidir(all, key, 6, 7);
 
     when(r.get(key)).thenReturn(all);
 
-    assertThrows(MissingTransformationInformationException.class, () -> uut.get(key, 1, 7));
+    assertThrows(
+        MissingTransformationInformationException.class,
+        () -> uut.get(key, 1, Collections.singleton(7)));
     verify(registryMetrics)
         .count(
             eq(RegistryMetrics.EVENT.MISSING_TRANSFORMATION_INFO),
@@ -110,23 +113,25 @@ public class TransformationChainsTest {
                 Tags.of(
                     Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()),
                     Tag.of("from", "1"),
-                    Tag.of("to", "7"))));
+                    Tag.of("to", "[7]"))));
   }
 
   @Test
-  void testShortcut() throws Exception {
+  void testSingleShortcut() throws Exception {
 
     ArrayList<Transformation> all = Lists.newArrayList();
-    all.add(SingleTransformation.of(key, 1, 2, js(1)));
-    all.add(SingleTransformation.of(key, 2, 3, js(2)));
-    all.add(SingleTransformation.of(key, 5, 6, js(5)));
-    all.add(SingleTransformation.of(key, 6, 7, js(6)));
+    bidir(all, key, 1, 2);
+    bidir(all, key, 2, 3);
+    bidir(all, key, 3, 4);
+    bidir(all, key, 4, 5);
+    bidir(all, key, 5, 6);
+    bidir(all, key, 6, 7);
 
     all.add(SingleTransformation.of(key, 2, 6, js(6)));
 
     when(r.get(key)).thenReturn(all);
 
-    TransformationChain chain = uut.get(key, 1, 7);
+    TransformationChain chain = uut.get(key, 1, Collections.singleton(7));
 
     assertEquals(1, chain.fromVersion());
     assertEquals(7, chain.toVersion());
@@ -141,21 +146,20 @@ public class TransformationChainsTest {
 
   @Test
   void testConcurringShortcuts() throws Exception {
-
     ArrayList<Transformation> all = Lists.newArrayList();
-    all.add(SingleTransformation.of(key, 1, 2, js(1)));
-    all.add(SingleTransformation.of(key, 2, 3, js(2)));
-    all.add(SingleTransformation.of(key, 3, 4, js(3)));
-    all.add(SingleTransformation.of(key, 4, 5, js(4)));
-    all.add(SingleTransformation.of(key, 5, 6, js(5)));
-    all.add(SingleTransformation.of(key, 6, 7, js(6)));
+    bidir(all, key, 1, 2);
+    bidir(all, key, 2, 3);
+    bidir(all, key, 3, 4);
+    bidir(all, key, 4, 5);
+    bidir(all, key, 5, 6);
+    bidir(all, key, 6, 7);
 
-    all.add(SingleTransformation.of(key, 2, 5, js(2)));
-    all.add(SingleTransformation.of(key, 1, 4, js(1))); // <- should win
+    unidir(all, key, 2, 5); // <- should win
+    unidir(all, key, 1, 4);
 
     when(r.get(key)).thenReturn(all);
 
-    TransformationChain chain = uut.get(key, 1, 7);
+    TransformationChain chain = uut.get(key, 1, Collections.singleton(7));
 
     assertEquals(1, chain.fromVersion());
     assertEquals(7, chain.toVersion());
@@ -170,19 +174,107 @@ public class TransformationChainsTest {
   }
 
   @Test
+  void testbiasToHigherVersionWhenPickingShortcut() throws Exception {
+
+    ArrayList<Transformation> all = Lists.newArrayList();
+
+    bidir(all, key, 1, 2);
+    bidir(all, key, 2, 3);
+    bidir(all, key, 3, 4);
+    bidir(all, key, 4, 5);
+
+    unidir(all, key, 2, 4);
+    unidir(all, key, 3, 5); // <- should win
+
+    when(r.get(key)).thenReturn(all);
+    TransformationChain chain = uut.get(key, 1, Collections.singleton(5));
+    assertEquals("[1, 2, 3, 5]", chain.id());
+  }
+
+  @Test
+  void testShortestPath() throws Exception {
+
+    ArrayList<Transformation> all = Lists.newArrayList();
+    bidir(all, key, 1, 2);
+    bidir(all, key, 2, 3);
+    bidir(all, key, 3, 4);
+    bidir(all, key, 4, 5);
+
+    when(r.get(key)).thenReturn(all);
+    TransformationChain chain = uut.get(key, 1, Sets.newHashSet(4, 5));
+    assertEquals("[1, 2, 3, 4]", chain.id());
+  }
+
+  @Test
+  void testShortestPath_preferHigherVersion() throws Exception {
+
+    ArrayList<Transformation> all = Lists.newArrayList();
+    bidir(all, key, 1, 2);
+    bidir(all, key, 2, 3);
+    bidir(all, key, 3, 4);
+    bidir(all, key, 4, 5);
+    unidir(all, key, 3, 5);
+
+    when(r.get(key)).thenReturn(all);
+    TransformationChain chain = uut.get(key, 1, Sets.newHashSet(4, 5));
+    assertEquals("[1, 2, 3, 5]", chain.id());
+  }
+
+  @Test
+  void testPreferShorterPathToLowerVersion() throws Exception {
+
+    ArrayList<Transformation> all = Lists.newArrayList();
+    bidir(all, key, 1, 2);
+    bidir(all, key, 2, 3);
+    bidir(all, key, 3, 4);
+    bidir(all, key, 4, 5);
+
+    unidir(all, key, 1, 4);
+    unidir(all, key, 3, 5); // should be chosen
+
+    when(r.get(key)).thenReturn(all);
+    TransformationChain chain = uut.get(key, 1, Collections.singleton(5));
+    assertEquals("[1, 4, 5]", chain.id());
+  }
+
+  @Test
+  void testBiasToHigherTargetIfPathCostEqual() throws Exception {
+
+    ArrayList<Transformation> all = Lists.newArrayList();
+    bidir(all, key, 1, 2);
+    bidir(all, key, 2, 3);
+
+    when(r.get(key)).thenReturn(all);
+    TransformationChain chain = uut.get(key, 2, Sets.newHashSet(1, 3));
+    assertEquals("[2, 3]", chain.id());
+  }
+
+  @Test
+  void testChooseNearerTargetEvenIfDownward() throws Exception {
+
+    ArrayList<Transformation> all = Lists.newArrayList();
+    bidir(all, key, 1, 2);
+    bidir(all, key, 2, 3);
+    bidir(all, key, 3, 4);
+
+    when(r.get(key)).thenReturn(all);
+    TransformationChain chain = uut.get(key, 2, Sets.newHashSet(1, 4));
+    assertEquals("[2, 1]", chain.id());
+  }
+
+  @Test
   void testTargetNotFound() {
     ArrayList<Transformation> all = Lists.newArrayList();
-    all.add(SingleTransformation.of(key, 1, 2, js(1)));
-    all.add(SingleTransformation.of(key, 2, 3, js(2)));
-    all.add(SingleTransformation.of(key, 3, 4, js(3)));
-    all.add(SingleTransformation.of(key, 4, 5, js(4)));
-    all.add(SingleTransformation.of(key, 5, 6, js(5)));
-    all.add(SingleTransformation.of(key, 6, 7, js(6)));
-    all.add(SingleTransformation.of(key, 3, 5, js(100)));
+    bidir(all, key, 1, 2);
+    bidir(all, key, 2, 3);
+    bidir(all, key, 3, 4);
+    bidir(all, key, 4, 5);
 
     when(r.get(key)).thenReturn(all);
 
-    assertThrows(MissingTransformationInformationException.class, () -> uut.get(key, 2, 99));
+    assertThrows(
+        MissingTransformationInformationException.class,
+        () -> uut.get(key, 2, Collections.singleton(99)));
     verify(registryMetrics)
         .count(
             eq(RegistryMetrics.EVENT.MISSING_TRANSFORMATION_INFO),
@@ -190,23 +282,23 @@ public class TransformationChainsTest {
                 Tags.of(
                     Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()),
                     Tag.of("from", "2"),
-                    Tag.of("to", "99"))));
+                    Tag.of("to", "[99]"))));
   }
 
   @Test
   void testSyntheticTransformation() throws Exception {
 
     ArrayList<Transformation> all = Lists.newArrayList();
-    all.add(SingleTransformation.of(key, 2, 1, js(1)));
+    all.add(SingleTransformation.of(key, 2, 1, js(2)));
     all.add(SingleTransformation.of(key, 3, 2, null));
 
     when(r.get(key)).thenReturn(all);
 
-    TransformationChain chain = uut.get(key, 3, 1);
+    TransformationChain chain = uut.get(key, 3, Collections.singleton(1));
 
     JsonNode input = FactCastJson.readTree("{}");
     JsonNode actual = new GraalJsTransformer().transform(chain, input);
-    assertThat(actual.toString()).isEqualTo("{\"stage1\":true}");
+    assertThat(actual.toString()).isEqualTo("{\"stage2\":true}");
   }
 
   @Test
@@ -214,7 +306,9 @@ public class TransformationChainsTest {
     ArrayList<Transformation> all = Lists.newArrayList();
     when(r.get(key)).thenReturn(all);
 
-    assertThrows(MissingTransformationInformationException.class, () -> uut.get(key, 2, 99));
+    assertThrows(
+        MissingTransformationInformationException.class,
+        () -> uut.get(key, 2, Collections.singleton(99)));
     verify(registryMetrics)
         .count(
             eq(RegistryMetrics.EVENT.MISSING_TRANSFORMATION_INFO),
@@ -222,7 +316,16 @@ public class TransformationChainsTest {
                 Tags.of(
                     Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()),
                     Tag.of("from", "2"),
-                    Tag.of("to", "99"))));
+                    Tag.of("to", "[99]"))));
+  }
+
+  private void bidir(ArrayList<Transformation> all, TransformationKey key, int i, int j) {
+    all.add(SingleTransformation.of(key, i, j, js(i)));
+    all.add(SingleTransformation.of(key, j, i, js(j)));
+  }
+
+  private void unidir(ArrayList<Transformation> all, TransformationKey key, int i, int j) {
+    all.add(SingleTransformation.of(key, i, j, js(i)));
   }
 
   private String js(int n) {
