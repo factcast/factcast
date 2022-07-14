@@ -15,16 +15,8 @@
  */
 package org.factcast.itests.factus;
 
-import static java.util.UUID.*;
-import static org.assertj.core.api.Assertions.*;
+import java.util.*;
 
-import config.RedissonProjectionConfiguration;
-import java.util.ArrayList;
-import java.util.UUID;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Factus;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.redis.batch.RedisBatched;
@@ -47,6 +39,15 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
 
+import config.RedissonProjectionConfiguration;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+
+import static java.util.UUID.*;
+import static org.assertj.core.api.Assertions.assertThat;
+
 @SpringBootTest
 @ContextConfiguration(classes = {Application.class, RedissonProjectionConfiguration.class})
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
@@ -64,7 +65,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
       var l = new ArrayList<EventObject>(NUMBER_OF_EVENTS);
       for (int i = 0; i < NUMBER_OF_EVENTS; i++) {
         UUID id = randomUUID();
-        l.add(new UserCreated(id, "" + i));
+        l.add(new UserCreated(id, getClass().getSimpleName() + ":" + i));
         if (i > 0) {
           l.add(new UserDeleted(id));
         }
@@ -114,7 +115,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     public void setup() {
       var l = new ArrayList<EventObject>(NUMBER_OF_EVENTS);
       for (int i = 0; i < NUMBER_OF_EVENTS; i++) {
-        l.add(new UserCreated(randomUUID(), "" + i));
+        l.add(new UserCreated(randomUUID(), getClass().getSimpleName() + ":" + i));
       }
       log.info("publishing {} Events ", NUMBER_OF_EVENTS);
       factus.publish(l);
@@ -166,7 +167,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     public void setup() {
       var l = new ArrayList<EventObject>(NUMBER_OF_EVENTS);
       for (int i = 0; i < NUMBER_OF_EVENTS; i++) {
-        l.add(new UserCreated(randomUUID(), "" + i));
+        l.add(new UserCreated(randomUUID(), getClass().getSimpleName() + ":" + i));
       }
       log.info("publishing {} Events ", NUMBER_OF_EVENTS);
       factus.publish(l);

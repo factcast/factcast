@@ -15,15 +15,9 @@
  */
 package org.factcast.itests.factus;
 
-import static java.util.UUID.*;
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.time.Duration;
 import java.util.*;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
+
 import org.factcast.factus.Factus;
 import org.factcast.factus.Handler;
 import org.factcast.factus.event.EventObject;
@@ -47,6 +41,14 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.testcontainers.containers.PostgreSQLContainer;
+
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+
+import static java.util.UUID.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ContextConfiguration(classes = {Application.class})
@@ -77,7 +79,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
 
     var l = new ArrayList<EventObject>(NUMBER_OF_EVENTS);
     for (int i = 0; i < NUMBER_OF_EVENTS; i++) {
-      l.add(new UserCreated(randomUUID(), "" + i));
+      l.add(new UserCreated(randomUUID(), getClass().getSimpleName() + ":" + i));
     }
     log.info("publishing {} Events ", NUMBER_OF_EVENTS);
     factus.publish(l);
