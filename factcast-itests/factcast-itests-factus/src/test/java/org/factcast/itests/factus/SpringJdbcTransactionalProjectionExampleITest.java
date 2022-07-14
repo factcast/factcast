@@ -15,11 +15,8 @@
  */
 package org.factcast.itests.factus;
 
-import static java.util.UUID.*;
-import static org.assertj.core.api.Assertions.*;
+import java.util.*;
 
-import java.util.Arrays;
-import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Factus;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
@@ -32,6 +29,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.testcontainers.containers.PostgreSQLContainer;
+
+import lombok.extern.slf4j.Slf4j;
+
+import static java.util.UUID.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @Slf4j
@@ -78,7 +80,7 @@ public class SpringJdbcTransactionalProjectionExampleITest extends AbstractFactC
     assertThat(userNames).containsExactlyInAnyOrder("Peter", "Paul");
   }
 
-  private void createTables() {
+  protected void createTables() {
     jdbcTemplate.execute("DROP TABLE IF EXISTS fact_stream_positions;");
     jdbcTemplate.execute(
         "CREATE TABLE fact_stream_positions (\n"
