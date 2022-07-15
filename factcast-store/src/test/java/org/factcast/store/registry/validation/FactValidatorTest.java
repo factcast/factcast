@@ -20,6 +20,7 @@ import static org.mockito.Mockito.*;
 
 import io.micrometer.core.instrument.Tags;
 import java.util.*;
+import lombok.SneakyThrows;
 import org.everit.json.schema.Schema;
 import org.factcast.core.Fact;
 import org.factcast.store.StoreConfigurationProperties;
@@ -222,6 +223,7 @@ public class FactValidatorTest {
     assertThat(FactValidator.isValidateable(invalidFact)).isFalse();
   }
 
+  @SneakyThrows
   @Test
   void testTryValidateWithoutError() {
     SchemaRegistry registry = mock(SchemaRegistry.class);
@@ -268,6 +270,7 @@ public class FactValidatorTest {
         .matches(s -> s.contains("Fact is not parseable"));
   }
 
+  @SneakyThrows
   @Test
   void testTryValidateWithError() {
     SchemaRegistry registry = mock(SchemaRegistry.class);
