@@ -16,20 +16,17 @@
 package org.factcast.store.internal.script.graaljs;
 
 import java.util.*;
-import lombok.experimental.UtilityClass;
+
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.Value;
+
+import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class NashornCompatContextBuilder {
 
   static {
-    // important property to enable nashorn compat mode within GraalJs
-    // this is necessary for the way we currently do event transformation (in place modification of
-    // event data)
-    System.setProperty("polyglot.js.nashorn-compat", "true");
-
     // we ignore this because we're not running on graal and its somehow expected
     System.setProperty("polyglot.engine.WarnInterpreterOnly", "false");
   }
