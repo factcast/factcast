@@ -15,8 +15,15 @@
  */
 package org.factcast.itests.factus;
 
-import java.util.*;
+import static java.util.UUID.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import config.RedissonProjectionConfiguration;
+import java.util.*;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Factus;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.redis.tx.RedisTransactional;
@@ -38,15 +45,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
-
-import config.RedissonProjectionConfiguration;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-
-import static java.util.UUID.*;
-import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ContextConfiguration(classes = {Application.class, RedissonProjectionConfiguration.class})
