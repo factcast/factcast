@@ -44,9 +44,10 @@ public class GraalJSEngine implements JSEngine {
               try {
                 // not stated anywhere that engine creation is thread-safe
                 synchronized (ENGINE_CREATION_MUTEX) {
-                  var engine = GraalJSScriptEngine.create(null, NashornCompatContextBuilder.CTX);
-                  engine.compile(script).eval();
-                  return engine;
+                  var graalJSScriptEngine =
+                      GraalJSScriptEngine.create(null, NashornCompatContextBuilder.CTX);
+                  graalJSScriptEngine.compile(script).eval();
+                  return graalJSScriptEngine;
                 }
               } catch (RuntimeException | ScriptException e) {
                 log.debug("Exception during engine creation. Escalating.", e);

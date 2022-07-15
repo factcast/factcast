@@ -16,10 +16,12 @@
 package org.factcast.store.internal.script.graaljs;
 
 import java.util.*;
-import lombok.experimental.UtilityClass;
+
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.Value;
+
+import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class NashornCompatContextBuilder {
@@ -34,7 +36,7 @@ public class NashornCompatContextBuilder {
     System.setProperty("polyglot.engine.WarnInterpreterOnly", "false");
   }
 
-  static Context.Builder CTX =
+  static final Context.Builder CTX =
       Context.newBuilder("js")
           .allowExperimentalOptions(true)
           .option("js.syntax-extensions", "true")
