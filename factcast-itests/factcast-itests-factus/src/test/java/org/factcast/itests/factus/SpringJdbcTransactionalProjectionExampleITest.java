@@ -15,8 +15,11 @@
  */
 package org.factcast.itests.factus;
 
-import java.util.*;
+import static java.util.UUID.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.*;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Factus;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
@@ -29,11 +32,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.testcontainers.containers.PostgreSQLContainer;
-
-import lombok.extern.slf4j.Slf4j;
-
-import static java.util.UUID.*;
-import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @Slf4j
