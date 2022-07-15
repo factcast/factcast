@@ -15,26 +15,29 @@
  */
 package org.factcast.itests.factus;
 
-import static org.assertj.core.api.Assertions.*;
+import java.util.concurrent.*;
 
-import com.google.common.base.Stopwatch;
-import eu.rekawek.toxiproxy.model.ToxicDirection;
-import java.util.concurrent.TimeUnit;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.factus.Factus;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.redis.RedisProxy;
 import org.factcast.test.toxi.FactCastProxy;
 import org.factcast.test.toxi.PostgresqlProxy;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
+
+import com.google.common.base.Stopwatch;
+
+import eu.rekawek.toxiproxy.model.ToxicDirection;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ContextConfiguration(classes = {Application.class})
@@ -104,7 +107,7 @@ class FactusExtensionProxyFeatureTest extends AbstractFactCastIntegrationTest {
     long rtWithLatency = sw.stop().elapsed(TimeUnit.MILLISECONDS);
 
     assertThat(rtWithoutLatency).isLessThan(LATENCY);
-    assertThat(rtWithLatency).isGreaterThan(LATENCY);
+    assertThat(rtWithLatency).isGreaterThanOrEqualTo(LATENCY);
   }
 
   @SneakyThrows
