@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2022 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal;
+package org.factcast.store.internal.script.exception;
 
-import static org.junit.jupiter.api.Assertions.*;
+import lombok.NonNull;
 
-import org.junit.jupiter.api.*;
+public class ScriptEngineException extends RuntimeException {
+  private static final long serialVersionUID = 1L;
 
-public class PgPostQueryMatcherTest {
+  public ScriptEngineException(@NonNull Throwable e) {
+    super(e);
+  }
 
-  @Test
-  public void testPGPostQueryMatcher() {
-    assertThrows(NullPointerException.class, () -> new PgPostQueryMatcher(null));
+  public ScriptEngineException(String message) {
+    super(message);
   }
 }

@@ -41,6 +41,7 @@ import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.query.PgQueryBuilder;
+import org.factcast.store.internal.script.JSEngineFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
@@ -75,6 +76,7 @@ public class PgFactStream {
   final FastForwardTarget ffwdTarget;
   final PgMetrics metrics;
   final PgBlacklist blacklist;
+  final JSEngineFactory ef;
 
   CondensedQueryExecutor condensedExecutor;
 
@@ -87,7 +89,7 @@ public class PgFactStream {
   void connect(@NonNull SubscriptionRequestTO request) {
     this.request = request;
     log.debug("{} connect subscription {}", request, request.dump());
-    postQueryMatcher = new PgPostQueryMatcher(request);
+    postQueryMatcher = new PgPostQueryMatcher(request, ef);
     PgQueryBuilder q = new PgQueryBuilder(request.specs(), statementHolder);
     initializeSerialToStartAfter();
 

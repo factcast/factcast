@@ -45,6 +45,7 @@ import org.factcast.store.internal.lock.AdvisoryWriteLock;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
+import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.snapcache.PgSnapshotCache;
 import org.factcast.store.internal.snapcache.PgSnapshotCacheConfiguration;
 import org.factcast.store.internal.tail.PGTailIndexingConfiguration;
@@ -139,7 +140,8 @@ public class PgFactStoreInternalConfiguration {
       FactTransformersFactory transformerFactory,
       FastForwardTarget target,
       PgMetrics metrics,
-      PgBlacklist blacklist) {
+      PgBlacklist blacklist,
+      JSEngineFactory ef) {
     return new PgSubscriptionFactory(
         jdbcTemplate,
         eventBus,
@@ -149,7 +151,8 @@ public class PgFactStoreInternalConfiguration {
         transformerFactory,
         target,
         metrics,
-        blacklist);
+        blacklist,
+        ef);
   }
 
   @Bean
