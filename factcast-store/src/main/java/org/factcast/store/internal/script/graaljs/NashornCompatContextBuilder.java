@@ -16,12 +16,10 @@
 package org.factcast.store.internal.script.graaljs;
 
 import java.util.*;
-
+import lombok.experimental.UtilityClass;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.Value;
-
-import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class NashornCompatContextBuilder {
