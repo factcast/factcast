@@ -28,6 +28,7 @@ import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.filter.PgBlacklist;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
+import org.factcast.store.internal.script.JSEngineFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 // TODO integrate with PGQuery
@@ -50,6 +51,7 @@ class PgSubscriptionFactory {
   final FastForwardTarget target;
   final PgMetrics metrics;
   final PgBlacklist blacklist;
+  final JSEngineFactory ef;
 
   public Subscription subscribe(SubscriptionRequestTO req, FactObserver observer) {
     SubscriptionImpl subscription =
@@ -64,7 +66,8 @@ class PgSubscriptionFactory {
             catchupFactory,
             target,
             metrics,
-            blacklist);
+            blacklist,
+            ef);
 
     // when closing the subscription, also close the PgFactStream
     subscription.onClose(pgsub::close);

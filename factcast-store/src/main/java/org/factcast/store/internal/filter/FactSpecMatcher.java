@@ -13,20 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.spec;
+package org.factcast.store.internal.filter;
 
-import com.fasterxml.jackson.databind.util.LRUMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import javax.script.ScriptEngine;
+import com.fasterxml.jackson.databind.JsonNode;
+import java.util.*;
+import java.util.function.*;
+import java.util.stream.*;
 import lombok.Generated;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.factcast.core.Fact;
+import org.factcast.core.spec.FactSpec;
+import org.factcast.core.spec.FilterScript;
+import org.factcast.core.util.FactCastJson;
+import org.factcast.store.internal.script.JSArgument;
+import org.factcast.store.internal.script.JSEngine;
+import org.factcast.store.internal.script.JSEngineFactory;
 
 /**
  * Matches facts against specifications.
@@ -34,8 +36,6 @@ import org.factcast.core.Fact;
  * @author uwe.schaefer@prisma-capacity.eu
  */
 public final class FactSpecMatcher implements Predicate<Fact> {
-
-  private static final LRUMap<FilterScript, ScriptEngine> scriptEngineCache = new LRUMap<>(10, 200);
 
   @NonNull final String ns;
 
@@ -49,12 +49,9 @@ public final class FactSpecMatcher implements Predicate<Fact> {
 
   final FilterScript script;
 
-  final ScriptEngine scriptEngine;
+  final JSEngine scriptEngine;
 
-  private static final Supplier<ScriptEngine> jsScriptEngineSupplier =
-      new JavaScriptEngineSupplier();
-
-  public FactSpecMatcher(@NonNull FactSpec spec) {
+  public FactSpecMatcher(@NonNull FactSpec spec, @NonNull JSEngineFactory ef) {
     // opt: prevent method calls by prefetching to final fields.
     // yes, they might be inlined at some point, but making decisions based
     // on final fields should help.
@@ -66,7 +63,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     aggId = spec.aggId();
     meta = spec.meta();
     script = spec.filterScript();
-    scriptEngine = getEngine(script);
+    scriptEngine = getEngine(script, ef);
   }
 
   @Override
@@ -80,18 +77,18 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     return match;
   }
 
-  protected boolean metaMatch(Fact t) {
+  boolean metaMatch(Fact t) {
     if ((meta.isEmpty())) {
       return true;
     }
     return meta.entrySet().stream().allMatch(e -> e.getValue().equals(t.meta(e.getKey())));
   }
 
-  protected boolean nsMatch(Fact t) {
+  boolean nsMatch(Fact t) {
     return ns.equals(t.ns());
   }
 
-  protected boolean typeMatch(Fact t) {
+  boolean typeMatch(Fact t) {
     if (type == null) {
       return true;
     }
@@ -99,7 +96,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     return type.equals(otherType);
   }
 
-  protected boolean versionMatch(Fact t) {
+  boolean versionMatch(Fact t) {
     if (version == 0) {
       return true;
     }
@@ -107,7 +104,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     return version.equals(otherVersion);
   }
 
-  protected boolean aggIdMatch(Fact t) {
+  boolean aggIdMatch(Fact t) {
     if (aggId == null) {
       return true;
     }
@@ -116,16 +113,21 @@ public final class FactSpecMatcher implements Predicate<Fact> {
 
   @SneakyThrows
   @Generated
-  protected boolean scriptMatch(Fact t) {
+  boolean scriptMatch(Fact t) {
     if (script == null) {
       return true;
     }
-    return (Boolean) scriptEngine.eval("test(" + t.jsonHeader() + "," + t.jsonPayload() + ")");
+    JsonNode headerNode = FactCastJson.readTree(t.jsonHeader());
+    JsonNode payloadNode = FactCastJson.readTree(t.jsonPayload());
+    return (Boolean)
+        scriptEngine.invoke(
+            "test", JSArgument.byValue(headerNode), JSArgument.byValue(payloadNode));
   }
 
   @SneakyThrows
   @Generated
-  private static synchronized ScriptEngine getEngine(FilterScript filterScript) {
+  private static synchronized JSEngine getEngine(
+      FilterScript filterScript, @NonNull JSEngineFactory ef) {
     if (filterScript == null) {
       return null;
     }
@@ -133,29 +135,21 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     // TODO: currently only supports language js:
     if ("js".equals(filterScript.languageIdentifier())) {
 
-      ScriptEngine cachedEngine = scriptEngineCache.get(filterScript);
-      if (cachedEngine != null) {
-        return cachedEngine;
-      } else {
-        ScriptEngine engine = jsScriptEngineSupplier.get();
-        engine.eval("var test=" + filterScript.source());
-        scriptEngineCache.put(filterScript, engine);
-        return engine;
-      }
+      return ef.getOrCreateFor("var test=" + filterScript.source());
     } else {
-      // TODO really?
       throw new IllegalArgumentException(
           "Unsupported Script language: " + filterScript.languageIdentifier());
     }
   }
 
-  public static Predicate<Fact> matchesAnyOf(@NonNull List<FactSpec> spec) {
+  public static Predicate<Fact> matchesAnyOf(
+      @NonNull List<FactSpec> spec, @NonNull JSEngineFactory ef) {
     List<FactSpecMatcher> matchers =
-        spec.stream().map(FactSpecMatcher::new).collect(Collectors.toList());
+        spec.stream().map(s -> new FactSpecMatcher(s, ef)).collect(Collectors.toList());
     return f -> matchers.stream().anyMatch(p -> p.test(f));
   }
 
-  public static Predicate<Fact> matches(@NonNull FactSpec spec) {
-    return new FactSpecMatcher(spec);
+  public static Predicate<Fact> matches(@NonNull FactSpec spec, @NonNull JSEngineFactory ef) {
+    return new FactSpecMatcher(spec, ef);
   }
 }

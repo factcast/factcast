@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import lombok.SneakyThrows;
+import nl.altindag.log.LogCaptor;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -37,7 +38,6 @@ import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.filter.PgFactFilter;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
-import org.factcast.test.Slf4jHelper;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,7 +46,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
-import slf4jtest.LogLevel;
 
 @ExtendWith(MockitoExtension.class)
 public class PgFactStreamTest {
@@ -207,7 +206,7 @@ public class PgFactStreamTest {
 
   @Test
   void logsWarnLevel() {
-    var logger = Slf4jHelper.replaceLogger(uut);
+    LogCaptor logCaptor = LogCaptor.forClass(uut.getClass());
 
     when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
     when(sub.factsTransformed()).thenReturn(new AtomicLong(50L));
@@ -215,13 +214,15 @@ public class PgFactStreamTest {
 
     uut.logCatchupTransformationStats();
 
-    assertThat(logger.contains(LogLevel.WarnLevel, "CatchupTransformationRatio")).isTrue();
+    assertThat(
+        logCaptor.getWarnLogs().stream()
+            .anyMatch(log -> log.contains("CatchupTransformationRatio")));
     verify(distributionSummary).record(50);
   }
 
   @Test
   void logsInfoLevel() {
-    var logger = Slf4jHelper.replaceLogger(uut);
+    LogCaptor logCaptor = LogCaptor.forClass(uut.getClass());
 
     when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
     when(sub.factsTransformed()).thenReturn(new AtomicLong(10L));
@@ -229,13 +230,15 @@ public class PgFactStreamTest {
 
     uut.logCatchupTransformationStats();
 
-    assertThat(logger.contains(LogLevel.InfoLevel, "CatchupTransformationRatio")).isTrue();
+    assertThat(
+        logCaptor.getInfoLogs().stream()
+            .anyMatch(log -> log.contains("CatchupTransformationRatio")));
     verify(distributionSummary).record(10);
   }
 
   @Test
   void logsDebugLevel() {
-    var logger = Slf4jHelper.replaceLogger(uut);
+    LogCaptor logCaptor = LogCaptor.forClass(uut.getClass());
 
     when(metrics.distributionSummary(any())).thenReturn(distributionSummary);
     when(sub.factsTransformed()).thenReturn(new AtomicLong(1L));
@@ -243,7 +246,9 @@ public class PgFactStreamTest {
 
     uut.logCatchupTransformationStats();
 
-    assertThat(logger.contains(LogLevel.DebugLevel, "CatchupTransformationRatio")).isTrue();
+    assertThat(
+        logCaptor.getDebugLogs().stream()
+            .anyMatch(log -> log.contains("CatchupTransformationRatio")));
     verify(distributionSummary).record(1);
   }
 
