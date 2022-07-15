@@ -15,8 +15,13 @@
  */
 package org.factcast.itests.factus;
 
-import java.util.concurrent.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.common.base.Stopwatch;
+import eu.rekawek.toxiproxy.model.ToxicDirection;
+import java.util.concurrent.*;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.factus.Factus;
 import org.factcast.test.AbstractFactCastIntegrationTest;
@@ -30,14 +35,6 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
-
-import com.google.common.base.Stopwatch;
-
-import eu.rekawek.toxiproxy.model.ToxicDirection;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ContextConfiguration(classes = {Application.class})

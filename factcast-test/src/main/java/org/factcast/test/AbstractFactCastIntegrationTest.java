@@ -15,12 +15,11 @@
  */
 package org.factcast.test;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.test.context.TestExecutionListeners;
 import org.testcontainers.junit.jupiter.Testcontainers;
-
-import lombok.extern.slf4j.Slf4j;
 
 @SuppressWarnings("rawtypes")
 @Testcontainers(disabledWithoutDocker = true)
