@@ -22,7 +22,9 @@ import java.sql.Statement;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
-
+import lombok.SneakyThrows;
+import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.test.toxi.FactCastProxy;
 import org.factcast.test.toxi.PostgresqlProxy;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -32,10 +34,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.ToxiproxyContainer.ContainerProxy;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
-
-import lombok.SneakyThrows;
-import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
 
 @SuppressWarnings("rawtypes")
 @Slf4j
