@@ -13,26 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.test.toxi;
+package org.factcast.store.internal.script;
 
-import lombok.NonNull;
-import org.testcontainers.containers.ToxiproxyContainer;
+import org.factcast.store.internal.script.exception.ScriptEngineException;
 
-public class FactCastProxy extends AbstractToxiProxySupplier {
-  public FactCastProxy(@NonNull ToxiproxyContainer.ContainerProxy proxy) {
-    super(proxy);
-  }
+public interface JSEngineFactory {
 
-  @Override
-  public String toString() {
-    return "FactCastProxy[ip="
-        + getContainerIpAddress()
-        + ",proxyPort="
-        + getProxyPort()
-        + ",origProxyPort="
-        + getOriginalProxyPort()
-        + ",name="
-        + getName()
-        + "]";
-  }
+  JSEngine getOrCreateFor(String script) throws ScriptEngineException;
 }

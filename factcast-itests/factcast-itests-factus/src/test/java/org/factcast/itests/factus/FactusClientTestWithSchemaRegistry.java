@@ -15,10 +15,10 @@
  */
 package org.factcast.itests.factus;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import config.RedissonProjectionConfiguration;
-import java.util.UUID;
+import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Factus;
 import org.factcast.itests.factus.proj.UserV1;
@@ -37,12 +37,12 @@ import org.springframework.test.context.ContextConfiguration;
 @ContextConfiguration(classes = {Application.class, RedissonProjectionConfiguration.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j
-public class FactusClientTestWithSchemaRegistry extends AbstractFactCastIntegrationTest {
+class FactusClientTestWithSchemaRegistry extends AbstractFactCastIntegrationTest {
 
   @Autowired Factus ec;
 
   @Test
-  public void testVersions_upcast() {
+  void testVersions_upcast() {
     // INIT
     UUID aggId = UUID.randomUUID();
 
@@ -60,7 +60,7 @@ public class FactusClientTestWithSchemaRegistry extends AbstractFactCastIntegrat
   }
 
   @Test
-  public void testVersions_downcast() {
+  void testVersions_downcast() {
     // INIT
     UUID aggId = UUID.randomUUID();
 

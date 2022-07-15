@@ -15,9 +15,10 @@
  */
 package org.factcast.itests.factus;
 
-import static java.util.concurrent.TimeUnit.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.awaitility.Awaitility.*;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 
 import com.google.common.base.Stopwatch;
 import eu.rekawek.toxiproxy.model.ToxicDirection;
@@ -30,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import nl.altindag.console.ConsoleCaptor;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
@@ -40,9 +42,9 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.FactCastExtension;
-import org.factcast.test.SLF4JTestSpy;
 import org.factcast.test.toxi.FactCastProxy;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
@@ -153,8 +155,7 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
   @SneakyThrows
   @Test
   void subscribeWithFailingReconnect() {
-    try (var spy = SLF4JTestSpy.attach()) {
-
+    try (var consoleCaptor = new ConsoleCaptor()) {
       var count = new AtomicInteger();
       assertThatThrownBy(
               () ->
@@ -179,7 +180,8 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
       assertThat(count.get()).isLessThan(MAX_FACTS);
 
       assertThat(
-              spy.stream().filter(e -> e.getFormattedMessage().contains("Trying to resubscribe")))
+              consoleCaptor.getStandardOutput().stream()
+                  .filter(e -> e.contains("Trying to resubscribe")))
           .hasSize(NUMBER_OF_ATTEMPTS - 1);
     }
   }
