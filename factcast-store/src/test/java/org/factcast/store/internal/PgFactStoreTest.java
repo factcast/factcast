@@ -15,14 +15,10 @@
  */
 package org.factcast.store.internal;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
-
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
-import lombok.NonNull;
-import lombok.SneakyThrows;
+
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
@@ -49,6 +45,14 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import lombok.Delegate;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
+
 @ContextConfiguration(classes = {PgTestConfiguration.class})
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
@@ -65,7 +69,19 @@ class PgFactStoreTest extends AbstractFactStoreTest {
 
   @Override
   protected FactStore createStoreToTest() {
-    return fs;
+    return new FactStoreWrapper(fs);
+  }
+
+  /**
+   * This weird trick is necessary, because Spring-Boot does something to autowired beans, so that
+   * mockito cannot spy them anymore. This wrapper serves as a simple shell around the injected
+   * FactStore bean, so that it can be spied as expected with mockito.spy()
+   *
+   * <p>And yes, I apologize...
+   */
+  @RequiredArgsConstructor
+  private class FactStoreWrapper implements FactStore {
+    @Delegate final FactStore delegate;
   }
 
   @Test
