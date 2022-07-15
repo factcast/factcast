@@ -15,25 +15,23 @@
  */
 package org.factcast.test;
 
-import com.google.common.collect.Lists;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Request.Builder;
-import okhttp3.RequestBody;
+import java.util.concurrent.atomic.*;
+import java.util.stream.*;
+
 import org.junit.jupiter.api.extension.*;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.ToxiproxyContainer;
 import org.testcontainers.containers.ToxiproxyContainer.ContainerProxy;
 import org.testcontainers.utility.DockerImageName;
+
+import com.google.common.collect.Lists;
+
+import eu.rekawek.toxiproxy.Proxy;
+import eu.rekawek.toxiproxy.ToxiproxyClient;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class FactCastExtension
@@ -50,9 +48,11 @@ public class FactCastExtension
   private static final List<FactCastIntegrationTestExtension> extensions = new LinkedList<>();
   private static List<FactCastIntegrationTestExtension> reverseExtensions;
   private static ToxiproxyContainer toxiProxy;
+  private static ToxiproxyClient toxiClient;
 
   @Override
   public void beforeEach(ExtensionContext context) throws Exception {
+    FactCastExtension.resetProxy();
     for (FactCastIntegrationTestExtension e : extensions) {
       e.beforeEach(context);
     }
@@ -125,48 +125,32 @@ public class FactCastExtension
             .withNetwork(_docker_network)
             .withNetworkAliases(TOXIPROXY_NETWORK_ALIAS);
     toxiProxy.start();
+    String host = toxiProxy.getHost();
+    int controlPort = toxiProxy.getControlPort();
+    toxiClient = new ToxiproxyClient(host, controlPort);
   }
 
   public static ContainerProxy proxy(String host, int port) {
     return toxiProxy.getProxy(host, port);
   }
 
-  public static ContainerProxy proxy(GenericContainer container, int port) {
+  public static ContainerProxy proxy(GenericContainer<?> container, int port) {
     return toxiProxy.getProxy(container, port);
   }
 
-  private static final OkHttpClient client = new OkHttpClient();
-
   @SneakyThrows
   public static void resetProxy() {
-
-    String host = toxiProxy.getHost();
-    int controlPort = toxiProxy.getControlPort();
-    URI uri = new URI("http://" + host + ":" + controlPort + "/reset");
-
-    Request request =
-        new Builder()
-            .url(uri.toURL())
-            .method(
-                "POST",
-                RequestBody.create(
-                    MediaType.get("application/json"), "{}".getBytes(StandardCharsets.UTF_8)))
-            .build();
-    client.newCall(request).execute();
+    toxiClient.reset();
   }
 
   @SneakyThrows
   public static void setProxyState(String name, boolean shouldBeOn) {
+    Proxy proxy = toxiClient.getProxy(name);
+    if (shouldBeOn) proxy.enable();
+    else proxy.disable();
+  }
 
-    String host = toxiProxy.getHost();
-    int controlPort = toxiProxy.getControlPort();
-    URI uri = new URI("http://" + host + ":" + controlPort + "/proxies");
-
-    RequestBody body =
-        RequestBody.create(
-            MediaType.get("application/json"),
-            ("{\"enabled\":" + shouldBeOn + "}").getBytes(StandardCharsets.UTF_8));
-    Request request = new Request.Builder().url(uri.toURL()).method("POST", body).build();
-    client.newCall(request).execute();
+  public static ToxiproxyClient client() {
+    return toxiClient;
   }
 }
