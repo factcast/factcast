@@ -11,6 +11,8 @@ org.factcast.spring.boot.autoconfigure.server.grpc.FactCastGrpcServerAutoConfigu
 org.factcast.spring.boot.autoconfigure.server.grpc.LZ4ServerAutoConfiguration,\
 org.factcast.spring.boot.autoconfigure.server.grpc.SnappyServerAutoConfiguration,\
 org.factcast.spring.boot.autoconfigure.store.rds.RdsAutoConfiguration,\
-org.factcast.spring.boot.autoconfigure.store.PgFactStoreAutoConfiguration\
+org.factcast.spring.boot.autoconfigure.store.PgFactStoreAutoConfiguration,\
+org.factcast.spring.boot.autoconfigure.store.script.engine.GraalJSScriptEngineAutoConfiguration\
+
 
   

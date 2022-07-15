@@ -74,7 +74,7 @@ public class GrpcThreadingITest extends AbstractFactCastIntegrationTest {
 
     var l = new ArrayList<EventObject>(NUMBER_OF_EVENTS);
     for (int i = 0; i < NUMBER_OF_EVENTS; i++) {
-      l.add(new UserCreated(randomUUID(), "" + i));
+      l.add(new UserCreated(randomUUID(), getClass().getSimpleName() + ":" + i));
     }
     log.info("publishing {} Events ", NUMBER_OF_EVENTS);
     factus.publish(l);

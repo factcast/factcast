@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.registry.transformation.chains;
+package org.factcast.store.internal.script.graaljs;
 
-import java.util.List;
+import java.util.*;
 import lombok.experimental.UtilityClass;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.Value;
 
-/**
- * The context and most of the host access is copied from
- * com.oracle.truffle.js.scriptengine.GraalJSScriptEngine#GraalJSScriptEngine(com.oracle.truffle.js.scriptengine.GraalJSEngineFactory,
- * org.graalvm.polyglot.Engine, org.graalvm.polyglot.Context.Builder) We had to copy it over and add
- * some more targetTypeMappings to make nested arrays work. See #1905
- */
 @UtilityClass
 public class NashornCompatContextBuilder {
-  public Context.Builder CTX =
+
+  static {
+    // we ignore this because we're not running on graal and its somehow expected
+    System.setProperty("polyglot.engine.WarnInterpreterOnly", "false");
+  }
+
+  static final Context.Builder CTX =
       Context.newBuilder("js")
           .allowExperimentalOptions(true)
           .option("js.syntax-extensions", "true")

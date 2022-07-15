@@ -16,11 +16,10 @@
 package org.factcast.itests.factus;
 
 import static java.util.UUID.*;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import config.RedissonProjectionConfiguration;
-import java.util.ArrayList;
-import java.util.UUID;
+import java.util.*;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -63,7 +62,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     public void setup() {
       var l = new ArrayList<EventObject>(NUMBER_OF_EVENTS);
       for (int i = 0; i < NUMBER_OF_EVENTS; i++) {
-        l.add(new UserCreated(randomUUID(), "" + i));
+        l.add(new UserCreated(randomUUID(), getClass().getSimpleName() + ":" + i));
       }
       log.info("publishing {} Events ", NUMBER_OF_EVENTS);
       factus.publish(l);
@@ -125,7 +124,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     public void setup() {
       var l = new ArrayList<EventObject>(NUMBER_OF_EVENTS);
       for (int i = 0; i < NUMBER_OF_EVENTS; i++) {
-        l.add(new UserCreated(randomUUID(), "" + i));
+        l.add(new UserCreated(randomUUID(), getClass().getSimpleName() + ":" + i));
       }
       log.info("publishing {} Events ", NUMBER_OF_EVENTS);
       factus.publish(l);

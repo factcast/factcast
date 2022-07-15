@@ -18,15 +18,15 @@ package org.factcast.itests.factus;
 import static java.util.Arrays.*;
 import static java.util.UUID.*;
 import static java.util.stream.Collectors.*;
-import static net.javacrumbs.jsonunit.assertj.JsonAssertions.*;
-import static org.assertj.core.api.Assertions.*;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.google.common.base.Stopwatch;
 import config.RedissonProjectionConfiguration;
 import java.util.*;
 import java.util.ArrayList;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -136,7 +136,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
     var l = new ArrayList<EventObject>(MAX);
     log.info("preparing {} Events ", MAX);
     for (int i = 0; i < MAX; i++) {
-      l.add(new UserCreated(randomUUID(), "" + i));
+      l.add(new UserCreated(randomUUID(), getClass().getSimpleName() + ":" + i));
     }
     log.info("publishing {} Events ", MAX);
     factus.publish(l);
