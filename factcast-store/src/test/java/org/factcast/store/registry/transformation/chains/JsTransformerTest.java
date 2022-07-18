@@ -15,9 +15,16 @@
  */
 package org.factcast.store.registry.transformation.chains;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.*;
 import java.util.concurrent.*;
-
+import lombok.SneakyThrows;
+import nl.altindag.log.LogCaptor;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.internal.script.graaljs.GraalJSEngineFactory;
@@ -26,16 +33,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import lombok.SneakyThrows;
-import nl.altindag.log.LogCaptor;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class JsTransformerTest {
