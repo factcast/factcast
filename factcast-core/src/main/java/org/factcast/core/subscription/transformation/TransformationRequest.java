@@ -16,11 +16,9 @@
 package org.factcast.core.subscription.transformation;
 
 import java.util.*;
-
-import org.factcast.core.Fact;
-
 import lombok.NonNull;
 import lombok.Value;
+import org.factcast.core.Fact;
 
 @Value
 public class TransformationRequest {
