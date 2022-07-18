@@ -22,4 +22,17 @@ public class FactCastProxy extends AbstractToxiProxySupplier {
   public FactCastProxy(@NonNull ToxiproxyContainer.ContainerProxy proxy) {
     super(proxy);
   }
+
+  @Override
+  public String toString() {
+    return "FactCastProxy[ip="
+        + getContainerIpAddress()
+        + ",proxyPort="
+        + getProxyPort()
+        + ",origProxyPort="
+        + getOriginalProxyPort()
+        + ",name="
+        + getName()
+        + "]";
+  }
 }

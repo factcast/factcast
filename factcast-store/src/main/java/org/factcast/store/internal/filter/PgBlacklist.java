@@ -76,7 +76,6 @@ public class PgBlacklist implements SmartInitializingSingleton, DisposableBean {
 
     @Override
     public Set<UUID> get() {
-      log.warn("Fetching blacklist");
       return Sets.newHashSet(jdbc.queryForList("SELECT id FROM blacklist", UUID.class));
     }
   }

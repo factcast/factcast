@@ -15,15 +15,9 @@
  */
 package org.factcast.store.internal;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.eventbus.EventBus;
 import java.util.*;
 import java.util.concurrent.atomic.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
@@ -39,9 +33,19 @@ import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.query.PgQueryBuilder;
+import org.factcast.store.internal.script.JSEngineFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.eventbus.EventBus;
+
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Creates and maintains a subscription.
@@ -60,9 +64,10 @@ public class PgFactStream {
   final PgLatestSerialFetcher fetcher;
   final PgCatchupFactory pgCatchupFactory;
   final FastForwardTarget ffwdTarget;
-  final PgBlacklist blacklist;
   final FactTransformerService transformationService;
+  final PgBlacklist blacklist;
   final PgMetrics metrics;
+  final JSEngineFactory ef;
 
   CondensedQueryExecutor condensedExecutor;
 
@@ -75,11 +80,12 @@ public class PgFactStream {
   @VisibleForTesting protected SubscriptionRequestTO request;
 
   final CurrentStatementHolder statementHolder = new CurrentStatementHolder();
+  private FactFilterImpl filter;
 
   void connect(@NonNull SubscriptionRequestTO request) {
     log.debug("{} connect subscription {}", request, request.dump());
     this.request = request;
-    FactFilter filter = new FactFilterImpl(request, blacklist);
+    this.filter = new FactFilterImpl(request, blacklist, ef);
     SimpleFactInterceptor interceptor =
         new SimpleFactInterceptor(
             transformationService,
@@ -120,7 +126,7 @@ public class PgFactStream {
       // just fast forward to the latest event published by now
       serial.set(fetcher.retrieveLatestSer());
     } else {
-      catchup(new FactFilterImpl(request, blacklist));
+      catchup(filter);
     }
 
     fastForward(request, subscription);

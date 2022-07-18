@@ -15,15 +15,8 @@
  */
 package org.factcast.store.registry.transformation;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.mockito.Mockito.*;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import java.util.*;
-import lombok.NonNull;
-import lombok.SneakyThrows;
+
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.transformation.TransformationRequest;
@@ -42,6 +35,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+
+import lombok.NonNull;
+import lombok.SneakyThrows;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class FactTransformerServiceImplTest {
@@ -63,7 +66,7 @@ class FactTransformerServiceImplTest {
 
     @Test
     void noChangeWhenNoTargetVersion() {
-      when(req.targetVersion()).thenReturn(0);
+      when(req.targetVersions()).thenReturn(Collections.singleton(0));
       when(req.toTransform()).thenReturn(fact);
       Fact transformed = underTest.transform(req);
       assertThat(transformed).isSameAs(req.toTransform());
@@ -71,7 +74,7 @@ class FactTransformerServiceImplTest {
 
     @Test
     void noChangeWhenSameTargetVersion() {
-      when(req.targetVersion()).thenReturn(4);
+      when(req.targetVersions()).thenReturn(Collections.singleton(4));
       when(req.toTransform()).thenReturn(fact);
       when(fact.version()).thenReturn(4);
       Fact transformed = underTest.transform(req);
@@ -87,11 +90,12 @@ class FactTransformerServiceImplTest {
 
       TransformationKey key = TransformationKey.from(fact);
 
-      when(req.targetVersion()).thenReturn(5);
+      when(req.targetVersions()).thenReturn(Collections.singleton(5));
       when(req.toTransform()).thenReturn(fact);
 
       when(chain.id()).thenReturn("myChainId");
-      when(chains.get(eq(key), eq(4), eq(5))).thenReturn(chain);
+      when(chain.toVersion()).thenReturn(5);
+      when(chains.get(eq(key), eq(4), eq(Collections.singleton(5)))).thenReturn(chain);
       TransformationCache.Key cacheKey = TransformationCache.Key.of(fact.id(), 5, "myChainId");
       when(cache.find(cacheKey)).thenReturn(Optional.of(fact2));
 
@@ -120,11 +124,12 @@ class FactTransformerServiceImplTest {
 
       TransformationKey key = TransformationKey.from(fact);
 
-      when(req.targetVersion()).thenReturn(5);
+      when(req.targetVersions()).thenReturn(Collections.singleton(5));
       when(req.toTransform()).thenReturn(fact);
 
       when(chain.id()).thenReturn("myChainId");
-      when(chains.get(eq(key), eq(4), eq(5))).thenReturn(chain);
+      when(chain.toVersion()).thenReturn(5);
+      when(chains.get(eq(key), eq(4), eq(Collections.singleton(5)))).thenReturn(chain);
       TransformationCache.Key cacheKey = TransformationCache.Key.of(fact.id(), 5, "myChainId");
       when(cache.find(cacheKey)).thenReturn(Optional.empty());
       Transformation t;
@@ -147,11 +152,12 @@ class FactTransformerServiceImplTest {
 
       TransformationKey key = TransformationKey.from(fact);
 
-      when(req.targetVersion()).thenReturn(5);
+      when(req.targetVersions()).thenReturn(Collections.singleton(5));
       when(req.toTransform()).thenReturn(fact);
 
       when(chain.id()).thenReturn("myChainId");
-      when(chains.get(eq(key), eq(4), eq(5))).thenReturn(chain);
+      when(chain.toVersion()).thenReturn(5);
+      when(chains.get(eq(key), eq(4), eq(Collections.singleton(5)))).thenReturn(chain);
       TransformationCache.Key cacheKey = TransformationCache.Key.of(fact.id(), 5, "myChainId");
       when(cache.find(cacheKey)).thenReturn(Optional.empty());
       Transformation t;
@@ -171,11 +177,12 @@ class FactTransformerServiceImplTest {
 
       TransformationKey key = TransformationKey.from(fact);
 
-      when(req.targetVersion()).thenReturn(5);
+      when(req.targetVersions()).thenReturn(Collections.singleton(5));
       when(req.toTransform()).thenReturn(fact);
 
       when(chain.id()).thenReturn("myChainId");
-      when(chains.get(eq(key), eq(4), eq(5))).thenReturn(chain);
+      when(chain.toVersion()).thenReturn(5);
+      when(chains.get(eq(key), eq(4), eq(Collections.singleton(5)))).thenReturn(chain);
       TransformationCache.Key cacheKey = TransformationCache.Key.of(fact.id(), 5, "myChainId");
       when(cache.findAll(eq(Lists.newArrayList(cacheKey)))).thenReturn(Collections.emptySet());
       Transformation t;
@@ -202,12 +209,12 @@ class FactTransformerServiceImplTest {
       TransformationKey key1 = TransformationKey.from(fact);
       TransformationKey key2 = TransformationKey.from(fact2);
 
-      var req1 = new TransformationRequest(fact, 5);
-      var req2 = new TransformationRequest(fact2, 5);
+      var req1 = new TransformationRequest(fact, Collections.singleton(5));
+      var req2 = new TransformationRequest(fact2, Collections.singleton(5));
 
       when(chain.id()).thenReturn("chain1");
-      when(chains.get(eq(key1), eq(4), eq(5))).thenReturn(chain);
-      when(chains.get(eq(key2), eq(4), eq(5))).thenReturn(chain);
+      when(chains.get(eq(key1), eq(4), eq(Collections.singleton(5)))).thenReturn(chain);
+      when(chains.get(eq(key2), eq(4), eq(Collections.singleton(5)))).thenReturn(chain);
 
       when(cache.findAll(any())).thenReturn(Sets.newHashSet(fact2transformed));
 

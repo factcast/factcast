@@ -15,13 +15,11 @@
  */
 package org.factcast.store.internal;
 
-import com.google.common.collect.Lists;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.atomic.*;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
+
 import org.factcast.core.DuplicateFactException;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
@@ -50,6 +48,11 @@ import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.google.common.collect.Lists;
+
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * A PostgreSQL based FactStore implementation
@@ -115,8 +118,12 @@ public class PgFactStore extends AbstractFactStore {
     var fact = fetchById(id);
     // map does not work here due to checked exception
     if (fact.isPresent()) {
-      return Optional.of(
-          factTransformerService.transform(new TransformationRequest(fact.get(), version)));
+      Fact f = fact.get();
+      if (version == 0 || f.version() == version) return Optional.of(f);
+      else
+        return Optional.of(
+            factTransformerService.transform(
+                new TransformationRequest(fact.get(), Collections.singleton(version))));
     } else {
       return fact;
     }

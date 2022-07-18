@@ -15,15 +15,19 @@
  */
 package org.factcast.core.subscription.transformation;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.util.*;
+
 import javax.annotation.Nullable;
+
+import org.factcast.core.Fact;
+import org.factcast.core.subscription.SubscriptionRequest;
+
+import com.google.common.annotations.VisibleForTesting;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.factcast.core.Fact;
-import org.factcast.core.subscription.SubscriptionRequest;
 
 @RequiredArgsConstructor
 public class FactTransformers {
@@ -44,18 +48,7 @@ public class FactTransformers {
 
       Set<Integer> versions = requested.get(ns, type);
       if (versions.isEmpty()) return null;
-      else {
-        int max =
-            versions.stream()
-                .mapToInt(v -> v)
-                .max()
-                .orElseThrow(
-                    () ->
-                        new IllegalArgumentException(
-                            "No requested Version !? This must not happen."));
-
-        return new TransformationRequest(e, max);
-      }
+      else return new TransformationRequest(e, versions);
     }
   }
 
