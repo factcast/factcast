@@ -15,15 +15,13 @@
  */
 package org.factcast.store.internal.filter;
 
+import com.google.common.annotations.VisibleForTesting;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.store.internal.PostQueryMatcher;
 import org.factcast.store.internal.script.JSEngineFactory;
-
-import com.google.common.annotations.VisibleForTesting;
-
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class FactFilterImpl implements FactFilter {
