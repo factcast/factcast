@@ -1,20 +1,26 @@
 package org.factcast.store.internal;
 
+import java.sql.PreparedStatement;
 import java.util.*;
+import java.util.concurrent.atomic.*;
 import java.util.function.*;
 
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
+import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.store.State;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
+import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.TransformationRequest;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
+import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.snapcache.PgSnapshotCache;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -24,10 +30,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.*;
 
 import lombok.NonNull;
+import lombok.SneakyThrows;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -35,7 +41,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class PgFactStoreTest {
 
-  //TODO plenty of opportunities for unit tests
+  // TODO plenty of opportunities for unit tests
 
   @Mock private @NonNull JdbcTemplate jdbcTemplate;
   @Mock private @NonNull PgSubscriptionFactory subscriptionFactory;
@@ -55,6 +61,26 @@ class PgFactStoreTest {
     void setup() {}
   }
 
+  private void configureMetricTimeSupplier() {
+    when(metrics.time(any(), any(Supplier.class)))
+        .thenAnswer(
+            i -> {
+              Supplier argument = i.getArgument(1);
+              return argument.get();
+            });
+  }
+
+  private void configureMetricTimeRunnable() {
+    doAnswer(
+            i -> {
+              Runnable argument = i.getArgument(1);
+              argument.run();
+              return null;
+            })
+        .when(metrics)
+        .time(any(), any(Runnable.class));
+  }
+
   @Nested
   class WhenFetchingByIdAndVersion {
     private final UUID ID = UUID.randomUUID();
@@ -63,12 +89,7 @@ class PgFactStoreTest {
     @SuppressWarnings("rawtypes")
     @BeforeEach
     void setup() {
-      when(metrics.time(any(), any(Supplier.class)))
-          .thenAnswer(
-              i -> {
-                Supplier argument = i.getArgument(1);
-                return argument.get();
-              });
+      configureMetricTimeSupplier();
     }
 
     @Test
@@ -114,17 +135,42 @@ class PgFactStoreTest {
   class WhenPublishing {
     @Mock private Fact fact;
 
+    @SuppressWarnings("rawtypes")
     @BeforeEach
-    void setup() {}
+    void setup() {
+      configureMetricTimeRunnable();
+    }
+
+    @Test
+    void publishLock() {
+      underTest.publish(Collections.singletonList(fact));
+      verify(jdbcTemplate)
+          .batchUpdate(
+              eq(PgConstants.INSERT_FACT),
+              eq(Lists.newArrayList(fact)),
+              eq(Integer.MAX_VALUE),
+              any(ParameterizedPreparedStatementSetter.class));
+      verify(lock).aquireExclusiveTXLock();
+    }
   }
 
   @Nested
   class WhenSubscribing {
     @Mock private @NonNull SubscriptionRequestTO request;
     @Mock private @NonNull FactObserver observer;
+    @Mock private @NonNull Subscription sub;
 
     @BeforeEach
-    void setup() {}
+    void setup() {
+      configureMetricTimeSupplier();
+    }
+
+    @Test
+    void name() {
+      when(subscriptionFactory.subscribe(request, observer)).thenReturn(sub);
+      Subscription s = underTest.subscribe(request, observer);
+      assertThat(s).isSameAs(sub);
+    }
   }
 
   @Nested
@@ -133,12 +179,35 @@ class PgFactStoreTest {
 
     @BeforeEach
     void setup() {}
+
+    @Test
+    void delegates() {
+      UUID factId = UUID.randomUUID();
+      when(pgFactIdToSerialMapper.retrieve(factId)).thenReturn(12L);
+      assertThat(underTest.serialOf(factId)).hasValue(12L);
+    }
+
+    @Test
+    void delegatesNoSerialFound() {
+      UUID factId = UUID.randomUUID();
+      when(pgFactIdToSerialMapper.retrieve(factId)).thenReturn(0L);
+      assertThat(underTest.serialOf(factId)).isEmpty();
+    }
   }
 
   @Nested
   class WhenEnumeratingNamespaces {
+    @SuppressWarnings("rawtypes")
     @BeforeEach
-    void setup() {}
+    void setup() {
+      configureMetricTimeSupplier();
+    }
+
+    @Test
+    void name() {
+      underTest.enumerateNamespaces();
+      verify(jdbcTemplate).query(eq(PgConstants.SELECT_DISTINCT_NAMESPACE), any(RowMapper.class));
+    }
   }
 
   @Nested
@@ -146,16 +215,83 @@ class PgFactStoreTest {
     private final String NS = "NS";
 
     @BeforeEach
-    void setup() {}
+    void setup() {
+      configureMetricTimeSupplier();
+    }
+
+    @Test
+    void name() {
+      underTest.enumerateTypes("ns1");
+      verify(jdbcTemplate)
+          .query(
+              eq(PgConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE),
+              eq(new Object[] {"ns1"}),
+              any(RowMapper.class));
+    }
   }
 
   @Nested
   class WhenPublishingIfUnchanged {
     @Mock private Fact fact;
-    @Mock private @NonNull Optional<StateToken> optionalToken;
+    @Mock private @NonNull StateToken optionalToken;
+    @Mock private State state;
 
     @BeforeEach
-    void setup() {}
+    void setup() {
+      configureMetricTimeSupplier();
+    }
+
+    @Test
+    void noToken() {
+
+      underTest = spy(underTest);
+
+      boolean b = underTest.publishIfUnchanged(Lists.newArrayList(fact), Optional.empty());
+      verify(lock).aquireExclusiveTXLock();
+      assertThat(b).isTrue();
+      verify(underTest).publish(any(List.class));
+    }
+
+    @Test
+    void brokenToken() {
+
+      underTest = spy(underTest);
+
+      List<FactSpec> specs = Lists.newArrayList(FactSpec.ns("hubba"));
+      when(state.specs()).thenReturn(specs);
+      when(state.serialOfLastMatchingFact()).thenReturn(10L);
+      when(tokenStore.get(optionalToken)).thenReturn(Optional.of(state));
+      when(jdbcTemplate.query(
+              anyString(), any(PreparedStatementSetter.class), any(ResultSetExtractor.class)))
+          .thenReturn(32L);
+
+      boolean b =
+          underTest.publishIfUnchanged(Lists.newArrayList(fact), Optional.of(optionalToken));
+      verify(lock).aquireExclusiveTXLock();
+      assertThat(b).isFalse();
+      verify(underTest, never()).publish(any(List.class));
+    }
+
+    @Test
+    void currentToken() {
+
+      underTest = spy(underTest);
+
+      List<FactSpec> specs = Lists.newArrayList(FactSpec.ns("hubba"));
+      when(state.specs()).thenReturn(specs);
+      when(state.serialOfLastMatchingFact()).thenReturn(32L);
+      when(tokenStore.get(optionalToken)).thenReturn(Optional.of(state));
+      // query for newer serial should return 0
+      when(jdbcTemplate.query(
+              anyString(), any(PreparedStatementSetter.class), any(ResultSetExtractor.class)))
+          .thenReturn(0L);
+
+      boolean b =
+          underTest.publishIfUnchanged(Lists.newArrayList(fact), Optional.of(optionalToken));
+      verify(lock).aquireExclusiveTXLock();
+      assertThat(b).isTrue();
+      verify(underTest).publish(any(List.class));
+    }
   }
 
   @Nested
@@ -163,7 +299,31 @@ class PgFactStoreTest {
     @Mock private FactSpec factSpec;
 
     @BeforeEach
-    void setup() {}
+    void setup() {
+      configureMetricTimeSupplier();
+    }
+
+    @SneakyThrows
+    @Test
+    void name() {
+      FactSpec spec1 = FactSpec.ns("ns1").type("type1");
+      List<FactSpec> specs = Lists.newArrayList(spec1);
+
+      PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
+      String stateSQL = pgQueryBuilder.createStateSQL();
+      PreparedStatementSetter statementSetter =
+          pgQueryBuilder.createStatementSetter(new AtomicLong(0));
+
+      ArgumentCaptor<PreparedStatementSetter> captor =
+          ArgumentCaptor.forClass(PreparedStatementSetter.class);
+      when(jdbcTemplate.query(eq(stateSQL), captor.capture(), any(ResultSetExtractor.class)))
+          .thenReturn(32L);
+      assertThat(underTest.getStateFor(specs, 16L).serialOfLastMatchingFact()).isEqualTo(32L);
+
+      PreparedStatement ps = mock(PreparedStatement.class);
+      captor.getValue().setValues(ps);
+      verify(ps).setLong(3, 16L);
+    }
   }
 
   @Nested
@@ -172,7 +332,30 @@ class PgFactStoreTest {
     @Mock private FactSpec factSpec;
 
     @BeforeEach
-    void setup() {}
+    void setup() {
+      configureMetricTimeSupplier();
+    }
+
+    @SneakyThrows
+    @Test
+    void name() {
+      FactSpec spec1 = FactSpec.ns("ns1").type("type1");
+      List<FactSpec> specs = Lists.newArrayList(spec1);
+
+      PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
+      String stateSQL = pgQueryBuilder.createStateSQL();
+      PreparedStatementSetter statementSetter =
+          pgQueryBuilder.createStatementSetter(new AtomicLong(12));
+      ArgumentCaptor<PreparedStatementSetter> captor =
+          ArgumentCaptor.forClass(PreparedStatementSetter.class);
+      when(jdbcTemplate.query(eq(stateSQL), captor.capture(), any(ResultSetExtractor.class)))
+          .thenReturn(32L);
+      assertThat(underTest.getStateFor(specs, 16L).serialOfLastMatchingFact()).isEqualTo(32L);
+
+      PreparedStatement ps = mock(PreparedStatement.class);
+      captor.getValue().setValues(ps);
+      verify(ps).setLong(3, 16L);
+    }
   }
 
   @Nested
@@ -180,21 +363,75 @@ class PgFactStoreTest {
     @Mock private FactSpec factSpec;
 
     @BeforeEach
-    void setup() {}
+    void setup() {
+      configureMetricTimeSupplier();
+    }
+
+    @SneakyThrows
+    @Test
+    void name() {
+      FactSpec spec1 = FactSpec.ns("ns1").type("type1");
+      List<FactSpec> specs = Lists.newArrayList(spec1);
+
+      PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
+      String stateSQL = pgQueryBuilder.createStateSQL();
+      when(jdbcTemplate.queryForObject(PgConstants.LAST_SERIAL_IN_LOG, Long.class)).thenReturn(32L);
+      assertThat(underTest.getCurrentStateFor(specs).serialOfLastMatchingFact()).isEqualTo(32L);
+    }
   }
 
   @Nested
   class WhenCurrentingTime {
-    @BeforeEach
-    void setup() {}
+
+    @SneakyThrows
+    @Test
+    void name() {
+      when(jdbcTemplate.queryForObject(PgConstants.CURRENT_TIME_MILLIS, Long.class))
+          .thenReturn(123L);
+      assertThat(underTest.currentTime()).isEqualTo(123L);
+    }
   }
 
   @Nested
   class WhenGettingSnapshot {
     @Mock private @NonNull SnapshotId id;
+    @Mock private Snapshot snap;
 
     @BeforeEach
-    void setup() {}
+    void setup() {
+      configureMetricTimeSupplier();
+    }
+
+    @SneakyThrows
+    @Test
+    void unknown() {
+      when(snapCache.getSnapshot(id)).thenReturn(Optional.empty());
+      assertThat(underTest.getSnapshot(id)).isEmpty();
+    }
+
+    @SneakyThrows
+    @Test
+    void known() {
+      when(snapCache.getSnapshot(id)).thenReturn(Optional.of(snap));
+      assertThat(underTest.getSnapshot(id)).isNotEmpty().hasValue(snap);
+    }
+  }
+
+  @Nested
+  class WhenSettingSnapshot {
+    @Mock private Snapshot snap;
+
+    @BeforeEach
+    void setup() {
+      configureMetricTimeRunnable();
+    }
+
+    @SneakyThrows
+    @Test
+    void name() {
+      underTest.setSnapshot(snap);
+      verify(snapCache).setSnapshot(snap);
+    }
   }
 
   @Nested
@@ -202,6 +439,16 @@ class PgFactStoreTest {
     @Mock private @NonNull SnapshotId id;
 
     @BeforeEach
-    void setup() {}
+    void setup() {
+      configureMetricTimeRunnable();
+    }
+
+    @SneakyThrows
+    @Test
+    void clear() {
+      underTest.clearSnapshot(id);
+      verify(snapCache).clearSnapshot(id);
+      ;
+    }
   }
 }
