@@ -40,6 +40,8 @@ import es.usc.citius.hipster.graph.GraphBuilder;
 import es.usc.citius.hipster.graph.GraphSearchProblem;
 import es.usc.citius.hipster.graph.HipsterDirectedGraph;
 import es.usc.citius.hipster.model.impl.WeightedNode;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 
@@ -51,6 +53,8 @@ public class TransformationChains implements TransformationStoreListener {
 
   private final RegistryMetrics registryMetrics;
 
+  @VisibleForTesting
+  @Getter(AccessLevel.PROTECTED)
   private final Map<TransformationKey, Map<VersionPath, TransformationChain>> cache =
       new HashMap<>();
 
