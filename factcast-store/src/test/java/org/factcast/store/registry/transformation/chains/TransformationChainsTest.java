@@ -68,7 +68,7 @@ class TransformationChainsTest {
     Assertions.assertEquals(3, chain.toVersion());
     Assertions.assertEquals(key, chain.key());
     Assertions.assertEquals("[1, 2, 3]", chain.id());
-    org.assertj.core.api.Assertions.assertThat(chain.transformationCode()).isPresent();
+    assertThat(chain.transformationCode()).isPresent();
 
     JsonNode input = FactCastJson.readTree("{}");
     JsonNode actual = transformer.transform(chain, input);
@@ -92,7 +92,7 @@ class TransformationChainsTest {
     Assertions.assertEquals(5, chain.toVersion());
     Assertions.assertEquals(key, chain.key());
     Assertions.assertEquals("[2, 3, 4, 5]", chain.id());
-    org.assertj.core.api.Assertions.assertThat(chain.transformationCode()).isPresent();
+    assertThat(chain.transformationCode()).isPresent();
 
     JsonNode input = FactCastJson.readTree("{}");
     JsonNode actual = transformer.transform(chain, input);
@@ -145,7 +145,7 @@ class TransformationChainsTest {
     Assertions.assertEquals(7, chain.toVersion());
     Assertions.assertEquals(key, chain.key());
     Assertions.assertEquals("[1, 2, 6, 7]", chain.id());
-    org.assertj.core.api.Assertions.assertThat(chain.transformationCode()).isPresent();
+    assertThat(chain.transformationCode()).isPresent();
 
     JsonNode input = FactCastJson.readTree("{}");
     JsonNode actual = transformer.transform(chain, input);
@@ -173,7 +173,7 @@ class TransformationChainsTest {
     Assertions.assertEquals(7, chain.toVersion());
     Assertions.assertEquals(key, chain.key());
     Assertions.assertEquals("[1, 2, 5, 6, 7]", chain.id());
-    org.assertj.core.api.Assertions.assertThat(chain.transformationCode()).isPresent();
+    assertThat(chain.transformationCode()).isPresent();
 
     JsonNode input = FactCastJson.readTree("{}");
     JsonNode actual = transformer.transform(chain, input);
@@ -325,6 +325,20 @@ class TransformationChainsTest {
                     Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, key.toString()),
                     Tag.of("from", "2"),
                     Tag.of("to", "[99]"))));
+  }
+
+  @Test
+  void notifyRemovesFromCache() {
+    Map<TransformationKey, Map<TransformationChains.VersionPath, TransformationChain>> cache =
+        uut.cache();
+    TransformationKey key1 = TransformationKey.of("ns", "type");
+    TransformationKey key2 = TransformationKey.of("ns", "otherType");
+    cache.put(key1, new HashMap<>());
+    cache.put(key2, new HashMap<>());
+
+    assertThat(cache).hasSize(2).containsKey(key2).containsKey(key1);
+    uut.notifyFor(key1);
+    assertThat(cache).hasSize(1).containsKey(key2);
   }
 
   private void bidir(ArrayList<Transformation> all, TransformationKey key, int i, int j) {
