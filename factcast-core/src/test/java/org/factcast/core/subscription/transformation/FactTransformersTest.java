@@ -15,8 +15,11 @@
  */
 package org.factcast.core.subscription.transformation;
 
-import java.util.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
+import com.google.common.collect.Lists;
+import java.util.*;
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.factcast.core.spec.FactSpec;
@@ -24,11 +27,6 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import com.google.common.collect.Lists;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class FactTransformersTest {
