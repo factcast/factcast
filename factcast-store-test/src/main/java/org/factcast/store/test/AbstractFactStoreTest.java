@@ -15,12 +15,19 @@
  */
 package org.factcast.store.test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.stream.*;
-
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.factcast.core.DuplicateFactException;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
@@ -39,15 +46,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.test.annotation.DirtiesContext;
-
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.SneakyThrows;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @SuppressWarnings("deprecation")
 public abstract class AbstractFactStoreTest {
@@ -79,8 +77,6 @@ public abstract class AbstractFactStoreTest {
     uut.fetchByIdAndVersion(id, 77);
     verify(store).fetchByIdAndVersion(id, 77);
   }
-
-
 
   @Test
   public void testPublishNullParameter() {
