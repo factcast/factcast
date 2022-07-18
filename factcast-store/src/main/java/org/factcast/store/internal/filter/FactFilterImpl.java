@@ -15,12 +15,15 @@
  */
 package org.factcast.store.internal.filter;
 
-import com.google.common.annotations.VisibleForTesting;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.store.internal.PostQueryMatcher;
+import org.factcast.store.internal.script.JSEngineFactory;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class FactFilterImpl implements FactFilter {
@@ -28,8 +31,11 @@ public class FactFilterImpl implements FactFilter {
   private final PgBlacklist blacklist;
   private final PostQueryMatcher matcher;
 
-  public FactFilterImpl(@NonNull SubscriptionRequest request, @NonNull PgBlacklist blacklist) {
-    this(request, blacklist, new PostQueryMatcher(request));
+  public FactFilterImpl(
+      @NonNull SubscriptionRequest request,
+      @NonNull PgBlacklist blacklist,
+      @NonNull JSEngineFactory ef) {
+    this(request, blacklist, new PostQueryMatcher(request, ef));
   }
 
   @VisibleForTesting
