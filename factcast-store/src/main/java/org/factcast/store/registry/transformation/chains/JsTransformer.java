@@ -15,8 +15,10 @@
  */
 package org.factcast.store.registry.transformation.chains;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import java.util.*;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.internal.script.JSArgument;
@@ -24,11 +26,6 @@ import org.factcast.store.internal.script.JSEngine;
 import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.script.exception.ScriptEngineException;
 import org.factcast.store.registry.transformation.Transformation;
-
-import com.fasterxml.jackson.databind.JsonNode;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @RequiredArgsConstructor
 @Slf4j
