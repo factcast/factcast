@@ -132,31 +132,31 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
         buffer.stream().map(Pair::left).filter(Objects::nonNull).collect(Collectors.toList());
 
     // resolve futures for the cache hits & transformations
-        CompletableFuture.runAsync(
-            () -> {
-              try {
-                List<Fact> transformedFacts = service.transform(factsThatNeedTransformation);
-                transformedFacts.forEach(
-                    f -> {
-                      CompletableFuture<Fact> factCompletableFuture = index.get(f.id());
-                      if (factCompletableFuture != null) {
-                        factCompletableFuture.complete(f);
-                      } else {
-                        log.warn("found unexpected fact id after transformation: {}", f.id());
+    CompletableFuture.runAsync(
+        () -> {
+          try {
+            List<Fact> transformedFacts = service.transform(factsThatNeedTransformation);
+            transformedFacts.forEach(
+                f -> {
+                  CompletableFuture<Fact> factCompletableFuture = index.get(f.id());
+                  if (factCompletableFuture != null) {
+                    factCompletableFuture.complete(f);
+                  } else {
+                    log.warn("found unexpected fact id after transformation: {}", f.id());
+                  }
+                });
+          } catch (Exception e) {
+            // make all uncompleted fail
+            index
+                .values()
+                .forEach(
+                    cf -> {
+                      if (!cf.isDone()) {
+                        cf.completeExceptionally(e);
                       }
                     });
-              } catch (Exception e) {
-                // make all uncompleted fail
-                index
-                    .values()
-                    .forEach(
-                        cf -> {
-                          if (!cf.isDone()) {
-                            cf.completeExceptionally(e);
-                          }
-                        });
-              }
-            });
+          }
+        });
 
     // flush out, blocking where the fact is not yet available
     buffer.forEach(
