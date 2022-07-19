@@ -132,7 +132,6 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
         buffer.stream().map(Pair::left).filter(Objects::nonNull).collect(Collectors.toList());
 
     // resolve futures for the cache hits & transformations
-    CompletableFuture<Void> voidCompletableFuture =
         CompletableFuture.runAsync(
             () -> {
               try {
