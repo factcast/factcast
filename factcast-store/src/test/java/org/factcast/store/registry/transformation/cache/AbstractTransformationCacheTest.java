@@ -15,18 +15,21 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
-
 import java.time.ZonedDateTime;
 import java.util.*;
+
 import org.factcast.core.Fact;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Spy;
+
+import com.google.common.collect.Lists;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
 public abstract class AbstractTransformationCacheTest {
   protected TransformationCache uut;
@@ -47,6 +50,32 @@ public abstract class AbstractTransformationCacheTest {
     assertThat(fact.isPresent()).isFalse();
 
     verify(registryMetrics).count(RegistryMetrics.EVENT.TRANSFORMATION_CACHE_MISS);
+  }
+
+  @Test
+  void testFindAll() {
+    UUID id1 = UUID.randomUUID();
+    UUID id2 = UUID.randomUUID();
+    UUID id3 = UUID.randomUUID();
+    Fact fact1 = Fact.builder().ns("ns").type("type").id(id1).version(1).build("{}");
+    Fact fact2 = Fact.builder().ns("ns").type("type").id(id2).version(1).build("{}");
+    Fact fact3 = Fact.builder().ns("ns").type("type").id(id3).version(1).build("{}");
+    String chainId = "1-2-3";
+
+    uut.put(TransformationCache.Key.of(fact1.id(), 1, chainId), fact1);
+    uut.put(TransformationCache.Key.of(fact2.id(), 1, chainId), fact2);
+    // but not fact3 !
+
+    Collection<TransformationCache.Key> keys =
+        Lists.newArrayList(
+            TransformationCache.Key.of(fact1.id(), fact1.version(), chainId),
+            TransformationCache.Key.of(fact2.id(), fact2.version(), chainId),
+            TransformationCache.Key.of(fact3.id(), fact3.version(), chainId));
+    var found = uut.findAll(keys);
+
+    assertThat(found).hasSize(2).contains(fact1, fact2);
+    verify(registryMetrics).increase(RegistryMetrics.EVENT.TRANSFORMATION_CACHE_HIT, 2);
+    verify(registryMetrics).increase(RegistryMetrics.EVENT.TRANSFORMATION_CACHE_MISS, 1);
   }
 
   @Test

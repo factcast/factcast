@@ -15,11 +15,8 @@
  */
 package org.factcast.itests.factus;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import config.RedissonProjectionConfiguration;
 import java.util.*;
-import lombok.extern.slf4j.Slf4j;
+
 import org.factcast.factus.Factus;
 import org.factcast.itests.factus.proj.UserV1;
 import org.factcast.itests.factus.proj.UserV2;
@@ -31,6 +28,11 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
+
+import config.RedissonProjectionConfiguration;
+import lombok.extern.slf4j.Slf4j;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
@@ -47,7 +49,7 @@ class FactusClientTestWithSchemaRegistry extends AbstractFactCastIntegrationTest
     UUID aggId = UUID.randomUUID();
 
     // RUN
-    ec.publish(new org.factcast.itests.factus.event.versioned.v1.UserCreated(aggId, "foo"));
+    ec.publish(new org.factcast.itests.factus.event.versioned.v2.UserCreated(aggId, "foo", ""));
 
     // ASSERT
     // this should work anyways:

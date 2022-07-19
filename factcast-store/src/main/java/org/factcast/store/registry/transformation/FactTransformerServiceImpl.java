@@ -15,27 +15,32 @@
  */
 package org.factcast.store.registry.transformation;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
 import java.util.*;
 import java.util.stream.*;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.tuple.Pair;
+
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.TransformationRequest;
 import org.factcast.core.util.FactCastJson;
+import org.factcast.store.internal.Pair;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.cache.TransformationCache;
 import org.factcast.store.registry.transformation.chains.TransformationChain;
 import org.factcast.store.registry.transformation.chains.TransformationChains;
 import org.factcast.store.registry.transformation.chains.Transformer;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @RequiredArgsConstructor
 public class FactTransformerServiceImpl implements FactTransformerService {
 
@@ -58,17 +63,17 @@ public class FactTransformerServiceImpl implements FactTransformerService {
 
     TransformationKey key = TransformationKey.of(e.ns(), e.type());
     TransformationChain chain = chains.get(key, sourceVersion, req.targetVersions());
-
     String chainId = chain.id();
-
-    Optional<Fact> cached =
-        cache.find(TransformationCache.Key.of(e.id(), chain.toVersion(), chainId));
-    return cached.orElseGet(() -> doTransform(e, chain));
+    TransformationCache.Key cacheKey =
+        TransformationCache.Key.of(e.id(), chain.toVersion(), chainId);
+    return cache.find(cacheKey).orElseGet(() -> doTransform(e, chain));
   }
 
   @Override
   public List<Fact> transform(@NonNull List<TransformationRequest> req)
       throws TransformationException {
+
+    log.trace("batch processing  " + req.size() + " transformation requests");
 
     List<Pair<TransformationRequest, TransformationChain>> pairs =
         req.stream().map(r -> Pair.of(r, toChain(r))).collect(Collectors.toList());
@@ -77,27 +82,28 @@ public class FactTransformerServiceImpl implements FactTransformerService {
             .map(
                 p ->
                     TransformationCache.Key.of(
-                        p.getLeft().toTransform().id(),
-                        p.getRight().toVersion(),
-                        p.getRight().id()))
+                        p.left().toTransform().id(), p.right().toVersion(), p.right().id()))
             .collect(Collectors.toList());
 
-    LinkedHashMap<UUID, Fact> map = new LinkedHashMap<>();
-    cache.findAll(keys).forEach(found -> map.put(found.id(), found));
+    Map<UUID, Fact> map = Collections.synchronizedMap(new LinkedHashMap<>(keys.size()));
+    Set<Fact> found = cache.findAll(keys);
+    log.trace("batch lookup found {} out of {} pre transformed facts", found.size(), req.size());
+    found.forEach(f -> map.put(f.id(), f));
 
     return pairs.parallelStream()
         .map(
             c -> {
-              Fact e = c.getLeft().toTransform();
-              TransformationChain chain = c.getRight();
+              Fact e = c.left().toTransform();
+              TransformationChain chain = c.right();
               return map.computeIfAbsent(
-                  c.getLeft().toTransform().id(), uuid -> doTransform(e, chain));
+                  c.left().toTransform().id(), uuid -> doTransform(e, chain));
             })
         .collect(Collectors.toList());
   }
 
   @NonNull
   public Fact doTransform(@NonNull Fact e, @NonNull TransformationChain chain) {
+
     return registryMetrics.timed(
         RegistryMetrics.OP.TRANSFORMATION,
         () -> {
@@ -107,18 +113,16 @@ public class FactTransformerServiceImpl implements FactTransformerService {
             ((ObjectNode) header).put("version", chain.toVersion());
             JsonNode transformedPayload = trans.transform(chain, input);
             Fact transformed = Fact.of(header, transformedPayload);
-            // can be optimized by passing jsonnode?
             cache.put(
                 TransformationCache.Key.of(transformed.id(), transformed.version(), chain.id()),
                 transformed);
             return transformed;
-          } catch (JsonProcessingException e1) {
+          } catch (Exception e1) {
             registryMetrics.count(
                 RegistryMetrics.EVENT.TRANSFORMATION_FAILED,
                 Tags.of(
                     Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, chain.key().toString()),
                     Tag.of("version", String.valueOf(chain.toVersion()))));
-
             throw new TransformationException(e1);
           }
         });

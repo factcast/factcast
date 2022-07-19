@@ -16,12 +16,14 @@
 package org.factcast.store;
 
 import java.time.Duration;
-import lombok.Data;
-import lombok.experimental.Accessors;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+
+import lombok.Data;
+import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 
 @SuppressWarnings("DefaultAnnotationParam")
 @ConfigurationProperties(prefix = StoreConfigurationProperties.PROPERTIES_PREFIX)
@@ -39,6 +41,13 @@ public class StoreConfigurationProperties implements InitializingBean {
    * respectively the fetchSize when using PageStrategy.FETCHING
    */
   int pageSize = 50;
+
+  /**
+   * defines the max number of Facts being scheduled for transformation
+   */
+  int transformationCachePageSize = 1000;
+
+
   /** Defines the Strategy used for Paging in the Catchup Phase. */
   CatchupStrategy catchupStrategy = CatchupStrategy.getDefault();
 

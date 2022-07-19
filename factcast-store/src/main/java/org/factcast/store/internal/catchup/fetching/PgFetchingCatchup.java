@@ -15,12 +15,8 @@
  */
 package org.factcast.store.internal.catchup.fetching;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.util.concurrent.atomic.*;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
+
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.BufferingFactInterceptor;
@@ -33,6 +29,13 @@ import org.postgresql.jdbc.PgConnection;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -64,6 +67,7 @@ public class PgFetchingCatchup implements PgCatchup {
       var jdbc = new JdbcTemplate(ds);
       fetch(jdbc);
     } finally {
+      log.trace("Done fetching, flushing interceptor");
       interceptor.flush();
       ds.destroy();
       statementHolder.statement(null);

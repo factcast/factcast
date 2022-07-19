@@ -18,14 +18,17 @@ package org.factcast.store.registry.transformation.cache;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.Map.*;
-import java.util.stream.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NonNull;
+
 import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.core.Fact;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class InMemTransformationCache implements TransformationCache {
   private final RegistryMetrics registryMetrics;
 
@@ -39,23 +42,19 @@ public class InMemTransformationCache implements TransformationCache {
   }
 
   public InMemTransformationCache(int capacity, RegistryMetrics registryMetrics) {
-    cache = new LRUMap<>(Math.max(capacity, DEFAULT_CAPACITY));
+    cache = Collections.synchronizedMap(new LRUMap<>(Math.max(capacity, DEFAULT_CAPACITY)));
     this.registryMetrics = registryMetrics;
   }
 
   @Override
   public void put(@NonNull TransformationCache.Key key, @NonNull Fact f) {
-    synchronized (cache) {
-      cache.put(key, new FactAndAccessTime(f, System.currentTimeMillis()));
-    }
+    cache.put(key, new FactAndAccessTime(f, System.currentTimeMillis()));
   }
 
   @Override
   public Optional<Fact> find(@NonNull TransformationCache.Key key) {
     Optional<FactAndAccessTime> cached;
-    synchronized (cache) {
-      cached = Optional.ofNullable(cache.get(key));
-    }
+    cached = Optional.ofNullable(cache.get(key));
     cached.ifPresent(faat -> faat.accessTimeInMillis(System.currentTimeMillis()));
     registryMetrics.count(
         cached.isPresent()
@@ -66,11 +65,21 @@ public class InMemTransformationCache implements TransformationCache {
 
   @Override
   public Set<Fact> findAll(Collection<Key> keys) {
-    return cache.entrySet().stream()
-        .filter(e -> keys.contains(e.getKey()))
-        .map(Entry::getValue)
-        .map(FactAndAccessTime::fact)
-        .collect(Collectors.toSet());
+    Set<Fact> found = new HashSet<>(keys.size());
+    keys.forEach(
+        k -> {
+          FactAndAccessTime factAndAccessTime = cache.get(k);
+          if (factAndAccessTime != null) found.add(factAndAccessTime.fact);
+        });
+
+    var hits = found.size();
+    var misses = keys.size() - hits;
+
+    if (hits > 0) registryMetrics.increase(RegistryMetrics.EVENT.TRANSFORMATION_CACHE_HIT, hits);
+    if (misses > 0)
+      registryMetrics.increase(RegistryMetrics.EVENT.TRANSFORMATION_CACHE_MISS, misses);
+
+    return found;
   }
 
   @Override
