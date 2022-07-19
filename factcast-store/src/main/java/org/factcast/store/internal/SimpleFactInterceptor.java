@@ -15,14 +15,13 @@
  */
 package org.factcast.store.internal;
 
+import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.FactTransformers;
 import org.factcast.core.subscription.transformation.TransformationRequest;
 import org.factcast.store.internal.filter.FactFilter;
-
-import lombok.NonNull;
 
 public class SimpleFactInterceptor extends AbstractFactInterceptor {
   private final FactTransformerService service;

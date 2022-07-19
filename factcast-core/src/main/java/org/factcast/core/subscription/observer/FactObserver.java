@@ -16,13 +16,11 @@
 package org.factcast.core.subscription.observer;
 
 import java.util.*;
-
+import lombok.Generated;
+import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.slf4j.LoggerFactory;
-
-import lombok.Generated;
-import lombok.NonNull;
 
 /**
  * Callback interface to use when subscribing to Facts from FactCast.
