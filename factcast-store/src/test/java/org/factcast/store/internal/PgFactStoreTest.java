@@ -54,8 +54,6 @@ import org.springframework.jdbc.core.*;
 @ExtendWith(MockitoExtension.class)
 class PgFactStoreTest {
 
-  // TODO plenty of opportunities for unit tests
-
   @Mock private @NonNull JdbcTemplate jdbcTemplate;
   @Mock private @NonNull PgSubscriptionFactory subscriptionFactory;
   @Mock private @NonNull FactTableWriteLock lock;
@@ -103,28 +101,6 @@ class PgFactStoreTest {
     @BeforeEach
     void setup() {
       configureMetricTimeSupplier();
-    }
-
-    @Test
-    void testFetchByIdAndMatchingVersion() {
-
-      UUID id = UUID.randomUUID();
-      Fact factAsPublished = Fact.builder().ns("ns").type("type").version(1).buildWithoutPayload();
-      when(jdbcTemplate.query(anyString(), any(Object[].class), any(RowMapper.class)))
-          .thenReturn(Lists.newArrayList(factAsPublished));
-
-      assertThat(underTest.fetchByIdAndVersion(id, 1)).isNotEmpty().hasValue(factAsPublished);
-    }
-
-    @Test
-    void testFetchByIdWith0Version() {
-
-      UUID id = UUID.randomUUID();
-      Fact factAsPublished = Fact.builder().ns("ns").type("type").version(1).buildWithoutPayload();
-      when(jdbcTemplate.query(anyString(), any(Object[].class), any(RowMapper.class)))
-          .thenReturn(Lists.newArrayList(factAsPublished));
-
-      assertThat(underTest.fetchByIdAndVersion(id, 0)).isNotEmpty().hasValue(factAsPublished);
     }
 
     @Test

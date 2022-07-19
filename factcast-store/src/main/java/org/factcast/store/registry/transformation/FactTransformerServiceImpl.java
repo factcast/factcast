@@ -117,7 +117,7 @@ public class FactTransformerServiceImpl implements FactTransformerService {
             registryMetrics.count(
                 RegistryMetrics.EVENT.TRANSFORMATION_FAILED,
                 Tags.of(
-                    Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, chain.key().toString()),
+                    Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, String.valueOf(chain.key())),
                     Tag.of("version", String.valueOf(chain.toVersion()))));
             throw new TransformationException(e1);
           }
