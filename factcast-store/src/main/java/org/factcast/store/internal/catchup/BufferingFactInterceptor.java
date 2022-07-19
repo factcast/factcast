@@ -18,8 +18,7 @@ package org.factcast.store.internal.catchup;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.*;
-import lombok.NonNull;
-import org.apache.commons.lang3.tuple.Pair;
+
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.TransformationException;
@@ -27,24 +26,29 @@ import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.FactTransformers;
 import org.factcast.core.subscription.transformation.TransformationRequest;
 import org.factcast.store.internal.AbstractFactInterceptor;
+import org.factcast.store.internal.Pair;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.filter.FactFilter;
 
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
+
 /** this class is NOT Threadsafe! */
+@Slf4j
 public class BufferingFactInterceptor extends AbstractFactInterceptor {
   public BufferingFactInterceptor(
       FactTransformerService service,
       FactTransformers transformers,
       FactFilter filter,
       SubscriptionImpl targetSubscription,
-      int pageSize,
+      int maxBufferSize,
       PgMetrics metrics) {
     super(metrics);
     this.service = service;
     this.transformers = transformers;
     this.filter = filter;
     this.targetSubscription = targetSubscription;
-    this.pageSize = pageSize;
+    this.maxBufferSize = maxBufferSize;
   }
 
   enum Mode {
@@ -56,7 +60,7 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
   private final FactTransformers transformers;
   private final FactFilter filter;
   private final SubscriptionImpl targetSubscription;
-  private final int pageSize;
+  private final int maxBufferSize;
   private Mode mode = Mode.DIRECT;
   private final List<Pair<TransformationRequest, CompletableFuture<Fact>>> buffer =
       new ArrayList<>();
@@ -75,20 +79,27 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
   }
 
   private void acceptInBufferingMode(@NonNull Fact f, TransformationRequest transformationRequest) {
+    log.trace("accepting in buffering mode");
     if (transformationRequest == null) {
       // does not need transformation, add as completed
       buffer.add(completedTransformation(f));
     } else {
       Pair<TransformationRequest, CompletableFuture<Fact>> scheduledTransformation =
           scheduledTransformation(transformationRequest);
-      buffer.add(scheduledTransformation);
-      index.put(f.id(), scheduledTransformation.getRight());
-
-      if (buffer.size() >= pageSize) flush();
+      addScheduledTransformationToBuffer(scheduledTransformation);
     }
   }
 
+  private void addScheduledTransformationToBuffer(
+      Pair<TransformationRequest, CompletableFuture<Fact>> scheduledTransformation) {
+    buffer.add(scheduledTransformation);
+    index.put(scheduledTransformation.left().toTransform().id(), scheduledTransformation.right());
+
+    if (buffer.size() >= maxBufferSize) flush();
+  }
+
   private void acceptInDirectMode(@NonNull Fact f, TransformationRequest transformationRequest) {
+    log.trace("accepting in direct mode");
     if (transformationRequest == null) {
       // does not need transformation, just pass it down
       targetSubscription.notifyElement(f);
@@ -96,7 +107,7 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
     } else {
       // needs transformation, so switch to buffering mode
       mode = Mode.BUFFERING;
-      buffer.add(scheduledTransformation(transformationRequest));
+      addScheduledTransformationToBuffer(scheduledTransformation(transformationRequest));
     }
   }
 
@@ -113,26 +124,36 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
   }
 
   public void flush() {
+    log.trace("flushing buffer of size " + buffer.size());
     List<TransformationRequest> factsThatNeedTransformation =
         // filter the scheduled ones
-        buffer.stream().map(Pair::getLeft).filter(Objects::nonNull).collect(Collectors.toList());
+        buffer.stream().map(Pair::left).filter(Objects::nonNull).collect(Collectors.toList());
 
     // resolve futures for the cache hits & transformations
-    CompletableFuture.runAsync(
-        () ->
-            service
-                .transform(factsThatNeedTransformation)
-                .forEach(f -> index.get(f.id()).complete(f)));
+    CompletableFuture<Void> voidCompletableFuture =
+        CompletableFuture.runAsync(
+            () -> {
+              List<Fact> transformedFacts = service.transform(factsThatNeedTransformation);
+              transformedFacts.forEach(
+                  f -> {
+                    CompletableFuture<Fact> factCompletableFuture = index.get(f.id());
+                    if (factCompletableFuture != null) factCompletableFuture.complete(f);
+                    else log.warn("found unexpected fact id after transformation: {}", f.id());
+                  });
+            });
 
     // flush out, blocking where the fact is not yet available
     buffer.forEach(
         p -> {
           try {
-            targetSubscription.notifyElement(p.getRight().get());
+            var id = p.left().toTransform().id();
+            // 30 seconds should be enough for almost everything (B.Gates)
+            Fact e = p.right().get(30, TimeUnit.SECONDS);
+            targetSubscription.notifyElement(e);
           } catch (InterruptedException i) {
             Thread.currentThread().interrupt();
             throw new TransformationException(i);
-          } catch (ExecutionException e) {
+          } catch (ExecutionException | TimeoutException e) {
             throw new TransformationException(e);
           }
         });
