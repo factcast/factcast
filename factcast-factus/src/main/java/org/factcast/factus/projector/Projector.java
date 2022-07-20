@@ -16,12 +16,10 @@
 package org.factcast.factus.projector;
 
 import java.util.*;
-
+import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.factus.projection.Projection;
-
-import lombok.NonNull;
 
 public interface Projector<A extends Projection> {
   void apply(@NonNull Fact element);

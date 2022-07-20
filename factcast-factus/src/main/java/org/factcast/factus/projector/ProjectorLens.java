@@ -16,7 +16,6 @@
 package org.factcast.factus.projector;
 
 import java.util.function.*;
-
 import org.factcast.core.Fact;
 import org.factcast.factus.projection.Projection;
 
