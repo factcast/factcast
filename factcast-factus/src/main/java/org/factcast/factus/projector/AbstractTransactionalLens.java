@@ -15,14 +15,16 @@
  */
 package org.factcast.factus.projector;
 
+import java.util.concurrent.atomic.*;
+
+import org.factcast.core.Fact;
+import org.factcast.factus.projection.Projection;
+
 import com.google.common.annotations.VisibleForTesting;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.Fact;
-import org.factcast.factus.projection.Projection;
 
 @Slf4j
 @Getter
@@ -161,4 +163,9 @@ public abstract class AbstractTransactionalLens implements ProjectorLens {
   protected abstract void doClear();
 
   protected abstract void doFlush();
+
+  @Override
+  public void onCancel() {
+    doClear();
+  }
 }
