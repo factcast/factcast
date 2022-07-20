@@ -17,6 +17,7 @@ package org.factcast.store.registry.transformation;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.annotations.VisibleForTesting;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.util.*;
@@ -86,7 +87,9 @@ public class FactTransformerServiceImpl implements FactTransformerService {
     log.trace("batch lookup found {} out of {} pre transformed facts", found.size(), req.size());
     found.forEach(f -> map.put(f.id(), f));
 
-    return pairs.parallelStream()
+    Stream<Pair<TransformationRequest, TransformationChain>> pairStream = pairs.stream();
+    if (shouldBeParallel(pairs.stream().map(Pair::right))) pairStream = pairStream.parallel();
+    return pairStream
         .map(
             c -> {
               Fact e = c.left().toTransform();
@@ -95,6 +98,23 @@ public class FactTransformerServiceImpl implements FactTransformerService {
                   c.left().toTransform().id(), uuid -> doTransform(e, chain));
             })
         .collect(Collectors.toList());
+  }
+
+  /**
+   * idea is to prevent the overhead of going parallel if all chains target the same warm
+   * script-engine as we'd have a serializing effect there due to synchronization.
+   *
+   * @return if the transformations should go parallel
+   */
+  @VisibleForTesting
+  boolean shouldBeParallel(@NonNull Stream<TransformationChain> chains) {
+    // if there is more than one distinct engine used, return true
+    return chains
+            .filter(Objects::nonNull)
+            .mapToInt(tc -> tc.id().hashCode() + tc.key().hashCode())
+            .distinct()
+            .count()
+        > 1;
   }
 
   @NonNull
