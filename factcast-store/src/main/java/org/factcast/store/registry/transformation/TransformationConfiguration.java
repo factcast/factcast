@@ -35,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Configuration
@@ -57,11 +58,12 @@ public class TransformationConfiguration {
   @Bean
   public TransformationCache transformationCache(
       @NonNull JdbcTemplate jdbcTemplate,
+      @NonNull NamedParameterJdbcTemplate namedJdbcTemplate,
       @NonNull StoreConfigurationProperties props,
       @NonNull RegistryMetrics registryMetrics,
       @Autowired(required = false) SpringLiquibase unused) {
     if (props.isSchemaRegistryConfigured() && props.isPersistentTransformationCache())
-      return new PgTransformationCache(jdbcTemplate, registryMetrics);
+      return new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics);
 
     // otherwise
     return new InMemTransformationCache(

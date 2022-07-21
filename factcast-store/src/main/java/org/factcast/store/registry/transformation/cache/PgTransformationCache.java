@@ -16,6 +16,7 @@
 package org.factcast.store.registry.transformation.cache;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -40,6 +41,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 @Slf4j
 public class PgTransformationCache implements TransformationCache {
   private final JdbcTemplate jdbcTemplate;
+  private final NamedParameterJdbcTemplate namedJdbcTemplate;
 
   private final RegistryMetrics registryMetrics;
 
@@ -55,8 +57,12 @@ public class PgTransformationCache implements TransformationCache {
 
   @VisibleForTesting
   PgTransformationCache(
-      JdbcTemplate jdbcTemplate, RegistryMetrics registryMetrics, int maxBufferSize) {
+      JdbcTemplate jdbcTemplate,
+      NamedParameterJdbcTemplate namedJdbcTemplate,
+      RegistryMetrics registryMetrics,
+      int maxBufferSize) {
     this.jdbcTemplate = jdbcTemplate;
+    this.namedJdbcTemplate = namedJdbcTemplate;
     this.registryMetrics = registryMetrics;
     this.maxBufferSize = maxBufferSize;
   }
@@ -93,24 +99,34 @@ public class PgTransformationCache implements TransformationCache {
   }
 
   @Override
-  public Set<Fact> findAll(Collection<Key> keys) {
+  public Set<Fact> findAll(Collection<Key> keysToFind) {
 
-    List<Fact> facts =
-        keys.stream().map(buffer::get).filter(Objects::nonNull).collect(Collectors.toList());
+    ArrayList<Key> keys = Lists.newArrayList(keysToFind);
 
-    if (facts.size() < keys.size()) {
-      NamedParameterJdbcTemplate named = new NamedParameterJdbcTemplate(jdbcTemplate);
+    List<Fact> facts = new ArrayList<>();
+    Iterator<Key> iterator = keys.iterator();
+    while (iterator.hasNext()) {
+      Key key = iterator.next();
+      Fact found = buffer.get(key);
+      if (found != null) {
+        iterator.remove();
+        facts.add(found);
+      }
+    }
+
+    if (!keys.isEmpty()) {
+
       SqlParameterSource parameters =
           new MapSqlParameterSource("ids", keys.stream().map(Key::id).collect(Collectors.toList()));
       facts.addAll(
-          named.query(
+          namedJdbcTemplate.query(
               "SELECT header, payload FROM transformationcache WHERE cache_key IN (:ids)",
               parameters,
               new FactRowMapper()));
     }
 
     int hits = facts.size();
-    int misses = keys.size() - hits;
+    int misses = keysToFind.size() - hits;
     registryMetrics.increase(EVENT.TRANSFORMATION_CACHE_MISS, misses);
     registryMetrics.increase(EVENT.TRANSFORMATION_CACHE_HIT, hits);
 
@@ -169,15 +185,14 @@ public class PgTransformationCache implements TransformationCache {
         insertBufferedAccesses(copy);
 
       } catch (Exception e) {
-        log.error(
-            "Could not complete batch update of transformations on transformation cache. Error: {}",
-            e.getMessage());
+        log.error("Could not complete batch update of transformations on transformation cache.", e);
       }
     }
   }
 
   @VisibleForTesting
   void insertBufferedTransformations(HashMap<Key, Fact> copy) {
+
     List<Object[]> parameters =
         copy.entrySet().stream()
             .filter(e -> e.getValue() != null)
@@ -206,9 +221,8 @@ public class PgTransformationCache implements TransformationCache {
             .collect(Collectors.toList());
 
     if (!keys.isEmpty()) {
-      NamedParameterJdbcTemplate named = new NamedParameterJdbcTemplate(jdbcTemplate);
       SqlParameterSource parameters = new MapSqlParameterSource("ids", keys);
-      named.update(
+      namedJdbcTemplate.update(
           "UPDATE transformationcache SET last_access=now() WHERE cache_key IN (:ids)", parameters);
     }
   }

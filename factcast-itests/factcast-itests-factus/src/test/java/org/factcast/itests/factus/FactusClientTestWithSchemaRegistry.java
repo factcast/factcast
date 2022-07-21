@@ -47,7 +47,7 @@ class FactusClientTestWithSchemaRegistry extends AbstractFactCastIntegrationTest
     UUID aggId = UUID.randomUUID();
 
     // RUN
-    ec.publish(new org.factcast.itests.factus.event.versioned.v2.UserCreated(aggId, "foo", ""));
+    ec.publish(new org.factcast.itests.factus.event.versioned.v1.UserCreated(aggId, "foo"));
 
     // ASSERT
     // this should work anyways:

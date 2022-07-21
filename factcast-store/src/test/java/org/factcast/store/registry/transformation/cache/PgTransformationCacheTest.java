@@ -36,8 +36,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 
 @SuppressWarnings("ALL")
 @ExtendWith(MockitoExtension.class)
@@ -45,6 +46,7 @@ class PgTransformationCacheTest {
 
   private static final int MAX_BUFFER_SIZE = 24;
   @Mock private JdbcTemplate jdbcTemplate;
+  @Mock private NamedParameterJdbcTemplate namedJdbcTemplate;
   RegistryMetrics registryMetrics = spy(new NOPRegistryMetrics());
 
   @Nested
@@ -55,7 +57,8 @@ class PgTransformationCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 10));
+      underTest =
+          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
     }
 
     @Test
@@ -86,7 +89,8 @@ class PgTransformationCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 10));
+      underTest =
+          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
     }
 
     @Test
@@ -131,22 +135,31 @@ class PgTransformationCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 10));
+      underTest =
+          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
     }
 
     @Test
     void findsBoth() {
       underTest.put(key, f);
-      Mockito.when(jdbcTemplate.query(any(PreparedStatementCreator.class), any(RowMapper.class)))
+      ArgumentCaptor<SqlParameterSource> cap = ArgumentCaptor.forClass(SqlParameterSource.class);
+      Mockito.when(namedJdbcTemplate.query(anyString(), cap.capture(), any(RowMapper.class)))
           .thenReturn(Collections.singletonList(f2));
+
       assertThat(underTest.findAll(Lists.newArrayList(key, key2)))
           .hasSize(2)
           .containsExactlyInAnyOrder(f, f2);
+
+      // only one key is looked for in persistent cache
+      Collection ids = (Collection) cap.getValue().getValue("ids");
+      assertThat(ids).hasSize(1).doesNotContain(key);
     }
 
     @Test
     void findsAllInCache() {
-      Mockito.when(jdbcTemplate.query(any(PreparedStatementCreator.class), any(RowMapper.class)))
+      Mockito.when(
+              namedJdbcTemplate.query(
+                  anyString(), any(SqlParameterSource.class), any(RowMapper.class)))
           .thenReturn(Lists.newArrayList(f, f2));
       assertThat(underTest.findAll(Lists.newArrayList(key, key2)))
           .hasSize(2)
@@ -162,7 +175,8 @@ class PgTransformationCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 10));
+      underTest =
+          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
     }
 
     @Test
@@ -191,7 +205,7 @@ class PgTransformationCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = new PgTransformationCache(jdbcTemplate, registryMetrics, 10);
+      underTest = new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10);
     }
 
     @Test
@@ -211,7 +225,8 @@ class PgTransformationCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 2));
+      underTest =
+          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 2));
     }
 
     @SneakyThrows
@@ -233,7 +248,8 @@ class PgTransformationCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 2));
+      underTest =
+          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 2));
     }
 
     @Test
@@ -257,7 +273,8 @@ class PgTransformationCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 10));
+      underTest =
+          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
     }
 
     @Test
@@ -303,7 +320,8 @@ class PgTransformationCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 10));
+      underTest =
+          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
     }
 
     @Test
@@ -337,7 +355,8 @@ class PgTransformationCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = spy(new PgTransformationCache(jdbcTemplate, registryMetrics, 10));
+      underTest =
+          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
     }
 
     @Test
@@ -351,14 +370,12 @@ class PgTransformationCacheTest {
 
       underTest.insertBufferedAccesses(buffer);
 
-      ArgumentCaptor<PreparedStatementCreator> m =
-          ArgumentCaptor.forClass(PreparedStatementCreator.class);
+      ArgumentCaptor<SqlParameterSource> m = ArgumentCaptor.forClass(SqlParameterSource.class);
 
-      Mockito.verify(jdbcTemplate).update(m.capture());
+      Mockito.verify(namedJdbcTemplate).update(anyString(), m.capture());
 
-      assertThat(m.getValue())
-          .hasFieldOrPropertyWithValue(
-              "sql", "UPDATE transformationcache SET last_access=now() WHERE cache_key IN (?, ?)");
+      Collection ids = (Collection) m.getValue().getValue("ids");
+      assertThat(ids).isNotNull().hasSize(2);
     }
   }
 }

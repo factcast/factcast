@@ -29,6 +29,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
@@ -41,6 +42,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @IntegrationTest
 class PgTransformationCacheITest extends AbstractTransformationCacheTest {
   @Autowired private JdbcTemplate tpl;
+  @Autowired private NamedParameterJdbcTemplate namedTpl;
 
   private final int maxBufferSize = 10;
   private final CountDownLatch wasflushed = new CountDownLatch(1);
@@ -48,7 +50,8 @@ class PgTransformationCacheITest extends AbstractTransformationCacheTest {
 
   @Override
   protected TransformationCache createUUT() {
-    this.underTest = Mockito.spy(new PgTransformationCache(tpl, registryMetrics, maxBufferSize));
+    this.underTest =
+        Mockito.spy(new PgTransformationCache(tpl, namedTpl, registryMetrics, maxBufferSize));
     return underTest;
   }
 
@@ -88,6 +91,7 @@ class PgTransformationCacheITest extends AbstractTransformationCacheTest {
     // flush is async
     wasflushed.await();
 
-    assertThat(underTest.buffer()).isEmpty();
+    // remove just acesses
+    assertThat(underTest.buffer().values().stream().filter(Objects::nonNull).count()).isZero();
   }
 }
