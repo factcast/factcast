@@ -91,7 +91,7 @@ class PgTransformationCacheITest extends AbstractTransformationCacheTest {
     // flush is async
     wasflushed.await();
 
-    // remove just acesses
-    assertThat(underTest.buffer().values().stream().filter(Objects::nonNull).count()).isZero();
+    // either empty, or just registered accesses
+    assertThat(underTest.buffer().values()).noneMatch(Objects::nonNull);
   }
 }
