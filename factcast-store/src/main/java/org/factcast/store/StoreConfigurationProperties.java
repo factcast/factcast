@@ -16,18 +16,16 @@
 package org.factcast.store;
 
 import java.time.Duration;
-
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
-
+import javax.validation.constraints.Positive;
+import lombok.Data;
+import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
-
-import lombok.Data;
-import lombok.experimental.Accessors;
-import lombok.extern.slf4j.Slf4j;
 
 @SuppressWarnings("DefaultAnnotationParam")
 @ConfigurationProperties(prefix = StoreConfigurationProperties.PROPERTIES_PREFIX)
@@ -45,11 +43,10 @@ public class StoreConfigurationProperties implements InitializingBean {
    * defines the number of Facts being retrieved with one Page Query for PageStrategy.PAGED, or
    * respectively the fetchSize when using PageStrategy.FETCHING
    */
-  @Min(1)
-  int pageSize = 50;
+  @Positive int pageSize = 50;
 
   /** defines the max number of Facts being scheduled for transformation */
-  @Min(1)
+  @Positive
   @Max(32000)
   int transformationCachePageSize = 1000;
 
@@ -82,15 +79,13 @@ public class StoreConfigurationProperties implements InitializingBean {
    * transformation result is not read in order to be considered stale. This should free some space
    * in a regular cleanup job
    */
-  @Min(1)
-  int deleteTransformationsStaleForDays = 14;
+  @Positive int deleteTransformationsStaleForDays = 14;
 
   /**
    * this is the min number of days a snapshot is not read in order to be considered stale. This
    * should free some space in a regular cleanup job
    */
-  @Min(1)
-  int deleteSnapshotStaleForDays = 90;
+  @Positive int deleteSnapshotStaleForDays = 90;
 
   /**
    * If validation is enabled, this controls if transformed facts are persistently cached in
@@ -102,8 +97,7 @@ public class StoreConfigurationProperties implements InitializingBean {
    * when using the inmem impl of the transformation cache, this is the max number of entries
    * cached.
    */
-  @Min(1)
-  int inMemTransformationCacheCapacity = 1_000_000;
+  @Positive int inMemTransformationCacheCapacity = 1_000_000;
 
   /**
    * If validation is enabled, this controls if publishing facts, that are not validatable (due to
@@ -159,7 +153,7 @@ public class StoreConfigurationProperties implements InitializingBean {
    * or 3 is a good value unless you have a very high tail rebuild frequency and not permanently
    * connected applications (like offline clients for instance)
    */
-  @Min(1)
+  @Positive
   @Max(128)
   int tailGenerationsToKeep = 3;
 
