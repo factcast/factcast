@@ -15,6 +15,7 @@
  */
 package org.factcast.factus.projector;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -23,7 +24,9 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.*;
 import java.util.stream.*;
-
+import lombok.NonNull;
+import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.FactHeader;
 import org.factcast.core.spec.FactSpec;
@@ -36,12 +39,6 @@ import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.AggregateUtil;
 import org.factcast.factus.projection.FactStreamPositionAware;
 import org.factcast.factus.projection.Projection;
-
-import com.google.common.annotations.VisibleForTesting;
-
-import lombok.NonNull;
-import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ProjectorImpl<A extends Projection> implements Projector<A> {
