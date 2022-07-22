@@ -24,7 +24,7 @@ import org.factcast.core.util.FactCastJson;
 
 public interface JSArgument<E> extends Supplier<E> {
 
-  static JSArgument<Boolean> byValue(@NonNull boolean b) {
+  static JSArgument<Boolean> byValue(boolean b) {
     return new ValueArgument<>(b);
   }
 
@@ -32,15 +32,15 @@ public interface JSArgument<E> extends Supplier<E> {
     return () -> null;
   }
 
-  static JSArgument<Integer> byValue(@NonNull int i) {
+  static JSArgument<Integer> byValue(int i) {
     return new ValueArgument<>(i);
   }
 
-  static JSArgument<Double> byValue(@NonNull double d) {
+  static JSArgument<Double> byValue(double d) {
     return new ValueArgument<>(d);
   }
 
-  static JSArgument<Long> byValue(@NonNull long l) {
+  static JSArgument<Long> byValue(long l) {
     return new ValueArgument<>(l);
   }
 

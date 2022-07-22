@@ -21,9 +21,14 @@ import java.util.concurrent.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.subscription.*;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionImpl;
+import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.subscription.transformation.FactTransformerService;
+import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.filter.PgBlacklist;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
@@ -47,15 +52,14 @@ class PgSubscriptionFactory {
 
   final PgCatchupFactory catchupFactory;
 
-  final FactTransformersFactory transformersFactory;
   final FastForwardTarget target;
   final PgMetrics metrics;
   final PgBlacklist blacklist;
+  final FactTransformerService transformerService;
   final JSEngineFactory ef;
 
   public Subscription subscribe(SubscriptionRequestTO req, FactObserver observer) {
-    SubscriptionImpl subscription =
-        SubscriptionImpl.on(observer, transformersFactory.createFor(req));
+    SubscriptionImpl subscription = SubscriptionImpl.on(observer);
     PgFactStream pgsub =
         new PgFactStream(
             jdbcTemplate,
@@ -65,8 +69,9 @@ class PgSubscriptionFactory {
             fetcher,
             catchupFactory,
             target,
-            metrics,
+            transformerService,
             blacklist,
+            metrics,
             ef);
 
     // when closing the subscription, also close the PgFactStream

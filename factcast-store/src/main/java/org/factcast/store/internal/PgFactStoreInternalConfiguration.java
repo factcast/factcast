@@ -29,9 +29,8 @@ import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
 import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMode;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.TokenStore;
-import org.factcast.core.subscription.FactTransformerService;
-import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.catchup.fetching.PgFetchingCatchUpFactory;
@@ -92,13 +91,13 @@ public class PgFactStoreInternalConfiguration {
   public PgCatchupFactory pgCatchupFactory(
       StoreConfigurationProperties props,
       PgConnectionSupplier supp,
-      PgFactIdToSerialMapper serMapper) {
-    // noinspection SwitchStatementWithTooFewBranches
+      PgMetrics metrics,
+      FactTransformerService transformerService) {
     switch (props.getCatchupStrategy()) {
       case PAGED:
-        return new PgTmpPagedCatchUpFactory(supp, props);
+        return new PgTmpPagedCatchUpFactory(supp, props, metrics, transformerService);
       case FETCHING:
-        return new PgFetchingCatchUpFactory(supp, props);
+        return new PgFetchingCatchUpFactory(supp, props, metrics, transformerService);
       default:
         throw new IllegalArgumentException("Unmapped Strategy: " + props.getCatchupStrategy());
     }
@@ -137,21 +136,21 @@ public class PgFactStoreInternalConfiguration {
       PgFactIdToSerialMapper pgFactIdToSerialMapper,
       PgLatestSerialFetcher pgLatestSerialFetcher,
       PgCatchupFactory pgCatchupFactory,
-      FactTransformersFactory transformerFactory,
       FastForwardTarget target,
       PgMetrics metrics,
       PgBlacklist blacklist,
-      JSEngineFactory ef) {
+      JSEngineFactory ef,
+      FactTransformerService transformerService) {
     return new PgSubscriptionFactory(
         jdbcTemplate,
         eventBus,
         pgFactIdToSerialMapper,
         pgLatestSerialFetcher,
         pgCatchupFactory,
-        transformerFactory,
         target,
         metrics,
         blacklist,
+        transformerService,
         ef);
   }
 
