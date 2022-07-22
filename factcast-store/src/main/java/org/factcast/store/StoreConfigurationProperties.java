@@ -16,18 +16,23 @@
 package org.factcast.store;
 
 import java.time.Duration;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.Positive;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.validation.annotation.Validated;
 
 @SuppressWarnings("DefaultAnnotationParam")
 @ConfigurationProperties(prefix = StoreConfigurationProperties.PROPERTIES_PREFIX)
 @Data
 @Slf4j
 @Accessors(fluent = false)
+@Validated
 public class StoreConfigurationProperties implements InitializingBean {
 
   public static final String PROPERTIES_PREFIX = "factcast.store";
@@ -38,7 +43,13 @@ public class StoreConfigurationProperties implements InitializingBean {
    * defines the number of Facts being retrieved with one Page Query for PageStrategy.PAGED, or
    * respectively the fetchSize when using PageStrategy.FETCHING
    */
-  int pageSize = 50;
+  @Positive int pageSize = 50;
+
+  /** defines the max number of Facts being scheduled for transformation */
+  @Positive
+  @Max(32000)
+  int transformationCachePageSize = 1000;
+
   /** Defines the Strategy used for Paging in the Catchup Phase. */
   CatchupStrategy catchupStrategy = CatchupStrategy.getDefault();
 
@@ -68,13 +79,13 @@ public class StoreConfigurationProperties implements InitializingBean {
    * transformation result is not read in order to be considered stale. This should free some space
    * in a regular cleanup job
    */
-  int deleteTransformationsStaleForDays = 14;
+  @Positive int deleteTransformationsStaleForDays = 14;
 
   /**
    * this is the min number of days a snapshot is not read in order to be considered stale. This
    * should free some space in a regular cleanup job
    */
-  int deleteSnapshotStaleForDays = 90;
+  @Positive int deleteSnapshotStaleForDays = 90;
 
   /**
    * If validation is enabled, this controls if transformed facts are persistently cached in
@@ -86,7 +97,7 @@ public class StoreConfigurationProperties implements InitializingBean {
    * when using the inmem impl of the transformation cache, this is the max number of entries
    * cached.
    */
-  int inMemTransformationCacheCapacity = 1_000_000;
+  @Positive int inMemTransformationCacheCapacity = 1_000_000;
 
   /**
    * If validation is enabled, this controls if publishing facts, that are not validatable (due to
@@ -106,6 +117,7 @@ public class StoreConfigurationProperties implements InitializingBean {
    * NOTIFY mechanism). When this time exceeds the health of the database connection is checked.
    * After that waiting for new notifications is repeated.
    */
+  @Min(5000)
   int factNotificationBlockingWaitTimeInMillis = 1000 * 15;
 
   /**
@@ -115,6 +127,7 @@ public class StoreConfigurationProperties implements InitializingBean {
    *
    * <p>If the time is exceeded the database connection is renewed.
    */
+  @Min(50)
   int factNotificationMaxRoundTripLatencyInMillis = 200;
 
   /**
@@ -122,6 +135,7 @@ public class StoreConfigurationProperties implements InitializingBean {
    * is only applied in the part of Factcast which deals with receiving and forwarding database
    * notifications.
    */
+  @Min(10)
   int factNotificationNewConnectionWaitTimeInMillis = 100;
 
   /**
@@ -139,6 +153,8 @@ public class StoreConfigurationProperties implements InitializingBean {
    * or 3 is a good value unless you have a very high tail rebuild frequency and not permanently
    * connected applications (like offline clients for instance)
    */
+  @Positive
+  @Max(128)
   int tailGenerationsToKeep = 3;
 
   /** Minimum age of the youngest tail index, before a new one is created. Defaults to 7 days */

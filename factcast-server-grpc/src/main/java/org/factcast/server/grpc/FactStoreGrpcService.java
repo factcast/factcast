@@ -38,13 +38,10 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
+import java.util.function.*;
+import java.util.stream.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -565,7 +562,10 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
     IdAndVersion fromProto = converter.fromProto(request);
     log.trace(
-        "{}fetchById {} in version {}", clientIdPrefix(), fromProto.uuid(), fromProto.version());
+        "{}fetchByIdAndVersion {} in version {}",
+        clientIdPrefix(),
+        fromProto.uuid(),
+        fromProto.version());
 
     doFetchById(
         responseObserver,

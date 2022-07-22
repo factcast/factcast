@@ -13,31 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.subscription;
+package org.factcast.store.internal;
 
-import java.util.*;
-
-import org.factcast.core.Fact;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.util.UUID;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
-@SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
-public interface InternalSubscription extends Subscription {
-  void close();
+@RequiredArgsConstructor
+public abstract class AbstractFactInterceptor implements FactInterceptor {
+  @NonNull final PgMetrics metrics;
 
-  void notifyCatchup();
-
-  void notifyFastForward(@NonNull UUID factId);
-
-  void notifyFactStreamInfo(@NonNull FactStreamInfo info);
-
-  void notifyComplete();
-
-  void notifyError(Throwable e);
-
-  void notifyElement(@NonNull Fact e) throws TransformationException;
-
-  SubscriptionImpl onClose(Runnable e);
+  protected void increaseNotifyMetric(int count) {
+    metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT).increment(count);
+  }
 }

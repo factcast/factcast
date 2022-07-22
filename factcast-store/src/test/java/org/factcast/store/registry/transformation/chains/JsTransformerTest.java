@@ -39,7 +39,7 @@ class JsTransformerTest {
 
   private JsTransformer uut = new JsTransformer(new GraalJSEngineFactory());
 
-  private ObjectMapper om = new ObjectMapper();
+  private final ObjectMapper om = new ObjectMapper();
 
   @Mock Transformation transformation;
 

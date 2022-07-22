@@ -13,13 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.subscription;
+package org.factcast.store.registry.transformation.cache;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.*;
-import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.junit.jupiter.api.Test;
 
-public interface FactTransformerService {
-  Fact transformIfNecessary(@NonNull Fact original, @NonNull Set<Integer> targetVersions)
-      throws TransformationException;
+class KeyTest {
+
+  @Test
+  void of() {
+    String chainId = "[3-2-1]";
+    Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}");
+
+    var ofId = TransformationCache.Key.of(fact.id(), fact.version(), chainId);
+
+    assertTrue(ofId.id().contains(fact.id().toString()));
+    assertTrue(ofId.id().contains(String.valueOf(fact.version())));
+    assertTrue(ofId.id().contains(chainId));
+  }
 }

@@ -152,13 +152,13 @@ databaseChangeLog:
   #            stripComments: true
 
   - changeSet:
-      id: updateNotifyFactInsert_condensed
+      id: updateNotifyFactInsert_condensed_without_comment
       runInTransaction: false
       author: uweschaefer
       changes:
         - sqlFile:
             encoding: utf8
-            path: factcast/issue1863/updateNotifyFactInsert_condensed.sql
+            path: factcast/issue1863/updateNotifyFactInsert_condensed_without_comment.sql
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
