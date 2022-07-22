@@ -15,7 +15,6 @@ BEGIN
         perform set_config(CONCAT('myvars.facttrigger.',ns,'.',type),'TRUE',TRUE);
         PERFORM pg_notify('fact_insert', json_build_object(
                 'ser', NEW.ser,
-            -- header is deprecated and will be removed
                 'header', NEW.header,
                 'txId', txid_current(),
                 'ns',ns,

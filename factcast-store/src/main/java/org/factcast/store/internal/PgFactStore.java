@@ -31,11 +31,12 @@ import org.factcast.core.store.AbstractFactStore;
 import org.factcast.core.store.State;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
-import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.transformation.FactTransformerService;
+import org.factcast.core.subscription.transformation.TransformationRequest;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
@@ -44,7 +45,6 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -111,11 +111,11 @@ public class PgFactStore extends AbstractFactStore {
   @Override
   public @NonNull Optional<Fact> fetchByIdAndVersion(@NonNull UUID id, int version)
       throws TransformationException {
-
-    var fact = fetchById(id);
-    return fact.map(
-        value ->
-            factTransformerService.transformIfNecessary(value, Collections.singleton(version)));
+    return fetchById(id)
+        .map(
+            value ->
+                factTransformerService.transform(
+                    new TransformationRequest(value, Collections.singleton(version))));
   }
 
   @Override
@@ -230,24 +230,20 @@ public class PgFactStore extends AbstractFactStore {
           PreparedStatementSetter statementSetter =
               pgQueryBuilder.createStatementSetter(new AtomicLong(lastMatchingSerial));
 
-          try {
-            ResultSetExtractor<Long> rch =
-                new ResultSetExtractor<>() {
-                  @Override
-                  public Long extractData(ResultSet resultSet)
-                      throws SQLException, DataAccessException {
-                    if (!resultSet.next()) {
-                      return 0L;
-                    } else {
-                      return resultSet.getLong(1);
-                    }
+          ResultSetExtractor<Long> rch =
+              new ResultSetExtractor<>() {
+                @Override
+                public Long extractData(ResultSet resultSet)
+                    throws SQLException, DataAccessException {
+                  if (!resultSet.next()) {
+                    return 0L;
+                  } else {
+                    return resultSet.getLong(1);
                   }
-                };
-            long lastSerial = jdbcTemplate.query(stateSQL, statementSetter, rch);
-            return State.of(specs, lastSerial);
-          } catch (EmptyResultDataAccessException lastSerialIs0Then) {
-            return State.of(specs, 0);
-          }
+                }
+              };
+          long lastSerial = jdbcTemplate.query(stateSQL, statementSetter, rch);
+          return State.of(specs, lastSerial);
         });
   }
 

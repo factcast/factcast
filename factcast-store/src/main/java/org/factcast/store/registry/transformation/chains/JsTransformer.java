@@ -56,9 +56,8 @@ public class JsTransformer implements Transformer {
   private JsonNode runJSTransformation(JsonNode input, String js) {
     try {
       JSEngine engine = getEngine(js);
-      Map<String, Object> jsonAsMap = FactCastJson.convertValue(input, Map.class);
-      //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (engine) {
+        Map<String, Object> jsonAsMap = FactCastJson.convertValue(input, Map.class);
         engine.invoke("transform", JSArgument.byReference(jsonAsMap));
         return FactCastJson.toJsonNode(jsonAsMap);
       }
