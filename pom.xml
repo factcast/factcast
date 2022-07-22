@@ -96,7 +96,7 @@
     <slf4j-api.version>1.7.36</slf4j-api.version>
     <!--suppress UnresolvedMavenProperty -->
     <etc>${session.executionRootDirectory}/src/etc</etc>
-    <spring-boot.version>2.7.1</spring-boot.version>
+    <spring-boot.version>2.7.2</spring-boot.version>
     <spring-cloud.version>2021.0.3</spring-cloud.version>
     <spring-grpc.version>2.13.1.RELEASE</spring-grpc.version>
     <grpc.version>1.42.1</grpc.version>
@@ -107,8 +107,8 @@
     <kotlin.version>1.7.10</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <kotest.version>4.6.4</kotest.version>
-    <redisson.version>3.17.4</redisson.version>
-    <redisson-spring-boot-starter.version>3.17.4</redisson-spring-boot-starter.version>
+    <redisson.version>3.17.5</redisson.version>
+    <redisson-spring-boot-starter.version>3.17.5</redisson-spring-boot-starter.version>
     <graaljs.version>22.2.0</graaljs.version>
     <shedlock.version>4.38.0</shedlock.version>
     <byte-buddy.version>1.12.12</byte-buddy.version>
