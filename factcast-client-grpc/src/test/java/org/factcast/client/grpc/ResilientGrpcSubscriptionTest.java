@@ -15,33 +15,19 @@
  */
 package org.factcast.client.grpc;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.*;
-
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.*;
-import lombok.NonNull;
-import lombok.SneakyThrows;
+
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 import org.factcast.client.grpc.ResilientGrpcSubscription.DelegatingFactObserver;
 import org.factcast.client.grpc.ResilientGrpcSubscription.SubscriptionHolder;
 import org.factcast.client.grpc.ResilientGrpcSubscription.ThrowingBiConsumer;
 import org.factcast.core.Fact;
 import org.factcast.core.store.RetryableException;
-import org.factcast.core.subscription.FactStreamInfo;
-import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionClosedException;
-import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -52,6 +38,20 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
+
+import lombok.NonNull;
+import lombok.SneakyThrows;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeout;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.*;
+
 @ExtendWith(MockitoExtension.class)
 class ResilientGrpcSubscriptionTest {
   @Mock(lenient = true)
@@ -61,7 +61,7 @@ class ResilientGrpcSubscriptionTest {
 
   @Mock private FactObserver obs;
 
-  @Mock private Subscription subscription;
+  @Mock private InternalSubscription subscription;
 
   private final ArgumentCaptor<FactObserver> observerAC =
       ArgumentCaptor.forClass(FactObserver.class);
@@ -348,7 +348,7 @@ class ResilientGrpcSubscriptionTest {
     @SneakyThrows
     @Test
     void blocksUntilSubscriptionAvailable() {
-      Subscription s = mock(Subscription.class);
+      InternalSubscription s = mock(InternalSubscription.class);
       new Timer()
           .schedule(
               new TimerTask() {

@@ -15,10 +15,12 @@
  */
 package org.factcast.core.subscription;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.util.UUID;
-import lombok.NonNull;
+import java.util.*;
+
 import org.factcast.core.Fact;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.NonNull;
 
 @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
 public interface InternalSubscription extends Subscription {

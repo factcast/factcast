@@ -15,13 +15,15 @@
  */
 package org.factcast.factus.spring.tx;
 
-import com.google.common.annotations.VisibleForTesting;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -60,4 +62,6 @@ class SpringTxManager {
       log.warn("Trying to rollback when no Transaction is in scope");
     }
   }
+
+  public boolean isRunning(){return currentTx!=null;}
 }

@@ -15,34 +15,22 @@
  */
 package org.factcast.factus;
 
-import static org.factcast.factus.metrics.TagKeys.*;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
 import java.lang.reflect.Constructor;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.*;
+import java.util.function.*;
+import java.util.stream.*;
+
 import javax.annotation.Nullable;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
+
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.subscription.InternalSubscription;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
@@ -61,6 +49,19 @@ import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepository;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+
+import static org.factcast.factus.metrics.TagKeys.CLASS;
 
 /** Single entry point to the factus API. */
 @RequiredArgsConstructor
@@ -194,7 +195,7 @@ public class FactusImpl implements Factus {
   @SneakyThrows
   private <P extends SubscribedProjection> Subscription doSubscribe(
       @NonNull P subscribedProjection, @NonNull WriterToken token) {
-    Projector<P> handler = ehFactory.create(subscribedProjection);
+    Projector<P> projector = ehFactory.create(subscribedProjection);
     FactObserver fo =
         new AbstractFactObserver(subscribedProjection, PROGRESS_INTERVAL, factusMetrics) {
 
@@ -204,7 +205,7 @@ public class FactusImpl implements Factus {
           public void onNextFact(@NonNull Fact element) {
             if (token.isValid()) {
               lastFactIdApplied = element.id();
-              handler.apply(element);
+              projector.apply(element);
             } else {
               // token is no longer valid
               throw new IllegalStateException("WriterToken is no longer valid.");
@@ -213,17 +214,19 @@ public class FactusImpl implements Factus {
 
           @Override
           public void onCatchupSignal() {
-            handler.onCatchup(lastFactIdApplied);
+            projector.onCatchup(lastFactIdApplied);
             subscribedProjection.onCatchup();
           }
 
           @Override
           public void onComplete() {
+            projector.flush();
             subscribedProjection.onComplete();
           }
 
           @Override
           public void onError(@NonNull Throwable exception) {
+            projector.flush();
             subscribedProjection.onError(exception);
           }
 
@@ -233,10 +236,14 @@ public class FactusImpl implements Factus {
           }
         };
 
-    return fc.subscribe(
-        SubscriptionRequest.follow(handler.createFactSpecs())
-            .fromNullable(subscribedProjection.factStreamPosition()),
-        fo);
+    InternalSubscription sub =
+        (InternalSubscription)
+            fc.subscribe(
+                SubscriptionRequest.follow(projector.createFactSpecs())
+                    .fromNullable(subscribedProjection.factStreamPosition()),
+                fo);
+    sub.onClose(() -> projector.flush());
+    return sub;
   }
 
   @Override
@@ -346,7 +353,7 @@ public class FactusImpl implements Factus {
   @SneakyThrows
   private <P extends Projection> UUID catchupProjection(
       @NonNull P projection, UUID stateOrNull, @Nullable BiConsumer<P, UUID> afterProcessing) {
-    Projector<P> handler = ehFactory.create(projection);
+    Projector<P> projector = ehFactory.create(projection);
     AtomicReference<UUID> factId = new AtomicReference<>();
     AtomicInteger factCount = new AtomicInteger(0);
 
@@ -357,7 +364,7 @@ public class FactusImpl implements Factus {
           @Override
           public void onNextFact(@NonNull Fact element) {
             id = element.id();
-            handler.apply(element);
+            projector.apply(element);
             factId.set(id);
             if (afterProcessing != null) {
               afterProcessing.accept(projection, id);
@@ -367,17 +374,19 @@ public class FactusImpl implements Factus {
 
           @Override
           public void onComplete() {
+            projector.flush();
             projection.onComplete();
           }
 
           @Override
           public void onCatchupSignal() {
-            handler.onCatchup(id);
+            projector.onCatchup(id);
             projection.onCatchup();
           }
 
           @Override
           public void onError(@NonNull Throwable exception) {
+            projector.flush();
             projection.onError(exception);
           }
 
@@ -389,14 +398,17 @@ public class FactusImpl implements Factus {
           }
         };
 
-    List<FactSpec> factSpecs = handler.createFactSpecs();
+    List<FactSpec> factSpecs = projector.createFactSpecs();
 
     // the sole purpose of this synchronization is to make sure that writes from the fact delivery
     // thread are guaranteed to be visible when leaving the block
     //
     synchronized (projection) {
-      fc.subscribe(SubscriptionRequest.catchup(factSpecs).fromNullable(stateOrNull), fo)
-          .awaitComplete();
+      InternalSubscription sub =
+          (InternalSubscription)
+              fc.subscribe(SubscriptionRequest.catchup(factSpecs).fromNullable(stateOrNull), fo);
+      sub.onClose(() -> projector.flush());
+      sub.awaitComplete();
     }
     return factId.get();
   }

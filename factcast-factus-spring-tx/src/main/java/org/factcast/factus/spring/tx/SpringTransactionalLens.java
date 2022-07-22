@@ -15,15 +15,18 @@
  */
 package org.factcast.factus.spring.tx;
 
-import com.google.common.annotations.VisibleForTesting;
-import java.util.function.Function;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
+import java.util.function.*;
+
 import org.factcast.core.Fact;
 import org.factcast.factus.projector.AbstractTransactionalLens;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class SpringTransactionalLens extends AbstractTransactionalLens {
@@ -81,7 +84,9 @@ public class SpringTransactionalLens extends AbstractTransactionalLens {
 
   @Override
   protected void doFlush() {
-    txManager.commit();
+    if (txManager.isRunning()) {
+      txManager.commit();
+    }
   }
 
   @VisibleForTesting

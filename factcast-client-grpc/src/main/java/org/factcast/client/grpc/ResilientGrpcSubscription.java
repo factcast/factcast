@@ -15,25 +15,25 @@
  */
 package org.factcast.client.grpc;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
+
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.FactStreamInfo;
-import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionClosedException;
-import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.util.ExceptionHelper;
 
+import com.google.common.annotations.VisibleForTesting;
+
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
-public class ResilientGrpcSubscription implements Subscription {
+public class ResilientGrpcSubscription implements InternalSubscription {
 
   private final GrpcFactStore store;
   private final SubscriptionRequestTO originalRequest;
@@ -90,6 +90,41 @@ public class ResilientGrpcSubscription implements Subscription {
         isClosed.set(true);
       }
     }
+  }
+
+  @Override
+  public void notifyCatchup() {}
+
+  @Override
+  public void notifyFastForward(@NonNull UUID factId) {}
+
+  @Override
+  public void notifyFactStreamInfo(@NonNull FactStreamInfo info) {}
+
+  @Override
+  public void notifyComplete() {}
+
+  @Override
+  public void notifyError(Throwable e) {}
+
+  @Override
+  public void notifyElement(@NonNull Fact e) throws TransformationException {}
+
+  @Override
+  public SubscriptionImpl onClose(Runnable e) {
+    return null;
+  }
+
+  @Override
+  // TODO remove
+  public AtomicLong factsNotTransformed() {
+    return currentSubscription.get().factsNotTransformed();
+  }
+
+  @Override
+  // TODO remove
+  public AtomicLong factsTransformed() {
+    return currentSubscription.get().factsTransformed();
   }
 
   @VisibleForTesting
@@ -162,7 +197,7 @@ public class ResilientGrpcSubscription implements Subscription {
 
     if (currentSubscription.get() == null) {
       try {
-        Subscription plainSubscription = store.internalSubscribe(to, delegatingObserver);
+        InternalSubscription plainSubscription = store.internalSubscribe(to, delegatingObserver);
         currentSubscription.set(plainSubscription);
       } catch (Exception e) {
         fail(e);
@@ -242,15 +277,16 @@ public class ResilientGrpcSubscription implements Subscription {
   @VisibleForTesting
   class SubscriptionHolder {
     // even though this is an atomicref, sync is necessary for wait/notify
-    private final AtomicReference<Subscription> currentSubscription = new AtomicReference<>();
+    private final AtomicReference<InternalSubscription> currentSubscription =
+        new AtomicReference<>();
 
     @NonNull
-    public Subscription getAndBlock() throws TimeoutException {
+    public InternalSubscription getAndBlock() throws TimeoutException {
       return getAndBlock(0);
     }
 
     @NonNull
-    public Subscription getAndBlock(long maxPause) throws TimeoutException {
+    public InternalSubscription getAndBlock(long maxPause) throws TimeoutException {
       long end = System.currentTimeMillis() + maxPause;
       synchronized (currentSubscription) {
         do {
@@ -273,20 +309,20 @@ public class ResilientGrpcSubscription implements Subscription {
       }
     }
 
-    Subscription getAndSet(@SuppressWarnings("SameParameterValue") Subscription s) {
+    InternalSubscription getAndSet(@SuppressWarnings("SameParameterValue") InternalSubscription s) {
       synchronized (currentSubscription) {
         return currentSubscription.getAndSet(s);
       }
     }
 
-    void set(Subscription s) {
+    void set(InternalSubscription s) {
       synchronized (currentSubscription) {
         currentSubscription.set(s);
         currentSubscription.notifyAll();
       }
     }
 
-    public Subscription get() {
+    public InternalSubscription get() {
       synchronized (currentSubscription) {
         return currentSubscription.get();
       }

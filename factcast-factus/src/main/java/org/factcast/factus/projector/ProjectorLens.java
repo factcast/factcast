@@ -15,7 +15,8 @@
  */
 package org.factcast.factus.projector;
 
-import java.util.function.Function;
+import java.util.function.*;
+
 import org.factcast.core.Fact;
 import org.factcast.factus.projection.Projection;
 
@@ -64,4 +65,6 @@ public interface ProjectorLens {
   default boolean skipStateUpdate() {
     return false;
   }
+
+  void flush();
 }
