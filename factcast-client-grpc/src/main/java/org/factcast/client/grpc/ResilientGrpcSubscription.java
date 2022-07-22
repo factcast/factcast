@@ -15,19 +15,22 @@
  */
 package org.factcast.client.grpc;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
+
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.util.ExceptionHelper;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ResilientGrpcSubscription implements InternalSubscription {
@@ -90,38 +93,38 @@ public class ResilientGrpcSubscription implements InternalSubscription {
   }
 
   @Override
-  public void notifyCatchup() {}
-
-  @Override
-  public void notifyFastForward(@NonNull UUID factId) {}
-
-  @Override
-  public void notifyFactStreamInfo(@NonNull FactStreamInfo info) {}
-
-  @Override
-  public void notifyComplete() {}
-
-  @Override
-  public void notifyError(Throwable e) {}
-
-  @Override
-  public void notifyElement(@NonNull Fact e) throws TransformationException {}
-
-  @Override
-  public SubscriptionImpl onClose(Runnable e) {
-    return null;
+  public void notifyCatchup() {
+    currentSubscription.get().notifyCatchup();
   }
 
   @Override
-  // TODO remove
-  public AtomicLong factsNotTransformed() {
-    return currentSubscription.get().factsNotTransformed();
+  public void notifyFastForward(@NonNull UUID factId) {
+    currentSubscription.get().notifyFastForward(factId);
   }
 
   @Override
-  // TODO remove
-  public AtomicLong factsTransformed() {
-    return currentSubscription.get().factsTransformed();
+  public void notifyFactStreamInfo(@NonNull FactStreamInfo info) {
+    currentSubscription.get().notifyFactStreamInfo(info);
+  }
+
+  @Override
+  public void notifyComplete() {
+    currentSubscription.get().notifyComplete();
+  }
+
+  @Override
+  public void notifyError(Throwable e) {
+    currentSubscription.get().notifyError(e);
+  }
+
+  @Override
+  public void notifyElement(@NonNull Fact e) throws TransformationException {
+    currentSubscription.get().notifyElement(e);
+  }
+
+  @Override
+  public InternalSubscription onClose(Runnable e) {
+    return delegate(s -> s.onClose(e));
   }
 
   @VisibleForTesting
@@ -151,11 +154,11 @@ public class ResilientGrpcSubscription implements InternalSubscription {
   }
 
   @VisibleForTesting
-  ResilientGrpcSubscription delegate(Consumer<Subscription> consumer) {
+  ResilientGrpcSubscription delegate(Consumer<InternalSubscription> consumer) {
     for (; ; ) {
       assertSubscriptionStateNotClosed();
       try {
-        Subscription cur = currentSubscription.getAndBlock();
+        InternalSubscription cur = currentSubscription.getAndBlock();
         consumer.accept(cur);
         return this;
       } catch (Exception e) {
