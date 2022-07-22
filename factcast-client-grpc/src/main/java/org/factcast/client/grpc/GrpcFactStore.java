@@ -15,14 +15,23 @@
  */
 package org.factcast.client.grpc;
 
+import static io.grpc.stub.ClientCalls.asyncServerStreamingCall;
+
+import com.google.common.annotations.VisibleForTesting;
+import io.grpc.*;
+import io.grpc.stub.MetadataUtils;
+import io.grpc.stub.StreamObserver;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.stream.*;
-
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
-
+import lombok.Generated;
+import lombok.NonNull;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+import net.devh.boot.grpc.client.security.CallCredentialsHelper;
 import org.factcast.core.DuplicateFactException;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
@@ -49,21 +58,6 @@ import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-
-import com.google.common.annotations.VisibleForTesting;
-
-import io.grpc.*;
-import io.grpc.stub.MetadataUtils;
-import io.grpc.stub.StreamObserver;
-
-import net.devh.boot.grpc.client.security.CallCredentialsHelper;
-
-import lombok.Generated;
-import lombok.NonNull;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
-
-import static io.grpc.stub.ClientCalls.asyncServerStreamingCall;
 
 /**
  * Adapter that implements a FactStore by calling a remote one via GRPC.
