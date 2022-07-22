@@ -30,9 +30,11 @@ import io.micrometer.core.instrument.Tags;
 import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
-import org.factcast.core.subscription.MissingTransformationInformationException;
+import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
 import org.factcast.store.registry.SchemaRegistry;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.Transformation;
@@ -47,6 +49,8 @@ public class TransformationChains implements TransformationStoreListener {
 
   private final RegistryMetrics registryMetrics;
 
+  @VisibleForTesting
+  @Getter(AccessLevel.PROTECTED)
   private final Map<TransformationKey, Map<VersionPath, TransformationChain>> cache =
       new HashMap<>();
 
@@ -62,10 +66,11 @@ public class TransformationChains implements TransformationStoreListener {
     r.register(this);
   }
 
-  public TransformationChain get(@NonNull TransformationKey key, int from, @NonNull Set<Integer> to)
+  public TransformationChain get(
+      @NonNull TransformationKey key, int from, @NonNull Set<Integer> requestedVersions)
       throws MissingTransformationInformationException {
 
-    Preconditions.checkState(!to.isEmpty());
+    Preconditions.checkState(!requestedVersions.isEmpty());
 
     Map<VersionPath, TransformationChain> chainsPerKey;
 
@@ -74,12 +79,12 @@ public class TransformationChains implements TransformationStoreListener {
       // different maps we're locking the whole cache, but creating a
       // hashmap should not take too much time
       chainsPerKey = cache.computeIfAbsent(key, k -> new HashMap<>());
-    }
-    synchronized (chainsPerKey) {
+
       // we're locking the map for this particular key. contention should
       // be limited and the gain of not creating unnecessary chains should
       // be on the plus side.
-      return chainsPerKey.computeIfAbsent(new VersionPath(from, to), p -> build(key, from, to));
+      return chainsPerKey.computeIfAbsent(
+          new VersionPath(from, requestedVersions), p -> build(key, from, requestedVersions));
     }
   }
 

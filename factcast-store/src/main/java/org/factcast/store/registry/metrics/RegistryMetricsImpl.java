@@ -17,7 +17,7 @@ package org.factcast.store.registry.metrics;
 
 import com.google.common.base.Stopwatch;
 import io.micrometer.core.instrument.*;
-import java.util.function.Supplier;
+import java.util.function.*;
 import lombok.NonNull;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -122,6 +122,12 @@ public class RegistryMetricsImpl implements RegistryMetrics, InitializingBean {
   public void count(@NonNull EVENT event, Tags tags) {
     Counter counter = counter(event, tags);
     counter.increment();
+  }
+
+  @Override
+  public void increase(@NonNull EVENT event, int amount) {
+    Counter counter = counter(event, Tags.empty());
+    counter.increment(amount);
   }
 
   @Override

@@ -72,4 +72,7 @@ public class NOPRegistryMetrics implements RegistryMetrics {
 
   @Override
   public void count(EVENT event, Tags tags) {}
+
+  @Override
+  public void increase(EVENT transformationCacheHit, int hits) {}
 }

@@ -37,7 +37,7 @@ import org.factcast.store.internal.script.JSEngineFactory;
  * @author uwe.schaefer@prisma-capacity.eu
  */
 @Slf4j
-public class PgPostQueryMatcher implements Predicate<Fact> {
+public class PostQueryMatcher implements Predicate<Fact> {
 
   @Getter
   @Accessors(fluent = true)
@@ -45,7 +45,7 @@ public class PgPostQueryMatcher implements Predicate<Fact> {
 
   final List<FactSpecMatcher> matchers = new LinkedList<>();
 
-  PgPostQueryMatcher(@NonNull SubscriptionRequest req, @NonNull JSEngineFactory ef) {
+  public PostQueryMatcher(@NonNull SubscriptionRequest req, @NonNull JSEngineFactory ef) {
     canBeSkipped = req.specs().stream().noneMatch(s -> s.jsFilterScript() != null);
     if (canBeSkipped) {
       log.trace("{} post query filtering has been disabled", req);

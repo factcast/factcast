@@ -18,8 +18,7 @@ package org.factcast.store.registry.transformation;
 import liquibase.integration.spring.SpringLiquibase;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.subscription.FactTransformerService;
-import org.factcast.core.subscription.FactTransformersFactory;
+import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.registry.SchemaRegistry;
@@ -36,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Configuration
@@ -58,11 +58,12 @@ public class TransformationConfiguration {
   @Bean
   public TransformationCache transformationCache(
       @NonNull JdbcTemplate jdbcTemplate,
+      @NonNull NamedParameterJdbcTemplate namedJdbcTemplate,
       @NonNull StoreConfigurationProperties props,
       @NonNull RegistryMetrics registryMetrics,
       @Autowired(required = false) SpringLiquibase unused) {
     if (props.isSchemaRegistryConfigured() && props.isPersistentTransformationCache())
-      return new PgTransformationCache(jdbcTemplate, registryMetrics);
+      return new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics);
 
     // otherwise
     return new InMemTransformationCache(
@@ -78,12 +79,6 @@ public class TransformationConfiguration {
   @Bean
   public Transformer transformer(@NonNull JSEngineFactory engineFactory) {
     return new JsTransformer(engineFactory);
-  }
-
-  @Bean
-  public FactTransformersFactory factTransformersFactory(
-      FactTransformerService trans, RegistryMetrics registryMetrics) {
-    return new FactTransformersFactoryImpl(trans, registryMetrics);
   }
 
   @Bean
