@@ -16,14 +16,15 @@
 package org.factcast.store.registry;
 
 import com.google.common.base.Stopwatch;
-import com.google.common.cache.AbstractLoadingCache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.everit.json.schema.Schema;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.http.ValidationConstants;
@@ -49,20 +50,18 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
 
   protected final Object mutex = new Object();
 
-  private final LoadingCache<SchemaKey, Schema> cache =
-      new AbstractLoadingCache<SchemaKey, Schema>() {
+  final CacheLoader<SchemaKey, Optional<Schema>> loader =
+      new CacheLoader<>() {
 
+        // optional is necessary because null as a return from load is not allowed by API
         @Override
-        public Schema get(@NonNull SchemaKey key) {
-          return schemaStore.get(key).map(ValidationConstants.jsonString2SchemaV7()).orElse(null);
-        }
-
-        @Override
-        public @Nullable Schema getIfPresent(@NonNull Object k) {
-          SchemaKey key = (SchemaKey) k;
-          return schemaStore.get(key).map(ValidationConstants.jsonString2SchemaV7()).orElse(null);
+        public @NonNull Optional<Schema> load(@NonNull SchemaKey key) {
+          return schemaStore.get(key).map(ValidationConstants.jsonString2SchemaV7());
         }
       };
+
+  private final LoadingCache<SchemaKey, Optional<Schema>> cache =
+      CacheBuilder.newBuilder().maximumSize(10000).build(loader);
 
   public AbstractSchemaRegistry(
       @NonNull IndexFetcher indexFetcher,
@@ -189,9 +188,10 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
     }
   }
 
+  @SneakyThrows
   @Override
   public Optional<Schema> get(@NonNull SchemaKey key) {
-    return Optional.ofNullable(cache.getIfPresent(key));
+    return cache.get(key);
   }
 
   @Override
