@@ -15,12 +15,23 @@
  */
 package org.factcast.client.grpc;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeout;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.*;
+
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.*;
-
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 import org.factcast.client.grpc.ResilientGrpcSubscription.DelegatingFactObserver;
 import org.factcast.client.grpc.ResilientGrpcSubscription.SubscriptionHolder;
@@ -37,20 +48,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
-
-import lombok.NonNull;
-import lombok.SneakyThrows;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ResilientGrpcSubscriptionTest {
