@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2022 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.registry.transformation.cache;
+package org.factcast.store.internal;
 
-import java.util.UUID;
-import lombok.NonNull;
-import org.factcast.core.Fact;
+import lombok.Value;
 
-class CacheKey {
-  static String of(@NonNull Fact fact, @NonNull String transformationChainId) {
-    return CacheKey.of(fact.id(), fact.version(), transformationChainId);
-  }
-
-  static String of(@NonNull UUID id, int version, @NonNull String transformationChainId) {
-    return String.join("-", id.toString(), String.valueOf(version), transformationChainId);
-  }
+@Value(staticConstructor = "of")
+public class Pair<L, R> {
+  L left;
+  R right;
 }

@@ -16,7 +16,7 @@
 package org.factcast.store.registry.metrics;
 
 import io.micrometer.core.instrument.Tags;
-import java.util.function.Supplier;
+import java.util.function.*;
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -48,6 +48,8 @@ public interface RegistryMetrics {
   void count(EVENT event);
 
   void count(EVENT event, Tags tags);
+
+  void increase(EVENT transformationCacheHit, int hits);
 
   enum OP {
     REFRESH_REGISTRY("refreshRegistry"),

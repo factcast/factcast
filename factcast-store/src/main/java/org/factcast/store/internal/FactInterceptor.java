@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.filter;
+package org.factcast.store.internal;
 
 import java.util.function.*;
 import org.factcast.core.Fact;
 
-public interface PgFactFilter extends Predicate<Fact> {}
+/** facts might be filtered away or transformed before passing along to the target subscription */
+public interface FactInterceptor extends Consumer<Fact> {}

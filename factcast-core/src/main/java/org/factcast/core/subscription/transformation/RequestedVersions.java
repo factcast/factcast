@@ -13,12 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal;
+package org.factcast.core.subscription.transformation;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import lombok.NonNull;
 
 public class RequestedVersions {
@@ -35,6 +32,6 @@ public class RequestedVersions {
 
   public boolean matches(@NonNull String ns, String type, int version) {
     Set<Integer> set = get(ns, type);
-    return set.isEmpty() || set.contains(0) || set.contains(version);
+    return set.contains(0) || set.contains(version);
   }
 }
