@@ -15,14 +15,11 @@
  */
 package org.factcast.itests.factus.load;
 
+import com.google.common.collect.Sets;
 import java.util.*;
-
+import lombok.ToString;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.Specification;
-
-import com.google.common.collect.Sets;
-
-import lombok.ToString;
 
 @Specification(ns = "users", type = "UserCreated", version = 1)
 @ToString

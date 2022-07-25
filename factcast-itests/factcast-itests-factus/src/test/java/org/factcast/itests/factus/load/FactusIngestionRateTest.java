@@ -15,9 +15,10 @@
  */
 package org.factcast.itests.factus.load;
 
+import com.google.common.base.Stopwatch;
 import java.time.Duration;
 import java.util.*;
-
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
@@ -28,10 +29,6 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
-
-import com.google.common.base.Stopwatch;
-
-import lombok.extern.slf4j.Slf4j;
 
 @SpringBootTest
 @ContextConfiguration(classes = {Application.class})

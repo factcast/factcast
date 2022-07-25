@@ -15,16 +15,13 @@
  */
 package org.factcast.itests.factus.event;
 
-import java.util.*;
-
-import org.factcast.factus.event.EventObject;
-import org.factcast.factus.event.Specification;
-
 import com.google.common.collect.Sets;
-
+import java.util.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.factcast.factus.event.EventObject;
+import org.factcast.factus.event.Specification;
 
 @Data
 @NoArgsConstructor

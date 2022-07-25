@@ -16,11 +16,9 @@
 package org.factcast.factus;
 
 import java.util.*;
-
+import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.factus.event.EventObject;
-
-import lombok.NonNull;
 
 @SuppressWarnings({"UnusedReturnValue", "unused"})
 public interface SimplePublisher {
