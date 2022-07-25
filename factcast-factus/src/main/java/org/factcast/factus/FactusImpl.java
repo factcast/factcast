@@ -15,12 +15,6 @@
  */
 package org.factcast.factus;
 
-import static org.factcast.factus.metrics.TagKeys.CLASS;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
 import java.lang.reflect.Constructor;
 import java.time.Duration;
 import java.time.Instant;
@@ -28,11 +22,9 @@ import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import java.util.stream.*;
+
 import javax.annotation.Nullable;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
+
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
@@ -58,6 +50,19 @@ import org.factcast.factus.snapshot.AggregateSnapshotRepository;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+
+import static org.factcast.factus.metrics.TagKeys.CLASS;
+
 /** Single entry point to the factus API. */
 @RequiredArgsConstructor
 @Slf4j
@@ -68,7 +73,7 @@ public class FactusImpl implements Factus {
 
   private final FactCast fc;
 
-  private final ProjectorFactory ehFactory;
+  private final ProjectorFactory projectorFactory;
 
   private final EventConverter eventConverter;
 
@@ -190,7 +195,7 @@ public class FactusImpl implements Factus {
   @SneakyThrows
   private <P extends SubscribedProjection> Subscription doSubscribe(
       @NonNull P subscribedProjection, @NonNull WriterToken token) {
-    Projector<P> projector = ehFactory.create(subscribedProjection);
+    Projector<P> projector = projectorFactory.create(subscribedProjection);
     FactObserver fo =
         new AbstractFactObserver(subscribedProjection, PROGRESS_INTERVAL, factusMetrics) {
 
@@ -209,6 +214,7 @@ public class FactusImpl implements Factus {
 
           @Override
           public void onCatchupSignal() {
+            projector.flush(); // should be done by the lenses already, but does not hurt
             projector.onCatchup(lastFactIdApplied);
             subscribedProjection.onCatchup();
           }
@@ -237,7 +243,7 @@ public class FactusImpl implements Factus {
                 SubscriptionRequest.follow(projector.createFactSpecs())
                     .fromNullable(subscribedProjection.factStreamPosition()),
                 fo);
-    sub.onClose(() -> projector.flush());
+    sub.onClose(projector::flush);
     return sub;
   }
 
@@ -348,7 +354,7 @@ public class FactusImpl implements Factus {
   @SneakyThrows
   private <P extends Projection> UUID catchupProjection(
       @NonNull P projection, UUID stateOrNull, @Nullable BiConsumer<P, UUID> afterProcessing) {
-    Projector<P> projector = ehFactory.create(projection);
+    Projector<P> projector = projectorFactory.create(projection);
     AtomicReference<UUID> factId = new AtomicReference<>();
     AtomicInteger factCount = new AtomicInteger(0);
 
@@ -375,6 +381,7 @@ public class FactusImpl implements Factus {
 
           @Override
           public void onCatchupSignal() {
+            projector.flush(); // should be done by the lenses already, but does not hurt
             projector.onCatchup(id);
             projection.onCatchup();
           }
@@ -402,7 +409,6 @@ public class FactusImpl implements Factus {
       InternalSubscription sub =
           (InternalSubscription)
               fc.subscribe(SubscriptionRequest.catchup(factSpecs).fromNullable(stateOrNull), fo);
-      sub.onClose(() -> projector.flush());
       sub.awaitComplete();
     }
     return factId.get();
@@ -452,8 +458,7 @@ public class FactusImpl implements Factus {
 
   @Override
   public <M extends ManagedProjection> Locked<M> withLockOn(@NonNull M managedProjection) {
-    Projector<M> applier = ehFactory.create(managedProjection);
-    List<FactSpec> specs = applier.createFactSpecs();
+    List<FactSpec> specs = projectorFactory.create(managedProjection).createFactSpecs();
     return new Locked<>(fc, this, managedProjection, specs, factusMetrics);
   }
 
@@ -464,16 +469,14 @@ public class FactusImpl implements Factus {
             TimedOperation.FIND_DURATION,
             Tags.of(Tag.of(CLASS, aggregateClass.getName())),
             () -> find(aggregateClass, id).orElse(instantiate(aggregateClass)));
-    Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
-    List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
+    List<FactSpec> specs = projectorFactory.<SnapshotProjection>create(fresh).createFactSpecs();
     return new Locked<>(fc, this, fresh, specs, factusMetrics);
   }
 
   @Override
   public <P extends SnapshotProjection> Locked<P> withLockOn(@NonNull Class<P> projectionClass) {
     P fresh = fetch(projectionClass);
-    Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
-    List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
+    List<FactSpec> specs = projectorFactory.<SnapshotProjection>create(fresh).createFactSpecs();
     return new Locked<>(fc, this, fresh, specs, factusMetrics);
   }
 

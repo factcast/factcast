@@ -15,23 +15,12 @@
  */
 package org.factcast.client.grpc;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.*;
-
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.*;
-import lombok.NonNull;
-import lombok.SneakyThrows;
+
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 import org.factcast.client.grpc.ResilientGrpcSubscription.DelegatingFactObserver;
 import org.factcast.client.grpc.ResilientGrpcSubscription.SubscriptionHolder;
@@ -48,6 +37,20 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
+
+import lombok.NonNull;
+import lombok.SneakyThrows;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeout;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ResilientGrpcSubscriptionTest {
@@ -245,6 +248,46 @@ class ResilientGrpcSubscriptionTest {
   @SneakyThrows
   private void sleep(int i) {
     Thread.sleep(i);
+  }
+
+  @Test
+  void notifyCatchup() {
+    uut.notifyCatchup();
+    verify(subscription).notifyCatchup();
+  }
+
+  @Test
+  void notifyComplete() {
+    uut.notifyComplete();
+    verify(subscription).notifyComplete();
+  }
+
+  @Test
+  void notifyFastForward() {
+    @NonNull UUID id = UUID.randomUUID();
+    uut.notifyFastForward(id);
+    verify(subscription).notifyFastForward(id);
+  }
+
+  @Test
+  void notifyFactStreamInfo() {
+    @NonNull FactStreamInfo info = new FactStreamInfo(1, 2);
+    uut.notifyFactStreamInfo(info);
+    verify(subscription).notifyFactStreamInfo(info);
+  }
+
+  @Test
+  void notifyElement() {
+    @NonNull Fact e = Fact.builder().buildWithoutPayload();
+    uut.notifyElement(e);
+    verify(subscription).notifyElement(e);
+  }
+
+  @Test
+  void notifyError() {
+    @NonNull Exception e = new IllegalStateException();
+    uut.notifyError(e);
+    verify(subscription).notifyError(e);
   }
 
   @Nested
