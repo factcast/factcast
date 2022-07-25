@@ -15,7 +15,6 @@
  */
 package org.factcast.store.registry.validation;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.*;
@@ -55,22 +54,12 @@ public class FactValidationAspect {
   }
 
   private void validate(List<? extends Fact> facts) {
-    Stream<? extends Fact> stream = facts.stream();
-    stream = parallelizeIfNecessary(facts, stream);
+    Stream<? extends Fact> stream = facts.stream().parallel();
     List<FactValidationError> errors = validate(stream);
 
     if (!errors.isEmpty())
       throw new FactValidationException(
           errors.stream().map(FactValidationError::toString).collect(Collectors.toList()));
-  }
-
-  @VisibleForTesting
-  Stream<? extends Fact> parallelizeIfNecessary(
-      List<? extends Fact> facts, Stream<? extends Fact> stream) {
-    if (facts.size() >= MINIMUM_FACT_LIST_SIZE_TO_GO_PARALLEL) {
-      stream = stream.parallel();
-    }
-    return stream;
   }
 
   private List<FactValidationError> validate(Stream<? extends Fact> stream) {
