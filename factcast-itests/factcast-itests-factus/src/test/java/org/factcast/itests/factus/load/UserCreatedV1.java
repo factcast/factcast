@@ -13,23 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus;
+package org.factcast.itests.factus.load;
 
 import java.util.*;
 
-import org.factcast.core.Fact;
 import org.factcast.factus.event.EventObject;
+import org.factcast.factus.event.Specification;
 
-import lombok.NonNull;
+import com.google.common.collect.Sets;
 
-@SuppressWarnings({"UnusedReturnValue", "unused"})
-public interface SimplePublisher {
-  /** publishes a single event immediately */
-  void publish(@NonNull EventObject eventPojo);
+import lombok.ToString;
 
-  /** publishes a list of events immediately in an atomic manner (all or none) */
-  void publish(@NonNull List<EventObject> eventPojos);
+@Specification(ns = "users", type = "UserCreated", version = 1)
+@ToString
+public class UserCreatedV1 implements EventObject {
 
-  /** In case you'd need to assemble a fact yourself */
-  void publish(@NonNull Fact f);
+  private UUID id = UUID.randomUUID();
+
+  private String lastName;
+
+  private String firstName;
+
+  public UserCreatedV1(String lastName, String firstName) {
+    this.lastName = lastName;
+    this.firstName = firstName;
+  }
+
+  protected UserCreatedV1() {}
+
+  @Override
+  public Set<UUID> aggregateIds() {
+    return Sets.newHashSet(id);
+  }
 }

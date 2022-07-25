@@ -15,17 +15,20 @@
  */
 package org.factcast.store.registry.validation;
 
-import com.google.common.annotations.VisibleForTesting;
+import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.*;
 import java.util.stream.*;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.factcast.core.Fact;
 import org.factcast.core.FactValidationException;
+
+import com.google.common.base.Stopwatch;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Aspect
 @Slf4j
@@ -39,8 +42,6 @@ public class FactValidationAspect {
   private final FactValidator validator;
 
   // not hogging the common FJP. Also limiting parallelism to less of what the common pool has.
-  private static final ForkJoinPool validationPool =
-      new ForkJoinPool((int) Math.abs(Runtime.getRuntime().availableProcessors() / 1.5));
 
   @SuppressWarnings("unchecked")
   @Around("execution(public void org.factcast.core.store.FactStore.publish(*))")
@@ -55,22 +56,16 @@ public class FactValidationAspect {
   }
 
   private void validate(List<? extends Fact> facts) {
-    Stream<? extends Fact> stream = facts.stream();
-    stream = parallelizeIfNecessary(facts, stream);
-    List<FactValidationError> errors = validate(stream);
+    measure(
+        "validation of a batch with size " + facts.size(),
+        () -> {
+          Stream<? extends Fact> stream = facts.stream(); // .parallel();
+          List<FactValidationError> errors = validate(stream);
 
-    if (!errors.isEmpty())
-      throw new FactValidationException(
-          errors.stream().map(FactValidationError::toString).collect(Collectors.toList()));
-  }
-
-  @VisibleForTesting
-  Stream<? extends Fact> parallelizeIfNecessary(
-      List<? extends Fact> facts, Stream<? extends Fact> stream) {
-    if (facts.size() >= MINIMUM_FACT_LIST_SIZE_TO_GO_PARALLEL) {
-      stream = stream.parallel();
-    }
-    return stream;
+          if (!errors.isEmpty())
+            throw new FactValidationException(
+                errors.stream().map(FactValidationError::toString).collect(Collectors.toList()));
+        });
   }
 
   private List<FactValidationError> validate(Stream<? extends Fact> stream) {
@@ -86,5 +81,14 @@ public class FactValidationAspect {
     validate(facts);
 
     return joinPoint.proceed();
+  }
+
+  public long measure(String s, Runnable r) {
+    var sw = Stopwatch.createStarted();
+    r.run();
+    Duration elapsed = sw.stop().elapsed();
+    long millis = elapsed.toMillis();
+    log.info("{} {}ms", s, millis);
+    return millis;
   }
 }
