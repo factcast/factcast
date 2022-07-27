@@ -18,20 +18,22 @@ package org.factcast.store.registry.transformation.cache;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.Map.*;
+
+import org.apache.commons.collections4.map.LRUMap;
+import org.factcast.core.Fact;
+import org.factcast.store.registry.metrics.RegistryMetrics;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.map.LRUMap;
-import org.factcast.core.Fact;
-import org.factcast.store.registry.metrics.RegistryMetrics;
 
 @Slf4j
 public class InMemTransformationCache implements TransformationCache {
   private final RegistryMetrics registryMetrics;
 
   // very low, but ok for tests
-  private static final int DEFAULT_CAPACITY = 1000;
+  private static final int DEFAULT_CAPACITY = 100;
 
   private final Map<Key, FactAndAccessTime> cache;
 
