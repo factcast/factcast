@@ -15,8 +15,15 @@
  */
 package org.factcast.store.registry.transformation;
 
-import java.util.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.mockito.Mockito.*;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import java.util.*;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.transformation.TransformationRequest;
@@ -35,16 +42,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-
-import lombok.NonNull;
-import lombok.SneakyThrows;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class FactTransformerServiceImplTest {
