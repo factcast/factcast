@@ -15,17 +15,13 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
-import java.util.*;
-
-import javax.annotation.Nullable;
-
-import org.factcast.core.Fact;
-
 import com.google.common.annotations.VisibleForTesting;
-
+import java.util.*;
+import javax.annotation.Nullable;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
+import org.factcast.core.Fact;
 
 class CacheBuffer {
   private final Object mutex = new Object() {};
