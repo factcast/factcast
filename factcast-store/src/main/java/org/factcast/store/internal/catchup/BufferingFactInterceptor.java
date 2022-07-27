@@ -126,57 +126,60 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
   }
 
   public void flush() {
-    log.trace("flushing buffer of size " + buffer.size());
-    List<TransformationRequest> factsThatNeedTransformation =
-        // filter the scheduled ones
-        buffer.stream().map(Pair::left).filter(Objects::nonNull).collect(Collectors.toList());
+    if (!buffer.isEmpty()) {
+      log.trace("flushing buffer of size " + buffer.size());
+      List<TransformationRequest> factsThatNeedTransformation =
+          // filter the scheduled ones
+          buffer.stream().map(Pair::left).filter(Objects::nonNull).collect(Collectors.toList());
 
-    // resolve futures for the cache hits & transformations
-    CompletableFuture.runAsync(
-        () -> {
-          try {
-            List<Fact> transformedFacts = service.transform(factsThatNeedTransformation);
-            transformedFacts.forEach(
-                f -> {
-                  CompletableFuture<Fact> factCompletableFuture = index.get(f.id());
-                  if (factCompletableFuture != null) {
-                    factCompletableFuture.complete(f);
-                  } else {
-                    log.warn("found unexpected fact id after transformation: {}", f.id());
-                  }
-                });
-          } catch (Exception e) {
-            // make all uncompleted fail
-            index
-                .values()
-                .forEach(
-                    cf -> {
-                      if (!cf.isDone()) {
-                        cf.completeExceptionally(e);
+      // resolve futures for the cache hits & transformations
+      if (!factsThatNeedTransformation.isEmpty())
+        CompletableFuture.runAsync(
+            () -> {
+              try {
+                List<Fact> transformedFacts = service.transform(factsThatNeedTransformation);
+                transformedFacts.forEach(
+                    f -> {
+                      CompletableFuture<Fact> factCompletableFuture = index.get(f.id());
+                      if (factCompletableFuture != null) {
+                        factCompletableFuture.complete(f);
+                      } else {
+                        log.warn("found unexpected fact id after transformation: {}", f.id());
                       }
                     });
-          }
-        });
+              } catch (Exception e) {
+                // make all uncompleted fail
+                index
+                    .values()
+                    .forEach(
+                        cf -> {
+                          if (!cf.isDone()) {
+                            cf.completeExceptionally(e);
+                          }
+                        });
+              }
+            });
 
-    // flush out, blocking where the fact is not yet available
-    buffer.forEach(
-        p -> {
-          try {
-            // 30 seconds should be enough for almost everything (B.Gates)
-            Fact e = p.right().get(30, TimeUnit.SECONDS);
-            targetSubscription.notifyElement(e);
-          } catch (InterruptedException i) {
-            Thread.currentThread().interrupt();
-            throw new TransformationException(i);
-          } catch (ExecutionException | TimeoutException e) {
-            throw new TransformationException(e);
-          }
-        });
+      // flush out, blocking where the fact is not yet available
+      buffer.forEach(
+          p -> {
+            try {
+              // 30 seconds should be enough for almost everything (B.Gates)
+              Fact e = p.right().get(30, TimeUnit.SECONDS);
+              targetSubscription.notifyElement(e);
+            } catch (InterruptedException i) {
+              Thread.currentThread().interrupt();
+              throw new TransformationException(i);
+            } catch (ExecutionException | TimeoutException e) {
+              throw new TransformationException(e);
+            }
+          });
 
-    increaseNotifyMetric(buffer.size());
+      increaseNotifyMetric(buffer.size());
 
-    // reset buffer
-    buffer.clear();
-    index.clear();
+      // reset buffer
+      buffer.clear();
+      index.clear();
+    }
   }
 }
