@@ -18,7 +18,8 @@ package org.factcast.store.internal.catchup;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.*;
-
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.TransformationException;
@@ -29,9 +30,6 @@ import org.factcast.store.internal.AbstractFactInterceptor;
 import org.factcast.store.internal.Pair;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.filter.FactFilter;
-
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 
 /** this class is NOT Threadsafe! */
 @Slf4j

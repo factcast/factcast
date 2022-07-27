@@ -15,9 +15,16 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+import com.google.common.collect.Lists;
 import java.time.ZonedDateTime;
 import java.util.*;
-
+import lombok.NonNull;
+import lombok.SneakyThrows;
+import nl.altindag.log.LogCaptor;
 import org.factcast.core.Fact;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics;
@@ -33,16 +40,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
-
-import com.google.common.collect.Lists;
-
-import lombok.NonNull;
-import lombok.SneakyThrows;
-import nl.altindag.log.LogCaptor;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 @SuppressWarnings("ALL")
 @ExtendWith(MockitoExtension.class)
