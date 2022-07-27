@@ -15,13 +15,17 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.util.*;
+
 import javax.annotation.Nullable;
+
+import org.factcast.core.Fact;
+
+import com.google.common.annotations.VisibleForTesting;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
-import org.factcast.core.Fact;
 
 class CacheBuffer {
   private final Object mutex = new Object() {};
@@ -39,7 +43,7 @@ class CacheBuffer {
     synchronized (mutex) {
       // do not override potential transformations
       // cannot use computeIfAbsent here as null values are not allowed.
-      if (!buffer.containsKey(cacheKey)) buffer.put(cacheKey, factOrNull);
+      if (factOrNull != null || !buffer.containsKey(cacheKey)) buffer.put(cacheKey, factOrNull);
     }
   }
 
