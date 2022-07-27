@@ -48,7 +48,7 @@ public class StoreConfigurationProperties implements InitializingBean {
   /** defines the max number of Facts being scheduled for transformation */
   @Positive
   @Max(32000)
-  int transformationCachePageSize = 1000;
+  int transformationCachePageSize = 100;
 
   /** Defines the Strategy used for Paging in the Catchup Phase. */
   CatchupStrategy catchupStrategy = CatchupStrategy.getDefault();
@@ -97,7 +97,9 @@ public class StoreConfigurationProperties implements InitializingBean {
    * when using the inmem impl of the transformation cache, this is the max number of entries
    * cached.
    */
-  @Positive int inMemTransformationCacheCapacity = 1_000_000;
+  @Positive
+  @Min(100)
+  int inMemTransformationCacheCapacity = 100;
 
   /**
    * If validation is enabled, this controls if publishing facts, that are not validatable (due to

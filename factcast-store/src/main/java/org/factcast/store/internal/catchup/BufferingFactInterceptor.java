@@ -47,6 +47,8 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
     this.filter = filter;
     this.targetSubscription = targetSubscription;
     this.maxBufferSize = maxBufferSize;
+    buffer = new ArrayList<>(maxBufferSize);
+    index = new HashMap<>(maxBufferSize);
   }
 
   enum Mode {
@@ -60,13 +62,11 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
   private final SubscriptionImpl targetSubscription;
   private final int maxBufferSize;
   private Mode mode = Mode.DIRECT;
-  private final List<Pair<TransformationRequest, CompletableFuture<Fact>>> buffer =
-      new ArrayList<>();
-  private final Map<UUID, CompletableFuture<Fact>> index = new HashMap<>();
+  private final List<Pair<TransformationRequest, CompletableFuture<Fact>>> buffer;
+  private final Map<UUID, CompletableFuture<Fact>> index;
 
   public void accept(@NonNull Fact f) {
     if (filter.test(f)) {
-
       TransformationRequest transformationRequest = transformers.prepareTransformation(f);
       if (mode == Mode.DIRECT) {
         acceptInDirectMode(f, transformationRequest);
@@ -79,7 +79,6 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
   }
 
   private void acceptInBufferingMode(@NonNull Fact f, TransformationRequest transformationRequest) {
-    log.trace("accepting in buffering mode");
     if (transformationRequest == null) {
       // does not need transformation, add as completed
       buffer.add(completedTransformation(f));
@@ -101,7 +100,6 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
   }
 
   private void acceptInDirectMode(@NonNull Fact f, TransformationRequest transformationRequest) {
-    log.trace("accepting in direct mode");
     if (transformationRequest == null) {
       // does not need transformation, just pass it down
       targetSubscription.notifyElement(f);
@@ -126,57 +124,60 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
   }
 
   public void flush() {
-    log.trace("flushing buffer of size " + buffer.size());
-    List<TransformationRequest> factsThatNeedTransformation =
-        // filter the scheduled ones
-        buffer.stream().map(Pair::left).filter(Objects::nonNull).collect(Collectors.toList());
+    if (!buffer.isEmpty()) {
+      log.trace("flushing buffer of size " + buffer.size());
+      List<TransformationRequest> factsThatNeedTransformation =
+          // filter the scheduled ones
+          buffer.stream().map(Pair::left).filter(Objects::nonNull).collect(Collectors.toList());
 
-    // resolve futures for the cache hits & transformations
-    CompletableFuture.runAsync(
-        () -> {
-          try {
-            List<Fact> transformedFacts = service.transform(factsThatNeedTransformation);
-            transformedFacts.forEach(
-                f -> {
-                  CompletableFuture<Fact> factCompletableFuture = index.get(f.id());
-                  if (factCompletableFuture != null) {
-                    factCompletableFuture.complete(f);
-                  } else {
-                    log.warn("found unexpected fact id after transformation: {}", f.id());
-                  }
-                });
-          } catch (Exception e) {
-            // make all uncompleted fail
-            index
-                .values()
-                .forEach(
-                    cf -> {
-                      if (!cf.isDone()) {
-                        cf.completeExceptionally(e);
+      // resolve futures for the cache hits & transformations
+      if (!factsThatNeedTransformation.isEmpty())
+        CompletableFuture.runAsync(
+            () -> {
+              try {
+                List<Fact> transformedFacts = service.transform(factsThatNeedTransformation);
+                transformedFacts.forEach(
+                    f -> {
+                      CompletableFuture<Fact> factCompletableFuture = index.get(f.id());
+                      if (factCompletableFuture != null) {
+                        factCompletableFuture.complete(f);
+                      } else {
+                        log.warn("found unexpected fact id after transformation: {}", f.id());
                       }
                     });
-          }
-        });
+              } catch (Exception e) {
+                // make all uncompleted fail
+                index
+                    .values()
+                    .forEach(
+                        cf -> {
+                          if (!cf.isDone()) {
+                            cf.completeExceptionally(e);
+                          }
+                        });
+              }
+            });
 
-    // flush out, blocking where the fact is not yet available
-    buffer.forEach(
-        p -> {
-          try {
-            // 30 seconds should be enough for almost everything (B.Gates)
-            Fact e = p.right().get(30, TimeUnit.SECONDS);
-            targetSubscription.notifyElement(e);
-          } catch (InterruptedException i) {
-            Thread.currentThread().interrupt();
-            throw new TransformationException(i);
-          } catch (ExecutionException | TimeoutException e) {
-            throw new TransformationException(e);
-          }
-        });
+      // flush out, blocking where the fact is not yet available
+      buffer.forEach(
+          p -> {
+            try {
+              // 30 seconds should be enough for almost everything (B.Gates)
+              Fact e = p.right().get(30, TimeUnit.SECONDS);
+              targetSubscription.notifyElement(e);
+            } catch (InterruptedException i) {
+              Thread.currentThread().interrupt();
+              throw new TransformationException(i);
+            } catch (ExecutionException | TimeoutException e) {
+              throw new TransformationException(e);
+            }
+          });
 
-    increaseNotifyMetric(buffer.size());
+      increaseNotifyMetric(buffer.size());
 
-    // reset buffer
-    buffer.clear();
-    index.clear();
+      // reset buffer
+      buffer.clear();
+      index.clear();
+    }
   }
 }
