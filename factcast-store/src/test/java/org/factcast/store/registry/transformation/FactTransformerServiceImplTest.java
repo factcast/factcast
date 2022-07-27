@@ -15,15 +15,8 @@
  */
 package org.factcast.store.registry.transformation;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.mockito.Mockito.*;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import java.util.*;
-import lombok.NonNull;
-import lombok.SneakyThrows;
+
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.transformation.TransformationRequest;
@@ -42,6 +35,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+
+import lombok.NonNull;
+import lombok.SneakyThrows;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class FactTransformerServiceImplTest {
@@ -238,7 +241,7 @@ class FactTransformerServiceImplTest {
       when(chain.toVersion()).thenReturn(5);
       when(chains.get(eq(key), eq(4), eq(Collections.singleton(5)))).thenReturn(chain);
       TransformationCache.Key cacheKey = TransformationCache.Key.of(fact.id(), 5, "myChainId");
-      when(cache.findAll(eq(Lists.newArrayList(cacheKey)))).thenReturn(Collections.emptySet());
+      when(cache.findAll(Set.of(cacheKey))).thenReturn(Collections.emptySet());
       Transformation t;
       when(trans.transform(same(chain), eq(FactCastJson.readTree(fact.jsonPayload()))))
           .thenReturn(FactCastJson.readTree("{\"a\":2}"));
