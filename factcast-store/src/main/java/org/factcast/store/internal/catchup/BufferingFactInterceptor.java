@@ -18,8 +18,7 @@ package org.factcast.store.internal.catchup;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.*;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
+
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.TransformationException;
@@ -30,6 +29,9 @@ import org.factcast.store.internal.AbstractFactInterceptor;
 import org.factcast.store.internal.Pair;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.filter.FactFilter;
+
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 /** this class is NOT Threadsafe! */
 @Slf4j
@@ -47,6 +49,8 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
     this.filter = filter;
     this.targetSubscription = targetSubscription;
     this.maxBufferSize = maxBufferSize;
+    buffer = new ArrayList<>(maxBufferSize);
+    index = new HashMap<>(maxBufferSize);
   }
 
   enum Mode {
@@ -60,13 +64,11 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
   private final SubscriptionImpl targetSubscription;
   private final int maxBufferSize;
   private Mode mode = Mode.DIRECT;
-  private final List<Pair<TransformationRequest, CompletableFuture<Fact>>> buffer =
-      new ArrayList<>();
-  private final Map<UUID, CompletableFuture<Fact>> index = new HashMap<>();
+  private final List<Pair<TransformationRequest, CompletableFuture<Fact>>> buffer;
+  private final Map<UUID, CompletableFuture<Fact>> index;
 
   public void accept(@NonNull Fact f) {
     if (filter.test(f)) {
-
       TransformationRequest transformationRequest = transformers.prepareTransformation(f);
       if (mode == Mode.DIRECT) {
         acceptInDirectMode(f, transformationRequest);
@@ -79,7 +81,6 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
   }
 
   private void acceptInBufferingMode(@NonNull Fact f, TransformationRequest transformationRequest) {
-    log.trace("accepting in buffering mode");
     if (transformationRequest == null) {
       // does not need transformation, add as completed
       buffer.add(completedTransformation(f));
@@ -101,7 +102,6 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
   }
 
   private void acceptInDirectMode(@NonNull Fact f, TransformationRequest transformationRequest) {
-    log.trace("accepting in direct mode");
     if (transformationRequest == null) {
       // does not need transformation, just pass it down
       targetSubscription.notifyElement(f);
