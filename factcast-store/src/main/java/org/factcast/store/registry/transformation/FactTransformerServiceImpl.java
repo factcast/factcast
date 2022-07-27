@@ -74,6 +74,8 @@ public class FactTransformerServiceImpl implements FactTransformerService {
   public List<Fact> transform(@NonNull List<TransformationRequest> req)
       throws TransformationException {
 
+    if (req.isEmpty()) return Collections.emptyList();
+
     log.trace("batch processing  " + req.size() + " transformation requests");
 
     List<Pair<TransformationRequest, TransformationChain>> pairs =
