@@ -15,15 +15,9 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
-import com.google.common.collect.Lists;
 import java.time.ZonedDateTime;
 import java.util.*;
-import lombok.NonNull;
-import lombok.SneakyThrows;
+
 import org.factcast.core.Fact;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics;
@@ -39,6 +33,16 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+
+import com.google.common.collect.Lists;
+
+import lombok.NonNull;
+import lombok.SneakyThrows;
+import nl.altindag.log.LogCaptor;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @SuppressWarnings("ALL")
 @ExtendWith(MockitoExtension.class)
@@ -66,7 +70,7 @@ class PgTransformationCacheTest {
       underTest.put(key, f);
 
       Mockito.verify(underTest).registerWrite(key, f);
-      assertThat(underTest.buffer()).containsEntry(key, f);
+      assertThat(underTest.buffer().get(key)).isEqualTo(f);
     }
 
     @Test
@@ -75,7 +79,7 @@ class PgTransformationCacheTest {
       underTest.put(key, f);
 
       Mockito.verify(underTest).registerWrite(key, f);
-      assertThat(underTest.buffer()).containsEntry(key, f);
+      assertThat(underTest.buffer().get(key)).isEqualTo(f);
     }
   }
 
@@ -97,7 +101,7 @@ class PgTransformationCacheTest {
     void findsUnflushed() {
       underTest.put(key, f);
       //noinspection OptionalGetWithoutIsPresent
-      assertThat(underTest.find(key).get()).isSameAs(f);
+      assertThat(underTest.find(key)).containsSame(f);
     }
 
     @Test
@@ -105,7 +109,7 @@ class PgTransformationCacheTest {
       //noinspection OptionalGetWithoutIsPresent
       Mockito.when(jdbcTemplate.query(anyString(), any(Object[].class), any(RowMapper.class)))
           .thenReturn(Collections.singletonList(f));
-      assertThat(underTest.find(key).get()).isSameAs(f);
+      assertThat(underTest.find(key)).containsSame(f);
     }
 
     @Test
@@ -182,7 +186,7 @@ class PgTransformationCacheTest {
     @Test
     void happyPath() {
       underTest.registerAccess(cacheKey);
-      assertThat(underTest.buffer()).containsKey(cacheKey);
+      assertThat(underTest.buffer().containsKey(cacheKey)).isTrue();
       assertThat(underTest.buffer().get(cacheKey)).isNull();
     }
 
@@ -193,7 +197,7 @@ class PgTransformationCacheTest {
 
       Mockito.verify(underTest).registerAccess(cacheKey);
       // the write is still there
-      assertThat(underTest.buffer()).containsEntry(cacheKey, f);
+      assertThat(underTest.buffer().get(cacheKey)).isEqualTo(f);
     }
   }
 
@@ -211,7 +215,7 @@ class PgTransformationCacheTest {
     @Test
     void happyPath() {
       underTest.registerWrite(cacheKey, f);
-      assertThat(underTest.buffer()).containsKey(cacheKey);
+      assertThat(underTest.buffer().containsKey(cacheKey)).isTrue();
       assertThat(underTest.buffer().get(cacheKey)).isNotNull();
     }
   }
@@ -233,9 +237,9 @@ class PgTransformationCacheTest {
     @Test
     void happyPath() {
       underTest.registerWrite(cacheKey, f);
-      assertThat(underTest.buffer()).hasSize(1);
+      assertThat(underTest.buffer().size()).isEqualTo(1);
       underTest.registerAccess(otherCacheKey).get();
-      assertThat(underTest.buffer()).isEmpty();
+      assertThat(underTest.buffer().size()).isZero();
 
       Mockito.verify(underTest, Mockito.times(2)).flushIfNecessary();
     }
@@ -260,14 +264,15 @@ class PgTransformationCacheTest {
       Mockito.verify(underTest).flush();
       Mockito.verify(jdbcTemplate)
           .update(
-              eq("DELETE FROM transformationcache WHERE last_access < ?"),
-              eq(new Date(THRESHOLD_DATE.toInstant().toEpochMilli())));
+              "DELETE FROM transformationcache WHERE last_access < ?",
+              new Date(THRESHOLD_DATE.toInstant().toEpochMilli()));
     }
   }
 
   @Nested
   class WhenFlushing {
     @Mock private TransformationCache.@NonNull Key key;
+    @Mock private TransformationCache.@NonNull Key key2;
     @Mock private @NonNull Fact f;
     private PgTransformationCache underTest;
 
@@ -280,9 +285,9 @@ class PgTransformationCacheTest {
     @Test
     void afterPut() {
       underTest.put(key, f);
-      assertThat(underTest.buffer()).isNotEmpty();
+      assertThat(underTest.buffer().size()).isPositive();
       underTest.flush();
-      assertThat(underTest.buffer()).isEmpty();
+      assertThat(underTest.buffer().size()).isZero();
     }
 
     @Test
@@ -294,19 +299,24 @@ class PgTransformationCacheTest {
     @Test
     void afterAcess() {
       underTest.registerAccess(key);
-      assertThat(underTest.buffer()).isNotEmpty();
+      assertThat(underTest.buffer().size()).isPositive();
       underTest.flush();
-      assertThat(underTest.buffer()).isEmpty();
+      assertThat(underTest.buffer().size()).isZero();
     }
 
     @Test
     void logsException() {
-      underTest.registerAccess(key);
+      underTest.registerAccess(key2);
       underTest.registerWrite(key, f);
       when(jdbcTemplate.batchUpdate(anyString(), any(List.class)))
           .thenThrow(IllegalArgumentException.class);
-      // TODO use logcaptor after merge with #2075
+      LogCaptor logCaptor = LogCaptor.forClass(PgTransformationCache.class);
+
       underTest.flush();
+
+      assertThat(logCaptor.getErrorLogs())
+          .containsExactly(
+              "Could not complete batch update of transformations on transformation cache.");
     }
   }
 
