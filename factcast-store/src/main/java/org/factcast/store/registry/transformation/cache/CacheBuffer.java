@@ -8,10 +8,14 @@ import org.factcast.core.Fact;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NonNull;
 
 class CacheBuffer {
   private final Object mutex = new Object() {};
+
+  @Getter(AccessLevel.PROTECTED)
   private final Map<TransformationCache.Key, Fact> buffer = new HashMap<>();
 
   Fact get(@NonNull TransformationCache.Key key) {
