@@ -65,7 +65,7 @@ class PgTransformationCacheITest extends AbstractTransformationCacheTest {
 
     uut.find(TransformationCache.Key.of(fact.id(), fact.version(), chainId));
 
-    assertThat(underTest.buffer()).containsKey(cacheKey);
+    assertThat(underTest.buffer().containsKey(cacheKey)).isTrue();
     assertThat(underTest.buffer().get(cacheKey)).isNotNull();
   }
 
@@ -92,6 +92,6 @@ class PgTransformationCacheITest extends AbstractTransformationCacheTest {
     wasflushed.await();
 
     // either empty, or just registered accesses
-    assertThat(underTest.buffer().values()).noneMatch(Objects::nonNull);
+    assertThat(underTest.buffer().clear().values()).noneMatch(Objects::nonNull);
   }
 }

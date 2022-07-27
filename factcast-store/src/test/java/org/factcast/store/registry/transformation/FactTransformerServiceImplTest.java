@@ -238,7 +238,7 @@ class FactTransformerServiceImplTest {
       when(chain.toVersion()).thenReturn(5);
       when(chains.get(eq(key), eq(4), eq(Collections.singleton(5)))).thenReturn(chain);
       TransformationCache.Key cacheKey = TransformationCache.Key.of(fact.id(), 5, "myChainId");
-      when(cache.findAll(eq(Lists.newArrayList(cacheKey)))).thenReturn(Collections.emptySet());
+      when(cache.findAll(Set.of(cacheKey))).thenReturn(Collections.emptySet());
       Transformation t;
       when(trans.transform(same(chain), eq(FactCastJson.readTree(fact.jsonPayload()))))
           .thenReturn(FactCastJson.readTree("{\"a\":2}"));
