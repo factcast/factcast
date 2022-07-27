@@ -15,16 +15,19 @@
  */
 package org.factcast.store.internal;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.annotations.VisibleForTesting;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
-import lombok.*;
+
 import org.factcast.core.Fact;
 import org.factcast.core.FactHeader;
 import org.factcast.core.util.FactCastJson;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.annotations.VisibleForTesting;
+
+import lombok.*;
 
 /**
  * PG Specific implementation of a Fact.
@@ -92,18 +95,17 @@ public class PgFact implements Fact {
     String jsonPayload = resultSet.getString(PgConstants.COLUMN_PAYLOAD);
     int version = resultSet.getInt(PgConstants.COLUMN_VERSION);
     return new PgFact(
-        UUID.fromString(id), ns, type, version, toUUIDArray(aggId), jsonHeader, jsonPayload);
+        UUID.fromString(id), ns, type, version, toUUIDSet(aggId), jsonHeader, jsonPayload);
   }
 
   @VisibleForTesting
-  static Set<UUID> toUUIDArray(String aggIdArrayAsString) {
-    Set<UUID> set = new LinkedHashSet<>();
+  static Set<UUID> toUUIDSet(String aggIdArrayAsString) {
     if (aggIdArrayAsString != null && aggIdArrayAsString.trim().length() > 2) {
       UUID[] readValue = FactCastJson.readValue(UUID[].class, aggIdArrayAsString);
       if (readValue != null) {
-        set.addAll(Arrays.asList(readValue));
+        return Set.of(readValue);
       }
     }
-    return set;
+    return Collections.emptySet();
   }
 }
