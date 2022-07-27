@@ -15,9 +15,16 @@
  */
 package org.factcast.store.registry.transformation;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.annotations.VisibleForTesting;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import java.util.*;
 import java.util.stream.*;
-
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.transformation.FactTransformerService;
@@ -29,17 +36,6 @@ import org.factcast.store.registry.transformation.cache.TransformationCache;
 import org.factcast.store.registry.transformation.chains.TransformationChain;
 import org.factcast.store.registry.transformation.chains.TransformationChains;
 import org.factcast.store.registry.transformation.chains.Transformer;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.annotations.VisibleForTesting;
-
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor

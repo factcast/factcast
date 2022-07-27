@@ -15,19 +15,16 @@
  */
 package org.factcast.store.internal;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
-
-import org.factcast.core.Fact;
-import org.factcast.core.FactHeader;
-import org.factcast.core.util.FactCastJson;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
-
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
 import lombok.*;
+import org.factcast.core.Fact;
+import org.factcast.core.FactHeader;
+import org.factcast.core.util.FactCastJson;
 
 /**
  * PG Specific implementation of a Fact.

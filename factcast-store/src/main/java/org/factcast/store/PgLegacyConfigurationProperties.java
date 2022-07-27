@@ -18,9 +18,9 @@ package org.factcast.store;
 import java.time.Duration;
 import java.util.*;
 import java.util.stream.*;
-
 import javax.annotation.Nonnull;
-
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -28,9 +28,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.DeprecatedConfigurationProperty;
 import org.springframework.context.ApplicationListener;
 import org.springframework.core.env.*;
-
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 
 @SuppressWarnings({"DefaultAnnotationParam", "OptionalUsedAsFieldOrParameterType"})
 @ConfigurationProperties(prefix = PgLegacyConfigurationProperties.LEGACY_PREFIX)
