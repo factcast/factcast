@@ -15,17 +15,16 @@
  */
 package org.factcast.store.internal;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
+
+import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Set;
-import java.util.UUID;
-import org.junit.jupiter.api.Test;
+import static org.mockito.Mockito.*;
 
 public class PgFactTest {
 
@@ -62,30 +61,30 @@ public class PgFactTest {
   }
 
   @Test
-  void testToUUIDArrayNull() {
-    Set<UUID> res = PgFact.toUUIDArray(null);
+  void testToUUIDSetNull() {
+    Set<UUID> res = PgFact.toUUIDSet(null);
     assertTrue(res.isEmpty());
   }
 
   @Test
-  void testToUUIDArrayEmpty() {
-    Set<UUID> res = PgFact.toUUIDArray("[]");
+  void testToUUIDSetEmpty() {
+    Set<UUID> res = PgFact.toUUIDSet("[]");
     assertTrue(res.isEmpty());
   }
 
   @Test
-  void testToUUIDArraySingle() {
+  void testToUUIDSetSingle() {
     UUID aggId1 = UUID.randomUUID();
-    Set<UUID> res = PgFact.toUUIDArray("[\"" + aggId1 + "\"]");
+    Set<UUID> res = PgFact.toUUIDSet("[\"" + aggId1 + "\"]");
     assertEquals(1, res.size());
     assertTrue(res.contains(aggId1));
   }
 
   @Test
-  void testToUUIDArrayMutli() {
+  void testToUUIDSetMutli() {
     UUID aggId1 = UUID.randomUUID();
     UUID aggId2 = UUID.randomUUID();
-    Set<UUID> res = PgFact.toUUIDArray("[\"" + aggId1 + "\",\"" + aggId2 + "\"]");
+    Set<UUID> res = PgFact.toUUIDSet("[\"" + aggId1 + "\",\"" + aggId2 + "\"]");
     assertEquals(2, res.size());
     assertTrue(res.contains(aggId1));
     assertTrue(res.contains(aggId2));

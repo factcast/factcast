@@ -15,11 +15,9 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.util.*;
 import java.util.concurrent.*;
-import lombok.SneakyThrows;
+
 import org.factcast.core.Fact;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.test.IntegrationTest;
@@ -34,6 +32,10 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import lombok.SneakyThrows;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ContextConfiguration(classes = {PgTestConfiguration.class})
 @ExtendWith(SpringExtension.class)
@@ -65,7 +67,7 @@ class PgTransformationCacheITest extends AbstractTransformationCacheTest {
 
     uut.find(TransformationCache.Key.of(fact.id(), fact.version(), chainId));
 
-    assertThat(underTest.buffer()).containsKey(cacheKey);
+    assertThat(underTest.buffer().containsKey(cacheKey)).isTrue();
     assertThat(underTest.buffer().get(cacheKey)).isNotNull();
   }
 
@@ -92,6 +94,6 @@ class PgTransformationCacheITest extends AbstractTransformationCacheTest {
     wasflushed.await();
 
     // either empty, or just registered accesses
-    assertThat(underTest.buffer().values()).noneMatch(Objects::nonNull);
+    assertThat(underTest.buffer().clear().values()).noneMatch(Objects::nonNull);
   }
 }
