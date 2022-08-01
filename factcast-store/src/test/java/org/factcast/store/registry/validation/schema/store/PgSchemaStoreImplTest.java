@@ -15,6 +15,7 @@
  */
 package org.factcast.store.registry.validation.schema.store;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.sql.SQLException;
@@ -147,5 +148,29 @@ public class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
             "foo",
             "id");
     verifyNoMoreInteractions(mockTpl);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  void clearsLocalCache() {
+    var uut = new PgSchemaStoreImpl(mockTpl, registryMetrics);
+
+    SchemaKey key = SchemaKey.of("foo", "bar", 122);
+    String schema1 = "schema1";
+    String schema2 = "schema2";
+    when(mockTpl.queryForList(
+            "SELECT jsonschema FROM schemastore WHERE ns=? AND type=? AND version=? ",
+            String.class,
+            key.ns(),
+            key.type(),
+            key.version()))
+        .thenReturn(Collections.singletonList(schema1), Collections.singletonList(schema2));
+    assertThat(uut.get(key)).containsSame(schema1); // this is mocked, but
+    assertThat(uut.get(key)).containsSame(schema1); // this comes from near cache
+    assertThat(uut.get(key)).containsSame(schema1); // again
+
+    uut.clearNearCache();
+
+    assertThat(uut.get(key)).containsSame(schema2); // new value freshly picked from store
   }
 }

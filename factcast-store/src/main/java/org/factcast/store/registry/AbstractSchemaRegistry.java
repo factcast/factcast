@@ -121,6 +121,12 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
   protected void process(RegistryIndex index) {
     updateSchemes(index);
     updateTransformations(index);
+    clearNearCaches();
+  }
+
+  private void clearNearCaches() {
+    schemaStore.clearNearCache();
+    transformationStore.clearNearCache();
   }
 
   private void updateSchemes(RegistryIndex index) {
