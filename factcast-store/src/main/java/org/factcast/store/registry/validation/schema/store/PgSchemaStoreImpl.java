@@ -16,7 +16,9 @@
 package org.factcast.store.registry.validation.schema.store;
 
 import io.micrometer.core.instrument.Tags;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.map.LRUMap;
@@ -132,10 +134,5 @@ public class PgSchemaStoreImpl implements SchemaStore {
                 return (String) null;
               }
             }));
-  }
-
-  @Override
-  public void clearNearCache() {
-    nearCache.clear();
   }
 }

@@ -17,8 +17,10 @@ package org.factcast.store.registry.transformation.store;
 
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.ListUtils;
@@ -86,10 +88,5 @@ public class InMemTransformationStoreImpl extends AbstractTransformationStore {
     synchronized (mutex) {
       return transformationCache.computeIfAbsent(key, (k) -> new CopyOnWriteArrayList<>());
     }
-  }
-
-  @Override
-  public void clearNearCache() {
-    // There is no near cache
   }
 }

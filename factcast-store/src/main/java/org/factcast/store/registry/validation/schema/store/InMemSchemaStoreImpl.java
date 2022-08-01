@@ -16,7 +16,9 @@
 package org.factcast.store.registry.validation.schema.store;
 
 import io.micrometer.core.instrument.Tags;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.store.registry.metrics.RegistryMetrics;
@@ -71,10 +73,5 @@ public class InMemSchemaStoreImpl implements SchemaStore {
     synchronized (mutex) {
       return Optional.ofNullable(schemaMap.get(key));
     }
-  }
-
-  @Override
-  public void clearNearCache() {
-    // there is no near cache
   }
 }
