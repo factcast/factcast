@@ -15,10 +15,12 @@
  */
 package org.factcast.store.registry;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 import com.google.common.cache.LoadingCache;
+import java.util.*;
 import lombok.NonNull;
 import org.everit.json.schema.Schema;
 import org.factcast.store.StoreConfigurationProperties;
@@ -73,6 +75,34 @@ class AbstractSchemaRegistryTest {
           .isInstanceOf(InitialRegistryFetchFailed.class);
 
       verify(registryMetrics).count(EVENT.SCHEMA_UPDATE_FAILURE);
+    }
+  }
+
+  @Nested
+  class WhenClearingNearCache {
+    @BeforeEach
+    void setup() {}
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void refetchesSchemaFromStoreAfterClearing() {
+
+      SchemaKey key = SchemaKey.of("foo", "bar", 122);
+      String schema1 = "{}";
+      String schema2 = "{}";
+      when(schemaStore.get(key)).thenReturn(Optional.of(schema1), Optional.of(schema2));
+      Schema firstSchema = underTest.get(key).get();
+      assertThat(underTest.get(key)).hasValue(firstSchema); // this is mocked, but
+      assertThat(underTest.get(key)).hasValue(firstSchema); // this comes from near cache
+      assertThat(underTest.get(key)).hasValue(firstSchema); // again
+
+      // act
+      underTest.clearNearCache();
+
+      Optional<Schema> actual = underTest.get(key);
+      assertThat(actual).isNotEmpty();
+      // new value freshly picked from store
+      assertThat(actual.get()).isNotSameAs(firstSchema);
     }
   }
 }
