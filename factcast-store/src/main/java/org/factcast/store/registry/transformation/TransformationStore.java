@@ -15,7 +15,7 @@
  */
 package org.factcast.store.registry.transformation;
 
-import java.util.List;
+import java.util.*;
 
 public interface TransformationStore {
   void store(TransformationSource source, String transformation)
@@ -28,4 +28,6 @@ public interface TransformationStore {
   boolean contains(TransformationSource source) throws TransformationConflictException;
 
   List<Transformation> get(TransformationKey key);
+
+  void clearNearCache();
 }

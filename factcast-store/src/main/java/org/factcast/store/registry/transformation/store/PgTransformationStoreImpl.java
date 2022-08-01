@@ -17,8 +17,7 @@ package org.factcast.store.registry.transformation.store;
 
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.store.registry.metrics.RegistryMetrics;
@@ -101,5 +100,10 @@ public class PgTransformationStoreImpl extends AbstractTransformationStore {
 
           return new SingleTransformation(key, from, to, Optional.ofNullable(code));
         });
+  }
+
+  @Override
+  public void clearNearCache() {
+    // implement, if we introduce a near cache.
   }
 }
