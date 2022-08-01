@@ -15,9 +15,10 @@
  */
 package org.factcast.store.registry.validation.schema.store;
 
+import static org.mockito.Mockito.*;
+
 import java.sql.SQLException;
 import java.util.*;
-
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.factcast.store.registry.validation.schema.SchemaSource;
@@ -32,8 +33,6 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-
-import static org.mockito.Mockito.*;
 
 @ContextConfiguration(classes = {PgTestConfiguration.class})
 @ExtendWith(SpringExtension.class)
