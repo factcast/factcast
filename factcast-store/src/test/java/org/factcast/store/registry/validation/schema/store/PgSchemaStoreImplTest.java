@@ -16,10 +16,8 @@
 package org.factcast.store.registry.validation.schema.store;
 
 import java.sql.SQLException;
-import java.util.*;
 
 import org.factcast.store.internal.PgTestConfiguration;
-import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.factcast.store.registry.validation.schema.SchemaSource;
 import org.factcast.store.registry.validation.schema.SchemaStore;
 import org.factcast.store.test.IntegrationTest;
@@ -47,27 +45,6 @@ public class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
   @Override
   protected SchemaStore createUUT() {
     return new PgSchemaStoreImpl(tpl, registryMetrics);
-  }
-
-  @Test
-  void doesNotRefetch() {
-    // first goes to DB
-
-    var uut = new PgSchemaStoreImpl(mockTpl, registryMetrics);
-
-    SchemaKey key = mock(SchemaKey.class);
-    when(mockTpl.queryForList(any(), eq(String.class), same(null), same(null), eq(0)))
-        .thenReturn(Collections.singletonList("my schema"));
-
-    uut.get(key);
-
-    verify(mockTpl, times(1)).queryForList(any(), eq(String.class), same(null), same(null), eq(0));
-    verifyNoMoreInteractions(mockTpl);
-
-    // now fetch again - should be answered from the near cache
-
-    uut.get(key);
-    verifyNoMoreInteractions(mockTpl);
   }
 
   @Test
