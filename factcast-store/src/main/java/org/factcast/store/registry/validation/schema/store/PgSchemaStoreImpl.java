@@ -15,10 +15,8 @@
  */
 package org.factcast.store.registry.validation.schema.store;
 
-import io.micrometer.core.instrument.Tags;
 import java.util.*;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.validation.schema.SchemaConflictException;
 import org.factcast.store.registry.validation.schema.SchemaKey;
@@ -27,7 +25,14 @@ import org.factcast.store.registry.validation.schema.SchemaStore;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-/** @author uwe */
+import io.micrometer.core.instrument.Tags;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+
+/**
+ * @author uwe
+ */
 @RequiredArgsConstructor
 public class PgSchemaStoreImpl implements SchemaStore {
 
@@ -109,8 +114,7 @@ public class PgSchemaStoreImpl implements SchemaStore {
   }
 
   @Override
-  public synchronized Optional<String> get(@NonNull SchemaKey key) {
-
+  public Optional<String> get(@NonNull SchemaKey key) {
     List<String> schema =
         jdbcTemplate.queryForList(
             "SELECT jsonschema FROM schemastore WHERE ns=? AND type=? AND version=? ",
@@ -119,10 +123,10 @@ public class PgSchemaStoreImpl implements SchemaStore {
             key.type(),
             key.version());
 
-    if (!schema.isEmpty()) {
-      return Optional.ofNullable(schema.get(0));
-    } else {
+    if (schema.isEmpty()) {
       return Optional.empty();
+    } else {
+      return Optional.ofNullable(schema.get(0));
     }
   }
 }
