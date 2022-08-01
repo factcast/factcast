@@ -50,7 +50,7 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
 
   protected final Object mutex = new Object();
 
-  final CacheLoader<SchemaKey, Optional<Schema>> loader =
+  final CacheLoader<SchemaKey, Optional<Schema>> schemaLoader =
       new CacheLoader<>() {
 
         // optional is necessary because null as a return from load is not allowed by API
@@ -60,8 +60,8 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
         }
       };
 
-  private final LoadingCache<SchemaKey, Optional<Schema>> cache =
-      CacheBuilder.newBuilder().maximumSize(10000).build(loader);
+  private final LoadingCache<SchemaKey, Optional<Schema>> schemaNearCache =
+      CacheBuilder.newBuilder().maximumSize(10000).build(schemaLoader);
 
   public AbstractSchemaRegistry(
       @NonNull IndexFetcher indexFetcher,
@@ -121,6 +121,11 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
   protected void process(RegistryIndex index) {
     updateSchemes(index);
     updateTransformations(index);
+    clearNearCache();
+  }
+
+  public void clearNearCache() {
+    schemaNearCache.invalidateAll();
   }
 
   private void updateSchemes(RegistryIndex index) {
@@ -191,7 +196,7 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
   @SneakyThrows
   @Override
   public Optional<Schema> get(@NonNull SchemaKey key) {
-    return cache.get(key);
+    return schemaNearCache.get(key);
   }
 
   @Override
