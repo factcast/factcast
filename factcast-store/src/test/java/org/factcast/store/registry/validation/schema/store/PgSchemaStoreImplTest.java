@@ -15,10 +15,9 @@
  */
 package org.factcast.store.registry.validation.schema.store;
 
-import static org.mockito.Mockito.*;
-
 import java.sql.SQLException;
 import java.util.*;
+
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.factcast.store.registry.validation.schema.SchemaSource;
@@ -33,6 +32,8 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import static org.mockito.Mockito.*;
 
 @ContextConfiguration(classes = {PgTestConfiguration.class})
 @ExtendWith(SpringExtension.class)
@@ -66,39 +67,6 @@ public class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
     // now fetch again - should be answered from the near cache
 
     uut.get(key);
-    verifyNoMoreInteractions(mockTpl);
-  }
-
-  @Test
-  void cachesRegistrations() {
-    // first goes to DB
-
-    var uut = new PgSchemaStoreImpl(mockTpl, registryMetrics);
-
-    SchemaSource source = new SchemaSource().hash("hash").id("id").ns("ns").type("type");
-    uut.register(source, "foo");
-    verify(mockTpl)
-        .update(
-            "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? ::"
-                + " JSONB) ON CONFLICT ON CONSTRAINT schemastore_pkey DO UPDATE set"
-                + " hash=?,ns=?,type=?,version=?,jsonschema=? :: JSONB WHERE schemastore.id=?",
-            "id",
-            "hash",
-            "ns",
-            "type",
-            0,
-            "foo",
-            "hash",
-            "ns",
-            "type",
-            0,
-            "foo",
-            "id");
-    verifyNoMoreInteractions(mockTpl);
-
-    // now fetch again - should be answered from the near cache
-
-    uut.get(source.toKey());
     verifyNoMoreInteractions(mockTpl);
   }
 

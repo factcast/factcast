@@ -15,13 +15,8 @@
  */
 package org.factcast.store.registry.validation.schema.store;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import java.util.*;
 
-import io.micrometer.core.instrument.Tags;
-import java.util.Optional;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics.EVENT;
@@ -29,8 +24,17 @@ import org.factcast.store.registry.validation.schema.SchemaConflictException;
 import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.factcast.store.registry.validation.schema.SchemaSource;
 import org.factcast.store.registry.validation.schema.SchemaStore;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Spy;
+
+import io.micrometer.core.instrument.Tags;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 public abstract class AbstractSchemaStoreTest {
 
@@ -100,17 +104,20 @@ public abstract class AbstractSchemaStoreTest {
   @Test
   public void testMultipleRegisterAttempts() {
 
-    s.id("http://testContainsSensesConflict");
+    s.id("http://testMultipleRegisterAttempts");
     s.hash("123");
     s.ns("ns");
-    s.type("testContainsSensesConflict");
+    s.type("testMultipleRegisterAttempts");
     s.version(5);
 
     uut.register(s, "{}");
-    uut.register(s, "{\"a\":1}");
+    uut.register(s, "{\"a\": 1}");
 
-    assertThat(uut.contains(s)).isTrue();
-    assertThat(uut.get(s.toKey())).isPresent().hasValue("{\"a\":1}");
+    boolean actualContains = uut.contains(s);
+    assertThat(actualContains).isTrue();
+
+    Optional<String> actual = uut.get(s.toKey());
+    assertThat(actual).isPresent().hasValue("{\"a\": 1}");
   }
 
   @Test
