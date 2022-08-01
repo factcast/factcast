@@ -15,8 +15,10 @@
  */
 package org.factcast.store.registry.validation.schema.store;
 
+import io.micrometer.core.instrument.Tags;
 import java.util.*;
-
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.validation.schema.SchemaConflictException;
 import org.factcast.store.registry.validation.schema.SchemaKey;
@@ -25,14 +27,7 @@ import org.factcast.store.registry.validation.schema.SchemaStore;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import io.micrometer.core.instrument.Tags;
-
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-
-/**
- * @author uwe
- */
+/** @author uwe */
 @RequiredArgsConstructor
 public class PgSchemaStoreImpl implements SchemaStore {
 
