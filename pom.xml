@@ -111,7 +111,7 @@
     <redisson-spring-boot-starter.version>3.17.5</redisson-spring-boot-starter.version>
     <graaljs.version>22.2.0</graaljs.version>
     <shedlock.version>4.39.0</shedlock.version>
-    <byte-buddy.version>1.12.12</byte-buddy.version>
+    <byte-buddy.version>1.12.13</byte-buddy.version>
   </properties>
   <dependencies>
     <dependency>
