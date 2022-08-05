@@ -158,7 +158,7 @@ databaseChangeLog:
       changes:
         - sqlFile:
             encoding: utf8
-            path: factcast/issue1863/updateNotifyFactInsert_condensed_without_comment.sql
+            path: factcast/issue1863/updateNotifyFactInsert_condensed_without_comment_corrected.sql
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
