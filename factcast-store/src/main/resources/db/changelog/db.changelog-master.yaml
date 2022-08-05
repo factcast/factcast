@@ -152,7 +152,7 @@ databaseChangeLog:
   #            stripComments: true
 
   - changeSet:
-      id: updateNotifyFactInsert_condensed_without_comment
+      id: updateNotifyFactInsert_condensed_without_comment_corrected
       runInTransaction: false
       author: uweschaefer
       changes:
@@ -191,13 +191,13 @@ databaseChangeLog:
             stripComments: true
 
   - changeSet:
-      id: issue2050
+      id: issue2050_corrected
       runInTransaction: false
       author: uweschaefer
       changes:
         - sqlFile:
             encoding: utf8
-            path: factcast/issue2050/blacklist.sql
+            path: factcast/issue2050/blacklist_corrected.sql
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
