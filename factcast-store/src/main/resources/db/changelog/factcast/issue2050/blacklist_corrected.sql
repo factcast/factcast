@@ -1,5 +1,10 @@
 create table if not exists blacklist (id uuid);
 
+DROP TRIGGER IF EXISTS tr_deferred_blacklist_insert on blacklist;
+DROP TRIGGER IF EXISTS tr_deferred_blacklist_update on blacklist;
+DROP TRIGGER IF EXISTS tr_deferred_blacklist_delete on blacklist;
+DROP TRIGGER IF EXISTS tr_deferred_blacklist_truncate on blacklist;
+
 CREATE OR REPLACE FUNCTION notifyBlacklistChange() RETURNS trigger AS
 $$
 BEGIN
@@ -10,10 +15,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS tr_deferred_blacklist_insert on blacklist;
-DROP TRIGGER IF EXISTS tr_deferred_blacklist_update on blacklist;
-DROP TRIGGER IF EXISTS tr_deferred_blacklist_delete on blacklist;
-DROP TRIGGER IF EXISTS tr_deferred_blacklist_truncate on blacklist;
+
 
 CREATE CONSTRAINT TRIGGER tr_deferred_blacklist_insert AFTER INSERT ON blacklist DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE PROCEDURE notifyBlacklistChange();
 CREATE CONSTRAINT TRIGGER tr_deferred_blacklist_update AFTER UPDATE ON blacklist DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE PROCEDURE notifyBlacklistChange();
