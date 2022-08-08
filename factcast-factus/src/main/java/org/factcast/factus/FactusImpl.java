@@ -21,6 +21,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.time.Duration;
 import java.time.Instant;
@@ -82,7 +83,7 @@ public class FactusImpl implements Factus {
 
   private final AtomicBoolean closed = new AtomicBoolean();
 
-  private final Set<AutoCloseable> managedObjects = new HashSet<>();
+  private final Set<WeakReference<AutoCloseable>> managedObjects = new HashSet<>();
 
   @Override
   public @NonNull PublishBatch batch() {
@@ -159,24 +160,25 @@ public class FactusImpl implements Factus {
       WriterToken token = subscribedProjection.acquireWriteToken(interval);
       if (token != null) {
         log.info("Acquired writer token for {}", subscribedProjection.getClass());
-        Subscription subscription = doSubscribe(subscribedProjection, token);
+        InternalSubscription subscription = doSubscribe(subscribedProjection, token);
         // close token & subscription on shutdown
         managedObjects.add(
-            new AutoCloseable() {
-              @Override
-              public void close() {
-                tryClose(subscription);
-                tryClose(token);
-              }
+            new WeakReference(
+                new AutoCloseable() {
+                  @Override
+                  public void close() {
+                    tryClose(subscription);
+                    tryClose(token);
+                  }
 
-              private void tryClose(AutoCloseable c) {
-                try {
-                  c.close();
-                } catch (Exception ignore) {
-                  // intentional
-                }
-              }
-            });
+                  private void tryClose(AutoCloseable c) {
+                    try {
+                      c.close();
+                    } catch (Exception ignore) {
+                      // intentional
+                    }
+                  }
+                }));
         return new TokenAwareSubscription(subscription, token);
       } else {
         log.trace(
@@ -188,7 +190,7 @@ public class FactusImpl implements Factus {
   }
 
   @SneakyThrows
-  private <P extends SubscribedProjection> Subscription doSubscribe(
+  private <P extends SubscribedProjection> InternalSubscription doSubscribe(
       @NonNull P subscribedProjection, @NonNull WriterToken token) {
     Projector<P> projector = projectorFactory.create(subscribedProjection);
     FactObserver fo =
@@ -434,13 +436,16 @@ public class FactusImpl implements Factus {
     if (closed.getAndSet(true)) {
       log.warn("close is being called more than once!?");
     } else {
-      ArrayList<AutoCloseable> closeables = new ArrayList<>(managedObjects);
-      for (AutoCloseable c : closeables) {
+      ArrayList<WeakReference<AutoCloseable>> closeables = new ArrayList<>(managedObjects);
+      for (WeakReference<AutoCloseable> r : closeables) {
+        AutoCloseable c = null;
         try {
-          c.close();
+          c = r.get();
+          if (c != null) c.close();
         } catch (Exception e) {
           // needs to be swallowed
-          log.warn("While closing {} of type {}:", c, c.getClass().getName(), e);
+          log.warn(
+              "While closing {} of type {}:", c, c != null ? c.getClass().getName() : "null", e);
         }
       }
     }
