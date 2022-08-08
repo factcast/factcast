@@ -25,7 +25,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
+import org.postgresql.util.PSQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
@@ -115,25 +117,44 @@ class PgSynchronizedQuery {
 
     final SubscriptionRequestTO request;
 
+    final CurrentStatementHolder statementHolder;
+
     @SuppressWarnings("NullableProblems")
     @Override
     public void processRow(ResultSet rs) throws SQLException {
       if (Boolean.TRUE.equals(isConnectedSupplier.get())) {
         if (rs.isClosed()) {
-          throw new IllegalStateException(
-              "ResultSet already closed. We should not have got here. THIS IS A BUG!");
+          if (!statementHolder.wasCanceled())
+            throw new IllegalStateException(
+                "ResultSet already closed. We should not have got here. THIS IS A BUG!");
+          else return;
         }
-        Fact f = PgFact.from(rs);
+        Fact f = null;
         try {
+          f = PgFact.from(rs);
           interceptor.accept(f);
           log.trace("{} notifyElement called with id={}", request, f.id());
           serial.set(rs.getLong(PgConstants.COLUMN_SER));
+        } catch (PSQLException psql) {
+          // see #2088
+          if (statementHolder.wasCanceled()) {
+            // then we just swallow the exception
+            log.trace("Swallowing because statement was cancelled", psql);
+          } else escalateError(rs, f, psql);
+
         } catch (Throwable e) {
-          rs.close();
-          log.warn("{} notifyError called with id={}", request, f.id());
-          subscription.notifyError(e);
+          escalateError(rs, f, e);
         }
       }
+    }
+
+    private void escalateError(ResultSet rs, Fact f, Throwable e) throws SQLException {
+      log.warn("{} notifyError called with id={}", request, f != null ? f.id() : "unknown");
+      try {
+        rs.close();
+      } catch (Throwable ignore) {
+      }
+      subscription.notifyError(e);
     }
   }
 }

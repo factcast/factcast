@@ -18,22 +18,49 @@ package org.factcast.store.internal.query;
 import java.io.Closeable;
 import java.sql.SQLException;
 import java.sql.Statement;
-import lombok.Setter;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class CurrentStatementHolder implements Closeable {
-  @Setter private Statement statement;
+  private final Object mutex = new Object();
+  private Statement statement;
+  private boolean wasCanceled = false;
 
   @Override
   public void close() {
-    if (statement != null) {
-      log.info("Canceling statement " + statement);
-      try {
-        statement.cancel();
-      } catch (SQLException e) {
-        log.debug("Exception while closing statement {}:", statement, e);
+    synchronized (mutex) {
+      if (statement != null) {
+        log.info("Canceling statement " + statement);
+        try {
+          statement.cancel();
+          // also set it to null, so that a thread can see it its statement was canceled
+          wasCanceled = true;
+        } catch (SQLException e) {
+          log.debug("Exception while closing statement {}:", statement, e);
+        }
       }
+    }
+  }
+
+  public CurrentStatementHolder statement(@NonNull Statement statement) {
+    synchronized (mutex) {
+      this.statement = statement;
+      this.wasCanceled = false;
+      return this;
+    }
+  }
+
+  public void clear() {
+    synchronized (mutex) {
+      statement = null;
+      wasCanceled = false;
+    }
+  }
+
+  public boolean wasCanceled() {
+    synchronized (mutex) {
+      return this.wasCanceled;
     }
   }
 }
