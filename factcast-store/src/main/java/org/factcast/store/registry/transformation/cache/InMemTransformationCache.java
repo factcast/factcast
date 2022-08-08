@@ -31,7 +31,7 @@ public class InMemTransformationCache implements TransformationCache {
   private final RegistryMetrics registryMetrics;
 
   // very low, but ok for tests
-  private static final int DEFAULT_CAPACITY = 1000;
+  private static final int DEFAULT_CAPACITY = 100;
 
   private final Map<Key, FactAndAccessTime> cache;
 

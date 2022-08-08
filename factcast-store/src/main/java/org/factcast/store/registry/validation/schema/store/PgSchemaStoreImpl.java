@@ -16,12 +16,9 @@
 package org.factcast.store.registry.validation.schema.store;
 
 import io.micrometer.core.instrument.Tags;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.validation.schema.SchemaConflictException;
 import org.factcast.store.registry.validation.schema.SchemaKey;
@@ -34,8 +31,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 @RequiredArgsConstructor
 public class PgSchemaStoreImpl implements SchemaStore {
 
-  private final Map<SchemaKey, String> nearCache = new LRUMap<>(500);
-
   @NonNull private final JdbcTemplate jdbcTemplate;
 
   @NonNull private final RegistryMetrics registryMetrics;
@@ -43,7 +38,6 @@ public class PgSchemaStoreImpl implements SchemaStore {
   @Override
   public void register(@NonNull SchemaSource key, @NonNull String schema)
       throws SchemaConflictException {
-    nearCache.put(key.toKey(), schema);
 
     try {
       jdbcTemplate.update(
@@ -115,24 +109,19 @@ public class PgSchemaStoreImpl implements SchemaStore {
   }
 
   @Override
-  public synchronized Optional<String> get(@NonNull SchemaKey key) {
-    return Optional.ofNullable(
-        nearCache.computeIfAbsent(
-            key,
-            k -> {
-              List<String> schema =
-                  jdbcTemplate.queryForList(
-                      "SELECT jsonschema FROM schemastore WHERE ns=? AND type=? AND version=? ",
-                      String.class,
-                      key.ns(),
-                      key.type(),
-                      key.version());
+  public Optional<String> get(@NonNull SchemaKey key) {
+    List<String> schema =
+        jdbcTemplate.queryForList(
+            "SELECT jsonschema FROM schemastore WHERE ns=? AND type=? AND version=? ",
+            String.class,
+            key.ns(),
+            key.type(),
+            key.version());
 
-              if (!schema.isEmpty()) {
-                return schema.get(0);
-              } else {
-                return (String) null;
-              }
-            }));
+    if (schema.isEmpty()) {
+      return Optional.empty();
+    } else {
+      return Optional.ofNullable(schema.get(0));
+    }
   }
 }

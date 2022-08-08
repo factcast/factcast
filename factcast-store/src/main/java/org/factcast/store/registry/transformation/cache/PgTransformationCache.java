@@ -51,7 +51,7 @@ public class PgTransformationCache implements TransformationCache {
   @Getter(AccessLevel.PROTECTED)
   @VisibleForTesting
   /* entry of null means read, entry of non-null means write */
-  private final Map<Key, Fact> buffer = Collections.synchronizedMap(new HashMap<>());
+  private final CacheBuffer buffer = new CacheBuffer();
 
   private int maxBufferSize = 1000;
 
@@ -130,24 +130,19 @@ public class PgTransformationCache implements TransformationCache {
     registryMetrics.increase(EVENT.TRANSFORMATION_CACHE_MISS, misses);
     registryMetrics.increase(EVENT.TRANSFORMATION_CACHE_HIT, hits);
 
-    CompletableFuture.runAsync(() -> keys.forEach(this::registerAccess));
+    buffer.putAllNull(keys);
     return Sets.newHashSet(facts);
   }
 
   @VisibleForTesting
   CompletableFuture<Void> registerAccess(Key cacheKey) {
-    synchronized (buffer) {
-      // important to check before in order not to negate writes
-      if (!buffer.containsKey(cacheKey)) buffer.put(cacheKey, null);
-    }
+    buffer.put(cacheKey, null);
     return flushIfNecessary();
   }
 
   @VisibleForTesting
   CompletableFuture<Void> registerWrite(@NonNull TransformationCache.Key key, @NonNull Fact f) {
-    synchronized (buffer) {
-      buffer.put(key, f);
-    }
+    buffer.put(key, f);
     return flushIfNecessary();
   }
 
@@ -174,16 +169,11 @@ public class PgTransformationCache implements TransformationCache {
 
   @Scheduled(fixedRate = 10, timeUnit = TimeUnit.MINUTES)
   public void flush() {
-    HashMap<Key, Fact> copy;
-    synchronized (buffer) {
-      copy = new HashMap<>(buffer);
-      buffer.clear();
-    }
+    Map<Key, Fact> copy = buffer.clear();
     if (!copy.isEmpty()) {
       try {
         insertBufferedTransformations(copy);
         insertBufferedAccesses(copy);
-
       } catch (Exception e) {
         log.error("Could not complete batch update of transformations on transformation cache.", e);
       }
@@ -191,8 +181,7 @@ public class PgTransformationCache implements TransformationCache {
   }
 
   @VisibleForTesting
-  void insertBufferedTransformations(HashMap<Key, Fact> copy) {
-
+  void insertBufferedTransformations(Map<Key, Fact> copy) {
     List<Object[]> parameters =
         copy.entrySet().stream()
             .filter(e -> e.getValue() != null)
@@ -213,7 +202,7 @@ public class PgTransformationCache implements TransformationCache {
   }
 
   @VisibleForTesting
-  void insertBufferedAccesses(HashMap<Key, Fact> copy) {
+  void insertBufferedAccesses(Map<Key, Fact> copy) {
     List<String> keys =
         copy.entrySet().stream()
             .filter(e -> e.getValue() == null)

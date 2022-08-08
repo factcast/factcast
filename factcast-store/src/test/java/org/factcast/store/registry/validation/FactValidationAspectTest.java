@@ -19,7 +19,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
-import java.util.stream.*;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.factcast.core.Fact;
 import org.factcast.core.FactValidationException;
@@ -91,24 +90,5 @@ public class FactValidationAspectTest {
       // expected
     }
     verify(jp, never()).proceed();
-  }
-
-  @Test
-  void testNoParallelization() {
-    Stream<Fact> stream = mock(Stream.class);
-    uut.parallelizeIfNecessary(Collections.singletonList(f), stream);
-    verifyNoInteractions(stream);
-  }
-
-  @Test
-  void testParallelization() {
-    Stream<Fact> stream = mock(Stream.class);
-    List<Fact> l = new ArrayList<>(FactValidationAspect.MINIMUM_FACT_LIST_SIZE_TO_GO_PARALLEL + 10);
-    for (int i = 0; i < FactValidationAspect.MINIMUM_FACT_LIST_SIZE_TO_GO_PARALLEL + 1; i++) {
-      l.add(f);
-    }
-    uut.parallelizeIfNecessary(l, stream);
-    verify(stream).parallel();
-    verifyNoMoreInteractions(stream);
   }
 }
