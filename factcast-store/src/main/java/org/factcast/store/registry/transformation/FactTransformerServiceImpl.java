@@ -70,22 +70,23 @@ public class FactTransformerServiceImpl implements FactTransformerService {
   public List<Fact> transform(@NonNull List<TransformationRequest> req)
       throws TransformationException {
 
+    if (req.isEmpty()) return Collections.emptyList();
+
     log.trace("batch processing  " + req.size() + " transformation requests");
 
     List<Pair<TransformationRequest, TransformationChain>> pairs =
         req.stream().map(r -> Pair.of(r, toChain(r))).collect(Collectors.toList());
-    List<TransformationCache.Key> keys =
-        pairs.stream()
+    Set<TransformationCache.Key> keys =
+        pairs.parallelStream()
             .map(
                 p ->
                     TransformationCache.Key.of(
                         p.left().toTransform().id(), p.right().toVersion(), p.right().id()))
-            .collect(Collectors.toList());
+            .collect(Collectors.toSet());
 
-    Map<UUID, Fact> map = Collections.synchronizedMap(new LinkedHashMap<>(keys.size()));
-    Set<Fact> found = cache.findAll(keys);
+    Map<UUID, Fact> found =
+        cache.findAll(keys).stream().collect(Collectors.toMap(Fact::id, f -> f));
     log.trace("batch lookup found {} out of {} pre transformed facts", found.size(), req.size());
-    found.forEach(f -> map.put(f.id(), f));
 
     Stream<Pair<TransformationRequest, TransformationChain>> pairStream = pairs.stream();
     if (shouldBeParallel(pairs.stream().map(Pair::right))) pairStream = pairStream.parallel();
@@ -93,9 +94,11 @@ public class FactTransformerServiceImpl implements FactTransformerService {
         .map(
             c -> {
               Fact e = c.left().toTransform();
-              TransformationChain chain = c.right();
-              return map.computeIfAbsent(
-                  c.left().toTransform().id(), uuid -> doTransform(e, chain));
+              Fact cached = found.get(e.id());
+              if (cached != null) return cached;
+              else {
+                return doTransform(e, c.right());
+              }
             })
         .collect(Collectors.toList());
   }
