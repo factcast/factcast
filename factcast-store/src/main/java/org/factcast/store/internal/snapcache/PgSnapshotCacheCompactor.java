@@ -15,13 +15,13 @@
  */
 package org.factcast.store.internal.snapcache;
 
+import java.time.ZonedDateTime;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.StoreMetrics;
-import org.joda.time.DateTime;
 import org.springframework.scheduling.annotation.Scheduled;
 
 @RequiredArgsConstructor
@@ -39,6 +39,6 @@ public class PgSnapshotCacheCompactor {
   public void compact() {
     pgMetrics.time(
         StoreMetrics.OP.COMPACT_SNAPSHOT_CACHE,
-        () -> cache.compact(DateTime.now().minusDays(days)));
+        () -> cache.compact(ZonedDateTime.now().minusDays(days)));
   }
 }

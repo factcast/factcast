@@ -20,12 +20,12 @@ description: Properties you can use to configure FactCast
 
 ### Transformation-Registry
 
-| Property        | Description           | Default |
-| ------------- |:-------------|:-----|
-| factcast.store.persistentTransformationCache                    | if Transformed Fact payloads are persistently cached into Postgres| false |
-| factcast.store.inMemTransformationCacheCapacity                 | when using the inmem impl of the transformation cache, this is the max number of entries cached. The minimum value here is 1000. | 1_000_000  |
-| factcast.store.deleteTransformationsStaleForDays                | when using the persistent impl of the transformation cache, this is the min number of days a transformation result is not read in order to be considered stale. This should free some space in a regular cleanup job | 14  |
-| factcast.store.transformationCacheCompactCron                   | defines the cron schedule for compacting the transformation result cache | `0 0 0 * * *` (at midnight)  |
+| Property        | Description           | Default                     |
+| ------------- |:-------------|:----------------------------|
+| factcast.store.persistentTransformationCache                    | if Transformed Fact payloads are persistently cached into Postgres| false                       |
+| factcast.store.inMemTransformationCacheCapacity                 | when using the inmem impl of the transformation cache, this is the max number of entries cached. The minimum value here is 100. | 100                         |
+| factcast.store.deleteTransformationsStaleForDays                | when using the persistent impl of the transformation cache, this is the min number of days a transformation result is not read in order to be considered stale. This should free some space in a regular cleanup job | 14                          |
+| factcast.store.transformationCacheCompactCron                   | defines the cron schedule for compacting the transformation result cache | `0 0 0 * * *` (at midnight) |
 
 ---
 

@@ -18,11 +18,11 @@ package org.factcast.itests.transformation;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import java.util.UUID;
+import java.util.*;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.FactValidationException;
-import org.factcast.core.subscription.MissingTransformationInformationException;
+import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
 import org.factcast.core.util.FactCastJson;
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -53,6 +53,17 @@ class TokenAwareSubscriptionTest {
 
     @SneakyThrows
     @Test
+    void testCloseAlsoReleasesTokenOnlyIfClosed() {
+      uut.close();
+      Mockito.verify(sub).close();
+      Mockito.verify(tkn).close();
+      uut.close();
+      Mockito.verifyNoMoreInteractions(sub);
+      Mockito.verifyNoMoreInteractions(tkn);
+    }
+
+    @SneakyThrows
+    @Test
     void testCloseAlsoReleasesTokenEvenIfExceptionIsThrown() {
       Mockito.doThrow(IOException.class).when(sub).close();
 

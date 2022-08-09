@@ -16,14 +16,9 @@
 package org.factcast.core.subscription;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import lombok.Getter;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,8 +37,6 @@ public class SubscriptionImpl implements InternalSubscription {
 
   @NonNull final FactObserver observer;
 
-  @NonNull final FactTransformers transformers;
-
   @NonNull Runnable onClose = () -> {};
 
   final AtomicBoolean closed = new AtomicBoolean(false);
@@ -51,9 +44,6 @@ public class SubscriptionImpl implements InternalSubscription {
   final CompletableFuture<Void> catchup = new CompletableFuture<>();
 
   final CompletableFuture<Void> complete = new CompletableFuture<>();
-
-  @Getter final AtomicLong factsNotTransformed = new AtomicLong(0);
-  @Getter final AtomicLong factsTransformed = new AtomicLong(0);
 
   @Override
   public void close() {
@@ -187,13 +177,8 @@ public class SubscriptionImpl implements InternalSubscription {
   @Override
   public void notifyElement(@NonNull Fact e) throws TransformationException {
     if (!closed.get()) {
-      Fact transformed = transformers.transformIfNecessary(e);
-      if (transformed == e) {
-        factsNotTransformed.incrementAndGet();
-      } else {
-        factsTransformed.incrementAndGet();
-      }
-      observer.onNext(transformed);
+      // note that this fact is already transformed
+      observer.onNext(e);
     }
   }
 
@@ -216,12 +201,7 @@ public class SubscriptionImpl implements InternalSubscription {
     }
   }
 
-  public static SubscriptionImpl on(@NonNull FactObserver o, FactTransformers transformers) {
-    return new SubscriptionImpl(o, transformers);
-  }
-
-  // for client side
-  public static SubscriptionImpl on(@NonNull FactObserver observer2) {
-    return new SubscriptionImpl(observer2, e -> e);
+  public static SubscriptionImpl on(@NonNull FactObserver o) {
+    return new SubscriptionImpl(o);
   }
 }
