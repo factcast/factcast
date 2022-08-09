@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2022 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.factcast.store.internal;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+import java.sql.PreparedStatement;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
@@ -28,212 +29,415 @@ import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.store.FactStore;
 import org.factcast.core.store.State;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
-import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.store.internal.StoreMetrics.OP;
-import org.factcast.store.internal.tail.PGTailIndexManager;
-import org.factcast.store.test.AbstractFactStoreTest;
-import org.factcast.store.test.IntegrationTest;
+import org.factcast.core.subscription.transformation.FactTransformerService;
+import org.factcast.core.subscription.transformation.TransformationRequest;
+import org.factcast.store.internal.lock.FactTableWriteLock;
+import org.factcast.store.internal.query.PgFactIdToSerialMapper;
+import org.factcast.store.internal.query.PgQueryBuilder;
+import org.factcast.store.internal.snapcache.PgSnapshotCache;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlConfig;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.*;
 
-@ContextConfiguration(classes = {PgTestConfiguration.class})
-@Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
-@ExtendWith(SpringExtension.class)
-@IntegrationTest
-class PgFactStoreTest extends AbstractFactStoreTest {
+@ExtendWith(MockitoExtension.class)
+class PgFactStoreTest {
 
-  @Autowired FactStore fs;
+  @Mock private @NonNull JdbcTemplate jdbcTemplate;
+  @Mock private @NonNull PgSubscriptionFactory subscriptionFactory;
+  @Mock private @NonNull FactTableWriteLock lock;
+  @Mock private @NonNull FactTransformerService factTransformerService;
+  @Mock private @NonNull PgFactIdToSerialMapper pgFactIdToSerialMapper;
+  @Mock private @NonNull PgMetrics metrics;
+  @Mock private @NonNull PgSnapshotCache snapCache;
+  @Mock private @NonNull TokenStore tokenStore;
+  @InjectMocks private PgFactStore underTest;
 
-  @Autowired PgMetrics metrics;
+  @Nested
+  class WhenFetchingById {
+    private final UUID ID = UUID.randomUUID();
 
-  @Autowired TokenStore tokenStore;
-
-  @Autowired PGTailIndexManager tailManager;
-
-  @Override
-  protected FactStore createStoreToTest() {
-    return fs;
+    @BeforeEach
+    void setup() {}
   }
 
-  @Test
-  void testGetSnapshotMetered() {
-    Optional<Snapshot> snapshot = store.getSnapshot(SnapshotId.of("xxx", UUID.randomUUID()));
-    assertThat(snapshot).isEmpty();
-
-    //noinspection unchecked
-    verify(metrics).time(same(OP.GET_SNAPSHOT), any(Supplier.class));
+  private void configureMetricTimeSupplier() {
+    when(metrics.time(any(), any(Supplier.class)))
+        .thenAnswer(
+            i -> {
+              Supplier argument = i.getArgument(1);
+              return argument.get();
+            });
   }
 
-  @Test
-  void testClearSnapshotMetered() {
-    var id = SnapshotId.of("xxx", UUID.randomUUID());
-    store.clearSnapshot(id);
-    verify(metrics).time(same(OP.CLEAR_SNAPSHOT), any(Runnable.class));
-  }
-
-  @Test
-  void testSetSnapshotMetered() {
-    var id = SnapshotId.of("xxx", UUID.randomUUID());
-    var snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
-    store.setSnapshot(snap);
-
-    verify(metrics).time(same(OP.SET_SNAPSHOT), any(Runnable.class));
-  }
-
-  /** This happens in a trigger */
-  @Test
-  @SneakyThrows
-  void testSerialAndTimestampWereAugmented() {
-    // INIT
-    UUID id = UUID.randomUUID();
-
-    // RUN
-    // we need to check if the timestamp that is added to meta makes sense, hence
-    // capture current millis before and after publishing, and compare against the timestamp
-    // set in meta.
-    var before = System.currentTimeMillis();
-    uut.publish(Fact.builder().ns("augmentation").type("test").id(id).buildWithoutPayload());
-
-    // ASSERT
-    var fact = uut.fetchById(id);
-    // fetching after here, as the trigger seems to be delayed
-    var after = System.currentTimeMillis();
-
-    assertThat(fact).isPresent();
-
-    assertThat(Long.parseLong(fact.get().meta("_ser"))).isPositive();
-
-    assertThat(Long.parseLong(fact.get().meta("_ts")))
-        .isGreaterThanOrEqualTo(before)
-        .isLessThanOrEqualTo(after);
+  private void configureMetricTimeRunnable() {
+    doAnswer(
+            i -> {
+              Runnable argument = i.getArgument(1);
+              argument.run();
+              return null;
+            })
+        .when(metrics)
+        .time(any(), any(Runnable.class));
   }
 
   @Nested
-  class FastForward {
-    @NonNull final UUID id = UUID.randomUUID();
-    @NonNull final UUID id2 = UUID.randomUUID();
-    @NonNull final UUID id3 = UUID.randomUUID();
-    final AtomicReference<UUID> fwd = new AtomicReference<>();
+  class WhenFetchingByIdAndVersion {
+    private final UUID ID = UUID.randomUUID();
+    private final int VERSION = 11;
 
-    @NonNull
-    final FactObserver obs =
-        new FactObserver() {
-
-          @Override
-          public void onNext(@NonNull Fact element) {}
-
-          @Override
-          public void onCatchup() {
-            System.out.println("onCatchup");
-          }
-
-          @Override
-          public void onFastForward(@NonNull UUID factIdToFfwdTo) {
-            fwd.set(factIdToFfwdTo);
-            System.out.println("ffwd " + factIdToFfwdTo);
-          }
-        };
-
-    @NonNull Collection<FactSpec> spec = Collections.singletonList(FactSpec.ns("ns1"));
-
+    @SuppressWarnings("rawtypes")
     @BeforeEach
     void setup() {
-      store.publish(
-          Collections.singletonList(Fact.builder().id(id).ns("ns1").buildWithoutPayload()));
-      // have some more facts in the database
-      store.publish(
-          Collections.singletonList(Fact.builder().ns("unrelated").buildWithoutPayload()));
-      // update the highwatermarks
-      tailManager.triggerTailCreation();
+      configureMetricTimeSupplier();
     }
 
     @Test
-    void testFfwdFromScratch() {
+    void testFetchByIdWithUnmatchedVersion() {
 
-      SubscriptionRequest scratch = SubscriptionRequest.catchup(spec).fromScratch();
-      store.subscribe(SubscriptionRequestTO.forFacts(scratch), obs).awaitCatchup();
+      UUID id = UUID.randomUUID();
+      Fact factAsPublished = Fact.builder().ns("ns").type("type").version(1).buildWithoutPayload();
+      Fact transformedFact = Fact.builder().ns("ns").type("type").version(27).buildWithoutPayload();
+      when(jdbcTemplate.query(anyString(), any(Object[].class), any(RowMapper.class)))
+          .thenReturn(Lists.newArrayList(factAsPublished));
+      ArgumentCaptor<TransformationRequest> reqCaptor =
+          ArgumentCaptor.forClass(TransformationRequest.class);
+      when(factTransformerService.transform(reqCaptor.capture())).thenReturn(transformedFact);
 
-      SubscriptionRequest tail = SubscriptionRequest.catchup(spec).from(id);
-      store.subscribe(SubscriptionRequestTO.forFacts(tail), obs).awaitCatchup();
-
-      // now, we expect a ffwd here
-      assertThat(fwd.get()).isNotNull();
-    }
-
-    @Test
-    void doesNotRewind() {
-
-      // now insert a fresh one
-      store.publish(
-          Collections.singletonList(Fact.builder().id(id2).ns("ns1").buildWithoutPayload()));
-
-      SubscriptionRequest newtail = SubscriptionRequest.catchup(spec).from(id);
-      store.subscribe(SubscriptionRequestTO.forFacts(newtail), obs).awaitCatchup();
-
-      tailManager.triggerTailCreation();
-      fwd.set(null);
-
-      // check for empty catchup
-      SubscriptionRequest emptyTail = SubscriptionRequest.catchup(spec).from(id2);
-      store.subscribe(SubscriptionRequestTO.forFacts(emptyTail), obs).awaitCatchup();
-
-      assertThat(fwd.get()).isNull();
-
-      // check for actual catchup (must not rewind)
-      store.publish(
-          Collections.singletonList(Fact.builder().id(id3).ns("ns1").buildWithoutPayload()));
-
-      SubscriptionRequest nonEmptyTail = SubscriptionRequest.catchup(spec).from(id2);
-      store.subscribe(SubscriptionRequestTO.forFacts(nonEmptyTail), obs).awaitCatchup();
-
-      // still no ffwd because the ffwd target is smaller than id2
-      assertThat(fwd.get()).isNull();
-    }
-
-    @Test
-    void movedTarget() {
-      spec = Collections.singletonList(FactSpec.ns("noneOfThese"));
-
-      SubscriptionRequest mt = SubscriptionRequest.catchup(spec).fromScratch();
-      store.subscribe(SubscriptionRequestTO.forFacts(mt), obs).awaitCatchup();
-
-      // ffwd expected
-      assertThat(fwd.get()).isNotNull();
-      UUID first = fwd.get();
-
-      // publish unrelated stuff and update ffwd target
-      store.publish(
-          Collections.singletonList(Fact.builder().ns("unrelated").buildWithoutPayload()));
-      tailManager.triggerTailCreation();
-
-      SubscriptionRequest further = SubscriptionRequest.catchup(spec).from(id2);
-      store.subscribe(SubscriptionRequestTO.forFacts(further), obs).awaitCatchup();
-
-      // now it should ffwd again to the last unrelated one
-      assertThat(fwd.get()).isNotNull().isNotEqualTo(first);
+      assertThat(underTest.fetchByIdAndVersion(id, 27)).isNotEmpty().hasValue(transformedFact);
+      assertThat(reqCaptor.getValue().targetVersions()).hasSize(1).containsExactly(27);
     }
   }
 
-  @Test
-  void getCurrentStateOnEmptyFactTableReturns0() {
-    StateToken token = store.currentStateFor(Lists.newArrayList());
-    assertThat(token).isNotNull();
+  @Nested
+  class WhenPublishing {
+    @Mock private Fact fact;
 
-    Optional<State> state = tokenStore.get(token);
-    assertThat(state).isNotEmpty();
-    assertThat(state.get()).extracting(State::serialOfLastMatchingFact).isEqualTo(0L);
+    @SuppressWarnings("rawtypes")
+    @BeforeEach
+    void setup() {
+      configureMetricTimeRunnable();
+    }
+
+    @Test
+    void publishLock() {
+      underTest.publish(Collections.singletonList(fact));
+      verify(jdbcTemplate)
+          .batchUpdate(
+              eq(PgConstants.INSERT_FACT),
+              eq(Lists.newArrayList(fact)),
+              eq(Integer.MAX_VALUE),
+              any(ParameterizedPreparedStatementSetter.class));
+      verify(lock).aquireExclusiveTXLock();
+    }
+  }
+
+  @Nested
+  class WhenSubscribing {
+    @Mock private @NonNull SubscriptionRequestTO request;
+    @Mock private @NonNull FactObserver observer;
+    @Mock private @NonNull Subscription sub;
+
+    @BeforeEach
+    void setup() {
+      configureMetricTimeSupplier();
+    }
+
+    @Test
+    void name() {
+      when(subscriptionFactory.subscribe(request, observer)).thenReturn(sub);
+      Subscription s = underTest.subscribe(request, observer);
+      assertThat(s).isSameAs(sub);
+    }
+  }
+
+  @Nested
+  class WhenSerialingOf {
+    private final UUID FACT_ID = UUID.randomUUID();
+
+    @BeforeEach
+    void setup() {}
+
+    @Test
+    void delegates() {
+      UUID factId = UUID.randomUUID();
+      when(pgFactIdToSerialMapper.retrieve(factId)).thenReturn(12L);
+      assertThat(underTest.serialOf(factId)).hasValue(12L);
+    }
+
+    @Test
+    void delegatesNoSerialFound() {
+      UUID factId = UUID.randomUUID();
+      when(pgFactIdToSerialMapper.retrieve(factId)).thenReturn(0L);
+      assertThat(underTest.serialOf(factId)).isEmpty();
+    }
+  }
+
+  @Nested
+  class WhenEnumeratingNamespaces {
+    @SuppressWarnings("rawtypes")
+    @BeforeEach
+    void setup() {
+      configureMetricTimeSupplier();
+    }
+
+    @Test
+    void name() {
+      underTest.enumerateNamespaces();
+      verify(jdbcTemplate).query(eq(PgConstants.SELECT_DISTINCT_NAMESPACE), any(RowMapper.class));
+    }
+  }
+
+  @Nested
+  class WhenEnumeratingTypes {
+    private final String NS = "NS";
+
+    @BeforeEach
+    void setup() {
+      configureMetricTimeSupplier();
+    }
+
+    @Test
+    void name() {
+      underTest.enumerateTypes("ns1");
+      verify(jdbcTemplate)
+          .query(
+              eq(PgConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE),
+              eq(new Object[] {"ns1"}),
+              any(RowMapper.class));
+    }
+  }
+
+  @Nested
+  class WhenPublishingIfUnchanged {
+    @Mock private Fact fact;
+    @Mock private @NonNull StateToken optionalToken;
+    @Mock private State state;
+
+    @BeforeEach
+    void setup() {
+      configureMetricTimeSupplier();
+    }
+
+    @Test
+    void noToken() {
+
+      underTest = spy(underTest);
+
+      boolean b = underTest.publishIfUnchanged(Lists.newArrayList(fact), Optional.empty());
+      verify(lock).aquireExclusiveTXLock();
+      assertThat(b).isTrue();
+      verify(underTest).publish(any(List.class));
+    }
+
+    @Test
+    void brokenToken() {
+
+      underTest = spy(underTest);
+
+      List<FactSpec> specs = Lists.newArrayList(FactSpec.ns("hubba"));
+      when(state.specs()).thenReturn(specs);
+      when(state.serialOfLastMatchingFact()).thenReturn(10L);
+      when(tokenStore.get(optionalToken)).thenReturn(Optional.of(state));
+      when(jdbcTemplate.query(
+              anyString(), any(PreparedStatementSetter.class), any(ResultSetExtractor.class)))
+          .thenReturn(32L);
+
+      boolean b =
+          underTest.publishIfUnchanged(Lists.newArrayList(fact), Optional.of(optionalToken));
+      verify(lock).aquireExclusiveTXLock();
+      assertThat(b).isFalse();
+      verify(underTest, never()).publish(any(List.class));
+    }
+
+    @Test
+    void currentToken() {
+
+      underTest = spy(underTest);
+
+      List<FactSpec> specs = Lists.newArrayList(FactSpec.ns("hubba"));
+      when(state.specs()).thenReturn(specs);
+      when(state.serialOfLastMatchingFact()).thenReturn(32L);
+      when(tokenStore.get(optionalToken)).thenReturn(Optional.of(state));
+      // query for newer serial should return 0
+      when(jdbcTemplate.query(
+              anyString(), any(PreparedStatementSetter.class), any(ResultSetExtractor.class)))
+          .thenReturn(0L);
+
+      boolean b =
+          underTest.publishIfUnchanged(Lists.newArrayList(fact), Optional.of(optionalToken));
+      verify(lock).aquireExclusiveTXLock();
+      assertThat(b).isTrue();
+      verify(underTest).publish(any(List.class));
+    }
+  }
+
+  @Nested
+  class WhenGettingStateFor {
+    @Mock private FactSpec factSpec;
+
+    @BeforeEach
+    void setup() {
+      configureMetricTimeSupplier();
+    }
+
+    @SneakyThrows
+    @Test
+    void name() {
+      FactSpec spec1 = FactSpec.ns("ns1").type("type1");
+      List<FactSpec> specs = Lists.newArrayList(spec1);
+
+      PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
+      String stateSQL = pgQueryBuilder.createStateSQL();
+      PreparedStatementSetter statementSetter =
+          pgQueryBuilder.createStatementSetter(new AtomicLong(0));
+
+      ArgumentCaptor<PreparedStatementSetter> captor =
+          ArgumentCaptor.forClass(PreparedStatementSetter.class);
+      when(jdbcTemplate.query(eq(stateSQL), captor.capture(), any(ResultSetExtractor.class)))
+          .thenReturn(32L);
+      assertThat(underTest.getStateFor(specs, 16L).serialOfLastMatchingFact()).isEqualTo(32L);
+
+      PreparedStatement ps = mock(PreparedStatement.class);
+      captor.getValue().setValues(ps);
+      verify(ps).setLong(3, 16L);
+    }
+  }
+
+  @Nested
+  class WhenGettingStateForWithSerial {
+    private final long LAST_MATCHING_SERIAL = 43;
+    @Mock private FactSpec factSpec;
+
+    @BeforeEach
+    void setup() {
+      configureMetricTimeSupplier();
+    }
+
+    @SneakyThrows
+    @Test
+    void name() {
+      FactSpec spec1 = FactSpec.ns("ns1").type("type1");
+      List<FactSpec> specs = Lists.newArrayList(spec1);
+
+      PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
+      String stateSQL = pgQueryBuilder.createStateSQL();
+      PreparedStatementSetter statementSetter =
+          pgQueryBuilder.createStatementSetter(new AtomicLong(12));
+      ArgumentCaptor<PreparedStatementSetter> captor =
+          ArgumentCaptor.forClass(PreparedStatementSetter.class);
+      when(jdbcTemplate.query(eq(stateSQL), captor.capture(), any(ResultSetExtractor.class)))
+          .thenReturn(32L);
+      assertThat(underTest.getStateFor(specs, 16L).serialOfLastMatchingFact()).isEqualTo(32L);
+
+      PreparedStatement ps = mock(PreparedStatement.class);
+      captor.getValue().setValues(ps);
+      verify(ps).setLong(3, 16L);
+    }
+  }
+
+  @Nested
+  class WhenGettingCurrentStateFor {
+    @Mock private FactSpec factSpec;
+
+    @BeforeEach
+    void setup() {
+      configureMetricTimeSupplier();
+    }
+
+    @SneakyThrows
+    @Test
+    void name() {
+      FactSpec spec1 = FactSpec.ns("ns1").type("type1");
+      List<FactSpec> specs = Lists.newArrayList(spec1);
+
+      PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
+      String stateSQL = pgQueryBuilder.createStateSQL();
+      when(jdbcTemplate.queryForObject(PgConstants.LAST_SERIAL_IN_LOG, Long.class)).thenReturn(32L);
+      assertThat(underTest.getCurrentStateFor(specs).serialOfLastMatchingFact()).isEqualTo(32L);
+    }
+  }
+
+  @Nested
+  class WhenCurrentingTime {
+
+    @SneakyThrows
+    @Test
+    void name() {
+      when(jdbcTemplate.queryForObject(PgConstants.CURRENT_TIME_MILLIS, Long.class))
+          .thenReturn(123L);
+      assertThat(underTest.currentTime()).isEqualTo(123L);
+    }
+  }
+
+  @Nested
+  class WhenGettingSnapshot {
+    @Mock private @NonNull SnapshotId id;
+    @Mock private Snapshot snap;
+
+    @BeforeEach
+    void setup() {
+      configureMetricTimeSupplier();
+    }
+
+    @SneakyThrows
+    @Test
+    void unknown() {
+      when(snapCache.getSnapshot(id)).thenReturn(Optional.empty());
+      assertThat(underTest.getSnapshot(id)).isEmpty();
+    }
+
+    @SneakyThrows
+    @Test
+    void known() {
+      when(snapCache.getSnapshot(id)).thenReturn(Optional.of(snap));
+      assertThat(underTest.getSnapshot(id)).isNotEmpty().hasValue(snap);
+    }
+  }
+
+  @Nested
+  class WhenSettingSnapshot {
+    @Mock private Snapshot snap;
+
+    @BeforeEach
+    void setup() {
+      configureMetricTimeRunnable();
+    }
+
+    @SneakyThrows
+    @Test
+    void name() {
+      underTest.setSnapshot(snap);
+      verify(snapCache).setSnapshot(snap);
+    }
+  }
+
+  @Nested
+  class WhenClearingSnapshot {
+    @Mock private @NonNull SnapshotId id;
+
+    @BeforeEach
+    void setup() {
+      configureMetricTimeRunnable();
+    }
+
+    @SneakyThrows
+    @Test
+    void clear() {
+      underTest.clearSnapshot(id);
+      verify(snapCache).clearSnapshot(id);
+      ;
+    }
   }
 }

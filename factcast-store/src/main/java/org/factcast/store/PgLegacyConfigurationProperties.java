@@ -16,11 +16,8 @@
 package org.factcast.store;
 
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.*;
+import java.util.stream.*;
 import javax.annotation.Nonnull;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -80,8 +77,8 @@ public class PgLegacyConfigurationProperties implements ApplicationListener<Appl
   private Optional<Integer> deleteSnapshotStaleForDays = Optional.empty();
 
   /**
-   * If validation is enabled, this controls if transformed facts are persistently cached in
-   * postgres, rather than in memory. (Defaults to false)
+   * this controls if transformed facts are persistently cached in postgres, rather than in memory.
+   * (Defaults to false)
    */
   private Optional<Boolean> persistentTransformationCache = Optional.empty();
 

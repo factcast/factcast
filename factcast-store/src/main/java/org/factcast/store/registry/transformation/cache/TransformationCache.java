@@ -15,18 +15,32 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
-import java.util.Optional;
-import java.util.UUID;
+import java.time.ZonedDateTime;
+import java.util.*;
+import lombok.NonNull;
+import lombok.Value;
 import org.factcast.core.Fact;
-import org.joda.time.DateTime;
 
 public interface TransformationCache {
 
   // maybe optimize by passing header and payload separately as
   // string/jsonnode?
-  void put(Fact f, String transformationChainId);
+  void put(@NonNull TransformationCache.Key key, @NonNull Fact f);
 
-  Optional<Fact> find(UUID eventId, int version, String transformationChainId);
+  Optional<Fact> find(Key key);
 
-  void compact(DateTime thresholdDate);
+  Set<Fact> findAll(Collection<Key> keys);
+
+  void compact(ZonedDateTime thresholdDate);
+
+  @Value
+  class Key {
+
+    String id;
+
+    public static Key of(@NonNull UUID id, int version, @NonNull String transformationChainId) {
+      return new Key(
+          String.join("-", id.toString(), String.valueOf(version), transformationChainId));
+    }
+  }
 }

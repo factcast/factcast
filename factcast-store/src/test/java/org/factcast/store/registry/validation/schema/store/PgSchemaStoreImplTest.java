@@ -18,9 +18,7 @@ package org.factcast.store.registry.validation.schema.store;
 import static org.mockito.Mockito.*;
 
 import java.sql.SQLException;
-import java.util.*;
 import org.factcast.store.internal.PgTestConfiguration;
-import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.factcast.store.registry.validation.schema.SchemaSource;
 import org.factcast.store.registry.validation.schema.SchemaStore;
 import org.factcast.store.test.IntegrationTest;
@@ -46,60 +44,6 @@ public class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
   @Override
   protected SchemaStore createUUT() {
     return new PgSchemaStoreImpl(tpl, registryMetrics);
-  }
-
-  @Test
-  void doesNotRefetch() {
-    // first goes to DB
-
-    var uut = new PgSchemaStoreImpl(mockTpl, registryMetrics);
-
-    SchemaKey key = mock(SchemaKey.class);
-    when(mockTpl.queryForList(any(), eq(String.class), same(null), same(null), eq(0)))
-        .thenReturn(Collections.singletonList("my schema"));
-
-    uut.get(key);
-
-    verify(mockTpl, times(1)).queryForList(any(), eq(String.class), same(null), same(null), eq(0));
-    verifyNoMoreInteractions(mockTpl);
-
-    // now fetch again - should be answered from the near cache
-
-    uut.get(key);
-    verifyNoMoreInteractions(mockTpl);
-  }
-
-  @Test
-  void cachesRegistrations() {
-    // first goes to DB
-
-    var uut = new PgSchemaStoreImpl(mockTpl, registryMetrics);
-
-    SchemaSource source = new SchemaSource().hash("hash").id("id").ns("ns").type("type");
-    uut.register(source, "foo");
-    verify(mockTpl)
-        .update(
-            "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? ::"
-                + " JSONB) ON CONFLICT ON CONSTRAINT schemastore_pkey DO UPDATE set"
-                + " hash=?,ns=?,type=?,version=?,jsonschema=? :: JSONB WHERE schemastore.id=?",
-            "id",
-            "hash",
-            "ns",
-            "type",
-            0,
-            "foo",
-            "hash",
-            "ns",
-            "type",
-            0,
-            "foo",
-            "id");
-    verifyNoMoreInteractions(mockTpl);
-
-    // now fetch again - should be answered from the near cache
-
-    uut.get(source.toKey());
-    verifyNoMoreInteractions(mockTpl);
   }
 
   @Test

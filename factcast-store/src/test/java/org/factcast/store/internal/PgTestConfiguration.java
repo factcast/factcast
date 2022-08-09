@@ -19,6 +19,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.PgFactStoreConfiguration;
+import org.factcast.store.internal.script.JSEngineFactory;
+import org.factcast.store.internal.script.graaljs.GraalJSEngineFactory;
 import org.mockito.Mockito;
 import org.postgresql.Driver;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
@@ -67,5 +69,10 @@ public class PgTestConfiguration {
   @Primary
   public PgMetrics pgMetrics(@NonNull MeterRegistry registry) {
     return Mockito.spy(new PgMetrics(registry));
+  }
+
+  @Bean
+  JSEngineFactory engineFactory() {
+    return new GraalJSEngineFactory();
   }
 }

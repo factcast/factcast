@@ -17,30 +17,29 @@ package org.factcast.store.internal;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.atomic.*;
-import java.util.function.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.subscription.transformation.FactTransformerService;
+import org.factcast.core.subscription.transformation.FactTransformers;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
+import org.factcast.store.internal.filter.FactFilter;
+import org.factcast.store.internal.filter.FactFilterImpl;
 import org.factcast.store.internal.filter.PgBlacklist;
-import org.factcast.store.internal.filter.PgFactFilter;
-import org.factcast.store.internal.filter.PgFactFilterImpl;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.query.PgQueryBuilder;
+import org.factcast.store.internal.script.JSEngineFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
@@ -56,12 +55,18 @@ import org.springframework.jdbc.core.RowCallbackHandler;
 public class PgFactStream {
 
   final JdbcTemplate jdbcTemplate;
-
   final EventBus eventBus;
-
   final PgFactIdToSerialMapper idToSerMapper;
-
   final SubscriptionImpl subscription;
+  final PgLatestSerialFetcher fetcher;
+  final PgCatchupFactory pgCatchupFactory;
+  final FastForwardTarget ffwdTarget;
+  final FactTransformerService transformationService;
+  final PgBlacklist blacklist;
+  final PgMetrics metrics;
+  final JSEngineFactory ef;
+
+  CondensedQueryExecutor condensedExecutor;
 
   @VisibleForTesting
   @Getter(AccessLevel.PROTECTED)
@@ -69,25 +74,22 @@ public class PgFactStream {
 
   final AtomicBoolean disconnected = new AtomicBoolean(false);
 
-  final PgLatestSerialFetcher fetcher;
-
-  final PgCatchupFactory pgCatchupFactory;
-  final FastForwardTarget ffwdTarget;
-  final PgMetrics metrics;
-  final PgBlacklist blacklist;
-
-  CondensedQueryExecutor condensedExecutor;
-
   @VisibleForTesting protected SubscriptionRequestTO request;
 
-  PgPostQueryMatcher postQueryMatcher;
   final CurrentStatementHolder statementHolder = new CurrentStatementHolder();
-  private PgFactFilter filter;
+  private FactFilterImpl filter;
 
   void connect(@NonNull SubscriptionRequestTO request) {
-    this.request = request;
     log.debug("{} connect subscription {}", request, request.dump());
-    postQueryMatcher = new PgPostQueryMatcher(request);
+    this.request = request;
+    this.filter = new FactFilterImpl(request, blacklist, ef);
+    SimpleFactInterceptor interceptor =
+        new SimpleFactInterceptor(
+            transformationService,
+            FactTransformers.createFor(request),
+            filter,
+            subscription,
+            metrics);
     PgQueryBuilder q = new PgQueryBuilder(request.specs(), statementHolder);
     initializeSerialToStartAfter();
 
@@ -98,9 +100,9 @@ public class PgFactStream {
 
     String sql = q.createSQL();
     PreparedStatementSetter setter = q.createStatementSetter(serial);
-    this.filter = new PgFactFilterImpl(request, blacklist, postQueryMatcher);
     RowCallbackHandler rsHandler =
-        new FactRowCallbackHandler(subscription, filter, this::isConnected, serial, request);
+        new PgSynchronizedQuery.FactRowCallbackHandler(
+            subscription, interceptor, this::isConnected, serial, request);
     PgSynchronizedQuery query =
         new PgSynchronizedQuery(jdbcTemplate, sql, setter, rsHandler, serial, fetcher);
     catchupAndFollow(request, subscription, query);
@@ -121,8 +123,7 @@ public class PgFactStream {
       // just fast forward to the latest event published by now
       serial.set(fetcher.retrieveLatestSer());
     } else {
-      catchup(postQueryMatcher);
-      logCatchupTransformationStats();
+      catchup(filter);
     }
 
     fastForward(request, subscription);
@@ -190,68 +191,15 @@ public class PgFactStream {
   }
 
   @VisibleForTesting
-  void catchup(PgPostQueryMatcher postQueryMatcher) {
+  void catchup(@NonNull FactFilter filter) {
     if (isConnected()) {
       log.trace("{} catchup phase1 - historic facts staring with SER={}", request, serial.get());
-      pgCatchupFactory
-          .create(request, filter, subscription, serial, metrics, statementHolder)
-          .run();
+      pgCatchupFactory.create(request, subscription, filter, serial, statementHolder).run();
     }
     if (isConnected()) {
       log.trace("{} catchup phase2 - facts since connect (SER={})", request, serial.get());
-      pgCatchupFactory
-          .create(request, filter, subscription, serial, metrics, statementHolder)
-          .run();
+      pgCatchupFactory.create(request, subscription, filter, serial, statementHolder).run();
     }
-  }
-
-  @VisibleForTesting
-  enum RatioLogLevel {
-    DEBUG,
-    INFO,
-    WARN
-  }
-
-  private static final String ratioMessage = "{} CatchupTransformationRatio: {}%, ({}/{})";
-
-  @VisibleForTesting
-  void logCatchupTransformationStats() {
-    if (subscription.factsTransformed().get() > 0) {
-      long sum = subscription.factsTransformed().get() + subscription.factsNotTransformed().get();
-      long transf = subscription.factsTransformed().get();
-      long ratio = Math.round(100.0 / sum * transf);
-      RatioLogLevel level = calculateLogLevel(sum, ratio);
-
-      switch (level) {
-        case DEBUG:
-          log.debug(ratioMessage, request, ratio, transf, sum);
-          break;
-        case INFO:
-          log.info(ratioMessage, request, ratio, transf, sum);
-          break;
-        case WARN:
-          log.warn(ratioMessage, request, ratio, transf, sum);
-          break;
-        default:
-          throw new IllegalArgumentException("switch fall-through. THIS IS A BUG! " + level);
-      }
-    }
-  }
-
-  @VisibleForTesting
-  RatioLogLevel calculateLogLevel(long sum, long ratio) {
-    // only bother sending metrics or raising the level if we did some significant catchup
-    RatioLogLevel level = RatioLogLevel.DEBUG;
-    if (sum >= 50) {
-      metrics.distributionSummary(StoreMetrics.VALUE.CATCHUP_TRANSFORMATION_RATIO).record(ratio);
-
-      if (ratio >= 20.0) {
-        level = RatioLogLevel.WARN;
-      } else if (ratio >= 10.0) {
-        level = RatioLogLevel.INFO;
-      }
-    }
-    return level;
   }
 
   @VisibleForTesting
@@ -269,41 +217,5 @@ public class PgFactStream {
     }
     statementHolder.close();
     log.debug("{} disconnected ", request);
-  }
-
-  @RequiredArgsConstructor
-  static class FactRowCallbackHandler implements RowCallbackHandler {
-
-    final SubscriptionImpl subscription;
-
-    final PgFactFilter filter;
-
-    final Supplier<Boolean> isConnectedSupplier;
-
-    final AtomicLong serial;
-
-    final SubscriptionRequestTO request;
-
-    @SuppressWarnings("NullableProblems")
-    @Override
-    public void processRow(ResultSet rs) throws SQLException {
-      if (isConnectedSupplier.get()) {
-        if (rs.isClosed()) {
-          throw new IllegalStateException(
-              "ResultSet already closed. We should not have got here. THIS IS A BUG!");
-        }
-        Fact f = PgFact.from(rs);
-        try {
-          if (filter.test(f)) {
-            subscription.notifyElement(f);
-            log.trace("{} notifyElement called with id={}", request, f.id());
-          }
-          serial.set(rs.getLong(PgConstants.COLUMN_SER));
-        } catch (Throwable e) {
-          rs.close();
-          subscription.notifyError(e);
-        }
-      }
-    }
   }
 }

@@ -16,7 +16,7 @@
 package org.factcast.core.subscription;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.util.UUID;
+import java.util.*;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 
@@ -37,8 +37,4 @@ public interface InternalSubscription extends Subscription {
   void notifyElement(@NonNull Fact e) throws TransformationException;
 
   SubscriptionImpl onClose(Runnable e);
-
-  java.util.concurrent.atomic.AtomicLong factsNotTransformed();
-
-  java.util.concurrent.atomic.AtomicLong factsTransformed();
 }
