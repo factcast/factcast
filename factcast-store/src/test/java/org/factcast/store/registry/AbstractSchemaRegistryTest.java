@@ -21,7 +21,8 @@ import static org.mockito.Mockito.*;
 
 import com.google.common.cache.LoadingCache;
 import java.util.*;
-import lombok.NonNull;
+import net.javacrumbs.shedlock.core.LockProvider;
+import net.javacrumbs.shedlock.core.SimpleLock;
 import org.everit.json.schema.Schema;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.metrics.RegistryMetrics;
@@ -39,18 +40,21 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class AbstractSchemaRegistryTest {
-  @Mock private @NonNull IndexFetcher indexFetcher;
-  @Mock private @NonNull RegistryFileFetcher registryFileFetcher;
-  @Mock private @NonNull SchemaStore schemaStore;
-  @Mock private @NonNull TransformationStore transformationStore;
-  @Mock private @NonNull RegistryMetrics registryMetrics;
-  @Mock private @NonNull StoreConfigurationProperties pgConfigurationProperties;
+  @Mock private IndexFetcher indexFetcher;
+  @Mock private RegistryFileFetcher registryFileFetcher;
+  @Mock private SchemaStore schemaStore;
+  @Mock private TransformationStore transformationStore;
+  @Mock private RegistryMetrics registryMetrics;
+  @Mock private StoreConfigurationProperties pgConfigurationProperties;
+  @Mock private SimpleLock lock;
+  @Mock private LockProvider lockProvider;
   @Mock private Object mutex;
   @Mock private LoadingCache<SchemaKey, Schema> cache;
   @InjectMocks private SomeSchemaRegistry underTest;
 
   @Nested
   class WhenFetchingInitial {
+
     @BeforeEach
     void setup() {}
 
@@ -58,9 +62,30 @@ class AbstractSchemaRegistryTest {
     void justCountsWhenSchemaPersistent() {
       when(indexFetcher.fetchIndex()).thenThrow(IllegalStateException.class);
       when(pgConfigurationProperties.isPersistentRegistry()).thenReturn(true);
-
+      when(lockProvider.lock(any())).thenReturn(Optional.of(lock));
       underTest.fetchInitial();
       verify(registryMetrics).count(EVENT.SCHEMA_UPDATE_FAILURE);
+    }
+
+    @Test
+    void doesNothingWhenLockCannotBeAcquired() {
+      when(pgConfigurationProperties.isPersistentRegistry()).thenReturn(true);
+      underTest.fetchInitial();
+      // failed to lock, so...
+      verify(lockProvider).lock(any());
+      // .. no more interaction expected
+      verifyNoInteractions(indexFetcher);
+    }
+
+    @Test
+    void fetchesWhenLockCanBeAcquired() {
+      when(pgConfigurationProperties.isPersistentRegistry()).thenReturn(true);
+      when(lockProvider.lock(any())).thenReturn(Optional.of(lock));
+      underTest.fetchInitial();
+      // failed to lock, so...
+      verify(lockProvider).lock(any());
+      // .. no more interaction expected
+      verify(indexFetcher).fetchIndex();
     }
 
     @Test

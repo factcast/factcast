@@ -20,11 +20,15 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.core.LockConfiguration;
+import net.javacrumbs.shedlock.core.LockProvider;
+import net.javacrumbs.shedlock.core.SimpleLock;
 import org.everit.json.schema.Schema;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.http.ValidationConstants;
@@ -47,6 +51,7 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
 
   @NonNull protected final RegistryMetrics registryMetrics;
   @NonNull protected final StoreConfigurationProperties pgConfigurationProperties;
+  @NonNull protected final LockProvider lockProvider;
 
   protected final Object mutex = new Object();
 
@@ -69,18 +74,38 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
       @NonNull SchemaStore schemaStore,
       @NonNull TransformationStore transformationStore,
       @NonNull RegistryMetrics registryMetrics,
-      @NonNull StoreConfigurationProperties pgConfigurationProperties) {
+      @NonNull StoreConfigurationProperties pgConfigurationProperties,
+      @NonNull LockProvider lockProvider) {
     this.indexFetcher = indexFetcher;
     this.registryFileFetcher = registryFileFetcher;
     this.schemaStore = schemaStore;
     this.transformationStore = transformationStore;
     this.registryMetrics = registryMetrics;
     this.pgConfigurationProperties = pgConfigurationProperties;
+    this.lockProvider = lockProvider;
   }
 
   @Override
   public void fetchInitial() {
+    if (pgConfigurationProperties.isPersistentRegistry()) {
+      log.info("Acquiring lock for registry update");
+      LockConfiguration lockConfig =
+          new LockConfiguration(
+              SchemaRegistry.LOCK_NAME, Duration.ofMinutes(1), Duration.ofSeconds(2));
+      Optional<SimpleLock> lock = lockProvider.lock(lockConfig);
+      if (lock.isPresent()) {
+        try {
+          doFetchInitial();
+        } finally {
+          lock.get().unlock();
+        }
+      } else {
+        log.warn("lock already exists, skipping initial schema-registry update");
+      }
+    } else doFetchInitial();
+  }
 
+  private void doFetchInitial() {
     synchronized (mutex) {
       Stopwatch sw = Stopwatch.createStarted();
       log.info("Registry update started");
