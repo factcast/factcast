@@ -16,11 +16,9 @@
 package org.factcast.server.grpc.metrics;
 
 import io.micrometer.core.instrument.Tags;
-import java.util.function.Supplier;
+import java.util.function.*;
 import lombok.Getter;
 import lombok.NonNull;
-import org.factcast.factus.metrics.RunnableWithException;
-import org.factcast.factus.metrics.SupplierWithException;
 
 public interface ServerMetrics {
 

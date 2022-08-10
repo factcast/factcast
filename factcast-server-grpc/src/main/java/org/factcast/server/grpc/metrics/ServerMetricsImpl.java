@@ -17,10 +17,8 @@ package org.factcast.server.grpc.metrics;
 
 import com.google.common.base.Stopwatch;
 import io.micrometer.core.instrument.*;
-import java.util.function.Supplier;
+import java.util.function.*;
 import lombok.NonNull;
-import org.factcast.factus.metrics.RunnableWithException;
-import org.factcast.factus.metrics.SupplierWithException;
 import org.springframework.beans.factory.InitializingBean;
 
 public class ServerMetricsImpl implements ServerMetrics, InitializingBean {
