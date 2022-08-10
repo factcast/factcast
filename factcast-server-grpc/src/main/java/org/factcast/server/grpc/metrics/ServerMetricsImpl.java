@@ -19,6 +19,8 @@ import com.google.common.base.Stopwatch;
 import io.micrometer.core.instrument.*;
 import java.util.function.*;
 import lombok.NonNull;
+import org.factcast.core.util.RunnableWithException;
+import org.factcast.core.util.SupplierWithException;
 import org.springframework.beans.factory.InitializingBean;
 
 public class ServerMetricsImpl implements ServerMetrics, InitializingBean {
