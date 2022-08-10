@@ -15,12 +15,11 @@
  */
 package org.factcast.store.internal.query;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.*;
+import java.util.Map.*;
+import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.FactSpec;
@@ -36,10 +35,17 @@ import org.springframework.jdbc.core.PreparedStatementSetter;
 @Slf4j
 public class PgQueryBuilder {
 
-  final @NonNull List<FactSpec> factSpecs;
+  private final @NonNull List<FactSpec> factSpecs;
+  private final CurrentStatementHolder statementHolder;
 
   public PgQueryBuilder(@NonNull List<FactSpec> specs) {
     factSpecs = specs;
+    statementHolder = null;
+  }
+
+  public PgQueryBuilder(@NonNull List<FactSpec> specs, @NonNull CurrentStatementHolder holder) {
+    factSpecs = specs;
+    this.statementHolder = holder;
   }
 
   public PreparedStatementSetter createStatementSetter(@NonNull AtomicLong serial) {
@@ -47,28 +53,48 @@ public class PgQueryBuilder {
       // TODO vulnerable of json injection attack
       int count = 0;
       for (FactSpec spec : factSpecs) {
-
-        String ns = spec.ns();
-        if (ns != null && !"*".equals(ns)) {
-          p.setString(++count, "{\"ns\": \"" + spec.ns() + "\"}");
-        }
-
-        String type = spec.type();
-        if (type != null) {
-          p.setString(++count, "{\"type\": \"" + type + "\"}");
-        }
+        count = setNs(p, count, spec);
+        count = setType(p, count, spec);
         // version is intentionally not used here
-        UUID agg = spec.aggId();
-        if (agg != null) {
-          p.setString(++count, "{\"aggIds\": [\"" + agg + "\"]}");
-        }
-        Map<String, String> meta = spec.meta();
-        for (Entry<String, String> e : meta.entrySet()) {
-          p.setString(++count, "{\"meta\":{\"" + e.getKey() + "\":\"" + e.getValue() + "\"}}");
-        }
+        count = setAggId(p, count, spec);
+        count = setMeta(p, count, spec);
       }
       p.setLong(++count, serial.get());
+
+      if (statementHolder != null) statementHolder.statement(p);
     };
+  }
+
+  private int setMeta(PreparedStatement p, int count, FactSpec spec) throws SQLException {
+    Map<String, String> meta = spec.meta();
+    for (Entry<String, String> e : meta.entrySet()) {
+      p.setString(++count, "{\"meta\":{\"" + e.getKey() + "\":\"" + e.getValue() + "\"}}");
+    }
+    return count;
+  }
+
+  private int setAggId(PreparedStatement p, int count, FactSpec spec) throws SQLException {
+    UUID agg = spec.aggId();
+    if (agg != null) {
+      p.setString(++count, "{\"aggIds\": [\"" + agg + "\"]}");
+    }
+    return count;
+  }
+
+  private int setType(PreparedStatement p, int count, FactSpec spec) throws SQLException {
+    String type = spec.type();
+    if (type != null) {
+      p.setString(++count, "{\"type\": \"" + type + "\"}");
+    }
+    return count;
+  }
+
+  private int setNs(PreparedStatement p, int count, FactSpec spec) throws SQLException {
+    String ns = spec.ns();
+    if (ns != null && !"*".equals(ns)) {
+      p.setString(++count, "{\"ns\": \"" + spec.ns() + "\"}");
+    }
+    return count;
   }
 
   private String createWhereClause() {
@@ -115,7 +141,7 @@ public class PgQueryBuilder {
             + " ORDER BY "
             + PgConstants.COLUMN_SER
             + " ASC";
-    log.trace("{} createSQL={}", factSpecs, sql);
+    log.trace("creating query SQL for {} - SQL={}", factSpecs, sql);
     return sql;
   }
 
@@ -130,7 +156,7 @@ public class PgQueryBuilder {
             + " ORDER BY "
             + PgConstants.COLUMN_SER
             + " DESC LIMIT 1";
-    log.trace("{} createStateSQL={}", factSpecs, sql);
+    log.trace("creating state SQL for {} - SQL={}", factSpecs, sql);
     return sql;
   }
 
@@ -150,7 +176,7 @@ public class PgQueryBuilder {
             + createWhereClause()
             + //
             "))";
-    log.trace("{} catchupSQL={}", factSpecs, sql);
+    log.trace("creating catchup-table SQL for {} - SQL={}", factSpecs, sql);
     return sql;
   }
 }

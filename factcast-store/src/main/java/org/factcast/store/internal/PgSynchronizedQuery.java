@@ -15,9 +15,16 @@
  */
 package org.factcast.store.internal;
 
-import java.util.concurrent.atomic.AtomicLong;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.concurrent.atomic.*;
+import java.util.function.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.Fact;
+import org.factcast.core.subscription.SubscriptionImpl;
+import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
@@ -40,6 +47,7 @@ import org.springframework.transaction.support.TransactionTemplate;
  * @author uwe.schaefer@prisma-capacity.eu
  */
 @RequiredArgsConstructor
+@Slf4j
 class PgSynchronizedQuery {
 
   @NonNull final JdbcTemplate jdbcTemplate;
@@ -69,6 +77,7 @@ class PgSynchronizedQuery {
     this.sql = sql;
     this.setter = setter;
     this.rowHandler = rowHandler;
+
     // noinspection ConstantConditions
     DataSourceTransactionManager transactionManager =
         new DataSourceTransactionManager(jdbcTemplate.getDataSource());
@@ -91,5 +100,40 @@ class PgSynchronizedQuery {
     // shift to max(retrievedLatestSer, and ser as updated in
     // rowHandler)
     serialToContinueFrom.set(Math.max(latest, serialToContinueFrom.get()));
+  }
+
+  @RequiredArgsConstructor
+  static class FactRowCallbackHandler implements RowCallbackHandler {
+
+    final SubscriptionImpl subscription;
+
+    final FactInterceptor interceptor;
+
+    final Supplier<Boolean> isConnectedSupplier;
+
+    final AtomicLong serial;
+
+    final SubscriptionRequestTO request;
+
+    @SuppressWarnings("NullableProblems")
+    @Override
+    public void processRow(ResultSet rs) throws SQLException {
+      if (Boolean.TRUE.equals(isConnectedSupplier.get())) {
+        if (rs.isClosed()) {
+          throw new IllegalStateException(
+              "ResultSet already closed. We should not have got here. THIS IS A BUG!");
+        }
+        Fact f = PgFact.from(rs);
+        try {
+          interceptor.accept(f);
+          log.trace("{} notifyElement called with id={}", request, f.id());
+          serial.set(rs.getLong(PgConstants.COLUMN_SER));
+        } catch (Throwable e) {
+          rs.close();
+          log.warn("{} notifyError called with id={}", request, f.id());
+          subscription.notifyError(e);
+        }
+      }
+    }
   }
 }

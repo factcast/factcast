@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.5.7-SNAPSHOT</version>
+    <version>0.6.2-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <properties>
@@ -181,7 +181,7 @@
     <dependency>
       <groupId>io.mockk</groupId>
       <artifactId>mockk</artifactId>
-      <version>1.12.4</version>
+      <version>1.12.5</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -275,7 +275,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
-        <version>3.0.0</version>
+        <version>3.1.0</version>
         <executions>
           <execution>
             <id>build</id>

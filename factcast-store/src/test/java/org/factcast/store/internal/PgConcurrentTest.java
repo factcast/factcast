@@ -17,14 +17,10 @@ package org.factcast.store.internal;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
+import java.util.stream.*;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
@@ -37,12 +33,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ContextConfiguration(classes = {PgTestConfiguration.class})
-@Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
 public class PgConcurrentTest {
@@ -61,7 +54,7 @@ public class PgConcurrentTest {
   }
 
   @Test
-  public void testConcurrent() throws Exception {
+  void testConcurrent() throws Exception {
     // prepare facts
     List<Fact> factsForAsyncBatchPublish =
         IntStream.range(0, 1000)
@@ -72,18 +65,11 @@ public class PgConcurrentTest {
 
     AtomicReference<CountDownLatch> subscriptionBeforePublish = subscribe(totalNoOfFacts);
 
-    boolean letTestFail = true;
-
     CompletableFuture<Void> batchPublishFuture =
         CompletableFuture.runAsync(() -> uut.publish(factsForAsyncBatchPublish));
     Thread.sleep(200);
-    if (letTestFail) {
-      uut.publish(lonelyFact);
-      batchPublishFuture.get(10, TimeUnit.SECONDS);
-    } else {
-      batchPublishFuture.get(10, TimeUnit.SECONDS);
-      uut.publish(lonelyFact);
-    }
+    batchPublishFuture.get(10, TimeUnit.SECONDS);
+    uut.publish(lonelyFact);
 
     AtomicReference<CountDownLatch> subscriptionAfterPublish = subscribe(totalNoOfFacts);
     assertTrue(subscriptionAfterPublish.get().await(5, TimeUnit.SECONDS));

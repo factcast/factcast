@@ -20,16 +20,14 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Duration;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
+import java.util.concurrent.*;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.test.toxi.FactCastProxy;
 import org.factcast.test.toxi.PostgresqlProxy;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -122,6 +120,8 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
   @SneakyThrows
   @Override
   public void beforeEach(ExtensionContext ctx) {
+    FactCastIntegrationTestExtension.super.beforeEach(ctx);
+
     FactcastTestConfig.Config config = discoverConfig(ctx);
     Containers containers = executions.get(config);
 
@@ -132,6 +132,13 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
               FactCastIntegrationTestExtension.inject(t, containers.fcProxy);
             });
     erasePostgres(containers);
+  }
+
+  @Override
+  @SneakyThrows
+  public void afterEach(ExtensionContext ctx) {
+    erasePostgres(executions.get(discoverConfig(ctx)));
+    FactCastIntegrationTestExtension.super.afterEach(ctx);
   }
 
   private void erasePostgres(Containers containers) throws SQLException {
