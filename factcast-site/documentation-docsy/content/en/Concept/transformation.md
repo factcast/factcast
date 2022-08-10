@@ -46,8 +46,8 @@ When necessary, you also can add a 4-1 transformation to the registry to do the 
 
 {{% alert title="Transformation rules" %}}
 
-* If there are many possible paths to transform from an origin version to a specific target version, the shortest always wins. If there are two equally long paths, the one that uses the bigger shortcut sooner wins.
-* A consumer also can be able to handle different versions for a particular fact type. In this case – again – the shortest path wins. If there is a tie, the higher target version wins.
+* If there are many possible paths to transform from an origin version to a specific target version, the **shortest always wins**. If there are two equally long paths, the one that *uses the bigger shortcut sooner* wins.
+* A consumer also can be able to handle different versions for a particular fact type. In this case – again – the **shortest path wins**. If there is a tie, *the higher target version wins*.
 
 {{% /alert %}}
 
