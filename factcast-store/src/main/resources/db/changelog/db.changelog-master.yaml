@@ -214,4 +214,16 @@ databaseChangeLog:
             splitStatements: false
             stripComments: true
 
+  - changeSet:
+      id: issue2131_toast
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2131/toast_transformationcache.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
 
