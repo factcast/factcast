@@ -1,4 +1,4 @@
-FROM openjdk:17-slim
+FROM openjdk:20-slim
 
 EXPOSE 9090
 EXPOSE 9443
