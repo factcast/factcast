@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.grpc.metrics;
+package org.factcast.core.util;
 
 @FunctionalInterface
 public interface SupplierWithException<R, E extends Exception> {
