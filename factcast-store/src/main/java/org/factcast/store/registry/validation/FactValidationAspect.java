@@ -56,12 +56,17 @@ public class FactValidationAspect {
 
     if (!errors.isEmpty()) {
       // see #2105
+
+      // remove duplicates
+      LinkedHashSet<FactValidationError> orderedSet = new LinkedHashSet<>(errors);
+
       List<String> errMsgs =
-          errors.stream()
+          orderedSet.stream()
+              // limit the amount of messages
               .limit(MAX_ERROR_MESSAGES)
               .map(FactValidationError::toString)
               .collect(Collectors.toList());
-      int numberOfErrors = errors.size();
+      int numberOfErrors = orderedSet.size();
       if (numberOfErrors > MAX_ERROR_MESSAGES)
         errMsgs.add(
             "... "
