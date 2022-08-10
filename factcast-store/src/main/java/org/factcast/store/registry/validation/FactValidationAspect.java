@@ -15,9 +15,11 @@
  */
 package org.factcast.store.registry.validation;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.*;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -55,25 +57,31 @@ public class FactValidationAspect {
     List<FactValidationError> errors = validate(stream);
 
     if (!errors.isEmpty()) {
-      // see #2105
-
-      // remove duplicates
-      LinkedHashSet<FactValidationError> orderedSet = new LinkedHashSet<>(errors);
-
-      List<String> errMsgs =
-          orderedSet.stream()
-              // limit the amount of messages
-              .limit(MAX_ERROR_MESSAGES)
-              .map(FactValidationError::toString)
-              .collect(Collectors.toList());
-      int numberOfErrors = orderedSet.size();
-      if (numberOfErrors > MAX_ERROR_MESSAGES)
-        errMsgs.add(
-            "... "
-                + (numberOfErrors - MAX_ERROR_MESSAGES)
-                + " more validation errors were suppressed");
-      throw new FactValidationException(errMsgs);
+      throw new FactValidationException(extractMessages(errors));
     }
+  }
+
+  @NonNull
+  @VisibleForTesting
+  static List<String> extractMessages(@NonNull List<FactValidationError> errors) {
+    // see #2105
+
+    // remove duplicates
+    LinkedHashSet<FactValidationError> orderedSet = new LinkedHashSet<>(errors);
+
+    List<String> errMsgs =
+        orderedSet.stream()
+            // limit the amount of messages
+            .limit(MAX_ERROR_MESSAGES)
+            .map(FactValidationError::toString)
+            .collect(Collectors.toList());
+    int numberOfErrors = orderedSet.size();
+    if (numberOfErrors > MAX_ERROR_MESSAGES)
+      errMsgs.add(
+          "... "
+              + (numberOfErrors - MAX_ERROR_MESSAGES)
+              + " more validation errors were suppressed");
+    return errMsgs;
   }
 
   private List<FactValidationError> validate(Stream<? extends Fact> stream) {
