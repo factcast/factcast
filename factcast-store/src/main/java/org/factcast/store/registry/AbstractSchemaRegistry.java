@@ -15,28 +15,21 @@
  */
 package org.factcast.store.registry;
 
-import com.github.fge.jsonschema.core.exceptions.ProcessingException;
-import com.github.fge.jsonschema.main.JsonSchema;
 import com.google.common.base.Stopwatch;
-import com.google.common.cache.AbstractLoadingCache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
+import java.util.*;
+import java.util.concurrent.*;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.everit.json.schema.Schema;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.http.ValidationConstants;
 import org.factcast.store.registry.metrics.RegistryMetrics;
-import org.factcast.store.registry.transformation.Transformation;
-import org.factcast.store.registry.transformation.TransformationConflictException;
-import org.factcast.store.registry.transformation.TransformationKey;
-import org.factcast.store.registry.transformation.TransformationSource;
-import org.factcast.store.registry.transformation.TransformationStore;
-import org.factcast.store.registry.transformation.TransformationStoreListener;
+import org.factcast.store.registry.transformation.*;
 import org.factcast.store.registry.validation.schema.SchemaConflictException;
 import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.factcast.store.registry.validation.schema.SchemaSource;
@@ -57,31 +50,18 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
 
   protected final Object mutex = new Object();
 
-  private final LoadingCache<SchemaKey, JsonSchema> cache =
-      new AbstractLoadingCache<SchemaKey, JsonSchema>() {
+  final CacheLoader<SchemaKey, Optional<Schema>> schemaLoader =
+      new CacheLoader<>() {
 
+        // optional is necessary because null as a return from load is not allowed by API
         @Override
-        public JsonSchema get(@NonNull SchemaKey key) {
-          return schemaStore.get(key).map(createSchema()).orElse(null);
-        }
-
-        private Function<? super String, ? extends JsonSchema> createSchema() {
-          return s -> {
-            try {
-              return ValidationConstants.JSON_SCHEMA_FACTORY.getJsonSchema(
-                  ValidationConstants.JACKSON.readTree(s));
-            } catch (ProcessingException | IOException e) {
-              throw new IllegalArgumentException("Cannot create schema from : \n " + s, e);
-            }
-          };
-        }
-
-        @Override
-        public @Nullable JsonSchema getIfPresent(@NonNull Object k) {
-          SchemaKey key = (SchemaKey) k;
-          return schemaStore.get(key).map(createSchema()).orElse(null);
+        public @NonNull Optional<Schema> load(@NonNull SchemaKey key) {
+          return schemaStore.get(key).map(ValidationConstants.jsonString2SchemaV7());
         }
       };
+
+  private final LoadingCache<SchemaKey, Optional<Schema>> schemaNearCache =
+      CacheBuilder.newBuilder().maximumSize(10000).build(schemaLoader);
 
   public AbstractSchemaRegistry(
       @NonNull IndexFetcher indexFetcher,
@@ -141,6 +121,11 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
   protected void process(RegistryIndex index) {
     updateSchemes(index);
     updateTransformations(index);
+    clearNearCache();
+  }
+
+  public void clearNearCache() {
+    schemaNearCache.invalidateAll();
   }
 
   private void updateSchemes(RegistryIndex index) {
@@ -208,9 +193,10 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
     }
   }
 
+  @SneakyThrows
   @Override
-  public Optional<JsonSchema> get(@NonNull SchemaKey key) {
-    return Optional.ofNullable(cache.getIfPresent(key));
+  public Optional<Schema> get(@NonNull SchemaKey key) {
+    return schemaNearCache.get(key);
   }
 
   @Override

@@ -16,28 +16,20 @@
 package org.factcast.store.internal.tail;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.factcast.store.internal.PgConstants.INDEX_NAME_COLUMN;
-import static org.factcast.store.internal.PgConstants.IS_INVALID;
-import static org.factcast.store.internal.PgConstants.IS_VALID;
-import static org.factcast.store.internal.PgConstants.LIST_FACT_INDEXES_WITH_VALIDATION;
-import static org.factcast.store.internal.PgConstants.VALID_COLUMN;
-import static org.factcast.store.internal.PgConstants.tailIndexName;
+import static org.factcast.store.internal.PgConstants.*;
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.*;
 import javax.sql.DataSource;
 import lombok.SneakyThrows;
+import nl.altindag.log.LogCaptor;
 import org.factcast.core.store.FactStore;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.test.IntegrationTest;
-import org.factcast.test.Slf4jHelper;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.*;
+import org.junit.jupiter.api.condition.DisabledForJreRange;
+import org.junit.jupiter.api.condition.JRE;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -45,12 +37,11 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import slf4jtest.TestLogger;
 
 @ContextConfiguration(classes = {PgTestConfiguration.class})
-@Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
+@Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 class PGTailIndexManagerImplIntTest {
 
   @Autowired FactStore fs;
@@ -71,7 +62,7 @@ class PGTailIndexManagerImplIntTest {
   @SneakyThrows
   @DisabledForJreRange(min = JRE.JAVA_9)
   void doesNotCreateIndexConcurrently() {
-    TestLogger logger = Slf4jHelper.replaceLogger(tailManager);
+    LogCaptor logCaptor = LogCaptor.forClass(tailManager.getClass());
 
     var c = dataSource.getConnection();
     c.setAutoCommit(false);
@@ -111,7 +102,9 @@ class PGTailIndexManagerImplIntTest {
       assertThat(allIndicesInvalid(before)).isTrue();
 
       // we should only see that from the second call, but not from the blocking one
-      assertThat(logger.lines()).filteredOn("text", "Done with tail index maintenance").hasSize(1);
+      assertThat(logCaptor.getLogEvents())
+          .filteredOn("formattedMessage", "Done with tail index maintenance")
+          .hasSize(1);
 
       s.close();
       c.commit();
@@ -122,17 +115,25 @@ class PGTailIndexManagerImplIntTest {
       // we should finally have one index, and it should be valid
       assertOnlyOneIndexAndIsValid(before);
 
-      assertThat(logger.lines()).filteredOn("text", "Triggering tail index maintenance").hasSize(2);
-      assertThat(logger.lines())
-          .filteredOn(l -> l.text.startsWith("Creating tail index"))
+      assertThat(logCaptor.getLogEvents())
+          .filteredOn("formattedMessage", "Triggering tail index maintenance")
+          .hasSize(2);
+      assertThat(logCaptor.getLogEvents())
+          .filteredOn(l -> l.getFormattedMessage().startsWith("Creating tail index"))
           .hasSize(1);
 
       // No exception should have happened
-      assertThat(logger.lines()).filteredOn(l -> l.text.startsWith("Error creating")).isEmpty();
-      assertThat(logger.lines()).filteredOn(l -> l.text.startsWith("After error")).isEmpty();
+      assertThat(logCaptor.getLogEvents())
+          .filteredOn(l -> l.getFormattedMessage().startsWith("Error creating"))
+          .isEmpty();
+      assertThat(logCaptor.getLogEvents())
+          .filteredOn(l -> l.getFormattedMessage().startsWith("After error"))
+          .isEmpty();
 
       // now we should see it twice
-      assertThat(logger.lines()).filteredOn("text", "Done with tail index maintenance").hasSize(2);
+      assertThat(logCaptor.getLogEvents())
+          .filteredOn("formattedMessage", "Done with tail index maintenance")
+          .hasSize(2);
 
     } catch (RuntimeException e) {
       c.rollback();
@@ -157,6 +158,6 @@ class PGTailIndexManagerImplIntTest {
 
   private boolean indexFound(long before) {
     return jdbcTemplate.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION).stream()
-        .anyMatch(m -> m.get(INDEX_NAME_COLUMN).toString().compareTo(tailIndexName(before)) > 0);
+        .anyMatch(m -> m.get(INDEX_NAME_COLUMN).toString().compareTo(tailIndexName(before)) >= 0);
   }
 }

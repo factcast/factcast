@@ -15,32 +15,33 @@
  */
 package org.factcast.store.internal.catchup.tmppaged;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.eq;
 
 import io.micrometer.core.instrument.Counter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.*;
+import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
-import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
-import org.factcast.core.TestFact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.transformation.FactTransformerService;
+import org.factcast.core.subscription.transformation.FactTransformers;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
 import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.PgPostQueryMatcher;
 import org.factcast.store.internal.StoreMetrics;
+import org.factcast.store.internal.catchup.BufferingFactInterceptor;
+import org.factcast.store.internal.filter.FactFilter;
+import org.factcast.store.internal.filter.PgBlacklist;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
+import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -55,17 +56,19 @@ class PgTmpPagedCatchupTest {
   @Mock @NonNull PgConnectionSupplier connectionSupplier;
   @Mock @NonNull StoreConfigurationProperties props;
   @Mock @NonNull SubscriptionRequestTO request;
-  @Mock @NonNull PgPostQueryMatcher postQueryMatcher;
+  @Mock @NonNull FactFilter filter;
   @Mock @NonNull SubscriptionImpl subscription;
   @Mock @NonNull AtomicLong serial;
   @Mock @NonNull PgMetrics metrics;
   @Mock @NonNull Counter counter;
+  @Mock @NonNull PgBlacklist blacklist;
+  @Mock @NonNull BufferingFactInterceptor interceptor;
+  @Mock @NonNull FactTransformerService service;
+  @Mock @NonNull CurrentStatementHolder statementHolder;
   @InjectMocks PgTmpPagedCatchup underTest;
 
   @Nested
   class WhenRunning {
-    @BeforeEach
-    void setup() {}
 
     @SneakyThrows
     @Test
@@ -73,12 +76,26 @@ class PgTmpPagedCatchupTest {
       PgConnection con = mock(PgConnection.class);
       when(connectionSupplier.get()).thenReturn(con);
 
-      final var uut = spy(underTest);
+      var uut = spy(underTest);
       doNothing().when(uut).fetch(any());
 
       uut.run();
 
       verify(con).close();
+    }
+
+    @SneakyThrows
+    @Test
+    void removesStatement() {
+      PgConnection con = mock(PgConnection.class);
+      when(connectionSupplier.get()).thenReturn(con);
+
+      var uut = spy(underTest);
+      doNothing().when(uut).fetch(any());
+
+      uut.run();
+
+      verify(statementHolder).statement(null);
     }
   }
 
@@ -91,8 +108,12 @@ class PgTmpPagedCatchupTest {
     @BeforeEach
     void setup() {
       doNothing().when(jdbc).execute(anyString());
-
-      when(postQueryMatcher.canBeSkipped()).thenReturn(true);
+      interceptor =
+          new BufferingFactInterceptor(
+              service, FactTransformers.createFor(request), filter, subscription, 3, metrics);
+      underTest =
+          new PgTmpPagedCatchup(
+              connectionSupplier, props, request, interceptor, serial, statementHolder);
     }
 
     @Test
@@ -111,6 +132,8 @@ class PgTmpPagedCatchupTest {
 
     @Test
     void notifies() {
+      when(filter.test(any(Fact.class))).thenReturn(true);
+
       when(jdbc.execute(anyString(), any(PreparedStatementCallback.class))).thenReturn(1L);
       List<Fact> testFactList = new ArrayList<Fact>();
       Fact testFact = Fact.builder().buildWithoutPayload();
@@ -128,20 +151,29 @@ class PgTmpPagedCatchupTest {
     }
 
     @Test
-    void counts() {
-      when(metrics.counter(any())).thenReturn(counter);
-      when(jdbc.execute(anyString(), any(PreparedStatementCallback.class))).thenReturn(1L);
-      List<Fact> testFactList = Lists.newArrayList(new TestFact(), new TestFact());
+    void filtersBlacklisted() {
+      when(filter.test(any(Fact.class))).thenReturn(false, true, true);
+      when(jdbc.execute(anyString(), any(PreparedStatementCallback.class))).thenReturn(2L);
+      List<Fact> testFactList = new ArrayList<Fact>();
+      UUID id1 = UUID.randomUUID();
+      UUID id2 = UUID.randomUUID();
+      Fact testFact1 = Fact.builder().id(id1).buildWithoutPayload();
+      Fact testFact2 = Fact.builder().id(id2).buildWithoutPayload();
+      Fact testFact3 = Fact.builder().id(id2).buildWithoutPayload();
+      testFactList.add(testFact1);
+      testFactList.add(testFact2);
+      testFactList.add(testFact3);
       when(jdbc.query(
               eq(PgConstants.SELECT_FACT_FROM_CATCHUP),
               any(PreparedStatementSetter.class),
               any(PgFactExtractor.class)))
           .thenReturn(testFactList)
-          .thenReturn(Collections.emptyList());
-
+          .thenReturn(new ArrayList<Fact>());
+      // stop iteration after first fetch
+      when(metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT)).thenReturn(mock(Counter.class));
       underTest.fetch(jdbc);
-
-      verify(counter).increment(testFactList.size());
+      verify(subscription, never()).notifyElement(testFact1);
+      verify(subscription, times(2)).notifyElement(testFact2);
     }
   }
 }

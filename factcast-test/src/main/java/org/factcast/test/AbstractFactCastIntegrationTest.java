@@ -16,8 +16,9 @@
 package org.factcast.test;
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.test.context.TestExecutionListeners;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SuppressWarnings("rawtypes")
@@ -25,6 +26,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @ExtendWith({FactCastExtension.class})
 @Slf4j
 @Tag("integration")
+@TestExecutionListeners(
+    listeners = FactCastConfigChangeDirtyMarker.class,
+    mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class AbstractFactCastIntegrationTest {
 
   // all the magic will be handled by the extension, this class is left over for compatibility

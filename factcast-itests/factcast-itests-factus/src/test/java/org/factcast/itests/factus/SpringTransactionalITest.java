@@ -16,13 +16,10 @@
 package org.factcast.itests.factus;
 
 import static java.util.UUID.*;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -37,7 +34,9 @@ import org.factcast.factus.spring.tx.AbstractSpringTxSubscribedProjection;
 import org.factcast.factus.spring.tx.SpringTransactional;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -54,7 +53,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 @EnableAutoConfiguration
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @Slf4j
-class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
+public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
   @Autowired JdbcTemplate jdbcTemplate;
   @Autowired PlatformTransactionManager platformTransactionManager;
   @Autowired Factus factus;
@@ -78,7 +77,7 @@ class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
 
     var l = new ArrayList<EventObject>(NUMBER_OF_EVENTS);
     for (int i = 0; i < NUMBER_OF_EVENTS; i++) {
-      l.add(new UserCreated(randomUUID(), "" + i));
+      l.add(new UserCreated(randomUUID(), getClass().getSimpleName() + ":" + i));
     }
     log.info("publishing {} Events ", NUMBER_OF_EVENTS);
     factus.publish(l);

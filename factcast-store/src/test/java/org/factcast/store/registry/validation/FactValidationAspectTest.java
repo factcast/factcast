@@ -15,18 +15,15 @@
  */
 package org.factcast.store.registry.validation;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.factcast.core.Fact;
 import org.factcast.core.FactValidationException;
 import org.factcast.core.TestFact;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
 
 public class FactValidationAspectTest {
 

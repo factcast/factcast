@@ -152,13 +152,13 @@ databaseChangeLog:
   #            stripComments: true
 
   - changeSet:
-      id: updateNotifyFactInsert_condensed
+      id: updateNotifyFactInsert_condensed_without_comment_corrected
       runInTransaction: false
       author: uweschaefer
       changes:
         - sqlFile:
             encoding: utf8
-            path: factcast/issue1863/updateNotifyFactInsert_condensed.sql
+            path: factcast/issue1863/updateNotifyFactInsert_condensed_without_comment_corrected.sql
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
@@ -189,3 +189,42 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
+
+
+  - changeSet:
+      id: issue2019
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2019/issue2019.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue2050_corrected
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2050/blacklist_corrected.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue2050_removeTails
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2050/removeTails.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+

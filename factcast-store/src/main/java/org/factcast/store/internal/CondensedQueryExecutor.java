@@ -18,19 +18,18 @@ package org.factcast.store.internal;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.Subscribe;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
+import java.util.concurrent.atomic.*;
+import java.util.function.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.store.internal.listen.PgListener.Signal;
+import org.factcast.store.internal.listen.PgListener.FactInsertionSignal;
 
 /**
  * Executes a given runnable if triggered, but ignores all subsequent triggers for maxDelayInMillis.
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
-@SuppressWarnings("UnstableApiUsage")
 @Slf4j
 class CondensedQueryExecutor {
 
@@ -84,7 +83,7 @@ class CondensedQueryExecutor {
   }
 
   public void trigger() {
-    if (connectionStateSupplier.get()) {
+    if (Boolean.TRUE.equals(connectionStateSupplier.get())) {
       if (maxDelayInMillis < 1) {
         runTarget();
       } else if (!currentlyScheduled.getAndSet(true)) {
@@ -96,7 +95,7 @@ class CondensedQueryExecutor {
                 currentlyScheduled.set(false);
                 try {
                   runTarget();
-                } catch (Throwable e) {
+                } catch (Exception e) {
                   log.error("Scheduled query failed, closing: {}", e.getMessage());
                 }
               }
@@ -108,7 +107,7 @@ class CondensedQueryExecutor {
 
   // called by the EventBus
   @Subscribe
-  public void onEvent(Signal ev) {
+  public void onEvent(FactInsertionSignal ev) {
 
     String ns = ev.ns();
     String type = ev.type();
@@ -137,7 +136,7 @@ class CondensedQueryExecutor {
   protected synchronized void runTarget() {
     try {
       target.run(false);
-    } catch (Throwable e) {
+    } catch (Exception e) {
       log.error("cannot run Target: ", e);
     }
   }

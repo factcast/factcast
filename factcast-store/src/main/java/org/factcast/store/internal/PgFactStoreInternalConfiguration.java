@@ -19,7 +19,7 @@ import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import javax.sql.DataSource;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -29,14 +29,14 @@ import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
 import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMode;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.TokenStore;
-import org.factcast.core.subscription.FactTransformerService;
-import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.catchup.fetching.PgFetchingCatchUpFactory;
 import org.factcast.store.internal.catchup.tmppaged.PgTmpPagedCatchUpFactory;
 import org.factcast.store.internal.check.IndexCheck;
+import org.factcast.store.internal.filter.PgBlacklist;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.listen.PgConnectionTester;
 import org.factcast.store.internal.listen.PgListener;
@@ -44,6 +44,7 @@ import org.factcast.store.internal.lock.AdvisoryWriteLock;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
+import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.snapcache.PgSnapshotCache;
 import org.factcast.store.internal.snapcache.PgSnapshotCacheConfiguration;
 import org.factcast.store.internal.tail.PGTailIndexingConfiguration;
@@ -90,13 +91,13 @@ public class PgFactStoreInternalConfiguration {
   public PgCatchupFactory pgCatchupFactory(
       StoreConfigurationProperties props,
       PgConnectionSupplier supp,
-      PgFactIdToSerialMapper serMapper) {
-    // noinspection SwitchStatementWithTooFewBranches
+      PgMetrics metrics,
+      FactTransformerService transformerService) {
     switch (props.getCatchupStrategy()) {
       case PAGED:
-        return new PgTmpPagedCatchUpFactory(supp, props);
+        return new PgTmpPagedCatchUpFactory(supp, props, metrics, transformerService);
       case FETCHING:
-        return new PgFetchingCatchUpFactory(supp, props);
+        return new PgFetchingCatchUpFactory(supp, props, metrics, transformerService);
       default:
         throw new IllegalArgumentException("Unmapped Strategy: " + props.getCatchupStrategy());
     }
@@ -135,18 +136,22 @@ public class PgFactStoreInternalConfiguration {
       PgFactIdToSerialMapper pgFactIdToSerialMapper,
       PgLatestSerialFetcher pgLatestSerialFetcher,
       PgCatchupFactory pgCatchupFactory,
-      FactTransformersFactory transformerFactory,
       FastForwardTarget target,
-      PgMetrics metrics) {
+      PgMetrics metrics,
+      PgBlacklist blacklist,
+      JSEngineFactory ef,
+      FactTransformerService transformerService) {
     return new PgSubscriptionFactory(
         jdbcTemplate,
         eventBus,
         pgFactIdToSerialMapper,
         pgLatestSerialFetcher,
         pgCatchupFactory,
-        transformerFactory,
         target,
-        metrics);
+        metrics,
+        blacklist,
+        transformerService,
+        ef);
   }
 
   @Bean
@@ -216,5 +221,15 @@ public class PgFactStoreInternalConfiguration {
   @Bean
   public IndexCheck indexCheck(JdbcTemplate jdbcTemplate) {
     return new IndexCheck(jdbcTemplate);
+  }
+
+  @Bean
+  public PgBlacklist.Fetcher blacklistFetcher(JdbcTemplate jdbc) {
+    return new PgBlacklist.Fetcher(jdbc);
+  }
+
+  @Bean
+  public PgBlacklist blacklist(EventBus bus, PgBlacklist.Fetcher fetcher) {
+    return new PgBlacklist(bus, fetcher);
   }
 }

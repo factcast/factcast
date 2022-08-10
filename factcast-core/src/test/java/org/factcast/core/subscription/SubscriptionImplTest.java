@@ -15,21 +15,23 @@
  */
 package org.factcast.core.subscription;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.factcast.core.TestHelper.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.factcast.core.TestHelper.expect;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
-import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeoutException;
+import java.util.*;
+import java.util.concurrent.*;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.factcast.core.subscription.transformation.FactTransformers;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -128,11 +130,9 @@ public class SubscriptionImplTest {
 
   private FactObserver obs;
 
-  private final FactTransformers ft = e -> e;
-
   @Test
   void testOnNull() {
-    Assertions.assertThrows(NullPointerException.class, () -> SubscriptionImpl.on(null, null));
+    Assertions.assertThrows(NullPointerException.class, () -> SubscriptionImpl.on(null));
   }
 
   final Fact testFact = new TestFact();
@@ -141,7 +141,7 @@ public class SubscriptionImplTest {
 
   @Test
   void testOn() throws TransformationException {
-    SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
+    SubscriptionImpl on = SubscriptionImpl.on(obs);
     verify(obs, never()).onNext(any());
     on.notifyElement(testFact);
     verify(obs).onNext(testFact);
@@ -156,31 +156,8 @@ public class SubscriptionImplTest {
   }
 
   @Test
-  void testOnElementIncrementsCounters() throws TransformationException {
-    SubscriptionImpl on = SubscriptionImpl.on(obs, factTransformers);
-    verify(obs, never()).onNext(any());
-    when(factTransformers.transformIfNecessary(testFact))
-        .thenReturn(testFact, testFact, transformedTestFact);
-
-    on.notifyElement(testFact);
-    verify(obs).onNext(testFact);
-    assertThat(on.factsTransformed().get()).isEqualTo(0);
-    assertThat(on.factsNotTransformed().get()).isEqualTo(1);
-
-    on.notifyElement(testFact);
-    verify(obs, times(2)).onNext(testFact);
-    assertThat(on.factsTransformed().get()).isEqualTo(0);
-    assertThat(on.factsNotTransformed().get()).isEqualTo(2);
-
-    on.notifyElement(testFact);
-    verify(obs, times(3)).onNext(testFact);
-    assertThat(on.factsTransformed().get()).isEqualTo(1);
-    assertThat(on.factsNotTransformed().get()).isEqualTo(2);
-  }
-
-  @Test
   void testOnError() {
-    SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
+    SubscriptionImpl on = SubscriptionImpl.on(obs);
     verify(obs, never()).onError(any());
     on.notifyError(new Throwable("ignore me"));
     verify(obs).onError(any());
@@ -188,7 +165,7 @@ public class SubscriptionImplTest {
 
   @Test
   void testOnErrorCloses() throws TransformationException {
-    SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
+    SubscriptionImpl on = SubscriptionImpl.on(obs);
     on.notifyError(new Throwable("ignore me"));
     on.notifyElement(testFact);
     on.notifyCatchup();
@@ -200,7 +177,7 @@ public class SubscriptionImplTest {
 
   @Test
   void testOnCompleteCloses() throws TransformationException {
-    SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
+    SubscriptionImpl on = SubscriptionImpl.on(obs);
     on.notifyComplete();
     on.notifyElement(testFact);
     on.notifyCatchup();
@@ -212,7 +189,7 @@ public class SubscriptionImplTest {
 
   @Test
   void testOnCatchupDoesNotClose() throws TransformationException {
-    SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
+    SubscriptionImpl on = SubscriptionImpl.on(obs);
     on.notifyCatchup();
     on.notifyElement(testFact);
     on.notifyError(new Throwable("ignore me"));
@@ -223,7 +200,7 @@ public class SubscriptionImplTest {
 
   @Test
   void testOnFastForwardDelegatesIfNotClosed() throws TransformationException {
-    SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
+    SubscriptionImpl on = SubscriptionImpl.on(obs);
     @NonNull UUID id = UUID.randomUUID();
     on.notifyFastForward(id);
     verify(obs).onFastForward(id);
@@ -231,7 +208,7 @@ public class SubscriptionImplTest {
 
   @Test
   void testOnFastForwardSkipsIfClosed() throws TransformationException {
-    SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
+    SubscriptionImpl on = SubscriptionImpl.on(obs);
     @NonNull UUID id = UUID.randomUUID();
     on.close();
     on.notifyFastForward(id);
@@ -243,7 +220,7 @@ public class SubscriptionImplTest {
     Assertions.assertThrows(
         Throwable.class,
         () -> {
-          SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
+          SubscriptionImpl on = SubscriptionImpl.on(obs);
           verify(obs, never()).onError(any());
           on.notifyError(new Throwable("ignore me"));
           verify(obs).onError(any());
@@ -256,7 +233,7 @@ public class SubscriptionImplTest {
     Assertions.assertThrows(
         Throwable.class,
         () -> {
-          SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
+          SubscriptionImpl on = SubscriptionImpl.on(obs);
           verify(obs, never()).onError(any());
           on.notifyError(new Throwable("ignore me"));
           verify(obs).onError(any());
@@ -304,7 +281,7 @@ public class SubscriptionImplTest {
 
   @Test
   void notifyInfoSkipsIfClosed() throws TransformationException {
-    SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
+    SubscriptionImpl on = SubscriptionImpl.on(obs);
     @NonNull UUID id = UUID.randomUUID();
     FactStreamInfo fsi = new FactStreamInfo(1, 10);
     uut.notifyFactStreamInfo(fsi);
