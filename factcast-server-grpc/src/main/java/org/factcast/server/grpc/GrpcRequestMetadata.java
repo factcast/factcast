@@ -18,10 +18,8 @@ package org.factcast.server.grpc;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import io.grpc.Metadata;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.OptionalInt;
-import java.util.stream.Stream;
+import java.util.*;
+import java.util.stream.*;
 import lombok.AccessLevel;
 import lombok.Setter;
 import org.factcast.grpc.api.Headers;
@@ -58,6 +56,10 @@ public class GrpcRequestMetadata {
 
   public Optional<String> clientId() {
     return Optional.ofNullable(headers).map(headers -> headers.get(Headers.CLIENT_ID));
+  }
+
+  public Optional<String> clientVersion() {
+    return Optional.ofNullable(headers).map(headers -> headers.get(Headers.CLIENT_VERSION));
   }
 
   public String clientIdAsString() {

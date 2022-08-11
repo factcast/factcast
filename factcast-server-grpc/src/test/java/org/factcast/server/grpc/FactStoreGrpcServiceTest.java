@@ -15,9 +15,9 @@
  */
 package org.factcast.server.grpc;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -28,7 +28,6 @@ import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
-import java.net.URL;
 import java.util.*;
 import lombok.NonNull;
 import org.factcast.core.Fact;
@@ -41,7 +40,6 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FastForwardTarget;
-import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.ProtoConverter;
@@ -53,8 +51,9 @@ import org.factcast.server.grpc.auth.FactCastUser;
 import org.factcast.server.grpc.metrics.NOPServerMetrics;
 import org.factcast.server.grpc.metrics.ServerMetrics;
 import org.factcast.server.grpc.metrics.ServerMetrics.OP;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.intercept.RunAsUserToken;
@@ -528,38 +527,6 @@ public class FactStoreGrpcServiceTest {
 
     verify(so).onCompleted();
     verify(so).onNext(any(MSG_ServerConfig.class));
-  }
-
-  @Test
-  public void testRetrieveImplementationVersion() {
-    uut = spy(uut);
-    when(uut.getProjectProperties()).thenReturn(getClass().getResource("/test.properties"));
-    HashMap<String, String> map = new HashMap<>();
-    uut.retrieveImplementationVersion(map);
-
-    assertEquals("9.9.9", map.get(Capabilities.FACTCAST_IMPL_VERSION.toString()));
-  }
-
-  @Test
-  public void testRetrieveImplementationVersionEmptyPropertyFile() {
-    uut = spy(uut);
-    when(uut.getProjectProperties()).thenReturn(getClass().getResource("/no-version.properties"));
-    HashMap<String, String> map = new HashMap<>();
-    uut.retrieveImplementationVersion(map);
-
-    assertEquals("UNKNOWN", map.get(Capabilities.FACTCAST_IMPL_VERSION.toString()));
-  }
-
-  @Test
-  public void testRetrieveImplementationVersionCannotReadFile() throws Exception {
-    uut = spy(uut);
-    URL url = mock(URL.class);
-    when(url.openStream()).thenReturn(null);
-    when(uut.getProjectProperties()).thenReturn(url);
-    HashMap<String, String> map = new HashMap<>();
-    uut.retrieveImplementationVersion(map);
-
-    assertEquals("UNKNOWN", map.get(Capabilities.FACTCAST_IMPL_VERSION.toString()));
   }
 
   @Test

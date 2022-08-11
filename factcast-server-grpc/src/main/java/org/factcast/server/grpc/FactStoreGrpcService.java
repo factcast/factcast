@@ -33,8 +33,7 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
-import java.io.InputStream;
-import java.net.URL;
+import io.micrometer.core.instrument.Tags;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
@@ -56,6 +55,7 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.core.util.FactCastJson;
+import org.factcast.core.util.MavenHelper;
 import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.CompressionCodecs;
 import org.factcast.grpc.api.ConditionalPublishRequest;
@@ -318,6 +318,12 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
         () -> {
           initialize(responseObserver);
 
+          metrics.count(
+              ServerMetrics.EVENT.CLIENT_VERSION,
+              Tags.of(
+                  grpcRequestMetadata.clientIdAsString(),
+                  grpcRequestMetadata.clientVersion().orElse("UNKNOWN")));
+
           ServerConfig cfg = ServerConfig.of(PROTOCOL_VERSION, collectProperties());
           responseObserver.onNext(converter.toProto(cfg));
           responseObserver.onCompleted();
@@ -339,37 +345,13 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
   @VisibleForTesting
   void retrieveImplementationVersion(HashMap<String, String> properties) {
-    properties.put(
-        Capabilities.FACTCAST_IMPL_VERSION.toString(), getImplVersion().orElse("UNKNOWN"));
+    properties.put(Capabilities.FACTCAST_IMPL_VERSION.toString(), getServerArtifactVersion());
   }
 
-  private Optional<String> getImplVersion() {
-    String implVersion = null;
-
-    URL propertiesUrl = getProjectProperties();
-    Properties buildProperties = new Properties();
-    if (propertiesUrl != null) {
-      try (InputStream is = propertiesUrl.openStream(); ) {
-        if (is != null) {
-          buildProperties.load(is);
-          String v = buildProperties.getProperty("version");
-          if (v != null) {
-            implVersion = v;
-          }
-        }
-      } catch (Exception ignore) {
-        // whatever fails when reading the version implies, that the
-        // impl Version is
-        // "UNKNOWN"
-      }
-    }
-    return Optional.ofNullable(implVersion);
-  }
-
-  @VisibleForTesting
-  URL getProjectProperties() {
-    return FactStoreGrpcService.class.getResource(
-        "/META-INF/maven/org.factcast/factcast-server-grpc/pom.properties");
+  @NonNull
+  private static String getServerArtifactVersion() {
+    return MavenHelper.getVersion("factcast-server-grpc", FactStoreGrpcService.class)
+        .orElse("UNKNOWN");
   }
 
   private void resetDebugInfo(SubscriptionRequestTO req, GrpcRequestMetadata meta) {
@@ -663,6 +645,6 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
   @Override
   public void afterPropertiesSet() throws Exception {
-    log.info("Service version: {}", getImplVersion().orElse("UNKNOWN"));
+    log.info("Service version: {}", getServerArtifactVersion());
   }
 }
