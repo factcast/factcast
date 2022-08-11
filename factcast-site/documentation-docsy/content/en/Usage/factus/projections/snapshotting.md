@@ -57,14 +57,12 @@ If your `SnapshotProjection` does not declare anything different, it will be ser
 In case you want to use a different implementation for a particular 'SnapshotProjection', you can annotate it with '@SerializeUsing'
 
 ```java
-
 @SerializeUsing(MySpecialSnapshotSerializer.class)
 static class MySnapshotProjection implements SnapshotProjection {
     //...
 }
-
 ```
-Note that those implementations need to have a default constructor.
+Note that those implementations need to have a default constructor and are expected to be stateless.
 
 ### Snapshot caching
 
