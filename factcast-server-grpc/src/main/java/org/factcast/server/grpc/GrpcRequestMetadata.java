@@ -20,13 +20,14 @@ import com.google.common.base.Preconditions;
 import io.grpc.Metadata;
 import java.util.*;
 import java.util.stream.*;
+import javax.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Setter;
 import org.factcast.grpc.api.Headers;
 
 public class GrpcRequestMetadata {
 
-  static final String UNKNOWN = "unknown";
+  public static final String UNKNOWN = "unknown";
 
   @Setter(AccessLevel.PROTECTED)
   Metadata headers;
@@ -54,15 +55,23 @@ public class GrpcRequestMetadata {
     return grpcRequestMetadata;
   }
 
+  @NotNull
   public Optional<String> clientId() {
     return Optional.ofNullable(headers).map(headers -> headers.get(Headers.CLIENT_ID));
   }
 
+  @NotNull
   public Optional<String> clientVersion() {
     return Optional.ofNullable(headers).map(headers -> headers.get(Headers.CLIENT_VERSION));
   }
 
+  @NotNull
   public String clientIdAsString() {
     return clientId().orElse(UNKNOWN);
+  }
+
+  @NotNull
+  public String clientVersionAsString() {
+    return clientVersion().orElse(UNKNOWN);
   }
 }
