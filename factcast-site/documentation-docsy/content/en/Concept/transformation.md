@@ -58,6 +58,8 @@ Anther use-case is that, over time, the publisher published 3 different versions
 Same as downcast, just express your expectation by providing a version to your subscription, and factcast will transform all facts into this version using the necessary transformations from the registry.
 While for downcast, missing transformations are considered compatible, upcasting will fail if there is no transformation code to the requested version.
 
+In terms of transformation priorities: the same rules as in downcasting apply. 
+
 *If transformation is not possible due to missing required code snippets in the registry or due to other errors, FactCast will throw an exception*.
 
 ## Caching
