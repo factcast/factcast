@@ -318,11 +318,11 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
         () -> {
           initialize(responseObserver);
 
-          metrics.count(
-              ServerMetrics.EVENT.CLIENT_VERSION,
-              Tags.of(
-                  grpcRequestMetadata.clientIdAsString(),
-                  grpcRequestMetadata.clientVersion().orElse("UNKNOWN")));
+          String clientId = grpcRequestMetadata.clientIdAsString();
+          String clientVersion = grpcRequestMetadata.clientVersion().orElse("UNKNOWN");
+
+          log.info("Handshake from '{}' using version {}", clientId, clientVersion);
+          metrics.count(ServerMetrics.EVENT.CLIENT_VERSION, Tags.of(clientId, clientVersion));
 
           ServerConfig cfg = ServerConfig.of(PROTOCOL_VERSION, collectProperties());
           responseObserver.onNext(converter.toProto(cfg));
