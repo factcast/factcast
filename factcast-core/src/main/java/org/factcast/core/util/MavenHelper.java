@@ -20,8 +20,10 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
 import lombok.NonNull;
+import lombok.experimental.UtilityClass;
 import org.factcast.core.FactCast;
 
+@UtilityClass
 public class MavenHelper {
   public static Optional<String> getVersion() {
     return getVersion("factcast-core", FactCast.class);
