@@ -536,8 +536,8 @@ public class FactStoreGrpcServiceTest {
     verify(so).onNext(any(MSG_ServerConfig.class));
 
     assertThat(tagsCaptor.getValue().stream())
-        .hasSize(1)
-        .contains(Tag.of("funky-service", "3.11 for Workgroups"));
+        .hasSize(2)
+        .contains(Tag.of("id", "funky-service"), Tag.of("version", "3.11 for Workgroups"));
   }
 
   @Test
@@ -557,8 +557,8 @@ public class FactStoreGrpcServiceTest {
     verify(so).onNext(any(MSG_ServerConfig.class));
 
     assertThat(tagsCaptor.getValue().stream())
-        .hasSize(1)
-        .contains(Tag.of("funky-service", GrpcRequestMetadata.UNKNOWN));
+        .hasSize(2)
+        .contains(Tag.of("id", "funky-service"), Tag.of("version", GrpcRequestMetadata.UNKNOWN));
   }
 
   @Test
