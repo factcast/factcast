@@ -33,6 +33,7 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -318,11 +319,13 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
         () -> {
           initialize(responseObserver);
 
-          String clientId = grpcRequestMetadata.clientIdAsString();
-          String clientVersion = grpcRequestMetadata.clientVersion().orElse("UNKNOWN");
+          String clientId = Objects.requireNonNull(grpcRequestMetadata.clientIdAsString());
+          String clientVersion =
+              Objects.requireNonNull(grpcRequestMetadata.clientVersionAsString());
 
           log.info("Handshake from '{}' using version {}", clientId, clientVersion);
-          metrics.count(ServerMetrics.EVENT.CLIENT_VERSION, Tags.of(clientId, clientVersion));
+          metrics.count(
+              ServerMetrics.EVENT.CLIENT_VERSION, Tags.of(Tag.of(clientId, clientVersion)));
 
           ServerConfig cfg = ServerConfig.of(PROTOCOL_VERSION, collectProperties());
           responseObserver.onNext(converter.toProto(cfg));
