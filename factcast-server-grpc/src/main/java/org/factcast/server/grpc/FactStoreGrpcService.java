@@ -325,7 +325,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
           log.info("Handshake from '{}' using version {}", clientId, clientVersion);
           metrics.count(
-              ServerMetrics.EVENT.CLIENT_VERSION, Tags.of(Tag.of(clientId, clientVersion)));
+              ServerMetrics.EVENT.CLIENT_VERSION,
+              Tags.of(Tag.of("id", clientId), Tag.of("version", clientVersion)));
 
           ServerConfig cfg = ServerConfig.of(PROTOCOL_VERSION, collectProperties());
           responseObserver.onNext(converter.toProto(cfg));
