@@ -28,22 +28,28 @@ For this to work, there are three prerequisites:
 
 1. The publisher needs to communicate what version he wants to publish
 
-This would not work otherwise anyway, because we assume version 1 and version 2 to be incompatible, so the correct schema must be chosen for validation anyway.
-In this case, it would be version 2.
+This would not work otherwise, because we assume version 1 and version 2 to be incompatible, so the correct schema must be chosen for validation anyway.
+In this case, it would be "version 2".
 
 2. The consumer must express his expectation
 
-When it subscribes on a particular fact type, it also needs to provide the version it expects (1 here)
+When it subscribes on a particular fact type, it also needs to provide the version it expects ("version 1" here)
 
-3. A Transformation code is available in the registry that can do the transformation if needed.
+3. A transformation code is available in the registry that can do the transformation if needed.
 
 The Registry takes little javascript snippets, that can convert for instance a version 2 fact payload, into a version 1.
 
 Factcast will build transformation chains if necessary (from 4-3, 3-2 and 2-1, in order to transform from version 4 to version 1). Every non-existent transformation is assumed compatible (so no transformation is necessary).
 
-When necessary, you also can add a 4-1 transformation to the registry to do the transformation in one step, if needed. Beware though, you will not benefit in terms of performance from this.
+When necessary, you also can add a 4-1 transformation to the registry to do the transformation in one step, if needed. Beware though, you will not benefit much in terms of performance from this.
 
-If there are many possible paths to transform from an origin version to the target version, the shortest always wins. If there are two equally long paths, the one that uses the bigger shortcut sooner wins.
+
+{{% alert title="Transformation rules" %}}
+
+* If there are many possible paths to transform from an origin version to a specific target version, the **shortest always wins**. If there are two equally long paths, the one that *uses the bigger shortcut sooner* wins.
+* A consumer also can be able to handle different versions for a particular fact type. In this case – again – the **shortest path wins**. If there is a tie, *the higher target version wins*.
+
+{{% /alert %}}
 
 ## Upcast
 
@@ -51,6 +57,8 @@ Anther use-case is that, over time, the publisher published 3 different versions
 
 Same as downcast, just express your expectation by providing a version to your subscription, and factcast will transform all facts into this version using the necessary transformations from the registry.
 While for downcast, missing transformations are considered compatible, upcasting will fail if there is no transformation code to the requested version.
+
+In terms of transformation priorities: the same rules as in downcasting apply. 
 
 *If transformation is not possible due to missing required code snippets in the registry or due to other errors, FactCast will throw an exception*.
 
