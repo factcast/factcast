@@ -36,5 +36,5 @@ public interface InternalSubscription extends Subscription {
 
   void notifyElement(@NonNull Fact e) throws TransformationException;
 
-  SubscriptionImpl onClose(Runnable e);
+  InternalSubscription onClose(Runnable e);
 }

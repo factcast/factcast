@@ -15,24 +15,20 @@
  */
 package org.factcast.factus;
 
-import static org.factcast.factus.metrics.TagKeys.*;
+import static org.factcast.factus.metrics.TagKeys.CLASS;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.*;
+import java.util.function.*;
+import java.util.stream.*;
 import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +39,7 @@ import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.subscription.InternalSubscription;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
@@ -72,7 +69,7 @@ public class FactusImpl implements Factus {
 
   private final FactCast fc;
 
-  private final ProjectorFactory ehFactory;
+  private final ProjectorFactory projectorFactory;
 
   private final EventConverter eventConverter;
 
@@ -86,7 +83,7 @@ public class FactusImpl implements Factus {
 
   private final AtomicBoolean closed = new AtomicBoolean();
 
-  private final Set<AutoCloseable> managedObjects = new HashSet<>();
+  private final Set<WeakReference<AutoCloseable>> managedObjects = new HashSet<>();
 
   @Override
   public @NonNull PublishBatch batch() {
@@ -163,24 +160,25 @@ public class FactusImpl implements Factus {
       WriterToken token = subscribedProjection.acquireWriteToken(interval);
       if (token != null) {
         log.info("Acquired writer token for {}", subscribedProjection.getClass());
-        Subscription subscription = doSubscribe(subscribedProjection, token);
+        InternalSubscription subscription = doSubscribe(subscribedProjection, token);
         // close token & subscription on shutdown
         managedObjects.add(
-            new AutoCloseable() {
-              @Override
-              public void close() {
-                tryClose(subscription);
-                tryClose(token);
-              }
+            new WeakReference(
+                new AutoCloseable() {
+                  @Override
+                  public void close() {
+                    tryClose(subscription);
+                    tryClose(token);
+                  }
 
-              private void tryClose(AutoCloseable c) {
-                try {
-                  c.close();
-                } catch (Exception ignore) {
-                  // intentional
-                }
-              }
-            });
+                  private void tryClose(AutoCloseable c) {
+                    try {
+                      c.close();
+                    } catch (Exception ignore) {
+                      // intentional
+                    }
+                  }
+                }));
         return new TokenAwareSubscription(subscription, token);
       } else {
         log.trace(
@@ -192,9 +190,9 @@ public class FactusImpl implements Factus {
   }
 
   @SneakyThrows
-  private <P extends SubscribedProjection> Subscription doSubscribe(
+  private <P extends SubscribedProjection> InternalSubscription doSubscribe(
       @NonNull P subscribedProjection, @NonNull WriterToken token) {
-    Projector<P> handler = ehFactory.create(subscribedProjection);
+    Projector<P> projector = projectorFactory.create(subscribedProjection);
     FactObserver fo =
         new AbstractFactObserver(subscribedProjection, PROGRESS_INTERVAL, factusMetrics) {
 
@@ -204,7 +202,7 @@ public class FactusImpl implements Factus {
           public void onNextFact(@NonNull Fact element) {
             if (token.isValid()) {
               lastFactIdApplied = element.id();
-              handler.apply(element);
+              projector.apply(element);
             } else {
               // token is no longer valid
               throw new IllegalStateException("WriterToken is no longer valid.");
@@ -213,17 +211,20 @@ public class FactusImpl implements Factus {
 
           @Override
           public void onCatchupSignal() {
-            handler.onCatchup(lastFactIdApplied);
+            projector.flush(); // should be done by the lenses already, but does not hurt
+            projector.onCatchup(lastFactIdApplied);
             subscribedProjection.onCatchup();
           }
 
           @Override
           public void onComplete() {
+            projector.flush();
             subscribedProjection.onComplete();
           }
 
           @Override
           public void onError(@NonNull Throwable exception) {
+            projector.flush();
             subscribedProjection.onError(exception);
           }
 
@@ -233,10 +234,14 @@ public class FactusImpl implements Factus {
           }
         };
 
-    return fc.subscribe(
-        SubscriptionRequest.follow(handler.createFactSpecs())
-            .fromNullable(subscribedProjection.factStreamPosition()),
-        fo);
+    InternalSubscription sub =
+        (InternalSubscription)
+            fc.subscribe(
+                SubscriptionRequest.follow(projector.createFactSpecs())
+                    .fromNullable(subscribedProjection.factStreamPosition()),
+                fo);
+    sub.onClose(projector::flush);
+    return sub;
   }
 
   @Override
@@ -346,7 +351,7 @@ public class FactusImpl implements Factus {
   @SneakyThrows
   private <P extends Projection> UUID catchupProjection(
       @NonNull P projection, UUID stateOrNull, @Nullable BiConsumer<P, UUID> afterProcessing) {
-    Projector<P> handler = ehFactory.create(projection);
+    Projector<P> projector = projectorFactory.create(projection);
     AtomicReference<UUID> factId = new AtomicReference<>();
     AtomicInteger factCount = new AtomicInteger(0);
 
@@ -357,7 +362,7 @@ public class FactusImpl implements Factus {
           @Override
           public void onNextFact(@NonNull Fact element) {
             id = element.id();
-            handler.apply(element);
+            projector.apply(element);
             factId.set(id);
             if (afterProcessing != null) {
               afterProcessing.accept(projection, id);
@@ -367,17 +372,20 @@ public class FactusImpl implements Factus {
 
           @Override
           public void onComplete() {
+            projector.flush();
             projection.onComplete();
           }
 
           @Override
           public void onCatchupSignal() {
-            handler.onCatchup(id);
+            projector.flush(); // should be done by the lenses already, but does not hurt
+            projector.onCatchup(id);
             projection.onCatchup();
           }
 
           @Override
           public void onError(@NonNull Throwable exception) {
+            projector.flush();
             projection.onError(exception);
           }
 
@@ -389,14 +397,16 @@ public class FactusImpl implements Factus {
           }
         };
 
-    List<FactSpec> factSpecs = handler.createFactSpecs();
+    List<FactSpec> factSpecs = projector.createFactSpecs();
 
     // the sole purpose of this synchronization is to make sure that writes from the fact delivery
     // thread are guaranteed to be visible when leaving the block
     //
     synchronized (projection) {
-      fc.subscribe(SubscriptionRequest.catchup(factSpecs).fromNullable(stateOrNull), fo)
-          .awaitComplete();
+      InternalSubscription sub =
+          (InternalSubscription)
+              fc.subscribe(SubscriptionRequest.catchup(factSpecs).fromNullable(stateOrNull), fo);
+      sub.awaitComplete();
     }
     return factId.get();
   }
@@ -426,13 +436,16 @@ public class FactusImpl implements Factus {
     if (closed.getAndSet(true)) {
       log.warn("close is being called more than once!?");
     } else {
-      ArrayList<AutoCloseable> closeables = new ArrayList<>(managedObjects);
-      for (AutoCloseable c : closeables) {
+      ArrayList<WeakReference<AutoCloseable>> closeables = new ArrayList<>(managedObjects);
+      for (WeakReference<AutoCloseable> r : closeables) {
+        AutoCloseable c = null;
         try {
-          c.close();
+          c = r.get();
+          if (c != null) c.close();
         } catch (Exception e) {
           // needs to be swallowed
-          log.warn("While closing {} of type {}:", c, c.getClass().getName(), e);
+          log.warn(
+              "While closing {} of type {}:", c, c != null ? c.getClass().getName() : "null", e);
         }
       }
     }
@@ -445,8 +458,7 @@ public class FactusImpl implements Factus {
 
   @Override
   public <M extends ManagedProjection> Locked<M> withLockOn(@NonNull M managedProjection) {
-    Projector<M> applier = ehFactory.create(managedProjection);
-    List<FactSpec> specs = applier.createFactSpecs();
+    List<FactSpec> specs = projectorFactory.create(managedProjection).createFactSpecs();
     return new Locked<>(fc, this, managedProjection, specs, factusMetrics);
   }
 
@@ -457,16 +469,14 @@ public class FactusImpl implements Factus {
             TimedOperation.FIND_DURATION,
             Tags.of(Tag.of(CLASS, aggregateClass.getName())),
             () -> find(aggregateClass, id).orElse(instantiate(aggregateClass)));
-    Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
-    List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
+    List<FactSpec> specs = projectorFactory.<SnapshotProjection>create(fresh).createFactSpecs();
     return new Locked<>(fc, this, fresh, specs, factusMetrics);
   }
 
   @Override
   public <P extends SnapshotProjection> Locked<P> withLockOn(@NonNull Class<P> projectionClass) {
     P fresh = fetch(projectionClass);
-    Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
-    List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
+    List<FactSpec> specs = projectorFactory.<SnapshotProjection>create(fresh).createFactSpecs();
     return new Locked<>(fc, this, fresh, specs, factusMetrics);
   }
 
