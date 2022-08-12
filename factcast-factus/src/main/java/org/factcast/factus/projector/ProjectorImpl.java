@@ -21,9 +21,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.concurrent.*;
+import java.util.function.*;
+import java.util.stream.*;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -250,6 +250,11 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     for (ProjectorLens lens : lenses) {
       lens.onCatchup(projection);
     }
+  }
+
+  @Override
+  public void flush() {
+    lenses.forEach(l -> l.flush());
   }
 
   @VisibleForTesting

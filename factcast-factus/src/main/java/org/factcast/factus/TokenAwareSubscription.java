@@ -15,24 +15,27 @@
  */
 package org.factcast.factus;
 
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionClosedException;
+import org.factcast.core.Fact;
+import org.factcast.core.subscription.*;
 import org.factcast.factus.projection.WriterToken;
 
 @RequiredArgsConstructor
 @Slf4j
-class TokenAwareSubscription implements Subscription {
-  @NonNull final Subscription delegate;
+class TokenAwareSubscription implements InternalSubscription {
+  @NonNull final InternalSubscription delegate;
   @NonNull final WriterToken token;
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
+  @SneakyThrows
   @Override
-  public void close() throws Exception {
+  public void close() {
     if (!closed.getAndSet(true)) {
       try {
         delegate.close();
@@ -40,6 +43,42 @@ class TokenAwareSubscription implements Subscription {
         token.close();
       }
     }
+  }
+
+  @Override
+  public void notifyCatchup() {
+    delegate.notifyCatchup();
+  }
+
+  @Override
+  public void notifyFastForward(@NonNull UUID factId) {
+    delegate.notifyFastForward(factId);
+  }
+
+  @Override
+  public void notifyFactStreamInfo(@NonNull FactStreamInfo info) {
+    delegate.notifyFactStreamInfo(info);
+  }
+
+  @Override
+  public void notifyComplete() {
+    delegate.notifyComplete();
+  }
+
+  @Override
+  public void notifyError(Throwable e) {
+    delegate.notifyError(e);
+  }
+
+  @Override
+  public void notifyElement(@NonNull Fact e) throws TransformationException {
+    delegate.notifyElement(e);
+  }
+
+  @Override
+  public InternalSubscription onClose(Runnable e) {
+    delegate.onClose(e);
+    return this;
   }
 
   @Override

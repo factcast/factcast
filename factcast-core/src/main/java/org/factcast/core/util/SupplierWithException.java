@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.registry.metrics;
+package org.factcast.core.util;
 
 @FunctionalInterface
-public interface RunnableWithException<E extends Exception> {
-  void run() throws E;
+public interface SupplierWithException<R, E extends Exception> {
+  R get() throws E;
 }
