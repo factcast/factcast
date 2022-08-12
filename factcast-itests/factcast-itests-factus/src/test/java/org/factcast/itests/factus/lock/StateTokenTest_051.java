@@ -20,10 +20,10 @@ import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.lock.Attempt;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.itests.factus.Application;
+import org.factcast.itests.TestFactusApplication;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.FactcastTestConfig;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
@@ -35,7 +35,7 @@ import org.springframework.test.context.ContextConfiguration;
 @FactcastTestConfig(factcastVersion = "0.5.1")
 @SpringBootTest
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
-@ContextConfiguration(classes = {Application.class})
+@ContextConfiguration(classes = TestFactusApplication.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class StateTokenTest_051 extends AbstractFactCastIntegrationTest {
   @Autowired FactCast fc;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package config;
+package org.factcast.itests.factus.config;
 
 import org.factcast.itests.factus.proj.RedissonManagedUserNames;
 import org.factcast.itests.factus.proj.TxRedissonManagedUserNames;

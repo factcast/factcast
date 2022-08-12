@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.factus;
+package org.factcast.itests.factus.client;
 
-import java.util.Collections;
-import java.util.Set;
-import java.util.UUID;
-import lombok.*;
+import java.util.*;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.FactHeader;

@@ -16,7 +16,7 @@
 package org.factcast.itests.factus.v3compat;
 
 import org.factcast.core.snap.SnapshotCache;
-import org.factcast.itests.factus.RedissonSnapshotCacheTest;
+import org.factcast.itests.factus.client.RedissonSnapshotCacheTest;
 import org.factcast.test.FactcastTestConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 

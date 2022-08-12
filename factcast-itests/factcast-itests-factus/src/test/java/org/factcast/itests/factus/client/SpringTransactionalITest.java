@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.factus;
+package org.factcast.itests.factus.client;
 
 import static java.util.UUID.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,6 +38,7 @@ import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.factus.spring.tx.AbstractSpringTxManagedProjection;
 import org.factcast.factus.spring.tx.AbstractSpringTxSubscribedProjection;
 import org.factcast.factus.spring.tx.SpringTransactional;
+import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,7 +56,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.testcontainers.containers.PostgreSQLContainer;
 
 @SpringBootTest
-@ContextConfiguration(classes = {Application.class})
+@ContextConfiguration(classes = TestFactusApplication.class)
 @EnableAutoConfiguration
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @Slf4j

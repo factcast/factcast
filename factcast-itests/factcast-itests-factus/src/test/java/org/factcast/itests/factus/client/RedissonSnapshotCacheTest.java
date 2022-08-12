@@ -13,30 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.factus;
+package org.factcast.itests.factus.client;
 
 import org.factcast.core.snap.SnapshotCache;
-import org.factcast.spring.boot.autoconfigure.core.RedissonSnapshotCacheAutoConfiguration;
-import org.redisson.spring.starter.RedissonAutoConfiguration;
+import org.factcast.itests.TestFactusApplication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
-@EnableAutoConfiguration(
-    exclude = {
-      RedissonSnapshotCacheAutoConfiguration.class,
-      RedissonAutoConfiguration.class,
-      RedisAutoConfiguration.class,
-      DataSourceAutoConfiguration.class
-    })
-@ContextConfiguration(classes = Application.class)
-public class FactCastSnapshotCacheTest extends SnapshotCacheTest {
+@ContextConfiguration(classes = TestFactusApplication.class)
+@EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
+public class RedissonSnapshotCacheTest extends SnapshotCacheTest {
+
   @Autowired
-  public FactCastSnapshotCacheTest(SnapshotCache repository) {
+  public RedissonSnapshotCacheTest(SnapshotCache repository) {
     super(repository);
   }
 }

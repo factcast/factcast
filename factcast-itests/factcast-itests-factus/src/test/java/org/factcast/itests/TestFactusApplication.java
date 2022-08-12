@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.factus;
+package org.factcast.itests;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
@@ -34,10 +34,10 @@ import org.springframework.context.annotation.Bean;
 @SpringBootApplication
 @Slf4j
 @EnableAutoConfiguration(exclude = CompositeMeterRegistryAutoConfiguration.class)
-public class Application {
+public class TestFactusApplication {
 
   public static void main(String[] args) {
-    SpringApplication.run(Application.class, args);
+    SpringApplication.run(TestFactusApplication.class, args);
   }
 
   @Bean

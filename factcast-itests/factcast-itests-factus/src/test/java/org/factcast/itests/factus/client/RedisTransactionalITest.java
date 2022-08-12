@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.factus;
+package org.factcast.itests.factus.client;
 
 import static java.util.UUID.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
-import config.RedissonProjectionConfiguration;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
@@ -34,6 +33,8 @@ import org.factcast.factus.Factus;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.redis.tx.RedisTransactional;
 import org.factcast.factus.serializer.ProjectionMetaData;
+import org.factcast.itests.TestFactusApplication;
+import org.factcast.itests.factus.config.RedissonProjectionConfiguration;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.proj.TxRedissonManagedUserNames;
 import org.factcast.itests.factus.proj.TxRedissonSubscribedUserNames;
@@ -53,7 +54,8 @@ import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
-@ContextConfiguration(classes = {Application.class, RedissonProjectionConfiguration.class})
+@ContextConfiguration(
+    classes = {TestFactusApplication.class, RedissonProjectionConfiguration.class})
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 @DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
 @Slf4j

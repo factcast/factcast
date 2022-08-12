@@ -15,9 +15,7 @@
  */
 package org.factcast.itests.factus.proj;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import org.factcast.factus.Handler;
 import org.factcast.factus.redis.AbstractRedisManagedProjection;
 import org.factcast.factus.redis.batch.RedisBatched;

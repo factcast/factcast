@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.factus;
+package org.factcast.itests.factus.client;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,6 +30,7 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.factus.Factus;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.EventSerializer;
+import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.event.versioned.v2.UserCreated;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
@@ -42,7 +43,7 @@ import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
-@ContextConfiguration(classes = {Application.class})
+@ContextConfiguration(classes = TestFactusApplication.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j
 class FactusClientFetchingTransformedTest extends AbstractFactCastIntegrationTest {
