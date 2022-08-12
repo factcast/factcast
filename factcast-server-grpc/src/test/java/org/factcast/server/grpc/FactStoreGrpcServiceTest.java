@@ -32,6 +32,8 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.util.*;
 import lombok.NonNull;
+import lombok.SneakyThrows;
+import nl.altindag.log.LogCaptor;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
@@ -1095,5 +1097,16 @@ public class FactStoreGrpcServiceTest {
     when(f.jsonHeader()).thenReturn("{borken");
     Fact f1 = uut.tagFactSource(f, "after");
     assertSame(f, f1);
+  }
+
+  @SneakyThrows
+  @Test
+  void logsServerVersion() {
+    LogCaptor logCaptor = LogCaptor.forClass(FactStoreGrpcService.class);
+    logCaptor.setLogLevelToInfo();
+
+    uut.afterPropertiesSet();
+
+    assertThat(logCaptor.getInfoLogs()).contains("Service version: UNKNOWN");
   }
 }

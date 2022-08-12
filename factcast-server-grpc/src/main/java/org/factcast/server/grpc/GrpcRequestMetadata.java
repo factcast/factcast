@@ -20,8 +20,8 @@ import com.google.common.base.Preconditions;
 import io.grpc.Metadata;
 import java.util.*;
 import java.util.stream.*;
-import javax.validation.constraints.NotNull;
 import lombok.AccessLevel;
+import lombok.NonNull;
 import lombok.Setter;
 import org.factcast.grpc.api.Headers;
 
@@ -55,22 +55,22 @@ public class GrpcRequestMetadata {
     return grpcRequestMetadata;
   }
 
-  @NotNull
+  @NonNull
   public Optional<String> clientId() {
     return Optional.ofNullable(headers).map(h -> h.get(Headers.CLIENT_ID));
   }
 
-  @NotNull
+  @NonNull
   public Optional<String> clientVersion() {
     return Optional.ofNullable(headers).map(h -> h.get(Headers.CLIENT_VERSION));
   }
 
-  @NotNull
+  @NonNull
   public String clientIdAsString() {
     return clientId().orElse(UNKNOWN);
   }
 
-  @NotNull
+  @NonNull
   public String clientVersionAsString() {
     return clientVersion().orElse(UNKNOWN);
   }

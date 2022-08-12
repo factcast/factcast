@@ -30,14 +30,14 @@ class MavenHelperTest {
   }
 
   @Test
-  public void testRetrieveImplementationVersionEmptyPropertyFile() {
+  void testRetrieveImplementationVersionEmptyPropertyFile() {
     URL resource = MavenHelperTest.class.getResource("/no-version.properties");
     Optional<String> actual = MavenHelper.getImplVersion(resource);
     assertThat(actual).isEmpty();
   }
 
   @Test
-  public void testRetrieveImplementationVersionCannotReadFile() throws Exception {
+  void testRetrieveImplementationVersionCannotReadFile() throws Exception {
     URL resource = MavenHelperTest.class.getResource("/file-not-found");
     Optional<String> actual = MavenHelper.getImplVersion(resource);
     assertThat(actual).isEmpty();
