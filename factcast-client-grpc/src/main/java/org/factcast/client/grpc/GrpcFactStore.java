@@ -240,7 +240,7 @@ public class GrpcFactStore implements FactStore {
     else return internalSubscribe(req, observer);
   }
 
-  public Subscription internalSubscribe(
+  public InternalSubscription internalSubscribe(
       @NonNull SubscriptionRequestTO req, @NonNull FactObserver observer) {
     return callAndHandle(
         () -> {

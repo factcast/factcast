@@ -16,7 +16,9 @@
 package org.factcast.factus.metrics;
 
 import io.micrometer.core.instrument.Tags;
-import java.util.function.Supplier;
+import java.util.function.*;
+import org.factcast.core.util.RunnableWithException;
+import org.factcast.core.util.SupplierWithException;
 
 public interface FactusMetrics {
 

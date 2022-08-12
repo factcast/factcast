@@ -15,9 +15,11 @@
  */
 package org.factcast.store.registry.validation;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.*;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -31,10 +33,7 @@ import org.factcast.core.FactValidationException;
 @RequiredArgsConstructor
 public class FactValidationAspect {
 
-  // tests with real live facts show that serial validation of 1000 facts cost about 20ms on
-  // commodity hardware,
-  // so parallelization is probably only worth it when there are huge batches during mass ingestion
-  public static final int MINIMUM_FACT_LIST_SIZE_TO_GO_PARALLEL = 1000;
+  public static final int MAX_ERROR_MESSAGES = 25;
   private final FactValidator validator;
 
   // not hogging the common FJP. Also limiting parallelism to less of what the common pool has.
@@ -57,9 +56,32 @@ public class FactValidationAspect {
     Stream<? extends Fact> stream = facts.stream().parallel();
     List<FactValidationError> errors = validate(stream);
 
-    if (!errors.isEmpty())
-      throw new FactValidationException(
-          errors.stream().map(FactValidationError::toString).collect(Collectors.toList()));
+    if (!errors.isEmpty()) {
+      throw new FactValidationException(extractMessages(errors));
+    }
+  }
+
+  @NonNull
+  @VisibleForTesting
+  static List<String> extractMessages(@NonNull List<FactValidationError> errors) {
+    // see #2105
+
+    // remove duplicates
+    LinkedHashSet<FactValidationError> orderedSet = new LinkedHashSet<>(errors);
+
+    List<String> errMsgs =
+        orderedSet.stream()
+            // limit the amount of messages
+            .limit(MAX_ERROR_MESSAGES)
+            .map(FactValidationError::toString)
+            .collect(Collectors.toList());
+    int numberOfErrors = orderedSet.size();
+    if (numberOfErrors > MAX_ERROR_MESSAGES)
+      errMsgs.add(
+          "... "
+              + (numberOfErrors - MAX_ERROR_MESSAGES)
+              + " more validation errors were suppressed");
+    return errMsgs;
   }
 
   private List<FactValidationError> validate(Stream<? extends Fact> stream) {

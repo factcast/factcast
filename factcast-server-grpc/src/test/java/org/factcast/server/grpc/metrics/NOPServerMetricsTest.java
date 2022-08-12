@@ -16,14 +16,16 @@
 package org.factcast.server.grpc.metrics;
 
 import io.micrometer.core.instrument.Tags;
-import java.util.function.Supplier;
+import java.util.function.*;
 import lombok.SneakyThrows;
-import org.factcast.factus.metrics.RunnableWithException;
-import org.factcast.factus.metrics.SupplierWithException;
+import org.factcast.core.util.RunnableWithException;
+import org.factcast.core.util.SupplierWithException;
 import org.factcast.server.grpc.metrics.ServerMetrics.EVENT;
 import org.factcast.server.grpc.metrics.ServerMetrics.OP;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;

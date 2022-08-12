@@ -19,6 +19,8 @@ import io.micrometer.core.instrument.Tags;
 import java.util.function.*;
 import lombok.Getter;
 import lombok.NonNull;
+import org.factcast.core.util.RunnableWithException;
+import org.factcast.core.util.SupplierWithException;
 
 public interface RegistryMetrics {
   String TAG_STATUS_CODE_KEY = "code";
