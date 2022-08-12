@@ -25,7 +25,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.google.common.base.Stopwatch;
 import config.RedissonProjectionConfiguration;
 import java.util.*;
-import java.util.ArrayList;
 import java.util.concurrent.*;
 import lombok.SneakyThrows;
 import lombok.Value;
@@ -35,17 +34,14 @@ import org.factcast.core.event.EventConverter;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.Factus;
 import org.factcast.factus.HandlerFor;
-import org.factcast.factus.event.EventObject;
 import org.factcast.factus.lock.LockedOperationAbortedException;
 import org.factcast.factus.projection.Aggregate;
-import org.factcast.factus.projection.LocalManagedProjection;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.factus.event.TestAggregateIncremented;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.*;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
@@ -125,99 +121,6 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
     var sw = Stopwatch.createStarted();
     r.run();
     log.info("{} {}ms", s, sw.stop().elapsed().toMillis());
-  }
-
-  @SneakyThrows
-  @Test
-  @Disabled // TODO remove
-  public void txBatchProcessingPerformance() {
-
-    int MAX = 10000;
-    var l = new ArrayList<EventObject>(MAX);
-    log.info("preparing {} Events ", MAX);
-    for (int i = 0; i < MAX; i++) {
-      l.add(new UserCreated(randomUUID(), getClass().getSimpleName() + ":" + i));
-    }
-    log.info("publishing {} Events ", MAX);
-    factus.publish(l);
-    log.info("Cooldown of a sec");
-    Thread.sleep(1000);
-
-    {
-      var sw = Stopwatch.createStarted();
-      RedissonManagedUserNames p = new RedissonManagedUserNames(redissonClient);
-      factus.update(p);
-      log.info("plain {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
-      p.clear();
-      p.factStreamPosition(new UUID(0, 0));
-    }
-    {
-      var sw = Stopwatch.createStarted();
-      RedissonManagedUserNames p = new RedissonManagedUserNames(redissonClient);
-      factus.update(p);
-      log.info("plain {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
-      p.clear();
-      p.factStreamPosition(new UUID(0, 0));
-    }
-    // ----------tx
-    {
-      var sw = Stopwatch.createStarted();
-      TxRedissonManagedUserNames p = new TxRedissonManagedUserNames(redissonClient);
-      factus.update(p);
-      log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
-      p.clear();
-      p.factStreamPosition(new UUID(0, 0));
-    }
-
-    {
-      var sw = Stopwatch.createStarted();
-      TxRedissonManagedUserNames p = new TxRedissonManagedUserNames(redissonClient);
-      factus.update(p);
-      log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
-      p.clear();
-      p.factStreamPosition(new UUID(0, 0));
-    }
-
-    // ------------ sub
-
-    // ----------tx
-    {
-      var sw = Stopwatch.createStarted();
-      TxRedissonSubscribedUserNames p = new TxRedissonSubscribedUserNames(redissonClient);
-      var sub = factus.subscribeAndBlock(p);
-      sub.awaitCatchup();
-      log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
-      p.clear();
-      p.factStreamPosition(new UUID(0, 0));
-    }
-
-    {
-      var sw = Stopwatch.createStarted();
-      TxRedissonSubscribedUserNames p = new TxRedissonSubscribedUserNames(redissonClient);
-      var sub = factus.subscribeAndBlock(p);
-      sub.awaitCatchup();
-      log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
-      p.clear();
-      p.factStreamPosition(new UUID(0, 0));
-    }
-
-    // ------------ batch
-    {
-      var sw = Stopwatch.createStarted();
-      BatchRedissonManagedUserNames p = new BatchRedissonManagedUserNames(redissonClient);
-      factus.update(p);
-      log.info("batch {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
-      p.clear();
-      p.factStreamPosition(new UUID(0, 0));
-    }
-    {
-      var sw = Stopwatch.createStarted();
-      BatchRedissonManagedUserNames p = new BatchRedissonManagedUserNames(redissonClient);
-      factus.update(p);
-      log.info("batch {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
-      p.clear();
-      p.factStreamPosition(new UUID(0, 0));
-    }
   }
 
   @SneakyThrows
@@ -609,18 +512,6 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
 
   @ProjectionMetaData(serial = 1)
   static class SimpleAggregate extends Aggregate {
-    static final String ns = "ns";
-    static final String type = "foo";
-
-    transient int factsConsumed = 0;
-
-    @HandlerFor(ns = ns, type = type)
-    void apply(Fact f) {
-      factsConsumed++;
-    }
-  }
-
-  static class SimpleManaged extends LocalManagedProjection {
     static final String ns = "ns";
     static final String type = "foo";
 
