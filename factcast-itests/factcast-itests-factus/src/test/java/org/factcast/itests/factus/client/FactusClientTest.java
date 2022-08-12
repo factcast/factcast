@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.factus;
+package org.factcast.itests.factus.client;
 
 import static java.util.Arrays.*;
 import static java.util.UUID.*;
@@ -23,7 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.google.common.base.Stopwatch;
-import config.RedissonProjectionConfiguration;
 import java.util.*;
 import java.util.concurrent.*;
 import lombok.SneakyThrows;
@@ -37,6 +36,8 @@ import org.factcast.factus.HandlerFor;
 import org.factcast.factus.lock.LockedOperationAbortedException;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.serializer.ProjectionMetaData;
+import org.factcast.itests.TestFactusApplication;
+import org.factcast.itests.factus.config.RedissonProjectionConfiguration;
 import org.factcast.itests.factus.event.TestAggregateIncremented;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
@@ -55,7 +56,8 @@ import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
-@ContextConfiguration(classes = {Application.class, RedissonProjectionConfiguration.class})
+@ContextConfiguration(
+    classes = {TestFactusApplication.class, RedissonProjectionConfiguration.class})
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j

@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.factus;
+package org.factcast.itests.factus.client;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import config.RedissonProjectionConfiguration;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Factus;
+import org.factcast.itests.TestFactusApplication;
+import org.factcast.itests.factus.config.RedissonProjectionConfiguration;
 import org.factcast.itests.factus.proj.UserV1;
 import org.factcast.itests.factus.proj.UserV2;
 import org.factcast.test.AbstractFactCastIntegrationTest;
@@ -34,7 +35,8 @@ import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
-@ContextConfiguration(classes = {Application.class, RedissonProjectionConfiguration.class})
+@ContextConfiguration(
+    classes = {TestFactusApplication.class, RedissonProjectionConfiguration.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j
 class FactusClientTestWithSchemaRegistry extends AbstractFactCastIntegrationTest {

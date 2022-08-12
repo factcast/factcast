@@ -15,21 +15,21 @@
  */
 package org.factcast.itests.factus.filtering;
 
-import static java.util.Arrays.*;
 import static java.util.UUID.*;
-import static java.util.stream.Collectors.*;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.util.Maps;
 import org.factcast.core.event.EventConverter;
 import org.factcast.factus.Factus;
-import org.factcast.itests.factus.Application;
+import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.event.UserCreated;
-import org.factcast.itests.factus.proj.*;
+import org.factcast.itests.factus.proj.LocalUserNamesFilterByAggregateId;
+import org.factcast.itests.factus.proj.LocalUserNamesFilterByMeta;
+import org.factcast.itests.factus.proj.LocalUserNamesFilterByScript;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
@@ -39,7 +39,7 @@ import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
-@ContextConfiguration(classes = {Application.class})
+@ContextConfiguration(classes = TestFactusApplication.class)
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j

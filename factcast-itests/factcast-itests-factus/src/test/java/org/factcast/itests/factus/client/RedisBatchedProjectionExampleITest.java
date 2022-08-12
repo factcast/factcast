@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.factus;
+package org.factcast.itests.factus.client;
 
 import static java.util.UUID.*;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Arrays;
+import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Factus;
+import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
-import org.factcast.itests.factus.proj.RedisTransactionalProjectionExample;
+import org.factcast.itests.factus.proj.RedisBatchedProjectionExample;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.redisson.api.RedissonClient;
@@ -32,17 +33,17 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+@SpringBootTest(classes = TestFactusApplication.class)
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 @Slf4j
-public class RedisTransactionalProjectionExampleITest extends AbstractFactCastIntegrationTest {
+public class RedisBatchedProjectionExampleITest extends AbstractFactCastIntegrationTest {
 
   @Autowired Factus factus;
 
   @Autowired RedissonClient redissonClient;
 
   @Test
-  void getUsers() {
+  void getNames() {
     var event1 = new UserCreated(randomUUID(), "Peter");
     var event2 = new UserCreated(randomUUID(), "Paul");
     var event3 = new UserCreated(randomUUID(), "Klaus");
@@ -51,7 +52,7 @@ public class RedisTransactionalProjectionExampleITest extends AbstractFactCastIn
     log.info("Publishing test events");
     factus.publish(Arrays.asList(event1, event2, event3, event4));
 
-    var uut = new RedisTransactionalProjectionExample.UserNames(redissonClient);
+    var uut = new RedisBatchedProjectionExample.UserNames(redissonClient);
     factus.update(uut);
     var userNames = uut.getUserNames();
 
