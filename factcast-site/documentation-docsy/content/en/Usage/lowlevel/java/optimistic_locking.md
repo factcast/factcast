@@ -96,7 +96,7 @@ factcast.lock("myBankNamespace")
 
 First, you tell factcast to record a state according to all events that have either *sourceAccountId* or *targetAccountId* in their list of aggIds and are on namespace *myBankNamespace*. While the namespace is not strictly necessary, it is encouraged to use it - but it depends on your decision on how to use namespaces and group Facts within them.
 
-The number of retries is set to *100* here (default is 10, which for many systems is an acceptable default). In essence this means, that the attempt will be executed at max 100 times, before factcast gives up and throws an ***OptimisticRetriesExceededException*** which extends ConcurrentModificationException.
+The number of retries is set to *100* here (default is 10, which for many systems is an acceptable default). In essence this means, that the attempt will be executed at max 100 times, before factcast gives up and throws an `OptimisticRetriesExceededException` which extends `ConcurrentModificationException`.
 
 If *interval* is not set, it defaults to 0 with the effect, that the code passed into *attempt* is continuously retried without any pause until it either *aborts*, succeeds, or the max number of retries was hit (see above).
 Setting it to *5* means, that before retrying, a 5 msec wait happens. 
@@ -112,14 +112,15 @@ public interface Attempt {
     //...
 }
 ```
-so that it has to return an instance of IntermediatePublishResult. The only way to create such an instance are static methods on the same interface (*abort* & *publish*) in order to make it obvious.
+so that it has to return an instance of `IntermediatePublishResult`. The only way to create such an instance are static methods on the same interface (`abort`, `publish`, ...) in order to make it obvious.
 This lambda now is called according to the logic above.
 
-Inside the lambda, you'd want to check the current state using the very latest facts from factcast (*repo.findById(...)*) and then check your business constraints on it (*if (source.amount() < amountToTransfer)*...).
+Inside the lambda, you'd want to check the current state using the very latest facts from factcast (`repo.findById(...)`) and then check your business constraints on it (`if (source.amount() < amountToTransfer)`...).
 If the constraints do not hold, you may choose to abort the Attempt and thus abort the process. In this case, the attempt will **not** be retried.
 
-On the other hand, if you choose to publish new facts using *Attempt.publish(...)*, the state will be checked and the Fact(s) will be published if there was not change in between (otherwise a retry will be issued, see above).
+On the other hand, if you choose to publish new facts using `Attempt.publish(...)`, the state will be checked and the Fact(s) will be published if there was not change in between (otherwise a retry will be issued, see above).
+In the rare case, that you do not want to publish anything, you can return `Attempt.withoutPublication()` to accomplish this.
 
-*Optionally*, you can pass a runnable using *.andThen* and schedule it for execution once, if **and only if** the publishing succeeded. Or in other words, this runnable is executed just once or never (in case of *abort* or *OptimisticRetriesExceededException*).
+*Optionally*, you can pass a runnable using `.andThen` and schedule it for execution once, if **and only if** the publishing succeeded. Or in other words, this runnable is executed just once or never (in case of *abort* or *OptimisticRetriesExceededException*).
 
 
