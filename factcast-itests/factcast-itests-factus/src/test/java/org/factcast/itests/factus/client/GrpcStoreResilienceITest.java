@@ -25,7 +25,6 @@ import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.factcast.test.FactCastExtension;
 import org.factcast.test.toxi.FactCastProxy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -75,7 +74,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
               public void run() {
                 // heal the communication
                 log.info("repairing proxy");
-                FactCastExtension.resetProxy();
+                proxy.reset();
               }
             },
             500);
@@ -104,7 +103,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
               public void run() {
                 // heal the communication
                 log.info("repairing proxy");
-                FactCastExtension.resetProxy();
+                proxy.reset();
               }
             },
             500);
@@ -129,7 +128,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
               public void run() {
                 // heal the communication
                 log.info("repairing proxy");
-                FactCastExtension.resetProxy();
+                proxy.reset();
               }
             },
             500);

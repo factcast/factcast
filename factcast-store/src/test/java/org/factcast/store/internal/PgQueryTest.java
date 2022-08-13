@@ -34,7 +34,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
@@ -77,7 +76,6 @@ public class PgQueryTest {
     return new EventBus(this.getClass().getSimpleName());
   }
 
-  @DirtiesContext
   @Test
   void testRoundtrip() {
     SubscriptionRequestTO req =
@@ -89,7 +87,6 @@ public class PgQueryTest {
     verify(c).onComplete();
   }
 
-  @DirtiesContext
   @Test
   void testRoundtripInsertBefore() {
     insertTestFact(TestHeader.create());
@@ -110,7 +107,6 @@ public class PgQueryTest {
     tpl.execute("INSERT INTO fact(header,payload) VALUES ('" + header + "','{}')");
   }
 
-  @DirtiesContext()
   @Test
   void testRoundtripInsertAfter() throws Exception {
     SubscriptionRequestTO req =
@@ -128,7 +124,6 @@ public class PgQueryTest {
     verify(c, times(2)).onNext(any(Fact.class));
   }
 
-  @DirtiesContext()
   @Test
   void testRoundtripCatchupEventsInsertedAfterStart() throws Exception {
     SubscriptionRequestTO req =
@@ -162,7 +157,6 @@ public class PgQueryTest {
     Thread.sleep(ms);
   }
 
-  @DirtiesContext()
   @Test
   void testRoundtripCompletion() throws Exception {
     SubscriptionRequestTO req =
@@ -184,7 +178,6 @@ public class PgQueryTest {
     verify(c, times(5)).onNext(any(Fact.class));
   }
 
-  @DirtiesContext()
   @Test
   void testCancel() throws Exception {
     SubscriptionRequestTO req =
