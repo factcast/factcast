@@ -44,10 +44,6 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
 
   @Override
   public boolean initialize(ExtensionContext ctx) {
-    FactcastTestConfig.Config config = discoverConfig(ctx);
-
-    startOrReuse(config);
-
     return true;
   }
 
@@ -66,7 +62,7 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                       .withNetworkAliases(dbName)
                       .withNetwork(FactCastExtension._docker_network);
               db.start();
-              ContainerProxy pgProxy = FactCastExtension.proxy(db, PG_PORT);
+              ContainerProxy pgProxy = FactCastExtension.createProxy(db, PG_PORT);
 
               GenericContainer fc =
                   new GenericContainer<>("factcast/factcast:" + config.factcastVersion())
@@ -91,10 +87,13 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                       .waitingFor(
                           new HostPortWaitStrategy().withStartupTimeout(Duration.ofSeconds(180)));
               fc.start();
-              ContainerProxy fcProxy = FactCastExtension.proxy(fc, FC_PORT);
+              ContainerProxy fcProxy = FactCastExtension.createProxy(fc, FC_PORT);
 
               return new Containers(
-                  db, fc, new PostgresqlProxy(pgProxy), new FactCastProxy(fcProxy));
+                  db,
+                  fc,
+                  new PostgresqlProxy(pgProxy),
+                  new FactCastProxy(fcProxy, FactCastExtension.client()));
             });
 
     ContainerProxy fcProxy = containers.fcProxy.get();
@@ -106,8 +105,6 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
   public void beforeAll(ExtensionContext ctx) {
     FactcastTestConfig.Config config = discoverConfig(ctx);
     startOrReuse(config);
-
-    FactCastIntegrationTestExtension.super.beforeAll(ctx);
   }
 
   private FactcastTestConfig.Config discoverConfig(ExtensionContext ctx) {
@@ -131,13 +128,21 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
               FactCastIntegrationTestExtension.inject(t, containers.pgProxy);
               FactCastIntegrationTestExtension.inject(t, containers.fcProxy);
             });
-    erasePostgres(containers);
   }
 
   @Override
   @SneakyThrows
   public void afterEach(ExtensionContext ctx) {
     erasePostgres(executions.get(discoverConfig(ctx)));
+
+    // set proxy fields to null to avoid confusion
+    ctx.getTestInstance()
+        .ifPresent(
+            t -> {
+              FactCastIntegrationTestExtension.inject(t, PostgresqlProxy.class, null);
+              FactCastIntegrationTestExtension.inject(t, FactCastProxy.class, null);
+            });
+
     FactCastIntegrationTestExtension.super.afterEach(ctx);
   }
 

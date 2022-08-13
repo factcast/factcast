@@ -40,7 +40,6 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.factcast.test.FactCastExtension;
 import org.factcast.test.toxi.FactCastProxy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -115,9 +114,9 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
     fetchAll(
         f -> {
           if (f.serial() == MAX_FACTS / 4) {
-            FactCastExtension.setProxyState(proxy.getName(), false);
+            proxy.disable();
             sleep(100);
-            FactCastExtension.setProxyState(proxy.getName(), true);
+            proxy.enable();
           }
           log.info("Got {}", f.serial());
           count.incrementAndGet();
@@ -140,9 +139,9 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
 
       await().atMost(3, SECONDS).untilAsserted(() -> assertThat(count.get()).isEqualTo(MAX_FACTS));
 
-      FactCastExtension.setProxyState(proxy.getName(), false);
+      proxy.disable();
       sleep(100);
-      FactCastExtension.setProxyState(proxy.getName(), true);
+      proxy.enable();
       fc.publish(Fact.builder().ns("ns").type("type").buildWithoutPayload());
 
       await()

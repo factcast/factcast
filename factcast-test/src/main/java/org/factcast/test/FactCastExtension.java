@@ -16,12 +16,10 @@
 package org.factcast.test;
 
 import com.google.common.collect.Lists;
-import eu.rekawek.toxiproxy.Proxy;
 import eu.rekawek.toxiproxy.ToxiproxyClient;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.stream.*;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.*;
 import org.testcontainers.containers.GenericContainer;
@@ -49,7 +47,7 @@ public class FactCastExtension
 
   @Override
   public void beforeEach(ExtensionContext context) throws Exception {
-    FactCastExtension.resetProxy();
+    toxiClient.reset();
     for (FactCastIntegrationTestExtension e : extensions) {
       e.beforeEach(context);
     }
@@ -64,7 +62,7 @@ public class FactCastExtension
 
   @Override
   public void afterEach(ExtensionContext context) throws Exception {
-    FactCastExtension.resetProxy();
+    toxiClient.reset();
     for (FactCastIntegrationTestExtension e : reverseExtensions) {
       e.afterEach(context);
     }
@@ -72,6 +70,7 @@ public class FactCastExtension
 
   @Override
   public void beforeAll(ExtensionContext context) throws Exception {
+
     synchronized (extensions) {
       if (!initialized) {
         initialize(context);
@@ -84,7 +83,7 @@ public class FactCastExtension
   }
 
   private void initialize(ExtensionContext context) {
-
+    // proxy will be started just once and always be the same container.
     initializeProxy();
 
     ArrayList<org.factcast.test.FactCastIntegrationTestExtension> discovered =
@@ -127,24 +126,8 @@ public class FactCastExtension
     toxiClient = new ToxiproxyClient(host, controlPort);
   }
 
-  public static ContainerProxy proxy(String host, int port) {
-    return toxiProxy.getProxy(host, port);
-  }
-
-  public static ContainerProxy proxy(GenericContainer<?> container, int port) {
+  public static ContainerProxy createProxy(GenericContainer<?> container, int port) {
     return toxiProxy.getProxy(container, port);
-  }
-
-  @SneakyThrows
-  public static void resetProxy() {
-    toxiClient.reset();
-  }
-
-  @SneakyThrows
-  public static void setProxyState(String name, boolean shouldBeOn) {
-    Proxy proxy = toxiClient.getProxy(name);
-    if (shouldBeOn) proxy.enable();
-    else proxy.disable();
   }
 
   public static ToxiproxyClient client() {

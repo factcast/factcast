@@ -18,6 +18,9 @@ package org.factcast.test;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestExecutionListeners;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -26,9 +29,11 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @ExtendWith({FactCastExtension.class})
 @Slf4j
 @Tag("integration")
+@SpringBootTest
 @TestExecutionListeners(
-    listeners = FactCastConfigChangeDirtyMarker.class,
+    listeners = AutoDirtyAfterMethod.class,
     mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
+@EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 public class AbstractFactCastIntegrationTest {
 
   // all the magic will be handled by the extension, this class is left over for compatibility

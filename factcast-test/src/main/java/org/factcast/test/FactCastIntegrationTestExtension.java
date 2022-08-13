@@ -16,10 +16,11 @@
 package org.factcast.test;
 
 import java.lang.reflect.Field;
-import java.util.List;
+import java.util.*;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.SneakyThrows;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.platform.commons.util.ReflectionUtils;
 import org.junit.platform.commons.util.ReflectionUtils.HierarchyTraversalMode;
 
@@ -43,13 +44,18 @@ public interface FactCastIntegrationTestExtension {
 
   default void afterAll(ExtensionContext ctx) {}
 
-  static void inject(@NonNull Object testInstance, @NonNull Object toInject) {
+  static void inject(
+      @NonNull Object testInstance, @NonNull Class<?> targetType, @Nullable Object toInject) {
     List<Field> proxyFields =
         ReflectionUtils.findFields(
             testInstance.getClass(),
-            f -> toInject.getClass().equals(f.getType()),
+            f -> targetType.equals(f.getType()),
             HierarchyTraversalMode.BOTTOM_UP);
     proxyFields.forEach(f -> setFieldValue(f, testInstance, toInject));
+  }
+
+  static void inject(@NonNull Object testInstance, @NonNull Object toInject) {
+    inject(testInstance, toInject.getClass(), toInject);
   }
 
   @SneakyThrows
