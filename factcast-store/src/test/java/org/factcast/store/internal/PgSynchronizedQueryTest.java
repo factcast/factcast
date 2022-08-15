@@ -27,6 +27,7 @@ import lombok.SneakyThrows;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.internal.filter.FactFilter;
+import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -35,12 +36,14 @@ import org.mockito.Answers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.quality.Strictness;
+import org.postgresql.util.PSQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
 
 @ExtendWith(MockitoExtension.class)
-public class PgSynchronizedQueryTest {
+class PgSynchronizedQueryTest {
 
   PgSynchronizedQuery uut;
 
@@ -58,7 +61,7 @@ public class PgSynchronizedQueryTest {
   @Mock PgLatestSerialFetcher fetcher;
 
   @Test
-  public void testRunWithIndex() {
+  void testRunWithIndex() {
     uut =
         new PgSynchronizedQuery(
             jdbcTemplate, sql, setter, rowHandler, serialToContinueFrom, fetcher);
@@ -67,7 +70,7 @@ public class PgSynchronizedQueryTest {
   }
 
   @Test
-  public void testRunWithoutIndex() {
+  void testRunWithoutIndex() {
     uut =
         new PgSynchronizedQuery(
             jdbcTemplate, sql, setter, rowHandler, serialToContinueFrom, fetcher);
@@ -90,6 +93,7 @@ public class PgSynchronizedQueryTest {
     @Mock FactFilter filter;
     @Mock FactInterceptor interceptor;
 
+    @Mock CurrentStatementHolder statementHolder;
     @InjectMocks private PgSynchronizedQuery.FactRowCallbackHandler uut;
 
     @Test
@@ -111,6 +115,60 @@ public class PgSynchronizedQueryTest {
       assertThatThrownBy(() -> uut.processRow(rs)).isInstanceOf(IllegalStateException.class);
 
       verifyNoInteractions(filter, serial, request);
+    }
+
+    @Test
+    @SneakyThrows
+    void swallowsExceptionAfterCancel() {
+      when(isConnectedSupplier.get()).thenReturn(true);
+      when(statementHolder.wasCanceled()).thenReturn(true);
+
+      // it should appear open,
+      when(rs.isClosed()).thenReturn(false);
+      // until
+      PSQLException mockException = mock(PSQLException.class);
+      when(rs.getString(anyString())).thenThrow(mockException);
+      uut.processRow(rs);
+      verifyNoMoreInteractions(subscription);
+    }
+
+    @Test
+    @SneakyThrows
+    void returnsIfCancelled() {
+      when(isConnectedSupplier.get()).thenReturn(true);
+      when(statementHolder.wasCanceled()).thenReturn(true);
+      when(rs.isClosed()).thenReturn(true);
+      uut.processRow(rs);
+      verifyNoMoreInteractions(subscription);
+    }
+
+    @Test
+    @SneakyThrows
+    void notifiesErrorWhenNotCanceled() {
+      when(isConnectedSupplier.get()).thenReturn(true);
+
+      // it should appear open,
+      when(rs.isClosed()).thenReturn(false);
+      // until
+      PSQLException mockException =
+          mock(PSQLException.class, withSettings().strictness(Strictness.LENIENT));
+      when(rs.getString(anyString())).thenThrow(mockException);
+
+      uut.processRow(rs);
+      verify(subscription).notifyError(mockException);
+    }
+
+    @Test
+    @SneakyThrows
+    void notifiesErrorWhenCanceledButUnexpectedException() {
+      when(isConnectedSupplier.get()).thenReturn(true);
+      // it should appear open,
+      when(rs.isClosed()).thenReturn(false);
+      // until
+      when(rs.getString(anyString())).thenThrow(RuntimeException.class);
+
+      uut.processRow(rs);
+      verify(subscription).notifyError(any(RuntimeException.class));
     }
 
     @Test

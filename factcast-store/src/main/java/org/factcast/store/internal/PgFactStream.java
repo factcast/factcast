@@ -102,7 +102,7 @@ public class PgFactStream {
     PreparedStatementSetter setter = q.createStatementSetter(serial);
     RowCallbackHandler rsHandler =
         new PgSynchronizedQuery.FactRowCallbackHandler(
-            subscription, interceptor, this::isConnected, serial, request);
+            subscription, interceptor, this::isConnected, serial, request, statementHolder);
     PgSynchronizedQuery query =
         new PgSynchronizedQuery(jdbcTemplate, sql, setter, rsHandler, serial, fetcher);
     catchupAndFollow(request, subscription, query);

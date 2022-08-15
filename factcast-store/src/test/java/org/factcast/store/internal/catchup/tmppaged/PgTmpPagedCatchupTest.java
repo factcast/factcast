@@ -95,7 +95,7 @@ class PgTmpPagedCatchupTest {
 
       uut.run();
 
-      verify(statementHolder).statement(null);
+      verify(statementHolder).clear();
     }
   }
 
