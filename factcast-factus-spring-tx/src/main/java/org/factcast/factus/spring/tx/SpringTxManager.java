@@ -60,4 +60,8 @@ class SpringTxManager {
       log.warn("Trying to rollback when no Transaction is in scope");
     }
   }
+
+  public boolean isRunning() {
+    return currentTx != null;
+  }
 }
