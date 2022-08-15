@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.base.Stopwatch;
 import eu.rekawek.toxiproxy.model.ToxicDirection;
+import java.util.*;
 import java.util.concurrent.*;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +30,10 @@ import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.redis.RedisProxy;
 import org.factcast.test.toxi.FactCastProxy;
 import org.factcast.test.toxi.PostgresqlProxy;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -41,8 +45,9 @@ import org.springframework.test.context.ContextConfiguration;
 @ContextConfiguration(classes = TestFactusApplication.class)
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 @Slf4j
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class FactusExtensionProxyFeatureTest extends AbstractFactCastIntegrationTest {
-  public static final long LATENCY = 300L;
+  public static final long LATENCY = 1000L;
   @Autowired Factus factus;
   @Autowired RedissonClient redis;
   private FactCastProxy fcProxy;
@@ -70,25 +75,30 @@ class FactusExtensionProxyFeatureTest extends AbstractFactCastIntegrationTest {
 
   @SneakyThrows
   @Test
+  @Order(1)
   void factcastInteractionWithLatency() {
+
+    fcProxy.toxics().latency(UUID.randomUUID().toString(), ToxicDirection.DOWNSTREAM, LATENCY);
     Stopwatch sw = Stopwatch.createStarted();
     publish();
-    long rtWithoutLatency = sw.stop().elapsed(TimeUnit.MILLISECONDS);
 
-    fcProxy.toxics().latency("some latency", ToxicDirection.UPSTREAM, LATENCY);
+    long rtWithLatency = sw.stop().elapsed(TimeUnit.MILLISECONDS);
+
+    fcProxy.reset();
 
     sw = Stopwatch.createStarted();
     publish();
-    long rtWithLatency = sw.stop().elapsed(TimeUnit.MILLISECONDS);
+    long rtWithoutLatency = sw.stop().elapsed(TimeUnit.MILLISECONDS);
 
-    assertThat(rtWithoutLatency).isLessThan(LATENCY);
+    assertThat(rtWithoutLatency).isLessThan(rtWithLatency);
     assertThat(rtWithLatency).isGreaterThanOrEqualTo(LATENCY);
   }
 
   @SneakyThrows
   @Test
-  void publishWithLatencyASecondTime() {
-    factcastInteractionWithLatency(); // fails if proxy was not reset
+  @Order(2)
+  void factcastInteractionWithLatencyWasReset() {
+    assertThat(fcProxy.get().toxics().getAll()).isEmpty();
   }
 
   @SneakyThrows

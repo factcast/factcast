@@ -92,7 +92,7 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
               return new Containers(
                   db,
                   fc,
-                  new PostgresqlProxy(pgProxy),
+                  new PostgresqlProxy(pgProxy, FactCastExtension.client()),
                   new FactCastProxy(fcProxy, FactCastExtension.client()));
             });
 
@@ -117,10 +117,10 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
   @SneakyThrows
   @Override
   public void beforeEach(ExtensionContext ctx) {
-    FactCastIntegrationTestExtension.super.beforeEach(ctx);
 
     FactcastTestConfig.Config config = discoverConfig(ctx);
     Containers containers = executions.get(config);
+    containers.fcProxy.reset();
 
     ctx.getTestInstance()
         .ifPresent(
@@ -142,8 +142,6 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
               FactCastIntegrationTestExtension.inject(t, PostgresqlProxy.class, null);
               FactCastIntegrationTestExtension.inject(t, FactCastProxy.class, null);
             });
-
-    FactCastIntegrationTestExtension.super.afterEach(ctx);
   }
 
   private void erasePostgres(Containers containers) throws SQLException {

@@ -47,7 +47,6 @@ public class FactCastExtension
 
   @Override
   public void beforeEach(ExtensionContext context) throws Exception {
-    toxiClient.reset();
     for (FactCastIntegrationTestExtension e : extensions) {
       e.beforeEach(context);
     }
@@ -70,7 +69,6 @@ public class FactCastExtension
 
   @Override
   public void beforeAll(ExtensionContext context) throws Exception {
-
     synchronized (extensions) {
       if (!initialized) {
         initialize(context);
