@@ -82,9 +82,9 @@ class AbstractSchemaRegistryTest {
       when(pgConfigurationProperties.isPersistentRegistry()).thenReturn(true);
       when(lockProvider.lock(any())).thenReturn(Optional.of(lock));
       underTest.fetchInitial();
-      // failed to lock, so...
+      // lock acquired, so...
       verify(lockProvider).lock(any());
-      // .. no more interaction expected
+      // .. it should fetch
       verify(indexFetcher).fetchIndex();
     }
 
