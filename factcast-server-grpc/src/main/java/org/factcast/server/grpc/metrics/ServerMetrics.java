@@ -59,7 +59,8 @@ public interface ServerMetrics {
   }
 
   enum EVENT {
-    SOME_EVENT_CHANGE_ME("something");
+    SOME_EVENT_CHANGE_ME("something"),
+    CLIENT_VERSION("clientversion");
 
     @NonNull @Getter final String event;
 
