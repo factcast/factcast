@@ -70,7 +70,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven-clean-plugin.version>3.2.0</maven-clean-plugin.version>
-    <maven-javadoc-plugin.version>3.4.0</maven-javadoc-plugin.version>
+    <maven-javadoc-plugin.version>3.4.1</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
     <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
     <maven-jar-plugin.version>3.2.2</maven-jar-plugin.version>
@@ -85,12 +85,12 @@
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
     <maven.compiler.version>3.10.1</maven.compiler.version>
-    <spotless-maven-plugin.version>2.24.0</spotless-maven-plugin.version>
+    <spotless-maven-plugin.version>2.24.1</spotless-maven-plugin.version>
     <directory-maven-plugin.version>1.0</directory-maven-plugin.version>
     <nexus-staging-maven-plugin.version>1.6.13</nexus-staging-maven-plugin.version>
     <assertj.version>3.23.1</assertj.version>
     <jackson.version>2.13.3</jackson.version>
-    <mockito.version>4.6.1</mockito.version>
+    <mockito.version>4.7.0</mockito.version>
     <junit-jupiter.version>5.9.0</junit-jupiter.version>
     <lombok.version>1.18.24</lombok.version>
     <slf4j-api.version>1.7.36</slf4j-api.version>
@@ -110,7 +110,7 @@
     <redisson.version>3.17.5</redisson.version>
     <redisson-spring-boot-starter.version>3.17.5</redisson-spring-boot-starter.version>
     <graaljs.version>22.2.0</graaljs.version>
-    <shedlock.version>4.39.0</shedlock.version>
+    <shedlock.version>4.40.0</shedlock.version>
     <byte-buddy.version>1.12.13</byte-buddy.version>
   </properties>
   <dependencies>

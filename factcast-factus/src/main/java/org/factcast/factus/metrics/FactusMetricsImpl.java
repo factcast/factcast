@@ -15,14 +15,16 @@
  */
 package org.factcast.factus.metrics;
 
-import static org.factcast.factus.metrics.TagKeys.*;
+import static org.factcast.factus.metrics.TagKeys.TAG_NAME;
 
 import com.google.common.base.Stopwatch;
 import io.micrometer.core.instrument.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
+import java.util.function.*;
 import lombok.NonNull;
+import org.factcast.core.util.RunnableWithException;
+import org.factcast.core.util.SupplierWithException;
 
 public class FactusMetricsImpl implements FactusMetrics {
   public static final String METRIC_NAME_TIMINGS = "factus.timings";

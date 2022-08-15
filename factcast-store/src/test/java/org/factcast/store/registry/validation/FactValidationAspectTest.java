@@ -15,6 +15,7 @@
  */
 package org.factcast.store.registry.validation;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.*;
 
@@ -90,5 +91,62 @@ public class FactValidationAspectTest {
       // expected
     }
     verify(jp, never()).proceed();
+  }
+
+  @Test
+  void extractMessagesLimits() {
+    List<FactValidationError> manyErrors = new ArrayList<>();
+    for (int i = 0; i < 1000; i++) {
+      manyErrors.add(new FactValidationError("meh " + (i)));
+    }
+    List<String> actual = FactValidationAspect.extractMessages(manyErrors);
+    assertThat(actual).hasSize(FactValidationAspect.MAX_ERROR_MESSAGES + 1);
+  }
+
+  @Test
+  void extractMessagesLimitsAndAddsMessage() {
+    List<FactValidationError> manyErrors = new ArrayList<>();
+    for (int i = 0; i < 1000; i++) {
+      manyErrors.add(new FactValidationError("meh " + (i)));
+    }
+    List<String> actual = FactValidationAspect.extractMessages(manyErrors);
+    assertThat(actual)
+        .hasSize(FactValidationAspect.MAX_ERROR_MESSAGES + 1)
+        .last()
+        .asString()
+        .isEqualTo(
+            "... "
+                + (1000 - FactValidationAspect.MAX_ERROR_MESSAGES)
+                + " more validation errors were suppressed");
+  }
+
+  @Test
+  void extractMessagesDeduplicatesSimple() {
+    List<FactValidationError> manyErrors = new ArrayList<>();
+    for (int i = 0; i < 1000; i++) {
+      manyErrors.add(new FactValidationError("meh "));
+    }
+    List<String> actual = FactValidationAspect.extractMessages(manyErrors);
+    assertThat(actual).hasSize(1);
+  }
+
+  @Test
+  void extractMessagesDeduplicates() {
+    List<FactValidationError> manyErrors = new ArrayList<>();
+    for (int i = 0; i < 1000; i++) {
+      manyErrors.add(new FactValidationError("meh " + (i % 10)));
+    }
+    List<String> actual = FactValidationAspect.extractMessages(manyErrors);
+    assertThat(actual).hasSize(10);
+  }
+
+  @Test
+  void extractMessages() {
+    List<FactValidationError> manyErrors = new ArrayList<>();
+    for (int i = 0; i < FactValidationAspect.MAX_ERROR_MESSAGES - 5; i++) {
+      manyErrors.add(new FactValidationError("meh " + i));
+    }
+    List<String> actual = FactValidationAspect.extractMessages(manyErrors);
+    assertThat(actual).hasSize(FactValidationAspect.MAX_ERROR_MESSAGES - 5);
   }
 }
