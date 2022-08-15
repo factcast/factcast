@@ -179,6 +179,19 @@ databaseChangeLog:
 
 
   - changeSet:
+      id: count_estimate
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue1170/count_estimate.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+
+  - changeSet:
       id: issue2019
       runInTransaction: false
       author: uweschaefer
@@ -210,6 +223,30 @@ databaseChangeLog:
         - sqlFile:
             encoding: utf8
             path: factcast/issue2050/removeTails.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue2131_toast_trans
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2131/toast_transformationcache.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue2131_toast_snap
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2131/toast_snapshotcache.sql
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true

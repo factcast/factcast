@@ -15,8 +15,7 @@
  */
 package org.factcast.factus.projector;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
@@ -32,4 +31,6 @@ public interface Projector<A extends Projection> {
   List<FactSpec> createFactSpecs();
 
   void onCatchup(UUID idOfLastFactApplied);
+
+  void flush();
 }

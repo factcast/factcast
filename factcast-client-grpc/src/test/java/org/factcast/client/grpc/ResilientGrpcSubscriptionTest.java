@@ -38,10 +38,7 @@ import org.factcast.client.grpc.ResilientGrpcSubscription.SubscriptionHolder;
 import org.factcast.client.grpc.ResilientGrpcSubscription.ThrowingBiConsumer;
 import org.factcast.core.Fact;
 import org.factcast.core.store.RetryableException;
-import org.factcast.core.subscription.FactStreamInfo;
-import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionClosedException;
-import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -61,7 +58,7 @@ class ResilientGrpcSubscriptionTest {
 
   @Mock private FactObserver obs;
 
-  @Mock private Subscription subscription;
+  @Mock private InternalSubscription subscription;
 
   private final ArgumentCaptor<FactObserver> observerAC =
       ArgumentCaptor.forClass(FactObserver.class);
@@ -199,7 +196,7 @@ class ResilientGrpcSubscriptionTest {
   void deletegateThrowing() {
     config.setEnabled(true).setAttempts(100);
 
-    Consumer<Subscription> consumer = mock(Consumer.class);
+    Consumer<InternalSubscription> consumer = mock(Consumer.class);
     doThrow(
             new RetryableException(new IOException()),
             new RetryableException(new Exception()),
@@ -218,7 +215,7 @@ class ResilientGrpcSubscriptionTest {
   void deletegateThrowingWithRetryDisabled() {
     config.setEnabled(false);
 
-    Consumer<Subscription> consumer = mock(Consumer.class);
+    Consumer<InternalSubscription> consumer = mock(Consumer.class);
     RetryableException initial = new RetryableException(new IOException());
     doThrow(initial, new RetryableException(new Exception()), new IllegalArgumentException())
         .when(consumer)
@@ -248,6 +245,46 @@ class ResilientGrpcSubscriptionTest {
   @SneakyThrows
   private void sleep(int i) {
     Thread.sleep(i);
+  }
+
+  @Test
+  void notifyCatchup() {
+    uut.notifyCatchup();
+    verify(subscription).notifyCatchup();
+  }
+
+  @Test
+  void notifyComplete() {
+    uut.notifyComplete();
+    verify(subscription).notifyComplete();
+  }
+
+  @Test
+  void notifyFastForward() {
+    @NonNull UUID id = UUID.randomUUID();
+    uut.notifyFastForward(id);
+    verify(subscription).notifyFastForward(id);
+  }
+
+  @Test
+  void notifyFactStreamInfo() {
+    @NonNull FactStreamInfo info = new FactStreamInfo(1, 2);
+    uut.notifyFactStreamInfo(info);
+    verify(subscription).notifyFactStreamInfo(info);
+  }
+
+  @Test
+  void notifyElement() {
+    @NonNull Fact e = Fact.builder().buildWithoutPayload();
+    uut.notifyElement(e);
+    verify(subscription).notifyElement(e);
+  }
+
+  @Test
+  void notifyError() {
+    @NonNull Exception e = new IllegalStateException();
+    uut.notifyError(e);
+    verify(subscription).notifyError(e);
   }
 
   @Nested
@@ -348,7 +385,7 @@ class ResilientGrpcSubscriptionTest {
     @SneakyThrows
     @Test
     void blocksUntilSubscriptionAvailable() {
-      Subscription s = mock(Subscription.class);
+      InternalSubscription s = mock(InternalSubscription.class);
       new Timer()
           .schedule(
               new TimerTask() {

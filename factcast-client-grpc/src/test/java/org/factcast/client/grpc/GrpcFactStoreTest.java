@@ -15,9 +15,9 @@
  */
 package org.factcast.client.grpc;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -26,7 +26,7 @@ import io.grpc.*;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.Callable;
+import java.util.concurrent.*;
 import lombok.NonNull;
 import org.assertj.core.util.Lists;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
@@ -51,8 +51,11 @@ import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -578,6 +581,21 @@ class GrpcFactStoreTest {
     uut.addClientIdTo(meta);
 
     verify(meta).put(same(Headers.CLIENT_ID), eq("gurke"));
+  }
+
+  @Test
+  void testAddClientVersionToMeta() {
+    Metadata meta = mock(Metadata.class);
+    uut =
+        new GrpcFactStore(
+            mock(Channel.class),
+            Optional.of("foo:bar"),
+            new FactCastGrpcClientProperties(),
+            "gurke");
+
+    uut.addClientVersionTo(meta, "x");
+
+    verify(meta).put(same(Headers.CLIENT_VERSION), eq("x"));
   }
 
   @Test
