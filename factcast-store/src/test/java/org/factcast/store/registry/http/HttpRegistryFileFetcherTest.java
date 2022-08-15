@@ -15,8 +15,10 @@
  */
 package org.factcast.store.registry.http;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import io.micrometer.core.instrument.Tags;
@@ -24,14 +26,14 @@ import java.net.URL;
 import lombok.SneakyThrows;
 import okhttp3.*;
 import okhttp3.Response.Builder;
+import org.factcast.core.util.SupplierWithException;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.RegistryFileFetchException;
 import org.factcast.store.registry.metrics.RegistryMetrics;
-import org.factcast.store.registry.metrics.SupplierWithException;
 import org.factcast.store.registry.transformation.TransformationSource;
 import org.factcast.store.registry.validation.schema.SchemaSource;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;

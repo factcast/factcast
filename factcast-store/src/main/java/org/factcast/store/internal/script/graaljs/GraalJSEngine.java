@@ -24,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.internal.script.JSArgument;
 import org.factcast.store.internal.script.JSEngine;
 import org.factcast.store.internal.script.exception.ScriptEngineException;
-import org.factcast.store.registry.metrics.SupplierWithException;
 
 @Slf4j
 public class GraalJSEngine implements JSEngine {
@@ -57,18 +56,24 @@ public class GraalJSEngine implements JSEngine {
     try {
       synchronized (engine) {
         return withTruffleClassloader(
-            () ->
-                engine.invokeFunction(
-                    functionName, Arrays.stream(input).map(Supplier::get).toArray()));
+            () -> {
+              try {
+                return engine.invokeFunction(
+                    functionName, Arrays.stream(input).map(Supplier::get).toArray());
+              } catch (NoSuchMethodException | ScriptException e) {
+                log.debug("Exception during the invocation of '{}'. Escalating.", functionName, e);
+                throw new ScriptEngineException(e);
+              }
+            });
       }
     } catch (Exception e) {
       log.debug("Exception during the invocation of '{}'. Escalating.", functionName, e);
-      throw new ScriptEngineException(e);
+      if (e instanceof ScriptEngineException) throw e;
+      else throw new ScriptEngineException(e);
     }
   }
 
-  public synchronized <T, E extends Exception> T withTruffleClassloader(
-      SupplierWithException<T, E> block) {
+  public synchronized <T> T withTruffleClassloader(Supplier<T> block) {
     ClassLoader oldCl = Thread.currentThread().getContextClassLoader();
     Thread.currentThread().setContextClassLoader(Truffle.class.getClassLoader());
     try {
