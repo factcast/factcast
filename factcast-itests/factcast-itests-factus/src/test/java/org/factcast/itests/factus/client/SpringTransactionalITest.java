@@ -17,19 +17,13 @@ package org.factcast.itests.factus.client;
 
 import static java.util.UUID.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.*;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.subscription.InternalSubscription;
-import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.Factus;
 import org.factcast.factus.Handler;
 import org.factcast.factus.event.EventObject;
@@ -52,7 +46,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.testcontainers.containers.PostgreSQLContainer;
 
 @SpringBootTest
 @ContextConfiguration(classes = TestFactusApplication.class)
@@ -62,17 +55,6 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
   @Autowired JdbcTemplate jdbcTemplate;
   @Autowired PlatformTransactionManager platformTransactionManager;
   @Autowired Factus factus;
-
-  public static PostgreSQLContainer postgreSQLContainer =
-      new PostgreSQLContainer("postgres:11.5").withPassword("sa").withUsername("sa");
-
-  static {
-    postgreSQLContainer.start();
-
-    System.setProperty("spring.datasource.url", postgreSQLContainer.getJdbcUrl());
-    System.setProperty("spring.datasource.username", postgreSQLContainer.getUsername());
-    System.setProperty("spring.datasource.password", postgreSQLContainer.getPassword());
-  }
 
   final int NUMBER_OF_EVENTS = 10;
 
@@ -241,47 +223,50 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
 
   @Nested
   class Subscribed {
-    @SneakyThrows
+    //    @SneakyThrows
+    //    @Test
+    //    public void txCommitsOnError() {
+    //
+    //      var subscribedProjection =
+    //          new Subscribed.BulkSize3ProjectionErrorAt3(platformTransactionManager,
+    // jdbcTemplate);
+    //      assertThat(subscribedProjection.userCount()).isZero();
+    //
+    //      // exec this in another thread
+    //      CompletableFuture.runAsync(
+    //              () -> {
+    //                Subscription subscription = factus.subscribeAndBlock(subscribedProjection);
+    //                subscribedProjection.subscription((InternalSubscription) subscription);
+    //
+    //                assertThatThrownBy(subscription::awaitComplete)
+    //                    .isInstanceOf(RuntimeException.class);
+    //              })
+    //          .get();
+    //
+    //      // make sure the first two are comitted
+    //      assertThat(subscribedProjection.userCount()).isEqualTo(2);
+    //    }
+
     @Test
-    public void txCommitsOnError() {
-
-      var subscribedProjection =
-          new Subscribed.BulkSize3ProjectionErrorAt3(platformTransactionManager, jdbcTemplate);
-      assertThat(subscribedProjection.userCount()).isZero();
-
-      // exec this in another thread
-      CompletableFuture.runAsync(
-              () -> {
-                Subscription subscription = factus.subscribeAndBlock(subscribedProjection);
-                subscribedProjection.subscription((InternalSubscription) subscription);
-
-                assertThatThrownBy(subscription::awaitComplete)
-                    .isInstanceOf(RuntimeException.class);
-              })
-          .get();
-
-      // make sure the first two are comitted
-      assertThat(subscribedProjection.userCount()).isEqualTo(2);
-    }
-
-    @Test
-    public void testBulkSize3() {
+    public void testBulkSize3() throws Exception {
       var s = new BulkSize3Projection(platformTransactionManager, jdbcTemplate);
-      factus.subscribeAndBlock(s).awaitCatchup();
+      try (var sub = factus.subscribeAndBlock(s).awaitCatchup(); ) {
 
-      assertThat(s.factStreamPositionModifications()).isEqualTo(4);
-      assertThat(s.txSeen()).hasSize(4);
-      assertThat(getUsers()).isEqualTo(NUMBER_OF_EVENTS);
+        assertThat(s.factStreamPositionModifications()).isEqualTo(4);
+        assertThat(s.txSeen()).hasSize(4);
+        assertThat(getUsers()).isEqualTo(NUMBER_OF_EVENTS);
+      }
     }
 
     @Test
-    public void testBulkSize5() {
+    public void testBulkSize5() throws Exception {
       var s = new BulkSize5Projection(platformTransactionManager, jdbcTemplate);
-      factus.subscribeAndBlock(s).awaitCatchup();
+      try (var sub = factus.subscribeAndBlock(s).awaitCatchup(); ) {
 
-      assertThat(s.factStreamPositionModifications()).isEqualTo(2);
-      assertThat(s.txSeen()).hasSize(2);
-      assertThat(getUsers()).isEqualTo(NUMBER_OF_EVENTS);
+        assertThat(s.factStreamPositionModifications()).isEqualTo(2);
+        assertThat(s.txSeen()).hasSize(2);
+        assertThat(getUsers()).isEqualTo(NUMBER_OF_EVENTS);
+      }
     }
 
     @Test
@@ -333,26 +318,6 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       assertThat(getUsers()).isEqualTo(5);
       assertThat(p.factStreamPositionModifications()).isEqualTo(1);
       assertThat(p.txSeen()).hasSize(1);
-    }
-
-    @ProjectionMetaData(serial = 1)
-    @SpringTransactional(bulkSize = 3)
-    class BulkSize3ProjectionErrorAt3 extends AbstractTrackingUserSubscribedProjection {
-      @Setter private InternalSubscription subscription;
-
-      public BulkSize3ProjectionErrorAt3(
-          @NonNull PlatformTransactionManager platformTransactionManager,
-          JdbcTemplate jdbcTemplate) {
-        super(platformTransactionManager, jdbcTemplate);
-      }
-
-      int count = 0;
-
-      @Override
-      protected void apply(UserCreated created) {
-        if (count++ < 2) super.apply(created);
-        else subscription.notifyError(new IOException("oh dear"));
-      }
     }
 
     @ProjectionMetaData(serial = 1)
@@ -535,10 +500,6 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
 
       jdbcTemplate.update(
           "INSERT INTO users (name,id) VALUES (?,?);", e.userName(), e.aggregateId());
-    }
-
-    int userCount() {
-      return jdbcTemplate.queryForObject("select count(*) from users ", Integer.class);
     }
 
     @Override

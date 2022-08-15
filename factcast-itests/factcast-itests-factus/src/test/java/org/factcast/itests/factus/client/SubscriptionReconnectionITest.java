@@ -44,15 +44,12 @@ import org.factcast.test.toxi.FactCastProxy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest
 @ContextConfiguration(classes = TestFactusApplication.class)
-@EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 @TestPropertySource(
     properties =
         "factcast.grpc.client.resilience.attempts="
@@ -188,6 +185,7 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
     fetchAll(f -> {});
   }
 
+  @SneakyThrows
   private void fetchAll(FactObserver o) {
     log.info("Fetching");
     SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("ns")).fromScratch();
@@ -196,17 +194,14 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
             f -> {
               o.onNext(f);
             })
-        .awaitComplete();
+        .awaitComplete()
+        .close();
   }
 
   private Subscription follow(FactObserver o) {
     log.info("Following");
     SubscriptionRequest req = SubscriptionRequest.follow(FactSpec.ns("ns")).fromScratch();
-    final var sub = fc.subscribe(req, o::onNext);
-
-    CompletableFuture.runAsync(sub::awaitComplete);
-
-    return sub;
+    return fc.subscribe(req, o::onNext);
   }
 
   @SneakyThrows

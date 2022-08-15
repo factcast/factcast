@@ -18,14 +18,11 @@ package org.factcast.itests.factus.client;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.itests.TestFactusApplication;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
 @ContextConfiguration(classes = TestFactusApplication.class)
-@EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 public class RedissonSnapshotCacheTest extends SnapshotCacheTest {
 
   @Autowired

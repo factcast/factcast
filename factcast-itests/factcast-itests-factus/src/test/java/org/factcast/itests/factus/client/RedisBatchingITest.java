@@ -23,6 +23,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.Factus;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.redis.batch.RedisBatched;
@@ -40,15 +41,12 @@ import org.junit.jupiter.api.Test;
 import org.redisson.api.RBatch;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
 @ContextConfiguration(
     classes = {TestFactusApplication.class, RedissonProjectionConfiguration.class})
-@EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 @Slf4j
 public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
   @Autowired Factus factus;
@@ -76,7 +74,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     public void mixedBatchManaged3() {
       BatchRedissonManagedUserNamesSize3 p = new BatchRedissonManagedUserNamesSize3(redissonClient);
       factus.update(p);
-      assertThat(p.userNames().size()).isEqualTo(1);
+      assertThat(p.userNames()).hasSize(1);
     }
 
     @SneakyThrows
@@ -84,7 +82,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     public void mixedBatchManaged2() {
       BatchRedissonManagedUserNamesSize2 p = new BatchRedissonManagedUserNamesSize2(redissonClient);
       factus.update(p);
-      assertThat(p.userNames().size()).isEqualTo(1);
+      assertThat(p.userNames()).hasSize(1);
     }
 
     @SneakyThrows
@@ -93,7 +91,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
       BatchRedissonSubscribedUserNamesSize3 p =
           new BatchRedissonSubscribedUserNamesSize3(redissonClient);
       factus.subscribeAndBlock(p).awaitCatchup();
-      assertThat(p.userNames().size()).isEqualTo(1);
+      assertThat(p.userNames()).hasSize(1);
     }
 
     @SneakyThrows
@@ -102,7 +100,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
       BatchRedissonSubscribedUserNamesSize2 p =
           new BatchRedissonSubscribedUserNamesSize2(redissonClient);
       factus.subscribeAndBlock(p).awaitCatchup();
-      assertThat(p.userNames().size()).isEqualTo(1);
+      assertThat(p.userNames()).hasSize(1);
     }
   }
 
@@ -124,7 +122,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
       BatchRedissonManagedUserNamesSize3 p = new BatchRedissonManagedUserNamesSize3(redissonClient);
       factus.update(p);
 
-      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
+      assertThat(p.userNames()).hasSize(NUMBER_OF_EVENTS);
       assertThat(p.stateModifications()).isEqualTo(4); // expected at 3,6,9,10
     }
 
@@ -134,7 +132,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
       BatchRedissonManagedUserNamesSize2 p = new BatchRedissonManagedUserNamesSize2(redissonClient);
       factus.update(p);
 
-      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
+      assertThat(p.userNames()).hasSize(NUMBER_OF_EVENTS);
       assertThat(p.stateModifications()).isEqualTo(5); // expected at 2,4,6,8,10
     }
 
@@ -153,7 +151,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
       }
 
       // only first bulk (size = 5) should be executed
-      assertThat(p.userNames().size()).isEqualTo(5);
+      assertThat(p.userNames()).hasSize(5);
       assertThat(p.stateModifications()).isEqualTo(1);
     }
   }
@@ -175,10 +173,12 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     public void bulkAppliesInBatch3() {
       BatchRedissonSubscribedUserNamesSize3 p =
           new BatchRedissonSubscribedUserNamesSize3(redissonClient);
-      factus.subscribeAndBlock(p).awaitCatchup();
+      try (Subscription sub = factus.subscribeAndBlock(p); ) {
+        sub.awaitCatchup();
 
-      assertThat(p.stateModifications()).isEqualTo(4); // expected at 3,6,9,10
-      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
+        assertThat(p.stateModifications()).isEqualTo(4); // expected at 3,6,9,10
+        assertThat(p.userNames()).hasSize(NUMBER_OF_EVENTS);
+      }
     }
 
     @SneakyThrows
@@ -186,10 +186,12 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     public void bulkAppliesInBatch2() {
       BatchRedissonSubscribedUserNamesSize2 p =
           new BatchRedissonSubscribedUserNamesSize2(redissonClient);
-      factus.subscribeAndBlock(p).awaitCatchup();
+      try (Subscription sub = factus.subscribeAndBlock(p); ) {
+        sub.awaitCatchup();
 
-      assertThat(p.stateModifications()).isEqualTo(5); // expected at 2,4,6,8,10
-      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
+        assertThat(p.stateModifications()).isEqualTo(5); // expected at 2,4,6,8,10
+        assertThat(p.userNames()).hasSize(NUMBER_OF_EVENTS);
+      }
     }
 
     @SneakyThrows
@@ -200,15 +202,14 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
 
       assertThat(p.userNames()).isEmpty();
 
-      try {
-        factus.subscribeAndBlock(p).awaitCatchup();
-      } catch (Throwable expected) {
-        // ignore
-      }
-
-      // only first bulk (size = 5) should be executed
+      try (Subscription sub = factus.subscribeAndBlock(p); ) {
+        try {
+          sub.awaitCatchup();
+        } catch (Exception expected) {
+        }
+      } // only first bulk (size = 5) should be executed
       assertThat(p.stateModifications()).isEqualTo(1);
-      assertThat(p.userNames().size()).isEqualTo(5);
+      assertThat(p.userNames()).hasSize(5);
     }
   }
 
