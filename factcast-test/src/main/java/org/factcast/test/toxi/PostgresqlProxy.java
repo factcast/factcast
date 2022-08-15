@@ -15,11 +15,48 @@
  */
 package org.factcast.test.toxi;
 
+import eu.rekawek.toxiproxy.ToxiproxyClient;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.testcontainers.containers.ToxiproxyContainer;
 
 public class PostgresqlProxy extends AbstractToxiProxySupplier {
-  public PostgresqlProxy(@NonNull ToxiproxyContainer.ContainerProxy proxy) {
+
+  private final String name;
+  private final ToxiproxyClient client;
+
+  public PostgresqlProxy(
+      @NonNull ToxiproxyContainer.ContainerProxy proxy, @NonNull ToxiproxyClient client) {
     super(proxy);
+    this.name = proxy.getName();
+    this.client = client;
+  }
+
+  @Override
+  public String toString() {
+    return "PostgresqlProxy[ip="
+        + getContainerIpAddress()
+        + ",proxyPort="
+        + getProxyPort()
+        + ",origProxyPort="
+        + getOriginalProxyPort()
+        + ",name="
+        + getName()
+        + "]";
+  }
+
+  @SneakyThrows
+  public void reset() {
+    client.reset();
+  }
+
+  @SneakyThrows
+  public void disable() {
+    client.getProxy(name).disable();
+  }
+
+  @SneakyThrows
+  public void enable() {
+    client.getProxy(name).enable();
   }
 }

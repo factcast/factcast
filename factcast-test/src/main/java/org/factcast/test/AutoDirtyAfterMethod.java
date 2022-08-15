@@ -24,7 +24,7 @@ public class AutoDirtyAfterMethod implements TestExecutionListener {
 
   @Override
   public void afterTestMethod(TestContext testContext) {
-    testContext.markApplicationContextDirty(DirtiesContext.HierarchyMode.CURRENT_LEVEL);
+    testContext.markApplicationContextDirty(DirtiesContext.HierarchyMode.EXHAUSTIVE);
     testContext.setAttribute(
         DependencyInjectionTestExecutionListener.REINJECT_DEPENDENCIES_ATTRIBUTE, Boolean.TRUE);
   }
