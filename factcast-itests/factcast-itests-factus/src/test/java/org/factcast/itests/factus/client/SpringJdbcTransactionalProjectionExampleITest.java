@@ -28,15 +28,12 @@ import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.testcontainers.containers.PostgreSQLContainer;
 
 @SpringBootTest
 @Slf4j
-@EnableAutoConfiguration
 public class SpringJdbcTransactionalProjectionExampleITest extends AbstractFactCastIntegrationTest {
 
   @Autowired JdbcTemplate jdbcTemplate;
@@ -44,17 +41,6 @@ public class SpringJdbcTransactionalProjectionExampleITest extends AbstractFactC
   @Autowired PlatformTransactionManager platformTransactionManager;
 
   @Autowired Factus factus;
-
-  public static PostgreSQLContainer postgreSQLContainer =
-      new PostgreSQLContainer("postgres:11.5").withPassword("sa").withUsername("sa");
-
-  static {
-    postgreSQLContainer.start();
-
-    System.setProperty("spring.datasource.url", postgreSQLContainer.getJdbcUrl());
-    System.setProperty("spring.datasource.username", postgreSQLContainer.getUsername());
-    System.setProperty("spring.datasource.password", postgreSQLContainer.getPassword());
-  }
 
   @BeforeEach
   void setUp() {

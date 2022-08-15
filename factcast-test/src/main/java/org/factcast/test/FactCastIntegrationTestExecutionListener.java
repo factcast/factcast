@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2022 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,70 +17,115 @@ package org.factcast.test;
 
 import com.google.common.collect.Lists;
 import eu.rekawek.toxiproxy.ToxiproxyClient;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.stream.*;
+import lombok.SneakyThrows;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.extension.*;
+import org.factcast.test.toxi.FactCastProxy;
+import org.factcast.test.toxi.PostgresqlProxy;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.TestContext;
+import org.springframework.test.context.TestExecutionListener;
+import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
+import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.ToxiproxyContainer;
-import org.testcontainers.containers.ToxiproxyContainer.ContainerProxy;
 import org.testcontainers.utility.DockerImageName;
 
 @Slf4j
-public class FactCastExtension
-    implements Extension,
-        BeforeEachCallback,
-        BeforeAllCallback,
-        AfterEachCallback,
-        AfterAllCallback {
+public class FactCastIntegrationTestExecutionListener implements TestExecutionListener {
 
   public static final Network _docker_network = Network.newNetwork();
   public static final String TOXIPROXY_NETWORK_ALIAS = "toxiproxy";
 
-  private static boolean initialized = false;
-  private static final List<FactCastIntegrationTestExtension> extensions = new LinkedList<>();
+  private static List<FactCastIntegrationTestExtension> extensions = new LinkedList<>();
   private static List<FactCastIntegrationTestExtension> reverseExtensions;
   private static ToxiproxyContainer toxiProxy;
   private static ToxiproxyClient toxiClient;
 
+  private static AtomicBoolean initialized = new AtomicBoolean(false);
+
   @Override
-  public void beforeEach(ExtensionContext context) throws Exception {
+  public void prepareTestInstance(TestContext testContext) throws Exception {}
+
+  @Override
+  public void beforeTestExecution(TestContext testContext) throws Exception {}
+
+  @Override
+  public void beforeTestClass(TestContext testContext) throws Exception {
+
+    if (!initialized.getAndSet(true)) initialize();
+
     for (FactCastIntegrationTestExtension e : extensions) {
-      e.beforeEach(context);
+      e.prepareContainers(testContext);
+    }
+
+    for (FactCastIntegrationTestExtension e : extensions) {
+      e.beforeAll(testContext);
     }
   }
 
   @Override
-  public void afterAll(ExtensionContext context) throws Exception {
-    for (FactCastIntegrationTestExtension e : reverseExtensions) {
-      e.afterAll(context);
+  public void beforeTestMethod(TestContext testContext) throws Exception {
+
+    for (FactCastIntegrationTestExtension e : extensions) {
+      e.injectFields(testContext);
+    }
+    for (FactCastIntegrationTestExtension e : extensions) {
+      e.beforeEach(testContext);
     }
   }
 
+  @SneakyThrows
   @Override
-  public void afterEach(ExtensionContext context) throws Exception {
+  public void afterTestMethod(TestContext testContext) throws SQLException {
+
     toxiClient.reset();
+
+    for (FactCastIntegrationTestExtension e : extensions) {
+      e.wipeExternalDataStore(testContext);
+    }
+
     for (FactCastIntegrationTestExtension e : reverseExtensions) {
-      e.afterEach(context);
+      e.afterEach(testContext);
     }
   }
 
   @Override
-  public void beforeAll(ExtensionContext context) throws Exception {
-    synchronized (extensions) {
-      if (!initialized) {
-        initialize(context);
-        initialized = true;
-      }
-    }
+  public void afterTestClass(TestContext testContext) throws Exception {
+
+    toxiClient.reset();
+
     for (FactCastIntegrationTestExtension e : extensions) {
-      e.beforeAll(context);
+      e.wipeExternalDataStore(testContext);
+    }
+
+    for (FactCastIntegrationTestExtension e : reverseExtensions) {
+      e.afterAll(testContext);
     }
   }
 
-  private void initialize(ExtensionContext context) {
+  @Override
+  public void afterTestExecution(TestContext testContext) throws Exception {
+    testContext.markApplicationContextDirty(DirtiesContext.HierarchyMode.EXHAUSTIVE);
+    testContext.setAttribute(
+        DependencyInjectionTestExecutionListener.REINJECT_DEPENDENCIES_ATTRIBUTE, Boolean.TRUE);
+  }
+
+  @Value
+  static class Containers {
+    PostgreSQLContainer db;
+    GenericContainer fc;
+    PostgresqlProxy pgProxy;
+    FactCastProxy fcProxy;
+    String jdbcUrl;
+  }
+
+  private void initialize() {
     // proxy will be started just once and always be the same container.
     initializeProxy();
 
@@ -90,7 +135,7 @@ public class FactCastExtension
     while (!discovered.isEmpty()) {
 
       for (FactCastIntegrationTestExtension e : discovered) {
-        if (e.initialize(context)) {
+        if (e.initialize()) {
           extensions.add(e);
         }
       }
@@ -124,7 +169,8 @@ public class FactCastExtension
     toxiClient = new ToxiproxyClient(host, controlPort);
   }
 
-  public static ContainerProxy createProxy(GenericContainer<?> container, int port) {
+  public static ToxiproxyContainer.ContainerProxy createProxy(
+      GenericContainer<?> container, int port) {
     return toxiProxy.getProxy(container, port);
   }
 

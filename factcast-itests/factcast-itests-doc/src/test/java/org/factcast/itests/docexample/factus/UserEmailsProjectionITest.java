@@ -15,23 +15,19 @@
  */
 package org.factcast.itests.docexample.factus;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import org.factcast.factus.Factus;
 import org.factcast.itests.docexample.factus.event.UserAdded;
 import org.factcast.itests.docexample.factus.event.UserRemoved;
-import org.factcast.test.FactCastExtension;
+import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-@ExtendWith(FactCastExtension.class)
-public class UserEmailsProjectionITest {
+public class UserEmailsProjectionITest extends AbstractFactCastIntegrationTest {
 
   @Autowired Factus factus;
 

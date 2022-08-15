@@ -15,16 +15,16 @@
  */
 package org.factcast.client.grpc;
 
-import static io.grpc.stub.ClientCalls.asyncServerStreamingCall;
+import static io.grpc.stub.ClientCalls.*;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.*;
 import io.grpc.stub.MetadataUtils;
 import io.grpc.stub.StreamObserver;
 import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
-import java.util.stream.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import lombok.Generated;
@@ -239,7 +239,7 @@ public class GrpcFactStore implements FactStore {
     else return internalSubscribe(req, observer);
   }
 
-  public InternalSubscription internalSubscribe(
+  public Subscription internalSubscribe(
       @NonNull SubscriptionRequestTO req, @NonNull FactObserver observer) {
     return callAndHandle(
         () -> {

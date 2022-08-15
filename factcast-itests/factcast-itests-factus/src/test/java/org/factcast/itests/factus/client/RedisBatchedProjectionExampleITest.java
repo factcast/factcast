@@ -26,24 +26,33 @@ import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.RedisBatchedProjectionExample;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.RepeatedTest;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest(classes = TestFactusApplication.class)
-@EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 @Slf4j
+@EnableAutoConfiguration
 public class RedisBatchedProjectionExampleITest extends AbstractFactCastIntegrationTest {
 
   @Autowired Factus factus;
 
   @Autowired RedissonClient redissonClient;
 
-  @Test
+  @RepeatedTest(20)
   void getNames() {
+    var uut = new RedisBatchedProjectionExample.UserNames(redissonClient);
+
+    assertThat(uut.count()).isZero();
+    assertThat(uut.getUserNames()).isEmpty();
+
+    factus.update(uut);
+
+    assertThat(uut.count()).isZero();
+    assertThat(uut.getUserNames()).isEmpty();
+
     var event1 = new UserCreated(randomUUID(), "Peter");
     var event2 = new UserCreated(randomUUID(), "Paul");
     var event3 = new UserCreated(randomUUID(), "Klaus");
@@ -52,10 +61,10 @@ public class RedisBatchedProjectionExampleITest extends AbstractFactCastIntegrat
     log.info("Publishing test events");
     factus.publish(Arrays.asList(event1, event2, event3, event4));
 
-    var uut = new RedisBatchedProjectionExample.UserNames(redissonClient);
     factus.update(uut);
     var userNames = uut.getUserNames();
 
     assertThat(userNames).containsExactlyInAnyOrder("Peter", "Paul");
+    assertThat(uut.count()).isEqualTo(4);
   }
 }

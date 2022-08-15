@@ -31,15 +31,12 @@ import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
 @ContextConfiguration(
     classes = {TestFactusApplication.class, RedissonProjectionConfiguration.class})
-@EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 @Slf4j
 class PublishDuplicateTest extends AbstractFactCastIntegrationTest {
 

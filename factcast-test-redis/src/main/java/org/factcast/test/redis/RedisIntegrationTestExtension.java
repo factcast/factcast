@@ -19,12 +19,10 @@ import java.util.*;
 import java.util.concurrent.*;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.test.FactCastExtension;
+import org.factcast.test.FactCastIntegrationTestExecutionListener;
 import org.factcast.test.FactCastIntegrationTestExtension;
-import org.junit.jupiter.api.extension.ExtensionContext;
-import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
-import org.redisson.config.Config;
+import org.springframework.test.context.TestContext;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.ToxiproxyContainer.ContainerProxy;
 
@@ -35,13 +33,6 @@ public class RedisIntegrationTestExtension implements FactCastIntegrationTestExt
   public static final int REDIS_PORT = 6379;
   private final Map<RedisConfig.Config, Containers> executions = new ConcurrentHashMap<>();
 
-  @Override
-  public boolean initialize(ExtensionContext ctx) {
-    final RedisConfig.Config config = discoverConfig(ctx);
-    startOrReuse(config);
-    return true;
-  }
-
   private void startOrReuse(RedisConfig.Config config) {
     final Containers container =
         executions.computeIfAbsent(
@@ -50,11 +41,13 @@ public class RedisIntegrationTestExtension implements FactCastIntegrationTestExt
               GenericContainer redis =
                   new GenericContainer<>("redis:" + config.redisVersion())
                       .withExposedPorts(REDIS_PORT)
-                      .withNetwork(FactCastExtension._docker_network);
+                      .withNetwork(FactCastIntegrationTestExecutionListener._docker_network);
               redis.start();
 
               return new Containers(
-                  redis, new RedisProxy(FactCastExtension.createProxy(redis, REDIS_PORT)));
+                  redis,
+                  new RedisProxy(
+                      FactCastIntegrationTestExecutionListener.createProxy(redis, REDIS_PORT)));
             });
 
     ContainerProxy redisProxy = container.redisProxy().get();
@@ -63,41 +56,23 @@ public class RedisIntegrationTestExtension implements FactCastIntegrationTestExt
   }
 
   @Override
-  public void beforeAll(ExtensionContext ctx) {
-    FactCastIntegrationTestExtension.super.beforeAll(ctx);
-    final RedisConfig.Config config = discoverConfig(ctx);
-    startOrReuse(config);
+  public void wipeExternalDataStore(TestContext ctx) {
+    ctx.getApplicationContext()
+        .getAutowireCapableBeanFactory()
+        .getBean(RedissonClient.class)
+        .getKeys()
+        .flushall();
   }
 
   @Override
-  public void beforeEach(ExtensionContext ctx) {
-    FactCastIntegrationTestExtension.super.beforeEach(ctx);
-    final RedisConfig.Config config = discoverConfig(ctx);
+  public void injectFields(TestContext ctx) {
+    final RedisConfig.Config config = discoverConfig(ctx.getTestClass());
     final Containers containers = executions.get(config);
-    ctx.getTestInstance()
-        .ifPresent(t -> FactCastIntegrationTestExtension.inject(t, containers.redisProxy));
+    FactCastIntegrationTestExtension.inject(ctx.getTestInstance(), containers.redisProxy);
   }
 
-  @Override
-  public void afterEach(ExtensionContext ctx) {
-    final RedisConfig.Config config = discoverConfig(ctx);
-    final Containers containers = executions.get(config);
-    FactCastIntegrationTestExtension.super.afterEach(ctx);
-    final String url =
-        "redis://" + containers.redis.getHost() + ":" + containers.redis.getMappedPort(REDIS_PORT);
-    log.trace("erasing redis state in between tests for {}", url);
-
-    final Config clientConfig = new Config().setThreads(1);
-    clientConfig.useSingleServer().setAddress(url);
-
-    final RedissonClient client = Redisson.create(clientConfig);
-    client.getKeys().flushdb();
-    client.shutdown();
-    FactCastIntegrationTestExtension.super.afterEach(ctx);
-  }
-
-  private RedisConfig.Config discoverConfig(ExtensionContext ctx) {
-    return ctx.getTestClass()
+  private RedisConfig.Config discoverConfig(Class<?> i) {
+    return Optional.ofNullable(i)
         .flatMap(x -> Optional.ofNullable(x.getAnnotation(RedisConfig.class)))
         .map(RedisConfig.Config::from)
         .orElse(RedisConfig.Config.defaults());
@@ -107,5 +82,11 @@ public class RedisIntegrationTestExtension implements FactCastIntegrationTestExt
   static class Containers {
     GenericContainer redis;
     RedisProxy redisProxy;
+  }
+
+  @Override
+  public void prepareContainers(TestContext ctx) {
+    final RedisConfig.Config config = discoverConfig(ctx.getTestClass());
+    startOrReuse(config);
   }
 }
