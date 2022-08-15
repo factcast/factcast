@@ -34,7 +34,6 @@ public class CurrentStatementHolder implements Closeable {
         log.info("Canceling statement " + statement);
         try {
           statement.cancel();
-          // also set it to null, so that a thread can see it its statement was canceled
           wasCanceled = true;
         } catch (SQLException e) {
           log.debug("Exception while closing statement {}:", statement, e);
