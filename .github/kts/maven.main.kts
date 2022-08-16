@@ -5,6 +5,7 @@
 import it.krzeminski.githubactions.actions.actions.CacheV3
 import it.krzeminski.githubactions.actions.actions.CheckoutV3
 import it.krzeminski.githubactions.actions.actions.SetupJavaV3
+import it.krzeminski.githubactions.actions.codecov.CodecovActionV3
 import it.krzeminski.githubactions.domain.RunnerType
 import it.krzeminski.githubactions.domain.Workflow
 import it.krzeminski.githubactions.domain.triggers.PullRequest
@@ -55,6 +56,16 @@ public val workflowMaven: Workflow = workflow(
         run(
             name = "Build with Maven",
             command = "./mvnw -B clean test --file pom.xml",
+        )
+        run(
+            name = "Remove partial execution reports",
+            command = "find -wholename \"**/target/jacoco-output\" -exec rm -rf {} +",
+        )
+        uses(
+            name = "CodecovActionV3",
+            action = CodecovActionV3(
+                token = "${'$'}{{ secrets.CODECOV_TOKEN }}",
+            ),
         )
     }
 }
