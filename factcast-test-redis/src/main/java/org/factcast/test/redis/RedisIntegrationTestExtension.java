@@ -47,7 +47,8 @@ public class RedisIntegrationTestExtension implements FactCastIntegrationTestExt
               return new Containers(
                   redis,
                   new RedisProxy(
-                      FactCastIntegrationTestExecutionListener.createProxy(redis, REDIS_PORT)));
+                      FactCastIntegrationTestExecutionListener.createProxy(redis, REDIS_PORT),
+                      FactCastIntegrationTestExecutionListener.client()));
             });
 
     ContainerProxy redisProxy = container.redisProxy().get();
