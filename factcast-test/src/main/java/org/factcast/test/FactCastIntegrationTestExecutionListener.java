@@ -72,6 +72,12 @@ public class FactCastIntegrationTestExecutionListener implements TestExecutionLi
   @Override
   public void beforeTestMethod(TestContext testContext) throws Exception {
 
+    toxiClient.reset();
+
+    for (FactCastIntegrationTestExtension e : extensions) {
+      e.wipeExternalDataStore(testContext);
+    }
+
     for (FactCastIntegrationTestExtension e : extensions) {
       e.injectFields(testContext);
     }
@@ -84,12 +90,6 @@ public class FactCastIntegrationTestExecutionListener implements TestExecutionLi
   @Override
   public void afterTestMethod(TestContext testContext) throws SQLException {
 
-    toxiClient.reset();
-
-    for (FactCastIntegrationTestExtension e : extensions) {
-      e.wipeExternalDataStore(testContext);
-    }
-
     for (FactCastIntegrationTestExtension e : reverseExtensions) {
       e.afterEach(testContext);
     }
@@ -97,12 +97,6 @@ public class FactCastIntegrationTestExecutionListener implements TestExecutionLi
 
   @Override
   public void afterTestClass(TestContext testContext) throws Exception {
-
-    toxiClient.reset();
-
-    for (FactCastIntegrationTestExtension e : extensions) {
-      e.wipeExternalDataStore(testContext);
-    }
 
     for (FactCastIntegrationTestExtension e : reverseExtensions) {
       e.afterAll(testContext);
@@ -114,6 +108,12 @@ public class FactCastIntegrationTestExecutionListener implements TestExecutionLi
     testContext.markApplicationContextDirty(DirtiesContext.HierarchyMode.EXHAUSTIVE);
     testContext.setAttribute(
         DependencyInjectionTestExecutionListener.REINJECT_DEPENDENCIES_ATTRIBUTE, Boolean.TRUE);
+
+    toxiClient.reset();
+
+    for (FactCastIntegrationTestExtension e : extensions) {
+      e.wipeExternalDataStore(testContext);
+    }
   }
 
   @Value

@@ -15,17 +15,20 @@
  */
 package org.factcast.itests.docexample.factcastlowlevel;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.annotations.VisibleForTesting;
 import java.util.*;
-import lombok.NonNull;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
+
 import org.factcast.core.Fact;
 import org.factcast.core.util.FactCastJson;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.annotations.VisibleForTesting;
+
+import lombok.NonNull;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
-public class UserEmailsProjection {
+public class UserEmailsLowLevelProjection {
 
   private final Map<UUID, String> userEmails = new HashMap<>();
 
