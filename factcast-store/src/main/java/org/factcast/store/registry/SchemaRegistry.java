@@ -24,6 +24,8 @@ import org.factcast.store.registry.validation.schema.SchemaKey;
 
 public interface SchemaRegistry {
 
+  String LOCK_NAME = "schemareg_update";
+
   Optional<Schema> get(SchemaKey key);
 
   List<Transformation> get(TransformationKey key);
