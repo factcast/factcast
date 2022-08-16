@@ -21,6 +21,7 @@ import com.google.common.collect.Lists;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import nl.altindag.console.ConsoleCaptor;
 import org.factcast.core.Fact;
@@ -120,6 +121,7 @@ class PublishDuplicateIgnoreTest extends AbstractFactCastIntegrationTest {
     assertThat(cp.count()).hasValue(4);
   }
 
+  @SneakyThrows
   @Test
   void fallsBackToSinglePublishWithMultipleDuplicates() {
 
@@ -129,6 +131,9 @@ class PublishDuplicateIgnoreTest extends AbstractFactCastIntegrationTest {
     try (ConsoleCaptor consoleCaptor = new ConsoleCaptor()) {
 
       factCast.publish(beatles);
+
+      // give it a bit of time for sysout on the server to be flushed
+      Thread.sleep(50);
 
       // it should have seen dups 3 times, one for the batch, two for the already inserted ones.
       assertThat(
