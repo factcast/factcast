@@ -42,16 +42,19 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
           FactcastTestConfig.Config, FactCastIntegrationTestExecutionListener.Containers>
       executions = new ConcurrentHashMap<>();
 
+  @Override
   public void prepareContainers(TestContext ctx) {
     FactcastTestConfig.Config config = discoverConfig(ctx.getTestClass());
     startOrReuse(config);
   }
 
+  @Override
   @SneakyThrows
   public void wipeExternalDataStore(TestContext ctx) {
     erasePostgres(ctx.getApplicationContext().getBean(DataSource.class));
   }
 
+  @Override
   public void injectFields(TestContext testContext) {
     FactcastTestConfig.Config config = discoverConfig(testContext.getTestClass());
     Object t = testContext.getTestInstance();
@@ -66,15 +69,14 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
         .orElse(FactcastTestConfig.Config.defaults());
   }
 
-  public FactCastIntegrationTestExecutionListener.Containers startOrReuse(
-      FactcastTestConfig.Config config) {
+  public void startOrReuse(FactcastTestConfig.Config config) {
     FactCastIntegrationTestExecutionListener.Containers containers =
         executions.computeIfAbsent(
             config,
             key -> {
               String dbName = "db" + config.hashCode();
 
-              PostgreSQLContainer db =
+              PostgreSQLContainer<?> db =
                   new PostgreSQLContainer<>("postgres:" + config.postgresVersion())
                       .withDatabaseName("fc")
                       .withUsername("fc")
@@ -92,7 +94,7 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                       + pgProxy.getOriginalProxyPort()
                       + "/"
                       + db.getDatabaseName();
-              GenericContainer fc =
+              GenericContainer<?> fc =
                   new GenericContainer<>("factcast/factcast:" + config.factcastVersion())
                       .withExposedPorts(FC_PORT)
                       .withFileSystemBind(config.configDir(), "/config/")
@@ -129,8 +131,6 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
     System.setProperty("spring.datasource.url", containers.db().getJdbcUrl());
     System.setProperty("spring.datasource.username", containers.db().getUsername());
     System.setProperty("spring.datasource.password", containers.db().getPassword());
-
-    return containers;
   }
 
   private void erasePostgres(DataSource ds) throws SQLException {
