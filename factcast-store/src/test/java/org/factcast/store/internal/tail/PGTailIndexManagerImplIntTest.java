@@ -26,7 +26,7 @@ import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
 import org.factcast.core.store.FactStore;
 import org.factcast.store.internal.PgTestConfiguration;
-import org.factcast.store.test.IntegrationTest;
+import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledForJreRange;
 import org.junit.jupiter.api.condition.JRE;

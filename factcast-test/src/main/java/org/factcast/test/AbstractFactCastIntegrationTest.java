@@ -16,7 +16,6 @@
 package org.factcast.test;
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Tag;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestExecutionListeners;
@@ -25,7 +24,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @SuppressWarnings("rawtypes")
 @Testcontainers(disabledWithoutDocker = true)
 @Slf4j
-@Tag("integration")
+@IntegrationTest
 @SpringBootTest
 @TestExecutionListeners(
     listeners = FactCastIntegrationTestExecutionListener.class,
