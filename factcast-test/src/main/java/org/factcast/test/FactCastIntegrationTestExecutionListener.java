@@ -97,6 +97,9 @@ public class FactCastIntegrationTestExecutionListener implements TestExecutionLi
 
   @Override
   public void afterTestClass(TestContext testContext) throws Exception {
+    testContext.markApplicationContextDirty(DirtiesContext.HierarchyMode.EXHAUSTIVE);
+    testContext.setAttribute(
+        DependencyInjectionTestExecutionListener.REINJECT_DEPENDENCIES_ATTRIBUTE, Boolean.TRUE);
 
     for (FactCastIntegrationTestExtension e : reverseExtensions) {
       e.afterAll(testContext);
@@ -105,9 +108,6 @@ public class FactCastIntegrationTestExecutionListener implements TestExecutionLi
 
   @Override
   public void afterTestExecution(TestContext testContext) throws Exception {
-    testContext.markApplicationContextDirty(DirtiesContext.HierarchyMode.EXHAUSTIVE);
-    testContext.setAttribute(
-        DependencyInjectionTestExecutionListener.REINJECT_DEPENDENCIES_ATTRIBUTE, Boolean.TRUE);
 
     toxiClient.reset();
 
