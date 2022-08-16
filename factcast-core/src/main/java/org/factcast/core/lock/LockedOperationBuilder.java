@@ -15,7 +15,7 @@
  */
 package org.factcast.core.lock;
 
-import java.util.List;
+import java.util.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.lock.WithOptimisticLock.OptimisticRetriesExceededException;

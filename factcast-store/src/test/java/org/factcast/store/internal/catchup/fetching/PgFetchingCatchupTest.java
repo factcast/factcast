@@ -20,6 +20,7 @@ import static org.mockito.Mockito.*;
 
 import io.micrometer.core.instrument.Counter;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -44,7 +45,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.quality.Strictness;
 import org.postgresql.jdbc.PgConnection;
+import org.postgresql.util.PSQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
@@ -102,7 +105,7 @@ class PgFetchingCatchupTest {
 
       uut.run();
 
-      verify(statementHolder).statement(null);
+      verify(statementHolder).clear();
     }
   }
 
@@ -140,7 +143,7 @@ class PgFetchingCatchupTest {
       final var cbh = underTest.createRowCallbackHandler(extractor);
       ResultSet rs = mock(ResultSet.class);
       Fact testFact = new TestFact();
-      when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
+      when(extractor.mapRow(rs, 0)).thenReturn(testFact);
       cbh.processRow(rs);
 
       verify(interceptor).accept(testFact);
@@ -160,6 +163,66 @@ class PgFetchingCatchupTest {
                 cbh.processRow(rs);
               })
           .isInstanceOf(TransformationException.class);
+    }
+
+    @Test
+    @SneakyThrows
+    void swallowsExceptionAfterCancel() {
+      final var cbh = underTest.createRowCallbackHandler(new PgFactExtractor(new AtomicLong()));
+      ResultSet rs = mock(ResultSet.class);
+      when(statementHolder.wasCanceled()).thenReturn(false, true);
+
+      // until
+      PSQLException mockException = mock(PSQLException.class);
+      when(rs.getString(anyString())).thenThrow(mockException);
+      // must not throw
+      cbh.processRow(rs);
+    }
+
+    @Test
+    @SneakyThrows
+    void returnsIfCancelled() {
+      final var cbh = underTest.createRowCallbackHandler(new PgFactExtractor(new AtomicLong()));
+      ResultSet rs = mock(ResultSet.class);
+      when(statementHolder.wasCanceled()).thenReturn(true);
+      // must not throw
+      cbh.processRow(rs);
+    }
+
+    @Test
+    @SneakyThrows
+    void throwsWhenNotCanceled() {
+      final var cbh = underTest.createRowCallbackHandler(new PgFactExtractor(new AtomicLong()));
+      ResultSet rs = mock(ResultSet.class);
+      // it should appear open,
+      when(rs.isClosed()).thenReturn(false);
+      // until
+      PSQLException mockException =
+          mock(PSQLException.class, withSettings().strictness(Strictness.LENIENT));
+      when(rs.getString(anyString())).thenThrow(mockException);
+
+      assertThatThrownBy(
+              () -> {
+                cbh.processRow(rs);
+              })
+          .isInstanceOf(SQLException.class);
+    }
+
+    @Test
+    @SneakyThrows
+    void throwsWhenCanceledButUnexpectedException() {
+      final var cbh = underTest.createRowCallbackHandler(extractor);
+      ResultSet rs = mock(ResultSet.class);
+      // it should appear open,
+      when(rs.isClosed()).thenReturn(false);
+      // until
+      when(extractor.mapRow(any(), anyInt())).thenThrow(RuntimeException.class);
+
+      assertThatThrownBy(
+              () -> {
+                cbh.processRow(rs);
+              })
+          .isInstanceOf(RuntimeException.class);
     }
   }
 }

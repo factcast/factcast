@@ -16,7 +16,7 @@
 package org.factcast.store.registry;
 
 import java.net.MalformedURLException;
-import java.util.List;
+import java.util.*;
 import lombok.NonNull;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.metrics.RegistryMetrics;
