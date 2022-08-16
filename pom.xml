@@ -387,6 +387,7 @@
           <excludedGroups>integration</excludedGroups>
           <!--suppress UnresolvedMavenProperty -->
           <argLine>${surefire.jacoco.args}</argLine>
+          <skip>${skipSurefire}</skip>
         </configuration>
       </plugin>
       <plugin>

@@ -35,3 +35,11 @@ jobs:
       - id: step-3
         name: Build with Maven
         run: ./mvnw -B clean test --file pom.xml
+      - id: step-4
+        name: Remove partial execution reports
+        run: find -wholename "**/target/jacoco-output" -exec rm -rf {} +
+      - id: step-5
+        name: CodecovActionV3
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

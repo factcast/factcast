@@ -74,7 +74,7 @@ public val workflowMaven: Workflow = workflow(
         )
         run(
             name = "Build with Maven",
-            command = "./mvnw -B clean verify --file pom.xml",
+            command = "./mvnw -DskipSurefire=true -B clean verify --file pom.xml",
         )
     }
 
