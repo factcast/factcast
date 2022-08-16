@@ -15,17 +15,17 @@
  */
 package org.factcast.itests.docexample.factcastlowlevel;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import java.util.*;
 
-import java.util.Set;
-import java.util.UUID;
 import org.factcast.core.Fact;
 import org.junit.jupiter.api.Test;
 
-class UserEmailsProjectionTest {
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
-  UserEmailsProjection uut = new UserEmailsProjection();
+class UserEmailsLowLevelProjectionTest {
+
+  UserEmailsLowLevelProjection uut = new UserEmailsLowLevelProjection();
 
   @Test
   void whenHandlingUserAddedFactEmailIsAdded() {
@@ -77,7 +77,7 @@ class UserEmailsProjectionTest {
 
   @Test
   void userAddedFactIsApplied() {
-    UserEmailsProjection projection = spy(new UserEmailsProjection());
+    UserEmailsLowLevelProjection projection = spy(new UserEmailsLowLevelProjection());
     String jsonPayload =
         String.format("{\"id\":\"%s\", \"email\": \"%s\"}", UUID.randomUUID(), "user@bar.com");
     Fact userAdded =
@@ -95,7 +95,7 @@ class UserEmailsProjectionTest {
 
   @Test
   void userDeletedFactIsApplied() {
-    UserEmailsProjection projection = spy(new UserEmailsProjection());
+    UserEmailsLowLevelProjection projection = spy(new UserEmailsLowLevelProjection());
     Fact userRemoved =
         Fact.builder()
             .id(UUID.randomUUID())

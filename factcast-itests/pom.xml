@@ -20,7 +20,7 @@
     <module>factcast-itests-novalidation</module>
     <module>factcast-itests-factus</module>
     <module>factcast-itests-exception-handling</module>
-    <module>factcast-itests-doc</module>
+    <!-- TODO for investigation <module>factcast-itests-doc</module> -->
   </modules>
   <dependencies>
     <dependency>

@@ -16,12 +16,13 @@
 package org.factcast.itests.docexample.factus;
 
 import java.util.*;
+
 import org.factcast.factus.Handler;
 import org.factcast.factus.projection.LocalManagedProjection;
 import org.factcast.itests.docexample.factus.event.UserAdded;
 import org.factcast.itests.docexample.factus.event.UserRemoved;
 
-public class UserEmailsProjection extends LocalManagedProjection {
+public class UserEmailsFactusProjection extends LocalManagedProjection {
 
   private final Map<UUID, String> userEmails = new HashMap<>();
 

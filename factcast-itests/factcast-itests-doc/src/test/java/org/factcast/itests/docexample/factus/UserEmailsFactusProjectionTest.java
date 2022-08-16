@@ -15,17 +15,17 @@
  */
 package org.factcast.itests.docexample.factus;
 
-import static org.assertj.core.api.Assertions.*;
+import java.util.*;
 
-import java.util.Set;
-import java.util.UUID;
 import org.factcast.itests.docexample.factus.event.UserAdded;
 import org.factcast.itests.docexample.factus.event.UserRemoved;
 import org.junit.jupiter.api.Test;
 
-class UserEmailsProjectionTest {
+import static org.assertj.core.api.Assertions.assertThat;
 
-  UserEmailsProjection uut = new UserEmailsProjection();
+class UserEmailsFactusProjectionTest {
+
+  UserEmailsFactusProjection uut = new UserEmailsFactusProjection();
   UUID someUserId = UUID.randomUUID();
 
   @Test
