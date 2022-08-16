@@ -15,7 +15,7 @@
  */
 package org.factcast.itests.tls;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.Duration;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,9 @@ import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
-import org.junit.jupiter.api.*;
+import org.factcast.test.IntegrationTest;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
@@ -38,6 +40,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @SpringBootTest
 @ContextConfiguration(classes = TLSClient.class)
 @Testcontainers
+@IntegrationTest
 @Slf4j
 public class TLSClientTest {
 
