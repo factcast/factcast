@@ -15,12 +15,15 @@
  */
 package org.factcast.core.lock;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.*;
+import lombok.SneakyThrows;
 import org.factcast.core.store.FactStore;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
 
 class LockedOperationBuilderTest {
 
@@ -42,5 +45,26 @@ class LockedOperationBuilderTest {
         () -> {
           on.attempt(() -> mock(IntermediatePublishResult.class));
         });
+  }
+
+  @SneakyThrows
+  @Test
+  void testAttemptWithoutPublishingOnRequest() {
+    UUID aggId = UUID.randomUUID();
+    LockedOperationBuilder on = uut.on(aggId);
+    // must not throw
+    on.attempt(() -> Attempt.publishUnlessEmpty(Collections.emptyList()));
+  }
+
+  @SneakyThrows
+  @Test
+  void testAttemptWithoutPublishingButExecuteAndThen() {
+    UUID aggId = UUID.randomUUID();
+    LockedOperationBuilder on = uut.on(aggId);
+    CountDownLatch cl = new CountDownLatch(1);
+
+    on.attempt(() -> Attempt.withoutPublication().andThen(cl::countDown));
+
+    assertThat(cl.await(1, TimeUnit.SECONDS)).isTrue();
   }
 }

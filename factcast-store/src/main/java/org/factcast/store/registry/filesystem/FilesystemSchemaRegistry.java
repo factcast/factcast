@@ -16,6 +16,7 @@
 package org.factcast.store.registry.filesystem;
 
 import lombok.NonNull;
+import net.javacrumbs.shedlock.core.LockProvider;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.AbstractSchemaRegistry;
 import org.factcast.store.registry.metrics.RegistryMetrics;
@@ -29,13 +30,15 @@ public class FilesystemSchemaRegistry extends AbstractSchemaRegistry {
       @NonNull SchemaStore schemaStore,
       @NonNull TransformationStore transformationStore,
       @NonNull RegistryMetrics registryMetrics,
-      @NonNull StoreConfigurationProperties pgConfigurationProperties) {
+      @NonNull StoreConfigurationProperties pgConfigurationProperties,
+      @NonNull LockProvider lockProvider) {
     super(
         new FilesystemIndexFetcher(base),
         new FilesystemRegistryFileFetcher(base),
         schemaStore,
         transformationStore,
         registryMetrics,
-        pgConfigurationProperties);
+        pgConfigurationProperties,
+        lockProvider);
   }
 }
