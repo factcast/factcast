@@ -23,7 +23,7 @@ import java.util.*;
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
-import org.factcast.store.test.IntegrationTest;
+import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;

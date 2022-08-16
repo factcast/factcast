@@ -388,6 +388,12 @@
           <!--suppress UnresolvedMavenProperty -->
           <argLine>${surefire.jacoco.args}</argLine>
           <skip>${skipSurefire}</skip>
+          <parallel>classes</parallel>
+          <threadCountClasses>8</threadCountClasses>
+          <!-- this produces a warning we choose to ignore for unit tests, as
+            the cost of creating a fork dominates the runtime of surefire -->
+          <forkCount>0</forkCount>
+          <reuseForks>true</reuseForks>
         </configuration>
       </plugin>
       <plugin>

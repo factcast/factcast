@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.test;
+package org.factcast.test;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Tag;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
