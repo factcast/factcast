@@ -35,6 +35,7 @@ import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.factus.Factus;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.FactcastTestConfig;
+import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +48,7 @@ import org.springframework.test.context.ContextConfiguration;
 @ContextConfiguration(classes = {Application.class})
 @FactcastTestConfig(factcastVersion = "latest")
 @Slf4j
+@IntegrationTest
 @Disabled("to be investigated") // TODO
 public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
 
