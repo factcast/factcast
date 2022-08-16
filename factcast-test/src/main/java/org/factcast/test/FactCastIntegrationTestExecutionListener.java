@@ -21,6 +21,7 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.stream.*;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -50,13 +51,7 @@ public class FactCastIntegrationTestExecutionListener implements TestExecutionLi
   private static AtomicBoolean initialized = new AtomicBoolean(false);
 
   @Override
-  public void prepareTestInstance(TestContext testContext) throws Exception {}
-
-  @Override
-  public void beforeTestExecution(TestContext testContext) throws Exception {}
-
-  @Override
-  public void beforeTestClass(TestContext testContext) throws Exception {
+  public void beforeTestClass(@NonNull TestContext testContext) throws Exception {
 
     if (!initialized.getAndSet(true)) initialize();
 
@@ -70,7 +65,7 @@ public class FactCastIntegrationTestExecutionListener implements TestExecutionLi
   }
 
   @Override
-  public void beforeTestMethod(TestContext testContext) throws Exception {
+  public void beforeTestMethod(@NonNull TestContext testContext) throws Exception {
 
     toxiClient.reset();
 
@@ -88,7 +83,7 @@ public class FactCastIntegrationTestExecutionListener implements TestExecutionLi
 
   @SneakyThrows
   @Override
-  public void afterTestMethod(TestContext testContext) throws SQLException {
+  public void afterTestMethod(@NonNull TestContext testContext) throws SQLException {
 
     for (FactCastIntegrationTestExtension e : reverseExtensions) {
       e.afterEach(testContext);
@@ -118,14 +113,14 @@ public class FactCastIntegrationTestExecutionListener implements TestExecutionLi
 
   @Value
   static class Containers {
-    PostgreSQLContainer db;
-    GenericContainer fc;
+    PostgreSQLContainer<?> db;
+    GenericContainer<?> fc;
     PostgresqlProxy pgProxy;
     FactCastProxy fcProxy;
     String jdbcUrl;
   }
 
-  private void initialize() {
+  private static void initialize() {
     // proxy will be started just once and always be the same container.
     initializeProxy();
 
