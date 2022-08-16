@@ -442,6 +442,7 @@
           <!--suppress UnresolvedMavenProperty -->
           <argLine>${surefire.jacoco.args}</argLine>
           <skip>${skipSurefire}</skip>
+          <forkCount>1</forkCount>
         </configuration>
       </plugin>
     </plugins>
