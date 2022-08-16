@@ -78,7 +78,7 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                   new PostgreSQLContainer<>("postgres:" + config.postgresVersion())
                       .withDatabaseName("fc")
                       .withUsername("fc")
-                      .withPassword("fc")
+                      .withPassword(UUID.randomUUID().toString())
                       .withNetworkAliases(dbName)
                       .withNetwork(FactCastIntegrationTestExecutionListener._docker_network);
               db.start();
@@ -90,7 +90,8 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                       + FactCastIntegrationTestExecutionListener.TOXIPROXY_NETWORK_ALIAS
                       + ":"
                       + pgProxy.getOriginalProxyPort()
-                      + "/fc?user=fc&password=fc";
+                      + "/"
+                      + db.getDatabaseName();
               GenericContainer fc =
                   new GenericContainer<>("factcast/factcast:" + config.factcastVersion())
                       .withExposedPorts(FC_PORT)
@@ -100,6 +101,8 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                       .withEnv("factcast_grpc_bandwidth_disabled", "true")
                       .withEnv("factcast_store_integrationTestMode", "true")
                       .withEnv("spring_datasource_url", jdbcUrl)
+                      .withEnv("spring_datasource_username", db.getUsername())
+                      .withEnv("spring_datasource_password", db.getPassword())
                       .withNetwork(FactCastIntegrationTestExecutionListener._docker_network)
                       .dependsOn(db)
                       .withLogConsumer(
