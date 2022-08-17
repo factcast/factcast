@@ -15,7 +15,7 @@
  */
 package org.factcast.itests.factus.v3compat;
 
-import org.factcast.itests.factus.FactusClientTest;
+import org.factcast.itests.factus.client.FactusClientTest;
 import org.factcast.test.FactcastTestConfig;
 
 @FactcastTestConfig(factcastVersion = "0.3.9")

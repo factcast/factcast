@@ -49,7 +49,7 @@ import org.springframework.core.annotation.Order;
 @AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
 public class FactusAutoConfiguration {
 
-  @Bean
+  @Bean(destroyMethod = "close")
   @ConditionalOnMissingBean
   public Factus factus(
       FactCast fc,
