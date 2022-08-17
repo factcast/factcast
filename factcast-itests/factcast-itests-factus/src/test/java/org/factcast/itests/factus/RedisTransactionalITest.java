@@ -17,19 +17,13 @@ package org.factcast.itests.factus;
 
 import static java.util.UUID.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 import config.RedissonProjectionConfiguration;
-import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.*;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.subscription.InternalSubscription;
-import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.Factus;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.redis.tx.RedisTransactional;
@@ -60,7 +54,6 @@ import org.springframework.test.context.ContextConfiguration;
 public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
   @Autowired Factus factus;
   @Autowired RedissonClient redissonClient;
-
   final int NUMBER_OF_EVENTS = 10;
 
   @Nested
@@ -83,29 +76,6 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
 
       assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
       assertThat(p.stateModifications()).isEqualTo(4); // expected at 3,6,9,10
-    }
-
-    @SneakyThrows
-    @Test
-    public void bulkCommitsOnError() {
-
-      TxRedissonManagedUserSubscribedSize3Error2 subscribedProjection =
-          new TxRedissonManagedUserSubscribedSize3Error2(redissonClient);
-      assertThat(subscribedProjection.userNames().size()).isZero();
-
-      // exec this in another thread
-      CompletableFuture.runAsync(
-              () -> {
-                Subscription subscription = factus.subscribeAndBlock(subscribedProjection);
-                subscribedProjection.subscription((InternalSubscription) subscription);
-
-                assertThatThrownBy(subscription::awaitComplete)
-                    .isInstanceOf(RuntimeException.class);
-              })
-          .get();
-
-      // make sure the first two are comitted
-      assertThat(subscribedProjection.userNames()).hasSize(2);
     }
 
     @SneakyThrows
@@ -252,25 +222,6 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
   static class TxRedissonManagedUserNamesSize3 extends TrackingTxRedissonManagedUserNames {
     public TxRedissonManagedUserNamesSize3(RedissonClient redisson) {
       super(redisson);
-    }
-  }
-
-  @ProjectionMetaData(serial = 1)
-  @RedisTransactional(bulkSize = 3)
-  static class TxRedissonManagedUserSubscribedSize3Error2
-      extends TrackingTxRedissonSubscribedUserNames {
-    @Setter private InternalSubscription subscription;
-
-    public TxRedissonManagedUserSubscribedSize3Error2(RedissonClient redisson) {
-      super(redisson);
-    }
-
-    int count = 0;
-
-    @Override
-    protected void apply(UserCreated created, RTransaction tx) {
-      if (count++ < 2) super.apply(created, tx);
-      else subscription.notifyError(new IOException("oh dear"));
     }
   }
 

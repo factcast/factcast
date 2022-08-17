@@ -17,7 +17,7 @@ package org.factcast.factus.redis.batch;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
-import java.util.function.*;
+import java.util.function.Function;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
@@ -100,6 +100,7 @@ public class RedisBatchedLens extends AbstractTransactionalLens {
 
   @Override
   protected void doFlush() {
+    // otherwise we can silently commit, not to flush the logs
     if (batchMan.inBatch()) {
       batchMan.execute();
     }

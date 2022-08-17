@@ -25,12 +25,15 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.*;
+import org.factcast.core.subscription.FactStreamInfo;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionClosedException;
+import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.util.ExceptionHelper;
 
 @Slf4j
-public class ResilientGrpcSubscription implements InternalSubscription {
+public class ResilientGrpcSubscription implements Subscription {
 
   private final GrpcFactStore store;
   private final SubscriptionRequestTO originalRequest;
@@ -89,41 +92,6 @@ public class ResilientGrpcSubscription implements InternalSubscription {
     }
   }
 
-  @Override
-  public void notifyCatchup() {
-    currentSubscription.get().notifyCatchup();
-  }
-
-  @Override
-  public void notifyFastForward(@NonNull UUID factId) {
-    currentSubscription.get().notifyFastForward(factId);
-  }
-
-  @Override
-  public void notifyFactStreamInfo(@NonNull FactStreamInfo info) {
-    currentSubscription.get().notifyFactStreamInfo(info);
-  }
-
-  @Override
-  public void notifyComplete() {
-    currentSubscription.get().notifyComplete();
-  }
-
-  @Override
-  public void notifyError(Throwable e) {
-    currentSubscription.get().notifyError(e);
-  }
-
-  @Override
-  public void notifyElement(@NonNull Fact e) throws TransformationException {
-    currentSubscription.get().notifyElement(e);
-  }
-
-  @Override
-  public InternalSubscription onClose(Runnable e) {
-    return delegate(s -> s.onClose(e));
-  }
-
   @VisibleForTesting
   ResilientGrpcSubscription delegate(
       ThrowingBiConsumer<Subscription, Long> consumer, long waitTimeInMillis)
@@ -151,11 +119,11 @@ public class ResilientGrpcSubscription implements InternalSubscription {
   }
 
   @VisibleForTesting
-  ResilientGrpcSubscription delegate(Consumer<InternalSubscription> consumer) {
+  ResilientGrpcSubscription delegate(Consumer<Subscription> consumer) {
     for (; ; ) {
       assertSubscriptionStateNotClosed();
       try {
-        InternalSubscription cur = currentSubscription.getAndBlock();
+        Subscription cur = currentSubscription.getAndBlock();
         consumer.accept(cur);
         return this;
       } catch (Exception e) {
@@ -194,7 +162,7 @@ public class ResilientGrpcSubscription implements InternalSubscription {
 
     if (currentSubscription.get() == null) {
       try {
-        InternalSubscription plainSubscription = store.internalSubscribe(to, delegatingObserver);
+        Subscription plainSubscription = store.internalSubscribe(to, delegatingObserver);
         currentSubscription.set(plainSubscription);
       } catch (Exception e) {
         fail(e);
@@ -274,16 +242,15 @@ public class ResilientGrpcSubscription implements InternalSubscription {
   @VisibleForTesting
   class SubscriptionHolder {
     // even though this is an atomicref, sync is necessary for wait/notify
-    private final AtomicReference<InternalSubscription> currentSubscription =
-        new AtomicReference<>();
+    private final AtomicReference<Subscription> currentSubscription = new AtomicReference<>();
 
     @NonNull
-    public InternalSubscription getAndBlock() throws TimeoutException {
+    public Subscription getAndBlock() throws TimeoutException {
       return getAndBlock(0);
     }
 
     @NonNull
-    public InternalSubscription getAndBlock(long maxPause) throws TimeoutException {
+    public Subscription getAndBlock(long maxPause) throws TimeoutException {
       long end = System.currentTimeMillis() + maxPause;
       synchronized (currentSubscription) {
         do {
@@ -306,20 +273,20 @@ public class ResilientGrpcSubscription implements InternalSubscription {
       }
     }
 
-    InternalSubscription getAndSet(@SuppressWarnings("SameParameterValue") InternalSubscription s) {
+    Subscription getAndSet(@SuppressWarnings("SameParameterValue") Subscription s) {
       synchronized (currentSubscription) {
         return currentSubscription.getAndSet(s);
       }
     }
 
-    void set(InternalSubscription s) {
+    void set(Subscription s) {
       synchronized (currentSubscription) {
         currentSubscription.set(s);
         currentSubscription.notifyAll();
       }
     }
 
-    public InternalSubscription get() {
+    public Subscription get() {
       synchronized (currentSubscription) {
         return currentSubscription.get();
       }
