@@ -15,9 +15,8 @@
  */
 package org.factcast.itests.factus.proj;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import lombok.Getter;
 import org.factcast.factus.Handler;
 import org.factcast.factus.redis.AbstractRedisManagedProjection;
 import org.factcast.factus.redis.batch.RedisBatched;
@@ -34,6 +33,7 @@ public class RedisBatchedProjectionExample {
   @ProjectionMetaData(serial = 1)
   @RedisBatched
   public static class UserNames extends AbstractRedisManagedProjection {
+    @Getter int count = 0;
 
     public UserNames(RedissonClient redisson) {
       super(redisson);
@@ -48,11 +48,14 @@ public class RedisBatchedProjectionExample {
     void apply(UserCreated created, RBatch batch) {
       RMapAsync<UUID, String> userNames = batch.getMap(redisKey());
       userNames.putAsync(created.aggregateId(), created.userName());
+      count++;
     }
 
     @Handler
     void apply(UserDeleted deleted, RBatch batch) {
       batch.getMap(redisKey()).removeAsync(deleted.aggregateId());
+
+      count++;
     }
   }
 }

@@ -22,7 +22,7 @@ import org.factcast.core.store.State;
 import org.factcast.core.store.TokenStore;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.test.AbstractTokenStoreTest;
-import org.factcast.store.test.IntegrationTest;
+import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
