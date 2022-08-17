@@ -2,7 +2,6 @@
 
 @file:DependsOn("it.krzeminski:github-actions-kotlin-dsl:0.24.0")
 
-import it.krzeminski.githubactions.actions.CustomAction
 import it.krzeminski.githubactions.actions.actions.CacheV3
 import it.krzeminski.githubactions.actions.actions.CheckoutV3
 import it.krzeminski.githubactions.actions.actions.SetupJavaV3
@@ -11,17 +10,9 @@ import it.krzeminski.githubactions.domain.RunnerType
 import it.krzeminski.githubactions.domain.Workflow
 import it.krzeminski.githubactions.domain.triggers.PullRequest
 import it.krzeminski.githubactions.domain.triggers.Push
-import it.krzeminski.githubactions.dsl.expressions.expr
 import it.krzeminski.githubactions.dsl.workflow
 import it.krzeminski.githubactions.yaml.writeToFile
 import java.nio.file.Paths
-
-val customAction = CustomAction(
-    actionOwner = "SonarSource",
-    actionName = "sonarcloud-github-action",
-    actionVersion = "master",
-    inputs = linkedMapOf()
-)
 
 public val workflowMaven: Workflow = workflow(
     name = "Maven Full profile",
@@ -82,16 +73,8 @@ public val workflowMaven: Workflow = workflow(
             ),
         )
         run(
-            name = "Build with Maven, test & verify",
-            command = "./mvnw -B clean verify --file pom.xml",
-        )
-        uses(
-            action = customAction,
-            name = "Sonar analysis",
-            env = linkedMapOf(
-                "GITHUB_TOKEN" to expr { secrets.GITHUB_TOKEN },
-                "SONAR_TOKEN" to expr { "secrets.SONAR_TOKEN" }
-            )
+            name = "Build with Maven - test, verify and analyze",
+            command = "./mvnw -B clean verify sonar:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=\${{ secrets.SONAR_TOKEN }} -Dsonar --file pom.xml",
         )
     }
 
