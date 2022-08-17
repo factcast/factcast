@@ -1,8 +1,8 @@
-# This file was generated using Kotlin DSL (.github/kts/.github/kts/maven.main.kts).
+# This file was generated using Kotlin DSL (.github/kts/.github/kts/maven-quick.main.kts).
 # If you want to modify the workflow, please change the Kotlin file and regenerate this YAML file.
 # Generated with https://github.com/krzema12/github-actions-kotlin-dsl
 
-name: maven
+name: Maven Quick profile
 
 on:
   pull_request:

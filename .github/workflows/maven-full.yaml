@@ -2,7 +2,7 @@
 # If you want to modify the workflow, please change the Kotlin file and regenerate this YAML file.
 # Generated with https://github.com/krzema12/github-actions-kotlin-dsl
 
-name: maven-full
+name: Maven Full profile
 
 on:
   pull_request:
@@ -46,5 +46,10 @@ jobs:
           java-version: 11
           distribution: corretto
       - id: step-5
-        name: Build with Maven
-        run: ./mvnw -DskipSurefire=true -B clean verify --file pom.xml
+        name: Build with Maven, test & verify
+        run: ./mvnw -B clean verify --file pom.xml
+      - id: step-6
+        uses: SonarSource/sonarcloud-github-action@v2
+        with:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
