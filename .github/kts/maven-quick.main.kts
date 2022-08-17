@@ -15,7 +15,7 @@ import it.krzeminski.githubactions.yaml.writeToFile
 import java.nio.file.Paths
 
 public val workflowMaven: Workflow = workflow(
-    name = "maven",
+    name = "Maven Quick profile",
     on = listOf(
         PullRequest(
             branches = listOf("master"),
@@ -24,7 +24,7 @@ public val workflowMaven: Workflow = workflow(
             branches = listOf("master"),
         ),
     ),
-    sourceFile = Paths.get(".github/kts/maven.main.kts"),
+    sourceFile = Paths.get(".github/kts/maven-quick.main.kts"),
 ) {
     job(
         id = "build",

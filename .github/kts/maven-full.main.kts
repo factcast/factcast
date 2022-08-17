@@ -2,6 +2,7 @@
 
 @file:DependsOn("it.krzeminski:github-actions-kotlin-dsl:0.24.0")
 
+import it.krzeminski.githubactions.actions.CustomAction
 import it.krzeminski.githubactions.actions.actions.CacheV3
 import it.krzeminski.githubactions.actions.actions.CheckoutV3
 import it.krzeminski.githubactions.actions.actions.SetupJavaV3
@@ -14,8 +15,15 @@ import it.krzeminski.githubactions.dsl.workflow
 import it.krzeminski.githubactions.yaml.writeToFile
 import java.nio.file.Paths
 
+val customAction = CustomAction(
+    actionOwner = "SonarSource", actionName = "sonarcloud-github-action", actionVersion = "v2", inputs = linkedMapOf(
+        "SONAR_TOKEN" to "\${{ secrets.SONAR_TOKEN }}",
+        "GITHUB_TOKEN" to "\${{ secrets.GITHUB_TOKEN }}",
+    )
+)
+
 public val workflowMaven: Workflow = workflow(
-    name = "maven-full",
+    name = "Maven Full profile",
     on = listOf(
         PullRequest(
             branches = listOf("master"),
@@ -73,8 +81,12 @@ public val workflowMaven: Workflow = workflow(
             ),
         )
         run(
-            name = "Build with Maven",
-            command = "./mvnw -DskipSurefire=true -B clean verify --file pom.xml",
+            name = "Build with Maven, test & verify",
+            command = "./mvnw -B clean verify --file pom.xml",
+        )
+        uses(
+
+            action = customAction
         )
     }
 
