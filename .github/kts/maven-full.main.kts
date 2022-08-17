@@ -16,7 +16,10 @@ import it.krzeminski.githubactions.yaml.writeToFile
 import java.nio.file.Paths
 
 val customAction = CustomAction(
-    actionOwner = "SonarSource", actionName = "sonarcloud-github-action", actionVersion = "v2", inputs = linkedMapOf(
+    actionOwner = "SonarSource",
+    actionName = "sonarcloud-github-action",
+    actionVersion = "master",
+    inputs = linkedMapOf(
         "SONAR_TOKEN" to "\${{ secrets.SONAR_TOKEN }}",
         "GITHUB_TOKEN" to "\${{ secrets.GITHUB_TOKEN }}",
     )
