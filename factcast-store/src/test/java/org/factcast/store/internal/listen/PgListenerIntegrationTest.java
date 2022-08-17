@@ -29,7 +29,7 @@ import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.internal.PgTestConfiguration;
-import org.factcast.store.test.IntegrationTest;
+import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

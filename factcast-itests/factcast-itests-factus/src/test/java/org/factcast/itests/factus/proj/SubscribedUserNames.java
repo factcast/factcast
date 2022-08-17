@@ -15,9 +15,8 @@
  */
 package org.factcast.itests.factus.proj;
 
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
+import java.util.concurrent.*;
 import lombok.Getter;
 import org.factcast.factus.projection.LocalSubscribedProjection;
 import org.springframework.stereotype.Component;

@@ -22,6 +22,7 @@ import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
+import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -44,6 +45,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @ContextConfiguration(classes = {RedissonAutoConfiguration.class, RedisAutoConfiguration.class})
 @ExtendWith(SpringExtension.class)
 @Testcontainers
+@IntegrationTest
 class RedissonSnapshotCacheTest {
 
   @SuppressWarnings("rawtypes")

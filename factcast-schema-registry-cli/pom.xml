@@ -433,7 +433,17 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.22.2</version>
+        <version>${maven-surefire-plugin.version}</version>
+        <configuration>
+          <includes>
+            <include>*</include>
+          </includes>
+          <excludedGroups>integration</excludedGroups>
+          <!--suppress UnresolvedMavenProperty -->
+          <argLine>${surefire.jacoco.args}</argLine>
+          <skip>${skipSurefire}</skip>
+          <forkCount>1</forkCount>
+        </configuration>
       </plugin>
     </plugins>
     <pluginManagement>

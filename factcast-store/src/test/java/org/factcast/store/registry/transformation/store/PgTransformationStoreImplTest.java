@@ -17,7 +17,7 @@ package org.factcast.store.registry.transformation.store;
 
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.registry.transformation.TransformationStore;
-import org.factcast.store.test.IntegrationTest;
+import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;

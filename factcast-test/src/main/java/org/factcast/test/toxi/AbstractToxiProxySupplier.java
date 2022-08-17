@@ -15,9 +15,11 @@
  */
 package org.factcast.test.toxi;
 
-import java.util.function.Supplier;
+import eu.rekawek.toxiproxy.ToxiproxyClient;
+import java.util.function.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.experimental.Delegate;
 import org.testcontainers.containers.ToxiproxyContainer;
 import org.testcontainers.containers.ToxiproxyContainer.ContainerProxy;
@@ -25,9 +27,40 @@ import org.testcontainers.containers.ToxiproxyContainer.ContainerProxy;
 @RequiredArgsConstructor
 public abstract class AbstractToxiProxySupplier implements Supplier<ContainerProxy> {
   @Delegate @NonNull private ToxiproxyContainer.ContainerProxy proxy;
+  @NonNull private final String name;
+  @NonNull private final ToxiproxyClient client;
 
   @Override
   public ContainerProxy get() {
     return proxy;
+  }
+
+  @SneakyThrows
+  public void reset() {
+    client.reset();
+  }
+
+  @SneakyThrows
+  public void disable() {
+    client.getProxy(name).disable();
+  }
+
+  @SneakyThrows
+  public void enable() {
+    client.getProxy(name).enable();
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName()
+        + "[ip="
+        + getContainerIpAddress()
+        + ",proxyPort="
+        + getProxyPort()
+        + ",origProxyPort="
+        + getOriginalProxyPort()
+        + ",name="
+        + getName()
+        + "]";
   }
 }
