@@ -15,7 +15,7 @@
  */
 package org.factcast.itests.factus.v3compat;
 
-import org.factcast.itests.factus.GrpcThreadingITest;
+import org.factcast.itests.factus.client.GrpcThreadingITest;
 import org.factcast.test.FactcastTestConfig;
 
 @FactcastTestConfig(factcastVersion = "0.3.9")

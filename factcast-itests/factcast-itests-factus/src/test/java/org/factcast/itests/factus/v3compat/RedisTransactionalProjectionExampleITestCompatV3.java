@@ -15,7 +15,7 @@
  */
 package org.factcast.itests.factus.v3compat;
 
-import org.factcast.itests.factus.RedisTransactionalProjectionExampleITest;
+import org.factcast.itests.factus.client.RedisTransactionalProjectionExampleITest;
 import org.factcast.test.FactcastTestConfig;
 
 @FactcastTestConfig(factcastVersion = "0.3.9")

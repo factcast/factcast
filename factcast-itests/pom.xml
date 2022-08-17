@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.6.2-SNAPSHOT</version>
+    <version>0.6.4-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-itests</artifactId>
@@ -20,7 +20,7 @@
     <module>factcast-itests-novalidation</module>
     <module>factcast-itests-factus</module>
     <module>factcast-itests-exception-handling</module>
-    <module>factcast-itests-doc</module>
+    <!-- TODO for investigation <module>factcast-itests-doc</module> -->
   </modules>
   <dependencies>
     <dependency>
@@ -29,16 +29,4 @@
       <scope>provided</scope>
     </dependency>
   </dependencies>
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-failsafe-plugin</artifactId>
-        <version>3.0.0-M7</version>
-        <configuration>
-          <skip>true</skip>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
 </project>

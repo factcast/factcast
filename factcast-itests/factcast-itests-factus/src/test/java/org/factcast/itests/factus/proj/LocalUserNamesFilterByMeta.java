@@ -16,7 +16,7 @@
 package org.factcast.itests.factus.proj;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.FilterByMeta;

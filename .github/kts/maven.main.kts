@@ -6,15 +6,12 @@ import it.krzeminski.githubactions.actions.actions.CacheV3
 import it.krzeminski.githubactions.actions.actions.CheckoutV3
 import it.krzeminski.githubactions.actions.actions.SetupJavaV3
 import it.krzeminski.githubactions.actions.codecov.CodecovActionV3
-import it.krzeminski.githubactions.actions.docker.LoginActionV2
 import it.krzeminski.githubactions.domain.RunnerType
 import it.krzeminski.githubactions.domain.Workflow
 import it.krzeminski.githubactions.domain.triggers.PullRequest
 import it.krzeminski.githubactions.domain.triggers.Push
 import it.krzeminski.githubactions.dsl.workflow
 import it.krzeminski.githubactions.yaml.writeToFile
-import java.io.File
-import java.io.IOException
 import java.nio.file.Paths
 
 public val workflowMaven: Workflow = workflow(
@@ -34,13 +31,6 @@ public val workflowMaven: Workflow = workflow(
         runsOn = RunnerType.UbuntuLatest,
     ) {
         uses(
-            name = "Login to Docker Hub",
-            action = LoginActionV2(
-                username = "${'$'}{{ secrets.DOCKERHUB_USERNAME }}",
-                password = "${'$'}{{ secrets.DOCKERHUB_TOKEN }}",
-            ),
-        )
-        uses(
             name = "CheckoutV3",
             action = CheckoutV3(),
         )
@@ -57,18 +47,6 @@ public val workflowMaven: Workflow = workflow(
             ),
         )
         uses(
-            name = "CacheV3",
-            action = CacheV3(
-                path = listOf(
-                    "/var/lib/docker/",
-                ),
-                key = "factcast-docker-cache-unversioned",
-                restoreKeys = listOf(
-                    "factcast-docker-cache-unversioned",
-                ),
-            ),
-        )
-        uses(
             name = "Set up JDK 11",
             action = SetupJavaV3(
                 distribution = SetupJavaV3.Distribution.Custom("corretto"),
@@ -77,7 +55,7 @@ public val workflowMaven: Workflow = workflow(
         )
         run(
             name = "Build with Maven",
-            command = "./mvnw -B clean verify --file pom.xml",
+            command = "./mvnw -B clean test --file pom.xml",
         )
         run(
             name = "Remove partial execution reports",
@@ -90,10 +68,7 @@ public val workflowMaven: Workflow = workflow(
             ),
         )
     }
-
 }
 
-if (!File(".github").isDirectory)
-    throw IOException("Run from project root")
 
 workflowMaven.writeToFile(addConsistencyCheck = false)

@@ -16,7 +16,7 @@
 package org.factcast.factus.spring.tx;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.util.function.*;
+import java.util.function.Function;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
@@ -81,9 +81,7 @@ public class SpringTransactionalLens extends AbstractTransactionalLens {
 
   @Override
   protected void doFlush() {
-    if (txManager.isRunning()) {
-      txManager.commit();
-    }
+    txManager.commit();
   }
 
   @VisibleForTesting

@@ -40,7 +40,7 @@ import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.store.internal.StoreMetrics.OP;
 import org.factcast.store.internal.tail.PGTailIndexManager;
 import org.factcast.store.test.AbstractFactStoreTest;
-import org.factcast.store.test.IntegrationTest;
+import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

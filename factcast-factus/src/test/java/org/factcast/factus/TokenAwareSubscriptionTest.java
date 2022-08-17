@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import lombok.SneakyThrows;
-import org.factcast.core.subscription.InternalSubscription;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.projection.WriterToken;
 import org.junit.jupiter.api.Assertions;
@@ -35,7 +34,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class TokenAwareSubscriptionTest {
 
-  @Mock private InternalSubscription sub;
+  @Mock private Subscription sub;
   @Mock private WriterToken tkn;
   @InjectMocks private TokenAwareSubscription uut;
 
