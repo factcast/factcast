@@ -49,7 +49,7 @@ jobs:
         name: Build with Maven, test & verify
         run: ./mvnw -B clean verify --file pom.xml
       - id: step-6
-        uses: SonarSource/sonarcloud-github-action@v2
+        uses: SonarSource/sonarcloud-github-action@master
         with:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
