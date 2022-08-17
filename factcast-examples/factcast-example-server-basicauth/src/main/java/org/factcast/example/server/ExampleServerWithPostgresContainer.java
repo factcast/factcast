@@ -28,7 +28,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
-@SuppressWarnings("ALL")
+@SuppressWarnings("all")
 @SpringBootApplication
 @Slf4j
 public class ExampleServerWithPostgresContainer {
@@ -43,7 +43,7 @@ public class ExampleServerWithPostgresContainer {
 
   private static void startPostgresContainer() {
     log.info("Trying to start postgres testcontainer");
-    PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:11.4");
+    PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:11.4");
     postgres.start();
     String url = postgres.getJdbcUrl();
     System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
