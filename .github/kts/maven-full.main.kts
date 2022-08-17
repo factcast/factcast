@@ -11,6 +11,7 @@ import it.krzeminski.githubactions.domain.RunnerType
 import it.krzeminski.githubactions.domain.Workflow
 import it.krzeminski.githubactions.domain.triggers.PullRequest
 import it.krzeminski.githubactions.domain.triggers.Push
+import it.krzeminski.githubactions.dsl.expressions.expr
 import it.krzeminski.githubactions.dsl.workflow
 import it.krzeminski.githubactions.yaml.writeToFile
 import java.nio.file.Paths
@@ -19,10 +20,7 @@ val customAction = CustomAction(
     actionOwner = "SonarSource",
     actionName = "sonarcloud-github-action",
     actionVersion = "master",
-    inputs = linkedMapOf(
-        "SONAR_TOKEN" to "\${{ secrets.SONAR_TOKEN }}",
-        "GITHUB_TOKEN" to "\${{ secrets.GITHUB_TOKEN }}",
-    )
+    inputs = linkedMapOf()
 )
 
 public val workflowMaven: Workflow = workflow(
@@ -88,8 +86,12 @@ public val workflowMaven: Workflow = workflow(
             command = "./mvnw -B clean verify --file pom.xml",
         )
         uses(
-
-            action = customAction
+            action = customAction,
+            name = "Sonar analysis",
+            env = linkedMapOf(
+                "GITHUB_TOKEN" to expr { secrets.GITHUB_TOKEN },
+                "SONAR_TOKEN" to expr { "secrets.SONAR_TOKEN" }
+            )
         )
     }
 
