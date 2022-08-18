@@ -96,7 +96,7 @@
     <slf4j-api.version>1.7.36</slf4j-api.version>
     <!--suppress UnresolvedMavenProperty -->
     <etc>${session.executionRootDirectory}/src/etc</etc>
-    <spring-boot.version>2.7.2</spring-boot.version>
+    <spring-boot.version>2.7.3</spring-boot.version>
     <spring-cloud.version>2021.0.3</spring-cloud.version>
     <spring-grpc.version>2.13.1.RELEASE</spring-grpc.version>
     <grpc.version>1.42.1</grpc.version>
