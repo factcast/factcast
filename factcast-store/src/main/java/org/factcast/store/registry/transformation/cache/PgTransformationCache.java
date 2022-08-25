@@ -41,7 +41,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 @RequiredArgsConstructor
 @Slf4j
 public class PgTransformationCache implements TransformationCache {
-  public static final int MAX_BATCH_SIZE = 32_000;
+  private static final int MAX_BATCH_SIZE = 20_000;
   private final JdbcTemplate jdbcTemplate;
   private final NamedParameterJdbcTemplate namedJdbcTemplate;
 
