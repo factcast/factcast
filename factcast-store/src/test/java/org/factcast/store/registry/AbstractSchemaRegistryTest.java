@@ -15,12 +15,8 @@
  */
 package org.factcast.store.registry;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
-
 import com.google.common.cache.LoadingCache;
-import java.util.*;
+import java.util.Optional;
 import net.javacrumbs.shedlock.core.LockProvider;
 import net.javacrumbs.shedlock.core.SimpleLock;
 import org.everit.json.schema.Schema;
@@ -38,6 +34,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
 @ExtendWith(MockitoExtension.class)
 class AbstractSchemaRegistryTest {
   @Mock private IndexFetcher indexFetcher;
@@ -45,7 +48,7 @@ class AbstractSchemaRegistryTest {
   @Mock private SchemaStore schemaStore;
   @Mock private TransformationStore transformationStore;
   @Mock private RegistryMetrics registryMetrics;
-  @Mock private StoreConfigurationProperties pgConfigurationProperties;
+  @Mock private StoreConfigurationProperties storeConfigurationProperties;
   @Mock private SimpleLock lock;
   @Mock private LockProvider lockProvider;
   @Mock private Object mutex;
@@ -61,7 +64,7 @@ class AbstractSchemaRegistryTest {
     @Test
     void justCountsWhenSchemaPersistent() {
       when(indexFetcher.fetchIndex()).thenThrow(IllegalStateException.class);
-      when(pgConfigurationProperties.isPersistentRegistry()).thenReturn(true);
+      when(storeConfigurationProperties.isPersistentRegistry()).thenReturn(true);
       when(lockProvider.lock(any())).thenReturn(Optional.of(lock));
       underTest.fetchInitial();
       verify(registryMetrics).count(EVENT.SCHEMA_UPDATE_FAILURE);
@@ -69,7 +72,7 @@ class AbstractSchemaRegistryTest {
 
     @Test
     void doesNothingWhenLockCannotBeAcquired() {
-      when(pgConfigurationProperties.isPersistentRegistry()).thenReturn(true);
+      when(storeConfigurationProperties.isPersistentRegistry()).thenReturn(true);
       underTest.fetchInitial();
       // failed to lock, so...
       verify(lockProvider).lock(any());
@@ -79,7 +82,7 @@ class AbstractSchemaRegistryTest {
 
     @Test
     void fetchesWhenLockCanBeAcquired() {
-      when(pgConfigurationProperties.isPersistentRegistry()).thenReturn(true);
+      when(storeConfigurationProperties.isPersistentRegistry()).thenReturn(true);
       when(lockProvider.lock(any())).thenReturn(Optional.of(lock));
       underTest.fetchInitial();
       // lock acquired, so...
@@ -91,7 +94,7 @@ class AbstractSchemaRegistryTest {
     @Test
     void throwsWhenSchemaIsNotPersistent() {
       when(indexFetcher.fetchIndex()).thenThrow(IllegalStateException.class);
-      when(pgConfigurationProperties.isPersistentRegistry()).thenReturn(false);
+      when(storeConfigurationProperties.isPersistentRegistry()).thenReturn(false);
 
       assertThatThrownBy(
               () -> {

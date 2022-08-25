@@ -15,7 +15,9 @@
  */
 package org.factcast.store.registry;
 
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
 import org.everit.json.schema.Schema;
 import org.factcast.store.registry.transformation.Transformation;
 import org.factcast.store.registry.transformation.TransformationKey;
@@ -52,6 +54,11 @@ public class NOPSchemaRegistry implements SchemaRegistry {
 
   @Override
   public void register(TransformationStoreListener transformationChains) {
+    // NOP
+  }
+
+  @Override
+  public void invalidateNearCache(SchemaKey key) {
     // NOP
   }
 }

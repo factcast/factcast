@@ -21,9 +21,10 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
+import java.util.Arrays;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
@@ -140,8 +141,55 @@ public class PgListener implements InitializingBean, DisposableBean {
             n -> {
               String name = n.getName();
 
+              // TODO use switch on name here? Or at least elseif?
+
               if (PgConstants.CHANNEL_BLACKLIST_CHANGE.equals(name)) {
                 postBlacklistChangeSignal();
+              }
+
+              if (PgConstants.CHANNEL_SCHEMASTORE_CHANGE.equals(name)) {
+                String json = n.getParameter();
+                try {
+                  JsonNode root = FactCastJson.readTree(json);
+
+                  String id = root.get("id").asText();
+                  String hash = root.get("hash").asText();
+                  String ns = root.get("ns").asText();
+                  String type = root.get("type").asText();
+                  Integer version = root.get("version").asInt();
+
+                  postSchemaStoreChangeSignal(
+                      new SchemaStoreChangeSignal(id, hash, ns, type, version));
+
+                } catch (JsonProcessingException | NullPointerException e) {
+                  // skipping
+                  log.debug(
+                      "Unparesable JSON parameter from notification: {}.",
+                      name);
+                }
+              }
+
+              if (PgConstants.CHANNEL_TRANSFORMATIONSTORE_DELETE.equals(name)) {
+                String json = n.getParameter();
+                try {
+                  JsonNode root = FactCastJson.readTree(json);
+
+                  String id = root.get("id").asText();
+                  String hash = root.get("hash").asText();
+                  String ns = root.get("ns").asText();
+                  String type = root.get("type").asText();
+                  Integer fromVersion = root.get("from_version").asInt();
+                  Integer toVersion = root.get("to_version").asInt();
+
+                  postTransformationStoreDeleteSignal(
+                      new TransformationStoreDeleteSignal(id, hash, ns, type, fromVersion, toVersion));
+
+                } catch (JsonProcessingException | NullPointerException e) {
+                  // skipping
+                  log.debug(
+                      "Unparesable JSON parameter from notification: {}.",
+                      name);
+                }
               }
 
               if (PgConstants.CHANNEL_FACT_INSERT.equals(name)) {
@@ -176,6 +224,16 @@ public class PgListener implements InitializingBean, DisposableBean {
   private void postBlacklistChangeSignal() {
     log.trace("Potential blacklist change detected");
     eventBus.post(new BlacklistChangeSignal());
+  }
+
+  private void postSchemaStoreChangeSignal(PgListener.SchemaStoreChangeSignal signal) {
+    log.trace("Potential schema store change detected"); // TODO log some more details about the signal?
+    eventBus.post(signal);
+  }
+
+  private void postTransformationStoreDeleteSignal(PgListener.TransformationStoreDeleteSignal signal) {
+    log.trace("Potential transformation store change detected"); // TODO log some more details about the signal?
+    eventBus.post(signal);
   }
 
   // try to receive Postgres notifications until timeout is over. In case we
@@ -253,6 +311,25 @@ public class PgListener implements InitializingBean, DisposableBean {
 
   @Value
   public static class BlacklistChangeSignal {}
+
+  @Value
+  public static class SchemaStoreChangeSignal {
+    @NonNull String id;
+    String hash;
+    String ns;
+    String type;
+    Integer version;
+  }
+
+  @Value
+  public static class TransformationStoreDeleteSignal {
+    @NonNull String id;
+    String hash;
+    String ns;
+    String type;
+    Integer fromVersion;
+    Integer toVersion;
+  }
 
   @Override
   public void afterPropertiesSet() {
