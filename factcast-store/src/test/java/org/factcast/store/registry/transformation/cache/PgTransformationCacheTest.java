@@ -154,17 +154,22 @@ class PgTransformationCacheTest {
       // only one key is looked for in persistent cache
       Collection ids = (Collection) cap.getValue().getValue("ids");
       assertThat(ids).hasSize(1).doesNotContain(key);
+
+      verify(underTest).registerAccess(Lists.newArrayList(key2));
     }
 
     @Test
     void findsAllInCache() {
+      final var keysToFind = Lists.newArrayList(key, key2);
+
       Mockito.when(
               namedJdbcTemplate.query(
                   anyString(), any(SqlParameterSource.class), any(RowMapper.class)))
           .thenReturn(Lists.newArrayList(f, f2));
-      assertThat(underTest.findAll(Lists.newArrayList(key, key2)))
-          .hasSize(2)
-          .containsExactlyInAnyOrder(f, f2);
+
+      assertThat(underTest.findAll(keysToFind)).hasSize(2).containsExactlyInAnyOrder(f, f2);
+
+      verify(underTest).registerAccess(keysToFind);
     }
   }
 
