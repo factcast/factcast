@@ -302,6 +302,16 @@ class PgTransformationCacheTest {
     }
 
     @Test
+    @SneakyThrows
+    void afterAcess_list() {
+      underTest.registerAccess(List.of(key, key2)).get();
+
+      assertThat(underTest.buffer().size()).isEqualTo(2);
+      assertThat(underTest.buffer().buffer().values()).allMatch(x -> x == null);
+      verify(underTest).flushIfNecessary();
+    }
+
+    @Test
     void logsException() {
       underTest.registerAccess(key2);
       underTest.registerWrite(key, f);
