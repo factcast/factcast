@@ -16,6 +16,7 @@
 package org.factcast.store.registry.transformation.cache;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.time.ZonedDateTime;
@@ -40,6 +41,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 @RequiredArgsConstructor
 @Slf4j
 public class PgTransformationCache implements TransformationCache {
+  private static final int MAX_BATCH_SIZE = 20_000;
   private final JdbcTemplate jdbcTemplate;
   private final NamedParameterJdbcTemplate namedJdbcTemplate;
 
@@ -130,8 +132,15 @@ public class PgTransformationCache implements TransformationCache {
     registryMetrics.increase(EVENT.TRANSFORMATION_CACHE_MISS, misses);
     registryMetrics.increase(EVENT.TRANSFORMATION_CACHE_HIT, hits);
 
-    buffer.putAllNull(keys);
+    registerAccess(keys);
+
     return Sets.newHashSet(facts);
+  }
+
+  @VisibleForTesting
+  CompletableFuture<Void> registerAccess(Collection<Key> keys) {
+    buffer.putAllNull(keys);
+    return flushIfNecessary();
   }
 
   @VisibleForTesting
@@ -193,11 +202,15 @@ public class PgTransformationCache implements TransformationCache {
             .collect(Collectors.toList());
 
     if (!parameters.isEmpty()) {
+
       // dup-keys can be ignored, in case another node just did the same
-      jdbcTemplate.batchUpdate(
-          "INSERT INTO transformationcache (cache_key, header, payload) VALUES (?, ? :: JSONB, ? ::"
-              + " JSONB) ON CONFLICT(cache_key) DO NOTHING",
-          parameters);
+      Iterables.partition(parameters, MAX_BATCH_SIZE)
+          .forEach(
+              p ->
+                  jdbcTemplate.batchUpdate(
+                      "INSERT INTO transformationcache (cache_key, header, payload) VALUES (?, ? :: JSONB, ? ::"
+                          + " JSONB) ON CONFLICT(cache_key) DO NOTHING",
+                      p));
     }
   }
 
@@ -210,9 +223,15 @@ public class PgTransformationCache implements TransformationCache {
             .collect(Collectors.toList());
 
     if (!keys.isEmpty()) {
-      SqlParameterSource parameters = new MapSqlParameterSource("ids", keys);
-      namedJdbcTemplate.update(
-          "UPDATE transformationcache SET last_access=now() WHERE cache_key IN (:ids)", parameters);
+
+      Iterables.partition(keys, MAX_BATCH_SIZE)
+          .forEach(
+              k -> {
+                SqlParameterSource parameters = new MapSqlParameterSource("ids", k);
+                namedJdbcTemplate.update(
+                    "UPDATE transformationcache SET last_access=now() WHERE cache_key IN (:ids)",
+                    parameters);
+              });
     }
   }
 }
