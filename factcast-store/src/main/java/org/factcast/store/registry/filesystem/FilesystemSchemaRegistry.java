@@ -30,7 +30,7 @@ public class FilesystemSchemaRegistry extends AbstractSchemaRegistry {
       @NonNull SchemaStore schemaStore,
       @NonNull TransformationStore transformationStore,
       @NonNull RegistryMetrics registryMetrics,
-      @NonNull StoreConfigurationProperties pgConfigurationProperties,
+      @NonNull StoreConfigurationProperties storeConfigurationProperties,
       @NonNull LockProvider lockProvider) {
     super(
         new FilesystemIndexFetcher(base),
@@ -38,7 +38,7 @@ public class FilesystemSchemaRegistry extends AbstractSchemaRegistry {
         schemaStore,
         transformationStore,
         registryMetrics,
-        pgConfigurationProperties,
+        storeConfigurationProperties,
         lockProvider);
   }
 }
