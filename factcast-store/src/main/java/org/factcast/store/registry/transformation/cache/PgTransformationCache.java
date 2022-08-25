@@ -130,8 +130,15 @@ public class PgTransformationCache implements TransformationCache {
     registryMetrics.increase(EVENT.TRANSFORMATION_CACHE_MISS, misses);
     registryMetrics.increase(EVENT.TRANSFORMATION_CACHE_HIT, hits);
 
-    buffer.putAllNull(keys);
+    registerAccess(keys);
+
     return Sets.newHashSet(facts);
+  }
+
+  @VisibleForTesting
+  CompletableFuture<Void> registerAccess(Collection<Key> keys) {
+    buffer.putAllNull(keys);
+    return flushIfNecessary();
   }
 
   @VisibleForTesting
