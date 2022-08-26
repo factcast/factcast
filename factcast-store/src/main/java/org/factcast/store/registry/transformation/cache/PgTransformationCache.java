@@ -19,9 +19,17 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.stream.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
@@ -167,6 +175,18 @@ public class PgTransformationCache implements TransformationCache {
                 new Date(thresholdDate.toInstant().toEpochMilli())));
   }
 
+  @Override
+  public void invalidateTransformationFor(String ns, String type) {
+    // we clear the buffer and flush only accesses
+    // we don't flush new transformations in the cache as those could contain the invalidated one
+    // TODO could be optimized
+    clearAndflushAccessesOnly();
+
+    jdbcTemplate.update(
+        "DELETE FROM transformationcache WHERE header ->> 'ns' = ? AND header ->> 'type' = ?",
+        ns, type);
+  }
+
   @Scheduled(fixedRate = 10, timeUnit = TimeUnit.MINUTES)
   public void flush() {
     Map<Key, Fact> copy = buffer.clear();
@@ -176,6 +196,18 @@ public class PgTransformationCache implements TransformationCache {
         insertBufferedAccesses(copy);
       } catch (Exception e) {
         log.error("Could not complete batch update of transformations on transformation cache.", e);
+      }
+    }
+  }
+
+  @VisibleForTesting
+  protected void clearAndflushAccessesOnly() {
+    Map<Key, Fact> copy = buffer.clear();
+    if (!copy.isEmpty()) {
+      try {
+        insertBufferedAccesses(copy);
+      } catch (Exception e) {
+        log.error("Could not complete batch update of transformation accesses on transformation cache.", e);
       }
     }
   }

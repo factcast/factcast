@@ -298,30 +298,27 @@ public class PgListenerTest {
   @Test
   void testNotifySchemaStoreChange() throws Exception {
     CountDownLatch latch = new CountDownLatch(1);
-    PGNotification validNotification =
-        new Notification(
-            PgConstants.CHANNEL_SCHEMASTORE_CHANGE,
-            1,
-            "{\"ns\":\"namespace\",\"type\":\"theType\",\"version\":1}");
-    PGNotification invalidNotification =
-        new Notification(
-            PgConstants.CHANNEL_SCHEMASTORE_CHANGE,
-            1,
-            "{\"ns\":\"namespace\",\"type\":\"theType\"}");
-    PGNotification otherChannelNotification =
-        new Notification(
-            PgConstants.CHANNEL_FACT_INSERT, 1, "{\"ns\":\"namespace\",\"type\":\"theType\"}");
-    PGNotification anotherValidNotification =
-        new Notification(
-            PgConstants.CHANNEL_SCHEMASTORE_CHANGE,
-            1,
-            "{\"ns\":\"namespace\",\"type\":\"theType\",\"version\":2}");
+    PGNotification validNotification = new Notification(
+        PgConstants.CHANNEL_SCHEMASTORE_CHANGE,
+        1,
+        "{\"ns\":\"namespace\",\"type\":\"theType\",\"version\":1}");
+    PGNotification invalidNotification = new Notification(
+        PgConstants.CHANNEL_SCHEMASTORE_CHANGE,
+        1,
+        "{\"ns\":\"namespace\",\"type\":\"theType\"}");
+    PGNotification otherChannelNotification = new Notification(
+        PgConstants.CHANNEL_FACT_INSERT,
+        1,
+        "{\"ns\":\"namespace\",\"type\":\"theType\",\"version\":1}");
+    PGNotification anotherValidNotification = new Notification(
+        PgConstants.CHANNEL_SCHEMASTORE_CHANGE,
+        1,
+        "{\"ns\":\"namespace\",\"type\":\"theType\",\"version\":2}");
 
     when(pgConnectionSupplier.get()).thenReturn(conn);
     when(conn.prepareStatement(anyString())).thenReturn(ps);
-    when(conn.prepareCall(anyString()).execute()).thenReturn(true);
-    when(conn.getNotifications(anyInt()))
-        .thenReturn(
+    when(conn.getNotifications(anyInt())).
+        thenReturn(
             new PGNotification[] {
               validNotification,
               invalidNotification,

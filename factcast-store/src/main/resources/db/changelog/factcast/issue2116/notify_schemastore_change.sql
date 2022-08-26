@@ -24,7 +24,6 @@ BEGIN
             'version', version,
             'txId', txid_current()
         )::text);
-    END IF;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
