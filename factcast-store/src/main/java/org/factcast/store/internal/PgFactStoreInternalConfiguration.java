@@ -236,5 +236,8 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
-  public PgSchemaStoreChangeListener pgSchemaStoreChangeListener(EventBus bus, SchemaRegistry registry) { return new PgSchemaStoreChangeListener(bus, registry); }
+  public PgSchemaStoreChangeListener pgSchemaStoreChangeListener(
+      EventBus bus, SchemaRegistry registry) {
+    return new PgSchemaStoreChangeListener(bus, registry);
+  }
 }
