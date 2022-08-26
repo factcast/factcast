@@ -15,13 +15,13 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
 import com.google.common.collect.Lists;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
@@ -40,6 +40,17 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.matches;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @SuppressWarnings("ALL")
 @ExtendWith(MockitoExtension.class)
@@ -383,6 +394,70 @@ class PgTransformationCacheTest {
 
       Collection ids = (Collection) m.getValue().getValue("ids");
       assertThat(ids).isNotNull().hasSize(2);
+    }
+  }
+
+  @Nested
+  class WhenInvalidatingTransformationFor {
+    private PgTransformationCache underTest;
+
+    @BeforeEach
+    void setup() {
+      underTest =
+          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
+    }
+
+    @Test
+    void clearsAndFlushesAccessesOnly() {
+      underTest.invalidateTransformationFor("theNamespace", "theType");
+
+      verify(underTest, times(1)).clearAndFlushAccessesOnly();
+    }
+
+    @Test
+    void deletesFromTransformationCache() {
+      underTest.invalidateTransformationFor("theNamespace", "theType");
+
+      ArgumentCaptor<String> m = ArgumentCaptor.forClass(String.class);
+
+      Mockito.verify(jdbcTemplate)
+          .update(matches("DELETE FROM transformationcache WHERE .*"), m.capture());
+
+      assertThat(m.getAllValues()).hasSize(2);
+      assertThat(m.getAllValues().get(0)).isEqualTo("theNamespace");
+      assertThat(m.getAllValues().get(1)).isEqualTo("theType");
+    }
+  }
+
+  @Nested
+  class WhenClearingAndFlushingAccessOnly {
+    private PgTransformationCache underTest;
+
+    @BeforeEach
+    void setup() {
+      underTest =
+          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
+    }
+
+    @Test
+    void clearsBuffer() {
+      underTest.registerWrite(Mockito.mock(TransformationCache.Key.class), Mockito.mock(Fact.class));
+      underTest.registerAccess(Mockito.mock(TransformationCache.Key.class));
+
+      underTest.clearAndFlushAccessesOnly();
+
+      assertThat(underTest.buffer().size()).isZero();
+    }
+
+    @Test
+    void flushesAccessesOnly() {
+      underTest.registerWrite(Mockito.mock(TransformationCache.Key.class), Mockito.mock(Fact.class));
+      underTest.registerAccess(Mockito.mock(TransformationCache.Key.class));
+
+      underTest.clearAndFlushAccessesOnly();
+
+      verify(underTest, times(1)).insertBufferedAccesses(any());
+      verify(underTest, never()).insertBufferedTransformations(any());
     }
   }
 }

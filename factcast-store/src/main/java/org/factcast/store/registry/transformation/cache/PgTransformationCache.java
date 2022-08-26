@@ -179,8 +179,8 @@ public class PgTransformationCache implements TransformationCache {
   public void invalidateTransformationFor(String ns, String type) {
     // we clear the buffer and flush only accesses
     // we don't flush new transformations in the cache as those could contain the invalidated one
-    // TODO could be optimized
-    clearAndflushAccessesOnly();
+    // could be optimized
+    clearAndFlushAccessesOnly();
 
     jdbcTemplate.update(
         "DELETE FROM transformationcache WHERE header ->> 'ns' = ? AND header ->> 'type' = ?",
@@ -202,7 +202,7 @@ public class PgTransformationCache implements TransformationCache {
   }
 
   @VisibleForTesting
-  protected void clearAndflushAccessesOnly() {
+  void clearAndFlushAccessesOnly() {
     Map<Key, Fact> copy = buffer.clear();
     if (!copy.isEmpty()) {
       try {
