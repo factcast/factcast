@@ -15,17 +15,12 @@
  */
 package org.factcast.store.internal.listen;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
 import com.google.common.eventbus.EventBus;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.concurrent.*;
-import java.util.function.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
 import org.factcast.store.internal.PgMetrics;
@@ -41,6 +36,22 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.postgresql.PGNotification;
 import org.postgresql.core.Notification;
 import org.postgresql.jdbc.PgConnection;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 @SuppressWarnings("UnstableApiUsage")
 @ExtendWith(MockitoExtension.class)
@@ -282,6 +293,55 @@ public class PgListenerTest {
             new FactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theOtherType"),
             new FactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theType"),
             new FactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theOtherType"));
+  }
+
+  @Test
+  void testNotifySchemaStoreChange() throws Exception {
+    CountDownLatch latch = new CountDownLatch(1);
+    PGNotification validNotification = new Notification(
+        PgConstants.CHANNEL_SCHEMASTORE_CHANGE,
+        1,
+        "{\"ns\":\"namespace\",\"type\":\"theType\",\"version\":1}");
+    PGNotification invalidNotification = new Notification(
+        PgConstants.CHANNEL_SCHEMASTORE_CHANGE,
+        1,
+        "{\"ns\":\"namespace\",\"type\":\"theType\"}");
+    PGNotification otherChannelNotification = new Notification(
+        PgConstants.CHANNEL_FACT_INSERT,
+        1,
+        "{\"ns\":\"namespace\",\"type\":\"theType\"}");
+    PGNotification anotherValidNotification = new Notification(
+        PgConstants.CHANNEL_SCHEMASTORE_CHANGE,
+        1,
+        "{\"ns\":\"namespace\",\"type\":\"theType\",\"version\":2}");
+
+    when(pgConnectionSupplier.get()).thenReturn(conn);
+    when(conn.prepareStatement(anyString())).thenReturn(ps);
+    when(conn.prepareCall(anyString()).execute()).thenReturn(true);
+    when(conn.getNotifications(anyInt())).
+        thenReturn(
+            new PGNotification[] {
+              validNotification,
+              invalidNotification,
+              otherChannelNotification,
+              anotherValidNotification
+            })
+        .thenAnswer(
+            i -> {
+              latch.countDown();
+              return null;
+            });
+
+    PgListener pgListener = spy(new PgListener(pgConnectionSupplier, eventBus, props, registry));
+    pgListener.listen();
+    latch.await(1, TimeUnit.MINUTES);
+    pgListener.destroy();
+
+    verify(pgListener, times(2)).postSchemaStoreChangeSignal(any());
+    verify(pgListener, times(1)).postSchemaStoreChangeSignal(new PgListener.SchemaStoreChangeSignal("namespace", "theType", 1));
+    verify(pgListener, times(1)).postSchemaStoreChangeSignal(new PgListener.SchemaStoreChangeSignal("namespace", "theType", 2));
+
+    verify(eventBus, times(2)).post(any(PgListener.SchemaStoreChangeSignal.class));
   }
 
   @Test

@@ -141,25 +141,21 @@ public class PgListener implements InitializingBean, DisposableBean {
             n -> {
               String name = n.getName();
 
-              // TODO use switch on name here? Or at least elseif?
+              // TODO use switch on name here? Or at least elseif? definetely, also because of last else if
 
               if (PgConstants.CHANNEL_BLACKLIST_CHANGE.equals(name)) {
                 postBlacklistChangeSignal();
-              }
-
-              if (PgConstants.CHANNEL_SCHEMASTORE_CHANGE.equals(name)) {
+              } else if (PgConstants.CHANNEL_SCHEMASTORE_CHANGE.equals(name)) {
                 String json = n.getParameter();
                 try {
                   JsonNode root = FactCastJson.readTree(json);
 
-                  String id = root.get("id").asText();
-                  String hash = root.get("hash").asText();
                   String ns = root.get("ns").asText();
                   String type = root.get("type").asText();
                   Integer version = root.get("version").asInt();
 
                   postSchemaStoreChangeSignal(
-                      new SchemaStoreChangeSignal(id, hash, ns, type, version));
+                      new SchemaStoreChangeSignal(ns, type, version));
 
                 } catch (JsonProcessingException | NullPointerException e) {
                   // skipping
@@ -167,9 +163,7 @@ public class PgListener implements InitializingBean, DisposableBean {
                       "Unparesable JSON parameter from notification: {}.",
                       name);
                 }
-              }
-
-              if (PgConstants.CHANNEL_TRANSFORMATIONSTORE_DELETE.equals(name)) {
+              } else if (PgConstants.CHANNEL_TRANSFORMATIONSTORE_DELETE.equals(name)) {
                 String json = n.getParameter();
                 try {
                   JsonNode root = FactCastJson.readTree(json);
@@ -190,9 +184,7 @@ public class PgListener implements InitializingBean, DisposableBean {
                       "Unparesable JSON parameter from notification: {}.",
                       name);
                 }
-              }
-
-              if (PgConstants.CHANNEL_FACT_INSERT.equals(name)) {
+              } else if (PgConstants.CHANNEL_FACT_INSERT.equals(name)) {
                 String json = n.getParameter();
 
                 try {
@@ -226,12 +218,14 @@ public class PgListener implements InitializingBean, DisposableBean {
     eventBus.post(new BlacklistChangeSignal());
   }
 
-  private void postSchemaStoreChangeSignal(PgListener.SchemaStoreChangeSignal signal) {
+  @VisibleForTesting
+  protected void postSchemaStoreChangeSignal(PgListener.SchemaStoreChangeSignal signal) {
     log.trace("Potential schema store change detected"); // TODO log some more details about the signal?
     eventBus.post(signal);
   }
 
-  private void postTransformationStoreDeleteSignal(PgListener.TransformationStoreDeleteSignal signal) {
+  @VisibleForTesting
+  protected void postTransformationStoreDeleteSignal(PgListener.TransformationStoreDeleteSignal signal) {
     log.trace("Potential transformation store change detected"); // TODO log some more details about the signal?
     eventBus.post(signal);
   }
@@ -314,11 +308,9 @@ public class PgListener implements InitializingBean, DisposableBean {
 
   @Value
   public static class SchemaStoreChangeSignal {
-    @NonNull String id;
-    String hash;
-    String ns;
-    String type;
-    Integer version;
+    @NonNull String ns;
+    @NonNull String type;
+    @NonNull Integer version;
   }
 
   @Value
