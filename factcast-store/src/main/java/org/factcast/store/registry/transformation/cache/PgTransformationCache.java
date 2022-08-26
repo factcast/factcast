@@ -184,7 +184,8 @@ public class PgTransformationCache implements TransformationCache {
 
     jdbcTemplate.update(
         "DELETE FROM transformationcache WHERE header ->> 'ns' = ? AND header ->> 'type' = ?",
-        ns, type);
+        ns,
+        type);
   }
 
   @Scheduled(fixedRate = 10, timeUnit = TimeUnit.MINUTES)
@@ -207,7 +208,9 @@ public class PgTransformationCache implements TransformationCache {
       try {
         insertBufferedAccesses(copy);
       } catch (Exception e) {
-        log.error("Could not complete batch update of transformation accesses on transformation cache.", e);
+        log.error(
+            "Could not complete batch update of transformation accesses on transformation cache.",
+            e);
       }
     }
   }
