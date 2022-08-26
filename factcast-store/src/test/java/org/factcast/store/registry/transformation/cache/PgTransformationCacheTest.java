@@ -15,6 +15,17 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.matches;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
 import com.google.common.collect.Lists;
 import java.time.ZonedDateTime;
 import java.util.Collection;
@@ -40,17 +51,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.matches;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
 @SuppressWarnings("ALL")
 @ExtendWith(MockitoExtension.class)
@@ -441,7 +441,8 @@ class PgTransformationCacheTest {
 
     @Test
     void clearsBuffer() {
-      underTest.registerWrite(Mockito.mock(TransformationCache.Key.class), Mockito.mock(Fact.class));
+      underTest.registerWrite(
+          Mockito.mock(TransformationCache.Key.class), Mockito.mock(Fact.class));
       underTest.registerAccess(Mockito.mock(TransformationCache.Key.class));
 
       underTest.clearAndFlushAccessesOnly();
@@ -451,7 +452,8 @@ class PgTransformationCacheTest {
 
     @Test
     void flushesAccessesOnly() {
-      underTest.registerWrite(Mockito.mock(TransformationCache.Key.class), Mockito.mock(Fact.class));
+      underTest.registerWrite(
+          Mockito.mock(TransformationCache.Key.class), Mockito.mock(Fact.class));
       underTest.registerAccess(Mockito.mock(TransformationCache.Key.class));
 
       underTest.clearAndFlushAccessesOnly();
