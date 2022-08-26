@@ -166,16 +166,11 @@ public class PgListener implements InitializingBean, DisposableBean {
                 try {
                   JsonNode root = FactCastJson.readTree(json);
 
-                  String id = root.get("id").asText();
-                  String hash = root.get("hash").asText();
                   String ns = root.get("ns").asText();
                   String type = root.get("type").asText();
-                  Integer fromVersion = root.get("from_version").asInt();
-                  Integer toVersion = root.get("to_version").asInt();
 
                   postTransformationStoreDeleteSignal(
-                      new TransformationStoreDeleteSignal(
-                          id, hash, ns, type, fromVersion, toVersion));
+                      new TransformationStoreDeleteSignal(ns, type));
 
                 } catch (JsonProcessingException | NullPointerException e) {
                   // skipping
@@ -316,12 +311,8 @@ public class PgListener implements InitializingBean, DisposableBean {
 
   @Value
   public static class TransformationStoreDeleteSignal {
-    @NonNull String id;
-    String hash;
-    String ns;
-    String type;
-    Integer fromVersion;
-    Integer toVersion;
+    @NonNull String ns;
+    @NonNull String type;
   }
 
   @Override
