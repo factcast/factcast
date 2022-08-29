@@ -15,22 +15,6 @@
  */
 package org.factcast.store.internal.listen;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
-
 import com.google.common.eventbus.EventBus;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -52,6 +36,22 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.postgresql.PGNotification;
 import org.postgresql.core.Notification;
 import org.postgresql.jdbc.PgConnection;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 @SuppressWarnings("UnstableApiUsage")
 @ExtendWith(MockitoExtension.class)
@@ -349,6 +349,62 @@ public class PgListenerTest {
             new PgListener.SchemaStoreChangeSignal("namespace", "theType", 2));
 
     verify(eventBus, times(2)).post(any(PgListener.SchemaStoreChangeSignal.class));
+  }
+
+  @Test
+  void testNotifyTransformationStoreDelete() throws Exception {
+    CountDownLatch latch = new CountDownLatch(1);
+    PGNotification validNotification =
+        new Notification(
+            PgConstants.CHANNEL_TRANSFORMATIONSTORE_DELETE,
+            1,
+            "{\"ns\":\"namespace\",\"type\":\"theType\"}");
+    PGNotification invalidNotification =
+        new Notification(
+            PgConstants.CHANNEL_TRANSFORMATIONSTORE_DELETE,
+            1,
+            "{\"ns\":\"namespace\",\"invalidTypeKey\":\"theType\"}");
+    PGNotification otherChannelNotification =
+        new Notification(
+            PgConstants.CHANNEL_FACT_INSERT,
+            1,
+            "{\"ns\":\"namespace\",\"type\":\"theType\"}");
+    PGNotification anotherValidNotification =
+        new Notification(
+            PgConstants.CHANNEL_TRANSFORMATIONSTORE_DELETE,
+            1,
+            "{\"ns\":\"namespace\",\"type\":\"theOtherType\"}");
+
+    when(pgConnectionSupplier.get()).thenReturn(conn);
+    when(conn.prepareStatement(anyString())).thenReturn(ps);
+    when(conn.getNotifications(anyInt()))
+        .thenReturn(
+            new PGNotification[] {
+                validNotification,
+                invalidNotification,
+                otherChannelNotification,
+                anotherValidNotification
+            })
+        .thenAnswer(
+            i -> {
+              latch.countDown();
+              return null;
+            });
+
+    PgListener pgListener = spy(new PgListener(pgConnectionSupplier, eventBus, props, registry));
+    pgListener.listen();
+    latch.await(1, TimeUnit.MINUTES);
+    pgListener.destroy();
+
+    verify(pgListener, times(2)).postTransformationStoreDeleteSignal(any());
+    verify(pgListener, times(1))
+        .postTransformationStoreDeleteSignal(
+            new PgListener.TransformationStoreDeleteSignal("namespace", "theType"));
+    verify(pgListener, times(1))
+        .postTransformationStoreDeleteSignal(
+            new PgListener.TransformationStoreDeleteSignal("namespace", "theOtherType"));
+
+    verify(eventBus, times(2)).post(any(PgListener.TransformationStoreDeleteSignal.class));
   }
 
   @Test
