@@ -221,8 +221,7 @@ public class PgListener implements InitializingBean, DisposableBean {
   protected void postTransformationStoreDeleteSignal(
       PgListener.TransformationStoreDeleteSignal signal) {
     log.trace(
-        "Potential transformation store change detected"); // TODO log some more details about the
-    // signal?
+        "Potential transformation store change detected"); // TODO log some more?
     eventBus.post(signal);
   }
 
