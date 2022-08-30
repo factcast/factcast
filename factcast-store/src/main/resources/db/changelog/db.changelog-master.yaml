@@ -163,7 +163,7 @@ databaseChangeLog:
             splitStatements: false
             stripComments: true
 
-# fix_index_for_enum was removed.
+  # fix_index_for_enum was removed.
 
   - changeSet:
       id: fix_index_for_enum2
@@ -247,6 +247,30 @@ databaseChangeLog:
         - sqlFile:
             encoding: utf8
             path: factcast/issue2131/toast_snapshotcache.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue2116_notify_schemastore_change
+      runInTransaction: false
+      author: bresciamattia
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2116/notify_schemastore_change.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue2116_notify_transformationstore_delete
+      runInTransaction: false
+      author: bresciamattia
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2116/notify_transformationstore_delete.sql
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
