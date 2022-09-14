@@ -4,9 +4,7 @@
 -- so even if we'd risk to loose a notify, we're now dropping the trigger first
 
 DROP TRIGGER IF EXISTS tr_deferred_schemastore_insert ON schemastore;
-
 DROP TRIGGER IF EXISTS tr_deferred_schemastore_update ON schemastore;
-
 CREATE OR REPLACE FUNCTION notifySchemaStoreChange() RETURNS trigger AS
 
 $$
