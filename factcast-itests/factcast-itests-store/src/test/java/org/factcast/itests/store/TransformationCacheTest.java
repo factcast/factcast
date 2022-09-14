@@ -15,6 +15,8 @@
  */
 package org.factcast.itests.store;
 
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -32,8 +34,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import static org.junit.jupiter.api.Assertions.assertNull;
-
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @IntegrationTest
@@ -41,11 +41,9 @@ public class TransformationCacheTest {
 
   @Autowired FactCast fc;
 
-  @Autowired
-  JdbcTemplate jdbcTemplate;
+  @Autowired JdbcTemplate jdbcTemplate;
 
-  @Autowired
-  TransformationCache transformationCache;
+  @Autowired TransformationCache transformationCache;
 
   @Test
   public void transformationCacheInvalidation() throws Exception {
@@ -63,7 +61,9 @@ public class TransformationCacheTest {
     System.out.println("### After transformation cache flush");
     printTransformationCacheContent();
 
-    jdbcTemplate.update(String.format("DELETE FROM transformationstore WHERE type='%s' AND from_version=%d", f.type(), 1));
+    jdbcTemplate.update(
+        String.format(
+            "DELETE FROM transformationstore WHERE type='%s' AND from_version=%d", f.type(), 1));
     Thread.sleep(2000); // TODO flaky again
 
     System.out.println("### After transformation delete");
@@ -81,13 +81,15 @@ public class TransformationCacheTest {
 
   private void printTransformationCacheContent() {
     System.out.println("### Transformation cache content:");
-    List<String> cacheRows = jdbcTemplate.query("SELECT * FROM transformationcache", new TransformationCacheRowMapper());
+    List<String> cacheRows =
+        jdbcTemplate.query("SELECT * FROM transformationcache", new TransformationCacheRowMapper());
     cacheRows.forEach(System.out::println);
   }
 
   private void printTransformationStoreContent() {
     System.out.println("### Transformation store content:");
-    List<String> storeRows = jdbcTemplate.query("SELECT * FROM transformationstore", new TransformationStoreRowMapper());
+    List<String> storeRows =
+        jdbcTemplate.query("SELECT * FROM transformationstore", new TransformationStoreRowMapper());
     storeRows.forEach(System.out::println);
   }
 
@@ -101,7 +103,12 @@ public class TransformationCacheTest {
   private class TransformationStoreRowMapper implements RowMapper<String> {
     @Override
     public String mapRow(ResultSet rs, int rowNum) throws SQLException {
-      return String.format("%s.%s %d->%d", rs.getString("ns"), rs.getString("type"), rs.getInt("from_version"), rs.getInt("to_version"));
+      return String.format(
+          "%s.%s %d->%d",
+          rs.getString("ns"),
+          rs.getString("type"),
+          rs.getInt("from_version"),
+          rs.getInt("to_version"));
     }
   }
 }
