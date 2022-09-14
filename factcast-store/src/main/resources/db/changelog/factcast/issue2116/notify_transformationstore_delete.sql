@@ -10,8 +10,6 @@ $$
 DECLARE
     ns           varchar;
     type         varchar;
-    -- dunno if we need all this stuff
-    -- we'll see
 BEGIN
     ns := OLD.ns;
     type := OLD.type;
