@@ -264,13 +264,13 @@ databaseChangeLog:
             stripComments: true
 
   - changeSet:
-      id: issue2116_notify_transformationstore_delete
+      id: issue2116_notify_transformationstore_change
       runInTransaction: false
       author: bresciamattia
       changes:
         - sqlFile:
             encoding: utf8
-            path: factcast/issue2116/notify_transformationstore_delete.sql
+            path: factcast/issue2116/notify_transformationstore_change.sql
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true

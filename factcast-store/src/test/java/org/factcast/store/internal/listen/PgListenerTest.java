@@ -356,12 +356,12 @@ public class PgListenerTest {
     CountDownLatch latch = new CountDownLatch(1);
     PGNotification validNotification =
         new Notification(
-            PgConstants.CHANNEL_TRANSFORMATIONSTORE_DELETE,
+            PgConstants.CHANNEL_TRANSFORMATIONSTORE_CHANGE,
             1,
             "{\"ns\":\"namespace\",\"type\":\"theType\"}");
     PGNotification invalidNotification =
         new Notification(
-            PgConstants.CHANNEL_TRANSFORMATIONSTORE_DELETE,
+            PgConstants.CHANNEL_TRANSFORMATIONSTORE_CHANGE,
             1,
             "{\"ns\":\"namespace\",\"invalidTypeKey\":\"theType\"}");
     PGNotification otherChannelNotification =
@@ -369,7 +369,7 @@ public class PgListenerTest {
             PgConstants.CHANNEL_FACT_INSERT, 1, "{\"ns\":\"namespace\",\"type\":\"theType\"}");
     PGNotification anotherValidNotification =
         new Notification(
-            PgConstants.CHANNEL_TRANSFORMATIONSTORE_DELETE,
+            PgConstants.CHANNEL_TRANSFORMATIONSTORE_CHANGE,
             1,
             "{\"ns\":\"namespace\",\"type\":\"theOtherType\"}");
 

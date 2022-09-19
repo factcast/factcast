@@ -3,19 +3,19 @@
 -- looks like pg may starve if we're replacing a function used in a trigger that is busy.
 -- so even if we'd risk to loose a notify, we're now dropping the trigger first
 
-DROP TRIGGER IF EXISTS tr_deferred_schemastore_insert ON schemastore;
+DROP TRIGGER IF EXISTS tr_deferred_schemastore_delete ON schemastore;
 DROP TRIGGER IF EXISTS tr_deferred_schemastore_update ON schemastore;
-CREATE OR REPLACE FUNCTION notifySchemaStoreChange() RETURNS trigger AS
 
+CREATE OR REPLACE FUNCTION notifySchemaStoreChange() RETURNS trigger AS
 $$
 DECLARE
     ns       varchar;
     type     varchar;
     version  int;
 BEGIN
-    ns := NEW.ns;
-    type := NEW.type;
-    version := NEW.version;
+    ns := OLD.ns;
+    type := OLD.type;
+    version := OLD.version;
     PERFORM pg_notify('schemastore_change', json_build_object(
             'ns', ns,
             'type', type,
@@ -26,8 +26,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE CONSTRAINT TRIGGER tr_deferred_schemastore_insert
-    AFTER INSERT
+CREATE CONSTRAINT TRIGGER tr_deferred_schemastore_delete
+    AFTER DELETE
     ON schemastore DEFERRABLE INITIALLY DEFERRED
     FOR EACH ROW
 EXECUTE PROCEDURE notifySchemaStoreChange();
