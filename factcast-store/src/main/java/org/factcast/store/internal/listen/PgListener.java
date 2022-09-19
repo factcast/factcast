@@ -161,7 +161,7 @@ public class PgListener implements InitializingBean, DisposableBean {
                   // skipping
                   log.debug("Unparesable JSON parameter from notification: {}.", name);
                 }
-              } else if (PgConstants.CHANNEL_TRANSFORMATIONSTORE_DELETE.equals(name)) {
+              } else if (PgConstants.CHANNEL_TRANSFORMATIONSTORE_CHANGE.equals(name)) {
                 String json = n.getParameter();
                 try {
                   JsonNode root = FactCastJson.readTree(json);
