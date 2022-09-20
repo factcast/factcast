@@ -121,13 +121,16 @@ public class PgListener implements InitializingBean, DisposableBean {
     try (PreparedStatement ps = pc.prepareStatement(PgConstants.LISTEN_ROUNDTRIP_CHANNEL_SQL)) {
       ps.execute();
     }
-    try (PreparedStatement ps = pc.prepareStatement(PgConstants.LISTEN_BLACKLIST_CHANGE_CHANNEL_SQL)) {
+    try (PreparedStatement ps =
+        pc.prepareStatement(PgConstants.LISTEN_BLACKLIST_CHANGE_CHANNEL_SQL)) {
       ps.execute();
     }
-    try (PreparedStatement ps = pc.prepareStatement(PgConstants.LISTEN_SCHEMASTORE_CHANGE_CHANNEL_SQL)) {
+    try (PreparedStatement ps =
+        pc.prepareStatement(PgConstants.LISTEN_SCHEMASTORE_CHANGE_CHANNEL_SQL)) {
       ps.execute();
     }
-    try (PreparedStatement ps = pc.prepareStatement(PgConstants.LISTEN_TRANSFORMATIONSTORE_CHANGE_CHANNEL_SQL)) {
+    try (PreparedStatement ps =
+        pc.prepareStatement(PgConstants.LISTEN_TRANSFORMATIONSTORE_CHANGE_CHANNEL_SQL)) {
       ps.execute();
     }
   }
@@ -222,8 +225,7 @@ public class PgListener implements InitializingBean, DisposableBean {
 
   @VisibleForTesting
   protected void postSchemaStoreChangeSignal(PgListener.SchemaStoreChangeSignal signal) {
-    log.trace(
-        "Schema store change detected");
+    log.trace("Schema store change detected");
     eventBus.post(signal);
   }
 
