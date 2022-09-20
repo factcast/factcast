@@ -33,7 +33,7 @@ public class PgTransformationStoreChangeListener
 
   private final EventBus bus;
 
-  private final PgTransformationCache cache;
+  private final TransformationCache cache;
 
   @Override
   public void afterSingletonsInstantiated() {
@@ -41,7 +41,7 @@ public class PgTransformationStoreChangeListener
   }
 
   @Subscribe
-  public void on(PgListener.TransformationStoreDeleteSignal signal) {
+  public void on(PgListener.TransformationStoreChangeSignal signal) {
     cache.invalidateTransformationFor(signal.ns(), signal.type());
   }
 
