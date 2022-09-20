@@ -352,7 +352,7 @@ public class PgListenerTest {
   }
 
   @Test
-  void testNotifyTransformationStoreDelete() throws Exception {
+  void testNotifyTransformationStoreChange() throws Exception {
     CountDownLatch latch = new CountDownLatch(1);
     PGNotification validNotification =
         new Notification(
@@ -394,15 +394,15 @@ public class PgListenerTest {
     latch.await(1, TimeUnit.MINUTES);
     pgListener.destroy();
 
-    verify(pgListener, times(2)).postTransformationStoreDeleteSignal(any());
+    verify(pgListener, times(2)).postTransformationStoreChangeSignal(any());
     verify(pgListener, times(1))
-        .postTransformationStoreDeleteSignal(
-            new PgListener.TransformationStoreDeleteSignal("namespace", "theType"));
+        .postTransformationStoreChangeSignal(
+            new PgListener.TransformationStoreChangeSignal("namespace", "theType"));
     verify(pgListener, times(1))
-        .postTransformationStoreDeleteSignal(
-            new PgListener.TransformationStoreDeleteSignal("namespace", "theOtherType"));
+        .postTransformationStoreChangeSignal(
+            new PgListener.TransformationStoreChangeSignal("namespace", "theOtherType"));
 
-    verify(eventBus, times(2)).post(any(PgListener.TransformationStoreDeleteSignal.class));
+    verify(eventBus, times(2)).post(any(PgListener.TransformationStoreChangeSignal.class));
   }
 
   @Test

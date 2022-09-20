@@ -121,6 +121,15 @@ public class PgListener implements InitializingBean, DisposableBean {
     try (PreparedStatement ps = pc.prepareStatement(PgConstants.LISTEN_ROUNDTRIP_CHANNEL_SQL)) {
       ps.execute();
     }
+    try (PreparedStatement ps = pc.prepareStatement(PgConstants.LISTEN_BLACKLIST_CHANGE_CHANNEL_SQL)) {
+      ps.execute();
+    }
+    try (PreparedStatement ps = pc.prepareStatement(PgConstants.LISTEN_SCHEMASTORE_CHANGE_CHANNEL_SQL)) {
+      ps.execute();
+    }
+    try (PreparedStatement ps = pc.prepareStatement(PgConstants.LISTEN_TRANSFORMATIONSTORE_CHANGE_CHANNEL_SQL)) {
+      ps.execute();
+    }
   }
 
   // make sure subscribers did not miss anything while we reconnected
@@ -140,6 +149,7 @@ public class PgListener implements InitializingBean, DisposableBean {
         .forEach(
             n -> {
               String name = n.getName();
+              log.debug("Received notification on channel: {}.", name);
 
               // TODO use switch on name here? Or at least elseif? definetely, also because of last
               // else if
@@ -169,8 +179,8 @@ public class PgListener implements InitializingBean, DisposableBean {
                   String ns = root.get("ns").asText();
                   String type = root.get("type").asText();
 
-                  postTransformationStoreDeleteSignal(
-                      new TransformationStoreDeleteSignal(ns, type));
+                  postTransformationStoreChangeSignal(
+                      new TransformationStoreChangeSignal(ns, type));
 
                 } catch (JsonProcessingException | NullPointerException e) {
                   // skipping
@@ -213,14 +223,14 @@ public class PgListener implements InitializingBean, DisposableBean {
   @VisibleForTesting
   protected void postSchemaStoreChangeSignal(PgListener.SchemaStoreChangeSignal signal) {
     log.trace(
-        "Potential schema store change detected"); // TODO log some more details about the signal?
+        "Schema store change detected");
     eventBus.post(signal);
   }
 
   @VisibleForTesting
-  protected void postTransformationStoreDeleteSignal(
-      PgListener.TransformationStoreDeleteSignal signal) {
-    log.trace("Potential transformation store change detected"); // TODO log some more?
+  protected void postTransformationStoreChangeSignal(
+      PgListener.TransformationStoreChangeSignal signal) {
+    log.trace("Transformation store change detected");
     eventBus.post(signal);
   }
 
@@ -308,7 +318,7 @@ public class PgListener implements InitializingBean, DisposableBean {
   }
 
   @Value
-  public static class TransformationStoreDeleteSignal {
+  public static class TransformationStoreChangeSignal {
     @NonNull String ns;
     @NonNull String type;
   }

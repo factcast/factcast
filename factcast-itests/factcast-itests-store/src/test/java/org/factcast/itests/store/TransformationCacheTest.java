@@ -64,7 +64,10 @@ public class TransformationCacheTest {
     jdbcTemplate.update(
         String.format(
             "DELETE FROM transformationstore WHERE type='%s' AND from_version=%d", f.type(), 1));
-    Thread.sleep(2000); // TODO flaky again
+    jdbcTemplate.update(
+        String.format(
+                "DELETE FROM transformationstore WHERE type='%s' AND from_version=%d", f.type(), 2));
+    Thread.sleep(10000); // TODO flaky again
 
     System.out.println("### After transformation delete");
     printTransformationStoreContent();
