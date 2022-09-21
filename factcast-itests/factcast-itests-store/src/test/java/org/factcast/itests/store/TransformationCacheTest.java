@@ -15,9 +15,6 @@
  */
 package org.factcast.itests.store;
 
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -54,7 +51,9 @@ public class TransformationCacheTest {
 
     Fact transformedV2 = fc.fetchByIdAndVersion(id, 2).get();
     Fact transformedV3 = fc.fetchByIdAndVersion(id, 3).get();
-    System.out.println(String.format("transformed fact before cache invalidation: %s", transformedV3.jsonPayload()));
+    System.out.println(
+        String.format(
+            "transformed fact before cache invalidation: %s", transformedV3.jsonPayload()));
     ((PgTransformationCache) transformationCache).flush();
     Thread.sleep(100); // TODO flaky
 
@@ -79,7 +78,9 @@ public class TransformationCacheTest {
 
     // assertSame(fc.fetchByIdAndVersion(id, 3).get(), transformedV3);
     Fact transformedV3After = fc.fetchByIdAndVersion(id, 3).get();
-    System.out.println(String.format("transformed fact after cache invalidation: %s", transformedV3After.jsonPayload()));
+    System.out.println(
+        String.format(
+            "transformed fact after cache invalidation: %s", transformedV3After.jsonPayload()));
   }
 
   private Fact createTestFact(UUID id, int version, String body) {
