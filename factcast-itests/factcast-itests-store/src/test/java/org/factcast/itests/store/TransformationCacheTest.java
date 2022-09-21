@@ -16,6 +16,7 @@
 package org.factcast.itests.store;
 
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -51,8 +52,9 @@ public class TransformationCacheTest {
     Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
     fc.publish(f);
 
-    fc.fetchByIdAndVersion(id, 2).orElse(null);
-    fc.fetchByIdAndVersion(id, 3).orElse(null);
+    Fact transformedV2 = fc.fetchByIdAndVersion(id, 2).get();
+    Fact transformedV3 = fc.fetchByIdAndVersion(id, 3).get();
+    System.out.println(String.format("transformed fact before cache invalidation: %s", transformedV3.jsonPayload()));
     ((PgTransformationCache) transformationCache).flush();
     Thread.sleep(100); // TODO flaky
 
@@ -67,7 +69,7 @@ public class TransformationCacheTest {
     jdbcTemplate.update(
         String.format(
             "DELETE FROM transformationstore WHERE type='%s' AND from_version=%d", f.type(), 2));
-    Thread.sleep(10000); // TODO flaky again
+    Thread.sleep(1000); // TODO flaky again
 
     System.out.println("### After transformation delete");
     printTransformationStoreContent();
@@ -75,7 +77,9 @@ public class TransformationCacheTest {
 
     // add proxy
 
-    assertNull(fc.fetchByIdAndVersion(id, 3).orElse(null));
+    // assertSame(fc.fetchByIdAndVersion(id, 3).get(), transformedV3);
+    Fact transformedV3After = fc.fetchByIdAndVersion(id, 3).get();
+    System.out.println(String.format("transformed fact after cache invalidation: %s", transformedV3After.jsonPayload()));
   }
 
   private Fact createTestFact(UUID id, int version, String body) {

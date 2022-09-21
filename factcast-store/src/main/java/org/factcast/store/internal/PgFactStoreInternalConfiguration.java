@@ -53,6 +53,7 @@ import org.factcast.store.registry.SchemaRegistry;
 import org.factcast.store.registry.SchemaRegistryConfiguration;
 import org.factcast.store.registry.transformation.cache.PgTransformationStoreChangeListener;
 import org.factcast.store.registry.transformation.cache.TransformationCache;
+import org.factcast.store.registry.transformation.chains.TransformationChains;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -245,7 +246,7 @@ public class PgFactStoreInternalConfiguration {
 
   @Bean
   public PgTransformationStoreChangeListener pgTransformationStoreChangeListener(
-      EventBus bus, TransformationCache transformationCache) {
-    return new PgTransformationStoreChangeListener(bus, transformationCache);
+      EventBus bus, TransformationCache transformationCache, TransformationChains transformationChains) {
+    return new PgTransformationStoreChangeListener(bus, transformationCache, transformationChains);
   }
 }
