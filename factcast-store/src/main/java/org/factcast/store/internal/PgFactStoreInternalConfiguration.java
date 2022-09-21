@@ -246,7 +246,9 @@ public class PgFactStoreInternalConfiguration {
 
   @Bean
   public PgTransformationStoreChangeListener pgTransformationStoreChangeListener(
-      EventBus bus, TransformationCache transformationCache, TransformationChains transformationChains) {
+      EventBus bus,
+      TransformationCache transformationCache,
+      TransformationChains transformationChains) {
     return new PgTransformationStoreChangeListener(bus, transformationCache, transformationChains);
   }
 }

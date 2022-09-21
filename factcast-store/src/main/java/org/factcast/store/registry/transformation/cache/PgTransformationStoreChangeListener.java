@@ -18,6 +18,9 @@ package org.factcast.store.registry.transformation.cache;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.internal.listen.PgListener;
@@ -27,10 +30,6 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -49,7 +48,11 @@ public class PgTransformationStoreChangeListener
   static final long INFLIGHT_TRANSFORMATIONS_DELAY_SECONDS = 10L;
 
   @VisibleForTesting
-  PgTransformationStoreChangeListener(EventBus bus, TransformationCache cache, TransformationChains chains, ScheduledExecutorService executor) {
+  PgTransformationStoreChangeListener(
+      EventBus bus,
+      TransformationCache cache,
+      TransformationChains chains,
+      ScheduledExecutorService executor) {
     this.bus = bus;
     this.cache = cache;
     this.chains = chains;
@@ -66,7 +69,10 @@ public class PgTransformationStoreChangeListener
     invalidateCachesFor(signal);
     // schedule another cache invalidation
     // to avoid in-flight transformations to be persisted
-    executor.schedule(() -> invalidateCachesFor(signal), INFLIGHT_TRANSFORMATIONS_DELAY_SECONDS, TimeUnit.SECONDS);
+    executor.schedule(
+        () -> invalidateCachesFor(signal),
+        INFLIGHT_TRANSFORMATIONS_DELAY_SECONDS,
+        TimeUnit.SECONDS);
   }
 
   @VisibleForTesting

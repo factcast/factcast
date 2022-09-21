@@ -21,6 +21,8 @@ import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.when;
 
 import com.google.common.eventbus.EventBus;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import lombok.SneakyThrows;
 import org.factcast.store.internal.listen.PgListener;
 import org.factcast.store.registry.transformation.TransformationKey;
@@ -31,11 +33,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.Timer;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 @ExtendWith(MockitoExtension.class)
 class PgTransformationStoreChangeListenerTest {
@@ -50,8 +47,7 @@ class PgTransformationStoreChangeListenerTest {
 
   @InjectMocks PgTransformationStoreChangeListener underTest;
 
-  @Captor
-  ArgumentCaptor<Runnable> lambdaCaptor;
+  @Captor ArgumentCaptor<Runnable> lambdaCaptor;
 
   @Nested
   class WhenAfteringSingletonsInstantiated {
@@ -94,7 +90,11 @@ class PgTransformationStoreChangeListenerTest {
       when(signal.ns()).thenReturn(key.ns());
       when(signal.type()).thenReturn(key.type());
       underTest.on(signal);
-      verify(executor).schedule(lambdaCaptor.capture(), eq(INFLIGHT_TRANSFORMATIONS_DELAY_SECONDS), eq(TimeUnit.SECONDS));
+      verify(executor)
+          .schedule(
+              lambdaCaptor.capture(),
+              eq(INFLIGHT_TRANSFORMATIONS_DELAY_SECONDS),
+              eq(TimeUnit.SECONDS));
       Runnable invalidation = lambdaCaptor.getValue();
       invalidation.run();
       verify(transformationCache, times(2)).invalidateTransformationFor(key.ns(), key.type());
