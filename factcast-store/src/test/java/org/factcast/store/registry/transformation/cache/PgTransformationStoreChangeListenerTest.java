@@ -15,6 +15,7 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
+import static org.factcast.store.registry.transformation.cache.PgTransformationStoreChangeListener.INFLIGHT_TRANSFORMATIONS_DELAY_SECONDS;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.when;
@@ -22,14 +23,19 @@ import static org.mockito.Mockito.when;
 import com.google.common.eventbus.EventBus;
 import lombok.SneakyThrows;
 import org.factcast.store.internal.listen.PgListener;
+import org.factcast.store.registry.transformation.TransformationKey;
+import org.factcast.store.registry.transformation.chains.TransformationChains;
 import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Spy;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Timer;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @ExtendWith(MockitoExtension.class)
 class PgTransformationStoreChangeListenerTest {
@@ -38,7 +44,14 @@ class PgTransformationStoreChangeListenerTest {
 
   @Mock private TransformationCache transformationCache;
 
+  @Mock private TransformationChains transformationChains;
+
+  @Mock private ScheduledExecutorService executor;
+
   @InjectMocks PgTransformationStoreChangeListener underTest;
+
+  @Captor
+  ArgumentCaptor<Runnable> lambdaCaptor;
 
   @Nested
   class WhenAfteringSingletonsInstantiated {
@@ -72,6 +85,20 @@ class PgTransformationStoreChangeListenerTest {
       when(signal.type()).thenReturn(key.type());
       underTest.on(signal);
       verify(transformationCache, times(1)).invalidateTransformationFor(key.ns(), key.type());
+      verify(transformationChains, times(1)).notifyFor(TransformationKey.of(key.ns(), key.type()));
+    }
+
+    @Test
+    @SneakyThrows
+    void schedulesCacheInvalidationToCoverInflightTransformations() {
+      when(signal.ns()).thenReturn(key.ns());
+      when(signal.type()).thenReturn(key.type());
+      underTest.on(signal);
+      verify(executor).schedule(lambdaCaptor.capture(), eq(INFLIGHT_TRANSFORMATIONS_DELAY_SECONDS), eq(TimeUnit.SECONDS));
+      Runnable invalidation = lambdaCaptor.getValue();
+      invalidation.run();
+      verify(transformationCache, times(2)).invalidateTransformationFor(key.ns(), key.type());
+      verify(transformationChains, times(2)).notifyFor(TransformationKey.of(key.ns(), key.type()));
     }
   }
 }
