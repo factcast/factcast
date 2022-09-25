@@ -45,6 +45,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.quality.Strictness;
 import org.postgresql.util.PSQLException;
+import org.postgresql.util.ServerErrorMessage;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 public class PgFactStreamTest {
@@ -214,7 +215,7 @@ public class PgFactStreamTest {
       // it should appear open,
       when(rs.isClosed()).thenReturn(false);
       // until
-      PSQLException mockException = mock(PSQLException.class);
+      PSQLException mockException = new PSQLException(new ServerErrorMessage("och"));
       when(rs.getString(anyString())).thenThrow(mockException);
       uut.processRow(rs);
       verifyNoMoreInteractions(subscription);
