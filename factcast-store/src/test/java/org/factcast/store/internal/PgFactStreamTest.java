@@ -71,6 +71,7 @@ public class PgFactStreamTest {
 
   @SuppressWarnings({"unused", "UnstableApiUsage"})
   @Nested
+  @ExtendWith(MockitoExtension.class)
   class FastForward {
 
     @Mock JdbcTemplate jdbcTemplate;
@@ -165,6 +166,7 @@ public class PgFactStreamTest {
   }
 
   @Nested
+  @ExtendWith(MockitoExtension.class)
   class FactRowCallbackHandlerTest {
     @Mock(lenient = true)
     private ResultSet rs;
@@ -299,6 +301,7 @@ public class PgFactStreamTest {
   }
 
   @Nested
+  @ExtendWith(MockitoExtension.class)
   class WhenCatchingUp {
     @Test
     void ifDisconnected_doNothing() {
@@ -327,6 +330,7 @@ public class PgFactStreamTest {
   }
 
   @Nested
+  @ExtendWith(MockitoExtension.class)
   class WhenInitializingSerialToStartAfter {
     @Test
     void fromScratch() {
