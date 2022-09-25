@@ -125,7 +125,7 @@ class PgSynchronizedQuery {
   }
 
   @RequiredArgsConstructor
-  static class FactRowCallbackHandler implements RowCallbackHandler {
+  public static class FactRowCallbackHandler implements RowCallbackHandler {
 
     final SubscriptionImpl subscription;
 
