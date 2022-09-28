@@ -15,13 +15,23 @@
  */
 package org.factcast.itests.store;
 
+import com.google.common.eventbus.EventBus;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.spring.boot.autoconfigure.client.grpc.GrpcFactStoreAutoConfiguration;
+import org.factcast.store.internal.listen.PgListener;
+import org.factcast.store.registry.transformation.cache.PgTransformationStoreChangeListener;
+import org.factcast.store.registry.transformation.cache.TransformationCache;
+import org.factcast.store.registry.transformation.chains.TransformationChains;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Spring boot starter for running a factcast server.
@@ -31,7 +41,7 @@ import org.springframework.core.annotation.Order;
  * @author uwe.schaefer@mercateo.com
  */
 @SuppressWarnings("ALL")
-@SpringBootApplication(exclude = GrpcFactStoreAutoConfiguration.class)
+@SpringBootApplication(exclude = GrpcFactStoreAutoConfiguration.class )
 @Slf4j
 public class ExampleServerWithPostgresContainer {
 
