@@ -47,5 +47,6 @@ jobs:
         distribution: corretto
     - id: step-5
       name: Build with Maven - test, verify and analyze
-      run: ./mvnw -B clean verify sonar:sonar -Pcoverage -Dsonar.projectKey=factcast -Dsonar.organization=factcast
-        -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }} -Dsonar --file pom.xml
+      run: ./mvnw -B clean verify sonar:sonar -Pcoverage -Dsonar.projectKey=factcast
+        -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{
+        secrets.SONAR_TOKEN }} -Dsonar --file pom.xml

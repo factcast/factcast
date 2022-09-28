@@ -74,7 +74,7 @@ public val workflowMaven: Workflow = workflow(
         )
         run(
             name = "Build with Maven - test, verify and analyze",
-            command = "./mvnw -B clean verify sonar:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=\${{ secrets.SONAR_TOKEN }} -Dsonar --file pom.xml",
+            command = "./mvnw -B clean verify sonar:sonar -Pcoverage -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=\${{ secrets.SONAR_TOKEN }} -Dsonar --file pom.xml",
         )
     }
 
