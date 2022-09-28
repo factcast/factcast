@@ -363,6 +363,7 @@
             <phase>post-integration-test</phase>
             <goals>
               <goal>merge</goal>
+              <goal>report-aggregate</goal>
             </goals>
             <configuration>
               <fileSets>
@@ -380,13 +381,6 @@
             <phase>post-integration-test</phase>
             <goals>
               <goal>report</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>report-aggregate</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>report-aggregate</goal>
             </goals>
           </execution>
         </executions>
