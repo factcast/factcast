@@ -290,8 +290,8 @@
           </includes>
           <excludedGroups>integration</excludedGroups>
           <!--suppress UnresolvedMavenProperty -->
-          <argLine>${surefire.jacoco.args}</argLine>
-          <skip>${skipSurefire}</skip>
+          <!-- <argLine>${surefire.jacoco.args}</argLine> -->
+          <!-- <skip>${skipSurefire}</skip> -->
           <parallel>classes</parallel>
           <threadCountClasses>8</threadCountClasses>
           <!-- this produces a warning we choose to ignore for unit tests, as
@@ -310,7 +310,7 @@
             <include>*</include>
           </includes>
           <!--suppress UnresolvedMavenProperty -->
-          <argLine>${failsafe.jacoco.args}</argLine>
+          <!-- <argLine>${failsafe.jacoco.args}</argLine> -->
         </configuration>
         <executions>
           <execution>
@@ -770,6 +770,7 @@
             <groupId>org.sonarsource.scanner.maven</groupId>
             <artifactId>sonar-maven-plugin</artifactId>
             <version>3.8.0.2131</version>
+            <inherited>false</inherited>
             <configuration>
             </configuration>
           </plugin>
