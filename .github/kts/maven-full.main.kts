@@ -42,7 +42,7 @@ public val workflowMaven: Workflow = workflow(
             action = CheckoutV3(fetchDepth = CheckoutV3.FetchDepth.Infinite)
         )
         uses(
-            name = "CacheV3",
+            name = "CacheV3 - m2",
             action = CacheV3(
                 path = listOf(
                     "~/.m2/repository",
@@ -54,7 +54,19 @@ public val workflowMaven: Workflow = workflow(
             ),
         )
         uses(
-            name = "CacheV3",
+            name = "CacheV3 - sonar",
+            action = CacheV3(
+                path = listOf(
+                    "~/.sonar/cache",
+                ),
+                key = "${'$'}{{ runner.os }}-sonar",
+                restoreKeys = listOf(
+                    "${'$'}{{ runner.os }}-sonar",
+                ),
+            ),
+        )
+        uses(
+            name = "CacheV - docker3",
             action = CacheV3(
                 path = listOf(
                     "/var/lib/docker/",
@@ -74,7 +86,7 @@ public val workflowMaven: Workflow = workflow(
         )
         run(
             name = "Build with Maven - test, verify and analyze",
-            command = "./mvnw -B clean verify sonar:sonar -Pcoverage -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=\${{ secrets.SONAR_TOKEN }} -Dsonar --file pom.xml",
+            command = "./mvnw -B clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=\${{ secrets.SONAR_TOKEN }} -Dsonar --file pom.xml",
         )
     }
 

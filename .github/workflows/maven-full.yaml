@@ -26,27 +26,34 @@ jobs:
       with:
         fetch-depth: 0
     - id: step-2
-      name: CacheV3
+      name: CacheV3 - m2
       uses: actions/cache@v3
       with:
         path: ~/.m2/repository
         key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-maven-
     - id: step-3
-      name: CacheV3
+      name: CacheV3 - sonar
+      uses: actions/cache@v3
+      with:
+        path: ~/.sonar/cache
+        key: ${{ runner.os }}-sonar
+        restore-keys: ${{ runner.os }}-sonar
+    - id: step-4
+      name: CacheV - docker3
       uses: actions/cache@v3
       with:
         path: /var/lib/docker/
         key: factcast-docker-cache-unversioned
         restore-keys: factcast-docker-cache-unversioned
-    - id: step-4
+    - id: step-5
       name: Set up JDK 11
       uses: actions/setup-java@v3
       with:
         java-version: 11
         distribution: corretto
-    - id: step-5
+    - id: step-6
       name: Build with Maven - test, verify and analyze
-      run: ./mvnw -B clean verify sonar:sonar -Pcoverage -Dsonar.projectKey=factcast
-        -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{
-        secrets.SONAR_TOKEN }} -Dsonar --file pom.xml
+      run: ./mvnw -B clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+        -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io
+        -Dsonar.login=${{ secrets.SONAR_TOKEN }} -Dsonar --file pom.xml
