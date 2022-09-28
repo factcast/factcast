@@ -28,13 +28,16 @@ import org.factcast.store.registry.PgSchemaStoreChangeListener;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 
+@ExtendWith(MockitoExtension.class)
 @SpringBootTest
 @IntegrationTest
 public class SchemaCacheTest {
