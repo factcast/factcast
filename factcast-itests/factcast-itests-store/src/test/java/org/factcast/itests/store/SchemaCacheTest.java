@@ -15,16 +15,16 @@
  */
 package org.factcast.itests.store;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.FactValidationException;
-import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
 import org.factcast.store.registry.PgSchemaStoreChangeListener;
-import org.factcast.store.registry.SchemaRegistry;
-import org.factcast.store.registry.transformation.cache.PgTransformationCache;
-import org.factcast.store.registry.transformation.cache.PgTransformationStoreChangeListener;
-import org.factcast.store.registry.transformation.cache.TransformationCache;
-import org.factcast.store.registry.validation.schema.SchemaStore;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -35,14 +35,6 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 
-import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-
 @SpringBootTest
 @IntegrationTest
 public class SchemaCacheTest {
@@ -51,8 +43,7 @@ public class SchemaCacheTest {
 
   @Autowired JdbcTemplate jdbcTemplate;
 
-  @SpyBean
-  PgSchemaStoreChangeListener listener;
+  @SpyBean PgSchemaStoreChangeListener listener;
 
   @Nested
   @DirtiesContext
@@ -61,33 +52,41 @@ public class SchemaCacheTest {
     public void schemaCacheIsInvalidated() throws Exception {
       CountDownLatch wasOned = new CountDownLatch(1);
       Mockito.doAnswer(
-                      spy -> {
-                        spy.callRealMethod();
-                        wasOned.countDown();
-                        return null;
-                      })
-              .when(listener)
-              .on(any());
+              spy -> {
+                spy.callRealMethod();
+                wasOned.countDown();
+                return null;
+              })
+          .when(listener)
+          .on(any());
       UUID idv1 = UUID.randomUUID();
       Fact v1 = createTestFact(idv1, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
       fc.publish(v1);
       UUID idv3 = UUID.randomUUID();
-      Fact v3 = createTestFact(idv3, 3, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"v3\"}");
+      Fact v3 =
+          createTestFact(
+              idv3,
+              3,
+              "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"v3\"}");
       fc.publish(v3);
       // fetching to populate the registry cache
       fc.fetchByIdAndVersion(idv1, 1).get();
       fc.fetchByIdAndVersion(idv3, 3).get();
 
       jdbcTemplate.update(
-              String.format(
-                      "DELETE FROM schemastore WHERE type='%s' AND version=%d", v3.type(), 3));
+          String.format("DELETE FROM schemastore WHERE type='%s' AND version=%d", v3.type(), 3));
       wasOned.await();
 
       assertDoesNotThrow(() -> fc.fetchByIdAndVersion(idv1, 1));
-      // assuming that deleting from the schemastore should not remove/change automatically existing facts
+      // assuming that deleting from the schemastore should not remove/change automatically existing
+      // facts
       // consider handling this if the requirement changes
       assertDoesNotThrow(() -> fc.fetchByIdAndVersion(idv3, 3));
-      Fact v3Again = createTestFact(UUID.randomUUID(), 3, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"v3Again\"}");
+      Fact v3Again =
+          createTestFact(
+              UUID.randomUUID(),
+              3,
+              "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"v3Again\"}");
       assertThrows(FactValidationException.class, () -> fc.publish(v3Again));
     }
   }
@@ -99,57 +98,72 @@ public class SchemaCacheTest {
     public void schemaCacheIsInvalidated() throws Exception {
       CountDownLatch wasOned = new CountDownLatch(1);
       Mockito.doAnswer(
-                      spy -> {
-                        spy.callRealMethod();
-                        wasOned.countDown();
-                        return null;
-                      })
-              .when(listener)
-              .on(any());
+              spy -> {
+                spy.callRealMethod();
+                wasOned.countDown();
+                return null;
+              })
+          .when(listener)
+          .on(any());
       UUID idv1 = UUID.randomUUID();
       Fact v1 = createTestFact(idv1, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
       fc.publish(v1);
       UUID idv3 = UUID.randomUUID();
-      Fact v3 = createTestFact(idv3, 3, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"v3\"}");
+      Fact v3 =
+          createTestFact(
+              idv3,
+              3,
+              "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"v3\"}");
       fc.publish(v3);
       // fetching to populate the registry cache
       fc.fetchByIdAndVersion(idv1, 1).get();
       fc.fetchByIdAndVersion(idv3, 3).get();
 
-      String newSchemaV3 = "{\n" +
-              "  \"additionalProperties\" : true,\n" +
-              "  \"properties\" : {\n" +
-              "    \"firstName\" : {\n" +
-              "      \"type\": \"string\"\n" +
-              "    },\n" +
-              "    \"lastName\" : {\n" +
-              "      \"type\": \"string\"\n" +
-              "    },\n" +
-              "    \"salutation\": {\n" +
-              "      \"type\": \"string\",\n" +
-              "      \"enum\": [\"Mr\", \"Mrs\", \"NA\"]\n" +
-              "    },\n" +
-              "    \"displayName\": {\n" +
-              "      \"type\": \"string\"\n" +
-              "    },\n" +
-              "    \"newProperty\": {\n" +
-              "      \"type\": \"string\"\n" +
-              "    }\n" +
-              "  },\n" +
-              "  \"required\": [\"firstName\", \"lastName\", \"salutation\", \"displayName\", \"newProperty\"]\n" +
-              "}";
+      String newSchemaV3 =
+          "{\n"
+              + "  \"additionalProperties\" : true,\n"
+              + "  \"properties\" : {\n"
+              + "    \"firstName\" : {\n"
+              + "      \"type\": \"string\"\n"
+              + "    },\n"
+              + "    \"lastName\" : {\n"
+              + "      \"type\": \"string\"\n"
+              + "    },\n"
+              + "    \"salutation\": {\n"
+              + "      \"type\": \"string\",\n"
+              + "      \"enum\": [\"Mr\", \"Mrs\", \"NA\"]\n"
+              + "    },\n"
+              + "    \"displayName\": {\n"
+              + "      \"type\": \"string\"\n"
+              + "    },\n"
+              + "    \"newProperty\": {\n"
+              + "      \"type\": \"string\"\n"
+              + "    }\n"
+              + "  },\n"
+              + "  \"required\": [\"firstName\", \"lastName\", \"salutation\", \"displayName\", \"newProperty\"]\n"
+              + "}";
       jdbcTemplate.update(
-              String.format(
-                      "UPDATE schemastore SET jsonschema='%s' WHERE type='%s' AND version=%d", newSchemaV3, v3.type(), 3));
+          String.format(
+              "UPDATE schemastore SET jsonschema='%s' WHERE type='%s' AND version=%d",
+              newSchemaV3, v3.type(), 3));
       wasOned.await();
 
       assertDoesNotThrow(() -> fc.fetchByIdAndVersion(idv1, 1));
-      // assuming that updating the schemastore should not remove/change automatically existing facts
+      // assuming that updating the schemastore should not remove/change automatically existing
+      // facts
       // consider handling this if the requirement changes
       assertDoesNotThrow(() -> fc.fetchByIdAndVersion(idv3, 3));
-      Fact v3Again = createTestFact(UUID.randomUUID(), 3, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"v3Again\"}");
+      Fact v3Again =
+          createTestFact(
+              UUID.randomUUID(),
+              3,
+              "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"v3Again\"}");
       assertThrows(FactValidationException.class, () -> fc.publish(v3Again));
-      Fact v3New = createTestFact(UUID.randomUUID(), 3, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"v3New\",\"newProperty\":\"test\"}");
+      Fact v3New =
+          createTestFact(
+              UUID.randomUUID(),
+              3,
+              "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"v3New\",\"newProperty\":\"test\"}");
       assertDoesNotThrow(() -> fc.publish(v3New));
     }
   }

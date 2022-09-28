@@ -15,9 +15,12 @@
  */
 package org.factcast.itests.store;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
-
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
@@ -25,18 +28,14 @@ import org.factcast.store.registry.transformation.cache.PgTransformationCache;
 import org.factcast.store.registry.transformation.cache.PgTransformationStoreChangeListener;
 import org.factcast.store.registry.transformation.cache.TransformationCache;
 import org.factcast.test.IntegrationTest;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 
 @SpringBootTest
 @IntegrationTest
@@ -57,13 +56,13 @@ public class TransformationCacheTest {
     public void transformationCacheIsInvalidated() throws Exception {
       CountDownLatch wasOned = new CountDownLatch(1);
       Mockito.doAnswer(
-                      spy -> {
-                        spy.callRealMethod();
-                        wasOned.countDown();
-                        return null;
-                      })
-              .when(listener)
-              .on(any());
+              spy -> {
+                spy.callRealMethod();
+                wasOned.countDown();
+                return null;
+              })
+          .when(listener)
+          .on(any());
       UUID id = UUID.randomUUID();
       Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
       fc.publish(f);
@@ -73,13 +72,14 @@ public class TransformationCacheTest {
       ((PgTransformationCache) transformationCache).flush();
 
       jdbcTemplate.update(
-              String.format(
-                      "DELETE FROM transformationstore WHERE type='%s' AND from_version=%d", f.type(), 2));
+          String.format(
+              "DELETE FROM transformationstore WHERE type='%s' AND from_version=%d", f.type(), 2));
       wasOned.await();
 
       assertDoesNotThrow(() -> fc.fetchByIdAndVersion(id, 1));
       assertDoesNotThrow(() -> fc.fetchByIdAndVersion(id, 2));
-      assertThrows(MissingTransformationInformationException.class, () -> fc.fetchByIdAndVersion(id, 3));
+      assertThrows(
+          MissingTransformationInformationException.class, () -> fc.fetchByIdAndVersion(id, 3));
     }
   }
 
@@ -90,13 +90,13 @@ public class TransformationCacheTest {
     public void transformationCacheIsInvalidated() throws Exception {
       CountDownLatch wasOned = new CountDownLatch(1);
       Mockito.doAnswer(
-                      spy -> {
-                        spy.callRealMethod();
-                        wasOned.countDown();
-                        return null;
-                      })
-              .when(listener)
-              .on(any());
+              spy -> {
+                spy.callRealMethod();
+                wasOned.countDown();
+                return null;
+              })
+          .when(listener)
+          .on(any());
       UUID id = UUID.randomUUID();
       Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
       fc.publish(f);
@@ -107,8 +107,9 @@ public class TransformationCacheTest {
 
       String randomUUID = UUID.randomUUID().toString();
       jdbcTemplate.update(
-              String.format(
-                      "UPDATE transformationstore SET transformation='function transform(event){event.displayName=\"%s\"}' WHERE type='%s' AND from_version=%d AND to_version=%d", randomUUID, f.type(), 2, 3));
+          String.format(
+              "UPDATE transformationstore SET transformation='function transform(event){event.displayName=\"%s\"}' WHERE type='%s' AND from_version=%d AND to_version=%d",
+              randomUUID, f.type(), 2, 3));
       wasOned.await();
 
       assertDoesNotThrow(() -> fc.fetchByIdAndVersion(id, 1));

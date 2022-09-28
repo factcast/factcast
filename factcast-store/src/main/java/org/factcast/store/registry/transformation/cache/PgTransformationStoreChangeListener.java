@@ -49,10 +49,10 @@ public class PgTransformationStoreChangeListener
 
   @VisibleForTesting
   protected PgTransformationStoreChangeListener(
-          EventBus bus,
-          TransformationCache cache,
-          TransformationChains chains,
-          ScheduledExecutorService executor) {
+      EventBus bus,
+      TransformationCache cache,
+      TransformationChains chains,
+      ScheduledExecutorService executor) {
     this.bus = bus;
     this.cache = cache;
     this.chains = chains;
