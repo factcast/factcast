@@ -48,11 +48,11 @@ public class PgTransformationStoreChangeListener
   static final long INFLIGHT_TRANSFORMATIONS_DELAY_SECONDS = 10L;
 
   @VisibleForTesting
-  PgTransformationStoreChangeListener(
-      EventBus bus,
-      TransformationCache cache,
-      TransformationChains chains,
-      ScheduledExecutorService executor) {
+  protected PgTransformationStoreChangeListener(
+          EventBus bus,
+          TransformationCache cache,
+          TransformationChains chains,
+          ScheduledExecutorService executor) {
     this.bus = bus;
     this.cache = cache;
     this.chains = chains;

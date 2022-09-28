@@ -15,24 +15,29 @@
  */
 package org.factcast.itests.store;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
+import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
 import org.factcast.store.registry.transformation.cache.PgTransformationCache;
+import org.factcast.store.registry.transformation.cache.PgTransformationStoreChangeListener;
 import org.factcast.store.registry.transformation.cache.TransformationCache;
 import org.factcast.test.IntegrationTest;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Nested;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.annotation.DirtiesContext;
 
-@RunWith(SpringRunner.class)
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+
 @SpringBootTest
 @IntegrationTest
 public class TransformationCacheTest {
@@ -43,80 +48,76 @@ public class TransformationCacheTest {
 
   @Autowired TransformationCache transformationCache;
 
-  @Test
-  public void transformationCacheInvalidation() throws Exception {
-    UUID id = UUID.randomUUID();
-    Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
-    fc.publish(f);
+  @SpyBean PgTransformationStoreChangeListener listener;
 
-    Fact transformedV2 = fc.fetchByIdAndVersion(id, 2).get();
-    Fact transformedV3 = fc.fetchByIdAndVersion(id, 3).get();
-    System.out.println(
-        String.format(
-            "transformed fact before cache invalidation: %s", transformedV3.jsonPayload()));
-    ((PgTransformationCache) transformationCache).flush();
-    Thread.sleep(100); // TODO flaky
+  @Nested
+  @DirtiesContext
+  class whenDeletingFromTransformationStore {
+    @Test
+    public void transformationCacheIsInvalidated() throws Exception {
+      CountDownLatch wasOned = new CountDownLatch(1);
+      Mockito.doAnswer(
+                      spy -> {
+                        spy.callRealMethod();
+                        wasOned.countDown();
+                        return null;
+                      })
+              .when(listener)
+              .on(any());
+      UUID id = UUID.randomUUID();
+      Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
+      fc.publish(f);
+      fc.fetchByIdAndVersion(id, 2).get();
+      fc.fetchByIdAndVersion(id, 3).get();
+      // force cache flush
+      ((PgTransformationCache) transformationCache).flush();
 
-    printTransformationStoreContent();
+      jdbcTemplate.update(
+              String.format(
+                      "DELETE FROM transformationstore WHERE type='%s' AND from_version=%d", f.type(), 2));
+      wasOned.await();
 
-    System.out.println("### After transformation cache flush");
-    printTransformationCacheContent();
+      assertDoesNotThrow(() -> fc.fetchByIdAndVersion(id, 1));
+      assertDoesNotThrow(() -> fc.fetchByIdAndVersion(id, 2));
+      assertThrows(MissingTransformationInformationException.class, () -> fc.fetchByIdAndVersion(id, 3));
+    }
+  }
 
-    jdbcTemplate.update(
-        String.format(
-            "DELETE FROM transformationstore WHERE type='%s' AND from_version=%d", f.type(), 1));
-    jdbcTemplate.update(
-        String.format(
-            "DELETE FROM transformationstore WHERE type='%s' AND from_version=%d", f.type(), 2));
-    Thread.sleep(1000); // TODO flaky again
+  @Nested
+  @DirtiesContext
+  class whenUpdatingTransformationStore {
+    @Test
+    public void transformationCacheIsInvalidated() throws Exception {
+      CountDownLatch wasOned = new CountDownLatch(1);
+      Mockito.doAnswer(
+                      spy -> {
+                        spy.callRealMethod();
+                        wasOned.countDown();
+                        return null;
+                      })
+              .when(listener)
+              .on(any());
+      UUID id = UUID.randomUUID();
+      Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
+      fc.publish(f);
+      fc.fetchByIdAndVersion(id, 2).get();
+      fc.fetchByIdAndVersion(id, 3).get();
+      // force cache flush
+      ((PgTransformationCache) transformationCache).flush();
 
-    System.out.println("### After transformation delete");
-    printTransformationStoreContent();
-    printTransformationCacheContent();
+      String randomUUID = UUID.randomUUID().toString();
+      jdbcTemplate.update(
+              String.format(
+                      "UPDATE transformationstore SET transformation='function transform(event){event.displayName=\"%s\"}' WHERE type='%s' AND from_version=%d AND to_version=%d", randomUUID, f.type(), 2, 3));
+      wasOned.await();
 
-    // add proxy
-
-    // assertSame(fc.fetchByIdAndVersion(id, 3).get(), transformedV3);
-    Fact transformedV3After = fc.fetchByIdAndVersion(id, 3).get();
-    System.out.println(
-        String.format(
-            "transformed fact after cache invalidation: %s", transformedV3After.jsonPayload()));
+      assertDoesNotThrow(() -> fc.fetchByIdAndVersion(id, 1));
+      assertDoesNotThrow(() -> fc.fetchByIdAndVersion(id, 2));
+      assertThat(fc.fetchByIdAndVersion(id, 3).get().jsonPayload()).contains(randomUUID);
+    }
   }
 
   private Fact createTestFact(UUID id, int version, String body) {
     return Fact.builder().ns("users").type("UserCreated").id(id).version(version).build(body);
-  }
-
-  private void printTransformationCacheContent() {
-    System.out.println("### Transformation cache content:");
-    List<String> cacheRows =
-        jdbcTemplate.query("SELECT * FROM transformationcache", new TransformationCacheRowMapper());
-    cacheRows.forEach(System.out::println);
-  }
-
-  private void printTransformationStoreContent() {
-    System.out.println("### Transformation store content:");
-    List<String> storeRows =
-        jdbcTemplate.query("SELECT * FROM transformationstore", new TransformationStoreRowMapper());
-    storeRows.forEach(System.out::println);
-  }
-
-  private class TransformationCacheRowMapper implements RowMapper<String> {
-    @Override
-    public String mapRow(ResultSet rs, int rowNum) throws SQLException {
-      return rs.getString("header");
-    }
-  }
-
-  private class TransformationStoreRowMapper implements RowMapper<String> {
-    @Override
-    public String mapRow(ResultSet rs, int rowNum) throws SQLException {
-      return String.format(
-          "%s.%s %d->%d",
-          rs.getString("ns"),
-          rs.getString("type"),
-          rs.getInt("from_version"),
-          rs.getInt("to_version"));
-    }
   }
 }
