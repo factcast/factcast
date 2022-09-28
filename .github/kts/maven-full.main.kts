@@ -39,7 +39,7 @@ public val workflowMaven: Workflow = workflow(
         )
         uses(
             name = "CheckoutV3",
-            action = CheckoutV3(),
+            action = CheckoutV3(fetchDepth = CheckoutV3.FetchDepth.Infinite)
         )
         uses(
             name = "CacheV3",
