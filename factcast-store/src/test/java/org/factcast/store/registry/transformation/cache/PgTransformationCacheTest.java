@@ -426,7 +426,7 @@ class PgTransformationCacheTest {
     void clearsAndFlushesAccessesOnly() {
       underTest.invalidateTransformationFor("theNamespace", "theType");
 
-      verify(underTest, times(1)).clearAndFlushAccessesOnly();
+      verify(underTest, times(1)).flush();
     }
 
     @Test
