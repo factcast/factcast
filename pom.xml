@@ -374,15 +374,18 @@
                   </includes>
                 </fileSet>
               </fileSets>
+              <formats>
+                <format>XML</format>
+              </formats>
             </configuration>
           </execution>
-          <execution>
-            <id>create-merged-report</id>
-            <phase>post-integration-test</phase>
-            <goals>
-              <goal>report</goal>
-            </goals>
-          </execution>
+          <!-- <execution> -->
+          <!-- <id>create-merged-report</id> -->
+          <!-- <phase>post-integration-test</phase> -->
+          <!-- <goals> -->
+          <!-- <goal>report-aggregate</goal> -->
+          <!-- </goals> -->
+          <!-- </execution> -->
         </executions>
       </plugin>
       <plugin>
