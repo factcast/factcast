@@ -94,7 +94,8 @@ class PgSynchronizedQueryTest {
         new PgSynchronizedQuery(
             jdbcTemplate, sql, setter, rowHandler, serialToContinueFrom, fetcher, statementHolder);
     when(statementHolder.wasCanceled()).thenReturn(false);
-    doThrow(DataAccessResourceFailureException.class)
+    DataAccessResourceFailureException exc = new DataAccessResourceFailureException("oh my");
+    doThrow(exc)
         .when(jdbcTemplate)
         .query(anyString(), any(PreparedStatementSetter.class), any(RowCallbackHandler.class));
 
@@ -102,7 +103,8 @@ class PgSynchronizedQueryTest {
             () -> {
               uut.run(false);
             })
-        .isNotNull();
+        // should be thrown unchanged
+        .isSameAs(exc);
   }
 
   @Test
