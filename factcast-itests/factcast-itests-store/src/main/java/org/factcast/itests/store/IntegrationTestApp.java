@@ -33,10 +33,9 @@ import org.springframework.core.annotation.Order;
 @SuppressWarnings("ALL")
 @SpringBootApplication(exclude = GrpcFactStoreAutoConfiguration.class)
 @Slf4j
-public class ExampleServerWithPostgresContainer {
-
+public class IntegrationTestApp {
   public static void main(String[] args) {
-    SpringApplication.run(ExampleServerWithPostgresContainer.class, args);
+    SpringApplication.run(IntegrationTestApp.class, args);
   }
 
   @Bean
