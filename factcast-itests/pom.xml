@@ -15,12 +15,11 @@
     <maven.deploy.skip>true</maven.deploy.skip>
   </properties>
   <modules>
+    <!-- <module>factcast-itests-doc</module> -->
+    <module>factcast-itests-exception-handling</module>
+    <module>factcast-itests-factus</module>
     <module>factcast-itests-tls</module>
     <module>factcast-itests-transformation</module>
-    <module>factcast-itests-novalidation</module>
-    <module>factcast-itests-factus</module>
-    <module>factcast-itests-exception-handling</module>
-    <!-- TODO for investigation <module>factcast-itests-doc</module> -->
   </modules>
   <dependencies>
     <dependency>

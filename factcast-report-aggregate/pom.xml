@@ -57,11 +57,11 @@
       <artifactId>factcast-grpc-api</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.factcast</groupId>
-      <artifactId>factcast-itests-doc</artifactId>
-      <version>${project.version}</version>
-    </dependency>
+    <!-- <dependency> -->
+    <!-- <groupId>org.factcast</groupId> -->
+    <!-- <artifactId>factcast-itests-doc</artifactId> -->
+    <!-- <version>${project.version}</version> -->
+    <!-- </dependency> -->
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-itests-exception-handling</artifactId>
