@@ -226,6 +226,7 @@
             <exclude>**/gen/*</exclude>
             <exclude>**/generated/*</exclude>
           </excludes>
+	  <classDumpDir>${project.build.outputDirectory}</classDumpDir>
         </configuration>
         <executions>
           <execution>
