@@ -66,7 +66,7 @@ public val workflowMaven: Workflow = workflow(
             ),
         )
         uses(
-            name = "CacheV - docker3",
+            name = "CacheV3 - docker",
             action = CacheV3(
                 path = listOf(
                     "/var/lib/docker/",
