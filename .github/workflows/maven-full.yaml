@@ -40,7 +40,7 @@ jobs:
         key: ${{ runner.os }}-sonar
         restore-keys: ${{ runner.os }}-sonar
     - id: step-4
-      name: CacheV - docker3
+      name: CacheV3 - docker
       uses: actions/cache@v3
       with:
         path: /var/lib/docker/
