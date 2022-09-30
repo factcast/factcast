@@ -101,7 +101,7 @@
     <spring-cloud.version>2021.0.3</spring-cloud.version>
     <spring-grpc.version>2.13.1.RELEASE</spring-grpc.version>
     <grpc.version>1.42.1</grpc.version>
-    <!-- lter versions seem to break toxi -->
+    <!-- older versions seem to break toxi -->
     <testcontainers.version>1.17.1</testcontainers.version>
     <arrow.version>1.1.2</arrow.version>
     <micronaut.version>2.5.13</micronaut.version>
@@ -241,19 +241,6 @@
             </configuration>
           </execution>
 
-          <!-- <execution> -->
-          <!-- <id>after-unit-test-execution</id> -->
-          <!-- <phase>test</phase> -->
-          <!-- <goals> -->
-          <!-- <goal>report</goal> -->
-          <!-- </goals> -->
-          <!-- <configuration> -->
-          <!-- <dataFile>${project.build.directory}/jacoco-output/jacoco-unit-tests.exec</dataFile> -->
-          <!-- <outputDirectory>${project.reporting.outputDirectory}/jacoco-unit-test-coverage-report -->
-          <!-- </outputDirectory> -->
-          <!-- </configuration> -->
-          <!-- </execution> -->
-
           <execution>
             <id>before-integration-test-execution</id>
             <phase>pre-integration-test</phase>
@@ -265,20 +252,6 @@
               <propertyName>failsafe.jacoco.args</propertyName>
             </configuration>
           </execution>
-
-          <!-- <execution> -->
-          <!-- <id>after-integration-test-execution</id> -->
-          <!-- <phase>post-integration-test</phase> -->
-          <!-- <goals> -->
-          <!-- <goal>report</goal> -->
-          <!-- </goals> -->
-          <!-- <configuration> -->
-          <!-- <dataFile>${project.build.directory}/jacoco-output/jacoco-integration-tests.exec</dataFile> -->
-          <!-- <outputDirectory> -->
-          <!-- ${project.reporting.outputDirectory}/jacoco-integration-test-coverage-report -->
-          <!-- </outputDirectory> -->
-          <!-- </configuration> -->
-          <!-- </execution> -->
 
           <execution>
             <id>merge-unit-and-integration</id>
@@ -308,7 +281,6 @@
                 <format>XML</format>
               </formats>
             </configuration>
-
           </execution>
         </executions>
       </plugin>
@@ -396,7 +368,7 @@
           <excludedGroups>integration</excludedGroups>
           <!--suppress UnresolvedMavenProperty -->
           <argLine>${surefire.jacoco.args}</argLine>
-          <!-- <skip>${skipSurefire}</skip> -->
+          <skip>${skipSurefire}</skip>
           <parallel>classes</parallel>
           <threadCountClasses>8</threadCountClasses>
         </configuration>
@@ -723,8 +695,10 @@
         </property>
       </activation>
       <properties>
+        <!-- even though this gives a warning on every module (but the parent)
+          - do not be alarmed... -->
         <sonar.coverage.jacoco.xmlReportPaths>
-          ${project.basedir}/target/site/jacoco/jacoco.xml
+          ${project.basedir}/factcast-report-aggregate/target/site/jacoco-aggregate/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
         <sonar.core.codeCoveragePlugin>jacoco</sonar.core.codeCoveragePlugin>
         <sonar.language>java</sonar.language>
@@ -734,8 +708,6 @@
         <sonar.exclusions>
           **/*Test*.java, **/*Test*.kt
         </sonar.exclusions>
-        <sonar.organization>factcast</sonar.organization>
-        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
       </properties>
       <build>
         <plugins>
