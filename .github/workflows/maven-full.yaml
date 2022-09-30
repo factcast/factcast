@@ -54,6 +54,9 @@ jobs:
         distribution: corretto
     - id: step-6
       name: Build with Maven - test, verify and analyze
-      run: ./mvnw -B clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
-        -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io
-        -Dsonar.login=${{ secrets.SONAR_TOKEN }} -Dsonar --file pom.xml
+      run: ./mvnw -B clean install --file pom.xml
+    - id: step-7
+      name: Run sonar upload
+      run: ./mvnw -N -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast
+        -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{
+        secrets.SONAR_TOKEN }} -Dsonar --file pom.xml

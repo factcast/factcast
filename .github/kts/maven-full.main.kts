@@ -90,7 +90,7 @@ public val workflowMaven: Workflow = workflow(
         )
         run(
             name = "Run sonar upload",
-            command = "./mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=\${{ secrets.SONAR_TOKEN }} -Dsonar --file pom.xml",
+            command = "./mvnw -N -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=\${{ secrets.SONAR_TOKEN }} -Dsonar --file pom.xml",
         )
     }
 
