@@ -208,6 +208,108 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco-maven-plugin.version}</version>
+        <configuration>
+          <excludes>
+            <exclude>**/*Configuration.*</exclude>
+            <exclude>**/*ConfigurationProperties.*</exclude>
+            <exclude>**/org/factcast/example/**/*</exclude>
+            <exclude>**/org/factcast/example/*</exclude>
+            <exclude>**/org/factcast/grpc/api/gen/**</exclude>
+            <exclude>**/org/factcast/client/grpc/cli/**</exclude>
+            <exclude>**/org/factcast/store/test/**</exclude>
+            <exclude>**/*Application.*</exclude>
+            <exclude>**/*Exception.*</exclude>
+            <exclude>**/gen/*</exclude>
+            <exclude>**/generated/*</exclude>
+          </excludes>
+        </configuration>
+        <executions>
+          <execution>
+            <id>before-unit-test-execution</id>
+            <phase>test-compile</phase>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+            <configuration>
+              <propertyName>surefire.jacoco.args</propertyName>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>after-unit-test-execution</id>
+            <phase>test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>
+                ${project.reporting.outputDirectory}/jacoco-unit-test-coverage-report
+              </outputDirectory>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>before-integration-test-execution</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+            <configuration>
+              <propertyName>failsafe.jacoco.args</propertyName>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>after-integration-test-execution</id>
+            <phase>post-integration-test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>
+                ${project.reporting.outputDirectory}/jacoco-integration-test-coverage-report
+              </outputDirectory>
+            </configuration>
+          </execution>
+
+          <!-- <execution> -->
+          <!-- <id>merge-unit-and-integration</id> -->
+          <!-- <phase>post-integration-test</phase> -->
+          <!-- <goals> -->
+          <!-- <goal>merge</goal> -->
+          <!-- </goals> -->
+          <!-- <configuration> -->
+          <!-- <fileSets> -->
+          <!-- <fileSet> -->
+          <!-- <directory>${project.build.directory}/jacoco-output/</directory> -->
+          <!-- <includes> -->
+          <!-- <include>*.exec</include> -->
+          <!-- </includes> -->
+          <!-- </fileSet> -->
+          <!-- </fileSets> -->
+          <!-- <destFile>${project.build.directory}/jacoco.exec</destFile> -->
+          <!-- </configuration> -->
+          <!-- </execution> -->
+
+          <execution>
+            <id>create-merged-report</id>
+            <phase>post-integration-test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <configuration>
+              <formats>
+                <format>XML</format>
+              </formats>
+            </configuration>
+          </execution>
+
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
         <version>3.1.0</version>
@@ -290,14 +392,10 @@
           </includes>
           <excludedGroups>integration</excludedGroups>
           <!--suppress UnresolvedMavenProperty -->
-          <!-- <argLine>${surefire.jacoco.args}</argLine> -->
+          <argLine>${surefire.jacoco.args}</argLine>
           <!-- <skip>${skipSurefire}</skip> -->
           <parallel>classes</parallel>
           <threadCountClasses>8</threadCountClasses>
-          <!-- this produces a warning we choose to ignore for unit tests, as
-            the cost of creating a fork dominates the runtime of surefire -->
-          <forkCount>0</forkCount>
-          <reuseForks>true</reuseForks>
         </configuration>
       </plugin>
       <plugin>
@@ -310,7 +408,7 @@
             <include>*</include>
           </includes>
           <!--suppress UnresolvedMavenProperty -->
-          <!-- <argLine>${failsafe.jacoco.args}</argLine> -->
+          <argLine>${failsafe.jacoco.args}</argLine>
         </configuration>
         <executions>
           <execution>
@@ -510,112 +608,11 @@
     <profile>
       <id>default-jacoco-conf</id>
       <activation>
-        <property>
-          <name>!sonar</name>
-        </property>
+        <activeByDefault>true</activeByDefault>
       </activation>
       <build>
         <plugins>
-          <plugin>
-            <groupId>org.jacoco</groupId>
-            <artifactId>jacoco-maven-plugin</artifactId>
-            <version>${jacoco-maven-plugin.version}</version>
-            <configuration>
-              <excludes>
-                <exclude>**/*Configuration.*</exclude>
-                <exclude>**/*ConfigurationProperties.*</exclude>
-                <exclude>**/org/factcast/example/**/*</exclude>
-                <exclude>**/org/factcast/example/*</exclude>
-                <exclude>**/org/factcast/grpc/api/gen/**</exclude>
-                <exclude>**/org/factcast/client/grpc/cli/**</exclude>
-                <exclude>**/org/factcast/store/test/**</exclude>
-                <exclude>**/*Application.*</exclude>
-                <exclude>**/*Exception.*</exclude>
-                <exclude>**/gen/*</exclude>
-                <exclude>**/generated/*</exclude>
-              </excludes>
-            </configuration>
-            <executions>
-              <execution>
-                <id>before-unit-test-execution</id>
-                <phase>test-compile</phase>
-                <goals>
-                  <goal>prepare-agent</goal>
-                </goals>
-                <configuration>
-                  <destFile>${project.build.directory}/jacoco-output/jacoco-unit-tests.exec</destFile>
-                  <propertyName>surefire.jacoco.args</propertyName>
-                </configuration>
-              </execution>
 
-              <execution>
-                <id>after-unit-test-execution</id>
-                <phase>test</phase>
-                <goals>
-                  <goal>report</goal>
-                </goals>
-                <configuration>
-                  <dataFile>${project.build.directory}/jacoco-output/jacoco-unit-tests.exec</dataFile>
-                  <outputDirectory>
-                    ${project.reporting.outputDirectory}/jacoco-unit-test-coverage-report
-                  </outputDirectory>
-                </configuration>
-              </execution>
-
-              <execution>
-                <id>before-integration-test-execution</id>
-                <phase>pre-integration-test</phase>
-                <goals>
-                  <goal>prepare-agent</goal>
-                </goals>
-                <configuration>
-                  <destFile>${project.build.directory}/jacoco-output/jacoco-integration-tests.exec
-                  </destFile>
-                  <propertyName>failsafe.jacoco.args</propertyName>
-                </configuration>
-              </execution>
-
-              <execution>
-                <id>after-integration-test-execution</id>
-                <phase>post-integration-test</phase>
-                <goals>
-                  <goal>report</goal>
-                </goals>
-                <configuration>
-                  <dataFile>${project.build.directory}/jacoco-output/jacoco-integration-tests.exec
-                  </dataFile>
-                  <outputDirectory>
-                    ${project.reporting.outputDirectory}/jacoco-integration-test-coverage-report
-                  </outputDirectory>
-                </configuration>
-              </execution>
-
-              <execution>
-                <id>merge-unit-and-integration</id>
-                <phase>post-integration-test</phase>
-                <goals>
-                  <goal>merge</goal>
-                </goals>
-                <configuration>
-                  <fileSets>
-                    <fileSet>
-                      <directory>${project.build.directory}/jacoco-output/</directory>
-                      <includes>
-                        <include>*.exec</include>
-                      </includes>
-                    </fileSet>
-                  </fileSets>
-                </configuration>
-              </execution>
-              <execution>
-                <id>create-merged-report</id>
-                <phase>post-integration-test</phase>
-                <goals>
-                  <goal>report</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
         </plugins>
       </build>
     </profile>
@@ -722,13 +719,10 @@
           <name>sonar</name>
         </property>
       </activation>
-      <modules>
-        <module>factcast-report-aggregate</module>
-      </modules>
       <properties>
-        <sonar.coverage.jacoco.xmlReportPaths>
-          ${project.basedir}/factcast-report-aggregate/target/site/jacoco-aggregate/jacoco.xml
-        </sonar.coverage.jacoco.xmlReportPaths>
+        <!-- <sonar.coverage.jacoco.xmlReportPaths> -->
+        <!-- ${project.basedir}/factcast-report-aggregate/target/site/jacoco-aggregate/jacoco.xml -->
+        <!-- </sonar.coverage.jacoco.xmlReportPaths> -->
         <sonar.core.codeCoveragePlugin>jacoco</sonar.core.codeCoveragePlugin>
         <sonar.language>java</sonar.language>
         <sonar.test.exclusions>
@@ -742,30 +736,6 @@
       </properties>
       <build>
         <plugins>
-          <plugin>
-            <groupId>org.jacoco</groupId>
-            <artifactId>jacoco-maven-plugin</artifactId>
-            <version>${jacoco-maven-plugin.version}</version>
-            <executions>
-              <execution>
-                <id>prepare-agent</id>
-                <goals>
-                  <goal>prepare-agent</goal>
-                </goals>
-              </execution>
-              <execution>
-                <id>report</id>
-                <goals>
-                  <goal>report</goal>
-                </goals>
-                <configuration>
-                  <formats>
-                    <format>XML</format>
-                  </formats>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
           <plugin>
             <groupId>org.sonarsource.scanner.maven</groupId>
             <artifactId>sonar-maven-plugin</artifactId>
