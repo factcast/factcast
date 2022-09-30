@@ -86,7 +86,7 @@ public val workflowMaven: Workflow = workflow(
         )
         run(
             name = "Build with Maven - test, verify and analyze",
-            command = "./mvnw -B clean verify --file pom.xml",
+            command = "./mvnw -B clean install --file pom.xml",
         )
         run(
             name = "Run sonar upload",
