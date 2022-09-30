@@ -18,7 +18,7 @@
     <!-- <module>factcast-itests-doc</module> -->
     <module>factcast-itests-exception-handling</module>
     <module>factcast-itests-factus</module>
-    <module>factcast-itests-tls</module>
+    <!-- <module>factcast-itests-tls</module> -->
     <module>factcast-itests-transformation</module>
   </modules>
   <dependencies>
