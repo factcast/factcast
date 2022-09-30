@@ -720,9 +720,9 @@
         </property>
       </activation>
       <properties>
-        <!-- <sonar.coverage.jacoco.xmlReportPaths> -->
-        <!-- ${project.basedir}/factcast-report-aggregate/target/site/jacoco-aggregate/jacoco.xml -->
-        <!-- </sonar.coverage.jacoco.xmlReportPaths> -->
+        <sonar.coverage.jacoco.xmlReportPaths>
+          ${project.basedir}/factcast-report-aggregate/target/site/jacoco-aggregate/jacoco.xml
+        </sonar.coverage.jacoco.xmlReportPaths>
         <sonar.core.codeCoveragePlugin>jacoco</sonar.core.codeCoveragePlugin>
         <sonar.language>java</sonar.language>
         <sonar.test.exclusions>
@@ -734,6 +734,9 @@
         <sonar.organization>factcast</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
       </properties>
+      <modules>
+        <module>factcast-report-aggregate</module>
+      </modules>
       <build>
         <plugins>
           <plugin>
