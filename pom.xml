@@ -738,14 +738,6 @@
       <build>
         <plugins>
           <plugin>
-            <groupId>org.sonarsource.scanner.maven</groupId>
-            <artifactId>sonar-maven-plugin</artifactId>
-            <version>3.8.0.2131</version>
-            <inherited>false</inherited>
-            <configuration>
-            </configuration>
-          </plugin>
-          <plugin>
             <artifactId>maven-plugin-plugin</artifactId>
             <configuration>
               <goalPrefix>org.sonarsource.scanner.maven</goalPrefix>
