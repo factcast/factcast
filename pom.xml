@@ -45,6 +45,7 @@
     <module>factcast-schema-registry-maven-plugin</module>
     <module>factcast-snapshotcache-redisson</module>
     <module>factcast-hugo</module>
+    <module>factcast-report-aggregate</module>
   </modules>
   <url>https://github.com/uweschaefer/factcast/tree/master/</url>
   <licenses>
@@ -734,9 +735,6 @@
         <sonar.organization>factcast</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
       </properties>
-      <modules>
-        <module>factcast-report-aggregate</module>
-      </modules>
       <build>
         <plugins>
           <plugin>
