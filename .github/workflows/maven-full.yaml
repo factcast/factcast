@@ -57,6 +57,6 @@ jobs:
       run: ./mvnw -B clean install --file pom.xml
     - id: step-7
       name: Run sonar upload
-      run: ./mvnw -N -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast
+      run: ./mvnw  -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast
         -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{
         secrets.SONAR_TOKEN }} -Dsonar --file pom.xml
