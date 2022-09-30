@@ -72,16 +72,16 @@
       <artifactId>factcast-itests-factus</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.factcast</groupId>
-      <artifactId>factcast-itests-novalidation</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.factcast</groupId>
-      <artifactId>factcast-itests-tls</artifactId>
-      <version>${project.version}</version>
-    </dependency>
+    <!-- <dependency> -->
+    <!-- <groupId>org.factcast</groupId> -->
+    <!-- <artifactId>factcast-itests-novalidation</artifactId> -->
+    <!-- <version>${project.version}</version> -->
+    <!-- </dependency> -->
+    <!-- <dependency> -->
+    <!-- <groupId>org.factcast</groupId> -->
+    <!-- <artifactId>factcast-itests-tls</artifactId> -->
+    <!-- <version>${project.version}</version> -->
+    <!-- </dependency> -->
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-itests-transformation</artifactId>
