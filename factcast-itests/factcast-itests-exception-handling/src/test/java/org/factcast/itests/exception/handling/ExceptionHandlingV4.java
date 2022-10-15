@@ -37,10 +37,8 @@ import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.FactcastTestConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
 
 @Slf4j
-@ContextConfiguration(classes = {Application.class})
 @FactcastTestConfig(factcastVersion = "latest")
 public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
 
