@@ -35,19 +35,13 @@ import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.factus.Factus;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.FactcastTestConfig;
-import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 
-@SpringBootTest
-@EnableAutoConfiguration
+@Slf4j
 @ContextConfiguration(classes = {Application.class})
 @FactcastTestConfig(factcastVersion = "latest")
-@Slf4j
-@IntegrationTest
 public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
 
   @Autowired Factus ec;
