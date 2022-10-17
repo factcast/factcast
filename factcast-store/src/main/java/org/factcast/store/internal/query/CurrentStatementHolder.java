@@ -34,9 +34,15 @@ public class CurrentStatementHolder implements Closeable {
         log.info("Canceling statement " + statement);
         try {
           statement.cancel();
-          wasCanceled = true;
+
+          // we have to roll back the tx on the underlying connection
+          // if we do not end the transaction, statements are cancelled but still "idle in
+          // transaction" and so block further actions like wiping between tests
+          statement.getConnection().rollback();
         } catch (SQLException e) {
           log.debug("Exception while closing statement {}:", statement, e);
+        } finally {
+          wasCanceled = true;
         }
       }
     }
