@@ -16,7 +16,6 @@
 package org.factcast.store.registry.transformation.cache;
 
 import static org.factcast.store.registry.transformation.cache.PgTransformationStoreChangeListener.INFLIGHT_TRANSFORMATIONS_DELAY_SECONDS;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.when;
 
@@ -71,24 +70,21 @@ class PgTransformationStoreChangeListenerTest {
 
   @Nested
   class WhenOning {
-    @Mock private PgListener.TransformationStoreChangeSignal signal;
+    private PgListener.TransformationStoreChangeSignal signal;
 
-    private SchemaKey key = SchemaKey.of("ns", "type", 1);
+    private final SchemaKey key = SchemaKey.of("ns", "type", 1);
 
     @Test
     void invalidatesCache() {
-      when(signal.ns()).thenReturn(key.ns());
-      when(signal.type()).thenReturn(key.type());
+      signal = new PgListener.TransformationStoreChangeSignal(key.ns(), key.type());
       underTest.on(signal);
       verify(transformationCache, times(1)).invalidateTransformationFor(key.ns(), key.type());
       verify(transformationChains, times(1)).notifyFor(TransformationKey.of(key.ns(), key.type()));
     }
 
     @Test
-    @SneakyThrows
     void schedulesCacheInvalidationToCoverInflightTransformations() {
-      when(signal.ns()).thenReturn(key.ns());
-      when(signal.type()).thenReturn(key.type());
+      signal = new PgListener.TransformationStoreChangeSignal(key.ns(), key.type());
       underTest.on(signal);
       verify(executor)
           .schedule(

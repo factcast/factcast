@@ -62,14 +62,12 @@ class PgSchemaStoreChangeListenerTest {
 
   @Nested
   class WhenOning {
-    @Mock private PgListener.SchemaStoreChangeSignal signal;
-    private SchemaKey key = SchemaKey.of("ns", "type", 1);
+    private PgListener.SchemaStoreChangeSignal signal;
+    private final SchemaKey key = SchemaKey.of("ns", "type", 1);
 
     @Test
     void invalidatesCache() {
-      when(signal.ns()).thenReturn(key.ns());
-      when(signal.type()).thenReturn(key.type());
-      when(signal.version()).thenReturn(key.version());
+      signal = new PgListener.SchemaStoreChangeSignal(key.ns(), key.type(), key.version());
       underTest.on(signal);
       verify(registry, times(1)).invalidateNearCache(key);
     }
