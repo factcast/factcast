@@ -17,7 +17,6 @@ package org.factcast.store.registry.transformation.cache;
 
 import static org.factcast.store.registry.transformation.cache.PgTransformationStoreChangeListener.INFLIGHT_TRANSFORMATIONS_DELAY_SECONDS;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.when;
 
 import com.google.common.eventbus.EventBus;
 import java.util.concurrent.ScheduledExecutorService;

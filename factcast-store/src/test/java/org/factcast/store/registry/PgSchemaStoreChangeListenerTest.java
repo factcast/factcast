@@ -17,7 +17,6 @@ package org.factcast.store.registry;
 
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import com.google.common.eventbus.EventBus;
 import lombok.SneakyThrows;
