@@ -15,10 +15,13 @@
  */
 package org.factcast.itests.store;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 
+import java.nio.charset.Charset;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import org.factcast.core.Fact;
@@ -26,6 +29,8 @@ import org.factcast.core.FactCast;
 import org.factcast.core.FactValidationException;
 import org.factcast.store.registry.PgSchemaStoreChangeListener;
 import org.factcast.test.IntegrationTest;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,8 +39,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.util.StreamUtils;
 
 @ExtendWith(MockitoExtension.class)
 @SpringBootTest
@@ -73,8 +80,8 @@ public class SchemaCacheTest {
               "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"v3\"}");
       fc.publish(v3);
       // fetching to populate the registry cache
-      fc.fetchByIdAndVersion(idv1, 1).get();
-      fc.fetchByIdAndVersion(idv3, 3).get();
+      assertTrue(fc.fetchByIdAndVersion(idv1, 1).isPresent());
+      assertTrue(fc.fetchByIdAndVersion(idv3, 3).isPresent());
 
       jdbcTemplate.update(
           String.format("DELETE FROM schemastore WHERE type='%s' AND version=%d", v3.type(), 3));
@@ -119,32 +126,14 @@ public class SchemaCacheTest {
               "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"v3\"}");
       fc.publish(v3);
       // fetching to populate the registry cache
-      fc.fetchByIdAndVersion(idv1, 1).get();
-      fc.fetchByIdAndVersion(idv3, 3).get();
+      assertTrue(fc.fetchByIdAndVersion(idv1, 1).isPresent());
+      assertTrue(fc.fetchByIdAndVersion(idv3, 3).isPresent());
 
-      String newSchemaV3 =
-          "{\n"
-              + "  \"additionalProperties\" : true,\n"
-              + "  \"properties\" : {\n"
-              + "    \"firstName\" : {\n"
-              + "      \"type\": \"string\"\n"
-              + "    },\n"
-              + "    \"lastName\" : {\n"
-              + "      \"type\": \"string\"\n"
-              + "    },\n"
-              + "    \"salutation\": {\n"
-              + "      \"type\": \"string\",\n"
-              + "      \"enum\": [\"Mr\", \"Mrs\", \"NA\"]\n"
-              + "    },\n"
-              + "    \"displayName\": {\n"
-              + "      \"type\": \"string\"\n"
-              + "    },\n"
-              + "    \"newProperty\": {\n"
-              + "      \"type\": \"string\"\n"
-              + "    }\n"
-              + "  },\n"
-              + "  \"required\": [\"firstName\", \"lastName\", \"salutation\", \"displayName\", \"newProperty\"]\n"
-              + "}";
+      String schemaV3 = StreamUtils.copyToString(new ClassPathResource("/example-registry/users/UserCreated/3/schema.json").getInputStream(), Charset.defaultCharset());
+      JSONObject newSchemaV3 = new JSONObject(schemaV3);
+      newSchemaV3.getJSONObject("properties").put("newProperty", new JSONObject().put("type", "string"));
+      newSchemaV3.put("required", new JSONArray().putAll(List.of("firstName", "lastName", "salutation", "displayName", "newProperty")));
+
       jdbcTemplate.update(
           String.format(
               "UPDATE schemastore SET jsonschema='%s' WHERE type='%s' AND version=%d",

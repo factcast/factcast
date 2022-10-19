@@ -69,8 +69,8 @@ public class TransformationCacheTest {
       UUID id = UUID.randomUUID();
       Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
       fc.publish(f);
-      fc.fetchByIdAndVersion(id, 2).get();
-      fc.fetchByIdAndVersion(id, 3).get();
+      assertTrue(fc.fetchByIdAndVersion(id, 2).isPresent());
+      assertTrue(fc.fetchByIdAndVersion(id, 3).isPresent());
       // force cache flush
       ((PgTransformationCache) transformationCache).flush();
 
@@ -103,8 +103,8 @@ public class TransformationCacheTest {
       UUID id = UUID.randomUUID();
       Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
       fc.publish(f);
-      fc.fetchByIdAndVersion(id, 2).get();
-      fc.fetchByIdAndVersion(id, 3).get();
+      assertTrue(fc.fetchByIdAndVersion(id, 2).isPresent());
+      assertTrue(fc.fetchByIdAndVersion(id, 3).isPresent());
       // force cache flush
       ((PgTransformationCache) transformationCache).flush();
 
@@ -117,7 +117,7 @@ public class TransformationCacheTest {
 
       assertDoesNotThrow(() -> fc.fetchByIdAndVersion(id, 1));
       assertDoesNotThrow(() -> fc.fetchByIdAndVersion(id, 2));
-      assertThat(fc.fetchByIdAndVersion(id, 3).get().jsonPayload()).contains(randomUUID);
+      assertThat(fc.fetchByIdAndVersion(id, 3)).isPresent().get().extracting(Fact::jsonPayload).asString().contains(randomUUID);
     }
   }
 

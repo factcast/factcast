@@ -96,11 +96,7 @@ class AbstractSchemaRegistryTest {
       when(indexFetcher.fetchIndex()).thenThrow(IllegalStateException.class);
       when(storeConfigurationProperties.isPersistentRegistry()).thenReturn(false);
 
-      assertThatThrownBy(
-              () -> {
-                underTest.fetchInitial();
-              })
-          .isInstanceOf(InitialRegistryFetchFailed.class);
+      assertThatThrownBy(underTest::fetchInitial).isInstanceOf(InitialRegistryFetchFailed.class);
 
       verify(registryMetrics).count(EVENT.SCHEMA_UPDATE_FAILURE);
     }

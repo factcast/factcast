@@ -72,9 +72,4 @@ class CacheBuffer {
       return buffer.containsKey(key);
     }
   }
-
-  @VisibleForTesting
-  void clearAllWrites() {
-    // TODO
-  }
 }
