@@ -117,7 +117,12 @@ public class TransformationCacheTest {
 
       assertDoesNotThrow(() -> fc.fetchByIdAndVersion(id, 1));
       assertDoesNotThrow(() -> fc.fetchByIdAndVersion(id, 2));
-      assertThat(fc.fetchByIdAndVersion(id, 3)).isPresent().get().extracting(Fact::jsonPayload).asString().contains(randomUUID);
+      assertThat(fc.fetchByIdAndVersion(id, 3))
+          .isPresent()
+          .get()
+          .extracting(Fact::jsonPayload)
+          .asString()
+          .contains(randomUUID);
     }
   }
 

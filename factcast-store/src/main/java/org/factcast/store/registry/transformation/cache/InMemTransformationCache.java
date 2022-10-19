@@ -107,7 +107,10 @@ public class InMemTransformationCache implements TransformationCache {
   public void invalidateTransformationFor(String ns, String type) {
     Set<Key> toBeInvalidated =
         cache.entrySet().stream()
-            .filter(e -> e.getValue().fact().ns().equals(ns) && Objects.equals(e.getValue().fact().type(), type))
+            .filter(
+                e ->
+                    e.getValue().fact().ns().equals(ns)
+                        && Objects.equals(e.getValue().fact().type(), type))
             .map(Entry::getKey)
             .collect(Collectors.toSet());
     if (!toBeInvalidated.isEmpty()) {

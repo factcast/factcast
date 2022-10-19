@@ -15,9 +15,9 @@
  */
 package org.factcast.itests.store;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 
 import java.nio.charset.Charset;
@@ -129,10 +129,20 @@ public class SchemaCacheTest {
       assertTrue(fc.fetchByIdAndVersion(idv1, 1).isPresent());
       assertTrue(fc.fetchByIdAndVersion(idv3, 3).isPresent());
 
-      String schemaV3 = StreamUtils.copyToString(new ClassPathResource("/example-registry/users/UserCreated/3/schema.json").getInputStream(), Charset.defaultCharset());
+      String schemaV3 =
+          StreamUtils.copyToString(
+              new ClassPathResource("/example-registry/users/UserCreated/3/schema.json")
+                  .getInputStream(),
+              Charset.defaultCharset());
       JSONObject newSchemaV3 = new JSONObject(schemaV3);
-      newSchemaV3.getJSONObject("properties").put("newProperty", new JSONObject().put("type", "string"));
-      newSchemaV3.put("required", new JSONArray().putAll(List.of("firstName", "lastName", "salutation", "displayName", "newProperty")));
+      newSchemaV3
+          .getJSONObject("properties")
+          .put("newProperty", new JSONObject().put("type", "string"));
+      newSchemaV3.put(
+          "required",
+          new JSONArray()
+              .putAll(
+                  List.of("firstName", "lastName", "salutation", "displayName", "newProperty")));
 
       jdbcTemplate.update(
           String.format(
