@@ -154,68 +154,76 @@ public class PgListener implements InitializingBean, DisposableBean {
               String name = n.getName();
               log.debug("Received notification on channel: {}.", name);
 
-              // TODO use switch on name here? Or at least elseif? definetely, also because of last
-              // else if
-
               if (PgConstants.CHANNEL_BLACKLIST_CHANGE.equals(name)) {
                 postBlacklistChangeSignal();
               } else if (PgConstants.CHANNEL_SCHEMASTORE_CHANGE.equals(name)) {
-                String json = n.getParameter();
-                try {
-                  JsonNode root = FactCastJson.readTree(json);
-
-                  String ns = root.get("ns").asText();
-                  String type = root.get("type").asText();
-                  Integer version = root.get("version").asInt();
-
-                  postSchemaStoreChangeSignal(new SchemaStoreChangeSignal(ns, type, version));
-
-                } catch (JsonProcessingException | NullPointerException e) {
-                  // skipping
-                  log.debug("Unparesable JSON parameter from notification: {}.", name);
-                }
+                processSchemaStoreChangeNotification(n);
               } else if (PgConstants.CHANNEL_TRANSFORMATIONSTORE_CHANGE.equals(name)) {
-                String json = n.getParameter();
-                try {
-                  JsonNode root = FactCastJson.readTree(json);
-
-                  String ns = root.get("ns").asText();
-                  String type = root.get("type").asText();
-
-                  postTransformationStoreChangeSignal(
-                      new TransformationStoreChangeSignal(ns, type));
-
-                } catch (JsonProcessingException | NullPointerException e) {
-                  // skipping
-                  log.debug("Unparesable JSON parameter from notification: {}.", name);
-                }
+                processTransformationStoreChangeNotification(n);
               } else if (PgConstants.CHANNEL_FACT_INSERT.equals(name)) {
-                String json = n.getParameter();
-
-                try {
-                  JsonNode root = FactCastJson.readTree(json);
-                  // since 0.5.2, all those attributes are top level
-                  String ns = root.get("ns").asText();
-                  String type = root.get("type").asText();
-
-                  postFactInsertionSignal(
-                      new FactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT, ns, type));
-
-                } catch (JsonProcessingException | NullPointerException e) {
-                  // unparseable, probably longer than 8k ?
-                  // fall back to informingAllSubscribers
-                  if (!oncePerArray.getAndSet(true)) {
-                    log.debug(
-                        "Unparesable JSON header from Notification: {}. Notifying everyone - just"
-                            + " in case",
-                        name);
-                    postFactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT);
-                  }
-                }
+                processFactInsertNotification(n, oncePerArray);
               } else if (!PgConstants.CHANNEL_ROUNDTRIP.equals(name)) {
                 log.debug("Ignored notification from unknown channel: {}", name);
               }
             });
+  }
+
+  private void processSchemaStoreChangeNotification(PGNotification n) {
+    String json = n.getParameter();
+    try {
+      JsonNode root = FactCastJson.readTree(json);
+
+      String ns = root.get("ns").asText();
+      String type = root.get("type").asText();
+      Integer version = root.get("version").asInt();
+
+      postSchemaStoreChangeSignal(new SchemaStoreChangeSignal(ns, type, version));
+
+    } catch (JsonProcessingException | NullPointerException e) {
+      // skipping
+      log.debug("Unparesable JSON parameter from notification: {}.", n.getName());
+    }
+  }
+
+  private void processTransformationStoreChangeNotification(PGNotification n) {
+    String json = n.getParameter();
+    try {
+      JsonNode root = FactCastJson.readTree(json);
+
+      String ns = root.get("ns").asText();
+      String type = root.get("type").asText();
+
+      postTransformationStoreChangeSignal(
+              new TransformationStoreChangeSignal(ns, type));
+
+    } catch (JsonProcessingException | NullPointerException e) {
+      // skipping
+      log.debug("Unparesable JSON parameter from notification: {}.", n.getName());
+    }
+  }
+
+  private void processFactInsertNotification(PGNotification n, AtomicBoolean oncePerArray) {
+    String json = n.getParameter();
+    try {
+      JsonNode root = FactCastJson.readTree(json);
+      // since 0.5.2, all those attributes are top level
+      String ns = root.get("ns").asText();
+      String type = root.get("type").asText();
+
+      postFactInsertionSignal(
+              new FactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT, ns, type));
+
+    } catch (JsonProcessingException | NullPointerException e) {
+      // unparseable, probably longer than 8k ?
+      // fall back to informingAllSubscribers
+      if (!oncePerArray.getAndSet(true)) {
+        log.debug(
+                "Unparesable JSON header from Notification: {}. Notifying everyone - just"
+                        + " in case",
+                n.getName());
+        postFactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT);
+      }
+    }
   }
 
   private void postBlacklistChangeSignal() {
