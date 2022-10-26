@@ -193,8 +193,7 @@ public class PgListener implements InitializingBean, DisposableBean {
       String ns = root.get("ns").asText();
       String type = root.get("type").asText();
 
-      postTransformationStoreChangeSignal(
-              new TransformationStoreChangeSignal(ns, type));
+      postTransformationStoreChangeSignal(new TransformationStoreChangeSignal(ns, type));
 
     } catch (JsonProcessingException | NullPointerException e) {
       // skipping
@@ -210,17 +209,15 @@ public class PgListener implements InitializingBean, DisposableBean {
       String ns = root.get("ns").asText();
       String type = root.get("type").asText();
 
-      postFactInsertionSignal(
-              new FactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT, ns, type));
+      postFactInsertionSignal(new FactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT, ns, type));
 
     } catch (JsonProcessingException | NullPointerException e) {
       // unparseable, probably longer than 8k ?
       // fall back to informingAllSubscribers
       if (!oncePerArray.getAndSet(true)) {
         log.debug(
-                "Unparesable JSON header from Notification: {}. Notifying everyone - just"
-                        + " in case",
-                n.getName());
+            "Unparesable JSON header from Notification: {}. Notifying everyone - just" + " in case",
+            n.getName());
         postFactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT);
       }
     }
