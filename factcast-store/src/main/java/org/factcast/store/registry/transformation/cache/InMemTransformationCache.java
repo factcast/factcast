@@ -17,7 +17,8 @@ package org.factcast.store.registry.transformation.cache;
 
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.Map.*;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
@@ -100,6 +101,21 @@ public class InMemTransformationCache implements TransformationCache {
                 }
               });
         });
+  }
+
+  @Override
+  public void invalidateTransformationFor(String ns, String type) {
+    Set<Key> toBeInvalidated =
+        cache.entrySet().stream()
+            .filter(
+                e ->
+                    e.getValue().fact().ns().equals(ns)
+                        && Objects.equals(e.getValue().fact().type(), type))
+            .map(Entry::getKey)
+            .collect(Collectors.toSet());
+    if (!toBeInvalidated.isEmpty()) {
+      toBeInvalidated.forEach(cache::remove);
+    }
   }
 
   @Data

@@ -30,7 +30,7 @@ public class ClasspathSchemaRegistry extends AbstractSchemaRegistry {
       @NonNull SchemaStore schemaStore,
       @NonNull TransformationStore transformationStore,
       @NonNull RegistryMetrics registryMetrics,
-      @NonNull StoreConfigurationProperties pgConfigurationProperties,
+      @NonNull StoreConfigurationProperties storeConfigurationProperties,
       @NonNull LockProvider lockProvider) {
     super(
         new ClasspathIndexFetcher(base),
@@ -38,7 +38,7 @@ public class ClasspathSchemaRegistry extends AbstractSchemaRegistry {
         schemaStore,
         transformationStore,
         registryMetrics,
-        pgConfigurationProperties,
+        storeConfigurationProperties,
         lockProvider);
   }
 
