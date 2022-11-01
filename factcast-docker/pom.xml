@@ -97,6 +97,7 @@
             <goals>
               <goal>build</goal>
             </goals>
+            <phase>pre-integration-test</phase>
           </execution>
         </executions>
         <configuration>
