@@ -17,6 +17,7 @@ package org.factcast.factus.spring.tx;
 
 import java.lang.annotation.*;
 import lombok.NonNull;
+import lombok.experimental.UtilityClass;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
@@ -33,6 +34,7 @@ public @interface SpringTransactional {
    */
   int timeoutInSeconds() default Defaults.timeoutInSeconds;
 
+  @UtilityClass
   class Defaults {
     static final int timeoutInSeconds = 30;
 

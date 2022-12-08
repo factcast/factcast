@@ -15,6 +15,9 @@
  */
 package org.factcast.server.grpc.auth;
 
+import lombok.experimental.UtilityClass;
+
+@UtilityClass
 public final class FactCastAuthority {
   public static final String AUTHENTICATED = "ROLE_AUTHENTICATED";
 }

@@ -22,6 +22,8 @@ import java.util.UUID;
 import java.util.function.Function;
 
 public class Converters {
+  private Converters() {
+  }
 
   public static IStringConverterInstanceFactory factory() {
     return (param, clazz, name) -> {

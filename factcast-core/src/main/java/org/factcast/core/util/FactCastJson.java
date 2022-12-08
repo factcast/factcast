@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import lombok.*;
+import lombok.experimental.UtilityClass;
 
 /**
  * Statically shared ObjectMapper reader & writer to be used within FactCast for Headers and
@@ -39,7 +40,7 @@ import lombok.*;
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@UtilityClass
 public final class FactCastJson {
 
   private static ObjectMapper objectMapper;

@@ -16,7 +16,9 @@
 package org.factcast.grpc.api;
 
 import io.grpc.Metadata;
+import lombok.experimental.UtilityClass;
 
+@UtilityClass
 public class Headers {
 
   private static final String GRPC_COMPRESSION_HEADER = "fc-msgcomp";

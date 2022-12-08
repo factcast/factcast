@@ -15,6 +15,7 @@
  */
 package org.factcast.factus.lock;
 
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -23,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
  * transaction and not to factus directly (which would be a mistake).
  */
 @Slf4j
+@UtilityClass
 public class InLockedOperation {
   private static final ThreadLocal<Boolean> isInLockedOperation =
       ThreadLocal.withInitial(() -> false);

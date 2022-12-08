@@ -16,7 +16,9 @@
 package org.factcast.core.util;
 
 import lombok.NonNull;
+import lombok.experimental.UtilityClass;
 
+@UtilityClass
 public class ExceptionHelper {
 
   public static RuntimeException toRuntime(@NonNull Throwable exception) {

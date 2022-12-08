@@ -18,6 +18,8 @@ package org.factcast.factus.redis.batch;
 import java.lang.annotation.*;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+
+import lombok.experimental.UtilityClass;
 import org.redisson.api.BatchOptions;
 
 @Retention(RetentionPolicy.RUNTIME)
@@ -33,6 +35,7 @@ public @interface RedisBatched {
 
   long retryInterval() default Defaults.retryInterval;
 
+  @UtilityClass
   class Defaults {
     static final long responseTimeout = 5000;
     static final int retryAttempts = 5;

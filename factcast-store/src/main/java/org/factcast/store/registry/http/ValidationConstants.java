@@ -19,11 +19,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.function.*;
 import lombok.NonNull;
+import lombok.experimental.UtilityClass;
 import okhttp3.OkHttpClient;
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.loader.SchemaLoader;
 import org.json.JSONObject;
-
+@UtilityClass
 public class ValidationConstants {
 
   public static final ObjectMapper JACKSON = new ObjectMapper();

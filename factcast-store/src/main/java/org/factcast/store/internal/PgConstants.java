@@ -20,6 +20,7 @@ import lombok.AccessLevel;
 import lombok.Generated;
 import lombok.NonNull;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.UtilityClass;
 
 /**
  * String constants mainly used in SQL-Statement creation
@@ -28,6 +29,7 @@ import lombok.experimental.FieldDefaults;
  */
 @FieldDefaults(level = AccessLevel.PUBLIC, makeFinal = true)
 @Generated
+@UtilityClass
 public class PgConstants {
 
   public static final String CURRENT_TIME_MILLIS = "SELECT TRUNC(EXTRACT(EPOCH FROM now()) * 1000)";

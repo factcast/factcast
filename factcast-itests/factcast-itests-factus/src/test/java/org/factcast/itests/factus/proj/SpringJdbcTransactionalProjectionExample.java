@@ -31,6 +31,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 
 public class SpringJdbcTransactionalProjectionExample {
+  private SpringJdbcTransactionalProjectionExample() {
+  }
 
   @Slf4j
   @ProjectionMetaData(serial = 1)

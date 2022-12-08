@@ -18,7 +18,9 @@ package org.factcast.server.grpc;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
+import lombok.experimental.UtilityClass;
 
+@UtilityClass
 public class ServerExceptionHelper {
 
   public static StatusRuntimeException translate(Throwable e) {
