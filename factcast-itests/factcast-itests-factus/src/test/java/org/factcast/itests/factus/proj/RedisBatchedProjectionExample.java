@@ -29,8 +29,7 @@ import org.redisson.api.RMapAsync;
 import org.redisson.api.RedissonClient;
 
 public class RedisBatchedProjectionExample {
-  private RedisBatchedProjectionExample() {
-  }
+  private RedisBatchedProjectionExample() {}
 
   @ProjectionMetaData(serial = 1)
   @RedisBatched

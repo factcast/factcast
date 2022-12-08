@@ -18,7 +18,6 @@ package org.factcast.factus.redis.batch;
 import java.lang.annotation.*;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
-
 import lombok.experimental.UtilityClass;
 import org.redisson.api.BatchOptions;
 

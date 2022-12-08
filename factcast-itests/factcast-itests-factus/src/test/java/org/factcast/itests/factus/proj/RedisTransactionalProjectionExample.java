@@ -26,8 +26,7 @@ import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
 
 public class RedisTransactionalProjectionExample {
-  private RedisTransactionalProjectionExample() {
-  }
+  private RedisTransactionalProjectionExample() {}
 
   @ProjectionMetaData(serial = 1)
   @RedisTransactional

@@ -24,6 +24,7 @@ import okhttp3.OkHttpClient;
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.loader.SchemaLoader;
 import org.json.JSONObject;
+
 @UtilityClass
 public class ValidationConstants {
 

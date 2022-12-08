@@ -18,7 +18,6 @@ package org.factcast.factus.redis.tx;
 import java.lang.annotation.*;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
-
 import lombok.experimental.UtilityClass;
 import org.redisson.api.TransactionOptions;
 
@@ -35,6 +34,7 @@ public @interface RedisTransactional {
   int retryAttempts() default Defaults.retryAttempts;
 
   long retryInterval() default Defaults.retryInterval;
+
   @UtilityClass
   class Defaults {
     static final long timeout = 30000;
