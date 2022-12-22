@@ -286,12 +286,12 @@ class ClientStreamObserverTest {
 
     // prolong interval
     for (int i = 0; i < 5; i++) {
-      sleep(50);
+      sleep(interval);
       // any notification will reset the time
       uut.onNext(converter.createKeepaliveNotification());
     }
 
-    sleep(200);
+    sleep(grace - 50);
     // still fine because it is < grace
     verify(subscription, never()).notifyError(any());
 
