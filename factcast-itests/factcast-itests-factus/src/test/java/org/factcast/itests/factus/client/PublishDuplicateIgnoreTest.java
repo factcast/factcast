@@ -94,6 +94,7 @@ class PublishDuplicateIgnoreTest extends AbstractFactCastIntegrationTest {
     }
   }
 
+  @SneakyThrows
   @Test
   void fallsBackToSinglePublish() {
 
@@ -102,6 +103,9 @@ class PublishDuplicateIgnoreTest extends AbstractFactCastIntegrationTest {
     try (ConsoleCaptor consoleCaptor = new ConsoleCaptor()) {
 
       factCast.publish(beatles);
+
+      // give it a bit of time for sysout on the server to be flushed
+      Thread.sleep(100);
 
       // it should have seen dups 2 times, one for the batch, second for ringo
       assertThat(
@@ -133,7 +137,7 @@ class PublishDuplicateIgnoreTest extends AbstractFactCastIntegrationTest {
       factCast.publish(beatles);
 
       // give it a bit of time for sysout on the server to be flushed
-      Thread.sleep(50);
+      Thread.sleep(100);
 
       // it should have seen dups 3 times, one for the batch, two for the already inserted ones.
       assertThat(
