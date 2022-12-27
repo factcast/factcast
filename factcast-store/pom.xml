@@ -89,11 +89,6 @@
       <artifactId>everit-json-schema</artifactId>
       <version>1.14.1</version>
     </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-simple</artifactId>
-      <scope>test</scope>
-    </dependency>
     <!-- spring -->
     <dependency>
       <groupId>org.springframework</groupId>
