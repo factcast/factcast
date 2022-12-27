@@ -104,7 +104,8 @@ public class PgFactStream {
         new PgSynchronizedQuery.FactRowCallbackHandler(
             subscription, interceptor, this::isConnected, serial, request, statementHolder);
     PgSynchronizedQuery query =
-        new PgSynchronizedQuery(jdbcTemplate, sql, setter, rsHandler, serial, fetcher);
+        new PgSynchronizedQuery(
+            jdbcTemplate, sql, setter, rsHandler, serial, fetcher, statementHolder);
     catchupAndFollow(request, subscription, query);
   }
 

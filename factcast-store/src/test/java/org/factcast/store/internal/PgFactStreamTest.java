@@ -37,17 +37,17 @@ import org.factcast.store.internal.filter.FactFilter;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.MockitoAnnotations;
 import org.mockito.quality.Strictness;
 import org.postgresql.util.PSQLException;
+import org.postgresql.util.ServerErrorMessage;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-@ExtendWith(MockitoExtension.class)
 public class PgFactStreamTest {
 
   @Mock SubscriptionRequest req;
@@ -63,6 +63,11 @@ public class PgFactStreamTest {
 
   @Mock PgCatchupFactory pgCatchupFactory;
   @InjectMocks PgFactStream uut;
+
+  @BeforeEach
+  void setup() {
+    MockitoAnnotations.openMocks(this);
+  }
 
   @Test
   public void testConnectNullParameter() {
@@ -91,6 +96,11 @@ public class PgFactStreamTest {
     @Mock FastForwardTarget ffwdTarget;
     @Mock SubscriptionRequest request;
     @InjectMocks PgFactStream underTest;
+
+    @BeforeEach
+    void setup() {
+      MockitoAnnotations.openMocks(this);
+    }
 
     @Test
     void noFfwdNotConnected() {
@@ -181,6 +191,11 @@ public class PgFactStreamTest {
 
     @InjectMocks private PgSynchronizedQuery.FactRowCallbackHandler uut;
 
+    @BeforeEach
+    void setup() {
+      MockitoAnnotations.openMocks(this);
+    }
+
     @Test
     @SneakyThrows
     void test_notConnected() {
@@ -200,7 +215,7 @@ public class PgFactStreamTest {
       // it should appear open,
       when(rs.isClosed()).thenReturn(false);
       // until
-      PSQLException mockException = mock(PSQLException.class);
+      PSQLException mockException = new PSQLException(new ServerErrorMessage("och"));
       when(rs.getString(anyString())).thenThrow(mockException);
       uut.processRow(rs);
       verifyNoMoreInteractions(subscription);
@@ -300,6 +315,11 @@ public class PgFactStreamTest {
 
   @Nested
   class WhenCatchingUp {
+    @BeforeEach
+    void setup() {
+      MockitoAnnotations.openMocks(this);
+    }
+
     @Test
     void ifDisconnected_doNothing() {
       uut = spy(uut);
@@ -328,6 +348,11 @@ public class PgFactStreamTest {
 
   @Nested
   class WhenInitializingSerialToStartAfter {
+    @BeforeEach
+    void setup() {
+      MockitoAnnotations.openMocks(this);
+    }
+
     @Test
     void fromScratch() {
       when(reqTo.startingAfter()).thenReturn(Optional.empty());
