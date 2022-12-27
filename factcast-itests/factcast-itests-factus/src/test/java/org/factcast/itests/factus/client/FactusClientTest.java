@@ -46,7 +46,6 @@ import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.*;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
@@ -123,7 +122,6 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
 
   @SneakyThrows
   @Test
-  @Disabled // TODO remove
   public void txBatchProcessingPerformance() {
 
     int MAX = 10000;
