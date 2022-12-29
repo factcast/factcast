@@ -60,7 +60,7 @@ public class RedissonSnapshotCache implements SnapshotCache {
     Optional<Snapshot> snapshot = Optional.ofNullable(bucket.get());
     if (snapshot.isPresent()) {
       // renew TTL
-      bucket.expireAsync(retentionTimeInDays, TimeUnit.DAYS);
+      bucket.expireAsync(Duration.ofDays(retentionTimeInDays));
       // can be removed at some point
       index.removeAsync(key, System.currentTimeMillis());
     }
