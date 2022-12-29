@@ -28,6 +28,8 @@ import org.factcast.core.snap.SnapshotId;
 import org.redisson.api.RBucket;
 import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
+import org.redisson.client.codec.Codec;
+import org.redisson.codec.MarshallingCodec;
 
 @Slf4j
 public class RedissonSnapshotCache implements SnapshotCache {
@@ -49,7 +51,10 @@ public class RedissonSnapshotCache implements SnapshotCache {
   @Override
   public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
     String key = createKeyFor(id);
-    RBucket<Snapshot> bucket = redisson.getBucket(key);
+    // From redisson-spring-boot-starter 3.19.0 onwards the default codec is Kryo5.
+    // Since it also uses Java17 we have to stick with 3.18.1 and enforce the old default codec manually.
+    Codec codec = new MarshallingCodec();
+    RBucket<Snapshot> bucket = redisson.getBucket(key, codec);
 
     Optional<Snapshot> snapshot = Optional.ofNullable(bucket.get());
     if (snapshot.isPresent()) {
