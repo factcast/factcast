@@ -78,7 +78,7 @@
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <version>42.4.2</version><!--$NO-MVN-MAN-VER$ -->
+      <version>42.5.1</version><!--$NO-MVN-MAN-VER$ -->
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
@@ -88,11 +88,6 @@
       <groupId>com.github.erosb</groupId>
       <artifactId>everit-json-schema</artifactId>
       <version>1.14.1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-simple</artifactId>
-      <scope>test</scope>
     </dependency>
     <!-- spring -->
     <dependency>
@@ -136,7 +131,7 @@
     <dependency>
       <groupId>io.javalin</groupId>
       <artifactId>javalin</artifactId>
-      <version>4.6.4</version>
+      <version>4.6.7</version>
       <scope>test</scope>
     </dependency>
     <dependency>
