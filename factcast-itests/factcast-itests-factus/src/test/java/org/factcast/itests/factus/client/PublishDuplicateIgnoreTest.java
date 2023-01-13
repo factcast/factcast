@@ -18,8 +18,8 @@ package org.factcast.itests.factus.client;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.collect.Lists;
-import java.util.*;
-import java.util.concurrent.atomic.*;
+import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -94,27 +94,29 @@ class PublishDuplicateIgnoreTest extends AbstractFactCastIntegrationTest {
     }
   }
 
+  @SneakyThrows
   @Test
   void fallsBackToSinglePublish() {
 
     factCast.publish(ringo);
 
-    try (ConsoleCaptor consoleCaptor = new ConsoleCaptor()) {
+    ConsoleCaptor consoleCaptor = new ConsoleCaptor();
 
-      factCast.publish(beatles);
+    factCast.publish(beatles);
 
-      // it should have seen dups 2 times, one for the batch, second for ringo
-      assertThat(
-              consoleCaptor.getStandardOutput().stream()
-                  // get the server output from docker
-                  .filter(l -> l.contains("STDOUT:"))
-                  // the actual exception as thrown by the jdbc driver
-                  .filter(
-                      line ->
-                          line.contains(
-                              "org.factcast.core.DuplicateFactException: PreparedStatementCallback; SQL [INSERT INTO fact(header,payload) VALUES")))
-          .hasSize(2);
-    }
+    consoleCaptor.close(); // flushes underlying streams
+
+    // it should have seen dups 2 times, one for the batch, second for ringo
+    assertThat(
+            consoleCaptor.getStandardOutput().stream()
+                // get the server output from docker
+                .filter(l -> l.contains("STDOUT:"))
+                // the actual exception as thrown by the jdbc driver
+                .filter(
+                    line ->
+                        line.contains(
+                            "org.factcast.core.DuplicateFactException: PreparedStatementCallback; SQL [INSERT INTO fact(header,payload) VALUES")))
+        .hasSize(2);
 
     var cp = new CountingProjection();
     factus.update(cp);
@@ -128,25 +130,23 @@ class PublishDuplicateIgnoreTest extends AbstractFactCastIntegrationTest {
     factCast.publish(george);
     factCast.publish(john);
 
-    try (ConsoleCaptor consoleCaptor = new ConsoleCaptor()) {
+    ConsoleCaptor consoleCaptor = new ConsoleCaptor();
 
-      factCast.publish(beatles);
+    factCast.publish(beatles);
 
-      // give it a bit of time for sysout on the server to be flushed
-      Thread.sleep(50);
+    consoleCaptor.close(); // flushes underlying streams
 
-      // it should have seen dups 3 times, one for the batch, two for the already inserted ones.
-      assertThat(
-              consoleCaptor.getStandardOutput().stream()
-                  // get the server output from docker
-                  .filter(l -> l.contains("STDOUT:"))
-                  // the actual exception as thrown by the jdbc driver
-                  .filter(
-                      line ->
-                          line.contains(
-                              "org.factcast.core.DuplicateFactException: PreparedStatementCallback; SQL [INSERT INTO fact(header,payload) VALUES")))
-          .hasSize(3);
-    }
+    // it should have seen dups 3 times, one for the batch, two for the already inserted ones.
+    assertThat(
+            consoleCaptor.getStandardOutput().stream()
+                // get the server output from docker
+                .filter(l -> l.contains("STDOUT:"))
+                // the actual exception as thrown by the jdbc driver
+                .filter(
+                    line ->
+                        line.contains(
+                            "org.factcast.core.DuplicateFactException: PreparedStatementCallback; SQL [INSERT INTO fact(header,payload) VALUES")))
+        .hasSize(3);
 
     var cp = new CountingProjection();
     factus.update(cp);
