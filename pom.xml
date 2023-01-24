@@ -76,7 +76,7 @@
     <maven-jar-plugin.version>3.2.2</maven-jar-plugin.version>
     <maven-surefire-plugin.version>3.0.0-M8</maven-surefire-plugin.version>
     <maven-resources-plugin.version>3.3.0</maven-resources-plugin.version>
-    <maven-failsafe-plugin.version>3.0.0-M7</maven-failsafe-plugin.version>
+    <maven-failsafe-plugin.version>3.0.0-M8</maven-failsafe-plugin.version>
     <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
     <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
     <jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
