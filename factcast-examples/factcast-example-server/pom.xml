@@ -12,7 +12,7 @@
   <artifactId>factcast-example-server</artifactId>
   <properties>
     <!-- Pin your own Spring Boot version. -->
-    <spring-boot.version>2.7.3</spring-boot.version>
+    <spring-boot.version>2.7.8</spring-boot.version>
     <docker.image.prefix>factcast</docker.image.prefix>
   </properties>
   <dependencyManagement>
