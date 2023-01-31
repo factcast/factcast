@@ -17,7 +17,8 @@ package org.factcast.core.snap.redisson;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.UUID;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.factcast.core.snap.Snapshot;
@@ -55,6 +56,11 @@ class RedissonSnapshotCacheTest {
 
   @Mock private RMap<String, Long> index;
 
+  private RedissonSnapshotProperties props =
+      new RedissonSnapshotProperties()
+          .setSnapshotCacheRedissonCodec(RedissonSnapshotProperties.RedissonCodec.RedissonDefault)
+          .setDeleteSnapshotStaleForDays(90);
+
   @BeforeAll
   public static void startContainers() throws InterruptedException {
     System.setProperty("spring.redis.host", redis.getHost());
@@ -72,7 +78,7 @@ class RedissonSnapshotCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = new RedissonSnapshotCache(redisson, 90);
+      underTest = new RedissonSnapshotCache(redisson, props);
     }
 
     @Test
@@ -96,7 +102,7 @@ class RedissonSnapshotCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = new RedissonSnapshotCache(redisson, 90);
+      underTest = new RedissonSnapshotCache(redisson, props);
     }
 
     @Test
@@ -119,7 +125,7 @@ class RedissonSnapshotCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = new RedissonSnapshotCache(redisson, 90);
+      underTest = new RedissonSnapshotCache(redisson, props);
     }
 
     @Test
@@ -164,6 +170,21 @@ class RedissonSnapshotCacheTest {
     @SneakyThrows
     private void sleep(long millis) {
       Thread.sleep(millis);
+    }
+  }
+
+  @Nested
+  class WhenConfiguringCodec {
+    @Test
+    void allEnumValuesHaveBeenMapped() {
+      Arrays.stream(RedissonSnapshotProperties.RedissonCodec.values())
+          .forEach(
+              codec -> {
+                RedissonSnapshotProperties props =
+                    new RedissonSnapshotProperties().setSnapshotCacheRedissonCodec(codec);
+                underTest = new RedissonSnapshotCache(redisson, props);
+                assertThat(underTest.getCodecAccordingToProperties(props)).isNotNull();
+              });
     }
   }
 }
