@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.6.4-SNAPSHOT</version>
+  <version>0.6.5-SNAPSHOT</version>
   <packaging>pom</packaging>
   <organization>
     <name>factcast</name>
@@ -73,44 +73,44 @@
     <maven-javadoc-plugin.version>3.4.1</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
     <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
-    <maven-jar-plugin.version>3.2.2</maven-jar-plugin.version>
-    <maven-surefire-plugin.version>3.0.0-M7</maven-surefire-plugin.version>
+    <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
+    <maven-surefire-plugin.version>3.0.0-M8</maven-surefire-plugin.version>
     <maven-resources-plugin.version>3.3.0</maven-resources-plugin.version>
-    <maven-failsafe-plugin.version>3.0.0-M7</maven-failsafe-plugin.version>
+    <maven-failsafe-plugin.version>3.0.0-M8</maven-failsafe-plugin.version>
     <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
     <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
     <jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
-    <maven.version>3.8.6</maven.version>
+    <maven.version>3.8.7</maven.version>
     <!-- defaults to 11, client modules will be compiled with/to 8 -->
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
     <maven.compiler.version>3.10.1</maven.compiler.version>
-    <spotless-maven-plugin.version>2.25.0</spotless-maven-plugin.version>
+    <spotless-maven-plugin.version>2.31.0</spotless-maven-plugin.version>
     <directory-maven-plugin.version>1.0</directory-maven-plugin.version>
     <nexus-staging-maven-plugin.version>1.6.13</nexus-staging-maven-plugin.version>
-    <assertj.version>3.23.1</assertj.version>
-    <jackson.version>2.13.3</jackson.version>
-    <mockito.version>4.7.0</mockito.version>
-    <junit-jupiter.version>5.9.0</junit-jupiter.version>
+    <assertj.version>3.24.2</assertj.version>
+    <jackson.version>2.14.1</jackson.version>
+    <mockito.version>4.11.0</mockito.version>
+    <junit-jupiter.version>5.9.2</junit-jupiter.version>
     <lombok.version>1.18.24</lombok.version>
     <slf4j-api.version>1.7.36</slf4j-api.version>
     <!--suppress UnresolvedMavenProperty -->
     <etc>${session.executionRootDirectory}/src/etc</etc>
-    <spring-boot.version>2.7.3</spring-boot.version>
+    <spring-boot.version>2.7.8</spring-boot.version>
     <spring-cloud.version>2021.0.3</spring-cloud.version>
-    <spring-grpc.version>2.13.1.RELEASE</spring-grpc.version>
+    <spring-grpc.version>2.14.0.RELEASE</spring-grpc.version>
     <grpc.version>1.42.1</grpc.version>
     <!-- lter versions seem to break toxi -->
-    <testcontainers.version>1.17.1</testcontainers.version>
-    <arrow.version>1.1.3</arrow.version>
+    <testcontainers.version>1.17.6</testcontainers.version>
+    <arrow.version>1.1.5</arrow.version>
     <micronaut.version>2.5.13</micronaut.version>
-    <kotlin.version>1.7.10</kotlin.version>
+    <kotlin.version>1.8.0</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <kotest.version>4.6.4</kotest.version>
     <redisson-spring-boot-starter.version>3.19.1</redisson-spring-boot-starter.version>
-    <graaljs.version>22.2.0</graaljs.version>
-    <shedlock.version>4.41.0</shedlock.version>
-    <byte-buddy.version>1.12.14</byte-buddy.version>
+    <graaljs.version>22.3.1</graaljs.version>
+    <shedlock.version>4.44.0</shedlock.version>
+    <byte-buddy.version>1.12.22</byte-buddy.version>
   </properties>
   <dependencies>
     <dependency>
@@ -193,7 +193,7 @@
       <dependency>
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
-        <version>5.9.0</version>
+        <version>5.9.2</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -232,7 +232,7 @@
       <plugin>
         <groupId>kr.motd.maven</groupId>
         <artifactId>os-maven-plugin</artifactId>
-        <version>1.7.0</version>
+        <version>1.7.1</version>
         <executions>
           <execution>
             <phase>initialize</phase>
@@ -245,7 +245,7 @@
       <plugin>
         <groupId>com.amashchenko.maven.plugin</groupId>
         <artifactId>gitflow-maven-plugin</artifactId>
-        <version>1.18.0</version>
+        <version>1.19.0</version>
         <configuration>
           <gitFlowConfig>
             <developmentBranch>master</developmentBranch>
