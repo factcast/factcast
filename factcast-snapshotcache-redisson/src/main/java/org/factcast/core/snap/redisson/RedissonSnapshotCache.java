@@ -49,7 +49,13 @@ public class RedissonSnapshotCache implements SnapshotCache {
       @NonNull RedissonClient redisson, @NonNull RedissonSnapshotProperties props) {
     this.redisson = redisson;
     this.properties = props;
-    index = redisson.getMap(TS_INDEX);
+
+    Optional<Codec> codec = getCodecAccordingToProperties(props);
+    if (codec.isPresent()) {
+      index = redisson.getMap(TS_INDEX, codec.get());
+    } else {
+      index = redisson.getMap(TS_INDEX);
+    }
   }
 
   @Override
@@ -78,7 +84,11 @@ public class RedissonSnapshotCache implements SnapshotCache {
   @Override
   public void setSnapshot(@NonNull Snapshot snapshot) {
     String key = createKeyFor(snapshot.id());
-    redisson.getBucket(key).set(snapshot, properties.getRetentionTime(), TimeUnit.DAYS);
+    RBucket<Snapshot> bucket =
+        getCodecAccordingToProperties(properties)
+            .map(codec -> createFromCodec(key, codec))
+            .orElse(redisson.getBucket(key));
+    bucket.set(snapshot, properties.getRetentionTime(), TimeUnit.DAYS);
   }
 
   @Override
