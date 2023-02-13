@@ -660,6 +660,11 @@
               <serverId>ossrh</serverId>
               <nexusUrl>https://oss.sonatype.org/</nexusUrl>
               <autoReleaseAfterClose>true</autoReleaseAfterClose>
+              <stagingProgressTimeoutMinutes>20</stagingProgressTimeoutMinutes>
+              <detail>true</detail>
+              <keepStagingRepositoryOnFailure>true</keepStagingRepositoryOnFailure>
+              <keepStagingRepositoryOnCloseRuleFailure>true</keepStagingRepositoryOnCloseRuleFailure>
+              <showReleased>true</showReleased>
             </configuration>
           </plugin>
           <plugin>
