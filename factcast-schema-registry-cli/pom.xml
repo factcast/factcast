@@ -163,7 +163,7 @@
     <dependency>
       <groupId>io.kotest</groupId>
       <artifactId>kotest-runner-junit5-jvm</artifactId>
-      <version>${kotest.version}</version>
+      <version>5.4.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -172,15 +172,15 @@
       <version>1.3.0</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>io.kotest</groupId>
-      <artifactId>kotest-assertions-core-jvm</artifactId>
-      <version>${kotest.version}</version>
-      <scope>test</scope>
-    </dependency>
+    <!-- <dependency> -->
+    <!-- <groupId>io.kotest</groupId> -->
+    <!-- <artifactId>kotest-assertions-core-jvm</artifactId> -->
+    <!-- <version>4.6.4</version> -->
+    <!-- <scope>test</scope> -->
+    <!-- </dependency> -->
     <dependency>
       <groupId>io.mockk</groupId>
-      <artifactId>mockk</artifactId>
+      <artifactId>mockk-jvm</artifactId>
       <version>1.13.4</version>
       <scope>test</scope>
     </dependency>

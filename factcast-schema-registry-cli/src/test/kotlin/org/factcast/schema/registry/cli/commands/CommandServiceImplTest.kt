@@ -1,6 +1,7 @@
 package org.factcast.schema.registry.cli.commands
 
 import arrow.core.Either
+import io.kotest.core.Tuple2
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.core.test.TestCase
 import io.kotest.core.test.TestResult
@@ -30,9 +31,10 @@ class CommandServiceImplTest : StringSpec() {
 
     val uut = CommandServiceImpl(fs, validationService, projectService, distributionCreatorService)
 
-    override fun afterTest(testCase: TestCase, result: TestResult) {
+    override fun afterTest(f: suspend (Tuple2<TestCase, TestResult>) -> Unit) {
         clearAllMocks()
     }
+
 
     init {
         "build a proper project" {

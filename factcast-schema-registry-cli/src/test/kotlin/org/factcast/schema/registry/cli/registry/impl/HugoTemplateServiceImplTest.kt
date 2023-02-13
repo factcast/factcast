@@ -1,11 +1,22 @@
 package org.factcast.schema.registry.cli.registry.impl
 
 import com.karumi.kotlinsnapshot.matchWithSnapshot
+import io.kotest.core.Tuple2
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.core.test.TestCase
 import io.kotest.core.test.TestResult
-import io.mockk.*
-import org.factcast.schema.registry.cli.domain.*
+import io.mockk.clearAllMocks
+import io.mockk.confirmVerified
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
+import io.mockk.verifyAll
+import org.factcast.schema.registry.cli.domain.Event
+import org.factcast.schema.registry.cli.domain.Example
+import org.factcast.schema.registry.cli.domain.Namespace
+import org.factcast.schema.registry.cli.domain.Project
+import org.factcast.schema.registry.cli.domain.Transformation
+import org.factcast.schema.registry.cli.domain.Version
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import java.nio.file.Paths
 
@@ -15,9 +26,10 @@ class HugoTemplateServiceImplTest : StringSpec() {
 
     val uut = HugoTemplateServiceImpl(fs)
 
-    override fun afterTest(testCase: TestCase, result: TestResult) {
+    override fun afterTest(f: suspend (Tuple2<TestCase, TestResult>) -> Unit) {
         clearAllMocks()
     }
+
 
     init {
         "loadHomeTemplate" {

@@ -1,5 +1,6 @@
 package org.factcast.schema.registry.cli.project
 
+import io.kotest.core.Tuple2
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.core.test.TestCase
 import io.kotest.core.test.TestResult
@@ -7,7 +8,12 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldBeSameInstanceAs
-import io.mockk.*
+import io.mockk.clearAllMocks
+import io.mockk.confirmVerified
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
+import io.mockk.verifyAll
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.project.impl.EXAMPLES_FOLDER
 import org.factcast.schema.registry.cli.project.impl.ProjectServiceImpl
@@ -27,10 +33,10 @@ class ProjectServiceImplTest : StringSpec() {
     val transfromationsPath = dummyPath.resolve(TRANSFORMATIONS_FOLDER)
 
     val uut = ProjectServiceImpl(fs, whiteListService)
-
-    override fun afterTest(testCase: TestCase, result: TestResult) {
+    override fun afterTest(f: suspend (Tuple2<TestCase, TestResult>) -> Unit) {
         clearAllMocks()
     }
+
 
     init {
         "fileExists - should return path if present" {

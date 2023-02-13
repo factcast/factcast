@@ -1,11 +1,22 @@
 package org.factcast.schema.registry.cli.registry.impl
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.kotest.core.Tuple2
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.core.test.TestCase
 import io.kotest.core.test.TestResult
-import io.mockk.*
-import org.factcast.schema.registry.cli.domain.*
+import io.mockk.clearAllMocks
+import io.mockk.confirmVerified
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
+import io.mockk.verifyAll
+import org.factcast.schema.registry.cli.domain.Event
+import org.factcast.schema.registry.cli.domain.Example
+import org.factcast.schema.registry.cli.domain.Namespace
+import org.factcast.schema.registry.cli.domain.Project
+import org.factcast.schema.registry.cli.domain.Transformation
+import org.factcast.schema.registry.cli.domain.Version
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.registry.IndexFileCalculator
 import org.factcast.schema.registry.cli.registry.getEventId
@@ -33,7 +44,7 @@ class FactcastIndexCreatorImplTest : StringSpec() {
 
     val titleFiltered = setOf("title")
 
-    override fun afterTest(testCase: TestCase, result: TestResult) {
+    override fun afterTest(f: suspend (Tuple2<TestCase, TestResult>) -> Unit) {
         clearAllMocks()
     }
 
@@ -62,10 +73,14 @@ class FactcastIndexCreatorImplTest : StringSpec() {
             verifyAll {
                 fs.copyFilteredJson(
                     any(),
-                    match { it.path.platformIndependent().endsWith(getEventId(namespace1, event1, version1)) }, titleFiltered)
+                    match { it.path.platformIndependent().endsWith(getEventId(namespace1, event1, version1)) },
+                    titleFiltered
+                )
                 fs.copyFilteredJson(
                     any(),
-                    match { it.path.platformIndependent().endsWith(getEventId(namespace1, event1, version2)) }, titleFiltered)
+                    match { it.path.platformIndependent().endsWith(getEventId(namespace1, event1, version2)) },
+                    titleFiltered
+                )
             }
             confirmVerified(fs)
         }

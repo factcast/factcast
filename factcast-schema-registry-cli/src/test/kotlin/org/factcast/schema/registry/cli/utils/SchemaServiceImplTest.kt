@@ -6,6 +6,7 @@ import com.github.fge.jsonschema.main.JsonSchema
 import com.github.fge.jsonschema.main.JsonSchemaFactory
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.core.Tuple2
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.core.test.TestCase
 import io.kotest.core.test.TestResult
@@ -28,7 +29,7 @@ class SchemaServiceImplTest : StringSpec() {
 
     val uut = SchemaServiceImpl(fs, jsonSchemaFactory)
 
-    override fun afterTest(testCase: TestCase, result: TestResult) {
+    override fun afterTest(f: suspend (Tuple2<TestCase, TestResult>) -> Unit) {
         clearAllMocks()
     }
 

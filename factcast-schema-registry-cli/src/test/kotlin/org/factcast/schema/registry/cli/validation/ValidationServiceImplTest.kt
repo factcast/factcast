@@ -3,6 +3,7 @@ package org.factcast.schema.registry.cli.validation
 import arrow.core.Either
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.core.Tuple2
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.core.test.TestCase
 import io.kotest.core.test.TestResult
@@ -34,9 +35,10 @@ class ValidationServiceImplTest : StringSpec() {
         validateProjectStructureServiceMock
     )
 
-    override fun afterTest(testCase: TestCase, result: TestResult) {
+    override fun afterTest(f: suspend (Tuple2<TestCase, TestResult>) -> Unit) {
         clearAllMocks()
     }
+
 
     init {
         "fail fast on wrong project structure" {

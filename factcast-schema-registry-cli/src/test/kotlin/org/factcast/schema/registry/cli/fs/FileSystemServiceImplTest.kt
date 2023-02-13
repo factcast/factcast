@@ -1,6 +1,7 @@
 package org.factcast.schema.registry.cli.fs
 
 import com.fasterxml.jackson.databind.JsonNode
+import io.kotest.core.Tuple2
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.core.test.TestCase
 import io.kotest.core.test.TestResult
@@ -17,8 +18,7 @@ import java.nio.file.Paths
 class FileSystemServiceImplTest : StringSpec() {
     var tmp = Files.createTempDirectory("fc-test")
     val uut = FileSystemServiceImpl()
-
-    override fun afterTest(testCase: TestCase, result: TestResult) {
+    override fun afterTest(f: suspend (Tuple2<TestCase, TestResult>) -> Unit) {
         try {
             Files.delete(tmp)
         } catch (e: Exception) {
