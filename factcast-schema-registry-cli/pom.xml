@@ -113,6 +113,7 @@
     <dependency>
       <groupId>info.picocli</groupId>
       <artifactId>picocli</artifactId>
+      <version>4.7.1</version>
     </dependency>
     <dependency>
       <groupId>io.micronaut.picocli</groupId>
@@ -129,7 +130,6 @@
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <version>1.4.5</version>
-      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>io.github.microutils</groupId>
@@ -255,6 +255,7 @@
               </transformers>
               <finalName>fc-schema-cli</finalName>
               <createDependencyReducedPom>false</createDependencyReducedPom>
+              <minimizeJar>false</minimizeJar>
             </configuration>
           </execution>
         </executions>
@@ -343,14 +344,9 @@
               </sourceDirs>
               <annotationProcessorPaths>
                 <annotationProcessorPath>
-                  <groupId>io.micronaut</groupId>
-                  <artifactId>micronaut-graal</artifactId>
-                  <version>${micronaut.version}</version>
-                </annotationProcessorPath>
-                <annotationProcessorPath>
                   <groupId>info.picocli</groupId>
                   <artifactId>picocli-codegen</artifactId>
-                  <version>4.6.3</version>
+                  <version>4.7.1</version>
                 </annotationProcessorPath>
                 <annotationProcessorPath>
                   <groupId>io.micronaut</groupId>
@@ -387,14 +383,9 @@
               </sourceDirs>
               <annotationProcessorPaths>
                 <annotationProcessorPath>
-                  <groupId>io.micronaut</groupId>
-                  <artifactId>micronaut-graal</artifactId>
-                  <version>${micronaut.version}</version>
-                </annotationProcessorPath>
-                <annotationProcessorPath>
                   <groupId>info.picocli</groupId>
                   <artifactId>picocli-codegen</artifactId>
-                  <version>4.6.3</version>
+                  <version>4.7.1</version>
                 </annotationProcessorPath>
                 <annotationProcessorPath>
                   <groupId>io.micronaut</groupId>
