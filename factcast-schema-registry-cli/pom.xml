@@ -134,7 +134,7 @@
     <dependency>
       <groupId>io.github.microutils</groupId>
       <artifactId>kotlin-logging-jvm</artifactId>
-      <version>3.0.4</version>
+      <version>3.0.5</version>
     </dependency>
     <dependency>
       <groupId>io.arrow-kt</groupId>
