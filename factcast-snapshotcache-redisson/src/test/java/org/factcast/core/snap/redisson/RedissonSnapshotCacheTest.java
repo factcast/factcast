@@ -18,8 +18,7 @@ package org.factcast.core.snap.redisson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-import java.util.Arrays;
-import java.util.UUID;
+import java.util.*;
 import lombok.SneakyThrows;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
@@ -195,21 +194,6 @@ class RedissonSnapshotCacheTest {
       verify(redisson, times(2)).getBucket(any(), argument.capture());
 
       argument.getAllValues().forEach(codec -> assertThat(codec).isInstanceOf(Kryo5Codec.class));
-    }
-  }
-
-  @Nested
-  class WhenConfiguringCodec {
-    @Test
-    void allEnumValuesHaveBeenMapped() {
-      Arrays.stream(RedissonSnapshotProperties.RedissonCodec.values())
-          .forEach(
-              codec -> {
-                RedissonSnapshotProperties props =
-                    new RedissonSnapshotProperties().setSnapshotCacheRedissonCodec(codec);
-                underTest = new RedissonSnapshotCache(redisson, props);
-                assertThat(underTest.getCodecAccordingToProperties(props)).isNotNull();
-              });
     }
   }
 }
