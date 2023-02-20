@@ -18,8 +18,8 @@ package org.factcast.core.snap.redisson;
 import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.snap.Snapshot;
@@ -28,11 +28,7 @@ import org.factcast.core.snap.SnapshotId;
 import org.redisson.api.RBucket;
 import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
-import org.redisson.client.codec.ByteArrayCodec;
 import org.redisson.client.codec.Codec;
-import org.redisson.client.codec.LongCodec;
-import org.redisson.client.codec.StringCodec;
-import org.redisson.codec.*;
 
 @Slf4j
 public class RedissonSnapshotCache implements SnapshotCache {
@@ -50,23 +46,14 @@ public class RedissonSnapshotCache implements SnapshotCache {
     this.redisson = redisson;
     this.properties = props;
 
-    Optional<Codec> codec = getCodecAccordingToProperties(props);
-    if (codec.isPresent()) {
-      index = redisson.getMap(TS_INDEX, codec.get());
-    } else {
-      index = redisson.getMap(TS_INDEX);
-    }
+    index = properties.getSnapshotCacheRedissonCodec().getMap(redisson, TS_INDEX);
   }
 
   @Override
   public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
     String key = createKeyFor(id);
 
-    RBucket<Snapshot> bucket =
-        getCodecAccordingToProperties(properties)
-            .map(codec -> createFromCodec(key, codec))
-            .orElse(redisson.getBucket(key));
-
+    RBucket<Snapshot> bucket = properties.getSnapshotCacheRedissonCodec().getBucket(redisson, key);
     Optional<Snapshot> snapshot = Optional.ofNullable(bucket.get());
     if (snapshot.isPresent()) {
       // renew TTL
@@ -84,10 +71,7 @@ public class RedissonSnapshotCache implements SnapshotCache {
   @Override
   public void setSnapshot(@NonNull Snapshot snapshot) {
     String key = createKeyFor(snapshot.id());
-    RBucket<Snapshot> bucket =
-        getCodecAccordingToProperties(properties)
-            .map(codec -> createFromCodec(key, codec))
-            .orElse(redisson.getBucket(key));
+    RBucket<Snapshot> bucket = properties.getSnapshotCacheRedissonCodec().getBucket(redisson, key);
     bucket.set(snapshot, properties.getRetentionTime(), TimeUnit.DAYS);
   }
 
@@ -117,42 +101,6 @@ public class RedissonSnapshotCache implements SnapshotCache {
                 index.removeAsync(key);
               }
             });
-  }
-
-  protected Optional<Codec> getCodecAccordingToProperties(RedissonSnapshotProperties properties) {
-    switch (properties.getSnapshotCacheRedissonCodec()) {
-      case RedissonDefault:
-        return Optional.empty();
-      case MarshallingCodec:
-        return Optional.of(new MarshallingCodec());
-      case Kryo5Codec:
-        return Optional.of(new Kryo5Codec());
-      case JsonJacksonCodec:
-        return Optional.of(new JsonJacksonCodec());
-      case SmileJacksonCodec:
-        return Optional.of(new SmileJacksonCodec());
-      case CborJacksonCodec:
-        return Optional.of(new CborJacksonCodec());
-      case MsgPackJacksonCodec:
-        return Optional.of(new MsgPackJacksonCodec());
-      case IonJacksonCodec:
-        return Optional.of(new IonJacksonCodec());
-      case SerializationCodec:
-        return Optional.of(new SerializationCodec());
-      case LZ4Codec:
-        return Optional.of(new LZ4Codec());
-      case SnappyCodecV2:
-        return Optional.of(new SnappyCodecV2());
-      case StringCodec:
-        return Optional.of(new StringCodec());
-      case LongCodec:
-        return Optional.of(new LongCodec());
-      case ByteArrayCodec:
-        return Optional.of(new ByteArrayCodec());
-      default:
-        throw new IllegalStateException(
-            "Unexpected enum value: " + properties.getSnapshotCacheRedissonCodec());
-    }
   }
 
   @NonNull
