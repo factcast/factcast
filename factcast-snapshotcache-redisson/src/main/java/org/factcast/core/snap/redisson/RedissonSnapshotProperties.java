@@ -16,6 +16,8 @@
 package org.factcast.core.snap.redisson;
 
 import java.util.*;
+import java.util.function.*;
+import javax.annotation.Nullable;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
@@ -49,48 +51,51 @@ public class RedissonSnapshotProperties {
     return this.getDeleteSnapshotStaleForDays();
   }
 
+  @SuppressWarnings("java:S115")
   enum RedissonCodec {
 
     /** When setting the codec to RedissonDefault, factcast will not specify a codec. */
     RedissonDefault(null),
-    MarshallingCodec(new MarshallingCodec()),
-    Kryo5Codec(new Kryo5Codec()),
-    JsonJacksonCodec(new JsonJacksonCodec()),
-    SmileJacksonCodec(new SmileJacksonCodec()),
-    CborJacksonCodec(new CborJacksonCodec()),
-    MsgPackJacksonCodec(new MsgPackJacksonCodec()),
-    IonJacksonCodec(new IonJacksonCodec()),
-    SerializationCodec(new SerializationCodec()),
-    LZ4Codec(new LZ4Codec()),
-    SnappyCodecV2(new SnappyCodecV2()),
-    StringCodec(new StringCodec()),
-    LongCodec(new LongCodec()),
-    ByteArrayCodec(new ByteArrayCodec());
+    @SuppressWarnings("deprecation")
+    MarshallingCodec(MarshallingCodec::new),
+    Kryo5Codec(Kryo5Codec::new),
+    JsonJacksonCodec(JsonJacksonCodec::new),
+    SmileJacksonCodec(SmileJacksonCodec::new),
+    CborJacksonCodec(CborJacksonCodec::new),
+    MsgPackJacksonCodec(MsgPackJacksonCodec::new),
+    IonJacksonCodec(IonJacksonCodec::new),
+    SerializationCodec(SerializationCodec::new),
+    LZ4Codec(LZ4Codec::new),
+    SnappyCodecV2(SnappyCodecV2::new),
+    StringCodec(StringCodec::new),
+    LongCodec(LongCodec::new),
+    ByteArrayCodec(ByteArrayCodec::new);
     // Support might be added: https://github.com/factcast/factcast/issues/2231
     // TypedJsonJacksonCodec,
     // CompositeCodec
 
-    private final Codec codec;
+    private final Supplier<Codec> codec;
 
-    RedissonCodec(Codec c) {
+    RedissonCodec(@Nullable Supplier<Codec> c) {
       this.codec = c;
     }
 
+    @NonNull
     public Optional<Codec> codec() {
-      return Optional.ofNullable(codec);
+      if (codec == null) return Optional.empty();
+      return Optional.ofNullable(codec.get());
     }
 
-    @SuppressWarnings("unchecked")
+    @NonNull
     public <T> RBucket<T> getBucket(@NonNull RedissonClient redisson, @NonNull String key) {
       if (codec == null) return redisson.getBucket(key);
-      else return redisson.getBucket(key, codec);
+      else return redisson.getBucket(key, codec.get());
     }
 
-    @SuppressWarnings("unchecked")
     @NonNull
     public <K, V> RMap<K, V> getMap(@NonNull RedissonClient redisson, @NonNull String key) {
       if (codec == null) return redisson.getMap(key);
-      else return redisson.getMap(key, codec);
+      else return redisson.getMap(key, codec.get());
     }
   }
 }
