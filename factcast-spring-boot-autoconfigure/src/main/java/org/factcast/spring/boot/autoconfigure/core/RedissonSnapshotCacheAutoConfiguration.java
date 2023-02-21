@@ -38,6 +38,8 @@ public class RedissonSnapshotCacheAutoConfiguration {
   @ConditionalOnMissingBean
   public SnapshotCache snapshotCache(
       RedissonClient redisson, @NonNull RedissonSnapshotProperties props) {
+    // Initialize codec at container startup to verify existence of required dependencies.
+    props.getSnapshotCacheRedissonCodec().codec();
     return new RedissonSnapshotCache(redisson, props);
   }
 

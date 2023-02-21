@@ -52,7 +52,7 @@ public class RedissonSnapshotProperties {
   }
 
   @SuppressWarnings("java:S115")
-  enum RedissonCodec {
+  public enum RedissonCodec {
 
     /** When setting the codec to RedissonDefault, factcast will not specify a codec. */
     RedissonDefault(null),
