@@ -22,7 +22,6 @@ import lombok.Data;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.index.qual.Positive;
 import org.redisson.api.RBucket;
 import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
@@ -32,18 +31,18 @@ import org.redisson.client.codec.LongCodec;
 import org.redisson.client.codec.StringCodec;
 import org.redisson.codec.*;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.context.annotation.Configuration;
 
-@ConfigurationProperties(prefix = RedissonSnapshotProperties.PROPERTIES_PREFIX)
+@Configuration
 @Data
 @Slf4j
 @Accessors(fluent = false)
-@Validated
+@ConfigurationProperties(prefix = RedissonSnapshotProperties.PROPERTIES_PREFIX)
 public class RedissonSnapshotProperties {
 
   public static final String PROPERTIES_PREFIX = "factcast.redis";
 
-  @Positive int deleteSnapshotStaleForDays = 90;
+  int deleteSnapshotStaleForDays = 90;
 
   RedissonCodec snapshotCacheRedissonCodec = RedissonCodec.MarshallingCodec;
 
