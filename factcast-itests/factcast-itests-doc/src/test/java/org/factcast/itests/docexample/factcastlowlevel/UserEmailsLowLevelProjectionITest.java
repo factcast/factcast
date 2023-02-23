@@ -15,8 +15,10 @@
  */
 package org.factcast.itests.docexample.factcastlowlevel;
 
-import java.util.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.*;
+import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
@@ -26,10 +28,6 @@ import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-
-import lombok.NonNull;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 class UserEmailsLowLevelProjectionITest extends AbstractFactCastIntegrationTest {
