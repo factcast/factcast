@@ -19,11 +19,13 @@ import static java.util.concurrent.TimeUnit.*;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import eu.rekawek.toxiproxy.model.ToxicDirection;
+import io.grpc.StatusRuntimeException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.store.RetryableException;
 import org.factcast.factus.Factus;
 import org.factcast.factus.Handler;
 import org.factcast.factus.projection.LocalManagedProjection;
@@ -32,6 +34,7 @@ import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.toxi.PostgresqlProxy;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -54,26 +57,22 @@ class DatabaseUnhealthyITest extends AbstractFactCastIntegrationTest {
 
   @SneakyThrows
   @Test
-  @Timeout(value = 5, unit = SECONDS)
+  @Timeout(value = 15, unit = SECONDS)
   void testFactusGetsStuckIssue2162() {
 
     final var userProjection = new UserProjection();
 
-    proxy.toxics().resetPeer("db-gone", ToxicDirection.UPSTREAM, 1000);
+    proxy.toxics().resetPeer("db-gone", ToxicDirection.UPSTREAM, 0);
 
-    new Timer()
-        .schedule(
-            new TimerTask() {
-              @Override
-              public void run() {
-                // heal the communication
-                log.info("repairing proxy");
-                proxy.reset();
-              }
-            },
-            2000);
+    assertThatThrownBy(() -> factus.update(userProjection))
+        .isInstanceOf(RetryableException.class)
+        .hasCauseExactlyInstanceOf(StatusRuntimeException.class)
+        .hasMessageContaining("UNKNOWN");
+  }
 
-    assertThatThrownBy(() -> factus.update(userProjection)).isInstanceOf(Exception.class);
+  @AfterEach
+  void tearDown() {
+    proxy.reset();
   }
 
   @ProjectionMetaData(serial = 1)
