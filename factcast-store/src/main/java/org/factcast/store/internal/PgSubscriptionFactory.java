@@ -30,7 +30,7 @@ import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
-import org.factcast.store.internal.filter.PgBlacklist;
+import org.factcast.store.internal.filter.blacklist.Blacklist;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.script.JSEngineFactory;
@@ -54,7 +54,7 @@ class PgSubscriptionFactory {
 
   final FastForwardTarget target;
   final PgMetrics metrics;
-  final PgBlacklist blacklist;
+  final Blacklist blacklist;
   final FactTransformerService transformerService;
   final JSEngineFactory ef;
 
