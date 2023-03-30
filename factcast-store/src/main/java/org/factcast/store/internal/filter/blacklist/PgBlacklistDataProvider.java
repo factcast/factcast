@@ -20,7 +20,6 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import java.util.Set;
 import java.util.UUID;
-
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.internal.listen.PgListener;
@@ -36,7 +35,9 @@ public final class PgBlacklistDataProvider
   private final Blacklist blacklist;
 
   public PgBlacklistDataProvider(
-          @NonNull EventBus eventBus, @NonNull JdbcTemplate jdbcTemplate, @NonNull Blacklist blacklist) {
+      @NonNull EventBus eventBus,
+      @NonNull JdbcTemplate jdbcTemplate,
+      @NonNull Blacklist blacklist) {
     this.bus = eventBus;
     this.jdbc = jdbcTemplate;
     this.blacklist = blacklist;
