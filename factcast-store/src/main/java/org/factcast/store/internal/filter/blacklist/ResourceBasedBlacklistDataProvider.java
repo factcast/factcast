@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -66,7 +65,8 @@ public final class ResourceBasedBlacklistDataProvider
     return mapper.readValue(stream, new TypeReference<List<BlacklistEntry>>() {});
   }
 
-  private InputStream readBlacklistFile(@NonNull String path) throws IOException, FileNotFoundException {
+  private InputStream readBlacklistFile(@NonNull String path)
+      throws IOException, FileNotFoundException {
     Resource resource = resourceLoader.getResource(path);
     return resource.getInputStream();
   }
