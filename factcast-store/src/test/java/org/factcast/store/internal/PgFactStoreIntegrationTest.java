@@ -21,10 +21,10 @@ import static org.mockito.Mockito.*;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
-import lombok.Delegate;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.experimental.Delegate;
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
@@ -46,7 +46,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
@@ -56,7 +55,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
-@ActiveProfiles("blacklist-resource")
 class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
 
   @Autowired FactStore fs;
@@ -262,31 +260,5 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
     Optional<State> state = tokenStore.get(token);
     assertThat(state).isNotEmpty();
     assertThat(state.get()).extracting(State::serialOfLastMatchingFact).isEqualTo(0L);
-  }
-  // TODO: ensure the property is set correctly to RESOURCE to make this test work.
-  @Nested
-  class Blacklist {
-    private final UUID blockedFactId1 = UUID.fromString("2f9d0632-809a-43be-ac9b-d5100e330de7");
-    private final UUID blockedFactId2 = UUID.fromString("b7a575ba-a4da-45f4-a205-7e6e424d2d64");
-    private final UUID factId = UUID.fromString("d6554917-5063-4ffb-a184-4e0e46de3218");
-    private final Collection<FactSpec> spec = Collections.singletonList(FactSpec.ns("ns1"));
-    final Set<UUID> receivedFactIds = new HashSet<>();
-    @NonNull final FactObserver obs = element -> receivedFactIds.add(element.id());
-
-    @BeforeEach
-    void setup() {
-      store.publish(
-          List.of(
-              Fact.builder().id(blockedFactId1).ns("ns1").buildWithoutPayload(),
-              Fact.builder().id(factId).ns("ns1").buildWithoutPayload(),
-              Fact.builder().id(blockedFactId2).ns("ns1").buildWithoutPayload()));
-    }
-
-    @Test
-    void blacklistWasInitialized() {
-      SubscriptionRequest req = SubscriptionRequest.catchup(spec).fromScratch();
-      store.subscribe(SubscriptionRequestTO.forFacts(req), obs).awaitCatchup();
-      assertThat(receivedFactIds).hasSize(1).containsExactly(factId);
-    }
   }
 }
