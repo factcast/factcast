@@ -18,6 +18,7 @@ package org.factcast.store.internal.blacklist;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.*;
+
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
@@ -40,9 +42,11 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 class ResourceBlacklistIntegrationTest {
 
-  @Autowired FactStore fs;
+  @Autowired
+  FactStore fs;
   private final UUID blockedFactId1 = UUID.fromString("2f9d0632-809a-43be-ac9b-d5100e330de7");
   private final UUID blockedFactId2 = UUID.fromString("b7a575ba-a4da-45f4-a205-7e6e424d2d64");
   private final UUID factId = UUID.fromString("d6554917-5063-4ffb-a184-4e0e46de3218");
