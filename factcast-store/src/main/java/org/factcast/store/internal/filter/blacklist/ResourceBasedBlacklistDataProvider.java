@@ -65,9 +65,12 @@ public final class ResourceBasedBlacklistDataProvider
     return mapper.readValue(stream, new TypeReference<List<BlacklistEntry>>() {});
   }
 
-  private InputStream readBlacklistFile(@NonNull String path)
-      throws IOException, FileNotFoundException {
+  private InputStream readBlacklistFile(@NonNull String path) throws IOException {
     Resource resource = resourceLoader.getResource(path);
+    if (!resource.exists()) {
+      throw new FileNotFoundException(
+          String.format("Blacklist could not be found at specified location: %s", path));
+    }
     return resource.getInputStream();
   }
 }
