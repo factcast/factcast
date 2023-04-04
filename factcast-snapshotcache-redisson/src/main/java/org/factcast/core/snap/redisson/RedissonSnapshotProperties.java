@@ -56,19 +56,19 @@ public class RedissonSnapshotProperties {
     /** When setting the codec to RedissonDefault, factcast will not specify a codec. */
     RedissonDefault(null),
     @SuppressWarnings("deprecation")
-    MarshallingCodec(MarshallingCodec::new),
-    Kryo5Codec(Kryo5Codec::new),
-    JsonJacksonCodec(JsonJacksonCodec::new),
-    SmileJacksonCodec(SmileJacksonCodec::new),
-    CborJacksonCodec(CborJacksonCodec::new),
-    MsgPackJacksonCodec(MsgPackJacksonCodec::new),
-    IonJacksonCodec(IonJacksonCodec::new),
-    SerializationCodec(SerializationCodec::new),
-    LZ4Codec(LZ4Codec::new),
-    SnappyCodecV2(SnappyCodecV2::new),
-    StringCodec(StringCodec::new),
-    LongCodec(LongCodec::new),
-    ByteArrayCodec(ByteArrayCodec::new);
+    MarshallingCodec(() -> new MarshallingCodec()),
+    Kryo5Codec(() -> new Kryo5Codec()),
+    JsonJacksonCodec(() -> new JsonJacksonCodec()),
+    SmileJacksonCodec(() -> new SmileJacksonCodec()),
+    CborJacksonCodec(() -> new CborJacksonCodec()),
+    MsgPackJacksonCodec(() -> new MsgPackJacksonCodec()),
+    IonJacksonCodec(() -> new IonJacksonCodec()),
+    SerializationCodec(() -> new SerializationCodec()),
+    LZ4Codec(() -> new LZ4Codec()),
+    SnappyCodecV2(() -> new SnappyCodecV2()),
+    StringCodec(() -> new StringCodec()),
+    LongCodec(() -> new LongCodec()),
+    ByteArrayCodec(() -> new ByteArrayCodec());
     // Support might be added: https://github.com/factcast/factcast/issues/2231
     // TypedJsonJacksonCodec,
     // CompositeCodec
