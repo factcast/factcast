@@ -17,6 +17,7 @@ package org.factcast.store.internal.filter.blacklist;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,7 +52,8 @@ public final class ResourceBasedBlacklistDataProvider
   }
 
   @SneakyThrows
-  private Set<UUID> fetchBlacklist() {
+  @VisibleForTesting
+  Set<UUID> fetchBlacklist() {
     try (InputStream blacklistContent = readBlacklistFile(properties.getLocation())) {
       return parseBlacklist(blacklistContent).stream()
           .map(BlacklistEntry::id)
