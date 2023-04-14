@@ -35,7 +35,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 @ExtendWith(MockitoExtension.class)
 class PgBlacklistDataProviderTest {
   @Spy private EventBus bus = new EventBus();
-
   @Mock private JdbcTemplate jdbc;
   @Mock private Blacklist blacklist;
   @InjectMocks private PgBlacklistDataProvider underTest;
