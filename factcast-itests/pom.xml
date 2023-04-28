@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.6.5-SNAPSHOT</version>
+    <version>0.6.6-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-itests</artifactId>
@@ -21,7 +21,7 @@
     <module>factcast-itests-factus</module>
     <module>factcast-itests-exception-handling</module>
     <module>factcast-itests-store</module>
-    <!-- TODO for investigation <module>factcast-itests-doc</module> -->
+    <module>factcast-itests-doc</module>
   </modules>
   <dependencies>
     <dependency>
