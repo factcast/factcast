@@ -16,8 +16,10 @@
 package org.factcast.itests.factus.client;
 
 import static java.util.UUID.*;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
@@ -67,16 +69,20 @@ class PublishDuplicateTest extends AbstractFactCastIntegrationTest {
           .isInstanceOf(DuplicateFactException.class);
 
       // it should not have retried this several times.
-      assertThat(
-              consoleCaptor.getStandardOutput().stream()
-                  // get the server output from docker
-                  .filter(l -> l.contains("STDOUT:"))
-                  // the actual exception as thrown by the jdbc driver
-                  .filter(
-                      line ->
-                          line.contains(
-                              "org.factcast.core.DuplicateFactException: PreparedStatementCallback; SQL [INSERT INTO fact(header,payload) VALUES")))
-          .hasSize(1);
+      await()
+          .atMost(3, SECONDS)
+          .untilAsserted(
+              () ->
+                  assertThat(
+                          consoleCaptor.getStandardOutput().stream()
+                              // get the server output from docker
+                              .filter(l -> l.contains("STDOUT:"))
+                              // the actual exception as thrown by the jdbc driver
+                              .filter(
+                                  line ->
+                                      line.contains(
+                                          "org.factcast.core.DuplicateFactException: PreparedStatementCallback; SQL [INSERT INTO fact(header,payload) VALUES")))
+                      .hasSize(1));
     }
   }
 }

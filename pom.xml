@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.6.5-SNAPSHOT</version>
+  <version>0.6.6-SNAPSHOT</version>
   <packaging>pom</packaging>
   <organization>
     <name>factcast</name>
@@ -90,7 +90,7 @@
     <nexus-staging-maven-plugin.version>1.6.13</nexus-staging-maven-plugin.version>
     <assertj.version>3.24.2</assertj.version>
     <jackson.version>2.14.2</jackson.version>
-    <mockito.version>4.11.0</mockito.version>
+    <mockito.version>5.1.1</mockito.version>
     <junit-jupiter.version>5.9.2</junit-jupiter.version>
     <lombok.version>1.18.26</lombok.version>
     <slf4j-api.version>1.7.36</slf4j-api.version>
@@ -98,8 +98,9 @@
     <etc>${session.executionRootDirectory}/src/etc</etc>
     <spring-boot.version>2.7.8</spring-boot.version>
     <spring-cloud.version>2021.0.3</spring-cloud.version>
+    <!-- whenever updating spring-grpc make sure to align grpc.version accordingly. -->
     <spring-grpc.version>2.14.0.RELEASE</spring-grpc.version>
-    <grpc.version>1.42.1</grpc.version>
+    <grpc.version>1.51.0</grpc.version>
     <!-- lter versions seem to break toxi -->
     <testcontainers.version>1.17.6</testcontainers.version>
     <arrow.version>1.1.5</arrow.version>
@@ -107,7 +108,7 @@
     <kotlin.version>1.8.10</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <kotest.version>4.6.4</kotest.version>
-    <redisson.version>3.17.5</redisson.version>
+    <redisson.version>3.19.3</redisson.version>
     <redisson-spring-boot-starter.version>3.17.5</redisson-spring-boot-starter.version>
     <graaljs.version>22.3.1</graaljs.version>
     <shedlock.version>4.44.0</shedlock.version>

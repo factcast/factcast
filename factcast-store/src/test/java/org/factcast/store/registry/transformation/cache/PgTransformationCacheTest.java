@@ -16,23 +16,12 @@
 package org.factcast.store.registry.transformation.cache;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.matches;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Lists;
 import java.time.ZonedDateTime;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
@@ -433,14 +422,15 @@ class PgTransformationCacheTest {
     void deletesFromTransformationCache() {
       underTest.invalidateTransformationFor("theNamespace", "theType");
 
-      ArgumentCaptor<String> m = ArgumentCaptor.forClass(String.class);
+      ArgumentCaptor<String> ns = ArgumentCaptor.forClass(String.class);
+      ArgumentCaptor<String> type = ArgumentCaptor.forClass(String.class);
 
       Mockito.verify(jdbcTemplate)
-          .update(matches("DELETE FROM transformationcache WHERE .*"), m.capture());
+          .update(
+              matches("DELETE FROM transformationcache WHERE .*"), ns.capture(), type.capture());
 
-      assertThat(m.getAllValues()).hasSize(2);
-      assertThat(m.getAllValues().get(0)).isEqualTo("theNamespace");
-      assertThat(m.getAllValues().get(1)).isEqualTo("theType");
+      assertThat(ns.getAllValues().get(0)).isEqualTo("theNamespace");
+      assertThat(type.getAllValues().get(0)).isEqualTo("theType");
     }
   }
 

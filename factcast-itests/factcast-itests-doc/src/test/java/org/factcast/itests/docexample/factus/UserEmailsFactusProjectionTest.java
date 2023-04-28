@@ -15,13 +15,12 @@
  */
 package org.factcast.itests.docexample.factus;
 
-import java.util.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.*;
 import org.factcast.itests.docexample.factus.event.UserAdded;
 import org.factcast.itests.docexample.factus.event.UserRemoved;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class UserEmailsFactusProjectionTest {
 
