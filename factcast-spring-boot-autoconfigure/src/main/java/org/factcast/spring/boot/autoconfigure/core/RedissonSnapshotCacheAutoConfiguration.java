@@ -16,19 +16,22 @@
 package org.factcast.spring.boot.autoconfigure.core;
 
 import lombok.Generated;
+import lombok.NonNull;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.redisson.RedissonSnapshotCache;
+import org.factcast.core.snap.redisson.RedissonSnapshotProperties;
 import org.redisson.api.RedissonClient;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 @Configuration
 @ConditionalOnClass({RedissonSnapshotCache.class, RedissonClient.class})
 @ConditionalOnMissingBean(SnapshotCache.class)
+@Import({RedissonSnapshotProperties.class})
 @Generated
 @AutoConfigureOrder(-100)
 public class RedissonSnapshotCacheAutoConfiguration {
@@ -36,9 +39,10 @@ public class RedissonSnapshotCacheAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean
   public SnapshotCache snapshotCache(
-      RedissonClient redisson,
-      @Value("${factcast.redis.deleteSnapshotStaleForDays:90}") int retentionTimeInDays) {
-    return new RedissonSnapshotCache(redisson, retentionTimeInDays);
+      RedissonClient redisson, @NonNull RedissonSnapshotProperties props) {
+    // Initialize codec at container startup to verify existence of required dependencies.
+    props.getSnapshotCacheRedissonCodec().codec();
+    return new RedissonSnapshotCache(redisson, props);
   }
 
   // compacting no longer needed with redis as we use EXPIRE instead
