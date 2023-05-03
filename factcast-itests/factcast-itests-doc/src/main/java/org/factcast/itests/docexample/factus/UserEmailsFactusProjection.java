@@ -16,7 +16,6 @@
 package org.factcast.itests.docexample.factus;
 
 import java.util.*;
-
 import org.factcast.factus.Handler;
 import org.factcast.factus.projection.LocalManagedProjection;
 import org.factcast.itests.docexample.factus.event.UserAdded;

@@ -15,13 +15,12 @@
  */
 package org.factcast.itests.docexample.factcastlowlevel;
 
-import java.util.*;
-
-import org.factcast.core.Fact;
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
+
+import java.util.*;
+import org.factcast.core.Fact;
+import org.junit.jupiter.api.Test;
 
 class UserEmailsLowLevelProjectionTest {
 
