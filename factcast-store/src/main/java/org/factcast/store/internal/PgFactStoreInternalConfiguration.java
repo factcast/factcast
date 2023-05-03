@@ -204,7 +204,9 @@ public class PgFactStoreInternalConfiguration {
     return new DataSourceTransactionManager(ds);
   }
 
-  /** @return A fallback {@code MeterRegistry} in case none is configured. */
+  /**
+   * @return A fallback {@code MeterRegistry} in case none is configured.
+   */
   @Bean
   @ConditionalOnMissingBean
   public MeterRegistry meterRegistry() {
