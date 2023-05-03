@@ -19,10 +19,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import io.micrometer.core.instrument.Tags;
+import jakarta.servlet.http.HttpServletResponse;
 import java.net.URL;
 import java.util.Date;
 import java.util.Map;
-import javax.servlet.http.HttpServletResponse;
 import lombok.SneakyThrows;
 import okhttp3.*;
 import okhttp3.Response.Builder;
@@ -49,9 +49,9 @@ public class HttpIndexFetcherTest {
             String sinceHeader = headers.get(ValidationConstants.HTTPHEADER_IF_MODIFIED_SINCE);
 
             if (etag.equals(etagHeader) && since.equals(sinceHeader)) {
-              ctx.res.setStatus(304);
+              ctx.res().setStatus(304);
             } else {
-              HttpServletResponse res = ctx.res;
+              HttpServletResponse res = ctx.res();
               res.setStatus(200);
               res.getWriter()
                   .write(
@@ -74,7 +74,7 @@ public class HttpIndexFetcherTest {
   void testThrowsExceptionOn404() throws Exception {
     try (TestHttpServer s = new TestHttpServer()) {
 
-      s.get("/registry/index.json", ctx -> ctx.res.setStatus(404));
+      s.get("/registry/index.json", ctx -> ctx.res().setStatus(404));
 
       var registryMetrics = mock(RegistryMetrics.class);
 
