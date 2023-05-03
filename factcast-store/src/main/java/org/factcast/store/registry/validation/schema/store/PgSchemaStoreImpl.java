@@ -27,7 +27,9 @@ import org.factcast.store.registry.validation.schema.SchemaStore;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-/** @author uwe */
+/**
+ * @author uwe
+ */
 @RequiredArgsConstructor
 public class PgSchemaStoreImpl implements SchemaStore {
 
