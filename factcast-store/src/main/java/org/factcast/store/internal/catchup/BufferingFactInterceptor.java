@@ -40,7 +40,8 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
       FactFilter filter,
       SubscriptionImpl targetSubscription,
       int maxBufferSize,
-      PgMetrics metrics) {
+      PgMetrics metrics,
+      ExecutorService es) {
     super(metrics);
     this.service = service;
     this.transformers = transformers;
@@ -49,6 +50,7 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
     this.maxBufferSize = maxBufferSize;
     buffer = new ArrayList<>(maxBufferSize);
     index = new HashMap<>(maxBufferSize);
+    this.es = es;
   }
 
   enum Mode {
@@ -64,6 +66,8 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
   private Mode mode = Mode.DIRECT;
   private final List<Pair<TransformationRequest, CompletableFuture<Fact>>> buffer;
   private final Map<UUID, CompletableFuture<Fact>> index;
+
+  private final ExecutorService es;
 
   public void accept(@NonNull Fact f) {
     if (filter.test(f)) {
@@ -156,7 +160,8 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
                           }
                         });
               }
-            });
+            },
+            es);
 
       // flush out, blocking where the fact is not yet available
       buffer.forEach(
