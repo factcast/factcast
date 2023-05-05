@@ -135,7 +135,7 @@ public class RegistryMetricsImpl implements RegistryMetrics, InitializingBean {
   }
 
   @Override
-  public ExecutorService monitor(ExecutorService executor, String name) {
+  public ExecutorService monitor(@NonNull ExecutorService executor, @NonNull String name) {
     return ExecutorServiceMetrics.monitor(meterRegistry, executor, name);
   }
 
