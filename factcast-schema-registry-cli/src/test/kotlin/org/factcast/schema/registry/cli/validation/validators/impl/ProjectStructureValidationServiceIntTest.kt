@@ -5,7 +5,7 @@ import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.types.shouldBeInstanceOf
-import io.micronaut.test.extensions.kotest.annotation.MicronautTest
+import io.micronaut.test.extensions.kotest5.annotation.MicronautTest
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.project.structure.*
 import org.factcast.schema.registry.cli.validation.ProjectError
