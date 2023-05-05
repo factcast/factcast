@@ -32,7 +32,7 @@ import org.factcast.schema.registry.cli.utils.mapEventVersions
 import org.factcast.schema.registry.cli.utils.mapEvents
 import org.factcast.schema.registry.cli.validation.MissingTransformationCalculator
 import java.nio.file.Path
-import javax.inject.Singleton
+import jakarta.inject.Singleton
 
 @Singleton
 class IndexFileCalculatorImpl(

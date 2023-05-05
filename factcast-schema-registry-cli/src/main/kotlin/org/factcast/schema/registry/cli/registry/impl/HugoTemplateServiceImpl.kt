@@ -15,7 +15,7 @@
  */
 package org.factcast.schema.registry.cli.registry.impl
 
-import javax.inject.Singleton
+import jakarta.inject.Singleton
 import org.factcast.schema.registry.cli.domain.Event
 import org.factcast.schema.registry.cli.domain.Namespace
 import org.factcast.schema.registry.cli.domain.Project
