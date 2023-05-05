@@ -18,6 +18,8 @@ package org.factcast.store.internal;
 import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -37,6 +39,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -57,12 +61,14 @@ class PgSubscriptionFactoryTest {
   @Mock private PgMetrics metrics;
 
   @Mock private JSEngineFactory engineFactory;
+
+  @Spy private ExecutorService executorService = Executors.newSingleThreadExecutor();
   private PgSubscriptionFactory underTest;
 
   @BeforeEach
   void setUp() {
     when(props.getSizeOfThreadPoolForSubscriptions()).thenReturn(1);
-    when(metrics.monitor(any(), anyString())).thenReturn(Executors.newSingleThreadExecutor());
+    when(metrics.monitor(any(), anyString())).thenReturn(executorService);
     underTest =
         new PgSubscriptionFactory(
             jdbcTemplate,
@@ -83,8 +89,17 @@ class PgSubscriptionFactoryTest {
     @Mock private SubscriptionRequestTO req;
     @Mock private FactObserver observer;
 
-    @BeforeEach
-    void setup() {}
+    @Test
+    void testSubscribe_happyCase() {
+      final var runnable = mock(Runnable.class);
+      final var spyUut = spy(underTest);
+      doReturn(runnable).when(spyUut).connect(any(), any(), any());
+
+      try (var cf = Mockito.mockStatic(CompletableFuture.class)) {
+        spyUut.subscribe(req, observer);
+        cf.verify(() -> CompletableFuture.runAsync(runnable, executorService));
+      }
+    }
   }
 
   @Nested

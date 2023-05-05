@@ -109,7 +109,7 @@ public class PgMetrics implements InitializingBean {
     return timer(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
   }
 
-  public ExecutorService monitor(ExecutorService executor, String name) {
+  public ExecutorService monitor(@NonNull ExecutorService executor, @NonNull String name) {
     return ExecutorServiceMetrics.monitor(registry, executor, name);
   }
 
