@@ -132,3 +132,5 @@ You can distinguish them by the `name` tag. Currently, these are:
 - subscription-factory - used for incoming new subscriptions
 - fetching-catchup - used for buffered transformation while using the fetching catchup strategy
 - paged-catchup - used for buffered transformation while using the paged catchup strategy
+
+See https://micrometer.io/docs/ref/jvm for more information.
