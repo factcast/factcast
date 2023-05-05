@@ -64,10 +64,10 @@ public val workflowMaven: Workflow = workflow(
             ),
         )
         uses(
-            name = "Set up JDK 11",
+            name = "Set up JDK 17",
             action = SetupJavaV3(
                 distribution = SetupJavaV3.Distribution.Custom("corretto"),
-                javaVersion = "11",
+                javaVersion = "17",
             ),
         )
         run(
