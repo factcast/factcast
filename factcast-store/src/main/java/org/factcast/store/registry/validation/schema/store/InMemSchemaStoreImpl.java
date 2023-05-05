@@ -27,7 +27,9 @@ import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.factcast.store.registry.validation.schema.SchemaSource;
 import org.factcast.store.registry.validation.schema.SchemaStore;
 
-/** @author uwe */
+/**
+ * @author uwe
+ */
 @RequiredArgsConstructor
 public class InMemSchemaStoreImpl implements SchemaStore {
   private final RegistryMetrics registryMetrics;

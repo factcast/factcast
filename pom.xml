@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.6.6-SNAPSHOT</version>
+  <version>0.7.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <organization>
     <name>factcast</name>
@@ -82,8 +82,8 @@
     <jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
     <maven.version>3.9.0</maven.version>
     <!-- defaults to 11, client modules will be compiled with/to 8 -->
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
     <maven.compiler.version>3.10.1</maven.compiler.version>
     <spotless-maven-plugin.version>2.33.0</spotless-maven-plugin.version>
     <directory-maven-plugin.version>1.0</directory-maven-plugin.version>
@@ -93,10 +93,10 @@
     <mockito.version>5.1.1</mockito.version>
     <junit-jupiter.version>5.9.2</junit-jupiter.version>
     <lombok.version>1.18.26</lombok.version>
-    <slf4j-api.version>1.7.36</slf4j-api.version>
+    <slf4j-api.version>2.0.7</slf4j-api.version>
     <!--suppress UnresolvedMavenProperty -->
     <etc>${session.executionRootDirectory}/src/etc</etc>
-    <spring-boot.version>2.7.8</spring-boot.version>
+    <spring-boot.version>3.0.6</spring-boot.version>
     <spring-cloud.version>2021.0.3</spring-cloud.version>
     <!-- whenever updating spring-grpc make sure to align grpc.version accordingly. -->
     <spring-grpc.version>2.14.0.RELEASE</spring-grpc.version>
@@ -109,12 +109,18 @@
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <kotest.version>5.5.5</kotest.version>
     <redisson.version>3.19.3</redisson.version>
-    <redisson-spring-boot-starter.version>3.17.5</redisson-spring-boot-starter.version>
+    <redisson-spring-boot-starter.version>3.21.0</redisson-spring-boot-starter.version>
     <graaljs.version>22.3.1</graaljs.version>
     <shedlock.version>4.44.0</shedlock.version>
     <byte-buddy.version>1.14.4</byte-buddy.version>
   </properties>
   <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-properties-migrator</artifactId>
+      <scope>runtime</scope>
+      <version>${spring-boot.version}</version>
+    </dependency>
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>annotations</artifactId>
@@ -429,7 +435,7 @@
             </licenseHeader>
             <trimTrailingWhitespace />
             <googleJavaFormat>
-              <version>1.9</version>
+              <version>1.15.0</version>
               <style>GOOGLE</style>
             </googleJavaFormat>
           </java>
