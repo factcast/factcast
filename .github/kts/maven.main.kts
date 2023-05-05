@@ -17,9 +17,7 @@ import java.nio.file.Paths
 public val workflowMaven: Workflow = workflow(
     name = "maven",
     on = listOf(
-        PullRequest(
-            branches = listOf("master"),
-        ),
+        PullRequest(),
         Push(
             branches = listOf("master"),
         ),
