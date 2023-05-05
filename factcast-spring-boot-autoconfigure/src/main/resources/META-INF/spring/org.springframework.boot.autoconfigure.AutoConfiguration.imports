@@ -1,0 +1,14 @@
+org.factcast.spring.boot.autoconfigure.core.FactCastAutoConfiguration
+org.factcast.spring.boot.autoconfigure.core.FactCastSnapshotCacheAutoConfiguration
+org.factcast.spring.boot.autoconfigure.core.RedissonSnapshotCacheAutoConfiguration
+org.factcast.spring.boot.autoconfigure.factus.FactusAutoConfiguration
+org.factcast.spring.boot.autoconfigure.factus.BinaryJacksonSnapshotSerializerAutoConfiguration
+org.factcast.spring.boot.autoconfigure.client.grpc.GrpcFactStoreAutoConfiguration
+org.factcast.spring.boot.autoconfigure.client.grpc.LZ4ClientAutoConfiguration
+org.factcast.spring.boot.autoconfigure.client.grpc.SnappyClientAutoConfiguration
+org.factcast.spring.boot.autoconfigure.server.grpc.FactCastGrpcServerAutoConfiguration
+org.factcast.spring.boot.autoconfigure.server.grpc.LZ4ServerAutoConfiguration
+org.factcast.spring.boot.autoconfigure.server.grpc.SnappyServerAutoConfiguration
+org.factcast.spring.boot.autoconfigure.store.rds.RdsAutoConfiguration
+org.factcast.spring.boot.autoconfigure.store.PgFactStoreAutoConfiguration
+org.factcast.spring.boot.autoconfigure.store.script.engine.GraalJSScriptEngineAutoConfiguration
