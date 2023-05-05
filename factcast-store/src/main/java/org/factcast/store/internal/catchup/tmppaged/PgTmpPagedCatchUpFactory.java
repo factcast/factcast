@@ -55,7 +55,7 @@ public class PgTmpPagedCatchUpFactory implements PgCatchupFactory, AutoCloseable
     this.executorService =
         metrics.monitor(
             Executors.newWorkStealingPool(props.getSizeOfThreadPoolForBufferedTransformations()),
-            "fetching-catchup");
+            "paged-catchup");
   }
 
   @Override
