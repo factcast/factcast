@@ -18,6 +18,7 @@ package org.factcast.store.internal;
 import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
+import java.util.concurrent.Executors;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
@@ -25,14 +26,16 @@ import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
+import org.factcast.store.internal.filter.PgBlacklist;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
+import org.factcast.store.internal.script.JSEngineFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -45,10 +48,35 @@ class PgSubscriptionFactoryTest {
   @Mock private PgFactIdToSerialMapper idToSerialMapper;
   @Mock private PgLatestSerialFetcher fetcher;
   @Mock private PgCatchupFactory catchupFactory;
+
+  @Mock private StoreConfigurationProperties props;
+
+  @Mock private PgBlacklist blacklist;
   @Mock private FastForwardTarget target;
   @Mock private FactTransformerService transformerService;
   @Mock private PgMetrics metrics;
-  @InjectMocks private PgSubscriptionFactory underTest;
+
+  @Mock private JSEngineFactory engineFactory;
+  private PgSubscriptionFactory underTest;
+
+  @BeforeEach
+  void setUp() {
+    when(props.getSizeOfThreadPoolForSubscriptions()).thenReturn(1);
+    when(metrics.monitor(any(), anyString())).thenReturn(Executors.newSingleThreadExecutor());
+    underTest =
+        new PgSubscriptionFactory(
+            jdbcTemplate,
+            eventBus,
+            idToSerialMapper,
+            fetcher,
+            props,
+            catchupFactory,
+            target,
+            metrics,
+            blacklist,
+            transformerService,
+            engineFactory);
+  }
 
   @Nested
   class WhenSubscribing {
