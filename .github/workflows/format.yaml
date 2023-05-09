@@ -22,7 +22,7 @@ jobs:
         distribution: 'corretto'
     - id: 'step-2'
       name: 'Execute Spotless'
-      run: './mvnw -B spotless:apply --file pom.xml'
+      run: './mvnw -B --non-recursive spotless:apply --file pom.xml'
     - id: 'step-3'
       name: 'GitAutoCommitActionV4'
       uses: 'stefanzweifel/git-auto-commit-action@v4'

@@ -37,7 +37,7 @@ public val workflowFormat: Workflow = workflow(
         )
         run(
             name = "Execute Spotless",
-            command = "./mvnw -B spotless:apply --file pom.xml",
+            command = "./mvnw -B --non-recursive spotless:apply --file pom.xml",
         )
         uses(
             name = "GitAutoCommitActionV4",
