@@ -13,13 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.schema.registry.cli.validation.validators
+package org.factcast.schema.registry.cli.registry.templates
 
-import javax.validation.Constraint
-import org.factcast.schema.registry.cli.validation.TRANSFORMATION_VERSION_INVALID
+import org.factcast.schema.registry.cli.registry.templates.data.TransformationTemplateData
 
-@Retention(AnnotationRetention.RUNTIME)
-@Constraint(validatedBy = [])
-annotation class ValidTransformationFolder(
-    val message: String = TRANSFORMATION_VERSION_INVALID
-)
+fun transformationTemplate(data: TransformationTemplateData): String {
+    return """
++++
+draft = false
+title = "Transformations"
+weight = -${data.maxVersion + 1}
+
+[menu.main]
+parent = "${data.ns}/${data.type}"
+identifier = "${data.ns}/${data.type}/transformations"
++++
+${data.transformations.joinToString("\n") {
+        """
+## From ${it.from} to ${it.to}
+```javascript
+${it.code}
+```
+""".trimIndent()
+    }}
+""".trimIndent()
+}

@@ -16,6 +16,9 @@
 package org.factcast.schema.registry.cli.project.impl
 
 import com.google.common.annotations.VisibleForTesting
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
+import javax.inject.Singleton
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.project.ProjectService
 import org.factcast.schema.registry.cli.project.structure.EventFolder
@@ -25,9 +28,6 @@ import org.factcast.schema.registry.cli.project.structure.ProjectFolder
 import org.factcast.schema.registry.cli.project.structure.TransformationFolder
 import org.factcast.schema.registry.cli.project.structure.log
 import org.factcast.schema.registry.cli.whitelistfilter.WhiteListFilterService
-import java.nio.file.NoSuchFileException
-import java.nio.file.Path
-import javax.inject.Singleton
 
 const val VERSIONS_FOLDER = "versions"
 const val TRANSFORMATIONS_FOLDER = "transformations"
@@ -43,93 +43,93 @@ class ProjectServiceImpl(
 ) : ProjectService {
     override fun detectProject(basePath: Path, whiteList: Path?): ProjectFolder {
         return loadProject(basePath)
-            .let { filterProject(it, whiteList) }
-            .also { it.log() }
+                .let { filterProject(it, whiteList) }
+                .also { it.log() }
     }
 
     fun loadProject(basePath: Path): ProjectFolder = ProjectFolder(
-        basePath,
-        fileExists(basePath, DESCRIPTION_FILE),
-        fileSystem
-            .listDirectories(basePath)
-            .map { path ->
-                NamespaceFolder(
-                    path,
-                    loadEvents(path),
-                    fileExists(
-                        path,
-                        DESCRIPTION_FILE
-                    )
-                )
-            }
+            basePath,
+            fileExists(basePath, DESCRIPTION_FILE),
+            fileSystem
+                    .listDirectories(basePath)
+                    .map { path ->
+                        NamespaceFolder(
+                                path,
+                                loadEvents(path),
+                                fileExists(
+                                        path,
+                                        DESCRIPTION_FILE
+                                )
+                        )
+                    }
     )
 
     @VisibleForTesting
     fun loadEvents(namespaceBasePath: Path) =
-        try {
-            fileSystem.listDirectories(namespaceBasePath)
-                .map { x ->
-                    EventFolder(
-                        x,
-                        loadVersions(x),
-                        fileExists(x, DESCRIPTION_FILE),
-                        loadTransformations(x)
-                    )
-                }
-        } catch (e: NoSuchFileException) {
-            emptyList<EventFolder>()
-        }
+            try {
+                fileSystem.listDirectories(namespaceBasePath)
+                        .map { x ->
+                            EventFolder(
+                                    x,
+                                    loadVersions(x),
+                                    fileExists(x, DESCRIPTION_FILE),
+                                    loadTransformations(x)
+                            )
+                        }
+            } catch (e: NoSuchFileException) {
+                emptyList<EventFolder>()
+            }
 
     @VisibleForTesting
     fun loadTransformations(eventBasePath: Path): List<TransformationFolder> =
-        try {
-            val transformationsFolder = eventBasePath.resolve(TRANSFORMATIONS_FOLDER)
+            try {
+                val transformationsFolder = eventBasePath.resolve(TRANSFORMATIONS_FOLDER)
 
-            fileSystem.listDirectories(transformationsFolder)
-                .map {
-                    TransformationFolder(
-                        it,
-                        fileExists(
-                            it,
-                            TRANSFORMATION_FILE
-                        )
-                    )
-                }
-        } catch (e: NoSuchFileException) {
-            emptyList()
-        }
+                fileSystem.listDirectories(transformationsFolder)
+                        .map {
+                            TransformationFolder(
+                                    it,
+                                    fileExists(
+                                            it,
+                                            TRANSFORMATION_FILE
+                                    )
+                            )
+                        }
+            } catch (e: NoSuchFileException) {
+                emptyList()
+            }
 
     @VisibleForTesting
     fun loadVersions(eventBasePath: Path) =
-        try {
-            val versionFolderPath = eventBasePath.resolve(VERSIONS_FOLDER)
+            try {
+                val versionFolderPath = eventBasePath.resolve(VERSIONS_FOLDER)
 
-            fileSystem
-                .listDirectories(versionFolderPath)
-                .map {
-                    EventVersionFolder(
-                        it,
-                        fileExists(it, SCHEMA_FILE),
-                        fileExists(
-                            it,
-                            DESCRIPTION_FILE
-                        ),
-                        loadExamples(it)
-                    )
-                }
-        } catch (e: NoSuchFileException) {
-            emptyList<EventVersionFolder>()
-        }
+                fileSystem
+                        .listDirectories(versionFolderPath)
+                        .map {
+                            EventVersionFolder(
+                                    it,
+                                    fileExists(it, SCHEMA_FILE),
+                                    fileExists(
+                                            it,
+                                            DESCRIPTION_FILE
+                                    ),
+                                    loadExamples(it)
+                            )
+                        }
+            } catch (e: NoSuchFileException) {
+                emptyList<EventVersionFolder>()
+            }
 
     @VisibleForTesting
     fun loadExamples(eventBasePath: Path) =
-        try {
-            val examplePath = eventBasePath.resolve(EXAMPLES_FOLDER)
+            try {
+                val examplePath = eventBasePath.resolve(EXAMPLES_FOLDER)
 
-            fileSystem.listFiles(examplePath)
-        } catch (e: NoSuchFileException) {
-            emptyList<Path>()
-        }
+                fileSystem.listFiles(examplePath)
+            } catch (e: NoSuchFileException) {
+                emptyList<Path>()
+            }
 
     @VisibleForTesting
     fun fileExists(folder: Path, fileName: String): Path? {

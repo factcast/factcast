@@ -15,10 +15,10 @@
  */
 package org.factcast.schema.registry.cli.validation
 
+import javax.inject.Singleton
 import org.factcast.schema.registry.cli.domain.Event
 import org.factcast.schema.registry.cli.domain.Transformation
 import org.factcast.schema.registry.cli.domain.Version
-import javax.inject.Singleton
 
 @Singleton
 class MissingTransformationCalculatorImpl : MissingTransformationCalculator {

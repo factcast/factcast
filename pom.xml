@@ -437,20 +437,12 @@
               <style>GOOGLE</style>
             </googleJavaFormat>
           </java>
-          <kotlin>
-            <licenseHeader>
-              <file>file://${etc}/header.txt</file>
-            </licenseHeader>
-            <trimTrailingWhitespace />
-            <ktlint>
-              <!-- Optional, available versions: https://github.com/shyiko/ktlint/releases -->
-              <version>0.46.0</version>
-            </ktlint>
-            <includes>
-              <include>**/src/*/kotlin/**/*.kt
-              </include>
-            </includes>
-          </kotlin>
+          <!-- Temporarily disabled, until 0.7 Branch is merged to avoid noisy
+            merge conflicts -->
+          <!-- <kotlin> <licenseHeader> <file>file://${etc}/header.txt</file>
+            </licenseHeader> <trimTrailingWhitespace /> <ktlint> <version>0.46.0</version>
+            </ktlint> <includes> <include>**/src/*/kotlin/**/*.kt </include> </includes>
+            </kotlin> -->
           <sql>
             <excludes>
               <exclude>**/src/main/resources/db/**</exclude>

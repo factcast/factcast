@@ -15,8 +15,8 @@
  */
 package org.factcast.schema.registry.cli.registry
 
-import org.factcast.schema.registry.cli.domain.Project
 import java.nio.file.Path
+import org.factcast.schema.registry.cli.domain.Project
 
 interface FactcastIndexCreator {
     fun createFactcastIndex(contentBase: Path, project: Project, removedSchemaProps: Set<String> = emptySet())
