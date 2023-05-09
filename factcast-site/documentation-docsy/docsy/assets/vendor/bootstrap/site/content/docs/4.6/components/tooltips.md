@@ -33,8 +33,8 @@ One way to initialize all tooltips on a page would be to select them by their `d
 
 ```js
 $(function () {
-  $('[data-toggle="tooltip"]').tooltip()
-})
+  $('[data-toggle="tooltip"]').tooltip();
+});
 ```
 
 ## Examples
@@ -59,16 +59,40 @@ Hover over the buttons below to see the four tooltips directions: top, right, bo
 </div>
 
 ```html
-<button type="button" class="btn btn-secondary" data-toggle="tooltip" data-placement="top" title="Tooltip on top">
+<button
+  type="button"
+  class="btn btn-secondary"
+  data-toggle="tooltip"
+  data-placement="top"
+  title="Tooltip on top"
+>
   Tooltip on top
 </button>
-<button type="button" class="btn btn-secondary" data-toggle="tooltip" data-placement="right" title="Tooltip on right">
+<button
+  type="button"
+  class="btn btn-secondary"
+  data-toggle="tooltip"
+  data-placement="right"
+  title="Tooltip on right"
+>
   Tooltip on right
 </button>
-<button type="button" class="btn btn-secondary" data-toggle="tooltip" data-placement="bottom" title="Tooltip on bottom">
+<button
+  type="button"
+  class="btn btn-secondary"
+  data-toggle="tooltip"
+  data-placement="bottom"
+  title="Tooltip on bottom"
+>
   Tooltip on bottom
 </button>
-<button type="button" class="btn btn-secondary" data-toggle="tooltip" data-placement="left" title="Tooltip on left">
+<button
+  type="button"
+  class="btn btn-secondary"
+  data-toggle="tooltip"
+  data-placement="left"
+  title="Tooltip on left"
+>
   Tooltip on left
 </button>
 ```
@@ -76,7 +100,13 @@ Hover over the buttons below to see the four tooltips directions: top, right, bo
 And with custom HTML added:
 
 ```html
-<button type="button" class="btn btn-secondary" data-toggle="tooltip" data-html="true" title="<em>Tooltip</em> <u>with</u> <b>HTML</b>">
+<button
+  type="button"
+  class="btn btn-secondary"
+  data-toggle="tooltip"
+  data-html="true"
+  title="<em>Tooltip</em> <u>with</u> <b>HTML</b>"
+>
   Tooltip with HTML
 </button>
 ```
@@ -88,17 +118,19 @@ The tooltip plugin generates content and markup on demand, and by default places
 Trigger the tooltip via JavaScript:
 
 ```js
-$('#example').tooltip(options)
+$("#example").tooltip(options);
 ```
 
 {{< callout warning >}}
+
 ##### Overflow `auto` and `scroll`
 
 Tooltip position attempts to automatically change when a parent container has `overflow: auto` or `overflow: scroll` like our `.table-responsive`, but still keeps the original placement's positioning. To resolve, set the `boundary` option to anything other than default value, `'scrollParent'`, such as `'window'`:
 
 ```js
-$('#example').tooltip({ boundary: 'window' })
+$("#example").tooltip({ boundary: "window" });
 ```
+
 {{< /callout >}}
 
 ### Markup
@@ -106,6 +138,7 @@ $('#example').tooltip({ boundary: 'window' })
 The required markup for a tooltip is only a `data` attribute and `title` on the HTML element you wish to have a tooltip. The generated markup of a tooltip is rather simple, though it does require a position (by default, set to `top` by the plugin).
 
 {{< callout warning >}}
+
 ##### Making tooltips work for keyboard and assistive technology users
 
 You should only add tooltips to HTML elements that are traditionally keyboard-focusable and interactive (such as links or form controls). Although arbitrary HTML elements (such as `<span>`s) can be made focusable by adding the `tabindex="0"` attribute, this will add potentially annoying and confusing tab stops on non-interactive elements for keyboard users, and most assistive technologies currently do not announce the tooltip in this situation. Additionally, do not rely solely on `hover` as the trigger for your tooltip, as this will make your tooltips impossible to trigger for keyboard users.
@@ -118,9 +151,7 @@ You should only add tooltips to HTML elements that are traditionally keyboard-fo
 <!-- Generated markup by the plugin -->
 <div class="tooltip bs-tooltip-top" role="tooltip">
   <div class="arrow"></div>
-  <div class="tooltip-inner">
-    Some tooltip text!
-  </div>
+  <div class="tooltip-inner">Some tooltip text!</div>
 </div>
 ```
 
@@ -293,6 +324,7 @@ Note that for security reasons the `sanitize`, `sanitizeFn` and `whiteList` opti
 </table>
 
 {{< callout info >}}
+
 #### Data attributes for individual tooltips
 
 Options for individual tooltips can alternatively be specified through the use of data attributes, as explained above.
@@ -313,7 +345,7 @@ Attaches a tooltip handler to an element collection.
 Reveals an element's tooltip. **Returns to the caller before the tooltip has actually been shown** (i.e. before the `shown.bs.tooltip` event occurs). This is considered a "manual" triggering of the tooltip. Tooltips with zero-length titles are never displayed.
 
 ```js
-$('#element').tooltip('show')
+$("#element").tooltip("show");
 ```
 
 #### `.tooltip('hide')`
@@ -321,7 +353,7 @@ $('#element').tooltip('show')
 Hides an element's tooltip. **Returns to the caller before the tooltip has actually been hidden** (i.e. before the `hidden.bs.tooltip` event occurs). This is considered a "manual" triggering of the tooltip.
 
 ```js
-$('#element').tooltip('hide')
+$("#element").tooltip("hide");
 ```
 
 #### `.tooltip('toggle')`
@@ -329,7 +361,7 @@ $('#element').tooltip('hide')
 Toggles an element's tooltip. **Returns to the caller before the tooltip has actually been shown or hidden** (i.e. before the `shown.bs.tooltip` or `hidden.bs.tooltip` event occurs). This is considered a "manual" triggering of the tooltip.
 
 ```js
-$('#element').tooltip('toggle')
+$("#element").tooltip("toggle");
 ```
 
 #### `.tooltip('dispose')`
@@ -337,7 +369,7 @@ $('#element').tooltip('toggle')
 Hides and destroys an element's tooltip. Tooltips that use delegation (which are created using [the `selector` option](#options)) cannot be individually destroyed on descendant trigger elements.
 
 ```js
-$('#element').tooltip('dispose')
+$("#element").tooltip("dispose");
 ```
 
 #### `.tooltip('enable')`
@@ -345,7 +377,7 @@ $('#element').tooltip('dispose')
 Gives an element's tooltip the ability to be shown. **Tooltips are enabled by default.**
 
 ```js
-$('#element').tooltip('enable')
+$("#element").tooltip("enable");
 ```
 
 #### `.tooltip('disable')`
@@ -353,7 +385,7 @@ $('#element').tooltip('enable')
 Removes the ability for an element's tooltip to be shown. The tooltip will only be able to be shown if it is re-enabled.
 
 ```js
-$('#element').tooltip('disable')
+$("#element").tooltip("disable");
 ```
 
 #### `.tooltip('toggleEnabled')`
@@ -361,7 +393,7 @@ $('#element').tooltip('disable')
 Toggles the ability for an element's tooltip to be shown or hidden.
 
 ```js
-$('#element').tooltip('toggleEnabled')
+$("#element").tooltip("toggleEnabled");
 ```
 
 #### `.tooltip('update')`
@@ -369,7 +401,7 @@ $('#element').tooltip('toggleEnabled')
 Updates the position of an element's tooltip.
 
 ```js
-$('#element').tooltip('update')
+$("#element").tooltip("update");
 ```
 
 ### Events
@@ -406,7 +438,7 @@ $('#element').tooltip('update')
 </table>
 
 ```js
-$('#myTooltip').on('hidden.bs.tooltip', function () {
+$("#myTooltip").on("hidden.bs.tooltip", function () {
   // do something...
-})
+});
 ```

@@ -6,6 +6,7 @@ group: utilities
 ---
 
 {{< callout warning >}}
+
 ##### Warning
 
 The `text-hide()` class and mixin has been deprecated as of v4.1. It will be removed entirely in v5.

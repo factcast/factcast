@@ -15,6 +15,7 @@ Be sure to use an appropriate `type` attribute on all inputs (e.g., `email` for 
 Here's a quick example to demonstrate Bootstrap's form styles. Keep reading for documentation on required classes, form layout, and more.
 
 {{< example >}}
+
 <form>
   <div class="form-group">
     <label for="exampleInputEmail1">Email address</label>
@@ -40,6 +41,7 @@ Textual form controls—like `<input>`s, `<select>`s, and `<textarea>`s—are st
 Be sure to explore our [custom forms](#custom-forms) to further style `<select>`s.
 
 {{< example >}}
+
 <form>
   <div class="form-group">
     <label for="exampleFormControlInput1">Email address</label>
@@ -75,6 +77,7 @@ Be sure to explore our [custom forms](#custom-forms) to further style `<select>`
 For file inputs, swap the `.form-control` for `.form-control-file`.
 
 {{< example >}}
+
 <form>
   <div class="form-group">
     <label for="exampleFormControlFile1">Example file input</label>
@@ -95,6 +98,7 @@ Set heights using classes like `.form-control-lg` and `.form-control-sm`.
 
 {{< example >}}
 <select class="form-control form-control-lg">
+
   <option>Large select</option>
 </select>
 <select class="form-control">
@@ -118,6 +122,7 @@ Add the `readonly` boolean attribute on an input to prevent modification of the 
 If you want to have `<input readonly>` elements in your form styled as plain text, use the `.form-control-plaintext` class to remove the default form field styling and preserve the correct margin and padding.
 
 {{< example >}}
+
 <form>
   <div class="form-group row">
     <label for="staticEmail" class="col-sm-2 col-form-label">Email</label>
@@ -135,6 +140,7 @@ If you want to have `<input readonly>` elements in your form styled as plain tex
 {{< /example >}}
 
 {{< example >}}
+
 <form class="form-inline">
   <div class="form-group mb-2">
     <label for="staticEmail2" class="sr-only">Email</label>
@@ -153,6 +159,7 @@ If you want to have `<input readonly>` elements in your form styled as plain tex
 Set horizontally scrollable range inputs using `.form-control-range`.
 
 {{< example >}}
+
 <form>
   <div class="form-group">
     <label for="formControlRange">Example Range input</label>
@@ -174,6 +181,7 @@ Checkboxes and radio buttons support HTML-based form validation and provide conc
 By default, any number of checkboxes and radios that are immediate sibling will be vertically stacked and appropriately spaced with `.form-check`.
 
 {{< example >}}
+
 <div class="form-check">
   <input class="form-check-input" type="checkbox" value="" id="defaultCheck1">
   <label class="form-check-label" for="defaultCheck1">
@@ -189,6 +197,7 @@ By default, any number of checkboxes and radios that are immediate sibling will 
 {{< /example >}}
 
 {{< example >}}
+
 <div class="form-check">
   <input class="form-check-input" type="radio" name="exampleRadios" id="exampleRadios1" value="option1" checked>
   <label class="form-check-label" for="exampleRadios1">
@@ -214,6 +223,7 @@ By default, any number of checkboxes and radios that are immediate sibling will 
 Group checkboxes or radios on the same horizontal row by adding `.form-check-inline` to any `.form-check`.
 
 {{< example >}}
+
 <div class="form-check form-check-inline">
   <input class="form-check-input" type="checkbox" id="inlineCheckbox1" value="option1">
   <label class="form-check-label" for="inlineCheckbox1">1</label>
@@ -229,6 +239,7 @@ Group checkboxes or radios on the same horizontal row by adding `.form-check-inl
 {{< /example >}}
 
 {{< example >}}
+
 <div class="form-check form-check-inline">
   <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1" value="option1">
   <label class="form-check-label" for="inlineRadio1">1</label>
@@ -248,6 +259,7 @@ Group checkboxes or radios on the same horizontal row by adding `.form-check-inl
 Add `.position-static` to inputs within `.form-check` that don't have any label text. Remember to still provide some form of accessible name for assistive technologies (for instance, using `aria-label`).
 
 {{< example >}}
+
 <div class="form-check">
   <input class="form-check-input position-static" type="checkbox" id="blankCheckbox" value="option1" aria-label="...">
 </div>
@@ -265,6 +277,7 @@ Since Bootstrap applies `display: block` and `width: 100%` to almost all our for
 The `.form-group` class is the easiest way to add some structure to forms. It provides a flexible class that encourages proper grouping of labels, controls, optional help text, and form validation messaging. By default it only applies `margin-bottom`, but it picks up additional styles in `.form-inline` as needed. Use it with `<fieldset>`s, `<div>`s, or nearly any other element.
 
 {{< example >}}
+
 <form>
   <div class="form-group">
     <label for="formGroupExampleInput">Example label</label>
@@ -282,6 +295,7 @@ The `.form-group` class is the easiest way to add some structure to forms. It pr
 More complex forms can be built using our grid classes. Use these for form layouts that require multiple columns, varied widths, and additional alignment options.
 
 {{< example >}}
+
 <form>
   <div class="row">
     <div class="col">
@@ -299,6 +313,7 @@ More complex forms can be built using our grid classes. Use these for form layou
 You may also swap `.row` for `.form-row`, a variation of our standard grid row that overrides the default column gutters for tighter and more compact layouts.
 
 {{< example >}}
+
 <form>
   <div class="form-row">
     <div class="col">
@@ -314,6 +329,7 @@ You may also swap `.row` for `.form-row`, a variation of our standard grid row t
 More complex layouts can also be created with the grid system.
 
 {{< example >}}
+
 <form>
   <div class="form-row">
     <div class="form-group col-md-6">
@@ -369,6 +385,7 @@ Create horizontal forms with the grid by adding the `.row` class to form groups 
 At times, you maybe need to use margin or padding utilities to create that perfect alignment you need. For example, we've removed the `padding-top` on our stacked radio inputs label to better align the text baseline.
 
 {{< example >}}
+
 <form>
   <div class="form-group row">
     <label for="inputEmail3" class="col-sm-2 col-form-label">Email</label>
@@ -428,6 +445,7 @@ At times, you maybe need to use margin or padding utilities to create that perfe
 Be sure to use `.col-form-label-sm` or `.col-form-label-lg` to your `<label>`s or `<legend>`s to correctly follow the size of `.form-control-lg` and `.form-control-sm`.
 
 {{< example >}}
+
 <form>
   <div class="form-group row">
     <label for="colFormLabelSm" class="col-sm-2 col-form-label col-form-label-sm">Email</label>
@@ -455,6 +473,7 @@ Be sure to use `.col-form-label-sm` or `.col-form-label-lg` to your `<label>`s o
 As shown in the previous examples, our grid system allows you to place any number of `.col`s within a `.row` or `.form-row`. They'll split the available width equally between them. You may also pick a subset of your columns to take up more or less space, while the remaining `.col`s equally split the rest, with specific column classes like `.col-7`.
 
 {{< example >}}
+
 <form>
   <div class="form-row">
     <div class="col-7">
@@ -475,6 +494,7 @@ As shown in the previous examples, our grid system allows you to place any numbe
 The example below uses a flexbox utility to vertically center the contents and changes `.col` to `.col-auto` so that your columns only take up as much space as needed. Put another way, the column sizes itself based on the contents.
 
 {{< example >}}
+
 <form>
   <div class="form-row align-items-center">
     <div class="col-auto">
@@ -508,6 +528,7 @@ The example below uses a flexbox utility to vertically center the contents and c
 You can then remix that once again with size-specific column classes.
 
 {{< example >}}
+
 <form>
   <div class="form-row align-items-center">
     <div class="col-sm-3 my-1">
@@ -541,6 +562,7 @@ You can then remix that once again with size-specific column classes.
 And of course [custom form controls](#custom-forms) are supported.
 
 {{< example >}}
+
 <form>
   <div class="form-row align-items-center">
     <div class="col-auto my-1">
@@ -576,11 +598,13 @@ Use the `.form-inline` class to display a series of labels, form controls, and b
 You may need to manually address the width and alignment of individual form controls with [spacing utilities]({{< docsref "/utilities/spacing" >}}) (as shown below). Lastly, be sure to always include a `<label>` with each form control, even if you need to hide it from non-screenreader visitors with `.sr-only`.
 
 {{< example >}}
+
 <form class="form-inline">
   <label class="sr-only" for="inlineFormInputName2">Name</label>
   <input type="text" class="form-control mb-2 mr-sm-2" id="inlineFormInputName2" placeholder="Jane Doe">
 
-  <label class="sr-only" for="inlineFormInputGroupUsername2">Username</label>
+<label class="sr-only" for="inlineFormInputGroupUsername2">Username</label>
+
   <div class="input-group mb-2 mr-sm-2">
     <div class="input-group-prepend">
       <div class="input-group-text">@</div>
@@ -595,13 +619,15 @@ You may need to manually address the width and alignment of individual form cont
     </label>
   </div>
 
-  <button type="submit" class="btn btn-primary mb-2">Submit</button>
+<button type="submit" class="btn btn-primary mb-2">Submit</button>
+
 </form>
 {{< /example >}}
 
 Custom form controls and selects are also supported.
 
 {{< example >}}
+
 <form class="form-inline">
   <label class="my-1 mr-2" for="inlineFormCustomSelectPref">Preference</label>
   <select class="custom-select my-1 mr-sm-2" id="inlineFormCustomSelectPref">
@@ -616,12 +642,15 @@ Custom form controls and selects are also supported.
     <label class="custom-control-label" for="customControlInline">Remember my preference</label>
   </div>
 
-  <button type="submit" class="btn btn-primary my-1">Submit</button>
+<button type="submit" class="btn btn-primary my-1">Submit</button>
+
 </form>
 {{< /example >}}
 
 {{< callout warning >}}
+
 ##### Alternatives to hidden labels
+
 Assistive technologies such as screen readers will have trouble with your forms if you don't include a label for every input. For these inline forms, you can hide the labels using the `.sr-only` class. There are further alternative methods of providing a label for assistive technologies, such as the `aria-label`, `aria-labelledby` or `title` attribute. If none of these are present, assistive technologies may resort to using the `placeholder` attribute, if present, but note that use of `placeholder` as a replacement for other labelling methods is not advised.
 {{< /callout >}}
 
@@ -630,6 +659,7 @@ Assistive technologies such as screen readers will have trouble with your forms 
 Block-level help text in forms can be created using `.form-text` (previously known as `.help-block` in v3). Inline help text can be flexibly implemented using any inline HTML element and utility classes like `.text-muted`.
 
 {{< callout warning >}}
+
 ##### Associating help text with form controls
 
 Help text should be explicitly associated with the form control it relates to using the `aria-describedby` attribute. This will ensure that assistive technologies—such as screen readers—will announce this help text when the user focuses or enters the control.
@@ -641,13 +671,14 @@ Help text below inputs can be styled with `.form-text`. This class includes `dis
 <label for="inputPassword5">Password</label>
 <input type="password" id="inputPassword5" class="form-control" aria-describedby="passwordHelpBlock">
 <small id="passwordHelpBlock" class="form-text text-muted">
-  Your password must be 8-20 characters long, contain letters and numbers, and must not contain spaces, special characters, or emoji.
+Your password must be 8-20 characters long, contain letters and numbers, and must not contain spaces, special characters, or emoji.
 </small>
 {{< /example >}}
 
 Inline text can use any typical inline HTML element (be it a `<small>`, `<span>`, or something else) with nothing more than a utility class.
 
 {{< example >}}
+
 <form class="form-inline">
   <div class="form-group">
     <label for="inputPassword6">Password</label>
@@ -664,12 +695,19 @@ Inline text can use any typical inline HTML element (be it a `<small>`, `<span>`
 Add the `disabled` boolean attribute on an input to prevent user interactions and make it appear lighter.
 
 ```html
-<input class="form-control" id="disabledInput" type="text" placeholder="Disabled input here..." disabled>
+<input
+  class="form-control"
+  id="disabledInput"
+  type="text"
+  placeholder="Disabled input here..."
+  disabled
+/>
 ```
 
 Add the `disabled` attribute to a `<fieldset>` to disable all the controls within.
 
 {{< example >}}
+
 <form>
   <fieldset disabled>
     <legend>Disabled fieldset example</legend>
@@ -697,6 +735,7 @@ Add the `disabled` attribute to a `<fieldset>` to disable all the controls withi
 {{< /example >}}
 
 {{< callout warning >}}
+
 ##### Caveat with anchors
 
 Browsers treat all native form controls (`<input>`, `<select>`, and `<button>` elements) inside a `<fieldset disabled>` as disabled, preventing both keyboard and mouse interactions on them.
@@ -705,6 +744,7 @@ However, if your form also includes custom button-like elements such as `<a ... 
 {{< /callout >}}
 
 {{< callout danger >}}
+
 #### Cross-browser compatibility
 
 While Bootstrap will apply these styles in all browsers, Internet Explorer 11 and below don't fully support the `disabled` attribute on a `<fieldset>`. Use custom JavaScript to disable the fieldset in these browsers.
@@ -740,6 +780,7 @@ For custom Bootstrap form validation messages, you'll need to add the `novalidat
 Custom feedback styles apply custom colors, borders, focus styles, and background icons to better communicate feedback. Background icons for `<select>`s are only available with `.custom-select`, and not `.form-control`.
 
 {{< example >}}
+
 <form class="needs-validation" novalidate>
   <div class="form-row">
     <div class="col-md-6 mb-3">
@@ -817,6 +858,7 @@ Custom feedback styles apply custom colors, borders, focus styles, and backgroun
   }, false);
 })();
 </script>
+
 {{< /example >}}
 
 ### Browser defaults
@@ -826,6 +868,7 @@ Not interested in custom validation feedback messages or writing JavaScript to c
 While these feedback styles cannot be styled with CSS, you can still customize the feedback text through JavaScript.
 
 {{< example >}}
+
 <form>
   <div class="form-row">
     <div class="col-md-6 mb-3">
@@ -873,6 +916,7 @@ We recommend using client-side validation, but in case you require server-side v
 For invalid fields, ensure that the invalid feedback/error message is associated with the relevant form field using `aria-describedby`. This attribute allows more than one `id` to be referenced, in case the field already points to additional form text.
 
 {{< example >}}
+
 <form>
   <div class="form-row">
     <div class="col-md-6 mb-3">
@@ -942,6 +986,7 @@ Validation styles are available for the following form controls and components:
 - `.custom-file`
 
 {{< example >}}
+
 <form class="was-validated">
   <div class="mb-3">
     <label for="validationTextarea">Textarea</label>
@@ -1032,6 +1077,7 @@ Validation styles are available for the following form controls and components:
 If your form layout allows it, you can swap the `.{valid|invalid}-feedback` classes for `.{valid|invalid}-tooltip` classes to display validation feedback in a styled tooltip. Be sure to have a parent with `position: relative` on it for tooltip positioning. In the example below, our column classes have this already, but your project may require an alternative setup.
 
 {{< example >}}
+
 <form class="needs-validation" novalidate>
   <div class="form-row">
     <div class="col-md-6 mb-3">
@@ -1092,12 +1138,12 @@ $form-validation-states: map-merge(
   (
     "valid": (
       "color": $form-feedback-valid-color,
-      "icon": $form-feedback-icon-valid
+      "icon": $form-feedback-icon-valid,
     ),
     "invalid": (
       "color": $form-feedback-invalid-color,
-      "icon": $form-feedback-icon-invalid
-    )
+      "icon": $form-feedback-icon-invalid,
+    ),
   ),
   $form-validation-states
 );
@@ -1106,7 +1152,11 @@ $form-validation-states: map-merge(
 // Any modifications to the above Sass map will be reflected in your compiled
 // CSS via this loop.
 @each $state, $data in $form-validation-states {
-  @include form-validation-state($state, map-get($data, color), map-get($data, icon));
+  @include form-validation-state(
+    $state,
+    map-get($data, color),
+    map-get($data, icon)
+  );
 }
 ```
 
@@ -1119,10 +1169,8 @@ To detect what elements need rounded corners inside an input group with validati
   <div class="input-group-prepend">
     <span class="input-group-text">@</span>
   </div>
-  <input type="text" class="form-control" required>
-  <div class="invalid-feedback">
-    Please choose a username.
-  </div>
+  <input type="text" class="form-control" required />
+  <div class="invalid-feedback">Please choose a username.</div>
 </div>
 ```
 
@@ -1155,6 +1203,7 @@ In the checked states, we use **base64 embedded SVG icons** from [Open Iconic](h
 #### Checkboxes
 
 {{< example >}}
+
 <div class="custom-control custom-checkbox">
   <input type="checkbox" class="custom-control-input" id="customCheck1">
   <label class="custom-control-label" for="customCheck1">Check this custom checkbox</label>
@@ -1173,12 +1222,13 @@ Custom checkboxes can also utilize the `:indeterminate` pseudo class when manual
 If you're using jQuery, something like this should suffice:
 
 ```js
-$('.your-checkbox').prop('indeterminate', true)
+$(".your-checkbox").prop("indeterminate", true);
 ```
 
 #### Radios
 
 {{< example >}}
+
 <div class="custom-control custom-radio">
   <input type="radio" id="customRadio1" name="customRadio" class="custom-control-input">
   <label class="custom-control-label" for="customRadio1">Toggle this custom radio</label>
@@ -1192,6 +1242,7 @@ $('.your-checkbox').prop('indeterminate', true)
 #### Inline
 
 {{< example >}}
+
 <div class="custom-control custom-radio custom-control-inline">
   <input type="radio" id="customRadioInline1" name="customRadioInline" class="custom-control-input">
   <label class="custom-control-label" for="customRadioInline1">Toggle this custom radio</label>
@@ -1207,6 +1258,7 @@ $('.your-checkbox').prop('indeterminate', true)
 Custom checkboxes and radios can also be disabled. Add the `disabled` boolean attribute to the `<input>` and the custom indicator and label description will be automatically styled.
 
 {{< example >}}
+
 <div class="custom-control custom-checkbox">
   <input type="checkbox" class="custom-control-input" id="customCheckDisabled1" disabled>
   <label class="custom-control-label" for="customCheckDisabled1">Check this custom checkbox</label>
@@ -1223,6 +1275,7 @@ Custom checkboxes and radios can also be disabled. Add the `disabled` boolean at
 A switch has the markup of a custom checkbox but uses the `.custom-switch` class to render a toggle switch. Switches also support the `disabled` attribute.
 
 {{< example >}}
+
 <div class="custom-control custom-switch">
   <input type="checkbox" class="custom-control-input" id="customSwitch1">
   <label class="custom-control-label" for="customSwitch1">Toggle this switch element</label>
@@ -1239,6 +1292,7 @@ Custom `<select>` menus need only a custom class, `.custom-select` to trigger th
 
 {{< example >}}
 <select class="custom-select">
+
   <option selected>Open this select menu</option>
   <option value="1">One</option>
   <option value="2">Two</option>
@@ -1250,6 +1304,7 @@ You may also choose from small and large custom selects to match our similarly s
 
 {{< example >}}
 <select class="custom-select custom-select-lg mb-3">
+
   <option selected>Open this select menu</option>
   <option value="1">One</option>
   <option value="2">Two</option>
@@ -1268,6 +1323,7 @@ The `multiple` attribute is also supported:
 
 {{< example >}}
 <select class="custom-select" multiple>
+
   <option selected>Open this select menu</option>
   <option value="1">One</option>
   <option value="2">Two</option>
@@ -1279,6 +1335,7 @@ As is the `size` attribute:
 
 {{< example >}}
 <select class="custom-select" size="3">
+
   <option selected>Open this select menu</option>
   <option value="1">One</option>
   <option value="2">Two</option>
@@ -1315,9 +1372,10 @@ By default, range inputs "snap" to integer values. To change this, you can speci
 The recommended plugin to animate custom file input: [bs-custom-file-input](https://www.npmjs.com/package/bs-custom-file-input), that's what we are using currently here in our docs.
 {{< /callout >}}
 
-The file input is the most gnarly of the bunch and requires additional JavaScript if you'd like to hook them up with functional *Choose file...* and selected file name text.
+The file input is the most gnarly of the bunch and requires additional JavaScript if you'd like to hook them up with functional _Choose file..._ and selected file name text.
 
 {{< example >}}
+
 <div class="custom-file">
   <input type="file" class="custom-file-input" id="customFile">
   <label class="custom-file-label" for="customFile">Choose file</label>
@@ -1333,13 +1391,14 @@ The [`:lang()` pseudo-class](https://developer.mozilla.org/en-US/docs/Web/CSS/:l
 ```scss
 $custom-file-text: (
   en: "Browse",
-  es: "Elegir"
+  es: "Elegir",
 );
 ```
 
 Here's `lang(es)` in action on the custom file input for a Spanish translation:
 
 {{< example >}}
+
 <div class="custom-file">
   <input type="file" class="custom-file-input" id="customFileLang" lang="es">
   <label class="custom-file-label" for="customFileLang">Seleccionar Archivo</label>
@@ -1353,6 +1412,7 @@ You'll need to set the language of your document (or subtree thereof) correctly 
 Bootstrap also provides a way to translate the "Browse" text in HTML with the `data-browse` attribute which can be added to the custom input label (example in Dutch):
 
 {{< example >}}
+
 <div class="custom-file">
   <input type="file" class="custom-file-input" id="customFileLangHTML">
   <label class="custom-file-label" for="customFileLangHTML" data-browse="Bestand kiezen">Voeg je document toe</label>

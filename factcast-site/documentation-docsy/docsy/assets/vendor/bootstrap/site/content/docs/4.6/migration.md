@@ -12,6 +12,7 @@ toc: true
 Moving from Beta 3 to our stable v4.x release, there are no breaking changes, but there are some notable changes.
 
 ### Printing
+
 - Fixed broken print utilities. Previously, using a `.d-print-*` class would unexpectedly overrule any other `.d-*` class. Now, they match our other display utilities and only apply to that media (`@media print`).
 
 - Expanded available print display utilities to match other utilities. Beta 3 and older only had `block`, `inline-block`, `inline`, and `none`. Stable v4 added `flex`, `inline-flex`, `table`, `table-row`, and `table-cell`.
@@ -67,7 +68,6 @@ While in beta, we aim to have no breaking changes. However, things don't always 
 ### Highlights
 
 - Introduced new `pointer-events` usage on modals. The outer `.modal-dialog` passes through events with `pointer-events: none` for custom click handling (making it possible to just listen on the `.modal-backdrop` for any clicks), and then counteracts it for the actual `.modal-content` with `pointer-events: auto`.
-
 
 ## Summary
 

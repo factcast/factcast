@@ -15,5 +15,5 @@ The annotation can be scoped to a type, method or field declaration.
 It requires a value, which specifies the type of warning(s) to suppress. At the time of writing (Factcast version 0.5.2), the allowed values are:
 
 - `SuppressFactusWarnings.Warning.ALL` suppresses all Factus related warnings
-- `SuppressFactusWarnings.Warning.PUBLIC_HANDLER_METHOD` suppresses *"Handler methods should not be public"* type of warning, caused by projection handler
+- `SuppressFactusWarnings.Warning.PUBLIC_HANDLER_METHOD` suppresses _"Handler methods should not be public"_ type of warning, caused by projection handler
   methods having a public scope

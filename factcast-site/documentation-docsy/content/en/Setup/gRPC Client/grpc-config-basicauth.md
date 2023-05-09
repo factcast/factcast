@@ -53,7 +53,7 @@ factcast.access.secrets.pinky=narf
 factcast.access.secrets.snowball=grim
 ```
 
-The catch with this simple approach of course is, *that credentials are stored in plaintext* in the server's classpath,
+The catch with this simple approach of course is, _that credentials are stored in plaintext_ in the server's classpath,
 but remember it is just a dead-simple approach to get you started. Nobody says, that you cannot provide this information
 with a layer of your docker container, pull it from the AWS Parameter Store etc...
 
@@ -67,74 +67,49 @@ The contents of factcast-access.json might look like:
   "accounts": [
     {
       "id": "brain",
-      "roles": [
-        "anything"
-      ]
+      "roles": ["anything"]
     },
     {
       "id": "pinky",
-      "roles": [
-        "anything",
-        "limited"
-      ]
+      "roles": ["anything", "limited"]
     },
     {
       "id": "snowball",
-      "roles": [
-        "readOnlyWithoutAudit"
-      ]
+      "roles": ["readOnlyWithoutAudit"]
     }
   ],
   "roles": [
     {
       "id": "anything",
       "read": {
-        "include": [
-          "*"
-        ]
+        "include": ["*"]
       },
       "write": {
-        "include": [
-          "*"
-        ]
+        "include": ["*"]
       }
     },
     {
       "id": "limited",
       "read": {
-        "include": [
-          "*"
-        ],
-        "exclude": [
-          "secret"
-        ]
+        "include": ["*"],
+        "exclude": ["secret"]
       },
       "write": {
-        "exclude": [
-          "audit*"
-        ]
+        "exclude": ["audit*"]
       }
     },
     {
       "id": "readOnlyWithoutAudit",
       "read": {
-        "include": [
-          "*"
-        ],
-        "exclude": [
-          "audit*",
-          "secret"
-        ]
+        "include": ["*"],
+        "exclude": ["audit*", "secret"]
       },
       "write": {
-        "exclude": [
-          "*"
-        ]
+        "exclude": ["*"]
       }
     }
   ]
 }
-
 ```
 
 Where `pinky` & `brain` are authorized to use the full FactStore's functionality (with 'pinky' not being able to write
@@ -143,10 +118,10 @@ anything.
 
 In case of conflicting information:
 
-* explicit wins over implicit
-* exclude wins over include
+- explicit wins over implicit
+- exclude wins over include
 
-Note, there is no fancy wildcard handling other than a trailing '*'.
+Note, there is no fancy wildcard handling other than a trailing '\*'.
 
 see
 module [examples/factcast-example-server-basicauth](https://github.com/factcast/factcast/tree/master/factcast-examples/factcast-example-server-basicauth)

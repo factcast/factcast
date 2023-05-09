@@ -16,30 +16,30 @@ Spacing utilities that apply to all breakpoints, from `xs` to `xl`, have no brea
 
 The classes are named using the format `{property}{sides}-{size}` for `xs` and `{property}{sides}-{breakpoint}-{size}` for `sm`, `md`, `lg`, and `xl`.
 
-Where *property* is one of:
+Where _property_ is one of:
 
-* `m` - for classes that set `margin`
-* `p` - for classes that set `padding`
+- `m` - for classes that set `margin`
+- `p` - for classes that set `padding`
 
-Where *sides* is one of:
+Where _sides_ is one of:
 
-* `t` - for classes that set `margin-top` or `padding-top`
-* `b` - for classes that set `margin-bottom` or `padding-bottom`
-* `l` - for classes that set `margin-left` or `padding-left`
-* `r` - for classes that set `margin-right` or `padding-right`
-* `x` - for classes that set both `*-left` and `*-right`
-* `y` - for classes that set both `*-top` and `*-bottom`
-* blank - for classes that set a `margin` or `padding` on all 4 sides of the element
+- `t` - for classes that set `margin-top` or `padding-top`
+- `b` - for classes that set `margin-bottom` or `padding-bottom`
+- `l` - for classes that set `margin-left` or `padding-left`
+- `r` - for classes that set `margin-right` or `padding-right`
+- `x` - for classes that set both `*-left` and `*-right`
+- `y` - for classes that set both `*-top` and `*-bottom`
+- blank - for classes that set a `margin` or `padding` on all 4 sides of the element
 
-Where *size* is one of:
+Where _size_ is one of:
 
-* `0` - for classes that eliminate the `margin` or `padding` by setting it to `0`
-* `1` - (by default) for classes that set the `margin` or `padding` to `$spacer * .25`
-* `2` - (by default) for classes that set the `margin` or `padding` to `$spacer * .5`
-* `3` - (by default) for classes that set the `margin` or `padding` to `$spacer`
-* `4` - (by default) for classes that set the `margin` or `padding` to `$spacer * 1.5`
-* `5` - (by default) for classes that set the `margin` or `padding` to `$spacer * 3`
-* `auto` - for classes that set the `margin` to auto
+- `0` - for classes that eliminate the `margin` or `padding` by setting it to `0`
+- `1` - (by default) for classes that set the `margin` or `padding` to `$spacer * .25`
+- `2` - (by default) for classes that set the `margin` or `padding` to `$spacer * .5`
+- `3` - (by default) for classes that set the `margin` or `padding` to `$spacer`
+- `4` - (by default) for classes that set the `margin` or `padding` to `$spacer * 1.5`
+- `5` - (by default) for classes that set the `margin` or `padding` to `$spacer * 3`
+- `auto` - for classes that set the `margin` to auto
 
 (You can add more sizes by adding entries to the `$spacers` Sass map variable.)
 
@@ -53,12 +53,12 @@ Here are some representative examples of these classes:
 }
 
 .ml-1 {
-  margin-left: ($spacer * .25) !important;
+  margin-left: ($spacer * 0.25) !important;
 }
 
 .px-2 {
-  padding-left: ($spacer * .5) !important;
-  padding-right: ($spacer * .5) !important;
+  padding-left: ($spacer * 0.5) !important;
+  padding-right: ($spacer * 0.5) !important;
 }
 
 .p-3 {
@@ -77,9 +77,7 @@ Additionally, Bootstrap also includes an `.mx-auto` class for horizontally cente
 </div>
 
 ```html
-<div class="mx-auto" style="width: 200px;">
-  Centered element
-</div>
+<div class="mx-auto" style="width: 200px;">Centered element</div>
 ```
 
 ### Negative margin
@@ -97,6 +95,7 @@ The syntax is nearly the same as the default, positive margin utilities, but wit
 Here's an example of customizing the Bootstrap grid at the medium (`md`) breakpoint and above. We've increased the `.col` padding with `.px-md-5` and then counteracted that with `.mx-md-n5` on the parent `.row`.
 
 {{< example >}}
+
 <div class="row mx-md-n5">
   <div class="col px-md-5"><div class="p-3 border bg-light">Custom column padding</div></div>
   <div class="col px-md-5"><div class="p-3 border bg-light">Custom column padding</div></div>

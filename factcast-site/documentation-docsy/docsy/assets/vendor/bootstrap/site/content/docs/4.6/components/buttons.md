@@ -109,6 +109,7 @@ Disabled buttons using the `<a>` element behave a bit different:
 {{< /example >}}
 
 {{< callout warning >}}
+
 ##### Link functionality caveat
 
 The `.disabled` class uses `pointer-events: none` to try to disable the link functionality of `<a>`s, but that CSS property is not yet standardized. In addition, even in browsers that do support `pointer-events: none`, keyboard navigation remains unaffected, meaning that sighted keyboard users and users of assistive technologies will still be able to activate these links. So to be safe, add a `tabindex="-1"` attribute on these links (to prevent them from receiving keyboard focus) and use custom JavaScript to disable their functionality.
@@ -124,7 +125,7 @@ Add `data-toggle="button"` to toggle a button's `active` state. If you're pre-to
 
 {{< example >}}
 <button type="button" class="btn btn-primary" data-toggle="button" aria-pressed="false">
-  Single toggle
+Single toggle
 </button>
 {{< /example >}}
 
@@ -137,6 +138,7 @@ The checked state for these buttons is **only updated via `click` event** on the
 Note that pre-checked buttons require you to manually add the `.active` class to the input's `<label>`.
 
 {{< example >}}
+
 <div class="btn-group-toggle" data-toggle="buttons">
   <label class="btn btn-secondary active">
     <input type="checkbox" checked> Checked
@@ -145,6 +147,7 @@ Note that pre-checked buttons require you to manually add the `.active` class to
 {{< /example >}}
 
 {{< example >}}
+
 <div class="btn-group btn-group-toggle" data-toggle="buttons">
   <label class="btn btn-secondary active">
     <input type="radio" name="options" id="option1" checked> Active
@@ -160,7 +163,7 @@ Note that pre-checked buttons require you to manually add the `.active` class to
 
 ### Methods
 
-| Method | Description |
-| --- | --- |
-| `$().button('toggle')` | Toggles push state. Gives the button the appearance that it has been activated. |
-| `$().button('dispose')` | Destroys an element's button. |
+| Method                  | Description                                                                     |
+| ----------------------- | ------------------------------------------------------------------------------- |
+| `$().button('toggle')`  | Toggles push state. Gives the button the appearance that it has been activated. |
+| `$().button('dispose')` | Destroys an element's button.                                                   |

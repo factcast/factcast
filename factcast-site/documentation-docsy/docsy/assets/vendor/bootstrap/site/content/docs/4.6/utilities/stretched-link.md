@@ -12,6 +12,7 @@ Cards have `position: relative` by default in Bootstrap, so in this case you can
 Multiple links and tap targets are not recommended with stretched links. However, some `position` and `z-index` styles can help should this be required.
 
 {{< example >}}
+
 <div class="card" style="width: 18rem;">
   {{< placeholder width="100%" height="180" class="card-img-top" text=" " title="Card image cap" >}}
   <div class="card-body">
@@ -25,6 +26,7 @@ Multiple links and tap targets are not recommended with stretched links. However
 Media objects do not have `position: relative` by default, so we need to add the `.position-relative` here to prevent the link from stretching outside the media object.
 
 {{< example >}}
+
 <div class="media position-relative">
   {{< placeholder width="144" height="144" class="mr-3" text=" " title="Generic placeholder image" >}}
   <div class="media-body">
@@ -38,6 +40,7 @@ Media objects do not have `position: relative` by default, so we need to add the
 Columns are `position: relative` by default, so clickable columns only require the `.stretched-link` class on a link. However, stretching a link over an entire `.row` requires `.position-static` on the column and `.position-relative` on the row.
 
 {{< example >}}
+
 <div class="row no-gutters bg-light position-relative">
   <div class="col-md-6 mb-md-0 p-md-4">
     {{< placeholder width="100%" height="200" class="w-100" text=" " title="Generic placeholder image" >}}
@@ -60,6 +63,7 @@ If the stretched link doesn't seem to work, the [containing block](https://devel
 - A `filter` value other than `none` or a `will-change` value of `filter` (only works on Firefox)
 
 {{< example >}}
+
 <div class="card" style="width: 18rem;">
   {{< placeholder width="100%" height="180" class="card-img-top" text=" " title="Card image cap" >}}
   <div class="card-body">

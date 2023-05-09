@@ -69,7 +69,15 @@ Scroll the area below the navbar and watch the active class change. The dropdown
       <a class="nav-link" href="#mdo">@mdo</a>
     </li>
     <li class="nav-item dropdown">
-      <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Dropdown</a>
+      <a
+        class="nav-link dropdown-toggle"
+        data-toggle="dropdown"
+        href="#"
+        role="button"
+        aria-haspopup="true"
+        aria-expanded="false"
+        >Dropdown</a
+      >
       <div class="dropdown-menu">
         <a class="dropdown-item" href="#one">one</a>
         <a class="dropdown-item" href="#two">two</a>
@@ -205,12 +213,25 @@ Scrollspy also works with `.list-group`s. Scroll the area next to the list group
 
 ```html
 <div id="list-example" class="list-group">
-  <a class="list-group-item list-group-item-action" href="#list-item-1">Item 1</a>
-  <a class="list-group-item list-group-item-action" href="#list-item-2">Item 2</a>
-  <a class="list-group-item list-group-item-action" href="#list-item-3">Item 3</a>
-  <a class="list-group-item list-group-item-action" href="#list-item-4">Item 4</a>
+  <a class="list-group-item list-group-item-action" href="#list-item-1"
+    >Item 1</a
+  >
+  <a class="list-group-item list-group-item-action" href="#list-item-2"
+    >Item 2</a
+  >
+  <a class="list-group-item list-group-item-action" href="#list-item-3"
+    >Item 3</a
+  >
+  <a class="list-group-item list-group-item-action" href="#list-item-4"
+    >Item 4</a
+  >
 </div>
-<div data-spy="scroll" data-target="#list-example" data-offset="0" class="scrollspy-example">
+<div
+  data-spy="scroll"
+  data-target="#list-example"
+  data-offset="0"
+  class="scrollspy-example"
+>
   <h4 id="list-item-1">Item 1</h4>
   <p>...</p>
   <h4 id="list-item-2">Item 2</h4>
@@ -251,16 +272,18 @@ body {
 After adding `position: relative;` in your CSS, call the scrollspy via JavaScript:
 
 ```js
-$('body').scrollspy({ target: '#navbar-example' })
+$("body").scrollspy({ target: "#navbar-example" });
 ```
 
 {{< callout danger >}}
+
 #### Resolvable ID targets required
 
 Navbar links must have resolvable id targets. For example, a `<a href="#home">home</a>` must correspond to something in the DOM like `<div id="home"></div>`.
 {{< /callout >}}
 
 {{< callout info >}}
+
 #### Non-`:visible` target elements ignored
 
 Target elements that are not [`:visible` according to jQuery](https://api.jquery.com/visible-selector/) will be ignored and their corresponding nav items will never be highlighted.
@@ -274,8 +297,8 @@ When using scrollspy in conjunction with adding or removing of elements from the
 
 ```js
 $('[data-spy="scroll"]').each(function () {
-  var $spy = $(this).scrollspy('refresh')
-})
+  var $spy = $(this).scrollspy("refresh");
+});
 ```
 
 #### `.scrollspy('dispose')`
@@ -335,7 +358,7 @@ Options can be passed via data attributes or JavaScript. For data attributes, ap
 </table>
 
 ```js
-$('[data-spy="scroll"]').on('activate.bs.scrollspy', function () {
+$('[data-spy="scroll"]').on("activate.bs.scrollspy", function () {
   // do something...
-})
+});
 ```

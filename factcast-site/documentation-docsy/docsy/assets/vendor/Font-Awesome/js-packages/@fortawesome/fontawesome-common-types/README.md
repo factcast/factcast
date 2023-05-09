@@ -10,7 +10,7 @@ Font Awesome 5 JavaScript packages support TypeScript. This package abstracts ou
 
 ## Here be dragons
 
-If you are trying to import types from this package we *highly* recommend you do the following instead as *all types in this package are re-exported to the main fontawesome package*.
+If you are trying to import types from this package we _highly_ recommend you do the following instead as _all types in this package are re-exported to the main fontawesome package_.
 
 your.ts
 

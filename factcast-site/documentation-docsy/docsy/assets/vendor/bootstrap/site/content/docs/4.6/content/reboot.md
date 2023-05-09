@@ -29,24 +29,20 @@ The `<html>` and `<body>` elements are updated to provide better page-wide defau
 
 ## Native font stack
 
-The default web fonts (Helvetica Neue, Helvetica, and Arial) have been dropped in Bootstrap 4 and replaced with a "native font stack" for optimum text rendering on every device and OS. Read more about [native font stacks in this *Smashing Magazine* article](https://www.smashingmagazine.com/2015/11/using-system-ui-fonts-practical-guide/).
+The default web fonts (Helvetica Neue, Helvetica, and Arial) have been dropped in Bootstrap 4 and replaced with a "native font stack" for optimum text rendering on every device and OS. Read more about [native font stacks in this _Smashing Magazine_ article](https://www.smashingmagazine.com/2015/11/using-system-ui-fonts-practical-guide/).
 
 ```scss
 $font-family-sans-serif:
   // Safari for macOS and iOS (San Francisco)
   -apple-system,
   // Chrome < 56 for macOS (San Francisco)
-  BlinkMacSystemFont,
-  // Windows
+  BlinkMacSystemFont, // Windows
   "Segoe UI",
   // Android
-  Roboto,
-  // Basic web fallback
+  Roboto, // Basic web fallback
   "Helvetica Neue", Arial,
   // Linux
-  "Noto Sans",
-  "Liberation Sans",
-  // Sans serif fallback
+  "Noto Sans", "Liberation Sans", // Sans serif fallback
   sans-serif,
   // Emoji fonts
   "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
@@ -348,10 +344,11 @@ The default `cursor` on summary is `text`, so we reset that to `pointer` to conv
 HTML5 adds [a new global attribute named `[hidden]`](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/hidden), which is styled as `display: none` by default. Borrowing an idea from [PureCSS](https://purecss.io/), we improve upon this default by making `[hidden] { display: none !important; }` to help prevent its `display` from getting accidentally overridden. While `[hidden]` isn't natively supported by IE10, the explicit declaration in our CSS gets around that problem.
 
 ```html
-<input type="text" hidden>
+<input type="text" hidden />
 ```
 
 {{< callout warning >}}
+
 ##### jQuery incompatibility
 
 `[hidden]` is not compatible with jQuery's `$(...).hide()` and `$(...).show()` methods. Therefore, we don't currently especially endorse `[hidden]` over other techniques for managing the `display` of elements.

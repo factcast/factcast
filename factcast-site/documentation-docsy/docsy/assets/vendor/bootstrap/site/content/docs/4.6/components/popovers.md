@@ -34,8 +34,8 @@ One way to initialize all popovers on a page would be to select them by their `d
 
 ```js
 $(function () {
-  $('[data-toggle="popover"]').popover()
-})
+  $('[data-toggle="popover"]').popover();
+});
 ```
 
 ## Example: Using the `container` option
@@ -44,10 +44,10 @@ When you have some styles on a parent element that interfere with a popover, you
 
 ```js
 $(function () {
-  $('.example-popover').popover({
-    container: 'body'
-  })
-})
+  $(".example-popover").popover({
+    container: "body",
+  });
+});
 ```
 
 ## Example
@@ -62,16 +62,16 @@ Four options are available: top, right, bottom, and left aligned.
 
 {{< example >}}
 <button type="button" class="btn btn-secondary" data-container="body" data-toggle="popover" data-placement="top" data-content="Top popover">
-  Popover on top
+Popover on top
 </button>
 <button type="button" class="btn btn-secondary" data-container="body" data-toggle="popover" data-placement="right" data-content="Right popover">
-  Popover on right
+Popover on right
 </button>
 <button type="button" class="btn btn-secondary" data-container="body" data-toggle="popover" data-placement="bottom" data-content="Bottom popover">
-  Popover on bottom
+Popover on bottom
 </button>
 <button type="button" class="btn btn-secondary" data-container="body" data-toggle="popover" data-placement="left" data-content="Left popover">
-  Popover on left
+Popover on left
 </button>
 {{< /example >}}
 
@@ -80,6 +80,7 @@ Four options are available: top, right, bottom, and left aligned.
 Use the `focus` trigger to dismiss popovers on the user's next click of a different element than the toggle element.
 
 {{< callout danger >}}
+
 #### Specific markup required for dismiss-on-next-click
 
 For proper cross-browser and cross-platform behavior, you must use the `<a>` tag, _not_ the `<button>` tag, and you also must include a [`tabindex`](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/tabindex) attribute.
@@ -90,9 +91,9 @@ For proper cross-browser and cross-platform behavior, you must use the `<a>` tag
 {{< /example >}}
 
 ```js
-$('.popover-dismiss').popover({
-  trigger: 'focus'
-})
+$(".popover-dismiss").popover({
+  trigger: "focus",
+});
 ```
 
 ### Disabled elements
@@ -103,7 +104,7 @@ For disabled popover triggers, you may also prefer `data-trigger="hover"` so tha
 
 {{< example >}}
 <span class="d-inline-block" data-toggle="popover" data-content="Disabled popover">
-  <button class="btn btn-primary" style="pointer-events: none;" type="button" disabled>Disabled button</button>
+<button class="btn btn-primary" style="pointer-events: none;" type="button" disabled>Disabled button</button>
 </span>
 {{< /example >}}
 
@@ -112,10 +113,11 @@ For disabled popover triggers, you may also prefer `data-trigger="hover"` so tha
 Enable popovers via JavaScript:
 
 ```js
-$('#example').popover(options)
+$("#example").popover(options);
 ```
 
 {{< callout warning >}}
+
 ##### GPU acceleration
 
 Popovers sometimes appear blurry on Windows 10 devices due to GPU acceleration and a modified system DPI. The workaround for this in v4 is to disable GPU acceleration as needed on your popovers.
@@ -123,11 +125,15 @@ Popovers sometimes appear blurry on Windows 10 devices due to GPU acceleration a
 Suggested fix:
 
 ```js
-Popper.Defaults.modifiers.computeStyle.gpuAcceleration = !(window.devicePixelRatio < 1.5 && /Win/.test(navigator.platform))
+Popper.Defaults.modifiers.computeStyle.gpuAcceleration = !(
+  window.devicePixelRatio < 1.5 && /Win/.test(navigator.platform)
+);
 ```
+
 {{< /callout >}}
 
 {{< callout warning >}}
+
 ### Making popovers work for keyboard and assistive technology users
 
 To allow keyboard users to activate your popovers, you should only add them to HTML elements that are traditionally keyboard-focusable and interactive (such as links or form controls). Although arbitrary HTML elements (such as `<span>`s) can be made focusable by adding the `tabindex="0"` attribute, this will add potentially annoying and confusing tab stops on non-interactive elements for keyboard users, and most assistive technologies currently do not announce the popover's content in this situation. Additionally, do not rely solely on `hover` as the trigger for your popovers, as this will make them impossible to trigger for keyboard users.
@@ -292,6 +298,7 @@ Note that for security reasons the `sanitize`, `sanitizeFn` and `whiteList` opti
 </table>
 
 {{< callout info >}}
+
 #### Data attributes for individual popovers
 
 Options for individual popovers can alternatively be specified through the use of data attributes, as explained above.
@@ -312,7 +319,7 @@ Initializes popovers for an element collection.
 Reveals an element's popover. **Returns to the caller before the popover has actually been shown** (i.e. before the `shown.bs.popover` event occurs). This is considered a "manual" triggering of the popover. Popovers whose title and content are both zero-length are never displayed.
 
 ```js
-$('#element').popover('show')
+$("#element").popover("show");
 ```
 
 #### `.popover('hide')`
@@ -320,7 +327,7 @@ $('#element').popover('show')
 Hides an element's popover. **Returns to the caller before the popover has actually been hidden** (i.e. before the `hidden.bs.popover` event occurs). This is considered a "manual" triggering of the popover.
 
 ```js
-$('#element').popover('hide')
+$("#element").popover("hide");
 ```
 
 #### `.popover('toggle')`
@@ -328,7 +335,7 @@ $('#element').popover('hide')
 Toggles an element's popover. **Returns to the caller before the popover has actually been shown or hidden** (i.e. before the `shown.bs.popover` or `hidden.bs.popover` event occurs). This is considered a "manual" triggering of the popover.
 
 ```js
-$('#element').popover('toggle')
+$("#element").popover("toggle");
 ```
 
 #### `.popover('dispose')`
@@ -336,7 +343,7 @@ $('#element').popover('toggle')
 Hides and destroys an element's popover. Popovers that use delegation (which are created using [the `selector` option](#options)) cannot be individually destroyed on descendant trigger elements.
 
 ```js
-$('#element').popover('dispose')
+$("#element").popover("dispose");
 ```
 
 #### `.popover('enable')`
@@ -344,7 +351,7 @@ $('#element').popover('dispose')
 Gives an element's popover the ability to be shown. **Popovers are enabled by default.**
 
 ```js
-$('#element').popover('enable')
+$("#element").popover("enable");
 ```
 
 #### `.popover('disable')`
@@ -352,7 +359,7 @@ $('#element').popover('enable')
 Removes the ability for an element's popover to be shown. The popover will only be able to be shown if it is re-enabled.
 
 ```js
-$('#element').popover('disable')
+$("#element").popover("disable");
 ```
 
 #### `.popover('toggleEnabled')`
@@ -360,7 +367,7 @@ $('#element').popover('disable')
 Toggles the ability for an element's popover to be shown or hidden.
 
 ```js
-$('#element').popover('toggleEnabled')
+$("#element").popover("toggleEnabled");
 ```
 
 #### `.popover('update')`
@@ -368,7 +375,7 @@ $('#element').popover('toggleEnabled')
 Updates the position of an element's popover.
 
 ```js
-$('#element').popover('update')
+$("#element").popover("update");
 ```
 
 ### Events
@@ -405,7 +412,7 @@ $('#element').popover('update')
 </table>
 
 ```js
-$('#myPopover').on('hidden.bs.popover', function () {
+$("#myPopover").on("hidden.bs.popover", function () {
   // do something...
-})
+});
 ```

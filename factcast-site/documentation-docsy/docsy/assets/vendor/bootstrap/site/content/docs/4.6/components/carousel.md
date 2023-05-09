@@ -31,6 +31,7 @@ Carousels don't automatically normalize slide dimensions. As such, you may need 
 Here's a carousel with slides only. Note the presence of the `.d-block` and `.w-100` on carousel images to prevent browser default image alignment.
 
 {{< example >}}
+
 <div id="carouselExampleSlidesOnly" class="carousel slide" data-ride="carousel">
   <div class="carousel-inner">
     <div class="carousel-item active">
@@ -51,6 +52,7 @@ Here's a carousel with slides only. Note the presence of the `.d-block` and `.w-
 Adding in the previous and next controls:
 
 {{< example >}}
+
 <div id="carouselExampleControls" class="carousel slide" data-ride="carousel">
   <div class="carousel-inner">
     <div class="carousel-item active">
@@ -79,6 +81,7 @@ Adding in the previous and next controls:
 You can also add the indicators to the carousel, alongside the controls, too.
 
 {{< example >}}
+
 <div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
   <ol class="carousel-indicators">
     <li data-target="#carouselExampleIndicators" data-slide-to="0" class="active"></li>
@@ -112,6 +115,7 @@ You can also add the indicators to the carousel, alongside the controls, too.
 Add captions to your slides easily with the `.carousel-caption` element within any `.carousel-item`. They can be easily hidden on smaller viewports, as shown below, with optional [display utilities]({{< docsref "/utilities/display" >}}). We hide them initially with `.d-none` and bring them back on medium-sized devices with `.d-md-block`.
 
 {{< example >}}
+
 <div id="carouselExampleCaptions" class="carousel slide" data-ride="carousel">
   <ol class="carousel-indicators">
     <li data-target="#carouselExampleCaptions" data-slide-to="0" class="active"></li>
@@ -157,6 +161,7 @@ Add captions to your slides easily with the `.carousel-caption` element within a
 Add `.carousel-fade` to your carousel to animate slides with a fade transition instead of a slide.
 
 {{< example >}}
+
 <div id="carouselExampleFade" class="carousel slide carousel-fade" data-ride="carousel">
   <div class="carousel-inner">
     <div class="carousel-item active">
@@ -185,6 +190,7 @@ Add `.carousel-fade` to your carousel to animate slides with a fade transition i
 Add `data-interval=""` to a `.carousel-item` to change the amount of time to delay between automatically cycling to the next item.
 
 {{< example >}}
+
 <div id="carouselExampleInterval" class="carousel slide" data-ride="carousel">
   <div class="carousel-inner">
     <div class="carousel-item active" data-interval="10000">
@@ -213,6 +219,7 @@ Add `data-interval=""` to a `.carousel-item` to change the amount of time to del
 Carousels support swiping left/right on touchscreen devices to move between slides. This can be disabled using the `data-touch` attribute. The example below also does not include the `data-ride` attribute and has `data-interval="false"` so it doesn't autoplay.
 
 {{< example >}}
+
 <div id="carouselExampleControlsNoTouching" class="carousel slide" data-touch="false" data-interval="false">
   <div class="carousel-inner">
     <div class="carousel-item active">
@@ -249,7 +256,7 @@ The `data-ride="carousel"` attribute is used to mark a carousel as animating sta
 Call carousel manually with:
 
 ```js
-$('.carousel').carousel()
+$(".carousel").carousel();
 ```
 
 ### Options
@@ -317,9 +324,9 @@ Options can be passed via data attributes or JavaScript. For data attributes, ap
 Initializes the carousel with an optional options `object` and starts cycling through items.
 
 ```js
-$('.carousel').carousel({
-  interval: 2000
-})
+$(".carousel").carousel({
+  interval: 2000,
+});
 ```
 
 #### `.carousel('cycle')`
@@ -385,9 +392,9 @@ All carousel events are fired at the carousel itself (i.e. at the `<div class="c
 </table>
 
 ```js
-$('#myCarousel').on('slide.bs.carousel', function () {
+$("#myCarousel").on("slide.bs.carousel", function () {
   // do something...
-})
+});
 ```
 
 ### Change transition duration

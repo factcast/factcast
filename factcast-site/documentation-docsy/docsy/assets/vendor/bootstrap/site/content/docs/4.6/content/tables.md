@@ -13,6 +13,7 @@ Due to the widespread use of tables across third-party widgets like calendars an
 Using the most basic table markup, here's how `.table`-based tables look in Bootstrap. **All table styles are inherited in Bootstrap 4**, meaning any nested tables will be styled in the same manner as the parent.
 
 {{< example >}}
+
 <table class="table">
   <thead>
     <tr>
@@ -48,6 +49,7 @@ Using the most basic table markup, here's how `.table`-based tables look in Boot
 You can also invert the colors—with light text on dark backgrounds—with `.table-dark`.
 
 {{< example >}}
+
 <table class="table table-dark">
   <thead>
     <tr>
@@ -85,6 +87,7 @@ You can also invert the colors—with light text on dark backgrounds—with `.ta
 Similar to tables and dark tables, use the modifier classes `.thead-light` or `.thead-dark` to make `<thead>`s appear light or dark gray.
 
 {{< example >}}
+
 <table class="table">
   <thead class="thead-dark">
     <tr>
@@ -153,6 +156,7 @@ Similar to tables and dark tables, use the modifier classes `.thead-light` or `.
 Use `.table-striped` to add zebra-striping to any table row within the `<tbody>`.
 
 {{< example >}}
+
 <table class="table table-striped">
   <thead>
     <tr>
@@ -186,6 +190,7 @@ Use `.table-striped` to add zebra-striping to any table row within the `<tbody>`
 {{< /example >}}
 
 {{< example >}}
+
 <table class="table table-striped table-dark">
   <thead>
     <tr>
@@ -223,6 +228,7 @@ Use `.table-striped` to add zebra-striping to any table row within the `<tbody>`
 Add `.table-bordered` for borders on all sides of the table and cells.
 
 {{< example >}}
+
 <table class="table table-bordered">
   <thead>
     <tr>
@@ -255,6 +261,7 @@ Add `.table-bordered` for borders on all sides of the table and cells.
 {{< /example >}}
 
 {{< example >}}
+
 <table class="table table-bordered table-dark">
   <thead>
     <tr>
@@ -291,6 +298,7 @@ Add `.table-bordered` for borders on all sides of the table and cells.
 Add `.table-borderless` for a table without borders.
 
 {{< example >}}
+
 <table class="table table-borderless">
   <thead>
     <tr>
@@ -325,6 +333,7 @@ Add `.table-borderless` for a table without borders.
 `.table-borderless` can also be used on dark tables.
 
 {{< example >}}
+
 <table class="table table-borderless table-dark">
   <thead>
     <tr>
@@ -361,6 +370,7 @@ Add `.table-borderless` for a table without borders.
 Add `.table-hover` to enable a hover state on table rows within a `<tbody>`.
 
 {{< example >}}
+
 <table class="table table-hover">
   <thead>
     <tr>
@@ -393,6 +403,7 @@ Add `.table-hover` to enable a hover state on table rows within a `<tbody>`.
 {{< /example >}}
 
 {{< example >}}
+
 <table class="table table-hover table-dark">
   <thead>
     <tr>
@@ -429,6 +440,7 @@ Add `.table-hover` to enable a hover state on table rows within a `<tbody>`.
 Add `.table-sm` to make tables more compact by cutting cell padding in half.
 
 {{< example >}}
+
 <table class="table table-sm">
   <thead>
     <tr>
@@ -461,6 +473,7 @@ Add `.table-sm` to make tables more compact by cutting cell padding in half.
 {{< /example >}}
 
 {{< example >}}
+
 <table class="table table-sm table-dark">
   <thead>
     <tr>
@@ -530,6 +543,7 @@ Use contextual classes to color table rows or individual cells.
 </div>
 
 {{< highlight html >}}
+
 <!-- On rows -->
 <tr class="table-active">...</tr>{{< table.inline >}}
 {{- range (index $.Site.Data "theme-colors") }}
@@ -610,11 +624,21 @@ Regular table background variants are not available with the dark table, however
 
 ```html
 <!-- On rows -->
-<tr class="bg-primary">...</tr>
-<tr class="bg-success">...</tr>
-<tr class="bg-warning">...</tr>
-<tr class="bg-danger">...</tr>
-<tr class="bg-info">...</tr>
+<tr class="bg-primary">
+  ...
+</tr>
+<tr class="bg-success">
+  ...
+</tr>
+<tr class="bg-warning">
+  ...
+</tr>
+<tr class="bg-danger">
+  ...
+</tr>
+<tr class="bg-info">
+  ...
+</tr>
 
 <!-- On cells (`td` or `th`) -->
 <tr>
@@ -641,6 +665,7 @@ Create responsive tables by wrapping any `.table` with `.table-responsive{-sm|-m
 A `<caption>` functions like a heading for a table. It helps users with screen readers to find a table and understand what it's about and decide if they want to read it.
 
 {{< example >}}
+
 <table class="table">
   <caption>List of users</caption>
   <thead>
@@ -679,6 +704,7 @@ A `<caption>` functions like a heading for a table. It helps users with screen r
 Responsive tables allow tables to be scrolled horizontally with ease. Make any table responsive across all viewports by wrapping a `.table` with `.table-responsive`. Or, pick a maximum breakpoint with which to have a responsive table up to by using `.table-responsive{-sm|-md|-lg|-xl}`.
 
 {{< callout warning >}}
+
 ##### Vertical clipping/truncation
 
 Responsive tables make use of `overflow-y: hidden`, which clips off any content that goes beyond the bottom or top edges of the table. In particular, this can clip off dropdown menus and other third-party widgets.
@@ -764,6 +790,7 @@ Use `.table-responsive{-sm|-md|-lg|-xl}` as needed to create responsive tables u
 {{< tables.inline >}}
 {{ range $.Site.Data.breakpoints }}
 {{ if not (eq .breakpoint "xs") }}
+
 <div class="bd-example">
 <div class="table-responsive{{ .abbr }}">
   <table class="table">
@@ -826,6 +853,7 @@ Use `.table-responsive{-sm|-md|-lg|-xl}` as needed to create responsive tables u
 {{< tables.inline >}}
 {{- range $.Site.Data.breakpoints -}}
 {{- if not (eq .breakpoint "xs") }}
+
 <div class="table-responsive{{ .abbr }}">
   <table class="table">
     ...

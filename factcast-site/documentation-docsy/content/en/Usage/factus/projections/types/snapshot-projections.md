@@ -29,7 +29,7 @@ public class UserNames implements SnapshotProjection {
     existingNames.remove(deleted.aggregateId());
   }
 // ...
-``` 
+```
 
 This projection is interested in `UserCreated` and `UserDeleted` EventObjects and can be serialized by
 the `SnapshotSerializer`.
@@ -40,10 +40,10 @@ be happy not to be bothered by this anymore):
 1. create an instance of the projection class, or get a Snapshot from somewhere
 1. create a list of FactSpecs (FactSpecifications) including the Specifications from `UserCreated` and `UserDeleted`
 1. create a FactObserver that implements an `void onNext(Fact fact)` method, that
-    1. looks at the fact's namespace/type/version
-    1. deserializes the payload of the fact into the right EventObject's instance
-    1. calls a method to actually process that EventObject
-    1. keeps track of facts being successfully processed
+   1. looks at the fact's namespace/type/version
+   1. deserializes the payload of the fact into the right EventObject's instance
+   1. calls a method to actually process that EventObject
+   1. keeps track of facts being successfully processed
 1. subscribe to a fact stream according to the FactSpecs from above (either from Scratch or from the last factId
    processed by the instance from the snapshot)
 1. await the completion of the subscription to be sure to receive all EventObjects currently in the EventLog
@@ -82,14 +82,13 @@ This is the reason why there is no ConcurrentHashMap or any other kind of synchr
 
 There are plenty of methods that you can override in order to hook into the lifecycle of a SnapshotProjection.
 
-* onCatchup() - will be called when the catchup signal is received from the server.
-* onComplete() - will be called when the FactStream is at its end (only valid for catchup projections)
-* onError() - whenever an error occures on the server side or on the client side before applying a fact
-* onBeforeSnapshot() - will be called whenever factus is about to take a snapshot of the projection. Might be an
+- onCatchup() - will be called when the catchup signal is received from the server.
+- onComplete() - will be called when the FactStream is at its end (only valid for catchup projections)
+- onError() - whenever an error occures on the server side or on the client side before applying a fact
+- onBeforeSnapshot() - will be called whenever factus is about to take a snapshot of the projection. Might be an
   opportunity to clean up.
-* onAfterRestore() - will be called whenever factus deserializes a projection from a snapshot. Might be an opportunity
+- onAfterRestore() - will be called whenever factus deserializes a projection from a snapshot. Might be an opportunity
   to initialize things.
-* executeUpdate(Runnable) - will be called to update the state of a projection. The runnable includes applying the Fact/Event and also updating the state of the projection, in case you want to do something like introduce transactionality here. 
+- executeUpdate(Runnable) - will be called to update the state of a projection. The runnable includes applying the Fact/Event and also updating the state of the projection, in case you want to do something like introduce transactionality here.
 
 This is not meant to be an exhaustive list. Look at the interfaces/classes you implement/extend and their javadoc.
-
