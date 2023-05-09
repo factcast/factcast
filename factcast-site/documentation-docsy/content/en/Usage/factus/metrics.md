@@ -1,8 +1,9 @@
 ---
+
 title: "Metrics"
 type: docs
 weigth: 1020
----
+------------
 
 Like [the FactCast server]({{< ref "/Setup/metrics.md" >}} "factcast server metrics"), also Factus makes use
 of [micrometer.io](https://micrometer.io/) metrics.
@@ -49,3 +50,4 @@ At the time of writing (Factcast version 0.3.13) the following metrics are suppo
   "factus aggregates")
 - `event_processing_latency` - time difference in milliseconds between a fact was published and a consuming  
   [Subscribed projection]({{< ref "subscribed-projection.md" >}} "factus subscribed projection") was updated
+

@@ -460,6 +460,13 @@
               <configFile>dbeaver.properties</configFile>
             </dbeaver>
           </sql>
+          <markdown>
+            <includes> <!-- You have to set the target manually -->
+              <include>factcast-site/documentation-docsy/content/**/*.md</include>
+            </includes>
+            <flexmark />
+          </markdown>
+
           <formats>
             <format>
               <excludes>
@@ -483,21 +490,9 @@
               <endWithNewline />
             </format>
 
-            <format>
-              <includes>
-                <include>factcast-site/documentation-docsy/**/*.md</include>
-              </includes>
-
-              <prettier>
-                <!-- Specify at most one of the following 3 configs: either 'prettierVersion'
-                  (2.0.5 is default), 'devDependencies' or 'devDependencyProperties' -->
-                <!-- <configFile>${project.basedir}/path/to/configfile</configFile> -->
-                <config>
-                  <useTabs>true</useTabs>
-                </config>
-              </prettier>
-            </format>
-
+            <!-- <format> <includes> <include>factcast-site/documentation-docsy/**/*.md</include>
+              </includes> <prettier> <config> <useTabs>true</useTabs> </config> </prettier>
+              </format> -->
           </formats>
         </configuration>
       </plugin>

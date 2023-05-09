@@ -31,7 +31,7 @@ If a new user registers,
 1. check if the username is already taken
    - if so, reject the registration
    - if not, prepare a change that creates the user
-1. check if a new user was created in between, and
+2. check if a new user was created in between, and
    - repeat from the beginning if this is the case
    - execute the change while making sure no other change can interfere.
 
@@ -70,13 +70,13 @@ public class UserNames implements SnapshotProjection {
 In order to implement the use case above (enforcing unique usernames), what we can do is basically:
 
 ```java
-  UserNames names=factus.fetch(UserNames.class);
-        if(names.contains(cmd.userName)){
-        // reject the change
-        }else{
-        UserCreated prepared=new UserCreated(cmd.userId,cmd.userName));
-        // publish the prepared UserCreated Event
-        }
+UserNames names=factus.fetch(UserNames.class);
+      if(names.contains(cmd.userName)){
+      // reject the change
+      }else{
+      UserCreated prepared=new UserCreated(cmd.userId,cmd.userName));
+      // publish the prepared UserCreated Event
+      }
 ```
 
 Now in order to make sure that the code above is re-attempted until there was no interference relevant to the UserNames
@@ -112,7 +112,7 @@ UserRegistrationCommand cmd=...    // details not important here
 As you can see here, the attempt call receives a BiConsumer that consumes
 
 1. your defined scope, updated to the latest changes in the Fact-stream
-1. a `RetryableTransaction` that you use to either publish to or abort.
+2. a `RetryableTransaction` that you use to either publish to or abort.
 
 Note that you can use either a `SnapshotProjection` (including aggregates) as well as a `ManagedProjection` to lock on.
 **A `SubscribedProjection` however is not usable here**, due to the fact that they are in nature eventual consistent,

@@ -1,10 +1,10 @@
-+++ 
++++
 title = "Snapshot"
 type = "docs"
 weight = 100
 +++
 
-![](../ph_sp.png#center)
+![](../ph_sp.png)
 
 Now that we know how snapshotting works and what a projection is, it is quite easy to put things together:
 
@@ -38,16 +38,16 @@ If you have worked with FactCast before, you'll know what needs to be done (if y
 be happy not to be bothered by this anymore):
 
 1. create an instance of the projection class, or get a Snapshot from somewhere
-1. create a list of FactSpecs (FactSpecifications) including the Specifications from `UserCreated` and `UserDeleted`
-1. create a FactObserver that implements an `void onNext(Fact fact)` method, that
+2. create a list of FactSpecs (FactSpecifications) including the Specifications from `UserCreated` and `UserDeleted`
+3. create a FactObserver that implements an `void onNext(Fact fact)` method, that
    1. looks at the fact's namespace/type/version
-   1. deserializes the payload of the fact into the right EventObject's instance
-   1. calls a method to actually process that EventObject
-   1. keeps track of facts being successfully processed
-1. subscribe to a fact stream according to the FactSpecs from above (either from Scratch or from the last factId
+   2. deserializes the payload of the fact into the right EventObject's instance
+   3. calls a method to actually process that EventObject
+   4. keeps track of facts being successfully processed
+4. subscribe to a fact stream according to the FactSpecs from above (either from Scratch or from the last factId
    processed by the instance from the snapshot)
-1. await the completion of the subscription to be sure to receive all EventObjects currently in the EventLog
-1. maybe create a snapshot manually and store it somewhere, so that you do not have to start from scratch next time
+5. await the completion of the subscription to be sure to receive all EventObjects currently in the EventLog
+6. maybe create a snapshot manually and store it somewhere, so that you do not have to start from scratch next time
 
 ... and this is just the "happy-path".
 

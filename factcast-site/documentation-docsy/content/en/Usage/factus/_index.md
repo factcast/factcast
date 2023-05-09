@@ -1,8 +1,9 @@
 ---
+
 title: "Factus (high-level)"
 type: docs
 weight: 20
----
+----------
 
 This section will walk you through using FactCast from an application programmers perspective using the abstractions of
 Factus. Factus is an optional high-level API provided in order to make it easier to work with FactCast from Java (or

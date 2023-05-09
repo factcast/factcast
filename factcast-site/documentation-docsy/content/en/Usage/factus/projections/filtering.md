@@ -38,11 +38,11 @@ Let's say, you only want to receive events that have a meta pair "priority":"urg
 Here, you would use code like:
 
 ```java
-  @Handler
-  @FilterByMeta(key="priority", value="urgent")
-  protected void apply(UserCreated created) {
-    // ...
-  }
+@Handler
+@FilterByMeta(key="priority", value="urgent")
+protected void apply(UserCreated created) {
+  // ...
+}
 ```
 
 This will add the additional filter defined by the `@FilterByMeta` annotation to `FactSpec`.
