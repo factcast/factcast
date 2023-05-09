@@ -22,11 +22,11 @@ When completed, you'll be able to run the various commands provided from the com
 
 Our [package.json]({{< param repo >}}/blob/v{{< param current_version >}}/package.json) includes the following commands and tasks:
 
-| Task                 | Description                                                                                                                                                                               |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run dist`       | `npm run dist` creates the `/dist/` directory with compiled files. **Uses [Sass](https://sass-lang.com/), [Autoprefixer][autoprefixer], and [terser](https://github.com/terser/terser).** |
-| `npm test`           | Runs tests locally after running `npm run dist`                                                                                                                                           |
-| `npm run docs-serve` | Builds and runs the documentation locally.                                                                                                                                                |
+| Task | Description |
+| --- | --- |
+| `npm run dist` | `npm run dist` creates the `/dist/` directory with compiled files. **Uses [Sass](https://sass-lang.com/), [Autoprefixer][autoprefixer], and [terser](https://github.com/terser/terser).** |
+| `npm test` | Runs tests locally after running `npm run dist` |
+| `npm run docs-serve` | Builds and runs the documentation locally. |
 
 Run `npm run` to see all the npm scripts.
 

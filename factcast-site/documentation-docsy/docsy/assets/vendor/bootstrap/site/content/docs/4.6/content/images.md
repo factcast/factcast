@@ -15,7 +15,6 @@ Images in Bootstrap are made responsive with `.img-fluid`. `max-width: 100%;` an
 {{< /example >}}
 
 {{< callout warning >}}
-
 ##### SVG images and Internet Explorer
 
 In Internet Explorer 10 and 11, SVG images with `.img-fluid` are disproportionately sized. To fix this, add `width: 100%;` or `.w-100` where necessary. This fix improperly sizes other image formats, so Bootstrap doesn't apply it automatically.
@@ -43,11 +42,11 @@ Align images with the [helper float classes]({{< docsref "/utilities/float" >}})
 {{< /example >}}
 
 {{< example >}}
-
 <div class="text-center">
   {{< placeholder width="200" height="200" class="rounded" >}}
 </div>
 {{< /example >}}
+
 
 ## Picture
 
@@ -55,7 +54,7 @@ If you are using the `<picture>` element to specify multiple `<source>` elements
 
 ```html
 ​<picture>
-	<source srcset="..." type="image/svg+xml" />
-	<img src="..." class="img-fluid img-thumbnail" alt="..." />
+  <source srcset="..." type="image/svg+xml">
+  <img src="..." class="img-fluid img-thumbnail" alt="...">
 </picture>
 ```

@@ -7,7 +7,6 @@ toc: true
 ---
 
 {{< callout info >}}
-
 #### Dealing with specificity
 
 Sometimes contextual classes cannot be applied due to the specificity of another selector. In some cases, a sufficient workaround is to wrap your element's content in a `<div>` with the class.
@@ -22,7 +21,6 @@ Sometimes contextual classes cannot be applied due to the specificity of another
 {{< example >}}
 {{< colors.inline >}}
 {{- range (index $.Site.Data "theme-colors") }}
-
 <p class="text-{{ .name }}{{ if eq .name "light" }} bg-dark{{ end }}">.text-{{ .name }}</p>
 {{- end -}}
 {{< /colors.inline >}}
@@ -38,7 +36,6 @@ Contextual text classes also work well on anchors with the provided hover and fo
 {{< example >}}
 {{< colors.inline >}}
 {{- range (index $.Site.Data "theme-colors") }}
-
 <p><a href="#" class="text-{{ .name }}{{ if eq .name "light" }} bg-dark{{ end }}">{{ .name | title }} link</a></p>
 {{- end -}}
 {{< /colors.inline >}}
@@ -53,7 +50,6 @@ Similar to the contextual text color classes, easily set the background of an el
 {{< example >}}
 {{< colors.inline >}}
 {{- range (index $.Site.Data "theme-colors") }}
-
 <div class="p-3 mb-2 bg-{{ .name }} {{ if or (eq .name "light") (eq .name "warning") }}text-dark{{ else }}text-white{{ end }}">.bg-{{ .name }}</div>
 {{- end -}}
 {{< /colors.inline >}}
@@ -68,8 +64,7 @@ When `$enable-gradients` is set to `true` (default is `false`), you can use `.bg
 {{< markdown >}}
 {{< colors.inline >}}
 {{- range (index $.Site.Data "theme-colors") }}
-
 - `.bg-gradient-{{ .name }}`
-  {{- end -}}
-  {{< /colors.inline >}}
-  {{< /markdown >}}
+{{- end -}}
+{{< /colors.inline >}}
+{{< /markdown >}}

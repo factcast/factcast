@@ -1,9 +1,10 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-title: ""
-labels: ""
-assignees: ""
+title: ''
+labels: ''
+assignees: ''
+
 ---
 
 **Describe the bug**
@@ -30,7 +31,6 @@ Browser and version: <!--- If applicable give us the browser specs -->
 - [ ] On the Desktop
 
 **Bug report checklist**
-
 - [ ] I have filled out as much of the above information as I can
 - [ ] I have included a test case because my odds go _way_ up that the team can fix this when I do
 - [ ] I have [searched for existing issues](https://github.com/FortAwesome/Font-Awesome/issues) and to the best of my knowledge this is not a duplicate

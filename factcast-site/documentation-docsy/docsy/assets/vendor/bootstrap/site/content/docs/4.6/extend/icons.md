@@ -16,6 +16,7 @@ While you won't find a built-in icon library in Bootstrap, our separate [Bootstr
                                             src="/docs/{{< param docs_version >}}/assets/img/bootstrap-icons.png"
                                             alt="Bootstrap Icons" width="966" height="600" loading="lazy">
 
+
 ## Additional icon sets
 
 In addition to Bootstrap Icons, we have a handful of alternative icon libraries for you to choose from. While most icon sets include multiple file formats, we prefer SVG implementations for their improved accessibility and vector support.

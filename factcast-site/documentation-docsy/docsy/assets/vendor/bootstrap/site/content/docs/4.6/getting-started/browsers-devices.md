@@ -145,9 +145,9 @@ As of Safari v8.0, use of the fixed-width `.container` class can cause Safari to
 
 ```css
 @media print {
-	.container {
-		width: auto;
-	}
+  .container {
+    width: auto;
+  }
 }
 ```
 
@@ -161,17 +161,13 @@ On `<select>` elements, the Android stock browser will not display the side cont
 
 ```html
 <script>
-	$(function () {
-		var nua = navigator.userAgent;
-		var isAndroid =
-			nua.indexOf("Mozilla/5.0") > -1 &&
-			nua.indexOf("Android ") > -1 &&
-			nua.indexOf("AppleWebKit") > -1 &&
-			nua.indexOf("Chrome") === -1;
-		if (isAndroid) {
-			$("select.form-control").removeClass("form-control").css("width", "100%");
-		}
-	});
+$(function () {
+  var nua = navigator.userAgent
+  var isAndroid = (nua.indexOf('Mozilla/5.0') > -1 && nua.indexOf('Android ') > -1 && nua.indexOf('AppleWebKit') > -1 && nua.indexOf('Chrome') === -1)
+  if (isAndroid) {
+    $('select.form-control').removeClass('form-control').css('width', '100%')
+  }
+})
 </script>
 ```
 

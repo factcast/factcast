@@ -1,4 +1,4 @@
-# Docsy
+# Docsy 
 
 Docsy is a [Hugo](https://gohugo.io/) theme for technical documentation sets, providing simple navigation, site structure, and more.
 
@@ -8,11 +8,11 @@ This is not an officially supported Google product. This project is actively bei
 
 The following are basic prerequisites for using Docsy in your site:
 
-- Install a recent release of the Hugo "extended" version (we recommend version 0.53 or later). If you install from the
-  [release page](https://github.com/gohugoio/hugo/releases), make sure you download the `_extended` version
+- Install a recent release of the Hugo "extended" version (we recommend version 0.53 or later). If you install from the 
+  [release page](https://github.com/gohugoio/hugo/releases), make sure you download the `_extended` version 
   which supports SCSS.
 
-- Install `PostCSS` so that the site build can create the final CSS assets. You can install it locally by running
+- Install `PostCSS` so that the site build can create the final CSS assets. You can install it locally by running 
   the following commands from the root directory of your project:
 
   ```
@@ -26,15 +26,15 @@ You can find an example project that uses Docsy in the [Docsy Example Project re
 
 To use the Docsy theme for your own site:
 
-- (Recommended) Use the [example project](https://github.com/google/docsy-example),
-  which includes the Docsy theme as a submodule, as a template to create your project.
-  You can customize this pre-configured basic site into your own Docsy themed site.
-  [Learn more...](https://github.com/google/docsy-example)
+  - (Recommended) Use the [example project](https://github.com/google/docsy-example),
+     which includes the Docsy theme as a submodule, as a template to create your project.
+    You can customize this pre-configured basic site into your own Docsy themed site. 
+    [Learn more...](https://github.com/google/docsy-example)
+  
+  - Add Docsy to your existing Hugo site repo's `themes` directory. You can either add Docsy as a Git submodule, or 
+    clone the Docsy theme into your project.
 
-- Add Docsy to your existing Hugo site repo's `themes` directory. You can either add Docsy as a Git submodule, or
-  clone the Docsy theme into your project.
-
-See the [Docsy Getting Started Guide](https://docsy.dev/docs/getting-started/) for
+See the [Docsy Getting Started Guide](https://docsy.dev/docs/getting-started/) for 
 details about the various usage options.
 
 ## Documentation

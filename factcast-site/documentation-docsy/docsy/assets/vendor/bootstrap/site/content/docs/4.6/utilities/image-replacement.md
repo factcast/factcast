@@ -6,7 +6,6 @@ group: utilities
 ---
 
 {{< callout warning >}}
-
 ##### Warning
 
 The `text-hide()` class and mixin has been deprecated as of v4.1. It will be removed entirely in v5.
@@ -21,7 +20,7 @@ Utilize the `.text-hide` class or mixin to help replace an element's text conten
 ```scss
 // Usage as a mixin
 .heading {
-	@include text-hide;
+  @include text-hide;
 }
 ```
 

@@ -23,7 +23,6 @@ With inline elements:
 With table cells:
 
 {{< example >}}
-
 <table style="height: 100px;">
   <tbody>
     <tr>
