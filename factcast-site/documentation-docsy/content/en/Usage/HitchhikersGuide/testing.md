@@ -1,15 +1,13 @@
 ---
 title: "Hitchhiker's Guide To Testing"
-weight: 10 
+weight: 10
 type: docs
 ---
 
-
-
 {{% alert title="Preface" %}}
 
-This guide refers to a *fact* as the JSON based data structure which is handled by the low-level FactCast API (see
-class `Fact`). In contrast, an *event* is an abstraction of the Factus library which hides these details and uses Java
+This guide refers to a _fact_ as the JSON based data structure which is handled by the low-level FactCast API (see
+class `Fact`). In contrast, an _event_ is an abstraction of the Factus library which hides these details and uses Java
 POJOs instead (see `EventObject`).
 
 The examples below may use Spring Boot or Lombok. None of those frameworks are necessary for testing, as the Junit5
@@ -21,15 +19,15 @@ An event-sourced application usually performs [two kinds of interactions]({{< re
 server:
 
 - It subscribes to facts and builds up use-case specific views of the received data. These use-case specific views are
-  called *projections*.
+  called _projections_.
 - It publishes new facts to the event log.
 
-Building up *projections* works on both APIs, low-level and Factus. However, to simplify development, the high-level
+Building up _projections_ works on both APIs, low-level and Factus. However, to simplify development, the high-level
 Factus API has [explicit support for this concept]({{< ref "/usage/factus/projections/types">}}).
 
 ### Unit Tests
 
-*Projections* are best tested in isolation, ideally at the unit test level. In the end, they are classes receiving facts
+_Projections_ are best tested in isolation, ideally at the unit test level. In the end, they are classes receiving facts
 and updating some internal state. However, as soon as the projection's state is externalized (e.g.
 [see here]({{< ref "/usage/factus/projections/atomicity/" >}})) this test approach can get challenging.
 
@@ -41,7 +39,7 @@ validate the correct behaviour of a projection that uses an external data store 
 Be aware that FactCast integration tests as shown below can startup real infrastructure via Docker. For this reason,
 they **usually perform significantly slower** than unit tests.
 
-----
+---
 
 ## Testing FactCast (low-level)
 
@@ -251,7 +249,7 @@ class UserEmailsProjectionITest {
   //...
 ```
 
-The previously mentioned `FactCastExtension` starts the FactCast server and the Postgres database *once* before the
+The previously mentioned `FactCastExtension` starts the FactCast server and the Postgres database _once_ before the
 first test is executed. Between the tests, the extension wipes all old facts from the FactCast server so that you are
 guaranteed to always start from scratch.
 
@@ -334,8 +332,8 @@ public class UserEmailsProjection extends LocalManagedProjection {
 }
 ```
 
-You will instantly notice how short this implementation is compared to the `UserEmailsProjection` class of 
-the low-level API example before. No dispatching or explicit JSON parsing is needed. 
+You will instantly notice how short this implementation is compared to the `UserEmailsProjection` class of
+the low-level API example before. No dispatching or explicit JSON parsing is needed.
 Instead, the event handler methods each receive their event as plain Java POJO which is ready to use.
 
 As projection type we decided for a [`LocalManagedProjection`]({{< ref "local-managed-projection.md" >}})
@@ -354,7 +352,7 @@ void whenHandlingUserAddedEventEmailIsAdded() {
 
     UserEmailsProjection uut = new UserEmailsProjection();
     uut.apply(UserAdded.of(someUserId, "foo@bar.com"));
-    
+
     Set<String> emails = uut.getEmails();
     assertThat(emails).hasSize(1).containsExactly("foo@bar.com");
 }
@@ -395,10 +393,10 @@ The annotations of the test class are identical to the integration test shown fo
 introduce them quickly here:
 
 - `@SpringBootTest`
-    - starts a Spring container to enable dependency injection of the `factus` Spring bean
+  - starts a Spring container to enable dependency injection of the `factus` Spring bean
 - `@ExtendWith(FactCastExtension.class)`
-    - starts a FactCast and its Postgres database in the background
-    - erases old events inside FactCast before each test
+  - starts a FactCast and its Postgres database in the background
+  - erases old events inside FactCast before each test
 
 The test itself first creates a `UserAdded` event which is then published to FactCast. Compared to the low-level
 integration test, the "act" part is slim and shows the power of the Factus API:

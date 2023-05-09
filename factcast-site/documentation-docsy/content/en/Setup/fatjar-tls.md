@@ -8,7 +8,6 @@ weight: 120
 
 In order to run a simple example FactCast server, you could enter the project **factcast-examples/factcast-example-server**, see [fatjar](../fatjar)
 
-
 ## TLS Server
 
 There is an extra example project that demonstrates the usage of TLS for your server that can be found **factcast-example-tls-server**

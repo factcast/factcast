@@ -15,6 +15,7 @@ These utility classes float an element to the left or right, or disable floating
 Toggle a float with a class:
 
 {{< example >}}
+
 <div class="float-left">Float left on all viewport sizes</div><br>
 <div class="float-right">Float right on all viewport sizes</div><br>
 <div class="float-none">Don't float on all viewport sizes</div>
@@ -41,6 +42,7 @@ Or by Sass mixin:
 Responsive variations also exist for each `float` value.
 
 {{< example >}}
+
 <div class="float-sm-left">Float left on viewports sized SM (small) or wider</div><br>
 <div class="float-md-left">Float left on viewports sized MD (medium) or wider</div><br>
 <div class="float-lg-left">Float left on viewports sized LG (large) or wider</div><br>
@@ -52,9 +54,10 @@ Here are all the support classes;
 {{< markdown >}}
 {{< float.inline >}}
 {{- range $.Site.Data.breakpoints }}
+
 - `.float{{ .abbr }}-left`
 - `.float{{ .abbr }}-right`
 - `.float{{ .abbr }}-none`
-{{- end -}}
-{{< /float.inline >}}
-{{< /markdown >}}
+  {{- end -}}
+  {{< /float.inline >}}
+  {{< /markdown >}}

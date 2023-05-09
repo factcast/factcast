@@ -25,6 +25,7 @@ Click the buttons below to show and hide another element via class changes:
 Generally, we recommend using a button with the `data-target` attribute. While not recommended from a semantic point of view, you can also use a link with the `href` attribute (and a `role="button"`). In both cases, the `data-toggle="collapse"` is required.
 
 {{< example >}}
+
 <p>
   <a class="btn btn-primary" data-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
     Link with href
@@ -46,6 +47,7 @@ A `<button>` or `<a>` can show and hide multiple elements by referencing them wi
 Multiple `<button>` or `<a>` can show and hide an element if they each reference it with their `href` or `data-target` attribute
 
 {{< example >}}
+
 <p>
   <a class="btn btn-primary" data-toggle="collapse" href="#multiCollapseExample1" role="button" aria-expanded="false" aria-controls="multiCollapseExample1">Toggle first element</a>
   <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#multiCollapseExample2" aria-expanded="false" aria-controls="multiCollapseExample2">Toggle second element</button>
@@ -74,6 +76,7 @@ Multiple `<button>` or `<a>` can show and hide an element if they each reference
 Using the [card]({{< docsref "/components/card" >}}) component, you can extend the default collapse behavior to create an accordion. To properly achieve the accordion style, be sure to use `.accordion` as a wrapper.
 
 {{< example >}}
+
 <div class="accordion" id="accordionExample">
   <div class="card">
     <div class="card-header" id="headingOne">
@@ -89,6 +92,7 @@ Using the [card]({{< docsref "/components/card" >}}) component, you can extend t
         Some placeholder content for the first accordion panel. This panel is shown by default, thanks to the <code>.show</code> class.
       </div>
     </div>
+
   </div>
   <div class="card">
     <div class="card-header" id="headingTwo">
@@ -150,7 +154,7 @@ To add accordion-like group management to a collapsible area, add the data attri
 Enable manually with:
 
 ```js
-$('.collapse').collapse()
+$(".collapse").collapse();
 ```
 
 ### Options
@@ -193,9 +197,9 @@ Options can be passed via data attributes or JavaScript. For data attributes, ap
 Activates your content as a collapsible element. Accepts an optional options `object`.
 
 ```js
-$('#myCollapsible').collapse({
-  toggle: false
-})
+$("#myCollapsible").collapse({
+  toggle: false,
+});
 ```
 
 #### `.collapse('toggle')`
@@ -246,7 +250,7 @@ Bootstrap's collapse class exposes a few events for hooking into collapse functi
 </table>
 
 ```js
-$('#myCollapsible').on('hidden.bs.collapse', function () {
+$("#myCollapsible").on("hidden.bs.collapse", function () {
   // do something...
-})
+});
 ```

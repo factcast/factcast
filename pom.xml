@@ -459,6 +459,12 @@
               <configFile>dbeaver.properties</configFile>
             </dbeaver>
           </sql>
+          <markdown>
+            <includes> <!-- You have to set the target manually -->
+              <include>factcast-site/documentation-docsy/**/*.md</include>
+            </includes>
+            <prettier />
+          </markdown>
           <formats>
             <format>
               <excludes>

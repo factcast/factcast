@@ -21,6 +21,7 @@ For accessibility purposes, each loader here includes `role="status"` and a nest
 Use the border spinners for a lightweight loading indicator.
 
 {{< example >}}
+
 <div class="spinner-border" role="status">
   <span class="sr-only">Loading...</span>
 </div>
@@ -33,6 +34,7 @@ The border spinner uses `currentColor` for its `border-color`, meaning you can c
 {{< example >}}
 {{< spinner.inline >}}
 {{- range (index $.Site.Data "theme-colors") }}
+
 <div class="spinner-border text-{{ .name }}" role="status">
   <span class="sr-only">Loading...</span>
 </div>
@@ -49,6 +51,7 @@ The border spinner uses `currentColor` for its `border-color`, meaning you can c
 If you don't fancy a border spinner, switch to the grow spinner. While it doesn't technically spin, it does repeatedly grow!
 
 {{< example >}}
+
 <div class="spinner-grow" role="status">
   <span class="sr-only">Loading...</span>
 </div>
@@ -59,6 +62,7 @@ Once again, this spinner is built with `currentColor`, so you can easily change 
 {{< example >}}
 {{< spinner.inline >}}
 {{- range (index $.Site.Data "theme-colors") }}
+
 <div class="spinner-grow text-{{ .name }}" role="status">
   <span class="sr-only">Loading...</span>
 </div>
@@ -75,6 +79,7 @@ Spinners in Bootstrap are built with `rem`s, `currentColor`, and `display: inlin
 Use [margin utilities][margin] like `.m-5` for easy spacing.
 
 {{< example >}}
+
 <div class="spinner-border m-5" role="status">
   <span class="sr-only">Loading...</span>
 </div>
@@ -87,6 +92,7 @@ Use [flexbox utilities][flex], [float utilities][float], or [text alignment][tex
 #### Flex
 
 {{< example >}}
+
 <div class="d-flex justify-content-center">
   <div class="spinner-border" role="status">
     <span class="sr-only">Loading...</span>
@@ -95,6 +101,7 @@ Use [flexbox utilities][flex], [float utilities][float], or [text alignment][tex
 {{< /example >}}
 
 {{< example >}}
+
 <div class="d-flex align-items-center">
   <strong>Loading...</strong>
   <div class="spinner-border ml-auto" role="status" aria-hidden="true"></div>
@@ -104,6 +111,7 @@ Use [flexbox utilities][flex], [float utilities][float], or [text alignment][tex
 #### Floats
 
 {{< example >}}
+
 <div class="clearfix">
   <div class="spinner-border float-right" role="status">
     <span class="sr-only">Loading...</span>
@@ -114,6 +122,7 @@ Use [flexbox utilities][flex], [float utilities][float], or [text alignment][tex
 #### Text align
 
 {{< example >}}
+
 <div class="text-center">
   <div class="spinner-border" role="status">
     <span class="sr-only">Loading...</span>
@@ -126,6 +135,7 @@ Use [flexbox utilities][flex], [float utilities][float], or [text alignment][tex
 Add `.spinner-border-sm` and `.spinner-grow-sm` to make a smaller spinner that can quickly be used within other components.
 
 {{< example >}}
+
 <div class="spinner-border spinner-border-sm" role="status">
   <span class="sr-only">Loading...</span>
 </div>
@@ -137,6 +147,7 @@ Add `.spinner-border-sm` and `.spinner-grow-sm` to make a smaller spinner that c
 Or, use custom CSS or inline styles to change the dimensions as needed.
 
 {{< example >}}
+
 <div class="spinner-border" style="width: 3rem; height: 3rem;" role="status">
   <span class="sr-only">Loading...</span>
 </div>
@@ -151,31 +162,30 @@ Use spinners within buttons to indicate an action is currently processing or tak
 
 {{< example >}}
 <button class="btn btn-primary" type="button" disabled>
-  <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-  <span class="sr-only">Loading...</span>
+<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+<span class="sr-only">Loading...</span>
 </button>
 <button class="btn btn-primary" type="button" disabled>
-  <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-  Loading...
+<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+Loading...
 </button>
 {{< /example >}}
 
 {{< example >}}
 <button class="btn btn-primary" type="button" disabled>
-  <span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>
-  <span class="sr-only">Loading...</span>
+<span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>
+<span class="sr-only">Loading...</span>
 </button>
 <button class="btn btn-primary" type="button" disabled>
-  <span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>
-  Loading...
+<span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>
+Loading...
 </button>
 {{< /example >}}
 
-
-[color]:   {{< docsref "/utilities/colors" >}}
+[color]: {{< docsref "/utilities/colors" >}}
 [display]: {{< docsref "/utilities/display" >}}
-[flex]:    {{< docsref "/utilities/flex" >}}
-[float]:   {{< docsref "/utilities/float" >}}
-[margin]:  {{< docsref "/utilities/spacing" >}}
-[sizing]:  {{< docsref "/utilities/sizing" >}}
-[text]:    {{< docsref "/content/typography" >}}
+[flex]: {{< docsref "/utilities/flex" >}}
+[float]: {{< docsref "/utilities/float" >}}
+[margin]: {{< docsref "/utilities/spacing" >}}
+[sizing]: {{< docsref "/utilities/sizing" >}}
+[text]: {{< docsref "/content/typography" >}}

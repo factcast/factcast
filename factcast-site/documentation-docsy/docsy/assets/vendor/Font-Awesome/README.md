@@ -19,31 +19,31 @@ Learn how to get started with Font Awesome and then dive deeper into other and a
 
 ### Using Font Awesome on the Web
 
-* [With SVG with JavaScript](https://fontawesome.com/how-to-use/on-the-web/setup/getting-started?using=svg-with-js)
-* [With web fonts with CSS](https://fontawesome.com/how-to-use/on-the-web/setup/getting-started?using=web-fonts-with-css)
-* [Upgrading from version 4](https://fontawesome.com/how-to-use/on-the-web/setup/upgrading-from-version-4)
-* [Installing Font Awesome with a package manager](https://fontawesome.com/how-to-use/on-the-web/setup/using-package-managers)
-* [Downloading + hosting Font Awesome yourself](https://fontawesome.com/how-to-use/on-the-web/setup/hosting-font-awesome-yourself)
-* [Performance and security](https://fontawesome.com/how-to-use/performance-and-security)
-* [Accessibility](https://fontawesome.com/how-to-use/on-the-web/other-topics/accessibility)
-* [Troubleshooting](https://fontawesome.com/how-to-use/on-the-web/other-topics/troubleshooting)
+- [With SVG with JavaScript](https://fontawesome.com/how-to-use/on-the-web/setup/getting-started?using=svg-with-js)
+- [With web fonts with CSS](https://fontawesome.com/how-to-use/on-the-web/setup/getting-started?using=web-fonts-with-css)
+- [Upgrading from version 4](https://fontawesome.com/how-to-use/on-the-web/setup/upgrading-from-version-4)
+- [Installing Font Awesome with a package manager](https://fontawesome.com/how-to-use/on-the-web/setup/using-package-managers)
+- [Downloading + hosting Font Awesome yourself](https://fontawesome.com/how-to-use/on-the-web/setup/hosting-font-awesome-yourself)
+- [Performance and security](https://fontawesome.com/how-to-use/performance-and-security)
+- [Accessibility](https://fontawesome.com/how-to-use/on-the-web/other-topics/accessibility)
+- [Troubleshooting](https://fontawesome.com/how-to-use/on-the-web/other-topics/troubleshooting)
 
 #### Advanced Options & Techniques
 
-* [Using CSS pseudo-elements](https://fontawesome.com/how-to-use/on-the-web/advanced/css-pseudo-elements)
-* [SVG sprites](https://fontawesome.com/how-to-use/svg-sprites)
-* [The Font Awesome API](https://fontawesome.com/how-to-use/font-awesome-api)
-* [SVG symbols](https://fontawesome.com/how-to-use/on-the-web/advanced/svg-symbols)
-* [SVG JavaScript Core](https://fontawesome.com/how-to-use/on-the-web/advanced/svg-javascript-core)
-* [Server side rendering](https://fontawesome.com/how-to-use/server-side-rendering)
+- [Using CSS pseudo-elements](https://fontawesome.com/how-to-use/on-the-web/advanced/css-pseudo-elements)
+- [SVG sprites](https://fontawesome.com/how-to-use/svg-sprites)
+- [The Font Awesome API](https://fontawesome.com/how-to-use/font-awesome-api)
+- [SVG symbols](https://fontawesome.com/how-to-use/on-the-web/advanced/svg-symbols)
+- [SVG JavaScript Core](https://fontawesome.com/how-to-use/on-the-web/advanced/svg-javascript-core)
+- [Server side rendering](https://fontawesome.com/how-to-use/server-side-rendering)
 
 ### Using Font Awesome on the Desktop
 
-* [Getting started](https://fontawesome.com/how-to-use/on-the-desktop/setup/getting-started)
-* [Upgrading from version 4](https://fontawesome.com/how-to-use/on-the-desktop/setup/upgrading-from-version-4)
-* [Using ligatures](https://fontawesome.com/how-to-use/on-the-desktop/referencing-icons/using-ligatures)
-* [Using glyphs](https://fontawesome.com/how-to-use/on-the-desktop/referencing-icons/using-glyphs)
-* [Troubleshooting](https://fontawesome.com/how-to-use/on-the-desktop/other-topics/troubleshooting)
+- [Getting started](https://fontawesome.com/how-to-use/on-the-desktop/setup/getting-started)
+- [Upgrading from version 4](https://fontawesome.com/how-to-use/on-the-desktop/setup/upgrading-from-version-4)
+- [Using ligatures](https://fontawesome.com/how-to-use/on-the-desktop/referencing-icons/using-ligatures)
+- [Using glyphs](https://fontawesome.com/how-to-use/on-the-desktop/referencing-icons/using-glyphs)
+- [Troubleshooting](https://fontawesome.com/how-to-use/on-the-desktop/other-topics/troubleshooting)
 
 ### Where did Font Awesome 4 (or 3) go?
 
@@ -78,7 +78,7 @@ We will behave ourselves if you behave yourselves. For more details see our
 
 ## Contributing
 
-Please read through our [contributing guidelines](./CONTRIBUTING.md).  Included
+Please read through our [contributing guidelines](./CONTRIBUTING.md). Included
 are directions for opening issues.
 
 ## Versioning
@@ -90,17 +90,17 @@ with the following format:
 
 For more information on SemVer, please visit http://semver.org.
 
-**The major version "5" is part of an umbrella release.  It includes many different types of files and technologies. Therefore
+**The major version "5" is part of an umbrella release. It includes many different types of files and technologies. Therefore
 we deviate from normal SemVer in the following ways:**
 
-* Any release may update the design, look-and-feel, or branding of an existing
+- Any release may update the design, look-and-feel, or branding of an existing
   icon
-* We will never intentionally release a `patch` version update that breaks
+- We will never intentionally release a `patch` version update that breaks
   backward compatibility
-* A `minor` release **may include backward-incompatible changes** but we will
+- A `minor` release **may include backward-incompatible changes** but we will
   write clear upgrading instructions in UPGRADING.md
-* A `minor` or `patch` release will never remove icons
-* Bug fixes will be addressed as `patch` releases unless they include backward
+- A `minor` or `patch` release will never remove icons
+- Bug fixes will be addressed as `patch` releases unless they include backward
   incompatibility then they will be `minor` releases
 
 ## License
@@ -125,14 +125,15 @@ to remove them from files, especially code. They're a great way for folks to
 learn about Font Awesome.
 
 ## Team
-* [Dave Gandy](https://github.com/davegandy)
-* [Travis Chase](https://github.com/supercodepoet)
-* [Rob Madole](https://github.com/robmadole)
-* [Brian Talbot](https://github.com/talbs)
-* [Jory Raphael](https://github.com/sensibleworld)
-* [Mike Wilkerson](https://github.com/mlwilkerson)
-* [Trevor Chase](https://github.com/trevorchase)
-* [Jason Lundien](https://github.com/jasonlundien)
-* [Jason Otero](https://github.com/deathnfudge)
-* [Edward Emanuel](https://github.com/ej2)
-* [Geremia Taglialatela](https://github.com/tagliala)
+
+- [Dave Gandy](https://github.com/davegandy)
+- [Travis Chase](https://github.com/supercodepoet)
+- [Rob Madole](https://github.com/robmadole)
+- [Brian Talbot](https://github.com/talbs)
+- [Jory Raphael](https://github.com/sensibleworld)
+- [Mike Wilkerson](https://github.com/mlwilkerson)
+- [Trevor Chase](https://github.com/trevorchase)
+- [Jason Lundien](https://github.com/jasonlundien)
+- [Jason Otero](https://github.com/deathnfudge)
+- [Edward Emanuel](https://github.com/ej2)
+- [Geremia Taglialatela](https://github.com/tagliala)

@@ -123,7 +123,7 @@ To modify an existing color in our `$theme-colors` map, add the following to you
 ```scss
 $theme-colors: (
   "primary": #0074d9,
-  "danger": #ff4136
+  "danger": #ff4136,
 );
 ```
 
@@ -133,7 +133,7 @@ To add a new color to `$theme-colors`, add the new key and value:
 
 ```scss
 $theme-colors: (
-  "custom-color": #900
+  "custom-color": #900,
 );
 ```
 
@@ -252,7 +252,7 @@ We use the `add` and `subtract` functions to wrap the CSS `calc` function. The p
 Example where the calc is valid:
 
 ```scss
-$border-radius: .25rem;
+$border-radius: 0.25rem;
 $border-width: 1px;
 
 .element {
@@ -269,7 +269,7 @@ $border-width: 1px;
 Example where the calc is invalid:
 
 ```scss
-$border-radius: .25rem;
+$border-radius: 0.25rem;
 $border-width: 0;
 
 .element {
@@ -289,22 +289,22 @@ Customize Bootstrap 4 with our built-in custom variables file and easily toggle 
 
 You can find and customize these variables for key global options in Bootstrap's `scss/_variables.scss` file.
 
-| Variable                                     | Values                             | Description                                                                            |
-| -------------------------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------- |
-| `$spacer`                                    | `1rem` (default), or any value > 0 | Specifies the default spacer value to programmatically generate our [spacer utilities]({{< docsref "/utilities/spacing" >}}). |
-| `$enable-rounded`                            | `true` (default) or `false`        | Enables predefined `border-radius` styles on various components. |
-| `$enable-shadows`                            | `true` or `false` (default)        | Enables predefined decorative `box-shadow` styles on various components. Does not affect `box-shadow`s used for focus states. |
-| `$enable-gradients`                          | `true` or `false` (default)        | Enables predefined gradients via `background-image` styles on various components. |
-| `$enable-transitions`                        | `true` (default) or `false`        | Enables predefined `transition`s on various components. |
+| Variable                                     | Values                             | Description                                                                                                                                                                                                                    |
+| -------------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `$spacer`                                    | `1rem` (default), or any value > 0 | Specifies the default spacer value to programmatically generate our [spacer utilities]({{< docsref "/utilities/spacing" >}}).                                                                                                  |
+| `$enable-rounded`                            | `true` (default) or `false`        | Enables predefined `border-radius` styles on various components.                                                                                                                                                               |
+| `$enable-shadows`                            | `true` or `false` (default)        | Enables predefined decorative `box-shadow` styles on various components. Does not affect `box-shadow`s used for focus states.                                                                                                  |
+| `$enable-gradients`                          | `true` or `false` (default)        | Enables predefined gradients via `background-image` styles on various components.                                                                                                                                              |
+| `$enable-transitions`                        | `true` (default) or `false`        | Enables predefined `transition`s on various components.                                                                                                                                                                        |
 | `$enable-prefers-reduced-motion-media-query` | `true` (default) or `false`        | Enables the [`prefers-reduced-motion` media query]({{< docsref "/getting-started/accessibility#reduced-motion" >}}), which suppresses certain animations/transitions based on the users' browser/operating system preferences. |
-| `$enable-hover-media-query`                  | `true` or `false` (default)        | **Deprecated** |
-| `$enable-grid-classes`                       | `true` (default) or `false`        | Enables the generation of CSS classes for the grid system (e.g., `.container`, `.row`, `.col-md-1`, etc.). |
-| `$enable-caret`                              | `true` (default) or `false`        | Enables pseudo element caret on `.dropdown-toggle`. |
-| `$enable-pointer-cursor-for-buttons`         | `true` (default) or `false`        | Add "hand" cursor to non-disabled button elements. |
-| `$enable-print-styles`                       | `true` (default) or `false`        | Enables styles for optimizing printing. |
-| `$enable-responsive-font-sizes`              | `true` or `false` (default)        | Enables [responsive font sizes]({{< docsref "/content/typography#responsive-font-sizes" >}}). |
-| `$enable-validation-icons`                   | `true` (default) or `false`        | Enables `background-image` icons within textual inputs and some custom forms for validation states. |
-| `$enable-deprecation-messages`               | `true` or `false` (default)        | Set to `true` to show warnings when using any of the deprecated mixins and functions that are planned to be removed in `v5`. |
+| `$enable-hover-media-query`                  | `true` or `false` (default)        | **Deprecated**                                                                                                                                                                                                                 |
+| `$enable-grid-classes`                       | `true` (default) or `false`        | Enables the generation of CSS classes for the grid system (e.g., `.container`, `.row`, `.col-md-1`, etc.).                                                                                                                     |
+| `$enable-caret`                              | `true` (default) or `false`        | Enables pseudo element caret on `.dropdown-toggle`.                                                                                                                                                                            |
+| `$enable-pointer-cursor-for-buttons`         | `true` (default) or `false`        | Add "hand" cursor to non-disabled button elements.                                                                                                                                                                             |
+| `$enable-print-styles`                       | `true` (default) or `false`        | Enables styles for optimizing printing.                                                                                                                                                                                        |
+| `$enable-responsive-font-sizes`              | `true` or `false` (default)        | Enables [responsive font sizes]({{< docsref "/content/typography#responsive-font-sizes" >}}).                                                                                                                                  |
+| `$enable-validation-icons`                   | `true` (default) or `false`        | Enables `background-image` icons within textual inputs and some custom forms for validation states.                                                                                                                            |
+| `$enable-deprecation-messages`               | `true` or `false` (default)        | Set to `true` to show warnings when using any of the deprecated mixins and functions that are planned to be removed in `v5`.                                                                                                   |
 
 ## Color
 
@@ -333,10 +333,14 @@ Here's how you can use these in your Sass:
 
 ```scss
 // With variable
-.alpha { color: $purple; }
+.alpha {
+  color: $purple;
+}
 
 // From the Sass map with our `color()` function
-.beta { color: color("purple"); }
+.beta {
+  color: color("purple");
+}
 ```
 
 [Color utility classes]({{< docsref "/utilities/colors" >}}) are also available for setting `color` and `background-color`.
@@ -395,7 +399,7 @@ $colors: (
   "cyan": $cyan,
   "white": $white,
   "gray": $gray-600,
-  "gray-dark": $gray-800
+  "gray-dark": $gray-800,
 ) !default;
 ```
 
@@ -415,13 +419,17 @@ Here are two examples of how we loop over the `$theme-colors` map to generate mo
 // Generate alert modifier classes
 @each $color, $value in $theme-colors {
   .alert-#{$color} {
-    @include alert-variant(theme-color-level($color, -10), theme-color-level($color, -9), theme-color-level($color, 6));
+    @include alert-variant(
+      theme-color-level($color, -10),
+      theme-color-level($color, -9),
+      theme-color-level($color, 6)
+    );
   }
 }
 
 // Generate `.bg-*` color utilities
 @each $color, $value in $theme-colors {
-  @include bg-variant('.bg-#{$color}', $value);
+  @include bg-variant(".bg-#{$color}", $value);
 }
 ```
 
@@ -434,9 +442,15 @@ These Sass loops aren't limited to color maps, either. You can also generate res
   @include media-breakpoint-up($breakpoint) {
     $infix: breakpoint-infix($breakpoint, $grid-breakpoints);
 
-    .text#{$infix}-left   { text-align: left !important; }
-    .text#{$infix}-right  { text-align: right !important; }
-    .text#{$infix}-center { text-align: center !important; }
+    .text#{$infix}-left {
+      text-align: left !important;
+    }
+    .text#{$infix}-right {
+      text-align: right !important;
+    }
+    .text#{$infix}-center {
+      text-align: center !important;
+    }
   }
 }
 ```
@@ -486,7 +500,7 @@ Here's an example of **what's not supported:**
 
 ```css
 @media (min-width: var(--breakpoint-sm)) {
-  ...
+  ...;
 }
 ```
 
