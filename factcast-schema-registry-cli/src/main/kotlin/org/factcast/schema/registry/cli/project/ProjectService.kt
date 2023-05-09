@@ -15,8 +15,8 @@
  */
 package org.factcast.schema.registry.cli.project
 
-import org.factcast.schema.registry.cli.project.structure.ProjectFolder
 import java.nio.file.Path
+import org.factcast.schema.registry.cli.project.structure.ProjectFolder
 
 interface ProjectService {
     fun detectProject(basePath: Path, whiteList: Path? = null): ProjectFolder

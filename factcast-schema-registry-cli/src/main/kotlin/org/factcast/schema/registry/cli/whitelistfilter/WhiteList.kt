@@ -25,13 +25,13 @@ class WhiteList(val projectPath: Path, whiteList: List<String>) {
     private val whiteListMatchers = buildMatchers(whiteList)
 
     fun matches(path: Path): Boolean =
-        whiteListMatchers.any { it.matches(path) }
+            whiteListMatchers.any { it.matches(path) }
 
     private fun buildMatchers(whiteList: List<String>): List<PathMatcher> =
-        whiteList
-            .map(this::buildGlobPattern)
-            .map { FileSystems.getDefault().getPathMatcher(it) }
+            whiteList
+                    .map(this::buildGlobPattern)
+                    .map { FileSystems.getDefault().getPathMatcher(it) }
 
     private fun buildGlobPattern(whiteListEntry: String) =
-        "glob:" + projectPath.toString().replace(File.separator, "/") + whiteListEntry
+            "glob:" + projectPath.toString().replace(File.separator, "/") + whiteListEntry
 }

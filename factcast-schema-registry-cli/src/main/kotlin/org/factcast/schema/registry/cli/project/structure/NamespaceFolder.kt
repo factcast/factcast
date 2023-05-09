@@ -16,13 +16,13 @@
 package org.factcast.schema.registry.cli.project.structure
 
 import io.micronaut.core.annotation.Introspected
-import org.factcast.schema.registry.cli.domain.Namespace
-import org.factcast.schema.registry.cli.validation.NO_DESCRIPTION
-import org.factcast.schema.registry.cli.validation.NO_EVENTS
 import java.nio.file.Path
 import javax.validation.Valid
 import javax.validation.constraints.NotEmpty
 import javax.validation.constraints.NotNull
+import org.factcast.schema.registry.cli.domain.Namespace
+import org.factcast.schema.registry.cli.validation.NO_DESCRIPTION
+import org.factcast.schema.registry.cli.validation.NO_EVENTS
 
 @Introspected
 data class NamespaceFolder(

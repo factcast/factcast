@@ -13,13 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.schema.registry.cli.validation.validators
+package org.factcast.schema.registry.cli.utils
 
-import javax.validation.Constraint
-import org.factcast.schema.registry.cli.validation.TRANSFORMATION_VERSION_INVALID
+import org.factcast.schema.registry.cli.domain.Event
+import org.factcast.schema.registry.cli.domain.Namespace
+import org.factcast.schema.registry.cli.domain.Project
+import org.factcast.schema.registry.cli.domain.Transformation
 
-@Retention(AnnotationRetention.RUNTIME)
-@Constraint(validatedBy = [])
-annotation class ValidTransformationFolder(
-    val message: String = TRANSFORMATION_VERSION_INVALID
-)
+fun <T> Project.mapEventTransformations(fn: (namespace: Namespace, event: Event, transformation: Transformation) -> T) =
+    namespaces.flatMap { ns ->
+        ns.events.flatMap { event ->
+            event.transformations.map { transformation ->
+                fn(ns, event, transformation)
+            }
+        }
+    }
