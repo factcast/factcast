@@ -17,7 +17,7 @@ package org.factcast.schema.registry.cli.validation.validators.impl
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.google.common.annotations.VisibleForTesting
-import org.factcast.schema.registry.cli.domain.*
+import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.utils.SchemaService
 import org.factcast.schema.registry.cli.utils.mapEventTransformations
@@ -36,7 +36,6 @@ class TransformationValidationServiceImpl(
     private val transformationEvaluator: TransformationEvaluator
 ) : TransformationValidationService {
     override fun validateTransformations(project: Project): List<ProjectError> {
-
         val downCastErrors = calculateNoopDowncastErrors(project)
         val missingUpCastTransformations = calculateMissingUpcastTransformations(project)
         val validationErrors = calculateValidationErrors(project)
@@ -60,7 +59,6 @@ class TransformationValidationServiceImpl(
                 )
             )
         }
-
 
         val examples = fromVersion.examples
             .mapNotNull { fileSystemService.readToJsonNode(it.exampleFilePath) }

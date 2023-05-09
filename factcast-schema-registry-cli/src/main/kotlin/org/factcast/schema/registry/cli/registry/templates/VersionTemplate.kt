@@ -44,7 +44,7 @@ ${data.examples.joinToString("\n") {
 ```json
 ${it.json}
 ```
-""".trimIndent()
+        """.trimIndent()
     }}
     """.trimIndent()
 }

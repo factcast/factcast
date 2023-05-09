@@ -73,8 +73,8 @@ Two remarks:
 
 The `@SpringTransactional` annotation provides various configuration options:
 
-|   Parameter Name   |    Description     | Default Value |
-|--------------------|--------------------|---------------|
+| Parameter Name     | Description        | Default Value |
+| ------------------ | ------------------ | ------------- |
 | `bulkSize`         | bulk size          | 50            |
 | `timeoutInSeconds` | timeout in seconds | 30            |
 
@@ -83,8 +83,8 @@ The `@SpringTransactional` annotation provides various configuration options:
 The two possible abstract base classes, `AbstractSpringTxManagedProjection` or `AbstractSpringTxSubscribedProjection`,
 both require the following methods to be implemented:
 
-|                          Method Signature                          |                                               Description                                               |
-|--------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| Method Signature                                                   | Description                                                                                             |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
 | `public UUID factStreamPosition()   `                              | read the last position in the Fact stream from the database                                             |
 | `public void factStreamPosition(@NonNull UUID factStreamPosition)` | write the current position of the Fact stream to the database                                           |
 | `public WriterToken acquireWriteToken(@NonNull Duration maxWait)`  | coordinates write access to the projection, see [here]({{< ref "managed-projection.md" >}}) for details |
@@ -199,4 +199,3 @@ To study the full example see
 - [the UserNames projection using `@SpringTransactional`](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/proj/SpringJdbcTransactionalProjectionExample.java),
 - [example code using this projection](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/SpringJdbcTransactionalProjectionExampleITest.java) and
 - [the Factus integration tests](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/SpringTransactionalITest.java) including managed- and subscribed projections.
-

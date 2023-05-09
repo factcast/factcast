@@ -15,12 +15,12 @@
  */
 package org.factcast.schema.registry.cli.whitelistfilter
 
-import javax.inject.Singleton
 import org.factcast.schema.registry.cli.project.structure.EventFolder
 import org.factcast.schema.registry.cli.project.structure.EventVersionFolder
 import org.factcast.schema.registry.cli.project.structure.NamespaceFolder
 import org.factcast.schema.registry.cli.project.structure.ProjectFolder
 import org.factcast.schema.registry.cli.project.structure.TransformationFolder
+import javax.inject.Singleton
 
 // returns a filtered ProjectFolder.
 @Singleton
@@ -30,38 +30,38 @@ class WhiteListFilterServiceImpl : WhiteListFilterService {
         val whiteList = WhiteList(project.path, whiteListEntries)
 
         return project.namespaces
-                .filter { it.containedIn(whiteList) }
-                .map { filterNamespaceFolder(it, whiteList) }
-                .let { ProjectFolder(project.path, project.description, it) }
+            .filter { it.containedIn(whiteList) }
+            .map { filterNamespaceFolder(it, whiteList) }
+            .let { ProjectFolder(project.path, project.description, it) }
     }
 
     fun filterNamespaceFolder(ns: NamespaceFolder, whiteList: WhiteList) =
-            ns.eventFolders
-                    .filter { it.containedIn(whiteList) }
-                    .map { filterEventFolder(it, whiteList) }
-                    .let { NamespaceFolder(ns.path, it, ns.description) }
+        ns.eventFolders
+            .filter { it.containedIn(whiteList) }
+            .map { filterEventFolder(it, whiteList) }
+            .let { NamespaceFolder(ns.path, it, ns.description) }
 
     private fun filterEventFolder(event: EventFolder, whiteList: WhiteList): EventFolder {
         val filteredVersionsFolder = event.versionFolders
-                .filter { it.containedIn(whiteList) }
+            .filter { it.containedIn(whiteList) }
 
         val filteredTransformationFolders = event.transformationFolders
-                .filter {
-                    try {
-                        val (fromVersion, toVersion) = determineTransformationVersions(it)
-                        eventVersionsContainsVersion(filteredVersionsFolder, fromVersion) &&
-                                eventVersionsContainsVersion(filteredVersionsFolder, toVersion)
-                    } catch (e: IndexOutOfBoundsException) {
-                        true // on parse error, ignore transformation from white listing
-                    }
+            .filter {
+                try {
+                    val (fromVersion, toVersion) = determineTransformationVersions(it)
+                    eventVersionsContainsVersion(filteredVersionsFolder, fromVersion) &&
+                        eventVersionsContainsVersion(filteredVersionsFolder, toVersion)
+                } catch (e: IndexOutOfBoundsException) {
+                    true // on parse error, ignore transformation from white listing
                 }
+            }
 
         return EventFolder(event.path, filteredVersionsFolder, event.description, filteredTransformationFolders)
     }
 
     private fun determineTransformationVersions(it: TransformationFolder) =
-            it.path.fileName.toString().split("-")
+        it.path.fileName.toString().split("-")
 
     private fun eventVersionsContainsVersion(eventVersions: List<EventVersionFolder>, version: String): Boolean =
-            eventVersions.any { it.path.fileName.toString() == version }
+        eventVersions.any { it.path.fileName.toString() == version }
 }

@@ -17,12 +17,12 @@ package org.factcast.schema.registry.cli
 
 import io.micronaut.configuration.picocli.PicocliRunner
 import io.micronaut.core.annotation.Introspected
-import kotlin.system.exitProcess
 import org.factcast.schema.registry.cli.commands.Build
 import org.factcast.schema.registry.cli.commands.Validate
 import org.factcast.schema.registry.cli.utils.BANNER
 import picocli.CommandLine
 import picocli.CommandLine.Command
+import kotlin.system.exitProcess
 
 @Command(
     name = "fc-schema",

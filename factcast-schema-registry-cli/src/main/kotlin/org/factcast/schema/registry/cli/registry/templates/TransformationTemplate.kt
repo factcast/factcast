@@ -34,7 +34,7 @@ ${data.transformations.joinToString("\n") {
 ```javascript
 ${it.code}
 ```
-""".trimIndent()
+        """.trimIndent()
     }}
-""".trimIndent()
+    """.trimIndent()
 }

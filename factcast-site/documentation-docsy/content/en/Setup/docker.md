@@ -1,10 +1,9 @@
 ---
-
 title: "Docker"
 type: docs
 weight: 900
 description: Building a FactCast server for integration testing using docker
-----------------------------------------------------------------------------
+---
 
 ## Building
 

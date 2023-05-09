@@ -15,49 +15,16 @@
  */
 package org.factcast.schema.registry.cli.registry.templates
 
-import org.factcast.schema.registry.cli.registry.templates.data.EventTemplateData
+import org.factcast.schema.registry.cli.registry.templates.data.HomeTemplateData
 
-fun eventTemplate(data: EventTemplateData): String {
+fun homeTemplate(data: HomeTemplateData): String {
     return """
 +++
 draft = false
-title = "${data.type}"
-
-[menu.main]
-parent = "${data.namespace}"
-identifier = "${data.namespace}/${data.type}"
-
+title = "Home"
 +++
-${data.description}
-
-## Latest version (${data.latestVersion.version})
-
-### Schema
-```json
-${data.latestVersion.schema}
-```
-
-### Examples
-
-${data.latestVersion.examples.joinToString("\n") {
-        """
-#### ${it.name}
-```json
-${it.json}
-```
-
-""".trimIndent()
-    }}
-## Changelog
-
-${data.changelog.joinToString("\n") {
-        """
-### Version ${it.version}
-
-${it.description}
-""".trimIndent()
-    }}
-
-
-        """.trimIndent()
+${data.description ?: """
+    # Factcast Schema Registry
+    """.trimIndent()}
+    """.trimIndent()
 }

@@ -1,9 +1,8 @@
 ---
-
 title: "Fact Specification"
 weight: 20
 type: docs
-----------
+---
 
 When consumers subscribe to a Stream of Events, it has to express, which Events he wants to receive. The more precise this can be done, the less resources like bandwidth, CPU-Time etc. are wasted.
 
@@ -36,7 +35,7 @@ In order to do that, a list of FactSpec-Objects is transferred on subscription. 
 FactSpec-Objects must define a **ns** attribute. The rest is actually optional:
 
 | Attribute      | Type                               | Semantics                                        |
-|:---------------|:-----------------------------------|:-------------------------------------------------|
+| :------------- | :--------------------------------- | :----------------------------------------------- |
 | ns             | String                             | Namespace                                        |
 | type           | String                             | Type of Fact                                     |
 | aggId          | UUID                               | Aggregate-ID                                     |

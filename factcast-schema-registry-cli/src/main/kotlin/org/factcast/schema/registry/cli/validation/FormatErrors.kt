@@ -35,7 +35,7 @@ Example ${it.examplePath} failed validation:
 ${it.result.joinToString("\n") { result ->
                 "- ${result.asJson().get("instance").get("pointer").asText()}: ${result.message}"
             }}
-                """.trimIndent()
+            """.trimIndent()
         is ProjectError.NoUpcastForVersion ->
             "No upcast for ${it.type} from version ${it.fromVersion} to ${it.toVersion}"
         is ProjectError.NoDowncastForVersion ->

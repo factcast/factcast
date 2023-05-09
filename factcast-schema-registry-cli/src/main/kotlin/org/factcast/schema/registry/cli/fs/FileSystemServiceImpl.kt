@@ -16,6 +16,8 @@
 package org.factcast.schema.registry.cli.fs
 
 import com.github.fge.jackson.JsonLoader
+import org.apache.commons.io.FileUtils
+import org.factcast.schema.registry.cli.utils.filterJson
 import java.io.File
 import java.io.IOException
 import java.net.JarURLConnection
@@ -25,21 +27,19 @@ import java.nio.file.Files
 import java.nio.file.Path
 import javax.inject.Singleton
 import kotlin.streams.toList
-import org.apache.commons.io.FileUtils
-import org.factcast.schema.registry.cli.utils.filterJson
 
 @Singleton
 class FileSystemServiceImpl() : FileSystemService {
     override fun exists(path: Path) =
-            Files.exists(path)
+        Files.exists(path)
 
     override fun listDirectories(path: Path) =
-            list(path)
-                    .filter { x -> Files.isDirectory(x) }
+        list(path)
+            .filter { x -> Files.isDirectory(x) }
 
     override fun listFiles(path: Path) =
-            list(path)
-                    .filter { x -> Files.isRegularFile(x) }
+        list(path)
+            .filter { x -> Files.isRegularFile(x) }
 
     override fun ensureDirectories(outputPath: Path) {
         Files.createDirectories(outputPath)
@@ -50,7 +50,7 @@ class FileSystemServiceImpl() : FileSystemService {
     }
 
     override fun readToString(filePath: File): String =
-            FileUtils.readFileToString(filePath, Charset.defaultCharset())
+        FileUtils.readFileToString(filePath, Charset.defaultCharset())
 
     override fun readToStrings(filePath: File): List<String> =
         readToString(filePath).lines()
@@ -66,7 +66,7 @@ class FileSystemServiceImpl() : FileSystemService {
     }
 
     override fun deleteDirectory(path: Path) =
-            FileUtils.deleteDirectory(path.toFile())
+        FileUtils.deleteDirectory(path.toFile())
 
     override fun readToBytes(file: Path): ByteArray {
         return Files.readAllBytes(file)
@@ -74,20 +74,20 @@ class FileSystemServiceImpl() : FileSystemService {
 
     override fun copyFromClasspath(source: String, target: Path) {
         val url = javaClass.classLoader.getResource(source)
-                ?: throw IllegalArgumentException("didnt found '$source' on classpath")
+            ?: throw IllegalArgumentException("didnt found '$source' on classpath")
 
         val urlConnection: URLConnection = url.openConnection()
         val toString = url.toString()
         if (toString.startsWith("file:")) {
             FileUtils.copyDirectory(File(url.path), target.toFile())
         } else if (toString.startsWith("jar:")) {
-                copyJarResourcesRecursively(target.toFile(), urlConnection as JarURLConnection)
-            } else throw IllegalStateException("not supported")
+            copyJarResourcesRecursively(target.toFile(), urlConnection as JarURLConnection)
+        } else throw IllegalStateException("not supported")
     }
 
     override fun copyFilteredJson(from: File, to: File, removedSchemaProps: Set<String>) {
         val jsonNode = this.readToJsonNode(from.toPath())
-                ?: throw IllegalStateException("Loading JSON from $from failed")
+            ?: throw IllegalStateException("Loading JSON from $from failed")
 
         this.writeToFile(to, filterJson(jsonNode, removedSchemaProps).toString())
     }
@@ -97,14 +97,13 @@ class FileSystemServiceImpl() : FileSystemService {
     }
 
     private fun list(path: Path) =
-            Files.list(path).toList()
+        Files.list(path).toList()
 
     private fun copyJarResourcesRecursively(destination: File, jarConnection: JarURLConnection) {
         val jarFile = jarConnection.jarFile
 
         for (entry in jarFile.entries()) {
             if (entry.name.startsWith(jarConnection.entryName)) {
-
                 val fileName: String = entry.name.replace(jarConnection.entryName, "")
                 val file = File(destination, fileName)
 

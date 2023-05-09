@@ -15,11 +15,11 @@
  */
 package org.factcast.schema.registry.cli.commands
 
+import picocli.CommandLine.Command
+import picocli.CommandLine.Option
 import java.nio.file.Paths
 import javax.inject.Inject
 import kotlin.system.exitProcess
-import picocli.CommandLine.Command
-import picocli.CommandLine.Option
 
 @Command(
     name = "validate",
@@ -42,7 +42,8 @@ class Validate : Runnable {
 
         val exitCode = commandService.validate(sourceRoot, whiteListPath)
 
-        if (exitCode != 0)
-        exitProcess(exitCode)
+        if (exitCode != 0) {
+            exitProcess(exitCode)
+        }
     }
 }

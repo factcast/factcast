@@ -1,9 +1,8 @@
 ---
-
 title: "gRPC BasicAuth"
 type: docs
 weight: 100
------------
+---
 
 ## Access control via Basic Auth
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2023 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.schema.registry.cli.registry.templates
+package org.factcast.schema.registry.cli
 
-import org.factcast.schema.registry.cli.registry.templates.data.HomeTemplateData
+import java.nio.file.Path
+import java.nio.file.Paths
 
-fun homeTemplate(data: HomeTemplateData): String {
-    return """
-+++
-draft = false
-title = "Home"
-+++
-${data.description ?: """
-    # Factcast Schema Registry
-""".trimIndent()}
-    """.trimIndent()
-}
+fun fixture(path: String): Path =
+    Paths.get("src", "test", "resources", "fixtures", path)

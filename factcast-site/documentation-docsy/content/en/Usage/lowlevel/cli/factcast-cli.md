@@ -76,4 +76,3 @@ Usage: fc-cli [options] [command] [command options]
       Usage: serialOf id
 
 ```
-

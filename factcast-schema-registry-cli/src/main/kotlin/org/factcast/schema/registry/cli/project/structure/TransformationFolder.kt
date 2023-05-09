@@ -16,11 +16,11 @@
 package org.factcast.schema.registry.cli.project.structure
 
 import io.micronaut.core.annotation.Introspected
-import java.nio.file.Path
-import javax.validation.constraints.NotNull
 import org.factcast.schema.registry.cli.domain.Transformation
 import org.factcast.schema.registry.cli.validation.NO_TRANSFORMATION_FILE
 import org.factcast.schema.registry.cli.validation.validators.ValidTransformationFolder
+import java.nio.file.Path
+import javax.validation.constraints.NotNull
 
 @Introspected
 data class TransformationFolder(

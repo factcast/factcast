@@ -16,8 +16,8 @@
 package org.factcast.schema.registry.cli.project.structure
 
 import io.micronaut.core.annotation.Introspected
-import java.nio.file.Path
 import org.factcast.schema.registry.cli.whitelistfilter.WhiteList
+import java.nio.file.Path
 
 @Introspected
 interface Folder {

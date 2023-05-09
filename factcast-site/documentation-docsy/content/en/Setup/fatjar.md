@@ -1,9 +1,8 @@
 ---
-
 title: "fat-jar"
 type: docs
 weight: 110
------------
+---
 
 ## Building
 

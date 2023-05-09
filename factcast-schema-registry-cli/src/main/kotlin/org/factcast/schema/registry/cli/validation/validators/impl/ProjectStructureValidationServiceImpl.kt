@@ -20,7 +20,16 @@ import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.project.structure.Folder
 import org.factcast.schema.registry.cli.project.structure.ProjectFolder
 import org.factcast.schema.registry.cli.project.structure.toProject
-import org.factcast.schema.registry.cli.validation.*
+import org.factcast.schema.registry.cli.validation.NO_DESCRIPTION
+import org.factcast.schema.registry.cli.validation.NO_EVENTS
+import org.factcast.schema.registry.cli.validation.NO_EVENT_VERSIONS
+import org.factcast.schema.registry.cli.validation.NO_EXAMPLES
+import org.factcast.schema.registry.cli.validation.NO_NAMESPACES
+import org.factcast.schema.registry.cli.validation.NO_SCHEMA
+import org.factcast.schema.registry.cli.validation.NO_TRANSFORMATION_FILE
+import org.factcast.schema.registry.cli.validation.ProjectError
+import org.factcast.schema.registry.cli.validation.TRANSFORMATION_VERSION_INVALID
+import org.factcast.schema.registry.cli.validation.VERSION_INVALID
 import org.factcast.schema.registry.cli.validation.validators.ProjectStructureValidationService
 import javax.inject.Singleton
 import javax.validation.Validator
@@ -34,30 +43,38 @@ class ProjectStructureValidationServiceImpl(private val validator: Validator) : 
                 when (it.messageTemplate) {
                     NO_DESCRIPTION ->
                         ProjectError.NoDescription(it.leafBean.toFolder().path)
+
                     NO_EVENT_VERSIONS ->
                         ProjectError.NoEventVersions(it.leafBean.toFolder().path)
+
                     NO_SCHEMA ->
                         ProjectError.NoSchema(it.leafBean.toFolder().path)
+
                     NO_EXAMPLES ->
                         ProjectError.NoExamples(it.leafBean.toFolder().path)
+
                     NO_EVENTS ->
                         ProjectError.NoEvents(it.leafBean.toFolder().path)
+
                     NO_NAMESPACES ->
                         ProjectError.NoNamespaces(it.leafBean.toFolder().path)
+
                     NO_TRANSFORMATION_FILE ->
                         ProjectError.NoSuchFile(it.leafBean.toFolder().path)
+
                     TRANSFORMATION_VERSION_INVALID, VERSION_INVALID -> {
                         val folder = it.leafBean.toFolder()
                         ProjectError.WrongVersionFormat(folder.path.fileName.toString(), folder.path)
                     }
+
                     else ->
                         throw IllegalArgumentException("Unknown error type: ${it.messageTemplate}")
                 }
             }
 
-        return if (errors.isNotEmpty())
+        return if (errors.isNotEmpty()) {
             Either.Left(errors)
-        else {
+        } else {
             Either.Right(
                 projectFolder.toProject()
             )
