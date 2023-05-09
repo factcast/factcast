@@ -1,16 +1,17 @@
 ---
+
 title: "Handler Parameters"
 type: docs
 weigth: 1020
----
+------------
 
 Inside projections, Factus uses [methods annotated with `@Handler` or `@HandlerFor`]({{< ref "projections.md#projections-in-general" >}})
 to process events. These methods allow various parameters, also in combination, which can serve as "input" during event handling.
 
 ## Common Handler Parameters
 
-| Parameter Type          | Description                                                                                                                    | valid on @Handler | valid on @HandlerFor |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------- | -------------------- |
+|     Parameter Type      |                                                          Description                                                           | valid on @Handler | valid on @HandlerFor |
+|-------------------------|--------------------------------------------------------------------------------------------------------------------------------|-------------------|----------------------|
 | `Fact`                  | Provides access to all [Fact]({{< ref "fact.md">}}) details including header (JSON) and payload (JSON)                         | yes               | yes                  |
 | `FactHeader`            | the [Fact header]({{< ref "fact.md#the-header">}}). Provides access to event namespace, type, version, meta entries and others | yes               | yes                  |
 | `UUID`                  | the [Fact ID of the Fact header]({{< ref "fact.md#the-header">}})                                                              | yes               | yes                  |
@@ -21,14 +22,14 @@ to process events. These methods allow various parameters, also in combination, 
 Additional to these common parameters, ProjectionLenses can add parameters to be used by handler methods.
 For instance handler methods of a @RedisBatched projection should use:
 
-| Parameter Type | Description                                                                    | valid on @Handler | valid on @HandlerFor |
-| -------------- | ------------------------------------------------------------------------------ | ----------------- | -------------------- |
+| Parameter Type |                                  Description                                   | valid on @Handler | valid on @HandlerFor |
+|----------------|--------------------------------------------------------------------------------|-------------------|----------------------|
 | `RBatch`       | needed in a [Redis batched projection]({{< ref "redis-batch-projection.md">}}) | yes               | yes                  |
 
 similar to @RedisTransactional projections that should use:
 
-| Parameter Type | Description                                                                                   | valid on @Handler | valid on @HandlerFor |
-| -------------- | --------------------------------------------------------------------------------------------- | ----------------- | -------------------- |
+| Parameter Type |                                          Description                                          | valid on @Handler | valid on @HandlerFor |
+|----------------|-----------------------------------------------------------------------------------------------|-------------------|----------------------|
 | `RTransaction` | needed in a [Redis transactional projection]({{< ref "redis-transactional-projections.md">}}) | yes               | yes                  |
 
 ## Examples

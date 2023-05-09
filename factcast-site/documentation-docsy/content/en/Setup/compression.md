@@ -1,9 +1,10 @@
 ---
+
 title: "Compression"
 type: docs
 weight: 155
 description: Selecting a compressor
----
+-----------------------------------
 
 ## Why ?
 

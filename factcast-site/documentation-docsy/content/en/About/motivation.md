@@ -15,8 +15,8 @@ Amongst others in no particular order:
 - [Akka persistence](http://doc.akka.io/docs/akka/current/scala/persistence.html)
 - [Axon Framework – Java Framework for scalable and high-performance applications.](http://www.axonframework.org/)
 - [Kafka – for building real-time data pipelines and streaming apps](https://kafka.apache.org/)
-- [The Eventuate™ Platform ](http://eventuate.io/)
-- [event-store-commons – a common event store Java interface ](https://github.com/fuinorg/event-store-commons)
+- [The Eventuate™ Platform](http://eventuate.io/)
+- [event-store-commons – a common event store Java interface](https://github.com/fuinorg/event-store-commons)
 - [vlingo](https://github.com/vlingo)
 
 All of these have a slightly different focus, but all of them deal with persisting, streaming and sometimes processing of Events.
@@ -36,3 +36,4 @@ Oh and one thing: Whatever solution we choose to store and stream forward needs 
 While all of them are most probably great, when it comes to clustering, backup, data-/application-management and fail-over, none of these are trivial problems and most of them bring their own (certainly great) solution.
 
 ##### Gee, i wish there was a solution, that is flexible, platform neutral and could be operated at scale with **what we already know**.
+

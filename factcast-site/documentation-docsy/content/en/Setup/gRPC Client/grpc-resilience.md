@@ -1,8 +1,9 @@
 ---
+
 title: "gRPC Resilience"
 type: docs
 weight: 210
----
+-----------
 
 ## Resilience approach
 

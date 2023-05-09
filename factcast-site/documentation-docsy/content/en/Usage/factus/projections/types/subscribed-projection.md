@@ -5,7 +5,7 @@ type = "docs"
 
 +++
 
-![](../ph_s.png#center)
+![](../ph_s.png)
 
 The `SnapshotProjection` and `ManagedProjection` have one thing in common:
 The application actively controls the frequency and time of updates by actively calling a method. While this gives the
