@@ -68,7 +68,7 @@ class PgSubscriptionFactory implements AutoCloseable {
       PgCatchupFactory catchupFactory,
       FastForwardTarget target,
       PgMetrics metrics,
-      PgBlacklist blacklist,
+      Blacklist blacklist,
       FactTransformerService transformerService,
       JSEngineFactory ef) {
     this.jdbcTemplate = jdbcTemplate;
