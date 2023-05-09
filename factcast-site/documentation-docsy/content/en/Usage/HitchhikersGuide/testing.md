@@ -1,9 +1,8 @@
 ---
-
 title: "Hitchhiker's Guide To Testing"
 weight: 10
 type: docs
-----------
+---
 
 {{% alert title="Preface" %}}
 

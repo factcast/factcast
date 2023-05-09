@@ -4,7 +4,7 @@ weight = 300
 type = "docs"
 +++
 
-![](../ph_m.png)
+![](../ph_m.png#center)
 
 As we have learnt, SnapshotProjections are created from scratch or from Snapshots, whenever you fetch them.
 If you look at it from another angle, you could call them unmanaged in a sense, that the application has no
