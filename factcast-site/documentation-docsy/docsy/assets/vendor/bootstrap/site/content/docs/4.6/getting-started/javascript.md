@@ -50,9 +50,9 @@ All infinitive events provide [`preventDefault()`](https://developer.mozilla.org
 
 ```js
 $("#myModal").on("show.bs.modal", function (event) {
-  if (!data) {
-    return event.preventDefault(); // stops modal from being shown
-  }
+	if (!data) {
+		return event.preventDefault(); // stops modal from being shown
+	}
 });
 ```
 
@@ -82,7 +82,7 @@ In order to execute an action once the transition is complete, you can listen to
 
 ```js
 $("#myCollapse").on("shown.bs.collapse", function (event) {
-  // Action to execute once the collapsible area is expanded
+	// Action to execute once the collapsible area is expanded
 });
 ```
 
@@ -90,7 +90,7 @@ In addition a method call on a **transitioning component will be ignored**.
 
 ```js
 $("#myCarousel").on("slid.bs.carousel", function (event) {
-  $("#myCarousel").carousel("2"); // Will slide to the slide 2 as soon as the transition to slide 1 is finished
+	$("#myCarousel").carousel("2"); // Will slide to the slide 2 as soon as the transition to slide 1 is finished
 });
 
 $("#myCarousel").carousel("1"); // Will start sliding to the slide 1 and returns to the caller
@@ -149,37 +149,37 @@ The default `whiteList` value is the following:
 ```js
 var ARIA_ATTRIBUTE_PATTERN = /^aria-[\w-]*$/i;
 var DefaultWhitelist = {
-  // Global attributes allowed on any supplied element below.
-  "*": ["class", "dir", "id", "lang", "role", ARIA_ATTRIBUTE_PATTERN],
-  a: ["target", "href", "title", "rel"],
-  area: [],
-  b: [],
-  br: [],
-  col: [],
-  code: [],
-  div: [],
-  em: [],
-  hr: [],
-  h1: [],
-  h2: [],
-  h3: [],
-  h4: [],
-  h5: [],
-  h6: [],
-  i: [],
-  img: ["src", "srcset", "alt", "title", "width", "height"],
-  li: [],
-  ol: [],
-  p: [],
-  pre: [],
-  s: [],
-  small: [],
-  span: [],
-  sub: [],
-  sup: [],
-  strong: [],
-  u: [],
-  ul: [],
+	// Global attributes allowed on any supplied element below.
+	"*": ["class", "dir", "id", "lang", "role", ARIA_ATTRIBUTE_PATTERN],
+	a: ["target", "href", "title", "rel"],
+	area: [],
+	b: [],
+	br: [],
+	col: [],
+	code: [],
+	div: [],
+	em: [],
+	hr: [],
+	h1: [],
+	h2: [],
+	h3: [],
+	h4: [],
+	h5: [],
+	h6: [],
+	i: [],
+	img: ["src", "srcset", "alt", "title", "width", "height"],
+	li: [],
+	ol: [],
+	p: [],
+	pre: [],
+	s: [],
+	small: [],
+	span: [],
+	sub: [],
+	sup: [],
+	strong: [],
+	u: [],
+	ul: [],
 };
 ```
 
@@ -204,8 +204,8 @@ If you want to bypass our sanitizer because you prefer to use a dedicated librar
 
 ```js
 $("#yourTooltip").tooltip({
-  sanitizeFn: function (content) {
-    return DOMPurify.sanitize(content);
-  },
+	sanitizeFn: function (content) {
+		return DOMPurify.sanitize(content);
+	},
 });
 ```

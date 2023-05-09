@@ -14,16 +14,16 @@ Easily clear `float`s by adding `.clearfix` **to the parent element**. Can also 
 ```scss
 // Mixin itself
 @mixin clearfix() {
-  &::after {
-    display: block;
-    content: "";
-    clear: both;
-  }
+	&::after {
+		display: block;
+		content: "";
+		clear: both;
+	}
 }
 
 // Usage as a mixin
 .element {
-  @include clearfix;
+	@include clearfix;
 }
 ```
 

@@ -122,8 +122,8 @@ To modify an existing color in our `$theme-colors` map, add the following to you
 
 ```scss
 $theme-colors: (
-  "primary": #0074d9,
-  "danger": #ff4136,
+	"primary": #0074d9,
+	"danger": #ff4136,
 );
 ```
 
@@ -133,7 +133,7 @@ To add a new color to `$theme-colors`, add the new key and value:
 
 ```scss
 $theme-colors: (
-  "custom-color": #900,
+	"custom-color": #900,
 );
 ```
 
@@ -168,15 +168,15 @@ Bootstrap utilizes several Sass functions, but only a subset are applicable to g
 
 ```scss
 @function color($key: "blue") {
-  @return map-get($colors, $key);
+	@return map-get($colors, $key);
 }
 
 @function theme-color($key: "primary") {
-  @return map-get($theme-colors, $key);
+	@return map-get($theme-colors, $key);
 }
 
 @function gray($key: "100") {
-  @return map-get($grays, $key);
+	@return map-get($grays, $key);
 }
 ```
 
@@ -184,8 +184,8 @@ These allow you to pick one color from a Sass map much like how you'd use a colo
 
 ```scss
 .custom-element {
-  color: gray("100");
-  background-color: theme-color("dark");
+	color: gray("100");
+	background-color: theme-color("dark");
 }
 ```
 
@@ -193,11 +193,11 @@ We also have another function for getting a particular _level_ of color from the
 
 ```scss
 @function theme-color-level($color-name: "primary", $level: 0) {
-  $color: theme-color($color-name);
-  $color-base: if($level > 0, #000, #fff);
-  $level: abs($level);
+	$color: theme-color($color-name);
+	$color-base: if($level > 0, #000, #fff);
+	$level: abs($level);
 
-  @return mix($color-base, $color, $level * $theme-color-interval);
+	@return mix($color-base, $color, $level * $theme-color-interval);
 }
 ```
 
@@ -205,7 +205,7 @@ In practice, you'd call the function and pass in two parameters: the name of the
 
 ```scss
 .custom-element {
-  color: theme-color-level(primary, -10);
+	color: theme-color-level(primary, -10);
 }
 ```
 
@@ -219,9 +219,9 @@ For example, to generate color swatches from our `$theme-colors` map:
 
 ```scss
 @each $color, $value in $theme-colors {
-  .swatch-#{$color} {
-    color: color-yiq($value);
-  }
+	.swatch-#{$color} {
+		color: color-yiq($value);
+	}
 }
 ```
 
@@ -229,7 +229,7 @@ It can also be used for one-off contrast needs:
 
 ```scss
 .custom-element {
-  color: color-yiq(#000); // returns `color: #fff`
+	color: color-yiq(#000); // returns `color: #fff`
 }
 ```
 
@@ -237,7 +237,7 @@ You can also specify a base color with our color map functions:
 
 ```scss
 .custom-element {
-  color: color-yiq(theme-color("dark")); // returns `color: #fff`
+	color: color-yiq(theme-color("dark")); // returns `color: #fff`
 }
 ```
 
@@ -256,13 +256,13 @@ $border-radius: 0.25rem;
 $border-width: 1px;
 
 .element {
-  // Output calc(.25rem - 1px) is valid
-  border-radius: calc($border-radius - $border-width);
+	// Output calc(.25rem - 1px) is valid
+	border-radius: calc($border-radius - $border-width);
 }
 
 .element {
-  // Output the same calc(.25rem - 1px) as above
-  border-radius: subtract($border-radius, $border-width);
+	// Output the same calc(.25rem - 1px) as above
+	border-radius: subtract($border-radius, $border-width);
 }
 ```
 
@@ -273,13 +273,13 @@ $border-radius: 0.25rem;
 $border-width: 0;
 
 .element {
-  // Output calc(.25rem - 0) is invalid
-  border-radius: calc($border-radius - $border-width);
+	// Output calc(.25rem - 0) is invalid
+	border-radius: calc($border-radius - $border-width);
 }
 
 .element {
-  // Output .25rem
-  border-radius: subtract($border-radius, $border-width);
+	// Output .25rem
+	border-radius: subtract($border-radius, $border-width);
 }
 ```
 
@@ -334,12 +334,12 @@ Here's how you can use these in your Sass:
 ```scss
 // With variable
 .alpha {
-  color: $purple;
+	color: $purple;
 }
 
 // From the Sass map with our `color()` function
 .beta {
-  color: color("purple");
+	color: color("purple");
 }
 ```
 
@@ -387,19 +387,19 @@ Within `scss/_variables.scss`, you'll find Bootstrap's color variables and Sass 
 
 ```scss
 $colors: (
-  "blue": $blue,
-  "indigo": $indigo,
-  "purple": $purple,
-  "pink": $pink,
-  "red": $red,
-  "orange": $orange,
-  "yellow": $yellow,
-  "green": $green,
-  "teal": $teal,
-  "cyan": $cyan,
-  "white": $white,
-  "gray": $gray-600,
-  "gray-dark": $gray-800,
+	"blue": $blue,
+	"indigo": $indigo,
+	"purple": $purple,
+	"pink": $pink,
+	"red": $red,
+	"orange": $orange,
+	"yellow": $yellow,
+	"green": $green,
+	"teal": $teal,
+	"cyan": $cyan,
+	"white": $white,
+	"gray": $gray-600,
+	"gray-dark": $gray-800,
 ) !default;
 ```
 
@@ -418,18 +418,18 @@ Here are two examples of how we loop over the `$theme-colors` map to generate mo
 ```scss
 // Generate alert modifier classes
 @each $color, $value in $theme-colors {
-  .alert-#{$color} {
-    @include alert-variant(
-      theme-color-level($color, -10),
-      theme-color-level($color, -9),
-      theme-color-level($color, 6)
-    );
-  }
+	.alert-#{$color} {
+		@include alert-variant(
+			theme-color-level($color, -10),
+			theme-color-level($color, -9),
+			theme-color-level($color, 6)
+		);
+	}
 }
 
 // Generate `.bg-*` color utilities
 @each $color, $value in $theme-colors {
-  @include bg-variant(".bg-#{$color}", $value);
+	@include bg-variant(".bg-#{$color}", $value);
 }
 ```
 
@@ -439,19 +439,19 @@ These Sass loops aren't limited to color maps, either. You can also generate res
 
 ```scss
 @each $breakpoint in map-keys($grid-breakpoints) {
-  @include media-breakpoint-up($breakpoint) {
-    $infix: breakpoint-infix($breakpoint, $grid-breakpoints);
+	@include media-breakpoint-up($breakpoint) {
+		$infix: breakpoint-infix($breakpoint, $grid-breakpoints);
 
-    .text#{$infix}-left {
-      text-align: left !important;
-    }
-    .text#{$infix}-right {
-      text-align: right !important;
-    }
-    .text#{$infix}-center {
-      text-align: center !important;
-    }
-  }
+		.text#{$infix}-left {
+			text-align: left !important;
+		}
+		.text#{$infix}-right {
+			text-align: right !important;
+		}
+		.text#{$infix}-center {
+			text-align: center !important;
+		}
+	}
 }
 ```
 
@@ -485,10 +485,10 @@ CSS variables offer similar flexibility to Sass's variables, but without the nee
 
 ```css
 body {
-  font: 1rem/1.5 var(--font-family-sans-serif);
+	font: 1rem/1.5 var(--font-family-sans-serif);
 }
 a {
-  color: var(--blue);
+	color: var(--blue);
 }
 ```
 
@@ -500,7 +500,7 @@ Here's an example of **what's not supported:**
 
 ```css
 @media (min-width: var(--breakpoint-sm)) {
-  ...;
+	...;
 }
 ```
 
@@ -508,8 +508,8 @@ And here's an example of **what is supported:**
 
 ```css
 @media (min-width: 768px) {
-  .custom-element {
-    color: var(--primary);
-  }
+	.custom-element {
+		color: var(--primary);
+	}
 }
 ```

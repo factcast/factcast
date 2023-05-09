@@ -17,18 +17,18 @@ Apply `.visible` or `.invisible` as needed.
 ```scss
 // Class
 .visible {
-  visibility: visible !important;
+	visibility: visible !important;
 }
 .invisible {
-  visibility: hidden !important;
+	visibility: hidden !important;
 }
 
 // Usage as a mixin
 // Warning: The `invisible()` mixin has been deprecated as of v4.3.0. It will be removed entirely in v5.
 .element {
-  @include invisible(visible);
+	@include invisible(visible);
 }
 .element {
-  @include invisible(hidden);
+	@include invisible(hidden);
 }
 ```

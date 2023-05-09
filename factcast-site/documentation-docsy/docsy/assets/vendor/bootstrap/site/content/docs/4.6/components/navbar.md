@@ -387,15 +387,15 @@ Theming the navbar has never been easier thanks to the combination of theming cl
 
 ```html
 <nav class="navbar navbar-dark bg-dark">
-  <!-- Navbar content -->
+	<!-- Navbar content -->
 </nav>
 
 <nav class="navbar navbar-dark bg-primary">
-  <!-- Navbar content -->
+	<!-- Navbar content -->
 </nav>
 
 <nav class="navbar navbar-light" style="background-color: #e3f2fd;">
-  <!-- Navbar content -->
+	<!-- Navbar content -->
 </nav>
 ```
 

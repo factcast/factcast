@@ -64,51 +64,51 @@ The contents of factcast-access.json might look like:
 
 ```json
 {
-  "accounts": [
-    {
-      "id": "brain",
-      "roles": ["anything"]
-    },
-    {
-      "id": "pinky",
-      "roles": ["anything", "limited"]
-    },
-    {
-      "id": "snowball",
-      "roles": ["readOnlyWithoutAudit"]
-    }
-  ],
-  "roles": [
-    {
-      "id": "anything",
-      "read": {
-        "include": ["*"]
-      },
-      "write": {
-        "include": ["*"]
-      }
-    },
-    {
-      "id": "limited",
-      "read": {
-        "include": ["*"],
-        "exclude": ["secret"]
-      },
-      "write": {
-        "exclude": ["audit*"]
-      }
-    },
-    {
-      "id": "readOnlyWithoutAudit",
-      "read": {
-        "include": ["*"],
-        "exclude": ["audit*", "secret"]
-      },
-      "write": {
-        "exclude": ["*"]
-      }
-    }
-  ]
+	"accounts": [
+		{
+			"id": "brain",
+			"roles": ["anything"]
+		},
+		{
+			"id": "pinky",
+			"roles": ["anything", "limited"]
+		},
+		{
+			"id": "snowball",
+			"roles": ["readOnlyWithoutAudit"]
+		}
+	],
+	"roles": [
+		{
+			"id": "anything",
+			"read": {
+				"include": ["*"]
+			},
+			"write": {
+				"include": ["*"]
+			}
+		},
+		{
+			"id": "limited",
+			"read": {
+				"include": ["*"],
+				"exclude": ["secret"]
+			},
+			"write": {
+				"exclude": ["audit*"]
+			}
+		},
+		{
+			"id": "readOnlyWithoutAudit",
+			"read": {
+				"include": ["*"],
+				"exclude": ["audit*", "secret"]
+			},
+			"write": {
+				"exclude": ["*"]
+			}
+		}
+	]
 }
 ```
 

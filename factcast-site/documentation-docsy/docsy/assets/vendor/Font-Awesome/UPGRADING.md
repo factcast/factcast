@@ -567,13 +567,13 @@ If you've previously configured tree shaking by modifying your webpack or rollup
 
 ```javascript
 module.exports = {
-  // ...
-  resolve: {
-    alias: {
-      "@fortawesome/fontawesome-free-solid$":
-        "@fortawesome/fontawesome-free-solid/shakable.es.js",
-    },
-  },
+	// ...
+	resolve: {
+		alias: {
+			"@fortawesome/fontawesome-free-solid$":
+				"@fortawesome/fontawesome-free-solid/shakable.es.js",
+		},
+	},
 };
 ```
 
@@ -581,13 +581,13 @@ module.exports = {
 const alias = require("rollup-plugin-alias");
 
 rollup({
-  // ...
-  plugins: [
-    alias({
-      "@fortawesome/fontawesome-free-solid":
-        "node_modules/@fortawesome/fontawesome-free-solid/shakable.es.js",
-    }),
-  ],
+	// ...
+	plugins: [
+		alias({
+			"@fortawesome/fontawesome-free-solid":
+				"node_modules/@fortawesome/fontawesome-free-solid/shakable.es.js",
+		}),
+	],
 });
 ```
 

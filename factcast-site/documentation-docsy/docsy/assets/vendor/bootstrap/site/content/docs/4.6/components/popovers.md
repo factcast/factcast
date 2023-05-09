@@ -34,7 +34,7 @@ One way to initialize all popovers on a page would be to select them by their `d
 
 ```js
 $(function () {
-  $('[data-toggle="popover"]').popover();
+	$('[data-toggle="popover"]').popover();
 });
 ```
 
@@ -44,9 +44,9 @@ When you have some styles on a parent element that interfere with a popover, you
 
 ```js
 $(function () {
-  $(".example-popover").popover({
-    container: "body",
-  });
+	$(".example-popover").popover({
+		container: "body",
+	});
 });
 ```
 
@@ -92,7 +92,7 @@ For proper cross-browser and cross-platform behavior, you must use the `<a>` tag
 
 ```js
 $(".popover-dismiss").popover({
-  trigger: "focus",
+	trigger: "focus",
 });
 ```
 
@@ -126,7 +126,7 @@ Suggested fix:
 
 ```js
 Popper.Defaults.modifiers.computeStyle.gpuAcceleration = !(
-  window.devicePixelRatio < 1.5 && /Win/.test(navigator.platform)
+	window.devicePixelRatio < 1.5 && /Win/.test(navigator.platform)
 );
 ```
 
@@ -413,6 +413,6 @@ $("#element").popover("update");
 
 ```js
 $("#myPopover").on("hidden.bs.popover", function () {
-  // do something...
+	// do something...
 });
 ```

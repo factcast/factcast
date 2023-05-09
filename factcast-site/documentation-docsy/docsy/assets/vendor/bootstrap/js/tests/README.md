@@ -35,40 +35,40 @@ Currently we're aiming for at least 80% test coverage for our code. To ensure yo
 ```js
 // Synchronous test
 QUnit.test("should describe the unit being tested", function (assert) {
-  assert.expect(1);
-  var templateHTML =
-    '<div class="alert alert-danger fade show">' +
-    '<a class="close" href="#" data-dismiss="alert">×</a>' +
-    "<p><strong>Template necessary for the test.</p>" +
-    "</div>";
-  var $alert = $(templateHTML).appendTo("#qunit-fixture").bootstrapAlert();
+	assert.expect(1);
+	var templateHTML =
+		'<div class="alert alert-danger fade show">' +
+		'<a class="close" href="#" data-dismiss="alert">×</a>' +
+		"<p><strong>Template necessary for the test.</p>" +
+		"</div>";
+	var $alert = $(templateHTML).appendTo("#qunit-fixture").bootstrapAlert();
 
-  $alert.find(".close").trigger("click");
+	$alert.find(".close").trigger("click");
 
-  // Make assertion
-  assert.strictEqual(
-    $alert.hasClass("show"),
-    false,
-    "remove .show class on .close click"
-  );
+	// Make assertion
+	assert.strictEqual(
+		$alert.hasClass("show"),
+		false,
+		"remove .show class on .close click"
+	);
 });
 
 // Asynchronous test
 QUnit.test("should describe the unit being tested", function (assert) {
-  assert.expect(2);
-  var done = assert.async();
+	assert.expect(2);
+	var done = assert.async();
 
-  var $tooltip = $('<div title="tooltip title"></div>').bootstrapTooltip();
-  var tooltipInstance = $tooltip.data("bs.tooltip");
-  var spyShow = sinon.spy(tooltipInstance, "show");
+	var $tooltip = $('<div title="tooltip title"></div>').bootstrapTooltip();
+	var tooltipInstance = $tooltip.data("bs.tooltip");
+	var spyShow = sinon.spy(tooltipInstance, "show");
 
-  $tooltip
-    .appendTo("#qunit-fixture")
-    .on("shown.bs.tooltip", function () {
-      assert.ok(true, '"shown" event was fired after calling "show"');
-      assert.ok(spyShow.called, "show called");
-      done();
-    })
-    .bootstrapTooltip("show");
+	$tooltip
+		.appendTo("#qunit-fixture")
+		.on("shown.bs.tooltip", function () {
+			assert.ok(true, '"shown" event was fired after calling "show"');
+			assert.ok(spyShow.called, "show called");
+			done();
+		})
+		.bootstrapTooltip("show");
 });
 ```

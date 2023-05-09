@@ -55,7 +55,7 @@ If you are using the `<picture>` element to specify multiple `<source>` elements
 
 ```html
 ​<picture>
-  <source srcset="..." type="image/svg+xml" />
-  <img src="..." class="img-fluid img-thumbnail" alt="..." />
+	<source srcset="..." type="image/svg+xml" />
+	<img src="..." class="img-fluid img-thumbnail" alt="..." />
 </picture>
 ```

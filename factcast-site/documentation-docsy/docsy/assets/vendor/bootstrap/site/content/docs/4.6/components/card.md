@@ -854,11 +854,11 @@ Card columns can also be extended and customized with some additional code. Show
 
 ```scss
 .card-columns {
-  @include media-breakpoint-only(lg) {
-    column-count: 4;
-  }
-  @include media-breakpoint-only(xl) {
-    column-count: 5;
-  }
+	@include media-breakpoint-only(lg) {
+		column-count: 4;
+	}
+	@include media-breakpoint-only(xl) {
+		column-count: 5;
+	}
 }
 ```

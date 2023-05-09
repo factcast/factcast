@@ -49,20 +49,20 @@ Here are some representative examples of these classes:
 
 ```scss
 .mt-0 {
-  margin-top: 0 !important;
+	margin-top: 0 !important;
 }
 
 .ml-1 {
-  margin-left: ($spacer * 0.25) !important;
+	margin-left: ($spacer * 0.25) !important;
 }
 
 .px-2 {
-  padding-left: ($spacer * 0.5) !important;
-  padding-right: ($spacer * 0.5) !important;
+	padding-left: ($spacer * 0.5) !important;
+	padding-right: ($spacer * 0.5) !important;
 }
 
 .p-3 {
-  padding: $spacer !important;
+	padding: $spacer !important;
 }
 ```
 
@@ -88,7 +88,7 @@ The syntax is nearly the same as the default, positive margin utilities, but wit
 
 ```scss
 .mt-n1 {
-  margin-top: -0.25rem !important;
+	margin-top: -0.25rem !important;
 }
 ```
 

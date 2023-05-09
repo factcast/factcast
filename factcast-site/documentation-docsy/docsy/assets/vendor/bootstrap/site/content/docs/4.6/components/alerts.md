@@ -91,7 +91,7 @@ Or with `data` attributes on a button **within the alert**, as demonstrated abov
 
 ```html
 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-  <span aria-hidden="true">&times;</span>
+	<span aria-hidden="true">&times;</span>
 </button>
 ```
 
@@ -120,6 +120,6 @@ Bootstrap's alert plugin exposes a few events for hooking into alert functionali
 
 ```js
 $("#myAlert").on("closed.bs.alert", function () {
-  // do something...
+	// do something...
 });
 ```
