@@ -17,9 +17,9 @@ package org.factcast.schema.registry.cli.validation.validators.impl
 
 import io.micronaut.core.annotation.AnnotationValue
 import io.micronaut.validation.validator.constraints.ConstraintValidator
+import org.factcast.schema.registry.cli.validation.validators.ValidVersionFolder
 import java.nio.file.Path
 import javax.inject.Singleton
-import org.factcast.schema.registry.cli.validation.validators.ValidVersionFolder
 
 @Singleton
 class ValidVersionFolderValidator : ConstraintValidator<ValidVersionFolder, Path> {

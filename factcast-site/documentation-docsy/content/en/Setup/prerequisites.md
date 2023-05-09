@@ -1,9 +1,8 @@
 ---
-
 title: "Prerequisites"
 type: docs
 weight: 100
------------
+---
 
 ## Postgres
 
@@ -29,4 +28,3 @@ Login into your Postgres console and execute the following command as superuser:
 ```sql
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 ```
-

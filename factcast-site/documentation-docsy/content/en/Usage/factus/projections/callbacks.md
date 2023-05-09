@@ -6,8 +6,8 @@ type = "docs"
 
 When implementing the [Projection interface](https://github.com/factcast/factcast/blob/master/factcast-factus/src/main/java/org/factcast/factus/projection/Projection.java), the user can choose to override these default hook methods for more fine-grained control:
 
-|                        Method Signature                        |                                                                             Description                                                                              |
-|----------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Method Signature                                               | Description                                                                                                                                                          |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `List<FactSpec> postprocess(List<FactSpec> specsAsDiscovered)` | further filter the handled facts via their [fact specification]({{<ref "factspec.md#specification">}}) including aggregate ID and meta entries                       |
 | `void onCatchup()`                                             | invoked after all past facts of the streams were processed. This is a good point to signal that the projection is ready to serve data (e.g. via a health indicator). |
 | `void onComplete()`                                            | called when subscription closed without error                                                                                                                        |

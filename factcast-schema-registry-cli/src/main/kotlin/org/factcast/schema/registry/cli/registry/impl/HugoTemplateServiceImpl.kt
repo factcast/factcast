@@ -15,7 +15,6 @@
  */
 package org.factcast.schema.registry.cli.registry.impl
 
-import javax.inject.Singleton
 import org.factcast.schema.registry.cli.domain.Event
 import org.factcast.schema.registry.cli.domain.Namespace
 import org.factcast.schema.registry.cli.domain.Project
@@ -35,6 +34,7 @@ import org.factcast.schema.registry.cli.registry.templates.homeTemplate
 import org.factcast.schema.registry.cli.registry.templates.namespaceTemplate
 import org.factcast.schema.registry.cli.registry.templates.transformationTemplate
 import org.factcast.schema.registry.cli.registry.templates.versionTemplate
+import javax.inject.Singleton
 
 @Singleton
 class HugoTemplateServiceImpl(private val fileSystemService: FileSystemService) : TemplateService {

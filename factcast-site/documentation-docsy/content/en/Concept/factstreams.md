@@ -1,9 +1,8 @@
 ---
-
 title: "FactStream Design"
 weight: 30
 type: docs
-----------
+---
 
 ## Fact Stream design
 

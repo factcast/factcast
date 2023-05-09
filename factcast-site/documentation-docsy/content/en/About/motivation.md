@@ -36,4 +36,3 @@ Oh and one thing: Whatever solution we choose to store and stream forward needs 
 While all of them are most probably great, when it comes to clustering, backup, data-/application-management and fail-over, none of these are trivial problems and most of them bring their own (certainly great) solution.
 
 ##### Gee, i wish there was a solution, that is flexible, platform neutral and could be operated at scale with **what we already know**.
-

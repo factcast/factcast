@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2017-2023 factcast.org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.factcast.schema.registry.cli.registry.impl
 
 import com.fasterxml.jackson.databind.JsonNode
@@ -10,7 +25,10 @@ import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import org.factcast.schema.registry.cli.domain.*
+import org.factcast.schema.registry.cli.domain.Event
+import org.factcast.schema.registry.cli.domain.Namespace
+import org.factcast.schema.registry.cli.domain.Project
+import org.factcast.schema.registry.cli.domain.Version
 import org.factcast.schema.registry.cli.fixture
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.fs.FileSystemServiceImpl
@@ -27,7 +45,7 @@ class IndexFileCalculatorImplTest : StringSpec() {
 
     val dummyPath = Paths.get(".")
     val dummyJson = JsonNodeFactory.instance.objectNode()
-    val transformation1to2 = Transformation(1, 2, dummyPath)
+    val transformation1to2 = org.factcast.schema.registry.cli.domain.Transformation(1, 2, dummyPath)
     val version1 = Version(1, dummyPath, dummyPath, emptyList())
     val version2 = Version(2, dummyPath, dummyPath, emptyList())
     val event1 = Event("bar", dummyPath, listOf(version1, version2), listOf(transformation1to2))
@@ -35,7 +53,8 @@ class IndexFileCalculatorImplTest : StringSpec() {
     val dummyProject = Project(null, listOf(namespace1))
 
     val uut = IndexFileCalculatorImpl(
-        checksumService, missingTransformationCalculator,
+        checksumService,
+        missingTransformationCalculator,
         fileSystemService
     )
 
@@ -93,7 +112,7 @@ class IndexFileCalculatorImplTest : StringSpec() {
                 """{"type":"string","foo1":"bar1", "foo2":"bar2"}""",
                 """{   "type"   :   "string",   "foo1"   :   "bar1",   "foo2"   :   "bar2"}""",
                 """{"type":"string","foo1":"bar1", "foo2":"bar2","title":"title"}""",
-                """{   "type"   :   "string",   "foo1"   :   "bar1",   "foo2"   :   "bar2",   "title"   :   "title"}""",
+                """{   "type"   :   "string",   "foo1"   :   "bar1",   "foo2"   :   "bar2",   "title"   :   "title"}"""
             )
 
             jsonWithSameHashCode.forEach { jsonString ->
@@ -102,7 +121,8 @@ class IndexFileCalculatorImplTest : StringSpec() {
 
                 val checksumService = ChecksumServiceImpl(fileSystemService, ObjectMapper())
                 val uut = IndexFileCalculatorImpl(
-                    checksumService, missingTransformationCalculator,
+                    checksumService,
+                    missingTransformationCalculator,
                     fileSystemService
                 )
                 val result = uut.createFilteredMd5Hash(Paths.get("some/file"), setOf("title"))
@@ -122,7 +142,8 @@ class IndexFileCalculatorImplTest : StringSpec() {
             val fileSystemService = FileSystemServiceImpl()
             val checksumService = ChecksumServiceImpl(fileSystemService, ObjectMapper())
             val uut = IndexFileCalculatorImpl(
-                checksumService, missingTransformationCalculator,
+                checksumService,
+                missingTransformationCalculator,
                 fileSystemService
             )
 

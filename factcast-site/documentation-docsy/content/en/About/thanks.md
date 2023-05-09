@@ -24,4 +24,3 @@ and also
 - [github.com/BernhardBln](https://github.com/BernhardBln) for discussions, review and guidance
 - [@emwexx](https://twitter.com/emwexx) for discussions
 - [@joerg_adler](https://twitter.com/joerg_adler) for providing the REST adapter
-

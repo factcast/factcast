@@ -69,4 +69,3 @@ Commands:
   validate  Validate your current events
   build     Validates and builds your registry
 ```
-

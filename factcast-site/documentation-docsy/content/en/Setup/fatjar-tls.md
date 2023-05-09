@@ -1,9 +1,8 @@
 ---
-
 title: "fat-jar (TLS)"
 type: docs
 weight: 120
------------
+---
 
 #### Non-Encrpyted
 

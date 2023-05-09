@@ -16,15 +16,15 @@
 package org.factcast.schema.registry.cli.project.structure
 
 import io.micronaut.core.annotation.Introspected
-import java.nio.file.Path
-import javax.validation.constraints.NotEmpty
-import javax.validation.constraints.NotNull
 import org.factcast.schema.registry.cli.domain.Example
 import org.factcast.schema.registry.cli.domain.Version
 import org.factcast.schema.registry.cli.validation.NO_DESCRIPTION
 import org.factcast.schema.registry.cli.validation.NO_EXAMPLES
 import org.factcast.schema.registry.cli.validation.NO_SCHEMA
 import org.factcast.schema.registry.cli.validation.validators.ValidVersionFolder
+import java.nio.file.Path
+import javax.validation.constraints.NotEmpty
+import javax.validation.constraints.NotNull
 
 @Introspected
 data class EventVersionFolder(
@@ -54,4 +54,5 @@ fun EventVersionFolder.toEventVersion() =
         description!!,
         examples.map { example ->
             Example(example.fileName.toString(), example)
-        })
+        }
+    )

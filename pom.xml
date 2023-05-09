@@ -85,7 +85,7 @@
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
     <maven.compiler.version>3.10.1</maven.compiler.version>
-    <spotless-maven-plugin.version>2.33.0</spotless-maven-plugin.version>
+    <spotless-maven-plugin.version>2.36.0</spotless-maven-plugin.version>
     <directory-maven-plugin.version>1.0</directory-maven-plugin.version>
     <nexus-staging-maven-plugin.version>1.6.13</nexus-staging-maven-plugin.version>
     <assertj.version>3.24.2</assertj.version>
@@ -422,12 +422,15 @@
         <groupId>com.diffplug.spotless</groupId>
         <artifactId>spotless-maven-plugin</artifactId>
         <version>${spotless-maven-plugin.version}</version>
-
+        <inherited>false</inherited>
         <configuration>
           <java>
             <licenseHeader>
               <file>file://${etc}/header.txt</file>
             </licenseHeader>
+            <includes>
+              <include>**/src/*/java/**/*.java</include>
+            </includes>
             <trimTrailingWhitespace />
             <googleJavaFormat>
               <version>1.9</version>
@@ -444,7 +447,7 @@
               <version>0.46.0</version>
             </ktlint>
             <includes>
-              <include>/src/main/kotlin/**/*.kt
+              <include>**/src/*/kotlin/**/*.kt
               </include>
             </includes>
           </kotlin>
@@ -460,13 +463,6 @@
               <configFile>dbeaver.properties</configFile>
             </dbeaver>
           </sql>
-          <markdown>
-            <includes> <!-- You have to set the target manually -->
-              <include>factcast-site/documentation-docsy/content/**/*.md</include>
-            </includes>
-            <flexmark />
-          </markdown>
-
           <formats>
             <format>
               <excludes>
@@ -490,10 +486,18 @@
               <endWithNewline />
             </format>
 
-            <!-- <format> <includes> <include>factcast-site/documentation-docsy/**/*.md</include>
-              </includes> <prettier> <config> <useTabs>true</useTabs> </config> </prettier>
-              </format> -->
+            <format>
+              <includes>
+                <include>factcast-site/documentation-docsy/content/**/*.md</include>
+              </includes>
+              <prettier>
+                <config>
+                  <useTabs>true</useTabs>
+                </config>
+              </prettier>
+            </format>
           </formats>
+
         </configuration>
       </plugin>
     </plugins>

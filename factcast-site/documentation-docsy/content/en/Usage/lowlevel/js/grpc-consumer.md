@@ -30,4 +30,3 @@ subscription.on("data", (fact) => {
 	console.log(fact);
 });
 ```
-

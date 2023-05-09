@@ -11,8 +11,8 @@ _UserCreated_ and _UserDeleted_ events:
 
 The `@RedisBatched` annotation provides various configuration options:
 
-|  Parameter Name   |                     Description                      | Default Value |
-|-------------------|------------------------------------------------------|---------------|
+| Parameter Name    | Description                                          | Default Value |
+| ----------------- | ---------------------------------------------------- | ------------- |
 | `bulkSize`        | bulk size                                            | 50            |
 | `responseTimeout` | timeout in milliseconds for Redis response           | 5000          |
 | `retryAttempts`   | maximum attempts to transmit batch of Redis commands | 5             |
@@ -99,8 +99,8 @@ also to a standard Java `Map`:
 
 There are good reasons for either variant, `1)` and `2)`:
 
-|                                                                                                                                                      Redisson specific                                                                                                                                                      |     plain Java      |
-|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------|
+| Redisson specific                                                                                                                                                                                                                                                                                                           | plain Java          |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
 | extended functionality which e.g. reduces I/O load. (e.g. see [`RMap.fastPut(...)`](<https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html#fastPut(K,V)>) and [`RMap.fastRemove(...)`](<https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html#fastRemove(K...).>) | standard, intuitive |
 | only option when using data-structures which are not available in standard Java Collections (e.g. [RedissonListMultimap](https://javadoc.io/doc/org.redisson/redisson/latest/org/redisson/RedissonListMultimap.html))                                                                                                       | easier to test      |
 
@@ -137,4 +137,3 @@ To study the full example, see
 
 - [the UserNames projection using `@RedisBatched`](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/proj/RedisBatchedProjectionExample.java) and
 - [example code using this projection](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/RedisBatchedProjectionExampleITest.java)
-

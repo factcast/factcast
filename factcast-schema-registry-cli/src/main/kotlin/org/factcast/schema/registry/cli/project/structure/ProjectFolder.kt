@@ -16,14 +16,14 @@
 package org.factcast.schema.registry.cli.project.structure
 
 import io.micronaut.core.annotation.Introspected
-import java.nio.file.Path
-import javax.validation.Valid
-import javax.validation.constraints.NotEmpty
-import javax.validation.constraints.NotNull
 import mu.KotlinLogging
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.validation.NO_DESCRIPTION
 import org.factcast.schema.registry.cli.validation.NO_NAMESPACES
+import java.nio.file.Path
+import javax.validation.Valid
+import javax.validation.constraints.NotEmpty
+import javax.validation.constraints.NotNull
 
 private val logger = KotlinLogging.logger {}
 
@@ -47,12 +47,13 @@ data class ProjectFolder(
  */
 fun ProjectFolder.toProject() =
     Project(
-        description, namespaces.map(NamespaceFolder::toNamespace)
+        description,
+        namespaces.map(NamespaceFolder::toNamespace)
     )
 
 fun ProjectFolder.log() =
-        namespaces.flatMap { ns ->
-            ns.eventFolders.flatMap { folder ->
-                folder.versionFolders
-            }
-        }.forEach { logger.debug("Included event ${it.path}") }
+    namespaces.flatMap { ns ->
+        ns.eventFolders.flatMap { folder ->
+            folder.versionFolders
+        }
+    }.forEach { logger.debug("Included event ${it.path}") }

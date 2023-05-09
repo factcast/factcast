@@ -15,8 +15,8 @@
  */
 package org.factcast.schema.registry.cli.validation.validators
 
-import javax.validation.Constraint
 import org.factcast.schema.registry.cli.validation.TRANSFORMATION_VERSION_INVALID
+import javax.validation.Constraint
 
 @Retention(AnnotationRetention.RUNTIME)
 @Constraint(validatedBy = [])

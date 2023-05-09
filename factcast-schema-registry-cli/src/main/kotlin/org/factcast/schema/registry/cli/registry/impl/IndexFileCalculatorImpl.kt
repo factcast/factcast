@@ -99,8 +99,11 @@ class IndexFileCalculatorImpl(
     }
 
     private fun createMd5Hash(filePath: Path, removedSchemaProps: Set<String>): String =
-        if (removedSchemaProps.isNotEmpty()) createFilteredMd5Hash(filePath, removedSchemaProps)
-        else checksumService.createMd5Hash(filePath)
+        if (removedSchemaProps.isNotEmpty()) {
+            createFilteredMd5Hash(filePath, removedSchemaProps)
+        } else {
+            checksumService.createMd5Hash(filePath)
+        }
 
     @VisibleForTesting
     fun createFilteredMd5Hash(filePath: Path, removedSchemaProps: Set<String>): String {

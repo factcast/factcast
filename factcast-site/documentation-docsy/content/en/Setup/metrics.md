@@ -1,9 +1,8 @@
 ---
-
 title: "Metrics"
 type: docs
 weight: 150
------------
+---
 
 Being a regular Spring Boot 2+ application, the FactCast Server uses [micrometer.io](https://micrometer.io) as its
 metrics emitting/collecting solution. In order to get started collecting the metrics FactCast Server emits, you'll need
@@ -56,14 +55,14 @@ respectively.
 
 At the **time of writing (0.4.3)**, the metrics exposed by the namespaces group `factcast.server` are:
 
-| operation |  type   |            description             |
-|-----------|---------|------------------------------------|
+| operation | type    | description                        |
+| --------- | ------- | ---------------------------------- |
 | handshake | `timer` | Duration of the initial handshake. |
 
 At the **time of writing (0.4.3)**, the metrics exposed by the namespaces group `factcast.store` are:
 
-|         operation          |  type   |                                                                                                                                                                                                                            description                                                                                                                                                                                                                            |
-|----------------------------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| operation                  | type    | description                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| -------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | publish                    | `timer` | Time to publish (write) a fact or a list of facts sent by the client.<br />Ref: [concepts](/concept)                                                                                                                                                                                                                                                                                                                                                              |
 | subscribe-follow           | `timer` | Time to create and return a follow subscription (not the actual stream of facts).<br />Ref: [concepts](/concept)                                                                                                                                                                                                                                                                                                                                                  |
 | subscribe-catchup          | `timer` | Time to create and return a catchup subscription (not the actual stream of facts).<br />Ref: [concepts](/concept)                                                                                                                                                                                                                                                                                                                                                 |
@@ -86,8 +85,8 @@ At the **time of writing (0.4.3)**, the metrics exposed by the namespaces group 
 
 At the **time of writing (0.4.3)**, the metrics exposed by the namespaces group `factcast.registry` are:
 
-|            operation             |  type   |                                                                                     description                                                                                     |
-|----------------------------------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| operation                        | type    | description                                                                                                                                                                         |
+| -------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | transformEvent                   | `timer` | Time to transform (upcast/downcast) a single fact.<br />Ref: [transformation](/concept/transformation)                                                                              |
 | fetchRegistryFile                | `timer` | Time to retrieve a file from the schema registry.<br />Ref: [facts validation](/concept/schema-registry/)                                                                           |
 | refreshRegistry                  | `timer` | Time to execute the schema registry refresh, in order to get the latest schema and transformation updates.                                                                          |
