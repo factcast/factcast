@@ -13,14 +13,14 @@ In order to talk to a - not in process - factstore (which is the usual setup for
 If you use Spring take the easy path in your Spring Boot Application by adding the appropriate dependencies to your application:
 
 ```xml
-<dependency>
-  <groupId>org.factcast</groupId>
-  <artifactId>factcast-client-grpc</artifactId>
-</dependency>
-<dependency>
-  <groupId>org.factcast</groupId>
-  <artifactId>factcast-spring-boot-autoconfigure</artifactId>
-</dependency>
+   <dependency>
+     <groupId>org.factcast</groupId>
+     <artifactId>factcast-client-grpc</artifactId>
+   </dependency>
+   <dependency>
+     <groupId>org.factcast</groupId>
+     <artifactId>factcast-spring-boot-autoconfigure</artifactId>
+   </dependency>
 ```
 
 There are example projects: **factcast-examples/factcast-example-client-spring-boot2** and **factcast-examples/factcast-example-client-spring-boot1** respectivly, that you can use as a template.

@@ -1,10 +1,9 @@
 ---
-
 title: "Releases"
 
 type: "docs-noedit"
 weight: 100000
---------------
+---
 
 Only important releases are mentioned here.
 

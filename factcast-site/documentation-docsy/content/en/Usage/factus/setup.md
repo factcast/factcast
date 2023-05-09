@@ -9,19 +9,19 @@ type="docs"
 First thing you need in your project is a dependency to factus itself.
 
 ```xml
-<dependency>
-  <groupId>org.factcast</groupId>
-  <artifactId>factcast-factus</artifactId>
-</dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-factus</artifactId>
+    </dependency>
 ```
 
 If you use Spring-Boot and also have the spring boot autoconfiguration dependency included,
 
 ```xml
-<dependency>
-  <groupId>org.factcast</groupId>
-  <artifactId>factcast-spring-boot-autoconfigure</artifactId>
-</dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-spring-boot-autoconfigure</artifactId>
+    </dependency>
 ```
 
 this is all you need to get started.
@@ -36,10 +36,10 @@ The default Snapshot Serializer in Factus uses Jackson to serialize to/from JSON
 This optional dependency:
 
 ```xml
-<dependency>
-  <groupId>org.factcast</groupId>
-  <artifactId>factcast-factus-bin-snapser</artifactId>
-</dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-factus-bin-snapser</artifactId>
+    </dependency>
 ```
 
 replaces the default Snapshot Serializer by another variant, that - while still using jackson to stay compatible
@@ -74,10 +74,10 @@ and snapshots**, by just implementing the respective interfaces.
 In case Redis is you weapon of choice, there is a Redis implementation of that interface. Just add
 
 ```xml
-<dependency>
-  <groupId>org.factcast</groupId>
-  <artifactId>factcast-snapshotcache-redisson</artifactId>
-</dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-snapshotcache-redisson</artifactId>
+    </dependency>
 ```
 
 to your client's project and spring autoconfiguration (if you use spring boot) will do the rest.

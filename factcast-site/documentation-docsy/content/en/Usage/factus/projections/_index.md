@@ -5,7 +5,7 @@ weight = 50
 
 +++
 
-![](ph_p.png)
+![](ph_p.png#center)
 
 Before we can look at processing Events, we first have to talk about another abstraction that does not exist in FactCast: `Projection`
 

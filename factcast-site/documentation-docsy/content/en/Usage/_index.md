@@ -1,12 +1,12 @@
 ---
-
 title: "API"
 menu:
-main:
-weight: 60
+  main:
+    weight: 60
 type: docs
 
-## weight: 40
+weight: 40
+---
 
 ## Choose your weapon: FactCast vs Factus
 

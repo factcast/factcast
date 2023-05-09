@@ -1,15 +1,14 @@
 ---
-
 title: "About"
 
 menu:
-main:
-weight: 1
+  main:
+    weight: 1
 
 type: "docs-start"
 
 weight: 1
----------
+---
 
 <div style="text-align: center; font-size: xx-large;"><i>FactCast is a 'good
 enough' Event-store based on PostgreSQL.</i></div>
