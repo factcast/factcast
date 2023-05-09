@@ -625,28 +625,28 @@ Regular table background variants are not available with the dark table, however
 ```html
 <!-- On rows -->
 <tr class="bg-primary">
-  ...
+	...
 </tr>
 <tr class="bg-success">
-  ...
+	...
 </tr>
 <tr class="bg-warning">
-  ...
+	...
 </tr>
 <tr class="bg-danger">
-  ...
+	...
 </tr>
 <tr class="bg-info">
-  ...
+	...
 </tr>
 
 <!-- On cells (`td` or `th`) -->
 <tr>
-  <td class="bg-primary">...</td>
-  <td class="bg-success">...</td>
-  <td class="bg-warning">...</td>
-  <td class="bg-danger">...</td>
-  <td class="bg-info">...</td>
+	<td class="bg-primary">...</td>
+	<td class="bg-success">...</td>
+	<td class="bg-warning">...</td>
+	<td class="bg-danger">...</td>
+	<td class="bg-info">...</td>
 </tr>
 ```
 
@@ -775,9 +775,9 @@ Across every breakpoint, use `.table-responsive` for horizontally scrolling tabl
 
 ```html
 <div class="table-responsive">
-  <table class="table">
-    ...
-  </table>
+	<table class="table">
+		...
+	</table>
 </div>
 ```
 

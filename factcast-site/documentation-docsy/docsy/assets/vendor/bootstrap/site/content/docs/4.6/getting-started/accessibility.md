@@ -32,8 +32,8 @@ Content which should be visually hidden, but remain accessible to assistive tech
 
 ```html
 <p class="text-danger">
-  <span class="sr-only">Danger: </span>
-  This action is not reversible
+	<span class="sr-only">Danger: </span>
+	This action is not reversible
 </p>
 ```
 

@@ -27,13 +27,13 @@ Or by Sass mixin:
 
 ```scss
 .element {
-  @include float-left;
+	@include float-left;
 }
 .another-element {
-  @include float-right;
+	@include float-right;
 }
 .one-more {
-  @include float-none;
+	@include float-none;
 }
 ```
 

@@ -34,18 +34,18 @@ The default web fonts (Helvetica Neue, Helvetica, and Arial) have been dropped i
 ```scss
 $font-family-sans-serif:
   // Safari for macOS and iOS (San Francisco)
-  -apple-system,
-  // Chrome < 56 for macOS (San Francisco)
-  BlinkMacSystemFont, // Windows
-  "Segoe UI",
-  // Android
-  Roboto, // Basic web fallback
-  "Helvetica Neue", Arial,
-  // Linux
-  "Noto Sans", "Liberation Sans", // Sans serif fallback
-  sans-serif,
-  // Emoji fonts
-  "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
+	-apple-system,
+	// Chrome < 56 for macOS (San Francisco)
+	BlinkMacSystemFont, // Windows
+	"Segoe UI",
+	// Android
+	Roboto, // Basic web fallback
+	"Helvetica Neue", Arial,
+	// Linux
+	"Noto Sans", "Liberation Sans", // Sans serif fallback
+	sans-serif,
+	// Emoji fonts
+	"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
 ```
 
 Note that because the font stack includes emoji fonts, many common symbol/dingbat unicode characters will be rendered as multi-colored pictographs. Their appearance will vary, depending on the style used in the browser/platform's native emoji font, and they won't be affected by any CSS `color` styles.

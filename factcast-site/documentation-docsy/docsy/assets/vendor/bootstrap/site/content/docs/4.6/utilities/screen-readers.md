@@ -14,7 +14,7 @@ Hide an element to all devices **except screen readers** with `.sr-only`. Combin
 ```scss
 // Usage as a mixin
 .skip-navigation {
-  @include sr-only;
-  @include sr-only-focusable;
+	@include sr-only;
+	@include sr-only-focusable;
 }
 ```

@@ -696,11 +696,11 @@ Add the `disabled` boolean attribute on an input to prevent user interactions an
 
 ```html
 <input
-  class="form-control"
-  id="disabledInput"
-  type="text"
-  placeholder="Disabled input here..."
-  disabled
+	class="form-control"
+	id="disabledInput"
+	type="text"
+	placeholder="Disabled input here..."
+	disabled
 />
 ```
 
@@ -1135,28 +1135,28 @@ Please note that we do not recommend customizing these values without also modif
 // Sass map from `_variables.scss`
 // Override this and recompile your Sass to generate different states
 $form-validation-states: map-merge(
-  (
-    "valid": (
-      "color": $form-feedback-valid-color,
-      "icon": $form-feedback-icon-valid,
-    ),
-    "invalid": (
-      "color": $form-feedback-invalid-color,
-      "icon": $form-feedback-icon-invalid,
-    ),
-  ),
-  $form-validation-states
+	(
+		"valid": (
+			"color": $form-feedback-valid-color,
+			"icon": $form-feedback-icon-valid,
+		),
+		"invalid": (
+			"color": $form-feedback-invalid-color,
+			"icon": $form-feedback-icon-invalid,
+		),
+	),
+	$form-validation-states
 );
 
 // Loop from `_forms.scss`
 // Any modifications to the above Sass map will be reflected in your compiled
 // CSS via this loop.
 @each $state, $data in $form-validation-states {
-  @include form-validation-state(
-    $state,
-    map-get($data, color),
-    map-get($data, icon)
-  );
+	@include form-validation-state(
+		$state,
+		map-get($data, color),
+		map-get($data, icon)
+	);
 }
 ```
 
@@ -1166,11 +1166,11 @@ To detect what elements need rounded corners inside an input group with validati
 
 ```html
 <div class="input-group has-validation">
-  <div class="input-group-prepend">
-    <span class="input-group-text">@</span>
-  </div>
-  <input type="text" class="form-control" required />
-  <div class="invalid-feedback">Please choose a username.</div>
+	<div class="input-group-prepend">
+		<span class="input-group-text">@</span>
+	</div>
+	<input type="text" class="form-control" required />
+	<div class="invalid-feedback">Please choose a username.</div>
 </div>
 ```
 
@@ -1390,8 +1390,8 @@ The [`:lang()` pseudo-class](https://developer.mozilla.org/en-US/docs/Web/CSS/:l
 
 ```scss
 $custom-file-text: (
-  en: "Browse",
-  es: "Elegir",
+	en: "Browse",
+	es: "Elegir",
 );
 ```
 

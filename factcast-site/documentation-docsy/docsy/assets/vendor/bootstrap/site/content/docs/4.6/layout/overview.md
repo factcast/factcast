@@ -105,7 +105,7 @@ Our default `.container` class is a responsive, fixed-width container, meaning i
 
 ```html
 <div class="container">
-  <!-- Content here -->
+	<!-- Content here -->
 </div>
 ```
 

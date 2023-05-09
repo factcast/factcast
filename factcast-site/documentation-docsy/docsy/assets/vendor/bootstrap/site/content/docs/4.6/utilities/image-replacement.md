@@ -21,7 +21,7 @@ Utilize the `.text-hide` class or mixin to help replace an element's text conten
 ```scss
 // Usage as a mixin
 .heading {
-  @include text-hide;
+	@include text-hide;
 }
 ```
 

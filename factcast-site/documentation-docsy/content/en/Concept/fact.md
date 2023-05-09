@@ -30,46 +30,46 @@ JSON-Schema:
 
 ```json
 {
-  "$schema": "http://json-schema.org/draft-04/schema#",
-  "definitions": {},
-  "id": "http://docs.factcast.org/example/fact.json",
-  "properties": {
-    "id": {
-      "id": "/properties/id",
-      "type": "string",
-      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
-    },
-    "aggIds": {
-      "id": "/properties/aggIds",
-      "type": "array",
-      "items": {
-        "id": "/properties/aggIds/items",
-        "type": "string",
-        "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
-      }
-    },
-    "ns": {
-      "id": "/properties/ns",
-      "type": "string"
-    },
-    "type": {
-      "id": "/properties/type",
-      "type": "string"
-    },
-    "meta": {
-      "id": "/properties/meta",
-      "type": "object",
-      "additionalProperties": {
-        "type": "string",
-        "description": "Some string values"
-      }
-    }
-  },
-  "type": "object",
-  "additionalProperties": {
-    "type": "object"
-  },
-  "required": ["id", "ns"]
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"definitions": {},
+	"id": "http://docs.factcast.org/example/fact.json",
+	"properties": {
+		"id": {
+			"id": "/properties/id",
+			"type": "string",
+			"pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+		},
+		"aggIds": {
+			"id": "/properties/aggIds",
+			"type": "array",
+			"items": {
+				"id": "/properties/aggIds/items",
+				"type": "string",
+				"pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+			}
+		},
+		"ns": {
+			"id": "/properties/ns",
+			"type": "string"
+		},
+		"type": {
+			"id": "/properties/type",
+			"type": "string"
+		},
+		"meta": {
+			"id": "/properties/meta",
+			"type": "object",
+			"additionalProperties": {
+				"type": "string",
+				"description": "Some string values"
+			}
+		}
+	},
+	"type": "object",
+	"additionalProperties": {
+		"type": "object"
+	},
+	"required": ["id", "ns"]
 }
 ```
 

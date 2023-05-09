@@ -116,7 +116,7 @@ Bootstrap requires the use of the HTML5 doctype. Without it, you'll see some fun
 ```html
 <!DOCTYPE html>
 <html lang="en">
-  ...
+	...
 </html>
 ```
 
@@ -126,8 +126,8 @@ Bootstrap is developed _mobile first_, a strategy in which we optimize code for 
 
 ```html
 <meta
-  name="viewport"
-  content="width=device-width, initial-scale=1, shrink-to-fit=no"
+	name="viewport"
+	content="width=device-width, initial-scale=1, shrink-to-fit=no"
 />
 ```
 
@@ -141,7 +141,7 @@ On the rare occasion you need to override it, use something like the following:
 
 ```css
 .selector-for-some-widget {
-  box-sizing: content-box;
+	box-sizing: content-box;
 }
 ```
 

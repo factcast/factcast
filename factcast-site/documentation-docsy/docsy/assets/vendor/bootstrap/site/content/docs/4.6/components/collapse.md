@@ -198,7 +198,7 @@ Activates your content as a collapsible element. Accepts an optional options `ob
 
 ```js
 $("#myCollapsible").collapse({
-  toggle: false,
+	toggle: false,
 });
 ```
 
@@ -251,6 +251,6 @@ Bootstrap's collapse class exposes a few events for hooking into collapse functi
 
 ```js
 $("#myCollapsible").on("hidden.bs.collapse", function () {
-  // do something...
+	// do something...
 });
 ```

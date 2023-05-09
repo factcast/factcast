@@ -33,7 +33,7 @@ One way to initialize all tooltips on a page would be to select them by their `d
 
 ```js
 $(function () {
-  $('[data-toggle="tooltip"]').tooltip();
+	$('[data-toggle="tooltip"]').tooltip();
 });
 ```
 
@@ -60,40 +60,40 @@ Hover over the buttons below to see the four tooltips directions: top, right, bo
 
 ```html
 <button
-  type="button"
-  class="btn btn-secondary"
-  data-toggle="tooltip"
-  data-placement="top"
-  title="Tooltip on top"
+	type="button"
+	class="btn btn-secondary"
+	data-toggle="tooltip"
+	data-placement="top"
+	title="Tooltip on top"
 >
-  Tooltip on top
+	Tooltip on top
 </button>
 <button
-  type="button"
-  class="btn btn-secondary"
-  data-toggle="tooltip"
-  data-placement="right"
-  title="Tooltip on right"
+	type="button"
+	class="btn btn-secondary"
+	data-toggle="tooltip"
+	data-placement="right"
+	title="Tooltip on right"
 >
-  Tooltip on right
+	Tooltip on right
 </button>
 <button
-  type="button"
-  class="btn btn-secondary"
-  data-toggle="tooltip"
-  data-placement="bottom"
-  title="Tooltip on bottom"
+	type="button"
+	class="btn btn-secondary"
+	data-toggle="tooltip"
+	data-placement="bottom"
+	title="Tooltip on bottom"
 >
-  Tooltip on bottom
+	Tooltip on bottom
 </button>
 <button
-  type="button"
-  class="btn btn-secondary"
-  data-toggle="tooltip"
-  data-placement="left"
-  title="Tooltip on left"
+	type="button"
+	class="btn btn-secondary"
+	data-toggle="tooltip"
+	data-placement="left"
+	title="Tooltip on left"
 >
-  Tooltip on left
+	Tooltip on left
 </button>
 ```
 
@@ -101,13 +101,13 @@ And with custom HTML added:
 
 ```html
 <button
-  type="button"
-  class="btn btn-secondary"
-  data-toggle="tooltip"
-  data-html="true"
-  title="<em>Tooltip</em> <u>with</u> <b>HTML</b>"
+	type="button"
+	class="btn btn-secondary"
+	data-toggle="tooltip"
+	data-html="true"
+	title="<em>Tooltip</em> <u>with</u> <b>HTML</b>"
 >
-  Tooltip with HTML
+	Tooltip with HTML
 </button>
 ```
 
@@ -150,8 +150,8 @@ You should only add tooltips to HTML elements that are traditionally keyboard-fo
 
 <!-- Generated markup by the plugin -->
 <div class="tooltip bs-tooltip-top" role="tooltip">
-  <div class="arrow"></div>
-  <div class="tooltip-inner">Some tooltip text!</div>
+	<div class="arrow"></div>
+	<div class="tooltip-inner">Some tooltip text!</div>
 </div>
 ```
 
@@ -439,6 +439,6 @@ $("#element").tooltip("update");
 
 ```js
 $("#myTooltip").on("hidden.bs.tooltip", function () {
-  // do something...
+	// do something...
 });
 ```
