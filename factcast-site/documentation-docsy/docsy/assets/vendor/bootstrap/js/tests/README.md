@@ -2,13 +2,14 @@
 
 Bootstrap uses [QUnit](https://qunitjs.com/) and [Sinon](https://sinonjs.org/). Each plugin has a file dedicated to its tests in `unit/<plugin-name>.js`.
 
-- `unit/` contains the unit test files for each Bootstrap plugin.
-- `vendor/` contains third-party testing-related code (QUnit, jQuery and Sinon).
-- `visual/` contains "visual" tests which are run interactively in real browsers and require manual verification by humans.
+* `unit/` contains the unit test files for each Bootstrap plugin.
+* `vendor/` contains third-party testing-related code (QUnit, jQuery and Sinon).
+* `visual/` contains "visual" tests which are run interactively in real browsers and require manual verification by humans.
 
 To run the unit test suite via [Karma](https://karma-runner.github.io/), run `npm run js-test`.
 
 To run the unit test suite via a real web browser, open `index.html` in the browser.
+
 
 ## How do I add a new unit test?
 
@@ -21,10 +22,10 @@ To run the unit test suite via a real web browser, open `index.html` in the brow
 
 ## What should a unit test look like?
 
-- Each test should have a unique name clearly stating what unit is being tested.
-- Each test should test only one unit per test, although one test can include several assertions. Create multiple tests for multiple units of functionality.
-- Each test should begin with [`assert.expect`](https://api.qunitjs.com/assert/expect/) to ensure that the expected assertions are run.
-- Each test should follow the project's [JavaScript Code Guidelines](https://github.com/twbs/bootstrap/blob/v4-dev/.github/CONTRIBUTING.md#js)
+* Each test should have a unique name clearly stating what unit is being tested.
+* Each test should test only one unit per test, although one test can include several assertions. Create multiple tests for multiple units of functionality.
+* Each test should begin with [`assert.expect`](https://api.qunitjs.com/assert/expect/) to ensure that the expected assertions are run.
+* Each test should follow the project's [JavaScript Code Guidelines](https://github.com/twbs/bootstrap/blob/v4-dev/.github/CONTRIBUTING.md#js)
 
 ## Code coverage
 
@@ -34,41 +35,35 @@ Currently we're aiming for at least 80% test coverage for our code. To ensure yo
 
 ```js
 // Synchronous test
-QUnit.test("should describe the unit being tested", function (assert) {
-	assert.expect(1);
-	var templateHTML =
-		'<div class="alert alert-danger fade show">' +
-		'<a class="close" href="#" data-dismiss="alert">×</a>' +
-		"<p><strong>Template necessary for the test.</p>" +
-		"</div>";
-	var $alert = $(templateHTML).appendTo("#qunit-fixture").bootstrapAlert();
+QUnit.test('should describe the unit being tested', function (assert) {
+  assert.expect(1)
+  var templateHTML = '<div class="alert alert-danger fade show">' +
+        '<a class="close" href="#" data-dismiss="alert">×</a>' +
+        '<p><strong>Template necessary for the test.</p>' +
+        '</div>'
+  var $alert = $(templateHTML).appendTo('#qunit-fixture').bootstrapAlert()
 
-	$alert.find(".close").trigger("click");
+  $alert.find('.close').trigger('click')
 
-	// Make assertion
-	assert.strictEqual(
-		$alert.hasClass("show"),
-		false,
-		"remove .show class on .close click"
-	);
-});
+  // Make assertion
+  assert.strictEqual($alert.hasClass('show'), false, 'remove .show class on .close click')
+})
 
 // Asynchronous test
-QUnit.test("should describe the unit being tested", function (assert) {
-	assert.expect(2);
-	var done = assert.async();
+QUnit.test('should describe the unit being tested', function (assert) {
+  assert.expect(2)
+  var done = assert.async()
 
-	var $tooltip = $('<div title="tooltip title"></div>').bootstrapTooltip();
-	var tooltipInstance = $tooltip.data("bs.tooltip");
-	var spyShow = sinon.spy(tooltipInstance, "show");
+  var $tooltip = $('<div title="tooltip title"></div>').bootstrapTooltip()
+  var tooltipInstance = $tooltip.data('bs.tooltip')
+  var spyShow = sinon.spy(tooltipInstance, 'show')
 
-	$tooltip
-		.appendTo("#qunit-fixture")
-		.on("shown.bs.tooltip", function () {
-			assert.ok(true, '"shown" event was fired after calling "show"');
-			assert.ok(spyShow.called, "show called");
-			done();
-		})
-		.bootstrapTooltip("show");
-});
+  $tooltip.appendTo('#qunit-fixture')
+    .on('shown.bs.tooltip', function () {
+      assert.ok(true, '"shown" event was fired after calling "show"')
+      assert.ok(spyShow.called, 'show called')
+      done()
+    })
+    .bootstrapTooltip('show')
+})
 ```

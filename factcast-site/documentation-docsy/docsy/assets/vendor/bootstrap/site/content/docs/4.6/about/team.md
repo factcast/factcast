@@ -8,7 +8,6 @@ group: about
 Bootstrap is maintained by the founding team and a small group of invaluable core contributors, with the massive support and involvement of our community.
 
 {{< team.inline >}}
-
 <div class="list-group mb-3">
   {{- range (index $.Site.Data "core-team") }}
     <a class="list-group-item list-group-item-action d-flex align-items-center" href="https://github.com/{{ .user }}">

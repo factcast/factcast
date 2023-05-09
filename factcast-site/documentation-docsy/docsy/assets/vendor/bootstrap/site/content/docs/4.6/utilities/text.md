@@ -11,14 +11,12 @@ toc: true
 Easily realign text to components with text alignment classes.
 
 {{< example >}}
-
 <p class="text-justify">Some placeholder text to demonstrate justified text alignment. Will you do the same for me? It's time to face the music I'm no longer your muse. Heard it's beautiful, be the judge and my girls gonna take a vote. I can feel a phoenix inside of me. Heaven is jealous of our love, angels are crying from up above. Yeah, you take me to utopia.</p>
 {{< /example >}}
 
 For left, right, and center alignment, responsive classes are available that use the same viewport width breakpoints as the grid system.
 
 {{< example >}}
-
 <p class="text-left">Left aligned text on all viewport sizes.</p>
 <p class="text-center">Center aligned text on all viewport sizes.</p>
 <p class="text-right">Right aligned text on all viewport sizes.</p>
@@ -34,7 +32,6 @@ For left, right, and center alignment, responsive classes are available that use
 Wrap text with a `.text-wrap` class.
 
 {{< example >}}
-
 <div class="badge badge-primary text-wrap" style="width: 6rem;">
   This text should wrap.
 </div>
@@ -43,7 +40,6 @@ Wrap text with a `.text-wrap` class.
 Prevent text from wrapping with a `.text-nowrap` class.
 
 {{< example >}}
-
 <div class="text-nowrap bd-highlight" style="width: 8rem;">
   This text should overflow the parent.
 </div>
@@ -52,7 +48,6 @@ Prevent text from wrapping with a `.text-nowrap` class.
 For longer content, you can add a `.text-truncate` class to truncate the text with an ellipsis. **Requires `display: inline-block` or `display: block`.**
 
 {{< example >}}
-
 <!-- Block level -->
 <div class="row">
   <div class="col-2 text-truncate">
@@ -71,7 +66,6 @@ For longer content, you can add a `.text-truncate` class to truncate the text wi
 Prevent long strings of text from breaking your components' layout by using `.text-break` to set `word-wrap: break-word` and `word-break: break-word`. We use `word-wrap` instead of the more common `overflow-wrap` for wider browser support, and add the deprecated `word-break: break-word` to avoid issues with flex containers.
 
 {{< example >}}
-
 <p class="text-break">mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm</p>
 {{< /example >}}
 
@@ -80,7 +74,6 @@ Prevent long strings of text from breaking your components' layout by using `.te
 Transform text in components with text capitalization classes.
 
 {{< example >}}
-
 <p class="text-lowercase">Lowercased text.</p>
 <p class="text-uppercase">Uppercased text.</p>
 <p class="text-capitalize">CapiTaliZed text.</p>
@@ -93,7 +86,6 @@ Note how `.text-capitalize` only changes the first letter of each word, leaving 
 Quickly change the weight (boldness) of text or italicize text.
 
 {{< example >}}
-
 <p class="font-weight-bold">Bold text.</p>
 <p class="font-weight-bolder">Bolder weight text (relative to the parent element).</p>
 <p class="font-weight-normal">Normal weight text.</p>
@@ -107,7 +99,6 @@ Quickly change the weight (boldness) of text or italicize text.
 Change a selection to our monospace font stack with `.text-monospace`.
 
 {{< example >}}
-
 <p class="text-monospace">This is in monospace</p>
 {{< /example >}}
 
@@ -116,7 +107,6 @@ Change a selection to our monospace font stack with `.text-monospace`.
 Reset a text or link's color with `.text-reset`, so that it inherits the color from its parent.
 
 {{< example >}}
-
 <p class="text-muted">
   Muted text with a <a href="#" class="text-reset">reset link</a>.
 </p>

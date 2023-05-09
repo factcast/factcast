@@ -24,7 +24,7 @@ Because Bootstrap's components are purposely designed to be fairly generic, auth
 
 ### Color contrast
 
-Most colors that currently make up Bootstrap's default palette—used throughout the framework for things such as button variations, alert variations, form validation indicators—lead to _insufficient_ color contrast (below the recommended [WCAG 2.0 color contrast ratio of 4.5:1](https://www.w3.org/TR/UNDERSTANDING-WCAG20/visual-audio-contrast-contrast.html)) when used against a light background. Authors will need to manually modify/extend these default colors to ensure adequate color contrast ratios.
+Most colors that currently make up Bootstrap's default palette—used throughout the framework for things such as button variations, alert variations, form validation indicators—lead to *insufficient* color contrast (below the recommended [WCAG 2.0 color contrast ratio of 4.5:1](https://www.w3.org/TR/UNDERSTANDING-WCAG20/visual-audio-contrast-contrast.html)) when used against a light background. Authors will need to manually modify/extend these default colors to ensure adequate color contrast ratios.
 
 ### Visually hidden content
 
@@ -32,8 +32,8 @@ Content which should be visually hidden, but remain accessible to assistive tech
 
 ```html
 <p class="text-danger">
-	<span class="sr-only">Danger: </span>
-	This action is not reversible
+  <span class="sr-only">Danger: </span>
+  This action is not reversible
 </p>
 ```
 

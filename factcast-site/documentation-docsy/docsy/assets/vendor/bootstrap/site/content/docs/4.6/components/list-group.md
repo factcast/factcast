@@ -11,7 +11,6 @@ toc: true
 The most basic list group is an unordered list with list items and the proper classes. Build upon it with the options that follow, or with your own CSS as needed.
 
 {{< example >}}
-
 <ul class="list-group">
   <li class="list-group-item">An item</li>
   <li class="list-group-item">A second item</li>
@@ -26,7 +25,6 @@ The most basic list group is an unordered list with list items and the proper cl
 Add `.active` to a `.list-group-item` to indicate the current active selection.
 
 {{< example >}}
-
 <ul class="list-group">
   <li class="list-group-item active" aria-current="true">An active item</li>
   <li class="list-group-item">A second item</li>
@@ -41,7 +39,6 @@ Add `.active` to a `.list-group-item` to indicate the current active selection.
 Add `.disabled` to a `.list-group-item` to make it _appear_ disabled. Note that some elements with `.disabled` will also require custom JavaScript to fully disable their click events (e.g., links).
 
 {{< example >}}
-
 <ul class="list-group">
   <li class="list-group-item disabled" aria-disabled="true">A disabled item</li>
   <li class="list-group-item">A second item</li>
@@ -58,7 +55,6 @@ Use `<a>`s or `<button>`s to create _actionable_ list group items with hover, di
 Be sure to **not use the standard `.btn` classes here**.
 
 {{< example >}}
-
 <div class="list-group">
   <a href="#" class="list-group-item list-group-item-action active" aria-current="true">
     The current link item
@@ -73,7 +69,6 @@ Be sure to **not use the standard `.btn` classes here**.
 With `<button>`s, you can also make use of the `disabled` attribute instead of the `.disabled` class. Sadly, `<a>`s don't support the disabled attribute.
 
 {{< example >}}
-
 <div class="list-group">
   <button type="button" class="list-group-item list-group-item-action active" aria-current="true">
     The current button
@@ -90,7 +85,6 @@ With `<button>`s, you can also make use of the `disabled` attribute instead of t
 Add `.list-group-flush` to remove some borders and rounded corners to render list group items edge-to-edge in a parent container (e.g., cards).
 
 {{< example >}}
-
 <ul class="list-group list-group-flush">
   <li class="list-group-item">An item</li>
   <li class="list-group-item">A second item</li>
@@ -109,7 +103,6 @@ Add `.list-group-horizontal` to change the layout of list group items from verti
 {{< example >}}
 {{< list-group.inline >}}
 {{- range $.Site.Data.breakpoints }}
-
 <ul class="list-group list-group-horizontal{{ .abbr }}">
   <li class="list-group-item">An item</li>
   <li class="list-group-item">A second item</li>
@@ -124,7 +117,6 @@ Add `.list-group-horizontal` to change the layout of list group items from verti
 Use contextual classes to style list items with a stateful background and color.
 
 {{< example >}}
-
 <ul class="list-group">
   <li class="list-group-item">A simple default list group item</li>
 {{< list.inline >}}
@@ -138,7 +130,6 @@ Use contextual classes to style list items with a stateful background and color.
 Contextual classes also work with `.list-group-item-action`. Note the addition of the hover styles here not present in the previous example. Also supported is the `.active` state; apply it to indicate an active selection on a contextual list group item.
 
 {{< example >}}
-
 <div class="list-group">
   <a href="#" class="list-group-item list-group-item-action">A simple default list group item</a>
 {{< list.inline >}}
@@ -158,7 +149,6 @@ Contextual classes also work with `.list-group-item-action`. Note the addition o
 Add badges to any list group item to show unread counts, activity, and more with the help of some [utilities]({{< docsref "/utilities/flex" >}}).
 
 {{< example >}}
-
 <ul class="list-group">
   <li class="list-group-item d-flex justify-content-between align-items-center">
     A list item
@@ -180,7 +170,6 @@ Add badges to any list group item to show unread counts, activity, and more with
 Add nearly any HTML within, even for linked list groups like the one below, with the help of [flexbox utilities]({{< docsref "/utilities/flex" >}}).
 
 {{< example >}}
-
 <div class="list-group">
   <a href="#" class="list-group-item list-group-item-action active">
     <div class="d-flex w-100 justify-content-between">
@@ -244,82 +233,22 @@ Use the tab JavaScript plugin—include it individually or through the compiled 
 
 ```html
 <div class="row">
-	<div class="col-4">
-		<div class="list-group" id="list-tab" role="tablist">
-			<a
-				class="list-group-item list-group-item-action active"
-				id="list-home-list"
-				data-toggle="list"
-				href="#list-home"
-				role="tab"
-				aria-controls="home"
-				>Home</a
-			>
-			<a
-				class="list-group-item list-group-item-action"
-				id="list-profile-list"
-				data-toggle="list"
-				href="#list-profile"
-				role="tab"
-				aria-controls="profile"
-				>Profile</a
-			>
-			<a
-				class="list-group-item list-group-item-action"
-				id="list-messages-list"
-				data-toggle="list"
-				href="#list-messages"
-				role="tab"
-				aria-controls="messages"
-				>Messages</a
-			>
-			<a
-				class="list-group-item list-group-item-action"
-				id="list-settings-list"
-				data-toggle="list"
-				href="#list-settings"
-				role="tab"
-				aria-controls="settings"
-				>Settings</a
-			>
-		</div>
-	</div>
-	<div class="col-8">
-		<div class="tab-content" id="nav-tabContent">
-			<div
-				class="tab-pane fade show active"
-				id="list-home"
-				role="tabpanel"
-				aria-labelledby="list-home-list"
-			>
-				...
-			</div>
-			<div
-				class="tab-pane fade"
-				id="list-profile"
-				role="tabpanel"
-				aria-labelledby="list-profile-list"
-			>
-				...
-			</div>
-			<div
-				class="tab-pane fade"
-				id="list-messages"
-				role="tabpanel"
-				aria-labelledby="list-messages-list"
-			>
-				...
-			</div>
-			<div
-				class="tab-pane fade"
-				id="list-settings"
-				role="tabpanel"
-				aria-labelledby="list-settings-list"
-			>
-				...
-			</div>
-		</div>
-	</div>
+  <div class="col-4">
+    <div class="list-group" id="list-tab" role="tablist">
+      <a class="list-group-item list-group-item-action active" id="list-home-list" data-toggle="list" href="#list-home" role="tab" aria-controls="home">Home</a>
+      <a class="list-group-item list-group-item-action" id="list-profile-list" data-toggle="list" href="#list-profile" role="tab" aria-controls="profile">Profile</a>
+      <a class="list-group-item list-group-item-action" id="list-messages-list" data-toggle="list" href="#list-messages" role="tab" aria-controls="messages">Messages</a>
+      <a class="list-group-item list-group-item-action" id="list-settings-list" data-toggle="list" href="#list-settings" role="tab" aria-controls="settings">Settings</a>
+    </div>
+  </div>
+  <div class="col-8">
+    <div class="tab-content" id="nav-tabContent">
+      <div class="tab-pane fade show active" id="list-home" role="tabpanel" aria-labelledby="list-home-list">...</div>
+      <div class="tab-pane fade" id="list-profile" role="tabpanel" aria-labelledby="list-profile-list">...</div>
+      <div class="tab-pane fade" id="list-messages" role="tabpanel" aria-labelledby="list-messages-list">...</div>
+      <div class="tab-pane fade" id="list-settings" role="tabpanel" aria-labelledby="list-settings-list">...</div>
+    </div>
+  </div>
 </div>
 ```
 
@@ -329,45 +258,21 @@ You can activate a list group navigation without writing any JavaScript by simpl
 
 ```html
 <div role="tabpanel">
-	<!-- List group -->
-	<div class="list-group" id="myList" role="tablist">
-		<a
-			class="list-group-item list-group-item-action active"
-			data-toggle="list"
-			href="#home"
-			role="tab"
-			>Home</a
-		>
-		<a
-			class="list-group-item list-group-item-action"
-			data-toggle="list"
-			href="#profile"
-			role="tab"
-			>Profile</a
-		>
-		<a
-			class="list-group-item list-group-item-action"
-			data-toggle="list"
-			href="#messages"
-			role="tab"
-			>Messages</a
-		>
-		<a
-			class="list-group-item list-group-item-action"
-			data-toggle="list"
-			href="#settings"
-			role="tab"
-			>Settings</a
-		>
-	</div>
+  <!-- List group -->
+  <div class="list-group" id="myList" role="tablist">
+    <a class="list-group-item list-group-item-action active" data-toggle="list" href="#home" role="tab">Home</a>
+    <a class="list-group-item list-group-item-action" data-toggle="list" href="#profile" role="tab">Profile</a>
+    <a class="list-group-item list-group-item-action" data-toggle="list" href="#messages" role="tab">Messages</a>
+    <a class="list-group-item list-group-item-action" data-toggle="list" href="#settings" role="tab">Settings</a>
+  </div>
 
-	<!-- Tab panes -->
-	<div class="tab-content">
-		<div class="tab-pane active" id="home" role="tabpanel">...</div>
-		<div class="tab-pane" id="profile" role="tabpanel">...</div>
-		<div class="tab-pane" id="messages" role="tabpanel">...</div>
-		<div class="tab-pane" id="settings" role="tabpanel">...</div>
-	</div>
+  <!-- Tab panes -->
+  <div class="tab-content">
+    <div class="tab-pane active" id="home" role="tabpanel">...</div>
+    <div class="tab-pane" id="profile" role="tabpanel">...</div>
+    <div class="tab-pane" id="messages" role="tabpanel">...</div>
+    <div class="tab-pane" id="settings" role="tabpanel">...</div>
+  </div>
 </div>
 ```
 
@@ -376,19 +281,19 @@ You can activate a list group navigation without writing any JavaScript by simpl
 Enable tabbable list item via JavaScript (each list item needs to be activated individually):
 
 ```js
-$("#myList a").on("click", function (event) {
-	event.preventDefault();
-	$(this).tab("show");
-});
+$('#myList a').on('click', function (event) {
+  event.preventDefault()
+  $(this).tab('show')
+})
 ```
 
 You can activate individual list item in several ways:
 
 ```js
-$('#myList a[href="#profile"]').tab("show"); // Select tab by name
-$("#myList a:first-child").tab("show"); // Select first tab
-$("#myList a:last-child").tab("show"); // Select last tab
-$("#myList a:nth-child(3)").tab("show"); // Select third tab
+$('#myList a[href="#profile"]').tab('show') // Select tab by name
+$('#myList a:first-child').tab('show') // Select first tab
+$('#myList a:last-child').tab('show') // Select last tab
+$('#myList a:nth-child(3)').tab('show') // Select third tab
 ```
 
 ### Fade effect
@@ -397,10 +302,10 @@ To make tabs panel fade in, add `.fade` to each `.tab-pane`. The first tab pane 
 
 ```html
 <div class="tab-content">
-	<div class="tab-pane fade show active" id="home" role="tabpanel">...</div>
-	<div class="tab-pane fade" id="profile" role="tabpanel">...</div>
-	<div class="tab-pane fade" id="messages" role="tabpanel">...</div>
-	<div class="tab-pane fade" id="settings" role="tabpanel">...</div>
+  <div class="tab-pane fade show active" id="home" role="tabpanel">...</div>
+  <div class="tab-pane fade" id="profile" role="tabpanel">...</div>
+  <div class="tab-pane fade" id="messages" role="tabpanel">...</div>
+  <div class="tab-pane fade" id="settings" role="tabpanel">...</div>
 </div>
 ```
 
@@ -412,47 +317,23 @@ Activates a list item element and content container. Tab should have either a `d
 
 ```html
 <div class="list-group" id="myList" role="tablist">
-	<a
-		class="list-group-item list-group-item-action active"
-		data-toggle="list"
-		href="#home"
-		role="tab"
-		>Home</a
-	>
-	<a
-		class="list-group-item list-group-item-action"
-		data-toggle="list"
-		href="#profile"
-		role="tab"
-		>Profile</a
-	>
-	<a
-		class="list-group-item list-group-item-action"
-		data-toggle="list"
-		href="#messages"
-		role="tab"
-		>Messages</a
-	>
-	<a
-		class="list-group-item list-group-item-action"
-		data-toggle="list"
-		href="#settings"
-		role="tab"
-		>Settings</a
-	>
+  <a class="list-group-item list-group-item-action active" data-toggle="list" href="#home" role="tab">Home</a>
+  <a class="list-group-item list-group-item-action" data-toggle="list" href="#profile" role="tab">Profile</a>
+  <a class="list-group-item list-group-item-action" data-toggle="list" href="#messages" role="tab">Messages</a>
+  <a class="list-group-item list-group-item-action" data-toggle="list" href="#settings" role="tab">Settings</a>
 </div>
 
 <div class="tab-content">
-	<div class="tab-pane active" id="home" role="tabpanel">...</div>
-	<div class="tab-pane" id="profile" role="tabpanel">...</div>
-	<div class="tab-pane" id="messages" role="tabpanel">...</div>
-	<div class="tab-pane" id="settings" role="tabpanel">...</div>
+  <div class="tab-pane active" id="home" role="tabpanel">...</div>
+  <div class="tab-pane" id="profile" role="tabpanel">...</div>
+  <div class="tab-pane" id="messages" role="tabpanel">...</div>
+  <div class="tab-pane" id="settings" role="tabpanel">...</div>
 </div>
 
 <script>
-	$(function () {
-		$("#myList a:last-child").tab("show");
-	});
+  $(function () {
+    $('#myList a:last-child').tab('show')
+  })
 </script>
 ```
 
@@ -461,7 +342,7 @@ Activates a list item element and content container. Tab should have either a `d
 Selects the given list item and shows its associated pane. Any other list item that was previously selected becomes unselected and its associated pane is hidden. **Returns to the caller before the tab pane has actually been shown** (for example, before the `shown.bs.tab` event occurs).
 
 ```js
-$("#someListItem").tab("show");
+$('#someListItem').tab('show')
 ```
 
 ### Events
@@ -503,8 +384,8 @@ If no tab was already active, the `hide.bs.tab` and `hidden.bs.tab` events will 
 </table>
 
 ```js
-$('a[data-toggle="list"]').on("shown.bs.tab", function (event) {
-	event.target; // newly activated tab
-	event.relatedTarget; // previous active tab
-});
+$('a[data-toggle="list"]').on('shown.bs.tab', function (event) {
+  event.target // newly activated tab
+  event.relatedTarget // previous active tab
+})
 ```

@@ -9,7 +9,7 @@ toc: true
 
 ## Containers
 
-Containers are the most basic layout element in Bootstrap and are **required when using our default grid system**. Containers are used to contain, pad, and (sometimes) center the content within them. While containers _can_ be nested, most layouts do not require a nested container.
+Containers are the most basic layout element in Bootstrap and are **required when using our default grid system**. Containers are used to contain, pad, and (sometimes) center the content within them. While containers *can* be nested, most layouts do not require a nested container.
 
 Bootstrap comes with three different containers:
 
@@ -105,7 +105,7 @@ Our default `.container` class is a responsive, fixed-width container, meaning i
 
 ```html
 <div class="container">
-	<!-- Content here -->
+  <!-- Content here -->
 </div>
 ```
 
@@ -114,7 +114,9 @@ Our default `.container` class is a responsive, fixed-width container, meaning i
 Use `.container-fluid` for a full width container, spanning the entire width of the viewport.
 
 ```html
-<div class="container-fluid">...</div>
+<div class="container-fluid">
+  ...
+</div>
 ```
 
 ### Responsive
@@ -171,7 +173,7 @@ Since we write our source CSS in Sass, all our media queries are available via S
 }
 ```
 
-We occasionally use media queries that go in the other direction (the given screen size _or smaller_):
+We occasionally use media queries that go in the other direction (the given screen size *or smaller*):
 
 ```scss
 // Extra small devices (portrait phones, less than 576px)
@@ -263,13 +265,13 @@ These higher values start at an arbitrary number, high and specific enough to id
 We don't encourage customization of these individual values; should you change one, you likely need to change them all.
 
 ```scss
-$zindex-dropdown: 1000 !default;
-$zindex-sticky: 1020 !default;
-$zindex-fixed: 1030 !default;
-$zindex-modal-backdrop: 1040 !default;
-$zindex-modal: 1050 !default;
-$zindex-popover: 1060 !default;
-$zindex-tooltip: 1070 !default;
+$zindex-dropdown:          1000 !default;
+$zindex-sticky:            1020 !default;
+$zindex-fixed:             1030 !default;
+$zindex-modal-backdrop:    1040 !default;
+$zindex-modal:             1050 !default;
+$zindex-popover:           1060 !default;
+$zindex-tooltip:           1070 !default;
 ```
 
 To handle overlapping borders within components (e.g., buttons and inputs in input groups), we use low single digit `z-index` values of `1`, `2`, and `3` for default, hover, and active states. On hover/focus/active, we bring a particular element to the forefront with a higher `z-index` value to show their border over the sibling elements.

@@ -238,9 +238,9 @@ Sass pre-processors. Specifically [`node-sass`](https://github.com/sass/node-sas
 
 The following icon shims have been changed to better match the original version 4 icon:
 
-- sort-alpha-desc
-- sort-amount-desc
-- sort-numeric-desc
+* sort-alpha-desc
+* sort-amount-desc
+* sort-numeric-desc
 
 ---
 
@@ -338,7 +338,7 @@ prevent redundancy and improve findability.
 ### Directory structure changes
 
 | Old path                          | New path    |
-| --------------------------------- | ----------- |
+|-----------------------------------|-------------|
 | advanced-options/metadata         | metadata    |
 | advanced-options/raw-svg          | svgs        |
 | advanced-options/svg-sprites      | sprites     |
@@ -363,8 +363,8 @@ There are no breaking changes in this version upgrade.
 
 Categories were renamed from:
 
-- Holiday to Halloween
-- Seasonal to Autumn
+* Holiday to Halloween
+* Seasonal to Autumn
 
 The "wand" icon in version 5.4.0 matched the "wand-magic" icon. The magical
 sparkles have been removed for "wand". If you were relying on this decoration
@@ -382,29 +382,29 @@ There are no breaking changes in this version upgrade.
 
 The following Pro-only icons were removed from Font Awesome Free as of 5.3.1:
 
-- abacus
-- calculator-alt
-- empty-set
-- function
-- integral
-- intersection
-- lambda
-- omega
-- pi
-- sigma
-- signal-alt
-- signal-alt-slash
-- signal-slash
-- square-root
-- tally
-- theta
-- tilde
-- union
-- value-absolute
-- volume
-- volume-down
-- volume-slash
-- wifi-slash
+* abacus
+* calculator-alt
+* empty-set
+* function
+* integral
+* intersection
+* lambda
+* omega
+* pi
+* sigma
+* signal-alt
+* signal-alt-slash
+* signal-slash
+* square-root
+* tally
+* theta
+* tilde
+* union
+* value-absolute
+* volume
+* volume-down
+* volume-slash
+* wifi-slash
 
 These icons were unintentionally included in 5.3.0.
 
@@ -459,16 +459,16 @@ packages.
 If you are using the Less or Sass file styles individually you will need to
 correct the names in your builds.
 
-| Old filename         | New filename      |
-| -------------------- | ----------------- |
-| less/fa-solid.less   | less/solid.less   |
-| less/fa-regular.less | less/regular.less |
-| less/fa-light.less   | less/light.less   |
-| less/fa-brands.less  | less/brands.less  |
-| scss/fa-solid.scss   | scss/solid.scss   |
-| scss/fa-regular.scss | scss/regular.scss |
-| scss/fa-light.scss   | scss/light.scss   |
-| scss/fa-brands.scss  | scss/brands.scss  |
+| Old filename                | New filename             |
+| --------------------------- | ------------------------ |
+| less/fa-solid.less          | less/solid.less          |
+| less/fa-regular.less        | less/regular.less        |
+| less/fa-light.less          | less/light.less          |
+| less/fa-brands.less         | less/brands.less         |
+| scss/fa-solid.scss          | scss/solid.scss          |
+| scss/fa-regular.scss        | scss/regular.scss        |
+| scss/fa-light.scss          | scss/light.scss          |
+| scss/fa-brands.scss         | scss/brands.scss         |
 
 ---
 
@@ -482,8 +482,8 @@ Our Free and Pro CDN provide access to JS, CSS, sprites, and separate SVG files.
 
 We've now made these files conveniently available through NPM.
 
-- [@fortawesome/fontawesome-free](https://www.npmjs.com/package/@fortawesome/fontawesome-free)
-- @fortawesome/fontawesome-pro (private package, requires Pro subscription)
+* [@fortawesome/fontawesome-free](https://www.npmjs.com/package/@fortawesome/fontawesome-free)
+* @fortawesome/fontawesome-pro (private package, requires Pro subscription)
 
 If you are familiar with the paths and options available with the CDN these
 packages should be familiar.
@@ -499,7 +499,7 @@ The following packages have been renamed as part of 5.1.0 of Font Awesome.
 _All packages are in the [@fortawesome NPM scope](https://www.npmjs.com/search?q=scope:fortawesome&ranking=optimal)_
 
 | Old package(1)            | New package            |
-| ------------------------- | ---------------------- |
+|---------------------------|------------------------|
 | fontawesome-free-webfonts | fontawesome-free       |
 | fontawesome-pro-webfonts  | fontawesome-pro        |
 | fontawesome-free-solid    | free-solid-svg-icons   |
@@ -527,32 +527,32 @@ What does that mean?
 ~~Old way:~~
 
 ```javascript
-import fontawesome from "@fortawesome/fontawesome";
-import solid from "@fortawesome/fontawesome-free-solid";
-import faTwitter from "@fortawesome/fontawesome-free-brands/faTwitter";
-import FontAwesomeIcon from "@fortawesome/vue-fontawesome";
+import fontawesome from '@fortawesome/fontawesome'
+import solid from '@fortawesome/fontawesome-free-solid'
+import faTwitter from '@fortawesome/fontawesome-free-brands/faTwitter'
+import FontAwesomeIcon from '@fortawesome/vue-fontawesome'
 
-library.add(solid, faTwitter);
+library.add(solid, faTwitter)
 ```
 
 New way:
 
 ```javascript
-import { library, dom } from "@fortawesome/fontawesome-svg-core";
-import { fas } from "@fortawesome/free-solid-svg-icons";
-import { faTwitter } from "@fortawesome/free-brands-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import { library, dom } from '@fortawesome/fontawesome-svg-core'
+import { fas } from '@fortawesome/free-solid-svg-icons'
+import { faTwitter } from '@fortawesome/free-brands-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
-library.add(fas, faTwitter);
+library.add(fas, faTwitter)
 
 // Kicks off the process of finding <i> tags and replacing with <svg>
-dom.watch();
+dom.watch()
 ```
 
 This is also a valid way to import icons that works if your tool does not support tree shaking:
 
 ```javascript
-import { faTwitter } from "@fortawesome/free-brands-svg-icons/faTwitter";
+import { faTwitter } from '@fortawesome/free-brands-svg-icons/faTwitter'
 ```
 
 ### Improved support for tree shaking
@@ -567,28 +567,26 @@ If you've previously configured tree shaking by modifying your webpack or rollup
 
 ```javascript
 module.exports = {
-	// ...
-	resolve: {
-		alias: {
-			"@fortawesome/fontawesome-free-solid$":
-				"@fortawesome/fontawesome-free-solid/shakable.es.js",
-		},
-	},
-};
+  // ...
+  resolve: {
+    alias: {
+      '@fortawesome/fontawesome-free-solid$': '@fortawesome/fontawesome-free-solid/shakable.es.js'
+    }
+  }
+}
 ```
 
 ```javascript
-const alias = require("rollup-plugin-alias");
+const alias = require('rollup-plugin-alias')
 
 rollup({
-	// ...
-	plugins: [
-		alias({
-			"@fortawesome/fontawesome-free-solid":
-				"node_modules/@fortawesome/fontawesome-free-solid/shakable.es.js",
-		}),
-	],
-});
+  // ...
+  plugins: [
+    alias({
+      '@fortawesome/fontawesome-free-solid': 'node_modules/@fortawesome/fontawesome-free-solid/shakable.es.js'
+    })
+  ]
+})
 ```
 
 ---

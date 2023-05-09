@@ -20,12 +20,12 @@ $ yarn add @fortawesome/fontawesome-free
 
 **This package includes all the same files available through our Free and Pro CDN.**
 
-- /js - All JavaScript files associated with Font Awesome 5 SVG with JS
-- /css - All CSS using the classic Web Fonts with CSS implementation
-- /sprites - SVG icons packaged in a convenient sprite
-- /scss, /less - CSS Pre-processor files for Web Fonts with CSS
-- /webfonts - Accompanying files for Web Fonts with CSS
-- /svg - Individual icon files in SVG format
+* /js - All JavaScript files associated with Font Awesome 5 SVG with JS
+* /css - All CSS using the classic Web Fonts with CSS implementation
+* /sprites - SVG icons packaged in a convenient sprite
+* /scss, /less - CSS Pre-processor files for Web Fonts with CSS
+* /webfonts - Accompanying files for Web Fonts with CSS
+* /svg - Individual icon files in SVG format
 
 ## Documentation
 
