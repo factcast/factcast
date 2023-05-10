@@ -10,8 +10,8 @@ In order to make it easier for clients to deal with errors, we try to mitigate c
 or RetryableExceptions in general by just retrying.
 There are two types of gRPC communications within the FactCast gRPC API:
 
-* synchronous, request / response
-* asynchronous, request / streaming response
+- synchronous, request / response
+- asynchronous, request / streaming response
 
 While the first can be mitigated easily by retrying the call, things get more complicated in a asynchronous, streaming
 scenario.
@@ -29,4 +29,5 @@ If you want to disable it completely for any reason, you always can use
 ```
 factcast.grpc.client.resilience.enabled=false
 ```
+
 See [properties](/setup/properties) for the defaults.
