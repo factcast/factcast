@@ -19,11 +19,6 @@
       <artifactId>factcast-schema-registry-cli</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.factcast</groupId>
-      <artifactId>factcast-hugo</artifactId>
-      <version>${project.version}</version>
-    </dependency>
   </dependencies>
   <build>
     <plugins>
