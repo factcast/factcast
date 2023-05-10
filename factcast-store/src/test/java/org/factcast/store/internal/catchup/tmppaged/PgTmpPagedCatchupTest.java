@@ -20,6 +20,7 @@ import static org.mockito.Mockito.*;
 
 import io.micrometer.core.instrument.Counter;
 import java.util.*;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -110,7 +111,13 @@ class PgTmpPagedCatchupTest {
       doNothing().when(jdbc).execute(anyString());
       interceptor =
           new BufferingFactInterceptor(
-              service, FactTransformers.createFor(request), filter, subscription, 3, metrics);
+              service,
+              FactTransformers.createFor(request),
+              filter,
+              subscription,
+              3,
+              metrics,
+              ForkJoinPool.commonPool());
       underTest =
           new PgTmpPagedCatchup(
               connectionSupplier, props, request, interceptor, serial, statementHolder);

@@ -17,6 +17,8 @@ package org.factcast.store.internal;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer.Sample;
+import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -105,6 +107,10 @@ public class PgMetrics implements InitializingBean {
   @NonNull
   public Timer timer(@NonNull StoreMetrics.OP operation) {
     return timer(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
+  }
+
+  public ExecutorService monitor(@NonNull ExecutorService executor, @NonNull String name) {
+    return ExecutorServiceMetrics.monitor(registry, executor, name);
   }
 
   @Override
