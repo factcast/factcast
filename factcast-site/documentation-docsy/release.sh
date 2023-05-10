@@ -6,8 +6,11 @@ rm -rf static/example-registry
 cp -r ../../factcast-schema-registry-cli/output/public/ static/example-registry
 
 (
-docker run --rm -u `id -u`:`id -g` -v $PWD/../..:/srv/hugo factcast/factcast-hugo hugo -s factcast-site/documentation-docsy --minify --templateMetrics --buildDrafts
+docker run --rm -it \
+  -v $PWD/../..:/src \
+  -p 1313:1313 \
+  klakegg/hugo:0.101.0-ext-debian -s factcast-site/documentation-docsy --minify --templateMetrics --buildDrafts
 )
 
 
-rsync --delete -rcv public/* con:/www/docs.factcast.org
+#rsync --delete -rcv public/* con:/www/docs.factcast.org
