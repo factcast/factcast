@@ -15,29 +15,29 @@ which leaves us with optimistic locking as a choice.
 
 On a general level, optimistic locking:
 
-* **tries** *to make a change* and then *to write that change* **or**
-* if something happens in the meantime that could invalidate this change,
-  *discard the change* and **try again** taking the new state into account.
+- **tries** _to make a change_ and then _to write that change_ **or**
+- if something happens in the meantime that could invalidate this change,
+  _discard the change_ and **try again** taking the new state into account.
 
 Often this is done by adding a `versionId` or `timestamp` to a particular Entity/Aggregate to detect concurrent changes.
 
-This process can be *repeated until the change is either successful or definitively unsuccessful and needs to be
-rejected*.
+This process can be _repeated until the change is either successful or definitively unsuccessful and needs to be
+rejected_.
 
 For our example that would mean:
 
 If a new user registers,
 
 1. check if the username is already taken
-    * if so, reject the registration
-    * if not, prepare a change that creates the user
+   - if so, reject the registration
+   - if not, prepare a change that creates the user
 1. check if a new user was created in between, and
-    * repeat from the beginning if this is the case
-    * execute the change while making sure no other change can interfere.
+   - repeat from the beginning if this is the case
+   - execute the change while making sure no other change can interfere.
 
 In FactCast/Factus, there is no need to assign a `versionId` or `timestamp` to an aggregate or even have aggregates for
 that matter.
-All you have to do is to define a *scope* of an optimistic lock to check for concurrent changes in order to either
+All you have to do is to define a _scope_ of an optimistic lock to check for concurrent changes in order to either
 discard the prepared changes and try again, or to publish the prepared change if there was no interfering change in
 between.
 
@@ -76,7 +76,7 @@ In order to implement the use case above (enforcing unique usernames), what we c
         }else{
         UserCreated prepared=new UserCreated(cmd.userId,cmd.userName));
         // publish the prepared UserCreated Event
-        }   
+        }
 ```
 
 Now in order to make sure that the code above is re-attempted until there was no interference relevant to the UserNames
@@ -97,7 +97,7 @@ Applied to our example that would be
 UserRegistrationCommand cmd=...    // details not important here
 
         factus.withLockOn(UserNames.class)
-        .retries(10)                     // optional call to limit the number of retries 
+        .retries(10)                     // optional call to limit the number of retries
         .intervalMillis(50)              // optional call to insert pause with the given number of milliseconds in between attempts
         .attempt((names,tx)->{
         if(names.contains(cmd.userName)){
@@ -107,7 +107,7 @@ UserRegistrationCommand cmd=...    // details not important here
         }
 
         });
-``` 
+```
 
 As you can see here, the attempt call receives a BiConsumer that consumes
 

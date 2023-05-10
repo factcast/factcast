@@ -1,11 +1,11 @@
 ---
 title: "API"
 menu:
-    main:
-        weight: 60
+  main:
+    weight: 60
 type: docs
 
-weight : 40
+weight: 40
 ---
 
 ## Choose your weapon: FactCast vs Factus
@@ -27,9 +27,4 @@ Factus just uses FactCast underneath, so every feature you may find in Factus ca
 > Whereas factcast tries to limit the number of assumptions, Factus is highly opinionated.
 
 Factus provides higher level abstractions that are supposed to make it faster and more convenient to work with FactCast
-from Java. For an Overview about what Factus can do, see the [Factus](/usage/factus) section.     
-
-
- 
-
-
+from Java. For an Overview about what Factus can do, see the [Factus](/usage/factus) section.

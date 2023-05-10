@@ -1,6 +1,7 @@
 # Changelog
 
 ## from verison 0.4.0 on, the changelog can be found [on
+
 ## github](https://github.com/factcast/factcast/releases).
 
 # Older changelogs:
@@ -184,8 +185,8 @@
 **Closed issues:**
 
 - Suppress metrics for time diff on subscribed projections before catchup. [\#1109](https://github.com/factcast/factcast/issues/1109)
-- make sure the update of snapshot projections is wrapped in synchronized in order make 100% sure that state is synced to heap before projection instance goes public   [\#1098](https://github.com/factcast/factcast/issues/1098)
-- Factus: Change locking of local projections to synchronize on a private mutex rather than the projection itself  [\#1094](https://github.com/factcast/factcast/issues/1094)
+- make sure the update of snapshot projections is wrapped in synchronized in order make 100% sure that state is synced to heap before projection instance goes public [\#1098](https://github.com/factcast/factcast/issues/1098)
+- Factus: Change locking of local projections to synchronize on a private mutex rather than the projection itself [\#1094](https://github.com/factcast/factcast/issues/1094)
 - schema-registry-cli: Enrich validation result output. [\#827](https://github.com/factcast/factcast/issues/827)
 - Suppress error logging in PgListener when shutting down [\#1105](https://github.com/factcast/factcast/issues/1105)
 - Add whitelisting capability for schema registry [\#1092](https://github.com/factcast/factcast/issues/1092)
@@ -215,7 +216,7 @@
 **Fixed bugs:**
 
 - GrpcFactStore: handshake happens too late \(Other beans could already use it\) [\#1086](https://github.com/factcast/factcast/issues/1086)
-- \#1086\_grpcfactstore--handshake-happe: initialize on construction [\#1087](https://github.com/factcast/factcast/pull/1087) ([uweschaefer](https://github.com/uweschaefer))
+- \#1086_grpcfactstore--handshake-happe: initialize on construction [\#1087](https://github.com/factcast/factcast/pull/1087) ([uweschaefer](https://github.com/uweschaefer))
 
 **Closed issues:**
 
@@ -268,7 +269,7 @@
 **Closed issues:**
 
 - Switch formatting to google format [\#1054](https://github.com/factcast/factcast/issues/1054)
-- RedissonSnapshotCacheAutoConfiguration doesnt kick in  [\#1052](https://github.com/factcast/factcast/issues/1052)
+- RedissonSnapshotCacheAutoConfiguration doesnt kick in [\#1052](https://github.com/factcast/factcast/issues/1052)
 - Factus snapshot deserialization is a fatal error although it doesn't have to [\#1040](https://github.com/factcast/factcast/issues/1040)
 
 **Merged pull requests:**
@@ -295,7 +296,7 @@
 
 **Closed issues:**
 
-- RedissonSnapshotCacheAutoConfiguration doesnt kick in  [\#1052](https://github.com/factcast/factcast/issues/1052)
+- RedissonSnapshotCacheAutoConfiguration doesnt kick in [\#1052](https://github.com/factcast/factcast/issues/1052)
 
 **Merged pull requests:**
 
@@ -394,7 +395,7 @@
 - Update dependency com.diffplug.spotless:spotless-maven-plugin to v2.0.3 [\#995](https://github.com/factcast/factcast/pull/995) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency org.postgresql:postgresql to v42.2.16 [\#994](https://github.com/factcast/factcast/pull/994) ([renovate[bot]](https://github.com/apps/renovate))
 - Micrometer integration with Factus [\#990](https://github.com/factcast/factcast/pull/990) ([edthamm](https://github.com/edthamm))
-- \#942\_hook\_for\_tx\_handling: suggestion for a hook [\#989](https://github.com/factcast/factcast/pull/989) ([uweschaefer](https://github.com/uweschaefer))
+- \#942_hook_for_tx_handling: suggestion for a hook [\#989](https://github.com/factcast/factcast/pull/989) ([uweschaefer](https://github.com/uweschaefer))
 - Update mockito.version to v3.5.2 [\#988](https://github.com/factcast/factcast/pull/988) ([renovate[bot]](https://github.com/apps/renovate))
 - \#986: added switch for schemaReplace [\#987](https://github.com/factcast/factcast/pull/987) ([uweschaefer](https://github.com/uweschaefer))
 - Foo 1464 unit tests [\#985](https://github.com/factcast/factcast/pull/985) ([BernhardBln](https://github.com/BernhardBln))
@@ -461,7 +462,7 @@
 
 - Update dependency com.github.vladimir-bukhtoyarov:bucket4j-core to v4.10.0 [\#939](https://github.com/factcast/factcast/pull/939) ([renovate[bot]](https://github.com/apps/renovate))
 - Update dependency com.diffplug.spotless:spotless-maven-plugin to v2.0.1 [\#936](https://github.com/factcast/factcast/pull/936) ([renovate[bot]](https://github.com/apps/renovate))
-- Issue930  [\#932](https://github.com/factcast/factcast/pull/932) ([uweschaefer](https://github.com/uweschaefer))
+- Issue930 [\#932](https://github.com/factcast/factcast/pull/932) ([uweschaefer](https://github.com/uweschaefer))
 - Issue905 [\#929](https://github.com/factcast/factcast/pull/929) ([uweschaefer](https://github.com/uweschaefer))
 - Update dependency org.liquibase:liquibase-core to v3.10.1 [\#927](https://github.com/factcast/factcast/pull/927) ([renovate[bot]](https://github.com/apps/renovate))
 - Issue907 [\#926](https://github.com/factcast/factcast/pull/926) ([uweschaefer](https://github.com/uweschaefer))
@@ -577,7 +578,7 @@
 **Closed issues:**
 
 - Factcast throws Exception \(on publish\) if validation is disabled [\#880](https://github.com/factcast/factcast/issues/880)
-- replace LZ4 impl with commons-compress  [\#861](https://github.com/factcast/factcast/issues/861)
+- replace LZ4 impl with commons-compress [\#861](https://github.com/factcast/factcast/issues/861)
 
 ## [factcast-0.2.0-RC](https://github.com/factcast/factcast/tree/factcast-0.2.0-RC) (2020-06-01)
 
@@ -609,7 +610,7 @@
 - build\(deps\): Bump testcontainers from 1.14.2 to 1.14.3 [\#845](https://github.com/factcast/factcast/pull/845) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
 - build\(deps-dev\): Bump postgresql from 1.14.2 to 1.14.3 [\#844](https://github.com/factcast/factcast/pull/844) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
 - build\(deps\): Bump shedlock-spring from 4.11.1 to 4.12.0 [\#843](https://github.com/factcast/factcast/pull/843) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
-- \#841: Prepare for building with JDK\>8  [\#842](https://github.com/factcast/factcast/pull/842) ([uweschaefer](https://github.com/uweschaefer))
+- \#841: Prepare for building with JDK\>8 [\#842](https://github.com/factcast/factcast/pull/842) ([uweschaefer](https://github.com/uweschaefer))
 - Dependabot/maven/spring grpc.version 2.7.0.release [\#839](https://github.com/factcast/factcast/pull/839) ([uweschaefer](https://github.com/uweschaefer))
 - \#834: codacy issues [\#835](https://github.com/factcast/factcast/pull/835) ([uweschaefer](https://github.com/uweschaefer))
 - \#832: add lz4 & snappy dependency to server [\#833](https://github.com/factcast/factcast/pull/833) ([uweschaefer](https://github.com/uweschaefer))
@@ -799,18 +800,18 @@
 - Add sponsoring note [\#639](https://github.com/factcast/factcast/issues/639)
 - Flaky test PgQueryTest.testRoundtripCatchupEventsInsertedAfterStart [\#628](https://github.com/factcast/factcast/issues/628)
 - Implement Schemaregistry configuration [\#627](https://github.com/factcast/factcast/issues/627)
-- Flaky Test PgQueryTest.testRoundtripCatchupEventsInsertedAfterStart:164  [\#625](https://github.com/factcast/factcast/issues/625)
+- Flaky Test PgQueryTest.testRoundtripCatchupEventsInsertedAfterStart:164 [\#625](https://github.com/factcast/factcast/issues/625)
 - Module for reference server docker building [\#621](https://github.com/factcast/factcast/issues/621)
 - Remove the need for two maven profiles for spotless [\#618](https://github.com/factcast/factcast/issues/618)
 - Make site generation platform agnostic [\#614](https://github.com/factcast/factcast/issues/614)
 - Module for composite docker container with a factcast server & postgres embedded [\#610](https://github.com/factcast/factcast/issues/610)
 - Wrap site generation in docker container [\#608](https://github.com/factcast/factcast/issues/608)
-- Drop inMem impl of FactStore  [\#607](https://github.com/factcast/factcast/issues/607)
+- Drop inMem impl of FactStore [\#607](https://github.com/factcast/factcast/issues/607)
 - Drop support for Spring-boot 1 [\#605](https://github.com/factcast/factcast/issues/605)
 - Extend Security configuration to assign roles to namespaces [\#604](https://github.com/factcast/factcast/issues/604)
 - Remove DDL/DML distinction as it causes more trouble than it is worth [\#601](https://github.com/factcast/factcast/issues/601)
 - \[DepShield\] \(CVSS 9.8\) Vulnerability due to usage of com.fasterxml.jackson.core:jackson-databind:2.9.9.2 [\#584](https://github.com/factcast/factcast/issues/584)
-- Jackson: CVE-2019-14379, CVE-2019-14439  [\#516](https://github.com/factcast/factcast/issues/516)
+- Jackson: CVE-2019-14379, CVE-2019-14439 [\#516](https://github.com/factcast/factcast/issues/516)
 - Improve developer experience for eclipse users [\#510](https://github.com/factcast/factcast/issues/510)
 - configure maven plugin version explicitly [\#507](https://github.com/factcast/factcast/issues/507)
 - use -RAM instance for postgres in circle-CI [\#505](https://github.com/factcast/factcast/issues/505)
@@ -830,7 +831,7 @@
 - build\(deps-dev\): bump mockito.version from 3.2.4 to 3.3.0 [\#674](https://github.com/factcast/factcast/pull/674) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
 - build\(deps\): bump jackson-core from 2.10.1 to 2.10.2 [\#673](https://github.com/factcast/factcast/pull/673) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
 - Extend Security configuration to assign roles to namespaces [\#672](https://github.com/factcast/factcast/pull/672) ([uweschaefer](https://github.com/uweschaefer))
-- lombok\_nullcheck\_config [\#670](https://github.com/factcast/factcast/pull/670) ([uweschaefer](https://github.com/uweschaefer))
+- lombok_nullcheck_config [\#670](https://github.com/factcast/factcast/pull/670) ([uweschaefer](https://github.com/uweschaefer))
 - WIP \#598: Fixed packaging of hugo template [\#669](https://github.com/factcast/factcast/pull/669) ([otbe](https://github.com/otbe))
 - build\(deps\): bump spring-cloud-dependencies from Hoxton.SR1 to Hoxton.SR2 [\#668](https://github.com/factcast/factcast/pull/668) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
 - build\(deps\): bump maven-shade-plugin from 3.1.0 to 3.2.2 [\#667](https://github.com/factcast/factcast/pull/667) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
@@ -861,7 +862,7 @@
 - \#625: fix flaky test [\#626](https://github.com/factcast/factcast/pull/626) ([uweschaefer](https://github.com/uweschaefer))
 - build\(deps\): bump spring-boot-starter-test from 2.2.2.RELEASE to 2.2.3.RELEASE [\#624](https://github.com/factcast/factcast/pull/624) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
 - \#612 add integration test via grpc [\#623](https://github.com/factcast/factcast/pull/623) ([uweschaefer](https://github.com/uweschaefer))
-- \#621: docker container  [\#622](https://github.com/factcast/factcast/pull/622) ([uweschaefer](https://github.com/uweschaefer))
+- \#621: docker container [\#622](https://github.com/factcast/factcast/pull/622) ([uweschaefer](https://github.com/uweschaefer))
 - \#614 remove hugo binaries [\#620](https://github.com/factcast/factcast/pull/620) ([uweschaefer](https://github.com/uweschaefer))
 - \#618: simplified spotless config [\#619](https://github.com/factcast/factcast/pull/619) ([uweschaefer](https://github.com/uweschaefer))
 - Issue614 removed hugo binaries [\#617](https://github.com/factcast/factcast/pull/617) ([uweschaefer](https://github.com/uweschaefer))
@@ -1029,7 +1030,7 @@
 - Fix initialization order of PG-Components [\#441](https://github.com/factcast/factcast/issues/441)
 - Unify autoconfiguration [\#310](https://github.com/factcast/factcast/issues/310)
 - Extend API to enumerate existing namespaces & types in store [\#153](https://github.com/factcast/factcast/issues/153)
-- Provide CLI Client for GRPC  [\#152](https://github.com/factcast/factcast/issues/152)
+- Provide CLI Client for GRPC [\#152](https://github.com/factcast/factcast/issues/152)
 - Provide Builder for Fact to make sure it has a namespace [\#147](https://github.com/factcast/factcast/issues/147)
 - Add TLS for communication encryption [\#122](https://github.com/factcast/factcast/issues/122)
 - gRPC: add Codec for snappy or lz4 compression [\#77](https://github.com/factcast/factcast/issues/77)
@@ -1039,7 +1040,7 @@
 - Performance: Use Queue for Paging in Catchup process [\#38](https://github.com/factcast/factcast/issues/38)
 - Enable GZIP for REST-API [\#27](https://github.com/factcast/factcast/issues/27)
 - Try to change LISTEN strategy, so that traditional JDBC Driver can be used. [\#26](https://github.com/factcast/factcast/issues/26)
-- Introduce faster streams for REST and Document client setup  [\#23](https://github.com/factcast/factcast/issues/23)
+- Introduce faster streams for REST and Document client setup [\#23](https://github.com/factcast/factcast/issues/23)
 - Add proper javadocs [\#22](https://github.com/factcast/factcast/issues/22)
 
 **Fixed bugs:**
@@ -1068,7 +1069,7 @@
 - added currentTimestamp\(\) to store interface [\#459](https://github.com/factcast/factcast/issues/459)
 - Extend GRPC Protocol with a call to fetch the current database-time [\#458](https://github.com/factcast/factcast/issues/458)
 - Abstract filterScript to enable future extension with non-js scripts. [\#457](https://github.com/factcast/factcast/issues/457)
-- Security: jackson databind vulnerability  [\#456](https://github.com/factcast/factcast/issues/456)
+- Security: jackson databind vulnerability [\#456](https://github.com/factcast/factcast/issues/456)
 - Bump spring-boot-dependencies from 2.1.5.RELEASE to 2.1.6.RELEASE [\#455](https://github.com/factcast/factcast/issues/455)
 - Bump postgresql from 42.2.5 to 42.2.6 [\#454](https://github.com/factcast/factcast/issues/454)
 - Bump spring-boot-maven-plugin from 2.1.5.RELEASE to 2.1.6.RELEASE [\#452](https://github.com/factcast/factcast/issues/452)
@@ -1145,11 +1146,11 @@
 - \#373: hacky way to work with either version 2.1 and 2.3 of grpc-sprin… [\#374](https://github.com/factcast/factcast/issues/374)
 - Fix Spring Boot1 example dependencies [\#373](https://github.com/factcast/factcast/issues/373)
 - Bump grpc.version from 1.18.0 to 1.20.0 [\#371](https://github.com/factcast/factcast/issues/371)
-- Scripts starting Hugo should use a macos version on macos  [\#370](https://github.com/factcast/factcast/issues/370)
+- Scripts starting Hugo should use a macos version on macos [\#370](https://github.com/factcast/factcast/issues/370)
 - DepShield encountered errors while building your project [\#369](https://github.com/factcast/factcast/issues/369)
 - Spotless polish [\#368](https://github.com/factcast/factcast/issues/368)
 - Bump junit-platform-commons from 1.4.1 to 1.4.2 [\#367](https://github.com/factcast/factcast/issues/367)
-- \#issue353 :  minor change : fixed typo in bash script output only [\#366](https://github.com/factcast/factcast/issues/366)
+- \#issue353 : minor change : fixed typo in bash script output only [\#366](https://github.com/factcast/factcast/issues/366)
 - Issue364 upgrade to junit5 - coverage problem [\#365](https://github.com/factcast/factcast/issues/365)
 - Evaluate Coverage drop when updating to junit 5.4 [\#364](https://github.com/factcast/factcast/issues/364)
 - Issue332 Optimistic Locking Documentation [\#363](https://github.com/factcast/factcast/issues/363)
@@ -1161,15 +1162,15 @@
 - Bump spring-boot-dependencies from 2.1.3.RELEASE to 2.1.4.RELEASE [\#357](https://github.com/factcast/factcast/issues/357)
 - \#355: Updated spring-grpc version [\#356](https://github.com/factcast/factcast/issues/356)
 - Bump spring-grpc.version from 2.1.0.RELEASE to 2.3.0.RELEASE [\#355](https://github.com/factcast/factcast/issues/355)
-- Issue353 spotless auto-apply  [\#354](https://github.com/factcast/factcast/issues/354)
+- Issue353 spotless auto-apply [\#354](https://github.com/factcast/factcast/issues/354)
 - Add configuration option for spotless auto-apply [\#353](https://github.com/factcast/factcast/issues/353)
 - Issue351 fix maven plugin version warnings [\#352](https://github.com/factcast/factcast/issues/352)
-- fix version warnings for spring-maven-plugin  [\#351](https://github.com/factcast/factcast/issues/351)
+- fix version warnings for spring-maven-plugin [\#351](https://github.com/factcast/factcast/issues/351)
 - Issue189 spotless [\#350](https://github.com/factcast/factcast/issues/350)
 - Issue348 update to latest version of yidongnan/grpc-spring-boot-starter [\#349](https://github.com/factcast/factcast/issues/349)
 - Update to latest grpc/netty deps [\#348](https://github.com/factcast/factcast/issues/348)
-- removed unique\_identifier feature [\#347](https://github.com/factcast/factcast/issues/347)
-- Remove unique\_identifier [\#346](https://github.com/factcast/factcast/issues/346)
+- removed unique_identifier feature [\#347](https://github.com/factcast/factcast/issues/347)
+- Remove unique_identifier [\#346](https://github.com/factcast/factcast/issues/346)
 - Issue239 factstore extensions [\#345](https://github.com/factcast/factcast/issues/345)
 - Issue338 transaction scoped locks [\#344](https://github.com/factcast/factcast/issues/344)
 - \#341: add lockGlobally [\#343](https://github.com/factcast/factcast/issues/343)
@@ -1266,10 +1267,10 @@
 - \#246: more careful catchup mechanics [\#249](https://github.com/factcast/factcast/issues/249)
 - this should break the build due to formal incorrectnes [\#248](https://github.com/factcast/factcast/issues/248)
 - Check formal requirements on CI [\#247](https://github.com/factcast/factcast/issues/247)
-- Flaky test in InMemStore  [\#246](https://github.com/factcast/factcast/issues/246)
+- Flaky test in InMemStore [\#246](https://github.com/factcast/factcast/issues/246)
 - CLI: add switch to talk to TLS [\#245](https://github.com/factcast/factcast/issues/245)
 - Issue240 make test methods package private [\#244](https://github.com/factcast/factcast/issues/244)
-- \#240\_coverage\_analysis: baseline [\#243](https://github.com/factcast/factcast/issues/243)
+- \#240_coverage_analysis: baseline [\#243](https://github.com/factcast/factcast/issues/243)
 - Issue240 Rename TestCases and limit test method scopes \(JUnit5\) [\#242](https://github.com/factcast/factcast/issues/242)
 - Issue122 [\#241](https://github.com/factcast/factcast/issues/241)
 - Cleanup Tests [\#240](https://github.com/factcast/factcast/issues/240)
@@ -1322,7 +1323,7 @@
 - Upgrade dependencies to spring-grpc [\#192](https://github.com/factcast/factcast/issues/192)
 - Issue188 dependency cleanup [\#191](https://github.com/factcast/factcast/issues/191)
 - Handle unavailable Nashorn engine [\#190](https://github.com/factcast/factcast/issues/190)
-- Consider formatting with spotless  [\#189](https://github.com/factcast/factcast/issues/189)
+- Consider formatting with spotless [\#189](https://github.com/factcast/factcast/issues/189)
 - Remove direct dependencies from parent pom [\#188](https://github.com/factcast/factcast/issues/188)
 - Extract dependency management to factcast-dependencies project [\#187](https://github.com/factcast/factcast/issues/187)
 - \#185: added @NonNull contract to obserer.onNext [\#186](https://github.com/factcast/factcast/issues/186)
@@ -1352,7 +1353,7 @@
 - CLI: Implement serialOf [\#161](https://github.com/factcast/factcast/issues/161)
 - compression config cleanup [\#160](https://github.com/factcast/factcast/issues/160)
 - Cleanup LZ4 & GZIP Configuration [\#159](https://github.com/factcast/factcast/issues/159)
-- \#157: introduced FACTCAST\_SERVER env variable [\#158](https://github.com/factcast/factcast/issues/158)
+- \#157: introduced FACTCAST_SERVER env variable [\#158](https://github.com/factcast/factcast/issues/158)
 - CLI: reintroduce getting defaults for -h and -p from environment [\#157](https://github.com/factcast/factcast/issues/157)
 - added CLI [\#156](https://github.com/factcast/factcast/issues/156)
 - Factory Method Fact.of\(JsonNode, JsonNode\) [\#155](https://github.com/factcast/factcast/issues/155)
@@ -1396,7 +1397,7 @@
 - \#106: updated dependency for pg-embed [\#107](https://github.com/factcast/factcast/issues/107)
 - Upgrade embedded postgres dependency [\#106](https://github.com/factcast/factcast/issues/106)
 - Issue87 [\#105](https://github.com/factcast/factcast/issues/105)
-- An instanceof check is being performed on the caught exception.  Create a separate catch clause for this exception type. [\#104](https://github.com/factcast/factcast/issues/104)
+- An instanceof check is being performed on the caught exception. Create a separate catch clause for this exception type. [\#104](https://github.com/factcast/factcast/issues/104)
 - Fields should be declared at the top of the class, before any method declarations, constructors, initializers or inner classes. [\#103](https://github.com/factcast/factcast/issues/103)
 - Fields should be declared at the top of the class, before any method declarations, constructors, initializers or inner classes. [\#102](https://github.com/factcast/factcast/issues/102)
 - \#86: added rpc endpoint for protocol version in grpc [\#101](https://github.com/factcast/factcast/issues/101)
@@ -1408,8 +1409,8 @@
 - fix hugo version [\#95](https://github.com/factcast/factcast/issues/95)
 - Issue79 [\#94](https://github.com/factcast/factcast/issues/94)
 - use provided pgsql in circleci [\#93](https://github.com/factcast/factcast/issues/93)
-- Document unique\_identifier [\#92](https://github.com/factcast/factcast/issues/92)
-- unique\_identifier added. fixes \#82 [\#91](https://github.com/factcast/factcast/issues/91)
+- Document unique_identifier [\#92](https://github.com/factcast/factcast/issues/92)
+- unique_identifier added. fixes \#82 [\#91](https://github.com/factcast/factcast/issues/91)
 - Issue53 [\#90](https://github.com/factcast/factcast/issues/90)
 - Update README.md [\#89](https://github.com/factcast/factcast/issues/89)
 - Deploy Milestone 0.10 to maven central [\#88](https://github.com/factcast/factcast/issues/88)
@@ -1425,7 +1426,7 @@
 - fixes \#71 [\#75](https://github.com/factcast/factcast/issues/75)
 - added global server interceptor [\#74](https://github.com/factcast/factcast/issues/74)
 - add global gzip compression to all grpc communication server -\> client [\#73](https://github.com/factcast/factcast/issues/73)
-- cannot run Target:  org.factcast.server.grpc.TransportLayerException: null [\#72](https://github.com/factcast/factcast/issues/72)
+- cannot run Target: org.factcast.server.grpc.TransportLayerException: null [\#72](https://github.com/factcast/factcast/issues/72)
 - Unregister call from Eventbus fails unexpectedly [\#71](https://github.com/factcast/factcast/issues/71)
 - Subscriptions can become stale? [\#70](https://github.com/factcast/factcast/issues/70)
 - Ignore .factorypath [\#68](https://github.com/factcast/factcast/issues/68)
@@ -1433,7 +1434,7 @@
 - Add GDPR Declaration to website [\#66](https://github.com/factcast/factcast/issues/66)
 - Upgrade circleci to 2.0 [\#65](https://github.com/factcast/factcast/issues/65)
 - adapt oss-parent-pom [\#64](https://github.com/factcast/factcast/issues/64)
-- Adapt to use oss-parent-pom  [\#63](https://github.com/factcast/factcast/issues/63)
+- Adapt to use oss-parent-pom [\#63](https://github.com/factcast/factcast/issues/63)
 - added license plugin, \#61 [\#62](https://github.com/factcast/factcast/issues/62)
 - Add License plugin to project [\#61](https://github.com/factcast/factcast/issues/61)
 - Remove wrapping of SQLException [\#58](https://github.com/factcast/factcast/issues/58)
@@ -1479,6 +1480,4 @@
 - remove Thread.sleep from tests [\#2](https://github.com/factcast/factcast/issues/2)
 - use spring support for jersey hyper schema generator [\#1](https://github.com/factcast/factcast/issues/1)
 
-
-
-\* *This Changelog was automatically generated by [github_changelog_generator](https://github.com/github-changelog-generator/github-changelog-generator)*
+\* _This Changelog was automatically generated by [github_changelog_generator](https://github.com/github-changelog-generator/github-changelog-generator)_
