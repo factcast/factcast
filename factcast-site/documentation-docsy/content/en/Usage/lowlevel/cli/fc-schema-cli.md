@@ -6,21 +6,21 @@ type="docs"
 +++
 
 This CLI provides a convenient way to create a suitable Schema Registry for your FactCast installation.
-It will give you the ability to validate events against examples and to make sure that there's always a upcast and if 
+It will give you the ability to validate events against examples and to make sure that there's always a upcast and if
 necessary a downcast transformation.
 
-It produces a human and a machine readable output. You will have to use [hugo](https://gohugo.io/) in order to get a 
+It produces a human and a machine readable output. You will have to use [hugo](https://gohugo.io/) in order to get a
 proper static website.
 
-A working example can be found [here](/example-registry/). 
+A working example can be found [here](/example-registry/).
 
 ## Build the example
 
-The example will be build during `mvn install`, but you can reach the same via 
+The example will be build during `mvn install`, but you can reach the same via
 
 `$  java -jar target/fc-schema-cli.jar build -p ../factcast-examples/factcast-example-schema-registry/src/main/resources`
 
-`build` validates and builds the example and also produces a `output` directory that contains the static website. Inside this folder run 
+`build` validates and builds the example and also produces a `output` directory that contains the static website. Inside this folder run
 
 `$ hugo server`
 
@@ -36,15 +36,18 @@ We propose to the following pipeline
 
 Build -> Package -> Upload
 
-Build:  
+Build:
+
 - runs the fc-schema-cli to build the registry
 - fails on wrong input/broken schema
 
 Package:
+
 - runs `$ hugo` in order to produce the artifact
 
 Upload:
--  uploads `output/public` to static file server (like S3)
+
+- uploads `output/public` to static file server (like S3)
 
 ## Available commands and options
 
