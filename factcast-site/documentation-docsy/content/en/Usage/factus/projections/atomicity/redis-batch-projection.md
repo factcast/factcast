@@ -4,23 +4,23 @@ weight = 1100
 type="docs"
 +++
 
-A *Redis batch projection* is a [atomic projection]({{< ref "atomicity">}}) 
-based on [Redisson RBatch](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RBatch.html). 
-Like [Redis transactional projections]({{< ref "redis-transactional-projections.md">}}), also this projection type 
-is more lightweight than [Spring transactional projections]({{< ref "spring-transactional-projections.md">}}). 
-No Spring `PlatformTransactionManager` is needed, 
-the [RBatch](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RBatch.html) object of 
-the [Redission library](https://github.com/redisson/redisson) is enough.  
+A _Redis batch projection_ is a [atomic projection]({{< ref "atomicity">}})
+based on [Redisson RBatch](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RBatch.html).
+Like [Redis transactional projections]({{< ref "redis-transactional-projections.md">}}), also this projection type
+is more lightweight than [Spring transactional projections]({{< ref "spring-transactional-projections.md">}}).
+No Spring `PlatformTransactionManager` is needed,
+the [RBatch](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RBatch.html) object of
+the [Redission library](https://github.com/redisson/redisson) is enough.
 
-Working with a *Redis batch projection* is **asynchronous** as multiple commands are collected and 
+Working with a _Redis batch projection_ is **asynchronous** as multiple commands are collected and
 executed later in an atomic way (all or none).
 
 ## Motivation
 
 You would want to use Redis Batched for two reasons:
 
-* atomicity of factStreamPosition updates and your projection state updates
-* increased fact processing throughput
+- atomicity of factStreamPosition updates and your projection state updates
+- increased fact processing throughput
 
 The performance bit is achieved by skipping unnecessary factStreamPosition updates and (more importantly) by reducing the number of operations on your Redis backend by using a `redisson batch` instead of single writes for `bulkSize` updates.
 The `bulkSize` is configurable per projection via the `@RedisBatched` annotation.
@@ -29,17 +29,16 @@ Redisson batches improve performance significantly by collecting operations and 
 delegating all possible work to an async thread. It has the effect, that you cannot read non-executed (batched) changes.
 If this is unacceptable for your projection, consider [Redis transactional projections]({{<ref "redis-transactional-projections.md">}}).
 See the Redisson documentation for details.
-    
-Other than a transaction, writes registered (but not yet executed) on a Redis batch can not be read. 
 
-A *Redis batch projection*, therefore, is recommended for projections which
+Other than a transaction, writes registered (but not yet executed) on a Redis batch can not be read.
+
+A _Redis batch projection_, therefore, is recommended for projections which
+
 - handle a lot of events and
 - don't require reading the current projection state in an event handler.
 
-For an alternative that allows access to the projection state during event handling, 
+For an alternative that allows access to the projection state during event handling,
 see [Redis transactional projection]({{<ref "redis-transactional-projections.md">}}).
-
-
 
 ## Configuration
 
@@ -50,13 +49,12 @@ In order to make use of redisson RBatch support, the necessary dependency has to
         <groupId>org.factcast</groupId>
         <artifactId>factcast-factus-redis</artifactId>
     </dependency>
-    
-```
 
+```
 
 ## Structure
 
-A *Redis batch projection* supports [managed-]({{< ref "managed-projection.md" >}}) 
+A _Redis batch projection_ supports [managed-]({{< ref "managed-projection.md" >}})
 or [subscribed]({{< ref "subscribed-projection.md" >}}) projections and is defined as follows:
 
 - it is annotated with `@RedisBatched`
@@ -64,8 +62,8 @@ or [subscribed]({{< ref "subscribed-projection.md" >}}) projections and is defin
 - it provides the serial number of the projection via the `@ProjectionMetaData` annotation
 - the handler methods receive an additional `RBatch` parameter
 
-This structure is similar to a [Redis transactional projection]({{<ref "redis-transactional-projections.md#structure">}}), 
-only the `@RedisBatched` annotation and the `RBatch` method parameter differ.  
+This structure is similar to a [Redis transactional projection]({{<ref "redis-transactional-projections.md#structure">}}),
+only the `@RedisBatched` annotation and the `RBatch` method parameter differ.
 
 ## Example
 
