@@ -35,7 +35,7 @@ import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.StoreMetrics;
 import org.factcast.store.internal.catchup.BufferingFactInterceptor;
 import org.factcast.store.internal.filter.FactFilter;
-import org.factcast.store.internal.filter.PgBlacklist;
+import org.factcast.store.internal.filter.blacklist.Blacklist;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
@@ -62,7 +62,7 @@ class PgTmpPagedCatchupTest {
   @Mock @NonNull AtomicLong serial;
   @Mock @NonNull PgMetrics metrics;
   @Mock @NonNull Counter counter;
-  @Mock @NonNull PgBlacklist blacklist;
+  @Mock @NonNull Blacklist blacklist;
   @Mock @NonNull BufferingFactInterceptor interceptor;
   @Mock @NonNull FactTransformerService service;
   @Mock @NonNull CurrentStatementHolder statementHolder;
