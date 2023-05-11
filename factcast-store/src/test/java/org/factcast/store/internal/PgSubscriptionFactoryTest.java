@@ -30,7 +30,7 @@ import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
-import org.factcast.store.internal.filter.PgBlacklist;
+import org.factcast.store.internal.filter.blacklist.Blacklist;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.script.JSEngineFactory;
@@ -55,7 +55,7 @@ class PgSubscriptionFactoryTest {
 
   @Mock private StoreConfigurationProperties props;
 
-  @Mock private PgBlacklist blacklist;
+  @Mock private Blacklist blacklist;
   @Mock private FastForwardTarget target;
   @Mock private FactTransformerService transformerService;
   @Mock private PgMetrics metrics;
