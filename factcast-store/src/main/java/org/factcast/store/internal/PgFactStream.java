@@ -34,7 +34,7 @@ import org.factcast.core.subscription.transformation.FactTransformers;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.filter.FactFilter;
 import org.factcast.store.internal.filter.FactFilterImpl;
-import org.factcast.store.internal.filter.PgBlacklist;
+import org.factcast.store.internal.filter.blacklist.Blacklist;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
@@ -62,7 +62,7 @@ public class PgFactStream {
   final PgCatchupFactory pgCatchupFactory;
   final FastForwardTarget ffwdTarget;
   final FactTransformerService transformationService;
-  final PgBlacklist blacklist;
+  final Blacklist blacklist;
   final PgMetrics metrics;
   final JSEngineFactory ef;
 
