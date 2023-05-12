@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2022 factcast.org
+ * Copyright © 2017-2023 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,70 +13,58 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.filter;
+package org.factcast.store.internal.filter.blacklist;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.function.*;
+import java.util.Set;
+import java.util.UUID;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.internal.listen.PgListener;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.SmartInitializingSingleton;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-@RequiredArgsConstructor
 @Slf4j
-@Order(Ordered.LOWEST_PRECEDENCE)
-public class PgBlacklist implements SmartInitializingSingleton, DisposableBean {
+public final class PgBlacklistDataProvider
+    implements SmartInitializingSingleton, DisposableBean, BlacklistDataProvider {
   private final EventBus bus;
-  private final Fetcher fetcher;
-  private final Set<UUID> blocked = new CopyOnWriteArraySet<>();
+  private final JdbcTemplate jdbc;
+  private final Blacklist blacklist;
 
-  private void read() {
-    Set<UUID> currentList = fetcher.get();
-    // we should not just replace it in order to not mess with the reference
-    Sets.SetView<UUID> toRemove = Sets.difference(blocked, currentList);
-    blocked.removeAll(toRemove);
-    blocked.addAll(currentList);
+  public PgBlacklistDataProvider(
+      @NonNull EventBus eventBus,
+      @NonNull JdbcTemplate jdbcTemplate,
+      @NonNull Blacklist blacklist) {
+    this.bus = eventBus;
+    this.jdbc = jdbcTemplate;
+    this.blacklist = blacklist;
   }
 
   @Override
   public void afterSingletonsInstantiated() {
     bus.register(this);
-    read();
-  }
-
-  public boolean isBlocked(@NonNull UUID factId) {
-    return blocked.contains(factId);
+    updateBlacklist();
   }
 
   @Subscribe
   public void on(PgListener.BlacklistChangeSignal signal) {
     log.info("A change on blacklist table was triggered.");
-    read();
+    updateBlacklist();
+  }
+
+  private void updateBlacklist() {
+    blacklist.accept(fetchBlacklist());
+  }
+
+  private Set<UUID> fetchBlacklist() {
+    return Sets.newHashSet(jdbc.queryForList("SELECT id FROM blacklist", UUID.class));
   }
 
   @Override
   public void destroy() throws Exception {
     bus.unregister(this);
-  }
-
-  @RequiredArgsConstructor
-  @VisibleForTesting
-  public static class Fetcher implements Supplier<Set<UUID>> {
-    final JdbcTemplate jdbc;
-
-    @Override
-    public Set<UUID> get() {
-      return Sets.newHashSet(jdbc.queryForList("SELECT id FROM blacklist", UUID.class));
-    }
   }
 }
