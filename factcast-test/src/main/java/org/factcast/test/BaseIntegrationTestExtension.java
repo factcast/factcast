@@ -151,4 +151,28 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
               + "END $$;");
     }
   }
+
+  @Override
+  public void afterAll(TestContext ctx) {
+
+    Class<?> tc = ctx.getTestClass();
+    if (Arrays.stream(tc.getDeclaredFields())
+        .anyMatch(f -> PostgresqlProxy.class.equals(f.getType()))) {
+
+      // there was a postgres proxy involved. Depending on what we did with it, the factcast
+      // container might now have broken connections in its pool, so lets make sure to restart it.
+
+      FactCastIntegrationTestExecutionListener.Containers containers =
+          executions.get(discoverConfig(ctx.getTestClass()));
+      GenericContainer<?> fc = containers.fc();
+      log.error(
+          "Cleanup after execution of "
+              + tc.getClass()
+              + ": PgProxy was involved, restarting factcast.");
+      fc.stop();
+      fc.start();
+    }
+
+    FactCastIntegrationTestExtension.super.afterAll(ctx);
+  }
 }
