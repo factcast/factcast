@@ -123,6 +123,17 @@ grpc.server.permit-keep-alive-without-calls=true
 grpc.server.permit-keep-alive-time=100
 ```
 
+---
+
+### Blacklist
+
+| Property                    | Description                                                                                                | Default                  | Example                            |
+| --------------------------- | :--------------------------------------------------------------------------------------------------------- | :----------------------- | :--------------------------------- |
+| factcast.blacklist.type     | Configures where the list of blacklisted facts is retrieved from. One of [POSTGRES, RESOURCE].             | POSTGRES                 | ---                                |
+| factcast.blacklist.location | Only required if type=RESOURCE. Specifies the URL where the JSON file containing the blacklist is located. | classpath:blacklist.json | file:/some/path/blocked-facts.json |
+
+---
+
 ### Testing
 
 | Property                           | Semantics                                                                                                         | Default |

@@ -22,6 +22,7 @@ import java.util.*;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.internal.PostQueryMatcher;
+import org.factcast.store.internal.filter.blacklist.Blacklist;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -34,7 +35,7 @@ class FactFilterImplTest {
 
   private static final boolean SKIP_TEST = true;
   @Mock private SubscriptionRequestTO request;
-  @Mock private PgBlacklist blacklist;
+  @Mock private Blacklist blacklist;
   @Mock private PostQueryMatcher matcher;
 
   @Nested

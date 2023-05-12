@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.filter;
+package org.factcast.store.internal.filter.blacklist;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Sets;
@@ -31,31 +30,32 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 @ExtendWith(MockitoExtension.class)
-class PgBlacklistTest {
-  private static final UUID UUID_VALUE = UUID.randomUUID();
+class PgBlacklistDataProviderTest {
   @Spy private EventBus bus = new EventBus();
-  @Mock private PgBlacklist.Fetcher fetcher;
-  @InjectMocks private PgBlacklist underTest;
+  @Mock private JdbcTemplate jdbc;
+  @Mock private Blacklist blacklist;
+  @InjectMocks private PgBlacklistDataProvider underTest;
 
   @Nested
   class WhenAfteringSingletonsInstantiated {
     @Test
     void fetches() {
       underTest.afterSingletonsInstantiated();
-      verify(fetcher).get();
+      verify(blacklist).accept(any());
     }
 
     @Test
     void registersOnBus() {
       underTest.afterSingletonsInstantiated();
-      verify(fetcher, times(1)).get();
+      verify(blacklist, times(1)).accept(any());
       // three more
       bus.post(new PgListener.BlacklistChangeSignal());
       bus.post(new PgListener.BlacklistChangeSignal());
       bus.post(new PgListener.BlacklistChangeSignal());
-      verify(fetcher, times(4)).get();
+      verify(blacklist, times(4)).accept(any());
     }
   }
 
@@ -71,39 +71,24 @@ class PgBlacklistTest {
   }
 
   @Nested
-  class WhenCheckingIfIsBlocked {
+  class WhenUpdatingBlacklist {
     private final UUID FACT_ID = UUID.randomUUID();
     private final UUID NEW_FACT_ID = UUID.randomUUID();
 
     @BeforeEach
     void setup() {
-      //noinspection unchecked
-      when(fetcher.get())
-          .thenReturn(
-              Sets.newHashSet(FACT_ID),
-              Sets.newHashSet(NEW_FACT_ID, FACT_ID),
-              Collections.emptySet());
+      when(jdbc.queryForList("SELECT id FROM blacklist", UUID.class))
+          .thenReturn(List.of(FACT_ID), List.of(NEW_FACT_ID, FACT_ID), Collections.emptyList());
       underTest.afterSingletonsInstantiated();
     }
 
     @Test
-    void remembersBlocked() {
-      assertThat(underTest.isBlocked(FACT_ID)).isTrue();
-      assertThat(underTest.isBlocked(UUID.randomUUID())).isFalse();
-    }
-
-    @Test
     void updatesSet() {
-      assertThat(underTest.isBlocked(FACT_ID)).isTrue();
-      assertThat(underTest.isBlocked(NEW_FACT_ID)).isFalse();
+      underTest.on(new PgListener.BlacklistChangeSignal());
+      verify(blacklist).accept(Sets.newHashSet(NEW_FACT_ID, FACT_ID));
 
       underTest.on(new PgListener.BlacklistChangeSignal());
-      assertThat(underTest.isBlocked(FACT_ID)).isTrue();
-      assertThat(underTest.isBlocked(NEW_FACT_ID)).isTrue();
-
-      underTest.on(new PgListener.BlacklistChangeSignal());
-      assertThat(underTest.isBlocked(FACT_ID)).isFalse();
-      assertThat(underTest.isBlocked(NEW_FACT_ID)).isFalse();
+      verify(blacklist).accept(new HashSet<>());
     }
   }
 
@@ -114,7 +99,8 @@ class PgBlacklistTest {
     @Test
     void fetches() {
       underTest.on(signal);
-      verify(fetcher).get();
+      verify(jdbc).queryForList("SELECT id FROM blacklist", UUID.class);
+      verify(blacklist).accept(any());
     }
   }
 }
