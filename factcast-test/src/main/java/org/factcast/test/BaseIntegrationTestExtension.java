@@ -165,7 +165,7 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
       FactCastIntegrationTestExecutionListener.Containers containers =
           executions.get(discoverConfig(ctx.getTestClass()));
       GenericContainer<?> fc = containers.fc();
-      log.error(
+      log.debug(
           "Cleanup after execution of "
               + tc.getClass()
               + ": PgProxy was involved, restarting factcast.");
