@@ -174,10 +174,14 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
               RetryableException.class);
       assertThat(count.get()).isLessThan(MAX_FACTS);
 
-      assertThat(
-              consoleCaptor.getStandardOutput().stream()
-                  .filter(e -> e.contains("Trying to resubscribe")))
-          .hasSize(NUMBER_OF_ATTEMPTS - 1);
+      await()
+          .atMost(3, SECONDS)
+          .untilAsserted(
+              () ->
+                  assertThat(
+                          consoleCaptor.getStandardOutput().stream()
+                              .filter(e -> e.contains("Trying to resubscribe")))
+                      .hasSize(NUMBER_OF_ATTEMPTS - 1));
     }
   }
 

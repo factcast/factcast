@@ -20,13 +20,22 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.stream.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.store.registry.metrics.RegistryMetrics;
@@ -38,14 +47,14 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.scheduling.annotation.Scheduled;
 
-@RequiredArgsConstructor
 @Slf4j
-public class PgTransformationCache implements TransformationCache {
+public class PgTransformationCache implements TransformationCache, AutoCloseable {
   private static final int MAX_BATCH_SIZE = 20_000;
   private final JdbcTemplate jdbcTemplate;
   private final NamedParameterJdbcTemplate namedJdbcTemplate;
-
   private final RegistryMetrics registryMetrics;
+
+  private final ExecutorService es;
 
   private static final CompletableFuture<Void> COMPLETED_FUTURE =
       CompletableFuture.completedFuture(null);
@@ -57,6 +66,16 @@ public class PgTransformationCache implements TransformationCache {
 
   private int maxBufferSize = 1000;
 
+  public PgTransformationCache(
+      JdbcTemplate jdbcTemplate,
+      NamedParameterJdbcTemplate namedJdbcTemplate,
+      RegistryMetrics registryMetrics) {
+    this.jdbcTemplate = jdbcTemplate;
+    this.namedJdbcTemplate = namedJdbcTemplate;
+    this.registryMetrics = registryMetrics;
+    this.es = registryMetrics.monitor(Executors.newSingleThreadExecutor(), "transformation-cache");
+  }
+
   @VisibleForTesting
   PgTransformationCache(
       JdbcTemplate jdbcTemplate,
@@ -67,6 +86,7 @@ public class PgTransformationCache implements TransformationCache {
     this.namedJdbcTemplate = namedJdbcTemplate;
     this.registryMetrics = registryMetrics;
     this.maxBufferSize = maxBufferSize;
+    this.es = Executors.newSingleThreadExecutor();
   }
 
   @Override
@@ -158,7 +178,7 @@ public class PgTransformationCache implements TransformationCache {
   @VisibleForTesting
   CompletableFuture<Void> flushIfNecessary() {
     if (buffer.size() >= maxBufferSize) {
-      return CompletableFuture.runAsync(this::flush);
+      return CompletableFuture.runAsync(this::flush, es);
     } else {
       return COMPLETED_FUTURE;
     }
@@ -176,6 +196,15 @@ public class PgTransformationCache implements TransformationCache {
                 new Date(thresholdDate.toInstant().toEpochMilli())));
   }
 
+  @Override
+  public void invalidateTransformationFor(String ns, String type) {
+    flush();
+    jdbcTemplate.update(
+        "DELETE FROM transformationcache WHERE header ->> 'ns' = ? AND header ->> 'type' = ?",
+        ns,
+        type);
+  }
+
   @Scheduled(fixedRate = 10, timeUnit = TimeUnit.MINUTES)
   public void flush() {
     Map<Key, Fact> copy = buffer.clear();
@@ -185,6 +214,20 @@ public class PgTransformationCache implements TransformationCache {
         insertBufferedAccesses(copy);
       } catch (Exception e) {
         log.error("Could not complete batch update of transformations on transformation cache.", e);
+      }
+    }
+  }
+
+  @VisibleForTesting
+  void clearAndFlushAccessesOnly() {
+    Map<Key, Fact> copy = buffer.clear();
+    if (!copy.isEmpty()) {
+      try {
+        insertBufferedAccesses(copy);
+      } catch (Exception e) {
+        log.error(
+            "Could not complete batch update of transformation accesses on transformation cache.",
+            e);
       }
     }
   }
@@ -233,5 +276,10 @@ public class PgTransformationCache implements TransformationCache {
                     parameters);
               });
     }
+  }
+
+  @Override
+  public void close() throws Exception {
+    es.shutdown();
   }
 }

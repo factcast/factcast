@@ -29,7 +29,7 @@ public class SomeSchemaRegistry extends AbstractSchemaRegistry {
       @NonNull SchemaStore schemaStore,
       @NonNull TransformationStore transformationStore,
       @NonNull RegistryMetrics registryMetrics,
-      @NonNull StoreConfigurationProperties pgConfigurationProperties,
+      @NonNull StoreConfigurationProperties storeConfigurationProperties,
       @NonNull LockProvider lockProvider) {
     super(
         indexFetcher,
@@ -37,7 +37,7 @@ public class SomeSchemaRegistry extends AbstractSchemaRegistry {
         schemaStore,
         transformationStore,
         registryMetrics,
-        pgConfigurationProperties,
+        storeConfigurationProperties,
         lockProvider);
   }
 }

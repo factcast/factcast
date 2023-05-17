@@ -34,7 +34,7 @@ public class HttpSchemaRegistry extends AbstractSchemaRegistry {
       @NonNull SchemaStore schemaStore,
       @NonNull TransformationStore transformationStore,
       @NonNull RegistryMetrics registryMetrics,
-      @NonNull StoreConfigurationProperties props,
+      @NonNull StoreConfigurationProperties storeConfigurationProperties,
       @NonNull LockProvider lockProvider) {
     this(
         schemaStore,
@@ -42,7 +42,7 @@ public class HttpSchemaRegistry extends AbstractSchemaRegistry {
         new HttpIndexFetcher(baseUrl, registryMetrics),
         new HttpRegistryFileFetcher(baseUrl, registryMetrics),
         registryMetrics,
-        props,
+        storeConfigurationProperties,
         lockProvider);
   }
 
@@ -53,7 +53,7 @@ public class HttpSchemaRegistry extends AbstractSchemaRegistry {
       @NonNull HttpIndexFetcher indexFetcher,
       @NonNull HttpRegistryFileFetcher registryFileFetcher,
       @NonNull RegistryMetrics registryMetrics,
-      @NonNull StoreConfigurationProperties properties,
+      @NonNull StoreConfigurationProperties storeConfigurationProperties,
       @NonNull LockProvider lockProvider) {
     super(
         indexFetcher,
@@ -61,7 +61,7 @@ public class HttpSchemaRegistry extends AbstractSchemaRegistry {
         schemaStore,
         transformationStore,
         registryMetrics,
-        properties,
+        storeConfigurationProperties,
         lockProvider);
   }
 }
