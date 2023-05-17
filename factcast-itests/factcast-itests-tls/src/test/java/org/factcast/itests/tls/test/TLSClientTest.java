@@ -15,8 +15,10 @@
  */
 package org.factcast.itests.tls.test;
 
-import java.time.Duration;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.time.Duration;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
@@ -35,10 +37,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-
-import lombok.extern.slf4j.Slf4j;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(classes = TLSClient.class)
 @ContextConfiguration(classes = {TLSClient.class})
