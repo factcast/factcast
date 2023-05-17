@@ -17,11 +17,13 @@ package org.factcast.store.registry.transformation.cache;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
 
 import com.google.common.collect.Lists;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Collection;
+import java.util.Optional;
+import java.util.UUID;
 import org.factcast.core.Fact;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics;
@@ -132,5 +134,20 @@ public abstract class AbstractTransformationCacheTest {
 
     uut.put(TransformationCache.Key.of(f.id(), 1, "foo"), f);
     assertThat(uut.find(TransformationCache.Key.of(f.id(), 2, "foo"))).isEmpty();
+  }
+
+  @Test
+  void testInvalidateTransformationForMatchingNamespaceAndType() {
+    String matchingNs = "namespace";
+    String matchingType = "type";
+    Fact f1 = Fact.builder().ns(matchingNs).type(matchingType).version(1).build("{}");
+    Fact f2 = Fact.builder().ns(matchingNs).type(matchingType).version(2).build("{}");
+    uut.put(TransformationCache.Key.of(f1.id(), 1, "foo1"), f1);
+    uut.put(TransformationCache.Key.of(f2.id(), 2, "foo2"), f2);
+
+    uut.invalidateTransformationFor(matchingNs, matchingType);
+
+    assertThat(uut.find(TransformationCache.Key.of(f1.id(), 1, "foo1"))).isEmpty();
+    assertThat(uut.find(TransformationCache.Key.of(f2.id(), 2, "foo2"))).isEmpty();
   }
 }

@@ -400,4 +400,71 @@ class PgTransformationCacheTest {
       assertThat(ids).isNotNull().hasSize(2);
     }
   }
+
+  @Nested
+  class WhenInvalidatingTransformationFor {
+    private PgTransformationCache underTest;
+
+    @BeforeEach
+    void setup() {
+      underTest =
+          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
+    }
+
+    @Test
+    void clearsAndFlushesAccessesOnly() {
+      underTest.invalidateTransformationFor("theNamespace", "theType");
+
+      verify(underTest, times(1)).flush();
+    }
+
+    @Test
+    void deletesFromTransformationCache() {
+      underTest.invalidateTransformationFor("theNamespace", "theType");
+
+      ArgumentCaptor<String> ns = ArgumentCaptor.forClass(String.class);
+      ArgumentCaptor<String> type = ArgumentCaptor.forClass(String.class);
+
+      Mockito.verify(jdbcTemplate)
+          .update(
+              matches("DELETE FROM transformationcache WHERE .*"), ns.capture(), type.capture());
+
+      assertThat(ns.getAllValues().get(0)).isEqualTo("theNamespace");
+      assertThat(type.getAllValues().get(0)).isEqualTo("theType");
+    }
+  }
+
+  @Nested
+  class WhenClearingAndFlushingAccessOnly {
+    private PgTransformationCache underTest;
+
+    @BeforeEach
+    void setup() {
+      underTest =
+          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
+    }
+
+    @Test
+    void clearsBuffer() {
+      underTest.registerWrite(
+          Mockito.mock(TransformationCache.Key.class), Mockito.mock(Fact.class));
+      underTest.registerAccess(Mockito.mock(TransformationCache.Key.class));
+
+      underTest.clearAndFlushAccessesOnly();
+
+      assertThat(underTest.buffer().size()).isZero();
+    }
+
+    @Test
+    void flushesAccessesOnly() {
+      underTest.registerWrite(
+          Mockito.mock(TransformationCache.Key.class), Mockito.mock(Fact.class));
+      underTest.registerAccess(Mockito.mock(TransformationCache.Key.class));
+
+      underTest.clearAndFlushAccessesOnly();
+
+      verify(underTest, times(1)).insertBufferedAccesses(any());
+      verify(underTest, never()).insertBufferedTransformations(any());
+    }
+  }
 }

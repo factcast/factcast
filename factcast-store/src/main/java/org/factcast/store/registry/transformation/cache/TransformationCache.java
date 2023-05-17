@@ -16,7 +16,10 @@
 package org.factcast.store.registry.transformation.cache;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Collection;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import lombok.NonNull;
 import lombok.Value;
 import org.factcast.core.Fact;
@@ -32,6 +35,8 @@ public interface TransformationCache {
   Set<Fact> findAll(Collection<Key> keys);
 
   void compact(ZonedDateTime thresholdDate);
+
+  void invalidateTransformationFor(String ns, String type);
 
   @Value
   class Key {

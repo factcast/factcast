@@ -5,7 +5,6 @@ weight: 40
 type: docs
 ---
 
-
 Since version 0.2.0, FactCast can be configured to validate Facts before publishing them. In order to do that, FactCast
 needs to have a Schema for the Namespace/Type/Version of a Fact, that is expected to live in a Schema-Registry. The
 Schema Registry is a static webiste, that is referenced by the property 'factcast.store.schemaRegistryUrl'. If no '

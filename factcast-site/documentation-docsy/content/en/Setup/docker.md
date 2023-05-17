@@ -23,5 +23,5 @@ The docker container can be started
 docker run -e"spring.datasource.url=jdbc:postgresql://<POSTGRES-SERVER>/<DATABASENAME>?user=<USERNAME>&password=<PASSWORD>" -p 9090:9090 -p 8080:8080 -p 8081:8081 factcast/factcast
 ```
 
-Note, that the resulting server is optimized and supposed to be used for integration testing only. 
-**Do not use it in production** 
+Note, that the resulting server is optimized and supposed to be used for integration testing only.
+**Do not use it in production**
