@@ -35,15 +35,11 @@ public class PgLatestSerialFetcher {
 
   /** @return 0, if no Fact is found, or exception is raised. */
   public long retrieveLatestSer() {
-    // noinspection CatchMayIgnoreException
-    try {
-      SqlRowSet rs = jdbcTemplate.queryForRowSet(PgConstants.SELECT_LATEST_SER);
-      if (rs.next()) {
-        return rs.getLong(1);
-      }
-    } catch (Exception ignored) {
-      log.warn("While retrieveLatestSer:", ignored);
+    SqlRowSet rs = jdbcTemplate.queryForRowSet(PgConstants.LAST_SERIAL_IN_LOG);
+    if (rs.next()) {
+      return rs.getLong(1);
     }
+
     return 0;
   }
 }

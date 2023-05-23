@@ -16,7 +16,6 @@
 package org.factcast.store.internal;
 
 import java.util.Random;
-
 import lombok.AccessLevel;
 import lombok.Generated;
 import lombok.NonNull;
@@ -71,6 +70,9 @@ public class PgConstants {
 
   public static final String CHANNEL_FACT_INSERT = "fact_insert";
   public static final String CHANNEL_SCHEDULED_POLL = "scheduled-poll";
+  public static final String CHANNEL_BLACKLIST_CHANGE = "blacklist_change";
+  public static final String CHANNEL_SCHEMASTORE_CHANGE = "schemastore_change";
+  public static final String CHANNEL_TRANSFORMATIONSTORE_CHANGE = "transformationstore_change";
   public static final String CHANNEL_ROUNDTRIP =
       "roundtrip_channel_"
           + Math.abs(new Random().nextLong()); // using the pid lead to a sql exception
@@ -143,9 +145,6 @@ public class PgConstants {
           + COLUMN_HEADER
           + " @> cast (? as jsonb)";
 
-  public static final String SELECT_LATEST_SER =
-      "SELECT max(" + COLUMN_SER + ") FROM " + TABLE_FACT;
-
   public static final //
   String SELECT_FACT_FROM_CATCHUP = //
       "SELECT "
@@ -194,6 +193,15 @@ public class PgConstants {
   public static final String NOTIFY_ROUNDTRIP = "NOTIFY " + CHANNEL_ROUNDTRIP;
 
   public static final String LISTEN_ROUNDTRIP_CHANNEL_SQL = "LISTEN " + CHANNEL_ROUNDTRIP;
+
+  public static final String LISTEN_BLACKLIST_CHANGE_CHANNEL_SQL =
+      "LISTEN " + CHANNEL_BLACKLIST_CHANGE;
+
+  public static final String LISTEN_SCHEMASTORE_CHANGE_CHANNEL_SQL =
+      "LISTEN " + CHANNEL_SCHEMASTORE_CHANGE;
+
+  public static final String LISTEN_TRANSFORMATIONSTORE_CHANGE_CHANNEL_SQL =
+      "LISTEN " + CHANNEL_TRANSFORMATIONSTORE_CHANGE;
 
   public static final String UPDATE_FACT_SERIALS =
       "update "
@@ -260,7 +268,8 @@ public class PgConstants {
   public static final String SELECT_NS_FROM_TOKEN =
       "SELECT " + COLUMN_NAMESPACE + " FROM " + TABLE_TOKENSTORE + " WHERE " + COLUMN_TOKEN + "=?";
 
-  public static final String LAST_SERIAL_IN_LOG = "select COALESCE(max(ser),0) from fact";
+  public static final String LAST_SERIAL_IN_LOG =
+      "SELECT COALESCE(MAX(" + COLUMN_SER + "),0) from " + TABLE_FACT;
   public static final String HIGHWATER_MARK =
       "select ("
           + COLUMN_HEADER
@@ -287,7 +296,7 @@ public class PgConstants {
         + TABLE_FACT
         + " using GIN("
         + COLUMN_HEADER
-        + " jsonb_path_ops) WHERE "
+        + " jsonb_path_ops) WITH (gin_pending_list_limit = 16384 , fastupdate = true)  WHERE "
         + COLUMN_SER
         + ">"
         + ser;

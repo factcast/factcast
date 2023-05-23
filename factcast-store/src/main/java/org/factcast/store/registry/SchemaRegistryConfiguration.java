@@ -16,8 +16,12 @@
 package org.factcast.store.registry;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import java.net.MalformedURLException;
+import java.util.*;
+import java.util.stream.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.core.LockProvider;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.classpath.ClasspathSchemaRegistryFactory;
 import org.factcast.store.registry.filesystem.FilesystemSchemaRegistryFactory;
@@ -33,10 +37,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-import java.net.MalformedURLException;
-import java.util.List;
-import java.util.stream.Collectors;
-
 @Slf4j
 @Configuration
 @EnableScheduling
@@ -49,18 +49,19 @@ public class SchemaRegistryConfiguration {
   }
 
   @Bean
-  public FilesystemSchemaRegistryFactory filesystemSchemaRegistryFactory() {
-    return new FilesystemSchemaRegistryFactory();
+  public FilesystemSchemaRegistryFactory filesystemSchemaRegistryFactory(
+      LockProvider lockProvider) {
+    return new FilesystemSchemaRegistryFactory(lockProvider);
   }
 
   @Bean
-  public ClasspathSchemaRegistryFactory classpathSchemaRegistryFactory() {
-    return new ClasspathSchemaRegistryFactory();
+  public ClasspathSchemaRegistryFactory classpathSchemaRegistryFactory(LockProvider lockProvider) {
+    return new ClasspathSchemaRegistryFactory(lockProvider);
   }
 
   @Bean
-  public HttpSchemaRegistryFactory httpSchemaRegistryFactory() {
-    return new HttpSchemaRegistryFactory();
+  public HttpSchemaRegistryFactory httpSchemaRegistryFactory(LockProvider lockProvider) {
+    return new HttpSchemaRegistryFactory(lockProvider);
   }
 
   @Bean
@@ -73,7 +74,7 @@ public class SchemaRegistryConfiguration {
 
     try {
 
-      if (p.isValidationEnabled()) {
+      if (p.isSchemaRegistryConfigured()) {
         String fullUrl = p.getSchemaRegistryUrl();
         if (!fullUrl.contains(":")) {
           fullUrl = "classpath:" + fullUrl;
@@ -93,9 +94,6 @@ public class SchemaRegistryConfiguration {
         return registry;
 
       } else {
-        log.warn(
-            "**** SchemaRegistry-mode is disabled. Fact validation will not happen. This is"
-                + " discouraged for production environments. You have been warned. ****");
         return new NOPSchemaRegistry();
       }
 
@@ -130,7 +128,7 @@ public class SchemaRegistryConfiguration {
   @Bean
   public ScheduledRegistryRefresher scheduledRegistryFresher(
       SchemaRegistry registry, StoreConfigurationProperties properties) {
-    if (properties.isValidationEnabled()) {
+    if (properties.isSchemaRegistryConfigured()) {
       return new ScheduledRegistryRefresher(registry);
     } else return null;
   }

@@ -15,24 +15,22 @@
  */
 package org.factcast.store.internal.catchup.tmppaged;
 
+import com.google.common.annotations.VisibleForTesting;
+import java.util.*;
+import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.PgPostQueryMatcher;
+import org.factcast.store.internal.catchup.BufferingFactInterceptor;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
+import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
-
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -44,12 +42,11 @@ public class PgTmpPagedCatchup implements PgCatchup {
 
   @NonNull final SubscriptionRequestTO request;
 
-  @NonNull final PgPostQueryMatcher postQueryMatcher;
-
-  @NonNull final SubscriptionImpl subscription;
+  @NonNull final BufferingFactInterceptor interceptor;
 
   @NonNull final AtomicLong serial;
-  @NonNull final PgMetrics metrics;
+
+  @NonNull final CurrentStatementHolder statementHolder;
 
   @SneakyThrows
   @Override
@@ -58,35 +55,32 @@ public class PgTmpPagedCatchup implements PgCatchup {
     SingleConnectionDataSource ds = new SingleConnectionDataSource(connectionSupplier.get(), true);
     try {
       var jdbc = new JdbcTemplate(ds);
-
-      jdbc.execute("CREATE TEMPORARY TABLE catchup(ser bigint)");
-
-      PgCatchUpPrepare prep = new PgCatchUpPrepare(jdbc, request);
-      // first collect all the sers
-      var numberOfFactsToCatchUp = prep.prepareCatchup(serial);
-      // and AFTERWARDs create the inmem index
-      jdbc.execute("CREATE INDEX catchup_tmp_idx1 ON catchup(ser ASC)"); // improves perf on sorting
-
-      var skipTesting = postQueryMatcher.canBeSkipped();
-
-      if (numberOfFactsToCatchUp > 0) {
-        PgCatchUpFetchTmpPage fetch = new PgCatchUpFetchTmpPage(jdbc, props.getPageSize(), request);
-        List<Fact> facts;
-        do {
-          facts = fetch.fetchFacts(serial);
-
-          for (Fact f : facts) {
-            UUID factId = f.id();
-            if (skipTesting || postQueryMatcher.test(f)) {
-              subscription.notifyElement(f);
-            } else {
-              log.trace("{} filtered id={}", request, factId);
-            }
-          }
-        } while (!facts.isEmpty());
-      }
+      fetch(jdbc);
     } finally {
+      interceptor.flush();
       ds.destroy();
+      statementHolder.clear();
+    }
+  }
+
+  @VisibleForTesting
+  void fetch(JdbcTemplate jdbc) {
+    jdbc.execute("CREATE TEMPORARY TABLE catchup(ser bigint)");
+
+    PgCatchUpPrepare prep = new PgCatchUpPrepare(jdbc, request, statementHolder);
+    // first collect all the sers
+    var numberOfFactsToCatchUp = prep.prepareCatchup(serial);
+    // and AFTERWARDs create the inmem index
+    jdbc.execute("CREATE INDEX catchup_tmp_idx1 ON catchup(ser ASC)"); // improves perf on sorting
+
+    if (numberOfFactsToCatchUp > 0) {
+      PgCatchUpFetchTmpPage fetch =
+          new PgCatchUpFetchTmpPage(jdbc, props.getPageSize(), request, statementHolder);
+      List<Fact> facts;
+      do {
+        facts = fetch.fetchFacts(serial);
+        facts.forEach(interceptor);
+      } while (!facts.isEmpty());
     }
   }
 }

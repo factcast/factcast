@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast-itests</artifactId>
-    <version>0.4.0</version>
+    <version>0.6.7-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-itests-novalidation</artifactId>
@@ -38,6 +38,11 @@
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-client-grpc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-test</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
@@ -119,7 +124,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <version>3.0.0-M5</version>
+        <version>3.0.0-M9</version>
         <configuration>
           <skipITs>true</skipITs>
         </configuration>

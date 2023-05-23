@@ -97,8 +97,194 @@ databaseChangeLog:
   - include:
       file: factcast/issue1435/stats_index.sql
       relativeToChangelogFile: true
-  - include:
-      file: factcast/issue1444/obsolete_index.sql
-      relativeToChangelogFile: true
 
+
+  - changeSet:
+      id: drop_obsolete_index
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue1444/drop_obsolete_index.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: updateNotifyFactInsert
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue1553/updateNotifyFactInsert.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: augmentation_trigger
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue1558/augmentation_trigger.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  # this has to be reverted: in high load situations, the alter index might not be able to acquire the necessary locks
+  # so that the server startup hangs, or fails.
+  # we'll have to move it to the documentation
+  #
+  #  - changeSet:
+  #      id: gin_fast_update
+  #      runInTransaction: false
+  #      author: uweschaefer
+  #      changes:
+  #        - sqlFile:
+  #            encoding: utf8
+  #            path: factcast/issue1696/gin_fast_update.sql
+  #            relativeToChangelogFile: true
+  #            splitStatements: false
+  #            stripComments: true
+
+  - changeSet:
+      id: updateNotifyFactInsert_condensed_without_comment_corrected
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue1863/updateNotifyFactInsert_condensed_without_comment_corrected.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  # fix_index_for_enum was removed.
+
+  - changeSet:
+      id: fix_index_for_enum2
+      runInTransaction: false
+      author: bresciamattia
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue1865-2/fix_index_for_enum2.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+
+  - changeSet:
+      id: count_estimate
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue1170/count_estimate.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+
+  - changeSet:
+      id: issue2019
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2019/issue2019.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue2050_corrected
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2050/blacklist_corrected.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue2050_removeTails
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2050/removeTails.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue2131_toast_trans
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2131/toast_transformationcache.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue2131_toast_snap
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2131/toast_snapshotcache.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue2116_notify_schemastore_change
+      runInTransaction: false
+      author: bresciamattia
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2116/notify_schemastore_change.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue2116_notify_transformationstore_change
+      runInTransaction: false
+      author: bresciamattia
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2116/notify_transformationstore_change.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+
+  - changeSet:
+      id: issue2180_add_blacklist_column
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2180/blacklist-reason.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
 

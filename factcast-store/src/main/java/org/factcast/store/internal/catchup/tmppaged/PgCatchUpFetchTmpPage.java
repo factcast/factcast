@@ -16,18 +16,18 @@
 package org.factcast.store.internal.catchup.tmppaged;
 
 import com.google.common.base.Stopwatch;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.internal.PgConstants;
+import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.PreparedStatementSetter;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -39,13 +39,20 @@ public class PgCatchUpFetchTmpPage {
 
   @NonNull final SubscriptionRequestTO req;
 
+  @NonNull final CurrentStatementHolder statementHolder;
+
   public List<Fact> fetchFacts(@NonNull AtomicLong serial) {
     Stopwatch sw = Stopwatch.createStarted();
     List<Fact> list =
         jdbc.query(
             PgConstants.SELECT_FACT_FROM_CATCHUP,
-            createSetter(serial, pageSize),
+            ps -> {
+              ps.setLong(1, serial.get());
+              ps.setLong(2, pageSize);
+              statementHolder.statement(ps);
+            },
             new PgFactExtractor(serial));
+    statementHolder.clear();
     sw.stop();
     log.trace(
         "{} fetched next page of Facts limit={}, ser>{} in {}ms",
@@ -54,12 +61,5 @@ public class PgCatchUpFetchTmpPage {
         serial.get(),
         sw.elapsed(TimeUnit.MILLISECONDS));
     return list;
-  }
-
-  private PreparedStatementSetter createSetter(AtomicLong serial, int pageSize) {
-    return ps -> {
-      ps.setLong(1, serial.get());
-      ps.setLong(2, pageSize);
-    };
   }
 }

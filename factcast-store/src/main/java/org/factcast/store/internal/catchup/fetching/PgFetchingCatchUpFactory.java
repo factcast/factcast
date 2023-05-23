@@ -15,36 +15,73 @@
  */
 package org.factcast.store.internal.catchup.fetching;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.*;
 import lombok.Generated;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.transformation.FactTransformerService;
+import org.factcast.core.subscription.transformation.FactTransformers;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.PgPostQueryMatcher;
+import org.factcast.store.internal.catchup.BufferingFactInterceptor;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
+import org.factcast.store.internal.filter.FactFilter;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
+import org.factcast.store.internal.query.CurrentStatementHolder;
 
-import java.util.concurrent.atomic.AtomicLong;
-
-@RequiredArgsConstructor
-// no code in here, just generated @nonnull checks
 @Generated
-public class PgFetchingCatchUpFactory implements PgCatchupFactory {
+public class PgFetchingCatchUpFactory implements PgCatchupFactory, AutoCloseable {
 
   @NonNull final PgConnectionSupplier connectionSupplier;
-
   @NonNull final StoreConfigurationProperties props;
+  @NonNull final PgMetrics metrics;
+  @NonNull final FactTransformerService transformerService;
+
+  private final ExecutorService executorService;
+
+  public PgFetchingCatchUpFactory(
+      @NonNull PgConnectionSupplier connectionSupplier,
+      @NonNull StoreConfigurationProperties props,
+      @NonNull PgMetrics metrics,
+      @NonNull FactTransformerService transformerService) {
+    this.connectionSupplier = connectionSupplier;
+    this.props = props;
+    this.metrics = metrics;
+    this.transformerService = transformerService;
+    this.executorService =
+        metrics.monitor(
+            Executors.newWorkStealingPool(props.getSizeOfThreadPoolForBufferedTransformations()),
+            "fetching-catchup");
+  }
 
   @Override
   public PgFetchingCatchup create(
       @NonNull SubscriptionRequestTO request,
-      @NonNull PgPostQueryMatcher postQueryMatcher,
       @NonNull SubscriptionImpl subscription,
+      @NonNull FactFilter factFilter,
       @NonNull AtomicLong serial,
-      @NonNull PgMetrics metrics) {
+      @NonNull CurrentStatementHolder statementHolder) {
     return new PgFetchingCatchup(
-        connectionSupplier, props, request, postQueryMatcher, subscription, serial, metrics);
+        connectionSupplier,
+        props,
+        request,
+        new BufferingFactInterceptor(
+            transformerService,
+            FactTransformers.createFor(request),
+            factFilter,
+            subscription,
+            props.getTransformationCachePageSize(),
+            metrics,
+            executorService),
+        serial,
+        statementHolder);
+  }
+
+  @Override
+  public void close() throws Exception {
+    executorService.shutdown();
   }
 }

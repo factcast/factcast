@@ -19,7 +19,6 @@ import static io.grpc.stub.ClientCalls.*;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.*;
-import io.grpc.Status.Code;
 import io.grpc.stub.MetadataUtils;
 import io.grpc.stub.StreamObserver;
 import java.util.*;
@@ -30,20 +29,22 @@ import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import lombok.Generated;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.client.security.CallCredentialsHelper;
+import org.factcast.core.DuplicateFactException;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.store.RetryableException;
 import org.factcast.core.store.StateToken;
+import org.factcast.core.subscription.InternalSubscription;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.core.util.ExceptionHelper;
+import org.factcast.core.util.MavenHelper;
 import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.CompressionCodecs;
 import org.factcast.grpc.api.ConditionalPublishRequest;
@@ -73,6 +74,7 @@ public class GrpcFactStore implements FactStore {
   private static final String CHANNEL_NAME = "factstore";
 
   private static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 1, 0);
+  private final Resilience resilience;
 
   private RemoteFactStoreBlockingStub blockingStub;
 
@@ -87,6 +89,7 @@ public class GrpcFactStore implements FactStore {
   private final ProtoConverter converter = new ProtoConverter();
 
   private final AtomicBoolean initialized = new AtomicBoolean(false);
+  @VisibleForTesting @Setter private boolean fastStateToken;
 
   @Autowired
   @Generated
@@ -123,7 +126,8 @@ public class GrpcFactStore implements FactStore {
         null);
   }
 
-  private GrpcFactStore(
+  @VisibleForTesting
+  GrpcFactStore(
       @NonNull RemoteFactStoreBlockingStub newBlockingStub,
       @NonNull RemoteFactStoreStub newStub,
       @NonNull Optional<String> credentials,
@@ -135,8 +139,8 @@ public class GrpcFactStore implements FactStore {
     this.clientId = clientId;
 
     // initially use the raw ones...
-    blockingStub = rawBlockingStub;
-    stub = rawStub;
+    blockingStub = rawBlockingStub.withWaitForReady();
+    stub = rawStub.withWaitForReady();
 
     if (credentials.isPresent()) {
       String[] sa = credentials.get().split(":");
@@ -149,18 +153,35 @@ public class GrpcFactStore implements FactStore {
       blockingStub = blockingStub.withCallCredentials(basic);
       stub = stub.withCallCredentials(basic);
     }
+
+    resilience = new Resilience(properties.getResilience());
   }
 
   @Override
   public void publish(@NonNull List<? extends Fact> factsToPublish) {
     runAndHandle(
         () -> {
-          log.trace("publishing {} facts to remote store", factsToPublish.size());
-          List<MSG_Fact> mf =
-              factsToPublish.stream().map(converter::toProto).collect(Collectors.toList());
-          MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
+          try {
+            log.trace("publishing {} facts to remote store", factsToPublish.size());
+            List<MSG_Fact> mf =
+                factsToPublish.stream().map(converter::toProto).collect(Collectors.toList());
+            MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
 
-          blockingStub.publish(mfs);
+            //noinspection ResultOfMethodCallIgnored
+            blockingStub.publish(mfs);
+          } catch (Exception e) {
+            RuntimeException decodedException = ClientExceptionHelper.from(e);
+            if (decodedException instanceof DuplicateFactException
+                && properties.isIgnoreDuplicateFacts()) {
+              // if it is only one, just skip
+              if (factsToPublish.size() > 1) {
+                //  fall back to publishing one by one
+                factsToPublish.forEach(f -> publish(Collections.singletonList(f)));
+              }
+            } else {
+              throw e;
+            }
+          }
         });
   }
 
@@ -168,10 +189,22 @@ public class GrpcFactStore implements FactStore {
   // GrpcGlobalClientInterceptor was tested but did not work as expected
   @VisibleForTesting
   void runAndHandle(@NonNull Runnable block) {
-    try {
-      block.run();
-    } catch (StatusRuntimeException e) {
-      throw ClientExceptionHelper.from(e);
+    for (; ; ) {
+      try {
+        resilience.registerAttempt();
+        block.run();
+        return;
+      } catch (Exception e) {
+        RuntimeException decodedException = ClientExceptionHelper.from(e);
+        if (resilience.shouldRetry(decodedException)) {
+          log.warn("Temporary failure", decodedException);
+          log.info("Retry call to remote server");
+          resilience.sleepForInterval();
+          // continue and try next attempt
+        } else {
+          throw decodedException;
+        }
+      }
     }
   }
 
@@ -179,21 +212,39 @@ public class GrpcFactStore implements FactStore {
   // GrpcGlobalClientInterceptor was tested but did not work as expected
   @VisibleForTesting
   <T> T callAndHandle(@NonNull Callable<T> block) {
-    try {
-      return block.call();
-    } catch (StatusRuntimeException e) {
-      throw ClientExceptionHelper.from(e);
-    } catch (Exception e) {
-      throw ExceptionHelper.toRuntime(e);
+    for (; ; ) {
+      try {
+        resilience.registerAttempt();
+        T call = block.call();
+        return call;
+      } catch (Exception e) {
+        RuntimeException decodedException = ClientExceptionHelper.from(e);
+        if (resilience.shouldRetry(decodedException)) {
+          log.warn("Temporary failure", decodedException);
+          log.info("Retry call to remote server");
+          resilience.sleepForInterval();
+          // continue and try next attempt
+        } else {
+          throw decodedException;
+        }
+      }
     }
   }
 
   @Override
+  @NonNull
   public Subscription subscribe(
+      @NonNull SubscriptionRequestTO req, @NonNull FactObserver observer) {
+    if (properties.getResilience().isEnabled())
+      return new ResilientGrpcSubscription(this, req, observer, properties.getResilience());
+    else return internalSubscribe(req, observer);
+  }
+
+  public Subscription internalSubscribe(
       @NonNull SubscriptionRequestTO req, @NonNull FactObserver observer) {
     return callAndHandle(
         () -> {
-          SubscriptionImpl subscription = SubscriptionImpl.on(observer);
+          InternalSubscription subscription = SubscriptionImpl.on(observer);
           StreamObserver<FactStoreProto.MSG_Notification> responseObserver =
               new ClientStreamObserver(subscription, req.keepaliveIntervalInMs());
           ClientCall<MSG_SubscriptionRequest, MSG_Notification> call =
@@ -213,16 +264,13 @@ public class GrpcFactStore implements FactStore {
   }
 
   @Override
+  @NonNull
   public OptionalLong serialOf(@NonNull UUID l) {
     return callAndHandle(
         () -> {
           MSG_UUID protoMessage = converter.toProto(l);
           MSG_OptionalSerial responseMessage;
-          try {
-            responseMessage = blockingStub.serialOf(protoMessage);
-          } catch (StatusRuntimeException e) {
-            throw wrapRetryable(e);
-          }
+          responseMessage = blockingStub.serialOf(protoMessage);
           return converter.fromProto(responseMessage);
         });
   }
@@ -234,20 +282,34 @@ public class GrpcFactStore implements FactStore {
       Map<String, String> serverProperties;
       ProtocolVersion serverProtocolVersion;
       try {
-        Metadata metadata = new Metadata();
-        addClientIdTo(metadata);
         MSG_ServerConfig handshake =
-            MetadataUtils.attachHeaders(blockingStub, metadata).handshake(converter.empty());
+            MetadataUtils.attachHeaders(blockingStub, createHandshakeMetadata())
+                .handshake(converter.empty());
         ServerConfig cfg = converter.fromProto(handshake);
         serverProtocolVersion = cfg.version();
         serverProperties = cfg.properties();
       } catch (StatusRuntimeException e) {
-        throw wrapRetryable(e);
+        throw ClientExceptionHelper.from(e);
       }
       logProtocolVersion(serverProtocolVersion);
       logServerVersion(serverProperties);
       configureCompressionAndMetaData(serverProperties.get(Capabilities.CODECS.toString()));
+
+      this.fastStateToken =
+          Optional.ofNullable(serverProperties.get(Capabilities.FAST_STATE_TOKEN.toString()))
+              .map(Boolean::parseBoolean)
+              .orElse(false);
     }
+  }
+
+  @NonNull
+  private Metadata createHandshakeMetadata() {
+    Metadata metadata = new Metadata();
+    addClientIdTo(metadata);
+    addClientVersionTo(
+        metadata,
+        MavenHelper.getVersion("factcast-client-grpc", GrpcFactStore.class).orElse("UNKNOWN"));
+    return metadata;
   }
 
   private static void logServerVersion(Map<String, String> serverProperties) {
@@ -322,7 +384,13 @@ public class GrpcFactStore implements FactStore {
     }
   }
 
+  @VisibleForTesting
+  void addClientVersionTo(@NonNull Metadata metadata, @NonNull String version) {
+    metadata.put(Headers.CLIENT_VERSION, version);
+  }
+
   @Override
+  @NonNull
   public Set<String> enumerateNamespaces() {
     return callAndHandle(
         () -> {
@@ -332,21 +400,10 @@ public class GrpcFactStore implements FactStore {
   }
 
   @Override
-  public Set<String> enumerateTypes(String ns) {
+  @NonNull
+  public Set<String> enumerateTypes(@NonNull String ns) {
     return callAndHandle(
-        () -> {
-          return converter.fromProto(blockingStub.enumerateTypes(converter.toProto(ns)));
-        });
-  }
-
-  @VisibleForTesting
-  static RuntimeException wrapRetryable(StatusRuntimeException e) {
-    // TODO
-    if (e.getStatus().getCode() == Code.UNAVAILABLE) {
-      return new RetryableException(e);
-    } else {
-      return e;
-    }
+        () -> converter.fromProto(blockingStub.enumerateTypes(converter.toProto(ns))));
   }
 
   @Override
@@ -365,13 +422,27 @@ public class GrpcFactStore implements FactStore {
   }
 
   @Override
-  public @NonNull StateToken stateFor(List<FactSpec> specs) {
+  @NonNull
+  public StateToken stateFor(@NonNull List<FactSpec> specs) {
     return callAndHandle(
         () -> {
           MSG_FactSpecsJson msg = converter.toProtoFactSpecs(specs);
           MSG_UUID result = blockingStub.stateForSpecsJson(msg);
           return new StateToken(converter.fromProto(result));
         });
+  }
+
+  @Override
+  @NonNull
+  public StateToken currentStateFor(List<FactSpec> specs) {
+    if (!this.fastStateToken) return stateFor(specs);
+    else
+      return callAndHandle(
+          () -> {
+            MSG_FactSpecsJson msg = converter.toProtoFactSpecs(specs);
+            MSG_UUID result = blockingStub.currentStateForSpecsJson(msg);
+            return new StateToken(converter.fromProto(result));
+          });
   }
 
   @Override
@@ -396,7 +467,8 @@ public class GrpcFactStore implements FactStore {
   }
 
   @Override
-  public Optional<Fact> fetchById(UUID id) {
+  @NonNull
+  public Optional<Fact> fetchById(@NonNull UUID id) {
     log.trace("fetching {} from remote store", id);
 
     return callAndHandle(
@@ -408,7 +480,8 @@ public class GrpcFactStore implements FactStore {
   }
 
   @Override
-  public Optional<Fact> fetchByIdAndVersion(UUID id, int versionExpected) {
+  @NonNull
+  public Optional<Fact> fetchByIdAndVersion(@NonNull UUID id, int versionExpected) {
     log.trace("fetching {} from remote store as version {}", id, versionExpected);
     return callAndHandle(
         () -> {
@@ -419,7 +492,8 @@ public class GrpcFactStore implements FactStore {
   }
 
   @Override
-  public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
+  @NonNull
+  public Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
     log.trace("fetching snapshot {} from remote store", id);
     return callAndHandle(
         () -> {
@@ -434,7 +508,7 @@ public class GrpcFactStore implements FactStore {
     runAndHandle(
         () -> {
           @NonNull SnapshotId id = snapshot.id();
-          @NonNull byte[] bytes = snapshot.bytes();
+          byte[] bytes = snapshot.bytes();
           boolean alreadyCompressed = snapshot.compressed();
           @NonNull UUID state = snapshot.lastFact();
 
@@ -451,11 +525,7 @@ public class GrpcFactStore implements FactStore {
   @Override
   public void clearSnapshot(@NonNull SnapshotId id) {
     log.trace("clearing snapshot {} in remote store", id);
-
-    runAndHandle(
-        () -> {
-          //noinspection ResultOfMethodCallIgnored
-          blockingStub.clearSnapshot(converter.toProto(id));
-        });
+    //noinspection ResultOfMethodCallIgnored
+    runAndHandle(() -> blockingStub.clearSnapshot(converter.toProto(id)));
   }
 }

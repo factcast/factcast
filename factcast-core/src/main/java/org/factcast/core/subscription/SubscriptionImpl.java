@@ -16,14 +16,9 @@
 package org.factcast.core.subscription;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import lombok.Getter;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,11 +33,9 @@ import org.factcast.core.util.ExceptionHelper;
  */
 @RequiredArgsConstructor
 @Slf4j
-public class SubscriptionImpl implements Subscription {
+public class SubscriptionImpl implements InternalSubscription {
 
   @NonNull final FactObserver observer;
-
-  @NonNull final FactTransformers transformers;
 
   @NonNull Runnable onClose = () -> {};
 
@@ -52,14 +45,11 @@ public class SubscriptionImpl implements Subscription {
 
   final CompletableFuture<Void> complete = new CompletableFuture<>();
 
-  @Getter final AtomicLong factsNotTransformed = new AtomicLong(0);
-  @Getter final AtomicLong factsTransformed = new AtomicLong(0);
-
   @Override
   public void close() {
     if (!closed.getAndSet(true)) {
-      SubscriptionCancelledException closedException =
-          new SubscriptionCancelledException("Client closed the subscription");
+      SubscriptionClosedException closedException =
+          new SubscriptionClosedException("Client closed the subscription");
       catchup.completeExceptionally(closedException);
       complete.completeExceptionally(closedException);
       onClose.run();
@@ -67,55 +57,62 @@ public class SubscriptionImpl implements Subscription {
   }
 
   @Override
-  public Subscription awaitCatchup() throws SubscriptionCancelledException {
-    try {
-      catchup.get();
-    } catch (InterruptedException e) {
-      throw new SubscriptionCancelledException(e);
-    } catch (ExecutionException e) {
-      throw ExceptionHelper.toRuntime(e.getCause());
-    }
-    return this;
+  public Subscription awaitCatchup() throws SubscriptionClosedException {
+    return await(catchup::get);
   }
 
   @Override
   public Subscription awaitCatchup(long waitTimeInMillis)
-      throws SubscriptionCancelledException, TimeoutException {
-    try {
-      catchup.get(waitTimeInMillis, TimeUnit.MILLISECONDS);
-    } catch (InterruptedException e) {
-      throw new SubscriptionCancelledException(e);
-    } catch (ExecutionException e) {
-      throw ExceptionHelper.toRuntime(e.getCause());
-    }
-    return this;
+      throws SubscriptionClosedException, TimeoutException {
+    return awaitTimed(() -> catchup.get(waitTimeInMillis, TimeUnit.MILLISECONDS));
   }
 
   @Override
-  public Subscription awaitComplete() throws SubscriptionCancelledException {
-    try {
-      complete.get();
-    } catch (InterruptedException e) {
-      throw new SubscriptionCancelledException(e);
-    } catch (ExecutionException e) {
-      throw ExceptionHelper.toRuntime(e.getCause());
-    }
-    return this;
+  public Subscription awaitComplete() throws SubscriptionClosedException {
+    return await(complete::get);
   }
 
   @Override
   public Subscription awaitComplete(long waitTimeInMillis)
-      throws SubscriptionCancelledException, TimeoutException {
+      throws SubscriptionClosedException, TimeoutException {
+    return awaitTimed(() -> complete.get(waitTimeInMillis, TimeUnit.MILLISECONDS));
+  }
+
+  @FunctionalInterface
+  interface ThrowingRunnable {
+    void run() throws InterruptedException, ExecutionException;
+  }
+
+  @FunctionalInterface
+  interface ThrowingTimedRunnable {
+    void run() throws InterruptedException, ExecutionException, TimeoutException;
+  }
+
+  private Subscription await(ThrowingRunnable o) {
     try {
-      complete.get(waitTimeInMillis, TimeUnit.MILLISECONDS);
+      o.run();
     } catch (InterruptedException e) {
-      throw new SubscriptionCancelledException(e);
+      Thread.currentThread().interrupt();
+      throw new SubscriptionClosedException(e);
     } catch (ExecutionException e) {
       throw ExceptionHelper.toRuntime(e.getCause());
     }
     return this;
   }
 
+  private Subscription awaitTimed(ThrowingTimedRunnable o) throws TimeoutException {
+    try {
+      o.run();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new SubscriptionClosedException(e);
+    } catch (ExecutionException e) {
+      throw ExceptionHelper.toRuntime(e.getCause());
+    }
+    return this;
+  }
+
+  @Override
   @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
   public void notifyCatchup() {
     if (!closed.get()) {
@@ -126,18 +123,21 @@ public class SubscriptionImpl implements Subscription {
     }
   }
 
+  @Override
   public void notifyFastForward(@NonNull UUID factId) {
     if (!closed.get()) {
       observer.onFastForward(factId);
     }
   }
 
+  @Override
   public void notifyFactStreamInfo(@NonNull FactStreamInfo info) {
     if (!closed.get()) {
       observer.onFactStreamInfo(info);
     }
   }
 
+  @Override
   @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
   public void notifyComplete() {
     if (!closed.get()) {
@@ -152,6 +152,7 @@ public class SubscriptionImpl implements Subscription {
     }
   }
 
+  @Override
   public void notifyError(Throwable e) {
     if (!closed.get()) {
       if (!catchup.isDone()) {
@@ -161,7 +162,6 @@ public class SubscriptionImpl implements Subscription {
         complete.completeExceptionally(e);
       }
       observer.onError(e);
-
       tryClose();
     }
   }
@@ -174,29 +174,34 @@ public class SubscriptionImpl implements Subscription {
     }
   }
 
+  @Override
   public void notifyElement(@NonNull Fact e) throws TransformationException {
     if (!closed.get()) {
-      Fact transformed = transformers.transformIfNecessary(e);
-      if (transformed == e) {
-        factsNotTransformed.incrementAndGet();
-      } else {
-        factsTransformed.incrementAndGet();
-      }
-      observer.onNext(transformed);
+      // note that this fact is already transformed
+      observer.onNext(e);
     }
   }
 
+  @Override
   public SubscriptionImpl onClose(Runnable e) {
-    onClose = e;
+    Runnable formerOnClose = onClose;
+    onClose =
+        () -> {
+          tryRun(formerOnClose);
+          tryRun(e);
+        };
     return this;
   }
 
-  public static SubscriptionImpl on(@NonNull FactObserver o, FactTransformers transformers) {
-    return new SubscriptionImpl(o, transformers);
+  private void tryRun(Runnable e) {
+    try {
+      e.run();
+    } catch (Exception ex) {
+      log.error("While executing onClose:", ex);
+    }
   }
 
-  // for client side
-  public static SubscriptionImpl on(@NonNull FactObserver observer2) {
-    return new SubscriptionImpl(observer2, e -> e);
+  public static SubscriptionImpl on(@NonNull FactObserver o) {
+    return new SubscriptionImpl(o);
   }
 }

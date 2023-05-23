@@ -15,12 +15,14 @@
  */
 package org.factcast.server.grpc;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.grpc.Metadata;
 import org.factcast.grpc.api.Headers;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -112,6 +114,36 @@ class GrpcRequestMetadataTest {
       underTest.headers(headers);
 
       assertThat(underTest.clientId()).isEmpty();
+    }
+
+    @Test
+    void testGettingClientIdAsString_noneSet() {
+      Metadata headers = new Metadata();
+      underTest.headers(headers);
+      assertThat(underTest.clientIdAsString()).isEqualTo(GrpcRequestMetadata.UNKNOWN);
+    }
+
+    @Test
+    void testGettingClientIdAsString_set() {
+      Metadata headers = new Metadata();
+      headers.put(Headers.CLIENT_ID, "narf");
+      underTest.headers(headers);
+      assertThat(underTest.clientIdAsString()).isEqualTo("narf");
+    }
+
+    @Test
+    void testGettingClientVersionAsString_noneSet() {
+      Metadata headers = new Metadata();
+      underTest.headers(headers);
+      assertThat(underTest.clientVersionAsString()).isEqualTo(GrpcRequestMetadata.UNKNOWN);
+    }
+
+    @Test
+    void testGettingClientVersionAsString_set() {
+      Metadata headers = new Metadata();
+      headers.put(Headers.CLIENT_VERSION, "3.11");
+      underTest.headers(headers);
+      assertThat(underTest.clientVersionAsString()).isEqualTo("3.11");
     }
   }
 }

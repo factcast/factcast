@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.4.0</version>
+  <version>0.6.7-SNAPSHOT</version>
   <packaging>pom</packaging>
   <organization>
     <name>factcast</name>
@@ -44,7 +44,6 @@
     <module>factcast-schema-registry-cli</module>
     <module>factcast-schema-registry-maven-plugin</module>
     <module>factcast-snapshotcache-redisson</module>
-    <module>factcast-hugo</module>
   </modules>
   <url>https://github.com/uweschaefer/factcast/tree/master/</url>
   <licenses>
@@ -69,48 +68,50 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <maven-clean-plugin.version>3.1.0</maven-clean-plugin.version>
-    <maven-javadoc-plugin.version>3.3.0</maven-javadoc-plugin.version>
+    <maven-clean-plugin.version>3.2.0</maven-clean-plugin.version>
+    <maven-javadoc-plugin.version>3.5.0</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
-    <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
-    <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
-    <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
-    <maven-surefire-plugin.version>3.0.0-M5</maven-surefire-plugin.version>
-    <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
-    <maven-failsafe-plugin.version>3.0.0-M5</maven-failsafe-plugin.version>
+    <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
+    <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
+    <maven-surefire-plugin.version>3.0.0-M9</maven-surefire-plugin.version>
+    <maven-resources-plugin.version>3.3.0</maven-resources-plugin.version>
+    <maven-failsafe-plugin.version>3.0.0-M9</maven-failsafe-plugin.version>
     <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
     <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
-    <jacoco-maven-plugin.version>0.8.7</jacoco-maven-plugin.version>
-    <spring-boot-maven-plugin.version>2.3.4.RELEASE</spring-boot-maven-plugin.version>
-    <maven.version>3.8.2</maven.version>
+    <jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
+    <maven.version>3.9.0</maven.version>
     <!-- defaults to 11, client modules will be compiled with/to 8 -->
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
-    <spotless-maven-plugin.version>2.13.0</spotless-maven-plugin.version>
-    <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
-    <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
-    <assertj.version>3.20.2</assertj.version>
-    <jackson.version>2.12.5</jackson.version>
-    <mockito.version>3.12.4</mockito.version>
-    <junit-jupiter.version>5.7.2</junit-jupiter.version>
-    <lombok.version>1.18.20</lombok.version>
-    <slf4j-api.version>1.7.32</slf4j-api.version>
+    <maven.compiler.version>3.10.1</maven.compiler.version>
+    <spotless-maven-plugin.version>2.36.0</spotless-maven-plugin.version>
+    <directory-maven-plugin.version>1.0</directory-maven-plugin.version>
+    <nexus-staging-maven-plugin.version>1.6.13</nexus-staging-maven-plugin.version>
+    <assertj.version>3.24.2</assertj.version>
+    <jackson.version>2.14.2</jackson.version>
+    <mockito.version>5.1.1</mockito.version>
+    <junit-jupiter.version>5.9.2</junit-jupiter.version>
+    <lombok.version>1.18.26</lombok.version>
+    <slf4j-api.version>1.7.36</slf4j-api.version>
     <!--suppress UnresolvedMavenProperty -->
     <etc>${session.executionRootDirectory}/src/etc</etc>
-    <spring-boot.version>2.5.4</spring-boot.version>
-    <spring-cloud.version>Hoxton.SR8</spring-cloud.version>
-    <spring-grpc.version>2.11.0.RELEASE</spring-grpc.version>
-    <grpc.version>1.30.2</grpc.version>
-    <spring-boot-maven-plugin.version>2.5.4</spring-boot-maven-plugin.version>
-    <testcontainers.version>1.16.0</testcontainers.version>
-    <arrow.version>0.12.1</arrow.version>
-    <micronaut.version>2.5.12</micronaut.version>
-    <kotlin.version>1.5.30</kotlin.version>
+    <spring-boot.version>2.7.8</spring-boot.version>
+    <spring-cloud.version>2021.0.3</spring-cloud.version>
+    <!-- whenever updating spring-grpc make sure to align grpc.version accordingly. -->
+    <spring-grpc.version>2.14.0.RELEASE</spring-grpc.version>
+    <grpc.version>1.51.0</grpc.version>
+    <!-- lter versions seem to break toxi -->
+    <testcontainers.version>1.17.6</testcontainers.version>
+    <arrow.version>1.1.5</arrow.version>
+    <micronaut.version>2.5.13</micronaut.version>
+    <kotlin.version>1.8.10</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
-    <kotest.version>4.6.2</kotest.version>
-    <redisson.version>3.16.2</redisson.version>
-    <redisson-spring-boot-starter.version>3.16.2</redisson-spring-boot-starter.version>
-    <graaljs.version>21.2.0</graaljs.version>
+    <kotest.version>4.6.4</kotest.version>
+    <redisson.version>3.19.3</redisson.version>
+    <redisson-spring-boot-starter.version>3.17.5</redisson-spring-boot-starter.version>
+    <graaljs.version>22.3.1</graaljs.version>
+    <shedlock.version>4.44.0</shedlock.version>
+    <byte-buddy.version>1.14.4</byte-buddy.version>
   </properties>
   <dependencies>
     <dependency>
@@ -163,6 +164,24 @@
       <version>${mockito.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>net.bytebuddy</groupId>
+      <artifactId>byte-buddy-agent</artifactId>
+      <version>${byte-buddy.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.bytebuddy</groupId>
+      <artifactId>byte-buddy</artifactId>
+      <version>${byte-buddy.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-inline</artifactId>
+      <version>${mockito.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   <dependencyManagement>
     <dependencies>
@@ -175,9 +194,14 @@
       <dependency>
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
-        <version>5.7.2</version>
+        <version>5.9.2</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-aws-jdbc</artifactId>
+        <version>2.2.6.RELEASE</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -186,7 +210,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <version>3.0.0</version>
+        <version>3.2.1</version>
         <executions>
           <execution>
             <id>enforce-versions</id>
@@ -209,7 +233,7 @@
       <plugin>
         <groupId>kr.motd.maven</groupId>
         <artifactId>os-maven-plugin</artifactId>
-        <version>1.7.0</version>
+        <version>1.7.1</version>
         <executions>
           <execution>
             <phase>initialize</phase>
@@ -222,7 +246,7 @@
       <plugin>
         <groupId>com.amashchenko.maven.plugin</groupId>
         <artifactId>gitflow-maven-plugin</artifactId>
-        <version>1.16.0</version>
+        <version>1.19.0</version>
         <configuration>
           <gitFlowConfig>
             <developmentBranch>master</developmentBranch>
@@ -243,9 +267,11 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>${maven-compiler-plugin.version}</version>
+        <version>${maven.compiler.version}</version>
         <configuration>
           <useIncrementalCompilation>true</useIncrementalCompilation>
+          <source>11</source>
+          <target>11</target>
         </configuration>
       </plugin>
       <plugin>
@@ -361,6 +387,13 @@
           <excludedGroups>integration</excludedGroups>
           <!--suppress UnresolvedMavenProperty -->
           <argLine>${surefire.jacoco.args}</argLine>
+          <skip>${skipSurefire}</skip>
+          <parallel>classes</parallel>
+          <threadCountClasses>8</threadCountClasses>
+          <!-- this produces a warning we choose to ignore for unit tests, as
+            the cost of creating a fork dominates the runtime of surefire -->
+          <forkCount>0</forkCount>
+          <reuseForks>true</reuseForks>
         </configuration>
       </plugin>
       <plugin>
@@ -388,41 +421,35 @@
         <groupId>com.diffplug.spotless</groupId>
         <artifactId>spotless-maven-plugin</artifactId>
         <version>${spotless-maven-plugin.version}</version>
+        <inherited>false</inherited>
         <configuration>
           <java>
             <licenseHeader>
               <file>file://${etc}/header.txt</file>
             </licenseHeader>
+            <includes>
+              <include>**/src/*/java/**/*.java</include>
+            </includes>
+            <excludes>
+              <exclude>/**/target/*</exclude>
+            </excludes>
             <trimTrailingWhitespace />
-            <removeUnusedImports />
             <googleJavaFormat>
-              <version>1.7</version> <!-- optional -->
-              <style>GOOGLE</style> <!-- or AOSP (optional) -->
+              <version>1.9</version>
+              <style>GOOGLE</style>
             </googleJavaFormat>
-            <includes>
-              <include>/src/main/java/**/*.java
-              </include>
-              <include>/src/test/java/**/*.java
-              </include>
-            </includes>
           </java>
-          <kotlin>
-            <licenseHeader>
-              <file>file://${etc}/header.txt</file>
-            </licenseHeader>
-            <trimTrailingWhitespace />
-            <ktlint>
-              <!-- Optional, available versions: https://github.com/shyiko/ktlint/releases -->
-              <version>0.42.1</version>
-            </ktlint>
-            <includes>
-              <include>/src/main/kotlin/**/*.kt
-              </include>
-            </includes>
-          </kotlin>
+          <!-- Temporarily disabled, until 0.7 Branch is merged to avoid noisy
+            merge conflicts -->
+          <!-- <kotlin> <licenseHeader> <file>file://${etc}/header.txt</file>
+            </licenseHeader> <trimTrailingWhitespace /> <ktlint> <version>0.46.0</version>
+            </ktlint> <includes> <include>**/src/*/kotlin/**/*.kt </include> </includes>
+            </kotlin> -->
           <sql>
             <excludes>
               <exclude>**/src/main/resources/db/**</exclude>
+              <exclude>**/src/test/resources/*.sql</exclude>
+              <exclude>/**/target/*</exclude>
             </excludes>
             <includes>
               <include>**/*.sql</include>
@@ -433,12 +460,13 @@
           </sql>
           <formats>
             <format>
-              <excludes>
-                <exclude>**/documentation-docsy/**</exclude>
-              </excludes>
+              <!-- <excludes> <exclude>**/documentation-docsy/**</exclude> <exclude>**/output/public/**</exclude>
+                <exclude>.*/**</exclude> <exclude>/**/target/*</exclude> </excludes> -->
               <includes>
-                <include>**/*.xml</include>
-                <include>**/*.xsd</include>
+                <include>/*.xml</include>
+                <include>**/pom.xml</include>
+                <include>**/src/**/*.xml</include>
+                <include>**/src/**/*.xsd</include>
               </includes>
               <eclipseWtp>
                 <type>XML</type>
@@ -451,7 +479,20 @@
               <trimTrailingWhitespace />
               <endWithNewline />
             </format>
+
+            <format>
+              <includes>
+                <include>factcast-site/documentation-docsy/content/**/*.md</include>
+                <include>/*.md</include>
+              </includes>
+              <prettier>
+                <config>
+                  <useTabs>true</useTabs>
+                </config>
+              </prettier>
+            </format>
           </formats>
+
         </configuration>
       </plugin>
     </plugins>
@@ -466,7 +507,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-deploy-plugin</artifactId>
-          <version>2.8.2</version>
+          <version>3.1.0</version>
         </plugin>
         <!--This plugin's configuration is used to store Eclipse m2e settings
           only. It has no influence on the Maven build itself. -->
@@ -510,7 +551,7 @@
         <plugin>
           <groupId>org.springframework.boot</groupId>
           <artifactId>spring-boot-maven-plugin</artifactId>
-          <version>${spring-boot-maven-plugin.version}</version>
+          <version>${spring-boot.version}</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -631,6 +672,11 @@
               <serverId>ossrh</serverId>
               <nexusUrl>https://oss.sonatype.org/</nexusUrl>
               <autoReleaseAfterClose>true</autoReleaseAfterClose>
+              <stagingProgressTimeoutMinutes>20</stagingProgressTimeoutMinutes>
+              <detail>true</detail>
+              <keepStagingRepositoryOnFailure>true</keepStagingRepositoryOnFailure>
+              <keepStagingRepositoryOnCloseRuleFailure>true</keepStagingRepositoryOnCloseRuleFailure>
+              <showReleased>true</showReleased>
             </configuration>
           </plugin>
           <plugin>

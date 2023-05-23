@@ -17,10 +17,10 @@ package org.factcast.spring.boot.autoconfigure.client.grpc;
 
 import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import javax.annotation.Nullable;
 import lombok.NonNull;
+import net.devh.boot.grpc.client.channelfactory.GrpcChannelConfigurer;
 import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
 import org.factcast.client.grpc.FactCastGrpcClientProperties;
 import org.factcast.client.grpc.GrpcFactStore;
@@ -32,6 +32,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Lazy;
 
 /**
  * Provides a GrpcFactStore as a FactStore implementation.
@@ -47,6 +48,7 @@ public class GrpcFactStoreAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean(FactStore.class)
+  @Lazy
   public FactStore factStore(
       @NonNull GrpcChannelFactory af,
       // we need a new namespace for those client properties
@@ -81,5 +83,10 @@ public class GrpcFactStoreAutoConfiguration {
     }
 
     return new GrpcFactStore(f, credentials, properties, id);
+  }
+
+  @Bean
+  public GrpcChannelConfigurer retryChannelConfigurer() {
+    return (channelBuilder, name) -> channelBuilder.enableRetry().maxRetryAttempts(100);
   }
 }

@@ -15,8 +15,9 @@
  */
 package org.factcast.schema.registry.cli.validation.validators.impl
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.google.common.annotations.VisibleForTesting
-import org.factcast.schema.registry.cli.domain.Project
+import org.factcast.schema.registry.cli.domain.*
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.utils.SchemaService
 import org.factcast.schema.registry.cli.utils.mapEventTransformations
@@ -60,32 +61,41 @@ class TransformationValidationServiceImpl(
             )
         }
 
+
         val examples = fromVersion.examples
             .mapNotNull { fileSystemService.readToJsonNode(it.exampleFilePath) }
 
         schemaService
             .loadSchema(toVersion.schemaPath)
-            .fold({ listOf(it) }, { schema ->
-                examples.mapNotNull {
-                    val transformationResult =
-                        transformationEvaluator.evaluate(ns, event, transformation, it)
-
-                    val validationResult = schema.validate(
-                        transformationResult
-                    )
-
-                    if (validationResult.isSuccess) {
-                        null
-                    } else {
-                        ProjectError.TransformationValidationError(
+            .fold({ listOf(it) }) { schema ->
+                examples.mapNotNull { example ->
+                    val transformationResult: JsonNode?
+                    try {
+                        transformationResult = transformationEvaluator.evaluate(ns, event, transformation, example)
+                    } catch (e: Exception) {
+                        return@mapNotNull ProjectError.TransformationError(
                             event.type,
                             fromVersion.version,
                             toVersion.version,
-                            validationResult
+                            e
                         )
                     }
+
+                    transformationResult?.let {
+                        val validationResult = schema.validate(it)
+                        if (validationResult.isSuccess) {
+                            null
+                        } else {
+                            ProjectError.TransformationValidationError(
+                                event.type,
+                                fromVersion.version,
+                                toVersion.version,
+                                validationResult
+                            )
+                        }
+                    }
                 }
-            })
+            }
     }.flatten()
 
     @VisibleForTesting

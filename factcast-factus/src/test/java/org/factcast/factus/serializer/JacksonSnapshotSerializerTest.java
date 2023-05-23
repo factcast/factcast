@@ -15,11 +15,10 @@
  */
 package org.factcast.factus.serializer;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.UUID;
-import java.util.function.Function;
 import lombok.Data;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.junit.jupiter.api.Nested;
@@ -58,36 +57,6 @@ class JacksonSnapshotSerializerTest {
 
   @Nested
   class whenCalculatingHash {
-    @Test
-    void calculateHash() {
-      try {
-        // In reality, an existing class would be changed. As we cannot
-        // do this in a unit test (with easy means), we use several
-        // classes instead to fake the lifecycle of the class.
-        // The problem is that then, we will always get different hashes
-        // as the Classname is part of the schema.
-        // The solution is to rename the classname of all TestClassV*
-        // classes to "TestClass".
-        JacksonSnapshotSerializer.schemaModifier(
-            schema -> schema.replaceAll("TestClassV[^\"]*\"", "TestClass"));
-
-        long v1 = underTest.calculateProjectionSerial(TestClassV1.class);
-        long v1a = underTest.calculateProjectionSerial(TestClassV1a_noRelevantChange.class);
-        long v2a = underTest.calculateProjectionSerial(TestClassV2a_withChanges_newField.class);
-        long v2b = underTest.calculateProjectionSerial(TestClassV2b_withChanges_typeChanged.class);
-        long v2c = underTest.calculateProjectionSerial(TestClassV2c_withChanges_fieldRenamed.class);
-
-        assertThat(v1).isEqualTo(v1a);
-
-        assertThat(v1).isNotEqualTo(v2a);
-        assertThat(v1).isNotEqualTo(v2b);
-        assertThat(v1).isNotEqualTo(v2c);
-
-      } finally {
-        // reset to "do nothing"
-        JacksonSnapshotSerializer.schemaModifier(Function.identity());
-      }
-    }
 
     @Test
     void upcastingWorksWhenHashesAreEqual() {

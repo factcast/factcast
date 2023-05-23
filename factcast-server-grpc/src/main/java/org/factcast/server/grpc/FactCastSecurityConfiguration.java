@@ -15,6 +15,12 @@
  */
 package org.factcast.server.grpc;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.autoconfigure.GrpcServerSecurityAutoConfiguration;
 import net.devh.boot.grpc.server.security.authentication.BasicGrpcAuthenticationReader;
@@ -40,13 +46,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("deprecation")
 @Slf4j

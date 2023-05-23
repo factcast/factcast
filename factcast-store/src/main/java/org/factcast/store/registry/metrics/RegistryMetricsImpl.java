@@ -17,8 +17,12 @@ package org.factcast.store.registry.metrics;
 
 import com.google.common.base.Stopwatch;
 import io.micrometer.core.instrument.*;
-import java.util.function.Supplier;
+import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
+import java.util.concurrent.ExecutorService;
+import java.util.function.*;
 import lombok.NonNull;
+import org.factcast.core.util.RunnableWithException;
+import org.factcast.core.util.SupplierWithException;
 import org.springframework.beans.factory.InitializingBean;
 
 public class RegistryMetricsImpl implements RegistryMetrics, InitializingBean {
@@ -122,6 +126,17 @@ public class RegistryMetricsImpl implements RegistryMetrics, InitializingBean {
   public void count(@NonNull EVENT event, Tags tags) {
     Counter counter = counter(event, tags);
     counter.increment();
+  }
+
+  @Override
+  public void increase(@NonNull EVENT event, int amount) {
+    Counter counter = counter(event, Tags.empty());
+    counter.increment(amount);
+  }
+
+  @Override
+  public ExecutorService monitor(@NonNull ExecutorService executor, @NonNull String name) {
+    return ExecutorServiceMetrics.monitor(meterRegistry, executor, name);
   }
 
   @Override

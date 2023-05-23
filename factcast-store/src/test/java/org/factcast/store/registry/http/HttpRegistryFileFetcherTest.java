@@ -15,22 +15,25 @@
  */
 package org.factcast.store.registry.http;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import io.micrometer.core.instrument.Tags;
 import java.net.URL;
-import okhttp3.OkHttpClient;
-import org.factcast.core.TestHelper;
+import lombok.SneakyThrows;
+import okhttp3.*;
+import okhttp3.Response.Builder;
+import org.factcast.core.util.SupplierWithException;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.RegistryFileFetchException;
 import org.factcast.store.registry.metrics.RegistryMetrics;
-import org.factcast.store.registry.metrics.SupplierWithException;
 import org.factcast.store.registry.transformation.TransformationSource;
 import org.factcast.store.registry.validation.schema.SchemaSource;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -53,18 +56,6 @@ public class HttpRegistryFileFetcherTest {
   }
 
   @Test
-  public void testNullContracts() {
-    var uut = new HttpRegistryFileFetcher(baseUrl, client, registryMetrics);
-    TestHelper.expectNPE(() -> new HttpRegistryFileFetcher(null, registryMetrics));
-    TestHelper.expectNPE(() -> new HttpRegistryFileFetcher(baseUrl, null));
-    TestHelper.expectNPE(
-        () -> new HttpRegistryFileFetcher(null, new OkHttpClient(), registryMetrics));
-    TestHelper.expectNPE(() -> new HttpRegistryFileFetcher(null, null, registryMetrics));
-    TestHelper.expectNPE(() -> new HttpRegistryFileFetcher(new URL("http://ibm.com"), null));
-    TestHelper.expectNPE(() -> uut.fetchSchema(null));
-  }
-
-  @Test
   public void testFetchThrowsOn404() throws Exception {
     try (TestHttpServer s = new TestHttpServer()) {
       URL baseUrl = new URL("http://localhost:" + s.port() + "/registry/");
@@ -74,12 +65,12 @@ public class HttpRegistryFileFetcherTest {
           RegistryFileFetchException.class,
           () -> uut.fetchSchema(new SchemaSource("unknown", "123", "ns", "type", 8)));
 
-      verify(registryMetrics)
+      verify(registryMetrics, atLeastOnce())
           .timed(
               eq(RegistryMetrics.OP.FETCH_REGISTRY_FILE),
               eq(RegistryFileFetchException.class),
               any(SupplierWithException.class));
-      verify(registryMetrics)
+      verify(registryMetrics, atLeastOnce())
           .count(
               RegistryMetrics.EVENT.REGISTRY_FILE_FETCH_FAILED,
               Tags.of(RegistryMetrics.TAG_STATUS_CODE_KEY, "404"));
@@ -134,5 +125,44 @@ public class HttpRegistryFileFetcherTest {
               eq(RegistryFileFetchException.class),
               any(SupplierWithException.class));
     }
+  }
+
+  @SneakyThrows
+  @Test
+  void retries() {
+    Call call = mock(Call.class);
+    OkHttpClient client = mock(OkHttpClient.class);
+    HttpRegistryFileFetcher uut =
+        new HttpRegistryFileFetcher(new URL("http://ibm.com"), client, registryMetrics);
+    when(client.newCall(any())).thenReturn(call);
+
+    Request request = new Request.Builder().url("http://ibm.com").get().build();
+    Response fail =
+        new Builder()
+            .code(503)
+            .request(request)
+            .protocol(Protocol.HTTP_1_1)
+            .message("slow down, fella")
+            .build();
+    Response success =
+        new Builder()
+            .code(200)
+            .request(request)
+            .protocol(Protocol.HTTP_1_1)
+            .message("ok")
+            .body(ResponseBody.create(MediaType.parse("application/json"), "{}"))
+            .build();
+
+    when(call.execute())
+        .thenReturn(fail)
+        .thenReturn(fail)
+        .thenReturn(fail)
+        .thenReturn(fail)
+        .thenReturn(fail)
+        .thenReturn(fail)
+        .thenReturn(success);
+
+    SchemaSource key = new SchemaSource("id", "hash", "ns", "type", 1);
+    uut.fetchSchema(key);
   }
 }

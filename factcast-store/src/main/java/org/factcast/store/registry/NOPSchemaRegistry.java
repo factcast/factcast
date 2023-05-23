@@ -15,10 +15,10 @@
  */
 package org.factcast.store.registry;
 
-import com.github.fge.jsonschema.main.JsonSchema;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import org.everit.json.schema.Schema;
 import org.factcast.store.registry.transformation.Transformation;
 import org.factcast.store.registry.transformation.TransformationKey;
 import org.factcast.store.registry.transformation.TransformationStoreListener;
@@ -33,7 +33,7 @@ public class NOPSchemaRegistry implements SchemaRegistry {
   private static final List<Transformation> EMPTY = new LinkedList<>();
 
   @Override
-  public Optional<JsonSchema> get(SchemaKey key) {
+  public Optional<Schema> get(SchemaKey key) {
     return Optional.empty();
   }
 
@@ -54,6 +54,11 @@ public class NOPSchemaRegistry implements SchemaRegistry {
 
   @Override
   public void register(TransformationStoreListener transformationChains) {
+    // NOP
+  }
+
+  @Override
+  public void invalidateNearCache(SchemaKey key) {
     // NOP
   }
 }

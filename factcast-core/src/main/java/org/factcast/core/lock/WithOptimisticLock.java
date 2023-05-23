@@ -15,11 +15,7 @@
  */
 package org.factcast.core.lock;
 
-import java.util.ConcurrentModificationException;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.*;
 import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
@@ -54,7 +50,7 @@ public class WithOptimisticLock {
       boolean publishIfUnchanged = false;
 
       // fetch current state
-      StateToken token = store.stateFor(factSpecs);
+      StateToken token = store.currentStateFor(factSpecs);
 
       try {
 
@@ -62,6 +58,11 @@ public class WithOptimisticLock {
         // in case an AttemptAbortedException is thrown, just pass it
         // through
         IntermediatePublishResult r = runAndWrapException(operation);
+        if (r.wasSkipped()) {
+          List<Fact> facts = Collections.emptyList();
+          executeAndThen(r, facts);
+          return new PublishingResult(facts);
+        }
 
         List<Fact> factsToPublish = r.factsToPublish();
         if (factsToPublish == null || factsToPublish.isEmpty()) {
@@ -75,13 +76,7 @@ public class WithOptimisticLock {
         // try to publish
         if (store.publishIfUnchanged(r.factsToPublish(), Optional.of(token))) {
 
-          // publishing worked
-          // now run the 'andThen' operation
-          try {
-            r.andThen().ifPresent(Runnable::run);
-          } catch (Throwable e) {
-            throw new ExceptionAfterPublish(factsToPublish, e);
-          }
+          executeAndThen(r, factsToPublish);
 
           // and return the lastFactId for reference
           return new PublishingResult(factsToPublish);
@@ -99,8 +94,14 @@ public class WithOptimisticLock {
     throw new OptimisticRetriesExceededException(retry);
   }
 
-  private List<FactSpec> toFactSpecs(String ns, List<UUID> ids) {
-    return ids.stream().map(id -> FactSpec.ns(ns).aggId(id)).collect(Collectors.toList());
+  private static void executeAndThen(IntermediatePublishResult r, List<Fact> factsToPublish) {
+    // publishing worked
+    // now run the 'andThen' operation
+    try {
+      r.andThen().ifPresent(Runnable::run);
+    } catch (Throwable e) {
+      throw new ExceptionAfterPublish(factsToPublish, e);
+    }
   }
 
   private IntermediatePublishResult runAndWrapException(Attempt operation)

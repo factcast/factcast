@@ -66,8 +66,6 @@ public class PgListener implements InitializingBean, DisposableBean {
 
   private final CountDownLatch countDownLatch = new CountDownLatch(1);
 
-  private final SignalDeduplicationSet signalDeduplicationSet = new SignalDeduplicationSet(512);
-
   @VisibleForTesting
   protected void listen() {
     log.trace("Starting instance Listener");
@@ -97,7 +95,7 @@ public class PgListener implements InitializingBean, DisposableBean {
 
           while (running.get()) {
             PGNotification[] notifications = receiveNotifications(pc);
-            informSubscriberOfChannelNotifications(notifications);
+            processNotifications(notifications);
           }
         } catch (Exception e) {
           if (running.get()) {
@@ -123,16 +121,29 @@ public class PgListener implements InitializingBean, DisposableBean {
     try (PreparedStatement ps = pc.prepareStatement(PgConstants.LISTEN_ROUNDTRIP_CHANNEL_SQL)) {
       ps.execute();
     }
+    try (PreparedStatement ps =
+        pc.prepareStatement(PgConstants.LISTEN_BLACKLIST_CHANGE_CHANNEL_SQL)) {
+      ps.execute();
+    }
+    try (PreparedStatement ps =
+        pc.prepareStatement(PgConstants.LISTEN_SCHEMASTORE_CHANGE_CHANNEL_SQL)) {
+      ps.execute();
+    }
+    try (PreparedStatement ps =
+        pc.prepareStatement(PgConstants.LISTEN_TRANSFORMATIONSTORE_CHANGE_CHANNEL_SQL)) {
+      ps.execute();
+    }
   }
 
   // make sure subscribers did not miss anything while we reconnected
   @VisibleForTesting
   protected void informSubscribersAboutFreshConnection() {
-    postEvent(PgConstants.CHANNEL_SCHEDULED_POLL);
+    postFactInsertionSignal(PgConstants.CHANNEL_SCHEDULED_POLL);
+    postBlacklistChangeSignal();
   }
 
   @VisibleForTesting
-  protected void informSubscriberOfChannelNotifications(PGNotification[] notifications) {
+  protected void processNotifications(PGNotification[] notifications) {
 
     AtomicBoolean oncePerArray = new AtomicBoolean(false);
 
@@ -140,36 +151,93 @@ public class PgListener implements InitializingBean, DisposableBean {
         .forEach(
             n -> {
               String name = n.getName();
+              log.trace("Received notification on channel: {}.", name);
 
-              if (PgConstants.CHANNEL_FACT_INSERT.equals(name)) {
-                String json = n.getParameter();
-
-                try {
-                  JsonNode root = FactCastJson.readTree(json);
-                  JsonNode header = root.get("header");
-
-                  String ns = header.get("ns").asText();
-                  String type = header.get("type").asText();
-                  String txId = root.get("txId").asText();
-
-                  postEvent(new Signal(PgConstants.CHANNEL_FACT_INSERT, ns, type, txId));
-
-                } catch (JsonProcessingException | NullPointerException e) {
-                  // unparseable, probably longer than 8k ?
-                  // fall back to informingAllSubscribers
-                  if (!oncePerArray.getAndSet(true)) {
-                    log.debug(
-                        "Unparesable JSON header from Notification: {}. Notifying everyone - just"
-                            + " in case",
-                        name);
-                    postEvent(PgConstants.CHANNEL_FACT_INSERT);
-                  }
-                }
-              }
-              if (!PgConstants.CHANNEL_ROUNDTRIP.equals(name)) {
-                log.debug("Ignored notification from unknown channel: {}", name);
+              if (PgConstants.CHANNEL_BLACKLIST_CHANGE.equals(name)) {
+                postBlacklistChangeSignal();
+              } else if (PgConstants.CHANNEL_SCHEMASTORE_CHANGE.equals(name)) {
+                processSchemaStoreChangeNotification(n);
+              } else if (PgConstants.CHANNEL_TRANSFORMATIONSTORE_CHANGE.equals(name)) {
+                processTransformationStoreChangeNotification(n);
+              } else if (PgConstants.CHANNEL_FACT_INSERT.equals(name)) {
+                processFactInsertNotification(n, oncePerArray);
+              } else if (!PgConstants.CHANNEL_ROUNDTRIP.equals(name)) {
+                log.warn("Ignored notification from unknown channel: {}", name);
               }
             });
+  }
+
+  private void processSchemaStoreChangeNotification(PGNotification n) {
+    String json = n.getParameter();
+    try {
+      JsonNode root = FactCastJson.readTree(json);
+
+      String ns = root.get("ns").asText();
+      String type = root.get("type").asText();
+      Integer version = root.get("version").asInt();
+
+      postSchemaStoreChangeSignal(new SchemaStoreChangeSignal(ns, type, version));
+
+    } catch (JsonProcessingException | NullPointerException e) {
+      // skipping
+      log.warn("Unparesable JSON parameter from notification: {}.", n.getName());
+    }
+  }
+
+  private void processTransformationStoreChangeNotification(PGNotification n) {
+    String json = n.getParameter();
+    try {
+      JsonNode root = FactCastJson.readTree(json);
+
+      String ns = root.get("ns").asText();
+      String type = root.get("type").asText();
+
+      postTransformationStoreChangeSignal(new TransformationStoreChangeSignal(ns, type));
+
+    } catch (JsonProcessingException | NullPointerException e) {
+      // skipping
+      log.warn("Unparesable JSON parameter from notification: {}.", n.getName());
+    }
+  }
+
+  private void processFactInsertNotification(PGNotification n, AtomicBoolean oncePerArray) {
+    String json = n.getParameter();
+    try {
+      JsonNode root = FactCastJson.readTree(json);
+      // since 0.5.2, all those attributes are top level
+      String ns = root.get("ns").asText();
+      String type = root.get("type").asText();
+
+      postFactInsertionSignal(new FactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT, ns, type));
+
+    } catch (JsonProcessingException | NullPointerException e) {
+      // unparseable, probably longer than 8k ?
+      // fall back to informingAllSubscribers
+      if (!oncePerArray.getAndSet(true)) {
+        log.warn(
+            "Unparesable JSON header from Notification: {}. Notifying everyone - just" + " in case",
+            n.getName());
+        postFactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT);
+      }
+    }
+  }
+
+  private void postBlacklistChangeSignal() {
+    log.trace("Potential blacklist change detected");
+    eventBus.post(new BlacklistChangeSignal());
+  }
+
+  @VisibleForTesting
+  protected void postSchemaStoreChangeSignal(PgListener.SchemaStoreChangeSignal signal) {
+    log.trace("Schema store change detected");
+    eventBus.post(signal);
+  }
+
+  @VisibleForTesting
+  protected void postTransformationStoreChangeSignal(
+      PgListener.TransformationStoreChangeSignal signal) {
+    log.trace("Transformation store change detected");
+    eventBus.post(signal);
   }
 
   // try to receive Postgres notifications until timeout is over. In case we
@@ -222,30 +290,43 @@ public class PgListener implements InitializingBean, DisposableBean {
   }
 
   @VisibleForTesting
-  protected void postEvent(@NonNull String name) {
-    // don't test against dedup list here!
-    eventBus.post(new Signal(name, null, null, null));
+  protected void postFactInsertionSignal(@NonNull String name) {
+    postFactInsertionSignal(new FactInsertionSignal(name, null, null));
   }
 
   @VisibleForTesting
-  protected void postEvent(@NonNull PgListener.Signal signal) {
-    if (running.get() && signalDeduplicationSet.add(signal)) {
+  protected void postFactInsertionSignal(@NonNull PgListener.FactInsertionSignal signal) {
+    if (running.get()) {
       log.trace(
-          "notifying consumers for '{}' with ns={}, type={}, tx={}",
+          "notifying consumers for '{}' with ns={}, type={}",
           signal.name(),
           signal.ns(),
-          signal.type(),
-          signal.txId());
+          signal.type());
       eventBus.post(signal);
     }
   }
 
   @Value
-  public static class Signal {
+  public static class FactInsertionSignal {
     @NonNull String name;
     String ns;
     String type;
-    String txId;
+  }
+
+  @Value
+  public static class BlacklistChangeSignal {}
+
+  @Value
+  public static class SchemaStoreChangeSignal {
+    @NonNull String ns;
+    @NonNull String type;
+    @NonNull Integer version;
+  }
+
+  @Value
+  public static class TransformationStoreChangeSignal {
+    @NonNull String ns;
+    @NonNull String type;
   }
 
   @Override

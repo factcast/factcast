@@ -19,9 +19,10 @@ import com.google.common.collect.Lists;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.DuplicateFactException;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
@@ -30,19 +31,20 @@ import org.factcast.core.store.AbstractFactStore;
 import org.factcast.core.store.State;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
-import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.transformation.FactTransformerService;
+import org.factcast.core.subscription.transformation.TransformationRequest;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.snapcache.PgSnapshotCache;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -109,14 +111,11 @@ public class PgFactStore extends AbstractFactStore {
   @Override
   public @NonNull Optional<Fact> fetchByIdAndVersion(@NonNull UUID id, int version)
       throws TransformationException {
-
-    var fact = fetchById(id);
-    // map does not work here due to checked exception
-    if (fact.isPresent()) {
-      return Optional.of(factTransformerService.transformIfNecessary(fact.get(), version));
-    } else {
-      return fact;
-    }
+    return fetchById(id)
+        .map(
+            value ->
+                factTransformerService.transform(
+                    new TransformationRequest(value, Collections.singleton(version))));
   }
 
   @Override
@@ -143,7 +142,7 @@ public class PgFactStore extends AbstractFactStore {
             // adding serials to headers is done via trigger
 
           } catch (DuplicateKeyException dupkey) {
-            throw new IllegalArgumentException(dupkey.getMessage());
+            throw new DuplicateFactException(dupkey.getMessage());
           }
         });
   }
@@ -214,32 +213,49 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   protected State getStateFor(@NonNull List<FactSpec> specs) {
+    return doGetState(specs, 0);
+  }
+
+  @Override
+  protected State getStateFor(@NonNull List<FactSpec> specs, long lastMatchingSerial) {
+    return doGetState(specs, lastMatchingSerial);
+  }
+
+  private State doGetState(@NotNull List<FactSpec> specs, long lastMatchingSerial) {
     return metrics.time(
         StoreMetrics.OP.GET_STATE_FOR,
         () -> {
           PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
           String stateSQL = pgQueryBuilder.createStateSQL();
           PreparedStatementSetter statementSetter =
-              pgQueryBuilder.createStatementSetter(new AtomicLong(0));
+              pgQueryBuilder.createStatementSetter(new AtomicLong(lastMatchingSerial));
 
-          try {
-            ResultSetExtractor<Long> rch =
-                new ResultSetExtractor<>() {
-                  @Override
-                  public Long extractData(ResultSet resultSet)
-                      throws SQLException, DataAccessException {
-                    if (!resultSet.next()) {
-                      return 0L;
-                    } else {
-                      return resultSet.getLong(1);
-                    }
+          ResultSetExtractor<Long> rch =
+              new ResultSetExtractor<>() {
+                @Override
+                public Long extractData(ResultSet resultSet)
+                    throws SQLException, DataAccessException {
+                  if (!resultSet.next()) {
+                    return 0L;
+                  } else {
+                    return resultSet.getLong(1);
                   }
-                };
-            long lastSerial = jdbcTemplate.query(stateSQL, statementSetter, rch);
-            return State.of(specs, lastSerial);
-          } catch (EmptyResultDataAccessException lastSerialIs0Then) {
-            return State.of(specs, 0);
-          }
+                }
+              };
+          long lastSerial = jdbcTemplate.query(stateSQL, statementSetter, rch);
+          return State.of(specs, lastSerial);
+        });
+  }
+
+  @Override
+  protected State getCurrentStateFor(List<FactSpec> specs) {
+    return metrics.time(
+        StoreMetrics.OP.GET_STATE_FOR,
+        () -> {
+          long max =
+              Objects.requireNonNull(
+                  jdbcTemplate.queryForObject(PgConstants.LAST_SERIAL_IN_LOG, Long.class));
+          return State.of(specs, max);
         });
   }
 

@@ -1,8 +1,8 @@
 package org.factcast.schema.registry.cli.validation
 
 import arrow.core.Either
-import io.kotest.assertions.arrow.either.shouldBeLeft
-import io.kotest.assertions.arrow.either.shouldBeRight
+import io.kotest.assertions.arrow.core.shouldBeLeft
+import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.core.test.TestCase
 import io.kotest.core.test.TestResult
@@ -45,14 +45,14 @@ class ValidationServiceImplTest : StringSpec() {
                 errorList
             )
 
-            uut.validateProject(dummyProjectFolder).shouldBeLeft {
+            uut.validateProject(dummyProjectFolder).shouldBeLeft().also {
                 it shouldBe errorList
             }
 
             verifyAll { validateProjectStructureServiceMock.validateProjectStructure(dummyProjectFolder) }
         }
 
-        "fail on broken examples and transcormations" {
+        "fail on broken examples and transformations" {
             val errorList = listOf(ProjectError.NoSuchFile(dummyPath))
             every { validateProjectStructureServiceMock.validateProjectStructure(dummyProjectFolder) } returns Either.Right(
                 dummyProject
@@ -60,7 +60,7 @@ class ValidationServiceImplTest : StringSpec() {
             every { validateExamplesServiceMock.validateExamples(dummyProject) } returns errorList
             every { validateTransformationsServiceMock.validateTransformations(dummyProject) } returns errorList
 
-            uut.validateProject(dummyProjectFolder).shouldBeLeft {
+            uut.validateProject(dummyProjectFolder).shouldBeLeft().also {
                 it shouldHaveSize 2
                 it[0].shouldBeInstanceOf<ProjectError.NoSuchFile>()
                 it[1].shouldBeInstanceOf<ProjectError.NoSuchFile>()
@@ -80,7 +80,7 @@ class ValidationServiceImplTest : StringSpec() {
             every { validateExamplesServiceMock.validateExamples(dummyProject) } returns emptyList()
             every { validateTransformationsServiceMock.validateTransformations(dummyProject) } returns emptyList()
 
-            uut.validateProject(dummyProjectFolder).shouldBeRight {
+            uut.validateProject(dummyProjectFolder).shouldBeRight().also {
                 it shouldBe dummyProject
             }
 

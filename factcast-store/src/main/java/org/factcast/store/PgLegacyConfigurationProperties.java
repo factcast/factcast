@@ -15,6 +15,10 @@
  */
 package org.factcast.store;
 
+import java.time.Duration;
+import java.util.*;
+import java.util.stream.*;
+import javax.annotation.Nonnull;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.slf4j.Logger;
@@ -24,14 +28,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.DeprecatedConfigurationProperty;
 import org.springframework.context.ApplicationListener;
 import org.springframework.core.env.*;
-
-import javax.annotation.Nonnull;
-import java.time.Duration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @SuppressWarnings({"DefaultAnnotationParam", "OptionalUsedAsFieldOrParameterType"})
 @ConfigurationProperties(prefix = PgLegacyConfigurationProperties.LEGACY_PREFIX)
@@ -81,8 +77,8 @@ public class PgLegacyConfigurationProperties implements ApplicationListener<Appl
   private Optional<Integer> deleteSnapshotStaleForDays = Optional.empty();
 
   /**
-   * If validation is enabled, this controls if transformed facts are persistently cached in
-   * postgres, rather than in memory. (Defaults to false)
+   * this controls if transformed facts are persistently cached in postgres, rather than in memory.
+   * (Defaults to false)
    */
   private Optional<Boolean> persistentTransformationCache = Optional.empty();
 

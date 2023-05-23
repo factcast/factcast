@@ -15,11 +15,11 @@
  */
 package org.factcast.store.internal;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
-import java.util.UUID;
+import java.util.*;
 import lombok.Data;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
@@ -27,23 +27,22 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.store.test.IntegrationTest;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.factcast.test.IntegrationTest;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ContextConfiguration(classes = {PgTestConfiguration.class})
-@Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
+@Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 public class PgQueryTest {
 
   static final FactSpec DEFAULT_SPEC = FactSpec.ns("default-ns").type("type1");
@@ -77,7 +76,6 @@ public class PgQueryTest {
     return new EventBus(this.getClass().getSimpleName());
   }
 
-  @DirtiesContext
   @Test
   void testRoundtrip() {
     SubscriptionRequestTO req =
@@ -89,7 +87,6 @@ public class PgQueryTest {
     verify(c).onComplete();
   }
 
-  @DirtiesContext
   @Test
   void testRoundtripInsertBefore() {
     insertTestFact(TestHeader.create());
@@ -110,7 +107,6 @@ public class PgQueryTest {
     tpl.execute("INSERT INTO fact(header,payload) VALUES ('" + header + "','{}')");
   }
 
-  @DirtiesContext()
   @Test
   void testRoundtripInsertAfter() throws Exception {
     SubscriptionRequestTO req =
@@ -128,7 +124,6 @@ public class PgQueryTest {
     verify(c, times(2)).onNext(any(Fact.class));
   }
 
-  @DirtiesContext()
   @Test
   void testRoundtripCatchupEventsInsertedAfterStart() throws Exception {
     SubscriptionRequestTO req =
@@ -162,7 +157,6 @@ public class PgQueryTest {
     Thread.sleep(ms);
   }
 
-  @DirtiesContext()
   @Test
   void testRoundtripCompletion() throws Exception {
     SubscriptionRequestTO req =
@@ -184,7 +178,6 @@ public class PgQueryTest {
     verify(c, times(5)).onNext(any(Fact.class));
   }
 
-  @DirtiesContext()
   @Test
   void testCancel() throws Exception {
     SubscriptionRequestTO req =

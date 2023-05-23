@@ -16,20 +16,27 @@
 package org.factcast.server.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import io.grpc.Metadata;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.OptionalInt;
-import java.util.stream.Stream;
+import java.util.*;
+import java.util.stream.*;
 import lombok.AccessLevel;
+import lombok.NonNull;
 import lombok.Setter;
 import org.factcast.grpc.api.Headers;
 
 public class GrpcRequestMetadata {
+
+  public static final String UNKNOWN = "unknown";
+
   @Setter(AccessLevel.PROTECTED)
   Metadata headers;
 
   OptionalInt catchupBatch() {
+
+    Preconditions.checkNotNull(
+        headers, "GrpcRequestMetadata has not been provided with headers via Interceptor");
+
     return Stream.of(headers.get(Headers.CATCHUP_BATCHSIZE))
         .filter(Objects::nonNull)
         .mapToInt(Integer::parseInt)
@@ -48,7 +55,23 @@ public class GrpcRequestMetadata {
     return grpcRequestMetadata;
   }
 
+  @NonNull
   public Optional<String> clientId() {
-    return Optional.ofNullable(headers).map(headers -> headers.get(Headers.CLIENT_ID));
+    return Optional.ofNullable(headers).map(h -> h.get(Headers.CLIENT_ID));
+  }
+
+  @NonNull
+  public Optional<String> clientVersion() {
+    return Optional.ofNullable(headers).map(h -> h.get(Headers.CLIENT_VERSION));
+  }
+
+  @NonNull
+  public String clientIdAsString() {
+    return clientId().orElse(UNKNOWN);
+  }
+
+  @NonNull
+  public String clientVersionAsString() {
+    return clientVersion().orElse(UNKNOWN);
   }
 }

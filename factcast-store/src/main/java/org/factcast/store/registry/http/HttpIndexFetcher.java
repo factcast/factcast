@@ -30,6 +30,8 @@ import org.factcast.store.registry.IndexFetcher;
 import org.factcast.store.registry.RegistryIndex;
 import org.factcast.store.registry.SchemaRegistryUnavailableException;
 import org.factcast.store.registry.metrics.RegistryMetrics;
+import org.springframework.retry.support.RetryTemplate;
+import org.springframework.retry.support.RetryTemplateBuilder;
 
 /**
  * fetches the index (using if-modified-since)
@@ -42,6 +44,13 @@ public class HttpIndexFetcher implements IndexFetcher {
   private final OkHttpClient client;
 
   private final RegistryMetrics registryMetrics;
+
+  private final RetryTemplate retry =
+      new RetryTemplateBuilder()
+          .retryOn(SchemaRegistryUnavailableException.class)
+          .exponentialBackoff(50, 1.5, 500)
+          .maxAttempts(10)
+          .build();
 
   public HttpIndexFetcher(@NonNull URL baseUrl, @NonNull RegistryMetrics registryMetrics) {
     this(baseUrl, ValidationConstants.OK_HTTP, registryMetrics);
@@ -66,50 +75,56 @@ public class HttpIndexFetcher implements IndexFetcher {
   /** @return future for empty, if index is unchanged, otherwise the updated index. */
   @Override
   public Optional<RegistryIndex> fetchIndex() {
+    return retry.execute(
+        ctx -> {
+          try {
+            URL indexUrl = createIndexUrl(schemaRegistryUrl);
 
-    try {
-      URL indexUrl = createIndexUrl(schemaRegistryUrl);
+            Builder req = new Request.Builder().url(indexUrl);
+            if (since != null) {
+              req.addHeader(ValidationConstants.HTTPHEADER_IF_MODIFIED_SINCE, since);
+            }
+            if (etag != null) {
+              req.addHeader(ValidationConstants.HTTPHEADER_E_TAG, etag);
+            }
 
-      Builder req = new Request.Builder().url(indexUrl);
-      if (since != null) {
-        req.addHeader(ValidationConstants.HTTPHEADER_IF_MODIFIED_SINCE, since);
-      }
-      if (etag != null) {
-        req.addHeader(ValidationConstants.HTTPHEADER_E_TAG, etag);
-      }
+            Request request = req.build();
+            log.debug("Fetching index from {}", request.url());
+            try (Response response = client.newCall(request).execute()) {
 
-      Request request = req.build();
-      log.debug("Fetching index from {}", request.url());
-      try (Response response = client.newCall(request).execute()) {
+              String responseBodyAsText = response.body().string();
 
-        String responseBodyAsText = response.body().string();
+              if (response.code() == ValidationConstants.HTTP_NOT_MODIFIED) {
+                // we're done here.
+                return Optional.empty();
+              } else {
+                if (response.code() == ValidationConstants.HTTP_OK) {
 
-        if (response.code() == ValidationConstants.HTTP_NOT_MODIFIED) {
-          // we're done here.
-          return Optional.empty();
-        } else if (response.code() == ValidationConstants.HTTP_OK) {
+                  etag = response.header(ValidationConstants.HTTPHEADER_E_TAG);
+                  since = response.header(ValidationConstants.HTTPHEADER_LAST_MODIFIED);
 
-          etag = response.header(ValidationConstants.HTTPHEADER_E_TAG);
-          since = response.header(ValidationConstants.HTTPHEADER_LAST_MODIFIED);
+                  RegistryIndex readValue =
+                      ValidationConstants.JACKSON.readValue(
+                          responseBodyAsText, RegistryIndex.class);
+                  return Optional.of(readValue);
 
-          RegistryIndex readValue =
-              ValidationConstants.JACKSON.readValue(responseBodyAsText, RegistryIndex.class);
-          return Optional.of(readValue);
+                } else {
+                  registryMetrics.count(
+                      RegistryMetrics.EVENT.SCHEMA_REGISTRY_UNAVAILABLE,
+                      Tags.of(
+                          RegistryMetrics.TAG_STATUS_CODE_KEY, String.valueOf(response.code())));
 
-        } else {
-          registryMetrics.count(
-              RegistryMetrics.EVENT.SCHEMA_REGISTRY_UNAVAILABLE,
-              Tags.of(RegistryMetrics.TAG_STATUS_CODE_KEY, String.valueOf(response.code())));
+                  throw new SchemaRegistryUnavailableException(
+                      request.url().toString(), response.code(), response.message());
+                }
+              }
+            }
 
-          throw new SchemaRegistryUnavailableException(
-              request.url().toString(), response.code(), response.message());
-        }
-      }
-    } catch (Exception e) {
-      registryMetrics.count(RegistryMetrics.EVENT.SCHEMA_REGISTRY_UNAVAILABLE);
-
-      throw new SchemaRegistryUnavailableException(e);
-    }
+          } catch (Exception e) {
+            registryMetrics.count(RegistryMetrics.EVENT.SCHEMA_REGISTRY_UNAVAILABLE);
+            throw new SchemaRegistryUnavailableException(e);
+          }
+        });
   }
 
   private URL createIndexUrl(URL url) throws MalformedURLException {

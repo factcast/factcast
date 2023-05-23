@@ -16,8 +16,7 @@
 package org.factcast.itests.factus.event.versioned.v2;
 
 import com.google.common.collect.Sets;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

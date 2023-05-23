@@ -16,7 +16,6 @@
 package org.factcast.server.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
@@ -47,8 +46,9 @@ public class BlockingStreamObserver<T> implements StreamObserver<T> {
 
   private final String id;
 
-  BlockingStreamObserver(@NonNull String id, @NonNull ServerCallStreamObserver<T> delegate, int batchSize) {
-    if (batchSize<1)throw new IllegalArgumentException("batchSize must be >=1");
+  BlockingStreamObserver(
+      @NonNull String id, @NonNull ServerCallStreamObserver<T> delegate, int batchSize) {
+    if (batchSize < 1) throw new IllegalArgumentException("batchSize must be >=1");
     this.id = id;
     this.delegate = delegate;
     this.batchSize = batchSize;
@@ -80,7 +80,11 @@ public class BlockingStreamObserver<T> implements StreamObserver<T> {
                   id
                       + " channel not coming back after waiting "
                       + (WAIT_TIME_MILLIS * batchSize * RETRY_COUNT)
-                      + "msec ("+ WAIT_TIME_MILLIS +" * batchSize * "+RETRY_COUNT+" retries");
+                      + "msec ("
+                      + WAIT_TIME_MILLIS
+                      + " * batchSize * "
+                      + RETRY_COUNT
+                      + " retries");
             }
           }
         }
@@ -115,7 +119,8 @@ public class BlockingStreamObserver<T> implements StreamObserver<T> {
     }
   }
 
-  private void waitForDelegate() {
+  @VisibleForTesting
+  void waitForDelegate() {
     int retry = RETRY_COUNT * batchSize;
     for (int i = 1; i <= retry; i++) {
 

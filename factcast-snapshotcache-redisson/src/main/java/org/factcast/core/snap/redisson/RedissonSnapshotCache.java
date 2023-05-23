@@ -18,8 +18,8 @@ package org.factcast.core.snap.redisson;
 import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.snap.Snapshot;
@@ -28,43 +28,51 @@ import org.factcast.core.snap.SnapshotId;
 import org.redisson.api.RBucket;
 import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
+import org.redisson.client.codec.Codec;
 
 @Slf4j
 public class RedissonSnapshotCache implements SnapshotCache {
 
   final RedissonClient redisson;
 
-  private final int retentionTimeInDays;
+  private final RedissonSnapshotProperties properties;
 
   // still needed to remove stale snapshots, can be removed at some point
   private static final String TS_INDEX = "SNAPCACHE_IDX";
   private final RMap<String, Long> index;
 
-  public RedissonSnapshotCache(@NonNull RedissonClient redisson, int retentionTimeInDays) {
+  public RedissonSnapshotCache(
+      @NonNull RedissonClient redisson, @NonNull RedissonSnapshotProperties props) {
     this.redisson = redisson;
-    this.retentionTimeInDays = retentionTimeInDays;
-    index = redisson.getMap(TS_INDEX);
+    this.properties = props;
+
+    index = properties.getSnapshotCacheRedissonCodec().getMap(redisson, TS_INDEX);
   }
 
   @Override
   public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
     String key = createKeyFor(id);
-    RBucket<Snapshot> bucket = redisson.getBucket(key);
 
+    RBucket<Snapshot> bucket = properties.getSnapshotCacheRedissonCodec().getBucket(redisson, key);
     Optional<Snapshot> snapshot = Optional.ofNullable(bucket.get());
     if (snapshot.isPresent()) {
       // renew TTL
-      bucket.expireAsync(retentionTimeInDays, TimeUnit.DAYS);
+      bucket.expireAsync(Duration.ofDays(properties.getRetentionTime()));
       // can be removed at some point
       index.removeAsync(key, System.currentTimeMillis());
     }
     return snapshot;
   }
 
+  private RBucket<Snapshot> createFromCodec(String key, Codec codec) {
+    return redisson.getBucket(key, codec);
+  }
+
   @Override
   public void setSnapshot(@NonNull Snapshot snapshot) {
     String key = createKeyFor(snapshot.id());
-    redisson.getBucket(key).set(snapshot, retentionTimeInDays, TimeUnit.DAYS);
+    RBucket<Snapshot> bucket = properties.getSnapshotCacheRedissonCodec().getBucket(redisson, key);
+    bucket.set(snapshot, properties.getRetentionTime(), TimeUnit.DAYS);
   }
 
   @Override
@@ -73,7 +81,7 @@ public class RedissonSnapshotCache implements SnapshotCache {
   }
 
   @Override
-  @Deprecated
+  @Deprecated // using EXPIRE instead
   public void compact(int retentionTimeInDays) {
     Duration daysAgo = Duration.ofDays(retentionTimeInDays);
     long threshold = Instant.now().minus(daysAgo).toEpochMilli();

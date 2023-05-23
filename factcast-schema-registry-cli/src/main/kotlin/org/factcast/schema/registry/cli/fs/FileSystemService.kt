@@ -33,5 +33,5 @@ interface FileSystemService {
     fun deleteDirectory(path: Path)
     fun readToBytes(file: Path): ByteArray
     fun copyFromClasspath(source: String, target: Path)
-    fun copyJsonFilteringTitle(from: File, to: File)
+    fun copyFilteredJson(from: File, to: File, removedSchemaProps: Set<String>)
 }

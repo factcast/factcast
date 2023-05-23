@@ -6,15 +6,13 @@ weight = 60
 
 As mentioned [before]({{%relref "/concept/_index.md#read-subscribe"%}}), there are three main Use-Cases for subscribing to a Fact-Stream:
 
-* Validation of Changes against a sctrictly consistent Model (Catchup)
-* Creating and maintaining a Read-Model (Follow)
-* Managing volatile cached data (Ephemeral)
+- Validation of Changes against a sctrictly consistent Model (Catchup)
+- Creating and maintaining a Read-Model (Follow)
+- Managing volatile cached data (Ephemeral)
 
 Here is some example code assuming you use the Spring GRPC Client:
 
 ## Example Code: Catchup
-
-
 
 ```java
 @Component
@@ -26,10 +24,10 @@ class CustomerRepository{
  public Customer getCustomer(UUID customerId){
    // match all Facts currently published about that customer
    SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("myapp").aggId(customerId)).fromScratch();
-   
+
    Customer customer = new Customer(id);
    // stream all these Facts to the customer object's handle method, and wait until the stream ends.
-   factCast.subscribeToFacts(req, customer::handle ).awaitComplete();
+   factCast.subscribe(req, customer::handle ).awaitComplete();
 
    // the customer object should now be in its latest state, and ready for command validation
    return customer;
@@ -45,7 +43,6 @@ class Customer {
   }
 }
 ```
-
 
 ## Example Code: Follow
 
@@ -68,11 +65,11 @@ class QueryOptimizedView {
           .or(type("PurchaseCompleted"))
       .from(lastFactProcessed);
 
-   factCast.subscribeToFacts(req, this::handle );
+   factCast.subscribe(req, this::handle );
  }
 
- private FactSpec type(String type){ 
-   return FactSpec.ns("myapp").type(type); 
+ private FactSpec type(String type){
+   return FactSpec.ns("myapp").type(type);
  }
 
  @Transactional
@@ -83,8 +80,6 @@ class QueryOptimizedView {
  }
 
 ```
-
-
 
 ## Example Code: Ephemeral
 
@@ -106,11 +101,11 @@ class CustomerCache {
           .or(type("PurchaseCompleted"))
       .fromNowOn();
 
-   factCast.subscribeToFacts(req, this::handle );
+   factCast.subscribe(req, this::handle );
  }
 
- private FactSpec type(String type){ 
-  return FactSpec.ns("myapp").type(type); 
+ private FactSpec type(String type){
+  return FactSpec.ns("myapp").type(type);
  }
 
  @Transactional

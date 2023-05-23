@@ -31,14 +31,23 @@ class TransformationEvaluator(
     private val transformer: Transformer,
     private val fs: FileSystemService
 ) {
-    fun evaluate(ns: Namespace, event: Event, transformation: Transformation, data: JsonNode): JsonNode {
+    /**
+     * will return null if the transformation should not be considered by schema reg cli
+     */
+    fun evaluate(ns: Namespace, event: Event, transformation: Transformation, data: JsonNode): JsonNode? {
+        val transformationAsString = fs.readToString(transformation.transformationPath.toFile())
+
+        if (transformationAsString.startsWith("/*CLI IGNORE*/")) {
+            return null
+        }
+
         val key = TransformationKey.of(ns.name, event.type)
         val singleTransformation =
             SingleTransformation.of(
                 key,
                 transformation.from,
                 transformation.to,
-                fs.readToString(transformation.transformationPath.toFile())
+                transformationAsString
             )
         val chain = TransformationChain.of(
             key,

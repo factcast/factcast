@@ -15,34 +15,56 @@
  */
 package org.factcast.core.lock;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.*;
+import lombok.SneakyThrows;
 import org.factcast.core.store.FactStore;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
 
-public class LockedOperationBuilderTest {
+class LockedOperationBuilderTest {
 
   final DeprecatedLockedOperationBuilder uut =
       new DeprecatedLockedOperationBuilder(mock(FactStore.class), "ns");
 
   @Test
-  public void testAttemptNullContracts() {
-    assertThrows(NullPointerException.class, () -> uut.on(UUID.randomUUID()).attempt(null));
-  }
-
-  @Test
-  public void testAttemptAbortsOnNull() {
+  void testAttemptAbortsOnNull() {
     assertThrows(
         AttemptAbortedException.class, () -> uut.on(UUID.randomUUID()).attempt(() -> null));
   }
 
   @Test
-  public void testAttemptWithoutPublishing() {
+  void testAttemptWithoutPublishing() {
+    UUID aggId = UUID.randomUUID();
+    LockedOperationBuilder on = uut.on(aggId);
     assertThrows(
         IllegalArgumentException.class,
-        () -> uut.on(UUID.randomUUID()).attempt(() -> mock(IntermediatePublishResult.class)));
+        () -> {
+          on.attempt(() -> mock(IntermediatePublishResult.class));
+        });
+  }
+
+  @SneakyThrows
+  @Test
+  void testAttemptWithoutPublishingOnRequest() {
+    UUID aggId = UUID.randomUUID();
+    LockedOperationBuilder on = uut.on(aggId);
+    // must not throw
+    on.attempt(() -> Attempt.publishUnlessEmpty(Collections.emptyList()));
+  }
+
+  @SneakyThrows
+  @Test
+  void testAttemptWithoutPublishingButExecuteAndThen() {
+    UUID aggId = UUID.randomUUID();
+    LockedOperationBuilder on = uut.on(aggId);
+    CountDownLatch cl = new CountDownLatch(1);
+
+    on.attempt(() -> Attempt.withoutPublication().andThen(cl::countDown));
+
+    assertThat(cl.await(1, TimeUnit.SECONDS)).isTrue();
   }
 }

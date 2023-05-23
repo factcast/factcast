@@ -16,17 +16,21 @@
 package org.factcast.store.registry.classpath;
 
 import com.google.common.collect.Lists;
+import java.util.*;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import net.javacrumbs.shedlock.core.LockProvider;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.SchemaRegistryFactory;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.TransformationStore;
 import org.factcast.store.registry.validation.schema.SchemaStore;
 
-import java.util.List;
-
+@RequiredArgsConstructor
 public class ClasspathSchemaRegistryFactory
     implements SchemaRegistryFactory<ClasspathSchemaRegistry> {
+
+  private final LockProvider lockProvider;
 
   @Override
   public List<String> getProtocols() {
@@ -46,6 +50,7 @@ public class ClasspathSchemaRegistryFactory
         schemaStore,
         transformationStore,
         registryMetrics,
-        props);
+        props,
+        lockProvider);
   }
 }

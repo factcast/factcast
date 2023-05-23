@@ -23,7 +23,6 @@ import io.micrometer.core.instrument.binder.cache.GuavaCacheMetrics;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.UUID;
-
 import org.factcast.store.internal.PgConstants;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.StoreMetrics;

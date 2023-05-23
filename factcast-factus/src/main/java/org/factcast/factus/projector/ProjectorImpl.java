@@ -31,8 +31,7 @@ import org.factcast.core.Fact;
 import org.factcast.core.FactHeader;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.spec.FactSpecCoordinates;
-import org.factcast.factus.Handler;
-import org.factcast.factus.HandlerFor;
+import org.factcast.factus.*;
 import org.factcast.factus.SuppressFactusWarnings.Warning;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.EventSerializer;
@@ -164,7 +163,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       // pass along and potentially rethrow
       projection.onError(e);
       throw new IllegalArgumentException(e);
-    } catch (Throwable e) {
+    } catch (Exception e) {
 
       // inform the lenses
       lenses.forEach(l -> l.afterFactProcessingFailed(f, e));
@@ -296,8 +295,6 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
     @NonNull ProjectorImpl.TargetObjectResolver objectResolver;
 
-    //    @NonNull ParameterTransformer parameterTransformer;
-
     @NonNull FactSpec spec;
 
     @NonNull EventSerializer deserializer;
@@ -348,7 +345,8 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
       HandlerFor handlerFor = m.getAnnotation(HandlerFor.class);
       if (handlerFor != null) {
-        return FactSpec.ns(handlerFor.ns()).type(handlerFor.type()).version(handlerFor.version());
+        return addOptionalFilterInfo(
+            m, FactSpec.ns(handlerFor.ns()).type(handlerFor.type()).version(handlerFor.version()));
       }
 
       List<Class<?>> eventPojoTypes =
@@ -367,9 +365,28 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
               "Multiple EventPojo Parameters. Cannot introspect FactSpec from " + m);
         } else {
           Class<?> eventPojoType = eventPojoTypes.get(0);
-          return FactSpec.from(eventPojoType);
+          return addOptionalFilterInfo(m, FactSpec.from(eventPojoType));
         }
       }
+    }
+
+    @VisibleForTesting
+    static FactSpec addOptionalFilterInfo(Method m, FactSpec spec) {
+      FilterByMetas attributes = m.getAnnotation(FilterByMetas.class);
+      if (attributes != null)
+        Arrays.stream(attributes.value()).forEach(a -> spec.meta(a.key(), a.value()));
+
+      FilterByMeta attribute = m.getAnnotation(FilterByMeta.class);
+      if (attribute != null) spec.meta(attribute.key(), attribute.value());
+
+      FilterByAggId aggregateId = m.getAnnotation(FilterByAggId.class);
+      if (aggregateId != null) spec.aggId(UUID.fromString(aggregateId.value()));
+
+      FilterByScript filterByScript = m.getAnnotation(FilterByScript.class);
+      if (filterByScript != null)
+        spec.filterScript(org.factcast.core.spec.FilterScript.js(filterByScript.value()));
+
+      return spec;
     }
 
     private static Collection<CallTarget> getRelevantClasses(Projection p) {

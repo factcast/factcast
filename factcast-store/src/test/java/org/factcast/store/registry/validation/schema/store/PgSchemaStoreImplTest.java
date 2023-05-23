@@ -18,26 +18,21 @@ package org.factcast.store.registry.validation.schema.store;
 import static org.mockito.Mockito.*;
 
 import java.sql.SQLException;
-import java.util.Collections;
 import org.factcast.store.internal.PgTestConfiguration;
-import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.factcast.store.registry.validation.schema.SchemaSource;
 import org.factcast.store.registry.validation.schema.SchemaStore;
-import org.factcast.store.test.IntegrationTest;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.factcast.test.IntegrationTest;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ContextConfiguration(classes = {PgTestConfiguration.class})
-@Sql(scripts = "/test_schema.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @ExtendWith(MockitoExtension.class)
 @IntegrationTest
@@ -49,60 +44,6 @@ public class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
   @Override
   protected SchemaStore createUUT() {
     return new PgSchemaStoreImpl(tpl, registryMetrics);
-  }
-
-  @Test
-  void doesNotRefetch() {
-    // first goes to DB
-
-    var uut = new PgSchemaStoreImpl(mockTpl, registryMetrics);
-
-    SchemaKey key = mock(SchemaKey.class);
-    when(mockTpl.queryForList(any(), eq(String.class), same(null), same(null), eq(0)))
-        .thenReturn(Collections.singletonList("my schema"));
-
-    uut.get(key);
-
-    verify(mockTpl, times(1)).queryForList(any(), eq(String.class), same(null), same(null), eq(0));
-    verifyNoMoreInteractions(mockTpl);
-
-    // now fetch again - should be answered from the near cache
-
-    uut.get(key);
-    verifyNoMoreInteractions(mockTpl);
-  }
-
-  @Test
-  void cachesRegistrations() {
-    // first goes to DB
-
-    var uut = new PgSchemaStoreImpl(mockTpl, registryMetrics);
-
-    SchemaSource source = new SchemaSource().hash("hash").id("id").ns("ns").type("type");
-    uut.register(source, "foo");
-    verify(mockTpl)
-        .update(
-            "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? ::"
-                + " JSONB) ON CONFLICT ON CONSTRAINT schemastore_pkey DO UPDATE set"
-                + " hash=?,ns=?,type=?,version=?,jsonschema=? :: JSONB WHERE schemastore.id=?",
-            "id",
-            "hash",
-            "ns",
-            "type",
-            0,
-            "foo",
-            "hash",
-            "ns",
-            "type",
-            0,
-            "foo",
-            "id");
-    verifyNoMoreInteractions(mockTpl);
-
-    // now fetch again - should be answered from the near cache
-
-    uut.get(source.toKey());
-    verifyNoMoreInteractions(mockTpl);
   }
 
   @Test

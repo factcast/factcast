@@ -1,7 +1,9 @@
 package org.factcast.schema.registry.cli.validation
 
+import arrow.core.computations.result
 import com.fasterxml.jackson.databind.JsonNode
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
@@ -28,6 +30,7 @@ class TransformationEvaluatorTest : StringSpec() {
     val transformation = mockk<Transformation>(relaxed = true)
     val dummyFile = mockk<File>()
     val dummyTransformation = "function(e) {return  e}"
+    val skippedDummyTransformation = "/*CLI IGNORE*/ function(e) {return  e}"
 
     val uut = TransformationEvaluator(transformer, fs)
 
@@ -58,6 +61,29 @@ class TransformationEvaluatorTest : StringSpec() {
                 key().ns() shouldBe "ns"
                 key().type() shouldBe "type"
             }
+
+            verify {
+                fs.readToString(transformation.transformationPath.toFile())
+                transformer.transform(any(), eq(dummyData));
+            }
+        }
+
+        "skipped" {
+            val chainSlot = slot<TransformationChain>()
+
+            every { ns.name } returns "ns"
+            every { event.type } returns "type"
+            every { transformation.from } returns 1
+            every { transformation.to } returns 2
+            every { transformation.transformationPath.toFile() } returns dummyFile
+
+            every {
+                fs.readToString(transformation.transformationPath.toFile())
+            } returns skippedDummyTransformation
+
+            every { transformer.transform(capture(chainSlot), eq(dummyData)) } returns resultData;
+
+            uut.evaluate(ns, event, transformation, dummyData).shouldBeNull()
 
             verify {
                 fs.readToString(transformation.transformationPath.toFile())

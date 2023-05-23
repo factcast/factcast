@@ -15,8 +15,8 @@
  */
 package org.factcast.server.grpc;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -28,9 +28,12 @@ import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
-import java.net.URL;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import java.util.*;
 import lombok.NonNull;
+import lombok.SneakyThrows;
+import nl.altindag.log.LogCaptor;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
@@ -41,7 +44,6 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FastForwardTarget;
-import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.ProtoConverter;
@@ -50,12 +52,13 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts.Builder;
 import org.factcast.server.grpc.auth.FactCastAccount;
 import org.factcast.server.grpc.auth.FactCastAuthority;
 import org.factcast.server.grpc.auth.FactCastUser;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.factcast.server.grpc.metrics.NOPServerMetrics;
+import org.factcast.server.grpc.metrics.ServerMetrics;
+import org.factcast.server.grpc.metrics.ServerMetrics.OP;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.intercept.RunAsUserToken;
 import org.springframework.security.core.Authentication;
@@ -70,10 +73,12 @@ public class FactStoreGrpcServiceTest {
   @Mock FactStore backend;
   @Mock GrpcRequestMetadata meta;
   @Mock FastForwardTarget ffwdTarget;
-  @Mock GrpcLimitProperties grpcLimitProperties;
-  @Mock GrpcRequestMetadata grpcRequestMetadata;
 
-  @InjectMocks FactStoreGrpcService uut;
+  @Mock(lenient = true)
+  GrpcLimitProperties grpcLimitProperties;
+
+  @Mock GrpcRequestMetadata grpcRequestMetadata;
+  @Spy ServerMetrics metrics = new NOPServerMetrics();
 
   @Captor ArgumentCaptor<List<Fact>> acFactList;
 
@@ -81,11 +86,13 @@ public class FactStoreGrpcServiceTest {
 
   @Captor private ArgumentCaptor<SubscriptionRequestTO> reqCaptor;
 
-  private final FactCastUser PRINCIPAL = new FactCastUser(FactCastAccount.GOD, "DISABLED");
+  FactStoreGrpcService uut;
 
   @BeforeEach
   void setUp() {
-    uut = new FactStoreGrpcService(backend, meta);
+
+    when(grpcLimitProperties.numberOfCatchupRequestsAllowedPerClientPerMinute()).thenReturn(5);
+    when(grpcLimitProperties.initialNumberOfCatchupRequestsAllowedPerClient()).thenReturn(5);
 
     SecurityContextHolder.setContext(
         new SecurityContext() {
@@ -104,6 +111,10 @@ public class FactStoreGrpcServiceTest {
             return testToken;
           }
         });
+
+    uut =
+        new FactStoreGrpcService(
+            backend, grpcRequestMetadata, grpcLimitProperties, ffwdTarget, metrics);
   }
 
   @Test
@@ -416,7 +427,7 @@ public class FactStoreGrpcServiceTest {
   }
 
   @Test
-  public void testSerialOf() {
+  void testSerialOf() {
     uut = new FactStoreGrpcService(backend, meta);
 
     StreamObserver so = mock(StreamObserver.class);
@@ -434,7 +445,7 @@ public class FactStoreGrpcServiceTest {
   }
 
   @Test
-  public void testSerialOfThrows() {
+  void testSerialOfThrows() {
     uut = new FactStoreGrpcService(backend, meta);
 
     StreamObserver so = mock(StreamObserver.class);
@@ -446,7 +457,7 @@ public class FactStoreGrpcServiceTest {
   }
 
   @Test
-  public void testEnumerateNamespaces() {
+  void testEnumerateNamespaces() {
     uut = new FactStoreGrpcService(backend, meta);
     StreamObserver so = mock(StreamObserver.class);
     when(backend.enumerateNamespaces()).thenReturn(Sets.newHashSet("foo", "bar"));
@@ -459,7 +470,7 @@ public class FactStoreGrpcServiceTest {
   }
 
   @Test
-  public void testEnumerateNamespacesThrows() {
+  void testEnumerateNamespacesThrows() {
     assertThatThrownBy(
             () -> {
               uut = new FactStoreGrpcService(backend, meta);
@@ -472,7 +483,7 @@ public class FactStoreGrpcServiceTest {
   }
 
   @Test
-  public void testEnumerateTypes() {
+  void testEnumerateTypes() {
     uut = new FactStoreGrpcService(backend, meta);
     StreamObserver so = mock(StreamObserver.class);
 
@@ -486,7 +497,7 @@ public class FactStoreGrpcServiceTest {
   }
 
   @Test
-  public void testEnumerateTypesThrows() {
+  void testEnumerateTypesThrows() {
     assertThatThrownBy(
             () -> {
               uut = new FactStoreGrpcService(backend, meta);
@@ -499,7 +510,7 @@ public class FactStoreGrpcServiceTest {
   }
 
   @Test
-  public void testPublishThrows() {
+  void testPublishThrows() {
     assertThatThrownBy(
             () -> {
               doThrow(UnsupportedOperationException.class).when(backend).publish(anyList());
@@ -512,151 +523,174 @@ public class FactStoreGrpcServiceTest {
   }
 
   @Test
-  public void testHandshake() {
+  void testHandshake() {
+    when(grpcRequestMetadata.clientIdAsString()).thenReturn("funky-service");
+    when(grpcRequestMetadata.clientVersionAsString()).thenReturn("3.11 for Workgroups");
 
     StreamObserver so = mock(StreamObserver.class);
-    uut.handshake(conv.empty(), so);
+    MSG_Empty empty = conv.empty();
+    uut.handshake(empty, so);
 
+    verify(metrics).timed(same(OP.HANDSHAKE), any(Runnable.class));
+    ArgumentCaptor<Tags> tagsCaptor = ArgumentCaptor.forClass(Tags.class);
+    verify(metrics).count(same(ServerMetrics.EVENT.CLIENT_VERSION), tagsCaptor.capture());
     verify(so).onCompleted();
     verify(so).onNext(any(MSG_ServerConfig.class));
+
+    assertThat(tagsCaptor.getValue().stream())
+        .hasSize(2)
+        .contains(Tag.of("id", "funky-service"), Tag.of("version", "3.11 for Workgroups"));
   }
 
   @Test
-  public void testRetrieveImplementationVersion() {
-    uut = spy(uut);
-    when(uut.getProjectProperties()).thenReturn(getClass().getResource("/test.properties"));
-    HashMap<String, String> map = new HashMap<>();
-    uut.retrieveImplementationVersion(map);
+  void testHandshakeWithUnknownVersion() {
 
-    assertEquals("9.9.9", map.get(Capabilities.FACTCAST_IMPL_VERSION.toString()));
+    when(grpcRequestMetadata.clientIdAsString()).thenReturn("funky-service");
+    when(grpcRequestMetadata.clientVersionAsString()).thenReturn(GrpcRequestMetadata.UNKNOWN);
+
+    StreamObserver so = mock(StreamObserver.class);
+    MSG_Empty empty = conv.empty();
+    uut.handshake(empty, so);
+
+    verify(metrics).timed(same(OP.HANDSHAKE), any(Runnable.class));
+    ArgumentCaptor<Tags> tagsCaptor = ArgumentCaptor.forClass(Tags.class);
+    verify(metrics).count(same(ServerMetrics.EVENT.CLIENT_VERSION), tagsCaptor.capture());
+    verify(so).onCompleted();
+    verify(so).onNext(any(MSG_ServerConfig.class));
+
+    assertThat(tagsCaptor.getValue().stream())
+        .hasSize(2)
+        .contains(Tag.of("id", "funky-service"), Tag.of("version", GrpcRequestMetadata.UNKNOWN));
   }
 
   @Test
-  public void testRetrieveImplementationVersionEmptyPropertyFile() {
-    uut = spy(uut);
-    when(uut.getProjectProperties()).thenReturn(getClass().getResource("/no-version.properties"));
-    HashMap<String, String> map = new HashMap<>();
-    uut.retrieveImplementationVersion(map);
+  void testInvalidate() {
+    UUID id = UUID.randomUUID();
+    MSG_UUID req = conv.toProto(id);
+    StreamObserver o = mock(StreamObserver.class);
+    uut.invalidate(req, o);
 
-    assertEquals("UNKNOWN", map.get(Capabilities.FACTCAST_IMPL_VERSION.toString()));
+    verify(backend).invalidate(eq(new StateToken(id)));
+    verify(o).onNext(any());
+    verify(o).onCompleted();
   }
 
   @Test
-  public void testRetrieveImplementationVersionCannotReadFile() throws Exception {
-    uut = spy(uut);
-    URL url = mock(URL.class);
-    when(url.openStream()).thenReturn(null);
-    when(uut.getProjectProperties()).thenReturn(url);
-    HashMap<String, String> map = new HashMap<>();
-    uut.retrieveImplementationVersion(map);
+  void testInvalidatePropagatesGRPCException() {
+    doThrow(new StatusRuntimeException(Status.DATA_LOSS)).when(backend).invalidate(any());
 
-    assertEquals("UNKNOWN", map.get(Capabilities.FACTCAST_IMPL_VERSION.toString()));
+    UUID id = UUID.randomUUID();
+    MSG_UUID req = conv.toProto(id);
+    StreamObserver o = mock(StreamObserver.class);
+    assertThatThrownBy(
+            () -> {
+              uut.invalidate(req, o);
+            })
+        .isInstanceOf(StatusRuntimeException.class);
+    verify(backend).invalidate(eq(new StateToken(id)));
+    verifyNoMoreInteractions(o);
   }
 
   @Test
-  public void testInvalidate() {
+  void testStateFor() {
+    UUID id = UUID.randomUUID();
 
-    {
-      UUID id = UUID.randomUUID();
-      MSG_UUID req = conv.toProto(id);
-      StreamObserver o = mock(StreamObserver.class);
-      uut.invalidate(req, o);
+    StateForRequest sfr = new StateForRequest(Lists.newArrayList(id), "foo");
+    MSG_StateForRequest req = conv.toProto(sfr);
+    StreamObserver o = mock(StreamObserver.class);
+    UUID token = UUID.randomUUID();
+    when(backend.stateFor(any())).thenReturn(new StateToken(token));
+    uut.stateFor(req, o);
+    ArrayList<FactSpec> expectedFactSpecs = Lists.newArrayList(FactSpec.ns("foo").aggId(id));
 
-      verify(backend).invalidate(eq(new StateToken(id)));
-      verify(o).onNext(any());
-      verify(o).onCompleted();
-    }
-
-    {
-      doThrow(new StatusRuntimeException(Status.DATA_LOSS)).when(backend).invalidate(any());
-
-      UUID id = UUID.randomUUID();
-      MSG_UUID req = conv.toProto(id);
-      StreamObserver o = mock(StreamObserver.class);
-      assertThatThrownBy(
-              () -> {
-                uut.invalidate(req, o);
-              })
-          .isInstanceOf(StatusRuntimeException.class);
-      verify(backend).invalidate(eq(new StateToken(id)));
-      verifyNoMoreInteractions(o);
-    }
+    verify(backend).stateFor(eq(expectedFactSpecs));
+    verify(o).onNext(eq(conv.toProto(token)));
+    verify(o).onCompleted();
   }
 
   @Test
-  public void testStateFor() {
+  void testStateForPropagatesGRPCException() {
+    doThrow(new StatusRuntimeException(Status.DATA_LOSS)).when(backend).stateFor(any());
 
-    {
-      UUID id = UUID.randomUUID();
+    UUID id = UUID.randomUUID();
+    StateForRequest sfr = new StateForRequest(Lists.newArrayList(id), "foo");
+    MSG_StateForRequest req = conv.toProto(sfr);
+    StreamObserver o = mock(StreamObserver.class);
+    assertThatThrownBy(
+            () -> {
+              uut.stateFor(req, o);
+            })
+        .isInstanceOf(StatusRuntimeException.class);
+    ArrayList<FactSpec> expectedFactSpecs = Lists.newArrayList(FactSpec.ns("foo").aggId(id));
+    verify(backend).stateFor(eq(expectedFactSpecs));
+    verifyNoMoreInteractions(o);
+  }
 
-      StateForRequest sfr = new StateForRequest(Lists.newArrayList(id), "foo");
+  @Test
+  void testStateForNotAllowedOnNS() {
+    UUID id = UUID.randomUUID();
+
+    FactCastUser mockedFactCastUser = mock(FactCastUser.class);
+    when(mockedFactCastUser.canRead("denied")).thenReturn(false);
+
+    Authentication mockedAuthentication = mock(Authentication.class);
+    when(mockedAuthentication.getPrincipal()).thenReturn(mockedFactCastUser);
+
+    SecurityContext mockedSecurityContext = mock(SecurityContext.class);
+    when(mockedSecurityContext.getAuthentication()).thenReturn(mockedAuthentication);
+
+    try (MockedStatic<SecurityContextHolder> utilities =
+        Mockito.mockStatic(SecurityContextHolder.class)) {
+      utilities.when(() -> SecurityContextHolder.getContext()).thenReturn(mockedSecurityContext);
+
+      StateForRequest sfr = new StateForRequest(Lists.newArrayList(id), "denied");
       MSG_StateForRequest req = conv.toProto(sfr);
       StreamObserver o = mock(StreamObserver.class);
-      UUID token = UUID.randomUUID();
-      when(backend.stateFor(any())).thenReturn(new StateToken(token));
-      uut.stateFor(req, o);
-
-      verify(backend).stateFor(any());
-      verify(o).onNext(eq(conv.toProto(token)));
-      verify(o).onCompleted();
-    }
-
-    {
-      doThrow(new StatusRuntimeException(Status.DATA_LOSS)).when(backend).stateFor(any());
-
-      UUID id = UUID.randomUUID();
-      StateForRequest sfr = new StateForRequest(Lists.newArrayList(id), "foo");
-      MSG_StateForRequest req = conv.toProto(sfr);
-      StreamObserver o = mock(StreamObserver.class);
-      assertThatThrownBy(
-              () -> {
-                uut.stateFor(req, o);
-              })
-          .isInstanceOf(StatusRuntimeException.class);
-      verifyNoMoreInteractions(o);
+      assertThatThrownBy(() -> uut.stateFor(req, o)).isInstanceOf(StatusRuntimeException.class);
     }
   }
 
   @Test
-  public void testPublishConditional() {
-    {
-      UUID id = UUID.randomUUID();
+  void testPublishConditional() {
+    UUID id = UUID.randomUUID();
 
-      ConditionalPublishRequest sfr = new ConditionalPublishRequest(Lists.newArrayList(), id);
-      MSG_ConditionalPublishRequest req = conv.toProto(sfr);
-      StreamObserver o = mock(StreamObserver.class);
-      when(backend.publishIfUnchanged(any(), any())).thenReturn(true);
+    ConditionalPublishRequest sfr = new ConditionalPublishRequest(Lists.newArrayList(), id);
+    MSG_ConditionalPublishRequest req = conv.toProto(sfr);
+    StreamObserver o = mock(StreamObserver.class);
+    when(backend.publishIfUnchanged(any(), any())).thenReturn(true);
 
-      uut.publishConditional(req, o);
+    uut.publishConditional(req, o);
 
-      verify(backend)
-          .publishIfUnchanged(eq(Lists.newArrayList()), eq(Optional.of(new StateToken(id))));
-      verify(o).onNext(eq(conv.toProto(true)));
-      verify(o).onCompleted();
-    }
-
-    {
-      doThrow(new StatusRuntimeException(Status.DATA_LOSS))
-          .when(backend)
-          .publishIfUnchanged(any(), any());
-
-      UUID id = UUID.randomUUID();
-
-      ConditionalPublishRequest sfr = new ConditionalPublishRequest(Lists.newArrayList(), id);
-      MSG_ConditionalPublishRequest req = conv.toProto(sfr);
-      StreamObserver o = mock(StreamObserver.class);
-
-      assertThatThrownBy(
-              () -> {
-                uut.publishConditional(req, o);
-              })
-          .isInstanceOf(StatusRuntimeException.class);
-      verifyNoMoreInteractions(o);
-    }
+    verify(backend)
+        .publishIfUnchanged(eq(Lists.newArrayList()), eq(Optional.of(new StateToken(id))));
+    verify(o).onNext(eq(conv.toProto(true)));
+    verify(o).onCompleted();
   }
 
   @Test
-  public void testSourceTaggingPublishConditional() {
+  void testPublishConditionalPropagatesGRPCException() {
+    doThrow(new StatusRuntimeException(Status.DATA_LOSS))
+        .when(backend)
+        .publishIfUnchanged(any(), any());
+
+    UUID id = UUID.randomUUID();
+
+    ConditionalPublishRequest sfr = new ConditionalPublishRequest(Lists.newArrayList(), id);
+    MSG_ConditionalPublishRequest req = conv.toProto(sfr);
+    StreamObserver o = mock(StreamObserver.class);
+
+    assertThatThrownBy(
+            () -> {
+              uut.publishConditional(req, o);
+            })
+        .isInstanceOf(StatusRuntimeException.class);
+    verify(backend)
+        .publishIfUnchanged(eq(Lists.newArrayList()), eq(Optional.of(new StateToken(id))));
+    verifyNoMoreInteractions(o);
+  }
+
+  @Test
+  void testSourceTaggingPublishConditional() {
     String clientId = "someApplication";
     when(grpcRequestMetadata.clientId()).thenReturn(Optional.of(clientId));
 
@@ -682,7 +716,7 @@ public class FactStoreGrpcServiceTest {
   }
 
   @Test
-  public void testAssertCanReadString() {
+  void testAssertCanReadString() {
 
     FactCastAccount account = mock(FactCastAccount.class);
 
@@ -703,7 +737,7 @@ public class FactStoreGrpcServiceTest {
   }
 
   @Test
-  public void testAssertCanReadStrings() {
+  void testAssertCanReadStrings() {
 
     FactCastAccount account = mock(FactCastAccount.class);
 
@@ -724,7 +758,7 @@ public class FactStoreGrpcServiceTest {
   }
 
   @Test
-  public void testAssertCanWriteStrings() {
+  void testAssertCanWriteStrings() {
 
     FactCastAccount account = mock(FactCastAccount.class);
 
@@ -744,11 +778,11 @@ public class FactStoreGrpcServiceTest {
     }
   }
 
-  public static void expectNPE(Runnable r) {
+  static void expectNPE(Runnable r) {
     expect(r, NullPointerException.class, IllegalArgumentException.class);
   }
 
-  public static void expect(Runnable r, Class<? extends Throwable>... ex) {
+  static void expect(Runnable r, Class<? extends Throwable>... ex) {
     try {
       r.run();
       fail("expected " + Arrays.toString(ex));
@@ -780,6 +814,24 @@ public class FactStoreGrpcServiceTest {
   }
 
   @Test
+  void currentStateForSpecsJson() {
+    var list =
+        Lists.newArrayList(
+            FactSpec.ns("foo").type("bar").version(1), FactSpec.ns("foo").type("bar2").version(2));
+    MSG_FactSpecsJson req = conv.toProtoFactSpecs(list);
+    StreamObserver<MSG_UUID> obs = mock(StreamObserver.class);
+    UUID tokenId = UUID.randomUUID();
+
+    when(backend.currentStateFor(eq(list))).thenReturn(new StateToken(tokenId));
+
+    // ACT
+    uut.currentStateForSpecsJson(req, obs);
+
+    verify(obs).onNext(eq(conv.toProto(tokenId)));
+    verify(obs).onCompleted();
+  }
+
+  @Test
   void stateForSpecsJsonEmpty() {
     List<FactSpec> list = Lists.newArrayList();
     MSG_FactSpecsJson req = conv.toProtoFactSpecs(list);
@@ -789,6 +841,64 @@ public class FactStoreGrpcServiceTest {
     uut.stateForSpecsJson(req, obs);
 
     verify(obs).onError(any(IllegalArgumentException.class));
+  }
+
+  @Test
+  void currentStateForSpecsJsonEmpty() {
+    List<FactSpec> list = Lists.newArrayList();
+    MSG_FactSpecsJson req = conv.toProtoFactSpecs(list);
+    StreamObserver<MSG_UUID> obs = mock(StreamObserver.class);
+
+    // ACT
+    uut.currentStateForSpecsJson(req, obs);
+
+    verify(obs).onError(any(IllegalArgumentException.class));
+  }
+
+  @Test
+  public void testStateForSpecsJsonNotAllowedOnNS() {
+    FactCastUser mockedFactCastUser = mock(FactCastUser.class);
+    when(mockedFactCastUser.canRead("denied")).thenReturn(false);
+
+    Authentication mockedAuthentication = mock(Authentication.class);
+    when(mockedAuthentication.getPrincipal()).thenReturn(mockedFactCastUser);
+
+    SecurityContext mockedSecurityContext = mock(SecurityContext.class);
+    when(mockedSecurityContext.getAuthentication()).thenReturn(mockedAuthentication);
+
+    try (MockedStatic<SecurityContextHolder> utilities =
+        Mockito.mockStatic(SecurityContextHolder.class)) {
+      utilities.when(() -> SecurityContextHolder.getContext()).thenReturn(mockedSecurityContext);
+
+      ArrayList<FactSpec> list = Lists.newArrayList(FactSpec.ns("denied").type("nope"));
+      MSG_FactSpecsJson req = conv.toProtoFactSpecs(list);
+      StreamObserver<MSG_UUID> obs = mock(StreamObserver.class);
+      assertThatThrownBy(() -> uut.stateForSpecsJson(req, obs))
+          .isInstanceOf(StatusRuntimeException.class);
+    }
+  }
+
+  @Test
+  void testCurrentStateForSpecsJsonNotAllowedOnNS() {
+    FactCastUser mockedFactCastUser = mock(FactCastUser.class);
+    when(mockedFactCastUser.canRead("denied")).thenReturn(false);
+
+    Authentication mockedAuthentication = mock(Authentication.class);
+    when(mockedAuthentication.getPrincipal()).thenReturn(mockedFactCastUser);
+
+    SecurityContext mockedSecurityContext = mock(SecurityContext.class);
+    when(mockedSecurityContext.getAuthentication()).thenReturn(mockedAuthentication);
+
+    try (MockedStatic<SecurityContextHolder> utilities =
+        Mockito.mockStatic(SecurityContextHolder.class)) {
+      utilities.when(() -> SecurityContextHolder.getContext()).thenReturn(mockedSecurityContext);
+
+      ArrayList<FactSpec> list = Lists.newArrayList(FactSpec.ns("denied").type("nope"));
+      MSG_FactSpecsJson req = conv.toProtoFactSpecs(list);
+      StreamObserver<MSG_UUID> obs = mock(StreamObserver.class);
+      assertThatThrownBy(() -> uut.currentStateForSpecsJson(req, obs))
+          .isInstanceOf(StatusRuntimeException.class);
+    }
   }
 
   @Test
@@ -987,5 +1097,16 @@ public class FactStoreGrpcServiceTest {
     when(f.jsonHeader()).thenReturn("{borken");
     Fact f1 = uut.tagFactSource(f, "after");
     assertSame(f, f1);
+  }
+
+  @SneakyThrows
+  @Test
+  void logsServerVersion() {
+    LogCaptor logCaptor = LogCaptor.forClass(FactStoreGrpcService.class);
+    logCaptor.setLogLevelToInfo();
+
+    uut.afterPropertiesSet();
+
+    assertThat(logCaptor.getInfoLogs()).contains("Service version: UNKNOWN");
   }
 }

@@ -16,9 +16,7 @@
 package org.factcast.factus.serializer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
-import com.google.common.hash.Hashing;
 import java.util.function.Function;
 import lombok.NonNull;
 import lombok.Setter;
@@ -57,15 +55,6 @@ public class JacksonSnapshotSerializer implements SnapshotSerializer {
   @Override
   public boolean includesCompression() {
     return false;
-  }
-
-  @SuppressWarnings("UnstableApiUsage")
-  @SneakyThrows
-  @Override
-  public Long calculateProjectionSerial(Class<? extends SnapshotProjection> projectionClass) {
-    JsonSchema jsonSchema = schemaGen.generateSchema(projectionClass);
-    String schema = objectMapper.writeValueAsString(jsonSchema);
-    return Hashing.sha512().hashUnencodedChars(schemaModifier.apply(schema)).asLong();
   }
 
   @Override

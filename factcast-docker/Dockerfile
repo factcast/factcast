@@ -1,11 +1,9 @@
-FROM openjdk:11-slim
-#FROM adoptopenjdk:8u252-b09-jre-openj9-0.20.0-bionic
-
+FROM openjdk:17.0.2-slim
 
 EXPOSE 9090
 EXPOSE 9443
 
-ENV JAVA_OPTS="-XX:TieredStopAtLevel=1 -noverify -Xms1G"
+ENV JAVA_OPTS="-XX:TieredStopAtLevel=1 -Xms1G"
 RUN mkdir /config
 RUN mkdir /log
  

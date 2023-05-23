@@ -15,23 +15,20 @@
  */
 package org.factcast.store.test;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
+import java.util.stream.*;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
-import org.assertj.core.util.Lists;
+import org.factcast.core.DuplicateFactException;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.lock.Attempt;
@@ -43,11 +40,11 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.springframework.test.annotation.DirtiesContext;
 
 @SuppressWarnings("deprecation")
 public abstract class AbstractFactStoreTest {
@@ -85,7 +82,6 @@ public abstract class AbstractFactStoreTest {
     assertThrows(NullPointerException.class, () -> createStoreToTest().publish(null));
   }
 
-  @DirtiesContext
   @Test
   protected void testEmptyStore() {
     Assertions.assertTimeout(
@@ -101,14 +97,13 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testUniquenessConstraint() {
     Assertions.assertTimeout(
         Duration.ofMillis(30000),
         () -> {
           Assertions.assertThrows(
-              IllegalArgumentException.class,
+              DuplicateFactException.class,
               () -> {
                 UUID id = UUID.randomUUID();
                 uut.publish(
@@ -122,7 +117,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testEmptyStoreFollowNonMatching() {
     Assertions.assertTimeout(
@@ -152,7 +146,6 @@ public abstract class AbstractFactStoreTest {
     return spy(new TestFactObserver());
   }
 
-  @DirtiesContext
   @Test
   protected void testEmptyStoreFollowMatching() {
     Assertions.assertTimeout(
@@ -172,7 +165,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testEmptyStoreEphemeral() {
     Assertions.assertTimeout(
@@ -206,7 +198,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testEmptyStoreEphemeralWithCancel() {
     Assertions.assertTimeout(
@@ -249,7 +240,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testEmptyStoreFollowWithCancel() {
     Assertions.assertTimeout(
@@ -291,7 +281,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testEmptyStoreCatchupMatching() {
     Assertions.assertTimeout(
@@ -310,7 +299,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testEmptyStoreFollowMatchingDelayed() {
     Assertions.assertTimeout(
@@ -334,7 +322,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testEmptyStoreFollowNonMatchingDelayed() {
     Assertions.assertTimeout(
@@ -357,7 +344,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testRequiredMetaAttribute() {
     Assertions.assertTimeout(
@@ -387,7 +373,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testScriptedWithPayloadFiltering() {
     Assertions.assertTimeout(
@@ -418,7 +403,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testScriptedWithHeaderFiltering() {
     Assertions.assertTimeout(
@@ -449,7 +433,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testScriptedFilteringMatchAll() {
     Assertions.assertTimeout(
@@ -479,7 +462,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testScriptedFilteringMatchNone() {
     Assertions.assertTimeout(
@@ -508,7 +490,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testMatchBySingleAggId() {
     Assertions.assertTimeout(
@@ -533,7 +514,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testMatchByOneOfAggId() {
     Assertions.assertTimeout(
@@ -567,7 +547,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testMatchBySecondAggId() {
     Assertions.assertTimeout(
@@ -595,7 +574,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testDelayed() {
     Assertions.assertTimeout(
@@ -621,7 +599,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testSerialOf() {
     Assertions.assertTimeout(
@@ -654,7 +631,7 @@ public abstract class AbstractFactStoreTest {
 
   // TODO: implement alternative
   /*
-   * @DirtiesContext
+   *
    *
    * @Test protected void testSerialHeader() {
    * Assertions.assertTimeout(Duration.ofMillis(30000), () -> { UUID id =
@@ -695,24 +672,6 @@ public abstract class AbstractFactStoreTest {
     assertEquals(2, ns.size());
     assertTrue(ns.contains("ns1"));
     assertTrue(ns.contains("ns2"));
-  }
-
-  @Test
-  protected void testEnumerateTypesNull() {
-    Assertions.assertThrows(NullPointerException.class, () -> uut.enumerateTypes(null));
-  }
-
-  @Test
-  protected void testInvalidateNullContract() {
-    Assertions.assertThrows(NullPointerException.class, () -> store.invalidate(null));
-  }
-
-  @Test
-  protected void testPublishIfUnchangedNullContract() {
-    Assertions.assertThrows(
-        NullPointerException.class, () -> store.publishIfUnchanged(Lists.emptyList(), null));
-    Assertions.assertThrows(
-        NullPointerException.class, () -> store.publishIfUnchanged(null, Optional.empty()));
   }
 
   @Test
@@ -824,14 +783,6 @@ public abstract class AbstractFactStoreTest {
     s.awaitComplete();
 
     assertEquals(2, toListObserver.list().size());
-  }
-
-  @Test
-  public void testSubscribeToFactsParameterContract() throws Exception {
-    FactObserver observer = mock(FactObserver.class);
-    assertThrows(NullPointerException.class, () -> uut.subscribe(null, observer));
-    assertThrows(
-        NullPointerException.class, () -> uut.subscribe(mock(SubscriptionRequestTO.class), null));
   }
 
   /// optimistic locking
@@ -1146,7 +1097,7 @@ public abstract class AbstractFactStoreTest {
 
     private static final long serialVersionUID = 1L;
 
-    private int i;
+    private final int i;
 
     public MyAbortException(int i) {
       super("nah");
@@ -1251,7 +1202,7 @@ public abstract class AbstractFactStoreTest {
     } catch (AttemptAbortedException expected) {
     }
 
-    verify(store, times(1)).stateFor(any());
+    verify(store, times(1)).currentStateFor(any());
     verify(store, times(1)).invalidate(any());
   }
 
@@ -1264,7 +1215,7 @@ public abstract class AbstractFactStoreTest {
 
     uut.lock(NS).on(agg1).attempt(() -> Attempt.publish(fact(agg1)));
 
-    verify(store, times(1)).stateFor(any());
+    verify(store, times(1)).currentStateFor(any());
     verify(store, times(0)).invalidate(any());
   }
 
@@ -1278,12 +1229,12 @@ public abstract class AbstractFactStoreTest {
     } catch (AttemptAbortedException expected) {
     }
 
-    verify(store, times(1)).stateFor(any());
+    verify(store, times(1)).currentStateFor(any());
     verify(store, times(1)).invalidate(any());
   }
 
   static class ToListObserver implements FactObserver {
-    @Getter private List<Fact> list = new LinkedList<>();
+    @Getter private final List<Fact> list = new LinkedList<>();
 
     @Override
     public void onNext(@NonNull Fact element) {
@@ -1310,25 +1261,6 @@ public abstract class AbstractFactStoreTest {
         }
       }
     }
-  }
-
-  @Test
-  public void nullContracts_publishIfUnchanged() {
-    assertThrows(
-        NullPointerException.class, () -> store.publishIfUnchanged(Lists.emptyList(), null));
-
-    assertThrows(NullPointerException.class, () -> store.publishIfUnchanged(null, null));
-
-    assertThrows(
-        NullPointerException.class, () -> store.publishIfUnchanged(null, Optional.empty()));
-  }
-
-  @Test
-  public void testSubscribeNullContract() throws Exception {
-    assertThrows(NullPointerException.class, () -> store.subscribe(null, mock(FactObserver.class)));
-    assertThrows(NullPointerException.class, () -> store.subscribe(null, null));
-    assertThrows(
-        NullPointerException.class, () -> store.subscribe(mock(SubscriptionRequestTO.class), null));
   }
 
   @Test

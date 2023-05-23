@@ -16,8 +16,8 @@
 package org.factcast.factus.snapshot;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.projection.SnapshotProjection;
@@ -30,9 +30,9 @@ public class SnapshotSerializerSupplier {
   @NonNull private final SnapshotSerializer defaultSerializer;
 
   private final Map<Class<? extends SnapshotSerializer>, SnapshotSerializer> serializers =
-      new HashMap<>();
+      new ConcurrentHashMap<>();
   private final Map<Class<? extends SnapshotProjection>, SnapshotSerializer> cache =
-      new HashMap<>();
+      new ConcurrentHashMap<>();
 
   public SnapshotSerializerSupplier(@NonNull SnapshotSerializer defaultSerializer) {
     this.defaultSerializer = defaultSerializer;

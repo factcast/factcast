@@ -15,9 +15,11 @@
  */
 package org.factcast.store.registry.validation;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.google.common.annotations.VisibleForTesting;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.*;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -31,7 +33,12 @@ import org.factcast.core.FactValidationException;
 @RequiredArgsConstructor
 public class FactValidationAspect {
 
+  public static final int MAX_ERROR_MESSAGES = 25;
   private final FactValidator validator;
+
+  // not hogging the common FJP. Also limiting parallelism to less of what the common pool has.
+  private static final ForkJoinPool validationPool =
+      new ForkJoinPool((int) Math.abs(Runtime.getRuntime().availableProcessors() / 1.5));
 
   @SuppressWarnings("unchecked")
   @Around("execution(public void org.factcast.core.store.FactStore.publish(*))")
@@ -46,14 +53,39 @@ public class FactValidationAspect {
   }
 
   private void validate(List<? extends Fact> facts) {
+    Stream<? extends Fact> stream = facts.stream().parallel();
+    List<FactValidationError> errors = validate(stream);
 
-    List<FactValidationError> errors = new LinkedList<>();
+    if (!errors.isEmpty()) {
+      throw new FactValidationException(extractMessages(errors));
+    }
+  }
 
-    facts.forEach(f -> errors.addAll(validator.validate(f)));
+  @NonNull
+  @VisibleForTesting
+  static List<String> extractMessages(@NonNull List<FactValidationError> errors) {
+    // see #2105
 
-    if (!errors.isEmpty())
-      throw new FactValidationException(
-          errors.stream().map(FactValidationError::toString).collect(Collectors.toList()));
+    // remove duplicates
+    LinkedHashSet<FactValidationError> orderedSet = new LinkedHashSet<>(errors);
+
+    List<String> errMsgs =
+        orderedSet.stream()
+            // limit the amount of messages
+            .limit(MAX_ERROR_MESSAGES)
+            .map(FactValidationError::toString)
+            .collect(Collectors.toList());
+    int numberOfErrors = orderedSet.size();
+    if (numberOfErrors > MAX_ERROR_MESSAGES)
+      errMsgs.add(
+          "... "
+              + (numberOfErrors - MAX_ERROR_MESSAGES)
+              + " more validation errors were suppressed");
+    return errMsgs;
+  }
+
+  private List<FactValidationError> validate(Stream<? extends Fact> stream) {
+    return stream.map(validator::validate).flatMap(Collection::stream).collect(Collectors.toList());
   }
 
   @SuppressWarnings("unchecked")

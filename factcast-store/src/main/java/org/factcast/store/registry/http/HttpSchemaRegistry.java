@@ -16,15 +16,15 @@
 package org.factcast.store.registry.http;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.net.URL;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.core.LockProvider;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.AbstractSchemaRegistry;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.TransformationStore;
 import org.factcast.store.registry.validation.schema.SchemaStore;
-
-import java.net.URL;
 
 @Slf4j
 public class HttpSchemaRegistry extends AbstractSchemaRegistry {
@@ -34,14 +34,16 @@ public class HttpSchemaRegistry extends AbstractSchemaRegistry {
       @NonNull SchemaStore schemaStore,
       @NonNull TransformationStore transformationStore,
       @NonNull RegistryMetrics registryMetrics,
-      @NonNull StoreConfigurationProperties props) {
+      @NonNull StoreConfigurationProperties storeConfigurationProperties,
+      @NonNull LockProvider lockProvider) {
     this(
         schemaStore,
         transformationStore,
         new HttpIndexFetcher(baseUrl, registryMetrics),
         new HttpRegistryFileFetcher(baseUrl, registryMetrics),
         registryMetrics,
-        props);
+        storeConfigurationProperties,
+        lockProvider);
   }
 
   @VisibleForTesting
@@ -51,13 +53,15 @@ public class HttpSchemaRegistry extends AbstractSchemaRegistry {
       @NonNull HttpIndexFetcher indexFetcher,
       @NonNull HttpRegistryFileFetcher registryFileFetcher,
       @NonNull RegistryMetrics registryMetrics,
-      @NonNull StoreConfigurationProperties properties) {
+      @NonNull StoreConfigurationProperties storeConfigurationProperties,
+      @NonNull LockProvider lockProvider) {
     super(
         indexFetcher,
         registryFileFetcher,
         schemaStore,
         transformationStore,
         registryMetrics,
-        properties);
+        storeConfigurationProperties,
+        lockProvider);
   }
 }

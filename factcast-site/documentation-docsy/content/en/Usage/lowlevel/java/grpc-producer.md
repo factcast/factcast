@@ -6,9 +6,9 @@ weight = 50
 
 #### FactCast.publish(List&lt;Fact&gt; factsToPublish)
 
-In order to produce Facts, you need to create Fact Instances and publish them via ```FactCast.publish()```.
+In order to produce Facts, you need to create Fact Instances and publish them via `FactCast.publish()`.
 
-On method return, the publishing of all the Facts passed to ```FactCast.publish()``` as a parameter are expected to have been written to PostgreSQL sucessfully. The order of the Facts is preserved while inserting into the database. All the inserts are done in a transactional context, so that the atomicity is preserved.
+On method return, the publishing of all the Facts passed to `FactCast.publish()` as a parameter are expected to have been written to PostgreSQL sucessfully. The order of the Facts is preserved while inserting into the database. All the inserts are done in a transactional context, so that the atomicity is preserved.
 
 If the method returns exceptionally, of the process is killed or interrupted in any way, you cannot know if the Facts have been sucessfully written. In that case, just repeat the call: if the write had gone through you'll get and exception complaining about duplicate IDs, if not – you may have a chance to succeed now.
 
@@ -31,5 +31,3 @@ class Foo{
  }
 }
 ```
-
-

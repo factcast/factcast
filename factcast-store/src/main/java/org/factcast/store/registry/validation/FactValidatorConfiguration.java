@@ -24,7 +24,7 @@ import org.factcast.store.registry.validation.schema.SchemaStore;
 import org.factcast.store.registry.validation.schema.store.InMemSchemaStoreImpl;
 import org.factcast.store.registry.validation.schema.store.PgSchemaStoreImpl;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -37,7 +37,7 @@ public class FactValidatorConfiguration {
       @NonNull StoreConfigurationProperties props,
       @NonNull RegistryMetrics registryMetrics,
       @Autowired(required = false) SpringLiquibase unused) {
-    if (props.isValidationEnabled() && props.isPersistentRegistry()) {
+    if (props.isSchemaRegistryConfigured() && props.isPersistentRegistry()) {
       return new PgSchemaStoreImpl(jdbcTemplate, registryMetrics);
     }
 
@@ -50,7 +50,7 @@ public class FactValidatorConfiguration {
       StoreConfigurationProperties props,
       SchemaRegistry registry,
       @NonNull RegistryMetrics registryMetrics) {
-    if (props.isValidationEnabled()) {
+    if (props.isSchemaRegistryConfigured()) {
       return new FactValidator(props, registry, registryMetrics);
     } else {
       return null;
@@ -58,7 +58,8 @@ public class FactValidatorConfiguration {
   }
 
   @Bean
-  @ConditionalOnProperty(name = "factcast.store.schema-registry-url")
+  @ConditionalOnExpression(
+      "!'${factcast.store.schema-registry-url:}'.isEmpty() && ${factcast.store.validation-enabled:true}")
   public FactValidationAspect factValidationAspect(
       StoreConfigurationProperties props, FactValidator v) {
     return new FactValidationAspect(v);

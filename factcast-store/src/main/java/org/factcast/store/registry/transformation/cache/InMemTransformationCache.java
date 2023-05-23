@@ -15,53 +15,46 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
-import java.util.HashSet;
-import java.util.Map;
+import java.time.ZonedDateTime;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.core.Fact;
 import org.factcast.store.registry.metrics.RegistryMetrics;
-import org.joda.time.DateTime;
 
+@Slf4j
 public class InMemTransformationCache implements TransformationCache {
   private final RegistryMetrics registryMetrics;
 
   // very low, but ok for tests
-  private static final int DEFAULT_CAPACITY = 1000;
+  private static final int DEFAULT_CAPACITY = 100;
 
-  private final Map<String, FactAndAccessTime> cache;
+  private final Map<Key, FactAndAccessTime> cache;
 
   public InMemTransformationCache(RegistryMetrics registryMetrics) {
     this(DEFAULT_CAPACITY, registryMetrics);
   }
 
   public InMemTransformationCache(int capacity, RegistryMetrics registryMetrics) {
-    cache = new LRUMap<>(Math.max(capacity, DEFAULT_CAPACITY));
+    cache = Collections.synchronizedMap(new LRUMap<>(Math.max(capacity, DEFAULT_CAPACITY)));
     this.registryMetrics = registryMetrics;
   }
 
   @Override
-  public void put(@NonNull Fact f, @NonNull String transformationChainId) {
-    String key = CacheKey.of(f, transformationChainId);
-    synchronized (cache) {
-      cache.put(key, new FactAndAccessTime(f, System.currentTimeMillis()));
-    }
+  public void put(@NonNull TransformationCache.Key key, @NonNull Fact f) {
+    cache.put(key, new FactAndAccessTime(f, System.currentTimeMillis()));
   }
 
   @Override
-  public Optional<Fact> find(
-      @NonNull UUID eventId, int version, @NonNull String transformationChainId) {
-    String key = CacheKey.of(eventId, version, transformationChainId);
+  public Optional<Fact> find(@NonNull TransformationCache.Key key) {
     Optional<FactAndAccessTime> cached;
-    synchronized (cache) {
-      cached = Optional.ofNullable(cache.get(key));
-    }
-    cached.ifPresent(faat -> faat.accessTime(System.currentTimeMillis()));
+    cached = Optional.ofNullable(cache.get(key));
+    cached.ifPresent(faat -> faat.accessTimeInMillis(System.currentTimeMillis()));
     registryMetrics.count(
         cached.isPresent()
             ? RegistryMetrics.EVENT.TRANSFORMATION_CACHE_HIT
@@ -70,23 +63,59 @@ public class InMemTransformationCache implements TransformationCache {
   }
 
   @Override
-  public void compact(@NonNull DateTime thresholdDate) {
+  public Set<Fact> findAll(Collection<Key> keys) {
+    Set<Fact> found = new HashSet<>(keys.size());
+    keys.forEach(
+        k -> {
+          FactAndAccessTime factAndAccessTime = cache.get(k);
+          if (factAndAccessTime != null) found.add(factAndAccessTime.fact);
+        });
+
+    var hits = found.size();
+    var misses = keys.size() - hits;
+
+    if (hits > 0) registryMetrics.increase(RegistryMetrics.EVENT.TRANSFORMATION_CACHE_HIT, hits);
+    if (misses > 0)
+      registryMetrics.increase(RegistryMetrics.EVENT.TRANSFORMATION_CACHE_MISS, misses);
+
+    return found;
+  }
+
+  @Override
+  public void compact(@NonNull ZonedDateTime thresholdDate) {
     registryMetrics.timed(
         RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE,
         () -> {
-          HashSet<Entry<String, FactAndAccessTime>> copyOfEntries;
+          HashSet<Entry<Key, FactAndAccessTime>> copyOfEntries;
           synchronized (cache) {
             copyOfEntries = new HashSet<>(cache.entrySet());
           }
 
+          var thresholdMillis = thresholdDate.toInstant().toEpochMilli();
+
           copyOfEntries.forEach(
               e -> {
                 FactAndAccessTime faat = e.getValue();
-                if (thresholdDate.isAfter(faat.accessTime)) {
+                if (thresholdMillis > faat.accessTimeInMillis) {
                   cache.remove(e.getKey());
                 }
               });
         });
+  }
+
+  @Override
+  public void invalidateTransformationFor(String ns, String type) {
+    Set<Key> toBeInvalidated =
+        cache.entrySet().stream()
+            .filter(
+                e ->
+                    e.getValue().fact().ns().equals(ns)
+                        && Objects.equals(e.getValue().fact().type(), type))
+            .map(Entry::getKey)
+            .collect(Collectors.toSet());
+    if (!toBeInvalidated.isEmpty()) {
+      toBeInvalidated.forEach(cache::remove);
+    }
   }
 
   @Data
@@ -94,6 +123,6 @@ public class InMemTransformationCache implements TransformationCache {
   private static class FactAndAccessTime {
     Fact fact;
 
-    long accessTime;
+    long accessTimeInMillis;
   }
 }
