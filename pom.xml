@@ -284,7 +284,7 @@
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>${jacoco-maven-plugin.version}</version>
-        <inherited>false</inherited>
+<!--        <inherited>false</inherited>-->
         <configuration>
           <excludes>
             <exclude>**/*Configuration.*</exclude>
@@ -313,18 +313,18 @@
             </configuration>
           </execution>
 
-          <!-- <execution> -->
-          <!-- <id>after-unit-test-execution</id> -->
-          <!-- <phase>test</phase> -->
-          <!-- <goals> -->
-          <!-- <goal>report</goal> -->
-          <!-- </goals> -->
-          <!-- <configuration> -->
-          <!-- <dataFile>${project.build.directory}/jacoco-output/jacoco-unit-tests.exec</dataFile> -->
-          <!-- <outputDirectory>${project.reporting.outputDirectory}/jacoco-unit-test-coverage-report -->
-          <!-- </outputDirectory> -->
-          <!-- </configuration> -->
-          <!-- </execution> -->
+<!--           <execution>-->
+<!--           <id>after-unit-test-execution</id>-->
+<!--           <phase>test</phase>-->
+<!--           <goals>-->
+<!--           <goal>report</goal>-->
+<!--           </goals>-->
+<!--           <configuration>-->
+<!--           <dataFile>${project.build.directory}/jacoco-output/jacoco-unit-tests.exec</dataFile>-->
+<!--           <outputDirectory>${project.reporting.outputDirectory}/jacoco-unit-test-coverage-report-->
+<!--           </outputDirectory>-->
+<!--           </configuration>-->
+<!--           </execution>-->
 
           <!-- <execution> -->
           <!-- <id>before-integration-test-execution</id> -->
@@ -353,9 +353,8 @@
           <!-- </execution> -->
 
           <execution>
-            <id>merge</id>
-            <!-- <phase>post-integration-test</phase> -->
-            <phase>validate</phase>
+            <id>merge-unit-test-coverage</id>
+            <phase>none</phase>
             <goals>
               <goal>merge</goal>
             </goals>
