@@ -284,6 +284,7 @@
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>${jacoco-maven-plugin.version}</version>
+        <inherited>false</inherited>
         <configuration>
           <excludes>
             <exclude>**/*Configuration.*</exclude>
@@ -312,60 +313,62 @@
             </configuration>
           </execution>
 
-          <execution>
-            <id>after-unit-test-execution</id>
-            <phase>test</phase>
-            <goals>
-              <goal>report</goal>
-            </goals>
-            <configuration>
-              <dataFile>${project.build.directory}/jacoco-output/jacoco-unit-tests.exec</dataFile>
-              <outputDirectory>${project.reporting.outputDirectory}/jacoco-unit-test-coverage-report
-              </outputDirectory>
-            </configuration>
-          </execution>
+          <!-- <execution> -->
+          <!-- <id>after-unit-test-execution</id> -->
+          <!-- <phase>test</phase> -->
+          <!-- <goals> -->
+          <!-- <goal>report</goal> -->
+          <!-- </goals> -->
+          <!-- <configuration> -->
+          <!-- <dataFile>${project.build.directory}/jacoco-output/jacoco-unit-tests.exec</dataFile> -->
+          <!-- <outputDirectory>${project.reporting.outputDirectory}/jacoco-unit-test-coverage-report -->
+          <!-- </outputDirectory> -->
+          <!-- </configuration> -->
+          <!-- </execution> -->
+
+          <!-- <execution> -->
+          <!-- <id>before-integration-test-execution</id> -->
+          <!-- <phase>pre-integration-test</phase> -->
+          <!-- <goals> -->
+          <!-- <goal>prepare-agent</goal> -->
+          <!-- </goals> -->
+          <!-- <configuration> -->
+          <!-- <destFile>${project.build.directory}/jacoco-output/jacoco-integration-tests.exec</destFile> -->
+          <!-- <propertyName>failsafe.jacoco.args</propertyName> -->
+          <!-- </configuration> -->
+          <!-- </execution> -->
+
+          <!-- <execution> -->
+          <!-- <id>after-integration-test-execution</id> -->
+          <!-- <phase>post-integration-test</phase> -->
+          <!-- <goals> -->
+          <!-- <goal>report</goal> -->
+          <!-- </goals> -->
+          <!-- <configuration> -->
+          <!-- <dataFile>${project.build.directory}/jacoco-output/jacoco-integration-tests.exec</dataFile> -->
+          <!-- <outputDirectory> -->
+          <!-- ${project.reporting.outputDirectory}/jacoco-integration-test-coverage-report -->
+          <!-- </outputDirectory> -->
+          <!-- </configuration> -->
+          <!-- </execution> -->
 
           <execution>
-            <id>before-integration-test-execution</id>
-            <phase>pre-integration-test</phase>
-            <goals>
-              <goal>prepare-agent</goal>
-            </goals>
-            <configuration>
-              <destFile>${project.build.directory}/jacoco-output/jacoco-integration-tests.exec</destFile>
-              <propertyName>failsafe.jacoco.args</propertyName>
-            </configuration>
-          </execution>
-
-          <execution>
-            <id>after-integration-test-execution</id>
-            <phase>post-integration-test</phase>
-            <goals>
-              <goal>report</goal>
-            </goals>
-            <configuration>
-              <dataFile>${project.build.directory}/jacoco-output/jacoco-integration-tests.exec</dataFile>
-              <outputDirectory>
-                ${project.reporting.outputDirectory}/jacoco-integration-test-coverage-report
-              </outputDirectory>
-            </configuration>
-          </execution>
-
-          <execution>
-            <id>merge-unit-and-integration</id>
-            <phase>post-integration-test</phase>
+            <id>merge</id>
+            <!-- <phase>post-integration-test</phase> -->
+            <phase>validate</phase>
             <goals>
               <goal>merge</goal>
             </goals>
             <configuration>
               <fileSets>
                 <fileSet>
-                  <directory>${project.build.directory}/jacoco-output/</directory>
+                  <directory>${session.executionRootDirectory}/</directory>
                   <includes>
-                    <include>*.exec</include>
+                    <include>**/jacoco-output/jacoco-unit-tests.exec</include>
                   </includes>
                 </fileSet>
               </fileSets>
+              <destFile>${project.build.directory}/jacoco-merged.exec</destFile>
             </configuration>
           </execution>
           <execution>
@@ -391,9 +394,9 @@
           <skip>${skipSurefire}</skip>
           <parallel>classes</parallel>
           <threadCountClasses>8</threadCountClasses>
-          <!-- this produces a warning we choose to ignore for unit tests, as
-            the cost of creating a fork dominates the runtime of surefire -->
-          <forkCount>0</forkCount>
+          <!-- In order for surefire to use the prepared jacoco arguments, we'd
+            need to fork in order to pass those along to the testing VM -->
+          <!-- <forkCount>0</forkCount> -->
           <reuseForks>true</reuseForks>
         </configuration>
       </plugin>
