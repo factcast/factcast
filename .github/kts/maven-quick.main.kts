@@ -59,6 +59,10 @@ public val workflowMaven: Workflow = workflow(
             command = "./mvnw -B clean test --file pom.xml",
         )
         run(
+            name = "Generate unit test coverage with Maven",
+            command = "./mvnw -B jacoco:merge@merge-unit-test-coverage --non-recursive --file pom.xml",
+        )
+        run(
             name = "Remove partial execution reports",
             command = "find -wholename \"**/target/jacoco-output\" -exec rm -rf {} +",
         )
