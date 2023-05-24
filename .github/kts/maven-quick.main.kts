@@ -70,9 +70,10 @@ public val workflowMaven: Workflow = workflow(
             name = "CodecovActionV3",
             action = CodecovActionV3(
                 token = "${'$'}{{ secrets.CODECOV_TOKEN }}",
-                files = listOf("./target/jacoco-merged.exec"),
-                flags = listOf("unittests")
-            ),
+//                files = listOf("target/jacoco-merged.exec"),
+                flags = listOf("unittests"),
+
+                ),
         )
     }
 }
