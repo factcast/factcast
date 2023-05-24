@@ -283,7 +283,6 @@
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>${jacoco-maven-plugin.version}</version>
-        <!-- <inherited>false</inherited> -->
         <configuration>
           <excludes>
             <exclude>**/*Configuration.*</exclude>
@@ -312,18 +311,17 @@
             </configuration>
           </execution>
 
-          <!-- <execution> -->
-          <!-- <id>after-unit-test-execution</id> -->
-          <!-- <phase>test</phase> -->
-          <!-- <goals> -->
-          <!-- <goal>report</goal> -->
-          <!-- </goals> -->
-          <!-- <configuration> -->
-          <!-- <dataFile>${project.build.directory}/jacoco-output/jacoco-unit-tests.exec</dataFile> -->
-          <!-- <outputDirectory>${project.reporting.outputDirectory}/jacoco-unit-test-coverage-report -->
-          <!-- </outputDirectory> -->
-          <!-- </configuration> -->
-          <!-- </execution> -->
+          <execution>
+            <id>after-unit-test-execution</id>
+            <phase>test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <configuration>
+              <formats>XML</formats>
+              <dataFile>${project.build.directory}/jacoco-output/jacoco-unit-tests.exec</dataFile>
+            </configuration>
+          </execution>
 
           <!-- <execution> -->
           <!-- <id>before-integration-test-execution</id> -->
@@ -362,7 +360,7 @@
                 <fileSet>
                   <directory>${session.executionRootDirectory}/</directory>
                   <includes>
-                    <include>**/jacoco-output/jacoco-unit-tests.exec</include>
+                    <include>/jacoco-unit-tests.exec</include>
                   </includes>
                 </fileSet>
               </fileSets>
