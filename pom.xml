@@ -456,6 +456,7 @@
             <excludes>
               <exclude>**/src/main/resources/db/**</exclude>
               <exclude>**/src/test/resources/*.sql</exclude>
+              <exclude>**/target/classes/**/*.sql</exclude>
             </excludes>
             <includes>
               <include>**/*.sql</include>
