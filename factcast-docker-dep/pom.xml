@@ -11,6 +11,7 @@
   </parent>
   <artifactId>factcast-docker-dep</artifactId>
   <properties>
+    <sonar.skip>true</sonar.skip>
     <docker.image.prefix>factcast</docker.image.prefix>
   </properties>
   <dependencyManagement>

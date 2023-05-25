@@ -12,6 +12,7 @@
   <artifactId>factcast-docker</artifactId>
   <properties>
     <docker.image.prefix>factcast</docker.image.prefix>
+    <sonar.skip>true</sonar.skip>
   </properties>
   <dependencyManagement>
     <dependencies>
