@@ -26,6 +26,9 @@ Blocked fact IDs can be added to a table named "blacklist" within the postgresDB
 triggers a notification that is sent to the FactCast and updates the internal representations of the running Factcast
 Servers to make sure that changes take immediate effect.
 
+In order to document why the facts have been blacklisted, you can use the reason column (of type text). It will
+not be use for anything else, so there are no expectations on the content.
+
 ## The filesystem blacklist
 
 As an alternative you can provide a list of blocked fact-ids in JSON format from a file located in the classpath or the

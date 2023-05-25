@@ -154,7 +154,7 @@ public class FactCastIntegrationTestExecutionListener implements TestExecutionLi
   private static void initializeProxy() {
     toxiProxy =
         new ToxiproxyContainer(
-                DockerImageName.parse("ghcr.io/shopify/toxiproxy:2.4.0")
+                DockerImageName.parse("ghcr.io/shopify/toxiproxy:2.5.0")
                     .asCompatibleSubstituteFor("shopify/toxiproxy"))
             .withNetwork(_docker_network)
             .withNetworkAliases(TOXIPROXY_NETWORK_ALIAS);

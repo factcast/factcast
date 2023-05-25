@@ -48,8 +48,6 @@ class PublishDuplicateTest extends AbstractFactCastIntegrationTest {
   @Test
   void descriptiveErrorOnPublishingDuplicates() {
 
-    UUID id = randomUUID();
-
     var john = ser.toFact(new UserCreated("John"));
     var paul = ser.toFact(new UserCreated("Paul"));
     var george = ser.toFact(new UserCreated("George"));
