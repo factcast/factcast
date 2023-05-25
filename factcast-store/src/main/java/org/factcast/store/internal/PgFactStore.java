@@ -93,6 +93,14 @@ public class PgFactStore extends AbstractFactStore {
     this.factTransformerService = factTransformerService;
   }
 
+  public void testCoverage() {
+    System.out.println("buh");
+    int a = 7 - 4;
+    if (a > 8) {
+      System.out.println("bah");
+    } else System.out.println("buh");
+  }
+
   @Override
   public @NonNull Optional<Fact> fetchById(@NonNull UUID id) {
     // replace on merge with faster version
