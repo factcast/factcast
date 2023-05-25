@@ -6,7 +6,6 @@
 import io.github.typesafegithub.workflows.actions.actions.CacheV3
 import io.github.typesafegithub.workflows.actions.actions.CheckoutV3
 import io.github.typesafegithub.workflows.actions.actions.SetupJavaV3
-import io.github.typesafegithub.workflows.actions.codecov.CodecovActionV3
 import io.github.typesafegithub.workflows.domain.RunnerType
 import io.github.typesafegithub.workflows.domain.Workflow
 import io.github.typesafegithub.workflows.domain.triggers.PullRequest
@@ -58,17 +57,24 @@ public val workflowMaven: Workflow = workflow(
             name = "Build with Maven",
             command = "./mvnw -B clean test --file pom.xml",
         )
-        uses(
-            name = "CodecovActionV3",
-            action = CodecovActionV3(
-                token = "${'$'}{{ secrets.CODECOV_TOKEN }}",
-//                files = listOf("target/jacoco-merged.exec"),
-                flags = listOf("unittests"),
+//      uses(
+//            name = "CodecovActionV3",
+//            action = CodecovActionV3(
+//                token = "${'$'}{{ secrets.CODECOV_TOKEN }}",
+////                files = listOf("target/jacoco-merged.exec"),
+//                flags = listOf("unittests"),
+//
+//                ),
+//        )
 
-                ),
+        run(
+            name = "Run sonar upload",
+            command = "./mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=\${{ secrets.SONAR_TOKEN }} -Pcoverage --file pom.xml"
         )
+
     }
 }
 
 
 workflowMaven.writeToFile(addConsistencyCheck = false)
+
