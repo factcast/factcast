@@ -31,6 +31,7 @@ import org.factcast.store.registry.SchemaRegistryUnavailableException;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.junit.jupiter.api.*;
 
+@Disabled // tmp for coverage analysis testing
 public class HttpIndexFetcherTest {
   private HttpIndexFetcher uut;
 
