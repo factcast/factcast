@@ -402,7 +402,7 @@
           <threadCountClasses>8</threadCountClasses>
           <!-- In order for surefire to use the prepared jacoco arguments, we'd
             need to fork in order to pass those along to the testing VM -->
-          <!-- <forkCount>0</forkCount> -->
+          <forkCount>1</forkCount>
           <reuseForks>true</reuseForks>
         </configuration>
       </plugin>
