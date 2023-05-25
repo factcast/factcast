@@ -16,7 +16,7 @@ import io.github.typesafegithub.workflows.yaml.writeToFile
 import java.nio.file.Paths
 
 public val workflowMaven: Workflow = workflow(
-    name = "Maven Quick profile",
+    name = "Maven all in one",
     on = listOf(
         PullRequest(
             branches = listOf("master"),
@@ -32,11 +32,11 @@ public val workflowMaven: Workflow = workflow(
         runsOn = RunnerType.UbuntuLatest,
     ) {
         uses(
-            name = "CheckoutV3",
+            name = "Checkout",
             action = CheckoutV3(fetchDepth = CheckoutV3.FetchDepth.Infinite)
         )
         uses(
-            name = "CacheV3 - maven repository",
+            name = "Cache - Maven Repository",
             action = CacheV3(
                 path = listOf(
                     "~/.m2/repository",
@@ -48,7 +48,7 @@ public val workflowMaven: Workflow = workflow(
             ),
         )
         uses(
-            name = "CacheV3 - sonar",
+            name = "Cache - Sonar cache",
             action = CacheV3(
                 path = listOf(
                     "~/.sonar/cache",
@@ -60,7 +60,7 @@ public val workflowMaven: Workflow = workflow(
             ),
         )
         uses(
-            name = "Set up JDK 11",
+            name = "JDK 11",
             action = SetupJavaV3(
                 distribution = SetupJavaV3.Distribution.Custom("corretto"),
                 javaVersion = "11",
@@ -78,7 +78,7 @@ public val workflowMaven: Workflow = workflow(
         )
 
         run(
-            name = "Run sonar upload",
+            name = "Sonar upload",
             command = "./mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=\${{ secrets.SONAR_TOKEN }}"
         )
 
@@ -87,7 +87,7 @@ public val workflowMaven: Workflow = workflow(
             command = "./mvnw -B verify -DskipUnitTests",
         )
         uses(
-            name = "CodecovActionV3",
+            name = "Codecov upload",
             action = CodecovActionV3(
                 token = "${'$'}{{ secrets.CODECOV_TOKEN }}"
             ),
