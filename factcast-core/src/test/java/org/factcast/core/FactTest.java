@@ -205,30 +205,30 @@ public class FactTest {
   }
 
   @Test
-  public void testBuildWithoutPayload() {
+  void testBuildWithoutPayload() {
     Fact f = Fact.builder().ns("foo").buildWithoutPayload();
     assertThat(f.ns()).isEqualTo("foo");
     assertThat(f.jsonPayload()).isEqualTo("{}");
   }
 
   @Test
-  public void testMeta() {
+  void testMeta() {
     Fact f = Fact.builder().ns("foo").meta("a", "1").buildWithoutPayload();
     assertThat(f.meta("a")).isEqualTo("1");
   }
 
   @Test
-  public void testTypeEmpty() {
+  void testTypeEmpty() {
     assertThrows(IllegalArgumentException.class, () -> Fact.builder().type(""));
   }
 
   @Test
-  public void testNsEmpty() {
+  void testNsEmpty() {
     assertThrows(IllegalArgumentException.class, () -> Fact.builder().ns(""));
   }
 
   @Test
-  public void testSerialMustExistInMeta() {
+  void testSerialMustExistInMeta() {
     assertThrows(
         IllegalStateException.class,
         () -> {
@@ -238,7 +238,7 @@ public class FactTest {
   }
 
   @Test
-  public void testOfJsonNodeJsonNode() {
+  void testOfJsonNodeJsonNode() {
     ObjectNode h = FactCastJson.toObjectNode("{\"id\":\"" + new UUID(0, 1) + "\",\"ns\":\"foo\"}");
     ObjectNode p = FactCastJson.toObjectNode("{}");
     Fact f = Fact.of(h, p);
@@ -247,7 +247,7 @@ public class FactTest {
   }
 
   @Test
-  public void testEmptyPayload() {
+  void testEmptyPayload() {
     assertThat(Fact.builder().build("").jsonPayload()).isEqualTo("{}");
     assertThat(Fact.builder().build("   ").jsonPayload()).isEqualTo("{}");
   }

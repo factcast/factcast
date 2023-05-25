@@ -211,7 +211,7 @@ public class DefaultFactTest {
         Fact.of(
             "{\"id\":\"" + id + "\",\"version\":\"" + 7 + "\",\"ns\":\"ns\"}",
             "{\"foo\":\"payload\"}");
-    assertEquals("DefaultFact [id=" + id.toString() + "]", fact.toString());
+    assertEquals("DefaultFact [id=" + id + "]", fact.toString());
   }
 
   @Test
