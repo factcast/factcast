@@ -79,7 +79,7 @@ public val workflowMaven: Workflow = workflow(
             ),
         )
         run(
-            name = "Build with Maven",
+            name = "Build with Maven, unittest",
             command = "./mvnw -B clean test --file pom.xml",
         )
 
@@ -89,7 +89,7 @@ public val workflowMaven: Workflow = workflow(
         )
 
         run(
-            name = "Build with Maven - test, verify and analyze",
+            name = "Continue build with Maven - integration-test and install",
             command = "./mvnw -B install -DskipUnitTests --file pom.xml",
         )
         uses(
