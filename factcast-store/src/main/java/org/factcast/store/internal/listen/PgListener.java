@@ -152,7 +152,7 @@ public class PgListener implements InitializingBean, DisposableBean {
         .forEach(
             n -> {
               String name = n.getName();
-              log.debug("Received notification on channel: {}.", name);
+              log.trace("Received notification on channel: {}.", name);
 
               if (PgConstants.CHANNEL_BLACKLIST_CHANGE.equals(name)) {
                 postBlacklistChangeSignal();
@@ -163,7 +163,7 @@ public class PgListener implements InitializingBean, DisposableBean {
               } else if (PgConstants.CHANNEL_FACT_INSERT.equals(name)) {
                 processFactInsertNotification(n, oncePerArray);
               } else if (!PgConstants.CHANNEL_ROUNDTRIP.equals(name)) {
-                log.debug("Ignored notification from unknown channel: {}", name);
+                log.warn("Ignored notification from unknown channel: {}", name);
               }
             });
   }
@@ -181,7 +181,7 @@ public class PgListener implements InitializingBean, DisposableBean {
 
     } catch (JsonProcessingException | NullPointerException e) {
       // skipping
-      log.debug("Unparesable JSON parameter from notification: {}.", n.getName());
+      log.warn("Unparesable JSON parameter from notification: {}.", n.getName());
     }
   }
 
@@ -197,7 +197,7 @@ public class PgListener implements InitializingBean, DisposableBean {
 
     } catch (JsonProcessingException | NullPointerException e) {
       // skipping
-      log.debug("Unparesable JSON parameter from notification: {}.", n.getName());
+      log.warn("Unparesable JSON parameter from notification: {}.", n.getName());
     }
   }
 
@@ -215,7 +215,7 @@ public class PgListener implements InitializingBean, DisposableBean {
       // unparseable, probably longer than 8k ?
       // fall back to informingAllSubscribers
       if (!oncePerArray.getAndSet(true)) {
-        log.debug(
+        log.warn(
             "Unparesable JSON header from Notification: {}. Notifying everyone - just" + " in case",
             n.getName());
         postFactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT);
