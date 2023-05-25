@@ -51,7 +51,7 @@ public final class PgBlacklistDataProvider
 
   @Subscribe
   public void on(PgListener.BlacklistChangeSignal signal) {
-    log.info("A change on blacklist table was triggered.");
+    log.debug("A potential change on blacklist table was triggered.");
     updateBlacklist();
   }
 
