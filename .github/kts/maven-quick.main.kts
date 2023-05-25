@@ -6,6 +6,7 @@
 import io.github.typesafegithub.workflows.actions.actions.CacheV3
 import io.github.typesafegithub.workflows.actions.actions.CheckoutV3
 import io.github.typesafegithub.workflows.actions.actions.SetupJavaV3
+import io.github.typesafegithub.workflows.actions.codecov.CodecovActionV3
 import io.github.typesafegithub.workflows.domain.RunnerType
 import io.github.typesafegithub.workflows.domain.Workflow
 import io.github.typesafegithub.workflows.domain.triggers.PullRequest
@@ -32,10 +33,10 @@ public val workflowMaven: Workflow = workflow(
     ) {
         uses(
             name = "CheckoutV3",
-            action = CheckoutV3(),
+            action = CheckoutV3(fetchDepth = CheckoutV3.FetchDepth.Infinite)
         )
         uses(
-            name = "CacheV3",
+            name = "CacheV3 - maven repository",
             action = CacheV3(
                 path = listOf(
                     "~/.m2/repository",
@@ -43,6 +44,30 @@ public val workflowMaven: Workflow = workflow(
                 key = "${'$'}{{ runner.os }}-maven-${'$'}{{ hashFiles('**/pom.xml') }}",
                 restoreKeys = listOf(
                     "${'$'}{{ runner.os }}-maven-",
+                ),
+            ),
+        )
+        uses(
+            name = "CacheV3 - sonar",
+            action = CacheV3(
+                path = listOf(
+                    "~/.sonar/cache",
+                ),
+                key = "${'$'}{{ runner.os }}-sonar",
+                restoreKeys = listOf(
+                    "${'$'}{{ runner.os }}-sonar",
+                ),
+            ),
+        )
+        uses(
+            name = "CacheV3 - docker",
+            action = CacheV3(
+                path = listOf(
+                    "/var/lib/docker/",
+                ),
+                key = "factcast-docker-cache-unversioned",
+                restoreKeys = listOf(
+                    "factcast-docker-cache-unversioned",
                 ),
             ),
         )
@@ -57,21 +82,24 @@ public val workflowMaven: Workflow = workflow(
             name = "Build with Maven",
             command = "./mvnw -B clean test --file pom.xml",
         )
-//      uses(
-//            name = "CodecovActionV3",
-//            action = CodecovActionV3(
-//                token = "${'$'}{{ secrets.CODECOV_TOKEN }}",
-////                files = listOf("target/jacoco-merged.exec"),
-//                flags = listOf("unittests"),
-//
-//                ),
-//        )
 
         run(
             name = "Run sonar upload",
             command = "./mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=\${{ secrets.SONAR_TOKEN }} -Pcoverage --file pom.xml"
         )
 
+        run(
+            name = "Build with Maven - test, verify and analyze",
+            command = "./mvnw -B install -DskipUnitTests --file pom.xml",
+        )
+        uses(
+            name = "CodecovActionV3",
+            action = CodecovActionV3(
+                token = "${'$'}{{ secrets.CODECOV_TOKEN }}",
+                files = listOf("target/jacoco-merged.exec"),
+                flags = listOf("unittests"),
+            ),
+        )
     }
 }
 
