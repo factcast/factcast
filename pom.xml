@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.6.7-SNAPSHOT</version>
+  <version>0.6.6-SNAPSHOT</version>
   <packaging>pom</packaging>
   <organization>
     <name>factcast</name>
@@ -439,9 +439,6 @@
             <includes>
               <include>**/src/*/java/**/*.java</include>
             </includes>
-            <excludes>
-              <exclude>/**/target/*</exclude>
-            </excludes>
             <trimTrailingWhitespace />
             <googleJavaFormat>
               <version>1.9</version>
@@ -458,7 +455,6 @@
             <excludes>
               <exclude>**/src/main/resources/db/**</exclude>
               <exclude>**/src/test/resources/*.sql</exclude>
-              <exclude>/**/target/*</exclude>
             </excludes>
             <includes>
               <include>**/*.sql</include>
@@ -469,13 +465,14 @@
           </sql>
           <formats>
             <format>
-              <!-- <excludes> <exclude>**/documentation-docsy/**</exclude> <exclude>**/output/public/**</exclude>
-                <exclude>.*/**</exclude> <exclude>/**/target/*</exclude> </excludes> -->
+              <excludes>
+                <exclude>**/documentation-docsy/**</exclude>
+                <exclude>**/output/public/**</exclude>
+                <exclude>.*/**</exclude>
+              </excludes>
               <includes>
-                <include>/*.xml</include>
-                <include>**/pom.xml</include>
-                <include>**/src/**/*.xml</include>
-                <include>**/src/**/*.xsd</include>
+                <include>**/*.xml</include>
+                <include>**/*.xsd</include>
               </includes>
               <eclipseWtp>
                 <type>XML</type>
@@ -492,7 +489,6 @@
             <format>
               <includes>
                 <include>factcast-site/documentation-docsy/content/**/*.md</include>
-                <include>/*.md</include>
               </includes>
               <prettier>
                 <config>

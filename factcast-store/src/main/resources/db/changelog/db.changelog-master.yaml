@@ -276,15 +276,3 @@ databaseChangeLog:
             stripComments: true
 
 
-  - changeSet:
-      id: issue2180_add_blacklist_column
-      runInTransaction: false
-      author: uweschaefer
-      changes:
-        - sqlFile:
-            encoding: utf8
-            path: factcast/issue2180/blacklist-reason.sql
-            relativeToChangelogFile: true
-            splitStatements: false
-            stripComments: true
-
