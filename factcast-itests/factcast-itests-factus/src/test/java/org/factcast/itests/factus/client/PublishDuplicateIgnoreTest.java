@@ -37,7 +37,6 @@ import org.factcast.itests.factus.config.RedissonProjectionConfiguration;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -49,7 +48,6 @@ import org.springframework.test.context.TestPropertySource;
     classes = {TestFactusApplication.class, RedissonProjectionConfiguration.class})
 @TestPropertySource(properties = {"factcast.grpc.client.ignore-duplicate-facts:true"})
 @Slf4j
-@Disabled // TODO Flaky
 class PublishDuplicateIgnoreTest extends AbstractFactCastIntegrationTest {
 
   @Autowired FactCast factCast;
