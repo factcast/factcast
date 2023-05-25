@@ -112,6 +112,7 @@
     <graaljs.version>22.3.1</graaljs.version>
     <shedlock.version>4.44.0</shedlock.version>
     <byte-buddy.version>1.14.4</byte-buddy.version>
+    <skipUnitTests>false</skipUnitTests>
   </properties>
   <dependencies>
     <dependency>
@@ -396,7 +397,7 @@
           <excludedGroups>integration</excludedGroups>
           <!--suppress UnresolvedMavenProperty -->
           <argLine>${surefire.jacoco.args}</argLine>
-          <skip>${skipSurefire}</skip>
+          <skip>${skipUnitTests}</skip>
           <parallel>classes</parallel>
           <threadCountClasses>8</threadCountClasses>
           <!-- In order for surefire to use the prepared jacoco arguments, we'd
