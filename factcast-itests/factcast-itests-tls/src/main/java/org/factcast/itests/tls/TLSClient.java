@@ -22,7 +22,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class TLSClient {
 
   public static void main(String[] args) {
-
     SpringApplication.run(TLSClient.class, args);
   }
 }

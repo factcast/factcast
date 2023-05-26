@@ -10,6 +10,9 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-store-test</artifactId>
+  <properties>
+    <sonar.skip>true</sonar.skip>
+  </properties>
   <dependencyManagement>
     <dependencies>
       <dependency>
