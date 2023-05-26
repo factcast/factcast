@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.tls;
+package org.factcast.itests.tls.test;
 
 import org.testcontainers.containers.output.OutputFrame;
 
