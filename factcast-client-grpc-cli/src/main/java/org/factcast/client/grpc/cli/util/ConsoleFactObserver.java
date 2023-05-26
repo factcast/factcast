@@ -15,13 +15,14 @@
  */
 package org.factcast.client.grpc.cli.util;
 
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.*;
+import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.observer.FactObserver;
 
+@SuppressWarnings("java:S106")
 public class ConsoleFactObserver implements FactObserver {
 
   private final FactRenderer factRenderer;
@@ -58,13 +59,13 @@ public class ConsoleFactObserver implements FactObserver {
   public synchronized void onComplete() {
     System.out.println("-> Signal: Complete");
     done.set(true);
-    notify();
+    notifyAll();
   }
 
   @Override
   public synchronized void onError(Throwable exception) {
     System.out.println("-> Signal: Error");
     exception.printStackTrace();
-    notify();
+    notifyAll();
   }
 }

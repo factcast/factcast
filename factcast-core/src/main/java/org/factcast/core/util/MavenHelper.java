@@ -41,7 +41,7 @@ public class MavenHelper {
 
     Properties buildProperties = new Properties();
     if (resource != null) {
-      try (InputStream is = resource.openStream(); ) {
+      try (InputStream is = resource.openStream()) {
         if (is != null) {
           buildProperties.load(is);
           String v = buildProperties.getProperty("version");
