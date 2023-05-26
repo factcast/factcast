@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.tls;
+package org.factcast.itests.tls.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -24,6 +24,7 @@ import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.itests.tls.TLSClient;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -37,8 +38,8 @@ import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-@SpringBootTest
-@ContextConfiguration(classes = TLSClient.class)
+@SpringBootTest(classes = TLSClient.class)
+@ContextConfiguration(classes = {TLSClient.class})
 @Testcontainers
 @IntegrationTest
 @Slf4j

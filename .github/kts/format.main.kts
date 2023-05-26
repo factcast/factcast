@@ -23,24 +23,24 @@ public val workflowFormat: Workflow = workflow(
         runsOn = RunnerType.UbuntuLatest,
     ) {
         uses(
-            name = "CheckoutV3",
+            name = "Checkout",
             action = CheckoutV3(
                 token = "${'$'}{{ secrets.PAT }}",
             ),
         )
         uses(
-            name = "SetupJavaV3",
+            name = "JDK 11",
             action = SetupJavaV3(
                 distribution = SetupJavaV3.Distribution.Custom("corretto"),
                 javaVersion = "11",
             ),
         )
         run(
-            name = "Execute Spotless",
+            name = "Spotless",
             command = "./mvnw -B --non-recursive spotless:apply --file pom.xml",
         )
         uses(
-            name = "GitAutoCommitActionV4",
+            name = "Commit formatting changes",
             action = CustomAction(
                 actionOwner = "stefanzweifel",
                 actionName = "git-auto-commit-action",

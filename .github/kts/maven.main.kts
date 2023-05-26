@@ -16,7 +16,7 @@ import io.github.typesafegithub.workflows.yaml.writeToFile
 import java.nio.file.Paths
 
 public val workflowMaven: Workflow = workflow(
-    name = "maven",
+    name = "Maven all in one",
     on = listOf(
         PullRequest(
             branches = listOf("master"),
@@ -32,11 +32,11 @@ public val workflowMaven: Workflow = workflow(
         runsOn = RunnerType.UbuntuLatest,
     ) {
         uses(
-            name = "CheckoutV3",
-            action = CheckoutV3(),
+            name = "Checkout",
+            action = CheckoutV3(fetchDepth = CheckoutV3.FetchDepth.Infinite)
         )
         uses(
-            name = "CacheV3",
+            name = "Cache - Maven Repository",
             action = CacheV3(
                 path = listOf(
                     "~/.m2/repository",
@@ -48,24 +48,48 @@ public val workflowMaven: Workflow = workflow(
             ),
         )
         uses(
-            name = "Set up JDK 11",
+            name = "Cache - Sonar cache",
+            action = CacheV3(
+                path = listOf(
+                    "~/.sonar/cache",
+                ),
+                key = "${'$'}{{ runner.os }}-sonar-${'$'}{{ hashFiles('**/pom.xml') }}",
+                restoreKeys = listOf(
+                    "${'$'}{{ runner.os }}-sonar-",
+                ),
+            ),
+        )
+        uses(
+            name = "JDK 11",
             action = SetupJavaV3(
                 distribution = SetupJavaV3.Distribution.Custom("corretto"),
                 javaVersion = "11",
             ),
         )
+
         run(
-            name = "Build with Maven",
-            command = "./mvnw -B clean test --file pom.xml",
+            name = "Build with Maven, no testing",
+            command = "./mvnw -B clean install -DskipTests",
         )
+
         run(
-            name = "Remove partial execution reports",
-            command = "find -wholename \"**/target/jacoco-output\" -exec rm -rf {} +",
+            name = "Test - Unit",
+            command = "./mvnw -B test",
+        )
+
+        run(
+            name = "Sonar upload",
+            command = "./mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=\${{ secrets.SONAR_TOKEN }}"
+        )
+
+        run(
+            name = "Test - Integration",
+            command = "./mvnw -B verify -DskipUnitTests",
         )
         uses(
-            name = "CodecovActionV3",
+            name = "Codecov upload",
             action = CodecovActionV3(
-                token = "${'$'}{{ secrets.CODECOV_TOKEN }}",
+                token = "${'$'}{{ secrets.CODECOV_TOKEN }}"
             ),
         )
     }
@@ -73,3 +97,4 @@ public val workflowMaven: Workflow = workflow(
 
 
 workflowMaven.writeToFile(addConsistencyCheck = false)
+
