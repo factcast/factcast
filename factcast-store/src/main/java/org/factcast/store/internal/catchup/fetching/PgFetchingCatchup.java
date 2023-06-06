@@ -21,6 +21,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.BufferingFactInterceptor;
@@ -30,6 +31,7 @@ import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.postgresql.jdbc.PgConnection;
+import org.postgresql.util.PSQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
@@ -67,7 +69,7 @@ public class PgFetchingCatchup implements PgCatchup {
       log.trace("Done fetching, flushing interceptor");
       interceptor.flush();
       ds.destroy();
-      statementHolder.statement(null);
+      statementHolder.clear();
     }
   }
 
@@ -83,6 +85,19 @@ public class PgFetchingCatchup implements PgCatchup {
 
   @VisibleForTesting
   RowCallbackHandler createRowCallbackHandler(PgFactExtractor extractor) {
-    return rs -> this.interceptor.accept(extractor.mapRow(rs, 0));
+    return rs -> {
+      try {
+        if (statementHolder.wasCanceled() || rs.isClosed()) return;
+
+        Fact f = extractor.mapRow(rs, 0);
+        this.interceptor.accept(f);
+      } catch (PSQLException psql) {
+        // see #2088
+        if (statementHolder.wasCanceled()) {
+          // then we just swallow the exception
+          log.trace("Swallowing because statement was cancelled", psql);
+        } else throw psql;
+      }
+    };
   }
 }

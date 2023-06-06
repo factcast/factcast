@@ -1,15 +1,16 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("it.krzeminski:github-actions-kotlin-dsl:0.24.0")
+@file:DependsOn("io.github.typesafegithub:github-workflows-kt:0.42.0")
 
-import it.krzeminski.githubactions.actions.CustomAction
-import it.krzeminski.githubactions.actions.actions.CheckoutV3
-import it.krzeminski.githubactions.actions.actions.SetupJavaV3
-import it.krzeminski.githubactions.domain.RunnerType
-import it.krzeminski.githubactions.domain.Workflow
-import it.krzeminski.githubactions.domain.triggers.Push
-import it.krzeminski.githubactions.dsl.workflow
-import it.krzeminski.githubactions.yaml.writeToFile
+
+import io.github.typesafegithub.workflows.actions.actions.CheckoutV3
+import io.github.typesafegithub.workflows.actions.actions.SetupJavaV3
+import io.github.typesafegithub.workflows.domain.RunnerType
+import io.github.typesafegithub.workflows.domain.Workflow
+import io.github.typesafegithub.workflows.domain.actions.CustomAction
+import io.github.typesafegithub.workflows.domain.triggers.Push
+import io.github.typesafegithub.workflows.dsl.workflow
+import io.github.typesafegithub.workflows.yaml.writeToFile
 import java.nio.file.Paths
 
 public val workflowFormat: Workflow = workflow(
@@ -22,24 +23,24 @@ public val workflowFormat: Workflow = workflow(
         runsOn = RunnerType.UbuntuLatest,
     ) {
         uses(
-            name = "CheckoutV3",
+            name = "Checkout",
             action = CheckoutV3(
                 token = "${'$'}{{ secrets.PAT }}",
             ),
         )
         uses(
-            name = "SetupJavaV3",
+            name = "JDK 11",
             action = SetupJavaV3(
                 distribution = SetupJavaV3.Distribution.Custom("corretto"),
                 javaVersion = "11",
             ),
         )
         run(
-            name = "Execute Spotless",
-            command = "./mvnw -B spotless:apply --file pom.xml",
+            name = "Spotless",
+            command = "./mvnw -B --non-recursive spotless:apply --file pom.xml",
         )
         uses(
-            name = "GitAutoCommitActionV4",
+            name = "Commit formatting changes",
             action = CustomAction(
                 actionOwner = "stefanzweifel",
                 actionName = "git-auto-commit-action",

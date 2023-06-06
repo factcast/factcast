@@ -3,10 +3,10 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
-    <artifactId>factcast</artifactId>
     <groupId>org.factcast</groupId>
-    <version>0.6.2-SNAPSHOT</version>
-    <relativePath>../../pom.xml</relativePath>
+    <artifactId>factcast-examples</artifactId>
+    <version>0.6.7-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>factcast-example-schema-registry</artifactId>
@@ -28,7 +28,7 @@
       <plugin>
         <groupId>org.factcast</groupId>
         <artifactId>factcast-schema-registry-maven-plugin</artifactId>
-        <version>0.6.2-SNAPSHOT</version>
+        <version>0.6.7-SNAPSHOT</version>
         <executions>
           <execution>
             <id>build</id>

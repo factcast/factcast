@@ -1,32 +1,30 @@
-# This file was generated using Kotlin DSL (.github/kts/format.main.kts).
+# This file was generated using Kotlin DSL (.github/kts/.github/kts/format.main.kts).
 # If you want to modify the workflow, please change the Kotlin file and regenerate this YAML file.
-# Generated with https://github.com/krzema12/github-actions-kotlin-dsl
+# Generated with https://github.com/typesafegithub/github-workflows-kt
 
-name: Format
-
+name: 'Format'
 on:
-  push:
-
+  push: {}
 jobs:
-  "formatting":
-    runs-on: "ubuntu-latest"
+  formatting:
+    runs-on: 'ubuntu-latest'
     steps:
-      - id: step-0
-        name: CheckoutV3
-        uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.PAT }}
-      - id: step-1
-        name: SetupJavaV3
-        uses: actions/setup-java@v3
-        with:
-          java-version: 11
-          distribution: corretto
-      - id: step-2
-        name: Execute Spotless
-        run: ./mvnw -B spotless:apply --file pom.xml
-      - id: step-3
-        name: GitAutoCommitActionV4
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: Apply formatter
+    - id: 'step-0'
+      name: 'Checkout'
+      uses: 'actions/checkout@v3'
+      with:
+        token: '${{ secrets.PAT }}'
+    - id: 'step-1'
+      name: 'JDK 11'
+      uses: 'actions/setup-java@v3'
+      with:
+        java-version: '11'
+        distribution: 'corretto'
+    - id: 'step-2'
+      name: 'Spotless'
+      run: './mvnw -B --non-recursive spotless:apply --file pom.xml'
+    - id: 'step-3'
+      name: 'Commit formatting changes'
+      uses: 'stefanzweifel/git-auto-commit-action@v4'
+      with:
+        commit_message: 'Apply formatter'

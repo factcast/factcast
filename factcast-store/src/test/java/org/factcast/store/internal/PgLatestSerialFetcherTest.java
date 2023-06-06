@@ -16,16 +16,14 @@
 package org.factcast.store.internal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
-import org.factcast.store.test.IntegrationTest;
+import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
@@ -79,13 +77,5 @@ public class PgLatestSerialFetcherTest {
             + UUID.randomUUID()
             + "\", \"ns\":\"hups\"}','{}') ");
     assertEquals(3, uut.retrieveLatestSer());
-  }
-
-  @Test
-  void testRetrieveLatestSerWithException() {
-    JdbcTemplate jdbcMock = mock(JdbcTemplate.class);
-    when(jdbcMock.queryForRowSet(anyString())).thenThrow(new EmptyResultDataAccessException(1));
-    uut = new PgLatestSerialFetcher(jdbcMock);
-    assertEquals(0, uut.retrieveLatestSer());
   }
 }

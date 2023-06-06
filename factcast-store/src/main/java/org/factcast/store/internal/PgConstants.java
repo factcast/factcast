@@ -15,7 +15,7 @@
  */
 package org.factcast.store.internal;
 
-import java.util.*;
+import java.util.Random;
 import lombok.AccessLevel;
 import lombok.Generated;
 import lombok.NonNull;
@@ -71,6 +71,8 @@ public class PgConstants {
   public static final String CHANNEL_FACT_INSERT = "fact_insert";
   public static final String CHANNEL_SCHEDULED_POLL = "scheduled-poll";
   public static final String CHANNEL_BLACKLIST_CHANGE = "blacklist_change";
+  public static final String CHANNEL_SCHEMASTORE_CHANGE = "schemastore_change";
+  public static final String CHANNEL_TRANSFORMATIONSTORE_CHANGE = "transformationstore_change";
   public static final String CHANNEL_ROUNDTRIP =
       "roundtrip_channel_"
           + Math.abs(new Random().nextLong()); // using the pid lead to a sql exception
@@ -191,6 +193,15 @@ public class PgConstants {
   public static final String NOTIFY_ROUNDTRIP = "NOTIFY " + CHANNEL_ROUNDTRIP;
 
   public static final String LISTEN_ROUNDTRIP_CHANNEL_SQL = "LISTEN " + CHANNEL_ROUNDTRIP;
+
+  public static final String LISTEN_BLACKLIST_CHANGE_CHANNEL_SQL =
+      "LISTEN " + CHANNEL_BLACKLIST_CHANGE;
+
+  public static final String LISTEN_SCHEMASTORE_CHANGE_CHANNEL_SQL =
+      "LISTEN " + CHANNEL_SCHEMASTORE_CHANGE;
+
+  public static final String LISTEN_TRANSFORMATIONSTORE_CHANGE_CHANNEL_SQL =
+      "LISTEN " + CHANNEL_TRANSFORMATIONSTORE_CHANGE;
 
   public static final String UPDATE_FACT_SERIALS =
       "update "

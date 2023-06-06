@@ -59,7 +59,7 @@ public class PgTmpPagedCatchup implements PgCatchup {
     } finally {
       interceptor.flush();
       ds.destroy();
-      statementHolder.statement(null);
+      statementHolder.clear();
     }
   }
 

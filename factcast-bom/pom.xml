@@ -6,11 +6,15 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.6.2-SNAPSHOT</version>
+    <version>0.6.7-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-bom</artifactId>
   <packaging>pom</packaging>
+  <properties>
+    <sonar.skip>true</sonar.skip>
+  </properties>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -120,7 +124,7 @@
       <dependency>
         <groupId>org.postgresql</groupId>
         <artifactId>postgresql</artifactId>
-        <version>42.4.1</version>
+        <version>42.5.4</version>
       </dependency>
       <dependency>
         <groupId>com.google.guava</groupId>
@@ -135,7 +139,7 @@
       <dependency>
         <groupId>org.xerial.snappy</groupId>
         <artifactId>snappy-java</artifactId>
-        <version>1.1.8.4</version>
+        <version>1.1.9.1</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson</groupId>

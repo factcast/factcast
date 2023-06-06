@@ -6,10 +6,13 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.6.2-SNAPSHOT</version>
+    <version>0.6.7-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-test</artifactId>
+  <properties>
+    <sonar.skip>true</sonar.skip>
+  </properties>
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -31,6 +34,10 @@
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-client-grpc</artifactId>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
@@ -75,7 +82,7 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-compress</artifactId>
-      <version>1.21</version>
+      <version>1.22</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -89,13 +96,13 @@
     <dependency>
       <groupId>io.github.hakky54</groupId>
       <artifactId>consolecaptor</artifactId>
-      <version>1.0.2</version>
+      <version>1.0.3</version>
     </dependency>
     <!-- needed for slf4TestSpy -->
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.2.11</version>
+      <version>1.4.7</version>
       <scope>provided</scope>
     </dependency>
 

@@ -15,7 +15,8 @@
  */
 package org.factcast.store.registry;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 import org.everit.json.schema.Schema;
 import org.factcast.store.registry.transformation.Transformation;
 import org.factcast.store.registry.transformation.TransformationKey;
@@ -23,6 +24,8 @@ import org.factcast.store.registry.transformation.TransformationStoreListener;
 import org.factcast.store.registry.validation.schema.SchemaKey;
 
 public interface SchemaRegistry {
+
+  String LOCK_NAME = "schemareg_update";
 
   Optional<Schema> get(SchemaKey key);
 
@@ -33,4 +36,6 @@ public interface SchemaRegistry {
   void refresh();
 
   void register(TransformationStoreListener listener);
+
+  void invalidateNearCache(SchemaKey key);
 }

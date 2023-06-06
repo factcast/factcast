@@ -16,7 +16,10 @@
 package org.factcast.store.registry.transformation.cache;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Nullable;
 import lombok.AccessLevel;
 import lombok.Getter;

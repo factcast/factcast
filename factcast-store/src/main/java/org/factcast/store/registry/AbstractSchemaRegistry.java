@@ -20,16 +20,26 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.*;
+import java.time.Duration;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.core.LockConfiguration;
+import net.javacrumbs.shedlock.core.LockProvider;
+import net.javacrumbs.shedlock.core.SimpleLock;
 import org.everit.json.schema.Schema;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.http.ValidationConstants;
 import org.factcast.store.registry.metrics.RegistryMetrics;
-import org.factcast.store.registry.transformation.*;
+import org.factcast.store.registry.transformation.Transformation;
+import org.factcast.store.registry.transformation.TransformationConflictException;
+import org.factcast.store.registry.transformation.TransformationKey;
+import org.factcast.store.registry.transformation.TransformationSource;
+import org.factcast.store.registry.transformation.TransformationStore;
+import org.factcast.store.registry.transformation.TransformationStoreListener;
 import org.factcast.store.registry.validation.schema.SchemaConflictException;
 import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.factcast.store.registry.validation.schema.SchemaSource;
@@ -46,7 +56,8 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
   @NonNull protected final TransformationStore transformationStore;
 
   @NonNull protected final RegistryMetrics registryMetrics;
-  @NonNull protected final StoreConfigurationProperties pgConfigurationProperties;
+  @NonNull protected final StoreConfigurationProperties storeConfigurationProperties;
+  @NonNull protected final LockProvider lockProvider;
 
   protected final Object mutex = new Object();
 
@@ -69,18 +80,38 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
       @NonNull SchemaStore schemaStore,
       @NonNull TransformationStore transformationStore,
       @NonNull RegistryMetrics registryMetrics,
-      @NonNull StoreConfigurationProperties pgConfigurationProperties) {
+      @NonNull StoreConfigurationProperties storeConfigurationProperties,
+      @NonNull LockProvider lockProvider) {
     this.indexFetcher = indexFetcher;
     this.registryFileFetcher = registryFileFetcher;
     this.schemaStore = schemaStore;
     this.transformationStore = transformationStore;
     this.registryMetrics = registryMetrics;
-    this.pgConfigurationProperties = pgConfigurationProperties;
+    this.storeConfigurationProperties = storeConfigurationProperties;
+    this.lockProvider = lockProvider;
   }
 
   @Override
   public void fetchInitial() {
+    if (storeConfigurationProperties.isPersistentRegistry()) {
+      log.info("Acquiring lock for registry update");
+      LockConfiguration lockConfig =
+          new LockConfiguration(
+              SchemaRegistry.LOCK_NAME, Duration.ofMinutes(1), Duration.ofSeconds(2));
+      Optional<SimpleLock> lock = lockProvider.lock(lockConfig);
+      if (lock.isPresent()) {
+        try {
+          doFetchInitial();
+        } finally {
+          lock.get().unlock();
+        }
+      } else {
+        log.warn("lock already exists, skipping initial schema-registry update");
+      }
+    } else doFetchInitial();
+  }
 
+  private void doFetchInitial() {
     synchronized (mutex) {
       Stopwatch sw = Stopwatch.createStarted();
       log.info("Registry update started");
@@ -92,7 +123,7 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
         registryMetrics.count(RegistryMetrics.EVENT.SCHEMA_UPDATE_FAILURE);
         log.info("Registry update failed in {}ms", sw.stop().elapsed(TimeUnit.MILLISECONDS));
 
-        if (!pgConfigurationProperties.isPersistentRegistry()) {
+        if (!storeConfigurationProperties.isPersistentRegistry()) {
           // while starting with a stale registry might be ok, we cannot start with a non-existant
           // (empty) registry.
           throw new InitialRegistryFetchFailed("While fetching initial state of registry", e);
@@ -121,11 +152,15 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
   protected void process(RegistryIndex index) {
     updateSchemes(index);
     updateTransformations(index);
-    clearNearCache();
+    // clearNearCache();
   }
 
   public void clearNearCache() {
     schemaNearCache.invalidateAll();
+  }
+
+  public void invalidateNearCache(SchemaKey key) {
+    schemaNearCache.invalidate(key);
   }
 
   private void updateSchemes(RegistryIndex index) {
@@ -144,7 +179,7 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
                       schemaStore.register(source, schema);
                     }
                   } catch (SchemaConflictException e) {
-                    if (pgConfigurationProperties.isAllowSchemaReplace()) {
+                    if (storeConfigurationProperties.isAllowSchemaReplace()) {
                       schemaStore.register(source, schema);
                     } else {
                       throw e;
@@ -179,7 +214,7 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
                       transformationStore.store(source, transformationCode);
                     }
                   } catch (TransformationConflictException conflict) {
-                    if (pgConfigurationProperties.isAllowSchemaReplace()) {
+                    if (storeConfigurationProperties.isAllowSchemaReplace()) {
                       transformationStore.store(source, transformationCode);
                     } else {
                       throw conflict;

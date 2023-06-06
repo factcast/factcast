@@ -2,8 +2,8 @@
 title: "About"
 
 menu:
-   main:
-      weight: 1
+  main:
+    weight: 1
 
 type: "docs-start"
 
@@ -15,9 +15,10 @@ enough' Event-store based on PostgreSQL.</i></div>
 <div style="text-align: center;">and also</div>
 <div style="text-align: center; font-size: x-large;"><i>Factus is an API to write Event-Sourced applications on the JVM using FactCast</i></div>
 
-____
+---
 
 {{< rawhtml >}}
+
 <center>
 <a href="https://github.com/factcast/factcast/actions"><img src="https://github.com/factcast/factcast/workflows/maven/badge.svg?branch=master" alt="Actions Status"
 class="inline"></a>
@@ -34,16 +35,15 @@ src="https://img.shields.io/docker/v/factcast/factcast?label=dockerhub"></a>
 </center>
 {{< /rawhtml >}}
 
-____
+---
 
 FactCast is written in Java & Kotlin and serves as a basis for working in a distributed environment with loosly coupled
 software systems that communicate over events.
 
-
 It provides two APIs for the JVM:
 
 1. FactCast client: low-level, un-opinionated GRPC library to publish / subscribe to facts
-2. Factus:  high-level, opinionated library working with facts as Objects, as well as abstractions like Aggregates &
+2. Factus: high-level, opinionated library working with facts as Objects, as well as abstractions like Aggregates &
    Projections
 
 and also a Schema-Registry that enables FactCast to <b>validate & transform</b> events on the fly.

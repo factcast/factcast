@@ -15,13 +15,20 @@
  */
 package org.factcast.store;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.ConsoleAppender;
 import java.time.Duration;
+import java.util.*;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.Positive;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -175,6 +182,22 @@ public class StoreConfigurationProperties implements InitializingBean {
    */
   Duration tailCreationTimeout = Duration.ofDays(1).minusMinutes(1);
 
+  /**
+   * This is the number of threads we create for handling new subscriptions requests. It's
+   * implemented via a fixed thread pool. As soon as the subscription request finishes or enters
+   * phase 3 (follow) the thread is freed up again. In earlier versions we used the common FJP which
+   * limits the parallelism to the number of cores - 1. If you ever encounter too much database load
+   * or too high waiting time for subscriptions this can be an option.
+   */
+  int sizeOfThreadPoolForSubscriptions = 100;
+
+  /**
+   * This is the number of threads we create for handling buffered transformations. It's implemented
+   * via work stealing thread pool. In early versions we used the common FJP which limits the
+   * parallelism to the number of cores - 1.
+   */
+  int sizeOfThreadPoolForBufferedTransformations = 25;
+
   public boolean isSchemaRegistryConfigured() {
     return schemaRegistryUrl != null;
   }
@@ -215,6 +238,9 @@ public class StoreConfigurationProperties implements InitializingBean {
     legacyProperties.getTailManagementCron().ifPresent(this::setTailManagementCron);
 
     if (integrationTestMode) {
+
+      adjustLogbackAppender();
+
       log.warn(
           "**** You are running in INTEGRATION TEST MODE. If you see this in production, "
               + "this would be a good time to panic. (See "
@@ -232,6 +258,20 @@ public class StoreConfigurationProperties implements InitializingBean {
         log.warn(
             "**** SchemaRegistry-mode is enabled but validation of Facts is disabled. This is"
                 + " discouraged for production environments. You have been warned. ****");
+      }
+    }
+  }
+
+  private void adjustLogbackAppender() {
+    LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+    for (Logger logger : context.getLoggerList()) {
+      Iterator<Appender<ILoggingEvent>> iter = logger.iteratorForAppenders();
+      while (iter.hasNext()) {
+        Appender<ILoggingEvent> appender = iter.next();
+        if (appender instanceof ConsoleAppender) {
+          log.debug("Setting " + appender.getClass() + " to immediate flush");
+          ((ConsoleAppender<?>) appender).setImmediateFlush(true);
+        }
       }
     }
   }

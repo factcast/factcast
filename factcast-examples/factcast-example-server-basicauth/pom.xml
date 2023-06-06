@@ -6,13 +6,13 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast-examples</artifactId>
-    <version>0.6.2-SNAPSHOT</version>
+    <version>0.6.7-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-example-server-basicauth</artifactId>
   <properties>
     <!-- Pin your own Spring Boot version. -->
-    <spring-boot.version>2.7.2</spring-boot.version>
+    <spring-boot.version>2.7.8</spring-boot.version>
     <docker.image.prefix>factcast</docker.image.prefix>
   </properties>
   <dependencyManagement>
