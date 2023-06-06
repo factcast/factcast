@@ -5,25 +5,25 @@ type="docs"
 +++
 
 We continue using the [previously introduced example]({{<ref "redis-transactional-projections.md#example">}}) of a projection handling
-*UserCreated* and *UserDeleted* events:
+_UserCreated_ and _UserDeleted_ events:
 
 ## Configuration
 
 The `@RedisBatched` annotation provides various configuration options:
 
-| Parameter Name         |  Description                                         | Default Value  |
-|------------------------|------------------------------------------------------|----------------|
-| `bulkSize`             | bulk size                                            |   50           |
-| `responseTimeout`      | timeout in milliseconds for Redis response           |   5000         |
-| `retryAttempts`        | maximum attempts to transmit batch of Redis commands |   5            |
-| `retryInterval`        | time interval in milliseconds between retry attempts |   3000         |
+| Parameter Name    | Description                                          | Default Value |
+| ----------------- | ---------------------------------------------------- | ------------- |
+| `bulkSize`        | bulk size                                            | 50            |
+| `responseTimeout` | timeout in milliseconds for Redis response           | 5000          |
+| `retryAttempts`   | maximum attempts to transmit batch of Redis commands | 5             |
+| `retryInterval`   | time interval in milliseconds between retry attempts | 3000          |
 
 ---
 
 ## Constructing
 
 Since we decided to use a managed projection, we extended the `AbstractRedisManagedProjection` class.
-To configure the connection to Redis via [Redisson](https://github.com/redisson/redisson), 
+To configure the connection to Redis via [Redisson](https://github.com/redisson/redisson),
 we injected RedissonClient in the constructor, calling the parent constructor.
 
 ```java
@@ -36,15 +36,14 @@ public class UserNames extends AbstractRedisManagedProjection {
   }
     ...
 ```
+
 We are using a managed projection, hence we extend the `AbstractRedisManagedProjection` class.
-To let Factus take care of the batch submission and to automatically persist the Fact stream position and manage the locks, 
+To let Factus take care of the batch submission and to automatically persist the Fact stream position and manage the locks,
 we provide the parent class with the instance of the Redisson client (call to `super(...)`)
 
-
-
 ## Updating the projection
-### Applying Events
 
+### Applying Events
 
 To access the batch, the handler methods require an additional `RBatch` parameter:
 
@@ -55,10 +54,11 @@ void apply(UserCreated created, RBatch batch) {
           .putAsync(created.getAggregateId(), created.getUserName());
 }
 ```
-We use a batch-derived 
-[`RMapAsync`](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMapAsync.html) object 
+
+We use a batch-derived
+[`RMapAsync`](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMapAsync.html) object
 which offers asynchronous versions of the common `Map` methods.
-By calling `putAsync(...)` we add the extracted event data to the map. Underneath, the `RBatch` collects this change and, 
+By calling `putAsync(...)` we add the extracted event data to the map. Underneath, the `RBatch` collects this change and,
 at a convenient point in time, transmits it together with other changes to Redis.
 
 {{% alert title="Note"%}}
@@ -99,10 +99,10 @@ also to a standard Java `Map`:
 
 There are good reasons for either variant, `1)` and `2)`:
 
-| Redisson specific         |  plain Java                                         |
-|------------------------|------------------------------------------------------|
-| extended functionality which e.g. reduces I/O load. (e.g. see [`RMap.fastPut(...)`](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html#fastPut(K,V)) and [`RMap.fastRemove(...)`](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html#fastRemove(K...).) |         standard, intuitive         | 
-| only option when using data-structures which are not available in standard Java Collections (e.g. [RedissonListMultimap](https://javadoc.io/doc/org.redisson/redisson/latest/org/redisson/RedissonListMultimap.html)) | easier to test |
+| Redisson specific                                                                                                                                                                                                                                                                                                           | plain Java          |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| extended functionality which e.g. reduces I/O load. (e.g. see [`RMap.fastPut(...)`](<https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html#fastPut(K,V)>) and [`RMap.fastRemove(...)`](<https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html#fastRemove(K...).>) | standard, intuitive |
+| only option when using data-structures which are not available in standard Java Collections (e.g. [RedissonListMultimap](https://javadoc.io/doc/org.redisson/redisson/latest/org/redisson/RedissonListMultimap.html))                                                                                                       | easier to test      |
 
 ## Full Example
 
@@ -134,5 +134,6 @@ public class UserNames extends AbstractRedisManagedProjection {
 ```
 
 To study the full example, see
+
 - [the UserNames projection using `@RedisBatched`](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/proj/RedisBatchedProjectionExample.java) and
-- [example code using this projection](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/RedisBatchedProjectionExampleITest.java)    
+- [example code using this projection](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/RedisBatchedProjectionExampleITest.java)

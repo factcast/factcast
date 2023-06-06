@@ -15,15 +15,18 @@
  */
 package org.factcast.store.registry.http;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Lists;
 import java.io.IOException;
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
+import java.util.*;
+import java.util.concurrent.*;
+import net.javacrumbs.shedlock.core.LockProvider;
+import net.javacrumbs.shedlock.core.SimpleLock;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.RegistryIndex;
@@ -38,11 +41,13 @@ import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.factcast.store.registry.validation.schema.SchemaSource;
 import org.factcast.store.registry.validation.schema.SchemaStore;
 import org.factcast.store.registry.validation.schema.store.InMemSchemaStoreImpl;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.quality.Strictness;
 
 @ExtendWith(MockitoExtension.class)
 public class HttpSchemaRegistryTest {
@@ -72,12 +77,16 @@ public class HttpSchemaRegistryTest {
   final TransformationStore transformationStore =
       spy(new InMemTransformationStoreImpl(registryMetrics));
 
+  final LockProvider lockProvider =
+      mock(LockProvider.class, withSettings().strictness(Strictness.LENIENT));
+  final SimpleLock lock = mock(SimpleLock.class);
+
   @BeforeEach
   public void setup() throws IOException {
     index.schemes(Lists.newArrayList(source1, source2));
     index.transformations(
         Lists.newArrayList(transformationSource1, transformationSource2, transformationSource3));
-
+    when(lockProvider.lock(any())).thenReturn(Optional.of(lock));
     when(indexFetcher.fetchIndex()).thenReturn(Optional.of(index));
 
     when(fileFetcher.fetchSchema(any())).thenReturn("{}");
@@ -93,7 +102,8 @@ public class HttpSchemaRegistryTest {
             indexFetcher,
             fileFetcher,
             registryMetrics,
-            new StoreConfigurationProperties());
+            new StoreConfigurationProperties(),
+            lockProvider);
     uut.fetchInitial();
 
     verify(schemaStore, times(2)).register(Mockito.any(), Mockito.any());
@@ -119,7 +129,8 @@ public class HttpSchemaRegistryTest {
             indexFetcher,
             fileFetcher,
             registryMetrics,
-            new StoreConfigurationProperties());
+            new StoreConfigurationProperties(),
+            lockProvider);
     uut.refresh();
 
     verify(schemaStore, times(2)).register(Mockito.any(), Mockito.any());
@@ -151,7 +162,8 @@ public class HttpSchemaRegistryTest {
             indexFetcher,
             fileFetcher,
             registryMetrics,
-            new StoreConfigurationProperties());
+            new StoreConfigurationProperties(),
+            lockProvider);
     uut.fetchInitial();
 
     index.schemes(Lists.newArrayList(testSource.hash("changed")));
@@ -174,7 +186,8 @@ public class HttpSchemaRegistryTest {
             indexFetcher,
             fileFetcher,
             registryMetrics,
-            new StoreConfigurationProperties().setAllowSchemaReplace(true));
+            new StoreConfigurationProperties().setAllowSchemaReplace(true),
+            lockProvider);
     uut.fetchInitial();
 
     assertThat(schemaStore.get(testSource.toKey())).isPresent().hasValue("{}");
@@ -198,7 +211,8 @@ public class HttpSchemaRegistryTest {
             indexFetcher,
             fileFetcher,
             registryMetrics,
-            new StoreConfigurationProperties());
+            new StoreConfigurationProperties(),
+            lockProvider);
     uut.fetchInitial();
 
     index.transformations(Lists.newArrayList(testSource.hash("changed")));
@@ -221,7 +235,8 @@ public class HttpSchemaRegistryTest {
             indexFetcher,
             fileFetcher,
             registryMetrics,
-            new StoreConfigurationProperties().setAllowSchemaReplace(true));
+            new StoreConfigurationProperties().setAllowSchemaReplace(true),
+            lockProvider);
     uut.fetchInitial();
 
     assertThat(transformationStore.get(testSource.toKey()).get(0).transformationCode())

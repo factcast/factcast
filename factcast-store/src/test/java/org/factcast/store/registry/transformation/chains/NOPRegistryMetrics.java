@@ -16,10 +16,11 @@
 package org.factcast.store.registry.transformation.chains;
 
 import io.micrometer.core.instrument.Tags;
+import java.util.concurrent.ExecutorService;
 import java.util.function.*;
+import org.factcast.core.util.RunnableWithException;
+import org.factcast.core.util.SupplierWithException;
 import org.factcast.store.registry.metrics.RegistryMetrics;
-import org.factcast.store.registry.metrics.RunnableWithException;
-import org.factcast.store.registry.metrics.SupplierWithException;
 
 public class NOPRegistryMetrics implements RegistryMetrics {
 
@@ -75,4 +76,9 @@ public class NOPRegistryMetrics implements RegistryMetrics {
 
   @Override
   public void increase(EVENT transformationCacheHit, int hits) {}
+
+  @Override
+  public ExecutorService monitor(ExecutorService executor, String name) {
+    return executor;
+  }
 }

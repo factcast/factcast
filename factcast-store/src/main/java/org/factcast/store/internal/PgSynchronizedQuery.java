@@ -25,7 +25,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
+import org.postgresql.util.PSQLException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
@@ -64,19 +67,23 @@ class PgSynchronizedQuery {
 
   @NonNull final PgLatestSerialFetcher latestFetcher;
 
+  @NonNull final CurrentStatementHolder statementHolder;
+
   PgSynchronizedQuery(
       @NonNull JdbcTemplate jdbcTemplate,
       @NonNull String sql,
       @NonNull PreparedStatementSetter setter,
       @NonNull RowCallbackHandler rowHandler,
       @NonNull AtomicLong serialToContinueFrom,
-      @NonNull PgLatestSerialFetcher fetcher) {
+      @NonNull PgLatestSerialFetcher fetcher,
+      @NonNull CurrentStatementHolder statementHolder) {
     this.serialToContinueFrom = serialToContinueFrom;
     latestFetcher = fetcher;
     this.jdbcTemplate = jdbcTemplate;
     this.sql = sql;
     this.setter = setter;
     this.rowHandler = rowHandler;
+    this.statementHolder = statementHolder;
 
     // noinspection ConstantConditions
     DataSourceTransactionManager transactionManager =
@@ -89,21 +96,36 @@ class PgSynchronizedQuery {
   public synchronized void run(boolean useIndex) {
     // TODO recheck latest handling - looks b0rken
     long latest = latestFetcher.retrieveLatestSer();
-    transactionTemplate.execute(
-        status -> {
-          if (!useIndex) {
-            jdbcTemplate.execute("SET LOCAL enable_bitmapscan=0;");
-          }
-          jdbcTemplate.query(sql, setter, rowHandler);
-          return null;
-        });
-    // shift to max(retrievedLatestSer, and ser as updated in
-    // rowHandler)
-    serialToContinueFrom.set(Math.max(latest, serialToContinueFrom.get()));
+    try {
+      transactionTemplate.execute(
+          status -> {
+            if (!useIndex) {
+              jdbcTemplate.execute("SET LOCAL enable_bitmapscan=0;");
+            }
+
+            jdbcTemplate.query(
+                sql,
+                ps -> {
+                  statementHolder.statement(ps);
+                  setter.setValues(ps);
+                },
+                rowHandler);
+            return null;
+          });
+
+      // shift to max(retrievedLatestSer, and ser as updated in
+      // rowHandler)
+      serialToContinueFrom.set(Math.max(latest, serialToContinueFrom.get()));
+    } catch (DataAccessException e) {
+      // #2165 swallow exception after cancel.
+      if (statementHolder.wasCanceled()) {
+        log.trace("Query was cancelled during execution", e);
+      } else throw e;
+    }
   }
 
   @RequiredArgsConstructor
-  static class FactRowCallbackHandler implements RowCallbackHandler {
+  public static class FactRowCallbackHandler implements RowCallbackHandler {
 
     final SubscriptionImpl subscription;
 
@@ -115,25 +137,43 @@ class PgSynchronizedQuery {
 
     final SubscriptionRequestTO request;
 
+    final CurrentStatementHolder statementHolder;
+
     @SuppressWarnings("NullableProblems")
     @Override
     public void processRow(ResultSet rs) throws SQLException {
       if (Boolean.TRUE.equals(isConnectedSupplier.get())) {
         if (rs.isClosed()) {
-          throw new IllegalStateException(
-              "ResultSet already closed. We should not have got here. THIS IS A BUG!");
+          if (!statementHolder.wasCanceled())
+            throw new IllegalStateException(
+                "ResultSet already closed. We should not have got here. THIS IS A BUG!");
+          else return;
         }
-        Fact f = PgFact.from(rs);
+        Fact f = null;
         try {
+          f = PgFact.from(rs);
           interceptor.accept(f);
           log.trace("{} notifyElement called with id={}", request, f.id());
           serial.set(rs.getLong(PgConstants.COLUMN_SER));
+        } catch (PSQLException psql) {
+          // see #2088
+          if (statementHolder.wasCanceled()) {
+            // then we just swallow the exception
+            log.trace("Swallowing because statement was cancelled", psql);
+          } else escalateError(rs, f, psql);
         } catch (Throwable e) {
-          rs.close();
-          log.warn("{} notifyError called with id={}", request, f.id());
-          subscription.notifyError(e);
+          escalateError(rs, f, e);
         }
       }
+    }
+
+    private void escalateError(ResultSet rs, Fact f, Throwable e) throws SQLException {
+      log.warn("{} notifyError called with id={}", request, f != null ? f.id() : "unknown");
+      try {
+        rs.close();
+      } catch (Throwable ignore) {
+      }
+      subscription.notifyError(e);
     }
   }
 }

@@ -22,7 +22,7 @@ import java.util.concurrent.*;
 import lombok.SneakyThrows;
 import org.factcast.core.Fact;
 import org.factcast.store.internal.PgTestConfiguration;
-import org.factcast.store.test.IntegrationTest;
+import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;

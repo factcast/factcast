@@ -16,24 +16,27 @@ Factcast comes with a module `factcast-test` that includes a Junit5 extension th
 The idea is, that in integration tests, you may want to start every test method with no preexisting events.
 Assuming you use the excellent TestContainers library in order to create & manage a postgres database in integration tests, the extension will find it and wipe it clean.
 In order to use the extension you either need to enable [Junit-Extension-Autodetection](https://junit.org/junit5/docs/current/user-guide/#running-tests-build-maven-config-params), or use
+
 ```java
 @ExtendWith(FactCastExtension.class)
-``` 
+```
+
 on your integration Test Class.
 
 The easy way to get the full package is to just extend AbstractIntegrationTest:
 
 ```java
 public class MyIntegrationTest extends AbstractFactcastIntegrationTest { // ...
-} 
+}
 ```
+
 which gives you the latest factcast Docker image found locally or at docker-hub running against a somewhat current postgres, both being started in a docker container (locally installed docker is a prerequisite of course).
 
-Also, in order to make sure, that FactCast-Server is **NOT** caching internally in memory, you can add a property to switch it into integrationTestMode. 
+Also, in order to make sure, that FactCast-Server is **NOT** caching internally in memory, you can add a property to switch it into integrationTestMode.
 [See Properties](/setup/properties).
 
 ### Local Redis
 
 In case you are also using Redis, there is an additional `factcast-test-redis` module.
-When added as Maven dependency it is automatically picked up by the `FactCastExtension` and starts a 
+When added as Maven dependency it is automatically picked up by the `FactCastExtension` and starts a
 local Redis instance.

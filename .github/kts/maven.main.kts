@@ -1,24 +1,22 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("it.krzeminski:github-actions-kotlin-dsl:0.24.0")
+@file:DependsOn("io.github.typesafegithub:github-workflows-kt:0.42.0")
 
-import it.krzeminski.githubactions.actions.actions.CacheV3
-import it.krzeminski.githubactions.actions.actions.CheckoutV3
-import it.krzeminski.githubactions.actions.actions.SetupJavaV3
-import it.krzeminski.githubactions.actions.codecov.CodecovActionV3
-import it.krzeminski.githubactions.actions.docker.LoginActionV2
-import it.krzeminski.githubactions.domain.RunnerType
-import it.krzeminski.githubactions.domain.Workflow
-import it.krzeminski.githubactions.domain.triggers.PullRequest
-import it.krzeminski.githubactions.domain.triggers.Push
-import it.krzeminski.githubactions.dsl.workflow
-import it.krzeminski.githubactions.yaml.writeToFile
-import java.io.File
-import java.io.IOException
+
+import io.github.typesafegithub.workflows.actions.actions.CacheV3
+import io.github.typesafegithub.workflows.actions.actions.CheckoutV3
+import io.github.typesafegithub.workflows.actions.actions.SetupJavaV3
+import io.github.typesafegithub.workflows.actions.codecov.CodecovActionV3
+import io.github.typesafegithub.workflows.domain.RunnerType
+import io.github.typesafegithub.workflows.domain.Workflow
+import io.github.typesafegithub.workflows.domain.triggers.PullRequest
+import io.github.typesafegithub.workflows.domain.triggers.Push
+import io.github.typesafegithub.workflows.dsl.workflow
+import io.github.typesafegithub.workflows.yaml.writeToFile
 import java.nio.file.Paths
 
 public val workflowMaven: Workflow = workflow(
-    name = "maven",
+    name = "Maven all in one",
     on = listOf(
         PullRequest(
             branches = listOf("master"),
@@ -34,18 +32,11 @@ public val workflowMaven: Workflow = workflow(
         runsOn = RunnerType.UbuntuLatest,
     ) {
         uses(
-            name = "Login to Docker Hub",
-            action = LoginActionV2(
-                username = "${'$'}{{ secrets.DOCKERHUB_USERNAME }}",
-                password = "${'$'}{{ secrets.DOCKERHUB_TOKEN }}",
-            ),
+            name = "Checkout",
+            action = CheckoutV3(fetchDepth = CheckoutV3.FetchDepth.Infinite)
         )
         uses(
-            name = "CheckoutV3",
-            action = CheckoutV3(),
-        )
-        uses(
-            name = "CacheV3",
+            name = "Cache - Maven Repository",
             action = CacheV3(
                 path = listOf(
                     "~/.m2/repository",
@@ -57,43 +48,53 @@ public val workflowMaven: Workflow = workflow(
             ),
         )
         uses(
-            name = "CacheV3",
+            name = "Cache - Sonar cache",
             action = CacheV3(
                 path = listOf(
-                    "/var/lib/docker/",
+                    "~/.sonar/cache",
                 ),
-                key = "factcast-docker-cache-unversioned",
+                key = "${'$'}{{ runner.os }}-sonar-${'$'}{{ hashFiles('**/pom.xml') }}",
                 restoreKeys = listOf(
-                    "factcast-docker-cache-unversioned",
+                    "${'$'}{{ runner.os }}-sonar-",
                 ),
             ),
         )
         uses(
-            name = "Set up JDK 11",
+            name = "JDK 11",
             action = SetupJavaV3(
                 distribution = SetupJavaV3.Distribution.Custom("corretto"),
                 javaVersion = "11",
             ),
         )
+
         run(
-            name = "Build with Maven",
-            command = "./mvnw -B clean verify --file pom.xml",
+            name = "Build with Maven, no testing",
+            command = "./mvnw -B clean install -DskipTests",
         )
+
         run(
-            name = "Remove partial execution reports",
-            command = "find -wholename \"**/target/jacoco-output\" -exec rm -rf {} +",
+            name = "Test - Unit",
+            command = "./mvnw -B test",
+        )
+
+        run(
+            name = "Sonar upload",
+            command = "./mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=\${{ secrets.SONAR_TOKEN }}"
+        )
+
+        run(
+            name = "Test - Integration",
+            command = "./mvnw -B verify -DskipUnitTests",
         )
         uses(
-            name = "CodecovActionV3",
+            name = "Codecov upload",
             action = CodecovActionV3(
-                token = "${'$'}{{ secrets.CODECOV_TOKEN }}",
+                token = "${'$'}{{ secrets.CODECOV_TOKEN }}"
             ),
         )
     }
-
 }
 
-if (!File(".github").isDirectory)
-    throw IOException("Run from project root")
 
 workflowMaven.writeToFile(addConsistencyCheck = false)
+

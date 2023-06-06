@@ -44,6 +44,7 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.util.MavenHelper;
 import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.CompressionCodecs;
 import org.factcast.grpc.api.ConditionalPublishRequest;
@@ -281,11 +282,9 @@ public class GrpcFactStore implements FactStore {
       Map<String, String> serverProperties;
       ProtocolVersion serverProtocolVersion;
       try {
-        Metadata metadata = new Metadata();
-        addClientIdTo(metadata);
-        @SuppressWarnings("deprecation")
         MSG_ServerConfig handshake =
-            MetadataUtils.attachHeaders(blockingStub, metadata).handshake(converter.empty());
+            MetadataUtils.attachHeaders(blockingStub, createHandshakeMetadata())
+                .handshake(converter.empty());
         ServerConfig cfg = converter.fromProto(handshake);
         serverProtocolVersion = cfg.version();
         serverProperties = cfg.properties();
@@ -301,6 +300,16 @@ public class GrpcFactStore implements FactStore {
               .map(Boolean::parseBoolean)
               .orElse(false);
     }
+  }
+
+  @NonNull
+  private Metadata createHandshakeMetadata() {
+    Metadata metadata = new Metadata();
+    addClientIdTo(metadata);
+    addClientVersionTo(
+        metadata,
+        MavenHelper.getVersion("factcast-client-grpc", GrpcFactStore.class).orElse("UNKNOWN"));
+    return metadata;
   }
 
   private static void logServerVersion(Map<String, String> serverProperties) {
@@ -373,6 +382,11 @@ public class GrpcFactStore implements FactStore {
     if (clientId != null) {
       meta.put(Headers.CLIENT_ID, clientId);
     }
+  }
+
+  @VisibleForTesting
+  void addClientVersionTo(@NonNull Metadata metadata, @NonNull String version) {
+    metadata.put(Headers.CLIENT_VERSION, version);
   }
 
   @Override

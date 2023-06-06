@@ -67,7 +67,7 @@ public interface FactCast extends ReadFactCast {
   LockedOperationBuilder lock(@NonNull List<FactSpec> scope);
 
   default LockedOperationBuilder lock(@NonNull FactSpec scope) {
-    return lock(Arrays.asList(scope));
+    return lock(Collections.singletonList(scope));
   }
 
   default LockedOperationBuilder lock(@NonNull FactSpec scope, FactSpec... tail) {

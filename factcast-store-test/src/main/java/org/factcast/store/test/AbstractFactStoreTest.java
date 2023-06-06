@@ -45,7 +45,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.springframework.test.annotation.DirtiesContext;
 
 @SuppressWarnings("deprecation")
 public abstract class AbstractFactStoreTest {
@@ -83,7 +82,6 @@ public abstract class AbstractFactStoreTest {
     assertThrows(NullPointerException.class, () -> createStoreToTest().publish(null));
   }
 
-  @DirtiesContext
   @Test
   protected void testEmptyStore() {
     Assertions.assertTimeout(
@@ -99,7 +97,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testUniquenessConstraint() {
     Assertions.assertTimeout(
@@ -120,7 +117,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testEmptyStoreFollowNonMatching() {
     Assertions.assertTimeout(
@@ -150,7 +146,6 @@ public abstract class AbstractFactStoreTest {
     return spy(new TestFactObserver());
   }
 
-  @DirtiesContext
   @Test
   protected void testEmptyStoreFollowMatching() {
     Assertions.assertTimeout(
@@ -170,7 +165,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testEmptyStoreEphemeral() {
     Assertions.assertTimeout(
@@ -204,7 +198,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testEmptyStoreEphemeralWithCancel() {
     Assertions.assertTimeout(
@@ -247,7 +240,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testEmptyStoreFollowWithCancel() {
     Assertions.assertTimeout(
@@ -289,7 +281,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testEmptyStoreCatchupMatching() {
     Assertions.assertTimeout(
@@ -308,7 +299,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testEmptyStoreFollowMatchingDelayed() {
     Assertions.assertTimeout(
@@ -332,7 +322,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testEmptyStoreFollowNonMatchingDelayed() {
     Assertions.assertTimeout(
@@ -355,7 +344,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testRequiredMetaAttribute() {
     Assertions.assertTimeout(
@@ -385,7 +373,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testScriptedWithPayloadFiltering() {
     Assertions.assertTimeout(
@@ -416,7 +403,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testScriptedWithHeaderFiltering() {
     Assertions.assertTimeout(
@@ -447,7 +433,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testScriptedFilteringMatchAll() {
     Assertions.assertTimeout(
@@ -477,7 +462,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testScriptedFilteringMatchNone() {
     Assertions.assertTimeout(
@@ -506,7 +490,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testMatchBySingleAggId() {
     Assertions.assertTimeout(
@@ -531,7 +514,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testMatchByOneOfAggId() {
     Assertions.assertTimeout(
@@ -565,7 +547,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testMatchBySecondAggId() {
     Assertions.assertTimeout(
@@ -593,7 +574,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testDelayed() {
     Assertions.assertTimeout(
@@ -619,7 +599,6 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  @DirtiesContext
   @Test
   protected void testSerialOf() {
     Assertions.assertTimeout(
@@ -652,7 +631,7 @@ public abstract class AbstractFactStoreTest {
 
   // TODO: implement alternative
   /*
-   * @DirtiesContext
+   *
    *
    * @Test protected void testSerialHeader() {
    * Assertions.assertTimeout(Duration.ofMillis(30000), () -> { UUID id =

@@ -19,7 +19,7 @@ import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.util.concurrent.*;
+import java.util.concurrent.Executors;
 import javax.sql.DataSource;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +36,7 @@ import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.catchup.fetching.PgFetchingCatchUpFactory;
 import org.factcast.store.internal.catchup.tmppaged.PgTmpPagedCatchUpFactory;
 import org.factcast.store.internal.check.IndexCheck;
-import org.factcast.store.internal.filter.PgBlacklist;
+import org.factcast.store.internal.filter.blacklist.*;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.listen.PgConnectionTester;
 import org.factcast.store.internal.listen.PgListener;
@@ -48,11 +48,18 @@ import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.snapcache.PgSnapshotCache;
 import org.factcast.store.internal.snapcache.PgSnapshotCacheConfiguration;
 import org.factcast.store.internal.tail.PGTailIndexingConfiguration;
+import org.factcast.store.registry.PgSchemaStoreChangeListener;
+import org.factcast.store.registry.SchemaRegistry;
 import org.factcast.store.registry.SchemaRegistryConfiguration;
+import org.factcast.store.registry.transformation.cache.PgTransformationStoreChangeListener;
+import org.factcast.store.registry.transformation.cache.TransformationCache;
+import org.factcast.store.registry.transformation.chains.TransformationChains;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.retry.annotation.EnableRetry;
@@ -135,10 +142,11 @@ public class PgFactStoreInternalConfiguration {
       EventBus eventBus,
       PgFactIdToSerialMapper pgFactIdToSerialMapper,
       PgLatestSerialFetcher pgLatestSerialFetcher,
+      StoreConfigurationProperties props,
       PgCatchupFactory pgCatchupFactory,
       FastForwardTarget target,
       PgMetrics metrics,
-      PgBlacklist blacklist,
+      Blacklist blacklist,
       JSEngineFactory ef,
       FactTransformerService transformerService) {
     return new PgSubscriptionFactory(
@@ -146,6 +154,7 @@ public class PgFactStoreInternalConfiguration {
         eventBus,
         pgFactIdToSerialMapper,
         pgLatestSerialFetcher,
+        props,
         pgCatchupFactory,
         target,
         metrics,
@@ -224,12 +233,43 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
-  public PgBlacklist.Fetcher blacklistFetcher(JdbcTemplate jdbc) {
-    return new PgBlacklist.Fetcher(jdbc);
+  public Blacklist blacklist() {
+    return new Blacklist();
   }
 
   @Bean
-  public PgBlacklist blacklist(EventBus bus, PgBlacklist.Fetcher fetcher) {
-    return new PgBlacklist(bus, fetcher);
+  @ConditionalOnProperty(value = "factcast.type", matchIfMissing = true)
+  public BlacklistDataProvider blacklistProvider(
+      ResourceLoader resourceLoader,
+      Blacklist blacklist,
+      EventBus eventBus,
+      JdbcTemplate jdbc,
+      BlacklistConfigurationProperties blacklistConfiguration) {
+    switch (blacklistConfiguration.getType()) {
+      case POSTGRES:
+        return new PgBlacklistDataProvider(eventBus, jdbc, blacklist);
+      case RESOURCE:
+        return new ResourceBasedBlacklistDataProvider(
+            resourceLoader, blacklistConfiguration, blacklist);
+      default:
+        log.warn(
+            "No Provider found for blacklist type {}. Using default postgres provider.",
+            blacklistConfiguration.getType());
+        return new PgBlacklistDataProvider(eventBus, jdbc, blacklist);
+    }
+  }
+
+  @Bean
+  public PgSchemaStoreChangeListener pgSchemaStoreChangeListener(
+      EventBus bus, SchemaRegistry registry) {
+    return new PgSchemaStoreChangeListener(bus, registry);
+  }
+
+  @Bean
+  public PgTransformationStoreChangeListener pgTransformationStoreChangeListener(
+      EventBus bus,
+      TransformationCache transformationCache,
+      TransformationChains transformationChains) {
+    return new PgTransformationStoreChangeListener(bus, transformationCache, transformationChains);
   }
 }

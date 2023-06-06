@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.6.2-SNAPSHOT</version>
+    <version>0.6.7-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-snapshotcache-redisson</artifactId>
@@ -35,11 +35,22 @@
       <groupId>org.factcast</groupId>
       <artifactId>factcast-factus-redis</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-test</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <version>${spring-boot.version}</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot</artifactId>
+      <version>${spring-boot.version}</version>
     </dependency>
     <dependency>
       <groupId>org.testcontainers</groupId>
@@ -57,6 +68,12 @@
       <groupId>org.redisson</groupId>
       <artifactId>redisson-spring-boot-starter</artifactId>
       <version>${redisson-spring-boot-starter.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.jpountz.lz4</groupId>
+      <artifactId>lz4</artifactId>
+      <version>1.3.0</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

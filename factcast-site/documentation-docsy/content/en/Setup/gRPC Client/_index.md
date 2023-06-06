@@ -12,7 +12,6 @@ In order to talk to a - not in process - factstore (which is the usual setup for
 
 If you use Spring take the easy path in your Spring Boot Application by adding the appropriate dependencies to your application:
 
-
 ```xml
    <dependency>
      <groupId>org.factcast</groupId>
@@ -30,10 +29,8 @@ Note that factcast-client-grpc is built on top of (https://github.com/yidongnan/
 
 At the time of writing, the most relevant are:
 
-|Name|Example Value|required|
-|:--|:--|:--|
-|grpc.client.factstore.address| static://localhost:9090 | yes |
-|grpc.client.factstore.negotiationType| PLAINTEXT | no |
-|grpc.client.factstore.enable-keep-alive| true | no |
-
-
+| Name                                    | Example Value           | required |
+| :-------------------------------------- | :---------------------- | :------- |
+| grpc.client.factstore.address           | static://localhost:9090 | yes      |
+| grpc.client.factstore.negotiationType   | PLAINTEXT               | no       |
+| grpc.client.factstore.enable-keep-alive | true                    | no       |

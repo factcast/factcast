@@ -6,22 +6,18 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.6.2-SNAPSHOT</version>
+    <version>0.6.7-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-site</artifactId>
   <properties>
+    <sonar.skip>true</sonar.skip>
     <maven.deploy.skip>true</maven.deploy.skip>
   </properties>
   <dependencies>
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-schema-registry-cli</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.factcast</groupId>
-      <artifactId>factcast-hugo</artifactId>
       <version>${project.version}</version>
     </dependency>
   </dependencies>
