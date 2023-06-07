@@ -14,5 +14,5 @@ docker buildx build \
   --tag docker.io/factcast/factcast:$fcversion \
   --push \
   --file=./target/docker/factcast/factcast/tmp/docker-build/Dockerfile \
-  /home/uwe/idea/factcast/factcast-docker/target/docker/factcast/factcast/tmp/docker-build
+  ./target/docker/factcast/factcast/tmp/docker-build
 
