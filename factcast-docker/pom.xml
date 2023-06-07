@@ -91,7 +91,7 @@
       <plugin>
         <groupId>io.fabric8</groupId>
         <artifactId>docker-maven-plugin</artifactId>
-        <version>0.41.0</version>
+        <version>0.43.0</version>
         <executions>
           <execution>
             <id>default</id>
@@ -104,12 +104,19 @@
         <configuration>
           <images>
             <image>
+              <registry>docker.io</registry>
               <name>factcast/factcast</name>
               <build>
                 <dockerFileDir>${project.basedir}</dockerFileDir>
                 <tags>
                   <tag>latest</tag>
                 </tags>
+                <buildx>
+                  <platforms>
+                    <platform>linux/amd64</platform>
+                    <platform>linux/arm64</platform>
+                  </platforms>
+                </buildx>
               </build>
             </image>
           </images>
@@ -136,13 +143,15 @@
                 <id>default</id>
                 <goals>
                   <goal>build</goal>
-                  <goal>push</goal>
+                  <!-- pushing is done from the shell directly, because auth does
+                    not work. <goal>push</goal> -->
                 </goals>
               </execution>
             </executions>
             <configuration>
               <images>
                 <image>
+                  <registry>docker.io</registry>
                   <name>factcast/factcast</name>
                   <build>
                     <dockerFileDir>${project.basedir}</dockerFileDir>
@@ -150,6 +159,12 @@
                       <tag>latest</tag>
                       <tag>${project.version}</tag>
                     </tags>
+                    <buildx>
+                      <platforms>
+                        <platform>linux/amd64</platform>
+                        <platform>linux/arm64</platform>
+                      </platforms>
+                    </buildx>
                   </build>
                 </image>
               </images>
