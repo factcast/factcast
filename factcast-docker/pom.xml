@@ -143,7 +143,8 @@
                 <id>default</id>
                 <goals>
                   <goal>build</goal>
-                  <goal>push</goal>
+                  <!-- pushing is done from the shell directly, because auth does
+                    not work. <goal>push</goal> -->
                 </goals>
               </execution>
             </executions>
