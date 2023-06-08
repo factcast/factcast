@@ -24,6 +24,7 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.event.DefaultEventSerializer;
 import org.factcast.factus.event.EventSerializer;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -31,7 +32,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
-@Configuration
+@AutoConfiguration
 @ConditionalOnClass(FactCast.class)
 @Generated
 @SuppressWarnings("unused")
