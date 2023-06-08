@@ -18,13 +18,14 @@ package org.factcast.spring.boot.autoconfigure.store.rds;
 import lombok.Generated;
 import org.factcast.store.rds.RdsConfiguration;
 import org.factcast.store.rds.RdsDataSourceFactoryBeanPostProcessor;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 @Generated
-@Configuration
+@AutoConfiguration
 @ConditionalOnClass(RdsDataSourceFactoryBeanPostProcessor.class)
 @ConditionalOnMissingBean(RdsDataSourceFactoryBeanPostProcessor.class)
 @Import(RdsConfiguration.class)

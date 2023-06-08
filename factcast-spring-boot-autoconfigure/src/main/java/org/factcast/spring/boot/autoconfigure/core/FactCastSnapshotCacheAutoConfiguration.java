@@ -20,6 +20,7 @@ import org.factcast.core.FactCast;
 import org.factcast.core.snap.FactCastSnapshotCache;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.store.FactStore;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -27,7 +28,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 
-@Configuration
+@AutoConfiguration
 @ConditionalOnClass(FactCast.class)
 @Generated
 @AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
