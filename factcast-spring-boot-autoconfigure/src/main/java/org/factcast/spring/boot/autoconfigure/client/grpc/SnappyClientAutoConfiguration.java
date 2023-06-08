@@ -16,11 +16,11 @@
 package org.factcast.spring.boot.autoconfigure.client.grpc;
 
 import org.factcast.client.grpc.codec.SnappyGrpcClientCodec;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.xerial.snappy.SnappyInputStream;
 import org.xerial.snappy.SnappyOutputStream;
 
@@ -29,7 +29,7 @@ import org.xerial.snappy.SnappyOutputStream;
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
-@Configuration
+@AutoConfiguration
 @ConditionalOnClass({
   SnappyInputStream.class,
   SnappyOutputStream.class,
