@@ -13,7 +13,7 @@ BEGIN
                    CONCAT('{',
                           '"_ser":', NEW.ser, ',',
                           '"_ts":',
-                          TRUNC(EXTRACT(EPOCH FROM now()::timestamptz(3)) * 1000), -- newer postgres versions return 6 decimals from EXTRACT, we have to truncate 3 decimals here
+                          TRUNC(EXTRACT(EPOCH FROM now()::timestamptz(3)) * 1000), -- newer postgres versions return numeric instead of float8 from extract, so we have to truncate remaining decimals
                           '}')::jsonb,
                    true)
     INTO NEW.header;
