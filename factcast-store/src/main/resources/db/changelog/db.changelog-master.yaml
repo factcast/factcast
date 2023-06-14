@@ -283,3 +283,21 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: true
             stripComments: true
+
+  - changeSet:
+      id: issue1483_pg_14_15_compat
+      runInTransaction: false
+      author: otbe
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue1483/updateNotifyFactInsert_handle_null_values.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue1483/augmentation_trigger_truncate_ts.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true

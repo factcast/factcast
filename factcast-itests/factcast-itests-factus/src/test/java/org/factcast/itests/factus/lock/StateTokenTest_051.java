@@ -29,7 +29,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 
 @Slf4j
-@FactcastTestConfig(factcastVersion = "0.5.1")
+@FactcastTestConfig(factcastVersion = "0.5.1", postgresVersion = "11.5")
 @SpringBootTest
 @ContextConfiguration(classes = TestFactusApplication.class)
 public class StateTokenTest_051 extends AbstractFactCastIntegrationTest {
