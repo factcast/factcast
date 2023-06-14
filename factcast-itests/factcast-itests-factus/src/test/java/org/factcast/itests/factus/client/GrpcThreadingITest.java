@@ -55,7 +55,7 @@ public class GrpcThreadingITest extends AbstractFactCastIntegrationTest {
   @Autowired Factus factus;
 
   public static PostgreSQLContainer postgreSQLContainer =
-      new PostgreSQLContainer("postgres:11.5").withPassword("sa").withUsername("sa");
+      new PostgreSQLContainer("postgres:15").withPassword("sa").withUsername("sa");
 
   static {
     postgreSQLContainer.start();

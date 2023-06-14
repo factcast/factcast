@@ -50,7 +50,7 @@ public class PgTestConfiguration {
     String url = System.getenv("pg_url");
     if (url == null) {
       log.info("Trying to start postgres testcontainer");
-      PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:11.5");
+      PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15");
       postgres.start();
       url = postgres.getJdbcUrl();
       System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());

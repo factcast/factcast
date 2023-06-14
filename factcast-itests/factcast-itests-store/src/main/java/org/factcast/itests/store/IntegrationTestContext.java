@@ -23,7 +23,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 public class IntegrationTestContext {
   public IntegrationTestContext() {
     log.info("Trying to start postgres testcontainer");
-    PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:11.5");
+    PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15");
     postgres.start();
     String url = postgres.getJdbcUrl();
     System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
