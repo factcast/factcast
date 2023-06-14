@@ -38,7 +38,7 @@ public @interface FactcastTestConfig {
     String configDir;
 
     static final String FACTCAST_VERSION = "latest";
-    static final String POSTGRES_VERSION = "11.5";
+    static final String POSTGRES_VERSION = "15";
     static final String CONFIG_DIR = "./config";
 
     static Config defaults() {
