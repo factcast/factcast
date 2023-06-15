@@ -63,7 +63,6 @@ jobs:
         postgresVersion:
         - '11'
         - '12'
-        - '15'
     steps:
     - id: 'step-0'
       name: 'Checkout'
