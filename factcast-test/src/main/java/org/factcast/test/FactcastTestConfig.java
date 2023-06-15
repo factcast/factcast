@@ -46,10 +46,14 @@ public @interface FactcastTestConfig {
     }
 
     static Config from(@NonNull FactcastTestConfig e) {
-      return defaults()
-          .withConfigDir(e.configDir())
-          .withFactcastVersion(e.factcastVersion())
-          .withPostgresVersion(e.postgresVersion());
+      final Config config =
+          defaults().withConfigDir(e.configDir()).withFactcastVersion(e.factcastVersion());
+
+      if (!e.postgresVersion().isEmpty()) {
+        return config.withPostgresVersion(e.postgresVersion());
+      }
+
+      return config;
     }
   }
 }
