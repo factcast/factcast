@@ -31,9 +31,6 @@ public val workflowMaven: Workflow = workflow(
     job(
         id = "build",
         runsOn = RunnerType.UbuntuLatest,
-        strategyMatrix = mapOf(
-            "postgresVersion" to listOf("11", "12", "15"),
-        ),
     ) {
         uses(
             name = "Checkout",
@@ -88,13 +85,51 @@ public val workflowMaven: Workflow = workflow(
 
         run(
             name = "Test - Integration",
-            command = "./mvnw -B -Dpostgres.version=${expr("matrix.postgresVersion")} verify -DskipUnitTests",
+            command = "./mvnw -B verify -DskipUnitTests",
         )
         uses(
             name = "Codecov upload",
             action = CodecovActionV3(
                 token = "${'$'}{{ secrets.CODECOV_TOKEN }}"
             ),
+        )
+    }
+
+    job(
+        id = "integration",
+        runsOn = RunnerType.UbuntuLatest,
+        strategyMatrix = mapOf(
+            "postgresVersion" to listOf("11", "12", "15"),
+        ),
+    ) {
+        uses(
+            name = "Checkout",
+            action = CheckoutV3(fetchDepth = CheckoutV3.FetchDepth.Infinite)
+        )
+        uses(
+            name = "Cache - Maven Repository",
+            action = CacheV3(
+                path = listOf(
+                    "~/.m2/repository",
+                ),
+                key = "${'$'}{{ runner.os }}-maven-${'$'}{{ hashFiles('**/pom.xml') }}",
+                restoreKeys = listOf(
+                    "${'$'}{{ runner.os }}-maven-",
+                ),
+            ),
+        )
+
+        uses(
+            name = "JDK 11",
+            action = SetupJavaV3(
+                distribution = SetupJavaV3.Distribution.Custom("corretto"),
+                javaVersion = "11",
+            ),
+        )
+
+        run(
+            name = "Test - Integration",
+            command = "./mvnw -B -Dpostgres.version=${expr("matrix.postgresVersion")} verify -DskipUnitTests",
         )
     }
 }
