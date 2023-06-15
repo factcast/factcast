@@ -13,6 +13,11 @@ on:
 jobs:
   build:
     runs-on: 'ubuntu-latest'
+    strategy:
+      matrix:
+        postgresVersion:
+        - '11'
+        - '12'
     steps:
     - id: 'step-0'
       name: 'Checkout'
@@ -50,7 +55,7 @@ jobs:
       run: './mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }}'
     - id: 'step-7'
       name: 'Test - Integration'
-      run: './mvnw -B verify -DskipUnitTests'
+      run: './mvnw -B -Dpostgres.version=${{ matrix.postgresVersion }} verify -DskipUnitTests'
     - id: 'step-8'
       name: 'Codecov upload'
       uses: 'codecov/codecov-action@v3'
