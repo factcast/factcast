@@ -113,6 +113,7 @@
     <shedlock.version>4.44.0</shedlock.version>
     <byte-buddy.version>1.14.5</byte-buddy.version>
     <skipUnitTests>false</skipUnitTests>
+    <postgres.version>11.5</postgres.version>
   </properties>
   <dependencies>
     <dependency>
@@ -417,6 +418,9 @@
           </includes>
           <!--suppress UnresolvedMavenProperty -->
           <argLine>${failsafe.jacoco.args}</argLine>
+          <systemPropertyVariables>
+            <postgres.version>${postgres.version}</postgres.version>
+          </systemPropertyVariables>
         </configuration>
         <executions>
           <execution>
