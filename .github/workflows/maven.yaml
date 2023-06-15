@@ -13,12 +13,6 @@ on:
 jobs:
   build:
     runs-on: 'ubuntu-latest'
-    strategy:
-      matrix:
-        postgresVersion:
-        - '11'
-        - '12'
-        - '15'
     steps:
     - id: 'step-0'
       name: 'Checkout'
@@ -56,9 +50,39 @@ jobs:
       run: './mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }}'
     - id: 'step-7'
       name: 'Test - Integration'
-      run: './mvnw -B -Dpostgres.version=${{ matrix.postgresVersion }} verify -DskipUnitTests'
+      run: './mvnw -B verify -DskipUnitTests'
     - id: 'step-8'
       name: 'Codecov upload'
       uses: 'codecov/codecov-action@v3'
       with:
         token: '${{ secrets.CODECOV_TOKEN }}'
+  integration:
+    runs-on: 'ubuntu-latest'
+    strategy:
+      matrix:
+        postgresVersion:
+        - '11'
+        - '12'
+        - '15'
+    steps:
+    - id: 'step-0'
+      name: 'Checkout'
+      uses: 'actions/checkout@v3'
+      with:
+        fetch-depth: '0'
+    - id: 'step-1'
+      name: 'Cache - Maven Repository'
+      uses: 'actions/cache@v3'
+      with:
+        path: '~/.m2/repository'
+        key: '${{ runner.os }}-maven-${{ hashFiles(''**/pom.xml'') }}'
+        restore-keys: '${{ runner.os }}-maven-'
+    - id: 'step-2'
+      name: 'JDK 11'
+      uses: 'actions/setup-java@v3'
+      with:
+        java-version: '11'
+        distribution: 'corretto'
+    - id: 'step-3'
+      name: 'Test - Integration'
+      run: './mvnw -B -Dpostgres.version=${{ matrix.postgresVersion }} verify -DskipUnitTests'
