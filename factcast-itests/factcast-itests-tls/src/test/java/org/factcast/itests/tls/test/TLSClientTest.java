@@ -49,7 +49,7 @@ public class TLSClientTest {
 
   @Container
   static final PostgreSQLContainer _database_container =
-      new PostgreSQLContainer<>("postgres:15")
+      new PostgreSQLContainer<>("postgres:" + System.getProperty("postgres.version", "11.5"))
           .withDatabaseName("fc")
           .withUsername("fc")
           .withPassword("fc")
