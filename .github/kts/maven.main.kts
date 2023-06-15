@@ -11,6 +11,7 @@ import io.github.typesafegithub.workflows.domain.RunnerType
 import io.github.typesafegithub.workflows.domain.Workflow
 import io.github.typesafegithub.workflows.domain.triggers.PullRequest
 import io.github.typesafegithub.workflows.domain.triggers.Push
+import io.github.typesafegithub.workflows.dsl.expressions.expr
 import io.github.typesafegithub.workflows.dsl.workflow
 import io.github.typesafegithub.workflows.yaml.writeToFile
 import java.nio.file.Paths
@@ -91,6 +92,44 @@ public val workflowMaven: Workflow = workflow(
             action = CodecovActionV3(
                 token = "${'$'}{{ secrets.CODECOV_TOKEN }}"
             ),
+        )
+    }
+
+    job(
+        id = "postgres-compatibility",
+        runsOn = RunnerType.UbuntuLatest,
+        strategyMatrix = mapOf(
+            "postgresVersion" to listOf("11"),
+        ),
+    ) {
+        uses(
+            name = "Checkout",
+            action = CheckoutV3(fetchDepth = CheckoutV3.FetchDepth.Infinite)
+        )
+        uses(
+            name = "Cache - Maven Repository",
+            action = CacheV3(
+                path = listOf(
+                    "~/.m2/repository",
+                ),
+                key = "${'$'}{{ runner.os }}-maven-${'$'}{{ hashFiles('**/pom.xml') }}",
+                restoreKeys = listOf(
+                    "${'$'}{{ runner.os }}-maven-",
+                ),
+            ),
+        )
+
+        uses(
+            name = "JDK 11",
+            action = SetupJavaV3(
+                distribution = SetupJavaV3.Distribution.Custom("corretto"),
+                javaVersion = "11",
+            ),
+        )
+
+        run(
+            name = "Test - Integration",
+            command = "./mvnw -B -Dpostgres.version=${expr("matrix.postgresVersion")} verify -DskipUnitTests",
         )
     }
 }
