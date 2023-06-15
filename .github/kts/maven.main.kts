@@ -32,7 +32,7 @@ public val workflowMaven: Workflow = workflow(
         id = "build",
         runsOn = RunnerType.UbuntuLatest,
         strategyMatrix = mapOf(
-            "postgresVersion" to listOf("11", "12"),
+            "postgresVersion" to listOf("11", "12", "15"),
         ),
     ) {
         uses(
