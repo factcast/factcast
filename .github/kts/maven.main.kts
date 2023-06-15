@@ -96,7 +96,7 @@ public val workflowMaven: Workflow = workflow(
     }
 
     job(
-        id = "integration",
+        id = "postgres-compatibility",
         runsOn = RunnerType.UbuntuLatest,
         strategyMatrix = mapOf(
             "postgresVersion" to listOf("11", "12", "15"),
