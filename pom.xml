@@ -417,7 +417,7 @@
             <include>*</include>
           </includes>
           <!--suppress UnresolvedMavenProperty -->
-          <argLine>${failsafe.jacoco.args} -D</argLine>
+          <argLine>${failsafe.jacoco.args}</argLine>
           <systemPropertyVariables>
             <postgres.version>${postgres.version}</postgres.version>
           </systemPropertyVariables>
