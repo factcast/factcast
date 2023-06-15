@@ -59,7 +59,7 @@ databaseChangeLog:
             encoding: utf8
             path: factcast/issue1161/jsonb_col_types.sql
             relativeToChangelogFile: true
-            splitStatements: false
+            splitStatements: true
             stripComments: true
   - changeSet:
       id: unique_index_using_uuids_to_reduce_space_requirements_gracefully
@@ -70,7 +70,7 @@ databaseChangeLog:
             encoding: utf8
             path: factcast/issue1358/unique_index_using_uuids.sql
             relativeToChangelogFile: true
-            splitStatements: false
+            splitStatements: true
             stripComments: true
   - changeSet:
       id: transformationcache_last_access_index
@@ -81,7 +81,7 @@ databaseChangeLog:
             encoding: utf8
             path: factcast/issue1354/transformationcache_last_access_index.sql
             relativeToChangelogFile: true
-            splitStatements: false
+            splitStatements: true
             stripComments: true
   - changeSet:
       id: snapshotcache_last_access_index
@@ -92,12 +92,11 @@ databaseChangeLog:
             encoding: utf8
             path: factcast/issue1354/snapshotcache_last_access_index.sql
             relativeToChangelogFile: true
-            splitStatements: false
+            splitStatements: true
             stripComments: true
   - include:
       file: factcast/issue1435/stats_index.sql
       relativeToChangelogFile: true
-
 
   - changeSet:
       id: drop_obsolete_index
@@ -108,7 +107,7 @@ databaseChangeLog:
             encoding: utf8
             path: factcast/issue1444/drop_obsolete_index.sql
             relativeToChangelogFile: true
-            splitStatements: false
+            splitStatements: true
             stripComments: true
 
   - changeSet:
@@ -148,7 +147,7 @@ databaseChangeLog:
   #            encoding: utf8
   #            path: factcast/issue1696/gin_fast_update.sql
   #            relativeToChangelogFile: true
-  #            splitStatements: false
+  #            splitStatements: true
   #            stripComments: true
 
   - changeSet:
@@ -174,9 +173,8 @@ databaseChangeLog:
             encoding: utf8
             path: factcast/issue1865-2/fix_index_for_enum2.sql
             relativeToChangelogFile: true
-            splitStatements: false
+            splitStatements: true
             stripComments: true
-
 
   - changeSet:
       id: count_estimate
@@ -190,7 +188,6 @@ databaseChangeLog:
             splitStatements: false
             stripComments: true
 
-
   - changeSet:
       id: issue2019
       runInTransaction: false
@@ -200,7 +197,7 @@ databaseChangeLog:
             encoding: utf8
             path: factcast/issue2019/issue2019.sql
             relativeToChangelogFile: true
-            splitStatements: false
+            splitStatements: true
             stripComments: true
 
   - changeSet:
@@ -236,7 +233,7 @@ databaseChangeLog:
             encoding: utf8
             path: factcast/issue2131/toast_transformationcache.sql
             relativeToChangelogFile: true
-            splitStatements: false
+            splitStatements: true
             stripComments: true
 
   - changeSet:
@@ -248,7 +245,7 @@ databaseChangeLog:
             encoding: utf8
             path: factcast/issue2131/toast_snapshotcache.sql
             relativeToChangelogFile: true
-            splitStatements: false
+            splitStatements: true
             stripComments: true
 
   - changeSet:
@@ -275,7 +272,6 @@ databaseChangeLog:
             splitStatements: false
             stripComments: true
 
-
   - changeSet:
       id: issue2180_add_blacklist_column
       runInTransaction: false
@@ -284,6 +280,24 @@ databaseChangeLog:
         - sqlFile:
             encoding: utf8
             path: factcast/issue2180/blacklist-reason.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: true
+
+  - changeSet:
+      id: issue1483_pg_14_15_compat
+      runInTransaction: false
+      author: otbe
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue1483/updateNotifyFactInsert_handle_null_values.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue1483/augmentation_trigger_truncate_ts.sql
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true

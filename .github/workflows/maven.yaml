@@ -62,6 +62,10 @@ jobs:
       matrix:
         postgresVersion:
         - '11'
+        - '12'
+        - '13'
+        - '14'
+        - '15'
     steps:
     - id: 'step-0'
       name: 'Checkout'
