@@ -99,7 +99,7 @@ public val workflowMaven: Workflow = workflow(
         id = "postgres-compatibility",
         runsOn = RunnerType.UbuntuLatest,
         strategyMatrix = mapOf(
-            "postgresVersion" to listOf("11"),
+            "postgresVersion" to listOf("11", "12", "13", "14", "15"),
         ),
     ) {
         uses(
