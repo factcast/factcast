@@ -43,8 +43,7 @@ public class TLSServerWithPostgresContainer {
 
   private static void startPostgresContainer() {
     log.info("Trying to start postgres testcontainer");
-    PostgreSQLContainer postgres =
-        new PostgreSQLContainer("postgres:" + System.getProperty("postgres.version", "11.5"));
+    PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:11.4");
     postgres.start();
     String url = postgres.getJdbcUrl();
     System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
