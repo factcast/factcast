@@ -17,15 +17,25 @@ package org.factcast.spring.boot.autoconfigure.server.grpc;
 
 import lombok.Generated;
 import net.devh.boot.grpc.server.autoconfigure.*;
+import net.devh.boot.grpc.server.security.authentication.GrpcAuthenticationReader;
+import net.devh.boot.grpc.server.security.check.GrpcSecurityMetadataSource;
+import net.devh.boot.grpc.server.security.interceptors.AuthenticatingServerInterceptor;
+import net.devh.boot.grpc.server.security.interceptors.AuthorizationCheckingServerInterceptor;
+import net.devh.boot.grpc.server.security.interceptors.DefaultAuthenticatingServerInterceptor;
+import net.devh.boot.grpc.server.security.interceptors.ExceptionTranslatingServerInterceptor;
 import org.factcast.server.grpc.FactCastGrpcServerConfiguration;
 import org.factcast.server.grpc.FactCastSecurityConfiguration;
 import org.factcast.server.grpc.FactStoreGrpcService;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.access.AccessDecisionManager;
+import org.springframework.security.authentication.AuthenticationManager;
 
 @Generated
 @AutoConfiguration
@@ -41,10 +51,48 @@ import org.springframework.context.annotation.Import;
   GrpcServerAutoConfiguration.class,
   GrpcServerFactoryAutoConfiguration.class,
   GrpcServerMetricAutoConfiguration.class,
-  GrpcServerSecurityAutoConfiguration.class,
   GrpcServerTraceAutoConfiguration.class
 })
 @ConditionalOnClass(FactStoreGrpcService.class)
 @ConditionalOnMissingBean(FactStoreGrpcService.class)
 @AutoConfigureBefore(GrpcServerAutoConfiguration.class)
-public class FactCastGrpcServerAutoConfiguration {}
+public class FactCastGrpcServerAutoConfiguration {
+  @Bean
+  @ConditionalOnMissingBean
+  public ExceptionTranslatingServerInterceptor exceptionTranslatingServerInterceptor() {
+    return new ExceptionTranslatingServerInterceptor();
+  }
+
+  /**
+   * The security interceptor that handles the authentication of requests.
+   *
+   * @param authenticationManager The authentication manager used to verify the credentials.
+   * @param authenticationReader The authentication reader used to extract the credentials from the
+   *     call.
+   * @return The authenticatingServerInterceptor bean.
+   */
+  @Bean
+  @ConditionalOnMissingBean(AuthenticatingServerInterceptor.class)
+  public DefaultAuthenticatingServerInterceptor authenticatingServerInterceptor(
+      final AuthenticationManager authenticationManager,
+      final GrpcAuthenticationReader authenticationReader) {
+    return new DefaultAuthenticatingServerInterceptor(authenticationManager, authenticationReader);
+  }
+
+  /**
+   * The security interceptor that handles the authorization of requests.
+   *
+   * @param accessDecisionManager The access decision manager used to check the requesting user.
+   * @param securityMetadataSource The source for the security metadata (access constraints).
+   * @return The authorizationCheckingServerInterceptor bean.
+   */
+  @Bean
+  @ConditionalOnMissingBean
+  @ConditionalOnBean({AccessDecisionManager.class, GrpcSecurityMetadataSource.class})
+  public AuthorizationCheckingServerInterceptor authorizationCheckingServerInterceptor(
+      final AccessDecisionManager accessDecisionManager,
+      final GrpcSecurityMetadataSource securityMetadataSource) {
+    return new AuthorizationCheckingServerInterceptor(
+        accessDecisionManager, securityMetadataSource);
+  }
+}

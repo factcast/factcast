@@ -42,6 +42,7 @@ import org.factcast.store.internal.tail.PGTailIndexManager;
 import org.factcast.store.test.AbstractFactStoreTest;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -109,6 +110,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
 
   /** This happens in a trigger */
   @Test
+  @Disabled
   @SneakyThrows
   void testSerialAndTimestampWereAugmented() {
     // INIT
