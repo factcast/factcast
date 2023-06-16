@@ -54,6 +54,8 @@ databaseChangeLog:
       id: transformationcache_and_schemastore_col_to_jsonb
       runInTransaction: false
       author: uweschaefer
+      validCheckSum:
+        - "8:442b3fa2d9a7c49c8e0a021690d6a7fa"
       changes:
         - sqlFile:
             encoding: utf8
@@ -65,6 +67,8 @@ databaseChangeLog:
       id: unique_index_using_uuids_to_reduce_space_requirements_gracefully
       runInTransaction: false
       author: uweschaefer
+      validCheckSum:
+        - "8:20a86b874a5cb2e57df7fa4a6477b318"
       changes:
         - sqlFile:
             encoding: utf8
@@ -76,6 +80,8 @@ databaseChangeLog:
       id: transformationcache_last_access_index
       runInTransaction: false
       author: uweschaefer
+      validCheckSum:
+        - "8:650fcc50dc7eb4d713d40a1d58d15cbc"
       changes:
         - sqlFile:
             encoding: utf8
@@ -87,6 +93,8 @@ databaseChangeLog:
       id: snapshotcache_last_access_index
       runInTransaction: false
       author: uweschaefer
+      validCheckSum:
+        - "8:681e61e199b0589da1423486e7e3ab16"
       changes:
         - sqlFile:
             encoding: utf8
@@ -102,6 +110,8 @@ databaseChangeLog:
       id: drop_obsolete_index
       runInTransaction: false
       author: uweschaefer
+      validCheckSum:
+        - "8:f2f69728e926b1d00280d2be96587b98"
       changes:
         - sqlFile:
             encoding: utf8
@@ -168,6 +178,8 @@ databaseChangeLog:
       id: fix_index_for_enum2
       runInTransaction: false
       author: bresciamattia
+      validCheckSum:
+        - "8:af79626faff3a47739e47b03c7e7aa53"
       changes:
         - sqlFile:
             encoding: utf8
@@ -192,6 +204,8 @@ databaseChangeLog:
       id: issue2019
       runInTransaction: false
       author: uweschaefer
+      validCheckSum:
+        - "8:e3f3407eb5bcb7f2987934bab9254d70"
       changes:
         - sqlFile:
             encoding: utf8
@@ -228,6 +242,8 @@ databaseChangeLog:
       id: issue2131_toast_trans
       runInTransaction: false
       author: uweschaefer
+      validCheckSum:
+        - "8:3e3857499e5a3d4960df281fedbcaaac"
       changes:
         - sqlFile:
             encoding: utf8
@@ -240,6 +256,8 @@ databaseChangeLog:
       id: issue2131_toast_snap
       runInTransaction: false
       author: uweschaefer
+      validCheckSum:
+        - "8:e794505dc78d3fae7bd83c73254bddbb"
       changes:
         - sqlFile:
             encoding: utf8
@@ -276,6 +294,8 @@ databaseChangeLog:
       id: issue2180_add_blacklist_column
       runInTransaction: false
       author: uweschaefer
+      validCheckSum:
+        - "8:ebc1b459e625e4afc7c918ac11ee2c2d"
       changes:
         - sqlFile:
             encoding: utf8
