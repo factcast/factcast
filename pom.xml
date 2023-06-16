@@ -45,7 +45,7 @@
     <module>factcast-schema-registry-maven-plugin</module>
     <module>factcast-snapshotcache-redisson</module>
   </modules>
-  <url>https://github.com/uweschaefer/factcast/tree/master/</url>
+  <url>https://github.com/factcast/factcast/tree/master/</url>
   <licenses>
     <license>
       <name>The Apache Software License, Version 2.0</name>
