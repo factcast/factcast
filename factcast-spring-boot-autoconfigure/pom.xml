@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.6.8-SNAPSHOT</version>
+    <version>0.6.7.1</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-spring-boot-autoconfigure</artifactId>
