@@ -23,7 +23,6 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
@@ -36,8 +35,6 @@ import org.springframework.validation.annotation.Validated;
 public class StoreConfigurationProperties implements InitializingBean {
 
   public static final String PROPERTIES_PREFIX = "factcast.store";
-
-  @Autowired private PgLegacyConfigurationProperties legacyProperties;
 
   /**
    * defines the number of Facts being retrieved with one Page Query for PageStrategy.PAGED, or
@@ -197,39 +194,6 @@ public class StoreConfigurationProperties implements InitializingBean {
 
   @Override
   public void afterPropertiesSet() throws Exception {
-    legacyProperties.getPageSize().ifPresent(this::setPageSize);
-    legacyProperties.getCatchupStrategy().ifPresent(this::setCatchupStrategy);
-    legacyProperties.getSchemaRegistryUrl().ifPresent(this::setSchemaRegistryUrl);
-    legacyProperties.getPersistentRegistry().ifPresent(this::setPersistentRegistry);
-    legacyProperties
-        .getDeleteTransformationsStaleForDays()
-        .ifPresent(this::setDeleteTransformationsStaleForDays);
-    legacyProperties
-        .getPersistentTransformationCache()
-        .ifPresent(this::setPersistentTransformationCache);
-    legacyProperties
-        .getPersistentTransformationCache()
-        .ifPresent(this::setPersistentTransformationCache);
-    legacyProperties
-        .getInMemTransformationCacheCapacity()
-        .ifPresent(this::setInMemTransformationCacheCapacity);
-    legacyProperties.getAllowUnvalidatedPublish().ifPresent(this::setAllowUnvalidatedPublish);
-    legacyProperties.getAllowSchemaReplace().ifPresent(this::setAllowSchemaReplace);
-    legacyProperties
-        .getFactNotificationMaxRoundTripLatencyInMillis()
-        .ifPresent(this::setFactNotificationMaxRoundTripLatencyInMillis);
-    legacyProperties
-        .getFactNotificationBlockingWaitTimeInMillis()
-        .ifPresent(this::setFactNotificationBlockingWaitTimeInMillis);
-    legacyProperties
-        .getFactNotificationNewConnectionWaitTimeInMillis()
-        .ifPresent(this::setFactNotificationNewConnectionWaitTimeInMillis);
-    legacyProperties.getIntegrationTestMode().ifPresent(this::setIntegrationTestMode);
-    legacyProperties.getTailIndexingEnabled().ifPresent(this::setTailIndexingEnabled);
-    legacyProperties.getTailGenerationsToKeep().ifPresent(this::setTailGenerationsToKeep);
-    legacyProperties.getMinimumTailAge().ifPresent(this::setMinimumTailAge);
-    legacyProperties.getTailManagementCron().ifPresent(this::setTailManagementCron);
-
     if (integrationTestMode) {
       log.warn(
           "**** You are running in INTEGRATION TEST MODE. If you see this in production, "

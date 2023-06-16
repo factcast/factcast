@@ -37,9 +37,4 @@ public class PgFactStoreConfiguration {
   StoreConfigurationProperties storeConfigurationProperties() {
     return new StoreConfigurationProperties();
   }
-
-  @Bean
-  PgLegacyConfigurationProperties pgLegacyConfigurationProperties() {
-    return new PgLegacyConfigurationProperties();
-  }
 }
