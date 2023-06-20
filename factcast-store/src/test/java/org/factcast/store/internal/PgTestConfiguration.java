@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.PgFactStoreConfiguration;
 import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.script.graaljs.GraalJSEngineFactory;
+import org.factcast.test.PostgresVersion;
 import org.mockito.Mockito;
 import org.postgresql.Driver;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
@@ -51,7 +52,7 @@ public class PgTestConfiguration {
     if (url == null) {
       log.info("Trying to start postgres testcontainer");
       PostgreSQLContainer<?> postgres =
-          new PostgreSQLContainer<>("postgres:" + System.getProperty("postgres.version", "11.5"));
+          new PostgreSQLContainer<>("postgres:" + PostgresVersion.get());
       postgres.start();
       url = postgres.getJdbcUrl();
       System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());

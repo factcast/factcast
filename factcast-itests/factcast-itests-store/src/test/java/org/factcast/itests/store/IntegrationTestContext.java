@@ -16,6 +16,7 @@
 package org.factcast.itests.store;
 
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.test.PostgresVersion;
 import org.postgresql.Driver;
 import org.testcontainers.containers.PostgreSQLContainer;
 
@@ -24,7 +25,7 @@ public class IntegrationTestContext {
   public IntegrationTestContext() {
     log.info("Trying to start postgres testcontainer");
     PostgreSQLContainer<?> postgres =
-        new PostgreSQLContainer<>("postgres:" + System.getProperty("postgres.version", "11.5"));
+        new PostgreSQLContainer<>("postgres:" + PostgresVersion.get());
     postgres.start();
     String url = postgres.getJdbcUrl();
     System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
