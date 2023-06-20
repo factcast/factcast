@@ -15,12 +15,8 @@
  */
 package org.factcast.itests.transformation;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 
 /**
  * Spring boot starter for running a factcast server.
@@ -31,16 +27,9 @@ import org.springframework.core.annotation.Order;
  */
 @SuppressWarnings("ALL")
 @SpringBootApplication
-@Slf4j
-public class ExampleServerWithPostgresContainer {
+public class TransformationApplication {
 
   public static void main(String[] args) {
-    SpringApplication.run(ExampleServerWithPostgresContainer.class, args);
-  }
-
-  @Bean
-  @Order(Ordered.LOWEST_PRECEDENCE)
-  public IntegrationTestContext integrationTestContext() {
-    return new IntegrationTestContext();
+    SpringApplication.run(TransformationApplication.class, args);
   }
 }

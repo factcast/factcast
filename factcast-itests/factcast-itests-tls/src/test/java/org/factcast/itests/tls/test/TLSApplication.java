@@ -15,12 +15,13 @@
  */
 package org.factcast.itests.tls.test;
 
-import org.testcontainers.containers.output.OutputFrame;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-public class SysoutConsumer
-    implements java.util.function.Consumer<org.testcontainers.containers.output.OutputFrame> {
-  @Override
-  public void accept(OutputFrame outputFrame) {
-    System.out.print(outputFrame.getUtf8String());
+@SpringBootApplication
+public class TLSApplication {
+
+  public static void main(String[] args) {
+    SpringApplication.run(TLSApplication.class, args);
   }
 }
