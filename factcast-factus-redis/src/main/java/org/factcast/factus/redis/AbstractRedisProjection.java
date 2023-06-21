@@ -15,7 +15,6 @@
  */
 package org.factcast.factus.redis;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -49,18 +48,15 @@ abstract class AbstractRedisProjection
     lock = redisson.getLock(redisKey + "_lock");
   }
 
-  @VisibleForTesting
-  RBucket<UUID> stateBucket(@NonNull RTransaction tx) {
+  protected RBucket<UUID> stateBucket(@NonNull RTransaction tx) {
     return tx.getBucket(stateBucketName, UUIDCodec.INSTANCE);
   }
 
-  @VisibleForTesting
-  RBucketAsync<UUID> stateBucket(@NonNull RBatch b) {
+  protected RBucketAsync<UUID> stateBucket(@NonNull RBatch b) {
     return b.getBucket(stateBucketName, UUIDCodec.INSTANCE);
   }
 
-  @VisibleForTesting
-  RBucket<UUID> stateBucket() {
+  protected RBucket<UUID> stateBucket() {
     return redisson.getBucket(stateBucketName, UUIDCodec.INSTANCE);
   }
 
