@@ -36,36 +36,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.testcontainers.containers.PostgreSQLContainer;
 
-@SpringBootTest
 @ContextConfiguration(classes = TestFactusApplication.class)
-@EnableAutoConfiguration
 @Slf4j
 public class GrpcThreadingITest extends AbstractFactCastIntegrationTest {
   @Autowired JdbcTemplate jdbcTemplate;
   @Autowired PlatformTransactionManager platformTransactionManager;
   @Autowired Factus factus;
-
-  public static PostgreSQLContainer postgreSQLContainer =
-      new PostgreSQLContainer("postgres:" + System.getProperty("postgres.version", "11.5"))
-          .withPassword("sa")
-          .withUsername("sa");
-
-  static {
-    postgreSQLContainer.start();
-
-    System.setProperty("spring.datasource.url", postgreSQLContainer.getJdbcUrl());
-    System.setProperty("spring.datasource.username", postgreSQLContainer.getUsername());
-    System.setProperty("spring.datasource.password", postgreSQLContainer.getPassword());
-  }
 
   final int NUMBER_OF_EVENTS = 1000;
 
