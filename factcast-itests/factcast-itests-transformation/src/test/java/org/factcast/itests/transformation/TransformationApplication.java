@@ -13,15 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.tls;
+package org.factcast.itests.transformation;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+/**
+ * Spring boot starter for running a factcast server.
+ *
+ * <p>This should contain a pgsql backend and grpc API frontend.
+ *
+ * @author uwe.schaefer@mercateo.com
+ */
+@SuppressWarnings("ALL")
 @SpringBootApplication
-public class TLSClient {
+public class TransformationApplication {
 
   public static void main(String[] args) {
-    SpringApplication.run(TLSClient.class, args);
+    SpringApplication.run(TransformationApplication.class, args);
   }
 }
