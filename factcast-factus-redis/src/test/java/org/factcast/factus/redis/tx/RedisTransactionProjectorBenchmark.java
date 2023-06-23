@@ -33,6 +33,7 @@ import org.factcast.factus.serializer.ProjectionMetaData;
 import org.mockito.Mockito;
 import org.openjdk.jmh.annotations.*;
 import org.redisson.api.RBucket;
+import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
 
 @SuppressWarnings("unchecked")
@@ -47,6 +48,8 @@ public class RedisTransactionProjectorBenchmark {
 
   private static final List<Fact> facts = Collections.nCopies(1000, f);
   private static final RedissonClient mockRedisson = Mockito.mock(RedissonClient.class);
+  private static final RTransaction tx = Mockito.mock(RTransaction.class);
+  private static final RBucket<UUID> nopBucket = Mockito.mock(RBucket.class);
 
   private static final TestProjection projection = new TestProjection(mockRedisson);
   private static final TestProjection1 projection1 = new TestProjection1(mockRedisson);
@@ -64,12 +67,11 @@ public class RedisTransactionProjectorBenchmark {
   private static final Projector<TestProjection50> projector1000 =
       new ProjectorImpl<>(ctx, projection1000);
 
-  private static final RBucket<UUID> nopBucket = Mockito.mock(RBucket.class);
-  ;
-
   static {
+    Mockito.when(mockRedisson.createTransaction(any())).thenReturn(tx);
     Mockito.when(mockRedisson.getBucket(any(), same(UUIDCodec.INSTANCE)))
         .thenReturn((RBucket) nopBucket);
+    Mockito.when(tx.getBucket(any(), same(UUIDCodec.INSTANCE))).thenReturn((RBucket) nopBucket);
   }
 
   @Benchmark
@@ -169,5 +171,6 @@ public class RedisTransactionProjectorBenchmark {
 
   public static void main(String[] args) throws Exception {
     org.openjdk.jmh.Main.main(args);
+    // new RedisTransactionProjectorBenchmark().applyBatch10();
   }
 }
