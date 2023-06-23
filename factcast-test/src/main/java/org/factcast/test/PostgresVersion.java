@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2023 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.tls.test;
+package org.factcast.test;
 
-import org.testcontainers.containers.output.OutputFrame;
+import lombok.experimental.UtilityClass;
 
-public class SysoutConsumer
-    implements java.util.function.Consumer<org.testcontainers.containers.output.OutputFrame> {
-  @Override
-  public void accept(OutputFrame outputFrame) {
-    System.out.print(outputFrame.getUtf8String());
+@UtilityClass
+public class PostgresVersion {
+  public String get() {
+    return System.getProperty("postgres.version", "11.5");
   }
 }
