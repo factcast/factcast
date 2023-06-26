@@ -203,6 +203,6 @@ class AggregateSnapshotRepositoryImplTest {
     }
   }
 
-  @ProjectionMetaData(serial = 43)
+  @ProjectionMetaData(projectionVersion = 43)
   public static class WithAnnotation extends Aggregate {}
 }

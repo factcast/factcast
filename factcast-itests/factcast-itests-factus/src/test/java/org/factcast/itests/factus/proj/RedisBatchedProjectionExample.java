@@ -30,7 +30,7 @@ import org.redisson.api.RedissonClient;
 
 public class RedisBatchedProjectionExample {
 
-  @ProjectionMetaData(serial = 1)
+  @ProjectionMetaData(projectionVersion = 1)
   @RedisBatched
   public static class UserNames extends AbstractRedisManagedProjection {
     @Getter int count = 0;

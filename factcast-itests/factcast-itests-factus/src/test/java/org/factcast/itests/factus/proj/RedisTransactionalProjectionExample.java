@@ -27,7 +27,7 @@ import org.redisson.api.RedissonClient;
 
 public class RedisTransactionalProjectionExample {
 
-  @ProjectionMetaData(serial = 1)
+  @ProjectionMetaData(projectionVersion = 1)
   @RedisTransactional
   public static class UserNames extends AbstractRedisManagedProjection {
 

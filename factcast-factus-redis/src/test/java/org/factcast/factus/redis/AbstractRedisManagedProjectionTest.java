@@ -274,7 +274,7 @@ class AbstractRedisManagedProjectionTest {
     }
   }
 
-  @ProjectionMetaData(serial = 1)
+  @ProjectionMetaData(projectionVersion = 1)
   static class TestProjection extends AbstractRedisManagedProjection {
 
     public TestProjection(@NonNull RedissonClient redisson) {

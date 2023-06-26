@@ -28,7 +28,7 @@ import lombok.experimental.UtilityClass;
 public @interface ProjectionMetaData {
   String name() default "";
 
-  long serial();
+  long projectionVersion();
 
   @UtilityClass
   class Resolver {

@@ -23,13 +23,13 @@ public class ProjectionMetaDataTest {
   @Test
   void testResolver() {
     assertThat(ProjectionMetaData.Resolver.resolveFor(With.class).get())
-        .extracting(ProjectionMetaData::name, ProjectionMetaData::serial)
+        .extracting(ProjectionMetaData::name, ProjectionMetaData::projectionVersion)
         .containsExactly("foo", 1L);
 
     assertThat(ProjectionMetaData.Resolver.resolveFor(Without.class)).isEmpty();
   }
 
-  @ProjectionMetaData(name = "foo", serial = 1)
+  @ProjectionMetaData(name = "foo", projectionVersion = 1)
   static class With {}
 
   static class Without {}

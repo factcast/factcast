@@ -44,7 +44,7 @@ public class ScopedName {
       name = ClassUtils.getNameFor(clazz);
     }
 
-    return ScopedName.of(name + NAME_SEPARATOR + metaData.serial());
+    return ScopedName.of(name + NAME_SEPARATOR + metaData.projectionVersion());
   }
 
   public static ScopedName of(@NonNull String name, long serial) {

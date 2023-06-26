@@ -205,7 +205,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  @ProjectionMetaData(serial = 1)
+  @ProjectionMetaData(projectionVersion = 1)
   @RedisTransactional(bulkSize = 2)
   static class TxRedissonManagedUserNamesSize2 extends TrackingTxRedissonManagedUserNames {
     public TxRedissonManagedUserNamesSize2(RedissonClient redisson) {
@@ -213,7 +213,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  @ProjectionMetaData(serial = 1)
+  @ProjectionMetaData(projectionVersion = 1)
   @RedisTransactional(bulkSize = 3)
   static class TxRedissonManagedUserNamesSize3 extends TrackingTxRedissonManagedUserNames {
     public TxRedissonManagedUserNamesSize3(RedissonClient redisson) {
@@ -221,7 +221,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  @ProjectionMetaData(serial = 1)
+  @ProjectionMetaData(projectionVersion = 1)
   @RedisTransactional(bulkSize = 3000000, timeout = 1000) // will flush after 800ms
   static class TxRedissonManagedUserNamesTimeout extends TrackingTxRedissonManagedUserNames {
     public TxRedissonManagedUserNamesTimeout(RedissonClient redisson) {
@@ -238,7 +238,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  @ProjectionMetaData(serial = 1)
+  @ProjectionMetaData(projectionVersion = 1)
   @RedisTransactional(bulkSize = 2)
   static class TxRedissonSubscribedUserNamesSize2 extends TrackingTxRedissonSubscribedUserNames {
     public TxRedissonSubscribedUserNamesSize2(RedissonClient redisson) {
@@ -246,7 +246,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  @ProjectionMetaData(serial = 1)
+  @ProjectionMetaData(projectionVersion = 1)
   @RedisTransactional(bulkSize = 3)
   static class TxRedissonSubscribedUserNamesSize3 extends TrackingTxRedissonSubscribedUserNames {
     public TxRedissonSubscribedUserNamesSize3(RedissonClient redisson) {
@@ -254,7 +254,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  @ProjectionMetaData(serial = 1)
+  @ProjectionMetaData(projectionVersion = 1)
   @RedisTransactional(bulkSize = 3000000, timeout = 1000) // will flush after 800ms
   static class TxRedissonSubscribedUserNamesTimeout extends TrackingTxRedissonSubscribedUserNames {
     public TxRedissonSubscribedUserNamesTimeout(RedissonClient redisson) {
@@ -271,7 +271,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  @ProjectionMetaData(serial = 1)
+  @ProjectionMetaData(projectionVersion = 1)
   @RedisTransactional(bulkSize = 5)
   static class TxRedissonManagedUserNamesSizeBlowAt7th extends TrackingTxRedissonManagedUserNames {
     private int count;
@@ -289,7 +289,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  @ProjectionMetaData(serial = 1)
+  @ProjectionMetaData(projectionVersion = 1)
   @RedisTransactional(bulkSize = 5)
   static class TxRedissonSubscribedUserNamesSizeBlowAt7th
       extends TrackingTxRedissonSubscribedUserNames {

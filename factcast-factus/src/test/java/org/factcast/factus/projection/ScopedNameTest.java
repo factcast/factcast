@@ -64,10 +64,10 @@ class ScopedNameTest {
         .isInstanceOf(IllegalArgumentException.class);
   }
 
-  @ProjectionMetaData(serial = 2)
+  @ProjectionMetaData(projectionVersion = 2)
   static class WithoutName {}
 
-  @ProjectionMetaData(name = "hugo", serial = 3)
+  @ProjectionMetaData(name = "hugo", projectionVersion = 3)
   static class Complete {}
 
   static class MissingAnnotation {}

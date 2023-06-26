@@ -34,7 +34,7 @@ import org.redisson.codec.LZ4Codec;
 import org.redisson.codec.MarshallingCodec;
 
 @Slf4j
-@ProjectionMetaData(serial = 1)
+@ProjectionMetaData(projectionVersion = 1)
 @RedisTransactional(bulkSize = 3, timeout = 10000000)
 public class TxRedissonManagedUserNames extends AbstractRedisManagedProjection {
 

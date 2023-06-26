@@ -124,7 +124,7 @@ public class RedisTransactionProjectorBenchmark {
     projector1000.apply(facts);
   }
 
-  @ProjectionMetaData(name = "peter", serial = 12)
+  @ProjectionMetaData(name = "peter", projectionVersion = 12)
   static class TestProjection extends AbstractRedisManagedProjection {
 
     protected int count;
@@ -138,7 +138,7 @@ public class RedisTransactionProjectorBenchmark {
   }
 
   @RedisTransactional(bulkSize = 1)
-  @ProjectionMetaData(name = "peter", serial = 12)
+  @ProjectionMetaData(name = "peter", projectionVersion = 12)
   static class TestProjection1 extends TestProjection {
     public TestProjection1(@NonNull RedissonClient redisson) {
       super(redisson);
@@ -146,7 +146,7 @@ public class RedisTransactionProjectorBenchmark {
   }
 
   @RedisTransactional(bulkSize = 10)
-  @ProjectionMetaData(name = "peter", serial = 12)
+  @ProjectionMetaData(name = "peter", projectionVersion = 12)
   static class TestProjection10 extends TestProjection {
     public TestProjection10(@NonNull RedissonClient redisson) {
       super(redisson);
@@ -154,7 +154,7 @@ public class RedisTransactionProjectorBenchmark {
   }
 
   @RedisTransactional(bulkSize = 50)
-  @ProjectionMetaData(name = "peter", serial = 12)
+  @ProjectionMetaData(name = "peter", projectionVersion = 12)
   static class TestProjection50 extends TestProjection {
     public TestProjection50(@NonNull RedissonClient redisson) {
       super(redisson);
@@ -162,7 +162,7 @@ public class RedisTransactionProjectorBenchmark {
   }
 
   @RedisTransactional(bulkSize = 1000)
-  @ProjectionMetaData(name = "peter", serial = 12)
+  @ProjectionMetaData(name = "peter", projectionVersion = 12)
   static class TestProjection1000 extends TestProjection {
     public TestProjection1000(@NonNull RedissonClient redisson) {
       super(redisson);
