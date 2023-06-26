@@ -41,6 +41,8 @@ public class RedisTransactionalLens extends AbstractTransactionalLens {
    */
   private final Supplier<RedissonTxManager> txManagerSupplier;
 
+  private final TransactionOptions opts;
+
   public RedisTransactionalLens(
       @NonNull RedisProjection p, @NonNull RedissonClient redissonClient) {
     this(p, () -> RedissonTxManager.get(redissonClient), createOpts(p));
@@ -54,7 +56,7 @@ public class RedisTransactionalLens extends AbstractTransactionalLens {
     super(p);
 
     this.txManagerSupplier = txManagerSupplier;
-    RedisTransactionalLens.this.txManagerSupplier.get().options(opts);
+    this.opts = opts;
 
     bulkSize = Math.max(1, getSize(p));
     flushTimeout = calculateFlushTimeout(opts);
@@ -107,7 +109,9 @@ public class RedisTransactionalLens extends AbstractTransactionalLens {
   public Function<Fact, ?> parameterTransformerFor(@NonNull Class<?> type) {
     if (RTransaction.class.equals(type)) {
       return f -> {
-        txManagerSupplier.get().startOrJoin();
+        RedissonTxManager redissonTxManager = txManagerSupplier.get();
+        redissonTxManager.options(opts); // it might have been just created
+        redissonTxManager.startOrJoin();
         return txManagerSupplier.get().getCurrentTransaction();
       };
     }
