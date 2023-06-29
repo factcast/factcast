@@ -82,7 +82,7 @@ public class PgQueryTest {
         SubscriptionRequestTO.forFacts(SubscriptionRequest.catchup(DEFAULT_SPEC).fromScratch());
     FactObserver c = mock(FactObserver.class);
     pq.subscribe(req, c).awaitComplete();
-    verify(c, never()).onNext(any());
+    verify(c, never()).onNext(any(Fact.class));
     verify(c).onCatchup();
     verify(c).onComplete();
   }
@@ -100,7 +100,7 @@ public class PgQueryTest {
     pq.subscribe(req, c).awaitComplete();
     verify(c).onCatchup();
     verify(c).onComplete();
-    verify(c, times(2)).onNext(any());
+    verify(c, times(2)).onNext(any(Fact.class));
   }
 
   private void insertTestFact(TestHeader header) {
@@ -129,7 +129,7 @@ public class PgQueryTest {
     SubscriptionRequestTO req =
         SubscriptionRequestTO.forFacts(SubscriptionRequest.follow(DEFAULT_SPEC).fromScratch());
     FactObserver c = mock(FactObserver.class);
-    doAnswer(i -> null).when(c).onNext(any());
+    doAnswer(i -> null).when(c).onNext(any(Fact.class));
     insertTestFact(TestHeader.create());
     insertTestFact(TestHeader.create());
     insertTestFact(TestHeader.create());
@@ -186,17 +186,17 @@ public class PgQueryTest {
     insertTestFact(TestHeader.create());
     Subscription sub = pq.subscribe(req, c).awaitCatchup();
     verify(c).onCatchup();
-    verify(c, times(1)).onNext(any());
+    verify(c, times(1)).onNext(any(Fact.class));
     insertTestFact(TestHeader.create());
     insertTestFact(TestHeader.create());
     sleep(200);
-    verify(c, times(3)).onNext(any());
+    verify(c, times(3)).onNext(any(Fact.class));
     sub.close();
     // must not show up
     insertTestFact(TestHeader.create());
     // must not show up
     insertTestFact(TestHeader.create());
     sleep(200);
-    verify(c, times(3)).onNext(any());
+    verify(c, times(3)).onNext(any(Fact.class));
   }
 }

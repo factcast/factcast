@@ -273,7 +273,7 @@ public class ProtoConverter {
     return new ConditionalPublishRequest(fromProto(request.getFacts()), token);
   }
 
-  public @NonNull List<? extends Fact> fromProto(@NonNull MSG_Facts facts) {
+  public @NonNull List<Fact> fromProto(@NonNull MSG_Facts facts) {
     return facts.getFactList().stream().map(this::fromProto).collect(Collectors.toList());
   }
 

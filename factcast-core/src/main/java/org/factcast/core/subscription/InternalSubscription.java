@@ -37,4 +37,8 @@ public interface InternalSubscription extends Subscription {
   void notifyElement(@NonNull Fact e) throws TransformationException;
 
   SubscriptionImpl onClose(Runnable e);
+
+  // since 0.7
+
+  void notifyElements(@NonNull List<Fact> e) throws TransformationException;
 }

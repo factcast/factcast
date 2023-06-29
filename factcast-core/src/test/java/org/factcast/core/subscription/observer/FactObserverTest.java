@@ -18,16 +18,16 @@ package org.factcast.core.subscription.observer;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.IOException;
-import java.util.UUID;
+import java.util.*;
 import lombok.NonNull;
 import nl.altindag.console.ConsoleCaptor;
+import org.assertj.core.api.Assertions;
+import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Spy;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +46,7 @@ class FactObserverTest {
   @Nested
   class WhenCallingOnMethod {
     @Mock private @NonNull Fact element;
+    @Mock private @NonNull Fact element2;
 
     @Test
     void noEffect() {
@@ -66,6 +67,17 @@ class FactObserverTest {
                     .filter(s -> s.contains("Unhandled onError:")))
             .hasSize(1);
       }
+    }
+
+    @Test
+    void delegatesToSingletonOnNext() {
+
+      underTest = Mockito.spy(underTest);
+      underTest.onNext(Lists.newArrayList(element, element2));
+
+      ArgumentCaptor<Fact> ac = ArgumentCaptor.forClass(Fact.class);
+      Mockito.verify(underTest, Mockito.times(2)).onNext(ac.capture());
+      Assertions.assertThat(ac.getAllValues()).hasSize(2).containsExactly(element, element2);
     }
   }
 }

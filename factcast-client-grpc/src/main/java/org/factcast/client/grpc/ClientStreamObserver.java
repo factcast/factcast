@@ -127,12 +127,9 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
         subscription.notifyElement(converter.fromProto(f.getFact()));
         break;
       case Facts:
-        List<? extends Fact> facts = converter.fromProto(f.getFacts());
+        List<Fact> facts = converter.fromProto(f.getFacts());
         log.trace("received {} facts", facts.size());
-
-        for (Fact fact : facts) {
-          subscription.notifyElement(fact);
-        }
+        subscription.notifyElements(facts);
         break;
       case Ffwd:
         log.debug("received fastforward signal");

@@ -93,7 +93,7 @@ public abstract class AbstractFactStoreTest {
           verify(observer).onCatchup();
           verify(observer).onComplete();
           verify(observer, never()).onError(any());
-          verify(observer, never()).onNext(any());
+          verify(observer, never()).onNext(any(Fact.class));
         });
   }
 
@@ -127,7 +127,7 @@ public abstract class AbstractFactStoreTest {
           verify(observer).onCatchup();
           verify(observer, never()).onComplete();
           verify(observer, never()).onError(any());
-          verify(observer, never()).onNext(any());
+          verify(observer, never()).onNext(any(Fact.class));
           uut.publish(
               Fact.of(
                   "{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}",
@@ -138,7 +138,7 @@ public abstract class AbstractFactStoreTest {
                   "{}"));
           observer.await(2);
           // the mark facts only
-          verify(observer, times(2)).onNext(any());
+          verify(observer, times(2)).onNext(any(Fact.class));
         });
   }
 
@@ -156,7 +156,7 @@ public abstract class AbstractFactStoreTest {
           verify(observer).onCatchup();
           verify(observer, never()).onComplete();
           verify(observer, never()).onError(any());
-          verify(observer, never()).onNext(any());
+          verify(observer, never()).onNext(any(Fact.class));
           uut.publish(
               Fact.of(
                   "{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}",
@@ -188,13 +188,13 @@ public abstract class AbstractFactStoreTest {
           verify(observer).onCatchup();
           verify(observer, never()).onComplete();
           verify(observer, never()).onError(any());
-          verify(observer, never()).onNext(any());
+          verify(observer, never()).onNext(any(Fact.class));
           uut.publish(
               Fact.of(
                   "{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}",
                   "{}"));
           observer.await(1);
-          verify(observer, times(1)).onNext(any());
+          verify(observer, times(1)).onNext(any(Fact.class));
         });
   }
 
@@ -222,13 +222,13 @@ public abstract class AbstractFactStoreTest {
           verify(observer).onCatchup();
           verify(observer, never()).onComplete();
           verify(observer, never()).onError(any());
-          verify(observer, never()).onNext(any());
+          verify(observer, never()).onNext(any(Fact.class));
           uut.publish(
               Fact.of(
                   "{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}",
                   "{}"));
           observer.await(1);
-          verify(observer, times(1)).onNext(any());
+          verify(observer, times(1)).onNext(any(Fact.class));
           subscription.close();
           uut.publish(
               Fact.of(
@@ -236,7 +236,7 @@ public abstract class AbstractFactStoreTest {
                   "{}"));
           Thread.sleep(100);
           // additional event not received
-          verify(observer, times(1)).onNext(any());
+          verify(observer, times(1)).onNext(any(Fact.class));
         });
   }
 
@@ -264,7 +264,7 @@ public abstract class AbstractFactStoreTest {
           verify(observer).onCatchup();
           verify(observer, never()).onComplete();
           verify(observer, never()).onError(any());
-          verify(observer, times(3)).onNext(any());
+          verify(observer, times(3)).onNext(any(Fact.class));
           uut.publish(
               Fact.of(
                   "{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}",
@@ -277,7 +277,7 @@ public abstract class AbstractFactStoreTest {
                   "{}"));
           Thread.sleep(100);
           // additional event not received
-          verify(observer, times(4)).onNext(any());
+          verify(observer, times(4)).onNext(any(Fact.class));
         });
   }
 
@@ -295,7 +295,7 @@ public abstract class AbstractFactStoreTest {
           verify(observer).onCatchup();
           verify(observer).onComplete();
           verify(observer, never()).onError(any());
-          verify(observer).onNext(any());
+          verify(observer).onNext(any(Fact.class));
         });
   }
 
@@ -313,7 +313,7 @@ public abstract class AbstractFactStoreTest {
           verify(observer).onCatchup();
           verify(observer, never()).onComplete();
           verify(observer, never()).onError(any());
-          verify(observer).onNext(any());
+          verify(observer).onNext(any(Fact.class));
           uut.publish(
               Fact.of(
                   "{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}",
@@ -336,7 +336,7 @@ public abstract class AbstractFactStoreTest {
           verify(observer).onCatchup();
           verify(observer, never()).onComplete();
           verify(observer, never()).onError(any());
-          verify(observer).onNext(any());
+          verify(observer).onNext(any(Fact.class));
           uut.publish(
               Fact.of(
                   "{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"other\",\"type\":\"t1\"}", "{}"));
@@ -366,7 +366,7 @@ public abstract class AbstractFactStoreTest {
           uut.subscribe(SubscriptionRequest.catchup(REQ_FOO_BAR).fromScratch(), observer)
               .awaitComplete();
           verify(observer).onFactStreamInfo(any());
-          verify(observer).onNext(any());
+          verify(observer).onNext(any(Fact.class));
           verify(observer).onCatchup();
           verify(observer).onComplete();
           verifyNoMoreInteractions(observer);
@@ -396,7 +396,7 @@ public abstract class AbstractFactStoreTest {
           uut.subscribe(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
               .awaitComplete();
           verify(observer).onFactStreamInfo(any());
-          verify(observer).onNext(any());
+          verify(observer).onNext(any(Fact.class));
           verify(observer).onCatchup();
           verify(observer).onComplete();
           verifyNoMoreInteractions(observer);
@@ -426,7 +426,7 @@ public abstract class AbstractFactStoreTest {
           uut.subscribe(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
               .awaitComplete();
           verify(observer).onFactStreamInfo(any());
-          verify(observer).onNext(any());
+          verify(observer).onNext(any(Fact.class));
           verify(observer).onCatchup();
           verify(observer).onComplete();
           verifyNoMoreInteractions(observer);
@@ -455,7 +455,7 @@ public abstract class AbstractFactStoreTest {
           uut.subscribe(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
               .awaitComplete();
           verify(observer).onFactStreamInfo(any());
-          verify(observer, times(2)).onNext(any());
+          verify(observer, times(2)).onNext(any(Fact.class));
           verify(observer).onCatchup();
           verify(observer).onComplete();
           verifyNoMoreInteractions(observer);
@@ -510,7 +510,7 @@ public abstract class AbstractFactStoreTest {
                   SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId1)).fromScratch(),
                   observer)
               .awaitComplete();
-          verify(observer, times(1)).onNext(any());
+          verify(observer, times(1)).onNext(any(Fact.class));
         });
   }
 
@@ -537,13 +537,13 @@ public abstract class AbstractFactStoreTest {
                   SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId1)).fromScratch(),
                   observer)
               .awaitComplete();
-          verify(observer, times(1)).onNext(any());
+          verify(observer, times(1)).onNext(any(Fact.class));
           observer = mock(FactObserver.class);
           uut.subscribe(
                   SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId2)).fromScratch(),
                   observer)
               .awaitComplete();
-          verify(observer, times(1)).onNext(any());
+          verify(observer, times(1)).onNext(any(Fact.class));
         });
   }
 
@@ -570,7 +570,7 @@ public abstract class AbstractFactStoreTest {
                   SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId2)).fromScratch(),
                   observer)
               .awaitComplete();
-          verify(observer, times(1)).onNext(any());
+          verify(observer, times(1)).onNext(any(Fact.class));
         });
   }
 

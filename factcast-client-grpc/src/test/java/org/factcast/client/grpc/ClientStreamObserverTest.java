@@ -18,21 +18,15 @@ package org.factcast.client.grpc;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentCaptor.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.after;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import lombok.SneakyThrows;
@@ -104,7 +98,7 @@ class ClientStreamObserverTest {
 
   @Test
   void rethrowsProcessingError() {
-    doThrow(new UnsupportedOperationException()).when(factObserver).onNext(any());
+    doThrow(new UnsupportedOperationException()).when(factObserver).onNext(any(Fact.class));
 
     Fact f = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
     MSG_Notification n = converter.createNotificationFor(f);
@@ -128,13 +122,34 @@ class ClientStreamObserverTest {
   }
 
   @Test
-  void testOnNextList() {
+  void testOnNextListDelegates() {
+
+    doCallRealMethod().when(factObserver).onNext(any(List.class));
+
     Fact f1 = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
     Fact f2 = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
     ArrayList<Fact> stagedFacts = Lists.newArrayList(f1, f2);
     MSG_Notification n = converter.createNotificationFor(stagedFacts);
     uut.onNext(n);
     verify(factObserver, times(2)).onNext(any(Fact.class));
+  }
+
+  @Test
+  void testOnNextList() {
+
+    Fact f1 = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
+    Fact f2 = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
+    ArrayList<Fact> stagedFacts = Lists.newArrayList(f1, f2);
+    MSG_Notification n = converter.createNotificationFor(stagedFacts);
+    uut.onNext(n);
+    @SuppressWarnings("unchecked")
+    ArgumentCaptor<List<Fact>> l = forClass(List.class);
+    verify(factObserver, times(1)).onNext(l.capture());
+
+    org.assertj.core.api.Assertions.assertThat(l.getValue())
+        .isNotNull()
+        .hasSize(2)
+        .containsExactly(f1, f2);
   }
 
   @Test
@@ -192,7 +207,7 @@ class ClientStreamObserverTest {
 
     uut.onError(ex);
 
-    ArgumentCaptor<Throwable> ecap = ArgumentCaptor.forClass(Throwable.class);
+    ArgumentCaptor<Throwable> ecap = forClass(Throwable.class);
     verify(factObserver).onError(ecap.capture());
     assertThat(ecap.getValue()).isInstanceOf(FactValidationException.class);
   }

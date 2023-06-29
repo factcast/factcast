@@ -47,4 +47,11 @@ public interface FactObserver {
   default void onError(@NonNull Throwable exception) {
     LoggerFactory.getLogger(FactObserver.class).warn("Unhandled onError:", exception);
   }
+
+  // since 0.7:
+
+  // overwriting allows for more efficient processing
+  default void onNext(@NonNull List<Fact> batch) {
+    batch.forEach(this::onNext);
+  }
 }

@@ -183,6 +183,14 @@ public class SubscriptionImpl implements InternalSubscription {
   }
 
   @Override
+  public void notifyElements(@NonNull List<Fact> batch) throws TransformationException {
+    if (!closed.get()) {
+      // note that those facts are already transformed
+      observer.onNext(batch);
+    }
+  }
+
+  @Override
   public SubscriptionImpl onClose(Runnable e) {
     Runnable formerOnClose = onClose;
     onClose =
