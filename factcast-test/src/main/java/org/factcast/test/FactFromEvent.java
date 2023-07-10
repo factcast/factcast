@@ -24,34 +24,34 @@ import org.jetbrains.annotations.NotNull;
 
 public class FactFromEvent {
 
-    public static Fact.Builder factFromEvent(@NotNull EventObject event) {
-        return factFromEvent(event, 0);
+  public static Fact.Builder factFromEvent(@NotNull EventObject event) {
+    return factFromEvent(event, 0);
+  }
+
+  public static Fact.Builder factFromEvent(@NotNull EventObject event, long serial) {
+    return factFromEvent(event, serial, UUID.randomUUID());
+  }
+
+  public static Fact.Builder factFromEvent(@NotNull EventObject event, long serial, UUID id) {
+    Annotation[] annotations = event.getClass().getAnnotations();
+    Specification specs = null;
+    int i = 0;
+    while (specs == null && i < annotations.length) {
+      if (annotations[i] instanceof Specification) {
+        specs = (Specification) annotations[i];
+      }
+      i++;
     }
 
-    public static Fact.Builder factFromEvent(@NotNull EventObject event, long serial) {
-        return factFromEvent(event, serial, UUID.randomUUID());
+    if (specs == null) {
+      throw new IllegalStateException("invalid event object");
+    } else {
+      return Fact.builder()
+          .type(specs.type())
+          .ns(specs.ns())
+          .version(specs.version())
+          .id(id)
+          .meta("_ser", String.valueOf(serial));
     }
-
-    public static Fact.Builder factFromEvent(@NotNull EventObject event, long serial, UUID id) {
-        Annotation[] annotations = event.getClass().getAnnotations();
-        Specification specs = null;
-        int i = 0;
-        while (specs == null && i < annotations.length) {
-            if (annotations[i] instanceof Specification) {
-                specs = (Specification) annotations[i];
-            }
-            i++;
-        }
-
-        if (specs == null) {
-            throw new IllegalStateException("invalid event object");
-        } else {
-            return Fact.builder()
-                    .type(specs.type())
-                    .ns(specs.ns())
-                    .version(specs.version())
-                    .id(id)
-                    .meta("_ser", String.valueOf(serial));
-        }
-    }
+  }
 }
