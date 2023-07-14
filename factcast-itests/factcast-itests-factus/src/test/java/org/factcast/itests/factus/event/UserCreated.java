@@ -19,7 +19,6 @@ import com.google.common.collect.Sets;
 import java.util.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.Specification;
@@ -45,6 +44,7 @@ public class UserCreated implements EventObject {
   public UUID getAggregateId() {
     return aggregateId;
   }
+
   public String getUserName() {
     return userName;
   }
