@@ -15,43 +15,102 @@
  */
 package org.factcast.test;
 
-import java.lang.annotation.Annotation;
 import java.util.UUID;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.NonNull;
+import lombok.SneakyThrows;
+import org.factcast.core.DefaultFact;
 import org.factcast.core.Fact;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.Specification;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.util.CollectionUtils;
 
 public class FactFromEvent {
 
-  public static Fact.Builder factFromEvent(@NotNull EventObject event) {
-    return factFromEvent(event, 0);
-  }
+    static private final ObjectMapper MAPPER = new ObjectMapper();
 
-  public static Fact.Builder factFromEvent(@NotNull EventObject event, long serial) {
-    return factFromEvent(event, serial, UUID.randomUUID());
-  }
-
-  public static Fact.Builder factFromEvent(@NotNull EventObject event, long serial, UUID id) {
-    Annotation[] annotations = event.getClass().getAnnotations();
-    Specification specs = null;
-    int i = 0;
-    while (specs == null && i < annotations.length) {
-      if (annotations[i] instanceof Specification) {
-        specs = (Specification) annotations[i];
-      }
-      i++;
+    public static Builder factFromEvent(@NotNull EventObject event) {
+        return factFromEvent(event, 0);
     }
 
-    if (specs == null) {
-      throw new IllegalStateException("invalid event object");
-    } else {
-      return Fact.builder()
-          .type(specs.type())
-          .ns(specs.ns())
-          .version(specs.version())
-          .id(id)
-          .meta("_ser", String.valueOf(serial));
+    public static Builder factFromEvent(@NotNull EventObject event, long serial) {
+        return factFromEvent(event, serial, UUID.randomUUID());
     }
-  }
+
+    @SneakyThrows
+    public static Builder factFromEvent(@NotNull EventObject event, long serial, UUID id) {
+        Specification specs = event.getClass().getAnnotation(Specification.class);
+
+        if (specs == null) {
+            throw new IllegalArgumentException("invalid event object");
+        } else {
+            Builder builder = FactFromEvent.builder()
+                    .serial(serial)
+                    .type(specs.type())
+                    .ns(specs.ns())
+                    .version(specs.version())
+                    .id(id)
+                    .payload(MAPPER.writeValueAsString(event));
+
+            if (!CollectionUtils.isEmpty(event.aggregateIds())) {
+                event.aggregateIds().forEach(builder::aggId);
+            }
+
+            return builder;
+        }
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder extends Fact.Builder {
+        private String payload;
+        public Builder serial(long id) {
+            meta("_ser", String.valueOf(id));
+            return this;
+        }
+
+        public Builder aggId(@NonNull UUID aggId) {
+            super.aggId(aggId);
+            return this;
+        }
+
+        public Builder ns(@NonNull String ns) {
+            super.ns(ns);
+            return this;
+        }
+
+        public Builder id(@NonNull UUID id) {
+            super.id(id);
+            return this;
+        }
+
+        public Builder type(@NonNull String type) {
+            super.type(type);
+            return this;
+        }
+
+        public Builder version(int version) {
+            super.version(version);
+            return this;
+        }
+
+        public Builder meta(@NonNull String key, String value) {
+            super.meta(key, value);
+            return this;
+        }
+
+        public Builder payload(@NonNull String payload) {
+            this.payload = payload;
+            return this;
+        }
+
+        public Fact build() {
+            return super.build(payload);
+        }
+    }
 }

@@ -46,6 +46,7 @@ import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.*;
 import org.factcast.test.AbstractFactCastIntegrationTest;
+import org.factcast.test.FactFromEvent;
 import org.junit.jupiter.api.Test;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
@@ -586,6 +587,18 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
     // make sure business rule was properly applied (we have 50 instead of
     // 53)
     assertThat(factus.fetch(TestAggregate.class, aggregateId).magicNumber()).isEqualTo(50);
+  }
+
+  @Test
+  public void simpleManagedProjectionPublishingFacts() {
+    Fact fact = FactFromEvent.factFromEvent(new UserCreated(randomUUID(), "One")).build();
+
+    factus.publish(fact);
+
+    factus.update(externalizedUserNames);
+
+    assertThat(externalizedUserNames.count()).isEqualTo(1);
+    assertThat(externalizedUserNames.contains("One")).isTrue();
   }
 
   private void waitForAllToTerminate(Set<CompletableFuture<Void>> futures) {

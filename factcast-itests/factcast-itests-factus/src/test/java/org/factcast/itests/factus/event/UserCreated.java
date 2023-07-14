@@ -19,6 +19,7 @@ import com.google.common.collect.Sets;
 import java.util.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.Specification;
@@ -26,7 +27,7 @@ import org.factcast.factus.event.Specification;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Specification(ns = "test", type = "UserCreated")
+@Specification(ns = "test", type = "UserCreated", version = 1)
 public class UserCreated implements EventObject {
   UUID aggregateId;
 
@@ -39,5 +40,12 @@ public class UserCreated implements EventObject {
 
   public UserCreated(String name) {
     this(UUID.randomUUID(), name);
+  }
+
+  public UUID getAggregateId() {
+    return aggregateId;
+  }
+  public String getUserName() {
+    return userName;
   }
 }
