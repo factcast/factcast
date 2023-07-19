@@ -46,7 +46,6 @@ import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.*;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.factcast.test.FactFromEvent;
 import org.junit.jupiter.api.Test;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
@@ -591,7 +590,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
 
   @Test
   public void simpleManagedProjectionPublishingFacts() {
-    Fact fact = FactFromEvent.factFromEvent(new UserCreated(randomUUID(), "One")).build();
+    Fact fact = Fact.buildFrom(new UserCreated(randomUUID(), "One")).build();
 
     factus.publish(fact);
 
