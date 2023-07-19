@@ -26,7 +26,7 @@ import org.factcast.factus.event.Specification;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Specification(ns = "test", type = "UserCreated", version = 1)
+@Specification(ns = "test", type = "UserCreated")
 public class UserCreated implements EventObject {
   UUID aggregateId;
 
@@ -39,13 +39,5 @@ public class UserCreated implements EventObject {
 
   public UserCreated(String name) {
     this(UUID.randomUUID(), name);
-  }
-
-  public UUID getAggregateId() {
-    return aggregateId;
-  }
-
-  public String getUserName() {
-    return userName;
   }
 }
