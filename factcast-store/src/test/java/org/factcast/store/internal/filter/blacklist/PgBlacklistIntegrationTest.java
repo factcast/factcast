@@ -70,7 +70,12 @@ class PgBlacklistIntegrationTest {
   }
 
   @Test
-  void blacklistIsApplied() {
+  void blacklistIsApplied() throws InterruptedException {
+
+    // after setup, some time will pass until the notification reached the server and the
+    // internal blacklist is updated...
+    Thread.sleep(1000);
+
     SubscriptionRequest req = SubscriptionRequest.catchup(spec).fromScratch();
     fs.subscribe(SubscriptionRequestTO.forFacts(req), obs).awaitCatchup();
     assertThat(receivedFactIds).hasSize(1).containsExactly(factId);
