@@ -20,8 +20,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.collect.Sets;
 import java.util.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.factcast.core.util.FactCastJson;
+import org.factcast.factus.event.EventObject;
+import org.factcast.factus.event.Specification;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -250,5 +256,40 @@ public class FactTest {
   void testEmptyPayload() {
     assertThat(Fact.builder().build("").jsonPayload()).isEqualTo("{}");
     assertThat(Fact.builder().build("   ").jsonPayload()).isEqualTo("{}");
+  }
+
+  @Test
+  void buildFromEventObject() {
+    UUID userId = UUID.randomUUID();
+    UUID factId = UUID.randomUUID();
+    String name = "Peter";
+    SomeUserCreatedEvent event = new SomeUserCreatedEvent(userId, name);
+    Fact.FactFromEventBuilder b = Fact.buildFrom(event);
+    assertThat(b).isNotNull();
+
+    Fact f = b.serial(12).id(factId).build();
+
+    assertThat(f.serial()).isEqualTo(12);
+    assertThat(f.id()).isEqualTo(factId);
+    assertThat(f.jsonPayload()).isEqualTo(FactCastJson.writeValueAsString(event));
+    assertThat(f.aggIds()).hasSize(1).containsExactly(userId);
+    assertThat(f.ns()).isEqualTo("test");
+    assertThat(f.type()).isEqualTo("SomeUserCreatedEvent");
+    assertThat(f.version()).isZero();
+  }
+
+  @Data
+  @NoArgsConstructor
+  @AllArgsConstructor
+  @Specification(ns = "test")
+  public class SomeUserCreatedEvent implements EventObject {
+    UUID aggregateId;
+
+    String userName;
+
+    @Override
+    public Set<UUID> aggregateIds() {
+      return Sets.newHashSet(aggregateId);
+    }
   }
 }

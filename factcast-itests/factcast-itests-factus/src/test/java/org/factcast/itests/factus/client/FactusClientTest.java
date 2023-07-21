@@ -588,6 +588,18 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
     assertThat(factus.fetch(TestAggregate.class, aggregateId).magicNumber()).isEqualTo(50);
   }
 
+  @Test
+  public void simpleManagedProjectionPublishingFacts() {
+    Fact fact = Fact.buildFrom(new UserCreated(randomUUID(), "One")).build();
+
+    factus.publish(fact);
+
+    factus.update(externalizedUserNames);
+
+    assertThat(externalizedUserNames.count()).isEqualTo(1);
+    assertThat(externalizedUserNames.contains("One")).isTrue();
+  }
+
   private void waitForAllToTerminate(Set<CompletableFuture<Void>> futures) {
     futures.forEach(
         f -> {
