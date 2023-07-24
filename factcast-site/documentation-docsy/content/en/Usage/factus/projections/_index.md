@@ -41,7 +41,7 @@ public class UserNames implements SnapshotProjection {
 ```
 
 Here the EventObject 'UserDeleted' and 'UserCreated' are just basically tuples of a UserId (aggregateId) and a Name (userName).
-Also **projections must have a default (no-args) constructor**.
+Also, **projections must have a default (no-args) constructor**.
 
 As we established before, you could also decide to use a nested class to separate the methods from other instance methods, like:
 
