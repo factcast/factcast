@@ -42,7 +42,7 @@ model, which can be used to provide consistent reads over different nodes that a
 the fact stream. In order to achieve this, you'd just update the model before reading from it.
 
 ```java
-// lets consider userCount is a spring-bean
+// let's consider userCount is a spring-bean
 UserCount userCount = new UserCount();
 
 // now catchup with the published events
@@ -54,7 +54,7 @@ The good part however is, that if FactCast was unavailable, you'd still have (a 
 fall back to.
 
 In cases where consistency with the fact-stream is not that important, you might just want to occasionally update
-the model. An example would be to call update for logged in users (to make sure, they see their potential writes)
+the model. An example would be to call update for logged-in users (to make sure, they see their potential writes)
 but not updating for public users, as they don't need to see the very latest changes.
 One way to manage the extends of "staleness" of a ManagedProjection could be just a **scheduled update call**,
 once every 5 minutes or whatever your requirements are for public users.

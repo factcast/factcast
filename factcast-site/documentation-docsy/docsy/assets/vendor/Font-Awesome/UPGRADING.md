@@ -42,7 +42,7 @@ If you were using any of the following icons with pseudo-elements you will need
 to change the CSS `content` value to the new unicode value.
 
 | Icon name              | Old  | New  |
-| ---------------------- | ---- | ---- |
+|------------------------|------|------|
 | bacteria               | f959 | e059 |
 | bacterium              | f95a | e05a |
 | box-tissue             | f95b | e05b |
@@ -459,16 +459,16 @@ packages.
 If you are using the Less or Sass file styles individually you will need to
 correct the names in your builds.
 
-| Old filename                | New filename             |
-| --------------------------- | ------------------------ |
-| less/fa-solid.less          | less/solid.less          |
-| less/fa-regular.less        | less/regular.less        |
-| less/fa-light.less          | less/light.less          |
-| less/fa-brands.less         | less/brands.less         |
-| scss/fa-solid.scss          | scss/solid.scss          |
-| scss/fa-regular.scss        | scss/regular.scss        |
-| scss/fa-light.scss          | scss/light.scss          |
-| scss/fa-brands.scss         | scss/brands.scss         |
+| Old filename         | New filename      |
+|----------------------|-------------------|
+| less/fa-solid.less   | less/solid.less   |
+| less/fa-regular.less | less/regular.less |
+| less/fa-light.less   | less/light.less   |
+| less/fa-brands.less  | less/brands.less  |
+| scss/fa-solid.scss   | scss/solid.scss   |
+| scss/fa-regular.scss | scss/regular.scss |
+| scss/fa-light.scss   | scss/light.scss   |
+| scss/fa-brands.scss  | scss/brands.scss  |
 
 ---
 

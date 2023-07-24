@@ -51,7 +51,7 @@ As you can see, you can either call a void method, or pass a function that trans
 
 Just like FactCast's `publish(List<Fact>)`, you can publish a list of Events/Facts atomically.
 
-However in some more complex scenarios, it might be more appropriate to have an object to pass around (and maybe mark aborted) where different parts of the code can contribute Events/Facts to publish to.
+However, in some more complex scenarios, it might be more appropriate to have an object to pass around (and maybe mark aborted) where different parts of the code can contribute Events/Facts to publish to.
 This is what **PublishBatch** is used for:
 
 ```java
