@@ -94,7 +94,7 @@ all possible namespaces that are in scope for the lock. Please use `factcast.loc
 
 #### Reconnection behavior
 
-Reconnecting due to connection/unknown errors has changed from an inifinite loop to just try five times (in a window of three seconds) and escalate if they failed.
+Reconnecting due to connection/unknown errors has changed from an infinite loop to just try five times (in a window of three seconds) and escalate if they failed.
 Details can be found [here](https://github.com/factcast/factcast/issues/889).
 
 ## Upgrading to 0.2.0 (quite a lot)
@@ -109,7 +109,7 @@ We encourage you to update any header in your postgres, that contains 'aggId', r
 
 #### basic-auth setup has changed
 
-If you used a 'factcast-security.json' before, you will be please to learn that FactCast was extended to support role/namespace based autorisation. Also the filename changed to 'factcast-access.json'.
+If you used a 'factcast-security.json' before, you will be please to learn that FactCast was extended to support role/namespace based authorisation. Also the filename changed to 'factcast-access.json'.
 
 see [basicauth usage](/setup/grpc-config-basicauth)
 
@@ -126,11 +126,11 @@ Next to fetchById(UUID) (asking for the event exactly the way it was published),
 
 #### unique_identifier
 
-If you used the uniqe*identifier feature before, it was removed. It was only a rouge hack that was used to coordinate two instance in case of publishing. By now, coordination can be done via optimistic locking, so that the need for \_unique_identifier* is no longer there.
+If you used the unique*identifier feature before, it was removed. It was only a rouge hack that was used to coordinate two instance in case of publishing. By now, coordination can be done via optimistic locking, so that the need for \_unique_identifier* is no longer there.
 
 #### optimistic locking
 
-There is a [section on optimitic locking](/usage/lowlevel/java/optimistic_locking/) as a new api feature.
+There is a [section on optimistic locking](/usage/lowlevel/java/optimistic_locking/) as a new api feature.
 
 #### Postgres module uuid-ossp
 
@@ -142,7 +142,7 @@ extension, the user performing the Liquibase operations requires Postgres superu
 The GRPC Protocol Version shifted from 1.0.0 to 1.1.0. That means, in order to talk to a FactCast server with version 0.1.0, you can use and client from 0.0.30 on, but in order to use a 0.1.0 client, you'd need to talk to a FactCast server with at least the same protocol version than your client.
 So the idea is: first update your servers, then update the clients.
 
-#### GRPC Adresses, Hosts, Ports
+#### GRPC Addresses, Hosts, Ports
 
 We updated to yidongnan/grpc-spring-boot-starter. In order to direct your client to a particular target address of a FactCast server, you might have specified:
 
@@ -170,7 +170,7 @@ see https://github.com/yidongnan/grpc-spring-boot-starter for details
 #### Spring Boot 2
 
 If you use Spring boot, please note, that all projects now depend on Spring Boot 2 artifacts.
-Support for Sring Boot 1.x was removed.
+Support for Spring Boot 1.x was removed.
 
 #### Plaintext vs TLS
 

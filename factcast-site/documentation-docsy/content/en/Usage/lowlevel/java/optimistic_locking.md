@@ -119,7 +119,7 @@ This lambda now is called according to the logic above.
 Inside the lambda, you'd want to check the current state using the very latest facts from factcast (`repo.findById(...)`) and then check your business constraints on it (`if (source.amount() < amountToTransfer)`...).
 If the constraints do not hold, you may choose to abort the Attempt and thus abort the process. In this case, the attempt will **not** be retried.
 
-On the other hand, if you choose to publish new facts using `Attempt.publish(...)`, the state will be checked and the Fact(s) will be published if there was not change in between (otherwise a retry will be issued, see above).
+On the other hand, if you choose to publish new facts using `Attempt.publish(...)`, the state will be checked and the Fact(s) will be published if there was no change in between (otherwise a retry will be issued, see above).
 In the rare case, that you do not want to publish anything, you can return `Attempt.withoutPublication()` to accomplish this.
 
 _Optionally_, you can pass a runnable using `.andThen` and schedule it for execution once, if **and only if** the publishing succeeded. Or in other words, this runnable is executed just once or never (in case of _abort_ or _OptimisticRetriesExceededException_).

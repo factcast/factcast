@@ -1,7 +1,7 @@
 ---
 title: "Metrics"
 type: docs
-weigth: 1020
+weight: 1020
 ---
 
 Like [the FactCast server]({{< ref "/Setup/metrics.md" >}} "factcast server metrics"), also Factus makes use

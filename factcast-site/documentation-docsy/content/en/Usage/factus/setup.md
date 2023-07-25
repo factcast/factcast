@@ -60,7 +60,7 @@ if you need inspiration.
 
 ### Redis SnapshotCache
 
-From a client's perspective, it is nice to be able to persist snapshots directly into factcast, so that you dont
+From a client's perspective, it is nice to be able to persist snapshots directly into factcast, so that you don't
 need any additional infrastructure to get started. In busy applications with many clients however, it might be
 a good idea to keep that load away from factcast, so that it can use its capacity to deal with Facts only.
 
@@ -82,5 +82,5 @@ In case Redis is you weapon of choice, there is a Redis implementation of that i
 
 to your client's project and spring autoconfiguration (if you use spring boot) will do the rest.
 
-As it relies on the excellent [Reddison](https://redisson.org/) library, all you need is to add the corresponding redis configuration to your project.
+As it relies on the excellent [Redisson](https://redisson.org/) library, all you need is to add the corresponding redis configuration to your project.
 See [the Redisson documentation](https://github.com/redisson/redisson/tree/master/redisson-spring-boot-starter).
