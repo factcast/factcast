@@ -15,7 +15,7 @@ Here are some good settings for an initial configuration of a SpringBoot FactCas
 ### Client side
 
 | Property                                         | Description                                                                                                                 | Recommended | Default |
-|:-------------------------------------------------|:----------------------------------------------------------------------------------------------------------------------------|:------------|---------|
+| :----------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------- | :---------- | ------- |
 | `grpc.client.factstore.enable-keep-alive`        | Configures whether keepAlive should be enabled.                                                                             | true        | false   |
 | `grpc.client.factstore.keep-alive-time`          | The default delay before sending keepAlives. Please note that shorter intervals increase the network burden for the server. | 300         | 60      |
 | `grpc.client.factstore.keep-alive-without-calls` | Configures whether keepAlive will be performed when there are no outstanding RPCs on a connection.                          | true        | false   |
@@ -25,7 +25,7 @@ Further details can be found here : `net.devh.boot.grpc.client.config.GrpcChanne
 ### Server side
 
 | Property                                      | Description                                                                                                                     | Recommended | Default |
-|:----------------------------------------------|:--------------------------------------------------------------------------------------------------------------------------------|:------------|---------|
+| :-------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------ | :---------- | ------- |
 | `grpc.server.permit-keep-alive-without-calls` | Configures whether clients are allowed to send keep-alive HTTP/2 PINGs even if there are no outstanding RPCs on the connection. | true        | false   |
 | `grpc.server.permit-keep-alive-time`          | Specifies the most aggressive keep-alive time in seconds clients are permitted to configure.                                    | 100         | 300     |
 

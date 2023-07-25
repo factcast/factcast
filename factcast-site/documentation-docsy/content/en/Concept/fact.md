@@ -78,10 +78,10 @@ JSON-Schema:
 The Meta-Data Object is optional and consist of key:value pairs. The reason for it is that implementations can filter facts on certain attributes efficiently (without indexing the whole Fact payload).
 When a fact is read from FactCast, it is guaranteed to have two field set in the Meta-Data object of the header:
 
-| Attribute  | Type         | Semantics                                                                                    |
-|:-----------|:-------------|:---------------------------------------------------------------------------------------------|
-| \_ser      | long / int64 | unique serial number for the fact, that determines a before/after relationship between facts |
-| \_ts       | long / int64 | timestamp in milliseconds, when this fact was published to factcast.                         |
+| Attribute | Type         | Semantics                                                                                    |
+| :-------- | :----------- | :------------------------------------------------------------------------------------------- |
+| \_ser     | long / int64 | unique serial number for the fact, that determines a before/after relationship between facts |
+| \_ts      | long / int64 | timestamp in milliseconds, when this fact was published to factcast.                         |
 
 As you can see, all meta-data attributes prefixed with "\_" are supposed to be server created, so please do not use an "\_" prefix yourself.
 
