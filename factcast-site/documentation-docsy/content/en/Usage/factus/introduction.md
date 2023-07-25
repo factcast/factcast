@@ -12,11 +12,11 @@ FactCast tries to be non-intrusive. It focuses on publishing, retrieval, validat
 
 Depending on your experience with eventsourcing in general or other products/approaches in particular, it might be hard to see how exactly this helps you to build correct, scalable and maintainable systems. At least this was our experience working with diverse groups of engineers over the years.
 
-Now, instead of documenting lots of good practices here, we thought it would be easier to start with, more convenient and less error prone to offer a high-level API instead, that codifies those good practices.
+Now, instead of documenting lots of good practices here, we thought it would be easier to start with, more convenient and less error-prone to offer a high-level API instead, that codifies those good practices.
 
 We say **"good" practices** here, rather than _"best" practices_ for a reason. Factus represents just one way of using FactCast from Java. Please be aware that it may grow over time and that there is nothing wrong with using a different approach.
 Also, be aware that not every possible use case is covered by Factus so that you occasionally might want to fall back to "doing things yourself" with the low-level FactCast API.
-In case you encounter such a situation, please open a github issue explaining your motivation. Maybe this is something Factus is currently lacking.
+In case you encounter such a situation, please open a GitHub issue explaining your motivation. Maybe this is something Factus is currently lacking.
 
 ### Factus as a higher level of abstraction
 

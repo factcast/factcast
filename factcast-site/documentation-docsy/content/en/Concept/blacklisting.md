@@ -35,6 +35,6 @@ As an alternative you can provide a list of blocked fact-ids in JSON format from
 filesystem. Consult the [properties page](/setup/properties#blacklist) on how to set this up.
 
 {{% alert  color="info" %}}
-Keep in mind that this feature has very limited usecases and in both implementations, the list of IDs is kept in memory for
+Keep in mind that this feature has very limited use-cases and in both implementations, the list of IDs is kept in memory for
 performance reasons, so please keep it very, very short.  
 {{% /alert %}}
