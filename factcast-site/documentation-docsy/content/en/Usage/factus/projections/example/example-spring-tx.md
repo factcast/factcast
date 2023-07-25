@@ -74,7 +74,7 @@ Two remarks:
 The `@SpringTransactional` annotation provides various configuration options:
 
 | Parameter Name     | Description        | Default Value |
-|--------------------|--------------------|---------------|
+| ------------------ | ------------------ | ------------- |
 | `bulkSize`         | bulk size          | 50            |
 | `timeoutInSeconds` | timeout in seconds | 30            |
 
@@ -84,7 +84,7 @@ The two possible abstract base classes, `AbstractSpringTxManagedProjection` or `
 both require the following methods to be implemented:
 
 | Method Signature                                                   | Description                                                                                             |
-|--------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
 | `public UUID factStreamPosition()   `                              | read the last position in the Fact stream from the database                                             |
 | `public void factStreamPosition(@NonNull UUID factStreamPosition)` | write the current position of the Fact stream to the database                                           |
 | `public WriterToken acquireWriteToken(@NonNull Duration maxWait)`  | coordinates write access to the projection, see [here]({{< ref "managed-projection.md" >}}) for details |

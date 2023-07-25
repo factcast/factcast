@@ -35,7 +35,7 @@ In order to do that, a list of FactSpec-Objects is transferred on subscription. 
 FactSpec-Objects must define a **ns** attribute. The rest is actually optional:
 
 | Attribute      | Type                               | Semantics                                        |
-|:---------------|:-----------------------------------|:-------------------------------------------------|
+| :------------- | :--------------------------------- | :----------------------------------------------- |
 | ns             | String                             | Namespace                                        |
 | type           | String                             | Type of Fact                                     |
 | aggId          | UUID                               | Aggregate-ID                                     |
