@@ -13,7 +13,7 @@ ref "example-spring-tx.md">}}). However, this time we use Redis as our data stor
 The `@RedisTransactional` annotation provides various configuration options:
 
 | Parameter Name    | Description                                                                                                      | Default Value |
-|-------------------|------------------------------------------------------------------------------------------------------------------|---------------|
+| ----------------- | ---------------------------------------------------------------------------------------------------------------- | ------------- |
 | `bulkSize`        | bulk size                                                                                                        | 50            |
 | `timeout`         | timeout in milliseconds until a transaction is interrupted and rolled back                                       | 30000         |
 | `responseTimeout` | timeout in milliseconds for Redis response. Starts to countdown when transaction has been successfully submitted | 5000          |
@@ -97,7 +97,7 @@ RMap<UUID, String> =tx.getMap(getRedisKey());
 There are good reasons for either variant, `1)` and `2)`:
 
 | Redisson specific                                                                                                                                                                                                                                                                                                           | plain Java          |
-|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------|
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
 | extended functionality which e.g. reduces I/O load. (e.g. see [`RMap.fastPut(...)`](<https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html#fastPut(K,V)>) and [`RMap.fastRemove(...)`](<https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html#fastRemove(K...).>) | standard, intuitive |
 | only option when using data-structures which are not available in standard Java Collections (e.g. [RedissonListMultimap](https://javadoc.io/doc/org.redisson/redisson/latest/org/redisson/RedissonListMultimap.html))                                                                                                       | easier to test      |
 
