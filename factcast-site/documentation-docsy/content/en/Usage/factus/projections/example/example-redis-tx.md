@@ -13,7 +13,7 @@ ref "example-spring-tx.md">}}). However, this time we use Redis as our data stor
 The `@RedisTransactional` annotation provides various configuration options:
 
 | Parameter Name    | Description                                                                                                      | Default Value |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------- | ------------- |
+|-------------------|------------------------------------------------------------------------------------------------------------------|---------------|
 | `bulkSize`        | bulk size                                                                                                        | 50            |
 | `timeout`         | timeout in milliseconds until a transaction is interrupted and rolled back                                       | 30000         |
 | `responseTimeout` | timeout in milliseconds for Redis response. Starts to countdown when transaction has been successfully submitted | 5000          |
@@ -49,7 +49,7 @@ state is carried out on a transaction derived data-structure (`Map` here) inside
 Received events are processed inside the methods annotated with `@Handler` (the _handler methods_). To participate in
 the transaction, these methods have an additional `RTransaction` parameter which represents the current transaction.
 
-Let' have a closer look at the handler for the `UserCreated` event:
+Let's have a closer look at the handler for the `UserCreated` event:
 
 ```java
 @Handler
@@ -79,15 +79,15 @@ in Redis:
 - `getRedisKey() + "_state_tracking"` - contains the UUID of the last position of the Fact stream
 - `getRedisKey() + "_lock"` - shared lock that needs to be acquired to update the projection.
 
-## Redission API Datastructures vs. Java Collections
+## Redisson API Datastructures vs. Java Collections
 
-As seen in the above example, some Redission data structures also implement the appropriate Java Collections interface.
+As seen in the above example, some Redisson data structures also implement the appropriate Java Collections interface.
 For example, you can assign
-a [Redission RMap](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html)
+a [Redisson RMap](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html)
 also to a standard Java `Map`:
 
 ```java
-// 1) use specific Redission type
+// 1) use specific Redisson type
 RMap<UUID, String> =tx.getMap(getRedisKey());
 
 // 2) use Java Collections type
@@ -97,7 +97,7 @@ RMap<UUID, String> =tx.getMap(getRedisKey());
 There are good reasons for either variant, `1)` and `2)`:
 
 | Redisson specific                                                                                                                                                                                                                                                                                                           | plain Java          |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------|
 | extended functionality which e.g. reduces I/O load. (e.g. see [`RMap.fastPut(...)`](<https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html#fastPut(K,V)>) and [`RMap.fastRemove(...)`](<https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html#fastRemove(K...).>) | standard, intuitive |
 | only option when using data-structures which are not available in standard Java Collections (e.g. [RedissonListMultimap](https://javadoc.io/doc/org.redisson/redisson/latest/org/redisson/RedissonListMultimap.html))                                                                                                       | easier to test      |
 

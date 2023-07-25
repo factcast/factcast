@@ -6,7 +6,7 @@ type: docs
 
 When consumers subscribe to a Stream of Events, it has to express, which Events he wants to receive. The more precise this can be done, the less resources like bandwidth, CPU-Time etc. are wasted.
 
-As discussed [here](../factstreams), there are more than one ways to do it. We decided to go for just-in-time filtering in FactCast. Here is why:
+As discussed [here](../factstreams), there is more than one way to do it. We decided to go for just-in-time filtering in FactCast. Here is why:
 
 #### The problem with FactStream-IDs
 
@@ -14,9 +14,9 @@ As discussed [here](../factstreams), there are more than one ways to do it. We d
 
 While that is a wonderful concept, that guarantees very good performance when actually streaming, it highlights a little organizational difficulty: Where to put this code? This is a problem similar to automatically maintaining Schemas in a relational Database, tackled by Liquibase et al.
 
-- How can an application know, if a matching Projection already exists and is what is expected?
+- How can an application know if a matching Projection already exists and is what is expected?
 - How to coordinate the creation of relevant Projections in the face of horizontal scalability (many instances of you application coming to live at roughly the same point in time) and
-- what about carnary releases with changing (probably not changing, but replacing) Projections?
+- what about canary releases with changing (probably not changing, but replacing) Projections?
 
 While these Problems are certainly solvable, we went for an easier, but certainly not as fast solution:
 
@@ -35,18 +35,18 @@ In order to do that, a list of FactSpec-Objects is transferred on subscription. 
 FactSpec-Objects must define a **ns** attribute. The rest is actually optional:
 
 | Attribute      | Type                               | Semantics                                        |
-| :------------- | :--------------------------------- | :----------------------------------------------- |
+|:---------------|:-----------------------------------|:-------------------------------------------------|
 | ns             | String                             | Namespace                                        |
 | type           | String                             | Type of Fact                                     |
 | aggId          | UUID                               | Aggregate-ID                                     |
 | meta           | JSON Object with String Properties | A list of String key-value pairs (Tags) to match |
 | jsFilterScript | String (JavaScript)                | Scripted Predicate, see below                    |
 
-Of course, **all** of the requirements defined in a FactSpec have to be met for a Fact to be matched.
+Of course, **all** the requirements defined in a FactSpec have to be met for a Fact to be matched.
 
 ### Post-Query Filtering / Scripted Predicates
 
-As discussed [here](../factstreams), there are situations, where these tagging/categorizing means are not enough, because you just do not have this information in the header, or you need some more fine grained control like Range-expressions etc.
+As discussed [here](../factstreams), there are situations, where these tagging/categorizing means are not enough, because you just do not have this information in the header, or you need some more fine-grained control like Range-expressions etc.
 
 This is where scripted Predicates come in.
 

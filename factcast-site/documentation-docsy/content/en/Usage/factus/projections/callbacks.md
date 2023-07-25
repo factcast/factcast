@@ -7,7 +7,7 @@ type = "docs"
 When implementing the [Projection interface](https://github.com/factcast/factcast/blob/master/factcast-factus/src/main/java/org/factcast/factus/projection/Projection.java), the user can choose to override these default hook methods for more fine-grained control:
 
 | Method Signature                                               | Description                                                                                                                                                          |
-| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|----------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `List<FactSpec> postprocess(List<FactSpec> specsAsDiscovered)` | further filter the handled facts via their [fact specification]({{<ref "factspec.md#specification">}}) including aggregate ID and meta entries                       |
 | `void onCatchup()`                                             | invoked after all past facts of the streams were processed. This is a good point to signal that the projection is ready to serve data (e.g. via a health indicator). |
 | `void onComplete()`                                            | called when subscription closed without error                                                                                                                        |
@@ -19,7 +19,7 @@ Annotating your handler methods gives you a convenient way of declaring a projec
 This kind of filtering should be sufficient for most of the use-cases. However, annotations have to have constant attributes, so what you cannot do this way is to filter on values that are only available at runtime:
 A particular aggregateId or a calculated meta-attribute in the header.
 
-For these usecases the postprocess hook can be used.
+For these use-cases the postprocess hook can be used.
 
 The following projection handles `SomethingStarted` and `SomethingEnded` events. When updating the projection, Factus invokes
 the `postprocess(...)` method and provides it with a list of `FactSpec` specifications as discovered from the annotations.

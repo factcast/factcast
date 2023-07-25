@@ -6,7 +6,7 @@ weight = 60
 
 As mentioned [before]({{%relref "/concept/_index.md#read-subscribe"%}}), there are three main Use-Cases for subscribing to a Fact-Stream:
 
-- Validation of Changes against a sctrictly consistent Model (Catchup)
+- Validation of Changes against a strictly consistent Model (Catchup)
 - Creating and maintaining a Read-Model (Follow)
 - Managing volatile cached data (Ephemeral)
 

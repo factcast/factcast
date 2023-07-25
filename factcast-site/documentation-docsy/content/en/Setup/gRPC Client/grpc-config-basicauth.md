@@ -11,7 +11,7 @@ FullAccess), FactCast support usage of secrets exchange via BasicAuth. Note that
 providing authentication that - if used in production - should be accompanied by using TLS in order not to expose
 secrets over the wire.
 
-Also the current implementation - while functional - is just a starting point. FactCast uses standard Spring Security,
+Also, the current implementation - while functional - is just a starting point. FactCast uses standard Spring Security,
 so that you have plenty of options to tailor security to your needs.
 
 ### Using BasicAuth from a client
