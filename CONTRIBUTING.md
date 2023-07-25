@@ -82,7 +82,7 @@ A good bug report shouldn't leave others needing to chase you up for more inform
 
 #### How Do I Submit a Good Bug Report?
 
-> You must never report security related issues, vulnerabilities or bugs including sensitive information to the issue tracker, or elsewhere in public. Instead sensitive bugs must be sent by email to <security@factcast.org>.
+> You must never report security related issues, vulnerabilities or bugs including sensitive information to the issue tracker, or elsewhere in public. Instead, sensitive bugs must be sent by email to <security@factcast.org>.
 
 <!-- You may add a PGP key to allow the messages to be sent encrypted as well. -->
 
@@ -142,7 +142,7 @@ or
 
 in the project's root folder.
 
-Please note, that if you do not format your commit, a github action will :D
+Please note, that if you do not format your commit, a GitHub action will :D
 
 ### Using git hooks
 

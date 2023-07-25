@@ -57,7 +57,7 @@ Atomic projections are declared via specific annotations. Currently, supported a
 These annotations share a common configuration attribute:
 
 | Parameter Name | Description                             | Default Value |
-| -------------- | --------------------------------------- | ------------- |
+|----------------|-----------------------------------------|---------------|
 | `bulkSize`     | how many events are processed in a bulk | 50            |
 
 as well as, different attributes needed to configure the respective underlying technical solution (Transaction/Batch/...).

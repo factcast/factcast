@@ -12,7 +12,7 @@ _UserCreated_ and _UserDeleted_ events:
 The `@RedisBatched` annotation provides various configuration options:
 
 | Parameter Name    | Description                                          | Default Value |
-| ----------------- | ---------------------------------------------------- | ------------- |
+|-------------------|------------------------------------------------------|---------------|
 | `bulkSize`        | bulk size                                            | 50            |
 | `responseTimeout` | timeout in milliseconds for Redis response           | 5000          |
 | `retryAttempts`   | maximum attempts to transmit batch of Redis commands | 5             |
@@ -82,15 +82,15 @@ in Redis:
 - `getRedisKey() + "_state_tracking"` - contains the UUID of the last position of the Fact stream
 - `getRedisKey() + "_lock"` - shared lock that needs to be acquired to update the projection.
 
-## Redission API Datastructures vs. Java Collections
+## Redisson API Datastructures vs. Java Collections
 
-As seen in the above example, some Redission data-structures also implement the appropriate Java Collections interface.
+As seen in the above example, some Redisson data-structures also implement the appropriate Java Collections interface.
 For example, you can assign
-a [Redission RMap](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html)
+a [Redisson RMap](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html)
 also to a standard Java `Map`:
 
 ```java
-// 1) use specific Redission type
+// 1) use specific Redisson type
         RMap<UUID, String> = tx.getMap(getRedisKey());
 
 // 2) use Java Collections type
@@ -100,7 +100,7 @@ also to a standard Java `Map`:
 There are good reasons for either variant, `1)` and `2)`:
 
 | Redisson specific                                                                                                                                                                                                                                                                                                           | plain Java          |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------|
 | extended functionality which e.g. reduces I/O load. (e.g. see [`RMap.fastPut(...)`](<https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html#fastPut(K,V)>) and [`RMap.fastRemove(...)`](<https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html#fastRemove(K...).>) | standard, intuitive |
 | only option when using data-structures which are not available in standard Java Collections (e.g. [RedissonListMultimap](https://javadoc.io/doc/org.redisson/redisson/latest/org/redisson/RedissonListMultimap.html))                                                                                                       | easier to test      |
 
