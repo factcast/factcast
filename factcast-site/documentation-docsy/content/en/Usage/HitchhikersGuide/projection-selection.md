@@ -6,7 +6,7 @@ type: docs
 
 {{% alert title="Preface" %}}
 
-This guide is targeting an audience that is already informed about the projection types offered by Factus, and about 
+This guide is targeting an audience that is already informed about the projection types offered by Factus, and about
 their basics.
 
 We suggest to check out the "Projections" section of the Factus API docs (TODO link) before delving into this guide.
@@ -15,67 +15,67 @@ We suggest to check out the "Projections" section of the Factus API docs (TODO l
 
 ## Introduction
 
-Projections, the derived views of our event-sourced data, serve as vital components in shaping our applications, 
-enabling efficient querying, analysis, and decision-making. However, with Factus offering a range of projection options, 
+Projections, the derived views of our event-sourced data, serve as vital components in shaping our applications,
+enabling efficient querying, analysis, and decision-making. However, with Factus offering a range of projection options,
 each with its own strengths and considerations, it becomes essential to choose wisely.
 
-Our objective is to equip you with the knowledge and insights necessary to navigate the available options and make the 
-right choices that align with your project's requirements. 
-We will delve into the intricacies of each projection type, uncover their unique features and trade-offs, and provide 
+Our objective is to equip you with the knowledge and insights necessary to navigate the available options and make the
+right choices that align with your project's requirements.
+We will delve into the intricacies of each projection type, uncover their unique features and trade-offs, and provide
 practical advice to aid your decision-making process.
 
 ---
 
 ## Identifying Relevant Requirements
 
-Before diving into the exploration of different projection types, it is essential to establish a clear understanding of 
-the requirements that are relevant to your specific project. By identifying these requirements upfront, you can 
-effectively narrow down the options and choose the projection type that best aligns with your project goals and 
+Before diving into the exploration of different projection types, it is essential to establish a clear understanding of
+the requirements that are relevant to your specific project. By identifying these requirements upfront, you can
+effectively narrow down the options and choose the projection type that best aligns with your project goals and
 constraints.
 
-In this section, we will delve into a comprehensive list of possible requirements that should be considered when 
-evaluating projection types. By examining and prioritizing these requirements, you will gain valuable insights into the 
+In this section, we will delve into a comprehensive list of possible requirements that should be considered when
+evaluating projection types. By examining and prioritizing these requirements, you will gain valuable insights into the
 trade-offs and considerations associated with each projection type.
 
 ### Scalability
 
-This requirement focuses on the ability of the chosen projection type to handle growing amounts of data and increasing 
-workloads without compromising performance or functionality. Considerations include the horizontal scalability of the 
+This requirement focuses on the ability of the chosen projection type to handle growing amounts of data and increasing
+workloads without compromising performance or functionality. Considerations include the horizontal scalability of the
 projection, the efficiency of data distribution, and the ability to handle concurrent updates and queries.
 
 ### Performance (split between latencies and costs?)
 
-Performance refers to the speed and responsiveness of the projection type in processing events and serving queries. 
-It involves evaluating factors such as event ingestion rates, query response times, and the impact of increasing data 
-volumes on overall system performance. Choosing a projection type that can meet the desired performance benchmarks is 
+Performance refers to the speed and responsiveness of the projection type in processing events and serving queries.
+It involves evaluating factors such as event ingestion rates, query response times, and the impact of increasing data
+volumes on overall system performance. Choosing a projection type that can meet the desired performance benchmarks is
 crucial for maintaining a high-performing and responsive system.
 
 ### Query flexibility
 
-Query flexibility assesses the ability to express complex queries and retrieve relevant information efficiently. It 
-involves evaluating the projection type's support for various query patterns, such as filtering, aggregations, joins, 
-and ad-hoc queries. Consider whether the chosen projection type enables the desired flexibility in querying the 
+Query flexibility assesses the ability to express complex queries and retrieve relevant information efficiently. It
+involves evaluating the projection type's support for various query patterns, such as filtering, aggregations, joins,
+and ad-hoc queries. Consider whether the chosen projection type enables the desired flexibility in querying the
 event-sourced data while maintaining good performance.
 
 ### Complexity
 
-Complexity refers to the level of intricacy and sophistication involved in implementing and managing the chosen 
-projection type. It encompasses aspects such as the learning curve for developers, the architectural complexity of the 
-projection, and the degree of operational complexity. It is important to assess whether the complexity aligns with the 
+Complexity refers to the level of intricacy and sophistication involved in implementing and managing the chosen
+projection type. It encompasses aspects such as the learning curve for developers, the architectural complexity of the
+projection, and the degree of operational complexity. It is important to assess whether the complexity aligns with the
 team's expertise and resources.
 
 ### Data consistency
 
-Data consistency focuses on ensuring that the derived views produced by the projection type accurately reflect the state 
-of the event stream. It involves assessing how well the projection type handles events, updates, and concurrent 
-modifications to maintain a consistent and coherent view of the data across different projections. Ensuring data 
+Data consistency focuses on ensuring that the derived views produced by the projection type accurately reflect the state
+of the event stream. It involves assessing how well the projection type handles events, updates, and concurrent
+modifications to maintain a consistent and coherent view of the data across different projections. Ensuring data
 consistency is crucial for making reliable and accurate decisions based on the derived views.
 
 ### Maintainability
 
-Maintainability assesses the ease of managing, updating, and evolving the projection type over time. Considerations 
-include the ability to accommodate changing business requirements, the ease of making modifications or adding new 
-features, and the availability of monitoring and debugging tools. Choosing a projection type that is maintainable 
+Maintainability assesses the ease of managing, updating, and evolving the projection type over time. Considerations
+include the ability to accommodate changing business requirements, the ease of making modifications or adding new
+features, and the availability of monitoring and debugging tools. Choosing a projection type that is maintainable
 ensures long-term sustainability and adaptability of the system.
 
 ---
@@ -90,8 +90,8 @@ ensures long-term sustainability and adaptability of the system.
 
 TODO link to docs
 
-- **Scalability**: by default, a Snapshot Projection stores its cached state in the FactCast server (aka the Event 
-  Store). This can create bottlenecks, or impact the performance of the Event Store, whenever the workload increases. 
+- **Scalability**: by default, a Snapshot Projection stores its cached state in the FactCast server (aka the Event
+  Store). This can create bottlenecks, or impact the performance of the Event Store, whenever the workload increases.
   It can be optimized, depending on the use case, by hooking into the snapshot lifecycle, and changing the way it is
   accessed, serialized, stored, and retained.
 
@@ -102,17 +102,17 @@ TODO link to docs
 - **Query flexibility**: a Snapshot Projection allows to query, and aggregate, multiple event types on-demand. Any type
   of data structure can be used to store the projected events, considering that it needs to be serializable.
 
-- **Complexity**: the complexity of this projection varies, as it's fairly easy to use, with the default snapshot 
+- **Complexity**: the complexity of this projection varies, as it's fairly easy to use, with the default snapshot
   lifecycle implementation. It can get more complex, whenever it's necessary to customize its aspects.
 
-- **Data consistency**: when fetched, the Snapshot Projection ensures to return the most recent representation of the 
+- **Data consistency**: when fetched, the Snapshot Projection ensures to return the most recent representation of the
   event stream. It supports optimistic locking to handle concurrent modifications (see Optimistic Locking - TODO link).
 
-- **Maintainability**: the projection allows to change the business logic of the event handlers, to create new data 
+- **Maintainability**: the projection allows to change the business logic of the event handlers, to create new data
   structures for the derived views, update existing ones, or to add new decisions. To do so, it is necessary to update
-  the serial of the projection every time the projection class is changed (TODO link "Serials" section of Snapshotting). 
-  The full event-stream will then be re-consumed on the subsequent fetch, as the previously created snapshots will get 
-  invalidated. The snapshots retention might need to be fine-tuned on the long run, based on the amount of resources 
+  the serial of the projection every time the projection class is changed (TODO link "Serials" section of Snapshotting).
+  The full event-stream will then be re-consumed on the subsequent fetch, as the previously created snapshots will get
+  invalidated. The snapshots retention might need to be fine-tuned on the long run, based on the amount of resources
   available, and the frequency of the queries.
 
 ### Aggregate
@@ -123,10 +123,10 @@ TODO link to docs
 
 - **Performance**: same considerations made for the Snapshot Projection apply.
 
-- **Query flexibility**: depending on the events schema design, an Aggregate Projection offers limited flexibility, 
-  compared to a snapshot projection, as it allows to build views that are specific to a single entity (or aggregate, 
+- **Query flexibility**: depending on the events schema design, an Aggregate Projection offers limited flexibility,
+  compared to a snapshot projection, as it allows to build views that are specific to a single entity (or aggregate,
   hence the name of this projection). This doesn't restrict to perform multiple queries for different aggregate ids, to
-  create relations between them. It could be argued that alternative projection types may be better suited for these 
+  create relations between them. It could be argued that alternative projection types may be better suited for these
   types of use cases, thereby reducing the number of requests sent to the server.
 
 - **Complexity**: same considerations made for the Snapshot Projection, but conceptually speaking, this is the easiest
@@ -142,60 +142,60 @@ TODO link to docs
 
 Preface: considering a Managed Projection that has its state externalized in a shared database.
 
-- **Scalability**: a Managed Projection enables the application to effectively handle the lifecycle of the views, 
-  allowing to adapt it to the expected workload. With a shared database, the derived views are uniformly accessible and 
+- **Scalability**: a Managed Projection enables the application to effectively handle the lifecycle of the views,
+  allowing to adapt it to the expected workload. With a shared database, the derived views are uniformly accessible and
   consistent among multiple instances of the projection.
 
-- **Performance**: whenever a projection is updated, the most recent events since the last update are fetched from the 
-  Event Store, and processed. The performance of the projection depends on the frequency of the updates, the amount of 
+- **Performance**: whenever a projection is updated, the most recent events since the last update are fetched from the
+  Event Store, and processed. The performance of the projection depends on the frequency of the updates, the amount of
   events that need to be processed, and of course, the complexity of the business logic to manage the derived views.
 
-- **Query flexibility**: a Managed Projection allows to query, and aggregate, multiple event types on-demand. Any type 
-  of external datasource can be potentially used to store the derived views. Since Factus has no control over the 
-  Projection, the projection implementation itself needs to ensure that proper concurrency handling is implemented, 
+- **Query flexibility**: a Managed Projection allows to query, and aggregate, multiple event types on-demand. Any type
+  of external datasource can be potentially used to store the derived views. Since Factus has no control over the
+  Projection, the projection implementation itself needs to ensure that proper concurrency handling is implemented,
   whenever the underlying datasource doesn't support it.
 
-- **Complexity**: this projection requires to implement the business logic to manage the derived views, and to handle 
-  the concurrency (if needed). It might also be necessary to design the lifecycle of the projection, to ensure that it 
+- **Complexity**: this projection requires to implement the business logic to manage the derived views, and to handle
+  the concurrency (if needed). It might also be necessary to design the lifecycle of the projection, to ensure that it
   is updated at the desired frequency (e.g. using scheduled updates).
 
-- **Data consistency**: since a shared datasource is used to store the derived views, the same state is shared across 
+- **Data consistency**: since a shared datasource is used to store the derived views, the same state is shared across
   all instances of the projection. Of course, the derived views might be stale, whenever new events are published, but
-  the projection can be updated while processing queries, to ensure that the most recent state is returned. It supports 
+  the projection can be updated while processing queries, to ensure that the most recent state is returned. It supports
   optimistic locking to handle concurrent modifications (see Optimistic Locking - TODO link).
 
-- **Maintainability**: a managed projection enables the construction of derived views that can potentially be queried 
-  even when the Event Store is unavailable. The projection allows to change the business logic of the event handlers, 
-  and change the underlying structure the derived views. To do so, it is necessary to update the serial of the 
-  projection every time the projection class is changed (TODO link "Serials" section of Snapshotting). The full 
+- **Maintainability**: a managed projection enables the construction of derived views that can potentially be queried
+  even when the Event Store is unavailable. The projection allows to change the business logic of the event handlers,
+  and change the underlying structure the derived views. To do so, it is necessary to update the serial of the
+  projection every time the projection class is changed (TODO link "Serials" section of Snapshotting). The full
   event-stream will then be re-consumed on the subsequent updates, to rebuild the derived views.
 
 ### Local Managed Projection
 
 TODO link to docs
 
-- **Scalability**: a Local Managed Projection stores its state in-memory. Depending on the use-case, this can create 
-  performance, and availability issues on the long-run, whenever the derived views size increases over time or is 
-  affected by peaks. Remember that, during horizontal scaling, each instance will maintain its independent state, 
+- **Scalability**: a Local Managed Projection stores its state in-memory. Depending on the use-case, this can create
+  performance, and availability issues on the long-run, whenever the derived views size increases over time or is
+  affected by peaks. Remember that, during horizontal scaling, each instance will maintain its independent state,
   potentially resulting in data inconsistencies.
 
-- **Performance**: same considerations made for the Managed Projection. Arguably, the performance of a Local Managed 
-  Projection is better, as it doesn't need to access an external datasource to store the derived views. However, it 
-  needs to be considered that the derived views are stored in-memory, and that the memory footprint of the projection 
+- **Performance**: same considerations made for the Managed Projection. Arguably, the performance of a Local Managed
+  Projection is better, as it doesn't need to access an external datasource to store the derived views. However, it
+  needs to be considered that the derived views are stored in-memory, and that the memory footprint of the projection
   will increase over time, potentially affecting the performance of the application.
 
 - **Query flexibility**: a Local Managed Projection offers the highest degree of freedom, in terms of flexibility, as it
   enable to manage the in-memory views using whatever data structure offered by the programming language.
 
-- **Complexity**: this projection only requires to implement the business logic to manage the derived views. For this 
+- **Complexity**: this projection only requires to implement the business logic to manage the derived views. For this
   reason, it is probably the easiest projection to start with, especially for a proof of concept, or a prototype.
 
 - **Data consistency**: since the derived views are stored in-memory, the same state won't be shared across multiple
   instances. In terms of staleness, the same considerations made for the Managed Projection apply.
 
-- **Maintainability**: a Local Managed Projection is the easiest projection to maintain, as it doesn't require to 
+- **Maintainability**: a Local Managed Projection is the easiest projection to maintain, as it doesn't require to
   manage external datasources. Everytime the application is stopped, the derived views are lost, and need to be rebuilt
-  on subsequent restarts: this allows to easily test the projection, and change its business logic, but also has an 
+  on subsequent restarts: this allows to easily test the projection, and change its business logic, but also has an
   impact on the performances, as the derived views need to be rebuilt from scratch.
 
 ### Subscribed Projection
@@ -204,19 +204,19 @@ TODO link to docs
 
 Preface: considering a Subscribed Projection that has its state externalized in a shared database.
 
-- **Scalability**: only one instance will actually subscribe to the event stream, and receive events asynchronously. 
-  This implies that horizontal scaling could be limited, as only one instance will be able to execute the handlers 
-  business logic. However, with a shared database, the derived views are uniformly accessible and consistent among 
+- **Scalability**: only one instance will actually subscribe to the event stream, and receive events asynchronously.
+  This implies that horizontal scaling could be limited, as only one instance will be able to execute the handlers
+  business logic. However, with a shared database, the derived views are uniformly accessible and consistent among
   multiple instances of the projection, enabling to spread the load of the queries.
 
-- **Performance**: after catching-up, the projection consumes events right after those are published, with a small 
+- **Performance**: after catching-up, the projection consumes events right after those are published, with a small
   latency (expected to be below 100ms). The projection performance only depends on the complexity of the business logic,
   and the underlying datasource used to store the derived views.
 
 - **Query flexibility**: a Managed Projection allows to query, and aggregate, multiple event types on-demand. Any type
   of external datasource can be potentially used to store the derived views. Since Factus has no control over the
   Projection, the projection implementation itself needs to ensure that proper concurrency handling is implemented,
-  whenever the underlying datasource doesn't support it. Since the derived views are updated asynchronously, it is 
+  whenever the underlying datasource doesn't support it. Since the derived views are updated asynchronously, it is
   possible to query only the most recent state of the derived views, and not the state at the time of the query.
 
 - **Complexity**: this projection requires to implement the business logic to manage the derived views, and to handle
@@ -232,7 +232,7 @@ Preface: considering a Subscribed Projection that has its state externalized in 
 - **Maintainability**: in terms of maintainability, a Subscribed Projection is similar to a Managed Projection, as it
   allows to change the business logic of the event handlers, and change the underlying structure the derived views. To
   do so, it is necessary to update the serial of the projection every time the projection class is changed (TODO link
-  "Serials" section of Snapshotting). The full event-stream will then be re-consumed on the next catch-up phase (when 
+  "Serials" section of Snapshotting). The full event-stream will then be re-consumed on the next catch-up phase (when
   the new projection starts), to rebuild the derived views.
 
 ### Local Subscribed Projection
@@ -247,8 +247,8 @@ TODO link to docs
 
 - **Complexity**: same considerations made for the Local Managed Projection apply.
 
-- **Data consistency**: same considerations made for the Local Managed Projection apply, with the difference that since 
-  the application is not responsible for the projection update, it never knows the current projection state, which is 
+- **Data consistency**: same considerations made for the Local Managed Projection apply, with the difference that since
+  the application is not responsible for the projection update, it never knows the current projection state, which is
   then eventually consistent.
 
 - **Maintainability**: same considerations made for the Local Managed Projection apply.
@@ -257,7 +257,7 @@ TODO link to docs
 
 ## Selecting the Right Projection Type
 
-When embarking on the journey of selecting the right projection type for your event sourcing project, it is crucial to 
+When embarking on the journey of selecting the right projection type for your event sourcing project, it is crucial to
 carefully evaluate and prioritize the identified requirements based on your project's unique context.
 
 That being said, here are some general Q&As to help you make an informed choice:
@@ -266,19 +266,17 @@ That being said, here are some general Q&As to help you make an informed choice:
 
 A: If yes, then make sure to go for a projection that doesn't rely on the Event Store for persisting its state. Consider
 the trade-offs between local and externalized states:
-- Local states are faster to query, easier to implement and to maintain, but they need to be rebuilt from scratch on 
+
+- Local states are faster to query, easier to implement and to maintain, but they need to be rebuilt from scratch on
   every restart
 - Externalized states are harder to implement and maintain, but they can be rebuilt incrementally, and are available
   across multiple instances
 
 **Q: Should your application ensure read-after-write consistency?**
 
-
     Offer guidance on how to evaluate and prioritize requirements based on the project's unique context.
     Provide a systematic approach or a decision-making framework to assist readers in making an informed choice.
     Include practical tips or considerations that can help readers assess trade-offs and make a well-rounded decision.
-
-
 
 ---
 
