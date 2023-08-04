@@ -82,9 +82,8 @@ ensures long-term sustainability and adaptability of the system.
 
 ## Comparing Projection Types
 
-    Present a comparative analysis of the different projection types.
-    Discuss the strengths and weaknesses of each type concerning the identified requirements.
-    Consider using tables, charts, or diagrams to visually present the comparison, making it easier for readers to grasp the information.
+Let's go over a comparative analysis of the different projection types, discussing the strengths and weaknesses of each 
+type concerning the identified requirements.
 
 ### Snapshot Projection
 
@@ -274,9 +273,22 @@ the trade-offs between local and externalized states:
 
 **Q: Should your application ensure read-after-write consistency?**
 
-    Offer guidance on how to evaluate and prioritize requirements based on the project's unique context.
-    Provide a systematic approach or a decision-making framework to assist readers in making an informed choice.
-    Include practical tips or considerations that can help readers assess trade-offs and make a well-rounded decision.
+A: If yes, then it's suggested to choose a projection that can be updated synchronously, like a SnapshotProjection, an 
+Aggregate or a ManagedProjection. Depending on the amount of data to be read, and the persistence layer, this might have
+a different impact on the application performance.
+
+**Q: Should the projected data be available for external services?**
+
+A: If yes, then opt for a projection that offers freedom in terms of persistence, like a ManagedProjection or a 
+SubscribedProjection. This will allow to store the derived views in an external datasource, and to query them using 
+whatever technology is available.
+
+**Q: Does your specific query need a single entity or object?**
+
+A: If yes, then you can opt to use a dedicated Aggregate for the query. Generally speaking, Aggregates are usually fast, 
+easier to implement and to maintain, but they might be not suitable for very complex queries that require to aggregate 
+multiple event types. You can still use different projection types for different queries, and combine them together in
+your application.
 
 ---
 
@@ -284,6 +296,8 @@ the trade-offs between local and externalized states:
 
     Summarize key best practices and tips for effectively implementing and managing the chosen projection type within Factus.
     Include insights or lessons learned from real-world projects, if applicable.
+
+TODO Link to DB improvements docs.
 
 ---
 
