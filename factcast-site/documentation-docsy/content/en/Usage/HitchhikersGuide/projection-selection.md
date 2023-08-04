@@ -82,7 +82,7 @@ ensures long-term sustainability and adaptability of the system.
 
 ## Comparing Projection Types
 
-Let's go over a comparative analysis of the different projection types, discussing the strengths and weaknesses of each 
+Let's go over a comparative analysis of the different projection types, discussing the strengths and weaknesses of each
 type concerning the identified requirements.
 
 ### Snapshot Projection
@@ -273,20 +273,20 @@ the trade-offs between local and externalized states:
 
 **Q: Should your application ensure read-after-write consistency?**
 
-A: If yes, then it's suggested to choose a projection that can be updated synchronously, like a SnapshotProjection, an 
+A: If yes, then it's suggested to choose a projection that can be updated synchronously, like a SnapshotProjection, an
 Aggregate or a ManagedProjection. Depending on the amount of data to be read, and the persistence layer, this might have
 a different impact on the application performance.
 
 **Q: Should the projected data be available for external services?**
 
-A: If yes, then opt for a projection that offers freedom in terms of persistence, like a ManagedProjection or a 
-SubscribedProjection. This will allow to store the derived views in an external datasource, and to query them using 
+A: If yes, then opt for a projection that offers freedom in terms of persistence, like a ManagedProjection or a
+SubscribedProjection. This will allow to store the derived views in an external datasource, and to query them using
 whatever technology is available.
 
 **Q: Does your specific query need a single entity or object?**
 
-A: If yes, then you can opt to use a dedicated Aggregate for the query. Generally speaking, Aggregates are usually fast, 
-easier to implement and to maintain, but they might be not suitable for very complex queries that require to aggregate 
+A: If yes, then you can opt to use a dedicated Aggregate for the query. Generally speaking, Aggregates are usually fast,
+easier to implement and to maintain, but they might be not suitable for very complex queries that require to aggregate
 multiple event types. You can still use different projection types for different queries, and combine them together in
 your application.
 
