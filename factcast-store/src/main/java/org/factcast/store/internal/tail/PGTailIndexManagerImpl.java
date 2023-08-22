@@ -23,17 +23,13 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
-import org.jetbrains.annotations.Nullable;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 
@@ -43,18 +39,6 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
 
   private final JdbcTemplate jdbc;
   private final StoreConfigurationProperties props;
-  private HighWaterMark target = new HighWaterMark();
-
-  @Nullable
-  @Override
-  public UUID targetId() {
-    return target.targetId();
-  }
-
-  @Override
-  public long targetSer() {
-    return target.targetSer();
-  }
 
   @Override
   @Scheduled(cron = "${factcast.store.tailManagementCron:0 0 0 * * *}")
@@ -79,8 +63,6 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
     if (timeToCreateANewTail(validIndexes) && !indexCreationInProgress(indexesWithValidityFlag)) {
       createNewTail();
     }
-
-    refreshHighwaterMark();
 
     log.debug("Done with tail index maintenance");
   }
@@ -205,28 +187,5 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
     Duration minAge = props.getTailCreationTimeout();
 
     return minAge.minus(age).isNegative();
-  }
-
-  @VisibleForTesting
-  void refreshHighwaterMark() {
-    try {
-      target =
-          jdbc.queryForObject(
-              PgConstants.HIGHWATER_MARK,
-              (rs, rowNum) -> {
-                HighWaterMark ret = new HighWaterMark();
-                ret.targetId(rs.getObject("targetId", UUID.class));
-                ret.targetSer(rs.getLong("targetSer"));
-                return ret;
-              });
-    } catch (EmptyResultDataAccessException noFactsAtAll) {
-      // ignore
-    }
-  }
-
-  @Data
-  static class HighWaterMark {
-    private UUID targetId = null;
-    private long targetSer = 0;
   }
 }

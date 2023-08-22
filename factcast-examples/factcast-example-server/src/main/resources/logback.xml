@@ -12,9 +12,7 @@
   <logger name="org.testcontainers" level="warn">
     <appender-ref ref="STDOUT" />
   </logger>
-  <root level="warn">
+  <root level="info">
     <appender-ref ref="STDOUT" />
   </root>
-  <logger name="org.factcast" level="INFO">
-  </logger>
 </configuration>

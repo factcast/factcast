@@ -26,6 +26,7 @@ import lombok.NonNull;
 import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
 import org.factcast.core.Fact;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,6 +51,8 @@ class PgTransformationCacheTest {
   @Mock private NamedParameterJdbcTemplate namedJdbcTemplate;
   RegistryMetrics registryMetrics = spy(new NOPRegistryMetrics());
 
+  @Mock StoreConfigurationProperties storeConfigurationProperties;
+
   @Nested
   class WhenPuting {
     @Mock private TransformationCache.@NonNull Key key;
@@ -59,7 +62,13 @@ class PgTransformationCacheTest {
     @BeforeEach
     void setup() {
       underTest =
-          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
+          spy(
+              new PgTransformationCache(
+                  jdbcTemplate,
+                  namedJdbcTemplate,
+                  registryMetrics,
+                  storeConfigurationProperties,
+                  10));
     }
 
     @Test
@@ -91,7 +100,13 @@ class PgTransformationCacheTest {
     @BeforeEach
     void setup() {
       underTest =
-          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
+          spy(
+              new PgTransformationCache(
+                  jdbcTemplate,
+                  namedJdbcTemplate,
+                  registryMetrics,
+                  storeConfigurationProperties,
+                  10));
     }
 
     @Test
@@ -137,7 +152,13 @@ class PgTransformationCacheTest {
     @BeforeEach
     void setup() {
       underTest =
-          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
+          spy(
+              new PgTransformationCache(
+                  jdbcTemplate,
+                  namedJdbcTemplate,
+                  registryMetrics,
+                  storeConfigurationProperties,
+                  10));
     }
 
     @Test
@@ -182,7 +203,13 @@ class PgTransformationCacheTest {
     @BeforeEach
     void setup() {
       underTest =
-          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
+          spy(
+              new PgTransformationCache(
+                  jdbcTemplate,
+                  namedJdbcTemplate,
+                  registryMetrics,
+                  storeConfigurationProperties,
+                  10));
     }
 
     @Test
@@ -211,7 +238,9 @@ class PgTransformationCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10);
+      underTest =
+          new PgTransformationCache(
+              jdbcTemplate, namedJdbcTemplate, registryMetrics, storeConfigurationProperties, 10);
     }
 
     @Test
@@ -232,7 +261,13 @@ class PgTransformationCacheTest {
     @BeforeEach
     void setup() {
       underTest =
-          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 2));
+          spy(
+              new PgTransformationCache(
+                  jdbcTemplate,
+                  namedJdbcTemplate,
+                  registryMetrics,
+                  storeConfigurationProperties,
+                  2));
     }
 
     @SneakyThrows
@@ -255,7 +290,13 @@ class PgTransformationCacheTest {
     @BeforeEach
     void setup() {
       underTest =
-          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 2));
+          spy(
+              new PgTransformationCache(
+                  jdbcTemplate,
+                  namedJdbcTemplate,
+                  registryMetrics,
+                  storeConfigurationProperties,
+                  2));
     }
 
     @Test
@@ -281,7 +322,13 @@ class PgTransformationCacheTest {
     @BeforeEach
     void setup() {
       underTest =
-          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
+          spy(
+              new PgTransformationCache(
+                  jdbcTemplate,
+                  namedJdbcTemplate,
+                  registryMetrics,
+                  storeConfigurationProperties,
+                  10));
     }
 
     @Test
@@ -343,7 +390,13 @@ class PgTransformationCacheTest {
     @BeforeEach
     void setup() {
       underTest =
-          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
+          spy(
+              new PgTransformationCache(
+                  jdbcTemplate,
+                  namedJdbcTemplate,
+                  registryMetrics,
+                  storeConfigurationProperties,
+                  10));
     }
 
     @Test
@@ -378,7 +431,13 @@ class PgTransformationCacheTest {
     @BeforeEach
     void setup() {
       underTest =
-          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
+          spy(
+              new PgTransformationCache(
+                  jdbcTemplate,
+                  namedJdbcTemplate,
+                  registryMetrics,
+                  storeConfigurationProperties,
+                  10));
     }
 
     @Test
@@ -408,7 +467,13 @@ class PgTransformationCacheTest {
     @BeforeEach
     void setup() {
       underTest =
-          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
+          spy(
+              new PgTransformationCache(
+                  jdbcTemplate,
+                  namedJdbcTemplate,
+                  registryMetrics,
+                  storeConfigurationProperties,
+                  10));
     }
 
     @Test
@@ -441,7 +506,13 @@ class PgTransformationCacheTest {
     @BeforeEach
     void setup() {
       underTest =
-          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
+          spy(
+              new PgTransformationCache(
+                  jdbcTemplate,
+                  namedJdbcTemplate,
+                  registryMetrics,
+                  storeConfigurationProperties,
+                  10));
     }
 
     @Test

@@ -49,7 +49,7 @@ public class TransformationConfiguration {
       @NonNull RegistryMetrics registryMetrics,
       @Autowired(required = false) SpringLiquibase unused) {
     if (props.isSchemaRegistryConfigured() && props.isPersistentRegistry())
-      return new PgTransformationStoreImpl(jdbcTemplate, txTemplate, registryMetrics);
+      return new PgTransformationStoreImpl(jdbcTemplate, txTemplate, registryMetrics, props);
 
     // otherwise
     return new InMemTransformationStoreImpl(registryMetrics);
@@ -63,7 +63,7 @@ public class TransformationConfiguration {
       @NonNull RegistryMetrics registryMetrics,
       @Autowired(required = false) SpringLiquibase unused) {
     if (props.isSchemaRegistryConfigured() && props.isPersistentTransformationCache())
-      return new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics);
+      return new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, props);
 
     // otherwise
     return new InMemTransformationCache(

@@ -26,9 +26,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 
 @RequiredArgsConstructor
 @Slf4j
-public class PgSnapshotCacheCompactor {
+public class SnapshotCacheCompactor {
 
-  @NonNull final PgSnapshotCache cache;
+  @NonNull final SnapshotCache cache;
 
   @NonNull final PgMetrics pgMetrics;
 

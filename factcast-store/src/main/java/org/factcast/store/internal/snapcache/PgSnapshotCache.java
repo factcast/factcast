@@ -31,7 +31,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 @Slf4j
 @RequiredArgsConstructor
-public class PgSnapshotCache {
+public class PgSnapshotCache implements SnapshotCache {
   private static final String SELECT_SNAPSHOT =
       "SELECT factid,data,compressed FROM snapshot_cache WHERE uuid=? AND cache_key=?";
 
@@ -48,6 +48,7 @@ public class PgSnapshotCache {
   final JdbcTemplate jdbcTemplate;
   final PgMetrics metrics;
 
+  @Override
   public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
 
     jdbcTemplate.update(TOUCH_SNAPSHOT_ACCESSTIME, id.uuid(), id.key());
@@ -61,6 +62,7 @@ public class PgSnapshotCache {
                 new Snapshot(id, snapData.factId(), snapData.bytes(), snapData.compressed()));
   }
 
+  @Override
   public void setSnapshot(@NonNull Snapshot snap) {
     jdbcTemplate.update(
         UPSERT_SNAPSHOT,
@@ -74,6 +76,7 @@ public class PgSnapshotCache {
         snap.compressed());
   }
 
+  @Override
   public void clearSnapshot(@NonNull SnapshotId id) {
     jdbcTemplate.update(CLEAR_SNAPSHOT, id.uuid(), id.key());
   }
@@ -84,6 +87,7 @@ public class PgSnapshotCache {
         UUID.fromString(resultSet.getString(1)), resultSet.getBytes(2), resultSet.getBoolean(3));
   }
 
+  @Override
   public void compact(@NonNull ZonedDateTime thresholdDate) {
     var deleted =
         jdbcTemplate.update(

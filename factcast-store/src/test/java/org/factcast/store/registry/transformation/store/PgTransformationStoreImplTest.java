@@ -15,6 +15,7 @@
  */
 package org.factcast.store.registry.transformation.store;
 
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.registry.transformation.TransformationStore;
 import org.factcast.test.IntegrationTest;
@@ -33,9 +34,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 class PgTransformationStoreImplTest extends AbstractTransformationStoreTest {
   @Autowired private JdbcTemplate jdbcTpl;
   @Autowired private TransactionTemplate txTpl;
+  @Autowired private StoreConfigurationProperties props;
 
   @Override
   protected TransformationStore createUUT() {
-    return new PgTransformationStoreImpl(jdbcTpl, txTpl, registryMetrics);
+    return new PgTransformationStoreImpl(jdbcTpl, txTpl, registryMetrics, props);
   }
 }
