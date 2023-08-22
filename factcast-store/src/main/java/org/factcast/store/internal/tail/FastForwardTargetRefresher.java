@@ -60,7 +60,9 @@ public class FastForwardTargetRefresher implements FastForwardTarget {
                 return HighWaterMark.of(targetId, targetSer);
               });
     } catch (EmptyResultDataAccessException noFactsAtAll) {
-      // ignore
+      // ignore but resetting target to initial values, can happen in integration tests when facts
+      // are wiped between runs
+      target = HighWaterMark.create();
     }
   }
 

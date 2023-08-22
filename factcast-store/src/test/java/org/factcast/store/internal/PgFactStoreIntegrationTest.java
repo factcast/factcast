@@ -82,6 +82,12 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
     @Delegate final FactStore delegate;
   }
 
+  @BeforeEach
+  void setup() {
+    // update the highwatermarks
+    fastForwardTargetRefresher.refresh();
+  }
+
   @Test
   void testGetSnapshotMetered() {
     Optional<Snapshot> snapshot = store.getSnapshot(SnapshotId.of("xxx", UUID.randomUUID()));
