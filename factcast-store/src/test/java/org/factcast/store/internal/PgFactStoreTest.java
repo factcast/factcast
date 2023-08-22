@@ -37,6 +37,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.TransformationRequest;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
@@ -62,6 +63,9 @@ class PgFactStoreTest {
   @Mock private @NonNull PgMetrics metrics;
   @Mock private @NonNull PgSnapshotCache snapCache;
   @Mock private @NonNull TokenStore tokenStore;
+
+  @Mock private StoreConfigurationProperties storeConfigurationProperties;
+
   @InjectMocks private PgFactStore underTest;
 
   @Nested

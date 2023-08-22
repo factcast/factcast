@@ -38,6 +38,11 @@
       <version>${shedlock.version}</version>
     </dependency>
     <dependency>
+      <groupId>net.javacrumbs.shedlock</groupId>
+      <artifactId>shedlock-provider-inmemory</artifactId>
+      <version>${shedlock.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-core</artifactId>
     </dependency>

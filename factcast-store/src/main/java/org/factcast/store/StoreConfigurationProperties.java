@@ -198,6 +198,8 @@ public class StoreConfigurationProperties implements InitializingBean {
    */
   int sizeOfThreadPoolForBufferedTransformations = 25;
 
+  boolean readOnlyModeEnabled = false;
+
   public boolean isSchemaRegistryConfigured() {
     return schemaRegistryUrl != null;
   }

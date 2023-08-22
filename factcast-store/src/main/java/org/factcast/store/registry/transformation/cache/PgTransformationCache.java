@@ -38,6 +38,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics.EVENT;
 import org.factcast.store.registry.metrics.RegistryMetrics.OP;
@@ -54,6 +55,8 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   private final NamedParameterJdbcTemplate namedJdbcTemplate;
   private final RegistryMetrics registryMetrics;
 
+  private final StoreConfigurationProperties storeConfigurationProperties;
+
   private final ExecutorService es;
 
   private static final CompletableFuture<Void> COMPLETED_FUTURE =
@@ -69,11 +72,13 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   public PgTransformationCache(
       JdbcTemplate jdbcTemplate,
       NamedParameterJdbcTemplate namedJdbcTemplate,
-      RegistryMetrics registryMetrics) {
+      RegistryMetrics registryMetrics,
+      StoreConfigurationProperties storeConfigurationProperties) {
     this.jdbcTemplate = jdbcTemplate;
     this.namedJdbcTemplate = namedJdbcTemplate;
     this.registryMetrics = registryMetrics;
     this.es = registryMetrics.monitor(Executors.newSingleThreadExecutor(), "transformation-cache");
+    this.storeConfigurationProperties = storeConfigurationProperties;
   }
 
   @VisibleForTesting
@@ -81,10 +86,12 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
       JdbcTemplate jdbcTemplate,
       NamedParameterJdbcTemplate namedJdbcTemplate,
       RegistryMetrics registryMetrics,
+      StoreConfigurationProperties storeConfigurationProperties,
       int maxBufferSize) {
     this.jdbcTemplate = jdbcTemplate;
     this.namedJdbcTemplate = namedJdbcTemplate;
     this.registryMetrics = registryMetrics;
+    this.storeConfigurationProperties = storeConfigurationProperties;
     this.maxBufferSize = maxBufferSize;
     this.es = Executors.newSingleThreadExecutor();
   }
@@ -188,27 +195,32 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   public void compact(@NonNull ZonedDateTime thresholdDate) {
     flush();
 
-    registryMetrics.timed(
-        OP.COMPACT_TRANSFORMATION_CACHE,
-        () ->
-            jdbcTemplate.update(
-                "DELETE FROM transformationcache WHERE last_access < ?",
-                new Date(thresholdDate.toInstant().toEpochMilli())));
+    if (!storeConfigurationProperties.isReadOnlyModeEnabled()) {
+      registryMetrics.timed(
+          OP.COMPACT_TRANSFORMATION_CACHE,
+          () ->
+              jdbcTemplate.update(
+                  "DELETE FROM transformationcache WHERE last_access < ?",
+                  new Date(thresholdDate.toInstant().toEpochMilli())));
+    }
   }
 
   @Override
   public void invalidateTransformationFor(String ns, String type) {
     flush();
-    jdbcTemplate.update(
-        "DELETE FROM transformationcache WHERE header ->> 'ns' = ? AND header ->> 'type' = ?",
-        ns,
-        type);
+
+    if (!storeConfigurationProperties.isReadOnlyModeEnabled()) {
+      jdbcTemplate.update(
+          "DELETE FROM transformationcache WHERE header ->> 'ns' = ? AND header ->> 'type' = ?",
+          ns,
+          type);
+    }
   }
 
   @Scheduled(fixedRate = 10, timeUnit = TimeUnit.MINUTES)
   public void flush() {
     Map<Key, Fact> copy = buffer.clear();
-    if (!copy.isEmpty()) {
+    if (!copy.isEmpty() && !storeConfigurationProperties.isReadOnlyModeEnabled()) {
       try {
         insertBufferedTransformations(copy);
         insertBufferedAccesses(copy);

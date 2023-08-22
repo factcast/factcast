@@ -38,7 +38,7 @@ public class FactValidatorConfiguration {
       @NonNull RegistryMetrics registryMetrics,
       @Autowired(required = false) SpringLiquibase unused) {
     if (props.isSchemaRegistryConfigured() && props.isPersistentRegistry()) {
-      return new PgSchemaStoreImpl(jdbcTemplate, registryMetrics);
+      return new PgSchemaStoreImpl(jdbcTemplate, registryMetrics, props);
     }
 
     // otherwise

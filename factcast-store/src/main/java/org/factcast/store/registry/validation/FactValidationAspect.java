@@ -36,6 +36,7 @@ public class FactValidationAspect {
   public static final int MAX_ERROR_MESSAGES = 25;
   private final FactValidator validator;
 
+  // TODO
   // not hogging the common FJP. Also limiting parallelism to less of what the common pool has.
   private static final ForkJoinPool validationPool =
       new ForkJoinPool((int) Math.abs(Runtime.getRuntime().availableProcessors() / 1.5));

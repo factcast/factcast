@@ -38,7 +38,7 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.store.internal.StoreMetrics.OP;
-import org.factcast.store.internal.tail.PGTailIndexManager;
+import org.factcast.store.internal.tail.FastForwardTargetRefresher;
 import org.factcast.store.test.AbstractFactStoreTest;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,7 +63,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
 
   @Autowired TokenStore tokenStore;
 
-  @Autowired PGTailIndexManager tailManager;
+  @Autowired FastForwardTargetRefresher fastForwardTargetRefresher;
 
   @Override
   protected FactStore createStoreToTest() {
@@ -171,7 +171,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       store.publish(
           Collections.singletonList(Fact.builder().ns("unrelated").buildWithoutPayload()));
       // update the highwatermarks
-      tailManager.triggerTailCreation();
+      fastForwardTargetRefresher.refresh();
     }
 
     @Test
@@ -197,7 +197,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       SubscriptionRequest newtail = SubscriptionRequest.catchup(spec).from(id);
       store.subscribe(SubscriptionRequestTO.forFacts(newtail), obs).awaitCatchup();
 
-      tailManager.triggerTailCreation();
+      fastForwardTargetRefresher.refresh();
       fwd.set(null);
 
       // check for empty catchup
@@ -231,7 +231,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       // publish unrelated stuff and update ffwd target
       store.publish(
           Collections.singletonList(Fact.builder().ns("unrelated").buildWithoutPayload()));
-      tailManager.triggerTailCreation();
+      fastForwardTargetRefresher.refresh();
 
       SubscriptionRequest further = SubscriptionRequest.catchup(spec).from(id2);
       store.subscribe(SubscriptionRequestTO.forFacts(further), obs).awaitCatchup();

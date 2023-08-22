@@ -18,6 +18,7 @@ package org.factcast.store.registry.validation.schema.store;
 import static org.mockito.Mockito.*;
 
 import java.sql.SQLException;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.registry.validation.schema.SchemaSource;
 import org.factcast.store.registry.validation.schema.SchemaStore;
@@ -41,14 +42,16 @@ public class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
   @Autowired private JdbcTemplate tpl;
   @Mock private JdbcTemplate mockTpl;
 
+  @Mock private StoreConfigurationProperties storeConfigurationProperties;
+
   @Override
   protected SchemaStore createUUT() {
-    return new PgSchemaStoreImpl(tpl, registryMetrics);
+    return new PgSchemaStoreImpl(tpl, registryMetrics, storeConfigurationProperties);
   }
 
   @Test
   void retriesOnWrongConstrainConflict() {
-    var uut = new PgSchemaStoreImpl(mockTpl, registryMetrics);
+    var uut = new PgSchemaStoreImpl(mockTpl, registryMetrics, storeConfigurationProperties);
 
     SchemaSource source = new SchemaSource().hash("hash").id("id").ns("ns").type("type");
 
