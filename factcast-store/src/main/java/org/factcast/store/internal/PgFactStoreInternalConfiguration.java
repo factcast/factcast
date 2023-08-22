@@ -292,10 +292,8 @@ public class PgFactStoreInternalConfiguration {
   public PgTransformationStoreChangeListener pgTransformationStoreChangeListener(
       EventBus bus,
       TransformationCache transformationCache,
-      TransformationChains transformationChains,
-      StoreConfigurationProperties props) {
-    return new PgTransformationStoreChangeListener(
-        bus, transformationCache, transformationChains, props);
+      TransformationChains transformationChains) {
+    return new PgTransformationStoreChangeListener(bus, transformationCache, transformationChains);
   }
 
   // we create a custom SpringLiquibase to avoid autoconfiguration and configure it to not run
