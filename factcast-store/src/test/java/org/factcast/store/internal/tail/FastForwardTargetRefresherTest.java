@@ -41,8 +41,8 @@ public class FastForwardTargetRefresherTest {
     void refresh() {
       var uut = spy(underTest);
 
-      assertThat(uut.targetId()).isEqualTo(null);
-      assertThat(uut.targetSer()).isEqualTo(0);
+      assertThat(uut.targetId()).isNull();
+      assertThat(uut.targetSer()).isZero();
 
       UUID id = UUID.randomUUID();
       long ser = 42L;
