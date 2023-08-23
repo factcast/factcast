@@ -244,7 +244,7 @@ public class PgFactStoreInternalConfiguration {
 
   @Bean
   @IsReadOnlyEnv
-  public LockProvider rolockProvider() {
+  public LockProvider inMemoryLockProvider() {
     log.debug("Configuring lock provider: IN MEMORY.");
 
     return new InMemoryLockProvider();
@@ -296,7 +296,7 @@ public class PgFactStoreInternalConfiguration {
     return new PgTransformationStoreChangeListener(bus, transformationCache, transformationChains);
   }
 
-  // we create a custom SpringLiquibase to avoid autoconfiguration and configure it to not run
+  // we create a custom SpringLiquibase bean to avoid autoconfiguration and configure it to not run
   @Bean
   @IsReadOnlyEnv
   public SpringLiquibase springLiquibase() {
