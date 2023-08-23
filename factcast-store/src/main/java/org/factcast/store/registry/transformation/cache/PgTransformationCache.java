@@ -231,20 +231,6 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   }
 
   @VisibleForTesting
-  void clearAndFlushAccessesOnly() {
-    Map<Key, Fact> copy = buffer.clear();
-    if (!copy.isEmpty()) {
-      try {
-        insertBufferedAccesses(copy);
-      } catch (Exception e) {
-        log.error(
-            "Could not complete batch update of transformation accesses on transformation cache.",
-            e);
-      }
-    }
-  }
-
-  @VisibleForTesting
   void insertBufferedTransformations(Map<Key, Fact> copy) {
     List<Object[]> parameters =
         copy.entrySet().stream()

@@ -498,44 +498,4 @@ class PgTransformationCacheTest {
       assertThat(type.getAllValues().get(0)).isEqualTo("theType");
     }
   }
-
-  @Nested
-  class WhenClearingAndFlushingAccessOnly {
-    private PgTransformationCache underTest;
-
-    @BeforeEach
-    void setup() {
-      underTest =
-          spy(
-              new PgTransformationCache(
-                  jdbcTemplate,
-                  namedJdbcTemplate,
-                  registryMetrics,
-                  storeConfigurationProperties,
-                  10));
-    }
-
-    @Test
-    void clearsBuffer() {
-      underTest.registerWrite(
-          Mockito.mock(TransformationCache.Key.class), Mockito.mock(Fact.class));
-      underTest.registerAccess(Mockito.mock(TransformationCache.Key.class));
-
-      underTest.clearAndFlushAccessesOnly();
-
-      assertThat(underTest.buffer().size()).isZero();
-    }
-
-    @Test
-    void flushesAccessesOnly() {
-      underTest.registerWrite(
-          Mockito.mock(TransformationCache.Key.class), Mockito.mock(Fact.class));
-      underTest.registerAccess(Mockito.mock(TransformationCache.Key.class));
-
-      underTest.clearAndFlushAccessesOnly();
-
-      verify(underTest, times(1)).insertBufferedAccesses(any());
-      verify(underTest, never()).insertBufferedTransformations(any());
-    }
-  }
 }
