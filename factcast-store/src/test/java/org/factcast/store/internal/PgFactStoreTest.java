@@ -15,7 +15,7 @@
  */
 package org.factcast.store.internal;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.sql.PreparedStatement;
@@ -128,14 +128,10 @@ class PgFactStoreTest {
   class WhenPublishing {
     @Mock private Fact fact;
 
-    @SuppressWarnings("rawtypes")
-    @BeforeEach
-    void setup() {
-      configureMetricTimeRunnable();
-    }
-
     @Test
     void publishLock() {
+      configureMetricTimeRunnable();
+
       underTest.publish(Collections.singletonList(fact));
       verify(jdbcTemplate)
           .batchUpdate(
@@ -144,6 +140,17 @@ class PgFactStoreTest {
               eq(Integer.MAX_VALUE),
               any(ParameterizedPreparedStatementSetter.class));
       verify(lock).aquireExclusiveTXLock();
+    }
+
+    @Test
+    void throwOnPublishInReadOnlyMode() {
+      when(storeConfigurationProperties.isReadOnlyModeEnabled()).thenReturn(true);
+
+      assertThatThrownBy(() -> underTest.publish(Collections.singletonList(fact)))
+          .isInstanceOf(UnsupportedOperationException.class);
+
+      verifyNoInteractions(jdbcTemplate);
+      verifyNoInteractions(lock);
     }
   }
 
@@ -229,13 +236,9 @@ class PgFactStoreTest {
     @Mock private @NonNull StateToken optionalToken;
     @Mock private State state;
 
-    @BeforeEach
-    void setup() {
-      configureMetricTimeSupplier();
-    }
-
     @Test
     void noToken() {
+      configureMetricTimeSupplier();
 
       underTest = spy(underTest);
 
@@ -247,6 +250,7 @@ class PgFactStoreTest {
 
     @Test
     void brokenToken() {
+      configureMetricTimeSupplier();
 
       underTest = spy(underTest);
 
@@ -267,6 +271,7 @@ class PgFactStoreTest {
 
     @Test
     void currentToken() {
+      configureMetricTimeSupplier();
 
       underTest = spy(underTest);
 
@@ -284,6 +289,20 @@ class PgFactStoreTest {
       verify(lock).aquireExclusiveTXLock();
       assertThat(b).isTrue();
       verify(underTest).publish(any(List.class));
+    }
+
+    @Test
+    void throwOnPublishIfUnchangedInReadOnlyMode() {
+      when(storeConfigurationProperties.isReadOnlyModeEnabled()).thenReturn(true);
+
+      assertThatThrownBy(
+              () ->
+                  underTest.publishIfUnchanged(
+                      Collections.singletonList(fact), Optional.of(optionalToken)))
+          .isInstanceOf(UnsupportedOperationException.class);
+
+      verifyNoInteractions(jdbcTemplate);
+      verifyNoInteractions(lock);
     }
   }
 
