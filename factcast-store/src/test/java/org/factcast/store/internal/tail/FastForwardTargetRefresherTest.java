@@ -25,6 +25,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
@@ -54,6 +55,31 @@ public class FastForwardTargetRefresherTest {
 
       assertThat(uut.targetId()).isEqualTo(id);
       assertThat(uut.targetSer()).isEqualTo(ser);
+    }
+
+    @Test
+    void resetAfterEmptyResult() {
+      var uut = spy(underTest);
+
+      assertThat(uut.targetId()).isNull();
+      assertThat(uut.targetSer()).isZero();
+
+      UUID id = UUID.randomUUID();
+      long ser = 42L;
+
+      when(jdbc.queryForObject(anyString(), any(RowMapper.class)))
+          .thenReturn(FastForwardTargetRefresher.HighWaterMark.of(id, ser))
+          .thenThrow(new EmptyResultDataAccessException(1));
+
+      uut.refresh();
+
+      assertThat(uut.targetId()).isEqualTo(id);
+      assertThat(uut.targetSer()).isEqualTo(ser);
+
+      uut.refresh();
+
+      assertThat(uut.targetId()).isNull();
+      assertThat(uut.targetSer()).isZero();
     }
   }
 }
