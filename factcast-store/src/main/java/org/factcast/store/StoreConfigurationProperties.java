@@ -198,6 +198,13 @@ public class StoreConfigurationProperties implements InitializingBean {
    */
   int sizeOfThreadPoolForBufferedTransformations = 25;
 
+  /**
+   * Configures the FactStore to work in read-only mode. You cannot publish any events in this mode
+   * and certain functionality like tail index generation or state token generation is disabled.
+   *
+   * <p>You can still use a persistent schema store and transformation cache, however they will work
+   * in read-only mode. Additionally, liquibase is disabled.
+   */
   boolean readOnlyModeEnabled = false;
 
   public boolean isSchemaRegistryConfigured() {
