@@ -21,13 +21,18 @@ import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.*;
 
 import com.google.common.base.Splitter;
+import java.sql.Connection;
+import java.sql.Driver;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Properties;
 import javax.sql.DataSource;
+import lombok.SneakyThrows;
 import org.apache.tomcat.jdbc.pool.PoolConfiguration;
 import org.junit.jupiter.api.*;
 import org.mockito.Mock;
+import org.postgresql.jdbc.PgConnection;
 
 public class PgConnectionSupplierTest {
 
@@ -178,5 +183,29 @@ public class PgConnectionSupplierTest {
     org.apache.tomcat.jdbc.pool.DataSource ds = new org.apache.tomcat.jdbc.pool.DataSource();
     PgConnectionSupplier uut = new PgConnectionSupplier(ds);
     assertThat(uut.ds).isSameAs(ds);
+  }
+
+  @Test
+  @SneakyThrows
+  void getConnection() {
+    final var driver = mock(Driver.class);
+    final var connection = mock(Connection.class);
+    final var pgConnection = mock(PgConnection.class);
+
+    when(driver.connect(anyString(), any(Properties.class))).thenReturn(connection);
+    when(connection.unwrap(any())).thenReturn(pgConnection);
+    when(ds.getUrl()).thenReturn("hugo");
+
+    try (var driverManager = mockStatic(DriverManager.class)) {
+
+      driverManager.when(() -> DriverManager.getDriver(anyString())).thenReturn(driver);
+
+      assertThat(uut.get()).isSameAs(pgConnection);
+
+      driverManager.verify(() -> DriverManager.getDriver(ds.getUrl()));
+    }
+
+    verify(driver).connect(eq("hugo"), any(Properties.class));
+    verify(connection).unwrap(PgConnection.class);
   }
 }
