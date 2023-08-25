@@ -20,7 +20,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.*;
 
+import com.google.common.base.Splitter;
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.Properties;
 import javax.sql.DataSource;
 import org.apache.tomcat.jdbc.pool.PoolConfiguration;
@@ -40,8 +42,15 @@ public class PgConnectionSupplierTest {
   }
 
   private void setupConnectionProperties(String properties) {
+    final var singleConnectionProperties =
+        properties != null
+            ? Splitter.on(";").omitEmptyStrings().withKeyValueSeparator("=").split(properties)
+            : Map.of();
+
     PoolConfiguration poolConf = mock(PoolConfiguration.class);
-    when(poolConf.getConnectionProperties()).thenReturn(properties);
+    final var props = new Properties();
+    props.putAll(singleConnectionProperties);
+    when(poolConf.getDbProperties()).thenReturn(props);
     when(ds.getPoolProperties()).thenReturn(poolConf);
   }
 
