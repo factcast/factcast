@@ -15,34 +15,27 @@
  */
 package org.factcast.store.internal.snapcache;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
-import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 
+/** This class is used only in read-only mode. */
 public class InMemorySnapshotCache implements SnapshotCache {
-  private static final int DEFAULT_CAPACITY = 100;
 
-  private final Map<SnapshotId, SnapshotAndAccessTime> cache;
-
-  public InMemorySnapshotCache() {
-    this(DEFAULT_CAPACITY);
-  }
-
-  public InMemorySnapshotCache(int capacity) {
-    cache = Collections.synchronizedMap(new LRUMap<>(Math.max(capacity, DEFAULT_CAPACITY)));
-  }
+  private final Cache<SnapshotId, SnapshotAndAccessTime> cache =
+      CacheBuilder.newBuilder().softValues().build();
 
   @Override
   public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
-    return Optional.ofNullable(cache.get(id)).map(SnapshotAndAccessTime::snapshot);
+    return Optional.ofNullable(cache.getIfPresent(id)).map(SnapshotAndAccessTime::snapshot);
   }
 
   @Override
@@ -52,7 +45,7 @@ public class InMemorySnapshotCache implements SnapshotCache {
 
   @Override
   public void clearSnapshot(@NonNull SnapshotId id) {
-    cache.remove(id);
+    cache.invalidate(id);
   }
 
   @Override
@@ -60,7 +53,7 @@ public class InMemorySnapshotCache implements SnapshotCache {
     HashSet<Map.Entry<SnapshotId, SnapshotAndAccessTime>> copyOfEntries;
 
     synchronized (cache) {
-      copyOfEntries = new HashSet<>(cache.entrySet());
+      copyOfEntries = new HashSet<>(cache.asMap().entrySet());
     }
 
     final var thresholdMillis = thresholdDate.toInstant().toEpochMilli();
@@ -68,7 +61,7 @@ public class InMemorySnapshotCache implements SnapshotCache {
         e -> {
           SnapshotAndAccessTime snapshotAndAccessTime = e.getValue();
           if (thresholdMillis > snapshotAndAccessTime.accessTimeInMillis) {
-            cache.remove(e.getKey());
+            cache.invalidate(e.getKey());
           }
         });
   }
