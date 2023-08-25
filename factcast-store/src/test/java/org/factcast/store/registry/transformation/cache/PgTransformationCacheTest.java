@@ -310,6 +310,16 @@ class PgTransformationCacheTest {
               "DELETE FROM transformationcache WHERE last_access < ?",
               new Date(THRESHOLD_DATE.toInstant().toEpochMilli()));
     }
+
+    @Test
+    void doesNotCompactIfInReadOnlyMode() {
+      when(storeConfigurationProperties.isReadOnlyModeEnabled()).thenReturn(true);
+
+      underTest.compact(THRESHOLD_DATE);
+
+      Mockito.verify(underTest).flush();
+      Mockito.verifyNoInteractions(jdbcTemplate);
+    }
   }
 
   @Nested
@@ -376,6 +386,19 @@ class PgTransformationCacheTest {
       assertThat(logCaptor.getErrorLogs())
           .containsExactly(
               "Could not complete batch update of transformations on transformation cache.");
+    }
+
+    @Test
+    void doesnotFlushInReadOnlyMode() {
+      when(storeConfigurationProperties.isReadOnlyModeEnabled()).thenReturn(true);
+
+      underTest.registerAccess(key);
+      assertThat(underTest.buffer().size()).isPositive();
+
+      underTest.flush();
+      assertThat(underTest.buffer().size()).isZero();
+
+      verifyNoInteractions(jdbcTemplate);
     }
   }
 
@@ -496,6 +519,15 @@ class PgTransformationCacheTest {
 
       assertThat(ns.getAllValues().get(0)).isEqualTo("theNamespace");
       assertThat(type.getAllValues().get(0)).isEqualTo("theType");
+    }
+
+    @Test
+    void doesNotDeleteWhenReadOnlyMode() {
+      when(storeConfigurationProperties.isReadOnlyModeEnabled()).thenReturn(true);
+
+      underTest.invalidateTransformationFor("theNamespace", "theType");
+
+      verifyNoInteractions(jdbcTemplate);
     }
   }
 }

@@ -44,7 +44,7 @@ public class PgTransformationStoreImpl extends AbstractTransformationStore {
       throws TransformationConflictException {
 
     if (storeConfigurationProperties.isReadOnlyModeEnabled()) {
-      log.info("Skipping schema registration in read-only mode");
+      log.info("Skipping transformation registration in read-only mode");
       return;
     }
 
