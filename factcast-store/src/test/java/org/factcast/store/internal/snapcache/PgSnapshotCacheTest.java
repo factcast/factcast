@@ -37,7 +37,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ContextConfiguration(classes = {PgTestConfiguration.class})
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
-class SnapshotCacheTest {
+class PgSnapshotCacheTest {
 
   @Autowired private JdbcTemplate jdbcTemplate;
 

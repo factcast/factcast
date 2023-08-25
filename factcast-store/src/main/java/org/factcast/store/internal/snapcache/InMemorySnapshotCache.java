@@ -63,7 +63,7 @@ public class InMemorySnapshotCache implements SnapshotCache {
       copyOfEntries = new HashSet<>(cache.entrySet());
     }
 
-    var thresholdMillis = thresholdDate.toInstant().toEpochMilli();
+    final var thresholdMillis = thresholdDate.toInstant().toEpochMilli();
     copyOfEntries.forEach(
         e -> {
           SnapshotAndAccessTime snapshotAndAccessTime = e.getValue();
@@ -75,7 +75,7 @@ public class InMemorySnapshotCache implements SnapshotCache {
 
   @Data
   @AllArgsConstructor
-  private static class SnapshotAndAccessTime {
+  static class SnapshotAndAccessTime {
     Snapshot snapshot;
     long accessTimeInMillis;
   }
