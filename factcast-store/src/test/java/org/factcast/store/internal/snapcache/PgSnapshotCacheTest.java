@@ -53,6 +53,7 @@ class PgSnapshotCacheTest {
   }
 
   @Test
+  @SuppressWarnings("java:S2925")
   void getSnapshot_returnsSnapshotAndUpdatesTimestamp() throws InterruptedException {
     // INIT
     // put snapshot
