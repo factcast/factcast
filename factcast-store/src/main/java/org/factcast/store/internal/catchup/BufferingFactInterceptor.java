@@ -86,6 +86,10 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
     if (transformationRequest == null) {
       // does not need transformation, add as completed
       buffer.add(completedTransformation(f));
+
+      if (buffer.size() >= maxBufferSize) {
+        flush();
+      }
     } else {
       Pair<TransformationRequest, CompletableFuture<Fact>> scheduledTransformation =
           scheduledTransformation(transformationRequest);
