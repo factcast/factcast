@@ -87,13 +87,17 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
       // does not need transformation, add as completed
       buffer.add(completedTransformation(f));
 
-      if (buffer.size() >= maxBufferSize) {
-        flush();
-      }
+      flushIfNecessary();
     } else {
       Pair<TransformationRequest, CompletableFuture<Fact>> scheduledTransformation =
           scheduledTransformation(transformationRequest);
       addScheduledTransformationToBuffer(scheduledTransformation);
+    }
+  }
+
+  private void flushIfNecessary() {
+    if (buffer.size() >= maxBufferSize) {
+      flush();
     }
   }
 
@@ -102,9 +106,7 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
     buffer.add(scheduledTransformation);
     index.put(scheduledTransformation.left().toTransform().id(), scheduledTransformation.right());
 
-    if (buffer.size() >= maxBufferSize) {
-      flush();
-    }
+    flushIfNecessary();
   }
 
   private void acceptInDirectMode(@NonNull Fact f, TransformationRequest transformationRequest) {
