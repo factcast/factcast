@@ -15,6 +15,9 @@
  */
 package org.factcast.factus.redis.tx;
 
+import static org.factcast.factus.redis.tx.TransactionNotificationMessages.COMMIT;
+import static org.factcast.factus.redis.tx.TransactionNotificationMessages.ROLLBACK;
+
 import com.google.common.annotations.VisibleForTesting;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -22,8 +25,10 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.factus.projector.AbstractTransactionalLens;
+import org.factcast.factus.redis.AbstractRedisSubscribedProjection;
 import org.factcast.factus.redis.RedisProjection;
 import org.factcast.factus.redis.tx.RedisTransactional.Defaults;
+import org.redisson.api.RTopic;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
 import org.redisson.api.TransactionOptions;
@@ -42,6 +47,7 @@ public class RedisTransactionalLens extends AbstractTransactionalLens {
   private final Supplier<RedissonTxManager> txManagerSupplier;
 
   private final TransactionOptions opts;
+  private final RTopic notificationTopic;
 
   public RedisTransactionalLens(
       @NonNull RedisProjection p, @NonNull RedissonClient redissonClient) {
@@ -58,6 +64,23 @@ public class RedisTransactionalLens extends AbstractTransactionalLens {
     this.txManagerSupplier = txManagerSupplier;
     this.opts = opts;
 
+    if (p.getClass().getAnnotation(EnableRedisTransactionCallbacks.class) != null) {
+      // enable callbacks for onCommit and onRollback
+
+      if (!(p instanceof AbstractRedisSubscribedProjection)) {
+        throw new IllegalStateException(
+            "Cannot use @EnableRedisTransactionCallbacks on projections that are not AbstractRedisSubscribedProjection!");
+      }
+
+      AbstractRedisSubscribedProjection sub = (AbstractRedisSubscribedProjection) p;
+
+      this.notificationTopic =
+          p.redisson().getTopic(TransactionNotificationMessages.getTopicName(sub));
+
+    } else {
+      this.notificationTopic = null;
+    }
+
     bulkSize = Math.max(1, getSize(p));
     flushTimeout = calculateFlushTimeout(opts);
     log.trace(
@@ -66,19 +89,6 @@ public class RedisTransactionalLens extends AbstractTransactionalLens {
         p,
         bulkSize,
         flushTimeout);
-  }
-
-  @VisibleForTesting
-  static int getSize(@NonNull RedisProjection p) {
-    RedisTransactional transactional = p.getClass().getAnnotation(RedisTransactional.class);
-    if (transactional == null) {
-      throw new IllegalStateException(
-          "Projection "
-              + p.getClass()
-              + " is expected to have an annotation @"
-              + RedisTransactional.class.getSimpleName());
-    }
-    return transactional.bulkSize();
   }
 
   @VisibleForTesting
@@ -92,6 +102,19 @@ public class RedisTransactionalLens extends AbstractTransactionalLens {
               + RedisTransactional.class.getSimpleName());
     }
     return Defaults.with(transactional);
+  }
+
+  @VisibleForTesting
+  static int getSize(@NonNull RedisProjection p) {
+    RedisTransactional transactional = p.getClass().getAnnotation(RedisTransactional.class);
+    if (transactional == null) {
+      throw new IllegalStateException(
+          "Projection "
+              + p.getClass()
+              + " is expected to have an annotation @"
+              + RedisTransactional.class.getSimpleName());
+    }
+    return transactional.bulkSize();
   }
 
   @VisibleForTesting
@@ -121,10 +144,16 @@ public class RedisTransactionalLens extends AbstractTransactionalLens {
   @Override
   public void doClear() {
     txManagerSupplier.get().rollback();
+    if (notificationTopic != null) {
+      notificationTopic.publish(ROLLBACK.code());
+    }
   }
 
   @Override
   public void doFlush() {
     txManagerSupplier.get().commit();
+    if (notificationTopic != null) {
+      notificationTopic.publish(COMMIT.code());
+    }
   }
 }

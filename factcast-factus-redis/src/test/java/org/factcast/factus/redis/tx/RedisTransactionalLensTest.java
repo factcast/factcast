@@ -16,6 +16,9 @@
 package org.factcast.factus.redis.tx;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.factcast.factus.redis.tx.TransactionNotificationMessages.COMMIT;
+import static org.factcast.factus.redis.tx.TransactionNotificationMessages.NOTIFICATION_TOPIC_POSTFIX;
+import static org.factcast.factus.redis.tx.TransactionNotificationMessages.ROLLBACK;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
@@ -28,12 +31,15 @@ import org.factcast.core.Fact;
 import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.redis.ARedisTransactionalManagedProjection;
+import org.factcast.factus.redis.AbstractRedisSubscribedProjection;
 import org.factcast.factus.redis.RedisManagedProjection;
 import org.factcast.factus.redis.tx.RedisTransactional.Defaults;
+import org.factcast.factus.serializer.ProjectionMetaData;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.redisson.api.RTopic;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
 import org.redisson.api.TransactionOptions;
@@ -312,6 +318,38 @@ class RedisTransactionalLensTest {
       assertThat(t).isNull();
     }
   }
+
+  @Nested
+  class WhenTransactionCallbackEnabled {
+    RedisSubscribedProjection p;
+    @Mock RTopic topic;
+    @Mock RedissonTxManager tx;
+    RedisTransactionalLens underTest;
+
+    @BeforeEach
+    void setup() {
+      when(client.getTopic(endsWith(NOTIFICATION_TOPIC_POSTFIX))).thenReturn(topic);
+
+      // only invoke after client.getTopic got mocked!
+      p = new RedisSubscribedProjection(client);
+
+      underTest = new RedisTransactionalLens(p, () -> tx, Defaults.create());
+    }
+
+    @Test
+    void publishesOnCommit() {
+      underTest.doFlush();
+
+      verify(topic).publish(COMMIT.code());
+    }
+
+    @Test
+    void publishesOnRollback() {
+      underTest.doClear();
+
+      verify(topic).publish(ROLLBACK.code());
+    }
+  }
 }
 
 class NonAnnotatedRedisManagedProjection implements RedisManagedProjection {
@@ -331,5 +369,14 @@ class NonAnnotatedRedisManagedProjection implements RedisManagedProjection {
   @Override
   public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
     return null;
+  }
+}
+
+@RedisTransactional
+@ProjectionMetaData(serial = 1)
+@EnableRedisTransactionCallbacks
+class RedisSubscribedProjection extends AbstractRedisSubscribedProjection {
+  RedisSubscribedProjection(@NonNull RedissonClient redisson) {
+    super(redisson);
   }
 }
