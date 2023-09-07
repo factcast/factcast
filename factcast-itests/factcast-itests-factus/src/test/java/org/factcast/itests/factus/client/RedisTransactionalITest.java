@@ -162,7 +162,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
 
       assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
       assertThat(p.stateModifications()).isEqualTo(2); // one for timeout, one for final flush
-      awaitCommits(p, 1);
+      awaitCommits(p, 2);
       awaitRollbacks(p, 0);
     }
 
