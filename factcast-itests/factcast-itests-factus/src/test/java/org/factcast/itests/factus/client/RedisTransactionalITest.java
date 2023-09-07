@@ -51,16 +51,161 @@ import org.springframework.test.context.ContextConfiguration;
     classes = {TestFactusApplication.class, RedissonProjectionConfiguration.class})
 @Slf4j
 public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
-  final int NUMBER_OF_EVENTS = 10;
   @Autowired Factus factus;
   @Autowired RedissonClient redissonClient;
+  final int NUMBER_OF_EVENTS = 10;
+
+  @Nested
+  class Managed {
+    @BeforeEach
+    public void setup() {
+      var l = new ArrayList<EventObject>(NUMBER_OF_EVENTS);
+      for (int i = 0; i < NUMBER_OF_EVENTS; i++) {
+        l.add(new UserCreated(randomUUID(), getClass().getSimpleName() + ":" + i));
+      }
+      log.info("publishing {} Events ", NUMBER_OF_EVENTS);
+      factus.publish(l);
+    }
+
+    @SneakyThrows
+    @Test
+    public void bulkAppliesInTransaction3() {
+      TxRedissonManagedUserNamesSize3 p = new TxRedissonManagedUserNamesSize3(redissonClient);
+      factus.update(p);
+
+      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
+      assertThat(p.stateModifications()).isEqualTo(4); // expected at 3,6,9,10
+    }
+
+    @SneakyThrows
+    @Test
+    public void bulkAppliesInTransaction2() {
+      TxRedissonManagedUserNamesSize2 p = new TxRedissonManagedUserNamesSize2(redissonClient);
+      factus.update(p);
+
+      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
+      assertThat(p.stateModifications()).isEqualTo(5); // expected at 2,4,6,8,10
+    }
+
+    @SneakyThrows
+    @Test
+    public void bulkAppliesInTransactionTimeout() {
+      TxRedissonManagedUserNamesTimeout p = new TxRedissonManagedUserNamesTimeout(redissonClient);
+      factus.update(p);
+
+      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
+      assertThat(p.stateModifications()).isEqualTo(2); // one for timeout, one for final flush
+    }
+
+    @SneakyThrows
+    @Test
+    public void rollsBack() {
+      TxRedissonManagedUserNamesSizeBlowAt7th p =
+          new TxRedissonManagedUserNamesSizeBlowAt7th(redissonClient);
+
+      assertThat(p.userNames()).isEmpty();
+
+      try {
+        factus.update(p);
+      } catch (Throwable expected) {
+        // ignore
+      }
+
+      // only first bulk (size = 5) should be executed
+      assertThat(p.userNames().size()).isEqualTo(5);
+      assertThat(p.stateModifications()).isEqualTo(1);
+    }
+  }
+
+  @Nested
+  class Subscribed {
+    @BeforeEach
+    public void setup() {
+      var l = new ArrayList<EventObject>(NUMBER_OF_EVENTS);
+      for (int i = 0; i < NUMBER_OF_EVENTS; i++) {
+        l.add(new UserCreated(randomUUID(), getClass().getSimpleName() + ":" + i));
+      }
+      log.info("publishing {} Events ", NUMBER_OF_EVENTS);
+      factus.publish(l);
+    }
+
+    @SneakyThrows
+    @Test
+    public void bulkAppliesInTransaction3() {
+      TxRedissonSubscribedUserNamesSize3 p = new TxRedissonSubscribedUserNamesSize3(redissonClient);
+      factus.subscribeAndBlock(p).awaitCatchup();
+
+      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
+      assertThat(p.stateModifications()).isEqualTo(4); // expected at 3,6,9,10
+      awaitCommits(p, 4);
+      awaitRollbacks(p, 0);
+    }
+
+    @SneakyThrows
+    @Test
+    public void bulkAppliesInTransaction2() {
+      TxRedissonSubscribedUserNamesSize2 p = new TxRedissonSubscribedUserNamesSize2(redissonClient);
+      factus.subscribeAndBlock(p).awaitCatchup();
+
+      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
+      assertThat(p.stateModifications()).isEqualTo(5); // expected at 2,4,6,8,10
+      awaitCommits(p, 5);
+      awaitRollbacks(p, 0);
+    }
+
+    @SneakyThrows
+    @Test
+    public void bulkAppliesInTransactionTimeout() {
+      TxRedissonSubscribedUserNamesTimeout p =
+          new TxRedissonSubscribedUserNamesTimeout(redissonClient);
+      factus.subscribeAndBlock(p).awaitCatchup();
+
+      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
+      assertThat(p.stateModifications()).isEqualTo(2); // one for timeout, one for final flush
+      awaitCommits(p, 1);
+      awaitRollbacks(p, 0);
+    }
+
+    @SneakyThrows
+    @Test
+    public void rollsBack() {
+      TxRedissonSubscribedUserNamesSizeBlowAt7th p =
+          new TxRedissonSubscribedUserNamesSizeBlowAt7th(redissonClient);
+
+      assertThat(p.userNames()).isEmpty();
+
+      try {
+        factus.subscribeAndBlock(p).awaitCatchup();
+      } catch (Throwable expected) {
+        // ignore
+      }
+
+      // only first bulk (size = 5) should be executed
+      assertThat(p.userNames().size()).isEqualTo(5);
+      assertThat(p.stateModifications()).isEqualTo(1);
+      awaitCommits(p, 1);
+      awaitRollbacks(p, 1);
+    }
+
+    private void awaitCommits(TrackingTxRedissonSubscribedUserNames p, int count) {
+      await("Awaiting " + count + " commit(s)")
+          .atMost(5, SECONDS)
+          .until(p::commits, c -> c == count);
+    }
+
+    private void awaitRollbacks(TrackingTxRedissonSubscribedUserNames p, int count) {
+      await("Awaiting " + count + " rollback(s)")
+          .atMost(5, SECONDS)
+          .until(p::rollbacks, r -> r == count);
+    }
+  }
 
   static class TrackingTxRedissonManagedUserNames extends TxRedissonManagedUserNames {
-    @Getter int stateModifications = 0;
-
     public TrackingTxRedissonManagedUserNames(RedissonClient redisson) {
       super(redisson);
     }
+
+    @Getter int stateModifications = 0;
 
     @Override
     public void factStreamPosition(@NonNull UUID factStreamPosition) {
@@ -196,151 +341,6 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
         throw new IllegalStateException("Bad luck");
       }
       super.apply(created, tx);
-    }
-  }
-
-  @Nested
-  class Managed {
-    @BeforeEach
-    public void setup() {
-      var l = new ArrayList<EventObject>(NUMBER_OF_EVENTS);
-      for (int i = 0; i < NUMBER_OF_EVENTS; i++) {
-        l.add(new UserCreated(randomUUID(), getClass().getSimpleName() + ":" + i));
-      }
-      log.info("publishing {} Events ", NUMBER_OF_EVENTS);
-      factus.publish(l);
-    }
-
-    @SneakyThrows
-    @Test
-    public void bulkAppliesInTransaction3() {
-      TxRedissonManagedUserNamesSize3 p = new TxRedissonManagedUserNamesSize3(redissonClient);
-      factus.update(p);
-
-      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
-      assertThat(p.stateModifications()).isEqualTo(4); // expected at 3,6,9,10
-    }
-
-    @SneakyThrows
-    @Test
-    public void bulkAppliesInTransaction2() {
-      TxRedissonManagedUserNamesSize2 p = new TxRedissonManagedUserNamesSize2(redissonClient);
-      factus.update(p);
-
-      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
-      assertThat(p.stateModifications()).isEqualTo(5); // expected at 2,4,6,8,10
-    }
-
-    @SneakyThrows
-    @Test
-    public void bulkAppliesInTransactionTimeout() {
-      TxRedissonManagedUserNamesTimeout p = new TxRedissonManagedUserNamesTimeout(redissonClient);
-      factus.update(p);
-
-      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
-      assertThat(p.stateModifications()).isEqualTo(2); // one for timeout, one for final flush
-    }
-
-    @SneakyThrows
-    @Test
-    public void rollsBack() {
-      TxRedissonManagedUserNamesSizeBlowAt7th p =
-          new TxRedissonManagedUserNamesSizeBlowAt7th(redissonClient);
-
-      assertThat(p.userNames()).isEmpty();
-
-      try {
-        factus.update(p);
-      } catch (Throwable expected) {
-        // ignore
-      }
-
-      // only first bulk (size = 5) should be executed
-      assertThat(p.userNames().size()).isEqualTo(5);
-      assertThat(p.stateModifications()).isEqualTo(1);
-    }
-  }
-
-  @Nested
-  class Subscribed {
-    @BeforeEach
-    public void setup() {
-      var l = new ArrayList<EventObject>(NUMBER_OF_EVENTS);
-      for (int i = 0; i < NUMBER_OF_EVENTS; i++) {
-        l.add(new UserCreated(randomUUID(), getClass().getSimpleName() + ":" + i));
-      }
-      log.info("publishing {} Events ", NUMBER_OF_EVENTS);
-      factus.publish(l);
-    }
-
-    @SneakyThrows
-    @Test
-    public void bulkAppliesInTransaction3() {
-      TxRedissonSubscribedUserNamesSize3 p = new TxRedissonSubscribedUserNamesSize3(redissonClient);
-      factus.subscribeAndBlock(p).awaitCatchup();
-
-      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
-      assertThat(p.stateModifications()).isEqualTo(4); // expected at 3,6,9,10
-      awaitCommits(p, 4);
-      awaitRollbacks(p, 0);
-    }
-
-    private void awaitCommits(TrackingTxRedissonSubscribedUserNames p, int count) {
-      await("Awaiting " + count + " commit(s)")
-          .atMost(5, SECONDS)
-          .until(p::commits, c -> c == count);
-    }
-
-    private void awaitRollbacks(TrackingTxRedissonSubscribedUserNames p, int count) {
-      await("Awaiting " + count + " rollback(s)")
-          .atMost(5, SECONDS)
-          .until(p::rollbacks, r -> r == count);
-    }
-
-    @SneakyThrows
-    @Test
-    public void bulkAppliesInTransaction2() {
-      TxRedissonSubscribedUserNamesSize2 p = new TxRedissonSubscribedUserNamesSize2(redissonClient);
-      factus.subscribeAndBlock(p).awaitCatchup();
-
-      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
-      assertThat(p.stateModifications()).isEqualTo(5); // expected at 2,4,6,8,10
-      awaitCommits(p, 5);
-      awaitRollbacks(p, 0);
-    }
-
-    @SneakyThrows
-    @Test
-    public void bulkAppliesInTransactionTimeout() {
-      TxRedissonSubscribedUserNamesTimeout p =
-          new TxRedissonSubscribedUserNamesTimeout(redissonClient);
-      factus.subscribeAndBlock(p).awaitCatchup();
-
-      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
-      assertThat(p.stateModifications()).isEqualTo(2); // one for timeout, one for final flush
-      awaitCommits(p, 1);
-      awaitRollbacks(p, 0);
-    }
-
-    @SneakyThrows
-    @Test
-    public void rollsBack() {
-      TxRedissonSubscribedUserNamesSizeBlowAt7th p =
-          new TxRedissonSubscribedUserNamesSizeBlowAt7th(redissonClient);
-
-      assertThat(p.userNames()).isEmpty();
-
-      try {
-        factus.subscribeAndBlock(p).awaitCatchup();
-      } catch (Throwable expected) {
-        // ignore
-      }
-
-      // only first bulk (size = 5) should be executed
-      assertThat(p.userNames().size()).isEqualTo(5);
-      assertThat(p.stateModifications()).isEqualTo(1);
-      awaitCommits(p, 1);
-      awaitRollbacks(p, 1);
     }
   }
 }
