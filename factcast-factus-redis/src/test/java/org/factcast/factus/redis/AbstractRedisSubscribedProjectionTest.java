@@ -77,8 +77,8 @@ class AbstractRedisSubscribedProjectionTest {
     @Test
     void commit() {
       // INIT
-      assertThat(underTest.numberCommits()).isEqualTo(0);
-      assertThat(underTest.numberRollbacks()).isEqualTo(0);
+      assertThat(underTest.numberCommits()).isZero();
+      assertThat(underTest.numberRollbacks()).isZero();
 
       // RUN
       // emulate we got a notification from redis
@@ -86,21 +86,21 @@ class AbstractRedisSubscribedProjectionTest {
 
       // ASSERT
       assertThat(underTest.numberCommits()).isEqualTo(1);
-      assertThat(underTest.numberRollbacks()).isEqualTo(0);
+      assertThat(underTest.numberRollbacks()).isZero();
     }
 
     @Test
     void rollBack() {
       // INIT
-      assertThat(underTest.numberCommits()).isEqualTo(0);
-      assertThat(underTest.numberRollbacks()).isEqualTo(0);
+      assertThat(underTest.numberCommits()).isZero();
+      assertThat(underTest.numberRollbacks()).isZero();
 
       // RUN
       // emulate we got a notification from redis
       listener.onMessage("", ROLLBACK.code());
 
       // ASSERT
-      assertThat(underTest.numberCommits()).isEqualTo(0);
+      assertThat(underTest.numberCommits()).isZero();
       assertThat(underTest.numberRollbacks()).isEqualTo(1);
     }
   }
