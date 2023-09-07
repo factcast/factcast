@@ -92,19 +92,6 @@ public class RedisTransactionalLens extends AbstractTransactionalLens {
   }
 
   @VisibleForTesting
-  static TransactionOptions createOpts(@NonNull RedisProjection p) {
-    RedisTransactional transactional = p.getClass().getAnnotation(RedisTransactional.class);
-    if (transactional == null) {
-      throw new IllegalStateException(
-          "Projection "
-              + p.getClass()
-              + " is expected to have an annotation @"
-              + RedisTransactional.class.getSimpleName());
-    }
-    return Defaults.with(transactional);
-  }
-
-  @VisibleForTesting
   static int getSize(@NonNull RedisProjection p) {
     RedisTransactional transactional = p.getClass().getAnnotation(RedisTransactional.class);
     if (transactional == null) {
@@ -115,6 +102,19 @@ public class RedisTransactionalLens extends AbstractTransactionalLens {
               + RedisTransactional.class.getSimpleName());
     }
     return transactional.bulkSize();
+  }
+
+  @VisibleForTesting
+  static TransactionOptions createOpts(@NonNull RedisProjection p) {
+    RedisTransactional transactional = p.getClass().getAnnotation(RedisTransactional.class);
+    if (transactional == null) {
+      throw new IllegalStateException(
+          "Projection "
+              + p.getClass()
+              + " is expected to have an annotation @"
+              + RedisTransactional.class.getSimpleName());
+    }
+    return Defaults.with(transactional);
   }
 
   @VisibleForTesting
