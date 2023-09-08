@@ -24,7 +24,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @Configuration
-public class PgSnapshotCacheConfiguration {
+public class SnapshotCacheConfiguration {
   @Bean
   @IsReadAndWriteEnv
   public SnapshotCache pgSnapshotCache(JdbcTemplate jdbcTemplate, PgMetrics metrics) {
@@ -38,7 +38,7 @@ public class PgSnapshotCacheConfiguration {
   }
 
   @Bean
-  public SnapshotCacheCompactor pgSnapshotCacheCompactor(
+  public SnapshotCacheCompactor snapshotCacheCompactor(
       SnapshotCache cache, StoreConfigurationProperties props, PgMetrics pgMetrics) {
     return new SnapshotCacheCompactor(cache, pgMetrics, props.getDeleteSnapshotStaleForDays());
   }
