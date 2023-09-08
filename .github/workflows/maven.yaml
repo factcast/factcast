@@ -78,10 +78,10 @@ jobs:
         key: '${{ runner.os }}-maven-${{ hashFiles(''**/pom.xml'') }}'
         restore-keys: '${{ runner.os }}-maven-'
     - id: 'step-2'
-      name: 'JDK 11'
+      name: 'JDK 17'
       uses: 'actions/setup-java@v3'
       with:
-        java-version: '11'
+        java-version: '17'
         distribution: 'corretto'
     - id: 'step-3'
       name: 'Test - Integration'
