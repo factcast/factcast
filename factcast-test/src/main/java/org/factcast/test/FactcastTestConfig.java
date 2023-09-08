@@ -30,18 +30,21 @@ public @interface FactcastTestConfig {
 
   String configDir() default Config.CONFIG_DIR;
 
+  boolean securityEnabled() default false;
+
   @Value
   @With
   class Config {
     String factcastVersion;
     String postgresVersion;
     String configDir;
+    boolean securityEnabled;
 
     static final String FACTCAST_VERSION = "latest";
     static final String CONFIG_DIR = "./config";
 
     static Config defaults() {
-      return new Config(FACTCAST_VERSION, PostgresVersion.get(), CONFIG_DIR);
+      return new Config(FACTCAST_VERSION, PostgresVersion.get(), CONFIG_DIR, false);
     }
 
     static Config from(@NonNull FactcastTestConfig e) {

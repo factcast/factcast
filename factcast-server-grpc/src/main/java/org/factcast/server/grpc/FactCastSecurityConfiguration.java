@@ -55,15 +55,7 @@ import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 @EnableConfigurationProperties
 public class FactCastSecurityConfiguration {
 
-  private static final String CLASSPATH_FACTCAST_ACCESS_JSON = "/factcast-access.json";
-
-  @Bean(name = "no_longer_used")
-  @ConditionalOnResource(resources = "classpath:factcast-security.json")
-  public Object credentialConfigurationFromClasspath() {
-    throw new IllegalArgumentException(
-        "classpath:factcast-security.json was removed in this release. Please read the migration"
-            + " guide.");
-  }
+  private static final String FACTCAST_ACCESS_JSON = "/factcast-access.json";
 
   @Bean
   @ConfigurationProperties(prefix = "factcast.access", ignoreUnknownFields = false)
@@ -81,11 +73,28 @@ public class FactCastSecurityConfiguration {
   @Primary
   @ConditionalOnMissingBean(FactCastAccessConfiguration.class)
   @ConditionalOnResource(
-      resources = "classpath:" + FactCastSecurityConfiguration.CLASSPATH_FACTCAST_ACCESS_JSON)
+      resources = "classpath:" + FactCastSecurityConfiguration.FACTCAST_ACCESS_JSON)
   public FactCastAccessConfiguration authenticationConfig(FactCastSecretProperties accessSecrets)
       throws IOException {
-    ClassPathResource access = new ClassPathResource(CLASSPATH_FACTCAST_ACCESS_JSON);
+    ClassPathResource access = new ClassPathResource(FACTCAST_ACCESS_JSON);
 
+    return parseAccessConfiguration(accessSecrets, access);
+  }
+
+  @Bean
+  @Primary
+  @ConditionalOnMissingBean(FactCastAccessConfiguration.class)
+  @ConditionalOnResource(
+      resources = "file:./config/" + FactCastSecurityConfiguration.FACTCAST_ACCESS_JSON)
+  public FactCastAccessConfiguration authenticationConfigViaConfig(
+      FactCastSecretProperties accessSecrets) throws IOException {
+    ClassPathResource access = new ClassPathResource("file:./config/" + FACTCAST_ACCESS_JSON);
+
+    return parseAccessConfiguration(accessSecrets, access);
+  }
+
+  private static FactCastAccessConfiguration parseAccessConfiguration(
+      FactCastSecretProperties accessSecrets, ClassPathResource access) throws IOException {
     try (InputStream is = access.getInputStream()) {
       FactCastAccessConfiguration cfg = FactCastAccessConfiguration.read(is);
 
