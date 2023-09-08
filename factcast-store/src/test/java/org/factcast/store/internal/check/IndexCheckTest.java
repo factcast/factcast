@@ -24,7 +24,6 @@ import java.util.Collections;
 import nl.altindag.log.LogCaptor;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,7 +44,6 @@ class IndexCheckTest {
     void setup() {}
 
     @Test
-    @Disabled
     void logsGivenIdexes() {
 
       when(jdbc.queryForList(any(), same(String.class)))
@@ -65,7 +63,6 @@ class IndexCheckTest {
     }
 
     @Test
-    @Disabled
     void doesNotLogSilentIfNoInvalidIndexesFound() {
 
       when(jdbc.queryForList(any(), same(String.class))).thenReturn(Collections.emptyList());

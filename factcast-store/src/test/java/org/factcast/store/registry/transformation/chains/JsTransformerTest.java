@@ -29,7 +29,6 @@ import org.assertj.core.api.Assertions;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.internal.script.graaljs.GraalJSEngineFactory;
 import org.factcast.store.registry.transformation.Transformation;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -175,7 +174,6 @@ class JsTransformerTest {
   }
 
   @Test
-  @Disabled
   void logsExceptionBrokenScript() {
     when(transformation.transformationCode())
         .thenReturn(Optional.of("function transform(e) { \n" + "  br0ken code" + " }\n"));
@@ -197,7 +195,6 @@ class JsTransformerTest {
   }
 
   @Test
-  @Disabled
   void logsExceptionBrokenParam() {
     when(transformation.transformationCode())
         .thenReturn(Optional.of("function transform(e) {throw \"fail at runtime\"}"));
