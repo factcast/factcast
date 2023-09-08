@@ -60,8 +60,9 @@ public class ReadOnlyTokenStoreTest {
     @Mock private @NonNull StateToken token;
 
     @Test
-    void alwaysEmpty() {
-      assertThat(underTest.get(token)).isEmpty();
+    void fails() {
+      assertThatThrownBy(() -> underTest.get(token))
+          .isInstanceOf(UnsupportedOperationException.class);
     }
   }
 }
