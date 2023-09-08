@@ -34,6 +34,6 @@ public class ReadOnlyTokenStore implements TokenStore {
 
   @Override
   public @NonNull Optional<State> get(@NonNull StateToken token) {
-    return Optional.empty();
+    throw new UnsupportedOperationException("tokens are not available in read-only mode");
   }
 }
