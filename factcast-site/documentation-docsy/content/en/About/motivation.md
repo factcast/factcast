@@ -24,7 +24,7 @@ All of these have a slightly different focus, but all of them deal with persisti
 ## The Problem at hand
 
 In a micro-service world, **teams choose their own** tools of trade. This is a very important benefit of using Micro-services in the first place, and you do not want to mess with this principle.
-However, where Subsystems communicate with each other (most likely corssing those team borders) you need some common ground. Event Sourcing is a great pattern here (as well as within those subsystems) because of the decoupling effect of its use.
+However, where Subsystems communicate with each other (most likely crossing those team borders) you need some common ground. Event Sourcing is a great pattern here (as well as within those subsystems) because of the decoupling effect of its use.
 
 ##### So, what is needed is some technical solution, that everyone can easily agree on, because it forces as little technical dependencies on the clients as possible.
 

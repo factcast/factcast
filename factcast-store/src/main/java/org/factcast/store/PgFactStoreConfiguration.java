@@ -16,6 +16,7 @@
 package org.factcast.store;
 
 import org.factcast.store.internal.PgFactStoreInternalConfiguration;
+import org.factcast.store.internal.filter.blacklist.BlacklistConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,5 +37,10 @@ public class PgFactStoreConfiguration {
   @Bean
   StoreConfigurationProperties storeConfigurationProperties() {
     return new StoreConfigurationProperties();
+  }
+
+  @Bean
+  BlacklistConfigurationProperties blacklistConfigurationProperties() {
+    return new BlacklistConfigurationProperties();
   }
 }

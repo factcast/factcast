@@ -36,7 +36,7 @@ and updating some internal state. However, as soon as the projection's state is 
 Integration tests check the interaction of more than one component. Here, we're looking at integration tests that
 validate the correct behaviour of a projection that uses an external data store like a Postgres database.
 
-Be aware that FactCast integration tests as shown below can startup real infrastructure via Docker. For this reason,
+Be aware that FactCast integration tests as shown below can start up real infrastructure via Docker. For this reason,
 they **usually perform significantly slower** than unit tests.
 
 ---

@@ -105,7 +105,7 @@ At the **time of writing (0.4.3)**, the metrics exposed by the namespaces group 
 
 ### gRPC Metrics
 
-If you're looking for remote calls and their execution times (including marshalling/demarshalling from protobuf), you
+If you're looking for remote calls and their execution times (including marshalling/de-marshalling from protobuf), you
 can have a look at the metrics automatically added by
 the [gRPC library](https://yidongnan.github.io/grpc-spring-boot-starter/en/)
 that we use.

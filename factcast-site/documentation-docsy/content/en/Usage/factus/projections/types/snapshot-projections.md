@@ -8,7 +8,7 @@ weight = 100
 
 Now that we know how snapshotting works and what a projection is, it is quite easy to put things together:
 
-A SnapshotProjection is a Projection (read EventHandler) that can be stored into/created from a Snapshot. Lets go back
+A SnapshotProjection is a Projection (read EventHandler) that can be stored into/created from a Snapshot. Let's go back
 to the example we had before:
 
 ```java
@@ -84,7 +84,7 @@ There are plenty of methods that you can override in order to hook into the life
 
 - onCatchup() - will be called when the catchup signal is received from the server.
 - onComplete() - will be called when the FactStream is at its end (only valid for catchup projections)
-- onError() - whenever an error occures on the server side or on the client side before applying a fact
+- onError() - whenever an error occurs on the server side or on the client side before applying a fact
 - onBeforeSnapshot() - will be called whenever factus is about to take a snapshot of the projection. Might be an
   opportunity to clean up.
 - onAfterRestore() - will be called whenever factus deserializes a projection from a snapshot. Might be an opportunity
