@@ -89,6 +89,7 @@ public class FactCastGrpcServerAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean
   @ConditionalOnBean({AccessDecisionManager.class, GrpcSecurityMetadataSource.class})
+  @SuppressWarnings("deprecation")
   public AuthorizationCheckingServerInterceptor authorizationCheckingServerInterceptor(
       final AccessDecisionManager accessDecisionManager,
       final GrpcSecurityMetadataSource securityMetadataSource) {
