@@ -49,8 +49,8 @@ import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.script.JSEngineFactory;
-import org.factcast.store.internal.snapcache.PgSnapshotCacheConfiguration;
 import org.factcast.store.internal.snapcache.SnapshotCache;
+import org.factcast.store.internal.snapcache.SnapshotCacheConfiguration;
 import org.factcast.store.internal.tail.PGTailIndexingConfiguration;
 import org.factcast.store.registry.PgSchemaStoreChangeListener;
 import org.factcast.store.registry.SchemaRegistry;
@@ -87,7 +87,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableSchedulerLock(defaultLockAtMostFor = "PT30m", interceptMode = InterceptMode.PROXY_METHOD)
 @Import({
   SchemaRegistryConfiguration.class,
-  PgSnapshotCacheConfiguration.class,
+  SnapshotCacheConfiguration.class,
   PGTailIndexingConfiguration.class
 })
 public class PgFactStoreInternalConfiguration {
