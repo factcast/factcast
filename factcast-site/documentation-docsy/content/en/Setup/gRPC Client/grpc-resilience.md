@@ -13,7 +13,7 @@ There are two types of gRPC communications within the FactCast gRPC API:
 - synchronous, request / response
 - asynchronous, request / streaming response
 
-While the first can be mitigated easily by retrying the call, things get more complicated in a asynchronous, streaming
+While the first can be mitigated easily by retrying the call, things get more complicated in an asynchronous, streaming
 scenario.
 Imagine a subscription to particular facts (let's say 10) from scratch, where after 5 successfully received facts
 the network connection fails. Now simply retrying would mean to receive those 5 facts again, which is not only wasteful,

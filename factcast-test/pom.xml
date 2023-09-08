@@ -10,6 +10,9 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-test</artifactId>
+  <properties>
+    <sonar.skip>true</sonar.skip>
+  </properties>
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -99,7 +102,7 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.4.5</version>
+      <version>1.4.7</version>
       <scope>provided</scope>
     </dependency>
 

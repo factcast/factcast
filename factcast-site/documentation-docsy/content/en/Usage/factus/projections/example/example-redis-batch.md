@@ -82,15 +82,15 @@ in Redis:
 - `getRedisKey() + "_state_tracking"` - contains the UUID of the last position of the Fact stream
 - `getRedisKey() + "_lock"` - shared lock that needs to be acquired to update the projection.
 
-## Redission API Datastructures vs. Java Collections
+## Redisson API Datastructures vs. Java Collections
 
-As seen in the above example, some Redission data-structures also implement the appropriate Java Collections interface.
+As seen in the above example, some Redisson data-structures also implement the appropriate Java Collections interface.
 For example, you can assign
-a [Redission RMap](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html)
+a [Redisson RMap](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html)
 also to a standard Java `Map`:
 
 ```java
-// 1) use specific Redission type
+// 1) use specific Redisson type
         RMap<UUID, String> = tx.getMap(getRedisKey());
 
 // 2) use Java Collections type

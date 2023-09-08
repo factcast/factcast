@@ -25,14 +25,11 @@ import org.factcast.core.FactValidationException;
 import org.factcast.core.store.RetryableException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class ClientExceptionHelperTest {
-
-  @InjectMocks private ClientExceptionHelper underTest;
 
   @Nested
   class WhenFroming {

@@ -38,10 +38,9 @@ fun formatErrors(errors: List<ProjectError>): List<String> = errors.map {
             """
 Example ${it.examplePath} failed validation:
 ${
-                ignoreExampleErrors(it.result)
-                    .joinToString("\n") { result ->
-                        "- ${result.asJson().get("instance").get("pointer").asText()}: ${result.message}"
-                    }
+                ignoreExampleErrors(it.result)?.joinToString("\n") { result ->
+                    "- ${result.asJson()?.get("instance")?.get("pointer")?.asText()}: ${result.message}"
+                }
             }
                 """.trimIndent()
 
@@ -51,7 +50,7 @@ ${
         is ProjectError.NoDowncastForVersion ->
             """No downcast for ${it.type} from version ${it.fromVersion} to ${it.toVersion} (implicit noop failed)
 ${
-                ignoreExampleErrors(it.result).joinToString("\n") { result ->
+                ignoreExampleErrors(it.result)?.joinToString("\n") { result ->
                     "- ${result.message}"
                 }
             }
@@ -60,7 +59,7 @@ ${
         is ProjectError.TransformationValidationError ->
             """Error while applying transformation for ${it.type} converting version ${it.fromVersion} to ${it.toVersion}:
 ${
-                ignoreExampleErrors(it.result).joinToString("\n") { result ->
+                ignoreExampleErrors(it.result)?.joinToString("\n") { result ->
                     "- ${result.message}"
                 }
             }
@@ -71,10 +70,10 @@ ${
             "Version ${it.fromVersion} or ${it.toVersion} does not exist for ${it.transformationPath}"
 
         is ProjectError.TransformationError -> """Exception during transformation of ${it.type} from ${it.fromVersion} to ${it.toVersion}:
-${it.exception.message}
+${it.exception?.message}
         """.trimIndent()
     }
 }
 
-private fun ignoreExampleErrors(result: ProcessingReport) =
-    result.filter { res -> res.message.contains("[example]").not() }
+private fun ignoreExampleErrors(result: ProcessingReport?) =
+    result?.filter { res -> res.message.contains("[example]").not() }

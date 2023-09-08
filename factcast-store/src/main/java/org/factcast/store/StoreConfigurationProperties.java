@@ -15,13 +15,20 @@
  */
 package org.factcast.store;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.ConsoleAppender;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import java.time.Duration;
+import java.util.*;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -231,6 +238,9 @@ public class StoreConfigurationProperties implements InitializingBean {
     legacyProperties.getTailManagementCron().ifPresent(this::setTailManagementCron);
 
     if (integrationTestMode) {
+
+      adjustLogbackAppender();
+
       log.warn(
           "**** You are running in INTEGRATION TEST MODE. If you see this in production, "
               + "this would be a good time to panic. (See "
@@ -248,6 +258,20 @@ public class StoreConfigurationProperties implements InitializingBean {
         log.warn(
             "**** SchemaRegistry-mode is enabled but validation of Facts is disabled. This is"
                 + " discouraged for production environments. You have been warned. ****");
+      }
+    }
+  }
+
+  private void adjustLogbackAppender() {
+    LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+    for (Logger logger : context.getLoggerList()) {
+      Iterator<Appender<ILoggingEvent>> iter = logger.iteratorForAppenders();
+      while (iter.hasNext()) {
+        Appender<ILoggingEvent> appender = iter.next();
+        if (appender instanceof ConsoleAppender) {
+          log.debug("Setting " + appender.getClass() + " to immediate flush");
+          ((ConsoleAppender<?>) appender).setImmediateFlush(true);
+        }
       }
     }
   }

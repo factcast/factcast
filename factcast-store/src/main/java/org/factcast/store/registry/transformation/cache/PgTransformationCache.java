@@ -28,14 +28,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.store.registry.metrics.RegistryMetrics;
@@ -54,7 +52,8 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   private final NamedParameterJdbcTemplate namedJdbcTemplate;
   private final RegistryMetrics registryMetrics;
 
-  private final ExecutorService es;
+  private final ThreadPoolExecutor tpe =
+      new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
 
   private static final CompletableFuture<Void> COMPLETED_FUTURE =
       CompletableFuture.completedFuture(null);
@@ -64,7 +63,9 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   /* entry of null means read, entry of non-null means write */
   private final CacheBuffer buffer = new CacheBuffer();
 
-  private int maxBufferSize = 1000;
+  private int bufferThreshold = 1000;
+
+  public final int maxBufferSize;
 
   public PgTransformationCache(
       JdbcTemplate jdbcTemplate,
@@ -73,7 +74,10 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
     this.jdbcTemplate = jdbcTemplate;
     this.namedJdbcTemplate = namedJdbcTemplate;
     this.registryMetrics = registryMetrics;
-    this.es = registryMetrics.monitor(Executors.newSingleThreadExecutor(), "transformation-cache");
+
+    registryMetrics.monitor(tpe, "transformation-cache");
+
+    this.maxBufferSize = bufferThreshold * 30;
   }
 
   @VisibleForTesting
@@ -81,12 +85,12 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
       JdbcTemplate jdbcTemplate,
       NamedParameterJdbcTemplate namedJdbcTemplate,
       RegistryMetrics registryMetrics,
-      int maxBufferSize) {
+      int bufferThreshold) {
     this.jdbcTemplate = jdbcTemplate;
     this.namedJdbcTemplate = namedJdbcTemplate;
     this.registryMetrics = registryMetrics;
-    this.maxBufferSize = maxBufferSize;
-    this.es = Executors.newSingleThreadExecutor();
+    this.bufferThreshold = bufferThreshold;
+    this.maxBufferSize = bufferThreshold;
   }
 
   @Override
@@ -176,11 +180,19 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   }
 
   @VisibleForTesting
+  @SneakyThrows
   CompletableFuture<Void> flushIfNecessary() {
-    if (buffer.size() >= maxBufferSize) {
-      return CompletableFuture.runAsync(this::flush, es);
-    } else {
+    final var size = buffer.size();
+
+    if (size > maxBufferSize) {
+      flush();
       return COMPLETED_FUTURE;
+    } else {
+      if (size >= bufferThreshold && tpe.getQueue().isEmpty()) {
+        return CompletableFuture.runAsync(this::flush, tpe);
+      } else {
+        return COMPLETED_FUTURE;
+      }
     }
   }
 
@@ -280,6 +292,6 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
   @Override
   public void close() throws Exception {
-    es.shutdown();
+    tpe.shutdown();
   }
 }
