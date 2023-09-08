@@ -5,7 +5,7 @@ type = "docs"
 +++
 
 To make business decisions, you need a model to base those decisions on. In most cases, it is important that this
-model is consistent with the facts published at the time of the decision and that the model is up to date.
+model is consistent with the facts published at the time of the decision and that the model is up-to-date.
 
 For example, we want to ensure that the username is unique for the whole system.
 In case of (potentially) distributed applications and especially in case of eventsourced applications,
@@ -84,7 +84,7 @@ Projection and also that the business decision (the simple if clause) is always 
 Factus offers a simple syntax:
 
 ```java
-    /**
+/**
  * optimistically 'locks' on a SnapshotProjection
  */
 <P extends SnapshotProjection> Locked<P> withLockOn(@NonNull Class<P> snapshotClass);

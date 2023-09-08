@@ -70,7 +70,7 @@ Note that those implementations need to have a default constructor and are expec
 The Key/Value store that keeps and maintains the snapshots is called a `SnapshotCache`.
 
 Factus comes with a default SnapshotCache that uses FactCast to store/retrieve and maintain those cached snapshots. While this works reasonably well and is easy to use, as it does not involve any other piece of infrastructure, you _might want to keep an eye on the load- and storage-requirements imposed by this_.
-It is very easy to provide an implementation of SnapshotCache that uses for instance Redis or memcached instead, so that you keep this load away from FactCast for performance, scalability and in the end also cost efficiency reasons. Also it has an effect on the availability and maybe responsiveness of your application, but this is obviously outside of the scope of this document.
+It is very easy to provide an implementation of SnapshotCache that uses for instance Redis or memcached instead, so that you keep this load away from FactCast for performance, scalability and in the end also cost efficiency reasons. Also, it has an effect on the availability and maybe responsiveness of your application, but this is obviously outside of the scope of this document.
 
 If you happen to use redis in your application for instance, you could use
 

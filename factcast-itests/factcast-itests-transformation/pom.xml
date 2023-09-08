@@ -32,22 +32,8 @@
   </dependencyManagement>
   <dependencies>
     <dependency>
-      <groupId>org.projectlombok</groupId>
-      <artifactId>lombok</artifactId>
-      <scope>provided</scope>
-
-    </dependency>
-    <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-spring-boot-autoconfigure</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.factcast</groupId>
-      <artifactId>factcast-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.factcast</groupId>
-      <artifactId>factcast-store</artifactId>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
@@ -56,23 +42,14 @@
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter</artifactId>
+      <artifactId>spring-boot-starter-jdbc</artifactId>
     </dependency>
+
     <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>testcontainers</artifactId>
-      <version>${testcontainers.version}</version>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-client-grpc</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-api</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-engine</artifactId>
-      <scope>test</scope>
-    </dependency>
+
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
@@ -86,11 +63,6 @@
           <artifactId>junit</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>postgresql</artifactId>
-      <version>${testcontainers.version}</version>
     </dependency>
     <dependency>
       <!-- only for dependency and build order analysis -->
@@ -108,17 +80,6 @@
         <configuration>
           <skip>true</skip>
         </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <goals>
-              <goal>repackage</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>

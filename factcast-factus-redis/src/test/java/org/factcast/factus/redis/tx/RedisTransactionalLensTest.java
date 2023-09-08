@@ -184,7 +184,7 @@ class RedisTransactionalLensTest {
     void delegates() {
       RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
       RedissonTxManager tx = mock(RedissonTxManager.class);
-      RedisTransactionalLens underTest = new RedisTransactionalLens(p, tx, Defaults.create());
+      RedisTransactionalLens underTest = new RedisTransactionalLens(p, () -> tx, Defaults.create());
 
       underTest.doClear();
 
@@ -201,7 +201,7 @@ class RedisTransactionalLensTest {
     void delegates() {
       RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
       RedissonTxManager tx = mock(RedissonTxManager.class);
-      RedisTransactionalLens underTest = new RedisTransactionalLens(p, tx, Defaults.create());
+      RedisTransactionalLens underTest = new RedisTransactionalLens(p, () -> tx, Defaults.create());
 
       underTest.doFlush();
 
@@ -295,7 +295,7 @@ class RedisTransactionalLensTest {
       RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
       RedissonTxManager tx = mock(RedissonTxManager.class);
       when(tx.getCurrentTransaction()).thenReturn(current);
-      RedisTransactionalLens underTest = new RedisTransactionalLens(p, tx, Defaults.create());
+      RedisTransactionalLens underTest = new RedisTransactionalLens(p, () -> tx, Defaults.create());
 
       Function<Fact, ?> t = underTest.parameterTransformerFor(RTransaction.class);
       assertThat(t).isNotNull();
@@ -306,7 +306,7 @@ class RedisTransactionalLensTest {
     void returnsNullForOtherType() {
       RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
       RedissonTxManager tx = mock(RedissonTxManager.class);
-      RedisTransactionalLens underTest = new RedisTransactionalLens(p, tx, Defaults.create());
+      RedisTransactionalLens underTest = new RedisTransactionalLens(p, () -> tx, Defaults.create());
 
       Function<Fact, ?> t = underTest.parameterTransformerFor(Fact.class);
       assertThat(t).isNull();

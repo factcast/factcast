@@ -1,7 +1,7 @@
 ---
 title: "Tips"
 type: "docs"
-weigth: 2000
+weight: 2000
 ---
 
 This section contains some tips and tricks that you might find useful to improve performances or to cover some corner use cases.
