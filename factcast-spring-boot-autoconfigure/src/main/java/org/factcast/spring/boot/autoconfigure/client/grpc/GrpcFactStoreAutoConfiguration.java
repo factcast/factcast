@@ -45,6 +45,7 @@ import org.springframework.context.annotation.Lazy;
 @AutoConfiguration
 @ConditionalOnClass({GrpcFactStore.class, GrpcChannelFactory.class})
 @Import(FactCastGrpcClientProperties.class)
+// spring-grpc compat until release
 @ImportAutoConfiguration({
   GrpcClientAutoConfiguration.class,
   GrpcClientMetricAutoConfiguration.class,
@@ -53,6 +54,7 @@ import org.springframework.context.annotation.Lazy;
   GrpcClientTraceAutoConfiguration.class,
   GrpcDiscoveryClientAutoConfiguration.class
 })
+// spring-grpc compat until release
 @EnableConfigurationProperties
 public class GrpcFactStoreAutoConfiguration {
 

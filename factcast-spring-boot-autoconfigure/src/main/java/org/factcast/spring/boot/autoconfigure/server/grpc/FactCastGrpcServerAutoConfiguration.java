@@ -40,6 +40,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 @Generated
 @AutoConfiguration
 @Import({FactCastGrpcServerConfiguration.class, FactCastSecurityConfiguration.class})
+// spring-grpc compat until release
 @ImportAutoConfiguration({
   GrpcAdviceAutoConfiguration.class,
   GrpcHealthServiceAutoConfiguration.class,
@@ -53,10 +54,12 @@ import org.springframework.security.authentication.AuthenticationManager;
   GrpcServerMetricAutoConfiguration.class,
   GrpcServerTraceAutoConfiguration.class
 })
+// spring-grpc compat until release
 @ConditionalOnClass(FactStoreGrpcService.class)
 @ConditionalOnMissingBean(FactStoreGrpcService.class)
 @AutoConfigureBefore(GrpcServerAutoConfiguration.class)
 public class FactCastGrpcServerAutoConfiguration {
+  // spring-grpc compat until release
   @Bean
   @ConditionalOnMissingBean
   public ExceptionTranslatingServerInterceptor exceptionTranslatingServerInterceptor() {
@@ -96,4 +99,5 @@ public class FactCastGrpcServerAutoConfiguration {
     return new AuthorizationCheckingServerInterceptor(
         accessDecisionManager, securityMetadataSource);
   }
+  // spring-grpc compat until release
 }

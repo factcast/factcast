@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.Generated;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.autoconfigure.GrpcServerSecurityAutoConfiguration;
 import net.devh.boot.grpc.server.security.authentication.BasicGrpcAuthenticationReader;
@@ -49,6 +50,7 @@ import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 
 @SuppressWarnings("deprecation")
 @Slf4j
+@Generated
 @Configuration
 @EnableGlobalMethodSecurity(securedEnabled = true, proxyTargetClass = true)
 @AutoConfigureBefore(GrpcServerSecurityAutoConfiguration.class)

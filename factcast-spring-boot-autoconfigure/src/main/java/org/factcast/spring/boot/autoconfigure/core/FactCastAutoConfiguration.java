@@ -36,10 +36,12 @@ import org.springframework.core.annotation.Order;
 
 @AutoConfiguration
 @ConditionalOnClass(FactCast.class)
+// spring-grpc compat until release
 @ImportAutoConfiguration({
   GrpcCommonCodecAutoConfiguration.class,
   GrpcCommonTraceAutoConfiguration.class
 })
+// spring-grpc compat until release
 @Generated
 @SuppressWarnings("unused")
 public class FactCastAutoConfiguration {
