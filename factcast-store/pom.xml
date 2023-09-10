@@ -136,7 +136,7 @@
     <dependency>
       <groupId>io.javalin</groupId>
       <artifactId>javalin</artifactId>
-      <version>4.6.7</version>
+      <version>4.6.8</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -152,7 +152,7 @@
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>okhttp</artifactId>
-      <version>4.10.0</version>
+      <version>4.11.0</version>
     </dependency>
     <dependency>
       <groupId>org.graalvm.js</groupId>
