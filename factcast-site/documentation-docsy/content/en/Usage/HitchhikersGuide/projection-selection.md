@@ -9,7 +9,8 @@ type: docs
 This guide is targeting an audience that is already informed about the projection types offered by Factus, and about
 their basics.
 
-We suggest to check out the "Projections" section of the Factus API docs (TODO link) before delving into this guide.
+We suggest to check out the "Projections" section of the [Factus API docs]({{< ref "/usage/factus/projections">}})
+before delving into this guide.
 
 {{% / alert %}}
 
@@ -87,16 +88,17 @@ type concerning the identified requirements.
 
 ### Snapshot Projection
 
-TODO link to docs
+[Snapshot Projection documentation]({{< ref "/usage/factus/projections/types/snapshot-projections">}})
 
 - **Scalability**: by default, a Snapshot Projection stores its cached state in the FactCast server (aka the Event
   Store). This can create bottlenecks, or impact the performance of the Event Store, whenever the workload increases.
   It can be optimized, depending on the use case, by hooking into the snapshot lifecycle, and changing the way it is
-  accessed, serialized, stored, and retained.
+  accessed, serialized, stored, and retained. Alternatively, the _factcast-snapshotcache-redisson_ module can be used,
+  to easily store the snapshots in a Redis cluster (see Best Practices and Tips section below).
 
-- **Performance**: whenever the projection is fetched for new events, the most recent snapshot is transferred, de-serialized,
-  updated, then re-serialized, and transferred back to the Event Store. Performance might decrease with the increase
-  of the snapshots size, and/or the frequency of the queries.
+- **Performance**: whenever the projection is fetched for new events, the most recent snapshot is transferred,
+  de-serialized, updated, then re-serialized, and transferred back to the Event Store. Performance might decrease with
+  the increase of the snapshots size, and/or the frequency of the queries.
 
 - **Query flexibility**: a Snapshot Projection allows to query, and aggregate, multiple event types on-demand. Any type
   of data structure can be used to store the projected events, considering that it needs to be serializable.
@@ -105,18 +107,20 @@ TODO link to docs
   lifecycle implementation. It can get more complex, whenever it's necessary to customize its aspects.
 
 - **Data consistency**: when fetched, the Snapshot Projection ensures to return the most recent representation of the
-  event stream. It supports optimistic locking to handle concurrent modifications (see Optimistic Locking - TODO link).
+  event stream. It supports optimistic locking to handle concurrent modifications. Check out the
+  [Optimistic Locking]({{< ref "/usage/factus/optimistic-locking">}}) section for further details.
 
 - **Maintainability**: the projection allows to change the business logic of the event handlers, to create new data
   structures for the derived views, update existing ones, or to add new decisions. To do so, it is necessary to update
-  the serial of the projection every time the projection class is changed (TODO link "Serials" section of Snapshotting).
+  the serial of the projection every time the projection class is changed - check out the
+  [documentation]({{< ref "/usage/factus/projections/snapshotting#serials">}}).
   The full event-stream will then be re-consumed on the subsequent fetch, as the previously created snapshots will get
   invalidated. The snapshots retention might need to be fine-tuned on the long run, based on the amount of resources
   available, and the frequency of the queries.
 
 ### Aggregate
 
-TODO link to docs
+[Aggregate documentation]({{< ref "/usage/factus/projections/types/aggregates">}})
 
 - **Scalability**: same considerations made for the Snapshot Projection apply.
 
@@ -137,7 +141,7 @@ TODO link to docs
 
 ### Managed Projection
 
-TODO link to docs
+[Managed Projection documentation]({{< ref "/usage/factus/projections/types/managed-projection">}})
 
 Preface: considering a Managed Projection that has its state externalized in a shared database.
 
@@ -161,17 +165,19 @@ Preface: considering a Managed Projection that has its state externalized in a s
 - **Data consistency**: since a shared datasource is used to store the derived views, the same state is shared across
   all instances of the projection. Of course, the derived views might be stale, whenever new events are published, but
   the projection can be updated while processing queries, to ensure that the most recent state is returned. It supports
-  optimistic locking to handle concurrent modifications (see Optimistic Locking - TODO link).
+  optimistic locking to handle concurrent modifications. Check out the
+  [Optimistic Locking]({{< ref "/usage/factus/optimistic-locking">}}) section for further details.
 
 - **Maintainability**: a managed projection enables the construction of derived views that can potentially be queried
   even when the Event Store is unavailable. The projection allows to change the business logic of the event handlers,
   and change the underlying structure the derived views. To do so, it is necessary to update the serial of the
-  projection every time the projection class is changed (TODO link "Serials" section of Snapshotting). The full
-  event-stream will then be re-consumed on the subsequent updates, to rebuild the derived views.
+  projection every time the projection class is changed - check out the
+  [documentation]({{< ref "/usage/factus/projections/snapshotting#serials">}}). The full event-stream will then be
+  re-consumed on the subsequent updates, to rebuild the derived views.
 
 ### Local Managed Projection
 
-TODO link to docs
+[Local Managed Projection documentation]({{< ref "/usage/factus/projections/types/local-managed-projection">}})
 
 - **Scalability**: a Local Managed Projection stores its state in-memory. Depending on the use-case, this can create
   performance, and availability issues on the long-run, whenever the derived views size increases over time or is
@@ -199,7 +205,7 @@ TODO link to docs
 
 ### Subscribed Projection
 
-TODO link to docs
+[Subscribed Projection documentation]({{< ref "/usage/factus/projections/types/subscribed-projection">}})
 
 Preface: considering a Subscribed Projection that has its state externalized in a shared database.
 
@@ -230,13 +236,13 @@ Preface: considering a Subscribed Projection that has its state externalized in 
 
 - **Maintainability**: in terms of maintainability, a Subscribed Projection is similar to a Managed Projection, as it
   allows to change the business logic of the event handlers, and change the underlying structure the derived views. To
-  do so, it is necessary to update the serial of the projection every time the projection class is changed (TODO link
-  "Serials" section of Snapshotting). The full event-stream will then be re-consumed on the next catch-up phase (when
-  the new projection starts), to rebuild the derived views.
+  do so, it is necessary to update the serial of the projection every time the projection class is changed - check out
+  the [documentation]({{< ref "/usage/factus/projections/snapshotting#serials">}}). The full event-stream will then be
+  re-consumed on the next catch-up phase (when the new projection starts), to rebuild the derived views.
 
 ### Local Subscribed Projection
 
-TODO link to docs
+[Local Subscribed Projection documentation]({{< ref "/usage/factus/projections/types/local-subscribed-projection">}})
 
 - **Scalability**: same considerations made for the Local Managed Projection apply.
 
@@ -261,6 +267,17 @@ carefully evaluate and prioritize the identified requirements based on your proj
 
 That being said, here are some general Q&As to help you make an informed choice:
 
+**Q: Are you still modelling for a prototype?**
+
+A: If yes, then you can start with a Local Managed Projection, as it's the easiest and most intuitive projection to
+implement.
+
+**Q: Do you need to easily rebuild your projection?**
+
+A: If yes, then consider using a Local Projection, as it allows to rebuild the in-memory derived views from scratch by
+simply restarting the application. Consider anyway that this might have an impact on the overall application
+performance, as this will produce an overhead on each deployment.
+
 **Q: Do you need to ensure high availability for queries, even when the Event Store is unavailable?**
 
 A: If yes, then make sure to go for a projection that doesn't rely on the Event Store for persisting its state. Consider
@@ -283,7 +300,7 @@ A: If yes, then opt for a projection that offers freedom in terms of persistence
 SubscribedProjection. This will allow to store the derived views in an external datasource, and to query them using
 whatever technology is available.
 
-**Q: Does your specific query need a single entity or object?**
+**Q: Does a specific query need a single entity or object?**
 
 A: If yes, then you can opt to use a dedicated Aggregate for the query. Generally speaking, Aggregates are usually fast,
 easier to implement and to maintain, but they might be not suitable for very complex queries that require to aggregate
@@ -294,14 +311,9 @@ your application.
 
 ## Best Practices and Tips
 
-    Summarize key best practices and tips for effectively implementing and managing the chosen projection type within Factus.
-    Include insights or lessons learned from real-world projects, if applicable.
+Check the following [guide](https://docs.factcast.org/usage/factus/tips/) regularly, as it is updated with tips to
+improve performance, or fix common issues.
 
-TODO Link to DB improvements docs.
-
----
-
-## Conclusion
-
-    Recap the main points discussed throughout the guide.
-    Encourage readers to apply the knowledge gained and make confident decisions when selecting projection types within Factus.
+When using Snapshot Projections, consider using the [factcast-snapshotcache-redisson](https://docs.factcast.org/usage/factus/setup/#redis-snapshotcache)
+module, to store the snapshots in a Redis cluster, instead of the Event Store.
+This will reduce the load on the Event Store, and will allow to scale the snapshots cache independently.
