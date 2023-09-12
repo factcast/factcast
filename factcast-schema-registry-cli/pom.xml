@@ -156,11 +156,6 @@
       <scope>runtime</scope>
     </dependency>
     <dependency>
-      <groupId>io.github.microutils</groupId>
-      <artifactId>kotlin-logging-jvm</artifactId>
-      <version>3.0.5</version>
-    </dependency>
-    <dependency>
       <groupId>io.arrow-kt</groupId>
       <artifactId>arrow-core-jvm</artifactId>
       <version>${arrow.version}</version>
