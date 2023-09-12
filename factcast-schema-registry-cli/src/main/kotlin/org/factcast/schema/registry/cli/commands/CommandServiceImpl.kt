@@ -15,10 +15,10 @@
  */
 package org.factcast.schema.registry.cli.commands
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.IOException
 import java.nio.file.Path
 import jakarta.inject.Singleton
-import io.github.oshai.KotlinLogging
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.project.ProjectService
 import org.factcast.schema.registry.cli.registry.DistributionCreatorService
