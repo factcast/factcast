@@ -33,11 +33,14 @@ import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepositoryImpl;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepositoryImpl;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
+import org.redisson.api.RedissonClient;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
@@ -49,8 +52,27 @@ import org.springframework.core.annotation.Order;
 @AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
 public class FactusAutoConfiguration {
 
+  @Bean("implicitRedissonDependency")
+  @ConditionalOnClass(RedissonClient.class)
+  RedissonHolder redissonAvailable() {
+    return new RedissonHolder() {};
+  }
+
+  @Bean("implicitRedissonDependency")
+  @ConditionalOnMissingClass("org.redisson.api.RedissonClient")
+  RedissonHolder redissonMissing() {
+    return new RedissonHolder() {};
+  }
+
+  /**
+   * Used to make sure factus is shut down before redisson, as they have an implicit dependency in
+   * some cases.
+   */
+  interface RedissonHolder {}
+
   @Bean(destroyMethod = "close")
   @ConditionalOnMissingBean
+  @DependsOn("implicitRedissonDependency")
   public Factus factus(
       FactCast fc,
       SnapshotCache sr,
