@@ -142,7 +142,7 @@
     <dependency>
       <groupId>io.github.oshai</groupId>
       <artifactId>kotlin-logging-jvm</artifactId>
-      <version>4.0.0-beta-28</version>
+      <version>5.1.0</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -154,11 +154,6 @@
       <artifactId>logback-classic</artifactId>
       <version>1.4.7</version>
       <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.github.microutils</groupId>
-      <artifactId>kotlin-logging-jvm</artifactId>
-      <version>3.0.5</version>
     </dependency>
     <dependency>
       <groupId>io.arrow-kt</groupId>
