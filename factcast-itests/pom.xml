@@ -23,6 +23,7 @@
     <module>factcast-itests-exception-handling</module>
     <module>factcast-itests-store</module>
     <module>factcast-itests-doc</module>
+    <module>factcast-itests-security</module>
   </modules>
   <dependencies>
     <dependency>

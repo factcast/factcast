@@ -99,7 +99,8 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                       .withExposedPorts(FC_PORT)
                       .withFileSystemBind(config.configDir(), "/config/")
                       .withEnv("grpc_server_port", String.valueOf(FC_PORT))
-                      .withEnv("factcast_security_enabled", "false")
+                      .withEnv(
+                          "factcast_security_enabled", String.valueOf(config.securityEnabled()))
                       .withEnv("factcast_grpc_bandwidth_disabled", "true")
                       .withEnv("factcast_store_integrationTestMode", "true")
                       .withEnv("spring_datasource_url", jdbcUrl)
