@@ -106,7 +106,8 @@
     <micronaut.version>4.1.0</micronaut.version>
     <kotlin.version>1.9.10</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
-    <kotest.version>5.5.5</kotest.version>
+    <kotest.version>5.7.2</kotest.version>
+    <mockk.version>1.13.7</mockk.version>
     <redisson.version>3.19.3</redisson.version>
     <redisson-spring-boot-starter.version>3.21.0</redisson-spring-boot-starter.version>
     <graaljs.version>22.3.1</graaljs.version>

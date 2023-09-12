@@ -205,7 +205,13 @@
     <dependency>
       <groupId>io.mockk</groupId>
       <artifactId>mockk</artifactId>
-      <version>1.13.4</version>
+      <version>${mockk.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.mockk</groupId>
+      <artifactId>mockk-jvm</artifactId>
+      <version>${mockk.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
