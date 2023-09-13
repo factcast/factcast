@@ -103,7 +103,7 @@
     <!-- lter versions seem to break toxi -->
     <testcontainers.version>1.19.0</testcontainers.version>
     <arrow.version>1.2.1</arrow.version>
-    <micronaut.version>4.1.0</micronaut.version>
+    <micronaut.version>4.1.5</micronaut.version>
     <kotlin.version>1.9.10</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <kotest.version>5.7.2</kotest.version>
