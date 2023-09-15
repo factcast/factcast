@@ -91,7 +91,7 @@
     <jackson.version>2.14.2</jackson.version>
     <mockito.version>5.5.0</mockito.version>
     <junit-jupiter.version>5.10.0</junit-jupiter.version>
-    <lombok.version>1.18.26</lombok.version>
+    <lombok.version>1.18.28</lombok.version>
     <slf4j-api.version>2.0.9</slf4j-api.version>
     <!--suppress UnresolvedMavenProperty -->
     <etc>${session.executionRootDirectory}/src/etc</etc>
@@ -112,7 +112,7 @@
     <redisson-spring-boot-starter.version>3.23.4</redisson-spring-boot-starter.version>
     <graaljs.version>23.0.1</graaljs.version>
     <shedlock.version>5.7.0</shedlock.version>
-    <byte-buddy.version>1.14.7</byte-buddy.version>
+    <byte-buddy.version>1.14.8</byte-buddy.version>
     <skipUnitTests>false</skipUnitTests>
     <postgres.version>15</postgres.version>
   </properties>
