@@ -88,7 +88,7 @@
     <directory-maven-plugin.version>1.0</directory-maven-plugin.version>
     <nexus-staging-maven-plugin.version>1.6.13</nexus-staging-maven-plugin.version>
     <assertj.version>3.24.2</assertj.version>
-    <jackson.version>2.14.2</jackson.version>
+    <jackson.version>2.15.2</jackson.version>
     <mockito.version>5.5.0</mockito.version>
     <junit-jupiter.version>5.10.0</junit-jupiter.version>
     <lombok.version>1.18.28</lombok.version>
