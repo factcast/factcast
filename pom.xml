@@ -108,7 +108,7 @@
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <kotest.version>5.7.2</kotest.version>
     <mockk.version>1.13.7</mockk.version>
-    <redisson.version>3.23.4</redisson.version>
+    <redisson.version>3.23.5</redisson.version>
     <redisson-spring-boot-starter.version>3.23.4</redisson-spring-boot-starter.version>
     <graaljs.version>23.0.1</graaljs.version>
     <shedlock.version>5.8.0</shedlock.version>
