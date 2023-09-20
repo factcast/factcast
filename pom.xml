@@ -109,7 +109,7 @@
     <kotest.version>5.7.2</kotest.version>
     <mockk.version>1.13.7</mockk.version>
     <redisson.version>3.23.5</redisson.version>
-    <redisson-spring-boot-starter.version>3.23.4</redisson-spring-boot-starter.version>
+    <redisson-spring-boot-starter.version>3.23.5</redisson-spring-boot-starter.version>
     <graaljs.version>23.0.1</graaljs.version>
     <shedlock.version>5.8.0</shedlock.version>
     <byte-buddy.version>1.14.8</byte-buddy.version>
