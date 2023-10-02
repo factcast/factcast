@@ -68,8 +68,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
 
   @Autowired PGTailIndexManager tailManager;
 
-  @Autowired
-  JdbcTemplate jdbcTemplate;
+  @Autowired JdbcTemplate jdbcTemplate;
 
   @Override
   protected FactStore createStoreToTest() {
@@ -285,8 +284,8 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
     }
     store.publish(facts);
     store.publish(
-            Collections.singletonList(Fact.builder().id(UUID.randomUUID()).ns("unrelated").buildWithoutPayload()));
-
+        Collections.singletonList(
+            Fact.builder().id(UUID.randomUUID()).ns("unrelated").buildWithoutPayload()));
 
     FactCount count = store.estimateFactsFor(Lists.newArrayList(FactSpec.ns(ns).type(type)));
     assertThat(count.preciseCount()).isEqualTo(OptionalLong.of(expectedCount));
