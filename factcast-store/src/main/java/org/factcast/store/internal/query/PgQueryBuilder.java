@@ -179,4 +179,32 @@ public class PgQueryBuilder {
     log.trace("creating catchup-table SQL for {} - SQL={}", factSpecs, sql);
     return sql;
   }
+
+  public String REMOVEME_createEstimatedFactCountSql() {
+    String sql = "SELECT count_estimate('" + escapeQuery(createSQL()) + "')";
+    log.trace("creating estimate-facts SQL for {} - SQL={}", factSpecs, sql);
+    return sql;
+  }
+
+  public String createEstimatedFactCountSql() {
+    String sql = "EXPLAIN (FORMAT JSON) " + createSQL();
+    log.trace("creating estimate-facts SQL for {} - SQL={}", factSpecs, sql);
+    return sql;
+  }
+
+  public String createPreciseFactCountSql() {
+    String sql =
+        "SELECT COUNT(DISTINCT "
+            + PgConstants.COLUMN_SER
+            + ") FROM "
+            + PgConstants.TABLE_FACT
+            + " WHERE "
+            + createWhereClause();
+    log.trace("creating query SQL for {} - SQL={}", factSpecs, sql);
+    return sql;
+  }
+
+  private String escapeQuery(String query) {
+    return query.replace("'", "''");
+  }
 }

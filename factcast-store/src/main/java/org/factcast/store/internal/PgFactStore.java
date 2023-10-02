@@ -24,6 +24,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.DuplicateFactException;
 import org.factcast.core.Fact;
+import org.factcast.core.FactCount;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
@@ -42,6 +43,7 @@ import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.snapcache.PgSnapshotCache;
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
@@ -277,5 +279,59 @@ public class PgFactStore extends AbstractFactStore {
   @Override
   public void clearSnapshot(@NonNull SnapshotId id) {
     metrics.time(StoreMetrics.OP.CLEAR_SNAPSHOT, () -> snapCache.clearSnapshot(id));
+  }
+
+  @Override
+  public @NonNull FactCount estimateFactsFor(@NonNull List<FactSpec> specs) {
+    return metrics.time(
+        StoreMetrics.OP.ESTIMATE_FACTS_FOR,
+        () -> {
+          long estimatedCount = getEstimatedFactCount(specs);
+          // TODO make threshold configurable
+          if (estimatedCount < 1000) {
+            long preciseCount = getPreciseFactCount(specs);
+            return FactCount.of(estimatedCount, OptionalLong.of(preciseCount));
+          }
+          return FactCount.of(estimatedCount, OptionalLong.empty());
+        });
+  }
+
+  private long getEstimatedFactCount(@NonNull List<FactSpec> specs) {
+    PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
+    String estimatedCountSql = pgQueryBuilder.createEstimatedFactCountSql();
+    PreparedStatementSetter statementSetter =
+        pgQueryBuilder.createStatementSetter(new AtomicLong(0L));
+    ResultSetExtractor<Long> rse =
+        new ResultSetExtractor<>() {
+          @Override
+          public Long extractData(ResultSet resultSet) throws SQLException, DataAccessException {
+            if (!resultSet.next()) {
+              return 0L;
+            } else {
+              JSONArray json = new JSONArray(resultSet.getString(1));
+              return json.getJSONObject(0).getJSONObject("Plan").getLong("Plan Rows");
+            }
+          }
+        };
+    return Objects.requireNonNull(jdbcTemplate.query(estimatedCountSql, statementSetter, rse));
+  }
+
+  private long getPreciseFactCount(@NonNull List<FactSpec> specs) {
+    PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
+    String preciseFactsSql = pgQueryBuilder.createPreciseFactCountSql();
+    PreparedStatementSetter statementSetter =
+        pgQueryBuilder.createStatementSetter(new AtomicLong(0L));
+    ResultSetExtractor<Long> rse =
+        new ResultSetExtractor<>() {
+          @Override
+          public Long extractData(ResultSet resultSet) throws SQLException, DataAccessException {
+            if (!resultSet.next()) {
+              return 0L;
+            } else {
+              return resultSet.getLong(1);
+            }
+          }
+        };
+    return Objects.requireNonNull(jdbcTemplate.query(preciseFactsSql, statementSetter, rse));
   }
 }

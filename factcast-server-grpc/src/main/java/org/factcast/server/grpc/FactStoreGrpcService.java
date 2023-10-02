@@ -47,6 +47,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.factcast.core.Fact;
+import org.factcast.core.FactCount;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
@@ -644,6 +645,22 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
     store.setSnapshot(new Snapshot(id, state, bytes, compressed));
 
     responseObserver.onNext(MSG_Empty.getDefaultInstance());
+    responseObserver.onCompleted();
+  }
+
+  @Override
+  @Secured(FactCastAuthority.AUTHENTICATED)
+  public void estimateFactsForSpecsJson(
+      MSG_FactSpecsJson request, StreamObserver<MSG_Count> responseObserver) {
+    initialize(responseObserver);
+
+    enableResponseCompression(responseObserver);
+    List<FactSpec> specs = converter.fromProto(request);
+
+    // TODO assert permissions?
+    // assertCanRead(ns);
+    FactCount count = store.estimateFactsFor(specs);
+    responseObserver.onNext(converter.toProto(count));
     responseObserver.onCompleted();
   }
 

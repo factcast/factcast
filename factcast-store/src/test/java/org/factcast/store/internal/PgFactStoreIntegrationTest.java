@@ -25,8 +25,10 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.experimental.Delegate;
+import org.assertj.core.data.Percentage;
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
+import org.factcast.core.FactCount;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
@@ -46,6 +48,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
@@ -64,6 +67,9 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
   @Autowired TokenStore tokenStore;
 
   @Autowired PGTailIndexManager tailManager;
+
+  @Autowired
+  JdbcTemplate jdbcTemplate;
 
   @Override
   protected FactStore createStoreToTest() {
@@ -260,5 +266,47 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
     Optional<State> state = tokenStore.get(token);
     assertThat(state).isNotEmpty();
     assertThat(state.get()).extracting(State::serialOfLastMatchingFact).isEqualTo(0L);
+  }
+
+  @Test
+  void getEstimateFactsForOnEmptyFactTableReturns0() {
+    FactCount count = store.estimateFactsFor(Lists.newArrayList(FactSpec.ns("foo").type("bar")));
+    assertThat(count.preciseCount()).isEqualTo(OptionalLong.of(0L));
+  }
+
+  @Test
+  void getEstimateFactsForReturnsPreciseCountOfFacts() {
+    int expectedCount = 10;
+    String ns = "foo";
+    String type = "bar";
+    List<Fact> facts = new ArrayList<>();
+    for (int i = 0; i < expectedCount; i++) {
+      facts.add(Fact.builder().ns(ns).type(type).buildWithoutPayload());
+    }
+    store.publish(facts);
+    store.publish(
+            Collections.singletonList(Fact.builder().id(UUID.randomUUID()).ns("unrelated").buildWithoutPayload()));
+
+
+    FactCount count = store.estimateFactsFor(Lists.newArrayList(FactSpec.ns(ns).type(type)));
+    assertThat(count.preciseCount()).isEqualTo(OptionalLong.of(expectedCount));
+  }
+
+  @Test
+  void getEstimateFactsForReturnsEstimatedCountOfFacts() {
+    int expectedCount = 5000; // should be higher than the threshold
+    String ns = "foo";
+    String type = "bar";
+    List<Fact> facts = new ArrayList<>();
+    for (int i = 0; i < expectedCount; i++) {
+      facts.add(Fact.builder().ns(ns).type(type).buildWithoutPayload());
+    }
+    store.publish(facts);
+    // ANALYZE is not run automatically, so we need to do it manually
+    jdbcTemplate.execute("ANALYZE fact");
+
+    FactCount count = store.estimateFactsFor(Lists.newArrayList(FactSpec.ns(ns).type(type)));
+    assertThat(count.estimatedCount()).isCloseTo(expectedCount, Percentage.withPercentage(5));
+    assertThat(count.preciseCount()).isEqualTo(OptionalLong.empty());
   }
 }

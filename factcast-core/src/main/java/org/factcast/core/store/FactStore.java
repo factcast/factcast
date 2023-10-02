@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.factcast.core.FactCount;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
@@ -85,4 +86,7 @@ public interface FactStore {
 
   @NonNull
   StateToken currentStateFor(List<FactSpec> factSpecs);
+
+  @NonNull
+  FactCount estimateFactsFor(@NonNull List<FactSpec> specs);
 }

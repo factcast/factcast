@@ -34,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.client.security.CallCredentialsHelper;
 import org.factcast.core.DuplicateFactException;
 import org.factcast.core.Fact;
+import org.factcast.core.FactCount;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
@@ -527,5 +528,15 @@ public class GrpcFactStore implements FactStore {
     log.trace("clearing snapshot {} in remote store", id);
     //noinspection ResultOfMethodCallIgnored
     runAndHandle(() -> blockingStub.clearSnapshot(converter.toProto(id)));
+  }
+
+  @Override
+  public @NonNull FactCount estimateFactsFor(@NonNull List<FactSpec> specs) {
+    return callAndHandle(
+        () -> {
+          MSG_FactSpecsJson msg = converter.toProtoFactSpecs(specs);
+          MSG_Count result = blockingStub.estimateFactsForSpecsJson(msg);
+          return converter.fromProto(result);
+        });
   }
 }

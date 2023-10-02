@@ -166,6 +166,16 @@ message MSG_OptionalSnapshot{
   MSG_Snapshot snapshot = 2;
 }
 
+message MSG_OptionalNumber {
+  bool present = 1;
+  int64 number = 2;
+}
+
+message MSG_Count {
+  int64 estimatedCount = 1;
+  MSG_OptionalNumber preciseCount = 2;
+}
+
 service RemoteFactStore {
   rpc subscribe (MSG_SubscriptionRequest) returns (stream MSG_Notification) {}
   rpc fetchById (MSG_UUID) returns (MSG_OptionalFact) {}
@@ -188,4 +198,6 @@ service RemoteFactStore {
   rpc stateForSpecsJson (MSG_FactSpecsJson) returns (MSG_UUID) {}
   // perf. opt. for stateForSpecsJson, where the query is replaced by a simple select max(ser)
   rpc currentStateForSpecsJson (MSG_FactSpecsJson) returns (MSG_UUID) {}
+  // 1.4
+  rpc estimateFactsForSpecsJson (MSG_FactSpecsJson) returns (MSG_Count) {}
 }

@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
+import org.factcast.core.FactCount;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
@@ -418,5 +419,27 @@ public class ProtoConverter {
 
   public MSG_Notification createInfoNotification(FactStreamInfo info) {
     return MSG_Notification.newBuilder().setType(Type.Info).setInfo(toProto(info)).build();
+  }
+
+  @NonNull
+  public FactCount fromProto(@NonNull MSG_Count resp) {
+    return FactCount.of(
+        resp.getEstimatedCount(),
+        resp.getPreciseCount().getPresent()
+            ? OptionalLong.of(resp.getPreciseCount().getNumber())
+            : OptionalLong.empty());
+  }
+
+  @NonNull
+  public MSG_Count toProto(FactCount count) {
+    MSG_OptionalNumber preciseCount =
+        MSG_OptionalNumber.newBuilder()
+            .setPresent(count.preciseCount().isPresent())
+            .setNumber(count.preciseCount().orElse(0))
+            .build();
+    return MSG_Count.newBuilder()
+        .setEstimatedCount(count.estimatedCount())
+        .setPreciseCount(preciseCount)
+        .build();
   }
 }
