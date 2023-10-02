@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.7.0-RC1</version>
+  <version>0.7.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <organization>
     <name>factcast</name>
@@ -40,6 +40,7 @@
     <module>factcast-factus-redis</module>
     <module>factcast-factus-spring-tx</module>
     <module>factcast-server-grpc</module>
+    <module>factcast-server-ui</module>
     <module>factcast-grpc-api</module>
     <module>factcast-schema-registry-cli</module>
     <module>factcast-schema-registry-maven-plugin</module>
