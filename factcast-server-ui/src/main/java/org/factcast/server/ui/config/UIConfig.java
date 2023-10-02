@@ -16,6 +16,7 @@
 package org.factcast.server.ui.config;
 
 import com.vaadin.flow.component.page.AppShellConfigurator;
+import com.vaadin.flow.spring.security.AuthenticationContext;
 import com.vaadin.flow.spring.security.VaadinWebSecurity;
 import com.vaadin.flow.theme.Theme;
 import org.factcast.server.ui.views.LoginView;
@@ -28,7 +29,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
@@ -50,7 +50,6 @@ public class UIConfig extends VaadinWebSecurity implements AppShellConfigurator 
   @Bean
   @Primary
   public UserDetailsService users() {
-    System.out.println("USERS1");
     UserDetails user =
         User.builder()
             .username("user")
@@ -60,13 +59,11 @@ public class UIConfig extends VaadinWebSecurity implements AppShellConfigurator 
             .build();
     UserDetails admin =
         User.builder().username("admin").password("pwd").roles("USER", "ADMIN").build();
-    return new InMemoryUserDetailsManager(user, admin) {
-      @Override
-      public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // TODO Auto-generated method stub
-        System.out.println("loadUserByUsername " + username);
-        return super.loadUserByUsername(username);
-      }
-    };
+    return new InMemoryUserDetailsManager(user, admin) {};
+  }
+
+  @Bean
+  public SecurityService securityService(AuthenticationContext ctx) {
+    return new SecurityService(ctx);
   }
 }
