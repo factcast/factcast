@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.id;
+package org.factcast.server.ui.full;
 
-import java.util.UUID;
-import javax.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
 @Data
-@Accessors(chain = false, fluent = false)
-public class IdQueryBean {
-  @Nullable private UUID id;
-  @Nullable private Integer version;
+@Accessors(fluent = false, chain = false)
+public class MetaTuple {
+  @NotNull String key;
+  @NotNull String value;
 }

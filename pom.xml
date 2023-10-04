@@ -135,6 +135,7 @@
       <artifactId>javax.annotation-api</artifactId>
       <version>1.3.2</version>
       <scope>provided</scope>
+      <!-- GRPC requires it, but please do not use in java files -->
     </dependency>
     <dependency>
       <groupId>org.assertj</groupId>

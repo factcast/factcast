@@ -26,8 +26,8 @@ import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import org.factcast.server.ui.views.about.AboutView;
-import org.factcast.server.ui.views.helloworld.HelloWorldView;
+import org.factcast.server.ui.full.FullQueryPage;
+import org.factcast.server.ui.id.IdQueryPage;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 
 /** The main view is a top-level placeholder for other views. */
@@ -52,7 +52,7 @@ public class MainLayout extends AppLayout {
   }
 
   private void addDrawerContent() {
-    H1 appName = new H1("My App");
+    H1 appName = new H1("FactCast Server UI");
     appName.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.NONE);
     Header header = new Header(appName);
 
@@ -65,8 +65,9 @@ public class MainLayout extends AppLayout {
     SideNav nav = new SideNav();
 
     nav.addItem(
-        new SideNavItem("Hello World", HelloWorldView.class, LineAwesomeIcon.GLOBE_SOLID.create()));
-    nav.addItem(new SideNavItem("About", AboutView.class, LineAwesomeIcon.FILE.create()));
+        new SideNavItem("Query", FullQueryPage.class, LineAwesomeIcon.GLOBE_SOLID.create()));
+    nav.addItem(
+        new SideNavItem("Query by Fact-ID", IdQueryPage.class, LineAwesomeIcon.FILE.create()));
 
     return nav;
   }

@@ -117,6 +117,15 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-security</artifactId>
     </dependency>
-
+    <dependency>
+      <groupId>com.vaadin.componentfactory</groupId>
+      <artifactId>lookup-field-flow</artifactId>
+      <version>24.0.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.vaadin.crudui</groupId>
+      <artifactId>crudui</artifactId>
+      <version>7.1.0</version>
+    </dependency>
   </dependencies>
 </project>

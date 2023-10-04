@@ -25,7 +25,7 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 
 @Route("login")
-@PageTitle("Login | Vaadin CRM")
+@PageTitle("Login")
 @AnonymousAllowed
 public class LoginView extends VerticalLayout implements BeforeEnterObserver {
 
@@ -39,7 +39,7 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
 
     login.setAction("login");
 
-    add(new H1("Vaadin CRM"), login);
+    add(new H1("FactCast Server UI"), login);
   }
 
   @Override

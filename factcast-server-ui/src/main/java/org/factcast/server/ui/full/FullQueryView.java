@@ -15,32 +15,53 @@
  */
 package org.factcast.server.ui.full;
 
+import com.vaadin.flow.component.accordion.AccordionPanel;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.formlayout.FormLayout;
-import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.combobox.MultiSelectComboBox;
+import com.vaadin.flow.component.datepicker.DatePicker;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
+import com.vaadin.flow.data.provider.DataProvider;
+import java.util.HashSet;
+import java.util.Optional;
+import org.factcast.server.ui.port.FactRepository;
 
-public class FullQueryView extends FormLayout {
+public class FullQueryView extends VerticalLayout {
 
-  private final FullQueryBean formBean;
-  private TextField name;
-  private Button sayHello;
+  final FullQueryBean formBean = new FullQueryBean();
 
-  TextField ns = new TextField("ns");
-  TextField type = new TextField("type");
-  // TextField agg = new TextField("agg");
+  private final MultiSelectComboBox<String> ns = new MultiSelectComboBox<>("Namespaces");
+  private final MultiSelectComboBox<String> type = new MultiSelectComboBox<>("Types");
 
-  public FullQueryView() {
+  private DatePicker since = new DatePicker("since");
+  private IntegerField limit = new IntegerField("limit");
+  private IntegerField offset = new IntegerField("offset");
 
-    this.formBean = new FullQueryBean();
+  FullQueryView(FactRepository repo) {
 
-    setResponsiveSteps(new FormLayout.ResponsiveStep("150em", 2));
+    // setResponsiveSteps(new FormLayout.ResponsiveStep("150em", 2));
+    setWidthFull();
+    type.setWidthFull();
+
+    // ns.setLabel("Namespace");
+    ns.setItems(DataProvider.ofCollection(repo.namespaces(Optional.empty())));
+    // ns.getGrid().addColumn(s -> s).setHeader("Namespace name");
+
+    type.setItems(DataProvider.ofCollection(repo.types(Optional.empty())));
+    //		type.getGrid().addColumn(s -> s).setHeader("Event type name");
+    //		type.setLabel("Type");
 
     Binder<FullQueryBean> b = new BeanValidationBinder<>(FullQueryBean.class);
-    b.forField(ns).bind("ns");
-    b.forField(type).bind("type");
+    b.forField(ns).withNullRepresentation(new HashSet<>()).bind("ns");
+    b.forField(type).withNullRepresentation(new HashSet<>()).bind("type");
+    b.forField(since).bind("since");
+    b.forField(limit).bind("limit");
+    b.forField(offset).bind("offset");
+    // TODO check grid binding
     b.readBean(formBean);
 
     Button query = new Button("query");
@@ -51,9 +72,19 @@ public class FullQueryView extends FormLayout {
           } catch (ValidationException e) {
             throw new RuntimeException(e);
           }
-          System.out.println("foo " + formBean);
+          System.out.println("query " + formBean);
         });
 
-    add(ns, type, query);
+    HorizontalLayout typeFilter = new HorizontalLayout(ns, type);
+    typeFilter.setWidthFull();
+
+    VerticalLayout extra =
+        new VerticalLayout(
+            new AccordionPanel("Aggregate-Ids", new AggregateIdView(formBean)),
+            new AccordionPanel("Meta", new MetaView(formBean)));
+    extra.setWidthFull();
+
+    HorizontalLayout quantity = new HorizontalLayout(since, limit, offset);
+    add(typeFilter, quantity, extra, query);
   }
 }
