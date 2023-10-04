@@ -275,8 +275,6 @@
         <version>${maven.compiler.version}</version>
         <configuration>
           <useIncrementalCompilation>true</useIncrementalCompilation>
-          <source>11</source>
-          <target>11</target>
         </configuration>
       </plugin>
       <plugin>

@@ -27,6 +27,7 @@ import com.vaadin.flow.data.converter.StringToIntegerConverter;
 import com.vaadin.flow.data.converter.StringToUuidConverter;
 import org.factcast.core.Fact;
 import org.factcast.server.ui.port.FactRepository;
+import org.factcast.server.ui.views.JsonView;
 
 public class IdQueryView extends FlexLayout {
   private final IdQueryBean formBean;
@@ -34,7 +35,10 @@ public class IdQueryView extends FlexLayout {
   TextField id = new TextField("id");
   TextField version = new TextField("version");
 
+  JsonView jsonView = new JsonView();
+
   public IdQueryView(FactRepository fc) {
+    setHeightFull();
 
     this.formBean = new IdQueryBean();
     id.setWidthFull();
@@ -59,6 +63,8 @@ public class IdQueryView extends FlexLayout {
             if (formBean.getId() != null) {
               var fact = fc.findBy(formBean);
               System.out.println("fact by id: " + fact.map(Fact::jsonPayload).orElse("not found"));
+
+              fact.ifPresent(jsonView::setFact);
             }
 
           } catch (ValidationException e) {
@@ -73,7 +79,11 @@ public class IdQueryView extends FlexLayout {
 
     VerticalLayout vl = new VerticalLayout(hl, query);
     vl.setWidthFull();
+    vl.setHeightFull();
     add(vl);
     setWidthFull();
+
+    vl.add(jsonView);
+    jsonView.setHeightFull();
   }
 }

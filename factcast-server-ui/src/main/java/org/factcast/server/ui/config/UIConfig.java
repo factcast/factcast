@@ -48,6 +48,8 @@ public class UIConfig extends VaadinWebSecurity implements AppShellConfigurator,
     http.authorizeHttpRequests(
         auth ->
             auth.requestMatchers(AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/images/*.png"))
+                .permitAll()
+                .requestMatchers(AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/ace-builds/**"))
                 .permitAll());
     super.configure(http);
     setLoginView(http, LoginView.class);
