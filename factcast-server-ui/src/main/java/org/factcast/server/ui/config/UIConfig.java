@@ -19,23 +19,29 @@ import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.spring.security.AuthenticationContext;
 import com.vaadin.flow.spring.security.VaadinWebSecurity;
 import com.vaadin.flow.theme.Theme;
+import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.factcast.core.Fact;
+import org.factcast.core.FactCast;
 import org.factcast.server.ui.views.LoginView;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @EnableWebSecurity
 @Configuration
 @Theme(value = "fcui")
-public class UIConfig extends VaadinWebSecurity implements AppShellConfigurator {
+@ComponentScan(basePackages = "org.factcast.server.ui")
+@RequiredArgsConstructor
+public class UIConfig extends VaadinWebSecurity implements AppShellConfigurator, InitializingBean {
+
+  final FactCast fc;
 
   @Override
   protected void configure(HttpSecurity http) throws Exception {
@@ -49,21 +55,19 @@ public class UIConfig extends VaadinWebSecurity implements AppShellConfigurator 
 
   @Bean
   @Primary
-  public UserDetailsService users() {
-    UserDetails user =
-        User.builder()
-            .username("user")
-            // password = password with this hash, don't tell anybody :-)
-            .password("pwd")
-            .roles("USER")
-            .build();
-    UserDetails admin =
-        User.builder().username("admin").password("pwd").roles("USER", "ADMIN").build();
-    return new InMemoryUserDetailsManager(user, admin) {};
+  public SecurityService vaadinSecurityService(AuthenticationContext ctx) {
+    return new SecurityService(ctx);
   }
 
-  @Bean
-  public SecurityService securityService(AuthenticationContext ctx) {
-    return new SecurityService(ctx);
+  @Override
+  public void afterPropertiesSet() throws Exception {
+    // TODO
+    fc.publish(
+        Fact.builder()
+            .ns("users")
+            .type("UserCreated")
+            .version(1)
+            .id(UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec084"))
+            .build("{\"firstName\":\"Peter\", \"lastName\":\"Lustig\"}"));
   }
 }

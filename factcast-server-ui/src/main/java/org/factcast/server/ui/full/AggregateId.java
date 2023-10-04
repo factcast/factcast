@@ -13,16 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.id;
+package org.factcast.server.ui.full;
 
+import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
-import javax.annotation.Nullable;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
 @Data
 @Accessors(chain = false, fluent = false)
-public class IdQueryBean {
-  @Nullable private UUID id;
-  @Nullable private Integer version;
+public class AggregateId {
+  @NotNull @ValidUUID String uuid;
+
+  public UUID asUuid() {
+    if ((uuid == null) || uuid.isBlank()) {
+      return null;
+    } else {
+      return UUID.fromString(uuid);
+    }
+  }
 }

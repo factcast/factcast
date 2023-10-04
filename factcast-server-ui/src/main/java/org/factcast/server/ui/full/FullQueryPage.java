@@ -16,15 +16,23 @@
 package org.factcast.server.ui.full;
 
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.RouteAlias;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
+import org.factcast.server.ui.port.FactRepository;
+import org.factcast.server.ui.views.MainLayout;
 
-// @Route(value = "ui/full")
-// @RouteAlias(value = "ui")
-// @PageTitle("Full")
-// @PermitAll
+@Route(value = "ui/full", layout = MainLayout.class)
+@RouteAlias(value = "", layout = MainLayout.class)
+@PageTitle("Full")
+@AnonymousAllowed
 public class FullQueryPage extends VerticalLayout {
-  //	public FullQueryPage() {
-  //		FullQueryView query = new FullQueryView();
-  //		JsonDisplayView display = new JsonDisplayView();
-  //		add(query, display);
-  //	}
+
+  public FullQueryPage(FactRepository repo) {
+    FullQueryView query = new FullQueryView(repo);
+    // JsonDisplayView display = new JsonDisplayView();
+    add(query);
+    setWidthFull();
+  }
 }

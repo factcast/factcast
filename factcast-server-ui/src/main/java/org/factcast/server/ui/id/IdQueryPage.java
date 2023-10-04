@@ -16,14 +16,20 @@
 package org.factcast.server.ui.id;
 
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
+import org.factcast.server.ui.port.FactRepository;
+import org.factcast.server.ui.views.MainLayout;
 
-// @Route(value = "ui/id")
-// @PageTitle("by Id")
-// @PermitAll
+@Route(value = "ui/id", layout = MainLayout.class)
+@PageTitle("by Id")
+@AnonymousAllowed
 public class IdQueryPage extends VerticalLayout {
-  //	public IdQueryPage() {
-  //		IdQueryView query = new IdQueryView();
-  //		JsonDisplayView display = new JsonDisplayView();
-  //		add(query, display);
-  //	}
+  public IdQueryPage(FactRepository fr) {
+    IdQueryView query = new IdQueryView(fr);
+    // JsonDisplayView display = new JsonDisplayView();
+    add(query);
+    setWidthFull();
+  }
 }

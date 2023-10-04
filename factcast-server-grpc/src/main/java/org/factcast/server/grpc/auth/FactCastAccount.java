@@ -17,21 +17,14 @@ package org.factcast.server.grpc.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
-import lombok.AccessLevel;
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
+import lombok.*;
 
 @NoArgsConstructor
 @Data
 public class FactCastAccount {
+  private static final long serialVersionUID = 42;
   public static final FactCastAccount GOD =
       new FactCastAccount("GODMODE") {
         @Override
@@ -55,7 +48,9 @@ public class FactCastAccount {
   private List<FactCastRole> roles;
 
   public void initialize(FactCastAccessConfiguration config) {
-    if (id == null) throw new IllegalArgumentException("Account without 'id' found.");
+    if (id == null) {
+      throw new IllegalArgumentException("Account without 'id' found.");
+    }
 
     roles = new LinkedList<>();
     roleNames.forEach(
@@ -70,7 +65,9 @@ public class FactCastAccount {
   }
 
   public boolean canWrite(String ns) {
-    if (roles == null) throw new IllegalStateException("Not yet initialized");
+    if (roles == null) {
+      throw new IllegalStateException("Not yet initialized");
+    }
 
     List<Boolean> results =
         roles.stream()
@@ -78,12 +75,16 @@ public class FactCastAccount {
             .filter(Objects::nonNull)
             .distinct()
             .collect(Collectors.toList());
-    if (results.contains(false)) return false;
+    if (results.contains(false)) {
+      return false;
+    }
     return results.contains(true);
   }
 
   public boolean canRead(String ns) {
-    if (roles == null) throw new IllegalStateException("Not yet initialized");
+    if (roles == null) {
+      throw new IllegalStateException("Not yet initialized");
+    }
 
     List<Boolean> results =
         roles.stream()
@@ -91,13 +92,17 @@ public class FactCastAccount {
             .filter(Objects::nonNull)
             .distinct()
             .collect(Collectors.toList());
-    if (results.contains(false)) return false;
+    if (results.contains(false)) {
+      return false;
+    }
     return results.contains(true);
   }
 
   @VisibleForTesting
   protected FactCastAccount role(@NonNull FactCastRole... other) {
-    if (roles == null) roles = new LinkedList<>();
+    if (roles == null) {
+      roles = new LinkedList<>();
+    }
 
     roles.addAll(Arrays.asList(other));
     return this;

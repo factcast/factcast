@@ -13,16 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.id;
+package org.factcast.server.ui.port;
 
-import java.util.UUID;
-import javax.annotation.Nullable;
-import lombok.Data;
-import lombok.experimental.Accessors;
+import java.util.List;
+import java.util.Optional;
+import lombok.NonNull;
+import org.factcast.core.Fact;
+import org.factcast.server.ui.full.FullQueryBean;
+import org.factcast.server.ui.id.IdQueryBean;
 
-@Data
-@Accessors(chain = false, fluent = false)
-public class IdQueryBean {
-  @Nullable private UUID id;
-  @Nullable private Integer version;
+public interface FactRepository {
+
+  List<Fact> findBy(FullQueryBean query);
+
+  Optional<Fact> findBy(@NonNull IdQueryBean bean);
+
+  List<String> namespaces(Optional<String> input);
+
+  List<String> types(Optional<String> input);
 }
