@@ -353,8 +353,7 @@ databaseChangeLog:
         - onFail: WARN
         - sqlCheck:
              expectedResult: t
-             sql: SELECT 'f'::boolean;
-             # count_estimate('SELECT COUNT(*) FROM fact') < 10000000;
+             sql: SELECT count_estimate('SELECT COUNT(*) FROM fact') < 10000000;
       comment: If you have less than 10mio facts, this will be executed, if not, we kindly ask you to execute this script manually  
       changes:
         - sqlFile:
@@ -364,21 +363,7 @@ databaseChangeLog:
             splitStatements: false
             stripComments: true
         
-  - changeSet:
-      id: issue2479_migration_cleanup
-      author: uweschaefer
-      preConditions:
-        - onFail: CONTINUE
-        - sqlCheck:
-             expectedResult: 0
-             sql: SELECT GREATEST(0,(SELECT n_tup_ins - n_tup_del FROM pg_stat_all_tables where relname='tmp_fact_date_trigger'));
-      changes:
-        - sqlFile:
-            encoding: utf8
-            path: factcast/issue2479/date2serial_cleanup_after_migration.sql
-            relativeToChangelogFile: true
-            splitStatements: false
-            stripComments: true
+
         
         
         

@@ -1,1 +1,0 @@
-DROP TABLE IF EXISTS tmp_fact_date_trigger;
