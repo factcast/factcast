@@ -165,12 +165,13 @@ class JsonView extends LitElement {
     css`
       :host {
         width: 100%;
-        height: 100%;
+        flex-grow: 1;
+        display: flex;
       }
 
       #monaco-editor {
         width: 100%;
-        height: 100%;
+        flex-grow: 1;
         border: 1px solid var(--lumo-contrast-20pct);
       }
     `,
