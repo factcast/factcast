@@ -65,7 +65,7 @@
     <dependency>
       <groupId>org.apache.maven.plugin-tools</groupId>
       <artifactId>maven-plugin-annotations</artifactId>
-      <version>3.7.1</version>
+      <version>3.9.0</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -95,7 +95,7 @@
       <plugins>
         <plugin>
           <artifactId>maven-clean-plugin</artifactId>
-          <version>3.2.0</version>
+          <version>3.3.1</version>
         </plugin>
         <!-- see http://maven.apache.org/ref/current/maven-core/default-bindings.html#Plugin_bindings_for_maven-plugin_packaging -->
         <plugin>
@@ -108,11 +108,11 @@
         </plugin>
         <plugin>
           <artifactId>maven-plugin-plugin</artifactId>
-          <version>3.7.1</version>
+          <version>3.9.0</version>
         </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.22.2</version>
+          <version>3.1.2</version>
         </plugin>
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>
@@ -128,7 +128,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-invoker-plugin</artifactId>
-          <version>3.5.0</version>
+          <version>3.6.0</version>
         </plugin>
         <!--This plugin's configuration is used to store Eclipse m2e settings
           only. It has no influence on the Maven build itself. -->
@@ -167,7 +167,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-plugin-plugin</artifactId>
-        <version>3.7.1</version>
+        <version>3.9.0</version>
         <configuration>
           <!-- <goalPrefix>maven-archetype-plugin</goalPrefix> -->
           <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
@@ -198,7 +198,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-invoker-plugin</artifactId>
-            <version>3.5.0</version>
+            <version>3.6.0</version>
             <configuration>
               <debug>true</debug>
               <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
