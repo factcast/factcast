@@ -15,6 +15,7 @@
  */
 package org.factcast.server.ui.full;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
@@ -27,8 +28,9 @@ public class FullQueryBean {
   private LocalDate since = LocalDate.now();
   private Integer limit = 50;
   private Integer offset = 0;
-  private Set<String> ns = null;
+  private String ns = null;
   private Set<String> type = null;
   private Set<AggregateId> agg = new HashSet<>();
   private Set<MetaTuple> meta = new HashSet<>();
+  private BigDecimal from = null;
 }
