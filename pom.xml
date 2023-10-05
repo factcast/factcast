@@ -228,7 +228,7 @@
                   <version>3.8.1</version>
                 </requireMavenVersion>
                 <requireJavaVersion>
-                  <version>11</version>
+                  <version>17</version>
                 </requireJavaVersion>
               </rules>
             </configuration>
@@ -275,8 +275,8 @@
         <version>${maven.compiler.version}</version>
         <configuration>
           <useIncrementalCompilation>true</useIncrementalCompilation>
-          <source>11</source>
-          <target>11</target>
+          <source>17</source>
+          <target>17</target>
         </configuration>
       </plugin>
       <plugin>
