@@ -31,5 +31,6 @@ public class IdQueryPage extends VerticalLayout {
     // JsonDisplayView display = new JsonDisplayView();
     add(query);
     setWidthFull();
+    setHeightFull();
   }
 }

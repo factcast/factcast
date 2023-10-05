@@ -41,6 +41,16 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 @RequiredArgsConstructor
 public class UIConfig extends VaadinWebSecurity implements AppShellConfigurator, InitializingBean {
 
+  static {
+    // TODO remove
+    System.err.println("UIConfig loaded");
+  }
+
+  {
+    // TODO remove
+    System.err.println("UIConfig instanciated");
+  }
+
   final FactCast fc;
 
   @Override
@@ -48,6 +58,8 @@ public class UIConfig extends VaadinWebSecurity implements AppShellConfigurator,
     http.authorizeHttpRequests(
         auth ->
             auth.requestMatchers(AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/images/*.png"))
+                .permitAll()
+                .requestMatchers(AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/ace-builds/**"))
                 .permitAll());
     super.configure(http);
     setLoginView(http, LoginView.class);
@@ -56,6 +68,8 @@ public class UIConfig extends VaadinWebSecurity implements AppShellConfigurator,
   @Bean
   @Primary
   public SecurityService vaadinSecurityService(AuthenticationContext ctx) {
+    // TODO remove
+    System.err.println("UIConfig.vaadinSecurityService executed");
     return new SecurityService(ctx);
   }
 
@@ -67,7 +81,9 @@ public class UIConfig extends VaadinWebSecurity implements AppShellConfigurator,
             .ns("users")
             .type("UserCreated")
             .version(1)
+            .aggId(UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec085"))
             .id(UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec084"))
-            .build("{\"firstName\":\"Peter\", \"lastName\":\"Lustig\"}"));
+            .build(
+                "{\"firstName\":\"Peter\", \"lastName\":\"Lustig\", \"foo\":[{\"bar\": \"baz\"}]}"));
   }
 }
