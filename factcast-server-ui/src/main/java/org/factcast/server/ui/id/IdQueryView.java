@@ -64,7 +64,7 @@ public class IdQueryView extends FlexLayout {
               var fact = fc.findBy(formBean);
               System.out.println("fact by id: " + fact.map(Fact::jsonPayload).orElse("not found"));
 
-              fact.ifPresent(jsonView::setFact);
+              fact.ifPresent(jsonView::renderFact);
             }
 
           } catch (ValidationException e) {

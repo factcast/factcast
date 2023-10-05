@@ -69,7 +69,9 @@ public class UIConfig extends VaadinWebSecurity implements AppShellConfigurator,
             .ns("users")
             .type("UserCreated")
             .version(1)
+            .aggId(UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec085"))
             .id(UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec084"))
-            .build("{\"firstName\":\"Peter\", \"lastName\":\"Lustig\"}"));
+            .build(
+                "{\"firstName\":\"Peter\", \"lastName\":\"Lustig\", \"foo\":[{\"bar\": \"baz\"}]}"));
   }
 }
