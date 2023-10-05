@@ -71,6 +71,7 @@ class JsonView extends LitElement {
       readOnly: true,
       minimap: { enabled: false },
       theme: "vs",
+      automaticLayout: true,
     });
   }
 
@@ -170,6 +171,7 @@ class JsonView extends LitElement {
       #monaco-editor {
         width: 100%;
         height: 100%;
+        border: 1px solid var(--lumo-contrast-20pct);
       }
     `,
   ];
