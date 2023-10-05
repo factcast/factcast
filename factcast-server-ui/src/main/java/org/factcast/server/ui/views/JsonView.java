@@ -16,31 +16,29 @@
 package org.factcast.server.ui.views;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.hilerio.ace.AceEditor;
-import com.hilerio.ace.AceMode;
-import com.hilerio.ace.AceTheme;
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.Tag;
+import com.vaadin.flow.component.dependency.*;
 import java.util.Collection;
 import org.factcast.core.Fact;
 import org.factcast.core.FactHeader;
 import org.factcast.core.util.FactCastJson;
 
-public class JsonView extends AceEditor {
-  public JsonView() {
-    super();
-
-    setTheme(AceTheme.github);
-    setMode(AceMode.json);
-    setReadOnly(true);
-    setShowGutter(true);
-    setDisplayIndentGuides(true);
-  }
+@Tag("json-view")
+@JsModule("./json-view/json-view.ts")
+@CssImport("./json-view/json-view.css")
+@NpmPackage(value = "monaco-editor", version = "0.43.0")
+public class JsonView extends Component {
 
   public void setFact(Fact f) {
-    setValue(FactCastJson.writeValueAsPrettyString(this.toFactJson(f)));
+    getElement().callJsFunction("renderFact", FactCastJson.writeValueAsPrettyString(toFactJson(f)));
   }
 
   public void setFacts(Collection<Fact> f) {
-    setValue(FactCastJson.writeValueAsPrettyString(f.stream().map(this::toFactJson).toList()));
+    getElement()
+        .callJsFunction(
+            "renderFact",
+            FactCastJson.writeValueAsPrettyString(f.stream().map(this::toFactJson).toList()));
   }
 
   private FactJson toFactJson(Fact f) {

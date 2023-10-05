@@ -84,6 +84,5 @@ public class IdQueryView extends FlexLayout {
     setWidthFull();
 
     vl.add(jsonView);
-    jsonView.setHeightFull();
   }
 }
