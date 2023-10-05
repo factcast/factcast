@@ -15,8 +15,10 @@
  */
 package org.factcast.server.ui.port;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.server.ui.full.FullQueryBean;
@@ -24,11 +26,15 @@ import org.factcast.server.ui.id.IdQueryBean;
 
 public interface FactRepository {
 
-  List<Fact> findBy(FullQueryBean query);
+  List<Fact> findBy(@NonNull FullQueryBean query);
 
   Optional<Fact> findBy(@NonNull IdQueryBean bean);
 
-  List<String> namespaces(Optional<String> input);
+  List<String> namespaces(@NonNull Optional<String> input);
 
-  List<String> types(Optional<String> input);
+  List<String> types(@NonNull String namespace, @NonNull Optional<String> input);
+
+  OptionalLong firstSerialFor(@NonNull LocalDate date);
+
+  Long lastSerial();
 }

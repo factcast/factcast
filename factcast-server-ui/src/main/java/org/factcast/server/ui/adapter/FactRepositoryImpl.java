@@ -15,10 +15,10 @@
  */
 package org.factcast.server.ui.adapter;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import com.helger.commons.functional.Predicates;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +38,6 @@ public class FactRepositoryImpl implements FactRepository {
 
   @Override
   public Optional<Fact> findBy(@NonNull IdQueryBean bean) {
-
     UUID id = bean.getId();
     if (id == null) {
       return Optional.empty();
@@ -64,18 +63,25 @@ public class FactRepositoryImpl implements FactRepository {
   }
 
   @Override
-  public List<String> types(Optional<String> input) {
-    // TODO
-    List<String> ns =
-        List.copyOf(
-            fs.enumerateNamespaces().stream()
-                .map(n -> fs.enumerateTypes(n))
-                .flatMap(Set::stream)
-                .toList());
+  public List<String> types(String namespace, Optional<String> input) {
+
+    Predicate<String> f = Predicates.all();
     if (input.isPresent()) {
       Pattern ptn = Pattern.compile(".*" + input.get() + ".*");
-      ns = ns.stream().filter(s -> ptn.matcher(s).matches()).toList();
+      f = s -> ptn.matcher(s).matches();
     }
-    return ns;
+
+    return fs.enumerateTypes(namespace).stream().filter(f).toList();
+  }
+
+  @Override
+  public OptionalLong firstSerialFor(@NonNull LocalDate date) {
+    // TODO extends store IF
+    return OptionalLong.of(new Random().nextLong(50));
+  }
+
+  @Override
+  public Long lastSerial() {
+    return 100L;
   }
 }
