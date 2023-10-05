@@ -41,6 +41,16 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 @RequiredArgsConstructor
 public class UIConfig extends VaadinWebSecurity implements AppShellConfigurator, InitializingBean {
 
+  static {
+    // TODO remove
+    System.err.println("UIConfig loaded");
+  }
+
+  {
+    // TODO remove
+    System.err.println("UIConfig instanciated");
+  }
+
   final FactCast fc;
 
   @Override
@@ -56,6 +66,8 @@ public class UIConfig extends VaadinWebSecurity implements AppShellConfigurator,
   @Bean
   @Primary
   public SecurityService vaadinSecurityService(AuthenticationContext ctx) {
+    // TODO remove
+    System.err.println("UIConfig.vaadinSecurityService executed");
     return new SecurityService(ctx);
   }
 
