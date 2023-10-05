@@ -75,7 +75,7 @@ public class JsonView extends Component {
                 Map.of("id", List.of("123"), "meta._ts", List.of("1.1.1970 oder so")),
                 Map.of("foo[0].bar", List.of("Hallo Uwe", "Alles klar?")),
                 Map.of(),
-                Map.of())));
+                Map.of("lastName", List.of("This is the last name of a user.")))));
   }
 
   public void renderFacts(List<Fact> f, List<FactMetaData> annotations) {
@@ -90,8 +90,8 @@ public class JsonView extends Component {
                   (k, v) -> annotationMap.put("[" + i + "].header." + k, String.join(", ", v)));
               a.payloadAnnotations.forEach(
                   (k, v) -> annotationMap.put("[" + i + "].payload." + k, String.join(", ", v)));
-              a.headerHoverContent.forEach((k, v) -> hoverMap.put("header." + k, v));
-              a.payloadHoverContent.forEach((k, v) -> hoverMap.put("payload." + k, v));
+              a.headerHoverContent.forEach((k, v) -> hoverMap.put("[" + i + "].header." + k, v));
+              a.payloadHoverContent.forEach((k, v) -> hoverMap.put("[" + i + "].payload." + k, v));
             });
 
     getElement()
