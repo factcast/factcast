@@ -6,6 +6,11 @@ import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 import jsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
 import { parse } from "@humanwhocodes/momoa";
 
+type FactMetaData = {
+  annotations: Record<string, string>;
+  hoverContent: Record<string, string[]>;
+};
+
 @customElement("json-view")
 class JsonView extends LitElement {
   private editor: any;
@@ -13,43 +18,11 @@ class JsonView extends LitElement {
   @query("#monaco-editor")
   private editorDiv: HTMLDivElement | undefined;
 
-  private annotations: { [key: string]: string } = {};
-
-  private createLenses(path: string, member: any[]) {
-    const nodesWithLenses: any[] = [];
-
-    if (member.value.type === "String" || member.value.type === "Number") {
-      if (this.annotations[path]) {
-        const lens = {
-          range: new monaco.Range(
-            member.loc.start.line,
-            member.loc.start.column,
-            member.loc.end.line,
-            member.loc.end.column
-          ),
-          command: {
-            id: "",
-            title: this.annotations[path],
-          },
-        };
-
-        nodesWithLenses.push(lens);
-      }
-    } else if (member.value.type === "Object") {
-      const subMembers = member.value.members;
-      const subLenses = subMembers.map((e) =>
-        this.createLenses(`${path}.${e.name.value}`, e)
-      );
-      nodesWithLenses.push(...subLenses);
-    } else if (member.value.type === "Array") {
-      const subMembers = member.value.elements.map((e, i) =>
-        this.createLenses(`${path}[${i}]`, e)
-      );
-      nodesWithLenses.push(...subMembers);
-    }
-
-    return nodesWithLenses;
-  }
+  private metaData: {
+    range: monaco.Range;
+    command: any;
+    contents: any;
+  }[] = [];
 
   firstUpdated() {
     super.firstUpdated();
@@ -65,26 +38,31 @@ class JsonView extends LitElement {
           };
         }
 
-        const ast = parse(model.getValue());
-
-        const lenses: any[] = [];
-
-        if (ast.body.type === "Array") {
-          ast.body.elements.forEach((e, i) => {
-            lenses.push(that.createLenses(`[${i}]`, e));
-          });
-        } else {
-          ast.body.members.forEach((e) => {
-            lenses.push(that.createLenses(e.name.value, e));
-          });
-        }
-
-        lenses.flat(Infinity);
-
         return {
-          lenses: lenses.flat(Infinity),
+          lenses: that.metaData,
           dispose: () => {},
         };
+      },
+    });
+
+    monaco.languages.registerHoverProvider("json", {
+      async provideHover(model, position) {
+        if (model.getValue() === "") {
+          return null;
+        }
+
+        const payload = that.metaData.find(
+          ({ range }) =>
+            (range.startLineNumber < position.lineNumber ||
+              (range.startLineNumber === position.lineNumber &&
+                range.startColumn <= position.column)) &&
+            (range.endLineNumber > position.lineNumber ||
+              (range.endLineNumber === position.lineNumber &&
+                range.endColumn >= position.column))
+        );
+        if (!payload) return null;
+
+        return payload;
       },
     });
 
@@ -96,11 +74,85 @@ class JsonView extends LitElement {
     });
   }
 
-  public renderJson(json: string, annotations: string) {
+  public renderJson(json: string, metaData: string) {
     if (this.editor) {
-      this.annotations = JSON.parse(annotations);
+      this.metaData = this.parseMetaData(json, metaData);
       this.editor.setValue(json);
     }
+  }
+
+  private parseMetaData(content: string, metaData: string) {
+    const parsedMetaData = JSON.parse(metaData) as FactMetaData;
+    const ast = parse(content);
+
+    const metaDatas: any[] = [];
+
+    if (ast.body.type === "Array") {
+      ast.body.elements.forEach((e, i) => {
+        metaDatas.push(this.createIntelliSense(parsedMetaData, `[${i}]`, e));
+      });
+    } else {
+      ast.body.members.forEach((e) => {
+        metaDatas.push(
+          this.createIntelliSense(parsedMetaData, e.name.value, e)
+        );
+      });
+    }
+
+    return metaDatas.flat(Infinity);
+  }
+
+  private createIntelliSense(
+    parsedMetaData: FactMetaData,
+    path: string,
+    member: any
+  ) {
+    const fieldsWithEnrichment: any[] = [];
+
+    if (member.value.type === "String" || member.value.type === "Number") {
+      if (
+        parsedMetaData.annotations[path] ||
+        parsedMetaData.hoverContent[path]
+      ) {
+        const lens: any = {
+          range: new monaco.Range(
+            member.loc.start.line,
+            member.loc.start.column,
+            member.loc.end.line,
+            member.loc.end.column
+          ),
+        };
+
+        if (parsedMetaData.annotations[path]) {
+          lens.command = {
+            id: "",
+            title: parsedMetaData.annotations[path],
+          };
+        }
+
+        if (parsedMetaData.hoverContent[path]) {
+          lens.contents = parsedMetaData.hoverContent[path].map((x) => ({
+            value: x,
+            isTrusted: true,
+          }));
+        }
+
+        fieldsWithEnrichment.push(lens);
+      }
+    } else if (member.value.type === "Object") {
+      const subMembers = member.value.members;
+      const subLenses = subMembers.map((e) =>
+        this.createIntelliSense(parsedMetaData, `${path}.${e.name.value}`, e)
+      );
+      fieldsWithEnrichment.push(...subLenses);
+    } else if (member.value.type === "Array") {
+      const subMembers = member.value.elements.map((e, i) =>
+        this.createIntelliSense(parsedMetaData, `${path}[${i}]`, e)
+      );
+      fieldsWithEnrichment.push(...subMembers);
+    }
+
+    return fieldsWithEnrichment;
   }
 
   render() {
