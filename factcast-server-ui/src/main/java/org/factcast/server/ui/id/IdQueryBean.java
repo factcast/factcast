@@ -23,6 +23,7 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = false, fluent = false)
 public class IdQueryBean {
-  @Nullable private UUID id;
+  // TODO remove default
+  @Nullable private UUID id = UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec084");
   @Nullable private Integer version;
 }
