@@ -17,6 +17,7 @@ package org.factcast.server.ui.id;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.ValidationException;
@@ -29,7 +30,7 @@ import lombok.SneakyThrows;
 import org.springframework.web.util.UriComponentsBuilder;
 
 public class BeanValidationUrlStateBinder<T> extends BeanValidationBinder<T> {
-  private final ObjectMapper om = new ObjectMapper();
+  private final ObjectMapper om = createOm();
   private final Class<T> beanType;
 
   public BeanValidationUrlStateBinder(Class<T> beanType) {
@@ -40,6 +41,12 @@ public class BeanValidationUrlStateBinder<T> extends BeanValidationBinder<T> {
   public BeanValidationUrlStateBinder(Class<T> beanType, boolean scanNestedDefinitions) {
     super(beanType, scanNestedDefinitions);
     this.beanType = beanType;
+  }
+
+  private ObjectMapper createOm() {
+    var om = new ObjectMapper();
+    om.registerModules(new JavaTimeModule());
+    return om;
   }
 
   @Override
