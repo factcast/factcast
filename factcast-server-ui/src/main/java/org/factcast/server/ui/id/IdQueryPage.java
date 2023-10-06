@@ -50,10 +50,7 @@ public class IdQueryPage extends VerticalLayout implements HasUrlParameter<Strin
     final var jsonView = new JsonView();
     final var queryButton = queryButton(fc, jsonView);
 
-    final var pageLayout = new VerticalLayout(inputFields, queryButton, jsonView);
-    pageLayout.setHeightFull();
-
-    add(pageLayout);
+    add(inputFields, queryButton, jsonView);
 
     b.readBean(formBean);
   }
