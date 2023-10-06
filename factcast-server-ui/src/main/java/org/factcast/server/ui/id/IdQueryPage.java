@@ -115,6 +115,7 @@ public class IdQueryPage extends VerticalLayout implements HasUrlParameter<Strin
   private TextField idInput() {
     final var id = new TextField("id");
     id.setLabel("Fact-ID");
+    id.setAutofocus(true);
     id.setWidthFull();
     id.setPlaceholder("UUID");
 
