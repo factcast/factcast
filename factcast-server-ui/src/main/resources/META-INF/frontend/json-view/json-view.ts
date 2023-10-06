@@ -14,6 +14,8 @@ type FactMetaData = {
 @customElement("json-view")
 class JsonView extends LitElement {
   private editor: any;
+  private codeLensProvider: any;
+  private hoverProvider: any;
 
   @query("#monaco-editor")
   private editorDiv: HTMLDivElement | undefined;
@@ -26,10 +28,33 @@ class JsonView extends LitElement {
 
   firstUpdated() {
     super.firstUpdated();
+    this.setupEditor();
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.setupEditor();
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+
+    if (this.editor) {
+      this.editor.dispose();
+      this.codeLensProvider.dispose();
+      this.hoverProvider.dispose();
+      this.editor = null;
+    }
+  }
+
+  private setupEditor() {
+    if (this.editor || !this.editorDiv) {
+      return;
+    }
 
     const that = this;
 
-    monaco.languages.registerCodeLensProvider("json", {
+    this.codeLensProvider = monaco.languages.registerCodeLensProvider("json", {
       async provideCodeLenses(model, token) {
         if (model.getValue() === "") {
           return {
@@ -45,7 +70,7 @@ class JsonView extends LitElement {
       },
     });
 
-    monaco.languages.registerHoverProvider("json", {
+    this.hoverProvider = monaco.languages.registerHoverProvider("json", {
       async provideHover(model, position) {
         if (model.getValue() === "") {
           return null;
