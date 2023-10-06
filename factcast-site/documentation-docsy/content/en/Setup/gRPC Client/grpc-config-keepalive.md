@@ -8,15 +8,15 @@ weight: 170
 
 Here are some good settings for an initial configuration of a SpringBoot FactCast client/server setup in case you ran into gRPC related client server communication troubles.
 
-- Sending keep-alive HTTP/2 PINGs on the connection is useful in case you are running on infrastructure that doesn't support configurable idle timeouts, and threfore closes connections.
+- Sending keep-alive HTTP/2 PINGs on the connection is useful in case you are running on infrastructure that doesn't support configurable idle timeouts, and therefore closes connections.
 
-- The proposed values are defining a scenario where the client sends keep-alive HTTP/2 PINGs every 300s and the server accepts this behavior without sending `GO_AWAY ENHANCE_YOUR_CALM` to the client. Please adobt to your specific needs.
+- The proposed values are defining a scenario where the client sends keep-alive HTTP/2 PINGs every 300s and the server accepts this behavior without sending `GO_AWAY ENHANCE_YOUR_CALM` to the client. Please adapt to your specific needs.
 
 ### Client side
 
 | Property                                         | Description                                                                                                                 | Recommended | Default |
 | :----------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------- | :---------- | ------- |
-| `grpc.client.factstore.enable-keep-alive`        | Configures whether keepAlive shoud be enabled.                                                                              | true        | false   |
+| `grpc.client.factstore.enable-keep-alive`        | Configures whether keepAlive should be enabled.                                                                             | true        | false   |
 | `grpc.client.factstore.keep-alive-time`          | The default delay before sending keepAlives. Please note that shorter intervals increase the network burden for the server. | 300         | 60      |
 | `grpc.client.factstore.keep-alive-without-calls` | Configures whether keepAlive will be performed when there are no outstanding RPCs on a connection.                          | true        | false   |
 

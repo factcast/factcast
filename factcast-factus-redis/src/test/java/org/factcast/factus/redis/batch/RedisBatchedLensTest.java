@@ -183,7 +183,7 @@ class RedisBatchedLensTest {
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
       RedissonBatchManager tx = mock(RedissonBatchManager.class);
       when(tx.inBatch()).thenReturn(true);
-      RedisBatchedLens underTest = new RedisBatchedLens(p, tx, Defaults.create());
+      RedisBatchedLens underTest = new RedisBatchedLens(p, () -> tx, Defaults.create());
 
       underTest.doClear();
 
@@ -201,7 +201,7 @@ class RedisBatchedLensTest {
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
       RedissonBatchManager tx = mock(RedissonBatchManager.class);
       when(tx.inBatch()).thenReturn(true);
-      RedisBatchedLens underTest = new RedisBatchedLens(p, tx, Defaults.create());
+      RedisBatchedLens underTest = new RedisBatchedLens(p, () -> tx, Defaults.create());
 
       underTest.doFlush();
 
@@ -263,9 +263,9 @@ class RedisBatchedLensTest {
     @Test
     void returnsCurrentBatch() {
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
-      RedissonBatchManager man = mock(RedissonBatchManager.class);
-      when(man.getCurrentBatch()).thenReturn(current);
-      RedisBatchedLens underTest = new RedisBatchedLens(p, man, Defaults.create());
+      RedissonBatchManager tx = mock(RedissonBatchManager.class);
+      when(tx.getCurrentBatch()).thenReturn(current);
+      RedisBatchedLens underTest = new RedisBatchedLens(p, () -> tx, Defaults.create());
 
       Function<Fact, ?> t = underTest.parameterTransformerFor(RBatch.class);
       assertThat(t).isNotNull();
@@ -276,7 +276,7 @@ class RedisBatchedLensTest {
     void returnsNullForOtherType() {
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
       RedissonBatchManager tx = mock(RedissonBatchManager.class);
-      RedisBatchedLens underTest = new RedisBatchedLens(p, tx, Defaults.create());
+      RedisBatchedLens underTest = new RedisBatchedLens(p, () -> tx, Defaults.create());
 
       Function<Fact, ?> t = underTest.parameterTransformerFor(Fact.class);
       assertThat(t).isNull();

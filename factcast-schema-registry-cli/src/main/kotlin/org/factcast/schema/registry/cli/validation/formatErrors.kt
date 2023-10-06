@@ -20,6 +20,7 @@ fun formatErrors(errors: List<ProjectError>): List<String> = errors.map {
         is ProjectError.NoEvents -> "No events found for namespace ${it.namespacePath.fileName}"
         is ProjectError.NoEventVersions ->
             "No versions found for event ${it.eventVersionsPath}"
+
         is ProjectError.NoExamples -> "No examples found for event ${it.path.fileName} at ${it.path}"
         is ProjectError.NoNamespaces -> "No namespaces found at ${it.projectPath}"
         is ProjectError.NoSuchFile -> "Corrupted JSON at ${it.filePath}"
@@ -27,34 +28,47 @@ fun formatErrors(errors: List<ProjectError>): List<String> = errors.map {
         is ProjectError.NoSchema -> "No schema found for ${it.path}"
         is ProjectError.WrongVersionFormat ->
             "Version ${it.version} is no number at ${it.path}"
+
         is ProjectError.NoDescription ->
             "No description found for ${it.descriptionPath}"
+
         is ProjectError.ValidationError ->
             """
 Example ${it.examplePath} failed validation:
-${it.result.joinToString("\n") { result ->
-                "- ${result.asJson().get("instance").get("pointer").asText()}: ${result.message}"
-            }}
+${
+                it.result?.joinToString("\n") { result ->
+                    "- ${result.asJson()?.get("instance")?.get("pointer")?.asText()}: ${result.message}"
+                }
+            }
                 """.trimIndent()
+
         is ProjectError.NoUpcastForVersion ->
             "No upcast for ${it.type} from version ${it.fromVersion} to ${it.toVersion}"
+
         is ProjectError.NoDowncastForVersion ->
             """No downcast for ${it.type} from version ${it.fromVersion} to ${it.toVersion} (implicit noop failed)
-${it.result.joinToString("\n") { result ->
-                "- ${result.message}"
-            }}
+${
+                it.result?.joinToString("\n") { result ->
+                    "- ${result.message}"
+                }
+            }
             """.trimIndent()
+
         is ProjectError.TransformationValidationError ->
             """Error while applying transformation for ${it.type} converting version ${it.fromVersion} to ${it.toVersion}:
-${it.result.joinToString("\n") { result ->
-                "- ${result.message}"
-            }}
+${
+                it.result?.joinToString("\n") { result ->
+                    "- ${result.message}"
+                }
+            }
 
             """.trimIndent()
+
         is ProjectError.MissingVersionForTransformation ->
             "Version ${it.fromVersion} or ${it.toVersion} does not exist for ${it.transformationPath}"
+
         is ProjectError.TransformationError -> """Exception during transformation of ${it.type} from ${it.fromVersion} to ${it.toVersion}:
-${it.exception.message}
+${it.exception?.message}
         """.trimIndent()
     }
 }

@@ -19,7 +19,7 @@ Annotating your handler methods gives you a convenient way of declaring a projec
 This kind of filtering should be sufficient for most of the use-cases. However, annotations have to have constant attributes, so what you cannot do this way is to filter on values that are only available at runtime:
 A particular aggregateId or a calculated meta-attribute in the header.
 
-For these usecases the postprocess hook can be used.
+For these use-cases the postprocess hook can be used.
 
 The following projection handles `SomethingStarted` and `SomethingEnded` events. When updating the projection, Factus invokes
 the `postprocess(...)` method and provides it with a list of `FactSpec` specifications as discovered from the annotations.
