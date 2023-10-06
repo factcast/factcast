@@ -31,7 +31,7 @@ import org.factcast.server.ui.views.JsonView;
 import org.factcast.server.ui.views.MainLayout;
 
 @Route(value = "ui/id", layout = MainLayout.class)
-@PageTitle("by Id")
+@PageTitle("Query by Fact-ID")
 @AnonymousAllowed
 public class IdQueryPage extends VerticalLayout implements HasUrlParameter<String> {
   private final IdQueryBean formBean = new IdQueryBean();
