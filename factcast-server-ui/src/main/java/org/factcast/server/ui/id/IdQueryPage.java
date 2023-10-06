@@ -69,7 +69,6 @@ public class IdQueryPage extends VerticalLayout implements HasUrlParameter<Strin
   private HorizontalLayout formButtons(FactRepository fc, JsonView jsonView) {
     final var hl = new HorizontalLayout();
     hl.setWidthFull();
-    hl.setJustifyContentMode(JustifyContentMode.BETWEEN);
 
     final var queryBtn = new Button("query");
     queryBtn.addClickShortcut(Key.ENTER);
@@ -79,7 +78,7 @@ public class IdQueryPage extends VerticalLayout implements HasUrlParameter<Strin
     final var resetBtn = new Button("reset");
     resetBtn.addClickListener(event -> b.reset());
 
-    hl.add(resetBtn, queryBtn);
+    hl.add(queryBtn, resetBtn);
     return hl;
   }
 
@@ -106,7 +105,7 @@ public class IdQueryPage extends VerticalLayout implements HasUrlParameter<Strin
     version.setPlaceholder("as published");
 
     b.forField(version)
-        .withNullRepresentation("as published")
+        .withNullRepresentation("")
         .withConverter(new StringToIntegerConverter("not a valid version"))
         .bind("version");
     return version;
@@ -117,6 +116,7 @@ public class IdQueryPage extends VerticalLayout implements HasUrlParameter<Strin
     final var id = new TextField("id");
     id.setLabel("Fact-ID");
     id.setWidthFull();
+    id.setPlaceholder("UUID");
 
     b.forField(id)
         .withNullRepresentation("")
