@@ -21,7 +21,10 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.QueryParameters;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
+import java.util.function.Function;
 import lombok.SneakyThrows;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -43,22 +46,12 @@ public class BeanValidationUrlStateBinder<T> extends BeanValidationBinder<T> {
   public void writeBean(T t) throws ValidationException {
     super.writeBean(t);
 
-    UI.getCurrent()
-        .getPage()
-        .fetchCurrentURL(
-            x -> {
-              try {
-                final var uri =
-                    UriComponentsBuilder.fromUri(x.toURI())
-                        .replaceQueryParam("state", this.writeValueAsString(t))
-                        .build();
-
-                UI.getCurrent().getPage().getHistory().replaceState(null, uri.toUriString());
-
-              } catch (URISyntaxException e) {
-                throw new RuntimeException(e);
-              }
-            });
+    updateClientUrl(
+        x ->
+            UriComponentsBuilder.fromUri(x)
+                .replaceQueryParam("state", writeValueAsString(t))
+                .build()
+                .toUri());
   }
 
   public void readFromQueryParams(QueryParameters queryParameters, T bean) {
@@ -66,7 +59,7 @@ public class BeanValidationUrlStateBinder<T> extends BeanValidationBinder<T> {
 
     if (parametersMap.containsKey("state")) {
       try {
-        this.om.readerForUpdating(bean).readValue(parametersMap.get("state").get(0));
+        om.readerForUpdating(bean).readValue(parametersMap.get("state").get(0));
         readBean(bean);
       } catch (JsonProcessingException e) {
         // do nothing
@@ -76,6 +69,29 @@ public class BeanValidationUrlStateBinder<T> extends BeanValidationBinder<T> {
 
   @SneakyThrows
   private String writeValueAsString(Object value) {
-    return this.om.writeValueAsString(value);
+    return om.writeValueAsString(value);
+  }
+
+  public void reset() {
+    readBean(null);
+
+    updateClientUrl(
+        x -> UriComponentsBuilder.fromUri(x).replaceQueryParam("state", List.of()).build().toUri());
+  }
+
+  private static void updateClientUrl(Function<URI, URI> urlReplacer) {
+    UI.getCurrent()
+        .getPage()
+        .fetchCurrentURL(
+            x -> {
+              try {
+                UI.getCurrent()
+                    .getPage()
+                    .getHistory()
+                    .replaceState(null, urlReplacer.apply(x.toURI()).toString());
+              } catch (URISyntaxException e) {
+                // do nothing
+              }
+            });
   }
 }

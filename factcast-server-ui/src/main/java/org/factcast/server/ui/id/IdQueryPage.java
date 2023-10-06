@@ -15,7 +15,9 @@
  */
 package org.factcast.server.ui.id;
 
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -25,8 +27,9 @@ import com.vaadin.flow.data.converter.StringToUuidConverter;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import lombok.NonNull;
-import org.factcast.core.Fact;
+import org.factcast.core.subscription.TransformationException;
 import org.factcast.server.ui.port.FactRepository;
+import org.factcast.server.ui.utils.Notifications;
 import org.factcast.server.ui.views.JsonView;
 import org.factcast.server.ui.views.MainLayout;
 
@@ -34,7 +37,7 @@ import org.factcast.server.ui.views.MainLayout;
 @PageTitle("Query by Fact-ID")
 @AnonymousAllowed
 public class IdQueryPage extends VerticalLayout implements HasUrlParameter<String> {
-  private final IdQueryBean formBean = new IdQueryBean();
+  private IdQueryBean formBean = new IdQueryBean();
   private final BeanValidationUrlStateBinder<IdQueryBean> b =
       new BeanValidationUrlStateBinder<>(IdQueryBean.class);
 
@@ -48,9 +51,9 @@ public class IdQueryPage extends VerticalLayout implements HasUrlParameter<Strin
     inputFields.setWidthFull();
 
     final var jsonView = new JsonView();
-    final var queryButton = queryButton(fc, jsonView);
+    final var buttons = formButtons(fc, jsonView);
 
-    add(inputFields, queryButton, jsonView);
+    add(inputFields, buttons, jsonView);
 
     b.readBean(formBean);
   }
@@ -63,31 +66,45 @@ public class IdQueryPage extends VerticalLayout implements HasUrlParameter<Strin
   }
 
   @NonNull
-  private Button queryButton(FactRepository fc, JsonView jsonView) {
-    final var query = new Button("query");
+  private HorizontalLayout formButtons(FactRepository fc, JsonView jsonView) {
+    final var hl = new HorizontalLayout();
+    hl.setWidthFull();
+    hl.setJustifyContentMode(JustifyContentMode.BETWEEN);
 
-    query.addClickListener(
-        event -> {
-          try {
-            b.writeBean(formBean);
+    final var queryBtn = new Button("query");
+    queryBtn.addClickShortcut(Key.ENTER);
+    queryBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+    queryBtn.addClickListener(event -> executeQuery(fc, jsonView));
 
-            if (formBean.getId() != null) {
-              var fact = fc.findBy(formBean);
-              System.out.println("fact by id: " + fact.map(Fact::jsonPayload).orElse("not found"));
+    final var resetBtn = new Button("reset");
+    resetBtn.addClickListener(event -> b.reset());
 
-              fact.ifPresent(jsonView::renderFact);
-            }
+    hl.add(resetBtn, queryBtn);
+    return hl;
+  }
 
-          } catch (ValidationException e) {
-            throw new RuntimeException(e);
-          }
-        });
-    return query;
+  private void executeQuery(FactRepository fc, JsonView jsonView) {
+    try {
+      b.writeBean(formBean);
+
+      if (formBean.getId() != null) {
+        var fact = fc.findBy(formBean);
+
+        fact.ifPresentOrElse(jsonView::renderFact, () -> Notifications.warn("Fact not found"));
+      }
+
+    } catch (ValidationException e) {
+      Notifications.warn(e.getMessage());
+    } catch (TransformationException e) {
+      Notifications.error(e.getMessage());
+    }
   }
 
   @NonNull
   private TextField versionInput() {
-    final var version = new TextField("version");
+    final var version = new TextField("Version");
+    version.setPlaceholder("as published");
+
     b.forField(version)
         .withNullRepresentation("as published")
         .withConverter(new StringToIntegerConverter("not a valid version"))
@@ -98,7 +115,7 @@ public class IdQueryPage extends VerticalLayout implements HasUrlParameter<Strin
   @NonNull
   private TextField idInput() {
     final var id = new TextField("id");
-    id.setLabel("Fact-id");
+    id.setLabel("Fact-ID");
     id.setWidthFull();
 
     b.forField(id)
