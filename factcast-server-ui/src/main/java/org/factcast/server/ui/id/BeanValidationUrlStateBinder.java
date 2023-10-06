@@ -15,6 +15,7 @@
  */
 package org.factcast.server.ui.id;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
@@ -60,13 +61,16 @@ public class BeanValidationUrlStateBinder<T> extends BeanValidationBinder<T> {
             });
   }
 
-  @SneakyThrows
   public void readFromQueryParams(QueryParameters queryParameters, T bean) {
     final var parametersMap = queryParameters.getParameters();
 
     if (parametersMap.containsKey("state")) {
-      this.om.readerForUpdating(bean).readValue(parametersMap.get("state").get(0));
-      readBean(bean);
+      try {
+        this.om.readerForUpdating(bean).readValue(parametersMap.get("state").get(0));
+        readBean(bean);
+      } catch (JsonProcessingException e) {
+        // do nothing
+      }
     }
   }
 
