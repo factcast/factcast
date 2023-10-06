@@ -17,6 +17,7 @@ package org.factcast.factus.redis.tx;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
@@ -30,22 +31,32 @@ import org.redisson.api.TransactionOptions;
 @Slf4j
 public class RedisTransactionalLens extends AbstractTransactionalLens {
 
-  private final RedissonTxManager redissonTxManager;
+  /**
+   * We cannot store the manager itself here, as during creation of the lens, we are on a common
+   * thread that creates the lenses for all projections, and they would hence all share the same
+   * transaction manager, as the transaction manager is manged via ThreadLocal.
+   *
+   * <p>Hence, use a supplier here, so we get the right tx manager when we are on the subscription
+   * thread.
+   */
+  private final Supplier<RedissonTxManager> txManagerSupplier;
+
+  private final TransactionOptions opts;
 
   public RedisTransactionalLens(
       @NonNull RedisProjection p, @NonNull RedissonClient redissonClient) {
-    this(p, RedissonTxManager.get(redissonClient), createOpts(p));
+    this(p, () -> RedissonTxManager.get(redissonClient), createOpts(p));
   }
 
   @VisibleForTesting
   RedisTransactionalLens(
       @NonNull RedisProjection p,
-      @NonNull RedissonTxManager txman,
+      @NonNull Supplier<RedissonTxManager> txManagerSupplier,
       @NonNull TransactionOptions opts) {
     super(p);
 
-    redissonTxManager = txman;
-    txman.options(opts);
+    this.txManagerSupplier = txManagerSupplier;
+    this.opts = opts;
 
     bulkSize = Math.max(1, getSize(p));
     flushTimeout = calculateFlushTimeout(opts);
@@ -98,8 +109,10 @@ public class RedisTransactionalLens extends AbstractTransactionalLens {
   public Function<Fact, ?> parameterTransformerFor(@NonNull Class<?> type) {
     if (RTransaction.class.equals(type)) {
       return f -> {
+        RedissonTxManager redissonTxManager = txManagerSupplier.get();
+        redissonTxManager.options(opts); // it might have been just created
         redissonTxManager.startOrJoin();
-        return redissonTxManager.getCurrentTransaction();
+        return txManagerSupplier.get().getCurrentTransaction();
       };
     }
     return null;
@@ -107,11 +120,11 @@ public class RedisTransactionalLens extends AbstractTransactionalLens {
 
   @Override
   public void doClear() {
-    redissonTxManager.rollback();
+    txManagerSupplier.get().rollback();
   }
 
   @Override
   public void doFlush() {
-    redissonTxManager.commit();
+    txManagerSupplier.get().commit();
   }
 }

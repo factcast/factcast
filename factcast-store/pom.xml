@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.6.7-SNAPSHOT</version>
+    <version>0.6.10-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-store</artifactId>
@@ -78,7 +78,7 @@
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <version>42.5.4</version><!--$NO-MVN-MAN-VER$ -->
+      <version>42.6.0</version><!--$NO-MVN-MAN-VER$ -->
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
@@ -131,7 +131,7 @@
     <dependency>
       <groupId>io.javalin</groupId>
       <artifactId>javalin</artifactId>
-      <version>4.6.7</version>
+      <version>4.6.8</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -147,7 +147,7 @@
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>okhttp</artifactId>
-      <version>4.10.0</version>
+      <version>4.11.0</version>
     </dependency>
     <dependency>
       <groupId>org.graalvm.js</groupId>

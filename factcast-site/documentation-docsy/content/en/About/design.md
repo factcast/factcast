@@ -39,7 +39,7 @@ Both technical requirements are trivial when choosing a RDBMS, due to its ACID n
 
 Monitoring, Alerting, Backup, Point in time recovery, Authentication / Authorization, read-replication, fail-over ... All of those are properties of a good RDBMS and it is hard to find more mature solutions than the ones we can find there.
 
-#### Flexible Querys
+#### Flexible Queries
 
 While Document datastores like [MongoDB](https://mongodb.com) certainly have more to offer here, PostgreSQL is surprisingly good with JSON. FactCast uses **GIN** Indexes on **JSONB** Columns in order to find matching Facts for subscriptions easily.
 
@@ -79,7 +79,7 @@ GRPC has a lot of implementations in languages like:
 
 ### Spring (GRPC Client)
 
-In order to make it easy to use the GRPC Client from java, the factcast-client-grpc module depends on Spring as well. This dependency is not exactly tight, so if there is a good reason to, you might want to implement a GRPC CLient free of Spring dependencies. If so, let us know.
+In order to make it easy to use the GRPC Client from java, the factcast-client-grpc module depends on Spring as well. This dependency is not exactly tight, so if there is a good reason to, you might want to implement a GRPC Client free of Spring dependencies. If so, let us know.
 
 ## Limitations
 
@@ -89,7 +89,7 @@ FactCast is written (and works out of the box) for deployments that contain any 
 one PostgreSQL database</b>. To be clear: the FactCast Server itself is horizontally scalable and capable of load-balancing and failover.
 
 While this might sound like a major limitation, it actually hardly is due to several performance
-optimizations within the FactCast server, as well as the extensive scalability and failover options of todays cloud
+optimizations within the FactCast server, as well as the extensive scalability and failover options of today's cloud
 offerings.
 
 While there is no technical reason you cannot use FactCast in a multi-database scenario, you'll have to give it a little thought.

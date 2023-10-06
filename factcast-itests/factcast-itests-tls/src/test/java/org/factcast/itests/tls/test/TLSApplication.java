@@ -13,34 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.transformation;
+package org.factcast.itests.tls.test;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 
-/**
- * Spring boot starter for running a factcast server.
- *
- * <p>This should contain a pgsql backend and grpc API frontend.
- *
- * @author uwe.schaefer@mercateo.com
- */
-@SuppressWarnings("ALL")
 @SpringBootApplication
-@Slf4j
-public class ExampleServerWithPostgresContainer {
+public class TLSApplication {
 
   public static void main(String[] args) {
-    SpringApplication.run(ExampleServerWithPostgresContainer.class, args);
-  }
-
-  @Bean
-  @Order(Ordered.LOWEST_PRECEDENCE)
-  public IntegrationTestContext integrationTestContext() {
-    return new IntegrationTestContext();
+    SpringApplication.run(TLSApplication.class, args);
   }
 }

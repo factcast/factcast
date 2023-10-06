@@ -10,7 +10,7 @@ Like [Redis transactional projections]({{< ref "redis-transactional-projections.
 is more lightweight than [Spring transactional projections]({{< ref "spring-transactional-projections.md">}}).
 No Spring `PlatformTransactionManager` is needed,
 the [RBatch](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RBatch.html) object of
-the [Redission library](https://github.com/redisson/redisson) is enough.
+the [Redisson library](https://github.com/redisson/redisson) is enough.
 
 Working with a _Redis batch projection_ is **asynchronous** as multiple commands are collected and
 executed later in an atomic way (all or none).

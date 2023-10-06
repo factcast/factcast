@@ -54,61 +54,70 @@ databaseChangeLog:
       id: transformationcache_and_schemastore_col_to_jsonb
       runInTransaction: false
       author: uweschaefer
+      validCheckSum:
+        - "8:442b3fa2d9a7c49c8e0a021690d6a7fa"
       changes:
         - sqlFile:
             encoding: utf8
             path: factcast/issue1161/jsonb_col_types.sql
             relativeToChangelogFile: true
-            splitStatements: false
+            splitStatements: true
             stripComments: true
   - changeSet:
       id: unique_index_using_uuids_to_reduce_space_requirements_gracefully
       runInTransaction: false
       author: uweschaefer
+      validCheckSum:
+        - "8:20a86b874a5cb2e57df7fa4a6477b318"
       changes:
         - sqlFile:
             encoding: utf8
             path: factcast/issue1358/unique_index_using_uuids.sql
             relativeToChangelogFile: true
-            splitStatements: false
+            splitStatements: true
             stripComments: true
   - changeSet:
       id: transformationcache_last_access_index
       runInTransaction: false
       author: uweschaefer
+      validCheckSum:
+        - "8:650fcc50dc7eb4d713d40a1d58d15cbc"
       changes:
         - sqlFile:
             encoding: utf8
             path: factcast/issue1354/transformationcache_last_access_index.sql
             relativeToChangelogFile: true
-            splitStatements: false
+            splitStatements: true
             stripComments: true
   - changeSet:
       id: snapshotcache_last_access_index
       runInTransaction: false
       author: uweschaefer
+      validCheckSum:
+        - "8:681e61e199b0589da1423486e7e3ab16"
       changes:
         - sqlFile:
             encoding: utf8
             path: factcast/issue1354/snapshotcache_last_access_index.sql
             relativeToChangelogFile: true
-            splitStatements: false
+            splitStatements: true
             stripComments: true
   - include:
       file: factcast/issue1435/stats_index.sql
       relativeToChangelogFile: true
 
-
   - changeSet:
       id: drop_obsolete_index
       runInTransaction: false
       author: uweschaefer
+      validCheckSum:
+        - "8:f2f69728e926b1d00280d2be96587b98"
       changes:
         - sqlFile:
             encoding: utf8
             path: factcast/issue1444/drop_obsolete_index.sql
             relativeToChangelogFile: true
-            splitStatements: false
+            splitStatements: true
             stripComments: true
 
   - changeSet:
@@ -148,7 +157,7 @@ databaseChangeLog:
   #            encoding: utf8
   #            path: factcast/issue1696/gin_fast_update.sql
   #            relativeToChangelogFile: true
-  #            splitStatements: false
+  #            splitStatements: true
   #            stripComments: true
 
   - changeSet:
@@ -169,14 +178,15 @@ databaseChangeLog:
       id: fix_index_for_enum2
       runInTransaction: false
       author: bresciamattia
+      validCheckSum:
+        - "8:af79626faff3a47739e47b03c7e7aa53"
       changes:
         - sqlFile:
             encoding: utf8
             path: factcast/issue1865-2/fix_index_for_enum2.sql
             relativeToChangelogFile: true
-            splitStatements: false
+            splitStatements: true
             stripComments: true
-
 
   - changeSet:
       id: count_estimate
@@ -190,17 +200,18 @@ databaseChangeLog:
             splitStatements: false
             stripComments: true
 
-
   - changeSet:
       id: issue2019
       runInTransaction: false
       author: uweschaefer
+      validCheckSum:
+        - "8:e3f3407eb5bcb7f2987934bab9254d70"
       changes:
         - sqlFile:
             encoding: utf8
             path: factcast/issue2019/issue2019.sql
             relativeToChangelogFile: true
-            splitStatements: false
+            splitStatements: true
             stripComments: true
 
   - changeSet:
@@ -231,24 +242,28 @@ databaseChangeLog:
       id: issue2131_toast_trans
       runInTransaction: false
       author: uweschaefer
+      validCheckSum:
+        - "8:3e3857499e5a3d4960df281fedbcaaac"
       changes:
         - sqlFile:
             encoding: utf8
             path: factcast/issue2131/toast_transformationcache.sql
             relativeToChangelogFile: true
-            splitStatements: false
+            splitStatements: true
             stripComments: true
 
   - changeSet:
       id: issue2131_toast_snap
       runInTransaction: false
       author: uweschaefer
+      validCheckSum:
+        - "8:e794505dc78d3fae7bd83c73254bddbb"
       changes:
         - sqlFile:
             encoding: utf8
             path: factcast/issue2131/toast_snapshotcache.sql
             relativeToChangelogFile: true
-            splitStatements: false
+            splitStatements: true
             stripComments: true
 
   - changeSet:
@@ -275,15 +290,34 @@ databaseChangeLog:
             splitStatements: false
             stripComments: true
 
-
   - changeSet:
       id: issue2180_add_blacklist_column
       runInTransaction: false
       author: uweschaefer
+      validCheckSum:
+        - "8:ebc1b459e625e4afc7c918ac11ee2c2d"
       changes:
         - sqlFile:
             encoding: utf8
             path: factcast/issue2180/blacklist-reason.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: true
+
+  - changeSet:
+      id: issue1483_pg_14_15_compat
+      runInTransaction: false
+      author: otbe
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue1483/updateNotifyFactInsert_handle_null_values.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue1483/augmentation_trigger_truncate_ts.sql
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
