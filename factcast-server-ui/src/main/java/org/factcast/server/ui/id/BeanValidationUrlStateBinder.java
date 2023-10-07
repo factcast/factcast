@@ -79,11 +79,18 @@ public class BeanValidationUrlStateBinder<T> extends BeanValidationBinder<T> {
     return om.writeValueAsString(value);
   }
 
-  public void reset() {
-    readBean(null);
+  @Override
+  public void readBean(T t) {
+    super.readBean(t);
 
-    updateClientUrl(
-        x -> UriComponentsBuilder.fromUri(x).replaceQueryParam("state", List.of()).build().toUri());
+    if (t == null) {
+      updateClientUrl(
+          x ->
+              UriComponentsBuilder.fromUri(x)
+                  .replaceQueryParam("state", List.of())
+                  .build()
+                  .toUri());
+    }
   }
 
   private static void updateClientUrl(Function<URI, URI> urlReplacer) {

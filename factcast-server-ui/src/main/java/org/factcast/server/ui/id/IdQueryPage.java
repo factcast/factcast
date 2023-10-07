@@ -37,7 +37,7 @@ import org.factcast.server.ui.views.MainLayout;
 @PageTitle("Query by Fact-ID")
 @AnonymousAllowed
 public class IdQueryPage extends VerticalLayout implements HasUrlParameter<String> {
-  private IdQueryBean formBean = new IdQueryBean();
+  private final IdQueryBean formBean = new IdQueryBean();
   private final BeanValidationUrlStateBinder<IdQueryBean> b =
       new BeanValidationUrlStateBinder<>(IdQueryBean.class);
 
@@ -67,18 +67,17 @@ public class IdQueryPage extends VerticalLayout implements HasUrlParameter<Strin
 
   @NonNull
   private HorizontalLayout formButtons(FactRepository fc, JsonView jsonView) {
-    final var hl = new HorizontalLayout();
-    hl.setWidthFull();
-
     final var queryBtn = new Button("query");
     queryBtn.addClickShortcut(Key.ENTER);
     queryBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
     queryBtn.addClickListener(event -> executeQuery(fc, jsonView));
 
     final var resetBtn = new Button("reset");
-    resetBtn.addClickListener(event -> b.reset());
+    resetBtn.addClickListener(event -> b.readBean(null));
 
-    hl.add(queryBtn, resetBtn);
+    final var hl = new HorizontalLayout(queryBtn, resetBtn);
+    hl.setWidthFull();
+
     return hl;
   }
 

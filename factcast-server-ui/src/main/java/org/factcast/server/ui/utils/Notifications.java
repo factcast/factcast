@@ -46,14 +46,14 @@ public class Notifications {
     notification.addThemeVariants(lumoError);
     notification.setPosition(Notification.Position.BOTTOM_START);
 
-    Div statusText = new Div(new Text(message));
+    final var statusText = new Div(new Text(message));
 
     final var closeButton = new Button(new Icon("lumo", "cross"));
     closeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
     closeButton.setAriaLabel("Close");
     closeButton.addClickListener(event -> notification.close());
 
-    HorizontalLayout layout = new HorizontalLayout(statusText, closeButton);
+    final var layout = new HorizontalLayout(statusText, closeButton);
     layout.setAlignItems(FlexComponent.Alignment.CENTER);
 
     notification.add(layout);
