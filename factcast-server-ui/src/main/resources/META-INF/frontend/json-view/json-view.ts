@@ -94,6 +94,7 @@ class JsonView extends LitElement {
     this.editor = monaco.editor.create(this.editorDiv, {
       language: "json",
       readOnly: true,
+      scrollBeyondLastLine: false,
       minimap: { enabled: false },
       theme: "vs",
       automaticLayout: true,
