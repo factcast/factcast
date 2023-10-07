@@ -97,6 +97,7 @@ class JsonView extends LitElement {
       minimap: { enabled: false },
       theme: "vs",
       automaticLayout: true,
+      fontLigatures: "",
     });
   }
 
