@@ -15,11 +15,7 @@
  */
 package org.factcast.core.store;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;

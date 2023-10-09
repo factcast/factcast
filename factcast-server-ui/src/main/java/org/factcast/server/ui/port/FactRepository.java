@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.UUID;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.server.ui.full.FullQueryBean;
@@ -34,7 +35,11 @@ public interface FactRepository {
 
   List<String> types(@NonNull String namespace, @NonNull Optional<String> input);
 
-  OptionalLong firstSerialFor(@NonNull LocalDate date);
+  OptionalLong lastSerialBefore(@NonNull LocalDate date);
 
-  Long lastSerial();
+  long latestSerial();
+
+  Optional<UUID> findIdOfSerial(long longValue);
+
+  List<Fact> fetchChunk(FullQueryBean bean);
 }

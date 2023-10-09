@@ -17,10 +17,11 @@ package org.factcast.server.ui.full;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import lombok.Data;
+import lombok.NonNull;
 import lombok.experimental.Accessors;
+import org.factcast.core.spec.FactSpec;
 
 @Data
 @Accessors(fluent = false, chain = false)
@@ -30,7 +31,40 @@ public class FullQueryBean {
   private Integer offset = 0;
   private String ns = null;
   private Set<String> type = null;
-  private Set<AggregateId> agg = new HashSet<>();
-  private Set<MetaTuple> meta = new HashSet<>();
+  // currently not possible to filter on more than one aggId via api
+  private UUID aggId = null;
+  private List<MetaTuple> meta = new LinkedList<>();
   private BigDecimal from = null;
+
+  @NonNull
+  public List<FactSpec> createFactSpecs() {
+    if (type != null) {
+      return type.stream()
+          .map(
+              t -> {
+                FactSpec fs = FactSpec.ns(ns).type(t);
+
+                if (aggId != null) {
+                  fs.aggId(aggId);
+                }
+
+                if (!meta.isEmpty()) {
+                  meta.forEach(m -> fs.meta(m.getKey(), m.getValue()));
+                }
+                return fs;
+              })
+          .toList();
+    } else if (ns == null) {
+      throw new IllegalArgumentException("You need at least a namespace to query");
+    } else {
+      FactSpec fs = FactSpec.ns(ns);
+      if (aggId != null) {
+        fs.aggId(aggId);
+      }
+      if (!meta.isEmpty()) {
+        meta.forEach(m -> fs.meta(m.getKey(), m.getValue()));
+      }
+      return Collections.singletonList(fs);
+    }
+  }
 }
