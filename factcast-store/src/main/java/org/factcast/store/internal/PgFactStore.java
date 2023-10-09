@@ -18,8 +18,9 @@ package org.factcast.store.internal;
 import com.google.common.collect.Lists;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.atomic.*;
+import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.DuplicateFactException;
@@ -27,10 +28,7 @@ import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.store.AbstractFactStore;
-import org.factcast.core.store.State;
-import org.factcast.core.store.StateToken;
-import org.factcast.core.store.TokenStore;
+import org.factcast.core.store.*;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
@@ -45,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -57,7 +56,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author uwe.schaefer@prisma-capacity.eu
  */
 @Slf4j
-public class PgFactStore extends AbstractFactStore {
+public class PgFactStore extends AbstractFactStore implements LocalFactStore {
 
   @NonNull private final JdbcTemplate jdbcTemplate;
 
@@ -277,5 +276,50 @@ public class PgFactStore extends AbstractFactStore {
   @Override
   public void clearSnapshot(@NonNull SnapshotId id) {
     metrics.time(StoreMetrics.OP.CLEAR_SNAPSHOT, () -> snapCache.clearSnapshot(id));
+  }
+
+  // TODO yet to be tested
+  @Override
+  public @NonNull Optional<Fact> fetchBySerial(long serial) {
+    return metrics.time(
+        StoreMetrics.OP.FETCH_BY_SER,
+        () ->
+            jdbcTemplate
+                .query(
+                    PgConstants.SELECT_BY_SER,
+                    new Object[] {serial},
+                    this::extractFactFromResultSet)
+                .stream()
+                .findFirst());
+  }
+
+  // TODO yet to be tested
+  @Override
+  public long latestSerial() {
+    try {
+      return jdbcTemplate.queryForObject(
+          PgConstants.HIGHWATER_MARK,
+          (rs, rowNum) -> {
+            HighWaterMark ret = new HighWaterMark();
+            ret.targetId(rs.getObject("targetId", UUID.class));
+            ret.targetSer(rs.getLong("targetSer"));
+            return ret.targetSer();
+          });
+    } catch (EmptyResultDataAccessException noFactsAtAll) {
+      return 0L;
+    }
+  }
+
+  // TODO yet to be tested
+  @Override
+  public long lastSerialBefore(@NonNull LocalDate date) {
+    try {
+      return jdbcTemplate.queryForObject(
+          PgConstants.LAST_SERIAL_BEFORE_DATE,
+          new Object[] {java.sql.Date.valueOf(date)},
+          (rs, rowNum) -> rs.getLong("lastSer"));
+    } catch (EmptyResultDataAccessException noFactsAtAll) {
+      return 0L;
+    }
   }
 }

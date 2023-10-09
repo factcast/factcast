@@ -35,6 +35,9 @@ public class PgConstants {
   public static final String TABLE_CATCHUP = "catchup";
 
   public static final String TABLE_FACT = "fact";
+
+  private static final String TABLE_DATE2SERIAL = "date2serial";
+
   public static final String TAIL_INDEX_NAME_PREFIX = "idx_fact_tail_";
 
   public static final String INDEX_NAME_COLUMN = "index_name";
@@ -74,8 +77,10 @@ public class PgConstants {
   public static final String CHANNEL_SCHEMASTORE_CHANGE = "schemastore_change";
   public static final String CHANNEL_TRANSFORMATIONSTORE_CHANGE = "transformationstore_change";
   public static final String CHANNEL_ROUNDTRIP =
-      "roundtrip_channel_"
-          + Math.abs(new Random().nextLong()); // using the pid lead to a sql exception
+      "roundtrip_channel_" + Math.abs(new Random().nextLong()); // using the
+  // pid lead
+  // to a sql
+  // exception
 
   public static final String COLUMN_PAYLOAD = "payload";
 
@@ -144,6 +149,9 @@ public class PgConstants {
           + " WHERE "
           + COLUMN_HEADER
           + " @> cast (? as jsonb)";
+
+  public static final String SELECT_BY_SER =
+      "SELECT " + PROJECTION_FACT + " FROM " + TABLE_FACT + " WHERE " + COLUMN_SER + " = ?";
 
   public static final //
   String SELECT_FACT_FROM_CATCHUP = //
@@ -284,6 +292,9 @@ public class PgConstants {
           + ") from "
           + TABLE_FACT
           + ")";
+
+  public static final String LAST_SERIAL_BEFORE_DATE =
+      "SELECT COALESCE(max(lastSerial),0) AS lastSer FROM " + TABLE_DATE2SERIAL + " where date < ?";
 
   private static String fromHeader(String attributeName) {
     return PgConstants.COLUMN_HEADER + "->>'" + attributeName + "' AS " + attributeName;

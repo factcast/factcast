@@ -353,7 +353,7 @@ databaseChangeLog:
         - onFail: WARN
         - sqlCheck:
              expectedResult: t
-             sql: SELECT count_estimate('SELECT COUNT(*) FROM fact') < 10000000;
+             sql: SELECT count_estimate('SELECT * FROM fact') < 10000000;
       comment: If you have less than 10mio facts, this will be executed, if not, we kindly ask you to execute this script manually  
       changes:
         - sqlFile:
