@@ -1,4 +1,5 @@
 CREATE TABLE IF NOT EXISTS date2serial (
         date date PRIMARY KEY,
-        ser bigint
+        firstSer bigint,
+        lastSer bigint
 );
