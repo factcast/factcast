@@ -23,7 +23,10 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +34,7 @@ import net.javacrumbs.shedlock.core.LockConfiguration;
 import net.javacrumbs.shedlock.core.LockProvider;
 import net.javacrumbs.shedlock.core.SimpleLock;
 import org.everit.json.schema.Schema;
+import org.everit.json.schema.SchemaLocation;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.http.ValidationConstants;
 import org.factcast.store.registry.metrics.RegistryMetrics;
@@ -242,5 +246,24 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
   @Override
   public void register(@NonNull TransformationStoreListener listener) {
     transformationStore.register(listener);
+  }
+
+  /**
+   * This method queries the schema store directly for all the SchemaKeys and doesn't use the schemaNearCache
+   * @return the set of all namespaces
+   */
+  @Override
+  public Set<String> enumerateNamespaces() {
+    return schemaStore.getAllSchemaKeys().stream().map(SchemaKey::ns).collect(Collectors.toSet());
+  }
+
+
+  /**
+   * This method queries the schema store directly for all the SchemaKeys and doesn't use the schemaNearCache
+   * @return the set of all types
+   */
+  @Override
+  public Set<String> enumerateTypes() {
+    return schemaStore.getAllSchemaKeys().stream().map(SchemaKey::type).collect(Collectors.toSet());
   }
 }

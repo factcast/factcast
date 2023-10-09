@@ -18,6 +18,8 @@ package org.factcast.store.registry;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+
 import org.everit.json.schema.Schema;
 import org.factcast.store.registry.transformation.Transformation;
 import org.factcast.store.registry.transformation.TransformationKey;
@@ -60,5 +62,15 @@ public class NOPSchemaRegistry implements SchemaRegistry {
   @Override
   public void invalidateNearCache(SchemaKey key) {
     // NOP
+  }
+
+  @Override
+  public Set<String> enumerateNamespaces() {
+    return Set.of();
+  }
+
+  @Override
+  public Set<String> enumerateTypes() {
+    return Set.of();
   }
 }

@@ -41,6 +41,7 @@ import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.snapcache.PgSnapshotCache;
+import org.factcast.store.registry.SchemaRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -60,6 +61,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PgFactStore extends AbstractFactStore {
 
   @NonNull private final JdbcTemplate jdbcTemplate;
+  @NonNull private final SchemaRegistry schemaRegistry;
 
   @NonNull private final PgSubscriptionFactory subscriptionFactory;
 
@@ -74,18 +76,19 @@ public class PgFactStore extends AbstractFactStore {
 
   @Autowired
   public PgFactStore(
-      @NonNull JdbcTemplate jdbcTemplate,
-      @NonNull PgSubscriptionFactory subscriptionFactory,
-      @NonNull TokenStore tokenStore,
-      @NonNull FactTableWriteLock lock,
-      @NonNull FactTransformerService factTransformerService,
-      @NonNull PgFactIdToSerialMapper pgFactIdToSerialMapper,
-      @NonNull PgSnapshotCache snapCache,
-      @NonNull PgMetrics metrics) {
+          @NonNull JdbcTemplate jdbcTemplate,
+          @NonNull PgSubscriptionFactory subscriptionFactory,
+          @NonNull TokenStore tokenStore,
+          @NonNull SchemaRegistry schemaRegistry, @NonNull FactTableWriteLock lock,
+          @NonNull FactTransformerService factTransformerService,
+          @NonNull PgFactIdToSerialMapper pgFactIdToSerialMapper,
+          @NonNull PgSnapshotCache snapCache,
+          @NonNull PgMetrics metrics) {
     super(tokenStore);
 
     this.jdbcTemplate = jdbcTemplate;
     this.subscriptionFactory = subscriptionFactory;
+    this.schemaRegistry = schemaRegistry;
     this.lock = lock;
     this.pgFactIdToSerialMapper = pgFactIdToSerialMapper;
     this.snapCache = snapCache;
@@ -179,24 +182,42 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   public @NonNull Set<String> enumerateNamespaces() {
+    final var namespaces = schemaRegistry.enumerateNamespaces();
+    if (namespaces.isEmpty()) {
+      return enumerateNamespacesFromPg();
+    }
+
+    return namespaces;
+  }
+
+  public @NonNull Set<String> enumerateNamespacesFromPg() {
     return metrics.time(
-        StoreMetrics.OP.ENUMERATE_NAMESPACES,
-        () ->
-            new HashSet<>(
-                jdbcTemplate.query(
-                    PgConstants.SELECT_DISTINCT_NAMESPACE, this::extractStringFromResultSet)));
+            StoreMetrics.OP.ENUMERATE_NAMESPACES,
+            () ->
+                    new HashSet<>(
+                            jdbcTemplate.query(
+                                    PgConstants.SELECT_DISTINCT_NAMESPACE, this::extractStringFromResultSet)));
   }
 
   @Override
   public @NonNull Set<String> enumerateTypes(@NonNull String ns) {
+    final var types = schemaRegistry.enumerateTypes();
+    if (types.isEmpty()) {
+      return enumerateTypesFromPg(ns);
+    }
+
+    return types;
+  }
+
+  public @NonNull Set<String> enumerateTypesFromPg(@NonNull String ns) {
     return metrics.time(
-        StoreMetrics.OP.ENUMERATE_TYPES,
-        () ->
-            new HashSet<>(
-                jdbcTemplate.query(
-                    PgConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE,
-                    new Object[] {ns},
-                    this::extractStringFromResultSet)));
+            StoreMetrics.OP.ENUMERATE_TYPES,
+            () ->
+                    new HashSet<>(
+                            jdbcTemplate.query(
+                                    PgConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE,
+                                    new Object[] {ns},
+                                    this::extractStringFromResultSet)));
   }
 
   @Override
