@@ -16,15 +16,24 @@
 package org.factcast.server.ui.adapter;
 
 import com.helger.commons.functional.Predicates;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.NotImplementedException;
 import org.factcast.core.Fact;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
+import org.factcast.core.subscription.SpecBuilder;
+import org.factcast.core.subscription.SubscriptionClosedException;
+import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.server.ui.full.FullQueryBean;
 import org.factcast.server.ui.id.IdQueryBean;
 import org.factcast.server.ui.port.FactRepository;
@@ -75,13 +84,79 @@ public class FactRepositoryImpl implements FactRepository {
   }
 
   @Override
-  public OptionalLong firstSerialFor(@NonNull LocalDate date) {
-    // TODO extends store IF
-    return OptionalLong.of(new Random().nextLong(50));
+  public long latestSerial() {
+    return 199L;
   }
 
   @Override
-  public Long lastSerial() {
-    return 100L;
+  public Optional<UUID> findIdOfSerial(long longValue) {
+    // TODO
+    return Optional.of(UUID.randomUUID());
+    // return fs.fetchBySerial(longValue).map(Fact::id);
+  }
+
+  @Override
+  public List<Fact> fetchChunk(FullQueryBean bean) {
+
+    List<FactSpec> specs = bean.createFactSpecs();
+
+    ListObserver obs =
+        new ListObserver(
+            Optional.ofNullable(bean.getLimit()).orElse(50),
+            Optional.ofNullable(bean.getOffset()).orElse(0));
+    SpecBuilder sr = SubscriptionRequest.catchup(specs);
+    BigDecimal from = bean.getFrom();
+    long ser = Optional.ofNullable(from).orElse(BigDecimal.ZERO).longValue();
+    SubscriptionRequest request = null;
+
+    if (ser > 0) {
+      request = sr.fromNullable(findIdOfSerial(ser).orElse(null));
+    } else {
+      request = sr.fromScratch();
+    }
+
+    int WAIT_TIME = 20000;
+    try {
+      fs.subscribe(SubscriptionRequestTO.forFacts(request), obs).awaitCatchup(WAIT_TIME);
+    } catch (SubscriptionClosedException | TimeoutException e) {
+      // TODO Auto-generated catch block
+      throw new RuntimeException(e);
+    }
+
+    return obs.list();
+  }
+
+  @Override
+  public OptionalLong lastSerialBefore(@NonNull LocalDate date) {
+    // TODO
+    return OptionalLong.of(3);
+  }
+
+  class ListObserver implements FactObserver {
+    private int limit;
+    private int offset;
+
+    public ListObserver(int limit, int offset) {
+      this.limit = limit;
+      this.offset = offset;
+    }
+
+    @Getter private List<Fact> list = new LinkedList<>();
+
+    @Override
+    public void onNext(@NonNull Fact element) {
+      if (offset > 0) {
+        offset--;
+      } else {
+        if (limit > 0) {
+          limit--;
+          list.add(element);
+        }
+      }
+    }
+
+    boolean isComplete() {
+      return limit == 0;
+    }
   }
 }

@@ -74,8 +74,10 @@ public class PgConstants {
   public static final String CHANNEL_SCHEMASTORE_CHANGE = "schemastore_change";
   public static final String CHANNEL_TRANSFORMATIONSTORE_CHANGE = "transformationstore_change";
   public static final String CHANNEL_ROUNDTRIP =
-      "roundtrip_channel_"
-          + Math.abs(new Random().nextLong()); // using the pid lead to a sql exception
+      "roundtrip_channel_" + Math.abs(new Random().nextLong()); // using the
+  // pid lead
+  // to a sql
+  // exception
 
   public static final String COLUMN_PAYLOAD = "payload";
 
@@ -144,6 +146,9 @@ public class PgConstants {
           + " WHERE "
           + COLUMN_HEADER
           + " @> cast (? as jsonb)";
+
+  public static final String SELECT_BY_SER =
+      "SELECT " + PROJECTION_FACT + " FROM " + TABLE_FACT + " WHERE " + COLUMN_SER + " = ?";
 
   public static final //
   String SELECT_FACT_FROM_CATCHUP = //

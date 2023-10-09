@@ -19,6 +19,7 @@ import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.spring.security.AuthenticationContext;
 import com.vaadin.flow.spring.security.VaadinWebSecurity;
 import com.vaadin.flow.theme.Theme;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
@@ -40,16 +41,6 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 @ComponentScan(basePackages = "org.factcast.server.ui")
 @RequiredArgsConstructor
 public class UIConfig extends VaadinWebSecurity implements AppShellConfigurator, InitializingBean {
-
-  static {
-    // TODO remove
-    System.err.println("UIConfig loaded");
-  }
-
-  {
-    // TODO remove
-    System.err.println("UIConfig instanciated");
-  }
 
   final FactCast fc;
 
@@ -75,13 +66,22 @@ public class UIConfig extends VaadinWebSecurity implements AppShellConfigurator,
   public void afterPropertiesSet() throws Exception {
     // TODO
     fc.publish(
-        Fact.builder()
-            .ns("users")
-            .type("UserCreated")
-            .version(1)
-            .aggId(UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec085"))
-            .id(UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec084"))
-            .build(
-                "{\"firstName\":\"Peter\", \"lastName\":\"Lustig\", \"foo\":[{\"bar\": \"baz\"}]}"));
+        List.of(
+            Fact.builder()
+                .ns("users")
+                .type("UserCreated")
+                .version(1)
+                .aggId(UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec085"))
+                .id(UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec084"))
+                .build(
+                    "{\"firstName\":\"Peter\", \"lastName\":\"Lustig\", \"foo\":[{\"bar\": \"baz\"}]}"),
+            Fact.builder()
+                .ns("users")
+                .type("UserCreated")
+                .version(1)
+                .aggId(UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec087"))
+                .id(UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec086"))
+                .build(
+                    "{\"firstName\":\"Werner\", \"lastName\":\"Ernst\", \"ping\":[{\"pang\": \"pong\"}]}")));
   }
 }

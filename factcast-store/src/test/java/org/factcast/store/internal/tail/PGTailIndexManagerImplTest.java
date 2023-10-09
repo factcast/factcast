@@ -15,8 +15,9 @@
  */
 package org.factcast.store.internal.tail;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.factcast.store.internal.PgConstants.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.sql.ResultSet;
@@ -25,6 +26,7 @@ import java.util.*;
 import org.assertj.core.util.Lists;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
+import org.factcast.store.internal.tail.PGTailIndexManagerImpl.HighWaterMark;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -39,7 +41,7 @@ import org.springframework.jdbc.core.RowMapper;
 class PGTailIndexManagerImplTest {
   @Mock private JdbcTemplate jdbc;
   @Mock private StoreConfigurationProperties props;
-  @Mock private PGTailIndexManagerImpl.HighWaterMark target;
+  @Mock private HighWaterMark target;
   @InjectMocks private PGTailIndexManagerImpl underTest;
 
   @Nested
@@ -151,7 +153,8 @@ class PGTailIndexManagerImplTest {
       String t2Valid = PgConstants.TAIL_INDEX_NAME_PREFIX + (now - 11000);
       String t3InvalidButRecent = PgConstants.TAIL_INDEX_NAME_PREFIX + (now - 60);
 
-      // we remove invalid indices older than 2 hours from now, so use a timestamp older than that
+      // we remove invalid indices older than 2 hours from now, so use a timestamp
+      // older than that
       var threeHours = Duration.ofHours(3).toMillis();
       String t4Invalid = PgConstants.TAIL_INDEX_NAME_PREFIX + (now - threeHours);
 
@@ -170,7 +173,8 @@ class PGTailIndexManagerImplTest {
       uut.triggerTailCreation();
 
       verify(uut, never()).createNewTail();
-      // must not have removed valid recent indices, and also not invalid recent ones (t3)
+      // must not have removed valid recent indices, and also not invalid recent ones
+      // (t3)
       verify(uut).removeIndex(t4Invalid);
       verify(uut).removeIndex(t5Invalid);
       verify(uut, times(2)).removeIndex(anyString());
@@ -208,7 +212,7 @@ class PGTailIndexManagerImplTest {
       when(props.getMinimumTailAge())
           .thenReturn(Duration.ofDays(1), Duration.ofHours(1), Duration.ofMinutes(1));
 
-      var ts = System.currentTimeMillis() - 1000 * 60 * 30; // half hour before
+      var ts = System.currentTimeMillis() - (1000 * 60 * 30); // half hour before
 
       ArrayList<String> indexes = Lists.newArrayList(PgConstants.TAIL_INDEX_NAME_PREFIX + ts);
       var ret1 = uut.timeToCreateANewTail(indexes);
@@ -292,7 +296,7 @@ class PGTailIndexManagerImplTest {
 
       var uut = spy(underTest);
       when(jdbc.queryForObject(anyString(), any(RowMapper.class)))
-          .thenReturn(new PGTailIndexManagerImpl.HighWaterMark().targetId(id).targetSer(ser));
+          .thenReturn(new HighWaterMark().targetId(id).targetSer(ser));
 
       uut.refreshHighwaterMark();
 
@@ -306,13 +310,13 @@ class PGTailIndexManagerImplTest {
       return null;
     }
 
-    if (keyValuePairs.length % 2 != 0) {
+    if ((keyValuePairs.length % 2) != 0) {
       throw new IllegalArgumentException("Uneven list of key value pairs received, aborting...");
     }
 
     Map<String, Object> resultMap = new HashMap<>();
-    for (int i = 0; i < keyValuePairs.length / 2; i++) {
-      resultMap.put(keyValuePairs[i * 2], keyValuePairs[i * 2 + 1]);
+    for (int i = 0; i < (keyValuePairs.length / 2); i++) {
+      resultMap.put(keyValuePairs[i * 2], keyValuePairs[(i * 2) + 1]);
     }
     return resultMap;
   }

@@ -18,11 +18,10 @@ package org.factcast.server.ui.views;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Tag;
-import com.vaadin.flow.component.dependency.*;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.vaadin.flow.component.dependency.CssImport;
+import com.vaadin.flow.component.dependency.JsModule;
+import com.vaadin.flow.component.dependency.NpmPackage;
+import java.util.*;
 import java.util.stream.IntStream;
 import lombok.NonNull;
 import org.factcast.core.Fact;
@@ -42,10 +41,15 @@ public class JsonView extends Component {
     renderFact(
         f,
         new FactMetaData(
-            Map.of("id", List.of("123"), "meta._ts", List.of("1.1.1970 oder so")),
-            Map.of("foo[0].bar", List.of("Hallo Uwe", "Alles klar?"), "lastName", List.of("foo")),
-            Map.of(),
-            Map.of("lastName", List.of("This is the last name of a user."))));
+            Collections.emptyMap(),
+            Collections.emptyMap(),
+            Collections.emptyMap(),
+            Collections.emptyMap()));
+
+    //		new FactMetaData(Map.of("id", List.of("123"), "meta._ts", List.of("1.1.1970 oder so")),
+    //				Map.of("foo[0].bar", List.of("Hallo Uwe", "Alles klar?"), "lastName", List.of("foo")),
+    // Map.of(),
+    //				Map.of("lastName", List.of("This is the last name of a user.")))
   }
 
   public void renderFact(Fact f, FactMetaData metaData) {
@@ -68,14 +72,13 @@ public class JsonView extends Component {
   }
 
   public void renderFacts(List<Fact> f) {
-    renderFacts(
-        f,
-        List.of(
-            new FactMetaData(
-                Map.of("id", List.of("123"), "meta._ts", List.of("1.1.1970 oder so")),
-                Map.of("foo[0].bar", List.of("Hallo Uwe", "Alles klar?")),
-                Map.of(),
-                Map.of("lastName", List.of("This is the last name of a user.")))));
+    renderFacts(f, Collections.emptyList());
+
+    //    new FactMetaData(
+    //        Map.of("id", List.of("123"), "meta._ts", List.of("1.1.1970 oder so")),
+    //        Map.of("foo[0].bar", List.of("Hallo Uwe", "Alles klar?")),
+    //        Map.of(),
+    //        Map.of("lastName", List.of("This is the last name of a user."))))
   }
 
   public void renderFacts(List<Fact> f, List<FactMetaData> annotations) {
