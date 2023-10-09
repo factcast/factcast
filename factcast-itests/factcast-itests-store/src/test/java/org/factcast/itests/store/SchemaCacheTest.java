@@ -28,7 +28,6 @@ import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.FactValidationException;
 import org.factcast.store.registry.PgSchemaStoreChangeListener;
-import org.factcast.store.registry.SchemaRegistry;
 import org.factcast.test.IntegrationTest;
 import org.json.JSONArray;
 import org.json.JSONObject;

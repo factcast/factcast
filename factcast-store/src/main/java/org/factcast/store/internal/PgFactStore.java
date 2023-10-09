@@ -76,14 +76,15 @@ public class PgFactStore extends AbstractFactStore {
 
   @Autowired
   public PgFactStore(
-          @NonNull JdbcTemplate jdbcTemplate,
-          @NonNull PgSubscriptionFactory subscriptionFactory,
-          @NonNull TokenStore tokenStore,
-          @NonNull SchemaRegistry schemaRegistry, @NonNull FactTableWriteLock lock,
-          @NonNull FactTransformerService factTransformerService,
-          @NonNull PgFactIdToSerialMapper pgFactIdToSerialMapper,
-          @NonNull PgSnapshotCache snapCache,
-          @NonNull PgMetrics metrics) {
+      @NonNull JdbcTemplate jdbcTemplate,
+      @NonNull PgSubscriptionFactory subscriptionFactory,
+      @NonNull TokenStore tokenStore,
+      @NonNull SchemaRegistry schemaRegistry,
+      @NonNull FactTableWriteLock lock,
+      @NonNull FactTransformerService factTransformerService,
+      @NonNull PgFactIdToSerialMapper pgFactIdToSerialMapper,
+      @NonNull PgSnapshotCache snapCache,
+      @NonNull PgMetrics metrics) {
     super(tokenStore);
 
     this.jdbcTemplate = jdbcTemplate;
@@ -192,11 +193,11 @@ public class PgFactStore extends AbstractFactStore {
 
   public @NonNull Set<String> enumerateNamespacesFromPg() {
     return metrics.time(
-            StoreMetrics.OP.ENUMERATE_NAMESPACES,
-            () ->
-                    new HashSet<>(
-                            jdbcTemplate.query(
-                                    PgConstants.SELECT_DISTINCT_NAMESPACE, this::extractStringFromResultSet)));
+        StoreMetrics.OP.ENUMERATE_NAMESPACES,
+        () ->
+            new HashSet<>(
+                jdbcTemplate.query(
+                    PgConstants.SELECT_DISTINCT_NAMESPACE, this::extractStringFromResultSet)));
   }
 
   @Override
@@ -211,13 +212,13 @@ public class PgFactStore extends AbstractFactStore {
 
   public @NonNull Set<String> enumerateTypesFromPg(@NonNull String ns) {
     return metrics.time(
-            StoreMetrics.OP.ENUMERATE_TYPES,
-            () ->
-                    new HashSet<>(
-                            jdbcTemplate.query(
-                                    PgConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE,
-                                    new Object[] {ns},
-                                    this::extractStringFromResultSet)));
+        StoreMetrics.OP.ENUMERATE_TYPES,
+        () ->
+            new HashSet<>(
+                jdbcTemplate.query(
+                    PgConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE,
+                    new Object[] {ns},
+                    this::extractStringFromResultSet)));
   }
 
   @Override

@@ -18,7 +18,6 @@ package org.factcast.store.registry.validation.schema.store;
 import io.micrometer.core.instrument.Tags;
 import java.util.*;
 import java.util.stream.Collectors;
-
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.store.registry.metrics.RegistryMetrics;
@@ -129,10 +128,11 @@ public class PgSchemaStoreImpl implements SchemaStore {
 
   @Override
   public Set<SchemaKey> getAllSchemaKeys() {
-    return jdbcTemplate.queryForList(
-            "SELECT ns, type, version FROM schemastore")
-            .stream()
-            .map(key -> SchemaKey.of((String) key.get("ns"), (String) key.get("type"), (Integer) key.get("version")))
-            .collect(Collectors.toSet());
+    return jdbcTemplate.queryForList("SELECT ns, type, version FROM schemastore").stream()
+        .map(
+            key ->
+                SchemaKey.of(
+                    (String) key.get("ns"), (String) key.get("type"), (Integer) key.get("version")))
+        .collect(Collectors.toSet());
   }
 }
