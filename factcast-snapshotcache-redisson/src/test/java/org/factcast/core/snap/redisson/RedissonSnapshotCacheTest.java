@@ -61,8 +61,8 @@ class RedissonSnapshotCacheTest {
 
   @BeforeAll
   public static void startContainers() throws InterruptedException {
-    System.setProperty("spring.redis.host", redis.getHost());
-    System.setProperty("spring.redis.port", String.valueOf(redis.getMappedPort(6379)));
+    System.setProperty("spring.data.redis.host", redis.getHost());
+    System.setProperty("spring.data.redis.port", String.valueOf(redis.getMappedPort(6379)));
   }
 
   @SpyBean private RedissonClient redisson;

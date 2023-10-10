@@ -86,8 +86,8 @@ public class HttpRegistryFileFetcherTest {
       s.get(
           "/registry/someId",
           ctx -> {
-            ctx.res.setStatus(200);
-            ctx.res.getWriter().write(json);
+            ctx.res().setStatus(200);
+            ctx.res().getOutputStream().write(json.getBytes());
           });
 
       URL baseUrl = new URL("http://localhost:" + s.port() + "/registry/");
@@ -107,8 +107,8 @@ public class HttpRegistryFileFetcherTest {
       s.get(
           "/registry/someId",
           ctx -> {
-            ctx.res.setStatus(200);
-            ctx.res.getWriter().write(json);
+            ctx.res().setStatus(200);
+            ctx.res().getOutputStream().write(json.getBytes());
           });
 
       URL baseUrl = new URL("http://localhost:" + s.port() + "/registry/");

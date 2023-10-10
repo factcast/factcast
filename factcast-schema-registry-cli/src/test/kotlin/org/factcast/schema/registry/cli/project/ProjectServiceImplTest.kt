@@ -28,7 +28,7 @@ class ProjectServiceImplTest : StringSpec() {
 
     val uut = ProjectServiceImpl(fs, whiteListService)
 
-    override fun afterTest(testCase: TestCase, result: TestResult) {
+    override suspend fun afterTest(testCase: TestCase, result: TestResult) {
         clearAllMocks()
     }
 
