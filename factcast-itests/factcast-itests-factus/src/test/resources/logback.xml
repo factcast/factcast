@@ -9,10 +9,10 @@
       </pattern>
     </encoder>
   </appender>
-  <logger name="org.testcontainers" level="warn">
+  <logger name="org.testcontainers" level="INFO">
     <appender-ref ref="STDOUT" />
   </logger>
-  <root level="INFO">
+  <root level="TRACE">
     <appender-ref ref="STDOUT" />
   </root>
 </configuration>
