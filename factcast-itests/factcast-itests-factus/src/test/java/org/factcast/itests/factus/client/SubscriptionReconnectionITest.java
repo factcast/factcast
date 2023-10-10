@@ -156,7 +156,7 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
               () ->
                   fetchAll(
                       f -> {
-                        if (f.serial() == MAX_FACTS / 32) {
+                        if (f.serial() == MAX_FACTS / 16) {
                           try {
                             // let it repeatedly fail after each 1k sent...
                             proxy.toxics().limitData("limit", ToxicDirection.DOWNSTREAM, 1024);
