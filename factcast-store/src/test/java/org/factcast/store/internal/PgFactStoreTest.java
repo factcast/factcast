@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.sql.PreparedStatement;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
@@ -49,6 +50,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -438,6 +440,87 @@ class PgFactStoreTest {
       underTest.clearSnapshot(id);
       verify(snapCache).clearSnapshot(id);
       ;
+    }
+  }
+
+  @Nested
+  class WhenFetchingBySerial {
+    @SuppressWarnings("rawtypes")
+    @BeforeEach
+    void setup() {
+      configureMetricTimeSupplier();
+    }
+
+    @Test
+    void knownSerial() {
+      Long serial = 123L;
+      Fact fact =
+          Fact.builder().ns("ns").type("type").serial(serial).version(1).buildWithoutPayload();
+      when(jdbcTemplate.query(
+              eq(PgConstants.SELECT_BY_SER), eq(new Object[] {serial}), any(RowMapper.class)))
+          .thenReturn(Lists.newArrayList(fact));
+
+      Optional<Fact> result = underTest.fetchBySerial(serial);
+      assertThat(result).isNotEmpty().hasValue(fact);
+    }
+
+    @Test
+    void unknownSerial() {
+      Long serial = 123L;
+      when(jdbcTemplate.query(
+              eq(PgConstants.SELECT_BY_SER), eq(new Object[] {serial}), any(RowMapper.class)))
+          .thenReturn(Lists.emptyList());
+
+      Optional<Fact> result = underTest.fetchBySerial(serial);
+      assertThat(result).isEmpty();
+    }
+  }
+
+  @Nested
+  class WhenLatestSerial {
+    @Test
+    void highWaterMark() {
+      Long serial = 123L;
+      when(jdbcTemplate.queryForObject(eq(PgConstants.HIGHWATER_MARK), any(RowMapper.class)))
+          .thenReturn(serial);
+
+      assertThat(underTest.latestSerial()).isEqualTo(serial);
+    }
+
+    @Test
+    void noFacts() {
+      when(jdbcTemplate.queryForObject(eq(PgConstants.HIGHWATER_MARK), any(RowMapper.class)))
+          .thenThrow(new EmptyResultDataAccessException("Testing", 2));
+
+      assertThat(underTest.latestSerial()).isEqualTo(0L);
+    }
+  }
+
+  @Nested
+  class WhenLastSerialBefore {
+    @Test
+    void knownSerial() {
+      Long serial = 123L;
+      LocalDate date = LocalDate.now();
+      when(jdbcTemplate.queryForObject(
+              eq(PgConstants.LAST_SERIAL_BEFORE_DATE),
+              eq(new Object[] {java.sql.Date.valueOf(date)}),
+              any(RowMapper.class)))
+          .thenReturn(serial);
+
+      assertThat(underTest.lastSerialBefore(date)).isEqualTo(serial);
+    }
+
+    @Test
+    void noFacts() {
+      LocalDate date = LocalDate.now();
+      when(jdbcTemplate.queryForObject(
+              eq(PgConstants.LAST_SERIAL_BEFORE_DATE),
+              eq(new Object[] {java.sql.Date.valueOf(date)}),
+              any(RowMapper.class)))
+          .thenThrow(new EmptyResultDataAccessException("Testing", 1));
+
+      assertThat(underTest.lastSerialBefore(date)).isEqualTo(0L);
     }
   }
 }

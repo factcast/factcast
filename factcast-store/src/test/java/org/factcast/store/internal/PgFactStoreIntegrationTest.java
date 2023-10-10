@@ -18,6 +18,7 @@ package org.factcast.store.internal;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
@@ -30,10 +31,7 @@ import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.store.FactStore;
-import org.factcast.core.store.State;
-import org.factcast.core.store.StateToken;
-import org.factcast.core.store.TokenStore;
+import org.factcast.core.store.*;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
@@ -46,6 +44,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
@@ -64,6 +63,8 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
   @Autowired TokenStore tokenStore;
 
   @Autowired PGTailIndexManager tailManager;
+
+  @Autowired JdbcTemplate jdbcTemplate;
 
   @Override
   protected FactStore createStoreToTest() {
@@ -253,12 +254,74 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
 
   @Test
   void getStateOnEmptyFactTableReturns0() {
-
     StateToken token = store.stateFor(Lists.newArrayList(FactSpec.ns("foo").type("bar")));
     assertThat(token).isNotNull();
 
     Optional<State> state = tokenStore.get(token);
     assertThat(state).isNotEmpty();
     assertThat(state.get()).extracting(State::serialOfLastMatchingFact).isEqualTo(0L);
+  }
+
+  @Nested
+  class LocalFactStoreTest {
+    final LocalFactStore localFactStore = (LocalFactStore) fs;
+
+    @BeforeEach
+    void setup() {
+      // cleanup the date2serial table
+      jdbcTemplate.update("DELETE FROM " + PgConstants.TABLE_DATE2SERIAL);
+    }
+
+    @Test
+    void testFetchBySerialReturnsFact() {
+      UUID id = UUID.randomUUID();
+      Fact fact = Fact.builder().id(id).ns("foo").type("bar").buildWithoutPayload();
+      store.publish(Collections.singletonList(fact));
+      long serial = store.serialOf(id).orElseThrow();
+
+      Optional<Fact> fetchedFact = localFactStore.fetchBySerial(serial);
+      assertThat(fetchedFact.orElseThrow().id()).isEqualTo(id);
+    }
+
+    @Test
+    void testLatestSerialReturns() {
+      UUID id = UUID.randomUUID();
+      Fact fact = Fact.builder().id(id).ns("foo").type("bar").buildWithoutPayload();
+      store.publish(Collections.singletonList(fact));
+      long expectedSerial = store.serialOf(id).orElseThrow();
+
+      long serial = localFactStore.latestSerial();
+      assertThat(serial).isEqualTo(expectedSerial);
+    }
+
+    @Test
+    void testLastSerialBeforeNowReturns0() {
+      UUID id1 = UUID.randomUUID();
+      Fact fact1 = Fact.builder().id(id1).ns("foo").type("bar").buildWithoutPayload();
+      UUID id2 = UUID.randomUUID();
+      Fact fact2 = Fact.builder().id(id2).ns("foo").type("bar").buildWithoutPayload();
+      store.publish(Lists.newArrayList(fact1, fact2));
+
+      long serial = localFactStore.lastSerialBefore(LocalDate.now());
+      assertThat(serial).isEqualTo(0L);
+    }
+
+    @Test
+    void testLastSerialBeforeNowReturns() {
+      LocalDate aWeekAgo = LocalDate.now().minusWeeks(1);
+      long firstSerial = 100L;
+      long lastSerial = 300L;
+      jdbcTemplate.update(
+          "INSERT INTO " + PgConstants.TABLE_DATE2SERIAL + " VALUES (?, ?, ?)",
+          aWeekAgo,
+          firstSerial,
+          lastSerial);
+      UUID id = UUID.randomUUID();
+      Fact fact = Fact.builder().id(id).ns("foo").type("bar").buildWithoutPayload();
+      store.publish(Collections.singletonList(fact));
+
+      long serial = localFactStore.lastSerialBefore(LocalDate.now());
+      assertThat(serial).isEqualTo(lastSerial);
+    }
   }
 }

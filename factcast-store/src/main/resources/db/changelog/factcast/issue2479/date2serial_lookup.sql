@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS date2serial (
-        date date PRIMARY KEY,
+        factDate date PRIMARY KEY,
         firstSer bigint,
         lastSer bigint
 );
