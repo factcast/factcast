@@ -17,6 +17,7 @@ package org.factcast.itests.factus.client;
 
 import static java.util.concurrent.TimeUnit.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
@@ -88,10 +89,13 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
     proxy.toxics().latency("some latency", ToxicDirection.UPSTREAM, LATENCY);
 
     sw = Stopwatch.createStarted();
-    fetchAll();
+
+    assertThatNoException().isThrownBy(() -> fetchAll());
     long rtWithLatency = sw.stop().elapsed(TimeUnit.MILLISECONDS);
 
-    assertThat(rtWithoutLatency).isLessThan(LATENCY);
+    // TODO remove, that is not certain, depends on batch size for instance...
+    // assertThat(rtWithoutLatency).isLessThan(LATENCY);
+    // that only tests that "proxy.toxics().latency" works as intended
     assertThat(rtWithLatency).isGreaterThan(LATENCY);
 
     log.info("Runtime with/without latency: {}/{}", rtWithLatency, rtWithoutLatency);
