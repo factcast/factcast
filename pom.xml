@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.7.0-RC1</version>
+  <version>0.7.0-RC2</version>
   <packaging>pom</packaging>
   <organization>
     <name>factcast</name>
@@ -13,8 +13,8 @@
   </organization>
   <name>factcast</name>
   <description>factcast is a 'good enough' event store using PostgreSQL
-    for persistence, and offers REST and GRPC
-    interfaces.
+    for persistence, and offers an GRPC interface and a java client
+    library for rapid application development.
   </description>
   <inceptionYear>2018</inceptionYear>
   <issueManagement>
