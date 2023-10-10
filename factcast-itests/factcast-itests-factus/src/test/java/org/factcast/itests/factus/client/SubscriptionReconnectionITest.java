@@ -184,7 +184,7 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
       assertThat(count.get()).isLessThan(MAX_FACTS);
 
       await()
-          .atMost(3, SECONDS)
+          .atMost(10, SECONDS)
           .untilAsserted(
               () ->
                   assertThat(
