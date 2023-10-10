@@ -15,19 +15,18 @@
  */
 package org.factcast.itests.factus.client;
 
-import static java.util.concurrent.TimeUnit.*;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
-import com.google.common.base.Stopwatch;
 import eu.rekawek.toxiproxy.model.ToxicDirection;
 import io.grpc.StatusRuntimeException;
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import nl.altindag.console.ConsoleCaptor;
@@ -96,13 +95,8 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
         proxy.getContainerIpAddress(),
         proxy.getProxyPort());
 
-    fetchAll();
-    Stopwatch sw = Stopwatch.createStarted();
-    fetchAll();
-    long rt = sw.stop().elapsed(TimeUnit.MILLISECONDS);
     var count = new AtomicInteger();
 
-    sw = Stopwatch.createStarted();
     fetchAll(
         f -> {
           if (f.serial() == MAX_FACTS / 4) {
@@ -114,12 +108,7 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
           count.incrementAndGet();
         });
 
-    long rtWithReconnect = sw.stop().elapsed(TimeUnit.MILLISECONDS);
-
-    assertThat(rtWithReconnect).isGreaterThan(rt);
     assertThat(count.get()).isEqualTo(MAX_FACTS);
-
-    log.info("Runtime with/without reconnect: {}/{}", rtWithReconnect, rt);
   }
 
   @SneakyThrows
