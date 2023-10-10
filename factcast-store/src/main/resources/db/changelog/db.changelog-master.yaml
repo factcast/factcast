@@ -350,7 +350,7 @@ databaseChangeLog:
       id: issue2479_migration
       author: uweschaefer
       preConditions:
-        - onFail: WARN
+        - onFail: MARK_RAN
         - sqlCheck:
              expectedResult: t
              sql: SELECT count_estimate('SELECT * FROM fact') < 10000000;
