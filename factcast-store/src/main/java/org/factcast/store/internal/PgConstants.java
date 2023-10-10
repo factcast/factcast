@@ -36,7 +36,7 @@ public class PgConstants {
 
   public static final String TABLE_FACT = "fact";
 
-  private static final String TABLE_DATE2SERIAL = "date2serial";
+  public static final String TABLE_DATE2SERIAL = "date2serial";
 
   public static final String TAIL_INDEX_NAME_PREFIX = "idx_fact_tail_";
 
@@ -294,7 +294,9 @@ public class PgConstants {
           + ")";
 
   public static final String LAST_SERIAL_BEFORE_DATE =
-      "SELECT COALESCE(max(lastSerial),0) AS lastSer FROM " + TABLE_DATE2SERIAL + " where date < ?";
+      "SELECT COALESCE(max(lastSer),0) AS lastSer FROM "
+          + TABLE_DATE2SERIAL
+          + " where factDate < ?";
 
   private static String fromHeader(String attributeName) {
     return PgConstants.COLUMN_HEADER + "->>'" + attributeName + "' AS " + attributeName;

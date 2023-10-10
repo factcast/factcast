@@ -278,7 +278,6 @@ public class PgFactStore extends AbstractFactStore implements LocalFactStore {
     metrics.time(StoreMetrics.OP.CLEAR_SNAPSHOT, () -> snapCache.clearSnapshot(id));
   }
 
-  // TODO yet to be tested
   @Override
   public @NonNull Optional<Fact> fetchBySerial(long serial) {
     return metrics.time(
@@ -293,7 +292,6 @@ public class PgFactStore extends AbstractFactStore implements LocalFactStore {
                 .findFirst());
   }
 
-  // TODO yet to be tested
   @Override
   public long latestSerial() {
     try {
@@ -310,7 +308,6 @@ public class PgFactStore extends AbstractFactStore implements LocalFactStore {
     }
   }
 
-  // TODO yet to be tested
   @Override
   public long lastSerialBefore(@NonNull LocalDate date) {
     try {
