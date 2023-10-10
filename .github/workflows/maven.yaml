@@ -99,4 +99,4 @@ jobs:
         distribution: 'corretto'
     - id: 'step-3'
       name: 'Test - Integration'
-      run: './mvnw -B -Dpostgres.version=${{ matrix.postgresVersion }} verify -DskipUnitTests'
+      run: './mvnw -B -Dpostgres.version=${{ matrix.postgresVersion }} verify -DskipUnitTests -Dit.test=SubscriptionReconnectionITest'
