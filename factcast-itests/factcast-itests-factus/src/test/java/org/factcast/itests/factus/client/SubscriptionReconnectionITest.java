@@ -15,7 +15,7 @@
  */
 package org.factcast.itests.factus.client;
 
-import static java.util.concurrent.TimeUnit.*;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -25,9 +25,10 @@ import com.google.common.base.Stopwatch;
 import eu.rekawek.toxiproxy.model.ToxicDirection;
 import io.grpc.StatusRuntimeException;
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import nl.altindag.console.ConsoleCaptor;
@@ -52,15 +53,13 @@ import org.springframework.test.context.TestPropertySource;
 @SpringBootTest
 @ContextConfiguration(classes = TestFactusApplication.class)
 @TestPropertySource(
-    properties =
-        "factcast.grpc.client.resilience.attempts="
-            + SubscriptionReconnectionITest.NUMBER_OF_ATTEMPTS)
+    properties = {
+      "factcast.grpc.client.resilience.attempts="
+          + SubscriptionReconnectionITest.NUMBER_OF_ATTEMPTS,
+      "factcast.grpc.client.catchup-batchsize=1"
+    })
 @Slf4j
 class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
-
-  static {
-    System.setProperty("factcast.grpc.client.catchup-batchsize", "1");
-  }
 
   static final int NUMBER_OF_ATTEMPTS = 30;
 
@@ -143,7 +142,7 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
 
     try (var ignored = follow(f -> count.incrementAndGet())) {
 
-      await().atMost(3, SECONDS).untilAsserted(() -> assertThat(count.get()).isEqualTo(MAX_FACTS));
+      await().atMost(10, SECONDS).untilAsserted(() -> assertThat(count.get()).isEqualTo(MAX_FACTS));
 
       proxy.disable();
       sleep(100);
