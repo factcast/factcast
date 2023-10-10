@@ -3,7 +3,8 @@
 -- as it can take some time depending on your DB performance
 
 INSERT INTO date2serial 
-	(SELECT	fact_date(header) AS d, min(ser), max(ser) FROM fact GROUP BY d);
+	(SELECT	fact_date(header) AS d, min(ser), max(ser) FROM fact GROUP BY d)
+	ON CONFLICT(factDate) DO NOTHING;
 
 
 -- for the day when the trigger was introduced, we might have a wrong serial 

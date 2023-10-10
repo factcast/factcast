@@ -5,6 +5,6 @@ CREATE OR REPLACE FUNCTION fact_date(header JSONB)
 RETURNS date AS $$
 BEGIN
 	-- __ts needs to be divided by 1000 because it is set by java with a finer granularity
-    RETURN to_timestamp( ($1 -> 'meta' ->> '_ts') :: numeric / 1000 ) :: date;
+    RETURN to_timestamp( COALESCE( ($1 -> 'meta' ->> '_ts') :: NUMERIC),0) / 1000 ) :: date;
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT;
