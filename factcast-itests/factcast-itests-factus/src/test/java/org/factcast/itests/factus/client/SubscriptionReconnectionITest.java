@@ -15,7 +15,7 @@
  */
 package org.factcast.itests.factus.client;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
@@ -24,10 +24,9 @@ import com.google.common.base.Stopwatch;
 import eu.rekawek.toxiproxy.model.ToxicDirection;
 import io.grpc.StatusRuntimeException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import nl.altindag.console.ConsoleCaptor;
@@ -42,7 +41,7 @@ import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.toxi.FactCastProxy;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -57,6 +56,11 @@ import org.springframework.test.context.TestPropertySource;
             + SubscriptionReconnectionITest.NUMBER_OF_ATTEMPTS)
 @Slf4j
 class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
+
+  static {
+    System.setProperty("factcast.grpc.client.catchup-batchsize", "1");
+  }
+
   static final int NUMBER_OF_ATTEMPTS = 30;
 
   private static final int MAX_FACTS = 10000;
@@ -64,7 +68,7 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
   @Autowired FactCast fc;
   FactCastProxy proxy;
 
-  @Before
+  @BeforeEach
   void setup() {
     log.info("Publishing");
     List<Fact> facts = new ArrayList<>(MAX_FACTS);
