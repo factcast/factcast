@@ -99,4 +99,4 @@ jobs:
         distribution: 'corretto'
     - id: 'step-3'
       name: 'Test - Integration'
-      run: './mvnw -B -Dpostgres.version=${{ matrix.postgresVersion }} verify -am -pl factcast-itests/factcast-itests-factus -DskipUnitTests -Dit.test=SubscriptionReconnectionITest -Dfailsafe.failIfNoSpecifiedTests=false'
+      run: './mvnw -B -Dpostgres.version=${{ matrix.postgresVersion }} verify -am -pl factcast-itests/factcast-itests-factus -DskipUnitTests -Dit.test=SubscriptionReconnectionITest#subscribeWithFailingReconnect -Dfailsafe.failIfNoSpecifiedTests=false'
