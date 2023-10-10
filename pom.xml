@@ -110,7 +110,7 @@
     <mockk.version>1.13.8</mockk.version>
     <redisson.version>3.23.5</redisson.version>
     <redisson-spring-boot-starter.version>3.23.5</redisson-spring-boot-starter.version>
-    <graaljs.version>23.0.1</graaljs.version>
+    <graaljs.version>23.1.0</graaljs.version>
     <shedlock.version>5.8.0</shedlock.version>
     <byte-buddy.version>1.14.8</byte-buddy.version>
     <skipUnitTests>false</skipUnitTests>
