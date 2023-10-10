@@ -15,7 +15,7 @@
  */
 package org.factcast.itests.factus.client;
 
-import static java.util.concurrent.TimeUnit.*;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
@@ -24,9 +24,10 @@ import com.google.common.base.Stopwatch;
 import eu.rekawek.toxiproxy.model.ToxicDirection;
 import io.grpc.StatusRuntimeException;
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import nl.altindag.console.ConsoleCaptor;
@@ -41,7 +42,7 @@ import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.toxi.FactCastProxy;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.Before;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -63,7 +64,7 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
   @Autowired FactCast fc;
   FactCastProxy proxy;
 
-  @BeforeEach
+  @Before
   void setup() {
     log.info("Publishing");
     List<Fact> facts = new ArrayList<>(MAX_FACTS);
@@ -156,7 +157,7 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
               () ->
                   fetchAll(
                       f -> {
-                        if (f.serial() == MAX_FACTS / 16) {
+                        if (f.serial() == MAX_FACTS / 32) {
                           try {
                             // let it repeatedly fail after each 1k sent...
                             proxy.toxics().limitData("limit", ToxicDirection.DOWNSTREAM, 1024);
