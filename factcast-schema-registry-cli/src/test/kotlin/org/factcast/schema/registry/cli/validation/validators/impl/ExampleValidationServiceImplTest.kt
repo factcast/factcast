@@ -35,7 +35,7 @@ class ExampleValidationServiceImplTest : StringSpec() {
 
     val uut = ExampleValidationServiceImpl(fs, schemaService)
 
-    override fun afterTest(testCase: TestCase, result: TestResult) {
+    override suspend fun afterTest(testCase: TestCase, result: TestResult) {
         clearAllMocks()
     }
 
