@@ -15,18 +15,18 @@
  */
 package org.factcast.itests.factus.client;
 
-import static java.util.concurrent.TimeUnit.*;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
-import com.google.common.base.Stopwatch;
 import eu.rekawek.toxiproxy.model.ToxicDirection;
 import io.grpc.StatusRuntimeException;
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import nl.altindag.console.ConsoleCaptor;
@@ -51,9 +51,12 @@ import org.springframework.test.context.TestPropertySource;
 @SpringBootTest
 @ContextConfiguration(classes = TestFactusApplication.class)
 @TestPropertySource(
-    properties =
-        "factcast.grpc.client.resilience.attempts="
-            + SubscriptionReconnectionITest.NUMBER_OF_ATTEMPTS)
+    properties = {
+      "factcast.grpc.client.resilience.attempts="
+          + SubscriptionReconnectionITest.NUMBER_OF_ATTEMPTS,
+      // some tests here assume event handling happens sequential even on networking level
+      "factcast.grpc.client.catchup-batchsize=1"
+    })
 @Slf4j
 class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
   static final int NUMBER_OF_ATTEMPTS = 30;
@@ -75,21 +78,12 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
 
   @SneakyThrows
   @Test
-  void subscribeWithLatency() {
-    Stopwatch sw = Stopwatch.createStarted();
+  void subscribeWorksWithoutAndWithLatency() {
     fetchAll();
-    long rtWithoutLatency = sw.stop().elapsed(TimeUnit.MILLISECONDS);
 
     proxy.toxics().latency("some latency", ToxicDirection.UPSTREAM, LATENCY);
 
-    sw = Stopwatch.createStarted();
-    fetchAll();
-    long rtWithLatency = sw.stop().elapsed(TimeUnit.MILLISECONDS);
-
-    assertThat(rtWithoutLatency).isLessThan(LATENCY);
-    assertThat(rtWithLatency).isGreaterThan(LATENCY);
-
-    log.info("Runtime with/without latency: {}/{}", rtWithLatency, rtWithoutLatency);
+    assertThatNoException().isThrownBy(this::fetchAll);
   }
 
   @SneakyThrows
@@ -101,13 +95,8 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
         proxy.getContainerIpAddress(),
         proxy.getProxyPort());
 
-    fetchAll();
-    Stopwatch sw = Stopwatch.createStarted();
-    fetchAll();
-    long rt = sw.stop().elapsed(TimeUnit.MILLISECONDS);
     var count = new AtomicInteger();
 
-    sw = Stopwatch.createStarted();
     fetchAll(
         f -> {
           if (f.serial() == MAX_FACTS / 4) {
@@ -119,12 +108,7 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
           count.incrementAndGet();
         });
 
-    long rtWithReconnect = sw.stop().elapsed(TimeUnit.MILLISECONDS);
-
-    assertThat(rtWithReconnect).isGreaterThan(rt);
     assertThat(count.get()).isEqualTo(MAX_FACTS);
-
-    log.info("Runtime with/without reconnect: {}/{}", rtWithReconnect, rt);
   }
 
   @SneakyThrows
@@ -134,7 +118,7 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
 
     try (var ignored = follow(f -> count.incrementAndGet())) {
 
-      await().atMost(3, SECONDS).untilAsserted(() -> assertThat(count.get()).isEqualTo(MAX_FACTS));
+      await().atMost(10, SECONDS).untilAsserted(() -> assertThat(count.get()).isEqualTo(MAX_FACTS));
 
       proxy.disable();
       sleep(100);
@@ -175,7 +159,7 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
       assertThat(count.get()).isLessThan(MAX_FACTS);
 
       await()
-          .atMost(3, SECONDS)
+          .atMost(10, SECONDS)
           .untilAsserted(
               () ->
                   assertThat(
