@@ -284,10 +284,15 @@ public class PgFactStore extends AbstractFactStore implements LocalFactStore {
   public @NonNull Optional<Fact> fetchBySerial(long serial) {
     return metrics.time(
         StoreMetrics.OP.FETCH_BY_SER,
-        () ->
-            Optional.ofNullable(
+        () -> {
+          try {
+            return Optional.ofNullable(
                 jdbcTemplate.queryForObject(
-                    PgConstants.SELECT_BY_SER, this::extractFactFromResultSet, serial)));
+                    PgConstants.SELECT_BY_SER, this::extractFactFromResultSet, serial));
+          } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+          }
+        });
   }
 
   @Override
