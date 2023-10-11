@@ -56,14 +56,14 @@ import org.springframework.jdbc.core.*;
 @ExtendWith(MockitoExtension.class)
 class PgFactStoreTest {
 
-  @Mock private @NonNull JdbcTemplate jdbcTemplate;
-  @Mock private @NonNull PgSubscriptionFactory subscriptionFactory;
-  @Mock private @NonNull FactTableWriteLock lock;
-  @Mock private @NonNull FactTransformerService factTransformerService;
-  @Mock private @NonNull PgFactIdToSerialMapper pgFactIdToSerialMapper;
-  @Mock private @NonNull PgMetrics metrics;
-  @Mock private @NonNull PgSnapshotCache snapCache;
-  @Mock private @NonNull TokenStore tokenStore;
+  @Mock private JdbcTemplate jdbcTemplate;
+  @Mock private PgSubscriptionFactory subscriptionFactory;
+  @Mock private FactTableWriteLock lock;
+  @Mock private FactTransformerService factTransformerService;
+  @Mock private PgFactIdToSerialMapper pgFactIdToSerialMapper;
+  @Mock private PgMetrics metrics;
+  @Mock private PgSnapshotCache snapCache;
+  @Mock private TokenStore tokenStore;
   @InjectMocks private PgFactStore underTest;
 
   @Nested
@@ -99,7 +99,6 @@ class PgFactStoreTest {
     private final UUID ID = UUID.randomUUID();
     private final int VERSION = 11;
 
-    @SuppressWarnings("rawtypes")
     @BeforeEach
     void setup() {
       configureMetricTimeSupplier();
@@ -126,7 +125,6 @@ class PgFactStoreTest {
   class WhenPublishing {
     @Mock private Fact fact;
 
-    @SuppressWarnings("rawtypes")
     @BeforeEach
     void setup() {
       configureMetricTimeRunnable();
@@ -188,7 +186,7 @@ class PgFactStoreTest {
 
   @Nested
   class WhenEnumeratingNamespaces {
-    @SuppressWarnings("rawtypes")
+
     @BeforeEach
     void setup() {
       configureMetricTimeSupplier();
@@ -439,13 +437,12 @@ class PgFactStoreTest {
     void clear() {
       underTest.clearSnapshot(id);
       verify(snapCache).clearSnapshot(id);
-      ;
     }
   }
 
   @Nested
   class WhenFetchingBySerial {
-    @SuppressWarnings("rawtypes")
+
     @BeforeEach
     void setup() {
       configureMetricTimeSupplier();
@@ -456,23 +453,22 @@ class PgFactStoreTest {
       Long serial = 123L;
       Fact fact =
           Fact.builder().ns("ns").type("type").serial(serial).version(1).buildWithoutPayload();
-      when(jdbcTemplate.query(
-              eq(PgConstants.SELECT_BY_SER), eq(new Object[] {serial}), any(RowMapper.class)))
-          .thenReturn(Lists.newArrayList(fact));
+      when(jdbcTemplate.queryForObject(
+              eq(PgConstants.SELECT_BY_SER), any(RowMapper.class), same(serial)))
+          .thenReturn(fact);
 
       Optional<Fact> result = underTest.fetchBySerial(serial);
-      assertThat(result).isNotEmpty().hasValue(fact);
+      assertThat(result).hasValue(fact);
     }
 
     @Test
     void unknownSerial() {
-      Long serial = 123L;
-      when(jdbcTemplate.query(
-              eq(PgConstants.SELECT_BY_SER), eq(new Object[] {serial}), any(RowMapper.class)))
-          .thenReturn(Lists.emptyList());
+      long serial = 123L;
+      when(jdbcTemplate.queryForObject(
+              eq(PgConstants.SELECT_BY_SER), any(RowMapper.class), same(serial)))
+          .thenReturn(null);
 
-      Optional<Fact> result = underTest.fetchBySerial(serial);
-      assertThat(result).isEmpty();
+      assertThat(underTest.fetchBySerial(serial)).isEmpty();
     }
   }
 
@@ -481,7 +477,7 @@ class PgFactStoreTest {
     @Test
     void highWaterMark() {
       Long serial = 123L;
-      when(jdbcTemplate.queryForObject(eq(PgConstants.HIGHWATER_MARK), any(RowMapper.class)))
+      when(jdbcTemplate.queryForObject(eq(PgConstants.HIGHWATER_SERIAL), any(RowMapper.class)))
           .thenReturn(serial);
 
       assertThat(underTest.latestSerial()).isEqualTo(serial);
@@ -489,7 +485,7 @@ class PgFactStoreTest {
 
     @Test
     void noFacts() {
-      when(jdbcTemplate.queryForObject(eq(PgConstants.HIGHWATER_MARK), any(RowMapper.class)))
+      when(jdbcTemplate.queryForObject(eq(PgConstants.HIGHWATER_SERIAL), any(RowMapper.class)))
           .thenThrow(new EmptyResultDataAccessException("Testing", 2));
 
       assertThat(underTest.latestSerial()).isZero();
@@ -504,8 +500,8 @@ class PgFactStoreTest {
       LocalDate date = LocalDate.now();
       when(jdbcTemplate.queryForObject(
               eq(PgConstants.LAST_SERIAL_BEFORE_DATE),
-              eq(new Object[] {java.sql.Date.valueOf(date)}),
-              any(RowMapper.class)))
+              any(RowMapper.class),
+              eq(new Object[] {java.sql.Date.valueOf(date)})))
           .thenReturn(serial);
 
       assertThat(underTest.lastSerialBefore(date)).isEqualTo(serial);
@@ -516,8 +512,8 @@ class PgFactStoreTest {
       LocalDate date = LocalDate.now();
       when(jdbcTemplate.queryForObject(
               eq(PgConstants.LAST_SERIAL_BEFORE_DATE),
-              eq(new Object[] {java.sql.Date.valueOf(date)}),
-              any(RowMapper.class)))
+              any(RowMapper.class),
+              eq(new Object[] {java.sql.Date.valueOf(date)})))
           .thenThrow(new EmptyResultDataAccessException("Testing", 1));
 
       assertThat(underTest.lastSerialBefore(date)).isZero();

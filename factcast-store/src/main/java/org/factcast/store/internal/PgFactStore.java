@@ -48,6 +48,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -284,13 +285,9 @@ public class PgFactStore extends AbstractFactStore implements LocalFactStore {
     return metrics.time(
         StoreMetrics.OP.FETCH_BY_SER,
         () ->
-            jdbcTemplate
-                .query(
-                    PgConstants.SELECT_BY_SER,
-                    new Object[] {serial},
-                    this::extractFactFromResultSet)
-                .stream()
-                .findFirst());
+            Optional.ofNullable(
+                jdbcTemplate.queryForObject(
+                    PgConstants.SELECT_BY_SER, this::extractFactFromResultSet, serial)));
   }
 
   @Override
@@ -298,13 +295,7 @@ public class PgFactStore extends AbstractFactStore implements LocalFactStore {
     try {
       Long l =
           jdbcTemplate.queryForObject(
-              PgConstants.HIGHWATER_MARK,
-              (rs, rowNum) -> {
-                HighWaterMark ret = new HighWaterMark();
-                ret.targetId(rs.getObject("targetId", UUID.class));
-                ret.targetSer(rs.getLong("targetSer"));
-                return ret.targetSer();
-              });
+              PgConstants.HIGHWATER_SERIAL, new SingleColumnRowMapper<>(Long.class));
       return Optional.ofNullable(l).orElse(0L);
     } catch (EmptyResultDataAccessException noFactsAtAll) {
       return 0L;
@@ -317,8 +308,8 @@ public class PgFactStore extends AbstractFactStore implements LocalFactStore {
       Long lastSer =
           jdbcTemplate.queryForObject(
               PgConstants.LAST_SERIAL_BEFORE_DATE,
-              new Object[] {Date.valueOf(date)},
-              (rs, rowNum) -> rs.getLong("lastSer"));
+              new SingleColumnRowMapper<>(Long.class),
+              Date.valueOf(date));
       return Optional.ofNullable(lastSer).orElse(0L);
     } catch (EmptyResultDataAccessException noFactsAtAll) {
       return 0L;
