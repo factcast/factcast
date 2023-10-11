@@ -21,6 +21,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import java.io.IOException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -97,7 +98,10 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
       log.info("Acquiring lock for registry update");
       LockConfiguration lockConfig =
           new LockConfiguration(
-              SchemaRegistry.LOCK_NAME, Duration.ofMinutes(1), Duration.ofSeconds(2));
+              Instant.now(),
+              SchemaRegistry.LOCK_NAME,
+              Duration.ofMinutes(1),
+              Duration.ofSeconds(2));
       Optional<SimpleLock> lock = lockProvider.lock(lockConfig);
       if (lock.isPresent()) {
         try {

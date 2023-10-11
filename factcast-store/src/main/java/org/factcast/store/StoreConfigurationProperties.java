@@ -20,17 +20,16 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.ConsoleAppender;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import java.time.Duration;
 import java.util.*;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.Positive;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
@@ -43,8 +42,6 @@ import org.springframework.validation.annotation.Validated;
 public class StoreConfigurationProperties implements InitializingBean {
 
   public static final String PROPERTIES_PREFIX = "factcast.store";
-
-  @Autowired private PgLegacyConfigurationProperties legacyProperties;
 
   /**
    * defines the number of Facts being retrieved with one Page Query for PageStrategy.PAGED, or
@@ -213,39 +210,6 @@ public class StoreConfigurationProperties implements InitializingBean {
 
   @Override
   public void afterPropertiesSet() throws Exception {
-    legacyProperties.getPageSize().ifPresent(this::setPageSize);
-    legacyProperties.getCatchupStrategy().ifPresent(this::setCatchupStrategy);
-    legacyProperties.getSchemaRegistryUrl().ifPresent(this::setSchemaRegistryUrl);
-    legacyProperties.getPersistentRegistry().ifPresent(this::setPersistentRegistry);
-    legacyProperties
-        .getDeleteTransformationsStaleForDays()
-        .ifPresent(this::setDeleteTransformationsStaleForDays);
-    legacyProperties
-        .getPersistentTransformationCache()
-        .ifPresent(this::setPersistentTransformationCache);
-    legacyProperties
-        .getPersistentTransformationCache()
-        .ifPresent(this::setPersistentTransformationCache);
-    legacyProperties
-        .getInMemTransformationCacheCapacity()
-        .ifPresent(this::setInMemTransformationCacheCapacity);
-    legacyProperties.getAllowUnvalidatedPublish().ifPresent(this::setAllowUnvalidatedPublish);
-    legacyProperties.getAllowSchemaReplace().ifPresent(this::setAllowSchemaReplace);
-    legacyProperties
-        .getFactNotificationMaxRoundTripLatencyInMillis()
-        .ifPresent(this::setFactNotificationMaxRoundTripLatencyInMillis);
-    legacyProperties
-        .getFactNotificationBlockingWaitTimeInMillis()
-        .ifPresent(this::setFactNotificationBlockingWaitTimeInMillis);
-    legacyProperties
-        .getFactNotificationNewConnectionWaitTimeInMillis()
-        .ifPresent(this::setFactNotificationNewConnectionWaitTimeInMillis);
-    legacyProperties.getIntegrationTestMode().ifPresent(this::setIntegrationTestMode);
-    legacyProperties.getTailIndexingEnabled().ifPresent(this::setTailIndexingEnabled);
-    legacyProperties.getTailGenerationsToKeep().ifPresent(this::setTailGenerationsToKeep);
-    legacyProperties.getMinimumTailAge().ifPresent(this::setMinimumTailAge);
-    legacyProperties.getTailManagementCron().ifPresent(this::setTailManagementCron);
-
     if (integrationTestMode) {
 
       adjustLogbackAppender();

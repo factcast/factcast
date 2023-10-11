@@ -19,9 +19,7 @@ import java.nio.file.Paths
 public val workflowMaven: Workflow = workflow(
     name = "Maven all in one",
     on = listOf(
-        PullRequest(
-            branches = listOf("master"),
-        ),
+        PullRequest(),
         Push(
             branches = listOf("master"),
         ),
@@ -61,10 +59,10 @@ public val workflowMaven: Workflow = workflow(
             ),
         )
         uses(
-            name = "JDK 11",
+            name = "JDK 17",
             action = SetupJavaV3(
                 distribution = SetupJavaV3.Distribution.Custom("corretto"),
-                javaVersion = "11",
+                javaVersion = "17",
             ),
         )
 
@@ -120,10 +118,10 @@ public val workflowMaven: Workflow = workflow(
         )
 
         uses(
-            name = "JDK 11",
+            name = "JDK 17",
             action = SetupJavaV3(
                 distribution = SetupJavaV3.Distribution.Custom("corretto"),
-                javaVersion = "11",
+                javaVersion = "17",
             ),
         )
 
