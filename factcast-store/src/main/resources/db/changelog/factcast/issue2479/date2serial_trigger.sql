@@ -1,7 +1,7 @@
 DROP TRIGGER IF EXISTS tr_fact_date2serial ON fact CASCADE; 
 DROP FUNCTION IF EXISTS maintain_fact_date CASCADE;
 
-CREATE TABLE IF NOT EXISTS tmp_fact_date_trigger (factDate date);
+CREATE TABLE IF NOT EXISTS tmp_fact_date_trigger (factDate date not null);
 INSERT INTO tmp_fact_date_trigger VALUES (now());
 
 CREATE FUNCTION maintain_fact_date() RETURNS trigger AS $$

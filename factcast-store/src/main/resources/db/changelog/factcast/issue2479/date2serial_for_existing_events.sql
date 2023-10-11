@@ -17,14 +17,13 @@ DECLARE
   startFrom bigint;
 BEGIN
  
- 	tofix := (SELECT LEAST((SELECT factDate FROM tmp_fact_date_trigger),now()));
+  tofix := (SELECT LEAST((SELECT factDate FROM tmp_fact_date_trigger),now()));
   startFrom := (SELECT GREATEST((SELECT max(lastSer) FROM date2serial WHERE	factDate < tofix),0));
  
   INSERT INTO date2serial 
-  	(SELECT fact_date(header), min(ser), max(ser) FROM fact WHERE fact_date(header) = tofix AND ser > startFrom GROUP BY fact_date(header)) 
-  	ON CONFLICT(factDate) DO UPDATE
-  		SET firstSer=excluded.firstSer, lastSer=excluded.lastSer;
- 
+    (SELECT fact_date(header), min(ser), max(ser) FROM fact WHERE fact_date(header) = tofix AND ser > startFrom GROUP BY fact_date(header))
+    ON CONFLICT(factDate) DO UPDATE
+      SET firstSer=excluded.firstSer, lastSer=excluded.lastSer;
   DELETE FROM tmp_fact_date_trigger;
 END; 
 $$
