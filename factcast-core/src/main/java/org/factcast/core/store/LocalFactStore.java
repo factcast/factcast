@@ -22,7 +22,9 @@ import org.factcast.core.Fact;
 
 public interface LocalFactStore extends FactStore {
 
-  /** @return 0 if the store is empty */
+  /**
+   * @return 0 if the store is empty
+   */
   long latestSerial();
 
   /**
