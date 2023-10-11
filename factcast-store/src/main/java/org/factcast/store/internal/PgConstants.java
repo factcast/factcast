@@ -76,8 +76,13 @@ public class PgConstants {
   public static final String CHANNEL_BLACKLIST_CHANGE = "blacklist_change";
   public static final String CHANNEL_SCHEMASTORE_CHANGE = "schemastore_change";
   public static final String CHANNEL_TRANSFORMATIONSTORE_CHANGE = "transformationstore_change";
+
+  public static final Random RANDOM = new Random();
+
+  @SuppressWarnings("java:S2245") // jesus christ, YES IT IS SAFE
   public static final String CHANNEL_ROUNDTRIP =
-      "roundtrip_channel_" + Math.abs(new Random().nextLong()); // using the
+      "roundtrip_channel_" + Math.abs(RANDOM.nextLong()); // using the
+
   // pid lead
   // to a sql
   // exception
