@@ -59,7 +59,7 @@ jobs:
     strategy:
       matrix:
         postgresVersion:
-        - '11'
+        - '11.5'
         - '12'
         - '13'
         - '14'
