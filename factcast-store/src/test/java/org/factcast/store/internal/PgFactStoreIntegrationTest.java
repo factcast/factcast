@@ -422,13 +422,13 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       // also we want to insert explicit _ts values, so we disable the augment trigger as well
       jdbcTemplate.execute("ALTER TABLE fact DISABLE TRIGGER tr_fact_augment");
       String INSERT_FACT =
-          "INSERT INTO fact(header,payload) VALUES ('{}'::jsonb || concat('{\"ns\":\"foo\",\"type\":\"bar\",\"id\":\"',gen_random_uuid(),'\"}')::jsonb || concat('{\"meta\":{\"_ts\":', extract(epoch from (now()::date - ?))*1000 ,'}}' )::jsonb  ,'{}')";
+          "INSERT INTO fact(header,payload) VALUES ('{}'::jsonb || concat('{\"ns\":\"foo\",\"type\":\"bar\",\"id\":\"',?,'\"}')::jsonb || concat('{\"meta\":{\"_ts\":', extract(epoch from (now()::date - ?))*1000 ,'}}' )::jsonb  ,'{}')";
       // a year before
-      jdbcTemplate.update(INSERT_FACT, 365);
+      jdbcTemplate.update(INSERT_FACT, UUID.randomUUID(), 365);
       // a week before
-      jdbcTemplate.update(INSERT_FACT, 7);
+      jdbcTemplate.update(INSERT_FACT, UUID.randomUUID(), 7);
       // today
-      jdbcTemplate.update(INSERT_FACT, 0);
+      jdbcTemplate.update(INSERT_FACT, UUID.randomUUID(), 0);
       // now date2ser should be still empty
       assertThat(getRowsInDate2Serial()).isZero();
 
@@ -439,8 +439,8 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       jdbcTemplate.execute(
           "CREATE TABLE IF NOT EXISTS tmp_fact_date_trigger (factDate date);INSERT INTO tmp_fact_date_trigger VALUES (now());");
       // and now add two more
-      jdbcTemplate.update(INSERT_FACT, 0);
-      jdbcTemplate.update(INSERT_FACT, 0);
+      jdbcTemplate.update(INSERT_FACT, UUID.randomUUID(), 0);
+      jdbcTemplate.update(INSERT_FACT, UUID.randomUUID(), 0);
 
       // date2Ser should now have one row with (today,4,5)
       assertThat(getRowsInDate2Serial()).isOne();

@@ -114,7 +114,9 @@
     <shedlock.version>5.8.0</shedlock.version>
     <byte-buddy.version>1.14.8</byte-buddy.version>
     <skipUnitTests>false</skipUnitTests>
-    <postgres.version>15</postgres.version>
+    <!-- as long as we promise pg11 compatibility, it might make sense to also
+      test against it -->
+    <postgres.version>11</postgres.version>
   </properties>
   <dependencies>
     <dependency>
