@@ -16,6 +16,7 @@
 package org.factcast.store.internal;
 
 import com.google.common.collect.Lists;
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -295,14 +296,16 @@ public class PgFactStore extends AbstractFactStore implements LocalFactStore {
   @Override
   public long latestSerial() {
     try {
-      return jdbcTemplate.queryForObject(
-          PgConstants.HIGHWATER_MARK,
-          (rs, rowNum) -> {
-            HighWaterMark ret = new HighWaterMark();
-            ret.targetId(rs.getObject("targetId", UUID.class));
-            ret.targetSer(rs.getLong("targetSer"));
-            return ret.targetSer();
-          });
+      Long l =
+          jdbcTemplate.queryForObject(
+              PgConstants.HIGHWATER_MARK,
+              (rs, rowNum) -> {
+                HighWaterMark ret = new HighWaterMark();
+                ret.targetId(rs.getObject("targetId", UUID.class));
+                ret.targetSer(rs.getLong("targetSer"));
+                return ret.targetSer();
+              });
+      return Optional.ofNullable(l).orElse(0L);
     } catch (EmptyResultDataAccessException noFactsAtAll) {
       return 0L;
     }
@@ -311,10 +314,12 @@ public class PgFactStore extends AbstractFactStore implements LocalFactStore {
   @Override
   public long lastSerialBefore(@NonNull LocalDate date) {
     try {
-      return jdbcTemplate.queryForObject(
-          PgConstants.LAST_SERIAL_BEFORE_DATE,
-          new Object[] {java.sql.Date.valueOf(date)},
-          (rs, rowNum) -> rs.getLong("lastSer"));
+      Long lastSer =
+          jdbcTemplate.queryForObject(
+              PgConstants.LAST_SERIAL_BEFORE_DATE,
+              new Object[] {Date.valueOf(date)},
+              (rs, rowNum) -> rs.getLong("lastSer"));
+      return Optional.ofNullable(lastSer).orElse(0L);
     } catch (EmptyResultDataAccessException noFactsAtAll) {
       return 0L;
     }
