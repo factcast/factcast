@@ -97,7 +97,8 @@ public val workflowMaven: Workflow = workflow(
         id = "postgres-compatibility",
         runsOn = RunnerType.UbuntuLatest,
         strategyMatrix = mapOf(
-            "postgresVersion" to listOf("11", "12", "13", "14", "15"),
+            // note that 11 is tested already in the regular build job
+            "postgresVersion" to listOf("12", "13", "14", "15"),
         ),
     ) {
         uses(
