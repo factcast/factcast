@@ -84,7 +84,7 @@
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
     <maven.compiler.version>3.11.0</maven.compiler.version>
-    <spotless-maven-plugin.version>2.39.0</spotless-maven-plugin.version>
+    <spotless-maven-plugin.version>2.40.0</spotless-maven-plugin.version>
     <directory-maven-plugin.version>1.0</directory-maven-plugin.version>
     <nexus-staging-maven-plugin.version>1.6.13</nexus-staging-maven-plugin.version>
     <assertj.version>3.24.2</assertj.version>
@@ -101,7 +101,7 @@
     <spring-grpc.version>2.14.0.RELEASE</spring-grpc.version>
     <grpc.version>1.51.0</grpc.version>
     <!-- lter versions seem to break toxi -->
-    <testcontainers.version>1.19.0</testcontainers.version>
+    <testcontainers.version>1.19.1</testcontainers.version>
     <arrow.version>1.2.1</arrow.version>
     <micronaut.version>4.1.2</micronaut.version>
     <kotlin.version>1.9.10</kotlin.version>
