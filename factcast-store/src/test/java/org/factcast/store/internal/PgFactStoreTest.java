@@ -492,7 +492,7 @@ class PgFactStoreTest {
       when(jdbcTemplate.queryForObject(eq(PgConstants.HIGHWATER_MARK), any(RowMapper.class)))
           .thenThrow(new EmptyResultDataAccessException("Testing", 2));
 
-      assertThat(underTest.latestSerial()).isEqualTo(0L);
+      assertThat(underTest.latestSerial()).isZero();
     }
   }
 
@@ -520,7 +520,7 @@ class PgFactStoreTest {
               any(RowMapper.class)))
           .thenThrow(new EmptyResultDataAccessException("Testing", 1));
 
-      assertThat(underTest.lastSerialBefore(date)).isEqualTo(0L);
+      assertThat(underTest.lastSerialBefore(date)).isZero();
     }
   }
 }
