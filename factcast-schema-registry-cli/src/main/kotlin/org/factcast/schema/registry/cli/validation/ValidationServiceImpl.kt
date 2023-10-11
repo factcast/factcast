@@ -22,7 +22,7 @@ import org.factcast.schema.registry.cli.project.structure.ProjectFolder
 import org.factcast.schema.registry.cli.validation.validators.ExampleValidationService
 import org.factcast.schema.registry.cli.validation.validators.ProjectStructureValidationService
 import org.factcast.schema.registry.cli.validation.validators.TransformationValidationService
-import javax.inject.Singleton
+import jakarta.inject.Singleton
 
 @Singleton
 class ValidationServiceImpl(

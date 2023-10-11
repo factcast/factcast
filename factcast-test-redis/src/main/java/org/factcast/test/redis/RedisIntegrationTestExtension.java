@@ -52,8 +52,8 @@ public class RedisIntegrationTestExtension implements FactCastIntegrationTestExt
             });
 
     ContainerProxy redisProxy = container.redisProxy().get();
-    System.setProperty("spring.redis.host", redisProxy.getContainerIpAddress());
-    System.setProperty("spring.redis.port", String.valueOf(redisProxy.getProxyPort()));
+    System.setProperty("spring.data.redis.host", redisProxy.getContainerIpAddress());
+    System.setProperty("spring.data.redis.port", String.valueOf(redisProxy.getProxyPort()));
   }
 
   @Override

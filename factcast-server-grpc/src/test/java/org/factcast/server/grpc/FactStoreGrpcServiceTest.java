@@ -15,9 +15,9 @@
  */
 package org.factcast.server.grpc;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -641,7 +641,7 @@ public class FactStoreGrpcServiceTest {
 
     try (MockedStatic<SecurityContextHolder> utilities =
         Mockito.mockStatic(SecurityContextHolder.class)) {
-      utilities.when(() -> SecurityContextHolder.getContext()).thenReturn(mockedSecurityContext);
+      utilities.when(SecurityContextHolder::getContext).thenReturn(mockedSecurityContext);
 
       StateForRequest sfr = new StateForRequest(Lists.newArrayList(id), "denied");
       MSG_StateForRequest req = conv.toProto(sfr);
@@ -868,7 +868,7 @@ public class FactStoreGrpcServiceTest {
 
     try (MockedStatic<SecurityContextHolder> utilities =
         Mockito.mockStatic(SecurityContextHolder.class)) {
-      utilities.when(() -> SecurityContextHolder.getContext()).thenReturn(mockedSecurityContext);
+      utilities.when(SecurityContextHolder::getContext).thenReturn(mockedSecurityContext);
 
       ArrayList<FactSpec> list = Lists.newArrayList(FactSpec.ns("denied").type("nope"));
       MSG_FactSpecsJson req = conv.toProtoFactSpecs(list);
@@ -891,7 +891,7 @@ public class FactStoreGrpcServiceTest {
 
     try (MockedStatic<SecurityContextHolder> utilities =
         Mockito.mockStatic(SecurityContextHolder.class)) {
-      utilities.when(() -> SecurityContextHolder.getContext()).thenReturn(mockedSecurityContext);
+      utilities.when(SecurityContextHolder::getContext).thenReturn(mockedSecurityContext);
 
       ArrayList<FactSpec> list = Lists.newArrayList(FactSpec.ns("denied").type("nope"));
       MSG_FactSpecsJson req = conv.toProtoFactSpecs(list);
@@ -1107,6 +1107,6 @@ public class FactStoreGrpcServiceTest {
 
     uut.afterPropertiesSet();
 
-    assertThat(logCaptor.getInfoLogs()).contains("Service version: UNKNOWN");
+    assertThat(logCaptor.getInfoLogs()).anyMatch(s -> s.startsWith("Service version: "));
   }
 }

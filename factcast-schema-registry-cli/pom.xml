@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.6.10-SNAPSHOT</version>
+    <version>0.7.1-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <properties>
@@ -31,8 +31,8 @@
         <scope>import</scope>
       </dependency>
       <dependency>
-        <groupId>io.micronaut</groupId>
-        <artifactId>micronaut-bom</artifactId>
+        <groupId>io.micronaut.platform</groupId>
+        <artifactId>micronaut-platform</artifactId>
         <version>${micronaut.version}</version>
         <type>pom</type>
         <scope>import</scope>
@@ -45,7 +45,7 @@
       <artifactId>micronaut-runtime</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.micronaut</groupId>
+      <groupId>io.micronaut.validation</groupId>
       <artifactId>micronaut-validation</artifactId>
     </dependency>
     <dependency>
@@ -55,10 +55,6 @@
     <dependency>
       <groupId>org.jetbrains.kotlin</groupId>
       <artifactId>kotlin-reflect</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.jetbrains.kotlinx</groupId>
-      <artifactId>kotlinx-coroutines-core-jvm</artifactId>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
@@ -108,6 +104,18 @@
           <artifactId>json-schema-validator</artifactId>
           <groupId>com.github.java-json-tools</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>logback-classic</artifactId>
+          <groupId>ch.qos.logback</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>logback-core</artifactId>
+          <groupId>ch.qos.logback</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>commons-logging</artifactId>
+          <groupId>commons-logging</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -118,23 +126,30 @@
     <dependency>
       <groupId>io.micronaut.picocli</groupId>
       <artifactId>micronaut-picocli</artifactId>
+      <version>5.0.1</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.module</groupId>
       <artifactId>jackson-module-kotlin</artifactId>
       <!-- even though all other modules are avail for 2.13.2, this one is missing -->
-      <version>2.14.2</version>
+      <version>2.15.2</version>
       <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.github.oshai</groupId>
+      <artifactId>kotlin-logging-jvm</artifactId>
+      <version>5.1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>2.0.9</version>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.4.7</version>
-    </dependency>
-    <dependency>
-      <groupId>io.github.microutils</groupId>
-      <artifactId>kotlin-logging-jvm</artifactId>
-      <version>3.0.5</version>
+      <version>1.4.11</version>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>io.arrow-kt</groupId>
@@ -157,7 +172,7 @@
     </dependency>
     <dependency>
       <groupId>io.micronaut.test</groupId>
-      <artifactId>micronaut-test-kotest</artifactId>
+      <artifactId>micronaut-test-kotest5</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -181,7 +196,13 @@
     <dependency>
       <groupId>io.mockk</groupId>
       <artifactId>mockk</artifactId>
-      <version>1.12.5</version>
+      <version>${mockk.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.mockk</groupId>
+      <artifactId>mockk-jvm</artifactId>
+      <version>${mockk.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -201,10 +222,6 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>javax.annotation</groupId>
-      <artifactId>javax.annotation-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.graalvm.sdk</groupId>
@@ -351,12 +368,12 @@
                 <annotationProcessorPath>
                   <groupId>io.micronaut</groupId>
                   <artifactId>micronaut-inject-java</artifactId>
-                  <version>${micronaut.version}</version>
+                  <version>4.1.6</version>
                 </annotationProcessorPath>
                 <annotationProcessorPath>
-                  <groupId>io.micronaut</groupId>
-                  <artifactId>micronaut-validation</artifactId>
-                  <version>${micronaut.version}</version>
+                  <groupId>io.micronaut.validation</groupId>
+                  <artifactId>micronaut-validation-processor</artifactId>
+                  <version>4.0.3</version>
                 </annotationProcessorPath>
               </annotationProcessorPaths>
             </configuration>
@@ -390,12 +407,12 @@
                 <annotationProcessorPath>
                   <groupId>io.micronaut</groupId>
                   <artifactId>micronaut-inject-java</artifactId>
-                  <version>${micronaut.version}</version>
+                  <version>4.1.6</version>
                 </annotationProcessorPath>
                 <annotationProcessorPath>
-                  <groupId>io.micronaut</groupId>
-                  <artifactId>micronaut-validation</artifactId>
-                  <version>${micronaut.version}</version>
+                  <groupId>io.micronaut.validation</groupId>
+                  <artifactId>micronaut-validation-processor</artifactId>
+                  <version>4.0.3</version>
                 </annotationProcessorPath>
               </annotationProcessorPaths>
             </configuration>
