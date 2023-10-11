@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.6.10-SNAPSHOT</version>
+  <version>0.7.1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <organization>
     <name>factcast</name>
@@ -13,8 +13,8 @@
   </organization>
   <name>factcast</name>
   <description>factcast is a 'good enough' event store using PostgreSQL
-    for persistence, and offers REST and GRPC
-    interfaces.
+    for persistence, and offers an GRPC interface and a java client
+    library for rapid application development.
   </description>
   <inceptionYear>2018</inceptionYear>
   <issueManagement>
@@ -69,7 +69,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven-clean-plugin.version>3.3.1</maven-clean-plugin.version>
-    <maven-javadoc-plugin.version>3.5.0</maven-javadoc-plugin.version>
+    <maven-javadoc-plugin.version>3.6.0</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.3.0</maven-source-plugin.version>
     <maven-gpg-plugin.version>3.1.0</maven-gpg-plugin.version>
     <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
@@ -81,8 +81,8 @@
     <jacoco-maven-plugin.version>0.8.10</jacoco-maven-plugin.version>
     <maven.version>3.9.4</maven.version>
     <!-- defaults to 11, client modules will be compiled with/to 8 -->
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
     <maven.compiler.version>3.11.0</maven.compiler.version>
     <spotless-maven-plugin.version>2.39.0</spotless-maven-plugin.version>
     <directory-maven-plugin.version>1.0</directory-maven-plugin.version>
@@ -91,31 +91,38 @@
     <jackson.version>2.14.2</jackson.version>
     <mockito.version>5.5.0</mockito.version>
     <junit-jupiter.version>5.10.0</junit-jupiter.version>
-    <lombok.version>1.18.28</lombok.version>
-    <slf4j-api.version>1.7.36</slf4j-api.version>
+    <lombok.version>1.18.30</lombok.version>
+    <slf4j-api.version>2.0.9</slf4j-api.version>
     <!--suppress UnresolvedMavenProperty -->
     <etc>${session.executionRootDirectory}/src/etc</etc>
-    <spring-boot.version>2.7.15</spring-boot.version>
-    <spring-cloud.version>2021.0.3</spring-cloud.version>
+    <spring-boot.version>3.1.4</spring-boot.version>
+    <spring-cloud.version>2022.0.4</spring-cloud.version>
     <!-- whenever updating spring-grpc make sure to align grpc.version accordingly. -->
     <spring-grpc.version>2.14.0.RELEASE</spring-grpc.version>
     <grpc.version>1.51.0</grpc.version>
     <!-- lter versions seem to break toxi -->
     <testcontainers.version>1.19.0</testcontainers.version>
     <arrow.version>1.2.1</arrow.version>
-    <micronaut.version>2.5.13</micronaut.version>
+    <micronaut.version>4.1.2</micronaut.version>
     <kotlin.version>1.9.10</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
-    <kotest.version>4.6.4</kotest.version>
-    <redisson.version>3.19.3</redisson.version>
-    <redisson-spring-boot-starter.version>3.17.5</redisson-spring-boot-starter.version>
-    <graaljs.version>22.3.1</graaljs.version>
-    <shedlock.version>4.44.0</shedlock.version>
-    <byte-buddy.version>1.14.8</byte-buddy.version>
+    <kotest.version>5.7.2</kotest.version>
+    <mockk.version>1.13.8</mockk.version>
+    <redisson.version>3.23.5</redisson.version>
+    <redisson-spring-boot-starter.version>3.23.5</redisson-spring-boot-starter.version>
+    <graaljs.version>23.0.1</graaljs.version>
+    <shedlock.version>5.8.0</shedlock.version>
+    <byte-buddy.version>1.14.9</byte-buddy.version>
     <skipUnitTests>false</skipUnitTests>
     <postgres.version>15</postgres.version>
   </properties>
   <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-properties-migrator</artifactId>
+      <scope>runtime</scope>
+      <version>${spring-boot.version}</version>
+    </dependency>
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>annotations</artifactId>
@@ -443,7 +450,7 @@
             </excludes>
             <trimTrailingWhitespace />
             <googleJavaFormat>
-              <version>1.9</version>
+              <version>1.15.0</version>
               <style>GOOGLE</style>
             </googleJavaFormat>
           </java>

@@ -15,10 +15,10 @@
  */
 package org.factcast.schema.registry.cli.commands
 
+import jakarta.inject.Inject
 import picocli.CommandLine.Command
 import picocli.CommandLine.Option
 import java.nio.file.Paths
-import javax.inject.Inject
 import kotlin.system.exitProcess
 
 @Command(

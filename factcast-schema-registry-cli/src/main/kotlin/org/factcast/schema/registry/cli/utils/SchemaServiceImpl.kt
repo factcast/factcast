@@ -22,7 +22,7 @@ import com.github.fge.jsonschema.main.JsonSchemaFactory
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.validation.ProjectError
 import java.nio.file.Path
-import javax.inject.Singleton
+import jakarta.inject.Singleton
 
 @Singleton
 class SchemaServiceImpl(
