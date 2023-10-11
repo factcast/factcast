@@ -77,15 +77,12 @@ public class PgConstants {
   public static final String CHANNEL_SCHEMASTORE_CHANGE = "schemastore_change";
   public static final String CHANNEL_TRANSFORMATIONSTORE_CHANGE = "transformationstore_change";
 
+  @SuppressWarnings("java:S2245") // jesus christ, YES IT IS SAFE
   public static final Random RANDOM = new Random();
 
-  @SuppressWarnings("java:S2245") // jesus christ, YES IT IS SAFE
+  @SuppressWarnings("java:S2676") // we just want a fricking random number without a - sign
   public static final String CHANNEL_ROUNDTRIP =
-      "roundtrip_channel_" + Math.abs(RANDOM.nextLong()); // using the
-
-  // pid lead
-  // to a sql
-  // exception
+      "roundtrip_channel_" + Math.abs(RANDOM.nextLong()); // using the pid lead to a sql exception
 
   public static final String COLUMN_PAYLOAD = "payload";
 
