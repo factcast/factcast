@@ -40,11 +40,6 @@ public class PgFactStoreConfiguration {
   }
 
   @Bean
-  PgLegacyConfigurationProperties pgLegacyConfigurationProperties() {
-    return new PgLegacyConfigurationProperties();
-  }
-
-  @Bean
   BlacklistConfigurationProperties blacklistConfigurationProperties() {
     return new BlacklistConfigurationProperties();
   }

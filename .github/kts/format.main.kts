@@ -1,6 +1,6 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("io.github.typesafegithub:github-workflows-kt:0.42.0")
+@file:DependsOn("io.github.typesafegithub:github-workflows-kt:1.0.0")
 
 
 import io.github.typesafegithub.workflows.actions.actions.CheckoutV3
@@ -29,10 +29,10 @@ public val workflowFormat: Workflow = workflow(
             ),
         )
         uses(
-            name = "JDK 11",
+            name = "JDK 17",
             action = SetupJavaV3(
                 distribution = SetupJavaV3.Distribution.Custom("corretto"),
-                javaVersion = "11",
+                javaVersion = "17",
             ),
         )
         run(

@@ -18,7 +18,7 @@ package org.factcast.schema.registry.cli.registry.impl
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.annotations.VisibleForTesting
 import java.nio.file.Path
-import javax.inject.Singleton
+import jakarta.inject.Singleton
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.registry.FactcastIndexCreator
