@@ -15,6 +15,8 @@
  */
 package org.factcast.schema.registry.cli.validation
 
+import com.github.fge.jsonschema.core.report.ProcessingReport
+
 fun formatErrors(errors: List<ProjectError>): List<String> = errors.map {
     when (it) {
         is ProjectError.NoEvents -> "No events found for namespace ${it.namespacePath.fileName}"
@@ -36,7 +38,7 @@ fun formatErrors(errors: List<ProjectError>): List<String> = errors.map {
             """
 Example ${it.examplePath} failed validation:
 ${
-                it.result?.joinToString("\n") { result ->
+                ignoreExampleErrors(it.result)?.joinToString("\n") { result ->
                     "- ${result.asJson()?.get("instance")?.get("pointer")?.asText()}: ${result.message}"
                 }
             }
@@ -48,7 +50,7 @@ ${
         is ProjectError.NoDowncastForVersion ->
             """No downcast for ${it.type} from version ${it.fromVersion} to ${it.toVersion} (implicit noop failed)
 ${
-                it.result?.joinToString("\n") { result ->
+                ignoreExampleErrors(it.result)?.joinToString("\n") { result ->
                     "- ${result.message}"
                 }
             }
@@ -57,7 +59,7 @@ ${
         is ProjectError.TransformationValidationError ->
             """Error while applying transformation for ${it.type} converting version ${it.fromVersion} to ${it.toVersion}:
 ${
-                it.result?.joinToString("\n") { result ->
+                ignoreExampleErrors(it.result)?.joinToString("\n") { result ->
                     "- ${result.message}"
                 }
             }
@@ -72,3 +74,6 @@ ${it.exception?.message}
         """.trimIndent()
     }
 }
+
+private fun ignoreExampleErrors(result: ProcessingReport?) =
+    result?.filter { res -> res.message.contains("[example]").not() }

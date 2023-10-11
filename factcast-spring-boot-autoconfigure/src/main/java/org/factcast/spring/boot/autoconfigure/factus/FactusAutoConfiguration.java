@@ -33,16 +33,16 @@ import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepositoryImpl;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepositoryImpl;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
 @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
-@Configuration
+@AutoConfiguration
 @ConditionalOnClass(Factus.class)
 @Generated
 @Slf4j
