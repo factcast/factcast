@@ -26,7 +26,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 
 @RequiredArgsConstructor
 @Slf4j
-// Event though it uses PgMetrics (which might be renamed to StoreMetrics in the future) it is not
+// Even though it uses PgMetrics (which might be renamed to StoreMetrics in the future) it is not
 // specific to Pg or PgSnapshotCache
 public class SnapshotCacheCompactor {
 
