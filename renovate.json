@@ -8,8 +8,7 @@
     "enabled": false
   },
   "baseBranches": [
-    "master",
-    "0.7-sink"
+    "master"
   ],
   "packageRules": [
     {
