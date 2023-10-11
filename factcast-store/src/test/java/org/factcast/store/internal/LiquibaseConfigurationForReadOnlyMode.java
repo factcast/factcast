@@ -19,7 +19,6 @@ import javax.sql.DataSource;
 import liquibase.integration.spring.SpringLiquibase;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseAutoConfiguration;
-import org.springframework.boot.autoconfigure.liquibase.LiquibaseDataSource;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -32,10 +31,8 @@ public class LiquibaseConfigurationForReadOnlyMode {
   @Primary
   @Bean
   public SpringLiquibase liquibase(
-      LiquibaseProperties props,
-      ObjectProvider<DataSource> dataSource,
-      @LiquibaseDataSource ObjectProvider<DataSource> liquibaseDataSource) {
-    return new LiquibaseAutoConfiguration.LiquibaseConfiguration(props)
-        .liquibase(dataSource, liquibaseDataSource);
+      LiquibaseProperties props, ObjectProvider<DataSource> dataSource) {
+    return new LiquibaseAutoConfiguration.LiquibaseConfiguration()
+        .liquibase(dataSource, dataSource, props, null);
   }
 }
