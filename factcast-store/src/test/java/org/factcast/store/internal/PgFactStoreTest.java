@@ -15,7 +15,7 @@
  */
 package org.factcast.store.internal;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.sql.PreparedStatement;
@@ -38,6 +38,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.TransformationRequest;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
@@ -57,17 +58,20 @@ import org.springframework.jdbc.core.*;
 @ExtendWith(MockitoExtension.class)
 class PgFactStoreTest {
 
-  @Mock JdbcTemplate jdbcTemplate;
-  @Mock PgSubscriptionFactory subscriptionFactory;
-  @Mock FactTableWriteLock lock;
-  @Mock FactTransformerService factTransformerService;
-  @Mock PgFactIdToSerialMapper pgFactIdToSerialMapper;
-  @Mock PgMetrics metrics;
-  @Mock PgSnapshotCache snapCache;
-  @Mock TokenStore tokenStore;
-  @Mock SchemaRegistry schemaRegistry;
+  @Mock private @NonNull JdbcTemplate jdbcTemplate;
+  @Mock private @NonNull PgSubscriptionFactory subscriptionFactory;
+  @Mock private @NonNull FactTableWriteLock lock;
+  @Mock private @NonNull FactTransformerService factTransformerService;
+  @Mock private @NonNull PgFactIdToSerialMapper pgFactIdToSerialMapper;
 
-  @InjectMocks PgFactStore underTest;
+  @Mock(strictness = Mock.Strictness.LENIENT)
+  private @NonNull PgMetrics metrics;
+
+  @Mock private @NonNull PgSnapshotCache snapCache;
+  @Mock private @NonNull TokenStore tokenStore;
+  @Mock private StoreConfigurationProperties storeConfigurationProperties;
+  @Mock SchemaRegistry schemaRegistry;
+  @InjectMocks private PgFactStore underTest;
 
   @Nested
   class WhenFetchingById {
@@ -144,6 +148,17 @@ class PgFactStoreTest {
               any(ParameterizedPreparedStatementSetter.class));
       verify(lock).aquireExclusiveTXLock();
     }
+
+    @Test
+    void throwOnPublishInReadOnlyMode() {
+      when(storeConfigurationProperties.isReadOnlyModeEnabled()).thenReturn(true);
+
+      assertThatThrownBy(() -> underTest.publish(Collections.singletonList(fact)))
+          .isInstanceOf(UnsupportedOperationException.class);
+
+      verifyNoInteractions(jdbcTemplate);
+      verifyNoInteractions(lock);
+    }
   }
 
   @Nested
@@ -189,6 +204,7 @@ class PgFactStoreTest {
 
   @Nested
   class WhenEnumeratingNamespaces {
+    @SuppressWarnings("rawtypes")
     @BeforeEach
     void setup() {}
 
@@ -303,6 +319,20 @@ class PgFactStoreTest {
       verify(lock).aquireExclusiveTXLock();
       assertThat(b).isTrue();
       verify(underTest).publish(any(List.class));
+    }
+
+    @Test
+    void throwOnPublishIfUnchangedInReadOnlyMode() {
+      when(storeConfigurationProperties.isReadOnlyModeEnabled()).thenReturn(true);
+
+      assertThatThrownBy(
+              () ->
+                  underTest.publishIfUnchanged(
+                      Collections.singletonList(fact), Optional.of(optionalToken)))
+          .isInstanceOf(UnsupportedOperationException.class);
+
+      verifyNoInteractions(jdbcTemplate);
+      verifyNoInteractions(lock);
     }
   }
 
@@ -460,6 +490,7 @@ class PgFactStoreTest {
     void clear() {
       underTest.clearSnapshot(id);
       verify(snapCache).clearSnapshot(id);
+      ;
     }
   }
 }

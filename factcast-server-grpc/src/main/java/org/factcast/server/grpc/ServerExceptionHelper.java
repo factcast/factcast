@@ -30,6 +30,9 @@ public class ServerExceptionHelper {
         && e.getClass().getName().startsWith("org.factcast.core")) {
 
       return new StatusRuntimeException(Status.UNKNOWN, addMetaData(meta, e));
+    } else if (e instanceof UnsupportedOperationException) {
+      // UNIMPLEMENTED is technically not fully correct but best we can do here
+      return new StatusRuntimeException(Status.UNIMPLEMENTED, meta);
     } else {
       return new StatusRuntimeException(Status.UNKNOWN, meta);
     }

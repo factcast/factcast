@@ -13,13 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.test;
+package org.factcast.store;
 
-import lombok.experimental.UtilityClass;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
-@UtilityClass
-public class PostgresVersion {
-  public String get() {
-    return System.getProperty("postgres.version", "11");
-  }
-}
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.TYPE, ElementType.METHOD})
+@ConditionalOnProperty(
+    prefix = StoreConfigurationProperties.PROPERTIES_PREFIX,
+    name = "readOnlyModeEnabled",
+    matchIfMissing = true,
+    havingValue = "false")
+public @interface IsReadAndWriteEnv {}

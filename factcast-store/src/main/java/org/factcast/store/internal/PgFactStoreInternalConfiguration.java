@@ -21,9 +21,11 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.concurrent.Executors;
 import javax.sql.DataSource;
+import liquibase.integration.spring.SpringLiquibase;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.LockProvider;
+import net.javacrumbs.shedlock.provider.inmemory.InMemoryLockProvider;
 import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
 import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
 import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMode;
@@ -31,6 +33,8 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.core.subscription.transformation.FactTransformerService;
+import org.factcast.store.IsReadAndWriteEnv;
+import org.factcast.store.IsReadOnlyEnv;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.catchup.fetching.PgFetchingCatchUpFactory;
@@ -45,8 +49,8 @@ import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.script.JSEngineFactory;
-import org.factcast.store.internal.snapcache.PgSnapshotCache;
-import org.factcast.store.internal.snapcache.PgSnapshotCacheConfiguration;
+import org.factcast.store.internal.snapcache.SnapshotCache;
+import org.factcast.store.internal.snapcache.SnapshotCacheConfiguration;
 import org.factcast.store.internal.tail.PGTailIndexingConfiguration;
 import org.factcast.store.registry.PgSchemaStoreChangeListener;
 import org.factcast.store.registry.SchemaRegistry;
@@ -83,7 +87,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableSchedulerLock(defaultLockAtMostFor = "PT30m", interceptMode = InterceptMode.PROXY_METHOD)
 @Import({
   SchemaRegistryConfiguration.class,
-  PgSnapshotCacheConfiguration.class,
+  SnapshotCacheConfiguration.class,
   PGTailIndexingConfiguration.class
 })
 public class PgFactStoreInternalConfiguration {
@@ -124,8 +128,9 @@ public class PgFactStoreInternalConfiguration {
       FactTableWriteLock lock,
       FactTransformerService factTransformerService,
       PgFactIdToSerialMapper pgFactIdToSerialMapper,
-      PgSnapshotCache snapCache,
-      PgMetrics pgMetrics) {
+      SnapshotCache snapCache,
+      PgMetrics pgMetrics,
+      StoreConfigurationProperties props) {
     return new PgFactStore(
         jdbcTemplate,
         subscriptionFactory,
@@ -135,7 +140,8 @@ public class PgFactStoreInternalConfiguration {
         factTransformerService,
         pgFactIdToSerialMapper,
         snapCache,
-        pgMetrics);
+        pgMetrics,
+        props);
   }
 
   @Bean
@@ -196,8 +202,15 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
-  public PgTokenStore pgTokenStore(JdbcTemplate jdbcTemplate, PgMetrics metrics) {
+  @IsReadAndWriteEnv
+  public TokenStore pgTokenStore(JdbcTemplate jdbcTemplate, PgMetrics metrics) {
     return new PgTokenStore(jdbcTemplate, metrics);
+  }
+
+  @Bean
+  @IsReadOnlyEnv
+  public TokenStore roTokenStore() {
+    return new ReadOnlyTokenStore();
   }
 
   @Bean
@@ -220,8 +233,10 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
+  @IsReadAndWriteEnv
   public LockProvider lockProvider(DataSource dataSource) {
-    log.debug("Configuring lock provider.");
+    log.debug("Configuring lock provider: JDBC.");
+
     var config =
         JdbcTemplateLockProvider.Configuration.builder()
             .withJdbcTemplate(new JdbcTemplate(dataSource))
@@ -229,6 +244,14 @@ public class PgFactStoreInternalConfiguration {
             .build();
 
     return new JdbcTemplateLockProvider(config);
+  }
+
+  @Bean
+  @IsReadOnlyEnv
+  public LockProvider inMemoryLockProvider() {
+    log.debug("Configuring lock provider: IN MEMORY.");
+
+    return new InMemoryLockProvider();
   }
 
   @Bean
@@ -275,5 +298,14 @@ public class PgFactStoreInternalConfiguration {
       TransformationCache transformationCache,
       TransformationChains transformationChains) {
     return new PgTransformationStoreChangeListener(bus, transformationCache, transformationChains);
+  }
+
+  // we create a custom SpringLiquibase bean to avoid autoconfiguration and configure it to not run
+  @Bean
+  @IsReadOnlyEnv
+  public SpringLiquibase springLiquibase() {
+    final var liquibase = new SpringLiquibase();
+    liquibase.setShouldRun(false);
+    return liquibase;
   }
 }
