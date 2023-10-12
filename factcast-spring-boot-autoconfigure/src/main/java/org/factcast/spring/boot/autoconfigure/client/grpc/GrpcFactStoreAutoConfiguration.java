@@ -28,7 +28,6 @@ import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.core.store.FactStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -45,16 +44,6 @@ import org.springframework.context.annotation.Lazy;
 @AutoConfiguration
 @ConditionalOnClass({GrpcFactStore.class, GrpcChannelFactory.class})
 @Import(FactCastGrpcClientProperties.class)
-// spring-grpc compat until release
-@ImportAutoConfiguration({
-  GrpcClientAutoConfiguration.class,
-  GrpcClientMetricAutoConfiguration.class,
-  GrpcClientHealthAutoConfiguration.class,
-  GrpcClientSecurityAutoConfiguration.class,
-  GrpcClientTraceAutoConfiguration.class,
-  GrpcDiscoveryClientAutoConfiguration.class
-})
-// spring-grpc compat until release
 @EnableConfigurationProperties
 public class GrpcFactStoreAutoConfiguration {
 

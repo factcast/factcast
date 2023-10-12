@@ -283,7 +283,9 @@ public class GrpcFactStore implements FactStore {
       ProtocolVersion serverProtocolVersion;
       try {
         MSG_ServerConfig handshake =
-            MetadataUtils.attachHeaders(blockingStub, createHandshakeMetadata())
+            blockingStub
+                .withInterceptors(
+                    MetadataUtils.newAttachHeadersInterceptor(createHandshakeMetadata()))
                 .handshake(converter.empty());
         ServerConfig cfg = converter.fromProto(handshake);
         serverProtocolVersion = cfg.version();
@@ -351,8 +353,13 @@ public class GrpcFactStore implements FactStore {
               rawStub = stub;
 
               // add compression info
-              blockingStub = MetadataUtils.attachHeaders(blockingStub.withCompression(c), meta);
-              stub = MetadataUtils.attachHeaders(stub.withCompression(c), meta);
+              blockingStub =
+                  blockingStub
+                      .withCompression(c)
+                      .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(meta));
+              stub =
+                  stub.withCompression(c)
+                      .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(meta));
             });
   }
 
