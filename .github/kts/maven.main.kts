@@ -1,10 +1,10 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("io.github.typesafegithub:github-workflows-kt:1.0.0")
+@file:DependsOn("io.github.typesafegithub:github-workflows-kt:1.2.0")
 
 
 import io.github.typesafegithub.workflows.actions.actions.CacheV3
-import io.github.typesafegithub.workflows.actions.actions.CheckoutV3
+import io.github.typesafegithub.workflows.actions.actions.CheckoutV4
 import io.github.typesafegithub.workflows.actions.actions.SetupJavaV3
 import io.github.typesafegithub.workflows.actions.codecov.CodecovActionV3
 import io.github.typesafegithub.workflows.domain.RunnerType
@@ -32,7 +32,7 @@ public val workflowMaven: Workflow = workflow(
     ) {
         uses(
             name = "Checkout",
-            action = CheckoutV3(fetchDepth = CheckoutV3.FetchDepth.Infinite)
+            action = CheckoutV4(fetchDepth = CheckoutV4.FetchDepth.Infinite)
         )
         uses(
             name = "Cache - Maven Repository",
@@ -102,7 +102,7 @@ public val workflowMaven: Workflow = workflow(
     ) {
         uses(
             name = "Checkout",
-            action = CheckoutV3(fetchDepth = CheckoutV3.FetchDepth.Infinite)
+            action = CheckoutV4(fetchDepth = CheckoutV4.FetchDepth.Infinite)
         )
         uses(
             name = "Cache - Maven Repository",
