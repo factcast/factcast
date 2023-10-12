@@ -295,16 +295,7 @@ public class PgConstants {
           + TABLE_FACT
           + ")";
 
-  public static final String HIGHWATER_SERIAL =
-      "SELECT ser FROM "
-          + TABLE_FACT
-          + " WHERE "
-          + COLUMN_SER
-          + "=(SELECT max("
-          + COLUMN_SER
-          + ") FROM "
-          + TABLE_FACT
-          + ")";
+  public static final String HIGHWATER_SERIAL = "SELECT max(" + COLUMN_SER + ") FROM " + TABLE_FACT;
 
   public static final String LAST_SERIAL_BEFORE_DATE =
       "SELECT COALESCE(max(lastSer),0) AS lastSer FROM "
