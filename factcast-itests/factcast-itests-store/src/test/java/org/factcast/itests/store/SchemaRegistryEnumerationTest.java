@@ -26,7 +26,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
 
 @ExtendWith(MockitoExtension.class)
 @SpringBootTest
@@ -35,21 +34,13 @@ public class SchemaRegistryEnumerationTest {
   @Autowired SchemaRegistry schemaRegistry;
 
   @Nested
-  @DirtiesContext
   class whenDeletingFromSchemaStore {
     @Test
     public void enumerateNamespacesAndTypes() {
       var ns = schemaRegistry.enumerateNamespaces();
       assertEquals(ns, Set.of("organisations", "users", "products"));
-      var types = schemaRegistry.enumerateTypes();
-      assertEquals(
-          types,
-          Set.of(
-              "ProductCreated",
-              "UserUpdated",
-              "OrganisationCreated",
-              "UserCreated",
-              "UserDeleted"));
+      var types = schemaRegistry.enumerateTypes("users");
+      assertEquals(types, Set.of("UserUpdated", "UserCreated", "UserDeleted"));
     }
   }
 }

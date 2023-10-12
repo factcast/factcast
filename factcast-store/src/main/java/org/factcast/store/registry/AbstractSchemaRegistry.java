@@ -265,10 +265,14 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
    * This method queries the schema store directly for all the SchemaKeys and doesn't use the
    * schemaNearCache
    *
-   * @return the set of all types
+   * @param ns to query types for
+   * @return the set of all types for the given Namespace
    */
   @Override
-  public Set<String> enumerateTypes() {
-    return schemaStore.getAllSchemaKeys().stream().map(SchemaKey::type).collect(Collectors.toSet());
+  public Set<String> enumerateTypes(String ns) {
+    return schemaStore.getAllSchemaKeys().stream()
+        .filter(sk -> ns.equals(sk.ns()))
+        .map(SchemaKey::type)
+        .collect(Collectors.toSet());
   }
 }

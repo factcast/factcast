@@ -202,7 +202,7 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   public @NonNull Set<String> enumerateTypes(@NonNull String ns) {
-    final var types = schemaRegistry.enumerateTypes();
+    final var types = schemaRegistry.enumerateTypes(ns);
     if (types.isEmpty()) {
       return enumerateTypesFromPg(ns);
     }
@@ -217,8 +217,8 @@ public class PgFactStore extends AbstractFactStore {
             new HashSet<>(
                 jdbcTemplate.query(
                     PgConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE,
-                    new Object[] {ns},
-                    this::extractStringFromResultSet)));
+                    this::extractStringFromResultSet,
+                    ns)));
   }
 
   @Override
