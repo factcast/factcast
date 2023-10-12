@@ -41,6 +41,7 @@ public class StoreMetrics {
     SUBSCRIBE_CATCHUP("subscribe-catchup"),
 
     FETCH_BY_ID("fetchById"),
+    FETCH_BY_SER("fetchBySer"),
 
     SERIAL_OF("serialOf"),
 
