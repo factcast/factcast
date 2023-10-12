@@ -24,7 +24,7 @@ import org.factcast.store.registry.transformation.SingleTransformation
 import org.factcast.store.registry.transformation.TransformationKey
 import org.factcast.store.registry.transformation.chains.TransformationChain
 import org.factcast.store.registry.transformation.chains.Transformer
-import javax.inject.Singleton
+import jakarta.inject.Singleton
 
 @Singleton
 class TransformationEvaluator(
