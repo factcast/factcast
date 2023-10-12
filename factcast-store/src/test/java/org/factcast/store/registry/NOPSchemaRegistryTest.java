@@ -15,6 +15,8 @@
  */
 package org.factcast.store.registry;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Optional;
@@ -38,37 +40,49 @@ public class NOPSchemaRegistryTest {
 
   @Test
   void testRefreshDoesNotThrow() {
-    NOPSchemaRegistry uut = new NOPSchemaRegistry();
-    uut.fetchInitial();
-    uut.refresh();
+    assertThatNoException()
+        .isThrownBy(
+            () -> {
+              NOPSchemaRegistry uut = new NOPSchemaRegistry();
+              uut.fetchInitial();
+              uut.refresh();
+            });
   }
 
   @Test
   void registerDoesNotThrow() {
-    NOPSchemaRegistry uut = new NOPSchemaRegistry();
-    uut.register(k -> {});
+    assertThatNoException()
+        .isThrownBy(
+            () -> {
+              NOPSchemaRegistry uut = new NOPSchemaRegistry();
+              uut.register(k -> {});
+            });
   }
 
   @Test
   void invalidateNearCacheDoesNotThrow() {
-    NOPSchemaRegistry uut = new NOPSchemaRegistry();
-    uut.invalidateNearCache(SchemaKey.of("ns", "type", 1));
+    assertThatNoException()
+        .isThrownBy(
+            () -> {
+              NOPSchemaRegistry uut = new NOPSchemaRegistry();
+              uut.invalidateNearCache(SchemaKey.of("ns", "type", 1));
+            });
   }
 
   @Test
   void enumerateNamespacesIsEmpty() {
     NOPSchemaRegistry uut = new NOPSchemaRegistry();
-    org.assertj.core.api.Assertions.assertThat(uut.enumerateNamespaces()).isEmpty();
+    assertThat(uut.enumerateNamespaces()).isEmpty();
   }
 
   @Test
   void enumerateTypesIsEmpty() {
     NOPSchemaRegistry uut = new NOPSchemaRegistry();
-    org.assertj.core.api.Assertions.assertThat(uut.enumerateTypes("ns")).isEmpty();
+    assertThat(uut.enumerateTypes("ns")).isEmpty();
   }
 
   @Test
   void isNotActive() {
-    org.assertj.core.api.Assertions.assertThat(new NOPSchemaRegistry().isActive()).isFalse();
+    assertThat(new NOPSchemaRegistry().isActive()).isFalse();
   }
 }
