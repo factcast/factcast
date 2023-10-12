@@ -43,4 +43,9 @@ public interface SchemaRegistry {
   Set<String> enumerateNamespaces();
 
   Set<String> enumerateTypes(String n);
+
+  default boolean isActive() {
+    return true;
+  }
+  ;
 }
