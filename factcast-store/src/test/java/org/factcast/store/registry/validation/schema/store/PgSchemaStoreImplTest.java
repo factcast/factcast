@@ -27,7 +27,6 @@ import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.factcast.store.registry.validation.schema.SchemaSource;
 import org.factcast.store.registry.validation.schema.SchemaStore;
-import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -41,7 +40,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ContextConfiguration(classes = {PgTestConfiguration.class})
 @ExtendWith(SpringExtension.class)
 @ExtendWith(MockitoExtension.class)
-@IntegrationTest
 class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
 
   @Autowired private JdbcTemplate tpl;
@@ -133,7 +131,7 @@ class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
     SchemaSource source = new SchemaSource().hash("hash").id("id").ns("ns").type("type");
 
     try (var logs = LogCaptor.forClass(PgSchemaStoreImpl.class)) {
-      uut.register(source, "foo");
+      uut.register(source, "{}");
 
       assertThat(logs.getInfoLogs()).contains("Skipping schema registration in read-only mode");
     }

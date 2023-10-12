@@ -15,6 +15,8 @@
  */
 package org.factcast.store.registry;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.util.Optional;
 import org.factcast.store.registry.transformation.TransformationKey;
 import org.factcast.store.registry.validation.schema.SchemaKey;
@@ -23,21 +25,50 @@ import org.junit.jupiter.api.*;
 public class NOPSchemaRegistryTest {
 
   @Test
-  public void testSchemaGet() {
+  void testSchemaGet() {
     NOPSchemaRegistry uut = new NOPSchemaRegistry();
-    Assertions.assertEquals(Optional.empty(), uut.get(SchemaKey.of("ns", "type", 1)));
+    assertEquals(Optional.empty(), uut.get(SchemaKey.of("ns", "type", 1)));
   }
 
   @Test
-  public void testTransformationGet() {
+  void testTransformationGet() {
     NOPSchemaRegistry uut = new NOPSchemaRegistry();
-    Assertions.assertTrue(uut.get(TransformationKey.of("ns", "type")).isEmpty());
+    assertTrue(uut.get(TransformationKey.of("ns", "type")).isEmpty());
   }
 
   @Test
-  public void testRefreshDoesNotThrow() {
+  void testRefreshDoesNotThrow() {
     NOPSchemaRegistry uut = new NOPSchemaRegistry();
     uut.fetchInitial();
     uut.refresh();
+  }
+
+  @Test
+  void registerDoesNotThrow() {
+    NOPSchemaRegistry uut = new NOPSchemaRegistry();
+    uut.register(k -> {});
+  }
+
+  @Test
+  void invalidateNearCacheDoesNotThrow() {
+    NOPSchemaRegistry uut = new NOPSchemaRegistry();
+    uut.invalidateNearCache(SchemaKey.of("ns", "type", 1));
+  }
+
+  @Test
+  void enumerateNamespacesIsEmpty() {
+    NOPSchemaRegistry uut = new NOPSchemaRegistry();
+    org.assertj.core.api.Assertions.assertThat(uut.enumerateNamespaces()).isEmpty();
+  }
+
+  @Test
+  void enumerateTypesIsEmpty() {
+    NOPSchemaRegistry uut = new NOPSchemaRegistry();
+    org.assertj.core.api.Assertions.assertThat(uut.enumerateTypes("ns")).isEmpty();
+  }
+
+  @Test
+  void isNotActive() {
+    org.assertj.core.api.Assertions.assertThat(new NOPSchemaRegistry().isActive()).isFalse();
   }
 }
