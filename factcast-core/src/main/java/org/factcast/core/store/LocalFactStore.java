@@ -13,13 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.test;
+package org.factcast.core.store;
 
-import lombok.experimental.UtilityClass;
+import java.time.LocalDate;
+import java.util.Optional;
+import lombok.NonNull;
+import org.factcast.core.Fact;
 
-@UtilityClass
-public class PostgresVersion {
-  public String get() {
-    return System.getProperty("postgres.version", "11");
-  }
+public interface LocalFactStore extends FactStore {
+
+  /**
+   * @return 0 if the store is empty
+   */
+  long latestSerial();
+
+  /**
+   * @since 0.7.1
+   * @return 0 if the store is empty
+   */
+  long lastSerialBefore(@NonNull LocalDate date);
+
+  /**
+   * @since 0.7.1
+   * @param serial to look for
+   * @return the Fact stored with that serial or empty if it does not exist
+   */
+  Optional<Fact> fetchBySerial(long serial);
 }
