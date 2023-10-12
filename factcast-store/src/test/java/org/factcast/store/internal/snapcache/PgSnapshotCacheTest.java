@@ -37,7 +37,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ContextConfiguration(classes = {PgTestConfiguration.class})
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
-class SnapshotCacheTest {
+class PgSnapshotCacheTest {
 
   @Autowired private JdbcTemplate jdbcTemplate;
 
@@ -53,6 +53,7 @@ class SnapshotCacheTest {
   }
 
   @Test
+  @SuppressWarnings("java:S2925")
   void getSnapshot_returnsSnapshotAndUpdatesTimestamp() throws InterruptedException {
     // INIT
     // put snapshot

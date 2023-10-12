@@ -91,6 +91,21 @@ class GrpcServerExceptionInterceptorTest {
       }
 
       @Test
+      void handlesException_UnsupportedOperationException() {
+        final var unsupportedOperationException = new UnsupportedOperationException();
+
+        ExceptionHandlingServerCallListener<Req, Res> uut = spy(underTest);
+        doThrow(unsupportedOperationException).when(listener).onMessage(any());
+
+        Req msg = null;
+
+        uut.onMessage(msg);
+        verify(uut).logIfNecessary(any(), same(unsupportedOperationException));
+        verify(serverCall).close(eq(Status.UNIMPLEMENTED), any(Metadata.class));
+        verify(uut).handleException(same(unsupportedOperationException), any(), any());
+      }
+
+      @Test
       void happyPath() {
         underTest.onMessage(null);
       }
