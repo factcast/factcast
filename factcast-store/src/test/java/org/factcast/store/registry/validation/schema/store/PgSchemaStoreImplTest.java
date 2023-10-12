@@ -42,7 +42,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ExtendWith(SpringExtension.class)
 @ExtendWith(MockitoExtension.class)
 @IntegrationTest
-public class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
+class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
 
   @Autowired private JdbcTemplate tpl;
 
@@ -50,6 +50,7 @@ public class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
 
   @Override
   protected SchemaStore createUUT() {
+    tpl.update("TRUNCATE schemastore");
     return new PgSchemaStoreImpl(tpl, registryMetrics, storeConfigurationProperties);
   }
 
