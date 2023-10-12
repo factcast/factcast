@@ -18,9 +18,9 @@ package org.factcast.store.internal.tail;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.store.internal.HighWaterMark;
 import org.factcast.store.internal.PgConstants;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -32,17 +32,17 @@ import org.springframework.scheduling.annotation.Scheduled;
 public class FastForwardTargetRefresher implements FastForwardTarget {
   private final JdbcTemplate jdbc;
 
-  private HighWaterMark target = HighWaterMark.create();
+  private HighWaterMark target = new HighWaterMark();
 
   @Nullable
   @Override
   public UUID targetId() {
-    return target.targetId;
+    return target.targetId();
   }
 
   @Override
   public long targetSer() {
-    return target.targetSer;
+    return target.targetSer();
   }
 
   @Scheduled(fixedRate = 5, timeUnit = TimeUnit.MINUTES)
@@ -57,22 +57,12 @@ public class FastForwardTargetRefresher implements FastForwardTarget {
                 final var targetId = rs.getObject("targetId", UUID.class);
                 final var targetSer = rs.getLong("targetSer");
 
-                return HighWaterMark.of(targetId, targetSer);
+                return new HighWaterMark().targetSer(targetSer).targetId(targetId);
               });
     } catch (EmptyResultDataAccessException noFactsAtAll) {
       // ignore but resetting target to initial values, can happen in integration tests when facts
       // are wiped between runs
-      target = HighWaterMark.create();
-    }
-  }
-
-  @Value(staticConstructor = "of")
-  static class HighWaterMark {
-    UUID targetId;
-    long targetSer;
-
-    static HighWaterMark create() {
-      return of(null, 0);
+      target = new HighWaterMark();
     }
   }
 }

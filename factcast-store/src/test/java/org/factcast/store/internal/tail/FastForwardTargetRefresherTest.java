@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.util.UUID;
+import org.factcast.store.internal.HighWaterMark;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,7 +34,7 @@ import org.springframework.jdbc.core.RowMapper;
 public class FastForwardTargetRefresherTest {
 
   @Mock private JdbcTemplate jdbc;
-  @Mock private FastForwardTargetRefresher.HighWaterMark target;
+  @Mock private HighWaterMark target;
   @InjectMocks private FastForwardTargetRefresher underTest;
 
   @Nested
@@ -49,7 +50,7 @@ public class FastForwardTargetRefresherTest {
       long ser = 42L;
 
       when(jdbc.queryForObject(anyString(), any(RowMapper.class)))
-          .thenReturn(FastForwardTargetRefresher.HighWaterMark.of(id, ser));
+          .thenReturn(new HighWaterMark().targetId(id).targetSer(ser));
 
       uut.refresh();
 
@@ -68,7 +69,7 @@ public class FastForwardTargetRefresherTest {
       long ser = 42L;
 
       when(jdbc.queryForObject(anyString(), any(RowMapper.class)))
-          .thenReturn(FastForwardTargetRefresher.HighWaterMark.of(id, ser))
+          .thenReturn(new HighWaterMark().targetId(id).targetSer(ser))
           .thenThrow(new EmptyResultDataAccessException(1));
 
       uut.refresh();
