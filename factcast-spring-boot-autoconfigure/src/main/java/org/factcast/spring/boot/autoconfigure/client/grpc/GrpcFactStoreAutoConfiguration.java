@@ -20,7 +20,6 @@ import io.grpc.ClientInterceptor;
 import java.util.*;
 import javax.annotation.Nullable;
 import lombok.NonNull;
-import net.devh.boot.grpc.client.autoconfigure.*;
 import net.devh.boot.grpc.client.channelfactory.GrpcChannelConfigurer;
 import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
 import org.factcast.client.grpc.FactCastGrpcClientProperties;
