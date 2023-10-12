@@ -72,4 +72,9 @@ public class NOPSchemaRegistry implements SchemaRegistry {
   public Set<String> enumerateTypes(String ns) {
     return Set.of();
   }
+
+  @Override
+  public boolean isActive() {
+    return false;
+  }
 }

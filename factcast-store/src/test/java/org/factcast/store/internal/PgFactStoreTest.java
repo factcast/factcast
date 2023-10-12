@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
@@ -56,16 +57,17 @@ import org.springframework.jdbc.core.*;
 @ExtendWith(MockitoExtension.class)
 class PgFactStoreTest {
 
-  @Mock private @NonNull JdbcTemplate jdbcTemplate;
-  @Mock private @NonNull PgSubscriptionFactory subscriptionFactory;
-  @Mock private @NonNull FactTableWriteLock lock;
-  @Mock private @NonNull FactTransformerService factTransformerService;
-  @Mock private @NonNull PgFactIdToSerialMapper pgFactIdToSerialMapper;
-  @Mock private @NonNull PgMetrics metrics;
-  @Mock private @NonNull PgSnapshotCache snapCache;
-  @Mock private @NonNull TokenStore tokenStore;
-  @Mock private @NonNull SchemaRegistry schemaRegistry;
-  @InjectMocks private PgFactStore underTest;
+  @Mock JdbcTemplate jdbcTemplate;
+  @Mock PgSubscriptionFactory subscriptionFactory;
+  @Mock FactTableWriteLock lock;
+  @Mock FactTransformerService factTransformerService;
+  @Mock PgFactIdToSerialMapper pgFactIdToSerialMapper;
+  @Mock PgMetrics metrics;
+  @Mock PgSnapshotCache snapCache;
+  @Mock TokenStore tokenStore;
+  @Mock SchemaRegistry schemaRegistry;
+
+  @InjectMocks PgFactStore underTest;
 
   @Nested
   class WhenFetchingById {
@@ -193,15 +195,19 @@ class PgFactStoreTest {
     @Test
     void withoutSchemaRegistry() {
       configureMetricTimeSupplier();
+      when(schemaRegistry.isActive()).thenReturn(false);
       underTest.enumerateNamespaces();
       verify(jdbcTemplate).query(eq(PgConstants.SELECT_DISTINCT_NAMESPACE), any(RowMapper.class));
     }
 
     @Test
     void withSchemaRegistry() {
-      when(schemaRegistry.enumerateNamespaces()).thenReturn(Set.of("a", "b"));
-      underTest.enumerateNamespaces();
-      verifyNoInteractions(jdbcTemplate);
+      underTest = spy(underTest);
+      Set<String> ns = Set.of("a", "b");
+      when(schemaRegistry.isActive()).thenReturn(true);
+      when(schemaRegistry.enumerateNamespaces()).thenReturn(ns);
+      assertThat(underTest.enumerateNamespaces()).isSameAs(ns);
+      verify(underTest, never()).enumerateNamespacesFromPg();
     }
   }
 
@@ -214,18 +220,25 @@ class PgFactStoreTest {
 
     @Test
     void withoutSchemaRegistry() {
+      when(schemaRegistry.isActive()).thenReturn(false);
       configureMetricTimeSupplier();
-      underTest.enumerateTypes("ns1");
+
+      underTest.enumerateTypes(NS);
       verify(jdbcTemplate)
-          .query(
-              eq(PgConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE), any(RowMapper.class), eq("ns1"));
+          .query(eq(PgConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE), any(RowMapper.class), same(NS));
     }
 
     @Test
     void withSchemaRegistry() {
-      when(schemaRegistry.enumerateTypes(anyString())).thenReturn(Set.of("a", "b"));
-      underTest.enumerateTypes("foo");
-      verifyNoInteractions(jdbcTemplate);
+
+      Set<String> types = Set.of("a", "b");
+      underTest = spy(underTest);
+      when(schemaRegistry.isActive()).thenReturn(true);
+      when(schemaRegistry.enumerateTypes(anyString())).thenReturn(types);
+
+      Assertions.assertThat(underTest.enumerateTypes("foo")).isSameAs(types);
+
+      verify(underTest, never()).enumerateTypesFromPg(any());
     }
   }
 

@@ -183,12 +183,8 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   public @NonNull Set<String> enumerateNamespaces() {
-    final var namespaces = schemaRegistry.enumerateNamespaces();
-    if (namespaces.isEmpty()) {
-      return enumerateNamespacesFromPg();
-    }
-
-    return namespaces;
+    if (schemaRegistry.isActive()) return schemaRegistry.enumerateNamespaces();
+    else return enumerateNamespacesFromPg();
   }
 
   public @NonNull Set<String> enumerateNamespacesFromPg() {
@@ -202,12 +198,8 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   public @NonNull Set<String> enumerateTypes(@NonNull String ns) {
-    final var types = schemaRegistry.enumerateTypes(ns);
-    if (types.isEmpty()) {
-      return enumerateTypesFromPg(ns);
-    }
-
-    return types;
+    if (schemaRegistry.isActive()) return schemaRegistry.enumerateTypes(ns);
+    else return enumerateTypesFromPg(ns);
   }
 
   public @NonNull Set<String> enumerateTypesFromPg(@NonNull String ns) {
