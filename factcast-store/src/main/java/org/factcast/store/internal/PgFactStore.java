@@ -36,10 +36,11 @@ import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.TransformationRequest;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
-import org.factcast.store.internal.snapcache.PgSnapshotCache;
+import org.factcast.store.internal.snapcache.SnapshotCache;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -71,7 +72,9 @@ public class PgFactStore extends AbstractFactStore implements LocalFactStore {
 
   @NonNull private final PgMetrics metrics;
 
-  @NonNull private final PgSnapshotCache snapCache;
+  @NonNull private final SnapshotCache snapCache;
+
+  @NonNull private final StoreConfigurationProperties props;
 
   @Autowired
   public PgFactStore(
@@ -81,8 +84,9 @@ public class PgFactStore extends AbstractFactStore implements LocalFactStore {
       @NonNull FactTableWriteLock lock,
       @NonNull FactTransformerService factTransformerService,
       @NonNull PgFactIdToSerialMapper pgFactIdToSerialMapper,
-      @NonNull PgSnapshotCache snapCache,
-      @NonNull PgMetrics metrics) {
+      @NonNull SnapshotCache snapCache,
+      @NonNull PgMetrics metrics,
+      @NonNull StoreConfigurationProperties props) {
     super(tokenStore);
 
     this.jdbcTemplate = jdbcTemplate;
@@ -92,6 +96,7 @@ public class PgFactStore extends AbstractFactStore implements LocalFactStore {
     this.snapCache = snapCache;
     this.metrics = metrics;
     this.factTransformerService = factTransformerService;
+    this.props = props;
   }
 
   @Override
@@ -122,6 +127,10 @@ public class PgFactStore extends AbstractFactStore implements LocalFactStore {
   @Override
   @Transactional(propagation = Propagation.REQUIRED)
   public void publish(@NonNull List<? extends Fact> factsToPublish) {
+    if (props.isReadOnlyModeEnabled()) {
+      throw new UnsupportedOperationException("Publishing is not allowed in read-only mode");
+    }
+
     metrics.time(
         StoreMetrics.OP.PUBLISH,
         () -> {
@@ -204,6 +213,10 @@ public class PgFactStore extends AbstractFactStore implements LocalFactStore {
   @Transactional(propagation = Propagation.REQUIRED)
   public boolean publishIfUnchanged(
       @NonNull List<? extends Fact> factsToPublish, @NonNull Optional<StateToken> optionalToken) {
+    if (props.isReadOnlyModeEnabled()) {
+      throw new UnsupportedOperationException("Publishing is not allowed in read-only mode");
+    }
+
     return metrics.time(
         StoreMetrics.OP.PUBLISH_IF_UNCHANGED,
         () -> {

@@ -15,6 +15,8 @@
  */
 package org.factcast.store.internal.snapcache;
 
+import org.factcast.store.IsReadAndWriteEnv;
+import org.factcast.store.IsReadOnlyEnv;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
 import org.springframework.context.annotation.Bean;
@@ -22,15 +24,22 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @Configuration
-public class PgSnapshotCacheConfiguration {
+public class SnapshotCacheConfiguration {
   @Bean
-  public PgSnapshotCache pgSnapshotCache(JdbcTemplate jdbcTemplate, PgMetrics metrics) {
+  @IsReadAndWriteEnv
+  public SnapshotCache pgSnapshotCache(JdbcTemplate jdbcTemplate, PgMetrics metrics) {
     return new PgSnapshotCache(jdbcTemplate, metrics);
   }
 
   @Bean
-  public PgSnapshotCacheCompactor pgSnapshotCacheCompactor(
-      PgSnapshotCache cache, StoreConfigurationProperties props, PgMetrics pgMetrics) {
-    return new PgSnapshotCacheCompactor(cache, pgMetrics, props.getDeleteSnapshotStaleForDays());
+  @IsReadOnlyEnv
+  public SnapshotCache inMemorySnapshotCache() {
+    return new InMemorySnapshotCache();
+  }
+
+  @Bean
+  public SnapshotCacheCompactor snapshotCacheCompactor(
+      SnapshotCache cache, StoreConfigurationProperties props, PgMetrics pgMetrics) {
+    return new SnapshotCacheCompactor(cache, pgMetrics, props.getDeleteSnapshotStaleForDays());
   }
 }

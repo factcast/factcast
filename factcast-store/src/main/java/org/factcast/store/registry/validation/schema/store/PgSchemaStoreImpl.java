@@ -19,6 +19,8 @@ import io.micrometer.core.instrument.Tags;
 import java.util.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.validation.schema.SchemaConflictException;
 import org.factcast.store.registry.validation.schema.SchemaKey;
@@ -30,6 +32,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 /**
  * @author uwe
  */
+@Slf4j
 @RequiredArgsConstructor
 public class PgSchemaStoreImpl implements SchemaStore {
 
@@ -37,9 +40,16 @@ public class PgSchemaStoreImpl implements SchemaStore {
 
   @NonNull private final RegistryMetrics registryMetrics;
 
+  @NonNull private final StoreConfigurationProperties storeConfigurationProperties;
+
   @Override
   public void register(@NonNull SchemaSource key, @NonNull String schema)
       throws SchemaConflictException {
+
+    if (storeConfigurationProperties.isReadOnlyModeEnabled()) {
+      log.info("Skipping schema registration in read-only mode");
+      return;
+    }
 
     try {
       jdbcTemplate.update(
