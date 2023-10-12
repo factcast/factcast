@@ -16,6 +16,7 @@
 package org.factcast.store.registry.validation.schema;
 
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Abstraction for a (potentially persistent) Schemastore
@@ -28,4 +29,6 @@ public interface SchemaStore {
   boolean contains(SchemaSource source) throws SchemaConflictException;
 
   Optional<String> get(SchemaKey key);
+
+  Set<SchemaKey> getAllSchemaKeys();
 }
