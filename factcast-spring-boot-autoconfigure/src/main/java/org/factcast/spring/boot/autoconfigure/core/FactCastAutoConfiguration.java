@@ -18,21 +18,30 @@ package org.factcast.spring.boot.autoconfigure.core;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Generated;
 import lombok.NonNull;
+import net.devh.boot.grpc.common.autoconfigure.GrpcCommonCodecAutoConfiguration;
+import net.devh.boot.grpc.common.autoconfigure.GrpcCommonTraceAutoConfiguration;
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.event.DefaultEventSerializer;
 import org.factcast.factus.event.EventSerializer;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
-@Configuration
+@AutoConfiguration
 @ConditionalOnClass(FactCast.class)
+// spring-grpc compat until release
+@ImportAutoConfiguration({
+  GrpcCommonCodecAutoConfiguration.class,
+  GrpcCommonTraceAutoConfiguration.class
+})
+// spring-grpc compat until release
 @Generated
 @SuppressWarnings("unused")
 public class FactCastAutoConfiguration {
