@@ -45,7 +45,8 @@ public interface SchemaRegistry {
   Set<String> enumerateTypes(String n);
 
   default boolean isActive() {
+    // only false for NOP, which is used when SR is not configured.
+    // shortcut to avoid using StoreConfigurationProperties.isSchemaRegistryConfigured()
     return true;
   }
-  ;
 }

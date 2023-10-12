@@ -34,6 +34,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 @RequiredArgsConstructor
 public class PgSchemaStoreImpl implements SchemaStore {
 
+  static final String SELECT_NS_TYPE_VERSION = "SELECT ns, type, version FROM schemastore";
+
   @NonNull private final JdbcTemplate jdbcTemplate;
 
   @NonNull private final RegistryMetrics registryMetrics;
@@ -66,7 +68,8 @@ public class PgSchemaStoreImpl implements SchemaStore {
       // https://stackoverflow.com/questions/35888012/use-multiple-conflict-target-in-on-conflict-clause
 
       // as we have seen conflicts on the triple ns.type,version as well (which is surprising,
-      // because pkey should complain first, we handle this situation by giving it another try here:
+      // because pkey should complain first), we handle this situation by giving it another try
+      // here:
       jdbcTemplate.update(
           "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? ::"
               + " JSONB) ON CONFLICT ON CONSTRAINT schemastore_ns_type_version_key DO UPDATE set"
@@ -130,7 +133,7 @@ public class PgSchemaStoreImpl implements SchemaStore {
 
   @Override
   public Set<SchemaKey> getAllSchemaKeys() {
-    return jdbcTemplate.queryForList("SELECT ns, type, version FROM schemastore").stream()
+    return jdbcTemplate.queryForList(SELECT_NS_TYPE_VERSION).stream()
         .map(
             key ->
                 SchemaKey.of(

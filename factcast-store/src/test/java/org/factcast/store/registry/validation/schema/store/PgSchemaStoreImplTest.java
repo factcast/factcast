@@ -15,16 +15,18 @@
  */
 package org.factcast.store.registry.validation.schema.store;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.sql.SQLException;
+import java.util.*;
 import org.factcast.store.internal.PgTestConfiguration;
+import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.factcast.store.registry.validation.schema.SchemaSource;
 import org.factcast.store.registry.validation.schema.SchemaStore;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -39,7 +41,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 public class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
 
   @Autowired private JdbcTemplate tpl;
-  @Mock private JdbcTemplate mockTpl;
 
   @Override
   protected SchemaStore createUUT() {
@@ -47,7 +48,8 @@ public class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
   }
 
   @Test
-  void retriesOnWrongConstrainConflict() {
+  void retriesOnWrongConstraintConflict() {
+    var mockTpl = spy(tpl);
     var uut = new PgSchemaStoreImpl(mockTpl, registryMetrics);
 
     SchemaSource source = new SchemaSource().hash("hash").id("id").ns("ns").type("type");
@@ -61,18 +63,18 @@ public class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
             "ns",
             "type",
             0,
-            "foo",
+            "{}",
             "hash",
             "ns",
             "type",
             0,
-            "foo",
+            "{}",
             "id"))
         .thenThrow(
             new DataAccessException("oh my", new SQLException("bad things happened")) {
               private static final long serialVersionUID = 6190462075599395409L;
             });
-    uut.register(source, "foo");
+    uut.register(source, "{}");
     verify(mockTpl)
         .update(
             "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? ::"
@@ -83,13 +85,34 @@ public class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
             "ns",
             "type",
             0,
-            "foo",
+            "{}",
             "hash",
             "ns",
             "type",
             0,
-            "foo",
+            "{}",
             "id");
-    verifyNoMoreInteractions(mockTpl);
+  }
+
+  @Test
+  void testGetAllSchemaKeys() {
+    var mockTpl = spy(tpl);
+    var uut = new PgSchemaStoreImpl(mockTpl, registryMetrics);
+
+    when(mockTpl.queryForList(PgSchemaStoreImpl.SELECT_NS_TYPE_VERSION))
+        .thenReturn(
+            List.of(
+                Map.of("ns", "ns1", "type", "t1", "version", 1),
+                Map.of("ns", "ns1", "type", "t1", "version", 2),
+                Map.of("ns", "ns1", "type", "t2", "version", 1),
+                Map.of("ns", "ns2", "type", "t3", "version", 1)));
+
+    assertThat(uut.getAllSchemaKeys())
+        .hasSize(4)
+        .containsExactlyInAnyOrder(
+            SchemaKey.of("ns1", "t1", 1),
+            SchemaKey.of("ns1", "t1", 2),
+            SchemaKey.of("ns1", "t2", 1),
+            SchemaKey.of("ns2", "t3", 1));
   }
 }
