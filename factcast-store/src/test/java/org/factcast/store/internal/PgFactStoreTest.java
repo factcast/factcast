@@ -15,7 +15,7 @@
  */
 package org.factcast.store.internal;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.sql.PreparedStatement;
@@ -38,6 +38,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.TransformationRequest;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
@@ -61,9 +62,13 @@ class PgFactStoreTest {
   @Mock private FactTableWriteLock lock;
   @Mock private FactTransformerService factTransformerService;
   @Mock private PgFactIdToSerialMapper pgFactIdToSerialMapper;
-  @Mock private PgMetrics metrics;
+
+  @Mock(strictness = Mock.Strictness.LENIENT)
+  private PgMetrics metrics;
+
   @Mock private PgSnapshotCache snapCache;
   @Mock private TokenStore tokenStore;
+  @Mock private StoreConfigurationProperties storeConfigurationProperties;
   @InjectMocks private PgFactStore underTest;
 
   @Nested
@@ -140,6 +145,17 @@ class PgFactStoreTest {
               eq(Integer.MAX_VALUE),
               any(ParameterizedPreparedStatementSetter.class));
       verify(lock).aquireExclusiveTXLock();
+    }
+
+    @Test
+    void throwOnPublishInReadOnlyMode() {
+      when(storeConfigurationProperties.isReadOnlyModeEnabled()).thenReturn(true);
+
+      assertThatThrownBy(() -> underTest.publish(Collections.singletonList(fact)))
+          .isInstanceOf(UnsupportedOperationException.class);
+
+      verifyNoInteractions(jdbcTemplate);
+      verifyNoInteractions(lock);
     }
   }
 
@@ -280,6 +296,20 @@ class PgFactStoreTest {
       verify(lock).aquireExclusiveTXLock();
       assertThat(b).isTrue();
       verify(underTest).publish(any(List.class));
+    }
+
+    @Test
+    void throwOnPublishIfUnchangedInReadOnlyMode() {
+      when(storeConfigurationProperties.isReadOnlyModeEnabled()).thenReturn(true);
+
+      assertThatThrownBy(
+              () ->
+                  underTest.publishIfUnchanged(
+                      Collections.singletonList(fact), Optional.of(optionalToken)))
+          .isInstanceOf(UnsupportedOperationException.class);
+
+      verifyNoInteractions(jdbcTemplate);
+      verifyNoInteractions(lock);
     }
   }
 
