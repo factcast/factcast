@@ -62,7 +62,10 @@ class PgFactStoreTest {
   @Mock private FactTableWriteLock lock;
   @Mock private FactTransformerService factTransformerService;
   @Mock private PgFactIdToSerialMapper pgFactIdToSerialMapper;
-  @Mock private PgMetrics metrics;
+
+  @Mock(strictness = Mock.Strictness.LENIENT)
+  private PgMetrics metrics;
+
   @Mock private PgSnapshotCache snapCache;
   @Mock private TokenStore tokenStore;
   @Mock private StoreConfigurationProperties storeConfigurationProperties;
