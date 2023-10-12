@@ -15,9 +15,12 @@
  */
 package org.factcast.store.registry.validation.schema.store;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.sql.SQLException;
+import nl.altindag.log.LogCaptor;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.registry.validation.schema.SchemaSource;
 import org.factcast.store.registry.validation.schema.SchemaStore;
@@ -41,14 +44,16 @@ public class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
   @Autowired private JdbcTemplate tpl;
   @Mock private JdbcTemplate mockTpl;
 
+  @Mock private StoreConfigurationProperties storeConfigurationProperties;
+
   @Override
   protected SchemaStore createUUT() {
-    return new PgSchemaStoreImpl(tpl, registryMetrics);
+    return new PgSchemaStoreImpl(tpl, registryMetrics, storeConfigurationProperties);
   }
 
   @Test
   void retriesOnWrongConstrainConflict() {
-    var uut = new PgSchemaStoreImpl(mockTpl, registryMetrics);
+    var uut = new PgSchemaStoreImpl(mockTpl, registryMetrics, storeConfigurationProperties);
 
     SchemaSource source = new SchemaSource().hash("hash").id("id").ns("ns").type("type");
 
@@ -91,5 +96,22 @@ public class PgSchemaStoreImplTest extends AbstractSchemaStoreTest {
             "foo",
             "id");
     verifyNoMoreInteractions(mockTpl);
+  }
+
+  @Test
+  void skipsInsertIfReadOnlyMode() {
+    when(storeConfigurationProperties.isReadOnlyModeEnabled()).thenReturn(true);
+
+    var uut = new PgSchemaStoreImpl(mockTpl, registryMetrics, storeConfigurationProperties);
+
+    SchemaSource source = new SchemaSource().hash("hash").id("id").ns("ns").type("type");
+
+    try (var logs = LogCaptor.forClass(PgSchemaStoreImpl.class)) {
+      uut.register(source, "foo");
+
+      assertThat(logs.getInfoLogs()).contains("Skipping schema registration in read-only mode");
+    }
+
+    verifyNoInteractions(mockTpl);
   }
 }

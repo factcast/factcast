@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2022 factcast.org
+ * Copyright © 2017-2023 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.tail;
+package org.factcast.store.internal.snapcache;
 
-public interface PGTailIndexManager {
-  void triggerTailCreation();
+import java.time.ZonedDateTime;
+import java.util.Optional;
+import lombok.NonNull;
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotId;
+
+public interface SnapshotCache {
+  @NonNull
+  Optional<Snapshot> getSnapshot(@NonNull SnapshotId id);
+
+  void setSnapshot(@NonNull Snapshot snap);
+
+  void clearSnapshot(@NonNull SnapshotId id);
+
+  default void compact(@NonNull ZonedDateTime thresholdDate) {}
 }
