@@ -41,6 +41,7 @@ import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.snapcache.PgSnapshotCache;
+import org.factcast.store.registry.SchemaRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -51,6 +52,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.*;
 
+@SuppressWarnings("rawtypes")
 @ExtendWith(MockitoExtension.class)
 class PgFactStoreTest {
 
@@ -62,6 +64,7 @@ class PgFactStoreTest {
   @Mock private @NonNull PgMetrics metrics;
   @Mock private @NonNull PgSnapshotCache snapCache;
   @Mock private @NonNull TokenStore tokenStore;
+  @Mock private @NonNull SchemaRegistry schemaRegistry;
   @InjectMocks private PgFactStore underTest;
 
   @Nested
@@ -97,7 +100,6 @@ class PgFactStoreTest {
     private final UUID ID = UUID.randomUUID();
     private final int VERSION = 11;
 
-    @SuppressWarnings("rawtypes")
     @BeforeEach
     void setup() {
       configureMetricTimeSupplier();
@@ -124,7 +126,6 @@ class PgFactStoreTest {
   class WhenPublishing {
     @Mock private Fact fact;
 
-    @SuppressWarnings("rawtypes")
     @BeforeEach
     void setup() {
       configureMetricTimeRunnable();
@@ -186,16 +187,21 @@ class PgFactStoreTest {
 
   @Nested
   class WhenEnumeratingNamespaces {
-    @SuppressWarnings("rawtypes")
     @BeforeEach
-    void setup() {
+    void setup() {}
+
+    @Test
+    void withoutSchemaRegistry() {
       configureMetricTimeSupplier();
+      underTest.enumerateNamespaces();
+      verify(jdbcTemplate).query(eq(PgConstants.SELECT_DISTINCT_NAMESPACE), any(RowMapper.class));
     }
 
     @Test
-    void name() {
+    void withSchemaRegistry() {
+      when(schemaRegistry.enumerateNamespaces()).thenReturn(Set.of("a", "b"));
       underTest.enumerateNamespaces();
-      verify(jdbcTemplate).query(eq(PgConstants.SELECT_DISTINCT_NAMESPACE), any(RowMapper.class));
+      verifyNoInteractions(jdbcTemplate);
     }
   }
 
@@ -204,18 +210,22 @@ class PgFactStoreTest {
     private final String NS = "NS";
 
     @BeforeEach
-    void setup() {
-      configureMetricTimeSupplier();
-    }
+    void setup() {}
 
     @Test
-    void name() {
+    void withoutSchemaRegistry() {
+      configureMetricTimeSupplier();
       underTest.enumerateTypes("ns1");
       verify(jdbcTemplate)
           .query(
-              eq(PgConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE),
-              eq(new Object[] {"ns1"}),
-              any(RowMapper.class));
+              eq(PgConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE), any(RowMapper.class), eq("ns1"));
+    }
+
+    @Test
+    void withSchemaRegistry() {
+      when(schemaRegistry.enumerateTypes(anyString())).thenReturn(Set.of("a", "b"));
+      underTest.enumerateTypes("foo");
+      verifyNoInteractions(jdbcTemplate);
     }
   }
 
@@ -437,7 +447,6 @@ class PgFactStoreTest {
     void clear() {
       underTest.clearSnapshot(id);
       verify(snapCache).clearSnapshot(id);
-      ;
     }
   }
 }

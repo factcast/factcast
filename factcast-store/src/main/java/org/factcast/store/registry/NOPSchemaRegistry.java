@@ -69,7 +69,7 @@ public class NOPSchemaRegistry implements SchemaRegistry {
   }
 
   @Override
-  public Set<String> enumerateTypes() {
+  public Set<String> enumerateTypes(String ns) {
     return Set.of();
   }
 }
