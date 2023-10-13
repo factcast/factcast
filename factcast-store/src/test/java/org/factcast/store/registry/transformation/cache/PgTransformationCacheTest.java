@@ -26,6 +26,7 @@ import lombok.NonNull;
 import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
 import org.factcast.core.Fact;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,6 +51,8 @@ class PgTransformationCacheTest {
   @Mock private NamedParameterJdbcTemplate namedJdbcTemplate;
   RegistryMetrics registryMetrics = spy(new NOPRegistryMetrics());
 
+  @Mock StoreConfigurationProperties storeConfigurationProperties;
+
   @Nested
   class WhenPuting {
     @Mock private TransformationCache.@NonNull Key key;
@@ -59,7 +62,13 @@ class PgTransformationCacheTest {
     @BeforeEach
     void setup() {
       underTest =
-          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
+          spy(
+              new PgTransformationCache(
+                  jdbcTemplate,
+                  namedJdbcTemplate,
+                  registryMetrics,
+                  storeConfigurationProperties,
+                  10));
     }
 
     @Test
@@ -91,7 +100,13 @@ class PgTransformationCacheTest {
     @BeforeEach
     void setup() {
       underTest =
-          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
+          spy(
+              new PgTransformationCache(
+                  jdbcTemplate,
+                  namedJdbcTemplate,
+                  registryMetrics,
+                  storeConfigurationProperties,
+                  10));
     }
 
     @Test
@@ -137,7 +152,13 @@ class PgTransformationCacheTest {
     @BeforeEach
     void setup() {
       underTest =
-          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
+          spy(
+              new PgTransformationCache(
+                  jdbcTemplate,
+                  namedJdbcTemplate,
+                  registryMetrics,
+                  storeConfigurationProperties,
+                  10));
     }
 
     @Test
@@ -182,7 +203,13 @@ class PgTransformationCacheTest {
     @BeforeEach
     void setup() {
       underTest =
-          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
+          spy(
+              new PgTransformationCache(
+                  jdbcTemplate,
+                  namedJdbcTemplate,
+                  registryMetrics,
+                  storeConfigurationProperties,
+                  10));
     }
 
     @Test
@@ -211,7 +238,9 @@ class PgTransformationCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10);
+      underTest =
+          new PgTransformationCache(
+              jdbcTemplate, namedJdbcTemplate, registryMetrics, storeConfigurationProperties, 10);
     }
 
     @Test
@@ -232,7 +261,13 @@ class PgTransformationCacheTest {
     @BeforeEach
     void setup() {
       underTest =
-          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 2));
+          spy(
+              new PgTransformationCache(
+                  jdbcTemplate,
+                  namedJdbcTemplate,
+                  registryMetrics,
+                  storeConfigurationProperties,
+                  2));
     }
 
     @SneakyThrows
@@ -255,7 +290,13 @@ class PgTransformationCacheTest {
     @BeforeEach
     void setup() {
       underTest =
-          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 2));
+          spy(
+              new PgTransformationCache(
+                  jdbcTemplate,
+                  namedJdbcTemplate,
+                  registryMetrics,
+                  storeConfigurationProperties,
+                  2));
     }
 
     @Test
@@ -269,6 +310,16 @@ class PgTransformationCacheTest {
               "DELETE FROM transformationcache WHERE last_access < ?",
               new Date(THRESHOLD_DATE.toInstant().toEpochMilli()));
     }
+
+    @Test
+    void doesNotCompactIfInReadOnlyMode() {
+      when(storeConfigurationProperties.isReadOnlyModeEnabled()).thenReturn(true);
+
+      underTest.compact(THRESHOLD_DATE);
+
+      Mockito.verify(underTest).flush();
+      Mockito.verifyNoInteractions(jdbcTemplate);
+    }
   }
 
   @Nested
@@ -281,7 +332,13 @@ class PgTransformationCacheTest {
     @BeforeEach
     void setup() {
       underTest =
-          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
+          spy(
+              new PgTransformationCache(
+                  jdbcTemplate,
+                  namedJdbcTemplate,
+                  registryMetrics,
+                  storeConfigurationProperties,
+                  10));
     }
 
     @Test
@@ -330,6 +387,19 @@ class PgTransformationCacheTest {
           .containsExactly(
               "Could not complete batch update of transformations on transformation cache.");
     }
+
+    @Test
+    void doesnotFlushInReadOnlyMode() {
+      when(storeConfigurationProperties.isReadOnlyModeEnabled()).thenReturn(true);
+
+      underTest.registerAccess(key);
+      assertThat(underTest.buffer().size()).isPositive();
+
+      underTest.flush();
+      assertThat(underTest.buffer().size()).isZero();
+
+      verifyNoInteractions(jdbcTemplate);
+    }
   }
 
   @Nested
@@ -343,7 +413,13 @@ class PgTransformationCacheTest {
     @BeforeEach
     void setup() {
       underTest =
-          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
+          spy(
+              new PgTransformationCache(
+                  jdbcTemplate,
+                  namedJdbcTemplate,
+                  registryMetrics,
+                  storeConfigurationProperties,
+                  10));
     }
 
     @Test
@@ -378,7 +454,13 @@ class PgTransformationCacheTest {
     @BeforeEach
     void setup() {
       underTest =
-          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
+          spy(
+              new PgTransformationCache(
+                  jdbcTemplate,
+                  namedJdbcTemplate,
+                  registryMetrics,
+                  storeConfigurationProperties,
+                  10));
     }
 
     @Test
@@ -408,7 +490,13 @@ class PgTransformationCacheTest {
     @BeforeEach
     void setup() {
       underTest =
-          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
+          spy(
+              new PgTransformationCache(
+                  jdbcTemplate,
+                  namedJdbcTemplate,
+                  registryMetrics,
+                  storeConfigurationProperties,
+                  10));
     }
 
     @Test
@@ -432,39 +520,14 @@ class PgTransformationCacheTest {
       assertThat(ns.getAllValues().get(0)).isEqualTo("theNamespace");
       assertThat(type.getAllValues().get(0)).isEqualTo("theType");
     }
-  }
-
-  @Nested
-  class WhenClearingAndFlushingAccessOnly {
-    private PgTransformationCache underTest;
-
-    @BeforeEach
-    void setup() {
-      underTest =
-          spy(new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, 10));
-    }
 
     @Test
-    void clearsBuffer() {
-      underTest.registerWrite(
-          Mockito.mock(TransformationCache.Key.class), Mockito.mock(Fact.class));
-      underTest.registerAccess(Mockito.mock(TransformationCache.Key.class));
+    void doesNotDeleteWhenReadOnlyMode() {
+      when(storeConfigurationProperties.isReadOnlyModeEnabled()).thenReturn(true);
 
-      underTest.clearAndFlushAccessesOnly();
+      underTest.invalidateTransformationFor("theNamespace", "theType");
 
-      assertThat(underTest.buffer().size()).isZero();
-    }
-
-    @Test
-    void flushesAccessesOnly() {
-      underTest.registerWrite(
-          Mockito.mock(TransformationCache.Key.class), Mockito.mock(Fact.class));
-      underTest.registerAccess(Mockito.mock(TransformationCache.Key.class));
-
-      underTest.clearAndFlushAccessesOnly();
-
-      verify(underTest, times(1)).insertBufferedAccesses(any());
-      verify(underTest, never()).insertBufferedTransformations(any());
+      verifyNoInteractions(jdbcTemplate);
     }
   }
 }

@@ -15,7 +15,7 @@
  */
 package org.factcast.store.internal;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.sql.PreparedStatement;
@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
@@ -37,10 +38,12 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.TransformationRequest;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.snapcache.PgSnapshotCache;
+import org.factcast.store.registry.SchemaRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -51,6 +54,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.*;
 
+@SuppressWarnings("rawtypes")
 @ExtendWith(MockitoExtension.class)
 class PgFactStoreTest {
 
@@ -59,9 +63,14 @@ class PgFactStoreTest {
   @Mock private @NonNull FactTableWriteLock lock;
   @Mock private @NonNull FactTransformerService factTransformerService;
   @Mock private @NonNull PgFactIdToSerialMapper pgFactIdToSerialMapper;
-  @Mock private @NonNull PgMetrics metrics;
+
+  @Mock(strictness = Mock.Strictness.LENIENT)
+  private @NonNull PgMetrics metrics;
+
   @Mock private @NonNull PgSnapshotCache snapCache;
   @Mock private @NonNull TokenStore tokenStore;
+  @Mock private StoreConfigurationProperties storeConfigurationProperties;
+  @Mock SchemaRegistry schemaRegistry;
   @InjectMocks private PgFactStore underTest;
 
   @Nested
@@ -97,7 +106,6 @@ class PgFactStoreTest {
     private final UUID ID = UUID.randomUUID();
     private final int VERSION = 11;
 
-    @SuppressWarnings("rawtypes")
     @BeforeEach
     void setup() {
       configureMetricTimeSupplier();
@@ -124,7 +132,6 @@ class PgFactStoreTest {
   class WhenPublishing {
     @Mock private Fact fact;
 
-    @SuppressWarnings("rawtypes")
     @BeforeEach
     void setup() {
       configureMetricTimeRunnable();
@@ -140,6 +147,17 @@ class PgFactStoreTest {
               eq(Integer.MAX_VALUE),
               any(ParameterizedPreparedStatementSetter.class));
       verify(lock).aquireExclusiveTXLock();
+    }
+
+    @Test
+    void throwOnPublishInReadOnlyMode() {
+      when(storeConfigurationProperties.isReadOnlyModeEnabled()).thenReturn(true);
+
+      assertThatThrownBy(() -> underTest.publish(Collections.singletonList(fact)))
+          .isInstanceOf(UnsupportedOperationException.class);
+
+      verifyNoInteractions(jdbcTemplate);
+      verifyNoInteractions(lock);
     }
   }
 
@@ -188,14 +206,24 @@ class PgFactStoreTest {
   class WhenEnumeratingNamespaces {
     @SuppressWarnings("rawtypes")
     @BeforeEach
-    void setup() {
+    void setup() {}
+
+    @Test
+    void withoutSchemaRegistry() {
       configureMetricTimeSupplier();
+      when(schemaRegistry.isActive()).thenReturn(false);
+      underTest.enumerateNamespaces();
+      verify(jdbcTemplate).query(eq(PgConstants.SELECT_DISTINCT_NAMESPACE), any(RowMapper.class));
     }
 
     @Test
-    void name() {
-      underTest.enumerateNamespaces();
-      verify(jdbcTemplate).query(eq(PgConstants.SELECT_DISTINCT_NAMESPACE), any(RowMapper.class));
+    void withSchemaRegistry() {
+      underTest = spy(underTest);
+      Set<String> ns = Set.of("a", "b");
+      when(schemaRegistry.isActive()).thenReturn(true);
+      when(schemaRegistry.enumerateNamespaces()).thenReturn(ns);
+      assertThat(underTest.enumerateNamespaces()).isSameAs(ns);
+      verify(underTest, never()).enumerateNamespacesFromPg();
     }
   }
 
@@ -204,18 +232,29 @@ class PgFactStoreTest {
     private final String NS = "NS";
 
     @BeforeEach
-    void setup() {
+    void setup() {}
+
+    @Test
+    void withoutSchemaRegistry() {
+      when(schemaRegistry.isActive()).thenReturn(false);
       configureMetricTimeSupplier();
+
+      underTest.enumerateTypes(NS);
+      verify(jdbcTemplate)
+          .query(eq(PgConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE), any(RowMapper.class), same(NS));
     }
 
     @Test
-    void name() {
-      underTest.enumerateTypes("ns1");
-      verify(jdbcTemplate)
-          .query(
-              eq(PgConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE),
-              eq(new Object[] {"ns1"}),
-              any(RowMapper.class));
+    void withSchemaRegistry() {
+
+      Set<String> types = Set.of("a", "b");
+      underTest = spy(underTest);
+      when(schemaRegistry.isActive()).thenReturn(true);
+      when(schemaRegistry.enumerateTypes(anyString())).thenReturn(types);
+
+      Assertions.assertThat(underTest.enumerateTypes("foo")).isSameAs(types);
+
+      verify(underTest, never()).enumerateTypesFromPg(any());
     }
   }
 
@@ -280,6 +319,20 @@ class PgFactStoreTest {
       verify(lock).aquireExclusiveTXLock();
       assertThat(b).isTrue();
       verify(underTest).publish(any(List.class));
+    }
+
+    @Test
+    void throwOnPublishIfUnchangedInReadOnlyMode() {
+      when(storeConfigurationProperties.isReadOnlyModeEnabled()).thenReturn(true);
+
+      assertThatThrownBy(
+              () ->
+                  underTest.publishIfUnchanged(
+                      Collections.singletonList(fact), Optional.of(optionalToken)))
+          .isInstanceOf(UnsupportedOperationException.class);
+
+      verifyNoInteractions(jdbcTemplate);
+      verifyNoInteractions(lock);
     }
   }
 

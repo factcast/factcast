@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.7.0-SNAPSHOT</version>
+    <version>0.7.1-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-factus</artifactId>
@@ -56,7 +56,7 @@
     <dependency>
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-core</artifactId>
-      <version>1.11.4</version>
+      <version>1.11.5</version>
     </dependency>
 
     <dependency>

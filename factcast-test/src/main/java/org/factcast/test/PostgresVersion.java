@@ -20,6 +20,6 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class PostgresVersion {
   public String get() {
-    return System.getProperty("postgres.version", "11.5");
+    return System.getProperty("postgres.version", "11");
   }
 }
