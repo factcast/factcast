@@ -1,0 +1,9 @@
+{
+  "additionalProperties" : true,
+  "properties" : {
+    "name" : {
+      "type": "string"
+    }
+  },
+  "required": ["name"]
+}

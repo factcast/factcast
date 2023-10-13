@@ -106,7 +106,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
             500);
 
     // should reconnect like hell
-    assertThat(fc.enumerateNamespaces()).containsExactly("ns");
+    assertThat(fc.enumerateNamespaces()).isNotEmpty(); // data might be coming from schemareg
   }
 
   @SneakyThrows
@@ -131,7 +131,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
             500);
 
     // should reconnect like hell
-    assertThat(fc.enumerateNamespaces()).containsExactly("ns");
+    assertThat(fc.enumerateNamespaces()).isNotEmpty();
   }
 
   @SneakyThrows

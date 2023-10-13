@@ -1,9 +1,9 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("io.github.typesafegithub:github-workflows-kt:1.0.0")
+@file:DependsOn("io.github.typesafegithub:github-workflows-kt:1.2.0")
 
 
-import io.github.typesafegithub.workflows.actions.actions.CheckoutV3
+import io.github.typesafegithub.workflows.actions.actions.CheckoutV4
 import io.github.typesafegithub.workflows.actions.actions.SetupJavaV3
 import io.github.typesafegithub.workflows.domain.RunnerType
 import io.github.typesafegithub.workflows.domain.Workflow
@@ -24,7 +24,7 @@ public val workflowFormat: Workflow = workflow(
     ) {
         uses(
             name = "Checkout",
-            action = CheckoutV3(
+            action = CheckoutV4(
                 token = "${'$'}{{ secrets.PAT }}",
             ),
         )
