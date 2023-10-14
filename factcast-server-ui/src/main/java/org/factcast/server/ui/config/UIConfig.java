@@ -25,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.store.FactStore;
+import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.server.ui.adapter.FactRepositoryImpl;
 import org.factcast.server.ui.port.FactRepository;
 import org.springframework.beans.factory.InitializingBean;
@@ -40,8 +41,9 @@ public class UIConfig implements AppShellConfigurator, InitializingBean {
   final FactCast fc;
 
   @Bean
-  public FactRepository factRepository(FactStore fs, SecurityService securityService) {
-    return new FactRepositoryImpl(fs, securityService);
+  public FactRepository factRepository(
+      FactStore fs, SecurityService securityService, FastForwardTarget fastForwardTarget) {
+    return new FactRepositoryImpl(fs, securityService, fastForwardTarget);
   }
 
   @Bean
