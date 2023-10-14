@@ -16,12 +16,16 @@
 package org.factcast.server.security.auth;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.io.Serial;
+import java.io.Serializable;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 @Data
-public class FactCastRole {
+public class FactCastRole implements Serializable {
+  @Serial private static final long serialVersionUID = 42;
+
   private String id;
 
   private AccessRules write = new AccessRules();
