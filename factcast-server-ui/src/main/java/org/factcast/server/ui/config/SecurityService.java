@@ -16,7 +16,9 @@
 package org.factcast.server.ui.config;
 
 import com.vaadin.flow.spring.security.AuthenticationContext;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.factcast.core.Fact;
 import org.factcast.server.security.auth.FactCastUser;
 
 @RequiredArgsConstructor
@@ -24,11 +26,19 @@ public class SecurityService {
 
   private final AuthenticationContext authenticationContext;
 
-  public FactCastUser getAuthenticatedUser() {
+  private FactCastUser getAuthenticatedUser() {
     return authenticationContext.getAuthenticatedUser(FactCastUser.class).orElseThrow();
   }
 
   public void logout() {
     authenticationContext.logout();
+  }
+
+  public boolean canRead(@NonNull Fact f) {
+    return canRead(f.ns());
+  }
+
+  public boolean canRead(@NonNull String ns) {
+    return getAuthenticatedUser().canRead(ns);
   }
 }

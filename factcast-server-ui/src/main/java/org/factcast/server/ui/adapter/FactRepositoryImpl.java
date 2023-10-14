@@ -34,6 +34,7 @@ import org.factcast.core.subscription.SubscriptionClosedException;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.server.ui.config.SecurityService;
 import org.factcast.server.ui.full.FullQueryBean;
 import org.factcast.server.ui.id.IdQueryBean;
 import org.factcast.server.ui.port.FactRepository;
@@ -43,6 +44,8 @@ public class FactRepositoryImpl implements FactRepository {
 
   private final FactStore fs;
 
+  private final SecurityService securityService;
+
   @Override
   public Optional<Fact> findBy(@NonNull IdQueryBean bean) {
     UUID id = bean.getId();
@@ -51,7 +54,7 @@ public class FactRepositoryImpl implements FactRepository {
     }
 
     int v = Optional.ofNullable(bean.getVersion()).orElse(0);
-    return fs.fetchByIdAndVersion(id, v);
+    return fs.fetchByIdAndVersion(id, v).filter(securityService::canRead);
   }
 
   @Override
@@ -66,11 +69,14 @@ public class FactRepositoryImpl implements FactRepository {
       Pattern ptn = Pattern.compile(".*" + input.get() + ".*");
       ns = ns.stream().filter(s -> ptn.matcher(s).matches()).toList();
     }
-    return ns;
+    return ns.stream().filter(securityService::canRead).toList();
   }
 
   @Override
-  public List<String> types(String namespace, Optional<String> input) {
+  public List<String> types(@NonNull String namespace, @NonNull Optional<String> input) {
+    if (!securityService.canRead(namespace)) {
+      return List.of();
+    }
 
     Predicate<String> f = Predicates.all();
     if (input.isPresent()) {

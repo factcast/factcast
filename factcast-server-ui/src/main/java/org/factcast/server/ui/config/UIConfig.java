@@ -40,8 +40,8 @@ public class UIConfig implements AppShellConfigurator, InitializingBean {
   final FactCast fc;
 
   @Bean
-  public FactRepository factRepository(FactStore fs) {
-    return new FactRepositoryImpl(fs);
+  public FactRepository factRepository(FactStore fs, SecurityService securityService) {
+    return new FactRepositoryImpl(fs, securityService);
   }
 
   @Bean
