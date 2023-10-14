@@ -93,7 +93,10 @@ public class CommonSecurityConfig {
     return username -> {
       Optional<FactCastAccount> account = cc.findAccountById(username);
       return account
-          .map(a -> toUser(a, passwordEncoder.encode(secrets.getSecrets().get(a.id()))))
+          .flatMap(
+              a ->
+                  Optional.of(secrets.getSecrets().get(a.id()))
+                      .map(rawPassword -> toUser(a, passwordEncoder.encode(rawPassword))))
           .orElseThrow(() -> new UsernameNotFoundException(username));
     };
   }
@@ -131,6 +134,12 @@ public class CommonSecurityConfig {
       FactCastSecretProperties accessSecrets, ClassPathResource access) throws IOException {
     try (InputStream is = access.getInputStream()) {
       FactCastAccessConfiguration cfg = FactCastAccessConfiguration.read(is);
+
+      if (accessSecrets.getSecrets().isEmpty()) {
+        log.info(
+            "'factcast.access' does not contain any secrets. We assume you are using a different authentication mechanism by providing a custom UserDetailsService bean.");
+        return cfg;
+      }
 
       // look for secrets in properties
       List<String> ids = cfg.accounts().stream().map(FactCastAccount::id).toList();
