@@ -34,6 +34,7 @@ import org.factcast.core.subscription.SubscriptionClosedException;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.server.ui.config.SecurityService;
 import org.factcast.server.ui.full.FullQueryBean;
 import org.factcast.server.ui.id.IdQueryBean;
@@ -45,6 +46,8 @@ public class FactRepositoryImpl implements FactRepository {
   private final FactStore fs;
 
   private final SecurityService securityService;
+
+  private final FastForwardTarget fastForwardTarget;
 
   @Override
   public Optional<Fact> findBy(@NonNull IdQueryBean bean) {
@@ -89,7 +92,7 @@ public class FactRepositoryImpl implements FactRepository {
 
   @Override
   public long latestSerial() {
-    return 199L;
+    return fastForwardTarget.targetSer();
   }
 
   @Override
