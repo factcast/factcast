@@ -28,6 +28,7 @@ import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.Autocomplete;
 import com.vaadin.flow.component.textfield.BigDecimalField;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextField;
@@ -78,6 +79,7 @@ public class FullQueryPage extends DefaultContent implements HasUrlParameter<Str
     type = new TypesMultiSelectComboBox();
 
     serialHelperOverlay.setTarget(from.getElement());
+    from.setAutocomplete(Autocomplete.OFF);
 
     since.addValueChangeListener(e -> updateFrom());
 
