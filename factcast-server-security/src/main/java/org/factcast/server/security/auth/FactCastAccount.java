@@ -17,15 +17,17 @@ package org.factcast.server.security.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.*;
-import java.util.stream.Collectors;
 import lombok.*;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class FactCastAccount {
-  private static final long serialVersionUID = 42;
+public class FactCastAccount implements Serializable {
+  @Serial private static final long serialVersionUID = 42;
+
   public static final FactCastAccount GOD =
       new FactCastAccount("GODMODE") {
         @Override
@@ -71,11 +73,7 @@ public class FactCastAccount {
     }
 
     List<Boolean> results =
-        roles.stream()
-            .map(r -> r.canWrite(ns))
-            .filter(Objects::nonNull)
-            .distinct()
-            .collect(Collectors.toList());
+        roles.stream().map(r -> r.canWrite(ns)).filter(Objects::nonNull).distinct().toList();
     if (results.contains(false)) {
       return false;
     }
@@ -88,11 +86,7 @@ public class FactCastAccount {
     }
 
     List<Boolean> results =
-        roles.stream()
-            .map(r -> r.canRead(ns))
-            .filter(Objects::nonNull)
-            .distinct()
-            .collect(Collectors.toList());
+        roles.stream().map(r -> r.canRead(ns)).filter(Objects::nonNull).distinct().toList();
     if (results.contains(false)) {
       return false;
     }

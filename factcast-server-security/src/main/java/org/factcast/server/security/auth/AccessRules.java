@@ -16,6 +16,8 @@
 package org.factcast.server.security.auth;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 import lombok.*;
@@ -23,7 +25,9 @@ import lombok.*;
 @Data
 @NoArgsConstructor
 // exclusion has precedents
-public class AccessRules {
+public class AccessRules implements Serializable {
+  @Serial private static final long serialVersionUID = 42;
+
   @VisibleForTesting
   @Getter(value = AccessLevel.PROTECTED)
   private List<String> include = new LinkedList<>();

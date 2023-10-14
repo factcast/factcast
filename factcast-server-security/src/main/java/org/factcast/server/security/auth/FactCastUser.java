@@ -15,6 +15,7 @@
  */
 package org.factcast.server.security.auth;
 
+import java.io.Serial;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.NonNull;
@@ -25,7 +26,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 
 public class FactCastUser implements UserDetails, CredentialsContainer {
-  private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
   @Delegate private final User user;
 
