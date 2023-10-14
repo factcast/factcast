@@ -37,13 +37,11 @@ import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.server.ui.full.FullQueryBean;
 import org.factcast.server.ui.id.IdQueryBean;
 import org.factcast.server.ui.port.FactRepository;
-import org.springframework.stereotype.Service;
 
-@Service
 @RequiredArgsConstructor
 public class FactRepositoryImpl implements FactRepository {
 
-  final FactStore fs;
+  private final FactStore fs;
 
   @Override
   public Optional<Fact> findBy(@NonNull IdQueryBean bean) {

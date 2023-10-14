@@ -49,7 +49,10 @@ public @interface FactcastTestConfig {
 
     static Config from(@NonNull FactcastTestConfig e) {
       final Config config =
-          defaults().withConfigDir(e.configDir()).withFactcastVersion(e.factcastVersion());
+          defaults()
+              .withConfigDir(e.configDir())
+              .withFactcastVersion(e.factcastVersion())
+              .withSecurityEnabled(e.securityEnabled());
 
       if (!e.postgresVersion().isEmpty()) {
         return config.withPostgresVersion(e.postgresVersion());

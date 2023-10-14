@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.grpc.auth;
+package org.factcast.server.security.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import lombok.*;
 
 @NoArgsConstructor
+@AllArgsConstructor
 @Data
 public class FactCastAccount {
   private static final long serialVersionUID = 42;

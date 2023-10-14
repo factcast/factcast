@@ -25,7 +25,7 @@ import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.converter.StringToIntegerConverter;
 import com.vaadin.flow.data.converter.StringToUuidConverter;
 import com.vaadin.flow.router.*;
-import com.vaadin.flow.server.auth.AnonymousAllowed;
+import jakarta.annotation.security.PermitAll;
 import lombok.NonNull;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.server.ui.port.FactRepository;
@@ -35,7 +35,7 @@ import org.factcast.server.ui.views.MainLayout;
 
 @Route(value = "ui/id", layout = MainLayout.class)
 @PageTitle("Query by Fact-ID")
-@AnonymousAllowed
+@PermitAll
 public class IdQueryPage extends VerticalLayout implements HasUrlParameter<String> {
   private final IdQueryBean formBean = new IdQueryBean();
   private final BeanValidationUrlStateBinder<IdQueryBean> b =

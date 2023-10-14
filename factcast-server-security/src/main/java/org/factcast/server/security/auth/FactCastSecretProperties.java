@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2023 factcast.org
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.config;
+package org.factcast.server.security.auth;
 
-import com.vaadin.flow.spring.security.AuthenticationContext;
-import lombok.RequiredArgsConstructor;
-import org.factcast.server.security.auth.FactCastUser;
+import java.util.HashMap;
+import java.util.Map;
 
-@RequiredArgsConstructor
-public class SecurityService {
+public class FactCastSecretProperties {
 
-  private final AuthenticationContext authenticationContext;
-
-  public FactCastUser getAuthenticatedUser() {
-    return authenticationContext.getAuthenticatedUser(FactCastUser.class).orElseThrow();
+  public Map<String, String> getSecrets() {
+    return secrets;
   }
 
-  public void logout() {
-    authenticationContext.logout();
-  }
+  private final Map<String, String> secrets = new HashMap<String, String>();
 }

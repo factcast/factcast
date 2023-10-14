@@ -16,50 +16,38 @@
 package org.factcast.server.ui.config;
 
 import com.vaadin.flow.component.page.AppShellConfigurator;
+import com.vaadin.flow.spring.annotation.EnableVaadin;
 import com.vaadin.flow.spring.security.AuthenticationContext;
-import com.vaadin.flow.spring.security.VaadinWebSecurity;
 import com.vaadin.flow.theme.Theme;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
-import org.factcast.server.ui.views.LoginView;
+import org.factcast.core.store.FactStore;
+import org.factcast.server.ui.adapter.FactRepositoryImpl;
+import org.factcast.server.ui.port.FactRepository;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.http.HttpMethod;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.context.annotation.*;
 
-@EnableWebSecurity
 @Configuration
 @Theme(value = "fcui")
-@ComponentScan(basePackages = "org.factcast.server.ui")
+@EnableVaadin("org.factcast.server.ui")
 @RequiredArgsConstructor
-public class UIConfig extends VaadinWebSecurity implements AppShellConfigurator, InitializingBean {
+public class UIConfig implements AppShellConfigurator, InitializingBean {
 
   final FactCast fc;
 
-  @Override
-  protected void configure(HttpSecurity http) throws Exception {
-    http.authorizeHttpRequests(
-        auth ->
-            auth.requestMatchers(AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/images/*.png"))
-                .permitAll());
-    super.configure(http);
-    setLoginView(http, LoginView.class);
+  @Bean
+  public FactRepository factRepository(FactStore fs) {
+    return new FactRepositoryImpl(fs);
   }
 
   @Bean
-  @Primary
-  public SecurityService vaadinSecurityService(AuthenticationContext ctx) {
-    // TODO remove
-    System.err.println("UIConfig.vaadinSecurityService executed");
-    return new SecurityService(ctx);
+  @ConditionalOnMissingBean
+  public SecurityService securityService(AuthenticationContext authenticationContext) {
+    return new SecurityService(authenticationContext);
   }
 
   @Override

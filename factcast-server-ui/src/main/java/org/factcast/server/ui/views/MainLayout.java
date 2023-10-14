@@ -21,6 +21,7 @@ import com.vaadin.flow.component.html.Footer;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Header;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
@@ -68,6 +69,7 @@ public class MainLayout extends AppLayout {
         new SideNavItem("Query", FullQueryPage.class, LineAwesomeIcon.GLOBE_SOLID.create()));
     nav.addItem(
         new SideNavItem("Query by Fact-ID", IdQueryPage.class, LineAwesomeIcon.FILE.create()));
+    nav.addItem(new SideNavItem("Logout", LogoutView.class, VaadinIcon.EXIT_O.create()));
 
     return nav;
   }
