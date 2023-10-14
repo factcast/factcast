@@ -13,22 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.config;
+package org.factcast.server.ui.views;
 
-import com.vaadin.flow.spring.security.AuthenticationContext;
-import lombok.RequiredArgsConstructor;
-import org.factcast.server.security.auth.FactCastUser;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.router.Route;
+import jakarta.annotation.security.PermitAll;
+import org.factcast.server.ui.config.SecurityService;
 
-@RequiredArgsConstructor
-public class SecurityService {
+@Route("logout")
+@PageTitle("Logout")
+@PermitAll
+public class LogoutView extends VerticalLayout {
 
-  private final AuthenticationContext authenticationContext;
-
-  public FactCastUser getAuthenticatedUser() {
-    return authenticationContext.getAuthenticatedUser(FactCastUser.class).orElseThrow();
-  }
-
-  public void logout() {
-    authenticationContext.logout();
+  public LogoutView(SecurityService securityService) {
+    securityService.logout();
   }
 }

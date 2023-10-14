@@ -40,6 +40,7 @@
     <module>factcast-factus-redis</module>
     <module>factcast-factus-spring-tx</module>
     <module>factcast-server-grpc</module>
+    <module>factcast-server-security</module>
     <module>factcast-server-ui</module>
     <module>factcast-grpc-api</module>
     <module>factcast-schema-registry-cli</module>

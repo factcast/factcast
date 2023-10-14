@@ -15,7 +15,6 @@
  */
 package org.factcast.example.server;
 
-import com.vaadin.flow.spring.annotation.EnableVaadin;
 import lombok.extern.slf4j.Slf4j;
 import org.postgresql.Driver;
 import org.springframework.boot.SpringApplication;
@@ -32,7 +31,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 @SuppressWarnings("ALL")
 @SpringBootApplication
 @Slf4j
-@EnableVaadin(value = "org.factcast.server.ui")
 public class ExampleServerWithPostgresContainer {
 
   public static void main(String[] args) {

@@ -32,7 +32,7 @@ import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.converter.StringToUuidConverter;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.router.*;
-import com.vaadin.flow.server.auth.AnonymousAllowed;
+import jakarta.annotation.security.PermitAll;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
@@ -46,7 +46,7 @@ import org.factcast.server.ui.views.MainLayout;
 @Route(value = "ui/full", layout = MainLayout.class)
 @RouteAlias(value = "", layout = MainLayout.class)
 @PageTitle("Full")
-@AnonymousAllowed
+@PermitAll
 public class FullQueryPage extends VerticalLayout implements HasUrlParameter<String> {
 
   final FullQueryBean formBean = new FullQueryBean();

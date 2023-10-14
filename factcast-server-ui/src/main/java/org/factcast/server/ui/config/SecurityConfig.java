@@ -15,20 +15,20 @@
  */
 package org.factcast.server.ui.config;
 
-import com.vaadin.flow.spring.security.AuthenticationContext;
-import lombok.RequiredArgsConstructor;
-import org.factcast.server.security.auth.FactCastUser;
+import com.vaadin.flow.spring.security.VaadinWebSecurity;
+import lombok.extern.slf4j.Slf4j;
+import org.factcast.server.ui.views.LoginView;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 
-@RequiredArgsConstructor
-public class SecurityService {
-
-  private final AuthenticationContext authenticationContext;
-
-  public FactCastUser getAuthenticatedUser() {
-    return authenticationContext.getAuthenticatedUser(FactCastUser.class).orElseThrow();
-  }
-
-  public void logout() {
-    authenticationContext.logout();
+@Slf4j
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig extends VaadinWebSecurity {
+  @Override
+  protected void configure(HttpSecurity http) throws Exception {
+    super.configure(http);
+    setLoginView(http, LoginView.class);
   }
 }

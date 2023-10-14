@@ -13,26 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.grpc.auth;
+package org.factcast.server.security.auth;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.util.LinkedList;
 import java.util.List;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
+import lombok.*;
 
+@Data
 @NoArgsConstructor
 // exclusion has precedents
 public class AccessRules {
   @VisibleForTesting
   @Getter(value = AccessLevel.PROTECTED)
-  private final List<String> include = new LinkedList<>();
+  private List<String> include = new LinkedList<>();
 
   @VisibleForTesting
   @Getter(value = AccessLevel.PROTECTED)
-  private final List<String> exclude = new LinkedList<>();
+  private List<String> exclude = new LinkedList<>();
 
   Boolean includes(@NonNull String ns) {
     boolean excluded = exclude.stream().anyMatch(s -> matches(s, ns));
