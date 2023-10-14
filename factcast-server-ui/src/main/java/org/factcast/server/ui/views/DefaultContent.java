@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.id;
+package org.factcast.server.ui.views;
 
-import jakarta.validation.constraints.NotNull;
-import java.util.UUID;
-import javax.annotation.Nullable;
-import lombok.Data;
-import lombok.experimental.Accessors;
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
-@Data
-@Accessors(chain = false, fluent = false)
-public class IdQueryBean {
-  @NotNull private UUID id;
-  @Nullable private Integer version;
+public class DefaultContent extends VerticalLayout {
+  public DefaultContent() {
+    setWidth("none");
+    setPadding(true);
+    setClassName("default-content");
+  }
+
+  public DefaultContent(Component... children) {
+    this();
+    add(children);
+  }
 }

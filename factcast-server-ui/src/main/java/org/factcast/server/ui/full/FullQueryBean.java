@@ -15,6 +15,7 @@
  */
 package org.factcast.server.ui.full;
 
+import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
@@ -29,7 +30,9 @@ public class FullQueryBean {
   private LocalDate since = LocalDate.now();
   private Integer limit = 50;
   private Integer offset = 0;
-  private String ns = null;
+
+  @NotNull private String ns;
+
   private Set<String> type = null;
   // currently not possible to filter on more than one aggId via api
   private UUID aggId = null;
