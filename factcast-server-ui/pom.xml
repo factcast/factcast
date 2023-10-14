@@ -132,6 +132,11 @@
       <version>24.0.2</version>
     </dependency>
     <dependency>
+      <groupId>com.vaadin.componentfactory</groupId>
+      <artifactId>popup</artifactId>
+      <version>24.0.4</version>
+    </dependency>
+    <dependency>
       <groupId>org.vaadin.crudui</groupId>
       <artifactId>crudui</artifactId>
       <version>7.1.0</version>

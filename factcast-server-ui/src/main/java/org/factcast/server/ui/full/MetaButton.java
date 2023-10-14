@@ -15,15 +15,25 @@
  */
 package org.factcast.server.ui.full;
 
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import java.util.Collection;
 import org.vaadin.crudui.crud.CrudListener;
 import org.vaadin.crudui.crud.impl.GridCrud;
 
-class MetaView extends VerticalLayout {
-  MetaView(FullQueryBean backingBean) {
+class MetaButton extends Button {
+  private final FullQueryBean backingBean;
+  private final GridCrud<MetaTuple> crud = new GridCrud<>(MetaTuple.class);
 
-    GridCrud<MetaTuple> crud = new GridCrud<>(MetaTuple.class);
+  MetaButton(FullQueryBean backingBean) {
+    super("Meta");
+    this.backingBean = backingBean;
+
+    final var dialog = new Dialog("Meta");
+
     crud.setCrudListener(
         new CrudListener<MetaTuple>() {
           @Override
@@ -36,6 +46,7 @@ class MetaView extends VerticalLayout {
             // should not be directly pushed into the formbean, TODO learn about grids and
             // binding
             backingBean.getMeta().add(user);
+            MetaButton.this.update();
             return user;
           }
 
@@ -49,13 +60,40 @@ class MetaView extends VerticalLayout {
             // should not be directly removed from the formbean, TODO learn about grids and
             // binding
             backingBean.getMeta().remove(user);
+            MetaButton.this.update();
           }
         });
     crud.getCrudFormFactory().setUseBeanValidation(true);
     setId("metabox");
 
-    add(crud);
-    setWidthFull();
     crud.setWidthFull();
+
+    Button closeButton = new Button("Close");
+    closeButton.addClickListener(e -> dialog.close());
+
+    VerticalLayout dialogLayout = new VerticalLayout(crud, closeButton);
+    dialogLayout.setPadding(false);
+    dialogLayout.setAlignItems(FlexComponent.Alignment.STRETCH);
+    dialogLayout.getStyle().set("width", "300px").set("max-width", "100%");
+    dialogLayout.setAlignSelf(FlexComponent.Alignment.END, closeButton);
+    dialog.add(dialogLayout);
+
+    addClickListener(e -> dialog.open());
+  }
+
+  public void update() {
+    if (getSuffixComponent() != null) {
+      getSuffixComponent().removeFromParent();
+    }
+
+    if (backingBean.getMeta().isEmpty()) {
+      return;
+    }
+
+    Span confirmed = new Span(String.valueOf(backingBean.getMeta().size()));
+    confirmed.getElement().getThemeList().add("badge success");
+    setSuffixComponent(confirmed);
+
+    crud.refreshGrid();
   }
 }

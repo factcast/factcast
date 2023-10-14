@@ -19,7 +19,6 @@ import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.converter.StringToIntegerConverter;
@@ -30,21 +29,19 @@ import lombok.NonNull;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.server.ui.port.FactRepository;
 import org.factcast.server.ui.utils.Notifications;
+import org.factcast.server.ui.views.DefaultContent;
 import org.factcast.server.ui.views.JsonView;
 import org.factcast.server.ui.views.MainLayout;
 
 @Route(value = "ui/id", layout = MainLayout.class)
 @PageTitle("Query by Fact-ID")
 @PermitAll
-public class IdQueryPage extends VerticalLayout implements HasUrlParameter<String> {
+public class IdQueryPage extends DefaultContent implements HasUrlParameter<String> {
   private final IdQueryBean formBean = new IdQueryBean();
   private final BeanValidationUrlStateBinder<IdQueryBean> b =
       new BeanValidationUrlStateBinder<>(IdQueryBean.class);
 
   public IdQueryPage(FactRepository fc) {
-    setWidthFull();
-    setHeightFull();
-
     final var idInput = idInput();
     final var versionInput = versionInput();
     final var inputFields = new HorizontalLayout(idInput, versionInput);
@@ -67,12 +64,12 @@ public class IdQueryPage extends VerticalLayout implements HasUrlParameter<Strin
 
   @NonNull
   private HorizontalLayout formButtons(FactRepository fc, JsonView jsonView) {
-    final var queryBtn = new Button("query");
+    final var queryBtn = new Button("Query");
     queryBtn.addClickShortcut(Key.ENTER);
     queryBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
     queryBtn.addClickListener(event -> executeQuery(fc, jsonView));
 
-    final var resetBtn = new Button("reset");
+    final var resetBtn = new Button("Reset");
     resetBtn.addClickListener(event -> b.readBean(null));
 
     final var hl = new HorizontalLayout(queryBtn, resetBtn);
@@ -120,6 +117,7 @@ public class IdQueryPage extends VerticalLayout implements HasUrlParameter<Strin
 
     b.forField(id)
         .withNullRepresentation("")
+        .asRequired()
         .withConverter(new StringToUuidConverter("not a uuid"))
         .bind("id");
     return id;

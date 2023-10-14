@@ -25,22 +25,19 @@ import com.vaadin.flow.router.QueryParameters;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import lombok.SneakyThrows;
 import org.springframework.web.util.UriComponentsBuilder;
 
 public class BeanValidationUrlStateBinder<T> extends BeanValidationBinder<T> {
   private final ObjectMapper om = createOm();
-  private final Class<T> beanType;
 
   public BeanValidationUrlStateBinder(Class<T> beanType) {
     super(beanType);
-    this.beanType = beanType;
   }
 
   public BeanValidationUrlStateBinder(Class<T> beanType, boolean scanNestedDefinitions) {
     super(beanType, scanNestedDefinitions);
-    this.beanType = beanType;
   }
 
   private ObjectMapper createOm() {
@@ -93,7 +90,7 @@ public class BeanValidationUrlStateBinder<T> extends BeanValidationBinder<T> {
     }
   }
 
-  private static void updateClientUrl(Function<URI, URI> urlReplacer) {
+  private static void updateClientUrl(UnaryOperator<URI> urlReplacer) {
     UI.getCurrent()
         .getPage()
         .fetchCurrentURL(

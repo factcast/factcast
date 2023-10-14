@@ -15,15 +15,18 @@
  */
 package org.factcast.server.ui.full;
 
+import com.vaadin.componentfactory.Popup;
 import com.vaadin.flow.component.HasValue.ValueChangeEvent;
 import com.vaadin.flow.component.HasValue.ValueChangeListener;
-import com.vaadin.flow.component.accordion.AccordionPanel;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
+import com.vaadin.flow.component.html.H4;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.ThemableLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.BigDecimalField;
 import com.vaadin.flow.component.textfield.IntegerField;
@@ -40,25 +43,28 @@ import lombok.NonNull;
 import org.factcast.server.ui.id.BeanValidationUrlStateBinder;
 import org.factcast.server.ui.port.FactRepository;
 import org.factcast.server.ui.utils.Notifications;
+import org.factcast.server.ui.views.DefaultContent;
 import org.factcast.server.ui.views.JsonView;
 import org.factcast.server.ui.views.MainLayout;
 
 @Route(value = "ui/full", layout = MainLayout.class)
 @RouteAlias(value = "", layout = MainLayout.class)
-@PageTitle("Full")
+@PageTitle("Query")
 @PermitAll
-public class FullQueryPage extends VerticalLayout implements HasUrlParameter<String> {
+public class FullQueryPage extends DefaultContent implements HasUrlParameter<String> {
 
   final FullQueryBean formBean = new FullQueryBean();
 
   private final ComboBox<String> ns;
   private final MultiSelectComboBox<String> type;
+  private final MetaButton metaButton;
 
-  private DatePicker since = new DatePicker("first serial of");
-  private IntegerField limit = new IntegerField("limit");
-  private IntegerField offset = new IntegerField("offset");
-  private BigDecimalField from = new BigDecimalField("starting after serial");
+  private DatePicker since = new DatePicker("First Serial of Day");
+  private IntegerField limit = new IntegerField("Limit");
+  private IntegerField offset = new IntegerField("Offset");
+  private BigDecimalField from = new BigDecimalField("Starting Serial");
   private TextField aggId = new AggregateIdField();
+  private Popup serialHelperOverlay = new Popup();
   private final JsonView jsonView = new JsonView();
 
   private FactRepository repo;
@@ -67,16 +73,13 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
 
   public FullQueryPage(@NonNull FactRepository repo) {
     this.repo = repo;
-    setWidthFull();
-    setHeightFull();
 
     ns = new NameSpacesComboBox(repo.namespaces(Optional.empty()));
     type = new TypesMultiSelectComboBox();
 
-    since.addValueChangeListener(
-        e -> {
-          updateFrom();
-        });
+    serialHelperOverlay.setTarget(from.getElement());
+
+    since.addValueChangeListener(e -> updateFrom());
 
     ns.addValueChangeListener(
         new ValueChangeListener<ValueChangeEvent<?>>() {
@@ -92,28 +95,32 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
           }
         });
 
-    updateFrom();
-
     b = createBinding();
 
-    HorizontalLayout typeFilter = new HorizontalLayout(ns, type);
-    typeFilter.setWidthFull();
+    final var nsAndTypeFilter = new HorizontalLayout(ns, type);
+    nsAndTypeFilter.setWidthFull();
 
-    VerticalLayout extra =
-        new VerticalLayout(
-            new AggregateIdField(), new AccordionPanel("Meta", new MetaView(formBean)));
+    metaButton = new MetaButton(formBean);
+    final var aggIdAndMeta = new HorizontalLayout(aggId, metaButton);
+    aggIdAndMeta.setWidthFull();
+    aggIdAndMeta.setAlignItems(Alignment.BASELINE);
 
-    noMarginAndPadding(extra);
+    final var form =
+        new VerticalLayout(nsAndTypeFilter, aggIdAndMeta, new FromPanel(), formButtons());
+    form.setSpacing(false);
+    form.setPadding(false);
 
-    add(typeFilter, extra, new FromPanel(), new QuantityPanel(), new QueryButton());
+    add(form);
     add(jsonView);
+    add(serialHelperOverlay);
 
     updateTypeState();
+    updateFrom();
   }
 
   private BeanValidationUrlStateBinder<FullQueryBean> createBinding() {
     var b = new BeanValidationUrlStateBinder<>(FullQueryBean.class);
-    b.forField(ns).withNullRepresentation("").bind("ns");
+    b.forField(ns).withNullRepresentation("").asRequired().bind("ns");
     b.forField(type).withNullRepresentation(new HashSet<>()).bind("type");
     b.forField(from).withNullRepresentation(BigDecimal.ZERO).bind("from");
     b.forField(since).bind("since");
@@ -136,6 +143,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     final var location = event.getLocation();
     b.readFromQueryParams(location.getQueryParameters(), formBean);
     updateTypeState();
+    metaButton.update();
   }
 
   private void updateFrom() {
@@ -148,71 +156,70 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     }
   }
 
-  void noMarginAndPadding(ThemableLayout l) {
-    l.setMargin(false);
-    l.setPadding(false);
-  }
-
-  class QuantityPanel extends HorizontalLayout {
-    public QuantityPanel() {
-      add(limit, offset);
-    }
-  }
-
   class FromPanel extends HorizontalLayout {
     public FromPanel() {
-      VerticalLayout serialHelpers = new VerticalLayout();
+      setClassName("flex-wrap");
+      setJustifyContentMode(JustifyContentMode.BETWEEN);
 
-      Button latestSerial = new Button("current (latest) serial");
+      Button latestSerial = new Button("Latest serial");
       latestSerial.addClickListener(
-          event -> {
-            from.setValue(BigDecimal.valueOf(repo.latestSerial()));
-          });
-      latestSerial.setWidthFull();
+          event -> from.setValue(BigDecimal.valueOf(repo.latestSerial())));
 
-      Button fromScratch = new Button("all");
-      fromScratch.addClickListener(
-          event -> {
-            from.setValue(null);
-          });
+      Button fromScratch = new Button("From scratch");
+      fromScratch.addClickListener(event -> from.setValue(BigDecimal.ZERO));
 
-      fromScratch.setWidthFull();
-      serialHelpers.add(since);
-      serialHelpers.add(latestSerial);
-      serialHelpers.add(fromScratch);
-      VerticalLayout fromContainer = new VerticalLayout(from);
-      add(fromContainer, serialHelpers);
+      final var heading = new H4("Select Starting Serial");
+      final var overlayContent = new VerticalLayout(heading, since, latestSerial, fromScratch);
+      overlayContent.setSpacing(false);
+      overlayContent.getThemeList().add("spacing-xs");
+      overlayContent.setAlignItems(FlexComponent.Alignment.STRETCH);
+      serialHelperOverlay.add(overlayContent);
 
-      noMarginAndPadding(this);
-      noMarginAndPadding(serialHelpers);
-      noMarginAndPadding(fromContainer);
-      from.setWidthFull();
+      from.setWidth("auto");
+      limit.setWidth("auto");
+      offset.setWidth("auto");
+      add(from, limit, offset);
     }
   }
 
-  class QueryButton extends Button {
-    public QueryButton() {
-      super("query");
+  @NonNull
+  private HorizontalLayout formButtons() {
+    final var queryBtn = new Button("Query");
+    queryBtn.addClickShortcut(Key.ENTER);
+    queryBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+    queryBtn.addClickListener(
+        event -> {
+          try {
+            b.writeBean(formBean);
+            jsonView.renderFacts(repo.fetchChunk(formBean));
+          } catch (ValidationException e) {
+            Notifications.warn(e.getMessage());
+          } catch (Exception e) {
+            Notifications.error(e.getMessage());
+          }
+        });
 
-      addClickListener(
-          event -> {
-            try {
-              b.writeBean(formBean);
-              jsonView.renderFacts(repo.fetchChunk(formBean));
-            } catch (ValidationException e) {
-              Notifications.warn("Validation failed: " + e.getMessage());
-            } catch (IllegalArgumentException e) {
-              Notifications.warn(e.getMessage());
-            }
-          });
-    }
+    final var resetBtn = new Button("Reset");
+    resetBtn.addClickListener(
+        event -> {
+          b.readBean(null);
+          formBean.getMeta().clear();
+          metaButton.update();
+        });
+
+    final var hl = new HorizontalLayout(queryBtn, resetBtn);
+    hl.setWidthFull();
+    hl.addClassName("label-padding");
+
+    return hl;
   }
 
   class NameSpacesComboBox extends ComboBox<String> {
     public NameSpacesComboBox(Collection<String> items) {
-      super("Namespaces");
+      super("Namespace");
       setItems(DataProvider.ofCollection(items));
-      setRequired(true);
+      setAutoOpen(true);
+      setAutofocus(true);
     }
   }
 
@@ -227,7 +234,8 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     public AggregateIdField() {
       super("aggregate-id");
       setLabel("Aggregate-ID");
-      setWidthFull();
+      setPlaceholder("UUID");
+      setWidth("100%");
     }
   }
 }
