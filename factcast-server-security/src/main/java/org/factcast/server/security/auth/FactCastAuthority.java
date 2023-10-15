@@ -15,6 +15,9 @@
  */
 package org.factcast.server.security.auth;
 
-public final class FactCastAuthority {
+import lombok.experimental.UtilityClass;
+
+@UtilityClass
+public class FactCastAuthority {
   public static final String AUTHENTICATED = "ROLE_AUTHENTICATED";
 }
