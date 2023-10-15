@@ -55,7 +55,7 @@ class JsonView extends LitElement {
     const that = this;
 
     this.codeLensProvider = monaco.languages.registerCodeLensProvider("json", {
-      async provideCodeLenses(model, token) {
+      async provideCodeLenses(model) {
         if (model.getValue() === "") {
           return {
             lenses: [],
@@ -71,7 +71,7 @@ class JsonView extends LitElement {
     });
 
     this.hoverProvider = monaco.languages.registerHoverProvider("json", {
-      async provideHover(model, position, token) {
+      async provideHover(model, position) {
         if (model.getValue() === "") {
           return null;
         }
