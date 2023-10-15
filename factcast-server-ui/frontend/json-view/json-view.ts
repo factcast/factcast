@@ -170,7 +170,7 @@ class JsonView extends LitElement {
     } else if (member.value.type === "Object") {
       const subMembers = member.value.members;
       const subLenses = subMembers
-        .map((e: any) =>
+        .map((e) =>
           this.createIntelliSense(parsedMetaData, `${path}.${e.name.value}`, e)
         )
         .flat(Infinity) as EnrichedMember[];
@@ -178,7 +178,7 @@ class JsonView extends LitElement {
       fieldsWithEnrichment.push(...subLenses);
     } else if (member.value.type === "Array") {
       const subMembers = member.value.elements
-        .map((e: any, i: number) =>
+        .map((e, i) =>
           this.createIntelliSense(parsedMetaData, `${path}[${i}]`, e)
         )
         .flat(Infinity) as EnrichedMember[];
