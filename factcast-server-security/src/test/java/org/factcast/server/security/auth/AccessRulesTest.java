@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 
-public class AccessRulesTest {
+class AccessRulesTest {
 
   private final AccessRules uut = new AccessRules();
 
