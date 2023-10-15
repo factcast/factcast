@@ -27,7 +27,7 @@
       <plugin>
         <groupId>org.factcast</groupId>
         <artifactId>factcast-schema-registry-maven-plugin</artifactId>
-        <version>0.7.1-SNAPSHOT</version>
+        <version>${project.version}</version>
         <executions>
           <execution>
             <id>build</id>

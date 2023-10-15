@@ -502,7 +502,11 @@
               <includes>
                 <include>factcast-site/documentation-docsy/content/**/*.md</include>
                 <include>/*.md</include>
+                <include>factcast-server-ui/frontend/**/*</include>
               </includes>
+              <excludes>
+                <exclude>factcast-server-ui/frontend/generated/**/*</exclude>
+              </excludes>
               <prettier>
                 <config>
                   <useTabs>true</useTabs>

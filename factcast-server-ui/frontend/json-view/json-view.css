@@ -1,5 +1,6 @@
 /* We must define the font face outside the shadowroot */
 @font-face {
-    font-family: 'codicon';
-    src: url('monaco-editor/min/vs/base/browser/ui/codicons/codicon/codicon.ttf') format('truetype');
+	font-family: "codicon";
+	src: url("monaco-editor/min/vs/base/browser/ui/codicons/codicon/codicon.ttf")
+		format("truetype");
 }
