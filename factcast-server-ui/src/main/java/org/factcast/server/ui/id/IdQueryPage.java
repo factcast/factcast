@@ -28,6 +28,7 @@ import jakarta.annotation.security.PermitAll;
 import lombok.NonNull;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.server.ui.port.FactRepository;
+import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
 import org.factcast.server.ui.utils.Notifications;
 import org.factcast.server.ui.views.DefaultContent;
 import org.factcast.server.ui.views.JsonView;

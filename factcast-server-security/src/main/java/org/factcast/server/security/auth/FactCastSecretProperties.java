@@ -24,5 +24,5 @@ public class FactCastSecretProperties {
     return secrets;
   }
 
-  private final Map<String, String> secrets = new HashMap<String, String>();
+  private final Map<String, String> secrets = new HashMap<>();
 }

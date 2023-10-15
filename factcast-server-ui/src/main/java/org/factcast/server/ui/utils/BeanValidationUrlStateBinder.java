@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.id;
+package org.factcast.server.ui.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,6 +30,7 @@ import lombok.SneakyThrows;
 import org.springframework.web.util.UriComponentsBuilder;
 
 public class BeanValidationUrlStateBinder<T> extends BeanValidationBinder<T> {
+  public static final String STATE = "state";
   private final ObjectMapper om = createOm();
 
   public BeanValidationUrlStateBinder(Class<T> beanType) {
@@ -41,9 +42,7 @@ public class BeanValidationUrlStateBinder<T> extends BeanValidationBinder<T> {
   }
 
   private ObjectMapper createOm() {
-    var om = new ObjectMapper();
-    om.registerModules(new JavaTimeModule());
-    return om;
+    return new ObjectMapper().registerModules(new JavaTimeModule());
   }
 
   @Override
@@ -53,7 +52,7 @@ public class BeanValidationUrlStateBinder<T> extends BeanValidationBinder<T> {
     updateClientUrl(
         x ->
             UriComponentsBuilder.fromUri(x)
-                .replaceQueryParam("state", writeValueAsString(t))
+                .replaceQueryParam(STATE, writeValueAsString(t))
                 .build()
                 .toUri());
   }
@@ -61,9 +60,9 @@ public class BeanValidationUrlStateBinder<T> extends BeanValidationBinder<T> {
   public void readFromQueryParams(QueryParameters queryParameters, T bean) {
     final var parametersMap = queryParameters.getParameters();
 
-    if (parametersMap.containsKey("state")) {
+    if (parametersMap.containsKey(STATE)) {
       try {
-        om.readerForUpdating(bean).readValue(parametersMap.get("state").get(0));
+        om.readerForUpdating(bean).readValue(parametersMap.get(STATE).get(0));
         readBean(bean);
       } catch (JsonProcessingException e) {
         // do nothing
@@ -82,11 +81,7 @@ public class BeanValidationUrlStateBinder<T> extends BeanValidationBinder<T> {
 
     if (t == null) {
       updateClientUrl(
-          x ->
-              UriComponentsBuilder.fromUri(x)
-                  .replaceQueryParam("state", List.of())
-                  .build()
-                  .toUri());
+          x -> UriComponentsBuilder.fromUri(x).replaceQueryParam(STATE, List.of()).build().toUri());
     }
   }
 

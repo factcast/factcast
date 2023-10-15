@@ -24,44 +24,44 @@ public class AccessRulesTest {
   private final AccessRules uut = new AccessRules();
 
   @Test
-  public void testIncludesDefaultsToNull() {
+  void testIncludesDefaultsToNull() {
     assertNull(uut.includes("foo"));
   }
 
   @Test
-  public void testIncludesNegative() {
+  void testIncludesNegative() {
     uut.exclude().add("foo");
     assertFalse(uut.includes("foo"));
   }
 
   @Test
-  public void testIncludesNegativeExcludeWins() {
+  void testIncludesNegativeExcludeWins() {
     uut.exclude().add("foo");
     uut.include().add("foo");
     assertFalse(uut.includes("foo"));
   }
 
   @Test
-  public void testIncludesNegativeExcludeWildcardWins() {
+  void testIncludesNegativeExcludeWildcardWins() {
     uut.exclude().add("*");
     uut.include().add("foo");
     assertFalse(uut.includes("foo"));
   }
 
   @Test
-  public void testIncludesPositive() {
+  void testIncludesPositive() {
     uut.include().add("foo");
     assertTrue(uut.includes("foo"));
   }
 
   @Test
-  public void testIncludesPositiveWildcardStar() {
+  void testIncludesPositiveWildcardStar() {
     uut.include().add("*");
     assertTrue(uut.includes("foo"));
   }
 
   @Test
-  public void testIncludesPositiveWildcard() {
+  void testIncludesPositiveWildcard() {
     uut.include().add("fo*");
     assertTrue(uut.includes("foo"));
   }
