@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
 import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 
-public class FactCastAccountTest {
+class FactCastAccountTest {
 
   private final FactCastAccount uut = new FactCastAccount("foo");
 
