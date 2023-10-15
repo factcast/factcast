@@ -47,7 +47,7 @@ public abstract class AbstractSchemaStoreTest {
 
   protected abstract SchemaStore createUUT();
 
-  final SchemaSource s = new SchemaSource();
+  SchemaSource s = new SchemaSource();
 
   @Test
   void testEmptyContains() {
@@ -129,5 +129,27 @@ public abstract class AbstractSchemaStoreTest {
     uut.register(s, "{}");
 
     assertThat(uut.contains(s)).isTrue();
+  }
+
+  @Test
+  void testGetAll() {
+
+    s.id("http://getAll1");
+    s.hash("123");
+    s.ns("ns");
+    s.type("type");
+    s.version(5);
+    uut.register(s, "{}");
+
+    s = new SchemaSource();
+    s.id("http://getAll2");
+    s.hash("124");
+    s.ns("ns");
+    s.type("type");
+    s.version(6);
+    uut.register(s, "{}");
+
+    assertThat(uut.getAllSchemaKeys())
+        .containsExactlyInAnyOrder(SchemaKey.of("ns", "type", 5), SchemaKey.of("ns", "type", 6));
   }
 }

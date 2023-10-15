@@ -1,1 +1,86 @@
-{"schemes":[{"id":"users/UserCreated/1/schema.json","ns":"users","type":"UserCreated","version":1,"hash":"24d48268356e3cb7ac2f148850e4aac1"},{"id":"users/UserCreated/2/schema.json","ns":"users","type":"UserCreated","version":2,"hash":"8fb5294baa827a46f5f0138fe08f04f3"},{"id":"users/UserCreated/3/schema.json","ns":"users","type":"UserCreated","version":3,"hash":"f61380a21bcd935a3a1b919b90374d61"}],"transformations":[{"id":"users/UserCreated/1-2/transform.js","ns":"users","type":"UserCreated","from":1,"to":2,"hash":"546d80170d224d6f24b276f3b8c4656e"},{"id":"users/UserCreated/3-2/transform.js","ns":"users","type":"UserCreated","from":3,"to":2,"hash":"e32be57fbe84391b9415b49cf730d400"},{"id":"users/UserCreated/2-3/transform.js","ns":"users","type":"UserCreated","from":2,"to":3,"hash":"bf85130f22ed18a0b559dc904059457d"},{"ns":"users","type":"UserCreated","from":2,"to":1,"id":"synthetic/users/UserCreated/2-1/transform.js"}]}
+{
+  "schemes": [
+    {
+      "id": "users/UserCreated/1/schema.json",
+      "ns": "users",
+      "type": "UserCreated",
+      "version": 1,
+      "hash": "24d48268356e3cb7ac2f148850e4aac1"
+    },
+    {
+      "id": "users/UserCreated/2/schema.json",
+      "ns": "users",
+      "type": "UserCreated",
+      "version": 2,
+      "hash": "8fb5294baa827a46f5f0138fe08f04f3"
+    },
+    {
+      "id": "users/UserCreated/3/schema.json",
+      "ns": "users",
+      "type": "UserCreated",
+      "version": 3,
+      "hash": "f61380a21bcd935a3a1b919b90374d61"
+    },
+    {
+      "id": "users/UserDeleted/1/schema.json",
+      "ns": "users",
+      "type": "UserDeleted",
+      "version": 1,
+      "hash": "f61380a21bcd935a3a1b919b90374d65"
+    },
+    {
+      "id": "users/UserUpdated/1/schema.json",
+      "ns": "users",
+      "type": "UserUpdated",
+      "version": 1,
+      "hash": "f61380a21bcd935a3a1b919b90374d64"
+    },
+    {
+      "id": "products/ProductCreated/1/schema.json",
+      "ns": "products",
+      "type": "ProductCreated",
+      "version": 1,
+      "hash": "f61380a21bcd935a3a1b919b90374d63"
+    },
+    {
+      "id": "organisations/OrganisationCreated/1/schema.json",
+      "ns": "organisations",
+      "type": "OrganisationCreated",
+      "version": 1,
+      "hash": "f61380a21bcd935a3a1b919b90374d62"
+    }
+  ],
+  "transformations": [
+    {
+      "id": "users/UserCreated/1-2/transform.js",
+      "ns": "users",
+      "type": "UserCreated",
+      "from": 1,
+      "to": 2,
+      "hash": "546d80170d224d6f24b276f3b8c4656e"
+    },
+    {
+      "id": "users/UserCreated/3-2/transform.js",
+      "ns": "users",
+      "type": "UserCreated",
+      "from": 3,
+      "to": 2,
+      "hash": "e32be57fbe84391b9415b49cf730d400"
+    },
+    {
+      "id": "users/UserCreated/2-3/transform.js",
+      "ns": "users",
+      "type": "UserCreated",
+      "from": 2,
+      "to": 3,
+      "hash": "bf85130f22ed18a0b559dc904059457d"
+    },
+    {
+      "ns": "users",
+      "type": "UserCreated",
+      "from": 2,
+      "to": 1,
+      "id": "synthetic/users/UserCreated/2-1/transform.js"
+    }
+  ]
+}
