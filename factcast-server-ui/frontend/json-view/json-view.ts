@@ -144,10 +144,10 @@ class JsonView extends LitElement {
       ) {
         const lens: EnrichedMember = {
           range: new monaco.Range(
-            member.loc!!.start.line,
-            member.loc!!.start.column,
-            member.loc!!.end.line,
-            member.loc!!.end.column
+            member.loc!.start.line,
+            member.loc!.start.column,
+            member.loc!.end.line,
+            member.loc!.end.column
           ),
         };
 
