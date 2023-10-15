@@ -51,11 +51,11 @@
       <groupId>org.factcast</groupId>
       <artifactId>factcast-spring-boot-autoconfigure</artifactId>
     </dependency>
-    <!-- TODO can go away soon -->
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-server-grpc</artifactId>
     </dependency>
+    <!-- this is optional -->
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-server-ui</artifactId>
@@ -69,10 +69,6 @@
       <groupId>org.testcontainers</groupId>
       <artifactId>postgresql</artifactId>
       <version>${testcontainers.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-devtools</artifactId>
     </dependency>
   </dependencies>
   <build>
@@ -121,28 +117,4 @@
       </plugin>
     </plugins>
   </build>
-  <profiles>
-    <profile>
-      <id>production</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>com.vaadin</groupId>
-            <artifactId>vaadin-maven-plugin</artifactId>
-            <version>${vaadin.version}</version>
-            <executions>
-              <execution>
-                <id>frontend</id>
-                <phase>compile</phase>
-                <goals>
-                  <goal>prepare-frontend</goal>
-                  <goal>build-frontend</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
 </project>
