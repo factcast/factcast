@@ -41,6 +41,7 @@ import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.snapcache.SnapshotCache;
+import org.factcast.store.registry.SchemaRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -62,6 +63,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PgFactStore extends AbstractFactStore implements LocalFactStore {
 
   @NonNull private final JdbcTemplate jdbcTemplate;
+  @NonNull private final SchemaRegistry schemaRegistry;
 
   @NonNull private final PgSubscriptionFactory subscriptionFactory;
 
@@ -81,6 +83,7 @@ public class PgFactStore extends AbstractFactStore implements LocalFactStore {
       @NonNull JdbcTemplate jdbcTemplate,
       @NonNull PgSubscriptionFactory subscriptionFactory,
       @NonNull TokenStore tokenStore,
+      @NonNull SchemaRegistry schemaRegistry,
       @NonNull FactTableWriteLock lock,
       @NonNull FactTransformerService factTransformerService,
       @NonNull PgFactIdToSerialMapper pgFactIdToSerialMapper,
@@ -91,6 +94,7 @@ public class PgFactStore extends AbstractFactStore implements LocalFactStore {
 
     this.jdbcTemplate = jdbcTemplate;
     this.subscriptionFactory = subscriptionFactory;
+    this.schemaRegistry = schemaRegistry;
     this.lock = lock;
     this.pgFactIdToSerialMapper = pgFactIdToSerialMapper;
     this.snapCache = snapCache;
@@ -189,6 +193,11 @@ public class PgFactStore extends AbstractFactStore implements LocalFactStore {
 
   @Override
   public @NonNull Set<String> enumerateNamespaces() {
+    if (schemaRegistry.isActive()) return schemaRegistry.enumerateNamespaces();
+    else return enumerateNamespacesFromPg();
+  }
+
+  public @NonNull Set<String> enumerateNamespacesFromPg() {
     return metrics.time(
         StoreMetrics.OP.ENUMERATE_NAMESPACES,
         () ->
@@ -199,14 +208,19 @@ public class PgFactStore extends AbstractFactStore implements LocalFactStore {
 
   @Override
   public @NonNull Set<String> enumerateTypes(@NonNull String ns) {
+    if (schemaRegistry.isActive()) return schemaRegistry.enumerateTypes(ns);
+    else return enumerateTypesFromPg(ns);
+  }
+
+  public @NonNull Set<String> enumerateTypesFromPg(@NonNull String ns) {
     return metrics.time(
         StoreMetrics.OP.ENUMERATE_TYPES,
         () ->
             new HashSet<>(
                 jdbcTemplate.query(
                     PgConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE,
-                    new Object[] {ns},
-                    this::extractStringFromResultSet)));
+                    this::extractStringFromResultSet,
+                    ns)));
   }
 
   @Override
