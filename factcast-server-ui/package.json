@@ -21,7 +21,6 @@
     "@vaadin/component-base": "24.1.10",
     "@vaadin/confirm-dialog": "24.1.10",
     "@vaadin/context-menu": "24.1.10",
-    "@vaadin/cookie-consent": "24.1.10",
     "@vaadin/custom-field": "24.1.10",
     "@vaadin/date-picker": "24.1.10",
     "@vaadin/date-time-picker": "24.1.10",
@@ -115,7 +114,6 @@
       "@vaadin/component-base": "24.1.10",
       "@vaadin/confirm-dialog": "24.1.10",
       "@vaadin/context-menu": "24.1.10",
-      "@vaadin/cookie-consent": "24.1.10",
       "@vaadin/custom-field": "24.1.10",
       "@vaadin/date-picker": "24.1.10",
       "@vaadin/date-time-picker": "24.1.10",
@@ -189,7 +187,7 @@
       "workbox-core": "7.0.0",
       "workbox-precaching": "7.0.0"
     },
-    "hash": "34a7de4bbd8e18aef5216fb84be23820c847154a97c105a357a6aeb397920c56"
+    "hash": "0ed5713c494f4b725bc5d3ea18f2568f9c0ca79b0009659a97c99e792ff0350a"
   },
   "overrides": {
     "@vaadin/bundles": "$@vaadin/bundles",
@@ -263,7 +261,6 @@
     "@vaadin-component-factory/vcf-popup": "$@vaadin-component-factory/vcf-popup",
     "mobile-drag-drop": "$mobile-drag-drop",
     "@humanwhocodes/momoa": "$@humanwhocodes/momoa",
-    "@vaadin-component-factory/vcf-lookup-field": "$@vaadin-component-factory/vcf-lookup-field",
-    "@vaadin/cookie-consent": "$@vaadin/cookie-consent"
+    "@vaadin-component-factory/vcf-lookup-field": "$@vaadin-component-factory/vcf-lookup-field"
   }
 }
