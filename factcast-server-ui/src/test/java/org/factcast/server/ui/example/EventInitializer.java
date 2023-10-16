@@ -38,6 +38,7 @@ public class EventInitializer implements InitializingBean {
                 .version(1)
                 .aggId(UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec085"))
                 .id(UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec084"))
+                .meta("hugo", "bar")
                 .build(
                     "{\"firstName\":\"Peter\", \"lastName\":\"Lustig\", \"foo\":[{\"bar\":\"baz\"}]}"),
             Fact.builder()
