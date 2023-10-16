@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.views;
+package org.factcast.server.ui.security;
 
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
-import jakarta.annotation.security.PermitAll;
-import org.factcast.server.ui.security.SecurityService;
+import lombok.NonNull;
+import org.factcast.core.Fact;
 
-@Route("logout")
-@PageTitle("Logout")
-@PermitAll
-public class LogoutView extends VerticalLayout {
+public interface SecurityService {
+  void logout();
 
-  public LogoutView(SecurityService securityService) {
-    securityService.logout();
-  }
+  boolean canRead(@NonNull Fact f);
+
+  boolean canRead(@NonNull String ns);
 }

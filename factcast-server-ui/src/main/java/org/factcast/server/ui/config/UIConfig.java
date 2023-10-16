@@ -23,6 +23,8 @@ import lombok.RequiredArgsConstructor;
 import org.factcast.core.store.LocalFactStore;
 import org.factcast.server.ui.adapter.FactRepositoryImpl;
 import org.factcast.server.ui.port.FactRepository;
+import org.factcast.server.ui.security.DefaultSecurityService;
+import org.factcast.server.ui.security.SecurityService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.*;
 
@@ -39,6 +41,6 @@ public class UIConfig implements AppShellConfigurator {
   @Bean
   @ConditionalOnMissingBean
   public SecurityService securityService(AuthenticationContext authenticationContext) {
-    return new SecurityService(authenticationContext);
+    return new DefaultSecurityService(authenticationContext);
   }
 }

@@ -33,10 +33,10 @@ import org.factcast.core.subscription.SubscriptionClosedException;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.server.ui.config.SecurityService;
 import org.factcast.server.ui.full.FullQueryBean;
 import org.factcast.server.ui.id.IdQueryBean;
 import org.factcast.server.ui.port.FactRepository;
+import org.factcast.server.ui.security.SecurityService;
 
 @RequiredArgsConstructor
 public class FactRepositoryImpl implements FactRepository {
