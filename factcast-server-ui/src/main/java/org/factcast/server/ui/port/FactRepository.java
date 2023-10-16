@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.server.ui.full.FullQueryBean;
@@ -27,13 +28,11 @@ import org.factcast.server.ui.id.IdQueryBean;
 
 public interface FactRepository {
 
-  List<Fact> findBy(@NonNull FullQueryBean query);
-
   Optional<Fact> findBy(@NonNull IdQueryBean bean);
 
-  List<String> namespaces(@NonNull Optional<String> input);
+  List<String> namespaces(@Nullable String optionalInput);
 
-  List<String> types(@NonNull String namespace, @NonNull Optional<String> input);
+  List<String> types(@NonNull String namespace, @Nullable String optionalInput);
 
   OptionalLong lastSerialBefore(@NonNull LocalDate date);
 

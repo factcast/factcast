@@ -52,30 +52,32 @@ import org.factcast.server.ui.views.MainLayout;
 @RouteAlias(value = "", layout = MainLayout.class)
 @PageTitle("Query")
 @PermitAll
+@SuppressWarnings("java:S110")
 public class FullQueryPage extends DefaultContent implements HasUrlParameter<String> {
 
-  final FullQueryBean formBean = new FullQueryBean();
+  // externalizable state
 
+  private final FullQueryBean formBean = new FullQueryBean();
+
+  // fields
   private final ComboBox<String> ns;
   private final MultiSelectComboBox<String> type;
   private final MetaButton metaButton;
-
-  private DatePicker since = new DatePicker("First Serial of Day");
-  private IntegerField limit = new IntegerField("Limit");
-  private IntegerField offset = new IntegerField("Offset");
-  private BigDecimalField from = new BigDecimalField("Starting Serial");
-  private TextField aggId = new AggregateIdField();
-  private Popup serialHelperOverlay = new Popup();
+  private final DatePicker since = new DatePicker("First Serial of Day");
+  private final IntegerField limit = new IntegerField("Limit");
+  private final IntegerField offset = new IntegerField("Offset");
+  private final BigDecimalField from = new BigDecimalField("Starting Serial");
+  private final TextField aggId = new AggregateIdField();
+  private final Popup serialHelperOverlay = new Popup();
   private final JsonView jsonView = new JsonView();
 
-  private FactRepository repo;
-
-  private BeanValidationUrlStateBinder<FullQueryBean> b;
+  private final BeanValidationUrlStateBinder<FullQueryBean> b;
+  private final FactRepository repo;
 
   public FullQueryPage(@NonNull FactRepository repo) {
     this.repo = repo;
 
-    ns = new NameSpacesComboBox(repo.namespaces(Optional.empty()));
+    ns = new NameSpacesComboBox(repo.namespaces(null));
     type = new TypesMultiSelectComboBox();
 
     serialHelperOverlay.setTarget(from.getElement());
@@ -84,18 +86,15 @@ public class FullQueryPage extends DefaultContent implements HasUrlParameter<Str
     since.addValueChangeListener(e -> updateFrom());
 
     ns.addValueChangeListener(
-        new ValueChangeListener<ValueChangeEvent<?>>() {
-
-          @Override
-          public void valueChanged(ValueChangeEvent<?> event) {
-            updateTypeState();
-            if (ns.isEmpty()) {
-              type.setValue(new HashSet<String>());
-            } else {
-              type.setItems(repo.types(ns.getValue(), Optional.empty()));
-            }
-          }
-        });
+        (ValueChangeListener<ValueChangeEvent<?>>)
+            event -> {
+              updateTypeState();
+              if (ns.isEmpty()) {
+                type.setValue(new HashSet<String>());
+              } else {
+                type.setItems(repo.types(ns.getValue(), null));
+              }
+            });
 
     b = createBinding();
 
@@ -216,7 +215,7 @@ public class FullQueryPage extends DefaultContent implements HasUrlParameter<Str
     return hl;
   }
 
-  class NameSpacesComboBox extends ComboBox<String> {
+  static class NameSpacesComboBox extends ComboBox<String> {
     public NameSpacesComboBox(Collection<String> items) {
       super("Namespace");
       setItems(DataProvider.ofCollection(items));
@@ -226,14 +225,14 @@ public class FullQueryPage extends DefaultContent implements HasUrlParameter<Str
     }
   }
 
-  class TypesMultiSelectComboBox extends MultiSelectComboBox<String> {
+  static class TypesMultiSelectComboBox extends MultiSelectComboBox<String> {
     public TypesMultiSelectComboBox() {
       super("Types", Collections.emptyList());
       setWidthFull();
     }
   }
 
-  class AggregateIdField extends TextField {
+  static class AggregateIdField extends TextField {
     public AggregateIdField() {
       super("aggregate-id");
       setLabel("Aggregate-ID");

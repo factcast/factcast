@@ -2,3 +2,5 @@ frontend/generated/
 node_modules/
 vite.generated.ts
 src/main/dev-bundle
+package.json
+package-lock.json

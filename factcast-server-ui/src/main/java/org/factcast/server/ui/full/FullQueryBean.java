@@ -16,6 +16,7 @@
 package org.factcast.server.ui.full;
 
 import jakarta.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
@@ -26,7 +27,7 @@ import org.factcast.core.spec.FactSpec;
 
 @Data
 @Accessors(fluent = false, chain = false)
-public class FullQueryBean {
+public class FullQueryBean implements Serializable {
   private LocalDate since = LocalDate.now();
   private Integer limit = 50;
   private Integer offset = 0;
