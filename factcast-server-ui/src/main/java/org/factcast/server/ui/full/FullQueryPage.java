@@ -222,6 +222,7 @@ public class FullQueryPage extends DefaultContent implements HasUrlParameter<Str
       setItems(DataProvider.ofCollection(items));
       setAutoOpen(true);
       setAutofocus(true);
+      getStyle().set("--vaadin-combo-box-overlay-width", "16em");
     }
   }
 
