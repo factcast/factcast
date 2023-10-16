@@ -15,17 +15,16 @@
  */
 package org.factcast.server.ui.adapter;
 
-import com.helger.commons.functional.Predicates;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.*;
+import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.NotImplementedException;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.LocalFactStore;
@@ -57,34 +56,27 @@ public class FactRepositoryImpl implements FactRepository {
     return fs.fetchByIdAndVersion(id, v).filter(securityService::canRead);
   }
 
-  @Override
-  public List<Fact> findBy(FullQueryBean query) {
-    throw new NotImplementedException();
-  }
-
-  @Override
-  public List<String> namespaces(Optional<String> input) {
-    List<String> ns = List.copyOf(fs.enumerateNamespaces());
-    if (input.isPresent()) {
-      Pattern ptn = Pattern.compile(".*" + input.get() + ".*");
-      ns = ns.stream().filter(s -> ptn.matcher(s).matches()).toList();
+  public List<String> namespaces(@Nullable String optionalInput) {
+    Stream<String> ns = fs.enumerateNamespaces().stream();
+    if (optionalInput != null) {
+      Pattern ptn = Pattern.compile(".*" + optionalInput + ".*");
+      ns = ns.filter(s -> ptn.matcher(s).matches());
     }
-    return ns.stream().filter(securityService::canRead).toList();
+    return ns.filter(securityService::canRead).sorted().toList();
   }
 
-  @Override
-  public List<String> types(@NonNull String namespace, @NonNull Optional<String> input) {
+  public List<String> types(@NonNull String namespace, @Nullable String optionalInput) {
     if (!securityService.canRead(namespace)) {
-      return List.of();
+      return Collections.emptyList();
     }
 
-    Predicate<String> f = Predicates.all();
-    if (input.isPresent()) {
-      Pattern ptn = Pattern.compile(".*" + input.get() + ".*");
-      f = s -> ptn.matcher(s).matches();
+    Stream<String> type = fs.enumerateTypes(namespace).stream();
+    if (optionalInput != null) {
+      Pattern ptn = Pattern.compile(".*" + optionalInput + ".*");
+      type = type.filter(s -> ptn.matcher(s).matches());
     }
 
-    return fs.enumerateTypes(namespace).stream().filter(f).toList();
+    return type.sorted().toList();
   }
 
   @Override
@@ -136,7 +128,7 @@ public class FactRepositoryImpl implements FactRepository {
     return OptionalLong.of(fs.lastSerialBefore(date));
   }
 
-  class ListObserver implements FactObserver {
+  public static class ListObserver implements FactObserver {
     private int limit;
     private int offset;
 
@@ -145,7 +137,7 @@ public class FactRepositoryImpl implements FactRepository {
       this.offset = offset;
     }
 
-    @Getter private List<Fact> list = new LinkedList<>();
+    @Getter private final List<Fact> list = new LinkedList<>();
 
     @Override
     public void onNext(@NonNull Fact element) {

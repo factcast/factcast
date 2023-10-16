@@ -37,7 +37,7 @@ public class MainLayout extends AppLayout {
   private H2 viewTitle;
 
   public MainLayout() {
-    setPrimarySection(Section.DRAWER);
+    setPrimarySection(Section.NAVBAR);
     addDrawerContent();
     addHeaderContent();
   }
@@ -75,9 +75,7 @@ public class MainLayout extends AppLayout {
   }
 
   private Footer createFooter() {
-    Footer layout = new Footer();
-
-    return layout;
+    return new Footer();
   }
 
   @Override
