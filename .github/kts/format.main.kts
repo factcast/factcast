@@ -1,6 +1,6 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("io.github.typesafegithub:github-workflows-kt:1.2.0")
+@file:DependsOn("io.github.typesafegithub:github-workflows-kt:1.3.1")
 
 
 import io.github.typesafegithub.workflows.actions.actions.CheckoutV4
