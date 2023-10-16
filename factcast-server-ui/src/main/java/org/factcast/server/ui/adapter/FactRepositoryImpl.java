@@ -28,13 +28,12 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.NotImplementedException;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.store.FactStore;
+import org.factcast.core.store.LocalFactStore;
 import org.factcast.core.subscription.SpecBuilder;
 import org.factcast.core.subscription.SubscriptionClosedException;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.server.ui.config.SecurityService;
 import org.factcast.server.ui.full.FullQueryBean;
 import org.factcast.server.ui.id.IdQueryBean;
@@ -43,11 +42,9 @@ import org.factcast.server.ui.port.FactRepository;
 @RequiredArgsConstructor
 public class FactRepositoryImpl implements FactRepository {
 
-  private final FactStore fs;
+  private final LocalFactStore fs;
 
   private final SecurityService securityService;
-
-  private final FastForwardTarget fastForwardTarget;
 
   @Override
   public Optional<Fact> findBy(@NonNull IdQueryBean bean) {
@@ -92,20 +89,21 @@ public class FactRepositoryImpl implements FactRepository {
 
   @Override
   public long latestSerial() {
-    return fastForwardTarget.targetSer();
+    return fs.latestSerial();
   }
 
   @Override
   public Optional<UUID> findIdOfSerial(long longValue) {
-    // TODO
-    return Optional.of(UUID.randomUUID());
-    // return fs.fetchBySerial(longValue).map(Fact::id);
+    return fs.fetchBySerial(longValue).map(Fact::id);
   }
 
   @Override
   public List<Fact> fetchChunk(FullQueryBean bean) {
 
-    List<FactSpec> specs = bean.createFactSpecs();
+    List<FactSpec> specs =
+        bean.createFactSpecs().stream()
+            .filter(x -> securityService.canRead(x.ns()))
+            .toList(); // TODO not quite sure if this is a good idea here but for now :D
 
     ListObserver obs =
         new ListObserver(
@@ -135,8 +133,7 @@ public class FactRepositoryImpl implements FactRepository {
 
   @Override
   public OptionalLong lastSerialBefore(@NonNull LocalDate date) {
-    // TODO
-    return OptionalLong.of(3);
+    return OptionalLong.of(fs.lastSerialBefore(date));
   }
 
   class ListObserver implements FactObserver {

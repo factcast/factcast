@@ -21,7 +21,7 @@ import com.vaadin.flow.spring.security.AuthenticationContext;
 import com.vaadin.flow.theme.Theme;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.store.LocalFactStore;
 import org.factcast.server.ui.adapter.FactRepositoryImpl;
 import org.factcast.server.ui.port.FactRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -33,9 +33,9 @@ import org.springframework.context.annotation.*;
 @RequiredArgsConstructor
 public class UIConfig implements AppShellConfigurator {
   @Bean
-  public FactRepository factRepository(
-      FactStore fs, SecurityService securityService, FastForwardTarget fastForwardTarget) {
-    return new FactRepositoryImpl(fs, securityService, fastForwardTarget);
+  public FactRepository factRepository(FactStore fs, SecurityService securityService) {
+    // TODO check if cast is avoidable
+    return new FactRepositoryImpl((LocalFactStore) fs, securityService);
   }
 
   @Bean
