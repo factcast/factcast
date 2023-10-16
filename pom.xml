@@ -80,7 +80,7 @@
     <maven-failsafe-plugin.version>3.1.2</maven-failsafe-plugin.version>
     <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
     <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
-    <jacoco-maven-plugin.version>0.8.10</jacoco-maven-plugin.version>
+    <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
     <maven.version>3.9.5</maven.version>
     <!-- defaults to 11, client modules will be compiled with/to 8 -->
     <maven.compiler.source>17</maven.compiler.source>
@@ -100,8 +100,8 @@
     <spring-boot.version>3.1.4</spring-boot.version>
     <spring-cloud.version>2022.0.4</spring-cloud.version>
     <!-- whenever updating spring-grpc make sure to align grpc.version accordingly. -->
-    <spring-grpc.version>2.14.0.RELEASE</spring-grpc.version>
-    <grpc.version>1.51.0</grpc.version>
+    <spring-grpc.version>2.15.0.RELEASE</spring-grpc.version>
+    <grpc.version>1.58.0</grpc.version>
     <!-- lter versions seem to break toxi -->
     <testcontainers.version>1.19.1</testcontainers.version>
     <arrow.version>1.2.1</arrow.version>
@@ -113,7 +113,7 @@
     <redisson.version>3.23.5</redisson.version>
     <redisson-spring-boot-starter.version>3.23.5</redisson-spring-boot-starter.version>
     <graaljs.version>23.0.1</graaljs.version>
-    <shedlock.version>5.8.0</shedlock.version>
+    <shedlock.version>5.9.0</shedlock.version>
     <byte-buddy.version>1.14.9</byte-buddy.version>
     <skipUnitTests>false</skipUnitTests>
     <!-- as long as we promise pg11 compatibility, it might make sense to also
