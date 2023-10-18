@@ -20,38 +20,41 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NonNull;
 
-@Getter
+/** meta-data for one fact (json entry) */
+@Getter(AccessLevel.PROTECTED)
 public class JsonEntryMetaData {
   @JsonProperty private final Map<String, Collection<String>> annotations = new HashMap<>();
 
   @JsonProperty private final Map<String, Collection<String>> hoverContent = new HashMap<>();
 
-  public void annotateHeader(String path, String value) {
-    final var p = "$.header." + path;
-    final var l = annotations.getOrDefault(p, new ArrayList<>());
+  public void annotateHeader(@NonNull String path, @NonNull String value) {
+    var p = "header." + path;
+    var l = annotations.getOrDefault(p, new ArrayList<>());
     l.add(value);
     annotations.put(p, l);
   }
 
-  public void annotatePayload(String path, String value) {
-    final var p = "$.payload." + path;
-    final var l = annotations.getOrDefault(p, new ArrayList<>());
+  public void annotatePayload(@NonNull String path, @NonNull String value) {
+    var p = "payload." + path;
+    var l = annotations.getOrDefault(p, new ArrayList<>());
     l.add(value);
     annotations.put(p, l);
   }
 
-  public void addHeaderHoverContent(String path, String value) {
-    final var p = "$.header." + path;
-    final var l = hoverContent.getOrDefault(p, new ArrayList<>());
+  public void addHeaderHoverContent(@NonNull String path, @NonNull String value) {
+    var p = "header." + path;
+    var l = hoverContent.getOrDefault(p, new ArrayList<>());
     l.add(value);
     hoverContent.put(p, l);
   }
 
-  public void addPayloadHoverContent(String path, String value) {
-    final var p = "$.payload." + path;
-    final var l = hoverContent.getOrDefault(p, new ArrayList<>());
+  public void addPayloadHoverContent(@NonNull String path, @NonNull String value) {
+    var p = "payload." + path;
+    var l = hoverContent.getOrDefault(p, new ArrayList<>());
     l.add(value);
     hoverContent.put(p, l);
   }
