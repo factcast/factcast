@@ -25,7 +25,6 @@ import com.vaadin.flow.data.converter.StringToIntegerConverter;
 import com.vaadin.flow.data.converter.StringToUuidConverter;
 import com.vaadin.flow.router.*;
 import jakarta.annotation.security.PermitAll;
-import java.util.*;
 import lombok.NonNull;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.server.ui.plugins.JsonViewPluginService;
@@ -71,7 +70,8 @@ public class IdQueryPage extends DefaultContent implements HasUrlParameter<Strin
     final var queryBtn = new Button("Query");
     queryBtn.addClickShortcut(Key.ENTER);
     queryBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-    queryBtn.addClickListener(event -> executeQuery(fc, jsonViewPluginService, jsonView));
+    queryBtn.setDisableOnClick(true);
+    queryBtn.addClickListener(event -> executeQuery(fc, jsonViewPluginService, jsonView, queryBtn));
 
     final var resetBtn = new Button("Reset");
     resetBtn.addClickListener(event -> b.readBean(null));
@@ -83,7 +83,10 @@ public class IdQueryPage extends DefaultContent implements HasUrlParameter<Strin
   }
 
   private void executeQuery(
-      FactRepository fc, JsonViewPluginService jsonViewPluginService, JsonView jsonView) {
+      FactRepository fc,
+      JsonViewPluginService jsonViewPluginService,
+      JsonView jsonView,
+      Button queryBtn) {
     try {
       b.writeBean(formBean);
 
@@ -99,6 +102,8 @@ public class IdQueryPage extends DefaultContent implements HasUrlParameter<Strin
       Notifications.warn(e.getMessage());
     } catch (TransformationException e) {
       Notifications.error(e.getMessage());
+    } finally {
+      queryBtn.setEnabled(true);
     }
   }
 
