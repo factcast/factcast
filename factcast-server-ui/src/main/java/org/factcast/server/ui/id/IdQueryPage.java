@@ -19,6 +19,7 @@ import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.converter.StringToIntegerConverter;
@@ -31,19 +32,22 @@ import org.factcast.server.ui.plugins.JsonViewPluginService;
 import org.factcast.server.ui.port.FactRepository;
 import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
 import org.factcast.server.ui.utils.Notifications;
-import org.factcast.server.ui.views.DefaultContent;
+import org.factcast.server.ui.views.FormContent;
 import org.factcast.server.ui.views.JsonView;
 import org.factcast.server.ui.views.MainLayout;
 
 @Route(value = "ui/id", layout = MainLayout.class)
 @PageTitle("Query by Fact-ID")
 @PermitAll
-public class IdQueryPage extends DefaultContent implements HasUrlParameter<String> {
+public class IdQueryPage extends VerticalLayout implements HasUrlParameter<String> {
   private final IdQueryBean formBean = new IdQueryBean();
   private final BeanValidationUrlStateBinder<IdQueryBean> b =
       new BeanValidationUrlStateBinder<>(IdQueryBean.class);
 
   public IdQueryPage(FactRepository fc, JsonViewPluginService jsonViewPluginService) {
+    setHeightFull();
+    setWidthFull();
+
     final var idInput = idInput();
     final var versionInput = versionInput();
     final var inputFields = new HorizontalLayout(idInput, versionInput);
@@ -52,7 +56,9 @@ public class IdQueryPage extends DefaultContent implements HasUrlParameter<Strin
     final var jsonView = new JsonView();
     final var buttons = formButtons(fc, jsonViewPluginService, jsonView);
 
-    add(inputFields, buttons, jsonView);
+    final var form = new FormContent(inputFields, buttons);
+
+    add(form, jsonView);
 
     b.readBean(formBean);
   }
@@ -78,6 +84,7 @@ public class IdQueryPage extends DefaultContent implements HasUrlParameter<Strin
 
     final var hl = new HorizontalLayout(queryBtn, resetBtn);
     hl.setWidthFull();
+    hl.addClassName("label-padding");
 
     return hl;
   }

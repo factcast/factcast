@@ -18,14 +18,15 @@ package org.factcast.server.ui.views;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
-public class DefaultContent extends VerticalLayout {
-  public DefaultContent() {
+public class FormContent extends VerticalLayout {
+  public FormContent() {
     setWidth("none");
-    setPadding(true);
+    setPadding(false);
+    setSpacing(false);
     setClassName("default-content");
   }
 
-  public DefaultContent(Component... children) {
+  public FormContent(Component... children) {
     this();
     add(children);
   }

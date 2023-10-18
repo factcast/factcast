@@ -16,7 +16,6 @@ vaadin-scroller[slot="drawer"] {
 }
 
 .default-content {
-	height: 100%;
 	width: auto;
 }
 

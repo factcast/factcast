@@ -48,7 +48,7 @@ import org.factcast.server.ui.plugins.JsonViewPluginService;
 import org.factcast.server.ui.port.FactRepository;
 import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
 import org.factcast.server.ui.utils.Notifications;
-import org.factcast.server.ui.views.DefaultContent;
+import org.factcast.server.ui.views.FormContent;
 import org.factcast.server.ui.views.JsonView;
 import org.factcast.server.ui.views.MainLayout;
 import org.springframework.security.core.Authentication;
@@ -60,7 +60,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 @PermitAll
 @SuppressWarnings("java:S110")
 @Slf4j
-public class FullQueryPage extends DefaultContent implements HasUrlParameter<String> {
+public class FullQueryPage extends VerticalLayout implements HasUrlParameter<String> {
 
   // externalizable state
 
@@ -85,6 +85,9 @@ public class FullQueryPage extends DefaultContent implements HasUrlParameter<Str
 
   public FullQueryPage(
       @NonNull FactRepository repo, @NonNull JsonViewPluginService jsonViewPluginService) {
+    setWidthFull();
+    setHeightFull();
+
     this.repo = repo;
     this.jsonViewPluginService = jsonViewPluginService;
 
@@ -119,10 +122,7 @@ public class FullQueryPage extends DefaultContent implements HasUrlParameter<Str
     aggIdAndMeta.setWidthFull();
     aggIdAndMeta.setAlignItems(Alignment.BASELINE);
 
-    final var form =
-        new VerticalLayout(nsAndTypeFilter, aggIdAndMeta, new FromPanel(), formButtons());
-    form.setSpacing(false);
-    form.setPadding(false);
+    final var form = new FormContent(nsAndTypeFilter, aggIdAndMeta, new FromPanel(), formButtons());
 
     add(form);
     add(jsonView);
