@@ -15,28 +15,37 @@
  */
 package org.factcast.server.ui.plugins;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.*;
 import lombok.Getter;
+import lombok.NonNull;
+import org.factcast.core.util.FactCastJson;
 
+@Getter
 public class JsonViewEntries {
   // should not be sent to client
-  @Getter @JsonIgnore private final List<JsonViewEntry> jsonViewEntries;
+  private final String json;
+  private final String meta;
 
-  @JsonProperty private final Map<String, Collection<String>> annotations = new HashMap<>();
+  public JsonViewEntries(@NonNull List<JsonViewEntry> entries) {
+    json =
+        FactCastJson.writeValueAsPrettyString(entries.stream().map(JsonViewEntry::fact).toList());
+    meta = FactCastJson.writeValueAsString(new MetaData(entries));
+  }
 
-  @JsonProperty private final Map<String, Collection<String>> hoverContent = new HashMap<>();
+  static class MetaData {
+    @JsonProperty private final Map<String, Collection<String>> annotations = new HashMap<>();
 
-  public JsonViewEntries(List<JsonViewEntry> entries) {
-    this.jsonViewEntries = entries;
+    @JsonProperty private final Map<String, Collection<String>> hoverContent = new HashMap<>();
 
-    for (int index = 0; index < entries.size(); index++) {
-      var entry = entries.get(index);
-      var prefix = "$.[" + index + "].";
-      JsonEntryMetaData meta = entry.metaData();
-      meta.annotations().forEach((k, v) -> annotations.put(prefix + k, v));
-      meta.hoverContent().forEach((k, v) -> hoverContent.put(prefix + k, v));
+    MetaData(List<JsonViewEntry> entries) {
+      for (int index = 0; index < entries.size(); index++) {
+        var entry = entries.get(index);
+        var prefix = "$.[" + index + "].";
+        JsonEntryMetaData meta = entry.metaData();
+        meta.annotations().forEach((k, v) -> annotations.put(prefix + k, v));
+        meta.hoverContent().forEach((k, v) -> hoverContent.put(prefix + k, v));
+      }
     }
   }
 }
