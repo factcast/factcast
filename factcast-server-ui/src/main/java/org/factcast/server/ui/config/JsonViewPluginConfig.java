@@ -41,7 +41,7 @@ public class JsonViewPluginConfig {
   }
 
   @Bean(JSON_VIEW_PLUGIN_OBJECT_MAPPER)
-  @ConditionalOnMissingBean
+  @ConditionalOnMissingBean(name = JSON_VIEW_PLUGIN_OBJECT_MAPPER)
   public ObjectMapper jsonViewPluginObjectMapper(JsonViewPluginObjectMapperCustomizer customizer) {
     final var om = new ObjectMapper();
 
