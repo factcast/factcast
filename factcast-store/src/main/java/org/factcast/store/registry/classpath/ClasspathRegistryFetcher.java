@@ -13,20 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.registry.filesystem;
+package org.factcast.store.registry.classpath;
 
-import java.io.File;
+import java.io.IOException;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.store.registry.AbstractFileBasedRegistryFileFetcher;
+import org.springframework.core.io.AbstractResource;
+import org.springframework.core.io.ClassPathResource;
 
 @RequiredArgsConstructor
-public class FilesystemRegistryFileFetcher extends AbstractFileBasedRegistryFileFetcher {
+public class ClasspathRegistryFetcher extends AbstractFileBasedRegistryFileFetcher {
 
   private final @NonNull String base;
 
   @Override
-  protected File getFile(String subPath) {
-    return new File(base, subPath);
+  protected AbstractResource getFile(String subPath) throws IOException {
+    return new ClassPathResource(base + "/" + subPath);
   }
 }
