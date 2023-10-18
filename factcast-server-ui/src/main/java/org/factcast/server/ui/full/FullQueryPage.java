@@ -42,6 +42,8 @@ import java.time.LocalDate;
 import java.util.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.Fact;
+import org.factcast.server.ui.plugins.JsonViewEntry;
 import org.factcast.server.ui.plugins.JsonViewPluginService;
 import org.factcast.server.ui.port.FactRepository;
 import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
@@ -49,6 +51,8 @@ import org.factcast.server.ui.utils.Notifications;
 import org.factcast.server.ui.views.DefaultContent;
 import org.factcast.server.ui.views.JsonView;
 import org.factcast.server.ui.views.MainLayout;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @Route(value = "ui/full", layout = MainLayout.class)
 @RouteAlias(value = "", layout = MainLayout.class)
@@ -202,8 +206,10 @@ public class FullQueryPage extends DefaultContent implements HasUrlParameter<Str
         event -> {
           try {
             binder.writeBean(formBean);
-            log.debug("run query for " + formBean);
-            jsonView.renderFacts(jsonViewPluginService.process(repo.fetchChunk(formBean)));
+            log.debug("{} runs query for {}", getLogggedInUserName(), formBean);
+            List<Fact> dataFromStore = repo.fetchChunk(formBean);
+            List<JsonViewEntry> processedByPlugins = jsonViewPluginService.process(dataFromStore);
+            jsonView.renderFacts(processedByPlugins);
           } catch (ValidationException e) {
             Notifications.warn(e.getMessage());
           } catch (Exception e) {
@@ -227,6 +233,16 @@ public class FullQueryPage extends DefaultContent implements HasUrlParameter<Str
     hl.addClassName("label-padding");
 
     return hl;
+  }
+
+  private String getLogggedInUserName() {
+    try {
+      Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+      return authentication.getName();
+    } catch (Exception e) {
+      log.warn("Cannot retrieve logged in user");
+      return "UNKNOWN";
+    }
   }
 
   static class NameSpacesComboBox extends ComboBox<String> {
