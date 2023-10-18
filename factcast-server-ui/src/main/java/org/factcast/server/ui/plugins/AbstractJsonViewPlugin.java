@@ -15,24 +15,14 @@
  */
 package org.factcast.server.ui.plugins;
 
-import java.time.Instant;
-import java.time.ZoneId;
-import java.util.Optional;
 import org.factcast.core.Fact;
 
-public class HeaderMetaTimestampToDatePlugin extends AbstractJsonViewPlugin {
+public abstract class AbstractJsonViewPlugin implements JsonViewPlugin {
   @Override
-  public void doHandle(Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData) {
-    Optional.ofNullable(fact.timestamp())
-        .ifPresent(
-            ts ->
-                jsonEntryMetaData.annotateHeader(
-                    "$.meta._ts",
-                    Instant.ofEpochMilli(ts).atZone(ZoneId.systemDefault()).toString()));
+  public final void handle(Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData) {
+    if (isReady()) doHandle(fact, payload, jsonEntryMetaData);
   }
 
-  @Override
-  public boolean isReady() {
-    return true;
-  }
+  protected abstract void doHandle(
+      Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData);
 }

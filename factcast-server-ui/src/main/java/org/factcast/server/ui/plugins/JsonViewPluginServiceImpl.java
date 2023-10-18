@@ -16,7 +16,7 @@
 package org.factcast.server.ui.plugins;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.List;
+import java.util.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -54,5 +54,13 @@ public class JsonViewPluginServiceImpl implements JsonViewPluginService {
     content.set("payload", payload.getPayload());
 
     return new JsonViewEntry(content, metaData);
+  }
+
+  @Override
+  public Collection<String> getNonResponsivePlugins() {
+    return plugins.stream()
+        .filter(p -> !p.isReady())
+        .map(i -> i.getClass().getSimpleName())
+        .toList();
   }
 }

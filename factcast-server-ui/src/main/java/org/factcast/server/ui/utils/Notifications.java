@@ -24,29 +24,33 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import java.util.*;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class Notifications {
-  public static void error(String message) {
+  public static void error(String... message) {
     createNotification(NotificationVariant.LUMO_ERROR, message);
   }
 
-  public static void warn(String message) {
+  public static void warn(String... message) {
     createNotification(NotificationVariant.LUMO_WARNING, message);
   }
 
-  public static void success(String message) {
+  public static void success(String... message) {
     createNotification(NotificationVariant.LUMO_SUCCESS, message);
   }
 
-  static void createNotification(NotificationVariant lumoError, String message) {
+  static void createNotification(NotificationVariant lumoError, String... message) {
     final var notification = new Notification();
     notification.setDuration(10000);
     notification.addThemeVariants(lumoError);
     notification.setPosition(Notification.Position.BOTTOM_START);
 
-    final var statusText = new Div(new Text(message));
+    final var statusText = new VerticalLayout();
+    statusText.setPadding(false);
+    Arrays.stream(message).forEach(s -> statusText.add(new Div(new Text(s))));
 
     final var closeButton = new Button(new Icon("lumo", "cross"));
     closeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
