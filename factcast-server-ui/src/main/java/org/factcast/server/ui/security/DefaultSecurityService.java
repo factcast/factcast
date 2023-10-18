@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.config;
+package org.factcast.server.ui.security;
 
 import com.vaadin.flow.spring.security.AuthenticationContext;
 import java.util.*;
@@ -25,7 +25,7 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.server.security.auth.FactCastUser;
 
 @RequiredArgsConstructor
-public class SecurityService {
+public class DefaultSecurityService implements SecurityService {
 
   private final AuthenticationContext authenticationContext;
 
@@ -33,22 +33,27 @@ public class SecurityService {
     return authenticationContext.getAuthenticatedUser(FactCastUser.class).orElseThrow();
   }
 
+  @Override
   public void logout() {
     authenticationContext.logout();
   }
 
+  @Override
   public final boolean canRead(@NonNull Fact f) {
     return canRead(f.ns());
   }
 
+  @Override
   public final boolean canRead(@NonNull FactSpec f) {
     return canRead(f.ns());
   }
 
+  @Override
   public boolean canRead(@NonNull String ns) {
     return getAuthenticatedUser().canRead(ns);
   }
 
+  @Override
   public final Set<FactSpec> filterReadable(@NonNull Collection<FactSpec> all) {
     return all.stream().filter(fs -> canRead(fs.ns())).collect(Collectors.toSet());
   }

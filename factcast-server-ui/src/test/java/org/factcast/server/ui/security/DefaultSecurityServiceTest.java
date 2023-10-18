@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.config;
+package org.factcast.server.ui.security;
 
 import static org.mockito.Mockito.*;
 
@@ -34,7 +34,7 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 @ExtendWith(MockitoExtension.class)
-public class SecurityServiceTest {
+public class DefaultSecurityServiceTest {
 
   @Mock
   @MockitoSettings(strictness = Strictness.LENIENT)
@@ -44,7 +44,7 @@ public class SecurityServiceTest {
   @MockitoSettings(strictness = Strictness.LENIENT)
   FactCastUser user;
 
-  @InjectMocks private SecurityService underTest;
+  @InjectMocks private DefaultSecurityService underTest;
 
   void setupPermissionCheck() {
     when(user.canRead(anyString()))
