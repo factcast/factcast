@@ -70,7 +70,7 @@ class JsonView extends LitElement {
 				}
 
 				return {
-					lenses: that.metaData,
+					lenses: that.metaData.filter((x) => x.command != null),
 					dispose: () => {},
 				} as languages.CodeLensList;
 			},
@@ -92,6 +92,8 @@ class JsonView extends LitElement {
 								range.endColumn >= position.column))
 				);
 				if (!payload) return null;
+
+				if (!payload.contents) return null;
 
 				return payload as languages.Hover;
 			},

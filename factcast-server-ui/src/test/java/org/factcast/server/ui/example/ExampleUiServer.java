@@ -59,6 +59,20 @@ public class ExampleUiServer {
     };
   }
 
+  @Bean
+  public JsonViewPlugin hoverOnlyPlugin() {
+    return (fact, payload, jsonEntryMetaData) -> {
+      final var paths = payload.findPaths("$..lastName");
+
+      paths.forEach(
+          p -> {
+            final var name = payload.read(p, String.class);
+
+            jsonEntryMetaData.addPayloadHoverContent(p, "J. Edgar Hoover: " + name);
+          });
+    };
+  }
+
   public static void main(String[] args) {
     startPostgresContainer();
 
