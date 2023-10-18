@@ -177,10 +177,17 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
 
       Button latestSerial = new Button("Latest serial");
       latestSerial.addClickListener(
-          event -> from.setValue(BigDecimal.valueOf(repo.latestSerial())));
+          event -> {
+            from.setValue(BigDecimal.valueOf(repo.latestSerial()));
+            serialHelperOverlay.hide();
+          });
 
       Button fromScratch = new Button("From scratch");
-      fromScratch.addClickListener(event -> from.setValue(BigDecimal.ZERO));
+      fromScratch.addClickListener(
+          event -> {
+            from.setValue(BigDecimal.ZERO);
+            serialHelperOverlay.hide();
+          });
 
       final var heading = new H4("Select Starting Serial");
       final var overlayContent = new VerticalLayout(heading, since, latestSerial, fromScratch);
