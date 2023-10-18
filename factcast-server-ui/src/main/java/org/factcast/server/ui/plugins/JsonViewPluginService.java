@@ -16,12 +16,13 @@
 package org.factcast.server.ui.plugins;
 
 import java.util.Collection;
-import java.util.List;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 
 public interface JsonViewPluginService {
   JsonViewEntry process(@NonNull Fact fact);
 
-  List<JsonViewEntry> process(@NonNull Collection<Fact> facts);
+  default JsonViewEntries process(@NonNull Collection<Fact> facts) {
+    return new JsonViewEntries(facts.stream().map(this::process).toList());
+  }
 }

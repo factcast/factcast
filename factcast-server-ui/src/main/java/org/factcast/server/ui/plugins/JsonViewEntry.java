@@ -16,6 +16,7 @@
 package org.factcast.server.ui.plugins;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.*;
 import lombok.NonNull;
 
 public record JsonViewEntry(@NonNull ObjectNode fact, @NonNull JsonEntryMetaData metaData) {}

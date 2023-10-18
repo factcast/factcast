@@ -43,7 +43,7 @@ import java.util.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
-import org.factcast.server.ui.plugins.JsonViewEntry;
+import org.factcast.server.ui.plugins.JsonViewEntries;
 import org.factcast.server.ui.plugins.JsonViewPluginService;
 import org.factcast.server.ui.port.FactRepository;
 import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
@@ -208,7 +208,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
             binder.writeBean(formBean);
             log.debug("{} runs query for {}", getLogggedInUserName(), formBean);
             List<Fact> dataFromStore = repo.fetchChunk(formBean);
-            List<JsonViewEntry> processedByPlugins = jsonViewPluginService.process(dataFromStore);
+            JsonViewEntries processedByPlugins = jsonViewPluginService.process(dataFromStore);
             jsonView.renderFacts(processedByPlugins);
           } catch (ValidationException e) {
             Notifications.warn(e.getMessage());
