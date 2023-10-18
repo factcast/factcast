@@ -121,10 +121,7 @@ public class FactRepositoryImpl implements FactRepository {
         // something else happened, we probably need to escalate and notify
         throw ExceptionHelper.toRuntime(e);
       }
-
-      System.out.println("buh " + e);
     }
-    System.out.println("must have been closed ");
     return obs.list();
   }
 
