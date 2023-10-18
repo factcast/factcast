@@ -195,9 +195,11 @@ public class FullQueryPage extends DefaultContent implements HasUrlParameter<Str
     final var queryBtn = new Button("Query");
     queryBtn.addClickShortcut(Key.ENTER);
     queryBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+    queryBtn.setDisableOnClick(true);
     queryBtn.addClickListener(
         event -> {
           try {
+
             binder.writeBean(formBean);
             jsonView.renderFacts(jsonViewPluginService.process(repo.fetchChunk(formBean)));
           } catch (ValidationException e) {
