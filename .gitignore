@@ -20,3 +20,7 @@ release.properties
 **/output/**/*
 **/*.plantuml
 
+package-lock.json
+package.json
+types.d.ts
+vite.generated.ts

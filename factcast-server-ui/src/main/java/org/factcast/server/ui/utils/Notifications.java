@@ -40,7 +40,7 @@ public class Notifications {
     createNotification(NotificationVariant.LUMO_SUCCESS, message);
   }
 
-  private static void createNotification(NotificationVariant lumoError, String message) {
+  static void createNotification(NotificationVariant lumoError, String message) {
     final var notification = new Notification();
     notification.setDuration(10000);
     notification.addThemeVariants(lumoError);

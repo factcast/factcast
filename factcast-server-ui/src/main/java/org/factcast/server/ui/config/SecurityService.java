@@ -16,9 +16,12 @@
 package org.factcast.server.ui.config;
 
 import com.vaadin.flow.spring.security.AuthenticationContext;
+import java.util.*;
+import java.util.stream.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.server.security.auth.FactCastUser;
 
 @RequiredArgsConstructor
@@ -34,11 +37,19 @@ public class SecurityService {
     authenticationContext.logout();
   }
 
-  public boolean canRead(@NonNull Fact f) {
+  public final boolean canRead(@NonNull Fact f) {
+    return canRead(f.ns());
+  }
+
+  public final boolean canRead(@NonNull FactSpec f) {
     return canRead(f.ns());
   }
 
   public boolean canRead(@NonNull String ns) {
     return getAuthenticatedUser().canRead(ns);
+  }
+
+  public final Set<FactSpec> filterReadable(@NonNull Collection<FactSpec> all) {
+    return all.stream().filter(fs -> canRead(fs.ns())).collect(Collectors.toSet());
   }
 }

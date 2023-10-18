@@ -25,6 +25,7 @@ import com.vaadin.flow.data.converter.StringToIntegerConverter;
 import com.vaadin.flow.data.converter.StringToUuidConverter;
 import com.vaadin.flow.router.*;
 import jakarta.annotation.security.PermitAll;
+import java.util.*;
 import lombok.NonNull;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.server.ui.port.FactRepository;
@@ -114,7 +115,6 @@ public class IdQueryPage extends DefaultContent implements HasUrlParameter<Strin
     id.setLabel("Fact-ID");
     id.setAutofocus(true);
     id.setWidthFull();
-    id.setPlaceholder("UUID");
 
     b.forField(id)
         .withNullRepresentation("")

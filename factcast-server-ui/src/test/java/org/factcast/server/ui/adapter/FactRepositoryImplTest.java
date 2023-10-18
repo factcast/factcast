@@ -15,13 +15,27 @@
  */
 package org.factcast.server.ui.adapter;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.*;
+import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.LocalFactStore;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionImpl;
+import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.server.ui.config.SecurityService;
 import org.factcast.server.ui.full.FullQueryBean;
 import org.factcast.server.ui.id.IdQueryBean;
@@ -29,6 +43,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -191,9 +206,134 @@ public class FactRepositoryImplTest {
   @Nested
   class WhenFetchingChunk {
     @Mock private FullQueryBean bean;
+    private FactSpec fs1 = FactSpec.ns("1");
+    private FactSpec fs2 = FactSpec.ns("3");
+    private FactSpec fsa = FactSpec.ns("a");
+
+    List<FactSpec> nameSpaces = List.of(fs1, fs2, fsa);
+    List<FactSpec> nameSpacesAfterFiltering = List.of(fs1, fs2);
 
     @BeforeEach
-    void setup() {}
+    void setup() {
+      when(bean.createFactSpecs()).thenReturn(nameSpaces);
+    }
+
+    @Test
+    public void testFilters() {
+      when(securityService.filterReadable(nameSpaces))
+          .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
+      ArgumentCaptor<SubscriptionRequestTO> srCaptor =
+          ArgumentCaptor.forClass(SubscriptionRequestTO.class);
+      when(fs.subscribe(srCaptor.capture(), any(ListObserver.class)))
+          .thenReturn(mock(Subscription.class));
+
+      underTest.fetchChunk(bean);
+
+      SubscriptionRequest request = srCaptor.getValue();
+      assertThat(request.specs()).containsExactlyInAnyOrderElementsOf(nameSpacesAfterFiltering);
+
+      verify(securityService).filterReadable(nameSpaces);
+    }
+
+    @Test
+    public void usesLimitAndOffset() {
+      int limit = 53;
+      int offset = 110;
+
+      when(bean.getLimitOrDefault()).thenReturn(limit);
+      when(bean.getOffsetOrDefault()).thenReturn(offset);
+
+      when(securityService.filterReadable(nameSpaces))
+          .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
+      ArgumentCaptor<ListObserver> captor = ArgumentCaptor.forClass(ListObserver.class);
+      when(fs.subscribe(any(), captor.capture())).thenReturn(mock(Subscription.class));
+
+      underTest.fetchChunk(bean);
+
+      ListObserver request = captor.getValue();
+      assertThat(request.limit()).isSameAs(limit);
+      assertThat(request.offset()).isSameAs(offset);
+
+      verify(securityService).filterReadable(nameSpaces);
+    }
+
+    @Test
+    public void usesFrom() {
+      UUID id = UUID.randomUUID();
+      Fact factWithId = Fact.builder().id(id).buildWithoutPayload();
+      int limit = 1;
+      int offset = 0;
+
+      ArgumentCaptor<SubscriptionRequestTO> srCaptor =
+          ArgumentCaptor.forClass(SubscriptionRequestTO.class);
+      when(bean.getLimitOrDefault()).thenReturn(limit);
+      when(bean.getOffsetOrDefault()).thenReturn(offset);
+      when(bean.getFrom()).thenReturn(BigDecimal.valueOf(1984));
+      when(fs.fetchBySerial(1984)).thenReturn(Optional.of(factWithId));
+      when(securityService.filterReadable(nameSpaces))
+          .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
+      when(fs.subscribe(srCaptor.capture(), any(ListObserver.class)))
+          .thenReturn(mock(Subscription.class));
+
+      underTest.fetchChunk(bean);
+
+      assertThat(srCaptor.getValue().startingAfter()).isNotEmpty().hasValue(id);
+    }
+
+    @Test
+    @SneakyThrows
+    void propagatesException() {
+
+      when(securityService.filterReadable(nameSpaces))
+          .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
+      when(fs.subscribe(any(), any()))
+          .thenAnswer(
+              i -> {
+                SubscriptionImpl subscriptionImpl = new SubscriptionImpl(mock(ListObserver.class));
+                CompletableFuture.runAsync(
+                    () -> {
+                      subscriptionImpl.notifyError(new ExampleException());
+                    });
+                return subscriptionImpl;
+              });
+
+      assertThatThrownBy(
+              () -> {
+                underTest.fetchChunk(bean);
+              })
+          .isInstanceOf(ExampleException.class);
+    }
+
+    @Test
+    @SneakyThrows
+    void catchesLimitException() {
+
+      when(securityService.filterReadable(nameSpaces))
+          .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
+      when(fs.subscribe(any(), any()))
+          .thenAnswer(
+              i -> {
+                SubscriptionImpl subscriptionImpl = new SubscriptionImpl(mock(ListObserver.class));
+                CompletableFuture.runAsync(
+                    () -> {
+                      subscriptionImpl.notifyError(new ListObserver.LimitReachedException());
+                    });
+                return subscriptionImpl;
+              });
+
+      assertDoesNotThrow(
+          () -> {
+            underTest.fetchChunk(bean);
+          });
+    }
+  }
+
+  @Nested
+  class WhenFilteringFactSpecs {
+    @Mock private FullQueryBean bean;
+
+    @Test
+    void filtersViaSecurityService() {}
   }
 
   @Nested
@@ -206,3 +346,5 @@ public class FactRepositoryImplTest {
     }
   }
 }
+
+class ExampleException extends RuntimeException {}
