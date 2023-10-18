@@ -20,35 +20,39 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.factcast.store.registry.transformation.TransformationSource;
 import org.factcast.store.registry.validation.schema.SchemaSource;
 import org.junit.jupiter.api.*;
+import org.springframework.util.StringUtils;
 
 class ClasspathRegistryFileFetcherTest {
 
   @Test
   void fetchTransformation() {
-    var uut = new ClasspathRegistryFileFetcher("/example-registry");
+    var uut = new ClasspathRegistryFetcher("/example-registry");
     String transformation =
         uut.fetchTransformation(new TransformationSource("1-2", "xxx", "ns", "type", 1, 2));
     assertEquals(
-        "function transform(event) {\n" + "    event.salutation = \"NA\"\n" + "}", transformation);
+        StringUtils.trimAllWhitespace(
+            "function transform(event) {\n" + "    event.salutation = \"NA\"\n" + "}"),
+        StringUtils.trimAllWhitespace(transformation));
   }
 
   @Test
   void fetchSchema() {
-    var uut = new ClasspathRegistryFileFetcher("/example-registry");
+    var uut = new ClasspathRegistryFetcher("/example-registry");
     var s = uut.fetchSchema(new SchemaSource("x", "xxx", "ns", "type", 1));
     assertEquals(
-        "{\n"
-            + "  \"additionalProperties\" : true,\n"
-            + "  \"properties\" : {\n"
-            + "    \"firstName\" : {\n"
-            + "      \"type\": \"string\"\n"
-            + "    },\n"
-            + "    \"lastName\" : {\n"
-            + "      \"type\": \"string\"\n"
-            + "    }\n"
-            + "  },\n"
-            + "  \"required\": [\"firstName\", \"lastName\"]\n"
-            + "}\n",
-        s);
+        StringUtils.trimAllWhitespace(
+            "{\n"
+                + "  \"additionalProperties\" : true,\n"
+                + "  \"properties\" : {\n"
+                + "    \"firstName\" : {\n"
+                + "      \"type\": \"string\"\n"
+                + "    },\n"
+                + "    \"lastName\" : {\n"
+                + "      \"type\": \"string\"\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"required\": [\"firstName\", \"lastName\"]\n"
+                + "}\n"),
+        StringUtils.trimAllWhitespace(s));
   }
 }
