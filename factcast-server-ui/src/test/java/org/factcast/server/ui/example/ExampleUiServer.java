@@ -16,9 +16,12 @@
 package org.factcast.server.ui.example;
 
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.Fact;
 import org.factcast.server.security.CommonSecurityConfig;
 import org.factcast.server.ui.config.SecurityConfig;
 import org.factcast.server.ui.config.UIConfig;
+import org.factcast.server.ui.plugins.JsonEntryMetaData;
+import org.factcast.server.ui.plugins.JsonPayload;
 import org.factcast.server.ui.plugins.JsonViewPlugin;
 import org.factcast.store.PgFactStoreConfiguration;
 import org.factcast.store.internal.script.JSEngineFactory;
@@ -46,30 +49,45 @@ public class ExampleUiServer {
 
   @Bean
   public JsonViewPlugin testPlugin() {
-    return (fact, payload, jsonEntryMetaData) -> {
-      final var paths = payload.findPaths("$..firstName");
+    return new JsonViewPlugin() {
+      @Override
+      public void handle(Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData) {
+        final var paths = payload.findPaths("$..firstName");
 
-      paths.forEach(
-          p -> {
-            final var name = payload.read(p, String.class);
+        paths.forEach(
+            p -> {
+              final var name = payload.read(p, String.class);
 
-            jsonEntryMetaData.annotatePayload(p, "Name: " + name);
-            jsonEntryMetaData.addPayloadHoverContent(p, "J. Edgar Hoover: " + name);
-          });
+              jsonEntryMetaData.annotatePayload(p, "Name: " + name);
+              jsonEntryMetaData.addPayloadHoverContent(p, "J. Edgar Hoover: " + name);
+            });
+      }
+
+      @Override
+      public boolean isReady() {
+        return true;
+      }
     };
   }
 
   @Bean
   public JsonViewPlugin hoverOnlyPlugin() {
-    return (fact, payload, jsonEntryMetaData) -> {
-      final var paths = payload.findPaths("$..lastName");
+    return new JsonViewPlugin() {
+      @Override
+      public void handle(Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData) {
+        final var paths = payload.findPaths("$..lastName");
 
-      paths.forEach(
-          p -> {
-            final var name = payload.read(p, String.class);
+        paths.forEach(
+            p -> {
+              final var name = payload.read(p, String.class);
+              jsonEntryMetaData.addPayloadHoverContent(p, "J. Edgar Hoover: " + name);
+            });
+      }
 
-            jsonEntryMetaData.addPayloadHoverContent(p, "J. Edgar Hoover: " + name);
-          });
+      @Override
+      public boolean isReady() {
+        return true;
+      }
     };
   }
 

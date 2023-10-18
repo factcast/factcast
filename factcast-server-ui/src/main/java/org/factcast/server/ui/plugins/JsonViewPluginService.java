@@ -25,4 +25,6 @@ public interface JsonViewPluginService {
   default JsonViewEntries process(@NonNull Collection<Fact> facts) {
     return new JsonViewEntries(facts.stream().map(this::process).toList());
   }
+
+  Collection<String> getNonResponsivePlugins();
 }

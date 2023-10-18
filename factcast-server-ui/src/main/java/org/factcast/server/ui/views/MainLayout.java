@@ -15,6 +15,8 @@
  */
 package org.factcast.server.ui.views;
 
+import com.google.common.collect.Lists;
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.html.Footer;
@@ -27,12 +29,18 @@ import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import java.util.*;
 import org.factcast.server.ui.full.FullQueryPage;
 import org.factcast.server.ui.id.IdQueryPage;
+import org.factcast.server.ui.plugins.JsonViewPluginService;
+import org.factcast.server.ui.utils.Notifications;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 
 /** The main view is a top-level placeholder for other views. */
 public class MainLayout extends AppLayout {
+
+  @Autowired JsonViewPluginService service;
 
   private H2 viewTitle;
 
@@ -40,6 +48,17 @@ public class MainLayout extends AppLayout {
     setPrimarySection(Section.NAVBAR);
     addDrawerContent();
     addHeaderContent();
+  }
+
+  private void notifyReadyState() {
+
+    List<String> nonResponsivePlugins = Lists.newArrayList(service.getNonResponsivePlugins());
+    if (!nonResponsivePlugins.isEmpty()) {
+      List<String> l = new ArrayList<>();
+      l.add("Some Plugins are not yet initialized:");
+      l.addAll(nonResponsivePlugins);
+      Notifications.warn(l.toArray(new String[] {}));
+    }
   }
 
   private void addHeaderContent() {
@@ -87,5 +106,11 @@ public class MainLayout extends AppLayout {
   private String getCurrentPageTitle() {
     PageTitle title = getContent().getClass().getAnnotation(PageTitle.class);
     return title == null ? "" : title.value();
+  }
+
+  @Override
+  protected void onAttach(AttachEvent attachEvent) {
+    super.onAttach(attachEvent);
+    notifyReadyState();
   }
 }

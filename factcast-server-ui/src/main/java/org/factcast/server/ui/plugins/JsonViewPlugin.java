@@ -19,4 +19,6 @@ import org.factcast.core.Fact;
 
 public interface JsonViewPlugin {
   void handle(Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData);
+
+  boolean isReady();
 }
