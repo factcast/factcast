@@ -156,9 +156,9 @@ class JsonView extends LitElement {
 				const enrichedMember: EnrichedMember = {
 					range: new monaco.Range(
 						startLine + 1,
-						startCharacter + 2, // +2 for the quote and zero based index
+						startCharacter + 1, // +1  zero based index
 						startLine + 1,
-						startCharacter + property.length + 2 // +2 for the quote and zero based index
+						startCharacter + property.length + 3 // +2 for the quote and zero based index
 					),
 				};
 
