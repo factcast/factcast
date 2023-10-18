@@ -6,16 +6,22 @@ import monacoCss from "monaco-editor/min/vs/editor/editor.main.css";
 import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 // @ts-ignore
 import jsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
-import { ElementNode, MemberNode, parse } from "@humanwhocodes/momoa";
 import { IDisposable, IRange, languages } from "monaco-editor";
+import { visit, JSONPath } from "jsonc-parser";
+import { JSONPath as jp } from "jsonpath-plus";
 
 type FactMetaData = {
-	annotations: Record<string, string>;
+	annotations: Record<string, string[]>;
 	hoverContent: Record<string, string[]>;
 };
 
 type EnrichedMember = { range: IRange } & Partial<languages.CodeLens> &
 	Partial<languages.Hover>;
+
+type CompiledPath = {
+	originalPath: string;
+	compiledPath: JSONPath;
+};
 
 @customElement("json-view")
 class JsonView extends LitElement {
@@ -111,82 +117,85 @@ class JsonView extends LitElement {
 
 	private parseMetaData(content: string, metaData: string) {
 		const parsedMetaData = JSON.parse(metaData) as FactMetaData;
-		const ast = parse(content);
+		const enrichedMembers: EnrichedMember[] = [];
 
-		const metaDatas: EnrichedMember[][] = [];
+		const annotationMap: CompiledPath[] = Object.keys(
+			parsedMetaData.annotations
+		).map((path) => ({
+			originalPath: path,
+			compiledPath: this.compilePath(path),
+		}));
 
-		if (ast.body.type === "Array") {
-			ast.body.elements.forEach((e, i) => {
-				metaDatas.push(this.createIntelliSense(parsedMetaData, `[${i}]`, e));
-			});
-		} else if (ast.body.type === "Object") {
-			ast.body.members.forEach((e) => {
-				metaDatas.push(
-					this.createIntelliSense(parsedMetaData, e.name.value, e)
-				);
-			});
-		}
+		const hoverMap: CompiledPath[] = Object.keys(
+			parsedMetaData.hoverContent
+		).map((path) => ({
+			originalPath: path,
+			compiledPath: this.compilePath(path),
+		}));
 
-		return metaDatas.flat(Infinity) as EnrichedMember[];
-	}
-
-	private createIntelliSense(
-		parsedMetaData: FactMetaData,
-		path: string,
-		member: MemberNode | ElementNode
-	) {
-		const fieldsWithEnrichment: EnrichedMember[] = [];
-
-		if (member.value.type === "String" || member.value.type === "Number") {
-			if (
-				parsedMetaData.annotations[path] ||
-				parsedMetaData.hoverContent[path]
+		visit(content, {
+			onObjectProperty(
+				property: string,
+				offset: number,
+				length: number,
+				startLine: number,
+				startCharacter: number,
+				pathSupplier: () => JSONPath
 			) {
-				const lens: EnrichedMember = {
+				const finalPath = JSON.stringify([...pathSupplier(), property]);
+				const annotation = annotationMap.find(
+					(x) => JSON.stringify(x.compiledPath) === finalPath
+				);
+
+				const hoverContent = hoverMap.find(
+					(x) => JSON.stringify(x.compiledPath) === finalPath
+				);
+
+				if (!annotation && !hoverContent) return;
+				const enrichedMember: EnrichedMember = {
 					range: new monaco.Range(
-						member.loc!.start.line,
-						member.loc!.start.column,
-						member.loc!.end.line,
-						member.loc!.end.column
+						startLine + 1,
+						startCharacter,
+						startLine + 1,
+						startCharacter + property.length
 					),
 				};
 
-				if (parsedMetaData.annotations[path]) {
-					lens.command = {
+				if (annotation?.originalPath) {
+					enrichedMember.command = {
 						id: "",
-						title: parsedMetaData.annotations[path],
+						title:
+							parsedMetaData.annotations[annotation.originalPath].join(", "),
 					};
 				}
 
-				if (parsedMetaData.hoverContent[path]) {
-					lens.contents = parsedMetaData.hoverContent[path].map((x) => ({
-						value: x,
+				if (hoverContent?.originalPath) {
+					enrichedMember.contents = parsedMetaData.hoverContent[
+						hoverContent.originalPath
+					].map((x) => ({
 						isTrusted: true,
+						value: x,
 					}));
 				}
 
-				fieldsWithEnrichment.push(lens);
-			}
-		} else if (member.value.type === "Object") {
-			const subMembers = member.value.members;
-			const subLenses = subMembers
-				.map((e) =>
-					this.createIntelliSense(parsedMetaData, `${path}.${e.name.value}`, e)
-				)
-				.flat(Infinity) as EnrichedMember[];
+				enrichedMembers.push(enrichedMember);
+			},
+		});
 
-			fieldsWithEnrichment.push(...subLenses);
-		} else if (member.value.type === "Array") {
-			const subMembers = member.value.elements
-				.map((e, i) =>
-					this.createIntelliSense(parsedMetaData, `${path}[${i}]`, e)
-				)
-				.flat(Infinity) as EnrichedMember[];
+		return enrichedMembers;
+	}
 
-			fieldsWithEnrichment.push(...subMembers);
-		}
+	private compilePath(path: string) {
+		return jp
+			.toPathArray(path)
+			.filter((x) => x !== "..")
+			.filter((x) => x !== "$")
+			.map((x) => this.getNumber(x));
+	}
 
-		return fieldsWithEnrichment;
+	private getNumber(s: string) {
+		const num = parseInt(s, 10);
+		return isNaN(num) ? s : num;
 	}
 
 	render() {

@@ -27,6 +27,7 @@ import com.vaadin.flow.router.*;
 import jakarta.annotation.security.PermitAll;
 import lombok.NonNull;
 import org.factcast.core.subscription.TransformationException;
+import org.factcast.server.ui.plugins.JsonViewPluginService;
 import org.factcast.server.ui.port.FactRepository;
 import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
 import org.factcast.server.ui.utils.Notifications;
@@ -42,14 +43,14 @@ public class IdQueryPage extends DefaultContent implements HasUrlParameter<Strin
   private final BeanValidationUrlStateBinder<IdQueryBean> b =
       new BeanValidationUrlStateBinder<>(IdQueryBean.class);
 
-  public IdQueryPage(FactRepository fc) {
+  public IdQueryPage(FactRepository fc, JsonViewPluginService jsonViewPluginService) {
     final var idInput = idInput();
     final var versionInput = versionInput();
     final var inputFields = new HorizontalLayout(idInput, versionInput);
     inputFields.setWidthFull();
 
     final var jsonView = new JsonView();
-    final var buttons = formButtons(fc, jsonView);
+    final var buttons = formButtons(fc, jsonViewPluginService, jsonView);
 
     add(inputFields, buttons, jsonView);
 
@@ -64,11 +65,12 @@ public class IdQueryPage extends DefaultContent implements HasUrlParameter<Strin
   }
 
   @NonNull
-  private HorizontalLayout formButtons(FactRepository fc, JsonView jsonView) {
+  private HorizontalLayout formButtons(
+      FactRepository fc, JsonViewPluginService jsonViewPluginService, JsonView jsonView) {
     final var queryBtn = new Button("Query");
     queryBtn.addClickShortcut(Key.ENTER);
     queryBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-    queryBtn.addClickListener(event -> executeQuery(fc, jsonView));
+    queryBtn.addClickListener(event -> executeQuery(fc, jsonViewPluginService, jsonView));
 
     final var resetBtn = new Button("Reset");
     resetBtn.addClickListener(event -> b.readBean(null));
@@ -79,14 +81,17 @@ public class IdQueryPage extends DefaultContent implements HasUrlParameter<Strin
     return hl;
   }
 
-  private void executeQuery(FactRepository fc, JsonView jsonView) {
+  private void executeQuery(
+      FactRepository fc, JsonViewPluginService jsonViewPluginService, JsonView jsonView) {
     try {
       b.writeBean(formBean);
 
       if (formBean.getId() != null) {
         var fact = fc.findBy(formBean);
 
-        fact.ifPresentOrElse(jsonView::renderFact, () -> Notifications.warn("Fact not found"));
+        fact.ifPresentOrElse(
+            f -> jsonView.renderFact(jsonViewPluginService.process(f)),
+            () -> Notifications.warn("Fact not found"));
       }
 
     } catch (ValidationException e) {

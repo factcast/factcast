@@ -41,6 +41,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import lombok.NonNull;
+import org.factcast.server.ui.plugins.JsonViewPluginService;
 import org.factcast.server.ui.port.FactRepository;
 import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
 import org.factcast.server.ui.utils.Notifications;
@@ -74,8 +75,12 @@ public class FullQueryPage extends DefaultContent implements HasUrlParameter<Str
   private final BeanValidationUrlStateBinder<FullQueryBean> b;
   private final FactRepository repo;
 
-  public FullQueryPage(@NonNull FactRepository repo) {
+  private final JsonViewPluginService jsonViewPluginService;
+
+  public FullQueryPage(
+      @NonNull FactRepository repo, @NonNull JsonViewPluginService jsonViewPluginService) {
     this.repo = repo;
+    this.jsonViewPluginService = jsonViewPluginService;
 
     ns = new NameSpacesComboBox(repo.namespaces(null));
     type = new TypesMultiSelectComboBox();
@@ -192,7 +197,7 @@ public class FullQueryPage extends DefaultContent implements HasUrlParameter<Str
         event -> {
           try {
             b.writeBean(formBean);
-            jsonView.renderFacts(repo.fetchChunk(formBean));
+            jsonView.renderFacts(jsonViewPluginService.process(repo.fetchChunk(formBean)));
           } catch (ValidationException e) {
             Notifications.warn(e.getMessage());
           } catch (Exception e) {

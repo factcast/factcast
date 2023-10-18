@@ -15,7 +15,7 @@
  */
 package org.factcast.server.ui.views;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.CssImport;
@@ -23,10 +23,8 @@ import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dependency.NpmPackage;
 import java.util.*;
 import java.util.stream.IntStream;
-import lombok.NonNull;
-import org.factcast.core.Fact;
-import org.factcast.core.FactHeader;
 import org.factcast.core.util.FactCastJson;
+import org.factcast.server.ui.plugins.JsonViewEntry;
 
 @Tag("json-view")
 @JsModule("./json-view/json-view.ts")
@@ -34,91 +32,43 @@ import org.factcast.core.util.FactCastJson;
 // we have to stick to this version
 // until https://github.com/microsoft/monaco-editor/issues/3409 is solved
 @NpmPackage(value = "monaco-editor", version = "0.33.0")
-@NpmPackage(value = "@humanwhocodes/momoa", version = "3.0.0")
+@NpmPackage(value = "jsonc-parser", version = "3.2.0")
+@NpmPackage(value = "jsonpath-plus", version = "7.2.0")
 public class JsonView extends Component {
 
-  public void renderFact(Fact f) {
-    renderFact(
-        f,
-        new FactMetaData(
-            Collections.emptyMap(),
-            Collections.emptyMap(),
-            Collections.emptyMap(),
-            Collections.emptyMap()));
-
-    //		new FactMetaData(Map.of("id", List.of("123"), "meta._ts", List.of("1.1.1970 oder so")),
-    //				Map.of("foo[0].bar", List.of("Hallo Uwe", "Alles klar?"), "lastName", List.of("foo")),
-    // Map.of(),
-    //				Map.of("lastName", List.of("This is the last name of a user.")))
-  }
-
-  public void renderFact(Fact f, FactMetaData metaData) {
-    final var annotationMap = new HashMap<String, String>();
-    final var hoverMap = new HashMap<String, Collection<String>>();
-
-    metaData.headerAnnotations.forEach(
-        (k, v) -> annotationMap.put("header." + k, String.join(", ", v)));
-    metaData.payloadAnnotations.forEach(
-        (k, v) -> annotationMap.put("payload." + k, String.join(", ", v)));
-
-    metaData.headerHoverContent.forEach((k, v) -> hoverMap.put("header." + k, v));
-    metaData.payloadHoverContent.forEach((k, v) -> hoverMap.put("payload." + k, v));
-
+  public void renderFact(JsonViewEntry f) {
     getElement()
         .callJsFunction(
             "renderJson",
-            FactCastJson.writeValueAsPrettyString(toFactJson(f)),
-            FactCastJson.writeValueAsString(buildMetaDataMap(annotationMap, hoverMap)));
+            FactCastJson.writeValueAsPrettyString(f.fact()),
+            FactCastJson.writeValueAsString(f.metaData()));
   }
 
-  public void renderFacts(List<Fact> f) {
-    renderFacts(f, Collections.emptyList());
-
-    //    new FactMetaData(
-    //        Map.of("id", List.of("123"), "meta._ts", List.of("1.1.1970 oder so")),
-    //        Map.of("foo[0].bar", List.of("Hallo Uwe", "Alles klar?")),
-    //        Map.of(),
-    //        Map.of("lastName", List.of("This is the last name of a user."))))
-  }
-
-  public void renderFacts(List<Fact> f, List<FactMetaData> annotations) {
-    final var annotationMap = new HashMap<String, String>();
-    final var hoverMap = new HashMap<String, Collection<String>>();
-
-    IntStream.range(0, annotations.size())
-        .forEach(
-            i -> {
-              final var a = annotations.get(i);
-              a.headerAnnotations.forEach(
-                  (k, v) -> annotationMap.put("[" + i + "].header." + k, String.join(", ", v)));
-              a.payloadAnnotations.forEach(
-                  (k, v) -> annotationMap.put("[" + i + "].payload." + k, String.join(", ", v)));
-              a.headerHoverContent.forEach((k, v) -> hoverMap.put("[" + i + "].header." + k, v));
-              a.payloadHoverContent.forEach((k, v) -> hoverMap.put("[" + i + "].payload." + k, v));
-            });
-
+  public void renderFacts(List<JsonViewEntry> f) {
     getElement()
         .callJsFunction(
             "renderJson",
-            FactCastJson.writeValueAsPrettyString(f.stream().map(this::toFactJson).toList()),
-            FactCastJson.writeValueAsString(buildMetaDataMap(annotationMap, hoverMap)));
+            FactCastJson.writeValueAsPrettyString(f.stream().map(JsonViewEntry::fact).toList()),
+            FactCastJson.writeValueAsString(new JsonViewEntriesMetaData(f)));
   }
 
-  @NonNull
-  private static Map<String, HashMap<String, ?>> buildMetaDataMap(
-      HashMap<String, String> annotationMap, HashMap<String, Collection<String>> hoverMap) {
-    return Map.of("annotations", annotationMap, "hoverContent", hoverMap);
+  static class JsonViewEntriesMetaData {
+    @JsonProperty private final Map<String, Collection<String>> annotations = new HashMap<>();
+
+    @JsonProperty private final Map<String, Collection<String>> hoverContent = new HashMap<>();
+
+    public JsonViewEntriesMetaData(List<JsonViewEntry> entries) {
+      IntStream.range(0, entries.size())
+          .forEach(
+              i -> {
+                final var a = entries.get(i);
+                a.metaData()
+                    .annotations()
+                    .forEach((k, v) -> annotations.put("$.[" + i + "]." + k, v));
+                a.metaData()
+                    .hoverContent()
+                    .forEach((k, v) -> hoverContent.put("$.[" + i + "]." + k, v));
+              });
+    }
   }
-
-  private FactJson toFactJson(Fact f) {
-    return new FactJson(f.header(), FactCastJson.toObjectNode(f.jsonPayload()));
-  }
-
-  public record FactJson(FactHeader header, ObjectNode payload) {}
-
-  public record FactMetaData(
-      Map<String, Collection<String>> headerAnnotations,
-      Map<String, Collection<String>> payloadAnnotations,
-      Map<String, Collection<String>> headerHoverContent,
-      Map<String, Collection<String>> payloadHoverContent) {}
 }
