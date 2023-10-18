@@ -20,7 +20,7 @@ import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dependency.NpmPackage;
-import org.factcast.core.util.FactCastJson;
+import java.util.*;
 import org.factcast.server.ui.plugins.JsonViewEntries;
 import org.factcast.server.ui.plugins.JsonViewEntry;
 
@@ -35,19 +35,10 @@ import org.factcast.server.ui.plugins.JsonViewEntry;
 public class JsonView extends Component {
 
   public void renderFact(JsonViewEntry f) {
-    getElement()
-        .callJsFunction(
-            "renderJson",
-            FactCastJson.writeValueAsPrettyString(f.fact()),
-            FactCastJson.writeValueAsString(f.metaData()));
+    renderFacts(new JsonViewEntries(Collections.singletonList(f)));
   }
 
-  public void renderFacts(JsonViewEntries toRender) {
-    getElement()
-        .callJsFunction(
-            "renderJson",
-            FactCastJson.writeValueAsPrettyString(
-                toRender.jsonViewEntries().stream().map(JsonViewEntry::fact).toList()),
-            FactCastJson.writeValueAsString(toRender));
+  public void renderFacts(JsonViewEntries entries) {
+    getElement().callJsFunction("renderJson", entries.json(), entries.meta());
   }
 }

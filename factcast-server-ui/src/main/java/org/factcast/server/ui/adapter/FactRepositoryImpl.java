@@ -32,7 +32,6 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.util.ExceptionHelper;
-import org.factcast.server.ui.adapter.ListObserver.LimitReachedException;
 import org.factcast.server.ui.full.FullQueryBean;
 import org.factcast.server.ui.id.IdQueryBean;
 import org.factcast.server.ui.port.FactRepository;
@@ -117,19 +116,12 @@ public class FactRepositoryImpl implements FactRepository {
       // factstream into the ListObserver. Leaving the try-with-resources, the
       // subscription will be closed
 
-      if (!hasLimitReachedException(e)) {
+      if (!LimitReachedException.matches(e)) {
         // something else happened, we probably need to escalate and notify
         throw ExceptionHelper.toRuntime(e);
       }
     }
     return obs.list();
-  }
-
-  private boolean hasLimitReachedException(Throwable e) {
-    if (e == null) {
-      return false;
-    }
-    return (e instanceof LimitReachedException) || hasLimitReachedException(e.getCause());
   }
 
   @Override

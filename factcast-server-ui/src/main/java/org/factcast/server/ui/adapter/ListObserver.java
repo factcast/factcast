@@ -47,9 +47,14 @@ public class ListObserver implements FactObserver {
     }
   }
 
+  @Override
+  public void onError(@NonNull Throwable exception) {
+    if (!LimitReachedException.matches(exception)) {
+      FactObserver.super.onError(exception);
+    }
+  }
+
   boolean isComplete() {
     return limit <= 0;
   }
-
-  static class LimitReachedException extends IllegalStateException {}
 }

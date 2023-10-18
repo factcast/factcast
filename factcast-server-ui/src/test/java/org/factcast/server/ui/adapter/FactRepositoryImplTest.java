@@ -316,7 +316,7 @@ public class FactRepositoryImplTest {
                 SubscriptionImpl subscriptionImpl = new SubscriptionImpl(mock(ListObserver.class));
                 CompletableFuture.runAsync(
                     () -> {
-                      subscriptionImpl.notifyError(new ListObserver.LimitReachedException());
+                      subscriptionImpl.notifyError(new LimitReachedException());
                     });
                 return subscriptionImpl;
               });

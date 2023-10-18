@@ -22,7 +22,6 @@ import java.util.LinkedList;
 import java.util.List;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
-import org.factcast.server.ui.adapter.ListObserver.LimitReachedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -49,7 +48,7 @@ public class ListObserverTest {
     void limits() {
       underTest = new ListObserver(3, 2);
       assertThatThrownBy(() -> mockFacts.forEach(underTest::onNext))
-          .isInstanceOf(ListObserver.LimitReachedException.class);
+          .isInstanceOf(LimitReachedException.class);
 
       var result = underTest.list();
       Assertions.assertThat(result).isNotNull().hasSize(3);
@@ -70,7 +69,7 @@ public class ListObserverTest {
     void usesOffset() {
       underTest = new ListObserver(3, 2);
       assertThatThrownBy(() -> mockFacts.forEach(underTest::onNext))
-          .isInstanceOf(ListObserver.LimitReachedException.class);
+          .isInstanceOf(LimitReachedException.class);
 
       var result = underTest.list();
       Assertions.assertThat(result)

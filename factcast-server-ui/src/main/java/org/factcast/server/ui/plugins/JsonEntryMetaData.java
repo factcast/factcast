@@ -15,7 +15,6 @@
  */
 package org.factcast.server.ui.plugins;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -27,9 +26,9 @@ import lombok.NonNull;
 /** meta-data for one fact (json entry) */
 @Getter(AccessLevel.PROTECTED)
 public class JsonEntryMetaData {
-  @JsonProperty private final Map<String, Collection<String>> annotations = new HashMap<>();
+  private final Map<String, Collection<String>> annotations = new HashMap<>();
 
-  @JsonProperty private final Map<String, Collection<String>> hoverContent = new HashMap<>();
+  private final Map<String, Collection<String>> hoverContent = new HashMap<>();
 
   public void annotateHeader(@NonNull String path, @NonNull String value) {
     var p = "header." + path;
