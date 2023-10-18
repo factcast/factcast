@@ -41,6 +41,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.server.ui.plugins.JsonViewPluginService;
 import org.factcast.server.ui.port.FactRepository;
 import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
@@ -54,6 +55,7 @@ import org.factcast.server.ui.views.MainLayout;
 @PageTitle("Query")
 @PermitAll
 @SuppressWarnings("java:S110")
+@Slf4j
 public class FullQueryPage extends DefaultContent implements HasUrlParameter<String> {
 
   // externalizable state
@@ -199,13 +201,15 @@ public class FullQueryPage extends DefaultContent implements HasUrlParameter<Str
     queryBtn.addClickListener(
         event -> {
           try {
-
             binder.writeBean(formBean);
+            log.debug("run query for " + formBean);
             jsonView.renderFacts(jsonViewPluginService.process(repo.fetchChunk(formBean)));
           } catch (ValidationException e) {
             Notifications.warn(e.getMessage());
           } catch (Exception e) {
             Notifications.error(e.getMessage());
+          } finally {
+            queryBtn.setEnabled(true);
           }
         });
 
