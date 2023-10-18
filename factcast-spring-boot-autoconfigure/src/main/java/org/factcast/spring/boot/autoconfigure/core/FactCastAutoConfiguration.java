@@ -28,6 +28,7 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
@@ -57,6 +58,7 @@ public class FactCastAutoConfiguration {
   }
 
   @Bean
+  @Primary
   @ConditionalOnMissingBean
   @Order(Ordered.HIGHEST_PRECEDENCE)
   // if there is no other one defined
