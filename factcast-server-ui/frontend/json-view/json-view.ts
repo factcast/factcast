@@ -105,7 +105,6 @@ class JsonView extends LitElement {
 			scrollBeyondLastLine: false,
 			minimap: { enabled: false },
 			theme: "vs",
-			automaticLayout: true,
 			fontLigatures: "",
 		});
 	}
@@ -209,12 +208,15 @@ class JsonView extends LitElement {
 		css`
 			:host {
 				width: 100%;
+				height: 100%;
 				flex-grow: 1;
+				display: flex;
 			}
 
 			#monaco-editor {
+				height: 100%;
+				flex-grow: 1;
 				width: 100%;
-				height: 600px;
 				border: 1px solid var(--lumo-contrast-20pct);
 			}
 		`,
