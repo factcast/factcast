@@ -15,6 +15,7 @@
  */
 package org.factcast.server.ui.full;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -91,10 +92,12 @@ public class FullQueryBean implements Serializable {
     from = BigDecimal.valueOf(defaultFrom);
   }
 
+  @JsonIgnore
   public int getOffsetOrDefault() {
     return Optional.ofNullable(offset).orElse(0);
   }
 
+  @JsonIgnore
   public int getLimitOrDefault() {
     return Optional.ofNullable(limit).orElse(FullQueryBean.DEFAULT_LIMIT);
   }
