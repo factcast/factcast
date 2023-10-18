@@ -112,7 +112,7 @@ public class FactRepositoryImpl implements FactRepository {
 
     try (Subscription subscription = fs.subscribe(SubscriptionRequestTO.forFacts(request), obs)) {
       subscription.awaitCatchup();
-    } catch (Throwable e) {
+    } catch (Exception e) {
       // in case the limit is reached, it makes no sense to stream the rest of the
       // factstream into the ListObserver. Leaving the try-with-resources, the
       // subscription will be closed
