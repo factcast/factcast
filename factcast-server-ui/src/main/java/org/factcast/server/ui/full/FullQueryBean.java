@@ -28,9 +28,11 @@ import org.factcast.core.spec.FactSpec;
 @Data
 @Accessors(fluent = false, chain = false)
 public class FullQueryBean implements Serializable {
+  public static final int DEFAULT_LIMIT = 50;
+  private final long defaultFrom;
   private LocalDate since = LocalDate.now();
-  private Integer limit = 50;
-  private Integer offset = 0;
+  private Integer limit = null;
+  private Integer offset = null;
 
   @NotNull private String ns;
 
@@ -39,6 +41,11 @@ public class FullQueryBean implements Serializable {
   private UUID aggId = null;
   private List<MetaTuple> meta = new LinkedList<>();
   private BigDecimal from = null;
+
+  FullQueryBean(long startingSerial) {
+    defaultFrom = startingSerial;
+    from = BigDecimal.valueOf(startingSerial);
+  }
 
   @NonNull
   public List<FactSpec> createFactSpecs() {
@@ -70,5 +77,25 @@ public class FullQueryBean implements Serializable {
       }
       return Collections.singletonList(fs);
     }
+  }
+
+  public void reset() {
+    since = LocalDate.now();
+    limit = null;
+    offset = null;
+    ns = null;
+    type = null;
+    aggId = null;
+    meta.clear();
+    from = null;
+    from = BigDecimal.valueOf(defaultFrom);
+  }
+
+  public int getOffsetOrDefault() {
+    return Optional.ofNullable(offset).orElse(0);
+  }
+
+  public int getLimitOrDefault() {
+    return Optional.ofNullable(limit).orElse(FullQueryBean.DEFAULT_LIMIT);
   }
 }

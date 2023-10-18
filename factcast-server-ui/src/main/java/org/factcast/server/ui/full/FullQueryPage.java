@@ -57,7 +57,7 @@ public class FullQueryPage extends DefaultContent implements HasUrlParameter<Str
 
   // externalizable state
 
-  private final FullQueryBean formBean = new FullQueryBean();
+  private final FullQueryBean formBean;
 
   // fields
   private final ComboBox<String> ns;
@@ -71,11 +71,13 @@ public class FullQueryPage extends DefaultContent implements HasUrlParameter<Str
   private final Popup serialHelperOverlay = new Popup();
   private final JsonView jsonView = new JsonView();
 
-  private final BeanValidationUrlStateBinder<FullQueryBean> b;
+  private final BeanValidationUrlStateBinder<FullQueryBean> binder;
   private final FactRepository repo;
 
   public FullQueryPage(@NonNull FactRepository repo) {
     this.repo = repo;
+
+    formBean = new FullQueryBean(repo.latestSerial());
 
     ns = new NameSpacesComboBox(repo.namespaces(null));
     type = new TypesMultiSelectComboBox();
@@ -90,13 +92,13 @@ public class FullQueryPage extends DefaultContent implements HasUrlParameter<Str
             event -> {
               updateTypeState();
               if (ns.isEmpty()) {
-                type.setValue(new HashSet<String>());
+                type.setValue(new HashSet<>());
               } else {
                 type.setItems(repo.types(ns.getValue(), null));
               }
             });
 
-    b = createBinding();
+    binder = createBinding();
 
     final var nsAndTypeFilter = new HorizontalLayout(ns, type);
     nsAndTypeFilter.setWidthFull();
@@ -125,8 +127,8 @@ public class FullQueryPage extends DefaultContent implements HasUrlParameter<Str
     b.forField(type).withNullRepresentation(new HashSet<>()).bind("type");
     b.forField(from).withNullRepresentation(BigDecimal.ZERO).bind("from");
     b.forField(since).bind("since");
-    b.forField(limit).bind("limit");
-    b.forField(offset).bind("offset");
+    b.forField(limit).withNullRepresentation(FullQueryBean.DEFAULT_LIMIT).bind("limit");
+    b.forField(offset).withNullRepresentation(0).bind("offset");
     b.forField(aggId)
         .withNullRepresentation("")
         .withConverter(new StringToUuidConverter("not a uuid"))
@@ -142,7 +144,7 @@ public class FullQueryPage extends DefaultContent implements HasUrlParameter<Str
   @Override
   public void setParameter(BeforeEvent event, @OptionalParameter String parameter) {
     final var location = event.getLocation();
-    b.readFromQueryParams(location.getQueryParameters(), formBean);
+    binder.readFromQueryParams(location.getQueryParameters(), formBean);
     updateTypeState();
     metaButton.update();
   }
@@ -191,7 +193,7 @@ public class FullQueryPage extends DefaultContent implements HasUrlParameter<Str
     queryBtn.addClickListener(
         event -> {
           try {
-            b.writeBean(formBean);
+            binder.writeBean(formBean);
             jsonView.renderFacts(repo.fetchChunk(formBean));
           } catch (ValidationException e) {
             Notifications.warn(e.getMessage());
@@ -203,7 +205,8 @@ public class FullQueryPage extends DefaultContent implements HasUrlParameter<Str
     final var resetBtn = new Button("Reset");
     resetBtn.addClickListener(
         event -> {
-          b.readBean(null);
+          formBean.reset();
+          binder.readBean(formBean);
           formBean.getMeta().clear();
           metaButton.update();
         });
@@ -236,7 +239,6 @@ public class FullQueryPage extends DefaultContent implements HasUrlParameter<Str
     public AggregateIdField() {
       super("aggregate-id");
       setLabel("Aggregate-ID");
-      setPlaceholder("UUID");
       setWidth("100%");
     }
   }
