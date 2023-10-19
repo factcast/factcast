@@ -111,7 +111,7 @@
     <redisson.version>3.23.5</redisson.version>
     <redisson-spring-boot-starter.version>3.23.5</redisson-spring-boot-starter.version>
     <graaljs.version>23.0.1</graaljs.version>
-    <shedlock.version>5.9.0</shedlock.version>
+    <shedlock.version>5.9.1</shedlock.version>
     <byte-buddy.version>1.14.9</byte-buddy.version>
     <skipUnitTests>false</skipUnitTests>
     <!-- as long as we promise pg11 compatibility, it might make sense to also
