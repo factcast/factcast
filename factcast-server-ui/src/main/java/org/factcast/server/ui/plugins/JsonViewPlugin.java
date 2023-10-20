@@ -17,8 +17,13 @@ package org.factcast.server.ui.plugins;
 
 import org.factcast.core.Fact;
 
-public interface JsonViewPlugin {
-  void handle(Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData);
+public abstract class JsonViewPlugin {
+  public final void handle(Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData) {
+    if (isReady()) doHandle(fact, payload, jsonEntryMetaData);
+  }
 
-  boolean isReady();
+  protected abstract boolean isReady();
+
+  protected abstract void doHandle(
+      Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData);
 }

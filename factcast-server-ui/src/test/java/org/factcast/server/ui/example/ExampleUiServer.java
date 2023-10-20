@@ -51,7 +51,7 @@ public class ExampleUiServer {
   public JsonViewPlugin testPlugin() {
     return new JsonViewPlugin() {
       @Override
-      public void handle(Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData) {
+      public void doHandle(Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData) {
         final var paths = payload.findPaths("$..firstName");
 
         paths.forEach(
@@ -74,7 +74,7 @@ public class ExampleUiServer {
   public JsonViewPlugin hoverOnlyPlugin() {
     return new JsonViewPlugin() {
       @Override
-      public void handle(Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData) {
+      public void doHandle(Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData) {
         final var paths = payload.findPaths("$..lastName");
 
         paths.forEach(
@@ -99,7 +99,7 @@ public class ExampleUiServer {
 
   private static void startPostgresContainer() {
     log.info("Trying to start postgres testcontainer");
-    PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:15.2");
+    PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15.2");
     postgres.start();
     String url = postgres.getJdbcUrl();
     System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
