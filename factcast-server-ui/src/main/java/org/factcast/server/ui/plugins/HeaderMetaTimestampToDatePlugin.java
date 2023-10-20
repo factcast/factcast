@@ -20,7 +20,7 @@ import java.time.ZoneId;
 import java.util.Optional;
 import org.factcast.core.Fact;
 
-public class HeaderMetaTimestampToDatePlugin extends AbstractJsonViewPlugin {
+public class HeaderMetaTimestampToDatePlugin extends JsonViewPlugin {
   @Override
   public void doHandle(Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData) {
     Optional.ofNullable(fact.timestamp())
