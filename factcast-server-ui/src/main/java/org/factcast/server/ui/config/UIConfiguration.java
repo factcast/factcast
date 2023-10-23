@@ -38,8 +38,8 @@ import org.springframework.context.annotation.*;
 @Theme(value = "fcui")
 @EnableVaadin("org.factcast.server.ui")
 @RequiredArgsConstructor
-@Import(JsonViewPluginConfig.class)
-public class UIConfig implements AppShellConfigurator {
+@Import(JsonViewPluginConfiguration.class)
+public class UIConfiguration implements AppShellConfigurator {
   @Bean
   public FactRepository factRepository(LocalFactStore fs, SecurityService securityService) {
     return new FactRepositoryImpl(fs, securityService);

@@ -19,8 +19,8 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.server.security.CommonSecurityConfig;
-import org.factcast.server.ui.config.SecurityConfig;
-import org.factcast.server.ui.config.UIConfig;
+import org.factcast.server.ui.config.SecurityConfiguration;
+import org.factcast.server.ui.config.UIConfiguration;
 import org.factcast.server.ui.plugins.JsonEntryMetaData;
 import org.factcast.server.ui.plugins.JsonPayload;
 import org.factcast.server.ui.plugins.JsonViewPlugin;
@@ -37,8 +37,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
 @Slf4j
 @SpringBootApplication
 @Import({
-  UIConfig.class,
-  SecurityConfig.class,
+  UIConfiguration.class,
+  SecurityConfiguration.class,
   PgFactStoreConfiguration.class,
   CommonSecurityConfig.class
 })

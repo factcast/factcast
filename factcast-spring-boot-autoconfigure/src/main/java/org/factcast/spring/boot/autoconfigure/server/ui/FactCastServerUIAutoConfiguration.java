@@ -16,13 +16,13 @@
 package org.factcast.spring.boot.autoconfigure.server.ui;
 
 import lombok.Generated;
-import org.factcast.server.ui.config.UIConfig;
+import org.factcast.server.ui.config.UIConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Import;
 
 @Generated
 @AutoConfiguration
-@Import({UIConfig.class})
-@ConditionalOnClass(UIConfig.class)
+@Import({UIConfiguration.class})
+@ConditionalOnClass(UIConfiguration.class)
 public class FactCastServerUIAutoConfiguration {}

@@ -29,6 +29,7 @@ import java.util.function.UnaryOperator;
 import lombok.SneakyThrows;
 import org.springframework.web.util.UriComponentsBuilder;
 
+@NoCoverageReportToBeGenerated
 public class BeanValidationUrlStateBinder<T> extends BeanValidationBinder<T> {
   public static final String STATE = "state";
   private final ObjectMapper om = createOm();

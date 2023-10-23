@@ -13,23 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.views;
+package org.factcast.server.ui.utils;
 
-import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import org.factcast.server.ui.utils.NoCoverageReportToBeGenerated;
+import java.lang.annotation.*;
 
-@NoCoverageReportToBeGenerated
-public class FormContent extends VerticalLayout {
-  public FormContent() {
-    setWidth("none");
-    setPadding(false);
-    setSpacing(false);
-    setClassName("default-content");
-  }
-
-  public FormContent(Component... children) {
-    this();
-    add(children);
-  }
-}
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface NoCoverageReportToBeGenerated {}

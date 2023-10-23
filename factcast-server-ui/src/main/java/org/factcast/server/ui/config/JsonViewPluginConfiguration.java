@@ -26,7 +26,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class JsonViewPluginConfig {
+public class JsonViewPluginConfiguration {
   public static final String JSON_VIEW_PLUGIN_OBJECT_MAPPER = "jsonViewPluginObjectMapper";
 
   @Bean
