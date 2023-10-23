@@ -23,7 +23,6 @@ import com.vaadin.flow.component.dependency.NpmPackage;
 import java.util.*;
 import org.factcast.server.ui.plugins.JsonViewEntries;
 import org.factcast.server.ui.plugins.JsonViewEntry;
-import org.factcast.server.ui.utils.NoCoverageReportToBeGenerated;
 
 @Tag("json-view")
 @JsModule("./json-view/json-view.ts")
@@ -33,7 +32,6 @@ import org.factcast.server.ui.utils.NoCoverageReportToBeGenerated;
 @NpmPackage(value = "monaco-editor", version = "0.33.0")
 @NpmPackage(value = "jsonc-parser", version = "3.2.0")
 @NpmPackage(value = "jsonpath-plus", version = "7.2.0")
-@NoCoverageReportToBeGenerated
 public class JsonView extends Component {
 
   public void renderFact(JsonViewEntry f) {
