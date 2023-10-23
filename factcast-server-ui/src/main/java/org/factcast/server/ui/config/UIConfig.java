@@ -19,6 +19,7 @@ import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.spring.annotation.EnableVaadin;
 import com.vaadin.flow.spring.security.AuthenticationContext;
 import com.vaadin.flow.theme.Theme;
+import io.micrometer.core.aop.TimedAspect;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.store.LocalFactStore;
@@ -29,6 +30,7 @@ import org.factcast.server.ui.port.FactRepository;
 import org.factcast.server.ui.security.DefaultSecurityService;
 import org.factcast.server.ui.security.SecurityService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.*;
 
@@ -57,5 +59,12 @@ public class UIConfig implements AppShellConfigurator {
     }
 
     return new MeterRegistryMetrics(meterRegistry);
+  }
+
+  @Bean
+  @ConditionalOnBean(MeterRegistry.class)
+  @ConditionalOnMissingBean
+  public TimedAspect timedAspect(MeterRegistry registry) {
+    return new TimedAspect(registry);
   }
 }

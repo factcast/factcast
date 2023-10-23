@@ -15,6 +15,7 @@
  */
 package org.factcast.server.ui.adapter;
 
+import io.micrometer.core.annotation.Timed;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
@@ -34,9 +35,11 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.util.ExceptionHelper;
 import org.factcast.server.ui.full.FullQueryBean;
 import org.factcast.server.ui.id.IdQueryBean;
+import org.factcast.server.ui.metrics.UiMetrics;
 import org.factcast.server.ui.port.FactRepository;
 import org.factcast.server.ui.security.SecurityService;
 
+@Timed(value = UiMetrics.TIMER_METRIC_NAME)
 @RequiredArgsConstructor
 public class FactRepositoryImpl implements FactRepository {
 
