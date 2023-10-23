@@ -47,7 +47,6 @@ import org.factcast.server.ui.plugins.JsonViewEntries;
 import org.factcast.server.ui.plugins.JsonViewPluginService;
 import org.factcast.server.ui.port.FactRepository;
 import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
-import org.factcast.server.ui.utils.NoCoverageReportToBeGenerated;
 import org.factcast.server.ui.utils.Notifications;
 import org.factcast.server.ui.views.FormContent;
 import org.factcast.server.ui.views.JsonView;
@@ -61,7 +60,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 @PermitAll
 @SuppressWarnings("java:S110")
 @Slf4j
-@NoCoverageReportToBeGenerated
 public class FullQueryPage extends VerticalLayout implements HasUrlParameter<String> {
 
   // externalizable state

@@ -18,9 +18,7 @@ package org.factcast.server.ui.full;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.experimental.Accessors;
-import org.factcast.server.ui.utils.NoCoverageReportToBeGenerated;
 
-@NoCoverageReportToBeGenerated
 @Data
 @Accessors(fluent = false, chain = false)
 public class MetaTuple {

@@ -17,9 +17,7 @@ package org.factcast.server.ui.views;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import org.factcast.server.ui.utils.NoCoverageReportToBeGenerated;
 
-@NoCoverageReportToBeGenerated
 public class FormContent extends VerticalLayout {
   public FormContent() {
     setWidth("none");
