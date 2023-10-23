@@ -21,9 +21,11 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import java.util.Collection;
+import org.factcast.server.ui.utils.NoCoverageReportToBeGenerated;
 import org.vaadin.crudui.crud.CrudListener;
 import org.vaadin.crudui.crud.impl.GridCrud;
 
+@NoCoverageReportToBeGenerated
 class MetaButton extends Button {
   private final FullQueryBean backingBean;
   private final GridCrud<MetaTuple> crud = new GridCrud<>(MetaTuple.class);

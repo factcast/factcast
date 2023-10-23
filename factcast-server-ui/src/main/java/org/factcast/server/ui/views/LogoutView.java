@@ -20,10 +20,12 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
 import org.factcast.server.ui.security.SecurityService;
+import org.factcast.server.ui.utils.NoCoverageReportToBeGenerated;
 
 @Route("logout")
 @PageTitle("Logout")
 @PermitAll
+@NoCoverageReportToBeGenerated
 public class LogoutView extends VerticalLayout {
 
   public LogoutView(SecurityService securityService) {

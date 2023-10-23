@@ -29,6 +29,7 @@ import java.util.*;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
+@NoCoverageReportToBeGenerated
 public class Notifications {
   public static void error(String... message) {
     createNotification(NotificationVariant.LUMO_ERROR, message);

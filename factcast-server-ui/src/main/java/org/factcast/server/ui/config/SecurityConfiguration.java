@@ -25,7 +25,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 @Slf4j
 @Configuration
 @EnableWebSecurity
-public class SecurityConfig extends VaadinWebSecurity {
+public class SecurityConfiguration extends VaadinWebSecurity {
   @Override
   protected void configure(HttpSecurity http) throws Exception {
     super.configure(http);

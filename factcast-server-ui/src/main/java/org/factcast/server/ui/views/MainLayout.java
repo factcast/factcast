@@ -33,10 +33,12 @@ import java.util.*;
 import org.factcast.server.ui.full.FullQueryPage;
 import org.factcast.server.ui.id.IdQueryPage;
 import org.factcast.server.ui.plugins.JsonViewPluginService;
+import org.factcast.server.ui.utils.NoCoverageReportToBeGenerated;
 import org.factcast.server.ui.utils.Notifications;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 
+@NoCoverageReportToBeGenerated
 /** The main view is a top-level placeholder for other views. */
 public class MainLayout extends AppLayout {
 
