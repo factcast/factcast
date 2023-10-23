@@ -15,6 +15,7 @@
  */
 package org.factcast.server.ui.example;
 
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.server.security.CommonSecurityConfig;
@@ -67,6 +68,11 @@ public class ExampleUiServer {
       public boolean isReady() {
         return true;
       }
+
+      @Override
+      public @NonNull String getDisplayName() {
+        return "TestPlugin";
+      }
     };
   }
 
@@ -87,6 +93,11 @@ public class ExampleUiServer {
       @Override
       public boolean isReady() {
         return true;
+      }
+
+      @Override
+      public @NonNull String getDisplayName() {
+        return "HoverOnlyPlugin";
       }
     };
   }

@@ -13,23 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.plugins;
+package org.factcast.server.ui.metrics;
 
+import lombok.Getter;
 import lombok.NonNull;
-import org.factcast.core.Fact;
+import lombok.RequiredArgsConstructor;
 
-public abstract class JsonViewPlugin {
-  public final void handle(Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData) {
-    if (isReady()) doHandle(fact, payload, jsonEntryMetaData);
-  }
+@Getter
+@RequiredArgsConstructor
+public enum Operations {
+  PLUGIN_EXECUTION("plugin-execution"),
+  FACT_PROCESSING("fact-processing");
 
-  protected abstract boolean isReady();
-
-  protected abstract void doHandle(
-      Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData);
-
-  @NonNull
-  public String getDisplayName() {
-    return getClass().getSimpleName();
-  }
+  @NonNull final String opsName;
 }

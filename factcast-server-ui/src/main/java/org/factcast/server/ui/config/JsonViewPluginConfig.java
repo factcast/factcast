@@ -18,6 +18,7 @@ package org.factcast.server.ui.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Optional;
+import org.factcast.server.ui.metrics.UiMetrics;
 import org.factcast.server.ui.plugins.*;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -61,7 +62,9 @@ public class JsonViewPluginConfig {
   public JsonViewPluginService jsonViewPluginService(
       Optional<List<JsonViewPlugin>> plugins,
       @Qualifier(JSON_VIEW_PLUGIN_OBJECT_MAPPER) ObjectMapper objectMapper,
-      JsonUtils jsonUtils) {
-    return new JsonViewPluginServiceImpl(plugins.orElse(List.of()), objectMapper, jsonUtils);
+      JsonUtils jsonUtils,
+      UiMetrics uiMetrics) {
+    return new JsonViewPluginServiceImpl(
+        plugins.orElse(List.of()), objectMapper, jsonUtils, uiMetrics);
   }
 }
