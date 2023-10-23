@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
+import org.factcast.server.ui.metrics.UiMetrics;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -29,23 +30,26 @@ public class JsonViewPluginServiceImpl implements JsonViewPluginService {
   private final List<JsonViewPlugin> plugins;
   private final ObjectMapper objectMapper;
   private final JsonUtils jsonUtils;
+  private final UiMetrics uiMetrics;
 
   @Override
-  @SneakyThrows
   public JsonViewEntry process(@NonNull Fact fact) {
+    return uiMetrics.timeFactProcessing(() -> processFact(fact));
+  }
+
+  @NonNull
+  @SneakyThrows
+  private JsonViewEntry processFact(@NonNull Fact fact) {
     final var payload = jsonUtils.forString(fact.jsonPayload());
     final var metaData = new JsonEntryMetaData();
 
     plugins.forEach(
         plugin -> {
           try {
-            plugin.handle(fact, payload, metaData);
+            uiMetrics.timePluginExecution(
+                plugin.getDisplayName(), () -> plugin.handle(fact, payload, metaData));
           } catch (Exception e) {
-            log.warn(
-                "Plugin {} failed to handle fact {}",
-                plugin.getClass().getSimpleName(),
-                fact.id(),
-                e);
+            log.warn("Plugin {} failed to handle fact {}", plugin.getDisplayName(), fact.id(), e);
           }
         });
 
@@ -58,9 +62,6 @@ public class JsonViewPluginServiceImpl implements JsonViewPluginService {
 
   @Override
   public Collection<String> getNonResponsivePlugins() {
-    return plugins.stream()
-        .filter(p -> !p.isReady())
-        .map(i -> i.getClass().getSimpleName())
-        .toList();
+    return plugins.stream().filter(p -> !p.isReady()).map(JsonViewPlugin::getDisplayName).toList();
   }
 }
