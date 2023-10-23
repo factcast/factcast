@@ -30,11 +30,6 @@ import org.springframework.beans.factory.InitializingBean;
 public class MeterRegistryMetrics implements InitializingBean, UiMetrics {
   private final MeterRegistry meterRegistry;
 
-  static final String DURATION_METRIC_NAME = "factcast.ui.timer";
-  static final String TAG_OPERATION_KEY = "operation";
-  static final String TAG_EXCEPTION_KEY = "exception";
-  static final String TAG_EXCEPTION_VALUE_NONE = "None";
-
   @Override
   public void timePluginExecution(@NonNull String pluginDisplayName, @NonNull Runnable r) {
     time(Operations.PLUGIN_EXECUTION, Tags.of("displayName", pluginDisplayName), r);
@@ -75,7 +70,7 @@ public class MeterRegistryMetrics implements InitializingBean, UiMetrics {
   private Timer timer(
       @NonNull Operations operation, @NonNull Tags tags, @NonNull String exceptionTagValue) {
     final var fullTags = forOperation(operation, exceptionTagValue).and(tags);
-    return Timer.builder(DURATION_METRIC_NAME).tags(fullTags).register(meterRegistry);
+    return Timer.builder(TIMER_METRIC_NAME).tags(fullTags).register(meterRegistry);
   }
 
   private void time(

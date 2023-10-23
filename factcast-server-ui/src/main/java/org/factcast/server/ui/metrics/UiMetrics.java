@@ -19,6 +19,11 @@ import java.util.function.Supplier;
 import lombok.NonNull;
 
 public interface UiMetrics {
+  String TIMER_METRIC_NAME = "factcast.ui.timer";
+  String TAG_OPERATION_KEY = "operation";
+  String TAG_EXCEPTION_KEY = "exception";
+  String TAG_EXCEPTION_VALUE_NONE = "None";
+
   /** The time it takes to execute the specified plugin for one fact. */
   void timePluginExecution(@NonNull String pluginDisplayName, @NonNull Runnable r);
 
