@@ -21,9 +21,11 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import java.util.Collection;
+import org.factcast.core.util.NoCoverageReportToBeGenerated;
 import org.vaadin.crudui.crud.CrudListener;
 import org.vaadin.crudui.crud.impl.GridCrud;
 
+@NoCoverageReportToBeGenerated
 class MetaButton extends Button {
   private final FullQueryBean backingBean;
   private final GridCrud<MetaTuple> crud = new GridCrud<>(MetaTuple.class);
@@ -34,35 +36,7 @@ class MetaButton extends Button {
 
     final var dialog = new Dialog("Meta");
 
-    crud.setCrudListener(
-        new CrudListener<MetaTuple>() {
-          @Override
-          public Collection<MetaTuple> findAll() {
-            return backingBean.getMeta();
-          }
-
-          @Override
-          public MetaTuple add(MetaTuple user) {
-            // should not be directly pushed into the formbean, TODO learn about grids and
-            // binding
-            backingBean.getMeta().add(user);
-            MetaButton.this.update();
-            return user;
-          }
-
-          @Override
-          public MetaTuple update(MetaTuple user) {
-            return user;
-          }
-
-          @Override
-          public void delete(MetaTuple user) {
-            // should not be directly removed from the formbean, TODO learn about grids and
-            // binding
-            backingBean.getMeta().remove(user);
-            MetaButton.this.update();
-          }
-        });
+    crud.setCrudListener(new MetaTupleCrudListener());
     crud.getCrudFormFactory().setUseBeanValidation(true);
     setId("metabox");
 
@@ -95,5 +69,36 @@ class MetaButton extends Button {
     setSuffixComponent(confirmed);
 
     crud.refreshGrid();
+  }
+
+  @NoCoverageReportToBeGenerated
+  class MetaTupleCrudListener implements CrudListener<MetaTuple> {
+
+    @Override
+    public Collection<MetaTuple> findAll() {
+      return backingBean.getMeta();
+    }
+
+    @Override
+    public MetaTuple add(MetaTuple user) {
+      // should not be directly pushed into the formbean, TODO learn about grids and
+      // binding
+      backingBean.getMeta().add(user);
+      MetaButton.this.update();
+      return user;
+    }
+
+    @Override
+    public MetaTuple update(MetaTuple user) {
+      return user;
+    }
+
+    @Override
+    public void delete(MetaTuple user) {
+      // should not be directly removed from the formbean, TODO learn about grids and
+      // binding
+      backingBean.getMeta().remove(user);
+      MetaButton.this.update();
+    }
   }
 }
