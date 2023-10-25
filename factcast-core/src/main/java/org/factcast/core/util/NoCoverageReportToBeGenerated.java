@@ -13,22 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.views;
+package org.factcast.core.util;
 
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
-import jakarta.annotation.security.PermitAll;
-import org.factcast.core.util.NoCoverageReportToBeGenerated;
-import org.factcast.server.ui.security.SecurityService;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-@Route("logout")
-@PageTitle("Logout")
-@PermitAll
-@NoCoverageReportToBeGenerated
-public class LogoutView extends VerticalLayout {
-
-  public LogoutView(SecurityService securityService) {
-    securityService.logout();
-  }
-}
+@Retention(RetentionPolicy.CLASS)
+@Target({ElementType.TYPE, ElementType.METHOD})
+public @interface NoCoverageReportToBeGenerated {}

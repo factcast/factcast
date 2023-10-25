@@ -30,6 +30,7 @@ import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.*;
+import org.factcast.core.util.NoCoverageReportToBeGenerated;
 import org.factcast.server.ui.full.FullQueryPage;
 import org.factcast.server.ui.id.IdQueryPage;
 import org.factcast.server.ui.plugins.JsonViewPluginService;
@@ -38,6 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 
 /** The main view is a top-level placeholder for other views. */
+@NoCoverageReportToBeGenerated
 public class MainLayout extends AppLayout {
 
   @Autowired JsonViewPluginService service;
