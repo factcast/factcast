@@ -143,7 +143,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       assertThat(p.txSeen()).hasSize(1);
     }
 
-    @ProjectionMetaData(serial = 1)
+    @ProjectionMetaData(revision = 1)
     @SpringTransactional(bulkSize = 3)
     class BulkSize3Projection extends AbstractTrackingUserProjection {
       public BulkSize3Projection(
@@ -153,7 +153,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
-    @ProjectionMetaData(serial = 1)
+    @ProjectionMetaData(revision = 1)
     @SpringTransactional(bulkSize = 5)
     class BulkSize5Projection extends AbstractTrackingUserProjection {
       public BulkSize5Projection(
@@ -163,7 +163,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
-    @ProjectionMetaData(serial = 1)
+    @ProjectionMetaData(revision = 1)
     @SpringTransactional(bulkSize = 20)
     class BulkSize20Projection extends AbstractTrackingUserProjection {
       public BulkSize20Projection(
@@ -173,7 +173,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
-    @ProjectionMetaData(serial = 1)
+    @ProjectionMetaData(revision = 1)
     @SpringTransactional(bulkSize = 10)
     class BulkSize10Projection extends AbstractTrackingUserProjection {
       public BulkSize10Projection(
@@ -183,7 +183,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
-    @ProjectionMetaData(serial = 1)
+    @ProjectionMetaData(revision = 1)
     @SpringTransactional(bulkSize = 3000000, timeoutInSeconds = 1) // will flush after 800ms
     class SpringTxProjectionTimeout extends AbstractTrackingUserProjection {
       public SpringTxProjectionTimeout(
@@ -200,7 +200,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
-    @ProjectionMetaData(serial = 1)
+    @ProjectionMetaData(revision = 1)
     @SpringTransactional(bulkSize = 5)
     class SpringTxProjectionSizeBlowAt7th extends AbstractTrackingUserProjection {
       private int count;
@@ -320,7 +320,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       assertThat(p.txSeen()).hasSize(1);
     }
 
-    @ProjectionMetaData(serial = 1)
+    @ProjectionMetaData(revision = 1)
     @SpringTransactional(bulkSize = 3)
     class BulkSize3Projection extends AbstractTrackingUserSubscribedProjection {
       public BulkSize3Projection(
@@ -330,7 +330,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
-    @ProjectionMetaData(serial = 1)
+    @ProjectionMetaData(revision = 1)
     @SpringTransactional(bulkSize = 5)
     class BulkSize5Projection extends AbstractTrackingUserSubscribedProjection {
       public BulkSize5Projection(
@@ -340,7 +340,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
-    @ProjectionMetaData(serial = 1)
+    @ProjectionMetaData(revision = 1)
     @SpringTransactional(bulkSize = 20)
     class BulkSize20Projection extends AbstractTrackingUserSubscribedProjection {
       public BulkSize20Projection(
@@ -350,7 +350,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
-    @ProjectionMetaData(serial = 1)
+    @ProjectionMetaData(revision = 1)
     @SpringTransactional(bulkSize = 10)
     class BulkSize10Projection extends AbstractTrackingUserSubscribedProjection {
       public BulkSize10Projection(
@@ -360,7 +360,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
-    @ProjectionMetaData(serial = 1)
+    @ProjectionMetaData(revision = 1)
     @SpringTransactional(bulkSize = 3000000, timeoutInSeconds = 1) // will flush after 800ms
     class SpringTxProjectionTimeout extends AbstractTrackingUserSubscribedProjection {
       public SpringTxProjectionTimeout(
@@ -377,7 +377,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
-    @ProjectionMetaData(serial = 1)
+    @ProjectionMetaData(revision = 1)
     @SpringTransactional(bulkSize = 5)
     class SpringTxProjectionSizeBlowAt7th extends AbstractTrackingUserSubscribedProjection {
       private int count;

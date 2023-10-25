@@ -241,7 +241,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  @ProjectionMetaData(serial = 1)
+  @ProjectionMetaData(revision = 1)
   @RedisBatched(bulkSize = 2)
   static class BatchRedissonManagedUserNamesSize2 extends TrackingBatchRedissonManagedUserNames {
     public BatchRedissonManagedUserNamesSize2(RedissonClient redisson) {
@@ -255,7 +255,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  @ProjectionMetaData(serial = 1)
+  @ProjectionMetaData(revision = 1)
   @RedisBatched(bulkSize = 3)
   static class BatchRedissonManagedUserNamesSize3 extends TrackingBatchRedissonManagedUserNames {
     public BatchRedissonManagedUserNamesSize3(RedissonClient redisson) {
@@ -263,7 +263,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  @ProjectionMetaData(serial = 1)
+  @ProjectionMetaData(revision = 1)
   @RedisBatched(bulkSize = 2)
   static class BatchRedissonSubscribedUserNamesSize2
       extends TrackingBatchRedissonSubscribedUserNames {
@@ -272,7 +272,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  @ProjectionMetaData(serial = 1)
+  @ProjectionMetaData(revision = 1)
   @RedisBatched(bulkSize = 3)
   static class BatchRedissonSubscribedUserNamesSize3
       extends TrackingBatchRedissonSubscribedUserNames {
@@ -281,7 +281,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  @ProjectionMetaData(serial = 1)
+  @ProjectionMetaData(revision = 1)
   @RedisBatched(bulkSize = 5)
   static class BatchRedissonManagedUserNamesSizeBlowAt7th
       extends TrackingBatchRedissonManagedUserNames {
@@ -300,7 +300,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  @ProjectionMetaData(serial = 1)
+  @ProjectionMetaData(revision = 1)
   @RedisBatched(bulkSize = 5)
   static class BatchRedissonSubscribedUserNamesSizeBlowAt7th
       extends TrackingBatchRedissonSubscribedUserNames {

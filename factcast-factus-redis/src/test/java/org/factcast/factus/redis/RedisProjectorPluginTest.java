@@ -82,21 +82,21 @@ class DoubleFeature extends AbstractRedisManagedProjection {
   }
 }
 
-@ProjectionMetaData(serial = 1)
+@ProjectionMetaData(revision = 1)
 class TX extends ARedisTransactionalManagedProjection {
   public TX(@NonNull RedissonClient redisson) {
     super(redisson);
   }
 }
 
-@ProjectionMetaData(serial = 1)
+@ProjectionMetaData(revision = 1)
 class BA extends ARedisBatchedManagedProjection {
   public BA(@NonNull RedissonClient redisson) {
     super(redisson);
   }
 }
 
-@ProjectionMetaData(serial = 1)
+@ProjectionMetaData(revision = 1)
 class None extends AbstractRedisManagedProjection {
   public None(@NonNull RedissonClient redisson) {
     super(redisson);

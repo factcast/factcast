@@ -611,7 +611,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
         });
   }
 
-  @ProjectionMetaData(serial = 1)
+  @ProjectionMetaData(revision = 1)
   static class SimpleAggregate extends Aggregate {
     static final String ns = "ns";
     static final String type = "foo";

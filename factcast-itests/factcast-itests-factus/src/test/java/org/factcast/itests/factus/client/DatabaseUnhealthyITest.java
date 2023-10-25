@@ -20,9 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import eu.rekawek.toxiproxy.model.ToxicDirection;
 import io.grpc.StatusRuntimeException;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.store.RetryableException;
@@ -75,7 +72,7 @@ class DatabaseUnhealthyITest extends AbstractFactCastIntegrationTest {
     proxy.reset();
   }
 
-  @ProjectionMetaData(serial = 1)
+  @ProjectionMetaData(revision = 1)
   static class UserProjection extends LocalManagedProjection {
 
     @Handler
