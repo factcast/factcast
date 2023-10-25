@@ -60,9 +60,9 @@ public class FactusAutoConfiguration {
       EventConverter eventConverter,
       SnapshotSerializerSupplier snapshotSerializerSupplier,
       FactusMetrics factusMetrics,
-      /** not used but part of the constructor to ensure the dependency graph can be inspected */
-      @SuppressWarnings("unused") Set<FactusDependency> dependencies,
-      ProjectorFactory projectorFactory) {
+      ProjectorFactory projectorFactory,
+      /** not used but part of parameters to ensure the dependency graph can be inspected */
+      @SuppressWarnings("unused") Set<FactusDependency> dependencies) {
     return new FactusImpl(
         fc,
         projectorFactory,
