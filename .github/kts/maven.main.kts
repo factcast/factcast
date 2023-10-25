@@ -1,10 +1,10 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("io.github.typesafegithub:github-workflows-kt:0.42.0")
+@file:DependsOn("io.github.typesafegithub:github-workflows-kt:1.3.1")
 
 
 import io.github.typesafegithub.workflows.actions.actions.CacheV3
-import io.github.typesafegithub.workflows.actions.actions.CheckoutV3
+import io.github.typesafegithub.workflows.actions.actions.CheckoutV4
 import io.github.typesafegithub.workflows.actions.actions.SetupJavaV3
 import io.github.typesafegithub.workflows.actions.codecov.CodecovActionV3
 import io.github.typesafegithub.workflows.domain.RunnerType
@@ -19,9 +19,7 @@ import java.nio.file.Paths
 public val workflowMaven: Workflow = workflow(
     name = "Maven all in one",
     on = listOf(
-        PullRequest(
-            branches = listOf("master"),
-        ),
+        PullRequest(),
         Push(
             branches = listOf("master"),
         ),
@@ -34,7 +32,7 @@ public val workflowMaven: Workflow = workflow(
     ) {
         uses(
             name = "Checkout",
-            action = CheckoutV3(fetchDepth = CheckoutV3.FetchDepth.Infinite)
+            action = CheckoutV4(fetchDepth = CheckoutV4.FetchDepth.Infinite)
         )
         uses(
             name = "Cache - Maven Repository",
@@ -61,10 +59,10 @@ public val workflowMaven: Workflow = workflow(
             ),
         )
         uses(
-            name = "JDK 11",
+            name = "JDK 17",
             action = SetupJavaV3(
                 distribution = SetupJavaV3.Distribution.Custom("corretto"),
-                javaVersion = "11",
+                javaVersion = "17",
             ),
         )
 
@@ -99,12 +97,13 @@ public val workflowMaven: Workflow = workflow(
         id = "postgres-compatibility",
         runsOn = RunnerType.UbuntuLatest,
         strategyMatrix = mapOf(
-            "postgresVersion" to listOf("11", "12", "13", "14", "15"),
+            // note that 11 is tested already in the regular build job
+            "postgresVersion" to listOf("12", "13", "14", "15"),
         ),
     ) {
         uses(
             name = "Checkout",
-            action = CheckoutV3(fetchDepth = CheckoutV3.FetchDepth.Infinite)
+            action = CheckoutV4(fetchDepth = CheckoutV4.FetchDepth.Infinite)
         )
         uses(
             name = "Cache - Maven Repository",
@@ -120,10 +119,10 @@ public val workflowMaven: Workflow = workflow(
         )
 
         uses(
-            name = "JDK 11",
+            name = "JDK 17",
             action = SetupJavaV3(
                 distribution = SetupJavaV3.Distribution.Custom("corretto"),
-                javaVersion = "11",
+                javaVersion = "17",
             ),
         )
 

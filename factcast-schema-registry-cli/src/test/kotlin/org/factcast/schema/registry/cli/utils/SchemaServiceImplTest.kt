@@ -28,7 +28,7 @@ class SchemaServiceImplTest : StringSpec() {
 
     val uut = SchemaServiceImpl(fs, jsonSchemaFactory)
 
-    override fun afterTest(testCase: TestCase, result: TestResult) {
+    override suspend fun afterTest(testCase: TestCase, result: TestResult) {
         clearAllMocks()
     }
 

@@ -7,9 +7,14 @@
   "js": {
     "enabled": false
   },
+  "baseBranches": [
+    "master"
+  ],
   "packageRules": [
     {
-      "matchManagers": ["npm"],
+      "matchManagers": [
+        "npm"
+      ],
       "enabled": false
     },
     {

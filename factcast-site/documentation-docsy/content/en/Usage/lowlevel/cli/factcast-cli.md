@@ -4,11 +4,11 @@ type="docs"
 weight = 100
 +++
 
-In order to help with quick testing or debugging, FactCast provides a **very** simple CLI that you can use to publish Facts or subscribe and print Facts recieved to stdout.
+In order to help with quick testing or debugging, FactCast provides a **very** simple CLI that you can use to publish Facts or subscribe and print Facts received to stdout.
 
 ## Usage
 
-Once module factcast-grpc-cli is buildt, it provides a selfcontained fc-cli.jar in its target folder. In order to use it, you can either run
+Once module factcast-grpc-cli is built, it provides a self-contained fc-cli.jar in its target folder. In order to use it, you can either run
 
 ```shell
 java -jar path_to/fc-cli.jar <OPTIONS> <COMMAND> <COMMAND OPTIONS>

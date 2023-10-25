@@ -1,8 +1,6 @@
 # Changelog
 
-## from verison 0.4.0 on, the changelog can be found [on
-
-## github](https://github.com/factcast/factcast/releases).
+## from version 0.4.0 on, the changelog can be found [on GitHub](https://github.com/factcast/factcast/releases).
 
 # Older changelogs:
 
@@ -615,7 +613,7 @@
 - \#834: codacy issues [\#835](https://github.com/factcast/factcast/pull/835) ([uweschaefer](https://github.com/uweschaefer))
 - \#832: add lz4 & snappy dependency to server [\#833](https://github.com/factcast/factcast/pull/833) ([uweschaefer](https://github.com/uweschaefer))
 - some minor cleanup [\#831](https://github.com/factcast/factcast/pull/831) ([uweschaefer](https://github.com/uweschaefer))
-- isssue828: fixed minor bug for version==0, updated tests to use fetching i… [\#829](https://github.com/factcast/factcast/pull/829) ([uweschaefer](https://github.com/uweschaefer))
+- issue828: fixed minor bug for version==0, updated tests to use fetching i… [\#829](https://github.com/factcast/factcast/pull/829) ([uweschaefer](https://github.com/uweschaefer))
 - build\(deps\): Bump json-schema-validator from 2.2.13 to 2.2.14 [\#826](https://github.com/factcast/factcast/pull/826) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
 - build\(deps\): Bump commons-io from 2.6 to 2.7 [\#825](https://github.com/factcast/factcast/pull/825) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
 - WIP: Issue804 fetchById / fetchByIdAndVersion [\#824](https://github.com/factcast/factcast/pull/824) ([uweschaefer](https://github.com/uweschaefer))
@@ -1461,7 +1459,7 @@
 - typo fix [\#24](https://github.com/factcast/factcast/issues/24)
 - unify schema for subscription-request between rest & grpc api [\#20](https://github.com/factcast/factcast/issues/20)
 - publish schema for subscriptionrequest [\#19](https://github.com/factcast/factcast/issues/19)
-- Add js based gRPC and REST consumer/producer usage exmaples [\#18](https://github.com/factcast/factcast/issues/18)
+- Add js based gRPC and REST consumer/producer usage examples [\#18](https://github.com/factcast/factcast/issues/18)
 - Publishing at high rates throws [\#17](https://github.com/factcast/factcast/issues/17)
 - Moving cursor without hit [\#16](https://github.com/factcast/factcast/issues/16)
 - Moving cursor without hit [\#15](https://github.com/factcast/factcast/issues/15)

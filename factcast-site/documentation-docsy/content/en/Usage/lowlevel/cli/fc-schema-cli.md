@@ -6,17 +6,17 @@ type="docs"
 +++
 
 This CLI provides a convenient way to create a suitable Schema Registry for your FactCast installation.
-It will give you the ability to validate events against examples and to make sure that there's always a upcast and if
+It will give you the ability to validate events against examples and to make sure that there's always an upcast and if
 necessary a downcast transformation.
 
-It produces a human and a machine readable output. You will have to use [hugo](https://gohugo.io/) in order to get a
+It produces a human and a machine-readable output. You will have to use [hugo](https://gohugo.io/) in order to get a
 proper static website.
 
 A working example can be found [here](/example-registry/).
 
 ## Build the example
 
-The example will be build during `mvn install`, but you can reach the same via
+The example will be built during `mvn install`, but you can reach the same via
 
 `$  java -jar target/fc-schema-cli.jar build -p ../factcast-examples/factcast-example-schema-registry/src/main/resources`
 

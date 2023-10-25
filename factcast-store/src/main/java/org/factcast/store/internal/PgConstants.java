@@ -35,6 +35,9 @@ public class PgConstants {
   public static final String TABLE_CATCHUP = "catchup";
 
   public static final String TABLE_FACT = "fact";
+
+  public static final String TABLE_DATE2SERIAL = "date2serial";
+
   public static final String TAIL_INDEX_NAME_PREFIX = "idx_fact_tail_";
 
   public static final String INDEX_NAME_COLUMN = "index_name";
@@ -73,9 +76,13 @@ public class PgConstants {
   public static final String CHANNEL_BLACKLIST_CHANGE = "blacklist_change";
   public static final String CHANNEL_SCHEMASTORE_CHANGE = "schemastore_change";
   public static final String CHANNEL_TRANSFORMATIONSTORE_CHANGE = "transformationstore_change";
+
+  @SuppressWarnings("java:S2245") // jesus christ, YES IT IS SAFE
+  public static final Random RANDOM = new Random();
+
+  @SuppressWarnings("java:S2676") // we just want a fricking random number without a - sign
   public static final String CHANNEL_ROUNDTRIP =
-      "roundtrip_channel_"
-          + Math.abs(new Random().nextLong()); // using the pid lead to a sql exception
+      "roundtrip_channel_" + Math.abs(RANDOM.nextLong()); // using the pid lead to a sql exception
 
   public static final String COLUMN_PAYLOAD = "payload";
 
@@ -144,6 +151,9 @@ public class PgConstants {
           + " WHERE "
           + COLUMN_HEADER
           + " @> cast (? as jsonb)";
+
+  public static final String SELECT_BY_SER =
+      "SELECT " + PROJECTION_FACT + " FROM " + TABLE_FACT + " WHERE " + COLUMN_SER + " = ?";
 
   public static final //
   String SELECT_FACT_FROM_CATCHUP = //
@@ -271,19 +281,26 @@ public class PgConstants {
   public static final String LAST_SERIAL_IN_LOG =
       "SELECT COALESCE(MAX(" + COLUMN_SER + "),0) from " + TABLE_FACT;
   public static final String HIGHWATER_MARK =
-      "select ("
+      "SELECT ("
           + COLUMN_HEADER
           + "->>'"
           + ALIAS_ID
-          + "')::uuid as targetId, ser as targetSer from "
+          + "')::uuid AS targetId, ser AS targetSer FROM "
           + TABLE_FACT
-          + " where "
+          + " WHERE "
           + COLUMN_SER
-          + "=(select max("
+          + "=(SELECT max("
           + COLUMN_SER
-          + ") from "
+          + ") FROM "
           + TABLE_FACT
           + ")";
+
+  public static final String HIGHWATER_SERIAL = "SELECT max(" + COLUMN_SER + ") FROM " + TABLE_FACT;
+
+  public static final String LAST_SERIAL_BEFORE_DATE =
+      "SELECT COALESCE(max(lastSer),0) AS lastSer FROM "
+          + TABLE_DATE2SERIAL
+          + " where factDate < ?";
 
   private static String fromHeader(String attributeName) {
     return PgConstants.COLUMN_HEADER + "->>'" + attributeName + "' AS " + attributeName;

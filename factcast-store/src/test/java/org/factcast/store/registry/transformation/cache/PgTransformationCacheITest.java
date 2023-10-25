@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import lombok.SneakyThrows;
 import org.factcast.core.Fact;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
@@ -43,6 +44,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 class PgTransformationCacheITest extends AbstractTransformationCacheTest {
   @Autowired private JdbcTemplate tpl;
   @Autowired private NamedParameterJdbcTemplate namedTpl;
+  @Autowired private StoreConfigurationProperties storeConfigurationProperties;
 
   private final int maxBufferSize = 10;
   private final CountDownLatch wasflushed = new CountDownLatch(1);
@@ -51,7 +53,9 @@ class PgTransformationCacheITest extends AbstractTransformationCacheTest {
   @Override
   protected TransformationCache createUUT() {
     this.underTest =
-        Mockito.spy(new PgTransformationCache(tpl, namedTpl, registryMetrics, maxBufferSize));
+        Mockito.spy(
+            new PgTransformationCache(
+                tpl, namedTpl, registryMetrics, storeConfigurationProperties, maxBufferSize));
     return underTest;
   }
 

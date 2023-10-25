@@ -21,9 +21,12 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import java.io.IOException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -97,7 +100,10 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
       log.info("Acquiring lock for registry update");
       LockConfiguration lockConfig =
           new LockConfiguration(
-              SchemaRegistry.LOCK_NAME, Duration.ofMinutes(1), Duration.ofSeconds(2));
+              Instant.now(),
+              SchemaRegistry.LOCK_NAME,
+              Duration.ofMinutes(1),
+              Duration.ofSeconds(2));
       Optional<SimpleLock> lock = lockProvider.lock(lockConfig);
       if (lock.isPresent()) {
         try {
@@ -242,5 +248,31 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
   @Override
   public void register(@NonNull TransformationStoreListener listener) {
     transformationStore.register(listener);
+  }
+
+  /**
+   * This method queries the schema store directly for all the SchemaKeys and doesn't use the
+   * schemaNearCache
+   *
+   * @return the set of all namespaces
+   */
+  @Override
+  public Set<String> enumerateNamespaces() {
+    return schemaStore.getAllSchemaKeys().stream().map(SchemaKey::ns).collect(Collectors.toSet());
+  }
+
+  /**
+   * This method queries the schema store directly for all the SchemaKeys and doesn't use the
+   * schemaNearCache
+   *
+   * @param ns to query types for
+   * @return the set of all types for the given Namespace
+   */
+  @Override
+  public Set<String> enumerateTypes(String ns) {
+    return schemaStore.getAllSchemaKeys().stream()
+        .filter(sk -> ns.equals(sk.ns()))
+        .map(SchemaKey::type)
+        .collect(Collectors.toSet());
   }
 }
