@@ -17,6 +17,7 @@ package org.factcast.store.registry;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.everit.json.schema.Schema;
 import org.factcast.store.registry.transformation.Transformation;
 import org.factcast.store.registry.transformation.TransformationKey;
@@ -38,4 +39,14 @@ public interface SchemaRegistry {
   void register(TransformationStoreListener listener);
 
   void invalidateNearCache(SchemaKey key);
+
+  Set<String> enumerateNamespaces();
+
+  Set<String> enumerateTypes(String n);
+
+  default boolean isActive() {
+    // only false for NOP, which is used when SR is not configured.
+    // shortcut to avoid using StoreConfigurationProperties.isSchemaRegistryConfigured()
+    return true;
+  }
 }

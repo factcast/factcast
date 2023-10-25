@@ -78,7 +78,7 @@
     <maven-failsafe-plugin.version>3.1.2</maven-failsafe-plugin.version>
     <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
     <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
-    <jacoco-maven-plugin.version>0.8.10</jacoco-maven-plugin.version>
+    <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
     <maven.version>3.9.5</maven.version>
     <!-- defaults to 11, client modules will be compiled with/to 8 -->
     <maven.compiler.source>17</maven.compiler.source>
@@ -88,22 +88,22 @@
     <directory-maven-plugin.version>1.0</directory-maven-plugin.version>
     <nexus-staging-maven-plugin.version>1.6.13</nexus-staging-maven-plugin.version>
     <assertj.version>3.24.2</assertj.version>
-    <jackson.version>2.14.2</jackson.version>
-    <mockito.version>5.5.0</mockito.version>
+    <jackson.version>2.15.3</jackson.version>
+    <mockito.version>5.6.0</mockito.version>
     <junit-jupiter.version>5.10.0</junit-jupiter.version>
     <lombok.version>1.18.30</lombok.version>
     <slf4j-api.version>2.0.9</slf4j-api.version>
     <!--suppress UnresolvedMavenProperty -->
     <etc>${session.executionRootDirectory}/src/etc</etc>
-    <spring-boot.version>3.1.4</spring-boot.version>
+    <spring-boot.version>3.1.5</spring-boot.version>
     <spring-cloud.version>2022.0.4</spring-cloud.version>
     <!-- whenever updating spring-grpc make sure to align grpc.version accordingly. -->
-    <spring-grpc.version>2.14.0.RELEASE</spring-grpc.version>
-    <grpc.version>1.51.0</grpc.version>
+    <spring-grpc.version>2.15.0.RELEASE</spring-grpc.version>
+    <grpc.version>1.59.0</grpc.version>
     <!-- lter versions seem to break toxi -->
     <testcontainers.version>1.19.1</testcontainers.version>
     <arrow.version>1.2.1</arrow.version>
-    <micronaut.version>4.1.2</micronaut.version>
+    <micronaut.version>4.1.5</micronaut.version>
     <kotlin.version>1.9.10</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <kotest.version>5.7.2</kotest.version>
@@ -111,10 +111,12 @@
     <redisson.version>3.23.5</redisson.version>
     <redisson-spring-boot-starter.version>3.23.5</redisson-spring-boot-starter.version>
     <graaljs.version>23.0.1</graaljs.version>
-    <shedlock.version>5.8.0</shedlock.version>
+    <shedlock.version>5.9.1</shedlock.version>
     <byte-buddy.version>1.14.9</byte-buddy.version>
     <skipUnitTests>false</skipUnitTests>
-    <postgres.version>15</postgres.version>
+    <!-- as long as we promise pg11 compatibility, it might make sense to also
+      test against it -->
+    <postgres.version>11</postgres.version>
   </properties>
   <dependencies>
     <dependency>
