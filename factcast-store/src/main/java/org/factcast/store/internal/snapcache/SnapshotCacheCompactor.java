@@ -26,9 +26,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 
 @RequiredArgsConstructor
 @Slf4j
-public class PgSnapshotCacheCompactor {
+// Even though it uses PgMetrics (which might be renamed to StoreMetrics in the future) it is not
+// specific to Pg or PgSnapshotCache
+public class SnapshotCacheCompactor {
 
-  @NonNull final PgSnapshotCache cache;
+  @NonNull final SnapshotCache cache;
 
   @NonNull final PgMetrics pgMetrics;
 
