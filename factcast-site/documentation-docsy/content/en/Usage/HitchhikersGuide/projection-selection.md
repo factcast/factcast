@@ -92,7 +92,7 @@ type concerning the identified requirements.
 
 - **Scalability**: by default, a Snapshot Projection stores its cached state in the FactCast server (aka the Event
   Store). This can create bottlenecks, or impact the performance of the Event Store, whenever the workload increases.
-  It can be optimized, depending on the use case, by hooking into the snapshot lifecycle, and changing the way it is
+  It can be optimized, depending on the use case, by hooking into the snapshot lifecycle and changing the way it is
   accessed, serialized, stored, and retained. Alternatively, the _factcast-snapshotcache-redisson_ module can be used,
   to easily store the snapshots in a Redis cluster (see Best Practices and Tips section below).
 
