@@ -7,7 +7,7 @@ type: docs
 {{% alert title="Preface" %}}
 
 This guide is targeting an audience that is already informed about the projection types offered by Factus, and about
-their basics.
+their concepts.
 
 We suggest to check out the "Projections" section of the [Factus API docs]({{< ref "/usage/factus/projections">}})
 before delving into this guide.
