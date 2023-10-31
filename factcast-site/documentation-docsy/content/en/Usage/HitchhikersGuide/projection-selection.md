@@ -269,8 +269,8 @@ That being said, here are some general Q&As to help you make an informed choice:
 
 **Q: Are you still modelling for a prototype?**
 
-A: If yes, then you can start with a Local Managed Projection, as it's the easiest and most intuitive projection to
-implement.
+A: If yes, then you can start with a Local, as it's the easiest and most intuitive projection to
+implement and quick to change an rebuild.
 
 **Q: Do you need to easily rebuild your projection?**
 
@@ -278,7 +278,7 @@ A: If yes, then consider using a Local Projection, as it allows to rebuild the i
 simply restarting the application. Consider anyway that this might have an impact on the overall application
 performance, as this will produce an overhead on each deployment.
 
-**Q: Do you need to ensure high availability for queries, even when the Event Store is unavailable?**
+**Q: Do you need to ensure high availability for queries of a usecase, even when the Event Store is unavailable?**
 
 A: If yes, then make sure to go for a projection that doesn't rely on the Event Store for persisting its state. Consider
 the trade-offs between local and externalized states:
@@ -288,7 +288,7 @@ the trade-offs between local and externalized states:
 - Externalized states are harder to implement and maintain, but they can be rebuilt incrementally, and are available
   across multiple instances
 
-**Q: Should your application ensure read-after-write consistency?**
+**Q: Does your query need to ensure read-after-write consistency?**
 
 A: If yes, then it's suggested to choose a projection that can be updated synchronously, like a SnapshotProjection, an
 Aggregate or a ManagedProjection. Depending on the amount of data to be read, and the persistence layer, this might have
