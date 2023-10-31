@@ -98,7 +98,7 @@ public val workflowMaven: Workflow = workflow(
         runsOn = RunnerType.UbuntuLatest,
         strategyMatrix = mapOf(
             // note that 11 is tested already in the regular build job
-	    // removed 12-14 for now to improve throughput regarding actions
+            // removed 12-14 for now to improve throughput regarding actions
             "postgresVersion" to listOf("15"),
         ),
     ) {
