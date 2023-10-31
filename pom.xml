@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.7.1-SNAPSHOT</version>
+  <version>0.7.2-SNAPSHOT</version>
   <packaging>pom</packaging>
   <organization>
     <name>factcast</name>
@@ -68,7 +68,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <maven-clean-plugin.version>3.3.1</maven-clean-plugin.version>
+    <maven-clean-plugin.version>3.3.2</maven-clean-plugin.version>
     <maven-javadoc-plugin.version>3.6.0</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.3.0</maven-source-plugin.version>
     <maven-gpg-plugin.version>3.1.0</maven-gpg-plugin.version>
