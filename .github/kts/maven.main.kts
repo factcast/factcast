@@ -1,6 +1,6 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("io.github.typesafegithub:github-workflows-kt:1.3.1")
+@file:DependsOn("io.github.typesafegithub:github-workflows-kt:1.4.0")
 
 
 import io.github.typesafegithub.workflows.actions.actions.CacheV3
@@ -98,7 +98,8 @@ public val workflowMaven: Workflow = workflow(
         runsOn = RunnerType.UbuntuLatest,
         strategyMatrix = mapOf(
             // note that 11 is tested already in the regular build job
-            "postgresVersion" to listOf("12", "13", "14", "15"),
+            // removed 12-14 for now to improve throughput regarding actions
+            "postgresVersion" to listOf("15"),
         ),
     ) {
         uses(

@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.7.1-SNAPSHOT</version>
+  <version>0.7.2-SNAPSHOT</version>
   <packaging>pom</packaging>
   <organization>
     <name>factcast</name>
@@ -70,14 +70,14 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <maven-clean-plugin.version>3.3.1</maven-clean-plugin.version>
+    <maven-clean-plugin.version>3.3.2</maven-clean-plugin.version>
     <maven-javadoc-plugin.version>3.6.0</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.3.0</maven-source-plugin.version>
     <maven-gpg-plugin.version>3.1.0</maven-gpg-plugin.version>
     <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
-    <maven-surefire-plugin.version>3.1.2</maven-surefire-plugin.version>
+    <maven-surefire-plugin.version>3.2.1</maven-surefire-plugin.version>
     <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
-    <maven-failsafe-plugin.version>3.1.2</maven-failsafe-plugin.version>
+    <maven-failsafe-plugin.version>3.2.1</maven-failsafe-plugin.version>
     <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
     <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
     <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
@@ -106,11 +106,11 @@
     <testcontainers.version>1.19.1</testcontainers.version>
     <arrow.version>1.2.1</arrow.version>
     <micronaut.version>4.1.5</micronaut.version>
-    <kotlin.version>1.9.10</kotlin.version>
+    <kotlin.version>1.9.20</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <kotest.version>5.7.2</kotest.version>
     <mockk.version>1.13.8</mockk.version>
-    <redisson.version>3.23.5</redisson.version>
+    <redisson.version>3.24.3</redisson.version>
     <redisson-spring-boot-starter.version>3.23.5</redisson-spring-boot-starter.version>
     <graaljs.version>23.0.1</graaljs.version>
     <shedlock.version>5.9.1</shedlock.version>
