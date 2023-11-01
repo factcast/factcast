@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.spring.boot.autoconfigure.core;
+package org.factcast.spring.boot.autoconfigure.redis;
 
 import lombok.Generated;
 import lombok.NonNull;
