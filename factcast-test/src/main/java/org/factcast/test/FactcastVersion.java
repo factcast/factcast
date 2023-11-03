@@ -20,6 +20,6 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class FactcastVersion {
   public String get() {
-    return System.getProperty("factcast.version", FactcastTestConfig.Config.AUTOMATIC);
+    return System.getProperty("factcast.version", "");
   }
 }

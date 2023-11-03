@@ -26,7 +26,7 @@ import org.factcast.core.util.MavenHelper;
 @Target(ElementType.TYPE)
 @Inherited
 public @interface FactcastTestConfig {
-  String factcastVersion() default Config.AUTOMATIC;
+  String factcastVersion() default "";
 
   String postgresVersion() default "";
 
@@ -42,7 +42,6 @@ public @interface FactcastTestConfig {
     String configDir;
     boolean securityEnabled;
 
-    static final String AUTOMATIC = "auto";
     static final String CONFIG_DIR = "./config";
 
     static Config defaults() {
@@ -54,12 +53,11 @@ public @interface FactcastTestConfig {
     }
 
     static Config from(@NonNull FactcastTestConfig e) {
-      final Config config =
-          defaults()
-              .withConfigDir(e.configDir())
-              // note the call is needed for resolving!
-              .withFactcastVersion(e.factcastVersion());
+      final Config config = defaults().withConfigDir(e.configDir());
 
+      if (!e.factcastVersion().isEmpty()) {
+        return config.withFactcastVersion(e.factcastVersion());
+      }
       if (!e.postgresVersion().isEmpty()) {
         return config.withPostgresVersion(e.postgresVersion());
       }
@@ -68,7 +66,7 @@ public @interface FactcastTestConfig {
     }
 
     private static String resolve(@NonNull String versionAsAnnotated) {
-      if (AUTOMATIC.equals(versionAsAnnotated)) {
+      if (versionAsAnnotated.isEmpty()) {
         if (runFromJar()) return jarVersion();
         else return "latest";
       } else return versionAsAnnotated;
