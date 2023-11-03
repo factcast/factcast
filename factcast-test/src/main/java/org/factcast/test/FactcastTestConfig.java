@@ -16,15 +16,17 @@
 package org.factcast.test;
 
 import java.lang.annotation.*;
+import java.util.*;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.With;
+import org.factcast.core.util.MavenHelper;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Inherited
 public @interface FactcastTestConfig {
-  String factcastVersion() default Config.FACTCAST_VERSION;
+  String factcastVersion() default Config.AUTOMATIC;
 
   String postgresVersion() default "";
 
@@ -40,22 +42,49 @@ public @interface FactcastTestConfig {
     String configDir;
     boolean securityEnabled;
 
-    static final String FACTCAST_VERSION = "latest";
+    static final String AUTOMATIC = "auto";
     static final String CONFIG_DIR = "./config";
 
     static Config defaults() {
-      return new Config(FACTCAST_VERSION, PostgresVersion.get(), CONFIG_DIR, false);
+      return new Config(AUTOMATIC, PostgresVersion.get(), CONFIG_DIR, false);
+    }
+
+    public String factcastVersion() {
+      return resolve(factcastVersion);
     }
 
     static Config from(@NonNull FactcastTestConfig e) {
       final Config config =
-          defaults().withConfigDir(e.configDir()).withFactcastVersion(e.factcastVersion());
+          defaults()
+              .withConfigDir(e.configDir())
+              // note the call is needed for resolving!
+              .withFactcastVersion(e.factcastVersion());
 
       if (!e.postgresVersion().isEmpty()) {
         return config.withPostgresVersion(e.postgresVersion());
       }
 
       return config;
+    }
+
+    private static String resolve(@NonNull String versionAsAnnotated) {
+      if (AUTOMATIC.equals(versionAsAnnotated)) {
+        if (runFromJar()) return jarVersion();
+        else return "latest";
+      } else return versionAsAnnotated;
+    }
+
+    private static String jarVersion() {
+      return MavenHelper.getVersion("factcast-test", FactcastTestConfig.class)
+          .orElseThrow(() -> new IllegalStateException("Cannot retrieve current version."));
+    }
+
+    private static boolean runFromJar() {
+      return Objects.requireNonNull(
+              FactcastTestConfig.class.getResource(
+                  "/" + FactcastTestConfig.class.getName().replace(".", "/") + ".class"))
+          .toString()
+          .startsWith("jar:");
     }
   }
 }
