@@ -46,7 +46,7 @@ public @interface FactcastTestConfig {
     static final String CONFIG_DIR = "./config";
 
     static Config defaults() {
-      return new Config(AUTOMATIC, PostgresVersion.get(), CONFIG_DIR, false);
+      return new Config(FactcastVersion.get(), PostgresVersion.get(), CONFIG_DIR, false);
     }
 
     public String factcastVersion() {
