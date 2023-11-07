@@ -91,16 +91,19 @@ class PGTailIndexManagerImplTest {
       when(props.isTailIndexingEnabled()).thenReturn(true);
       when(props.getMinimumTailAge()).thenReturn(Duration.ofDays(1));
       when(props.getTailGenerationsToKeep()).thenReturn(3);
+      final String t1 = PgConstants.TAIL_INDEX_NAME_PREFIX + (System.currentTimeMillis() - 43200000); // 12 hours
+      final String t2 = PgConstants.TAIL_INDEX_NAME_PREFIX + (System.currentTimeMillis() - 172800000); // 2 days
+      final String t3 = PgConstants.TAIL_INDEX_NAME_PREFIX + (System.currentTimeMillis() - 259200000); // 3 days
       when(jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION))
           .thenReturn(
               Lists.newArrayList(
-                  map(
-                      INDEX_NAME_COLUMN,
-                      PgConstants.TAIL_INDEX_NAME_PREFIX + (System.currentTimeMillis() - 10000),
-                      VALID_COLUMN,
-                      IS_VALID)));
+                  map(INDEX_NAME_COLUMN, t1, VALID_COLUMN, IS_VALID),
+                  map(INDEX_NAME_COLUMN, t2, VALID_COLUMN, IS_VALID),
+                  map(INDEX_NAME_COLUMN, t3, VALID_COLUMN, IS_VALID)));
 
       uut.triggerTailCreation();
+
+      verify(uut, never()).createNewTail();
     }
 
     @Test
