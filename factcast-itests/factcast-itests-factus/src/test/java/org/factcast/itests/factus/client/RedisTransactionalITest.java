@@ -16,7 +16,9 @@
 package org.factcast.itests.factus.client;
 
 import static java.util.UUID.*;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.util.*;
 import lombok.Getter;
@@ -25,6 +27,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Factus;
 import org.factcast.factus.event.EventObject;
+import org.factcast.factus.redis.tx.EnableRedisTransactionCallbacks;
 import org.factcast.factus.redis.tx.RedisTransactional;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.TestFactusApplication;
@@ -134,6 +137,8 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
 
       assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
       assertThat(p.stateModifications()).isEqualTo(4); // expected at 3,6,9,10
+      awaitCommits(p, 4);
+      awaitRollbacks(p, 0);
     }
 
     @SneakyThrows
@@ -144,6 +149,8 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
 
       assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
       assertThat(p.stateModifications()).isEqualTo(5); // expected at 2,4,6,8,10
+      awaitCommits(p, 5);
+      awaitRollbacks(p, 0);
     }
 
     @SneakyThrows
@@ -155,6 +162,8 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
 
       assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
       assertThat(p.stateModifications()).isEqualTo(2); // one for timeout, one for final flush
+      awaitCommits(p, 2);
+      awaitRollbacks(p, 0);
     }
 
     @SneakyThrows
@@ -174,6 +183,20 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
       // only first bulk (size = 5) should be executed
       assertThat(p.userNames().size()).isEqualTo(5);
       assertThat(p.stateModifications()).isEqualTo(1);
+      awaitCommits(p, 1);
+      awaitRollbacks(p, 1);
+    }
+
+    private void awaitCommits(TrackingTxRedissonSubscribedUserNames p, int count) {
+      await("Awaiting " + count + " commit(s)")
+          .atMost(5, SECONDS)
+          .until(p::commits, c -> c == count);
+    }
+
+    private void awaitRollbacks(TrackingTxRedissonSubscribedUserNames p, int count) {
+      await("Awaiting " + count + " rollback(s)")
+          .atMost(5, SECONDS)
+          .until(p::rollbacks, r -> r == count);
     }
   }
 
@@ -191,17 +214,30 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
+  @EnableRedisTransactionCallbacks
   static class TrackingTxRedissonSubscribedUserNames extends TxRedissonSubscribedUserNames {
+    @Getter int stateModifications = 0;
+    @Getter int commits = 0;
+    @Getter int rollbacks = 0;
+
     public TrackingTxRedissonSubscribedUserNames(RedissonClient redisson) {
       super(redisson);
     }
-
-    @Getter int stateModifications = 0;
 
     @Override
     public void factStreamPosition(@NonNull UUID factStreamPosition) {
       stateModifications++;
       super.factStreamPosition(factStreamPosition);
+    }
+
+    @Override
+    public void onCommit() {
+      commits++;
+    }
+
+    @Override
+    public void onRollback() {
+      rollbacks++;
     }
   }
 
