@@ -86,7 +86,7 @@ class PGTailIndexManagerImplTest {
     }
 
     @Test
-    void createsNoTailIfYoungestIndexIsRecent() {
+    void createsNoTailIfYoungestIndexIsRecent_issue2571() {
       var uut = spy(underTest);
       when(props.isTailIndexingEnabled()).thenReturn(true);
       when(props.getMinimumTailAge()).thenReturn(Duration.ofDays(1));
@@ -194,7 +194,6 @@ class PGTailIndexManagerImplTest {
 
   @Nested
   class WhenTimingToCreateANewTail {
-    private final String STRING = "STRING";
 
     @BeforeEach
     void setup() {}

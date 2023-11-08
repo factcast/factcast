@@ -20,7 +20,6 @@ import static org.factcast.store.internal.PgConstants.*;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -134,9 +133,9 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
   }
 
   private void removeOldestValidIndices(List<String> validIndexes) {
-    Collections.reverse(validIndexes);
     while (validIndexes.size() > props.getTailGenerationsToKeep()) {
-      removeIndex(validIndexes.remove(0));
+      // Oldest is last in list as order is descending by name.
+      removeIndex(validIndexes.remove(validIndexes.size() - 1));
     }
   }
 
