@@ -21,6 +21,7 @@ import static org.mockito.Mockito.*;
 
 import java.time.Duration;
 import java.util.*;
+import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Lists;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
@@ -86,21 +87,27 @@ class PGTailIndexManagerImplTest {
     }
 
     @Test
-    void createsNoTailIfYoungestIndexIsRecent() {
+    void createsNoTailIfYoungestIndexIsRecent_issue2571() {
       var uut = spy(underTest);
       when(props.isTailIndexingEnabled()).thenReturn(true);
       when(props.getMinimumTailAge()).thenReturn(Duration.ofDays(1));
       when(props.getTailGenerationsToKeep()).thenReturn(3);
+      final String t1 =
+          PgConstants.TAIL_INDEX_NAME_PREFIX + (System.currentTimeMillis() - 43200000); // 12 hours
+      final String t2 =
+          PgConstants.TAIL_INDEX_NAME_PREFIX + (System.currentTimeMillis() - 172800000); // 2 days
+      final String t3 =
+          PgConstants.TAIL_INDEX_NAME_PREFIX + (System.currentTimeMillis() - 259200000); // 3 days
       when(jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION))
           .thenReturn(
               Lists.newArrayList(
-                  map(
-                      INDEX_NAME_COLUMN,
-                      PgConstants.TAIL_INDEX_NAME_PREFIX + (System.currentTimeMillis() - 10000),
-                      VALID_COLUMN,
-                      IS_VALID)));
+                  map(INDEX_NAME_COLUMN, t1, VALID_COLUMN, IS_VALID),
+                  map(INDEX_NAME_COLUMN, t2, VALID_COLUMN, IS_VALID),
+                  map(INDEX_NAME_COLUMN, t3, VALID_COLUMN, IS_VALID)));
 
       uut.triggerTailCreation();
+
+      verify(uut, never()).createNewTail();
     }
 
     @Test
@@ -190,8 +197,28 @@ class PGTailIndexManagerImplTest {
   }
 
   @Nested
+  class WhenRemovingOldestIndex {
+    private final String INDEX_NAME = "INDEX_NAME";
+
+    @BeforeEach
+    void setup() {
+
+      when(props.getTailGenerationsToKeep()).thenReturn(3);
+    }
+
+    @Test
+    void removeOldestValidIndicies() {
+      var uut = spy(underTest);
+
+      List<String> input = new ArrayList<String>(List.of("5", "4", "3", "2", "1"));
+      uut.removeOldestValidIndices(input);
+
+      Assertions.assertThat(input).hasSize(3).containsExactly("5", "4", "3");
+    }
+  }
+
+  @Nested
   class WhenTimingToCreateANewTail {
-    private final String STRING = "STRING";
 
     @BeforeEach
     void setup() {}
