@@ -21,6 +21,7 @@ import static org.mockito.Mockito.*;
 
 import java.time.Duration;
 import java.util.*;
+import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Lists;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
@@ -192,6 +193,27 @@ class PGTailIndexManagerImplTest {
       uut.removeIndex(INDEX_NAME);
 
       verify(jdbc).update("DROP INDEX CONCURRENTLY IF EXISTS INDEX_NAME");
+    }
+  }
+
+  @Nested
+  class WhenRemovingOldestIndex {
+    private final String INDEX_NAME = "INDEX_NAME";
+
+    @BeforeEach
+    void setup() {
+
+      when(props.getTailGenerationsToKeep()).thenReturn(3);
+    }
+
+    @Test
+    void removeOldestValidIndicies() {
+      var uut = spy(underTest);
+
+      List<String> input = new ArrayList<String>(List.of("5", "4", "3", "2", "1"));
+      uut.removeOldestValidIndices(input);
+
+      Assertions.assertThat(input).hasSize(3).containsExactly("5", "4", "3");
     }
   }
 
