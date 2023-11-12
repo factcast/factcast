@@ -6,6 +6,6 @@ menu:
 type: docs
 ---
 
-## Factcast-Server UI
+## FactCast-Server UI
 
-What it is, what it is not
+The FactCast-Server UI is a easy to use

@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.7.1-SNAPSHOT</version>
+    <version>0.7.2-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <properties>
@@ -126,7 +126,7 @@
     <dependency>
       <groupId>io.micronaut.picocli</groupId>
       <artifactId>micronaut-picocli</artifactId>
-      <version>5.0.1</version>
+      <version>5.1.0</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.module</groupId>
@@ -163,7 +163,7 @@
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-      <version>2.14.0</version>
+      <version>2.15.0</version>
     </dependency>
     <dependency>
       <groupId>commons-codec</groupId>
@@ -368,7 +368,7 @@
                 <annotationProcessorPath>
                   <groupId>io.micronaut</groupId>
                   <artifactId>micronaut-inject-java</artifactId>
-                  <version>4.1.10</version>
+                  <version>4.1.11</version>
                 </annotationProcessorPath>
                 <annotationProcessorPath>
                   <groupId>io.micronaut.validation</groupId>
@@ -407,7 +407,7 @@
                 <annotationProcessorPath>
                   <groupId>io.micronaut</groupId>
                   <artifactId>micronaut-inject-java</artifactId>
-                  <version>4.1.10</version>
+                  <version>4.1.11</version>
                 </annotationProcessorPath>
                 <annotationProcessorPath>
                   <groupId>io.micronaut.validation</groupId>

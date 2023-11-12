@@ -31,7 +31,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Slf4j
@@ -77,7 +77,7 @@ public class CommonSecurityConfiguration {
   @Bean
   @ConditionalOnMissingBean
   public PasswordEncoder passwordEncoder() {
-    return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    return NoOpPasswordEncoder.getInstance();
   }
 
   // security on
