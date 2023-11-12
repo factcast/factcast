@@ -1,8 +1,8 @@
 ---
 title: "Usage"
 type: docs
-weight: 10
+weight: 20
 description: Usage of the FactCast-Server-UI
 ---
 
-Nice pictures, please
+![FactCast-Server UI](./ui.png)

@@ -16,6 +16,7 @@
 package org.factcast.spring.boot.autoconfigure.factus;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import java.util.*;
 import lombok.Generated;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.FactCast;
@@ -33,6 +34,7 @@ import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepositoryImpl;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepositoryImpl;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
+import org.factcast.factus.utils.FactusDependency;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -58,7 +60,9 @@ public class FactusAutoConfiguration {
       EventConverter eventConverter,
       SnapshotSerializerSupplier snapshotSerializerSupplier,
       FactusMetrics factusMetrics,
-      ProjectorFactory projectorFactory) {
+      ProjectorFactory projectorFactory,
+      /** not used but part of parameters to ensure the dependency graph can be inspected */
+      @SuppressWarnings("unused") Set<FactusDependency> dependencies) {
     return new FactusImpl(
         fc,
         projectorFactory,
