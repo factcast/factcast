@@ -18,7 +18,7 @@ package org.factcast.server.ui.example;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
-import org.factcast.server.security.CommonSecurityConfig;
+import org.factcast.server.security.CommonSecurityConfiguration;
 import org.factcast.server.ui.config.SecurityConfiguration;
 import org.factcast.server.ui.config.UIConfiguration;
 import org.factcast.server.ui.plugins.JsonEntryMetaData;
@@ -40,7 +40,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
   UIConfiguration.class,
   SecurityConfiguration.class,
   PgFactStoreConfiguration.class,
-  CommonSecurityConfig.class
+  CommonSecurityConfiguration.class
 })
 public class ExampleUiServer {
   @Bean

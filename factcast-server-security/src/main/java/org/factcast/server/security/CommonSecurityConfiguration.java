@@ -37,7 +37,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Slf4j
 @EnableConfigurationProperties
 @Configuration
-public class CommonSecurityConfig {
+public class CommonSecurityConfiguration {
   private static final String FACTCAST_ACCESS_JSON = "/factcast-access.json";
 
   @Bean
