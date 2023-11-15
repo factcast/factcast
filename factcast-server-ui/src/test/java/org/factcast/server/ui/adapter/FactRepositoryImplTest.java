@@ -219,7 +219,7 @@ public class FactRepositoryImplTest {
     }
 
     @Test
-    public void testFilters() {
+    void testFilters() {
       when(securityService.filterReadable(nameSpaces))
           .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
       ArgumentCaptor<SubscriptionRequestTO> srCaptor =
@@ -236,7 +236,7 @@ public class FactRepositoryImplTest {
     }
 
     @Test
-    public void usesLimitAndOffset() {
+    void usesLimitAndOffset() {
       int limit = 53;
       int offset = 110;
 
@@ -258,7 +258,7 @@ public class FactRepositoryImplTest {
     }
 
     @Test
-    public void usesFrom() {
+    void usesFrom() {
       UUID id = UUID.randomUUID();
       Fact factWithId = Fact.builder().id(id).buildWithoutPayload();
       int limit = 1;
@@ -333,7 +333,9 @@ public class FactRepositoryImplTest {
     @Mock private FullQueryBean bean;
 
     @Test
-    void filtersViaSecurityService() {}
+    void filtersViaSecurityService() {
+      // TODO
+    }
   }
 
   @Nested

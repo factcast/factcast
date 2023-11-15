@@ -81,8 +81,6 @@ class MetaButton extends Button {
 
     @Override
     public MetaTuple add(MetaTuple user) {
-      // should not be directly pushed into the formbean, TODO learn about grids and
-      // binding
       backingBean.getMeta().add(user);
       MetaButton.this.update();
       return user;
@@ -95,8 +93,6 @@ class MetaButton extends Button {
 
     @Override
     public void delete(MetaTuple user) {
-      // should not be directly removed from the formbean, TODO learn about grids and
-      // binding
       backingBean.getMeta().remove(user);
       MetaButton.this.update();
     }

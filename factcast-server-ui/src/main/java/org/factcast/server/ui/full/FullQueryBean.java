@@ -27,6 +27,7 @@ import lombok.experimental.Accessors;
 import org.factcast.core.spec.FactSpec;
 
 @Data
+@SuppressWarnings("java:S1948")
 @Accessors(fluent = false, chain = false)
 public class FullQueryBean implements Serializable {
   public static final int DEFAULT_LIMIT = 50;
@@ -40,7 +41,7 @@ public class FullQueryBean implements Serializable {
   private Set<String> type = null;
   // currently not possible to filter on more than one aggId via api
   private UUID aggId = null;
-  private List<MetaTuple> meta = new LinkedList<>();
+  private LinkedList<MetaTuple> meta = new LinkedList<>();
   private BigDecimal from = null;
 
   FullQueryBean(long startingSerial) {
@@ -80,10 +81,12 @@ public class FullQueryBean implements Serializable {
     }
   }
 
+  @SuppressWarnings("java:S2637") // settings ns to null is intended
   public void reset() {
     since = LocalDate.now();
     limit = null;
     offset = null;
+
     ns = null;
     type = null;
     aggId = null;

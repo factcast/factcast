@@ -59,7 +59,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 @RouteAlias(value = "", layout = MainLayout.class)
 @PageTitle("Query")
 @PermitAll
-@SuppressWarnings("java:S110")
+@SuppressWarnings({"java:S110", "java:S1948"})
 @Slf4j
 @NoCoverageReportToBeGenerated
 public class FullQueryPage extends VerticalLayout implements HasUrlParameter<String> {

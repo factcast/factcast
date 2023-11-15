@@ -40,6 +40,7 @@ import org.factcast.server.ui.views.MainLayout;
 @Route(value = "ui/id", layout = MainLayout.class)
 @PageTitle("Query by Fact-ID")
 @PermitAll
+@SuppressWarnings("java:S1948")
 @NoCoverageReportToBeGenerated
 public class IdQueryPage extends VerticalLayout implements HasUrlParameter<String> {
   private final IdQueryBean formBean = new IdQueryBean();

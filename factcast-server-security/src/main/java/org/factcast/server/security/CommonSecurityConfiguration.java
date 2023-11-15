@@ -76,12 +76,16 @@ public class CommonSecurityConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
+  @SuppressWarnings({
+    "java:S4790",
+    "java:S1874",
+    "deprecation"
+  }) // anything else creates an unacceptable performance problem
   public PasswordEncoder passwordEncoder() {
     return NoOpPasswordEncoder.getInstance();
   }
 
   // security on
-
   @Bean
   @ConditionalOnBean(FactCastAccessConfiguration.class)
   @ConditionalOnMissingBean(UserDetailsService.class)

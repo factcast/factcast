@@ -16,6 +16,7 @@
 package org.factcast.server.security.auth;
 
 import com.google.common.annotations.VisibleForTesting;
+import jakarta.annotation.Nullable;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.LinkedList;
@@ -36,6 +37,7 @@ public class AccessRules implements Serializable {
   @Getter(value = AccessLevel.PROTECTED)
   private List<String> exclude = new LinkedList<>();
 
+  @Nullable
   Boolean includes(@NonNull String ns) {
     boolean excluded = exclude.stream().anyMatch(s -> matches(s, ns));
     if (excluded) return false;
