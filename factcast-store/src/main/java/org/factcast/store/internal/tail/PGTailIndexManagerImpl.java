@@ -20,10 +20,8 @@ import static org.factcast.store.internal.PgConstants.*;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,14 +52,15 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
 
     log.debug("Triggering tail index maintenance");
 
-    var indexesWithValidityFlag = jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION);
-    var validIndexes = getValidIndices(indexesWithValidityFlag);
+    var indexesOrderedByTimeWithValidityFlag = jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION);
+    var validIndexes = getValidIndices(indexesOrderedByTimeWithValidityFlag);
     // delete first
     removeOldestValidIndices(validIndexes);
-    removeNonRecentInvalidIndices(indexesWithValidityFlag);
+    removeNonRecentInvalidIndices(indexesOrderedByTimeWithValidityFlag);
 
     // THEN create
-    if (timeToCreateANewTail(validIndexes) && !indexCreationInProgress(indexesWithValidityFlag)) {
+    if (timeToCreateANewTail(validIndexes)
+        && !indexCreationInProgress(indexesOrderedByTimeWithValidityFlag)) {
       createNewTail();
     }
 
@@ -73,7 +72,7 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
     return indexesWithValidityFlag.stream()
         .filter(r -> r.get(VALID_COLUMN).equals(IS_VALID))
         .map(r -> r.get(INDEX_NAME_COLUMN).toString())
-        .collect(Collectors.toList());
+        .collect(java.util.stream.Collectors.toList());
   }
 
   @VisibleForTesting
@@ -135,10 +134,11 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
     }
   }
 
-  private void removeOldestValidIndices(List<String> validIndexes) {
-    Collections.reverse(validIndexes);
-    while (validIndexes.size() > props.getTailGenerationsToKeep()) {
-      removeIndex(validIndexes.remove(0));
+  @VisibleForTesting
+  protected void removeOldestValidIndices(List<String> validIndexesOrdered) {
+    while (validIndexesOrdered.size() > props.getTailGenerationsToKeep()) {
+      // Oldest is last in list as order is descending by name.
+      removeIndex(validIndexesOrdered.remove(validIndexesOrdered.size() - 1));
     }
   }
 

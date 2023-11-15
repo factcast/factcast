@@ -6,12 +6,11 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast-examples</artifactId>
-    <version>0.7.2-SNAPSHOT</version>
+    <version>0.7.3-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-example-server</artifactId>
   <properties>
-
     <!-- Pin your own Spring Boot version. -->
     <spring-boot.version>3.1.5</spring-boot.version>
     <docker.image.prefix>factcast</docker.image.prefix>
@@ -35,7 +34,6 @@
     </dependencies>
   </dependencyManagement>
   <dependencies>
-
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter</artifactId>
@@ -48,11 +46,6 @@
       <groupId>org.factcast</groupId>
       <artifactId>factcast-server-grpc</artifactId>
     </dependency>
-    <!-- this is optional -->
-    <dependency>
-      <groupId>org.factcast</groupId>
-      <artifactId>factcast-server-ui</artifactId>
-    </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-store</artifactId>
@@ -63,6 +56,7 @@
       <artifactId>postgresql</artifactId>
       <version>${testcontainers.version}</version>
     </dependency>
+    <!-- /you want to remove this -->
   </dependencies>
   <build>
     <finalName>factcast</finalName>
