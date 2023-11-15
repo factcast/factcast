@@ -23,3 +23,9 @@ release.properties
 package-lock.json
 package.json
 vite.generated.ts
+
+frontend/*
+node_modules/*
+tsconfig.json
+types.d.ts
+vite.config.ts
