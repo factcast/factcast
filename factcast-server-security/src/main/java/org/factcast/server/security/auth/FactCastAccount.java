@@ -17,7 +17,6 @@ package org.factcast.server.security.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
-import java.io.Serial;
 import java.io.Serializable;
 import java.util.*;
 import lombok.*;
@@ -26,7 +25,7 @@ import lombok.*;
 @AllArgsConstructor
 @Data
 public class FactCastAccount implements Serializable {
-  @Serial private static final long serialVersionUID = 42;
+  private static final long serialVersionUID = 42;
 
   public static final FactCastAccount GOD =
       new FactCastAccount("GODMODE") {

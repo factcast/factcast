@@ -40,6 +40,8 @@
     <module>factcast-factus-redis</module>
     <module>factcast-factus-spring-tx</module>
     <module>factcast-server-grpc</module>
+    <module>factcast-server-security</module>
+    <module>factcast-server-ui</module>
     <module>factcast-grpc-api</module>
     <module>factcast-schema-registry-cli</module>
     <module>factcast-schema-registry-maven-plugin</module>
@@ -228,7 +230,7 @@
                   <version>3.8.1</version>
                 </requireMavenVersion>
                 <requireJavaVersion>
-                  <version>11</version>
+                  <version>17</version>
                 </requireJavaVersion>
               </rules>
             </configuration>
@@ -275,8 +277,6 @@
         <version>${maven.compiler.version}</version>
         <configuration>
           <useIncrementalCompilation>true</useIncrementalCompilation>
-          <source>11</source>
-          <target>11</target>
         </configuration>
       </plugin>
       <plugin>
@@ -502,7 +502,11 @@
               <includes>
                 <include>factcast-site/documentation-docsy/content/**/*.md</include>
                 <include>/*.md</include>
+                <include>factcast-server-ui/frontend/**/*</include>
               </includes>
+              <excludes>
+                <exclude>factcast-server-ui/frontend/generated/**/*</exclude>
+              </excludes>
               <prettier>
                 <config>
                   <useTabs>true</useTabs>
