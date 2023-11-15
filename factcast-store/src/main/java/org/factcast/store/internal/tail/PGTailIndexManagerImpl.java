@@ -20,8 +20,8 @@ import static org.factcast.store.internal.PgConstants.*;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -69,10 +69,11 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
 
   @NonNull
   private List<String> getValidIndices(List<Map<String, Object>> indexesWithValidityFlag) {
-    return indexesWithValidityFlag.stream()
-        .filter(r -> r.get(VALID_COLUMN).equals(IS_VALID))
-        .map(r -> r.get(INDEX_NAME_COLUMN).toString())
-        .collect(java.util.stream.Collectors.toList());
+    return new ArrayList<>(
+        indexesWithValidityFlag.stream()
+            .filter(r -> r.get(VALID_COLUMN).equals(IS_VALID))
+            .map(r -> r.get(INDEX_NAME_COLUMN).toString())
+            .toList());
   }
 
   @VisibleForTesting

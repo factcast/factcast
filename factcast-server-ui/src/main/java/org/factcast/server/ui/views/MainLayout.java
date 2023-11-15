@@ -40,6 +40,7 @@ import org.vaadin.lineawesome.LineAwesomeIcon;
 
 /** The main view is a top-level placeholder for other views. */
 @NoCoverageReportToBeGenerated
+@SuppressWarnings({"java:S1948", "java:S6813"}) // vaadin prescribed
 public class MainLayout extends AppLayout {
 
   @Autowired JsonViewPluginService service;
