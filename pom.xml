@@ -423,6 +423,7 @@
           <argLine>${failsafe.jacoco.args}</argLine>
           <systemPropertyVariables>
             <postgres.version>${postgres.version}</postgres.version>
+            <factcast.version>${factcast.version}</factcast.version>
           </systemPropertyVariables>
         </configuration>
         <executions>
