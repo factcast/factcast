@@ -56,10 +56,10 @@ public @interface FactcastTestConfig {
       final Config config = defaults().withConfigDir(e.configDir());
 
       if (!e.factcastVersion().isEmpty()) {
-        return config.withFactcastVersion(e.factcastVersion());
+        config = config.withFactcastVersion(e.factcastVersion());
       }
       if (!e.postgresVersion().isEmpty()) {
-        return config.withPostgresVersion(e.postgresVersion());
+        config = config.withPostgresVersion(e.postgresVersion());
       }
 
       return config;
