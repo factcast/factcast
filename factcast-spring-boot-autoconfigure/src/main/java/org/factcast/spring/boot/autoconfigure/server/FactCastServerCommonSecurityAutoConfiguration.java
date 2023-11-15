@@ -16,7 +16,7 @@
 package org.factcast.spring.boot.autoconfigure.server;
 
 import lombok.Generated;
-import org.factcast.server.security.CommonSecurityConfig;
+import org.factcast.server.security.CommonSecurityConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -25,7 +25,7 @@ import org.springframework.context.annotation.Import;
 
 @Generated
 @AutoConfiguration
-@Import({CommonSecurityConfig.class})
-@ConditionalOnClass(CommonSecurityConfig.class)
+@Import({CommonSecurityConfiguration.class})
+@ConditionalOnClass(CommonSecurityConfiguration.class)
 @AutoConfigureBefore(SecurityAutoConfiguration.class)
 public class FactCastServerCommonSecurityAutoConfiguration {}
