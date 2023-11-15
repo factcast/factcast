@@ -30,9 +30,15 @@ public class MyIntegrationTest extends AbstractFactcastIntegrationTest { // ...
 }
 ```
 
-which gives you the latest factcast Docker image found locally or at docker-hub running against a somewhat current postgres, both being started in a docker container (locally installed docker is a prerequisite of course).
+which gives you the factcast Docker image respective to the version of the dependency
+you used from docker-hub running against a sufficiently current postgres, both being
+started in a docker container (locally installed docker is a prerequisite of course).
 
-Also, in order to make sure, that FactCast-Server is **NOT** caching internally in memory, you can add a property to switch it into integrationTestMode.
+If you want to be selective about the versions used, have a look at `@FactcastTestConfig`
+which lets you pin the versions if necessary and allows for advanced configuration.
+
+Also, in order to make sure, that FactCast-Server is **NOT** caching internally in memory,
+you can add a property to switch it into integrationTestMode.
 [See Properties](/setup/properties).
 
 ### Local Redis
