@@ -27,8 +27,10 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import java.util.*;
 import lombok.experimental.UtilityClass;
+import org.factcast.core.util.NoCoverageReportToBeGenerated;
 
 @UtilityClass
+@NoCoverageReportToBeGenerated
 public class Notifications {
   public static void error(String... message) {
     createNotification(NotificationVariant.LUMO_ERROR, message);

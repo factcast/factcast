@@ -28,6 +28,7 @@ import com.vaadin.flow.router.*;
 import jakarta.annotation.security.PermitAll;
 import lombok.NonNull;
 import org.factcast.core.subscription.TransformationException;
+import org.factcast.core.util.NoCoverageReportToBeGenerated;
 import org.factcast.server.ui.plugins.JsonViewPluginService;
 import org.factcast.server.ui.port.FactRepository;
 import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
@@ -39,6 +40,7 @@ import org.factcast.server.ui.views.MainLayout;
 @Route(value = "ui/id", layout = MainLayout.class)
 @PageTitle("Query by Fact-ID")
 @PermitAll
+@NoCoverageReportToBeGenerated
 public class IdQueryPage extends VerticalLayout implements HasUrlParameter<String> {
   private final IdQueryBean formBean = new IdQueryBean();
   private final BeanValidationUrlStateBinder<IdQueryBean> b =

@@ -43,6 +43,7 @@ import java.util.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
+import org.factcast.core.util.NoCoverageReportToBeGenerated;
 import org.factcast.server.ui.plugins.JsonViewEntries;
 import org.factcast.server.ui.plugins.JsonViewPluginService;
 import org.factcast.server.ui.port.FactRepository;
@@ -60,6 +61,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 @PermitAll
 @SuppressWarnings("java:S110")
 @Slf4j
+@NoCoverageReportToBeGenerated
 public class FullQueryPage extends VerticalLayout implements HasUrlParameter<String> {
 
   // externalizable state
@@ -101,16 +103,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
 
     since.addValueChangeListener(e -> updateFrom());
 
-    ns.addValueChangeListener(
-        (ValueChangeListener<ValueChangeEvent<?>>)
-            event -> {
-              updateTypeState();
-              if (ns.isEmpty()) {
-                type.setValue(new HashSet<>());
-              } else {
-                type.setItems(repo.types(ns.getValue(), null));
-              }
-            });
+    ns.addValueChangeListener(new ValueChangeEventValueChangeListener());
 
     binder = createBinding();
 
@@ -170,6 +163,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     }
   }
 
+  @NoCoverageReportToBeGenerated
   class FromPanel extends HorizontalLayout {
     public FromPanel() {
       setClassName("flex-wrap");
@@ -252,6 +246,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     }
   }
 
+  @NoCoverageReportToBeGenerated
   static class NameSpacesComboBox extends ComboBox<String> {
     public NameSpacesComboBox(Collection<String> items) {
       super("Namespace");
@@ -262,6 +257,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     }
   }
 
+  @NoCoverageReportToBeGenerated
   static class TypesMultiSelectComboBox extends MultiSelectComboBox<String> {
     public TypesMultiSelectComboBox() {
       super("Types", Collections.emptyList());
@@ -269,11 +265,27 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     }
   }
 
+  @NoCoverageReportToBeGenerated
   static class AggregateIdField extends TextField {
     public AggregateIdField() {
       super("aggregate-id");
       setLabel("Aggregate-ID");
       setWidth("100%");
+    }
+  }
+
+  @NoCoverageReportToBeGenerated
+  private class ValueChangeEventValueChangeListener
+      implements ValueChangeListener<ValueChangeEvent<?>> {
+
+    @Override
+    public void valueChanged(ValueChangeEvent<?> event) {
+      updateTypeState();
+      if (ns.isEmpty()) {
+        type.setValue(new HashSet<>());
+      } else {
+        type.setItems(repo.types(ns.getValue(), null));
+      }
     }
   }
 }
