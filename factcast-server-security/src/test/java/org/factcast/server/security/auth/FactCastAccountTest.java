@@ -110,4 +110,30 @@ class FactCastAccountTest {
             })
         .isInstanceOf(IllegalArgumentException.class);
   }
+
+  @Test
+  void godPower() {
+    assertTrue(FactCastAccount.GOD.canRead("anything"));
+    assertTrue(FactCastAccount.GOD.canWrite("anything"));
+  }
+
+  @Test
+  void cannotReadUninitialized() {
+    var underTest = new FactCastAccount();
+    org.assertj.core.api.Assertions.assertThatThrownBy(
+            () -> {
+              underTest.canRead("foo");
+            })
+        .isInstanceOf(IllegalStateException.class);
+  }
+
+  @Test
+  void cannotWriteUninitialized() {
+    var underTest = new FactCastAccount();
+    org.assertj.core.api.Assertions.assertThatThrownBy(
+            () -> {
+              underTest.canWrite("foo");
+            })
+        .isInstanceOf(IllegalStateException.class);
+  }
 }

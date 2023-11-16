@@ -65,4 +65,10 @@ class AccessRulesTest {
     uut.include().add("fo*");
     assertTrue(uut.includes("foo"));
   }
+
+  @Test
+  void testMissesPositiveWildcard() {
+    uut.include().add("fo*");
+    org.assertj.core.api.Assertions.assertThat(uut.includes("bar")).isNull();
+  }
 }
