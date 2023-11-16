@@ -18,8 +18,10 @@ package org.factcast.server.ui.adapter;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import lombok.NonNull;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.junit.jupiter.api.BeforeEach;
@@ -105,6 +107,37 @@ public class ListObserverTest {
                 underTest.onNext(mock(Fact.class));
               })
           .isInstanceOf(LimitReachedException.class);
+    }
+
+    @Nested
+    class WhenFacingError {
+      @Test
+      void delegates() {
+        underTest = spy(new ListObserver(2, 2));
+        // first skipped for offset
+        @NonNull Throwable exc = new IOException("expected - can be ignored");
+        underTest.onError(exc);
+        verify(underTest).handleError(exc);
+      }
+
+      @Test
+      void swallowsLimitReached() {
+        underTest = spy(new ListObserver(2, 2));
+        // first skipped for offset
+        @NonNull Throwable exc = new LimitReachedException();
+        underTest.onError(exc);
+        verify(underTest, never()).handleError(exc);
+      }
+
+      @Test
+      void swallowsWrappedLimitReached() {
+        underTest = spy(new ListObserver(2, 2));
+        // first skipped for offset
+        @NonNull
+        Throwable exc = new RuntimeException(new RuntimeException(new LimitReachedException()));
+        underTest.onError(exc);
+        verify(underTest, never()).handleError(exc);
+      }
     }
   }
 }

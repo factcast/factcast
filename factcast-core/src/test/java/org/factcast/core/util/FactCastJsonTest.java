@@ -43,7 +43,7 @@ import org.junit.jupiter.api.io.*;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
-public class FactCastJsonTest {
+class FactCastJsonTest {
   @Test
   void testCopyNull() {
     Assertions.assertThrows(NullPointerException.class, () -> FactCastJson.copy(null));
@@ -287,5 +287,10 @@ public class FactCastJsonTest {
 
       assertSame(om, FactCastJson.mapper());
     }
+  }
+
+  @Test
+  void newArrayNode() throws Exception {
+    assertThat(FactCastJson.newArrayNode()).isNotNull().matches(an -> !an.iterator().hasNext());
   }
 }

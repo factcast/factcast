@@ -41,15 +41,15 @@ public class FactCastUser implements UserDetails, CredentialsContainer {
             AuthorityUtils.createAuthorityList(FactCastAuthority.AUTHENTICATED));
   }
 
-  private final Map<String, Boolean> readAccess = new HashMap<>();
+  private final Map<String, Boolean> readAccessCache = new HashMap<>();
 
-  private final Map<String, Boolean> writeAccess = new HashMap<>();
+  private final Map<String, Boolean> writeAccessCache = new HashMap<>();
 
   public boolean canRead(@NonNull String ns) {
-    return readAccess.computeIfAbsent(ns, account::canRead);
+    return readAccessCache.computeIfAbsent(ns, account::canRead);
   }
 
   public boolean canWrite(@NonNull String ns) {
-    return writeAccess.computeIfAbsent(ns, account::canWrite);
+    return writeAccessCache.computeIfAbsent(ns, account::canWrite);
   }
 }

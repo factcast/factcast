@@ -23,7 +23,7 @@ import org.mockito.Mockito;
 
 class FactCastAccountTest {
 
-  private final FactCastAccount uut = new FactCastAccount("foo");
+  private FactCastAccount uut = new FactCastAccount("foo");
 
   @Test
   void testDefaultsToFalse() {
@@ -96,5 +96,18 @@ class FactCastAccountTest {
     // exclusion wins
     assertTrue(uut.roles().contains(role1));
     assertTrue(uut.roles().contains(role2));
+  }
+
+  @Test
+  void testfailsOnIdNull() {
+    uut = new FactCastAccount();
+
+    FactCastAccessConfiguration cfg = new FactCastAccessConfiguration();
+    cfg.initialize();
+    org.assertj.core.api.Assertions.assertThatThrownBy(
+            () -> {
+              uut.initialize(cfg);
+            })
+        .isInstanceOf(IllegalArgumentException.class);
   }
 }
