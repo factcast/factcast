@@ -40,8 +40,8 @@ public class JsonViewPluginServiceImpl implements JsonViewPluginService {
   @NonNull
   @SneakyThrows
   JsonViewEntry processFact(@NonNull Fact fact) {
-    final var payload = jsonUtils.forString(fact.jsonPayload());
-    final var metaData = new JsonEntryMetaData();
+    final JsonPayload payload = jsonUtils.forString(fact.jsonPayload());
+    final JsonEntryMetaData metaData = new JsonEntryMetaData();
 
     plugins.forEach(
         plugin -> {
@@ -53,7 +53,7 @@ public class JsonViewPluginServiceImpl implements JsonViewPluginService {
           }
         });
 
-    final var content = objectMapper.createObjectNode();
+    var content = objectMapper.createObjectNode();
     content.set("header", objectMapper.readTree(fact.jsonHeader()));
     content.set("payload", payload.getPayload());
 

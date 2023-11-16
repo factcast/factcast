@@ -56,14 +56,60 @@ class FullQueryBeanTest {
           .contains(
               FactSpec.ns("n").type("foo").version(0).meta("m1", "1").meta("m2", "2").aggId(aggId))
           .contains(
-              FactSpec.ns("n").type("foo").version(0).meta("m1", "1").meta("m2", "2").aggId(aggId));
+              FactSpec.ns("n").type("bar").version(0).meta("m1", "1").meta("m2", "2").aggId(aggId));
+    }
+
+    @Test
+    void specsWithTypeNoMeta() {
+      underTest.setNs("n");
+      underTest.setType(Set.of("foo", "bar"));
+
+      Assertions.assertThat(underTest.createFactSpecs())
+          .hasSize(2)
+          .contains(FactSpec.ns("n").type("foo").version(0))
+          .contains(FactSpec.ns("n").type("bar").version(0));
+    }
+
+    @Test
+    void specsNoType() {
+      UUID aggId = UUID.randomUUID();
+      underTest.setNs("n");
+      underTest.setAggId(aggId);
+
+      MetaTuple m1 = new MetaTuple();
+      m1.setKey("m1");
+      m1.setValue("1");
+
+      MetaTuple m2 = new MetaTuple();
+      m2.setKey("m2");
+      m2.setValue("2");
+
+      underTest.setMeta(List.of(m1, m2));
+      underTest.setAggId(aggId);
+
+      Assertions.assertThat(underTest.createFactSpecs())
+          .hasSize(1)
+          .contains(FactSpec.ns("n").version(0).meta("m1", "1").meta("m2", "2").aggId(aggId));
+    }
+
+    void specsNoTypeNoMeta() {
+      underTest.setNs("n");
+
+      Assertions.assertThat(underTest.createFactSpecs())
+          .hasSize(1)
+          .contains(FactSpec.ns("n").version(0));
     }
 
     @Test
     void specsNsOnly() {
-      UUID aggId = UUID.randomUUID();
       underTest.setNs("n");
       Assertions.assertThat(underTest.createFactSpecs()).hasSize(1).contains(FactSpec.ns("n"));
+    }
+
+    @Test
+    void specsThrowsIfNsMissing() {
+      Assertions.assertThatThrownBy(() -> underTest.createFactSpecs())
+          .isInstanceOf(IllegalArgumentException.class);
     }
   }
 

@@ -41,6 +41,9 @@ class JsonViewPluginServiceImplTest {
   @Mock private JsonUtils jsonUtils;
   @Spy private UiMetrics uiMetrics = new UiMetrics.NOP();
   @InjectMocks private JsonViewPluginServiceImpl underTest;
+  P1 p1 = spy(new P1());
+  P2 p2 = spy(new P2());
+  P3 p3 = spy(new P3());
 
   @Nested
   class WhenProcessing {
@@ -65,14 +68,33 @@ class JsonViewPluginServiceImplTest {
   class WhenGettingNonResponsivePlugins {
     @Test
     void filters() {
-      P1 p1 = new P1();
-      P2 p2 = new P2();
-      P3 p3 = new P3();
+
       underTest =
           new JsonViewPluginServiceImpl(List.of(p1, p2, p3), objectMapper, jsonUtils, uiMetrics);
       Assertions.assertThat(underTest.getNonResponsivePlugins())
           .hasSize(2)
-          .containsExactlyInAnyOrder(p1.getDisplayName(), p3.getDisplayName());
+          .containsExactlyInAnyOrder(p1.getDisplayName());
+    }
+  }
+
+  @Nested
+  class WhenProcessingFacts {
+    @Mock private JsonPayload jsonPayload;
+
+    @Test
+    void callsOnlyReadyPlugins() {
+      when(jsonUtils.forString(anyString())).thenReturn(jsonPayload);
+      underTest =
+          new JsonViewPluginServiceImpl(
+              List.of(p1, p2, p3), new ObjectMapper(), jsonUtils, uiMetrics);
+
+      var fact = Fact.builder().buildWithoutPayload();
+
+      JsonViewEntry result = underTest.processFact(fact);
+
+      verify(p1, never()).doHandle(same(fact), any(), any());
+      verify(p2).doHandle(same(fact), any(), any());
+      verify(p3).doHandle(same(fact), any(), any());
     }
   }
 
@@ -103,7 +125,7 @@ class JsonViewPluginServiceImplTest {
 
   class P3 extends FakeJsonViewPlugin {
     public P3() {
-      super(false);
+      super(true);
     }
   }
 }

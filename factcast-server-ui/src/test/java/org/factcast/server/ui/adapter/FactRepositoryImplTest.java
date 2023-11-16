@@ -27,6 +27,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.*;
+import java.util.stream.*;
 import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
@@ -54,6 +55,12 @@ public class FactRepositoryImplTest {
   @Mock private LocalFactStore fs;
   @Mock private SecurityService securityService;
   @InjectMocks private FactRepositoryImpl underTest;
+
+  private FactSpec fs1 = FactSpec.ns("1");
+  private FactSpec fs2 = FactSpec.ns("3");
+  private FactSpec fsa = FactSpec.ns("a");
+  List<FactSpec> nameSpaces = List.of(fs1, fs2, fsa);
+  List<FactSpec> nameSpacesAfterFiltering = List.of(fs1, fs2);
 
   @Nested
   class WhenFindingBy {
@@ -206,12 +213,6 @@ public class FactRepositoryImplTest {
   @Nested
   class WhenFetchingChunk {
     @Mock private FullQueryBean bean;
-    private FactSpec fs1 = FactSpec.ns("1");
-    private FactSpec fs2 = FactSpec.ns("3");
-    private FactSpec fsa = FactSpec.ns("a");
-
-    List<FactSpec> nameSpaces = List.of(fs1, fs2, fsa);
-    List<FactSpec> nameSpacesAfterFiltering = List.of(fs1, fs2);
 
     @BeforeEach
     void setup() {
@@ -334,7 +335,14 @@ public class FactRepositoryImplTest {
 
     @Test
     void filtersViaSecurityService() {
-      // TODO
+      when(fs.enumerateNamespaces()).thenReturn(Set.of("1", "2", "3"));
+      when(securityService.canRead("1")).thenReturn(true);
+      when(securityService.canRead("2")).thenReturn(false);
+      when(securityService.canRead("3")).thenReturn(true);
+      Assertions.assertThat(underTest.namespaces(null))
+          .hasSize(2)
+          .containsExactlyInAnyOrder("1", "3")
+          .doesNotContain("2");
     }
   }
 
