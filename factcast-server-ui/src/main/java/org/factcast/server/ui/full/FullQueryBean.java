@@ -41,7 +41,7 @@ public class FullQueryBean implements Serializable {
   private Set<String> type = null;
   // currently not possible to filter on more than one aggId via api
   private UUID aggId = null;
-  private LinkedList<MetaTuple> meta = new LinkedList<>();
+  private List<MetaTuple> meta = new LinkedList<>();
   private BigDecimal from = null;
 
   FullQueryBean(long startingSerial) {
