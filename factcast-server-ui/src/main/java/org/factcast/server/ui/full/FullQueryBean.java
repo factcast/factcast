@@ -16,6 +16,8 @@
 package org.factcast.server.ui.full;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -33,7 +35,11 @@ public class FullQueryBean implements Serializable {
   public static final int DEFAULT_LIMIT = 50;
   private final long defaultFrom;
   private LocalDate since = LocalDate.now();
+
+  @Max(1000)
   private Integer limit = null;
+
+  @Min(0)
   private Integer offset = null;
 
   @NotNull private String ns;

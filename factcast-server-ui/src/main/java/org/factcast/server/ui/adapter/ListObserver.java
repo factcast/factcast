@@ -44,7 +44,7 @@ public class ListObserver implements FactObserver {
       offset--;
     } else {
       limit--;
-      list.add(element);
+      list.add(0, element);
     }
   }
 
