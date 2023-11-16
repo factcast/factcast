@@ -17,5 +17,7 @@ package org.factcast.server.ui.plugins;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.NonNull;
+import org.factcast.core.util.NoCoverageReportToBeGenerated;
 
+@NoCoverageReportToBeGenerated
 public record JsonViewEntry(@NonNull ObjectNode fact, @NonNull JsonEntryMetaData metaData) {}
