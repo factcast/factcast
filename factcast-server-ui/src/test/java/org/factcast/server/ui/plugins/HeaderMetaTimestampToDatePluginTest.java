@@ -18,6 +18,8 @@ package org.factcast.server.ui.plugins;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.time.ZoneId;
+import java.util.*;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.junit.jupiter.api.Nested;
@@ -48,12 +50,18 @@ class HeaderMetaTimestampToDatePluginTest {
 
     @Test
     void addsTimestamp() {
-      Long ts = 1001L;
-      when(fact.timestamp()).thenReturn(ts);
-      underTest.doHandle(fact, payload, jsonEntryMetaData);
+      TimeZone oldDefault = TimeZone.getDefault();
+      try {
+        TimeZone.setDefault(TimeZone.getTimeZone(ZoneId.of("Europe/Paris")));
+        Long ts = 1001L;
+        when(fact.timestamp()).thenReturn(ts);
+        underTest.doHandle(fact, payload, jsonEntryMetaData);
 
-      verify(jsonEntryMetaData)
-          .annotateHeader(eq("$.meta._ts"), eq("1970-01-01T01:00:01.001+01:00[Europe/Berlin]"));
+        verify(jsonEntryMetaData)
+            .annotateHeader(eq("$.meta._ts"), eq("1970-01-01T01:00:01.001+01:00[Europe/Paris]"));
+      } finally {
+        TimeZone.setDefault(oldDefault);
+      }
     }
   }
 
