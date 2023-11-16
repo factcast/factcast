@@ -34,6 +34,14 @@ class JsonView extends LitElement {
 
 	private metaData: EnrichedMember[] = [];
 
+	constructor() {
+		super();
+
+		console.log(
+			`Facts rendered during the lifetime of this component will be logged and can be used for further processing/aggregation.`
+		);
+	}
+
 	firstUpdated(_changedProperties: PropertyValues) {
 		super.firstUpdated(_changedProperties);
 		this.setupEditor();
@@ -113,6 +121,8 @@ class JsonView extends LitElement {
 		if (this.editor) {
 			this.metaData = this.parseMetaData(json, metaData);
 			this.editor.setValue(json);
+
+			console.dir((JSON.parse(json) as []).reverse());
 		}
 	}
 
