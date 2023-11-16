@@ -18,9 +18,11 @@ package org.factcast.server.ui.metrics;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.factcast.core.util.NoCoverageReportToBeGenerated;
 
 @Getter
 @RequiredArgsConstructor
+@NoCoverageReportToBeGenerated
 public enum Operations {
   PLUGIN_EXECUTION("plugin-execution"),
   FACT_PROCESSING("fact-processing");

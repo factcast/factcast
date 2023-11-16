@@ -22,4 +22,6 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.CLASS)
 @Target({ElementType.TYPE, ElementType.METHOD})
-public @interface NoCoverageReportToBeGenerated {}
+public @interface NoCoverageReportToBeGenerated {
+  String value() default "";
+}

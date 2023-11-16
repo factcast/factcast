@@ -17,7 +17,9 @@ package org.factcast.server.security.auth;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.factcast.core.util.NoCoverageReportToBeGenerated;
 
+@NoCoverageReportToBeGenerated("pojo for secrets configuration")
 public class FactCastSecretProperties {
 
   public Map<String, String> getSecrets() {

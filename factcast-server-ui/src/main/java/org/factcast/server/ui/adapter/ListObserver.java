@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.slf4j.LoggerFactory;
 
 @Getter
 public class ListObserver implements FactObserver {
@@ -48,10 +49,14 @@ public class ListObserver implements FactObserver {
   }
 
   @Override
-  public void onError(@NonNull Throwable exception) {
+  public final void onError(@NonNull Throwable exception) {
     if (!LimitReachedException.matches(exception)) {
-      FactObserver.super.onError(exception);
+      handleError(exception);
     }
+  }
+
+  protected void handleError(@NonNull Throwable exception) {
+    LoggerFactory.getLogger(FactObserver.class).warn("Unhandled onError:", exception);
   }
 
   boolean isComplete() {
