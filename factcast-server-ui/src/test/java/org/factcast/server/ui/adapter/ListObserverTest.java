@@ -77,7 +77,7 @@ public class ListObserverTest {
       Assertions.assertThat(result)
           .isNotNull()
           .hasSize(3)
-          .containsExactly(mockFacts.get(2), mockFacts.get(3), mockFacts.get(4));
+          .containsExactly(mockFacts.get(4), mockFacts.get(3), mockFacts.get(2));
 
       Assertions.assertThat(underTest.isComplete()).isTrue();
     }
