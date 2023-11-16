@@ -72,7 +72,7 @@ class JsonViewPluginServiceImplTest {
       underTest =
           new JsonViewPluginServiceImpl(List.of(p1, p2, p3), objectMapper, jsonUtils, uiMetrics);
       Assertions.assertThat(underTest.getNonResponsivePlugins())
-          .hasSize(2)
+          .hasSize(1)
           .containsExactlyInAnyOrder(p1.getDisplayName());
     }
   }
