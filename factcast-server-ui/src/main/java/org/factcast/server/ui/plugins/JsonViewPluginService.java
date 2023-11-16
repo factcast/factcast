@@ -20,11 +20,14 @@ import lombok.NonNull;
 import org.factcast.core.Fact;
 
 public interface JsonViewPluginService {
+  @NonNull
   JsonViewEntry process(@NonNull Fact fact);
 
+  @NonNull
   default JsonViewEntries process(@NonNull Collection<Fact> facts) {
     return new JsonViewEntries(facts.stream().map(this::process).toList());
   }
 
+  @NonNull
   Collection<String> getNonResponsivePlugins();
 }

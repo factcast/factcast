@@ -39,7 +39,7 @@ public class JsonViewPluginServiceImpl implements JsonViewPluginService {
 
   @NonNull
   @SneakyThrows
-  private JsonViewEntry processFact(@NonNull Fact fact) {
+  JsonViewEntry processFact(@NonNull Fact fact) {
     final var payload = jsonUtils.forString(fact.jsonPayload());
     final var metaData = new JsonEntryMetaData();
 

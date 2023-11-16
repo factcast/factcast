@@ -16,14 +16,17 @@
 package org.factcast.server.ui.id;
 
 import jakarta.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import org.factcast.core.util.NoCoverageReportToBeGenerated;
 
 @Data
 @Accessors(chain = false, fluent = false)
-public class IdQueryBean {
+@NoCoverageReportToBeGenerated("backing bean")
+public class IdQueryBean implements Serializable {
   @NotNull private UUID id;
   @Nullable private Integer version;
 }
