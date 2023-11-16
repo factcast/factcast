@@ -21,16 +21,27 @@ import static org.mockito.Mockito.*;
 import java.util.*;
 import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.factcast.core.util.FactCastJson;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class JsonViewPluginServiceTest {
-  @InjectMocks private JsonViewPluginService underTest;
+  private JsonViewPluginService underTest =
+      new JsonViewPluginService() {
+        @Override
+        public @NonNull JsonViewEntry process(@NonNull Fact fact) {
+          return new JsonViewEntry(FactCastJson.newObjectNode(), new JsonEntryMetaData());
+        }
+
+        @Override
+        public @NonNull Collection<String> getNonResponsivePlugins() {
+          return null;
+        }
+      };
 
   @Nested
   class WhenProcessing {
