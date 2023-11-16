@@ -15,6 +15,7 @@
  */
 package org.factcast.server.ui.metrics;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
@@ -73,7 +74,8 @@ public class MeterRegistryMetrics implements InitializingBean, UiMetrics {
     return Timer.builder(TIMER_METRIC_NAME).tags(fullTags).register(meterRegistry);
   }
 
-  private void time(
+  @VisibleForTesting
+  void time(
       @NonNull Operations operation,
       @NonNull Timer.Sample sample,
       @NonNull Tags tags,

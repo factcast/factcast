@@ -54,14 +54,14 @@ public class JsonPayload {
     documentContext().delete(path);
   }
 
-  private DocumentContext documentContext() {
+  private synchronized DocumentContext documentContext() {
     if (documentContext == null) {
       documentContext = parseContext.parse(json);
     }
     return documentContext;
   }
 
-  private DocumentContext pathReturningDocumentContext() {
+  private synchronized DocumentContext pathReturningDocumentContext() {
     if (pathReturningDocumentContext == null) {
       pathReturningDocumentContext = pathReturningContext.parse(json);
     }
