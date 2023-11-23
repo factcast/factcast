@@ -16,6 +16,7 @@
 package org.factcast.server.ui.full;
 
 import jakarta.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -27,7 +28,7 @@ import org.factcast.core.spec.FactSpec;
 
 @Data
 @Accessors(fluent = false, chain = false)
-public class FactCriteria {
+public class FactCriteria implements Serializable {
   @NotNull private String ns;
 
   private Set<String> type = null;

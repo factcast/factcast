@@ -28,7 +28,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class FullQueryBeanTest {
 
-  private FullQueryBean underTest = new FullQueryBean(12);
+  final FullQueryBean underTest = new FullQueryBean(12);
 
   @Nested
   class WhenCreatingFactSpecs {
@@ -138,7 +138,7 @@ class FullQueryBeanTest {
 
     @Test
     void returnsDefault() {
-      Assertions.assertThat(underTest.getOffsetOrDefault()).isEqualTo(0);
+      Assertions.assertThat(underTest.getOffsetOrDefault()).isZero();
     }
   }
 
