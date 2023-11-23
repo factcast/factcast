@@ -17,7 +17,10 @@ package org.factcast.server.ui.full;
 
 import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Stream;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -26,6 +29,7 @@ import org.factcast.core.spec.FactSpec;
 @Data
 @Accessors(fluent = false, chain = false)
 public class FactCriteria implements Serializable {
+
   @NotNull private String ns;
 
   private Set<String> type = null;
@@ -63,11 +67,13 @@ public class FactCriteria implements Serializable {
     }
   }
 
+  /** must match for referential equality only */
   @Override
   public boolean equals(Object o) {
     return this == o;
   }
 
+  /** see equals(Object) */
   @Override
   public int hashCode() {
     return 1;
