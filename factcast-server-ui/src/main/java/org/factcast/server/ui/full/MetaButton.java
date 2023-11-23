@@ -27,10 +27,10 @@ import org.vaadin.crudui.crud.impl.GridCrud;
 
 @NoCoverageReportToBeGenerated
 class MetaButton extends Button {
-  private final FullQueryBean backingBean;
+  private final FactCriteria backingBean;
   private final GridCrud<MetaTuple> crud = new GridCrud<>(MetaTuple.class);
 
-  MetaButton(FullQueryBean backingBean) {
+  MetaButton(FactCriteria backingBean) {
     super("Meta");
     this.backingBean = backingBean;
 
