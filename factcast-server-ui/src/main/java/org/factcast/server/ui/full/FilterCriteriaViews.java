@@ -15,10 +15,7 @@
  */
 package org.factcast.server.ui.full;
 
-import com.vaadin.flow.component.ClickEvent;
-import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import java.util.stream.Stream;
 import lombok.NonNull;
@@ -43,14 +40,8 @@ public class FilterCriteriaViews extends VerticalLayout {
   }
 
   private Button createButton() {
-    Button button = new Button("+");
-    button.addClickListener(
-        new ComponentEventListener<ClickEvent<Button>>() {
-          @Override
-          public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
-            createView();
-          }
-        });
+    Button button = new Button("add Condition");
+    button.addClickListener(buttonClickEvent -> createView());
     return button;
   }
 
@@ -60,18 +51,14 @@ public class FilterCriteriaViews extends VerticalLayout {
   }
 
   public void clear() {
-    getFilterCriteriaViews()
-        .forEach(
-            fc -> {
-              bean.getCriteria().remove(fc.factCriteria());
-              fc.removeFromParent();
-            });
+    getFilterCriteriaViews().forEach(this::destroyView);
   }
 
-  public void destroyView(FilterCriteriaView v) {
+  public void destroyView(@NonNull FilterCriteriaView v) {
+    v.removeBindings();
+    // remove backing bean
     bean.getCriteria().remove(v.factCriteria());
-    // TODO what about unbinding?
-    remove(v.getParent().get());
+    remove(v.getParent().get()); // it was wrapped by a container
   }
 
   public void createView() {
@@ -85,17 +72,18 @@ public class FilterCriteriaViews extends VerticalLayout {
 
     if (withRemoveButton)
       addComponentAtIndex(
-          getComponentCount() - 1, new HorizontalLayout(c, new RemoveButton(this, c)));
+          getComponentCount() - 1, new FilterCriteriaViewContainer(c, new RemoveButton(this, c)));
     else
       addComponentAtIndex(
-          getComponentCount() - 1, new HorizontalLayout(c)); // maybe need style adaptions
+          getComponentCount() - 1,
+          new FilterCriteriaViewContainer(c)); // maybe need style adaptions
   }
 
   @NonNull
   private Stream<FilterCriteriaView> getFilterCriteriaViews() {
     return getChildren()
-        .filter(FilterCriteriaView.class::isInstance)
-        .map(f -> (FilterCriteriaView) f);
+        .filter(FilterCriteriaViewContainer.class::isInstance)
+        .map(f -> ((FilterCriteriaViewContainer) f).filterCriteriaView());
   }
 
   public void updateState() {
