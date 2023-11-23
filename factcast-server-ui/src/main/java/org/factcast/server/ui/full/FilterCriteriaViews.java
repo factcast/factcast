@@ -55,11 +55,7 @@ public class FilterCriteriaViews extends VerticalLayout {
 
   private void addViewsAccordingTo(@NonNull FullQueryBean bean) {
     AtomicBoolean first = new AtomicBoolean(true);
-    bean.getCriteria()
-        .forEach(
-            c -> {
-              addFilterCriteriaView(!first.getAndSet(false), c);
-            });
+    bean.getCriteria().forEach(c -> addFilterCriteriaView(!first.getAndSet(false), c));
     binder.readBean(bean);
   }
 
@@ -72,40 +68,37 @@ public class FilterCriteriaViews extends VerticalLayout {
 
     final var button = new Button("add Condition", new Icon(VaadinIcon.PLUS_CIRCLE_O));
     button.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
-    button.addClickListener(buttonClickEvent -> createView());
+    button.addClickListener(buttonClickEvent -> addCondition());
 
     hl.add(button);
 
     return hl;
   }
 
-  private void destroyView(@NonNull FilterCriteriaView v) {
-    remove(v.getParent().get()); // it was wrapped by a container
+  private void removeCondition(@NonNull FilterCriteriaView v) {
+    v.getParent().ifPresent(this::remove); // it was wrapped by a container
     v.removeBindings();
   }
 
-  private void destroyViewAndUnbind(@NonNull FilterCriteriaView v) {
-    destroyView(v);
+  private void removeConditionAndBackingBean(@NonNull FilterCriteriaView v) {
+    removeCondition(v);
     bean.getCriteria().remove(v.factCriteria());
   }
 
-  private void createView() {
-    createView(true);
-  }
-
-  private void createView(boolean withRemoveButton) {
+  private void addCondition() {
     FactCriteria criteria = new FactCriteria();
     bean.getCriteria().add(criteria);
-    addFilterCriteriaView(withRemoveButton, criteria);
+    addFilterCriteriaView(true, criteria);
   }
 
-  private void addFilterCriteriaView(boolean withRemoveButton, FactCriteria criteria) {
+  private void addFilterCriteriaView(boolean withRemoveButton, @NonNull FactCriteria criteria) {
     FilterCriteriaView c = new FilterCriteriaView(repo, binder, criteria);
 
     if (withRemoveButton)
       addComponentAtIndex(
           getComponentCount() - 1,
-          new FilterCriteriaViewContainer(c, new RemoveButton(() -> destroyViewAndUnbind(c))));
+          new FilterCriteriaViewContainer(
+              c, new RemoveButton(() -> removeConditionAndBackingBean(c))));
     else
       addComponentAtIndex(
           getComponentCount() - 1,
@@ -120,7 +113,7 @@ public class FilterCriteriaViews extends VerticalLayout {
   }
 
   public void rebuild() {
-    getFilterCriteriaViews().forEach(this::destroyView);
+    getFilterCriteriaViews().forEach(this::removeCondition);
     addViewsAccordingTo(bean);
   }
 }

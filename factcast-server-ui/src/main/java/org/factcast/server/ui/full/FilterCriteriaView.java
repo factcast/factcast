@@ -50,12 +50,8 @@ public class FilterCriteriaView extends VerticalLayout {
     ns = new NameSpacesComboBox(repo.namespaces(null));
     this.binder = binder;
     this.factCriteria = factCriteria;
-    type =
-        new MultiSelectComboBox<String>("Types", Collections.emptyList()) {
-          {
-            setWidthFull();
-          }
-        };
+    type = new MultiSelectComboBox<>("Types", Collections.emptyList());
+    type.setWidthFull();
     ns.addValueChangeListener(
         event -> {
           updateTypeState();
