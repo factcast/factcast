@@ -28,19 +28,20 @@ import java.util.HashSet;
 import java.util.List;
 import lombok.Getter;
 import lombok.NonNull;
+import org.factcast.core.util.NoCoverageReportToBeGenerated;
 import org.factcast.server.ui.port.FactRepository;
 import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
 
+@NoCoverageReportToBeGenerated
 public class FilterCriteriaView extends VerticalLayout {
 
   private final NameSpacesComboBox ns;
   private final MultiSelectComboBox<String> type;
   private final TextField aggId = new AggregateIdField();
-  private final MetaButton metaButton;
 
   private final BeanValidationUrlStateBinder<FullQueryBean> binder;
   @Getter private final FactCriteria factCriteria;
-  private List<Binder.Binding<FullQueryBean, ?>> bindings = new ArrayList<>();
+  private final List<Binder.Binding<FullQueryBean, ?>> bindings = new ArrayList<>();
 
   FilterCriteriaView(
       @NonNull FactRepository repo,
@@ -68,7 +69,7 @@ public class FilterCriteriaView extends VerticalLayout {
     final var nsAndTypeFilter = new HorizontalLayout(ns, type);
     nsAndTypeFilter.setWidthFull();
 
-    metaButton = new MetaButton(factCriteria);
+    MetaButton metaButton = new MetaButton(factCriteria);
     final var aggIdAndMeta = new HorizontalLayout(aggId, metaButton);
     aggIdAndMeta.setWidthFull();
     aggIdAndMeta.setAlignItems(FlexComponent.Alignment.BASELINE);
@@ -101,16 +102,6 @@ public class FilterCriteriaView extends VerticalLayout {
 
   private void updateTypeState() {
     type.setEnabled(!ns.isEmpty());
-  }
-
-  public void updateState() {
-    updateTypeState();
-    metaButton.update();
-  }
-
-  public void reset() {
-    factCriteria.reset();
-    updateTypeState();
   }
 
   public void removeBindings() {

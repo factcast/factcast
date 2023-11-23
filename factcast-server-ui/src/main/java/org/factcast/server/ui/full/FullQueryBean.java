@@ -18,6 +18,7 @@ package org.factcast.server.ui.full;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.collect.Lists;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.io.Serializable;
@@ -46,7 +47,7 @@ public class FullQueryBean implements Serializable {
   @Min(0)
   private Integer offset = null;
 
-  private List<FactCriteria> criteria = Lists.newArrayList(new FactCriteria());
+  @Valid private List<FactCriteria> criteria = Lists.newArrayList(new FactCriteria());
 
   // currently not possible to filter on more than one aggId via api
   private BigDecimal from = null;
@@ -67,8 +68,6 @@ public class FullQueryBean implements Serializable {
     limit = null;
     offset = null;
     criteria = Lists.newArrayList(new FactCriteria());
-
-    from = null;
     from = BigDecimal.valueOf(defaultFrom);
   }
 
