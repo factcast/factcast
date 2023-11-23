@@ -64,12 +64,4 @@ public class FactCriteria {
       return Stream.of(fs);
     }
   }
-
-  @SuppressWarnings("java:S2637") // intended
-  public void reset() {
-    ns = null;
-    type = null;
-    meta.clear();
-    aggId = null;
-  }
 }

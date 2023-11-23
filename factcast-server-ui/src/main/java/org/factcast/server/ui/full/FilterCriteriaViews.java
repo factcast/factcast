@@ -25,9 +25,11 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 import lombok.NonNull;
+import org.factcast.core.util.NoCoverageReportToBeGenerated;
 import org.factcast.server.ui.port.FactRepository;
 import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
 
+@NoCoverageReportToBeGenerated
 public class FilterCriteriaViews extends VerticalLayout {
   private final BeanValidationUrlStateBinder<FullQueryBean> binder;
   private final FullQueryBean bean;

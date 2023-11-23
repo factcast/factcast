@@ -20,11 +20,12 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import org.factcast.core.util.NoCoverageReportToBeGenerated;
 
+@NoCoverageReportToBeGenerated
 public class RemoveButton extends HorizontalLayout {
 
   public RemoveButton(Runnable onClick) {
-
     setWidthFull();
     setPadding(false);
     setMargin(false);
@@ -33,7 +34,6 @@ public class RemoveButton extends HorizontalLayout {
     var btn = new Button("remove Condition", new Icon(VaadinIcon.MINUS_CIRCLE_O));
     btn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
     btn.addClickListener(buttonClickEvent -> onClick.run());
-
     add(btn);
   }
 }

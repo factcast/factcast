@@ -15,17 +15,16 @@
  */
 package org.factcast.server.ui.full;
 
-import com.google.common.collect.Lists;
-import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.Getter;
 import lombok.NonNull;
+import org.factcast.core.util.NoCoverageReportToBeGenerated;
 
+@Getter
+@NoCoverageReportToBeGenerated
 public class FilterCriteriaViewContainer extends VerticalLayout {
-  @Getter @NonNull private final FilterCriteriaView filterCriteriaView;
+  @NonNull private final FilterCriteriaView filterCriteriaView;
 
   public FilterCriteriaViewContainer(@NonNull FilterCriteriaView c) {
     super(c);
@@ -49,11 +48,5 @@ public class FilterCriteriaViewContainer extends VerticalLayout {
     super(extra, c);
     this.filterCriteriaView = c;
     initializeLayout();
-  }
-
-  private static List<Component> asList(FilterCriteriaView c, Component... extra) {
-    ArrayList<Component> components = Lists.newArrayList(extra);
-    components.add(0, c);
-    return components;
   }
 }
