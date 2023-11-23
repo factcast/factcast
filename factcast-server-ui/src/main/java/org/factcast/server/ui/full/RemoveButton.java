@@ -19,22 +19,32 @@ import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 
-public class RemoveButton extends Button {
+public class RemoveButton extends HorizontalLayout {
   private final Component c;
 
   public RemoveButton(FilterCriteriaViews views, FilterCriteriaView c) {
-    super("-");
     this.c = c;
 
-    addClickListener(
-        new ComponentEventListener<ClickEvent<Button>>() {
-          @Override
-          public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
-            views.destroyView(c);
-            // TODO
+    setWidthFull();
+    setPadding(false);
+    setMargin(false);
+    setJustifyContentMode(JustifyContentMode.END);
 
-          }
-        });
+    final var btn = new Button("remove Condition", new Icon(VaadinIcon.MINUS_CIRCLE_O));
+    btn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
+    btn.addClickListener(
+        (ComponentEventListener<ClickEvent<Button>>)
+            buttonClickEvent -> {
+              views.destroyView(c);
+              // TODO
+
+            });
+
+    add(btn);
   }
 }

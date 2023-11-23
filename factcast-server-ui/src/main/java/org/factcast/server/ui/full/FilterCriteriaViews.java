@@ -16,10 +16,15 @@
 package org.factcast.server.ui.full;
 
 import com.vaadin.flow.component.ClickEvent;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.stream.Stream;
 import lombok.NonNull;
 import org.factcast.server.ui.port.FactRepository;
@@ -38,20 +43,30 @@ public class FilterCriteriaViews extends VerticalLayout {
     this.binder = binder;
     this.bean = bean;
 
+    setWidthFull();
+    setMargin(false);
+    setPadding(false);
+    setSpacing(false);
+
     add(createButton());
     reset();
   }
 
-  private Button createButton() {
-    Button button = new Button("+");
+  private Component createButton() {
+    final var hl = new HorizontalLayout();
+    hl.setWidthFull();
+    hl.setPadding(false);
+    hl.setMargin(false);
+    hl.setJustifyContentMode(JustifyContentMode.END);
+
+    final var button = new Button("add Condition", new Icon(VaadinIcon.PLUS_CIRCLE_O));
+    button.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
     button.addClickListener(
-        new ComponentEventListener<ClickEvent<Button>>() {
-          @Override
-          public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
-            createView();
-          }
-        });
-    return button;
+        (ComponentEventListener<ClickEvent<Button>>) buttonClickEvent -> createView());
+
+    hl.add(button);
+
+    return hl;
   }
 
   public void reset() {
@@ -84,11 +99,23 @@ public class FilterCriteriaViews extends VerticalLayout {
     FilterCriteriaView c = new FilterCriteriaView(repo, binder, criteria);
 
     if (withRemoveButton)
-      addComponentAtIndex(
-          getComponentCount() - 1, new HorizontalLayout(c, new RemoveButton(this, c)));
-    else
-      addComponentAtIndex(
-          getComponentCount() - 1, new HorizontalLayout(c)); // maybe need style adaptions
+      addComponentAtIndex(getComponentCount() - 1, wrap(new RemoveButton(this, c), c));
+    else addComponentAtIndex(getComponentCount() - 1, wrap(c)); // maybe need style adaptions
+  }
+
+  @NonNull
+  private static VerticalLayout wrap(Component... c) {
+    final var hl = new VerticalLayout(c);
+    hl.setWidthFull();
+    hl.setSpacing(false);
+    hl.setMargin(false);
+    hl.setPadding(false);
+    hl.addClassNames(
+        LumoUtility.Border.BOTTOM,
+        LumoUtility.BorderColor.CONTRAST_10,
+        LumoUtility.Padding.Bottom.MEDIUM);
+
+    return hl;
   }
 
   @NonNull
