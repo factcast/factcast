@@ -17,23 +17,38 @@ package org.factcast.server.ui.full;
 
 import com.google.common.collect.Lists;
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.NonNull;
 
-public class FilterCriteriaViewContainer extends HorizontalLayout {
+public class FilterCriteriaViewContainer extends VerticalLayout {
   @Getter @NonNull private final FilterCriteriaView filterCriteriaView;
 
   public FilterCriteriaViewContainer(@NonNull FilterCriteriaView c) {
     super(c);
     this.filterCriteriaView = c;
+    add(c);
+    initializeLayout();
   }
 
-  public FilterCriteriaViewContainer(@NonNull FilterCriteriaView c, Component... extra) {
-    super(asList(c, extra).toArray(new Component[] {}));
+  private void initializeLayout() {
+    setWidthFull();
+    setSpacing(false);
+    setMargin(false);
+    setPadding(false);
+    addClassNames(
+        LumoUtility.Border.BOTTOM,
+        LumoUtility.BorderColor.CONTRAST_20,
+        LumoUtility.Padding.Bottom.MEDIUM);
+  }
+
+  public FilterCriteriaViewContainer(@NonNull FilterCriteriaView c, RemoveButton extra) {
+    super(extra, c);
     this.filterCriteriaView = c;
+    initializeLayout();
   }
 
   private static List<Component> asList(FilterCriteriaView c, Component... extra) {

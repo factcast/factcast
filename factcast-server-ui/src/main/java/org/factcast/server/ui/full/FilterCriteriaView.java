@@ -77,6 +77,7 @@ public class FilterCriteriaView extends VerticalLayout {
 
     bind(binder);
     updateTypeState();
+    metaButton.update();
 
     setPadding(false);
   }

@@ -15,8 +15,14 @@
  */
 package org.factcast.server.ui.full;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 import lombok.NonNull;
 import org.factcast.server.ui.port.FactRepository;
@@ -35,44 +41,69 @@ public class FilterCriteriaViews extends VerticalLayout {
     this.binder = binder;
     this.bean = bean;
 
+    setWidthFull();
+    setMargin(false);
+    setPadding(false);
+    setSpacing(false);
+
     add(createButton());
-    reset();
+
+    addViewsAccordingTo(bean);
   }
 
-  private Button createButton() {
-    Button button = new Button("add Condition");
+  private void addViewsAccordingTo(@NonNull FullQueryBean bean) {
+    AtomicBoolean first = new AtomicBoolean(true);
+    bean.getCriteria()
+        .forEach(
+            c -> {
+              addFilterCriteriaView(!first.getAndSet(false), c);
+            });
+    binder.readBean(bean);
+  }
+
+  private Component createButton() {
+    final var hl = new HorizontalLayout();
+    hl.setWidthFull();
+    hl.setPadding(false);
+    hl.setMargin(false);
+    hl.setJustifyContentMode(JustifyContentMode.END);
+
+    final var button = new Button("add Condition", new Icon(VaadinIcon.PLUS_CIRCLE_O));
+    button.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
     button.addClickListener(buttonClickEvent -> createView());
-    return button;
+
+    hl.add(button);
+
+    return hl;
   }
 
-  public void reset() {
-    clear();
-    createView(false);
-  }
-
-  public void clear() {
-    getFilterCriteriaViews().forEach(this::destroyView);
-  }
-
-  public void destroyView(@NonNull FilterCriteriaView v) {
-    v.removeBindings();
-    // remove backing bean
-    bean.getCriteria().remove(v.factCriteria());
+  private void destroyView(@NonNull FilterCriteriaView v) {
     remove(v.getParent().get()); // it was wrapped by a container
+    v.removeBindings();
   }
 
-  public void createView() {
+  private void destroyViewAndUnbind(@NonNull FilterCriteriaView v) {
+    destroyView(v);
+    bean.getCriteria().remove(v.factCriteria());
+  }
+
+  private void createView() {
     createView(true);
   }
 
-  public void createView(boolean withRemoveButton) {
+  private void createView(boolean withRemoveButton) {
     FactCriteria criteria = new FactCriteria();
     bean.getCriteria().add(criteria);
+    addFilterCriteriaView(withRemoveButton, criteria);
+  }
+
+  private void addFilterCriteriaView(boolean withRemoveButton, FactCriteria criteria) {
     FilterCriteriaView c = new FilterCriteriaView(repo, binder, criteria);
 
     if (withRemoveButton)
       addComponentAtIndex(
-          getComponentCount() - 1, new FilterCriteriaViewContainer(c, new RemoveButton(this, c)));
+          getComponentCount() - 1,
+          new FilterCriteriaViewContainer(c, new RemoveButton(() -> destroyViewAndUnbind(c))));
     else
       addComponentAtIndex(
           getComponentCount() - 1,
@@ -86,7 +117,8 @@ public class FilterCriteriaViews extends VerticalLayout {
         .map(f -> ((FilterCriteriaViewContainer) f).filterCriteriaView());
   }
 
-  public void updateState() {
-    getFilterCriteriaViews().forEach(FilterCriteriaView::updateState);
+  public void rebuild() {
+    getFilterCriteriaViews().forEach(this::destroyView);
+    addViewsAccordingTo(bean);
   }
 }

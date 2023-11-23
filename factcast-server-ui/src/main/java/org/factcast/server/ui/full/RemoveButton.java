@@ -16,13 +16,24 @@
 package org.factcast.server.ui.full;
 
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import lombok.NonNull;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 
-public class RemoveButton extends Button {
-  public RemoveButton(@NonNull FilterCriteriaViews views, @NonNull FilterCriteriaView c) {
-    super(new Icon(VaadinIcon.MINUS_CIRCLE));
-    addClickListener(buttonClickEvent -> views.destroyView(c));
+public class RemoveButton extends HorizontalLayout {
+
+  public RemoveButton(Runnable onClick) {
+
+    setWidthFull();
+    setPadding(false);
+    setMargin(false);
+    setJustifyContentMode(JustifyContentMode.END);
+
+    var btn = new Button("remove Condition", new Icon(VaadinIcon.MINUS_CIRCLE_O));
+    btn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
+    btn.addClickListener(buttonClickEvent -> onClick.run());
+
+    add(btn);
   }
 }
