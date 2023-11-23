@@ -74,7 +74,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
   private final FactRepository repo;
 
   private final JsonViewPluginService jsonViewPluginService;
-  private final FilterCriteriaViews factCriteriaViews = new FilterCriteriaViews();
+  private final FilterCriteriaViews factCriteriaViews;
 
   public FullQueryPage(
       @NonNull FactRepository repo, @NonNull JsonViewPluginService jsonViewPluginService) {
@@ -91,8 +91,8 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     since.addValueChangeListener(e -> updateFrom());
 
     binder = createBinding();
-    factCriteriaViews.add(new FilterCriteriaView(repo, binder, formBean.getCriteria().get(0)));
 
+    factCriteriaViews = new FilterCriteriaViews(repo, binder, formBean);
     final var form = new FormContent(factCriteriaViews, new FromPanel(), formButtons());
 
     add(form);
@@ -193,9 +193,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
         event -> {
           formBean.reset();
           binder.readBean(formBean);
-          factCriteriaViews.clear();
-          factCriteriaViews.add(
-              new FilterCriteriaView(repo, binder, formBean.getCriteria().get(0)));
+          factCriteriaViews.reset();
         });
 
     final var hl = new HorizontalLayout(queryBtn, resetBtn);

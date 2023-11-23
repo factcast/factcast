@@ -43,7 +43,7 @@ public class FullQueryBean implements Serializable {
   @Min(0)
   private Integer offset = null;
 
-  private List<FactCriteria> criteria = Lists.newArrayList(new FactCriteria());
+  private List<FactCriteria> criteria = Lists.newArrayList();
 
   // currently not possible to filter on more than one aggId via api
   private BigDecimal from = null;
