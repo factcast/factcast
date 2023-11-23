@@ -23,6 +23,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.converter.StringToUuidConverter;
 import java.util.Collections;
 import java.util.HashSet;
+import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.server.ui.port.FactRepository;
 import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
@@ -30,15 +31,16 @@ import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
 public class FilterCriteriaView extends VerticalLayout {
 
   private final NameSpacesComboBox ns;
-  private final FactCriteria factCriteria;
   private final MultiSelectComboBox<String> type;
   private final TextField aggId = new AggregateIdField();
   private final MetaButton metaButton;
 
+  @Getter private final FactCriteria factCriteria;
+
   FilterCriteriaView(
       @NonNull FactRepository repo,
-      BeanValidationUrlStateBinder<FullQueryBean> binder,
-      FactCriteria factCriteria) {
+      @NonNull BeanValidationUrlStateBinder<FullQueryBean> binder,
+      @NonNull FactCriteria factCriteria) {
     ns = new NameSpacesComboBox(repo.namespaces(null));
     this.factCriteria = factCriteria;
     type =
