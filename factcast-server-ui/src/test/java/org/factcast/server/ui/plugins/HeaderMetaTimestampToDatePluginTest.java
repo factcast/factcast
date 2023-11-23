@@ -15,11 +15,10 @@
  */
 package org.factcast.server.ui.plugins;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.time.ZoneId;
-import java.util.*;
+import java.util.TimeZone;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.junit.jupiter.api.Nested;
@@ -58,7 +57,7 @@ class HeaderMetaTimestampToDatePluginTest {
         underTest.doHandle(fact, payload, jsonEntryMetaData);
 
         verify(jsonEntryMetaData)
-            .annotateHeader(eq("$.meta._ts"), eq("1970-01-01T01:00:01.001+01:00[Europe/Paris]"));
+            .annotateHeader("$.meta._ts", "1970-01-01T01:00:01.001+01:00[Europe/Paris]");
       } finally {
         TimeZone.setDefault(oldDefault);
       }
