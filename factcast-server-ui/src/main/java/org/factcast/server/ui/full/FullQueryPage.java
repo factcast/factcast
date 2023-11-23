@@ -16,13 +16,9 @@
 package org.factcast.server.ui.full;
 
 import com.vaadin.componentfactory.Popup;
-import com.vaadin.flow.component.HasValue.ValueChangeEvent;
-import com.vaadin.flow.component.HasValue.ValueChangeListener;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.combobox.ComboBox;
-import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -31,15 +27,13 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.Autocomplete;
 import com.vaadin.flow.component.textfield.BigDecimalField;
 import com.vaadin.flow.component.textfield.IntegerField;
-import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.ValidationException;
-import com.vaadin.flow.data.converter.StringToUuidConverter;
-import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.router.*;
 import jakarta.annotation.security.PermitAll;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.List;
+import java.util.OptionalLong;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
@@ -69,14 +63,10 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
   private final FullQueryBean formBean;
 
   // fields
-  private final ComboBox<String> ns;
-  private final MultiSelectComboBox<String> type;
-  private final MetaButton metaButton;
   private final DatePicker since = new DatePicker("First Serial of Day");
   private final IntegerField limit = new IntegerField("Limit");
   private final IntegerField offset = new IntegerField("Offset");
   private final BigDecimalField from = new BigDecimalField("Starting Serial");
-  private final TextField aggId = new AggregateIdField();
   private final Popup serialHelperOverlay = new Popup();
   private final JsonView jsonView = new JsonView();
 
@@ -84,6 +74,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
   private final FactRepository repo;
 
   private final JsonViewPluginService jsonViewPluginService;
+  private final FilterCriteriaViews factCriteriaViews = new FilterCriteriaViews();
 
   public FullQueryPage(
       @NonNull FactRepository repo, @NonNull JsonViewPluginService jsonViewPluginService) {
@@ -95,62 +86,39 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
 
     formBean = new FullQueryBean(repo.latestSerial());
 
-    ns = new NameSpacesComboBox(repo.namespaces(null));
-    type = new TypesMultiSelectComboBox();
-
     serialHelperOverlay.setTarget(from.getElement());
     from.setAutocomplete(Autocomplete.OFF);
-
     since.addValueChangeListener(e -> updateFrom());
 
-    ns.addValueChangeListener(new ValueChangeEventValueChangeListener());
-
     binder = createBinding();
+    factCriteriaViews.add(new FilterCriteriaView(repo, binder, formBean.getCriteria().get(0)));
 
-    final var nsAndTypeFilter = new HorizontalLayout(ns, type);
-    nsAndTypeFilter.setWidthFull();
-
-    metaButton = new MetaButton(formBean);
-    final var aggIdAndMeta = new HorizontalLayout(aggId, metaButton);
-    aggIdAndMeta.setWidthFull();
-    aggIdAndMeta.setAlignItems(Alignment.BASELINE);
-
-    final var form = new FormContent(nsAndTypeFilter, aggIdAndMeta, new FromPanel(), formButtons());
+    final var form = new FormContent(factCriteriaViews, new FromPanel(), formButtons());
 
     add(form);
     add(jsonView);
     add(serialHelperOverlay);
 
-    updateTypeState();
     updateFrom();
   }
 
   private BeanValidationUrlStateBinder<FullQueryBean> createBinding() {
     var b = new BeanValidationUrlStateBinder<>(FullQueryBean.class);
-    b.forField(ns).withNullRepresentation("").asRequired().bind("ns");
-    b.forField(type).withNullRepresentation(new HashSet<>()).bind("type");
     b.forField(from).withNullRepresentation(BigDecimal.ZERO).bind("from");
     b.forField(since).bind("since");
     b.forField(limit).withNullRepresentation(FullQueryBean.DEFAULT_LIMIT).bind("limit");
     b.forField(offset).withNullRepresentation(0).bind("offset");
-    b.forField(aggId)
-        .withNullRepresentation("")
-        .withConverter(new StringToUuidConverter("not a uuid"))
-        .bind("aggId");
+
     b.readBean(formBean);
     return b;
-  }
-
-  private void updateTypeState() {
-    type.setEnabled(!ns.isEmpty());
   }
 
   @Override
   public void setParameter(BeforeEvent event, @OptionalParameter String parameter) {
     final var location = event.getLocation();
+    // TODO handle list
     binder.readFromQueryParams(location.getQueryParameters(), formBean);
-    updateTypeState();
-    metaButton.update();
+    factCriteriaViews.updateState();
   }
 
   private void updateFrom() {
@@ -207,7 +175,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
         event -> {
           try {
             binder.writeBean(formBean);
-            log.debug("{} runs query for {}", getLogggedInUserName(), formBean);
+            log.info("{} runs query for {}", getLogggedInUserName(), formBean);
             List<Fact> dataFromStore = repo.fetchChunk(formBean);
             JsonViewEntries processedByPlugins = jsonViewPluginService.process(dataFromStore);
             jsonView.renderFacts(processedByPlugins);
@@ -225,8 +193,9 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
         event -> {
           formBean.reset();
           binder.readBean(formBean);
-          formBean.getMeta().clear();
-          metaButton.update();
+          factCriteriaViews.clear();
+          factCriteriaViews.add(
+              new FilterCriteriaView(repo, binder, formBean.getCriteria().get(0)));
         });
 
     final var hl = new HorizontalLayout(queryBtn, resetBtn);
@@ -243,49 +212,6 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     } catch (Exception e) {
       log.warn("Cannot retrieve logged in user");
       return "UNKNOWN";
-    }
-  }
-
-  @NoCoverageReportToBeGenerated
-  static class NameSpacesComboBox extends ComboBox<String> {
-    public NameSpacesComboBox(Collection<String> items) {
-      super("Namespace");
-      setItems(DataProvider.ofCollection(items));
-      setAutoOpen(true);
-      setAutofocus(true);
-      getStyle().set("--vaadin-combo-box-overlay-width", "16em");
-    }
-  }
-
-  @NoCoverageReportToBeGenerated
-  static class TypesMultiSelectComboBox extends MultiSelectComboBox<String> {
-    public TypesMultiSelectComboBox() {
-      super("Types", Collections.emptyList());
-      setWidthFull();
-    }
-  }
-
-  @NoCoverageReportToBeGenerated
-  static class AggregateIdField extends TextField {
-    public AggregateIdField() {
-      super("aggregate-id");
-      setLabel("Aggregate-ID");
-      setWidth("100%");
-    }
-  }
-
-  @NoCoverageReportToBeGenerated
-  private class ValueChangeEventValueChangeListener
-      implements ValueChangeListener<ValueChangeEvent<?>> {
-
-    @Override
-    public void valueChanged(ValueChangeEvent<?> event) {
-      updateTypeState();
-      if (ns.isEmpty()) {
-        type.setValue(new HashSet<>());
-      } else {
-        type.setItems(repo.types(ns.getValue(), null));
-      }
     }
   }
 }

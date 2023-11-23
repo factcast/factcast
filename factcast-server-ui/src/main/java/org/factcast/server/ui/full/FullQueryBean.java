@@ -16,13 +16,14 @@
 package org.factcast.server.ui.full;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.collect.Lists;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
@@ -42,12 +43,9 @@ public class FullQueryBean implements Serializable {
   @Min(0)
   private Integer offset = null;
 
-  @NotNull private String ns;
+  private List<FactCriteria> criteria = Lists.newArrayList(new FactCriteria());
 
-  private Set<String> type = null;
   // currently not possible to filter on more than one aggId via api
-  private UUID aggId = null;
-  private List<MetaTuple> meta = new LinkedList<>();
   private BigDecimal from = null;
 
   FullQueryBean(long startingSerial) {
@@ -57,34 +55,9 @@ public class FullQueryBean implements Serializable {
 
   @NonNull
   public List<FactSpec> createFactSpecs() {
-    if (type != null) {
-      return type.stream()
-          .map(
-              t -> {
-                FactSpec fs = FactSpec.ns(ns).type(t);
-
-                if (aggId != null) {
-                  fs.aggId(aggId);
-                }
-
-                if (!meta.isEmpty()) {
-                  meta.forEach(m -> fs.meta(m.getKey(), m.getValue()));
-                }
-                return fs;
-              })
-          .toList();
-    } else if (ns == null) {
-      throw new IllegalArgumentException("You need at least a namespace to query");
-    } else {
-      FactSpec fs = FactSpec.ns(ns);
-      if (aggId != null) {
-        fs.aggId(aggId);
-      }
-      if (!meta.isEmpty()) {
-        meta.forEach(m -> fs.meta(m.getKey(), m.getValue()));
-      }
-      return Collections.singletonList(fs);
-    }
+    List<FactSpec> factSpecList = criteria.stream().flatMap(FactCriteria::createFactSpecs).toList();
+    System.err.println("crit: " + factSpecList);
+    return factSpecList;
   }
 
   @SuppressWarnings("java:S2637") // settings ns to null is intended
@@ -92,11 +65,8 @@ public class FullQueryBean implements Serializable {
     since = LocalDate.now();
     limit = null;
     offset = null;
+    criteria = Lists.newArrayList(new FactCriteria());
 
-    ns = null;
-    type = null;
-    aggId = null;
-    meta.clear();
     from = null;
     from = BigDecimal.valueOf(defaultFrom);
   }
