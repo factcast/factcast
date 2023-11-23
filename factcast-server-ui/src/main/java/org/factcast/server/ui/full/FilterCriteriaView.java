@@ -20,9 +20,12 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.converter.StringToUuidConverter;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.server.ui.port.FactRepository;
@@ -35,13 +38,16 @@ public class FilterCriteriaView extends VerticalLayout {
   private final TextField aggId = new AggregateIdField();
   private final MetaButton metaButton;
 
+  private final BeanValidationUrlStateBinder<FullQueryBean> binder;
   @Getter private final FactCriteria factCriteria;
+  private List<Binder.Binding<FullQueryBean, ?>> bindings = new ArrayList<>();
 
   FilterCriteriaView(
       @NonNull FactRepository repo,
       @NonNull BeanValidationUrlStateBinder<FullQueryBean> binder,
       @NonNull FactCriteria factCriteria) {
     ns = new NameSpacesComboBox(repo.namespaces(null));
+    this.binder = binder;
     this.factCriteria = factCriteria;
     type =
         new MultiSelectComboBox<String>("Types", Collections.emptyList()) {
@@ -76,18 +82,20 @@ public class FilterCriteriaView extends VerticalLayout {
   }
 
   private void bind(BeanValidationUrlStateBinder<FullQueryBean> b) {
-
-    b.forField(ns)
-        .withNullRepresentation("")
-        .asRequired()
-        .bind(ignored -> factCriteria.getNs(), (ignored, v) -> factCriteria.setNs(v));
-    b.forField(type)
-        .withNullRepresentation(new HashSet<>())
-        .bind(ignored -> factCriteria.getType(), (ignored, v) -> factCriteria.setType(v));
-    b.forField(aggId)
-        .withNullRepresentation("")
-        .withConverter(new StringToUuidConverter("not a uuid"))
-        .bind(ignored -> factCriteria.getAggId(), (ignored, v) -> factCriteria.setAggId(v));
+    bindings.add(
+        b.forField(ns)
+            .withNullRepresentation("")
+            .asRequired()
+            .bind(ignored -> factCriteria.getNs(), (ignored, v) -> factCriteria.setNs(v)));
+    bindings.add(
+        b.forField(type)
+            .withNullRepresentation(new HashSet<>())
+            .bind(ignored -> factCriteria.getType(), (ignored, v) -> factCriteria.setType(v)));
+    bindings.add(
+        b.forField(aggId)
+            .withNullRepresentation("")
+            .withConverter(new StringToUuidConverter("not a uuid"))
+            .bind(ignored -> factCriteria.getAggId(), (ignored, v) -> factCriteria.setAggId(v)));
   }
 
   private void updateTypeState() {
@@ -102,5 +110,9 @@ public class FilterCriteriaView extends VerticalLayout {
   public void reset() {
     factCriteria.reset();
     updateTypeState();
+  }
+
+  public void removeBindings() {
+    bindings.forEach(binder::removeBinding);
   }
 }
