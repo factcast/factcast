@@ -29,6 +29,9 @@ import org.factcast.core.spec.FactSpec;
 @Data
 @Accessors(fluent = false, chain = false)
 public class FactCriteria implements Serializable {
+
+  private UUID id = UUID.randomUUID();
+
   @NotNull private String ns;
 
   private Set<String> type = null;

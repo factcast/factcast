@@ -78,6 +78,7 @@ public class FilterCriteriaViews extends VerticalLayout {
   private void removeCondition(@NonNull FilterCriteriaView v) {
     v.getParent().ifPresent(this::remove); // it was wrapped by a container
     v.removeBindings();
+    System.err.println("removing " + v.factCriteria().getId().toString());
   }
 
   private void removeConditionAndBackingBean(@NonNull FilterCriteriaView v) {

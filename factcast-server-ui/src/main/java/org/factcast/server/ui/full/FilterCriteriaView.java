@@ -15,6 +15,7 @@
  */
 package org.factcast.server.ui.full;
 
+import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -70,7 +71,7 @@ public class FilterCriteriaView extends VerticalLayout {
     aggIdAndMeta.setWidthFull();
     aggIdAndMeta.setAlignItems(FlexComponent.Alignment.BASELINE);
 
-    add(nsAndTypeFilter, aggIdAndMeta);
+    add(new Text(factCriteria.getId().toString()), nsAndTypeFilter, aggIdAndMeta);
 
     bind(binder);
     updateTypeState();
