@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.7.1-SNAPSHOT</version>
+    <version>0.7.3-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <properties>
@@ -132,7 +132,7 @@
       <groupId>com.fasterxml.jackson.module</groupId>
       <artifactId>jackson-module-kotlin</artifactId>
       <!-- even though all other modules are avail for 2.13.2, this one is missing -->
-      <version>2.15.3</version>
+      <version>2.16.0</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
@@ -163,7 +163,7 @@
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-      <version>2.14.0</version>
+      <version>2.15.0</version>
     </dependency>
     <dependency>
       <groupId>commons-codec</groupId>
@@ -293,7 +293,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
-        <version>3.1.0</version>
+        <version>3.1.1</version>
         <executions>
           <execution>
             <id>build</id>
@@ -368,12 +368,12 @@
                 <annotationProcessorPath>
                   <groupId>io.micronaut</groupId>
                   <artifactId>micronaut-inject-java</artifactId>
-                  <version>4.1.10</version>
+                  <version>4.1.11</version>
                 </annotationProcessorPath>
                 <annotationProcessorPath>
                   <groupId>io.micronaut.validation</groupId>
                   <artifactId>micronaut-validation-processor</artifactId>
-                  <version>4.0.3</version>
+                  <version>4.1.0</version>
                 </annotationProcessorPath>
               </annotationProcessorPaths>
             </configuration>
@@ -407,12 +407,12 @@
                 <annotationProcessorPath>
                   <groupId>io.micronaut</groupId>
                   <artifactId>micronaut-inject-java</artifactId>
-                  <version>4.1.10</version>
+                  <version>4.1.11</version>
                 </annotationProcessorPath>
                 <annotationProcessorPath>
                   <groupId>io.micronaut.validation</groupId>
                   <artifactId>micronaut-validation-processor</artifactId>
-                  <version>4.0.3</version>
+                  <version>4.1.0</version>
                 </annotationProcessorPath>
               </annotationProcessorPaths>
             </configuration>
