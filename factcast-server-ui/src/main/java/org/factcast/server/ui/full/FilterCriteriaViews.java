@@ -112,7 +112,7 @@ public class FilterCriteriaViews extends VerticalLayout {
     hl.setPadding(false);
     hl.addClassNames(
         LumoUtility.Border.BOTTOM,
-        LumoUtility.BorderColor.CONTRAST_10,
+        LumoUtility.BorderColor.CONTRAST_5,
         LumoUtility.Padding.Bottom.MEDIUM);
 
     return hl;
