@@ -114,6 +114,7 @@ class JsonView extends LitElement {
 			minimap: { enabled: false },
 			theme: "vs",
 			fontLigatures: "",
+			automaticLayout: true,
 		});
 	}
 
@@ -218,13 +219,11 @@ class JsonView extends LitElement {
 		css`
 			:host {
 				width: 100%;
-				height: 100%;
 				flex-grow: 1;
 				display: flex;
 			}
 
 			#monaco-editor {
-				height: 100%;
 				flex-grow: 1;
 				width: 100%;
 				border: 1px solid var(--lumo-contrast-20pct);
