@@ -24,4 +24,16 @@ import lombok.experimental.Accessors;
 public class MetaTuple {
   @NotNull String key;
   @NotNull String value;
+
+  /** must match for referential equality only */
+  @Override
+  public boolean equals(Object o) {
+    return this == o;
+  }
+
+  /** see equals(Object) */
+  @Override
+  public int hashCode() {
+    return 1;
+  }
 }
