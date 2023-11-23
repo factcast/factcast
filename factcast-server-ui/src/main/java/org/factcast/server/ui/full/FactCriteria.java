@@ -17,10 +17,7 @@ package org.factcast.server.ui.full;
 
 import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Stream;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -64,5 +61,15 @@ public class FactCriteria implements Serializable {
       }
       return Stream.of(fs);
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return this == o;
+  }
+
+  @Override
+  public int hashCode() {
+    return 1;
   }
 }
