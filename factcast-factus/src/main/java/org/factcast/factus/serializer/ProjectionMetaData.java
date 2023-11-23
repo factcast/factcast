@@ -25,15 +25,34 @@ import lombok.experimental.UtilityClass;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
+@SuppressWarnings("java:S1133")
 public @interface ProjectionMetaData {
   String name() default "";
 
-  long serial();
+  /**
+   * use revision instead. Will be removed in 0.8
+   *
+   * @deprecated
+   */
+  @Deprecated
+  long serial() default 0;
+
+  /** will be made required as soon as serial() is removed */
+  long revision() default Long.MIN_VALUE;
 
   @UtilityClass
   class Resolver {
     public static Optional<ProjectionMetaData> resolveFor(@NonNull Class<?> clazz) {
       return Optional.ofNullable(clazz.getAnnotation(ProjectionMetaData.class));
+    }
+  }
+
+  @UtilityClass
+  @SuppressWarnings({"java:S1874"})
+  class Revision {
+    public static long get(ProjectionMetaData ann) {
+      if (ann.revision() == Long.MIN_VALUE) return ann.serial();
+      else return ann.revision();
     }
   }
 }

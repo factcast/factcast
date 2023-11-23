@@ -26,7 +26,7 @@ import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.factus.event.UserCreated;
 
 @Slf4j
-@ProjectionMetaData(serial = 1)
+@ProjectionMetaData(revision = 1)
 public class LocalUserNamesFilterByScript extends LocalManagedProjection {
   ConcurrentHashMap<UUID, String> map = new ConcurrentHashMap<>();
 
