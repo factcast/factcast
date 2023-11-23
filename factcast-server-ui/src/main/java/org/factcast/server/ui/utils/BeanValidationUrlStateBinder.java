@@ -27,9 +27,11 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.function.UnaryOperator;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.util.NoCoverageReportToBeGenerated;
 import org.springframework.web.util.UriComponentsBuilder;
 
+@Slf4j
 @NoCoverageReportToBeGenerated
 public class BeanValidationUrlStateBinder<T> extends BeanValidationBinder<T> {
   public static final String STATE = "state";
@@ -67,7 +69,8 @@ public class BeanValidationUrlStateBinder<T> extends BeanValidationBinder<T> {
         om.readerForUpdating(bean).readValue(parametersMap.get(STATE).get(0));
         readBean(bean);
       } catch (JsonProcessingException e) {
-        // do nothing
+        // ignore
+        log.warn("ignoring passed in parameters due to:", e);
       }
     }
   }

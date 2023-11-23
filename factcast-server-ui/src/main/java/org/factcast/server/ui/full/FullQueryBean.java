@@ -16,6 +16,7 @@
 package org.factcast.server.ui.full;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.collect.Lists;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -32,9 +33,11 @@ import org.factcast.core.spec.FactSpec;
 @Data
 @SuppressWarnings("java:S1948")
 @Accessors(fluent = false, chain = false)
+@JsonIgnoreProperties("since")
 public class FullQueryBean implements Serializable {
   public static final int DEFAULT_LIMIT = 50;
   private final long defaultFrom;
+
   private LocalDate since = LocalDate.now();
 
   @Max(1000)
@@ -43,7 +46,7 @@ public class FullQueryBean implements Serializable {
   @Min(0)
   private Integer offset = null;
 
-  private List<FactCriteria> criteria = Lists.newArrayList();
+  private List<FactCriteria> criteria = Lists.newArrayList(new FactCriteria());
 
   // currently not possible to filter on more than one aggId via api
   private BigDecimal from = null;
@@ -55,9 +58,7 @@ public class FullQueryBean implements Serializable {
 
   @NonNull
   public List<FactSpec> createFactSpecs() {
-    List<FactSpec> factSpecList = criteria.stream().flatMap(FactCriteria::createFactSpecs).toList();
-    System.err.println("crit: " + factSpecList);
-    return factSpecList;
+    return criteria.stream().flatMap(FactCriteria::createFactSpecs).toList();
   }
 
   @SuppressWarnings("java:S2637") // settings ns to null is intended

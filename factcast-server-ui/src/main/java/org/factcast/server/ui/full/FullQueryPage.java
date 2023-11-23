@@ -17,6 +17,7 @@ package org.factcast.server.ui.full;
 
 import com.vaadin.componentfactory.Popup;
 import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datepicker.DatePicker;
@@ -93,7 +94,12 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     binder = createBinding();
 
     factCriteriaViews = new FilterCriteriaViews(repo, binder, formBean);
-    final var form = new FormContent(factCriteriaViews, new FromPanel(), formButtons());
+
+    final var accordion = new Accordion();
+    accordion.setWidthFull();
+    accordion.add("Conditions", factCriteriaViews);
+
+    final var form = new FormContent(accordion, new FromPanel(), formButtons());
 
     add(form);
     add(jsonView);
@@ -116,9 +122,9 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
   @Override
   public void setParameter(BeforeEvent event, @OptionalParameter String parameter) {
     final var location = event.getLocation();
-    // TODO handle list
+
     binder.readFromQueryParams(location.getQueryParameters(), formBean);
-    factCriteriaViews.updateState();
+    factCriteriaViews.rebuild();
   }
 
   private void updateFrom() {
@@ -193,7 +199,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
         event -> {
           formBean.reset();
           binder.readBean(formBean);
-          factCriteriaViews.reset();
+          factCriteriaViews.rebuild();
         });
 
     final var hl = new HorizontalLayout(queryBtn, resetBtn);
