@@ -47,6 +47,8 @@ public class FilterCriteriaView extends VerticalLayout {
       @NonNull FactRepository repo,
       @NonNull BeanValidationUrlStateBinder<FullQueryBean> binder,
       @NonNull FactCriteria factCriteria) {
+    setSpacing(false);
+
     ns = new NameSpacesComboBox(repo.namespaces(null));
     this.binder = binder;
     this.factCriteria = factCriteria;
