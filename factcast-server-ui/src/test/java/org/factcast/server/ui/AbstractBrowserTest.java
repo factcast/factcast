@@ -30,12 +30,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest(
     classes = ExampleUiServer.class,
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Testcontainers
 @IntegrationTest
 public abstract class AbstractBrowserTest {
   @LocalServerPort protected int port;
