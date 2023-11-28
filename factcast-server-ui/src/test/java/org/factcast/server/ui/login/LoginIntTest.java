@@ -18,7 +18,7 @@ package org.factcast.server.ui.login;
 import org.factcast.server.ui.AbstractBrowserTest;
 import org.junit.jupiter.api.Test;
 
-public class LoginIntTest extends AbstractBrowserTest {
+class LoginIntTest extends AbstractBrowserTest {
 
   @Test
   void loginWorks() {
