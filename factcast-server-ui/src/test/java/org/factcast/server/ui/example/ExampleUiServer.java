@@ -19,6 +19,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.server.security.CommonSecurityConfiguration;
+import org.factcast.server.ui.DbTestConfiguration;
 import org.factcast.server.ui.config.SecurityConfiguration;
 import org.factcast.server.ui.config.UIConfiguration;
 import org.factcast.server.ui.plugins.JsonEntryMetaData;
@@ -27,12 +28,10 @@ import org.factcast.server.ui.plugins.JsonViewPlugin;
 import org.factcast.store.PgFactStoreConfiguration;
 import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.script.graaljs.GraalJSEngineFactory;
-import org.postgresql.Driver;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.testcontainers.containers.PostgreSQLContainer;
 
 @Slf4j
 @SpringBootApplication
@@ -40,7 +39,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
   UIConfiguration.class,
   SecurityConfiguration.class,
   PgFactStoreConfiguration.class,
-  CommonSecurityConfiguration.class
+  CommonSecurityConfiguration.class,
+  DbTestConfiguration.class
 })
 public class ExampleUiServer {
   @Bean
@@ -103,19 +103,6 @@ public class ExampleUiServer {
   }
 
   public static void main(String[] args) {
-    startPostgresContainer();
-
     SpringApplication.run(ExampleUiServer.class, args);
-  }
-
-  private static void startPostgresContainer() {
-    log.info("Trying to start postgres testcontainer");
-    PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15.2");
-    postgres.start();
-    String url = postgres.getJdbcUrl();
-    System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
-    System.setProperty("spring.datasource.url", url);
-    System.setProperty("spring.datasource.username", postgres.getUsername());
-    System.setProperty("spring.datasource.password", postgres.getPassword());
   }
 }
