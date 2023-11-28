@@ -19,9 +19,8 @@ import static org.assertj.core.api.Assertions.*;
 
 import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.AriaRole;
+import com.microsoft.playwright.options.LoadState;
 import jakarta.annotation.Nullable;
-import java.util.Collection;
-import lombok.NonNull;
 import org.factcast.server.ui.example.ExampleUiServer;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.AfterAll;
@@ -87,49 +86,7 @@ public abstract class AbstractBrowserTest {
 
   protected void navigateTo(@Nullable String path) {
     page.navigate(String.join("", "http://localhost:" + port, path));
-  }
-
-  protected void selectNamespace(@NonNull String ns) {
-    selectNamespace(ns, 0);
-  }
-
-  protected void selectNamespace(@NonNull String ns, int index) {
-    page.getByLabel("Namespace").nth(index).click();
-
-    final var attr =
-        page.locator("#namespace-selector")
-            .nth(index)
-            .locator("input")
-            .getAttribute("aria-controls");
-
-    final var options = page.locator("#" + attr);
-    options.waitFor();
-    options.getByRole(AriaRole.OPTION, new Locator.GetByRoleOptions().setName(ns)).click();
-  }
-
-  protected void selectTypes(@NonNull Collection<String> types) {
-    selectTypes(types, 0);
-  }
-
-  protected void selectTypes(@NonNull Collection<String> types, int index) {
-    page.getByLabel("Types").nth(index).click();
-
-    final var input = page.locator("#types-selector").nth(index).locator("input");
-    final var attr = input.getAttribute("aria-controls");
-    final var options = page.locator("#" + attr);
-    options.waitFor();
-
-    types.forEach(
-        t -> options.getByRole(AriaRole.OPTION, new Locator.GetByRoleOptions().setName(t)).click());
-
-    input.blur();
-  }
-
-  protected Locator openSerialSelector() {
-    page.locator("#starting-serial > input").click();
-    final var dialog = page.getByRole(AriaRole.DIALOG);
-    dialog.waitFor();
-    return dialog;
+    page.waitForLoadState(LoadState.NETWORKIDLE);
   }
 
   protected void query() {

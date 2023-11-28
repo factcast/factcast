@@ -25,7 +25,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 public class DbTestConfiguration {
   @Bean
   @ServiceConnection
-  public PostgreSQLContainer<?> neo4jContainer() {
+  public PostgreSQLContainer<?> pgContainer() {
     return new PostgreSQLContainer<>("postgres:" + PostgresVersion.get()).withReuse(true);
   }
 }
