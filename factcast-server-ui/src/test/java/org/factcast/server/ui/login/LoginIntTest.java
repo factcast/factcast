@@ -15,6 +15,8 @@
  */
 package org.factcast.server.ui.login;
 
+import static org.assertj.core.api.Assertions.*;
+
 import org.factcast.server.ui.AbstractBrowserTest;
 import org.junit.jupiter.api.Test;
 
@@ -23,5 +25,7 @@ class LoginIntTest extends AbstractBrowserTest {
   @Test
   void loginWorks() {
     login();
+
+    assertThat(page.waitForSelector("h2").innerText()).contains("Query");
   }
 }
