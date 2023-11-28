@@ -27,7 +27,7 @@ import lombok.NonNull;
 import org.factcast.server.ui.AbstractBrowserTest;
 import org.junit.jupiter.api.*;
 
-class FullQueryIntTest extends AbstractBrowserTest {
+class FullQueryPageIntTest extends AbstractBrowserTest {
   @BeforeEach
   void setUp() {
     login();

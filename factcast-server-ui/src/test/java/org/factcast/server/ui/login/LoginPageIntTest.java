@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.*;
 import org.factcast.server.ui.AbstractBrowserTest;
 import org.junit.jupiter.api.Test;
 
-class LoginIntTest extends AbstractBrowserTest {
+class LoginPageIntTest extends AbstractBrowserTest {
 
   @Test
   void loginWorks() {
