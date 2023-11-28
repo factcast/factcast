@@ -81,6 +81,8 @@ public abstract class AbstractBrowserTest {
 
     page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Log in")).click();
 
+    page.waitForLoadState(LoadState.NETWORKIDLE);
+
     assertThat(page.waitForSelector("h2").innerText()).contains("Query");
   }
 
@@ -95,5 +97,6 @@ public abstract class AbstractBrowserTest {
 
   protected void query() {
     page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Query")).click();
+    page.waitForLoadState(LoadState.NETWORKIDLE);
   }
 }
