@@ -21,6 +21,7 @@ import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
 import jakarta.annotation.Nullable;
+import java.util.regex.Pattern;
 import org.factcast.server.ui.example.ExampleUiServer;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.AfterAll;
@@ -82,8 +83,7 @@ public abstract class AbstractBrowserTest {
     page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Log in")).click();
 
     page.waitForLoadState(LoadState.NETWORKIDLE);
-
-    assertThat(page.waitForSelector("h2").innerText()).contains("Query");
+    page.waitForURL(Pattern.compile(".*\\?continue.*"));
   }
 
   protected void navigateTo(@Nullable String path) {
