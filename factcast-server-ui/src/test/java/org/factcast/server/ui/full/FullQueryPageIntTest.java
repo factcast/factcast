@@ -51,8 +51,8 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
 
       query();
 
-      assertThat(page.getByRole(AriaRole.CODE)).containsText(USER1_EVENT_ID.toString());
-      assertThat(page.getByRole(AriaRole.CODE)).containsText(USER2_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER1_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
     }
 
     @Test
@@ -63,7 +63,7 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
 
       query();
 
-      assertThat(page.getByRole(AriaRole.CODE)).containsText(USER2_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
     }
 
     @Test
@@ -75,7 +75,7 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
 
       query();
 
-      assertThat(page.getByRole(AriaRole.CODE)).containsText(USER1_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER1_EVENT_ID.toString());
     }
 
     @Test
@@ -86,7 +86,7 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
 
       query();
 
-      assertThat(page.getByRole(AriaRole.CODE)).containsText(USER1_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER1_EVENT_ID.toString());
     }
 
     @Test
@@ -97,7 +97,7 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
 
       query();
 
-      assertThat(page.getByRole(AriaRole.CODE)).containsText(USER2_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
     }
 
     @Test
@@ -108,8 +108,8 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
 
       query();
 
-      assertThat(page.getByRole(AriaRole.CODE)).not().containsText(USER1_EVENT_ID.toString());
-      assertThat(page.getByRole(AriaRole.CODE)).not().containsText(USER2_EVENT_ID.toString());
+      assertThat(jsonView()).not().containsText(USER1_EVENT_ID.toString());
+      assertThat(jsonView()).not().containsText(USER2_EVENT_ID.toString());
     }
 
     private void assertMetaCount(int count) {
@@ -137,8 +137,8 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
 
       query();
 
-      assertThat(page.getByRole(AriaRole.CODE)).containsText(USER1_EVENT_ID.toString());
-      assertThat(page.getByRole(AriaRole.CODE)).containsText(USER2_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER1_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
     }
 
     @Test
@@ -155,8 +155,8 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
 
       query();
 
-      assertThat(page.getByRole(AriaRole.CODE)).containsText(USER1_EVENT_ID.toString());
-      assertThat(page.getByRole(AriaRole.CODE)).containsText(USER2_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER1_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
     }
 
     private void addNewCondition() {

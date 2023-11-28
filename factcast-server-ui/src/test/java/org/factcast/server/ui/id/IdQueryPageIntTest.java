@@ -19,7 +19,6 @@ import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertTha
 import static org.factcast.server.ui.example.EventInitializer.*;
 
 import com.microsoft.playwright.*;
-import com.microsoft.playwright.options.AriaRole;
 import java.util.UUID;
 import lombok.NonNull;
 import org.factcast.server.ui.AbstractBrowserTest;
@@ -40,7 +39,7 @@ class IdQueryPageIntTest extends AbstractBrowserTest {
 
       query();
 
-      assertThat(page.getByRole(AriaRole.CODE)).containsText(USER1_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER1_EVENT_ID.toString());
     }
 
     @Test
@@ -50,9 +49,9 @@ class IdQueryPageIntTest extends AbstractBrowserTest {
 
       query();
 
-      assertThat(page.getByRole(AriaRole.CODE)).containsText(USER1_EVENT_ID.toString());
-      assertThat(page.getByRole(AriaRole.CODE)).containsText("displayName");
-      assertThat(page.getByRole(AriaRole.CODE)).containsText("Peter Lustig");
+      assertThat(jsonView()).containsText(USER1_EVENT_ID.toString());
+      assertThat(jsonView()).containsText("displayName");
+      assertThat(jsonView()).containsText("Peter Lustig");
     }
   }
 

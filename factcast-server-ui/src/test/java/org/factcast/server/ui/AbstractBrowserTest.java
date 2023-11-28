@@ -89,6 +89,10 @@ public abstract class AbstractBrowserTest {
     page.waitForLoadState(LoadState.NETWORKIDLE);
   }
 
+  protected Locator jsonView() {
+    return page.getByRole(AriaRole.CODE);
+  }
+
   protected void query() {
     page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Query")).click();
   }
