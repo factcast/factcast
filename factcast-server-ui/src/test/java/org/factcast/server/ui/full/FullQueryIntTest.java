@@ -23,7 +23,7 @@ import java.util.List;
 import org.factcast.server.ui.AbstractBrowserTest;
 import org.junit.jupiter.api.*;
 
-public class FullQueryIntTest extends AbstractBrowserTest {
+class FullQueryIntTest extends AbstractBrowserTest {
 
   @Test
   void queryByNamespaceAndTypeFromScratch() {
