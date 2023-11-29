@@ -15,7 +15,7 @@
  */
 package org.factcast.server.ui;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
 import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.AriaRole;
@@ -24,7 +24,6 @@ import jakarta.annotation.Nullable;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.server.ui.example.ExampleUiServer;
 import org.factcast.test.IntegrationTest;
@@ -111,21 +110,19 @@ public abstract class AbstractBrowserTest {
   protected void login() {
     navigateTo("/login");
 
-    assertThat(page.waitForSelector("h1").innerText()).contains("FactCast Server UI");
+    assertThat(page.locator("h2")).hasText("Log in");
 
     page.getByLabel("Username").fill("admin");
     page.getByLabel("Password").first().fill("security_disabled");
 
     page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Log in")).click();
 
-    page.waitForURL(Pattern.compile(".*\\?continue.*"));
+    assertThat(page.locator("h2")).hasText("Query");
     waitForLoadState();
-    assertThat(page.waitForSelector("h2").innerText()).contains("Query");
   }
 
   protected void navigateTo(@Nullable String path) {
     page.navigate(String.join("", "http://localhost:" + port, path));
-    page.waitForURL("**" + path + "**");
     waitForLoadState();
   }
 
