@@ -48,10 +48,15 @@ public class FilterCriteriaView extends VerticalLayout {
       @NonNull BeanValidationUrlStateBinder<FullQueryBean> binder,
       @NonNull FactCriteria factCriteria) {
     ns = new NameSpacesComboBox(repo.namespaces(null));
+    ns.setId("namespace-selector");
+
     this.binder = binder;
     this.factCriteria = factCriteria;
     type = new MultiSelectComboBox<>("Types", Collections.emptyList());
     type.setWidthFull();
+    type.setId("types-selector");
+    type.setEnabled(false);
+
     ns.addValueChangeListener(
         event -> {
           updateTypeState();
@@ -98,7 +103,7 @@ public class FilterCriteriaView extends VerticalLayout {
   }
 
   private void updateTypeState() {
-    type.setEnabled(!ns.isEmpty());
+    type.setEnabled(!ns.isEmpty() && !ns.getValue().isEmpty());
   }
 
   public void removeBindings() {
