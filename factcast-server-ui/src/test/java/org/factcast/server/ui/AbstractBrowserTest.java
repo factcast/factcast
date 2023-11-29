@@ -24,10 +24,7 @@ import jakarta.annotation.Nullable;
 import java.util.regex.Pattern;
 import org.factcast.server.ui.example.ExampleUiServer;
 import org.factcast.test.IntegrationTest;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.*;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
@@ -35,6 +32,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
     classes = ExampleUiServer.class,
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @IntegrationTest
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class AbstractBrowserTest {
   @LocalServerPort protected int port;
 
@@ -84,10 +82,12 @@ public abstract class AbstractBrowserTest {
 
     page.waitForURL(Pattern.compile(".*\\?continue.*"));
     waitForLoadState();
+    assertThat(page.waitForSelector("h2").innerText()).contains("Query");
   }
 
   protected void navigateTo(@Nullable String path) {
     page.navigate(String.join("", "http://localhost:" + port, path));
+    page.waitForURL("**" + path + "**");
     waitForLoadState();
   }
 
