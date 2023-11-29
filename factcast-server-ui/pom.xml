@@ -168,6 +168,34 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>${maven-failsafe-plugin.version}</version>
+        <configuration>
+          <groups>integration</groups>
+          <includes>
+            <include>*</include>
+          </includes>
+          <!--suppress UnresolvedMavenProperty -->
+          <forkCount>4</forkCount>
+          <reuseForks>false</reuseForks>
+          <argLine>${failsafe.jacoco.args}</argLine>
+          <systemPropertyVariables>
+            <postgres.version>${postgres.version}</postgres.version>
+            <factcast.version>${factcast.version}</factcast.version>
+          </systemPropertyVariables>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
   </build>
 </project>
