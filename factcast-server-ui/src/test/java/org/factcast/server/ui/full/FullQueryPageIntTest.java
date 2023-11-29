@@ -64,8 +64,6 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
       query();
 
       assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
-
-      page.screenshot();
     }
 
     @Test
