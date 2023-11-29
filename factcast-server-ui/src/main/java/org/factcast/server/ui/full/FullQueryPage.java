@@ -88,6 +88,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     formBean = new FullQueryBean(repo.latestSerial());
 
     serialHelperOverlay.setTarget(from.getElement());
+    from.setId("starting-serial");
     from.setAutocomplete(Autocomplete.OFF);
     since.addValueChangeListener(e -> updateFrom());
 
