@@ -30,8 +30,7 @@ import org.junit.jupiter.api.*;
 class FullQueryPageIntTest extends AbstractBrowserTest {
   @BeforeEach
   void setUp() {
-    login();
-    navigateTo("/ui/full");
+    loginFor("/ui/full");
   }
 
   @Nested
