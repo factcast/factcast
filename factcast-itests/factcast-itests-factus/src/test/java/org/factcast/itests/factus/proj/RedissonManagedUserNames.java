@@ -24,7 +24,7 @@ import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
 
 @Slf4j
-@ProjectionMetaData(serial = 1)
+@ProjectionMetaData(revision = 1)
 public class RedissonManagedUserNames extends AbstractRedisManagedProjection implements UserNames {
 
   @Getter private final RMap<UUID, String> userNames;

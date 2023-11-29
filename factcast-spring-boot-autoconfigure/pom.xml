@@ -101,6 +101,12 @@
       <artifactId>snappy-java</artifactId>
       <optional>true</optional>
     </dependency>
+    <dependency>
+      <groupId>org.redisson</groupId>
+      <artifactId>redisson-spring-boot-starter</artifactId>
+      <version>${redisson-spring-boot-starter.version}</version>
+      <optional>true</optional>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
