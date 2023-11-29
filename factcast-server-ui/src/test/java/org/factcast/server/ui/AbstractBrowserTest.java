@@ -15,13 +15,17 @@
  */
 package org.factcast.server.ui;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
 import jakarta.annotation.Nullable;
+import java.lang.reflect.Method;
+import java.nio.file.Path;
+import java.time.Duration;
 import java.util.regex.Pattern;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.server.ui.example.ExampleUiServer;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.*;
@@ -33,6 +37,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @IntegrationTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Slf4j
 public abstract class AbstractBrowserTest {
   @LocalServerPort protected int port;
 
@@ -46,8 +51,30 @@ public abstract class AbstractBrowserTest {
   @BeforeAll
   static void beforeAll() {
     playwright = Playwright.create();
-    browser = playwright.chromium().launch();
-    //    .launch(new BrowserType.LaunchOptions().setHeadless(false).setSlowMo(20));
+    var options = new BrowserType.LaunchOptions();
+
+    if (isRecordPropertySet() || isWatchPropertySet()) {
+      long millis = getSlowMotionSpeed().toMillis();
+      log.debug("Using " + millis + "ms delay between UI interactions");
+      options.setSlowMo(millis);
+    }
+
+    options.setHeadless(!isWatchPropertySet());
+    browser = playwright.chromium().launch(options);
+  }
+
+  private static Duration getSlowMotionSpeed() {
+    var watch = System.getProperty("ui.watch");
+    if (watch == null || watch.isBlank()) return Duration.ofMillis(500);
+    else return Duration.ofMillis(Long.parseLong(watch));
+  }
+
+  private static boolean isRecordPropertySet() {
+    return System.getProperty("ui.record") != null;
+  }
+
+  private static boolean isWatchPropertySet() {
+    return System.getProperty("ui.watch") != null;
   }
 
   @AfterAll
@@ -56,16 +83,29 @@ public abstract class AbstractBrowserTest {
   }
 
   @BeforeEach
-  void createContextAndPage() {
-    context =
-        browser.newContext(new Browser.NewContextOptions().setViewportSize(1600, 1200)); // new
-    // Browser.NewContextOptions().setRecordVideoDir(Path.of("target"))
+  void createContextAndPage(TestInfo info) {
+    Browser.NewContextOptions options = new Browser.NewContextOptions().setViewportSize(1600, 1200);
+    if (isRecordPropertySet()) {
+      String testPath =
+          "target/ui-recording/"
+              + info.getTestClass().map(this::retrieveClassName).orElse("Unknown")
+              + "_"
+              + info.getTestMethod().map(Method::getName).orElse("unknown");
+      log.debug("Recording into " + testPath);
+      options.setRecordVideoDir(Path.of(testPath));
+    }
+    context = browser.newContext(options);
     page = context.newPage();
+  }
+
+  private String retrieveClassName(Class<?> aClass) {
+    // we cannot use simpleName here due to nesting
+    return aClass.getCanonicalName().replace(aClass.getPackageName() + ".", "");
   }
 
   @AfterEach
   void closeContext() {
-    context.close();
+    context.close(); // needed for videos to be saved
   }
 
   protected void login() {
