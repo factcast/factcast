@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.factcast.server.ui.example.ExampleUiServer;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.*;
@@ -35,11 +36,12 @@ import org.springframework.boot.test.web.server.LocalServerPort;
     classes = ExampleUiServer.class,
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @IntegrationTest
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestInstance(TestInstance.Lifecycle.PER_METHOD)
 @Slf4j
 public abstract class AbstractBrowserTest {
   @LocalServerPort protected int port;
 
+  private static BrowserType.LaunchOptions options;
   private static Playwright playwright = null;
   private static Browser browser = null;
 
@@ -50,7 +52,7 @@ public abstract class AbstractBrowserTest {
   @BeforeAll
   static void beforeAll() {
     playwright = Playwright.create();
-    var options = new BrowserType.LaunchOptions();
+    options = new BrowserType.LaunchOptions();
 
     if (isRecordPropertySet() || isWatchPropertySet()) {
       long millis = getSlowMotionSpeed().toMillis();
@@ -59,12 +61,12 @@ public abstract class AbstractBrowserTest {
     }
 
     options.setHeadless(!isWatchPropertySet());
-    browser = playwright.chromium().launch(options);
   }
 
   private static Duration getSlowMotionSpeed() {
     var watch = System.getProperty("ui.watch");
-    if (watch == null || watch.isBlank()) return Duration.ofMillis(500);
+    if (watch == null || watch.isBlank() || !StringUtils.isNumeric(watch))
+      return Duration.ofMillis(500);
     else return Duration.ofMillis(Long.parseLong(watch));
   }
 
@@ -83,7 +85,8 @@ public abstract class AbstractBrowserTest {
 
   @BeforeEach
   void createContextAndPage(TestInfo info) {
-    Browser.NewContextOptions options = new Browser.NewContextOptions().setViewportSize(1600, 1200);
+    Browser.NewContextOptions contextOptions =
+        new Browser.NewContextOptions().setViewportSize(1600, 1200);
     if (isRecordPropertySet()) {
       String testPath =
           "target/ui-recording/"
@@ -91,9 +94,10 @@ public abstract class AbstractBrowserTest {
               + "_"
               + info.getTestMethod().map(Method::getName).orElse("unknown");
       log.debug("Recording into " + testPath);
-      options.setRecordVideoDir(Path.of(testPath));
+      contextOptions.setRecordVideoDir(Path.of(testPath));
     }
-    context = browser.newContext(options);
+    browser = playwright.chromium().launch(options);
+    context = browser.newContext(contextOptions);
     page = context.newPage();
   }
 
@@ -104,7 +108,9 @@ public abstract class AbstractBrowserTest {
 
   @AfterEach
   void closeContext() {
+    page.close();
     context.close(); // needed for videos to be saved
+    browser.close();
   }
 
   protected void loginFor(@NonNull String path) {
