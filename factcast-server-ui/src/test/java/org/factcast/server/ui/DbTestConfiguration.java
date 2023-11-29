@@ -26,6 +26,6 @@ public class DbTestConfiguration {
   @Bean
   @ServiceConnection
   public PostgreSQLContainer<?> pgContainer() {
-    return new PostgreSQLContainer<>("postgres:" + PostgresVersion.get()).withReuse(true);
+    return new PostgreSQLContainer<>("postgres:" + PostgresVersion.get());
   }
 }
