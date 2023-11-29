@@ -24,7 +24,7 @@ class LoginPageIntTest extends AbstractBrowserTest {
 
   @Test
   void loginWorks() {
-    login();
+    loginFor("/");
 
     assertThat(page.waitForSelector("h2").innerText()).contains("Query");
   }

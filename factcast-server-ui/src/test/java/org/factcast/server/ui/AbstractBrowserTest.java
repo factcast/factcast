@@ -20,10 +20,10 @@ import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertTha
 import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
-import jakarta.annotation.Nullable;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.time.Duration;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.server.ui.example.ExampleUiServer;
 import org.factcast.test.IntegrationTest;
@@ -107,8 +107,10 @@ public abstract class AbstractBrowserTest {
     context.close(); // needed for videos to be saved
   }
 
-  protected void login() {
-    navigateTo("/login");
+  protected void loginFor(@NonNull String path) {
+    final var url = String.join("", "http://localhost:" + port, path);
+    page.navigate(url);
+    waitForLoadState();
 
     assertThat(page.locator("h2")).hasText("Log in");
 
@@ -117,12 +119,7 @@ public abstract class AbstractBrowserTest {
 
     page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Log in")).click();
 
-    assertThat(page.locator("h2")).hasText("Query");
-    waitForLoadState();
-  }
-
-  protected void navigateTo(@Nullable String path) {
-    page.navigate(String.join("", "http://localhost:" + port, path));
+    page.waitForURL(url + "?continue");
     waitForLoadState();
   }
 

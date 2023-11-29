@@ -18,7 +18,6 @@ package org.factcast.server.ui.id;
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 import static org.factcast.server.ui.example.EventInitializer.*;
 
-import com.microsoft.playwright.*;
 import java.util.UUID;
 import lombok.NonNull;
 import org.factcast.server.ui.AbstractBrowserTest;
@@ -27,8 +26,7 @@ import org.junit.jupiter.api.*;
 class IdQueryPageIntTest extends AbstractBrowserTest {
   @BeforeEach
   void setUp() {
-    login();
-    navigateTo("/ui/id");
+    loginFor("/ui/id");
   }
 
   @Nested
