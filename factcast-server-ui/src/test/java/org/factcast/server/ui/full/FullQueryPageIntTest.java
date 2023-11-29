@@ -56,6 +56,18 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
     }
 
     @Test
+    void queryByAggId_noMatch() {
+      selectNamespace("users");
+      setAggId(UUID.randomUUID());
+      fromScratch();
+
+      query();
+
+      assertThat(jsonView()).not().containsText(USER1_EVENT_ID.toString());
+      assertThat(jsonView()).not().containsText(USER2_EVENT_ID.toString());
+    }
+
+    @Test
     void queryByAggId() {
       selectNamespace("users");
       setAggId(USER2_AGG_ID);
@@ -157,6 +169,24 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
 
       assertThat(jsonView()).containsText(USER1_EVENT_ID.toString());
       assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
+    }
+
+    @Test
+    void queryByAggId_noMatch() {
+      selectNamespace("users");
+      setAggId(UUID.randomUUID());
+
+      addNewCondition();
+
+      selectNamespace("users", 1);
+      setAggId(UUID.randomUUID(), 1);
+
+      fromScratch();
+
+      query();
+
+      assertThat(jsonView()).not().containsText(USER1_EVENT_ID.toString());
+      assertThat(jsonView()).not().containsText(USER2_EVENT_ID.toString());
     }
 
     private void addNewCondition() {
