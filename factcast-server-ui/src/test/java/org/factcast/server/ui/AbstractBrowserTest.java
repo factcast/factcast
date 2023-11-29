@@ -111,8 +111,6 @@ public abstract class AbstractBrowserTest {
   protected void login() {
     navigateTo("/login");
 
-    page.navigate("http://localhost:" + port);
-
     assertThat(page.waitForSelector("h1").innerText()).contains("FactCast Server UI");
 
     page.getByLabel("Username").fill("admin");
