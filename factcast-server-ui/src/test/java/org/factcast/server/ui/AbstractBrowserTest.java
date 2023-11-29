@@ -82,13 +82,13 @@ public abstract class AbstractBrowserTest {
 
     page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Log in")).click();
 
-    page.waitForLoadState(LoadState.NETWORKIDLE);
     page.waitForURL(Pattern.compile(".*\\?continue.*"));
+    waitForLoadState();
   }
 
   protected void navigateTo(@Nullable String path) {
     page.navigate(String.join("", "http://localhost:" + port, path));
-    page.waitForLoadState(LoadState.NETWORKIDLE);
+    waitForLoadState();
   }
 
   protected Locator jsonView() {
@@ -97,6 +97,12 @@ public abstract class AbstractBrowserTest {
 
   protected void query() {
     page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Query")).click();
+    waitForLoadState();
+  }
+
+  private void waitForLoadState() {
+    page.waitForLoadState(LoadState.LOAD);
+    page.waitForLoadState(LoadState.DOMCONTENTLOADED);
     page.waitForLoadState(LoadState.NETWORKIDLE);
   }
 }
