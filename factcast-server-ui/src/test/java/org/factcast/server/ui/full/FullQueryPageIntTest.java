@@ -64,6 +64,8 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
       query();
 
       assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
+
+      page.screenshot();
     }
 
     @Test
@@ -161,6 +163,32 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
 
     private void addNewCondition() {
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("add Condition")).click();
+    }
+  }
+
+  @Nested
+  class JsonView {
+    @Test
+    void codeLensIsPresent() {
+      // setup result
+      selectNamespace("users");
+      fromScratch();
+      query();
+
+      // codelens is visible
+      assertThat(
+              jsonView()
+                  .locator("[widgetid*='codelens']")
+                  .filter(new Locator.FilterOptions().setHasText("Name: Werner"))
+                  .first())
+          .containsText("Name: Werner");
+
+      assertThat(
+              jsonView()
+                  .locator("[widgetid*='codelens']")
+                  .filter(new Locator.FilterOptions().setHasText("Name: Peter"))
+                  .first())
+          .containsText("Name: Peter");
     }
   }
 
