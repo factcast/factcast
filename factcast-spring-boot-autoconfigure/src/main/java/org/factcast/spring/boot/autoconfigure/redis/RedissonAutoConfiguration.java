@@ -16,17 +16,22 @@
 package org.factcast.spring.boot.autoconfigure.redis;
 
 import org.factcast.factus.utils.FactusDependency;
+import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
 
 @AutoConfiguration
-@ConditionalOnBean({RedissonClient.class})
+@ConditionalOnClass(Redisson.class)
+@AutoConfigureAfter(org.redisson.spring.starter.RedissonAutoConfiguration.class)
 public class RedissonAutoConfiguration {
 
   @Bean
-  public FactusDependency redissonClientDependency(RedissonClient redisson) {
-    return FactusDependency.on(redisson);
+  @ConditionalOnBean(RedissonClient.class)
+  public FactusDependency redissonClientDependency(RedissonClient redissonClient) {
+    return FactusDependency.on(redissonClient);
   }
 }
