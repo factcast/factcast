@@ -167,13 +167,13 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
   @Nested
   class JsonView {
     @Test
-    void codeLensIsPresent() {
+    void codeLensAndHoverAreWorking() {
       // setup result
       selectNamespace("users");
       fromScratch();
       query();
 
-      // codelens is visible
+      // codelenses are present
       assertThat(
               jsonView()
                   .locator("[widgetid*='codelens']")
@@ -187,6 +187,12 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
                   .filter(new Locator.FilterOptions().setHasText("Name: Peter"))
                   .first())
           .containsText("Name: Peter");
+
+      // hover the first lastName in the result
+      jsonView().getByText("\"lastName\"").first().hover();
+
+      // expect that the hover contents are shown
+      assertThat(jsonView().locator(".hover-contents")).containsText("J. Edgar Hoover: Ernst");
     }
   }
 
