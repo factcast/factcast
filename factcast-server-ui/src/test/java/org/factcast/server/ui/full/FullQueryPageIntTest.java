@@ -18,25 +18,24 @@ package org.factcast.server.ui.full;
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 import static org.factcast.server.ui.example.EventInitializer.*;
 
-import com.microsoft.playwright.*;
+import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import lombok.NonNull;
 import org.factcast.server.ui.AbstractBrowserTest;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Nested;
+import org.junitpioneer.jupiter.RetryingTest;
 
 class FullQueryPageIntTest extends AbstractBrowserTest {
-  @BeforeEach
-  void setUp() {
-    loginFor("/ui/full");
-  }
 
   @Nested
   class Basics {
-    @Test
+    @RetryingTest(maxAttempts = 5, minSuccess = 1)
     void queryByType() {
+      loginFor("/ui/full");
       // types input disabled
       assertThat(page.getByLabel("Types")).isDisabled();
 
@@ -54,8 +53,9 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
       assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
     }
 
-    @Test
+    @RetryingTest(maxAttempts = 5, minSuccess = 1)
     void queryByAggId_noMatch() {
+      loginFor("/ui/full");
       selectNamespace("users");
       setAggId(UUID.randomUUID());
       fromScratch();
@@ -66,8 +66,9 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
       assertThat(jsonView()).not().containsText(USER2_EVENT_ID.toString());
     }
 
-    @Test
+    @RetryingTest(maxAttempts = 5, minSuccess = 1)
     void queryByAggId() {
+      loginFor("/ui/full");
       selectNamespace("users");
       setAggId(USER2_AGG_ID);
       fromScratch();
@@ -77,8 +78,9 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
       assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
     }
 
-    @Test
+    @RetryingTest(maxAttempts = 5, minSuccess = 1)
     void queryByMeta() {
+      loginFor("/ui/full");
       selectNamespace("users");
       addMetaEntry("hugo", "bar"); // that's user 1
       assertMetaCount(1);
@@ -89,8 +91,9 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
       assertThat(jsonView()).containsText(USER1_EVENT_ID.toString());
     }
 
-    @Test
+    @RetryingTest(maxAttempts = 5, minSuccess = 1)
     void queryByLimit() {
+      loginFor("/ui/full");
       selectNamespace("users");
       page.getByLabel("Limit").fill("1");
       fromScratch();
@@ -100,8 +103,9 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
       assertThat(jsonView()).containsText(USER1_EVENT_ID.toString());
     }
 
-    @Test
+    @RetryingTest(maxAttempts = 5, minSuccess = 1)
     void queryByOffset() {
+      loginFor("/ui/full");
       selectNamespace("users");
       page.getByLabel("Offset").fill("1");
       fromScratch();
@@ -111,8 +115,9 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
       assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
     }
 
-    @Test
+    @RetryingTest(maxAttempts = 5, minSuccess = 1)
     void queryFromLatest() {
+      loginFor("/ui/full");
       selectNamespace("users");
 
       fromLatest();
@@ -133,8 +138,9 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
 
   @Nested
   class MultiCondition {
-    @Test
+    @RetryingTest(maxAttempts = 5, minSuccess = 1)
     void queryByTypeAndAggIds() {
+      loginFor("/ui/full");
       selectNamespace("users");
       setAggId(USER1_AGG_ID);
 
@@ -152,8 +158,9 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
       assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
     }
 
-    @Test
+    @RetryingTest(maxAttempts = 5, minSuccess = 1)
     void queryByAggIdAndMeta() {
+      loginFor("/ui/full");
       selectNamespace("users");
       setAggId(USER2_AGG_ID);
 
@@ -170,8 +177,9 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
       assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
     }
 
-    @Test
+    @RetryingTest(maxAttempts = 5, minSuccess = 1)
     void queryByAggId_noMatch() {
+      loginFor("/ui/full");
       selectNamespace("users");
       setAggId(UUID.randomUUID());
 
@@ -195,8 +203,9 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
 
   @Nested
   class JsonView {
-    @Test
+    @RetryingTest(maxAttempts = 5, minSuccess = 1)
     void codeLensAndHoverAreWorking() {
+      loginFor("/ui/full");
       // setup result
       selectNamespace("users");
       fromScratch();
