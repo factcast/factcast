@@ -35,4 +35,4 @@ jobs:
       run: './mvnw -B clean install -DskipTests'
     - id: 'step-4'
       name: 'Test - UI'
-      run: 'cd factcast-server-ui ; ./mvnw -B -Dui failsafe:integration-test '
+      run: 'cd factcast-server-ui ; ../mvnw -B -Dui failsafe:integration-test '
