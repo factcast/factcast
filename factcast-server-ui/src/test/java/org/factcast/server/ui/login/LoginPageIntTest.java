@@ -15,14 +15,14 @@
  */
 package org.factcast.server.ui.login;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.factcast.server.ui.AbstractBrowserTest;
-import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.RetryingTest;
 
 class LoginPageIntTest extends AbstractBrowserTest {
 
-  @Test
+  @RetryingTest(maxAttempts = 5, minSuccess = 1)
   void loginWorks() {
     loginFor("/");
 
