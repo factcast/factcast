@@ -178,7 +178,6 @@
             <include>*</include>
           </includes>
           <forkCount>1</forkCount>
-          #
           <reuseForks>false</reuseForks>
           <!--suppress UnresolvedMavenProperty -->
           <argLine>${failsafe.jacoco.args}</argLine>
