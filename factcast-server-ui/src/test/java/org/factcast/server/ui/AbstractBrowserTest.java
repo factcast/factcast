@@ -43,7 +43,7 @@ public abstract class AbstractBrowserTest {
 
   private static BrowserType.LaunchOptions options;
   private static Playwright playwright = null;
-  private static Browser browser = null;
+  private Browser browser = null;
 
   // New instance for each test method.
   protected BrowserContext context = null;
