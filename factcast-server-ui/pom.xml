@@ -39,8 +39,7 @@
   </repositories>
   <properties>
     <java.version>17</java.version>
-    <vaadin.version>24.1.11</vaadin.version>
-
+    <vaadin.version>24.2.3</vaadin.version>
   </properties>
   <dependencies>
     <dependency>
@@ -177,8 +176,6 @@
           <includes>
             <include>*</include>
           </includes>
-          <forkCount>1</forkCount>
-          <reuseForks>false</reuseForks>
           <!--suppress UnresolvedMavenProperty -->
           <argLine>${failsafe.jacoco.args}</argLine>
           <systemPropertyVariables>
@@ -197,5 +194,46 @@
       </plugin>
 
     </plugins>
+
   </build>
+  <profiles>
+    <profile>
+      <id>uitests</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+        <property>
+          <name>ui</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <version>${maven-failsafe-plugin.version}</version>
+            <configuration>
+              <groups>uitest</groups>
+              <includes>
+                <include>*</include>
+              </includes>
+              <!--suppress UnresolvedMavenProperty -->
+              <systemPropertyVariables>
+                <postgres.version>${postgres.version}</postgres.version>
+                <factcast.version>${factcast.version}</factcast.version>
+              </systemPropertyVariables>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>integration-test</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+
+        </plugins>
+      </build>
+    </profile>
+
+  </profiles>
 </project>

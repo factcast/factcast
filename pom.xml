@@ -398,7 +398,7 @@
           <includes>
             <include>*</include>
           </includes>
-          <excludedGroups>integration</excludedGroups>
+          <excludedGroups>integration,uitest</excludedGroups>
           <!--suppress UnresolvedMavenProperty -->
           <argLine>${surefire.jacoco.args}</argLine>
           <skip>${skipUnitTests}</skip>

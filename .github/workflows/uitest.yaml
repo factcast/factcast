@@ -1,0 +1,38 @@
+# This file was generated using Kotlin DSL (.github/kts/.github/kts/uitest.main.kts).
+# If you want to modify the workflow, please change the Kotlin file and regenerate this YAML file.
+# Generated with https://github.com/typesafegithub/github-workflows-kt
+
+name: 'Maven UITest'
+on:
+  pull_request: {}
+  push:
+    branches:
+    - 'master'
+jobs:
+  build:
+    runs-on: 'ubuntu-latest'
+    steps:
+    - id: 'step-0'
+      name: 'Checkout'
+      uses: 'actions/checkout@v4'
+      with:
+        fetch-depth: '0'
+    - id: 'step-1'
+      name: 'Cache - Maven Repository'
+      uses: 'actions/cache@v3'
+      with:
+        path: '~/.m2/repository'
+        key: '${{ runner.os }}-maven-${{ hashFiles(''**/pom.xml'') }}'
+        restore-keys: '${{ runner.os }}-maven-'
+    - id: 'step-2'
+      name: 'JDK 17'
+      uses: 'actions/setup-java@v3'
+      with:
+        java-version: '17'
+        distribution: 'corretto'
+    - id: 'step-3'
+      name: 'Build with Maven, no testing'
+      run: './mvnw -B clean install -DskipTests'
+    - id: 'step-4'
+      name: 'Test - UI'
+      run: 'cd factcast-server-ui ; ./mvnw -B -Dui failsafe:integration '

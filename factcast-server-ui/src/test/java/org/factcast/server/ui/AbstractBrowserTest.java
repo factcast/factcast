@@ -27,7 +27,6 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.factcast.server.ui.example.ExampleUiServer;
-import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.*;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -35,7 +34,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 @SpringBootTest(
     classes = ExampleUiServer.class,
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@IntegrationTest
+@Tag("uitest")
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 @Slf4j
 public abstract class AbstractBrowserTest {
