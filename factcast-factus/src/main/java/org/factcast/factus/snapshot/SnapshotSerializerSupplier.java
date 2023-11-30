@@ -15,7 +15,6 @@
  */
 package org.factcast.factus.snapshot;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.NonNull;
@@ -28,6 +27,7 @@ import org.factcast.factus.serializer.SnapshotSerializer;
 public class SnapshotSerializerSupplier {
 
   @NonNull private final SnapshotSerializer defaultSerializer;
+  @NonNull private final SnapshotSerializerFactory factory;
 
   private final Map<Class<? extends SnapshotSerializer>, SnapshotSerializer> serializers =
       new ConcurrentHashMap<>();
@@ -35,7 +35,13 @@ public class SnapshotSerializerSupplier {
       new ConcurrentHashMap<>();
 
   public SnapshotSerializerSupplier(@NonNull SnapshotSerializer defaultSerializer) {
+    this(defaultSerializer, new SnapshotSerializerFactory.Default());
+  }
+
+  public SnapshotSerializerSupplier(
+      @NonNull SnapshotSerializer defaultSerializer, @NonNull SnapshotSerializerFactory factory) {
     this.defaultSerializer = defaultSerializer;
+    this.factory = factory;
     if (!(defaultSerializer instanceof JacksonSnapshotSerializer)) {
       log.info(
           "Using {} as a default SnapshotSerializer", defaultSerializer.getClass().getSimpleName());
@@ -52,19 +58,8 @@ public class SnapshotSerializerSupplier {
             return defaultSerializer;
           } else {
             Class<? extends SnapshotSerializer> ser = classAnnotation.value();
-            return serializers.computeIfAbsent(ser, SnapshotSerializerSupplier::instanciate);
+            return serializers.computeIfAbsent(ser, factory::create);
           }
         });
-  }
-
-  private static <C> C instanciate(Class<C> clazz) {
-    try {
-      return clazz.getDeclaredConstructor().newInstance();
-    } catch (InstantiationException
-        | IllegalAccessException
-        | InvocationTargetException
-        | NoSuchMethodException e) {
-      throw new SerializerInstantiationException("Cannot create instance from " + clazz, e);
-    }
   }
 }
