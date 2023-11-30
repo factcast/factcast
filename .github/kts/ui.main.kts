@@ -58,7 +58,7 @@ public val workflowMaven: Workflow = workflow(
 
         run(
             name = "Test - UI",
-            command = "cd factcast-server-ui ; ./mvnw -B -Dui failsafe:integration-test ",
+            command = "cd factcast-server-ui ; ../mvnw -B -Dui failsafe:integration-test ",
         )
     }
 }
