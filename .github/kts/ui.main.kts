@@ -21,7 +21,7 @@ public val workflowMaven: Workflow = workflow(
             branches = listOf("master"),
         ),
     ),
-    sourceFile = Paths.get(".github/kts/uitest.main.kts"),
+    sourceFile = Paths.get(".github/kts/ui.main.kts"),
 ) {
     job(
         id = "build",

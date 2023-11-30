@@ -212,7 +212,7 @@
             <artifactId>maven-failsafe-plugin</artifactId>
             <version>${maven-failsafe-plugin.version}</version>
             <configuration>
-              <groups>uitest</groups>
+              <groups>ui</groups>
               <includes>
                 <include>*</include>
               </includes>
