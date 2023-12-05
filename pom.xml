@@ -81,17 +81,17 @@
     <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
     <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
     <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
-    <maven.version>3.9.5</maven.version>
+    <maven.version>3.9.6</maven.version>
     <!-- defaults to 11, client modules will be compiled with/to 8 -->
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
     <maven.compiler.version>3.11.0</maven.compiler.version>
-    <spotless-maven-plugin.version>2.41.0</spotless-maven-plugin.version>
+    <spotless-maven-plugin.version>2.41.1</spotless-maven-plugin.version>
     <directory-maven-plugin.version>1.0</directory-maven-plugin.version>
     <nexus-staging-maven-plugin.version>1.6.13</nexus-staging-maven-plugin.version>
     <assertj.version>3.24.2</assertj.version>
     <jackson.version>2.15.3</jackson.version>
-    <mockito.version>5.7.0</mockito.version>
+    <mockito.version>5.8.0</mockito.version>
     <junit-jupiter.version>5.10.1</junit-jupiter.version>
     <lombok.version>1.18.30</lombok.version>
     <slf4j-api.version>2.0.9</slf4j-api.version>
