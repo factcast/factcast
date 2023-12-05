@@ -2,7 +2,7 @@
 title: "Properties"
 type: docs
 weight: 200
-description: Properties you can use to configure FactCast
+description: Properties you can use to configure FactCast UI.
 ---
 
 ## UI
