@@ -22,7 +22,6 @@ import com.microsoft.playwright.Download;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -247,7 +246,9 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
       selectNamespace("users");
       fromScratch();
 
-      assertThat(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Export JSON"))).isDisabled();
+      assertThat(
+              page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Export JSON")))
+          .isDisabled();
 
       query();
 

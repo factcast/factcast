@@ -32,7 +32,6 @@ import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.server.StreamResource;
 import jakarta.annotation.security.PermitAll;
-
 import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -181,7 +180,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
   private HorizontalLayout formButtons() {
     final var exportJsonBtn = new Button("Export JSON");
 
-    final var queryBtn =  new Button("Query");
+    final var queryBtn = new Button("Query");
     queryBtn.addClickShortcut(Key.ENTER);
     queryBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
     queryBtn.setDisableOnClick(true);
@@ -219,10 +218,12 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     return hl;
   }
 
-  private FileDownloadWrapper configureDownloadWrapper(Button button){
+  private FileDownloadWrapper configureDownloadWrapper(Button button) {
     button.setEnabled(false);
-    FileDownloadWrapper buttonWrapper = new FileDownloadWrapper(
-        new StreamResource("events.json", () -> new ByteArrayInputStream(queryResult.json().getBytes())));
+    FileDownloadWrapper buttonWrapper =
+        new FileDownloadWrapper(
+            new StreamResource(
+                "events.json", () -> new ByteArrayInputStream(queryResult.json().getBytes())));
     buttonWrapper.wrapComponent(button);
     return buttonWrapper;
   }
