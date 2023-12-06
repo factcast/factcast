@@ -137,6 +137,11 @@ public abstract class AbstractBrowserTest {
     waitForLoadState();
   }
 
+  protected void download() {
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Export JSON")).click();
+    waitForLoadState();
+  }
+
   private void waitForLoadState() {
     page.waitForLoadState(LoadState.LOAD);
     page.waitForLoadState(LoadState.DOMCONTENTLOADED);

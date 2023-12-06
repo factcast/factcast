@@ -18,16 +18,21 @@ package org.factcast.server.ui.full;
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 import static org.factcast.server.ui.example.EventInitializer.*;
 
+import com.microsoft.playwright.Download;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
+
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import lombok.NonNull;
+import org.assertj.core.api.Assertions;
 import org.factcast.server.ui.AbstractBrowserTest;
 import org.junit.jupiter.api.Nested;
 import org.junitpioneer.jupiter.RetryingTest;
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 class FullQueryPageIntTest extends AbstractBrowserTest {
 
@@ -231,6 +236,27 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
 
       // expect that the hover contents are shown
       assertThat(jsonView().locator(".hover-contents")).containsText("J. Edgar Hoover: Ernst");
+    }
+  }
+
+  @Nested
+  class JsonDownload {
+    @RetryingTest(maxAttempts = 5, minSuccess = 1)
+    void downloadsJsonAfterQuery() throws IOException {
+      loginFor("/ui/full");
+      selectNamespace("users");
+      fromScratch();
+
+      assertThat(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Export JSON"))).isDisabled();
+
+      query();
+
+      Download download = page.waitForDownload(FullQueryPageIntTest.this::download);
+
+      final var mapper = new ObjectMapper();
+      final var downloadedJson = mapper.readTree(download.createReadStream());
+
+      Assertions.assertThat(downloadedJson.size()).isEqualTo(2);
     }
   }
 

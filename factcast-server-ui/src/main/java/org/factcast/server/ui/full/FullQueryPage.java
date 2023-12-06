@@ -30,7 +30,10 @@ import com.vaadin.flow.component.textfield.BigDecimalField;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.*;
+import com.vaadin.flow.server.StreamResource;
 import jakarta.annotation.security.PermitAll;
+
+import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -49,6 +52,7 @@ import org.factcast.server.ui.views.JsonView;
 import org.factcast.server.ui.views.MainLayout;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.vaadin.olli.FileDownloadWrapper;
 
 @Route(value = "ui/full", layout = MainLayout.class)
 @RouteAlias(value = "", layout = MainLayout.class)
@@ -76,6 +80,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
 
   private final JsonViewPluginService jsonViewPluginService;
   private final FilterCriteriaViews factCriteriaViews;
+  private JsonViewEntries queryResult;
 
   public FullQueryPage(
       @NonNull FactRepository repo, @NonNull JsonViewPluginService jsonViewPluginService) {
@@ -174,7 +179,9 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
 
   @NonNull
   private HorizontalLayout formButtons() {
-    final var queryBtn = new Button("Query");
+    final var exportJsonBtn = new Button("Export JSON");
+
+    final var queryBtn =  new Button("Query");
     queryBtn.addClickShortcut(Key.ENTER);
     queryBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
     queryBtn.setDisableOnClick(true);
@@ -182,10 +189,12 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
         event -> {
           try {
             binder.writeBean(formBean);
-            log.info("{} runs query for {}", getLogggedInUserName(), formBean);
+            log.info("{} runs query for {}", getLoggedInUserName(), formBean);
             List<Fact> dataFromStore = repo.fetchChunk(formBean);
             JsonViewEntries processedByPlugins = jsonViewPluginService.process(dataFromStore);
             jsonView.renderFacts(processedByPlugins);
+            queryResult = processedByPlugins;
+            exportJsonBtn.setEnabled(true);
           } catch (ValidationException e) {
             Notifications.warn(e.getMessage());
           } catch (Exception e) {
@@ -203,13 +212,22 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
           factCriteriaViews.rebuild();
         });
 
-    final var hl = new HorizontalLayout(queryBtn, resetBtn);
+    final var jsonDownload = configureDownloadWrapper(exportJsonBtn);
+    final var hl = new HorizontalLayout(queryBtn, resetBtn, jsonDownload);
     hl.setWidthFull();
 
     return hl;
   }
 
-  private String getLogggedInUserName() {
+  private FileDownloadWrapper configureDownloadWrapper(Button button){
+    button.setEnabled(false);
+    FileDownloadWrapper buttonWrapper = new FileDownloadWrapper(
+        new StreamResource("events.json", () -> new ByteArrayInputStream(queryResult.json().getBytes())));
+    buttonWrapper.wrapComponent(button);
+    return buttonWrapper;
+  }
+
+  private String getLoggedInUserName() {
     try {
       Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
       return authentication.getName();
