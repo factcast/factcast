@@ -15,9 +15,9 @@
  */
 package org.factcast.server.grpc;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -126,7 +126,7 @@ public class FactStoreGrpcServiceTest {
 
     uut.currentTime(MSG_Empty.getDefaultInstance(), stream);
 
-    verify(stream).onNext(eq(new ProtoConverter().toProto(101L)));
+    verify(stream).onNext(eq(new ProtoConverter().toProtoTime(101L)));
     verify(stream).onCompleted();
     verifyNoMoreInteractions(stream);
   }

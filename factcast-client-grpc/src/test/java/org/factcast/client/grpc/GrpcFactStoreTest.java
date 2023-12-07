@@ -26,7 +26,7 @@ import io.grpc.*;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
 import lombok.NonNull;
 import org.assertj.core.util.Lists;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
@@ -283,7 +283,7 @@ class GrpcFactStoreTest {
   void testCompatibleProtocolVersion() {
     when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
     when(blockingStub.handshake(any()))
-        .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(1, 1, 0), new HashMap<>())));
+        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
     uut.initialize();
   }
 
@@ -299,7 +299,7 @@ class GrpcFactStoreTest {
   void testInitializationExecutesHandshakeOnlyOnce() {
     when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
     when(blockingStub.handshake(any()))
-        .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(1, 1, 0), new HashMap<>())));
+        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
     uut.initialize();
     uut.initialize();
     verify(blockingStub, times(1)).handshake(any());
@@ -490,7 +490,7 @@ class GrpcFactStoreTest {
   @Test
   public void testCurrentTime() {
     long l = 123L;
-    when(blockingStub.currentTime(conv.empty())).thenReturn(conv.toProto(l));
+    when(blockingStub.currentTime(conv.empty())).thenReturn(conv.toProtoTime(l));
     Long t = uut.currentTime();
     assertEquals(t, l);
   }

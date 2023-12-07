@@ -38,10 +38,13 @@ import io.micrometer.core.instrument.Tags;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
-import java.util.function.*;
-import java.util.stream.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -90,7 +93,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 @SuppressWarnings("all")
 public class FactStoreGrpcService extends RemoteFactStoreImplBase implements InitializingBean {
 
-  static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 1, 0);
+  public static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 4, 0);
 
   static final AtomicLong subscriptionIdStore = new AtomicLong();
 
@@ -450,6 +453,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
   }
 
   @Override
+  @Secured(FactCastAuthority.AUTHENTICATED)
   public void stateForSpecsJson(
       MSG_FactSpecsJson request, StreamObserver<MSG_UUID> responseObserver) {
     Function<List<FactSpec>, StateToken> tokenSupplier = r -> store.stateFor(r);
@@ -479,6 +483,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
   }
 
   @Override
+  @Secured(FactCastAuthority.AUTHENTICATED)
   public void currentStateForSpecsJson(
       MSG_FactSpecsJson request, StreamObserver<MSG_UUID> responseObserver) {
     initialize(responseObserver);
@@ -502,7 +507,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
       MSG_Empty request, StreamObserver<MSG_CurrentDatabaseTime> responseObserver) {
     initialize(responseObserver);
 
-    responseObserver.onNext(converter.toProto(store.currentTime()));
+    responseObserver.onNext(converter.toProtoTime(store.currentTime()));
     responseObserver.onCompleted();
   }
 
@@ -514,7 +519,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
     UUID fromProto = converter.fromProto(request);
     log.trace("{}fetchById {}", clientIdPrefix(), fromProto);
 
-    doFetchById(
+    doFetch(
         responseObserver,
         () -> {
           Optional<Fact> fetchById = store.fetchById(fromProto);
@@ -527,7 +532,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
         });
   }
 
-  private void doFetchById(
+  private void doFetch(
       StreamObserver<MSG_OptionalFact> responseObserver, Supplier<Optional<Fact>> o) {
 
     enableResponseCompression(responseObserver);
@@ -542,6 +547,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
   }
 
   @Override
+  @Secured(FactCastAuthority.AUTHENTICATED)
   public void fetchByIdAndVersion(
       MSG_UUID_AND_VERSION request, StreamObserver<MSG_OptionalFact> responseObserver) {
     initialize(responseObserver);
@@ -553,7 +559,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
         fromProto.uuid(),
         fromProto.version());
 
-    doFetchById(
+    doFetch(
         responseObserver,
         () -> {
           Optional<Fact> fetchById =
@@ -607,6 +613,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
   }
 
   @Override
+  @Secured(FactCastAuthority.AUTHENTICATED)
   public void clearSnapshot(MSG_SnapshotId request, StreamObserver<MSG_Empty> responseObserver) {
     initialize(responseObserver);
 
@@ -616,6 +623,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
   }
 
   @Override
+  @Secured(FactCastAuthority.AUTHENTICATED)
   public void getSnapshot(
       MSG_SnapshotId request, StreamObserver<MSG_OptionalSnapshot> responseObserver) {
     initialize(responseObserver);
@@ -650,5 +658,43 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
   @Override
   public void afterPropertiesSet() throws Exception {
     log.info("Service version: {}", getServerArtifactVersion());
+  }
+
+  @Override
+  @Secured(FactCastAuthority.AUTHENTICATED)
+  public void latestSerial(MSG_Empty request, StreamObserver<MSG_Serial> responseObserver) {
+    initialize(responseObserver);
+    responseObserver.onNext(converter.toProto(store.latestSerial()));
+    responseObserver.onCompleted();
+  }
+
+  @Override
+  @Secured(FactCastAuthority.AUTHENTICATED)
+  public void lastSerialBefore(MSG_Date request, StreamObserver<MSG_Serial> responseObserver) {
+    initialize(responseObserver);
+    responseObserver.onNext(
+        converter.toProto(store.lastSerialBefore(converter.fromProto(request))));
+    responseObserver.onCompleted();
+  }
+
+  @Override
+  @Secured(FactCastAuthority.AUTHENTICATED)
+  public void fetchBySerial(MSG_Serial request, StreamObserver<MSG_OptionalFact> responseObserver) {
+    initialize(responseObserver);
+
+    long fromProto = converter.fromProto(request);
+    log.trace("{}fetchBySerial {}", clientIdPrefix(), fromProto);
+
+    doFetch(
+        responseObserver,
+        () -> {
+          Optional<Fact> fetchById = store.fetchBySerial(fromProto);
+          log.trace(
+              "{}fetchBySerial({}) was {}found",
+              clientIdPrefix(),
+              fromProto,
+              fetchById.map(f -> "").orElse("NOT "));
+          return fetchById;
+        });
   }
 }
