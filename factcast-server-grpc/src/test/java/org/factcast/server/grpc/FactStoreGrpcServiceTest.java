@@ -35,7 +35,6 @@ import java.util.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
-import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
@@ -128,7 +127,7 @@ public class FactStoreGrpcServiceTest {
 
     uut.currentTime(MSG_Empty.getDefaultInstance(), stream);
 
-    verify(stream).onNext(eq(new ProtoConverter().toProtoTime(101L)));
+    verify(stream).onNext(new ProtoConverter().toProtoTime(101L));
     verify(stream).onCompleted();
     verifyNoMoreInteractions(stream);
   }
@@ -1134,11 +1133,8 @@ public class FactStoreGrpcServiceTest {
     doNothing().when(responseObserver).setOnCancelHandler(captor.capture());
     uut.initialize(responseObserver);
 
-    Assertions.assertThatThrownBy(
-            () -> {
-              captor.getValue().run();
-            })
-        .isInstanceOf(RequestCanceledByClientException.class);
+    Runnable handler = captor.getValue();
+    assertThatThrownBy(handler::run).isInstanceOf(RequestCanceledByClientException.class);
   }
 
   @Test
