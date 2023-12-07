@@ -738,7 +738,7 @@ class GrpcFactStoreTest {
   void fetchBySerial() {
     TestFact fact = new TestFact();
     long serial = 2L;
-    when(blockingStub.fetchBySerial(eq(conv.toProto(serial))))
+    when(blockingStub.fetchBySerial(conv.toProto(serial)))
         .thenReturn(
             MSG_OptionalFact.newBuilder().setFact(conv.toProto(fact)).setPresent(true).build());
 
