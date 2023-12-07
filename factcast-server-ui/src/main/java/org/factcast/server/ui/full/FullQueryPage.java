@@ -205,6 +205,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
 
     final var hl = new HorizontalLayout(queryBtn, resetBtn);
     hl.setWidthFull();
+    hl.addClassName("label-padding");
 
     return hl;
   }
