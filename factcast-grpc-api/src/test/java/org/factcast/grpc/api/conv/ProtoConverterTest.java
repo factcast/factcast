@@ -718,4 +718,16 @@ public class ProtoConverterTest {
     LocalDate ld = LocalDate.of(2023, 12, 7);
     assertThat(uut.fromProto(uut.toProto(ld))).isEqualTo(ld);
   }
+
+  @Test
+  void toProtoSnap() {
+    SnapshotId id = SnapshotId.of("narf", UUID.randomUUID());
+    assertThat(uut.fromProto(uut.toProto(id))).isEqualTo(id);
+  }
+
+  @Test
+  void toProtoCurrentDatabaseTimestamp() {
+    long ts = 42;
+    assertThat(uut.fromProto(uut.toProtoTime(ts))).isEqualTo(ts);
+  }
 }
