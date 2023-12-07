@@ -220,7 +220,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
     }
   }
 
-  private void initialize(StreamObserver<?> responseObserver) {
+  @VisibleForTesting
+  void initialize(StreamObserver<?> responseObserver) {
     if (responseObserver instanceof ServerCallStreamObserver)
       ((ServerCallStreamObserver) responseObserver)
           .setOnCancelHandler(
