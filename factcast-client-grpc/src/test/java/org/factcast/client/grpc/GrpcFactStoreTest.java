@@ -25,6 +25,7 @@ import com.google.common.collect.Sets;
 import io.grpc.*;
 import java.io.IOException;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.Callable;
 import lombok.NonNull;
@@ -716,5 +717,32 @@ class GrpcFactStoreTest {
           .extracting(Throwable::getMessage)
           .isEqualTo(msg);
     }
+  }
+
+  @Test
+  void latestSerial() {
+    MSG_Serial ser = conv.toProto(2L);
+    when(blockingStub.latestSerial(any())).thenReturn(ser);
+    org.assertj.core.api.Assertions.assertThat(uut.latestSerial()).isEqualTo(2);
+  }
+
+  @Test
+  void lastSerialBefore() {
+    LocalDate date = LocalDate.of(2003, 12, 24);
+    MSG_Date msgDate = conv.toProto(date);
+    when(blockingStub.lastSerialBefore(msgDate)).thenReturn(conv.toProto(2L));
+    org.assertj.core.api.Assertions.assertThat(uut.lastSerialBefore(date)).isEqualTo(2);
+  }
+
+  @Test
+  void fetchBySerial() {
+    TestFact fact = new TestFact();
+    long serial = 2L;
+    when(blockingStub.fetchBySerial(eq(conv.toProto(serial))))
+        .thenReturn(
+            MSG_OptionalFact.newBuilder().setFact(conv.toProto(fact)).setPresent(true).build());
+
+    Optional<Fact> result = uut.fetchBySerial(serial);
+    assertThat(result).isPresent();
   }
 }
