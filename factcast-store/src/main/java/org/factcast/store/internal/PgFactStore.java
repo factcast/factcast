@@ -29,7 +29,10 @@ import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.store.*;
+import org.factcast.core.store.AbstractFactStore;
+import org.factcast.core.store.State;
+import org.factcast.core.store.StateToken;
+import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
@@ -60,7 +63,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author uwe.schaefer@prisma-capacity.eu
  */
 @Slf4j
-public class PgFactStore extends AbstractFactStore implements LocalFactStore {
+public class PgFactStore extends AbstractFactStore {
 
   @NonNull private final JdbcTemplate jdbcTemplate;
   @NonNull private final SchemaRegistry schemaRegistry;
