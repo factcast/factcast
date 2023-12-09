@@ -15,6 +15,7 @@
  */
 package org.factcast.core.store;
 
+import java.time.LocalDate;
 import java.util.*;
 import lombok.NonNull;
 import org.factcast.core.Fact;
@@ -81,4 +82,23 @@ public interface FactStore {
 
   @NonNull
   StateToken currentStateFor(List<FactSpec> factSpecs);
+
+  /**
+   * @return 0 if the store is empty
+   * @since 0.7.3
+   */
+  long latestSerial();
+
+  /**
+   * @return 0 if the store is empty
+   * @since 0.7.3
+   */
+  long lastSerialBefore(@NonNull LocalDate date);
+
+  /**
+   * @param serial to look for
+   * @return the Fact stored with that serial or empty if it does not exist
+   * @since 0.7.3
+   */
+  Optional<Fact> fetchBySerial(long serial);
 }

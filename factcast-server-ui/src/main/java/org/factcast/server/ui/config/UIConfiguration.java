@@ -22,7 +22,7 @@ import com.vaadin.flow.theme.Theme;
 import io.micrometer.core.aop.TimedAspect;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
-import org.factcast.core.store.LocalFactStore;
+import org.factcast.core.store.FactStore;
 import org.factcast.server.ui.adapter.FactRepositoryImpl;
 import org.factcast.server.ui.metrics.MeterRegistryMetrics;
 import org.factcast.server.ui.metrics.UiMetrics;
@@ -32,7 +32,9 @@ import org.factcast.server.ui.security.SecurityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 @Configuration
 @Theme(value = "fcui")
@@ -41,7 +43,7 @@ import org.springframework.context.annotation.*;
 @Import(JsonViewPluginConfiguration.class)
 public class UIConfiguration implements AppShellConfigurator {
   @Bean
-  public FactRepository factRepository(LocalFactStore fs, SecurityService securityService) {
+  public FactRepository factRepository(FactStore fs, SecurityService securityService) {
     return new FactRepositoryImpl(fs, securityService);
   }
 
