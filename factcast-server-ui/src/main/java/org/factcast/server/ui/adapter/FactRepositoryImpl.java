@@ -27,7 +27,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.store.LocalFactStore;
+import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.SpecBuilder;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
@@ -43,7 +43,7 @@ import org.factcast.server.ui.security.SecurityService;
 @RequiredArgsConstructor
 public class FactRepositoryImpl implements FactRepository {
 
-  private final LocalFactStore fs;
+  private final FactStore fs;
 
   private final SecurityService securityService;
 

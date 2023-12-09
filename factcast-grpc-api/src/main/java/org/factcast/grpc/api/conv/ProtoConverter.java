@@ -18,6 +18,7 @@ package org.factcast.grpc.api.conv;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.ProtocolStringList;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 import lombok.NonNull;
@@ -316,7 +317,7 @@ public class ProtoConverter {
   }
 
   @NonNull
-  public MSG_CurrentDatabaseTime toProto(long currentTime) {
+  public MSG_CurrentDatabaseTime toProtoTime(long currentTime) {
     return MSG_CurrentDatabaseTime.newBuilder().setMillis(currentTime).build();
   }
 
@@ -418,5 +419,25 @@ public class ProtoConverter {
 
   public MSG_Notification createInfoNotification(FactStreamInfo info) {
     return MSG_Notification.newBuilder().setType(Type.Info).setInfo(toProto(info)).build();
+  }
+
+  public long fromProto(MSG_Serial msgSerial) {
+    return msgSerial.getSerial();
+  }
+
+  public MSG_Date toProto(LocalDate date) {
+    return MSG_Date.newBuilder()
+        .setYear(date.getYear())
+        .setMonth(date.getMonthValue())
+        .setDay(date.getDayOfMonth())
+        .build();
+  }
+
+  public LocalDate fromProto(MSG_Date msgDate) {
+    return LocalDate.of(msgDate.getYear(), msgDate.getMonth(), msgDate.getDay());
+  }
+
+  public MSG_Serial toProto(long serial) {
+    return MSG_Serial.newBuilder().setSerial(serial).build();
   }
 }

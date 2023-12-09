@@ -30,7 +30,7 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -38,7 +38,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Slf4j
 @Generated
 @Configuration
-@EnableGlobalMethodSecurity(securedEnabled = true, proxyTargetClass = true)
+@EnableMethodSecurity(securedEnabled = true, proxyTargetClass = true)
 @AutoConfigureBefore(GrpcServerSecurityAutoConfiguration.class)
 public class FactCastSecurityConfiguration {
 
