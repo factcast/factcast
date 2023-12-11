@@ -16,6 +16,7 @@
 package org.factcast.factus;
 
 import java.io.Closeable;
+import java.time.Duration;
 import java.util.List;
 import java.util.OptionalLong;
 import java.util.UUID;
@@ -77,11 +78,21 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
 
   /**
    * creates a permanent, async subscription to the projection. The subscription will be remembered
-   * for autoclose, when Factus is closed. (Probably more of a shutdown hook)
+   * for autoclose, when Factus is closed. (Probably more of a shutdown hook) This method sets a
+   * default wait time between retries of 5 minutes.
    *
    * <p>Note that this method will block forever, if this node fails to acquire a writer token.
    */
   <P extends SubscribedProjection> Subscription subscribeAndBlock(@NonNull P subscribedProjection);
+
+  /**
+   * creates a permanent, async subscription to the projection. The subscription will be remembered
+   * for autoclose, when Factus is closed. (Probably more of a shutdown hook)
+   *
+   * <p>Note that this method will block forever, if this node fails to acquire a writer token.
+   */
+  <P extends SubscribedProjection> Subscription subscribeAndBlock(
+      @NonNull P subscribedProjection, Duration retryWaitTime);
 
   /**
    * Method returns immediately, but you wont know if subscription was sucessful (kind of "keep
