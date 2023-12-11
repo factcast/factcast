@@ -154,13 +154,18 @@ public class FactusImpl implements Factus {
   @Override
   public <P extends SubscribedProjection> Subscription subscribeAndBlock(
       @NonNull P subscribedProjection) {
+    return subscribeAndBlock(subscribedProjection, Duration.ofMinutes(5));
+  }
+
+  @Override
+  public <P extends SubscribedProjection> Subscription subscribeAndBlock(
+      @NonNull P subscribedProjection, Duration retryWaitTime) {
 
     assertNotClosed();
     InLockedOperation.assertNotInLockedOperation();
 
-    Duration interval = Duration.ofMinutes(5); // TODO should be a property?
     while (!closed.get()) {
-      WriterToken token = subscribedProjection.acquireWriteToken(interval);
+      WriterToken token = subscribedProjection.acquireWriteToken(retryWaitTime);
       if (token != null) {
         log.info("Acquired writer token for {}", subscribedProjection.getClass());
         Subscription subscription = doSubscribe(subscribedProjection, token);

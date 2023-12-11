@@ -70,6 +70,12 @@ class FactusTest {
             }
 
             @Override
+            public <P extends SubscribedProjection> Subscription subscribeAndBlock(
+                @NonNull P subscribedProjection, Duration retryWaitTime) {
+              return null;
+            }
+
+            @Override
             public <A extends Aggregate> Locked<A> withLockOn(
                 @NonNull Class<A> aggregateClass, UUID id) {
               return null;
