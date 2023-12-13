@@ -8,7 +8,7 @@ type: docs
 
 ## FactCast-Server UI
 
-The FactCast-Server UI is an easy to use UI based on Vaadin, that you can optionally plug into FactCast.
+The FactCast-Server UI is an easy to use UI based on Vaadin, that optionally can be plugged into FactCast. It allows even to query for raw events, without requiring knowledge of a query language or database access. 
 
 ![FactCast-Server UI](./ui.png)
 
