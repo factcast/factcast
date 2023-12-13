@@ -1,7 +1,7 @@
 ---
 title: "Security"
 type: docs
-weight: 100
+weight: 300
 ---
 
 ## Authentication & Authorization
