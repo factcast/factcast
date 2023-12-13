@@ -22,13 +22,14 @@ UserId.
 
 Now, when you look at UserLogin Events through the UI, the UserId is all you see, because thats all the json there is to
 your fact payload. However it might be nice to know the UserName for a UserId when you look at it. Also it would be
-cool, to 'annotate' the Json with that information. This can be done by building custom Plugins:
-In the client, you'd know what to do: Build a projection that consumes all the UserRegistered Events to provide a
-queryable Map<UserId, UserName>.
+cool, to 'annotate' the Json with that information. This can be done by building custom Plugins.
 
-If you now do this in a Plugin, it gives you an API to inspect and annotate the Json that will be displayed to the User.
+A plugin provides you an API to inspect and annotate the Json that will be displayed to the User.
+As part of a plugin, you could for instance build a projection that consumes all the UserRegistered Events to provide a
+queryable Map<UserId, UserName>, and use this data to annotate the `UserName` to every `UserId`.
 
 ### Getting started
 
-Take a look at `HeaderMetaTimestampToDatePlugin` as an example of the simplest Plugin possible. It just turns the `meta_.ts` attribute of the fact header into a human readable DateTime.
+Take a look at `HeaderMetaTimestampToDatePlugin` as an example of the simplest Plugin possible. It just turns
+the `meta_.ts` attribute of the fact header into a human readable DateTime.
 ![header-meta-timestamp-to-date-plugin.png](header-meta-timestamp-to-date-plugin.png)
