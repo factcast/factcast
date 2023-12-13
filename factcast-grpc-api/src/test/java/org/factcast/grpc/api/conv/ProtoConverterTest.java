@@ -15,11 +15,12 @@
  */
 package org.factcast.grpc.api.conv;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
+import java.time.LocalDate;
 import java.util.*;
 import lombok.NonNull;
 import org.assertj.core.util.Lists;
@@ -35,7 +36,8 @@ import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Type;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class ProtoConverterTest {
 
@@ -702,12 +704,30 @@ public class ProtoConverterTest {
   }
 
   @Test
-  public void createInfoNotification() {
+  void createInfoNotification() {
     FactStreamInfo info = new FactStreamInfo(2, 3);
     MSG_Notification msg = uut.createInfoNotification(info);
 
     assertThat(msg.getType()).isEqualTo(Type.Info);
     assertThat(msg.getInfo().getSerialStart()).isEqualTo(2);
     assertThat(msg.getInfo().getSerialHorizon()).isEqualTo(3);
+  }
+
+  @Test
+  void toProtoDate() {
+    LocalDate ld = LocalDate.of(2023, 12, 7);
+    assertThat(uut.fromProto(uut.toProto(ld))).isEqualTo(ld);
+  }
+
+  @Test
+  void toProtoSnap() {
+    SnapshotId id = SnapshotId.of("narf", UUID.randomUUID());
+    assertThat(uut.fromProto(uut.toProto(id))).isEqualTo(id);
+  }
+
+  @Test
+  void toProtoCurrentDatabaseTimestamp() {
+    long ts = 42;
+    assertThat(uut.fromProto(uut.toProtoTime(ts))).isEqualTo(ts);
   }
 }
