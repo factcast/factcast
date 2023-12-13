@@ -25,8 +25,9 @@ import com.google.common.collect.Sets;
 import io.grpc.*;
 import java.io.IOException;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
 import lombok.NonNull;
 import org.assertj.core.util.Lists;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
@@ -283,7 +284,7 @@ class GrpcFactStoreTest {
   void testCompatibleProtocolVersion() {
     when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
     when(blockingStub.handshake(any()))
-        .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(1, 1, 0), new HashMap<>())));
+        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
     uut.initialize();
   }
 
@@ -299,7 +300,7 @@ class GrpcFactStoreTest {
   void testInitializationExecutesHandshakeOnlyOnce() {
     when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
     when(blockingStub.handshake(any()))
-        .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(1, 1, 0), new HashMap<>())));
+        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
     uut.initialize();
     uut.initialize();
     verify(blockingStub, times(1)).handshake(any());
@@ -490,7 +491,7 @@ class GrpcFactStoreTest {
   @Test
   public void testCurrentTime() {
     long l = 123L;
-    when(blockingStub.currentTime(conv.empty())).thenReturn(conv.toProto(l));
+    when(blockingStub.currentTime(conv.empty())).thenReturn(conv.toProtoTime(l));
     Long t = uut.currentTime();
     assertEquals(t, l);
   }
@@ -716,5 +717,32 @@ class GrpcFactStoreTest {
           .extracting(Throwable::getMessage)
           .isEqualTo(msg);
     }
+  }
+
+  @Test
+  void latestSerial() {
+    MSG_Serial ser = conv.toProto(2L);
+    when(blockingStub.latestSerial(any())).thenReturn(ser);
+    org.assertj.core.api.Assertions.assertThat(uut.latestSerial()).isEqualTo(2);
+  }
+
+  @Test
+  void lastSerialBefore() {
+    LocalDate date = LocalDate.of(2003, 12, 24);
+    MSG_Date msgDate = conv.toProto(date);
+    when(blockingStub.lastSerialBefore(msgDate)).thenReturn(conv.toProto(2L));
+    org.assertj.core.api.Assertions.assertThat(uut.lastSerialBefore(date)).isEqualTo(2);
+  }
+
+  @Test
+  void fetchBySerial() {
+    TestFact fact = new TestFact();
+    long serial = 2L;
+    when(blockingStub.fetchBySerial(conv.toProto(serial)))
+        .thenReturn(
+            MSG_OptionalFact.newBuilder().setFact(conv.toProto(fact)).setPresent(true).build());
+
+    Optional<Fact> result = uut.fetchBySerial(serial);
+    assertThat(result).isPresent();
   }
 }

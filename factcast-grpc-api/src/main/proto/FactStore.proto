@@ -25,6 +25,10 @@ message MSG_OptionalSerial {
   bool present = 1;
   uint64 serial = 2;
 }
+message MSG_Serial {
+  uint64 serial = 1;
+}
+
 /**
 	A Notification as returned as a stream member from subscribe.
 	Type acts as descriminator. Either a Fact or one of the signals Catchup/Complete/Error.
@@ -150,6 +154,12 @@ message MSG_CurrentDatabaseTime {
   int64 millis = 1;
 }
 
+message MSG_Date {
+  int32 year = 1;
+  int32 month = 2;
+  int32 day = 3;
+}
+
 message MSG_SnapshotId{
   string key = 1;
   MSG_OptionalUuid uuid = 2; // useful in case of aggregates, unused when dealing with projections
@@ -188,4 +198,9 @@ service RemoteFactStore {
   rpc stateForSpecsJson (MSG_FactSpecsJson) returns (MSG_UUID) {}
   // perf. opt. for stateForSpecsJson, where the query is replaced by a simple select max(ser)
   rpc currentStateForSpecsJson (MSG_FactSpecsJson) returns (MSG_UUID) {}
+  // 1.4 (corresponds to version 0.7.3)
+  rpc latestSerial(MSG_Empty) returns (MSG_Serial) {}
+  rpc lastSerialBefore(MSG_Date) returns (MSG_Serial) {}
+  rpc fetchBySerial(MSG_Serial) returns (MSG_OptionalFact) {}
+
 }
