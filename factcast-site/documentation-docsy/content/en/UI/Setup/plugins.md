@@ -22,7 +22,7 @@ UserId.
 
 Now, when you look at UserLogin Events through the UI, the UserId is all you see, because thats all the json there is to
 your fact payload. However it might be nice to know the UserName for a UserId when you look at it. Also it would be
-cool, to 'annotate' the Json with that information. This is what Plugins can do:
+cool, to 'annotate' the Json with that information. This can be done by building custom Plugins:
 In the client, you'd know what to do: Build a projection that consumes all the UserRegistered Events to provide a
 queryable Map<UserId, UserName>.
 
