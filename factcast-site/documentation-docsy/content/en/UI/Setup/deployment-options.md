@@ -20,7 +20,7 @@ additional configuration is needed.
 
 ### Option 2: as a standalone instance accessing the Database
 
-You can add a new project to your landscape that just servers as a UI Server. In this configuration you don't even need
+You can add a new project to your landscape that just acts as a UI Server. In this configuration you don't even need
 the gRPC layer (factcast-server-grpc) because it uses a jdbc connection to your database directly. The config is
 basically the
 same than with your FactCast Server (in terms of how to access the backing database), but additionally, you may want
