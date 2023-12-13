@@ -13,4 +13,4 @@ conveniently query for facts, without requiring knowledge of a query language or
 
 ![FactCast-Server UI](./ui.png)
 
-Learn [here](Setup) how to set it up in your environment.
+Learn [here](setup) how to set it up in your environment.

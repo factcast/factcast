@@ -1,7 +1,7 @@
 ---
 title: "Deployment Options"
 type: docs
-weight: 900
+weight: 10
 description: Options for deploying the FactCast server-ui.
 ---
 
@@ -35,5 +35,5 @@ accordingly.
 
 ### Security
 
-The UI uses spring-security. Some helpful settings are documented [here](../Setup/security).
+The UI uses spring-security. Some helpful settings are documented [here](../security).
 If security is disabled you can log in with any username and `security_disabled` as password.

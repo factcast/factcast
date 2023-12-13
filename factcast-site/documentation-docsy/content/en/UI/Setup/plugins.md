@@ -1,7 +1,7 @@
 ---
 title: "Plugins"
 type: docs
-weight: 200
+weight: 500
 description: Plugins to enrich visual representation of data
 ---
 
@@ -32,4 +32,4 @@ queryable Map<UserId, UserName>, and use this data to annotate the `UserName` to
 
 Take a look at `HeaderMetaTimestampToDatePlugin` as an example of the simplest Plugin possible. It just turns
 the `meta_.ts` attribute of the fact header into a human readable DateTime.
-![header-meta-timestamp-to-date-plugin.png](header-meta-timestamp-to-date-plugin.png)
+![header-meta-timestamp-to-date-plugin.png](../header-meta-timestamp-to-date-plugin.png)
