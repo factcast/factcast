@@ -36,10 +36,6 @@ public class FactValidationAspect {
   public static final int MAX_ERROR_MESSAGES = 25;
   private final FactValidator validator;
 
-  // not hogging the common FJP. Also limiting parallelism to less of what the common pool has.
-  private static final ForkJoinPool validationPool =
-      new ForkJoinPool((int) Math.abs(Runtime.getRuntime().availableProcessors() / 1.5));
-
   @SuppressWarnings("unchecked")
   @Around("execution(public void org.factcast.core.store.FactStore.publish(*))")
   public Object interceptPublish(ProceedingJoinPoint joinPoint) throws Throwable {

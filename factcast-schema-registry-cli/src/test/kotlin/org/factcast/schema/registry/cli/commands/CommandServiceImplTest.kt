@@ -30,7 +30,7 @@ class CommandServiceImplTest : StringSpec() {
 
     val uut = CommandServiceImpl(fs, validationService, projectService, distributionCreatorService)
 
-    override fun afterTest(testCase: TestCase, result: TestResult) {
+    override suspend fun afterTest(testCase: TestCase, result: TestResult) {
         clearAllMocks()
     }
 

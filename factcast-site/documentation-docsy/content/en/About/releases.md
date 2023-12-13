@@ -146,7 +146,7 @@ href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.2.5
 {{< /rawhtml >}}
 
 - important fix for detecting disappearing clients
-- self defense agains spinngin clients by refusing excessive reoccuring
+- self-defense against spinning clients by refusing excessive reoccurring
   subscription requests
 - added PID to subscription requests (compatible change)
 

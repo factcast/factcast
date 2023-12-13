@@ -321,3 +321,62 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
+
+  - changeSet:
+      id: issue2479
+      runInTransaction: false
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2479/fact_date.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2479/date2serial_lookup.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2479/date2serial_trigger.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue2479_migration
+      author: uweschaefer
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+             expectedResult: t
+             sql: SELECT count_estimate('SELECT * FROM fact') < 10000000;
+      comment: If you have less than 10mio facts, this will be executed, if not, we kindly ask you to execute this script manually  
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2479/date2serial_for_existing_events.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+        
+  - changeSet:
+      id: issue2589_add_pk_to_blacklist
+      runInTransaction: false
+      author: uweschaefer
+      comment: add missing pk to blacklist table
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2589/add_pk_to_blacklist.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+        
+        
+        
+        

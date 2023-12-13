@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.6.9-SNAPSHOT</version>
+    <version>0.7.5-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-itests</artifactId>
@@ -14,6 +14,8 @@
   <properties>
     <sonar.skip>true</sonar.skip>
     <maven.deploy.skip>true</maven.deploy.skip>
+    <!-- docker version to test against -->
+    <factcast.version>latest</factcast.version>
   </properties>
   <modules>
     <module>factcast-itests-tls</module>
@@ -23,6 +25,7 @@
     <module>factcast-itests-exception-handling</module>
     <module>factcast-itests-store</module>
     <module>factcast-itests-doc</module>
+    <module>factcast-itests-security</module>
   </modules>
   <dependencies>
     <dependency>

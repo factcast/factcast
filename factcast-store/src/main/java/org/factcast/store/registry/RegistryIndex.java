@@ -16,11 +16,14 @@
 package org.factcast.store.registry;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.LinkedList;
-import java.util.List;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.*;
 import lombok.Data;
+import org.factcast.store.registry.http.ValidationConstants;
 import org.factcast.store.registry.transformation.TransformationSource;
 import org.factcast.store.registry.validation.schema.SchemaSource;
+import org.springframework.core.io.AbstractResource;
 
 /**
  * Object representation for an index.json
@@ -32,4 +35,19 @@ public class RegistryIndex {
   @JsonProperty private List<SchemaSource> schemes = new LinkedList<>();
 
   @JsonProperty private List<TransformationSource> transformations = new LinkedList<>();
+
+  public static Optional<RegistryIndex> fetch(AbstractResource fileSystemResource) {
+    try {
+      if (fileSystemResource.exists()) {
+        return Optional.of(
+            ValidationConstants.JACKSON.readValue(
+                fileSystemResource.getInputStream(), RegistryIndex.class));
+      } else {
+        throw new SchemaRegistryUnavailableException(
+            new FileNotFoundException("Resource " + fileSystemResource + " does not exist."));
+      }
+    } catch (IOException e) {
+      throw new SchemaRegistryUnavailableException(e);
+    }
+  }
 }

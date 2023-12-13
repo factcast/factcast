@@ -22,6 +22,7 @@ import org.factcast.store.registry.transformation.TransformationSource;
 import org.factcast.store.registry.validation.schema.SchemaSource;
 import org.junit.jupiter.api.*;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.util.StringUtils;
 
 class FilesystemRegistryFileFetcherTest {
 
@@ -30,7 +31,7 @@ class FilesystemRegistryFileFetcherTest {
     // INIT
     String path = new ClassPathResource("/example-registry/").getFile().getAbsolutePath();
 
-    var uut = new FilesystemRegistryFileFetcher(path);
+    var uut = new FilesystemRegistryFetcher(path);
 
     // RUN
     String transformation =
@@ -38,7 +39,9 @@ class FilesystemRegistryFileFetcherTest {
 
     // ASSERT
     assertEquals(
-        "function transform(event) {\n" + "    event.salutation = \"NA\"\n" + "}", transformation);
+        StringUtils.trimAllWhitespace(
+            "function transform(event) {\n" + "    event.salutation = \"NA\"\n" + "}"),
+        StringUtils.trimAllWhitespace(transformation));
   }
 
   @Test
@@ -46,25 +49,26 @@ class FilesystemRegistryFileFetcherTest {
     // INIT
     String path = new ClassPathResource("/example-registry/").getFile().getAbsolutePath();
 
-    var uut = new FilesystemRegistryFileFetcher(path);
+    var uut = new FilesystemRegistryFetcher(path);
 
     // RUN
     var s = uut.fetchSchema(new SchemaSource("x", "xxx", "ns", "type", 1));
 
     // ASSERT
     assertEquals(
-        "{\n"
-            + "  \"additionalProperties\" : true,\n"
-            + "  \"properties\" : {\n"
-            + "    \"firstName\" : {\n"
-            + "      \"type\": \"string\"\n"
-            + "    },\n"
-            + "    \"lastName\" : {\n"
-            + "      \"type\": \"string\"\n"
-            + "    }\n"
-            + "  },\n"
-            + "  \"required\": [\"firstName\", \"lastName\"]\n"
-            + "}\n",
-        s);
+        StringUtils.trimAllWhitespace(
+            "{\n"
+                + "  \"additionalProperties\" : true,\n"
+                + "  \"properties\" : {\n"
+                + "    \"firstName\" : {\n"
+                + "      \"type\": \"string\"\n"
+                + "    },\n"
+                + "    \"lastName\" : {\n"
+                + "      \"type\": \"string\"\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"required\": [\"firstName\", \"lastName\"]\n"
+                + "}\n"),
+        StringUtils.trimAllWhitespace(s));
   }
 }

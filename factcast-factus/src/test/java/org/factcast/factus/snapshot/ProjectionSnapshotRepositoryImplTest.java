@@ -171,6 +171,6 @@ class ProjectionSnapshotRepositoryImplTest {
     }
   }
 
-  @ProjectionMetaData(serial = 1)
+  @ProjectionMetaData(revision = 1)
   static class SomeSnapshotProjection implements SnapshotProjection {}
 }

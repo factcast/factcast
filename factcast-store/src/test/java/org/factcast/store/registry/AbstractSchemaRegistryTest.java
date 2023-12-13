@@ -23,7 +23,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.common.cache.LoadingCache;
-import java.util.Optional;
+import java.util.*;
+import lombok.experimental.FieldDefaults;
 import net.javacrumbs.shedlock.core.LockProvider;
 import net.javacrumbs.shedlock.core.SimpleLock;
 import org.everit.json.schema.Schema;
@@ -127,6 +128,42 @@ class AbstractSchemaRegistryTest {
       assertThat(actual).isNotEmpty();
       // new value freshly picked from store
       assertThat(actual.get()).isNotSameAs(firstSchema);
+    }
+  }
+
+  @Test
+  void shouldBeActive() {
+    // only false for NOP
+    assertThat(underTest.isActive()).isTrue();
+  }
+
+  @Nested
+  @FieldDefaults(makeFinal = true)
+  class WhenEnumerating {
+
+    SchemaKey key1 = SchemaKey.of("ns1", "t1", 1);
+    SchemaKey key2 = SchemaKey.of("ns1", "t1", 2);
+    SchemaKey key3 = SchemaKey.of("ns1", "t2", 1);
+    SchemaKey key4 = SchemaKey.of("ns2", "t3", 1);
+    Set<SchemaKey> allKeys = Set.of(key1, key2, key3, key4);
+
+    @Test
+    void passesAllNamespaces() {
+      when(schemaStore.getAllSchemaKeys()).thenReturn(allKeys);
+      assertThat(underTest.enumerateNamespaces()).containsExactlyInAnyOrder("ns1", "ns2");
+    }
+
+    @Test
+    void noTypesInUnknownNS() {
+      when(schemaStore.getAllSchemaKeys()).thenReturn(allKeys);
+      assertThat(underTest.enumerateTypes("unknown")).isEmpty();
+    }
+
+    @Test
+    void enumeratesTypesForNamespace() {
+      when(schemaStore.getAllSchemaKeys()).thenReturn(allKeys);
+      assertThat(underTest.enumerateTypes("ns1")).containsExactlyInAnyOrder("t1", "t2");
+      assertThat(underTest.enumerateTypes("ns2")).containsExactlyInAnyOrder("t3");
     }
   }
 }

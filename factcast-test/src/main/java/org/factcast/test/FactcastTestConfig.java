@@ -16,19 +16,23 @@
 package org.factcast.test;
 
 import java.lang.annotation.*;
+import java.util.*;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.With;
+import org.factcast.core.util.MavenHelper;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Inherited
 public @interface FactcastTestConfig {
-  String factcastVersion() default Config.FACTCAST_VERSION;
+  String factcastVersion() default "";
 
   String postgresVersion() default "";
 
   String configDir() default Config.CONFIG_DIR;
+
+  boolean securityEnabled() default false;
 
   @Value
   @With
@@ -36,23 +40,50 @@ public @interface FactcastTestConfig {
     String factcastVersion;
     String postgresVersion;
     String configDir;
+    boolean securityEnabled;
 
-    static final String FACTCAST_VERSION = "latest";
     static final String CONFIG_DIR = "./config";
 
     static Config defaults() {
-      return new Config(FACTCAST_VERSION, PostgresVersion.get(), CONFIG_DIR);
+      return new Config(FactcastVersion.get(), PostgresVersion.get(), CONFIG_DIR, false);
+    }
+
+    public String factcastVersion() {
+      return resolve(factcastVersion);
     }
 
     static Config from(@NonNull FactcastTestConfig e) {
-      final Config config =
-          defaults().withConfigDir(e.configDir()).withFactcastVersion(e.factcastVersion());
+      Config config =
+          defaults().withConfigDir(e.configDir()).withSecurityEnabled(e.securityEnabled());
 
+      if (!e.factcastVersion().isEmpty()) {
+        config = config.withFactcastVersion(e.factcastVersion());
+      }
       if (!e.postgresVersion().isEmpty()) {
-        return config.withPostgresVersion(e.postgresVersion());
+        config = config.withPostgresVersion(e.postgresVersion());
       }
 
       return config;
+    }
+
+    private static String resolve(@NonNull String versionAsAnnotated) {
+      if (versionAsAnnotated.isEmpty()) {
+        if (runFromJar()) return jarVersion();
+        else return "latest";
+      } else return versionAsAnnotated;
+    }
+
+    private static String jarVersion() {
+      return MavenHelper.getVersion("factcast-test", FactcastTestConfig.class)
+          .orElseThrow(() -> new IllegalStateException("Cannot retrieve current version."));
+    }
+
+    private static boolean runFromJar() {
+      return Objects.requireNonNull(
+              FactcastTestConfig.class.getResource(
+                  "/" + FactcastTestConfig.class.getName().replace(".", "/") + ".class"))
+          .toString()
+          .startsWith("jar:");
     }
   }
 }

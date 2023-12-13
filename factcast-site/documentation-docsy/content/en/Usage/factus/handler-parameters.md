@@ -1,7 +1,7 @@
 ---
 title: "Handler Parameters"
 type: docs
-weigth: 1020
+weight: 1020
 ---
 
 Inside projections, Factus uses [methods annotated with `@Handler` or `@HandlerFor`]({{< ref "projections.md#projections-in-general" >}})

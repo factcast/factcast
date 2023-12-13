@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.6.9-SNAPSHOT</version>
+    <version>0.7.5-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-docker</artifactId>
@@ -91,7 +91,7 @@
       <plugin>
         <groupId>io.fabric8</groupId>
         <artifactId>docker-maven-plugin</artifactId>
-        <version>0.43.0</version>
+        <version>0.43.4</version>
         <executions>
           <execution>
             <id>default</id>
@@ -137,14 +137,13 @@
           <plugin>
             <groupId>io.fabric8</groupId>
             <artifactId>docker-maven-plugin</artifactId>
-            <version>0.41.0</version>
+            <version>0.43.4</version>
             <executions>
               <execution>
                 <id>default</id>
                 <goals>
                   <goal>build</goal>
-                  <!-- pushing is done from the shell directly, because auth does
-                    not work. <goal>push</goal> -->
+                  <goal>push</goal>
                 </goals>
               </execution>
             </executions>

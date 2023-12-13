@@ -15,7 +15,10 @@
  */
 package org.factcast.store.internal.tail;
 
+import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.store.IsReadAndWriteEnv;
 import org.factcast.store.StoreConfigurationProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -24,8 +27,15 @@ import org.springframework.jdbc.core.JdbcTemplate;
 public class PGTailIndexingConfiguration {
 
   @Bean
+  @IsReadAndWriteEnv
   public PGTailIndexManager pgTailIndexManager(
       JdbcTemplate jdbc, StoreConfigurationProperties props) {
     return new PGTailIndexManagerImpl(jdbc, props);
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  public FastForwardTarget fastForwardTarget(JdbcTemplate jdbc) {
+    return new FastForwardTargetRefresher(jdbc);
   }
 }

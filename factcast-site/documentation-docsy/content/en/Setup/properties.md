@@ -47,6 +47,7 @@ description: Properties you can use to configure FactCast
 | factcast.store.transformationCachePageSize                   | Defines the max number of Facts being scheduled for transformation in one go. Must be positive and not exceed 32000.                                                                                                                                                                                                                                                                                                                                | <nobr>100</nobr>                         |
 | factcast.store.sizeOfThreadPoolForSubscriptions              | This is the number of threads we create for handling new subscriptions requests. It's implemented via a fixed thread pool. As soon as the subscription request finishes or enters phase 3 (follow) the thread is freed up again. In earlier versions we used the common FJP which limits the parallelism to the number of cores - 1. If you ever encounter too much database load or too high waiting time for subscriptions this can be an option. | <nobr>100</nobr>                         |
 | factcast.store.sizeOfThreadPoolForBufferedTransformations    | This is the number of threads we create for handling buffered transformations. It's implemented via work stealing thread pool. In early versions we used the common FJP which limits the parallelism to the number of cores - 1.                                                                                                                                                                                                                    | <nobr>25</nobr>                          |
+| factcast.store.readOnlyModeEnabled                           | Configures the FacCast to work in read-only mode. You cannot publish any events in this mode and certain functionality like tail index generation or state token generation is disabled. You can still use a persistent schema store or transformation cache, however they will work in read-only mode. Additionally, liquibase is disabled.                                                                                                        | false                                    |
 
 ---
 
@@ -136,8 +137,16 @@ grpc.server.permit-keep-alive-time=100
 
 ### Testing
 
-| Property                           | Semantics                                                                                                         | Default |
+| Property                           | Description                                                                                                       | Default |
 | ---------------------------------- | :---------------------------------------------------------------------------------------------------------------- | :------ |
 | factcast.store.integrationTestMode | when set to true, disables all non-essential memory-internal caches, timing might differ to production of course. | false   |
+
+---
+
+### UI
+
+| Property              | Description                                                                                                            | Default |
+| --------------------- | :--------------------------------------------------------------------------------------------------------------------- | :------ |
+| vaadin.productionMode | Should be set to true, otherwise vaadin tries to generate a dev bundle which is not necessary, and probably will fail. | false   |
 
 Further details can be found here : `net.devh.boot.grpc.server.config.GrpcServerProperties`.

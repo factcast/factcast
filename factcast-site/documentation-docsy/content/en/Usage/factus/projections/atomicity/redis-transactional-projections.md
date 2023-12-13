@@ -5,7 +5,7 @@ type="docs"
 +++
 
 A _Redis transactional projection_ is a [transactional projection]({{<ref "atomicity">}})
-based on [Redission RTransaction](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RTransaction.html).
+based on [Redisson RTransaction](https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RTransaction.html).
 
 Compared to a [Spring transactional projection]({{< ref "spring-transactional-projections.md">}}), a _Redis transactional projection_ is more lightweight since
 
