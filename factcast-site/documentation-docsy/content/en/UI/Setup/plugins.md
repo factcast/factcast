@@ -30,5 +30,5 @@ If you now do this in a Plugin, it gives you an API to inspect and annotate the 
 
 ### Getting started
 
-Take a look at `HeaderMetaTimestampToDatePlugin` as an example of the simplest Plugin possible, that just turns the `meta_.ts` attribute of the fact header into a human readable DateTime.
+Take a look at `HeaderMetaTimestampToDatePlugin` as an example of the simplest Plugin possible. It just turns the `meta_.ts` attribute of the fact header into a human readable DateTime.
 ![header-meta-timestamp-to-date-plugin.png](header-meta-timestamp-to-date-plugin.png)
