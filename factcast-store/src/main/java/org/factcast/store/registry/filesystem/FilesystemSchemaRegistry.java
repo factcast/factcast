@@ -34,7 +34,7 @@ public class FilesystemSchemaRegistry extends AbstractSchemaRegistry {
       @NonNull LockProvider lockProvider) {
     super(
         new FilesystemIndexFetcher(base),
-        new FilesystemRegistryFileFetcher(base),
+        new FilesystemRegistryFetcher(base),
         schemaStore,
         transformationStore,
         registryMetrics,

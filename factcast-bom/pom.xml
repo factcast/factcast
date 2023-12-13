@@ -45,6 +45,16 @@
       </dependency>
       <dependency>
         <groupId>org.factcast</groupId>
+        <artifactId>factcast-server-ui</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-server-security</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
         <artifactId>factcast-spring-boot-autoconfigure</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -106,6 +116,16 @@
       <dependency>
         <groupId>org.factcast</groupId>
         <artifactId>factcast-script-engine</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-server-security</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-server-ui</artifactId>
         <version>${project.version}</version>
       </dependency>
       <!-- for testing only! -->

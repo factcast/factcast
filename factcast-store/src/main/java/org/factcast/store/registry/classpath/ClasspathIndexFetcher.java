@@ -15,15 +15,11 @@
  */
 package org.factcast.store.registry.classpath;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Optional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.store.registry.IndexFetcher;
 import org.factcast.store.registry.RegistryIndex;
-import org.factcast.store.registry.SchemaRegistryUnavailableException;
-import org.factcast.store.registry.filesystem.FilesystemIndexFetcher;
 import org.springframework.core.io.ClassPathResource;
 
 @RequiredArgsConstructor
@@ -36,17 +32,12 @@ public class ClasspathIndexFetcher implements IndexFetcher {
   @Override
   public Optional<RegistryIndex> fetchIndex() {
     if (initialRun) {
-
       try {
-        File file = new ClassPathResource(base + "/index.json").getFile();
-        return FilesystemIndexFetcher.fetch_index(file);
-
-      } catch (IOException e) {
-        throw new SchemaRegistryUnavailableException(e);
+        ClassPathResource file = new ClassPathResource(base + "/index.json");
+        return RegistryIndex.fetch(file);
       } finally {
         initialRun = false;
       }
-
     } else
       // assume unchanged
       return Optional.empty();
