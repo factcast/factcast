@@ -11,7 +11,7 @@ The FactCast Server-UI can be deployed in different ways:
 
 ### Option 1: as part of the factcast server
 
-Just add the dependency factcast-server-ui to your server project (next to server-grpc), so that you can use the UI
+Just add the dependency `factcast-server-ui` to your server project (next to server-grpc), so that you can use the UI
 directly from within the Server. In
 this configuration, the UI uses the (process-local) FactStore interface to talk to your store, and (almost) no
 additional configuration is needed.
