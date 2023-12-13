@@ -26,7 +26,7 @@ basically the
 same than with your FactCast Server (in terms of how to access the backing database), but additionally, you may want
 to set the role of this instance to readOnly by setting `factcast.store.readOnlyModeEnabled=true`.
 
-### Option 3: as standalone instance facilitating an existing factcast-server over gRPC.
+### Option 3: as standalone instance facilitating an existing factcast-server over gRPC
 
 This is useful when you don't want to publish the UI (much recommended) and also cannot / don't want to access the
 Database directly. This
