@@ -53,7 +53,8 @@ public @interface FactcastTestConfig {
     }
 
     static Config from(@NonNull FactcastTestConfig e) {
-      Config config = defaults().withConfigDir(e.configDir());
+      Config config =
+          defaults().withConfigDir(e.configDir()).withSecurityEnabled(e.securityEnabled());
 
       if (!e.factcastVersion().isEmpty()) {
         config = config.withFactcastVersion(e.factcastVersion());

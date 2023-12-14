@@ -1,0 +1,54 @@
+vaadin-scroller[slot="drawer"] {
+	padding: var(--lumo-space-s);
+}
+
+[slot="drawer"]:is(header, footer) {
+	display: flex;
+	align-items: center;
+	gap: var(--lumo-space-s);
+	padding: var(--lumo-space-s) var(--lumo-space-m);
+	min-height: var(--lumo-size-xl);
+	box-sizing: border-box;
+}
+
+[slot="drawer"]:is(header, footer):is(:empty) {
+	display: none;
+}
+
+.default-content {
+	width: auto;
+}
+
+.single-line-input {
+	width: 100%;
+}
+
+@media (min-width: 992px) {
+	.default-content {
+		width: 43rem;
+	}
+
+	.single-line-input {
+		width: 50%;
+	}
+}
+
+@media (min-width: 1200px) {
+	.default-content {
+		width: 59rem;
+	}
+}
+
+@media (min-width: 1400px) {
+	.default-content {
+		width: 67rem;
+	}
+}
+
+.flex-wrap {
+	flex-wrap: wrap;
+}
+
+.label-padding {
+	padding-top: var(--lumo-space-m);
+}

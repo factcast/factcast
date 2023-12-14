@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.7.3-SNAPSHOT</version>
+    <version>0.7.5-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <properties>
@@ -368,12 +368,12 @@
                 <annotationProcessorPath>
                   <groupId>io.micronaut</groupId>
                   <artifactId>micronaut-inject-java</artifactId>
-                  <version>4.1.11</version>
+                  <version>4.2.1</version>
                 </annotationProcessorPath>
                 <annotationProcessorPath>
                   <groupId>io.micronaut.validation</groupId>
                   <artifactId>micronaut-validation-processor</artifactId>
-                  <version>4.1.0</version>
+                  <version>4.2.0</version>
                 </annotationProcessorPath>
               </annotationProcessorPaths>
             </configuration>
@@ -407,12 +407,12 @@
                 <annotationProcessorPath>
                   <groupId>io.micronaut</groupId>
                   <artifactId>micronaut-inject-java</artifactId>
-                  <version>4.1.11</version>
+                  <version>4.2.1</version>
                 </annotationProcessorPath>
                 <annotationProcessorPath>
                   <groupId>io.micronaut.validation</groupId>
                   <artifactId>micronaut-validation-processor</artifactId>
-                  <version>4.1.0</version>
+                  <version>4.2.0</version>
                 </annotationProcessorPath>
               </annotationProcessorPaths>
             </configuration>

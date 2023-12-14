@@ -15,13 +15,14 @@
  */
 package org.factcast.store.registry;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.store.registry.transformation.TransformationSource;
 import org.factcast.store.registry.validation.schema.SchemaSource;
+import org.springframework.core.io.AbstractResource;
 
 /** Abstract super class for RegistryFileFetcher that operate on local files. */
 @RequiredArgsConstructor
@@ -42,9 +43,9 @@ public abstract class AbstractFileBasedRegistryFileFetcher implements RegistryFi
 
   private @NonNull String fetch(String subPath) {
     try {
-      File file = getFile(subPath);
+      AbstractResource file = getFile(subPath);
       if (file.exists()) {
-        return readFile(file);
+        return file.getContentAsString(StandardCharsets.UTF_8);
       } else {
         throw new SchemaRegistryUnavailableException(
             new FileNotFoundException("Resource " + subPath + " does not exist."));
@@ -59,18 +60,5 @@ public abstract class AbstractFileBasedRegistryFileFetcher implements RegistryFi
    * @return a File object pointing to the requested file
    * @throws IOException in case of problems resolving the File object
    */
-  protected abstract File getFile(String subPath) throws IOException;
-
-  private static @NonNull String readFile(@NonNull File file) throws IOException {
-    StringBuilder sb = new StringBuilder();
-    java.nio.file.Files.lines(file.toPath())
-        .forEachOrdered(
-            l -> {
-              if (sb.length() > 0) {
-                sb.append("\n");
-              }
-              sb.append(l);
-            });
-    return sb.toString();
-  }
+  protected abstract AbstractResource getFile(String subPath) throws IOException;
 }
