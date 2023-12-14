@@ -16,7 +16,8 @@
 package org.factcast.factus.projector;
 
 import org.factcast.factus.projection.Projection;
+import org.factcast.factus.projection.ProjectorContext;
 
 public interface ProjectorFactory {
-  <A extends Projection> Projector<A> create(A projection);
+  <A extends Projection, T extends ProjectorContext> Projector<A, T> create(A projection);
 }

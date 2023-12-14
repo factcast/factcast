@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2023 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,8 @@
  */
 package org.factcast.factus.projection;
 
-import lombok.experimental.Delegate;
+import org.factcast.factus.projection.tx.TransactionAware;
 
-/**
- * Local projection (using vm-locks to synchronize) for async subscription to a stream of
- * events/facts.
- */
-public abstract class LocalSubscribedProjection
-    implements SubscribedProjection<LocalProjectorContext> {
-  @Delegate
-  private final LocalFactStreamPosition factStreamPosition = new LocalFactStreamPosition();
-
-  @Delegate private final LocalWriteToken lock = new LocalWriteToken();
-  @Delegate private final LocalTransaction transaction = new LocalTransaction();
-}
+// TODO please find a better term
+public interface ContextualProjection<T extends ProjectorContext>
+    extends Projection, FactStreamPositionAware<T>, TransactionAware<T> {}

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2023 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.projector;
+package org.factcast.factus.projection.parameter;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.function.BiFunction;
 import lombok.NonNull;
 import org.factcast.core.Fact;
-import org.factcast.core.spec.FactSpec;
-import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projection.ProjectorContext;
 
-public interface Projector<A extends Projection, T extends ProjectorContext> {
-  default void apply(@NonNull Fact element) {
-    apply(Collections.singletonList(element));
-  }
-
-  void apply(@NonNull Iterable<Fact> facts);
-
-  List<FactSpec> createFactSpecs();
-
-  void onCatchup(UUID idOfLastFactApplied);
-}
+public interface HandlerParameterProvider
+    extends BiFunction<@NonNull Fact, @NonNull ProjectorContext, Object> {}

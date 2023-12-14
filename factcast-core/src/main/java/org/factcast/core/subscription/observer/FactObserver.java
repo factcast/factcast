@@ -15,7 +15,8 @@
  */
 package org.factcast.core.subscription.observer;
 
-import java.util.*;
+import java.util.List;
+import java.util.UUID;
 import lombok.Generated;
 import lombok.NonNull;
 import org.factcast.core.Fact;
@@ -48,7 +49,7 @@ public interface FactObserver {
     LoggerFactory.getLogger(FactObserver.class).warn("Unhandled onError:", exception);
   }
 
-  // since 0.7:
+  // since 0.7.5:
 
   // overwriting allows for more efficient processing
   default void onNext(@NonNull List<Fact> batch) {

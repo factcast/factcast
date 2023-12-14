@@ -23,6 +23,7 @@ import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.ManagedProjection;
+import org.factcast.factus.projection.ProjectorContext;
 import org.factcast.factus.projection.SnapshotProjection;
 
 public interface ProjectionAccessor {
@@ -77,7 +78,8 @@ public interface ProjectionAccessor {
    * <p>This method is thread-safe, even on the same projection.
    */
   @SneakyThrows
-  default <P extends ManagedProjection> void update(@NonNull P managedProjection) {
+  default <T extends ProjectorContext, P extends ManagedProjection<T>> void update(
+      @NonNull P managedProjection) {
     update(managedProjection, FactusConstants.FOREVER);
   }
 
@@ -87,6 +89,6 @@ public interface ProjectionAccessor {
    *
    * <p>This method is thread-safe, even on the same projection.
    */
-  <P extends ManagedProjection> void update(
+  <T extends ProjectorContext, P extends ManagedProjection<T>> void update(
       @NonNull P managedProjection, @NonNull Duration maxWaitTime) throws TimeoutException;
 }

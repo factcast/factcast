@@ -18,6 +18,7 @@ package org.factcast.factus.projection;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder(alphabetic = true)
+// snapshots need to be local by definition
 public interface SnapshotProjection extends Projection {
   default void onBeforeSnapshot() {}
 

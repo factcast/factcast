@@ -15,5 +15,5 @@
  */
 package org.factcast.factus.projection;
 
-public interface SubscribedProjection
-    extends Projection, WriterTokenAware, FactStreamPositionAware {}
+public interface SubscribedProjection<T extends ProjectorContext>
+    extends Projection, WriterTokenAware, ContextualProjection<T> {}

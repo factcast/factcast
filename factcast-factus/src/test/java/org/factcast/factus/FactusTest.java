@@ -33,12 +33,9 @@ import org.factcast.factus.batch.PublishBatch;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.lock.Locked;
 import org.factcast.factus.lock.LockedOnSpecs;
-import org.factcast.factus.projection.Aggregate;
-import org.factcast.factus.projection.ManagedProjection;
-import org.factcast.factus.projection.SnapshotProjection;
-import org.factcast.factus.projection.SubscribedProjection;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.factcast.factus.projection.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -64,8 +61,8 @@ class FactusTest {
             }
 
             @Override
-            public <P extends SubscribedProjection> Subscription subscribeAndBlock(
-                @NonNull P subscribedProjection) {
+            public <T extends ProjectorContext, P extends SubscribedProjection<T>>
+                Subscription subscribeAndBlock(@NonNull P subscribedProjection) {
               return null;
             }
 
@@ -82,7 +79,8 @@ class FactusTest {
             }
 
             @Override
-            public <M extends ManagedProjection> Locked<M> withLockOn(@NonNull M managed) {
+            public <T extends ProjectorContext, M extends ManagedProjection<T>>
+                Locked<M> withLockOn(@NonNull M managed) {
               return null;
             }
 
@@ -122,7 +120,7 @@ class FactusTest {
             }
 
             @Override
-            public <P extends ManagedProjection> void update(
+            public <T extends ProjectorContext, P extends ManagedProjection<T>> void update(
                 @NonNull P managedProjection, @NonNull Duration maxWaitTime)
                 throws TimeoutException {}
 

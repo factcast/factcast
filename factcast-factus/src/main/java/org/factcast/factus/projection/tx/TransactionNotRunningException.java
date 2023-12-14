@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2023 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.projection;
+package org.factcast.factus.projection.tx;
 
-import java.util.UUID;
-import lombok.NonNull;
+public class TransactionNotRunningException extends TransactionException {
+  public TransactionNotRunningException(String msg) {
+    super(msg);
+  }
 
-// TODO extends projection?
-public interface FactStreamPositionAware<T extends ProjectorContext> {
+  public TransactionNotRunningException(Throwable e) {
+    super(e);
+  }
 
-  @NonNull
-  // does not use the context as it returns the comitted position
-  UUID factStreamPosition();
-
-  void factStreamPosition(@NonNull UUID factStreamPosition, @NonNull T context);
+  public TransactionNotRunningException(String msg, Throwable e) {
+    super(msg, e);
+  }
 }

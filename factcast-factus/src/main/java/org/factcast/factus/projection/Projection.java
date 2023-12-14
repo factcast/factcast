@@ -20,6 +20,7 @@ import lombok.NonNull;
 import org.factcast.core.spec.FactSpec;
 import org.slf4j.LoggerFactory;
 
+// TODO maybe progressaware can also be made optional
 public interface Projection extends ProgressAware {
   default @NonNull List<FactSpec> postprocess(@NonNull List<FactSpec> specsAsDiscovered) {
     return specsAsDiscovered;

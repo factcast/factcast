@@ -81,13 +81,15 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
    *
    * <p>Note that this method will block forever, if this node fails to acquire a writer token.
    */
-  <P extends SubscribedProjection> Subscription subscribeAndBlock(@NonNull P subscribedProjection);
+  <T extends ProjectorContext, P extends SubscribedProjection<T>> Subscription subscribeAndBlock(
+      @NonNull P subscribedProjection);
 
   /**
    * Method returns immediately, but you wont know if subscription was sucessful (kind of "keep
    * trying to subscribe" and forget)
    */
-  default <P extends SubscribedProjection> void subscribe(@NonNull P subscribedProjection) {
+  default <T extends ProjectorContext, P extends SubscribedProjection<T>> void subscribe(
+      @NonNull P subscribedProjection) {
     CompletableFuture.runAsync(
         () -> {
           try {
@@ -118,7 +120,8 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
   <P extends SnapshotProjection> Locked<P> withLockOn(@NonNull Class<P> snapshotClass);
 
   /** optimistically 'locks' on a ManagedProjection */
-  <M extends ManagedProjection> Locked<M> withLockOn(@NonNull M managed);
+  <T extends ProjectorContext, M extends ManagedProjection<T>> Locked<M> withLockOn(
+      @NonNull M managed);
 
   // conversion
   Fact toFact(@NonNull EventObject e);

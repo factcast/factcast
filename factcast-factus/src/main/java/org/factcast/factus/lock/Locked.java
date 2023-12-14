@@ -21,9 +21,11 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.*;
-import java.util.function.*;
-import java.util.stream.*;
+import java.util.concurrent.TimeoutException;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -188,7 +190,7 @@ public class Locked<I extends Projection> {
       }
 
       @Override
-      public <P extends ManagedProjection> void update(
+      public <T extends ProjectorContext, P extends ManagedProjection<T>> void update(
           @NonNull P managedProjection, @NonNull Duration maxWaitTime) throws TimeoutException {
         factus.update(managedProjection, maxWaitTime);
       }

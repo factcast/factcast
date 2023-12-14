@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2023 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,18 @@
  */
 package org.factcast.factus.projection;
 
-import lombok.experimental.Delegate;
+/** represents the state of the projector during application of on fact or a batch of facts */
+public interface ProjectorContext {
 
-/**
- * Local projection (using vm-locks to synchronize) for async subscription to a stream of
- * events/facts.
- */
-public abstract class LocalSubscribedProjection
-    implements SubscribedProjection<LocalProjectorContext> {
-  @Delegate
-  private final LocalFactStreamPosition factStreamPosition = new LocalFactStreamPosition();
+  // not sure if reusable
+  LocalProjectorContext EMPTY = new LocalProjectorContext();
 
-  @Delegate private final LocalWriteToken lock = new LocalWriteToken();
-  @Delegate private final LocalTransaction transaction = new LocalTransaction();
+  static LocalProjectorContext local() {
+    return EMPTY;
+  }
+  // TODO maybe replace by currentThread?
+
+  // should we delegate the resolvers from here?
+  //  pro: less clutter|we can loose the PC parameter on resolvers,
+  //  con: PC is call scope, resolvers currently are application scope
 }
