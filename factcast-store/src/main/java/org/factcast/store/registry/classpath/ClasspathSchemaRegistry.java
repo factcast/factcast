@@ -34,7 +34,7 @@ public class ClasspathSchemaRegistry extends AbstractSchemaRegistry {
       @NonNull LockProvider lockProvider) {
     super(
         new ClasspathIndexFetcher(base),
-        new ClasspathRegistryFileFetcher(base),
+        new ClasspathRegistryFetcher(base),
         schemaStore,
         transformationStore,
         registryMetrics,
