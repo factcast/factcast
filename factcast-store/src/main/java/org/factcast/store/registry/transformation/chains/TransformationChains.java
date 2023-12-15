@@ -178,7 +178,8 @@ public class TransformationChains implements TransformationStoreListener {
               Tag.of("from", String.valueOf(from)),
               Tag.of("to", String.valueOf(to))));
 
-      throw new MissingTransformationInformationException("No Transformations for " + key);
+      throw new MissingTransformationInformationException(
+          "No Transformations for " + key + " from version " + from + " to " + to);
     }
 
     // populate graph
