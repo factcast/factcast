@@ -71,7 +71,7 @@ class FactusTest {
 
             @Override
             public <P extends SubscribedProjection> Subscription subscribeAndBlock(
-                @NonNull P subscribedProjection, Duration retryWaitTime) {
+                @NonNull P subscribedProjection, @NonNull Duration retryWaitTime) {
               return null;
             }
 

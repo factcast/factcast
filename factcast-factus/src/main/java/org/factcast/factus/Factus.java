@@ -92,7 +92,7 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
    * <p>Note that this method will block forever, if this node fails to acquire a writer token.
    */
   <P extends SubscribedProjection> Subscription subscribeAndBlock(
-      @NonNull P subscribedProjection, Duration retryWaitTime);
+      @NonNull P subscribedProjection, @NonNull Duration retryWaitTime);
 
   /**
    * Method returns immediately, but you wont know if subscription was sucessful (kind of "keep

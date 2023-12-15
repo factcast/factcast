@@ -159,7 +159,7 @@ public class FactusImpl implements Factus {
 
   @Override
   public <P extends SubscribedProjection> Subscription subscribeAndBlock(
-      @NonNull P subscribedProjection, Duration retryWaitTime) {
+      @NonNull P subscribedProjection, @NonNull Duration retryWaitTime) {
 
     assertNotClosed();
     InLockedOperation.assertNotInLockedOperation();
