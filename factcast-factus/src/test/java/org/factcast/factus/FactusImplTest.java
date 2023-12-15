@@ -779,6 +779,7 @@ class FactusImplTest {
   class WhenSubscribing {
 
     @Captor ArgumentCaptor<FactObserver> factObserverArgumentCaptor;
+    @Captor ArgumentCaptor<Duration> retryWaitTime;
 
     @Test
     void subscribe() throws Exception {
@@ -806,6 +807,80 @@ class FactusImplTest {
       underTest.subscribeAndBlock(subscribedProjection);
 
       // ASSERT
+      verify(subscribedProjection).acquireWriteToken(retryWaitTime.capture());
+      assertThat(retryWaitTime.getValue()).isEqualTo(Duration.ofMinutes(5));
+
+      verify(fc).subscribe(any(), factObserverArgumentCaptor.capture());
+
+      FactObserver factObserver = factObserverArgumentCaptor.getValue();
+
+      Fact mockedFact = mock(Fact.class);
+
+      UUID factId = UUID.randomUUID();
+      when(mockedFact.id()).thenReturn(factId);
+
+      // onNext(...)
+      // now assume a new fact has been observed...
+      factObserver.onNext(mockedFact);
+
+      // ... and then it should be applied to event projector
+      verify(eventApplier).apply(mockedFact);
+
+      // ... and the fact stream position should be updated as well
+      verify(subscribedProjection).factStreamPosition(factId);
+
+      // onCatchup()
+      // assume onCatchup got called on the fact observer...
+      factObserver.onCatchup();
+
+      // ... then make sure it got called on the subscribed projection
+      verify(subscribedProjection).onCatchup();
+
+      // onComplete()
+      // assume onComplete got called on the fact observer...
+      factObserver.onComplete();
+
+      // ... then make sure it got called on the subscribed projection
+      verify(subscribedProjection).onComplete();
+
+      // onError(...)
+      // assume onError got called on the fact observer...
+      Exception exc = new Exception();
+      factObserver.onError(exc);
+
+      // ... then make sure it got called on the subscribed projection
+      verify(subscribedProjection).onError(exc);
+    }
+
+    @Test
+    void subscribeWithCustomRetryWaitTime() throws Exception {
+      // INIT
+      SubscribedProjection subscribedProjection = mock(SubscribedProjection.class);
+      Projector<SubscribedProjection> eventApplier = mock(Projector.class);
+
+      when(subscribedProjection.acquireWriteToken(any())).thenReturn(() -> {});
+
+      when(ehFactory.create(subscribedProjection)).thenReturn(eventApplier);
+
+      when(eventApplier.createFactSpecs()).thenReturn(Arrays.asList(mock(FactSpec.class)));
+      doAnswer(
+              i -> {
+                subscribedProjection.factStreamPosition(((Fact) (i.getArgument(0))).id());
+                return null;
+              })
+          .when(eventApplier)
+          .apply(any(Fact.class));
+
+      Subscription subscription = mock(Subscription.class);
+      when(fc.subscribe(any(), any())).thenReturn(subscription);
+
+      // RUN
+      underTest.subscribeAndBlock(subscribedProjection, Duration.ofMinutes(10));
+
+      // ASSERT
+      verify(subscribedProjection).acquireWriteToken(retryWaitTime.capture());
+      assertThat(retryWaitTime.getValue()).isEqualTo(Duration.ofMinutes(10));
+
       verify(fc).subscribe(any(), factObserverArgumentCaptor.capture());
 
       FactObserver factObserver = factObserverArgumentCaptor.getValue();
