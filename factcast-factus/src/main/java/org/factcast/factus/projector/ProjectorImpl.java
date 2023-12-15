@@ -16,6 +16,7 @@
 package org.factcast.factus.projector;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -34,13 +35,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.spec.FactSpecCoordinates;
+import org.factcast.core.util.ExceptionHelper;
 import org.factcast.factus.*;
 import org.factcast.factus.SuppressFactusWarnings.Warning;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.EventSerializer;
-import org.factcast.factus.projection.*;
+import org.factcast.factus.projection.Aggregate;
+import org.factcast.factus.projection.AggregateUtil;
+import org.factcast.factus.projection.Projection;
+import org.factcast.factus.projection.ProjectorContext;
 import org.factcast.factus.projection.parameter.HandlerParameterContributors;
 import org.factcast.factus.projection.parameter.HandlerParameterTransformer;
+import org.factcast.factus.projection.tx.TransactionSupport;
+import org.factcast.factus.projection.tx.TransactionalProjection;
 
 @Slf4j
 public class ProjectorImpl<A extends Projection, T extends ProjectorContext>
@@ -104,16 +111,42 @@ public class ProjectorImpl<A extends Projection, T extends ProjectorContext>
   @Override
   @SneakyThrows
   public void apply(@NonNull Iterable<Fact> facts) {
-    if (projection instanceof ContextualProjection) {
+    if (projection instanceof TransactionalProjection) {
       @SuppressWarnings("unchecked")
-      ContextualProjection<T> cp = (ContextualProjection<T>) projection;
+      TransactionalProjection<T> cp = (TransactionalProjection<T>) projection;
 
-      T ctx = cp.begin();
       AtomicReference<UUID> last = new AtomicReference<>();
-      facts.forEach(f -> last.set(doApply(f, ctx)));
-      cp.factStreamPosition(last.get(), ctx);
-      cp.commit(ctx);
-      // TODO err handling / retry to last...
+      T ctx = cp.begin();
+      try {
+        facts.forEach(f -> last.set(doApply(f, ctx)));
+        cp.factStreamPosition(last.get(), ctx);
+        cp.commit(ctx);
+      } catch (Throwable e) {
+        TransactionSupport.tryRollback(cp, ctx);
+
+        // if the msg was larger than one, then retry the previous ones in one tx
+        UUID lastGoodId = last.get();
+        if (lastGoodId != null) {
+          // re-apply the previous ones.
+          // damn. they added takewhile in Java9.
+          ArrayList<Fact> originalFacts = Lists.newArrayList(facts);
+          originalFacts.stream()
+              .filter(f -> lastGoodId.equals(f.id()))
+              .findFirst()
+              .ifPresent(
+                  lastGood -> {
+                    List<Fact> goodFacts =
+                        originalFacts.subList(0, originalFacts.indexOf(lastGood) + 1);
+                    log.info("Reapplying {} good facts after rollback ", goodFacts.size());
+                    apply(goodFacts);
+                    log.info("Reapplication is done");
+                  });
+        }
+
+        // no matter if we retried previous ones, or not - we need to escalate the original
+        // exception
+        throw ExceptionHelper.toRuntime(e);
+      }
 
     } else {
       // just a basic projection, no context
@@ -263,14 +296,20 @@ public class ProjectorImpl<A extends Projection, T extends ProjectorContext>
 
     @NonNull EventSerializer deserializer;
 
-    void invoke(Projection projection, Fact f, @Nullable ProjectorContext ctx)
-        throws InvocationTargetException, IllegalAccessException {
+    void invoke(Projection projection, Fact f, @Nullable ProjectorContext ctx) {
       // choose the target object (nested)
       Object targetObject = objectResolver.apply(projection);
       // create actual parameters
       Object[] parameters = transformer.apply(f, ctx);
       // fire
-      dispatchMethod.invoke(targetObject, parameters);
+      try {
+        dispatchMethod.invoke(targetObject, parameters);
+      } catch (IllegalAccessException e) {
+        throw new RuntimeException(e);
+      } catch (InvocationTargetException e) {
+        // unwrap
+        throw ExceptionHelper.toRuntime(e.getCause());
+      }
     }
   }
 

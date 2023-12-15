@@ -18,12 +18,9 @@ package org.factcast.factus.projection;
 import java.util.UUID;
 import lombok.NonNull;
 
-// TODO extends projection?
-public interface FactStreamPositionAware<T extends ProjectorContext> {
+public interface FactStreamPositionAware extends Projection {
 
   @NonNull
   // does not use the context as it returns the comitted position
   UUID factStreamPosition();
-
-  void factStreamPosition(@NonNull UUID factStreamPosition, @NonNull T context);
 }

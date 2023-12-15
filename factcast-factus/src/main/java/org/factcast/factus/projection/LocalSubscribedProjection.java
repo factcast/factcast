@@ -21,11 +21,7 @@ import lombok.experimental.Delegate;
  * Local projection (using vm-locks to synchronize) for async subscription to a stream of
  * events/facts.
  */
-public abstract class LocalSubscribedProjection
-    implements SubscribedProjection<LocalProjectorContext> {
-  @Delegate
-  private final LocalFactStreamPosition factStreamPosition = new LocalFactStreamPosition();
-
-  @Delegate private final LocalWriteToken lock = new LocalWriteToken();
-  @Delegate private final LocalTransaction transaction = new LocalTransaction();
+public abstract class LocalSubscribedProjection implements SubscribedProjection<ProjectorContext> {
+  @Delegate private final LocalSupport.WriteToken lock = new LocalSupport.WriteToken();
+  @Delegate private final LocalSupport.Transaction transaction = new LocalSupport.Transaction();
 }

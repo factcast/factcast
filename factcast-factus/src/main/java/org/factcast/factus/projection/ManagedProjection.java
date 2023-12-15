@@ -16,9 +16,10 @@
 package org.factcast.factus.projection;
 
 import org.factcast.core.util.ExceptionHelper;
+import org.factcast.factus.projection.tx.TransactionalProjection;
 
 public interface ManagedProjection<T extends ProjectorContext>
-    extends ContextualProjection<T>, WriterTokenAware {
+    extends TransactionalProjection<T>, WriterTokenAware {
 
   default void withLock(Runnable runnable) {
     try (AutoCloseable token = acquireWriteToken()) {

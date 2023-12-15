@@ -15,18 +15,4 @@
  */
 package org.factcast.factus.projection;
 
-/** represents the state of the projector during application of on fact or a batch of facts */
-public interface ProjectorContext {
-
-  // not sure if reusable
-  LocalProjectorContext EMPTY = new LocalProjectorContext();
-
-  static LocalProjectorContext local() {
-    return EMPTY;
-  }
-  // TODO maybe replace by currentThread?
-
-  // should we delegate the resolvers from here?
-  //  pro: less clutter|we can loose the PC parameter on resolvers,
-  //  con: PC is call scope, resolvers currently are application scope
-}
+public interface ProjectorContext {}

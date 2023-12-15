@@ -15,51 +15,33 @@
  */
 package org.factcast.factus.projection.tx;
 
-import java.util.function.Consumer;
+import java.util.UUID;
 import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
-import org.factcast.factus.projection.ContextualProjection;
+import org.factcast.factus.projection.FactStreamPositionAware;
 import org.factcast.factus.projection.ProjectorContext;
 
-public interface TransactionAware<T extends ProjectorContext> {
+/**
+ * context can be null (default for vm-local projections)
+ *
+ * @param <T>
+ */
+public interface TransactionalProjection<T extends ProjectorContext>
+    extends FactStreamPositionAware {
   /**
    * @throws {@link TransactionException}, {@link TransactionAlreadyRunningException}
    */
+  @NonNull
   T begin() throws TransactionException;
 
   /**
    * @throws {@link TransactionException}, {@link TransactionNotRunningException}
    */
-  void commit(T t) throws TransactionException;
+  void commit(@NonNull T ctx) throws TransactionException;
 
   /**
    * @throws {@link TransactionException}, {@link TransactionNotRunningException}
    */
-  void rollback(T t) throws TransactionException;
+  void rollback(@NonNull T ctx) throws TransactionException;
 
-  // helpers
-
-  static <T extends ProjectorContext, P extends ContextualProjection<T>> void inTransaction(
-      @NonNull P p, @NonNull Consumer<T> o) throws TransactionException {
-
-    T ctx = p.begin();
-    try {
-      o.accept(ctx);
-      p.commit(ctx);
-    } catch (Exception e) {
-      new TryRollback(p, ctx);
-      throw new TransactionException(e);
-    }
-  }
-
-  @Slf4j
-  class TryRollback {
-    public <P extends ContextualProjection<T>, T extends ProjectorContext> TryRollback(P p, T ctx) {
-      try {
-        p.rollback(ctx);
-      } catch (Throwable swallow) {
-        log.warn("Swallowed a failure", swallow);
-      }
-    }
-  }
+  void factStreamPosition(@NonNull UUID position, @NonNull T ctx);
 }

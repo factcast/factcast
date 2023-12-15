@@ -56,7 +56,8 @@ import org.factcast.factus.lock.LockedOnSpecs;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.metrics.TimedOperation;
 import org.factcast.factus.projection.*;
-import org.factcast.factus.projection.tx.TransactionAware;
+import org.factcast.factus.projection.tx.TransactionSupport;
+import org.factcast.factus.projection.tx.TransactionalProjection;
 import org.factcast.factus.projector.Projector;
 import org.factcast.factus.projector.ProjectorFactory;
 import org.factcast.factus.serializer.SnapshotSerializer;
@@ -234,7 +235,7 @@ public class FactusImpl implements Factus {
           @SneakyThrows
           @Override
           public void onFastForward(@NonNull UUID factIdToFfwdTo) {
-            TransactionAware.inTransaction(
+            TransactionSupport.inTransaction(
                 subscribedProjection,
                 ctx -> {
                   subscribedProjection.factStreamPosition(factIdToFfwdTo, ctx);
@@ -396,10 +397,11 @@ public class FactusImpl implements Factus {
           @Override
           public void onFastForward(@NonNull UUID factIdToFfwdTo) {
 
-            if (projection instanceof ContextualProjection) {
+            if (projection instanceof TransactionalProjection) {
               @SuppressWarnings("unchecked") // due to T
-              ContextualProjection<T> cp = (ContextualProjection<T>) projection;
-              TransactionAware.inTransaction(cp, ctx -> cp.factStreamPosition(factIdToFfwdTo, ctx));
+              TransactionalProjection<T> cp = (TransactionalProjection<T>) projection;
+              TransactionSupport.inTransaction(
+                  cp, ctx -> cp.factStreamPosition(factIdToFfwdTo, ctx));
             }
           }
         };
@@ -473,7 +475,7 @@ public class FactusImpl implements Factus {
             TimedOperation.FIND_DURATION,
             Tags.of(Tag.of(CLASS, aggregateClass.getName())),
             () -> find(aggregateClass, id).orElse(instantiate(aggregateClass)));
-    Projector<SnapshotProjection, LocalProjectorContext> snapshotProjectionEventApplier =
+    Projector<SnapshotProjection, ProjectorContext> snapshotProjectionEventApplier =
         ehFactory.create(fresh);
     List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
     return new Locked<>(fc, this, fresh, specs, factusMetrics);
@@ -482,7 +484,7 @@ public class FactusImpl implements Factus {
   @Override
   public <P extends SnapshotProjection> Locked<P> withLockOn(@NonNull Class<P> projectionClass) {
     P fresh = fetch(projectionClass);
-    Projector<SnapshotProjection, LocalProjectorContext> snapshotProjectionEventApplier =
+    Projector<SnapshotProjection, ProjectorContext> snapshotProjectionEventApplier =
         ehFactory.create(fresh);
     List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
     return new Locked<>(fc, this, fresh, specs, factusMetrics);

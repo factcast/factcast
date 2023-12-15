@@ -21,11 +21,10 @@ import lombok.experimental.Delegate;
  * a managed Projection that is local to the process. Access to state and WriteToken will be
  * synchronized in memory.
  */
-public class LocalManagedProjection implements ManagedProjection<LocalProjectorContext> {
-  @Delegate
-  private final LocalFactStreamPosition factStreamPosition = new LocalFactStreamPosition();
+public class LocalManagedProjection
+    implements ManagedProjection<LocalSupport.LocalProjectorContext> {
 
-  @Delegate private final LocalWriteToken lock = new LocalWriteToken();
+  @Delegate private final LocalSupport.WriteToken lock = new LocalSupport.WriteToken();
 
-  @Delegate private final LocalTransaction transaction = new LocalTransaction();
+  @Delegate private final LocalSupport.Transaction transaction = new LocalSupport.Transaction();
 }
