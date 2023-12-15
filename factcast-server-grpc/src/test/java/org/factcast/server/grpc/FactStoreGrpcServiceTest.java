@@ -15,9 +15,9 @@
  */
 package org.factcast.server.grpc;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -30,6 +30,7 @@ import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
+import java.time.LocalDate;
 import java.util.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -49,12 +50,12 @@ import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts.Builder;
-import org.factcast.server.grpc.auth.FactCastAccount;
-import org.factcast.server.grpc.auth.FactCastAuthority;
-import org.factcast.server.grpc.auth.FactCastUser;
 import org.factcast.server.grpc.metrics.NOPServerMetrics;
 import org.factcast.server.grpc.metrics.ServerMetrics;
 import org.factcast.server.grpc.metrics.ServerMetrics.OP;
+import org.factcast.server.security.auth.FactCastAccount;
+import org.factcast.server.security.auth.FactCastAuthority;
+import org.factcast.server.security.auth.FactCastUser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -126,7 +127,7 @@ public class FactStoreGrpcServiceTest {
 
     uut.currentTime(MSG_Empty.getDefaultInstance(), stream);
 
-    verify(stream).onNext(eq(new ProtoConverter().toProto(101L)));
+    verify(stream).onNext(new ProtoConverter().toProtoTime(101L));
     verify(stream).onCompleted();
     verifyNoMoreInteractions(stream);
   }
@@ -1108,5 +1109,76 @@ public class FactStoreGrpcServiceTest {
     uut.afterPropertiesSet();
 
     assertThat(logCaptor.getInfoLogs()).anyMatch(s -> s.startsWith("Service version: "));
+  }
+
+  @Test
+  void onlyTouchesServerCall() {
+    StreamObserver<?> so = mock(StreamObserver.class);
+    uut.initialize(so);
+    verifyNoMoreInteractions(so);
+  }
+
+  @Test
+  void setsDefaultCancelHandler() {
+    ServerCallStreamObserver<?> responseObserver = mock(ServerCallStreamObserver.class);
+    uut.initialize(responseObserver);
+    verify(responseObserver, times(1)).setOnCancelHandler(notNull());
+  }
+
+  @Test
+  void defaultCancelHandlerThrows() {
+
+    ArgumentCaptor<Runnable> captor = ArgumentCaptor.forClass(Runnable.class);
+    ServerCallStreamObserver<?> responseObserver = mock(ServerCallStreamObserver.class);
+    doNothing().when(responseObserver).setOnCancelHandler(captor.capture());
+    uut.initialize(responseObserver);
+
+    Runnable handler = captor.getValue();
+    assertThatThrownBy(handler::run).isInstanceOf(RequestCanceledByClientException.class);
+  }
+
+  @Test
+  void fetchBySerial() {
+    var store = mock(FactStore.class);
+    var uut = new FactStoreGrpcService(store, meta);
+    Fact fact =
+        Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).serial(31).buildWithoutPayload();
+    var expected = Optional.of(fact);
+    when(store.fetchBySerial(31)).thenReturn(expected);
+    StreamObserver<MSG_OptionalFact> stream = mock(StreamObserver.class);
+
+    uut.fetchBySerial(new ProtoConverter().toProto(31), stream);
+
+    verify(stream).onNext(new ProtoConverter().toProto(Optional.of(fact)));
+    verify(stream).onCompleted();
+    verifyNoMoreInteractions(stream);
+  }
+
+  @Test
+  void latestSerial() {
+    var req = conv.empty();
+    StreamObserver<MSG_Serial> obs = mock(StreamObserver.class);
+    when(backend.latestSerial()).thenReturn(2L);
+    // ACT
+    uut.latestSerial(req, obs);
+
+    verify(backend).latestSerial();
+    verify(obs).onNext(conv.toProto(2L));
+    verify(obs).onCompleted();
+  }
+
+  @Test
+  void lastSerialBefore() {
+    LocalDate xmas = LocalDate.of(2023, 12, 24);
+    var req = conv.toProto(xmas);
+    StreamObserver<MSG_Serial> obs = mock(StreamObserver.class);
+
+    when(backend.lastSerialBefore(xmas)).thenReturn(2L);
+    // ACT
+    uut.lastSerialBefore(req, obs);
+
+    verify(backend).lastSerialBefore(xmas);
+    verify(obs).onNext(conv.toProto(2L));
+    verify(obs).onCompleted();
   }
 }

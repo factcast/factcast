@@ -20,8 +20,8 @@ import static org.factcast.store.internal.PgConstants.*;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +40,8 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
 
   @Override
   @Scheduled(cron = "${factcast.store.tailManagementCron:0 0 0 * * *}")
-  // Here we only need to ensure not two tasks are running in parallel until index creation
+  // Here we only need to ensure not two tasks are running in parallel until index
+  // creation
   // was triggered. 5 minutes should be more than enough.
   @SchedulerLock(name = "triggerTailCreation", lockAtMostFor = "5m")
   public void triggerTailCreation() {
@@ -68,10 +69,11 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
 
   @NonNull
   private List<String> getValidIndices(List<Map<String, Object>> indexesWithValidityFlag) {
-    return indexesWithValidityFlag.stream()
-        .filter(r -> r.get(VALID_COLUMN).equals(IS_VALID))
-        .map(r -> r.get(INDEX_NAME_COLUMN).toString())
-        .collect(java.util.stream.Collectors.toList());
+    return new ArrayList<>(
+        indexesWithValidityFlag.stream()
+            .filter(r -> r.get(VALID_COLUMN).equals(IS_VALID))
+            .map(r -> r.get(INDEX_NAME_COLUMN).toString())
+            .toList());
   }
 
   @VisibleForTesting
@@ -102,7 +104,8 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
     log.debug("Creating tail index {}.", indexName);
 
     // make sure index creation does not hang forever.
-    // make 5 seconds shorter to compensate for the gap between currentTimeMillis and create index
+    // make 5 seconds shorter to compensate for the gap between currentTimeMillis
+    // and create index
     jdbc.execute(
         PgConstants.setStatementTimeout(props.getTailCreationTimeout().minusSeconds(5).toMillis()));
 
@@ -183,7 +186,8 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
 
     Duration age = Duration.ofMillis(System.currentTimeMillis() - indexTimestamp);
     // use the time after which a hanging index creation would run into a timeout,
-    // plus 5 extra seconds, as the millis are obtained before the index creation is started
+    // plus 5 extra seconds, as the millis are obtained before the index creation is
+    // started
     Duration minAge = props.getTailCreationTimeout();
 
     return minAge.minus(age).isNegative();
