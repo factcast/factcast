@@ -5,7 +5,7 @@
 
 import io.github.typesafegithub.workflows.actions.actions.CacheV3
 import io.github.typesafegithub.workflows.actions.actions.CheckoutV4
-import io.github.typesafegithub.workflows.actions.actions.SetupJavaV3
+import io.github.typesafegithub.workflows.actions.actions.SetupJavaV4
 import io.github.typesafegithub.workflows.actions.codecov.CodecovActionV3
 import io.github.typesafegithub.workflows.domain.RunnerType
 import io.github.typesafegithub.workflows.domain.Workflow
@@ -24,7 +24,7 @@ public val workflowMaven: Workflow = workflow(
             branches = listOf("master"),
         ),
     ),
-    sourceFile = Paths.get(".github/kts/maven.main.kts"),
+    sourceFile =  __FILE__.toPath(),
 ) {
     job(
         id = "build",
@@ -60,8 +60,8 @@ public val workflowMaven: Workflow = workflow(
         )
         uses(
             name = "JDK 17",
-            action = SetupJavaV3(
-                distribution = SetupJavaV3.Distribution.Custom("corretto"),
+            action = SetupJavaV4(
+                distribution = SetupJavaV4.Distribution.Corretto,
                 javaVersion = "17",
             ),
         )
@@ -121,8 +121,8 @@ public val workflowMaven: Workflow = workflow(
 
         uses(
             name = "JDK 17",
-            action = SetupJavaV3(
-                distribution = SetupJavaV3.Distribution.Custom("corretto"),
+            action = SetupJavaV4(
+                distribution = SetupJavaV4.Distribution.Corretto,
                 javaVersion = "17",
             ),
         )
