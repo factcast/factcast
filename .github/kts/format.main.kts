@@ -16,7 +16,7 @@ import java.nio.file.Paths
 public val workflowFormat: Workflow = workflow(
     name = "Format",
     on = listOf(Push()),
-    sourceFile = Paths.get(".github/kts/format.main.kts"),
+    sourceFile =  __FILE__.toPath(),
 ) {
     job(
         id = "formatting",
@@ -44,7 +44,7 @@ public val workflowFormat: Workflow = workflow(
             action = CustomAction(
                 actionOwner = "stefanzweifel",
                 actionName = "git-auto-commit-action",
-                actionVersion = "v4",
+                actionVersion = "v5",
                 inputs = mapOf(
                     "commit_message" to "Apply formatter",
                 )
