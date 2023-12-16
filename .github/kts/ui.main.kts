@@ -22,7 +22,7 @@ public val workflowMaven: Workflow = workflow(
             branches = listOf("master"),
         ),
     ),
-    sourceFile = Paths.get(".github/kts/ui.main.kts"),
+    sourceFile =  __FILE__.toPath(),
 ) {
     job(
         id = "build",
