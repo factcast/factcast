@@ -5,8 +5,6 @@ weight: 500
 description: Plugins to enrich visual representation of data
 ---
 
-## Plugins
-
 FactCast Server UI is extensible using Plugins. Those plugins can be handy for enriching the plain fact information you
 see.
 
