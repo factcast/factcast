@@ -29,5 +29,5 @@ queryable Map<UserId, UserName>, and use this data to annotate the `UserName` to
 ### Getting started
 
 Take a look at `HeaderMetaTimestampToDatePlugin` as an example of the simplest Plugin possible. It just turns
-the `meta_.ts` attribute of the fact header into a human readable DateTime.
+the `meta._ts` attribute of the fact header into a human readable DateTime.
 ![header-meta-timestamp-to-date-plugin.png](../header-meta-timestamp-to-date-plugin.png)
