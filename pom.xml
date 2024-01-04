@@ -94,7 +94,7 @@
     <mockito.version>5.8.0</mockito.version>
     <junit-jupiter.version>5.10.1</junit-jupiter.version>
     <lombok.version>1.18.30</lombok.version>
-    <slf4j-api.version>2.0.9</slf4j-api.version>
+    <slf4j-api.version>2.0.10</slf4j-api.version>
     <!--suppress UnresolvedMavenProperty -->
     <etc>${session.executionRootDirectory}/src/etc</etc>
     <spring-boot.version>3.1.5</spring-boot.version>
