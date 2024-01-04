@@ -26,7 +26,10 @@ import org.springframework.context.annotation.Bean;
 
 @AutoConfiguration
 @ConditionalOnClass(Redisson.class)
-@AutoConfigureAfter(org.redisson.spring.starter.RedissonAutoConfigurationV2.class)
+@AutoConfigureAfter({
+  org.redisson.spring.starter.RedissonAutoConfiguration.class,
+  org.redisson.spring.starter.RedissonAutoConfigurationV2.class
+})
 public class RedissonAutoConfiguration {
 
   @Bean
