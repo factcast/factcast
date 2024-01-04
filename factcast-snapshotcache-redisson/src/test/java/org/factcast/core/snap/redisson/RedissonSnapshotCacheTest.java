@@ -32,7 +32,7 @@ import org.mockito.ArgumentCaptor;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.Codec;
 import org.redisson.codec.Kryo5Codec;
-import org.redisson.spring.starter.RedissonAutoConfiguration;
+import org.redisson.spring.starter.RedissonAutoConfigurationV2;
 import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -43,7 +43,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest
-@ContextConfiguration(classes = {RedissonAutoConfiguration.class, RedisAutoConfiguration.class})
+@ContextConfiguration(classes = {RedissonAutoConfigurationV2.class, RedisAutoConfiguration.class})
 @ExtendWith(SpringExtension.class)
 @Testcontainers
 @IntegrationTest
