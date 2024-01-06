@@ -11,7 +11,7 @@
   </parent>
   <artifactId>factcast-store</artifactId>
   <properties>
-    <jetty-javalin.version>11.0.17</jetty-javalin.version>
+    <jetty-javalin.version>11.0.19</jetty-javalin.version>
   </properties>
   <dependencyManagement>
     <dependencies>
