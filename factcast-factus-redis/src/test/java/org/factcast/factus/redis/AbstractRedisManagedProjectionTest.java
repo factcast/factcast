@@ -15,19 +15,24 @@
  */
 package org.factcast.factus.redis;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import org.factcast.core.FactStreamPosition;
+import org.factcast.core.TestFactStreamPosition;
 import org.factcast.factus.redis.batch.RedissonBatchManager;
 import org.factcast.factus.redis.tx.RedissonTxManager;
 import org.factcast.factus.serializer.ProjectionMetaData;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -53,7 +58,8 @@ class AbstractRedisManagedProjectionTest {
       when(redisson.getBucket(any(), any())).thenReturn(bucket);
 
       assertThat(underTest.stateBucket()).isNotNull().isInstanceOf(RBucket.class).isSameAs(bucket);
-      verify(redisson).getBucket(underTest.redisKey() + "_state_tracking", UUIDCodec.INSTANCE);
+      verify(redisson)
+          .getBucket(underTest.redisKey() + "_state_tracking", FactStreamPositionCodec.INSTANCE);
     }
   }
 
@@ -70,7 +76,8 @@ class AbstractRedisManagedProjectionTest {
           .isNotNull()
           .isInstanceOf(RBucket.class)
           .isSameAs(bucket);
-      verify(tx).getBucket(underTest.redisKey() + "_state_tracking", UUIDCodec.INSTANCE);
+      verify(tx)
+          .getBucket(underTest.redisKey() + "_state_tracking", FactStreamPositionCodec.INSTANCE);
     }
   }
 
@@ -86,7 +93,8 @@ class AbstractRedisManagedProjectionTest {
           .isNotNull()
           .isInstanceOf(RBucket.class)
           .isSameAs(bucket);
-      verify(batch).getBucket(underTest.redisKey() + "_state_tracking", UUIDCodec.INSTANCE);
+      verify(batch)
+          .getBucket(underTest.redisKey() + "_state_tracking", FactStreamPositionCodec.INSTANCE);
     }
   }
 
@@ -101,9 +109,10 @@ class AbstractRedisManagedProjectionTest {
       RBucket<Object> bucket = mock(RBucket.class);
       RTransaction tx = mock(RTransaction.class);
       when(redisson.getBucket(any(), any())).thenReturn(bucket);
-      when(bucket.get()).thenReturn(id);
+      when(bucket.get()).thenReturn(FactStreamPosition.of(id, -1L));
 
-      UUID result = underTest.factStreamPosition();
+      FactStreamPosition factStreamPosition = underTest.factStreamPosition();
+      UUID result = Objects.requireNonNull(factStreamPosition).factId();
 
       assertThat(result).isEqualTo(id);
     }
@@ -116,20 +125,20 @@ class AbstractRedisManagedProjectionTest {
       RedissonTxManager man = RedissonTxManager.get(redisson);
       man.startOrJoin();
 
-      UUID id = new UUID(23, 43);
+      FactStreamPosition pos = org.factcast.core.TestFactStreamPosition.random();
       RBucket<Object> bucket = mock(RBucket.class);
       when(tx.getBucket(any(), any())).thenReturn(bucket);
-      when(bucket.get()).thenReturn(id);
+      when(bucket.get()).thenReturn(pos);
 
-      UUID result = underTest.factStreamPosition();
+      FactStreamPosition result = underTest.factStreamPosition();
 
-      assertThat(result).isEqualTo(id);
+      assertThat(result).isEqualTo(pos);
     }
   }
 
   @Nested
   class WhenSettingFactStreamPosition {
-    private final UUID FACT_STREAM_POSITION = UUID.randomUUID();
+    private final FactStreamPosition FACT_STREAM_POSITION = TestFactStreamPosition.random();
 
     @Test
     void nonRunningTransaction() {

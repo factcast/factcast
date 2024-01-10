@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
@@ -82,10 +83,11 @@ public class ProtoConverter {
   }
 
   @NonNull
-  public MSG_Notification createNotificationForFastForward(@NonNull UUID id) {
+  public MSG_Notification createNotificationForFastForward(@NonNull FactStreamPosition id) {
     MSG_Notification.Builder builder =
         MSG_Notification.newBuilder().setType(MSG_Notification.Type.Ffwd);
-    builder.setId(toProto(id));
+    builder.setId(toProto(id.factId()));
+    builder.setSerial(toProto(id.serial()));
     return builder.build();
   }
 
@@ -439,5 +441,9 @@ public class ProtoConverter {
 
   public MSG_Serial toProto(long serial) {
     return MSG_Serial.newBuilder().setSerial(serial).build();
+  }
+
+  public FactStreamPosition fromProto(MSG_UUID id, MSG_Serial serial) {
+    return FactStreamPosition.of(fromProto(id), fromProto(serial));
   }
 }

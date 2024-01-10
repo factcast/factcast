@@ -15,15 +15,16 @@
  */
 package org.factcast.itests.factus.client;
 
-import static java.util.UUID.*;
+import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ForkJoinPool;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.factus.Factus;
 import org.factcast.factus.Handler;
 import org.factcast.factus.event.EventObject;
@@ -135,12 +136,13 @@ public class GrpcThreadingITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    public UUID factStreamPosition() {
+    public FactStreamPosition factStreamPosition() {
       try {
-        return jdbcTemplate.queryForObject(
-            "SELECT fact_stream_position FROM managed_projection WHERE name = ?",
-            UUID.class,
-            getScopedName().with(String.valueOf(id)).asString());
+        return FactStreamPosition.withoutSerial(
+            jdbcTemplate.queryForObject(
+                "SELECT fact_stream_position FROM managed_projection WHERE name = ?",
+                UUID.class,
+                getScopedName().with(String.valueOf(id)).asString()));
       } catch (IncorrectResultSizeDataAccessException e) {
         // no position yet, just return null
         return null;
@@ -148,7 +150,7 @@ public class GrpcThreadingITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    public void factStreamPosition(@NonNull UUID state) {
+    public void factStreamPosition(@NonNull FactStreamPosition state) {
       log.debug("set state");
       assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isTrue();
       factStreamPositionModifications++;
@@ -159,8 +161,8 @@ public class GrpcThreadingITest extends AbstractFactCastIntegrationTest {
           "INSERT INTO managed_projection (name, fact_stream_position) VALUES (?, ?) "
               + "ON CONFLICT (name) DO UPDATE SET fact_stream_position = ?",
           getScopedName().with(String.valueOf(id)).asString(),
-          state,
-          state);
+          state.factId(),
+          state.factId());
     }
 
     @Override

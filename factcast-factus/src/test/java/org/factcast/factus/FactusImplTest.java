@@ -15,10 +15,12 @@
  */
 package org.factcast.factus;
 
-import static java.util.UUID.*;
-import static net.javacrumbs.jsonunit.assertj.JsonAssertions.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static java.util.UUID.randomUUID;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Sets;
@@ -35,6 +37,7 @@ import lombok.SneakyThrows;
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
@@ -60,12 +63,16 @@ import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepository;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
+@Tag("integration") // technically unit, but it takes some time due to waiting
 class FactusImplTest {
 
   @Mock private FactCast fc;
@@ -377,7 +384,7 @@ class FactusImplTest {
       // the prepared update happens on the projection and updates its
       // fact stream position.
       Mockito.verify(ea, times(2)).apply(any(Fact.class));
-      assertThat(m.factStreamPosition()).isEqualTo(f2.id());
+      assertThat(m.factStreamPosition()).isEqualTo(FactStreamPosition.from(f2));
     }
   }
 
@@ -735,10 +742,7 @@ class FactusImplTest {
       // ASSERT
       FactObserver factObserver = factObserverCaptor.getValue();
 
-      Fact mockedFact = mock(Fact.class);
-
-      UUID factId = UUID.randomUUID();
-      when(mockedFact.id()).thenReturn(factId);
+      Fact mockedFact = Fact.builder().id(UUID.randomUUID()).buildWithoutPayload();
 
       // onNext(...)
       // now assume a new fact has been observed...
@@ -794,7 +798,8 @@ class FactusImplTest {
       when(eventApplier.createFactSpecs()).thenReturn(Arrays.asList(mock(FactSpec.class)));
       doAnswer(
               i -> {
-                subscribedProjection.factStreamPosition(((Fact) (i.getArgument(0))).id());
+                Fact argument = (Fact) (i.getArgument(0));
+                subscribedProjection.factStreamPosition(FactStreamPosition.from(argument));
                 return null;
               })
           .when(eventApplier)
@@ -814,10 +819,8 @@ class FactusImplTest {
 
       FactObserver factObserver = factObserverArgumentCaptor.getValue();
 
-      Fact mockedFact = mock(Fact.class);
-
       UUID factId = UUID.randomUUID();
-      when(mockedFact.id()).thenReturn(factId);
+      Fact mockedFact = Fact.builder().id(factId).serial(12L).buildWithoutPayload();
 
       // onNext(...)
       // now assume a new fact has been observed...
@@ -827,7 +830,7 @@ class FactusImplTest {
       verify(eventApplier).apply(mockedFact);
 
       // ... and the fact stream position should be updated as well
-      verify(subscribedProjection).factStreamPosition(factId);
+      verify(subscribedProjection).factStreamPosition(FactStreamPosition.of(factId, 12));
 
       // onCatchup()
       // assume onCatchup got called on the fact observer...
@@ -865,7 +868,8 @@ class FactusImplTest {
       when(eventApplier.createFactSpecs()).thenReturn(Arrays.asList(mock(FactSpec.class)));
       doAnswer(
               i -> {
-                subscribedProjection.factStreamPosition(((Fact) (i.getArgument(0))).id());
+                Fact argument = (Fact) (i.getArgument(0));
+                subscribedProjection.factStreamPosition(FactStreamPosition.from(argument));
                 return null;
               })
           .when(eventApplier)
@@ -885,10 +889,8 @@ class FactusImplTest {
 
       FactObserver factObserver = factObserverArgumentCaptor.getValue();
 
-      Fact mockedFact = mock(Fact.class);
-
       UUID factId = UUID.randomUUID();
-      when(mockedFact.id()).thenReturn(factId);
+      Fact mockedFact = Fact.builder().id(factId).serial(13L).buildWithoutPayload();
 
       // onNext(...)
       // now assume a new fact has been observed...
@@ -898,7 +900,7 @@ class FactusImplTest {
       verify(eventApplier).apply(mockedFact);
 
       // ... and the fact stream position should be updated as well
-      verify(subscribedProjection).factStreamPosition(factId);
+      verify(subscribedProjection).factStreamPosition(FactStreamPosition.of(factId, 13L));
 
       // onCatchup()
       // assume onCatchup got called on the fact observer...
@@ -1351,8 +1353,8 @@ class FactusImplTest {
     @Test
     void happyPath() {
       AtomicInteger calls = new AtomicInteger(0);
-      Duration wait = Duration.ofSeconds(3);
-      IntervalSnapshotter uut =
+      Duration wait = Duration.ofSeconds(2);
+      IntervalSnapshotter<?> uut =
           new IntervalSnapshotter<SnapshotProjection>(wait) {
             @Override
             void createSnapshot(SnapshotProjection projection, UUID state) {
@@ -1365,19 +1367,19 @@ class FactusImplTest {
       uut.accept(null, UUID.randomUUID());
       uut.accept(null, UUID.randomUUID());
 
-      assertThat(calls.get()).isEqualTo(0);
+      assertThat(calls.get()).isZero();
 
       Thread.sleep(wait.toMillis() + 100);
 
-      assertThat(calls.get()).isEqualTo(0);
+      assertThat(calls.get()).isZero();
       uut.accept(null, UUID.randomUUID());
       uut.accept(null, UUID.randomUUID());
 
-      assertThat(calls.get()).isEqualTo(1);
+      assertThat(calls.get()).isOne();
 
       Thread.sleep(wait.toMillis() + 100);
 
-      assertThat(calls.get()).isEqualTo(1);
+      assertThat(calls.get()).isOne();
       uut.accept(null, UUID.randomUUID());
       uut.accept(null, UUID.randomUUID());
 

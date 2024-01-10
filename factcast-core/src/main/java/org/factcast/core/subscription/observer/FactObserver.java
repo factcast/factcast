@@ -15,10 +15,10 @@
  */
 package org.factcast.core.subscription.observer;
 
-import java.util.*;
 import lombok.Generated;
 import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +32,7 @@ public interface FactObserver {
 
   void onNext(@NonNull Fact element);
 
-  default void onFastForward(@NonNull UUID factIdToFfwdTo) {}
+  default void onFastForward(@NonNull FactStreamPosition pos) {}
 
   default void onFactStreamInfo(@NonNull FactStreamInfo info) {}
 

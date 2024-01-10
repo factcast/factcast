@@ -15,7 +15,8 @@
  */
 package org.factcast.factus.redis.tx;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
@@ -25,13 +26,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.redis.ARedisTransactionalManagedProjection;
 import org.factcast.factus.redis.RedisManagedProjection;
 import org.factcast.factus.redis.tx.RedisTransactional.Defaults;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.redisson.api.RTransaction;
@@ -321,12 +325,12 @@ class NonAnnotatedRedisManagedProjection implements RedisManagedProjection {
   }
 
   @Override
-  public UUID factStreamPosition() {
+  public FactStreamPosition factStreamPosition() {
     return null;
   }
 
   @Override
-  public void factStreamPosition(@NonNull UUID factStreamPosition) {}
+  public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {}
 
   @Override
   public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
