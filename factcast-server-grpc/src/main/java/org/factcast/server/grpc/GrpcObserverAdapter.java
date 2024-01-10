@@ -20,13 +20,13 @@ import io.grpc.stub.StreamObserver;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;
@@ -176,11 +176,11 @@ class GrpcObserverAdapter implements FactObserver {
   }
 
   @Override
-  public void onFastForward(@NonNull UUID factIdToFfwdTo) {
+  public void onFastForward(@NonNull FactStreamPosition position) {
     if (supportsFastForward) {
-      log.debug("{} sending ffwd notification to fact id {}", id, factIdToFfwdTo);
+      log.debug("{} sending ffwd notification to fact id {}", id, position);
       // we have not sent any fact. check for ffwding
-      observer.onNext(converter.createNotificationForFastForward(factIdToFfwdTo));
+      observer.onNext(converter.createNotificationForFastForward(position));
     }
   }
 

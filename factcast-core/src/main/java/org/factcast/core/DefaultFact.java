@@ -94,8 +94,9 @@ public class DefaultFact implements Fact, Externalizable {
   }
 
   @Override
+  @Deprecated
   public String meta(String key) {
-    return deserializedHeader.meta().get(key);
+    return deserializedHeader.meta(key);
   }
 
   @Override
@@ -115,7 +116,7 @@ public class DefaultFact implements Fact, Externalizable {
   }
 
   @Override
-  public UUID id() {
+  public @NonNull UUID id() {
     return deserializedHeader.id();
   }
 
@@ -125,7 +126,7 @@ public class DefaultFact implements Fact, Externalizable {
   }
 
   @Override
-  public String ns() {
+  public @NonNull String ns() {
     return deserializedHeader.ns();
   }
 

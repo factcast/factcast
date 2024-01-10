@@ -18,6 +18,7 @@ package org.factcast.core;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.*;
+import javax.annotation.Nullable;
 import lombok.*;
 
 @Getter
@@ -37,4 +38,29 @@ public class FactHeader {
   @JsonProperty Set<UUID> aggIds = new HashSet<>();
 
   @JsonProperty final Map<String, String> meta = new HashMap<>();
+
+  @Nullable
+  // could be null if not yet published to the factcast server. This should only happen in unit
+  // tests.
+  Long serial() {
+    String s = meta("_ser");
+    if (s != null) {
+      return Long.parseLong(s);
+    } else return null;
+  }
+
+  @Nullable
+  // could be null if not yet published to the factcast server. This should only happen in unit
+  // tests.
+  Long timestamp() {
+    String s = meta("_ts");
+    if (s != null) {
+      return Long.parseLong(s);
+    } else return null;
+  }
+
+  @Nullable
+  String meta(@NonNull String key) {
+    return meta.get(key);
+  }
 }

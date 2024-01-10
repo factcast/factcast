@@ -35,7 +35,7 @@ message MSG_Serial {
 
 	Updates:
   * The functionality around id was removed but needs to stick here for compatibility
-	* Facts added for batching (more effective compression and overasll I/O)
+	* Facts added for batching (more effective compression and overall I/O)
 	* FastForward added to support in query speedup using tail indexes
 	* KeepAlive added for subscription level keepalive in order to detect stale subscriptions not possible/hard to detect with the means of grpc protocol.
 
@@ -57,6 +57,8 @@ message MSG_Notification{
   MSG_UUID id = 3;
   MSG_Facts facts = 4;
   MSG_Info info = 5;
+  // since 7.4, needed for fast forward
+  MSG_Serial serial = 6;
 }
 
 /**

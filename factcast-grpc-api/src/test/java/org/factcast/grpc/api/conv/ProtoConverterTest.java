@@ -26,6 +26,8 @@ import lombok.NonNull;
 import org.assertj.core.util.Lists;
 import org.assertj.core.util.Maps;
 import org.factcast.core.Fact;
+import org.factcast.core.FactStreamPosition;
+import org.factcast.core.TestFactStreamPosition;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
@@ -222,11 +224,11 @@ public class ProtoConverterTest {
 
   @Test
   void testCreateNotificationForFastForward() {
-    UUID probe = UUID.randomUUID();
+    FactStreamPosition probe = TestFactStreamPosition.random();
     MSG_Notification n = uut.createNotificationForFastForward(probe);
     assertNotNull(n);
     assertEquals(Type.Ffwd, n.getType());
-    assertEquals(probe, uut.fromProto(n.getId()));
+    assertEquals(probe, uut.fromProto(n.getId(), n.getSerial()));
   }
 
   @Test
