@@ -74,7 +74,7 @@ class FactStreamPositionTest {
     @Test
     void wihoutSerial() {
       UUID id = UUID.randomUUID();
-      FactStreamPosition actual = verify(FactStreamPosition.withoutSerial(id));
+      FactStreamPosition actual = FactStreamPosition.withoutSerial(id);
 
       Assertions.assertThat(actual.factId()).isSameAs(id);
       Assertions.assertThat(actual.serial()).isSameAs(-1L);
