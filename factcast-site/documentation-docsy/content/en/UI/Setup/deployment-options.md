@@ -5,8 +5,6 @@ weight: 10
 description: Options for deploying the FactCast server-ui.
 ---
 
-## Deployment Options
-
 The FactCast Server-UI can be deployed in different ways:
 
 ### Option 1: as part of the factcast server
