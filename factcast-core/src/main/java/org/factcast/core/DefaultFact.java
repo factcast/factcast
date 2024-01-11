@@ -93,9 +93,14 @@ public class DefaultFact implements Fact, Externalizable {
       throw new IllegalArgumentException("version attribute is not valid " + jsonHeader);
   }
 
+  /**
+   * @deprecated use header.meta(String) instead
+   * @param key
+   * @return null if does not exist
+   */
   @Override
   @Deprecated
-  public String meta(String key) {
+  public String meta(@NonNull String key) {
     return deserializedHeader.meta(key);
   }
 

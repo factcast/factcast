@@ -121,8 +121,14 @@ public interface Fact {
     return b;
   }
 
-  default boolean before(Fact other) {
-    return serial() < other.serial();
+  default boolean before(@NonNull Fact other) {
+    Long serial = header().serial();
+    Long otherSerial = other.header().serial();
+
+    if (serial == null || otherSerial == null)
+      throw new IllegalStateException(
+          "Can only decide if both Facts have been published (have a serial)");
+    else return serial < otherSerial;
   }
 
   @RequiredArgsConstructor

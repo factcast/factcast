@@ -57,7 +57,7 @@ class FactHeaderTest {
                 "{\"id\":\"5d0e3ae9-6684-42bc-87a7-854f76506f7e\",\"ns\":\"ns\",\"meta\":{\"_ser\":5}}",
                 FactHeader.class);
     assertEquals(UUID.fromString("5d0e3ae9-6684-42bc-87a7-854f76506f7e"), h.id());
-    assertEquals(h.serial(), 5);
+    assertEquals(5, h.serial());
   }
 
   @Test
@@ -79,7 +79,7 @@ class FactHeaderTest {
                 "{\"id\":\"5d0e3ae9-6684-42bc-87a7-854f76506f7e\",\"ns\":\"ns\",\"type\":\"t\",\"meta\":{\"_ts\":5}}",
                 FactHeader.class);
     assertEquals(UUID.fromString("5d0e3ae9-6684-42bc-87a7-854f76506f7e"), h.id());
-    assertEquals(h.timestamp(), 5);
+    assertEquals(5, h.timestamp());
   }
 
   @Test
