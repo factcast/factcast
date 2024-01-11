@@ -15,14 +15,16 @@
  */
 package org.factcast.itests.factus.client;
 
-import static java.util.UUID.*;
+import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.Factus;
 import org.factcast.factus.event.EventObject;
@@ -183,7 +185,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
 
     @SneakyThrows
     @Test
-    public void bulkAppliesInBatch2() {
+    void bulkAppliesInBatch2() {
       BatchRedissonSubscribedUserNamesSize2 p =
           new BatchRedissonSubscribedUserNamesSize2(redissonClient);
       try (Subscription sub = factus.subscribeAndBlock(p); ) {
@@ -196,7 +198,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
 
     @SneakyThrows
     @Test
-    public void discardsFaultyBulk() {
+    void discardsFaultyBulk() {
       BatchRedissonSubscribedUserNamesSizeBlowAt7th p =
           new BatchRedissonSubscribedUserNamesSizeBlowAt7th(redissonClient);
 
@@ -221,7 +223,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     @Getter int stateModifications = 0;
 
     @Override
-    public void factStreamPosition(@NonNull UUID factStreamPosition) {
+    public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {
       stateModifications++;
       super.factStreamPosition(factStreamPosition);
     }
@@ -235,7 +237,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     @Getter int stateModifications = 0;
 
     @Override
-    public void factStreamPosition(@NonNull UUID factStreamPosition) {
+    public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {
       stateModifications++;
       super.factStreamPosition(factStreamPosition);
     }
@@ -249,7 +251,7 @@ public class RedisBatchingITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    public void factStreamPosition(@NonNull UUID factStreamPosition) {
+    public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {
 
       super.factStreamPosition(factStreamPosition);
     }

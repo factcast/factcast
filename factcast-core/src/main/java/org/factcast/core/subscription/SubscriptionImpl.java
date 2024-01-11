@@ -16,13 +16,16 @@
 package org.factcast.core.subscription;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.util.ExceptionHelper;
 
@@ -124,9 +127,9 @@ public class SubscriptionImpl implements InternalSubscription {
   }
 
   @Override
-  public void notifyFastForward(@NonNull UUID factId) {
+  public void notifyFastForward(@NonNull FactStreamPosition pos) {
     if (!closed.get()) {
-      observer.onFastForward(factId);
+      observer.onFastForward(pos);
     }
   }
 
@@ -153,7 +156,7 @@ public class SubscriptionImpl implements InternalSubscription {
   }
 
   @Override
-  public void notifyError(Throwable e) {
+  public void notifyError(@NonNull Throwable e) {
     if (!closed.get()) {
       if (!catchup.isDone()) {
         catchup.completeExceptionally(e);

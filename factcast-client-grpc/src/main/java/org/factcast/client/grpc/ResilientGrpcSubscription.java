@@ -16,15 +16,17 @@
 package org.factcast.client.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
-import java.util.function.*;
+import java.util.UUID;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 import org.factcast.core.Fact;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionClosedException;
@@ -215,7 +217,7 @@ public class ResilientGrpcSubscription implements Subscription {
     }
 
     @Override
-    public void onFastForward(@NonNull UUID factIdToFfwdTo) {
+    public void onFastForward(@NonNull FactStreamPosition factIdToFfwdTo) {
       originalObserver.onFastForward(factIdToFfwdTo);
     }
 

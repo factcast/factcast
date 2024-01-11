@@ -15,17 +15,17 @@
  */
 package org.factcast.itests.factus.client;
 
-import static java.util.Arrays.*;
-import static java.util.UUID.*;
-import static java.util.stream.Collectors.*;
+import static java.util.Arrays.asList;
+import static java.util.UUID.randomUUID;
+import static java.util.stream.Collectors.toList;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.google.common.base.Stopwatch;
 import java.util.*;
-import java.util.ArrayList;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -56,7 +56,7 @@ import org.springframework.test.context.ContextConfiguration;
 @ContextConfiguration(
     classes = {TestFactusApplication.class, RedissonProjectionConfiguration.class})
 @Slf4j
-public class FactusClientTest extends AbstractFactCastIntegrationTest {
+class FactusClientTest extends AbstractFactCastIntegrationTest {
   private static final long WAIT_TIME_FOR_ASYNC_FACT_DELIVERY = 1000;
 
   static {
@@ -77,7 +77,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
   @Autowired RedissonClient redissonClient;
 
   @Test
-  public void allWaysToPublish() {
+  void allWaysToPublish() {
 
     UUID johnsId = randomUUID();
 
@@ -114,7 +114,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
     assertThat(externalizedUserNames.contains("Brian")).isTrue();
   }
 
-  public void measure(String s, Runnable r) {
+  void measure(String s, Runnable r) {
     var sw = Stopwatch.createStarted();
     r.run();
     log.info("{} {}ms", s, sw.stop().elapsed().toMillis());
@@ -122,7 +122,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
 
   @SneakyThrows
   @Test
-  public void txBatchProcessingPerformance() {
+  void txBatchProcessingPerformance() {
 
     int MAX = 10000;
     var l = new ArrayList<EventObject>(MAX);
@@ -141,7 +141,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
       factus.update(p);
       log.info("plain {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
       p.clear();
-      p.factStreamPosition(new UUID(0, 0));
+      p.factStreamPosition(null);
     }
     {
       var sw = Stopwatch.createStarted();
@@ -149,7 +149,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
       factus.update(p);
       log.info("plain {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
       p.clear();
-      p.factStreamPosition(new UUID(0, 0));
+      p.factStreamPosition(null);
     }
     // ----------tx
     {
@@ -158,7 +158,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
       factus.update(p);
       log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
       p.clear();
-      p.factStreamPosition(new UUID(0, 0));
+      p.factStreamPosition(null);
     }
 
     {
@@ -167,7 +167,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
       factus.update(p);
       log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
       p.clear();
-      p.factStreamPosition(new UUID(0, 0));
+      p.factStreamPosition(null);
     }
 
     // ------------ sub
@@ -180,7 +180,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
       sub.awaitCatchup();
       log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
       p.clear();
-      p.factStreamPosition(new UUID(0, 0));
+      p.factStreamPosition(null);
     }
 
     {
@@ -190,7 +190,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
       sub.awaitCatchup();
       log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
       p.clear();
-      p.factStreamPosition(new UUID(0, 0));
+      p.factStreamPosition(null);
     }
 
     // ------------ batch
@@ -200,7 +200,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
       factus.update(p);
       log.info("batch {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
       p.clear();
-      p.factStreamPosition(new UUID(0, 0));
+      p.factStreamPosition(null);
     }
     {
       var sw = Stopwatch.createStarted();
@@ -208,13 +208,13 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
       factus.update(p);
       log.info("batch {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
       p.clear();
-      p.factStreamPosition(new UUID(0, 0));
+      p.factStreamPosition(null);
     }
   }
 
   @SneakyThrows
   @Test
-  public void redissionDigger() {
+  void redissionDigger() {
 
     RTransaction tx2 =
         redissonClient.createTransaction(
@@ -235,7 +235,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  public void testSubscription() throws Exception {
+  void testSubscription() throws Exception {
 
     subscribedUserNames.clear();
 
@@ -250,7 +250,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
 
     Thread.sleep(WAIT_TIME_FOR_ASYNC_FACT_DELIVERY);
 
-    assertThat(subscribedUserNames.names()).hasSize(2).contains("preexisting").contains("Peter");
+    assertThat(subscribedUserNames.names()).hasSize(2).contains("preexisting", "Peter");
 
     factus.publish(new UserCreated(randomUUID(), "John"));
     Thread.sleep(WAIT_TIME_FOR_ASYNC_FACT_DELIVERY);
@@ -263,7 +263,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  public void simpleAggregateRoundtrip() throws Exception {
+  void simpleAggregateRoundtrip() throws Exception {
     UUID aggregateId = randomUUID();
     assertThat(factus.find(TestAggregate.class, aggregateId)).isEmpty();
 
@@ -296,7 +296,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  public void simpleSnapshotProjectionRoundtrip() throws Exception {
+  void simpleSnapshotProjectionRoundtrip() throws Exception {
     assertThat(factus.fetch(SnapshotUserNames.class)).isNotNull();
 
     UUID johnsId = randomUUID();
@@ -334,7 +334,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  public void simpleProjectionLockingRoundtrip() throws Exception {
+  void simpleProjectionLockingRoundtrip() throws Exception {
     SnapshotUserNames emptyUserNames = factus.fetch(SnapshotUserNames.class);
     assertThat(emptyUserNames).isNotNull();
     assertThat(emptyUserNames.count()).isEqualTo(0);
@@ -355,15 +355,15 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
               }
             });
 
-    assertThat(factus.fetch(SnapshotUserNames.class).count()).isEqualTo(1);
+    assertThat(factus.fetch(SnapshotUserNames.class).count()).isOne();
 
     factus.publish(new UserDeleted(petersId));
 
-    assertThat(factus.fetch(SnapshotUserNames.class).count()).isEqualTo(0);
+    assertThat(factus.fetch(SnapshotUserNames.class).count()).isZero();
   }
 
   @Test
-  public void testPublishSafeguard() throws Exception {
+  void testPublishSafeguard() throws Exception {
 
     assertThatThrownBy(
             () ->
@@ -381,7 +381,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  public void simpleManagedProjectionRoundtrip() throws Exception {
+  void simpleManagedProjectionRoundtrip() throws Exception {
     // lets consider userCount a springbean
 
     assertThat(userCount.factStreamPosition()).isNull();
@@ -408,7 +408,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  public void simpleManagedProjectionRoundtrip_withLock() throws Exception {
+  void simpleManagedProjectionRoundtrip_withLock() throws Exception {
     // lets consider userCount a springbean
     UserCount userCount = new UserCount();
 
@@ -507,7 +507,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  public void simpleAggregateLockRoundtrip() throws Exception {
+  void simpleAggregateLockRoundtrip() throws Exception {
     UUID aggregateId = randomUUID();
     assertThat(factus.find(TestAggregate.class, aggregateId)).isEmpty();
 
@@ -589,7 +589,7 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  public void simpleManagedProjectionPublishingFacts() {
+  void simpleManagedProjectionPublishingFacts() {
     Fact fact = Fact.buildFrom(new UserCreated(randomUUID(), "One")).build();
 
     factus.publish(fact);
@@ -665,11 +665,11 @@ public class FactusClientTest extends AbstractFactCastIntegrationTest {
     assertThat(a1.factsConsumed).isEqualTo(2);
 
     var a2 = factus.fetch(SimpleAggregate.class, aggId);
-    assertThat(a2.factsConsumed).isEqualTo(0);
+    assertThat(a2.factsConsumed).isZero();
 
     factus.publish(f3);
 
     var a3 = factus.fetch(SimpleAggregate.class, aggId);
-    assertThat(a3.factsConsumed).isEqualTo(1);
+    assertThat(a3.factsConsumed).isOne();
   }
 }

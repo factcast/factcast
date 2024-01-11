@@ -23,10 +23,14 @@ import static org.mockito.Mockito.*;
 import com.google.common.eventbus.EventBus;
 import io.micrometer.core.instrument.DistributionSummary;
 import java.sql.ResultSet;
-import java.util.*;
-import java.util.concurrent.atomic.*;
-import java.util.function.*;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 import lombok.SneakyThrows;
+import org.factcast.core.FactStreamPosition;
+import org.factcast.core.TestFactStreamPosition;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -137,9 +141,9 @@ public class PgFactStreamTest {
       UUID uuid = UUID.randomUUID();
       when(request.startingAfter()).thenReturn(Optional.of(uuid));
       when(idToSerMapper.retrieve(uuid)).thenReturn(10L);
-      UUID target = UUID.randomUUID();
-      when(ffwdTarget.targetId()).thenReturn(target);
-      when(ffwdTarget.targetSer()).thenReturn(100L);
+      FactStreamPosition target = TestFactStreamPosition.random();
+      when(ffwdTarget.targetId()).thenReturn(target.factId());
+      when(ffwdTarget.targetSer()).thenReturn(target.serial());
 
       underTest.fastForward(request, subscription);
 
@@ -164,9 +168,9 @@ public class PgFactStreamTest {
       UUID uuid = UUID.randomUUID();
       when(request.startingAfter()).thenReturn(Optional.of(uuid));
       when(idToSerMapper.retrieve(uuid)).thenReturn(10L);
-      UUID target = UUID.randomUUID();
-      when(ffwdTarget.targetId()).thenReturn(target);
-      when(ffwdTarget.targetSer()).thenReturn(90L);
+      FactStreamPosition target = TestFactStreamPosition.random();
+      when(ffwdTarget.targetId()).thenReturn(target.factId());
+      when(ffwdTarget.targetSer()).thenReturn(target.serial());
 
       underTest.fastForward(request, subscription);
 

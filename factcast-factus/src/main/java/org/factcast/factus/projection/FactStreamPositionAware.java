@@ -15,11 +15,18 @@
  */
 package org.factcast.factus.projection;
 
-import java.util.UUID;
+import javax.annotation.Nullable;
 import lombok.NonNull;
+import org.factcast.core.FactStreamPosition;
 
 public interface FactStreamPositionAware {
-  UUID factStreamPosition();
+  /**
+   * returns null if not set
+   *
+   * @return
+   */
+  @Nullable
+  FactStreamPosition factStreamPosition();
 
-  void factStreamPosition(@NonNull UUID factStreamPosition);
+  void factStreamPosition(@NonNull FactStreamPosition factStreamPosition);
 }

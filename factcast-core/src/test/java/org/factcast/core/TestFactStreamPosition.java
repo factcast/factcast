@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2022 factcast.org
+ * Copyright © 2017-2024 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.subscription;
+package org.factcast.core;
 
-import lombok.AllArgsConstructor;
-import lombok.Value;
+import java.util.Random;
+import java.util.UUID;
+import lombok.NonNull;
 
-@Value(staticConstructor = "of")
-@AllArgsConstructor
-public class FactStreamInfo {
-  long startSerial;
-  long horizonSerial;
+public class TestFactStreamPosition {
 
-  public int calculatePercentage(long currentSerial) {
-    long num = horizonSerial - startSerial;
-    long pos = currentSerial - startSerial;
+  private static final Random random = new Random();
 
-    return (int) ((100.0 / num) * pos);
+  @NonNull
+  public static FactStreamPosition random() {
+    return FactStreamPosition.of(UUID.randomUUID(), Math.abs(random.nextLong()) + 1);
+  }
+
+  @NonNull
+  public static FactStreamPosition fromString(@NonNull String uuid) {
+    return FactStreamPosition.of(UUID.fromString(uuid), Math.abs(random.nextLong()) + 1);
   }
 }
