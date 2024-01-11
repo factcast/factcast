@@ -81,11 +81,6 @@
       <artifactId>vaadin-spring-boot-starter</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.parttio</groupId>
-      <artifactId>line-awesome</artifactId>
-      <version>2.0.0</version>
-    </dependency>
-    <dependency>
       <groupId>org.vaadin.olli</groupId>
       <artifactId>file-download-wrapper</artifactId>
       <version>7.0.0</version>
