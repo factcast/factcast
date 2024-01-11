@@ -28,7 +28,6 @@ import lombok.NoArgsConstructor;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.Specification;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -36,27 +35,27 @@ public class FactTest {
 
   @Test
   void testOfNull1() {
-    Assertions.assertThrows(NullPointerException.class, () -> Fact.of(null, ""));
+    assertThrows(NullPointerException.class, () -> Fact.of(null, ""));
   }
 
   @Test
   void testOfNull2() {
-    Assertions.assertThrows(NullPointerException.class, () -> Fact.of("", null));
+    assertThrows(NullPointerException.class, () -> Fact.of("", null));
   }
 
   @Test
   void testOfNull() {
-    Assertions.assertThrows(NullPointerException.class, () -> Fact.of((String) null, null));
+    assertThrows(NullPointerException.class, () -> Fact.of((String) null, null));
   }
 
   @Test
   void testVersion0() {
-    Assertions.assertThrows(IllegalArgumentException.class, () -> Fact.builder().version(0));
+    assertThrows(IllegalArgumentException.class, () -> Fact.builder().version(0));
   }
 
   @Test
   void testVersionNegative() {
-    Assertions.assertThrows(IllegalArgumentException.class, () -> Fact.builder().version(-3));
+    assertThrows(IllegalArgumentException.class, () -> Fact.builder().version(-3));
   }
 
   @Test
@@ -141,8 +140,38 @@ public class FactTest {
   }
 
   @Test
+  void beforeFailsIfSerialUnknown() {
+    Fact one =
+        Fact.of(
+            "{" + "\"ns\":\"ns\"," + "\"id\":\"" + UUID.randomUUID() + "\"," + "\"meta\":{ }" + "}",
+            "{}");
+    Fact two =
+        Fact.of(
+            "{"
+                + "\"ns\":\"ns\","
+                + "\"id\":\""
+                + UUID.randomUUID()
+                + "\","
+                + "\"meta\":{ \"_ser\":2 }"
+                + "}",
+            "{}");
+
+    org.assertj.core.api.Assertions.assertThatThrownBy(
+            () -> {
+              one.before(two);
+            })
+        .isInstanceOf(IllegalStateException.class);
+
+    org.assertj.core.api.Assertions.assertThatThrownBy(
+            () -> {
+              two.before(one);
+            })
+        .isInstanceOf(IllegalStateException.class);
+  }
+
+  @Test
   void testSerialUnset() {
-    Assertions.assertThrows(
+    assertThrows(
         IllegalStateException.class,
         () ->
             Fact.of("{" + "\"ns\":\"ns\"," + "\"id\":\"" + UUID.randomUUID() + "\"" + "}", "{}")
@@ -187,19 +216,17 @@ public class FactTest {
 
   @Test
   void testOfJsonNodeJsonNodeNull1() {
-    Assertions.assertThrows(
-        NullPointerException.class, () -> Fact.of(null, Mockito.mock(JsonNode.class)));
+    assertThrows(NullPointerException.class, () -> Fact.of(null, Mockito.mock(JsonNode.class)));
   }
 
   @Test
   void testOfJsonNodeJsonNodeNull2() {
-    Assertions.assertThrows(
-        NullPointerException.class, () -> Fact.of(Mockito.mock(JsonNode.class), null));
+    assertThrows(NullPointerException.class, () -> Fact.of(Mockito.mock(JsonNode.class), null));
   }
 
   @Test
   void testOfJsonNodeJsonNodeNull() {
-    Assertions.assertThrows(NullPointerException.class, () -> Fact.of((JsonNode) null, null));
+    assertThrows(NullPointerException.class, () -> Fact.of((JsonNode) null, null));
   }
 
   @Test
