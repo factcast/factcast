@@ -21,7 +21,6 @@ import static org.mockito.Mockito.*;
 
 import java.util.UUID;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,9 +35,6 @@ class FactStreamPositionTest {
 
   @Nested
   class WhenFroming {
-
-    @BeforeEach
-    void setup() {}
 
     @Test
     void rejectsNull() {
@@ -61,17 +57,24 @@ class FactStreamPositionTest {
     }
   }
 
+  @SuppressWarnings("deprecation")
   @Nested
   class WhenWithoutingSerial {
 
-    @BeforeEach
-    void setup() {}
-
     @Test
-    void happyPath() {
+    void fromFactNoSerial() {
       UUID id = UUID.randomUUID();
       f = Fact.builder().id(id).buildWithoutPayload();
       FactStreamPosition actual = FactStreamPosition.from(f);
+
+      Assertions.assertThat(actual.factId()).isSameAs(id);
+      Assertions.assertThat(actual.serial()).isSameAs(-1L);
+    }
+
+    @Test
+    void wihoutSerial() {
+      UUID id = UUID.randomUUID();
+      FactStreamPosition actual = verify(FactStreamPosition.withoutSerial(id));
 
       Assertions.assertThat(actual.factId()).isSameAs(id);
       Assertions.assertThat(actual.serial()).isSameAs(-1L);
