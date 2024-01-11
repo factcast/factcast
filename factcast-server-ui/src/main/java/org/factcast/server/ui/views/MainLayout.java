@@ -36,7 +36,6 @@ import org.factcast.server.ui.id.IdQueryPage;
 import org.factcast.server.ui.plugins.JsonViewPluginService;
 import org.factcast.server.ui.utils.Notifications;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.vaadin.lineawesome.LineAwesomeIcon;
 
 /** The main view is a top-level placeholder for other views. */
 @NoCoverageReportToBeGenerated
@@ -87,11 +86,9 @@ public class MainLayout extends AppLayout {
   private SideNav createNavigation() {
     SideNav nav = new SideNav();
 
-    nav.addItem(
-        new SideNavItem("Query", FullQueryPage.class, LineAwesomeIcon.GLOBE_SOLID.create()));
-    nav.addItem(
-        new SideNavItem("Query by Fact-ID", IdQueryPage.class, LineAwesomeIcon.FILE.create()));
-    nav.addItem(new SideNavItem("Logout", LogoutView.class, VaadinIcon.EXIT_O.create()));
+    nav.addItem(new SideNavItem("Query", FullQueryPage.class, VaadinIcon.GLOBE.create()));
+    nav.addItem(new SideNavItem("Query by Fact-ID", IdQueryPage.class, VaadinIcon.FILE_O.create()));
+    nav.addItem(new SideNavItem("Logout", LogoutView.class, VaadinIcon.EXIT.create()));
 
     return nav;
   }
