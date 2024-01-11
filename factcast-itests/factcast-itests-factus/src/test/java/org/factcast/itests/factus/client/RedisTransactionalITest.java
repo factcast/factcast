@@ -15,14 +15,15 @@
  */
 package org.factcast.itests.factus.client;
 
-import static java.util.UUID.*;
+import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.UUID;
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.factus.Factus;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.redis.tx.RedisTransactional;
@@ -185,7 +186,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     @Getter int stateModifications = 0;
 
     @Override
-    public void factStreamPosition(@NonNull UUID factStreamPosition) {
+    public void factStreamPosition(FactStreamPosition factStreamPosition) {
       stateModifications++;
       super.factStreamPosition(factStreamPosition);
     }
@@ -199,7 +200,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     @Getter int stateModifications = 0;
 
     @Override
-    public void factStreamPosition(@NonNull UUID factStreamPosition) {
+    public void factStreamPosition(FactStreamPosition factStreamPosition) {
       stateModifications++;
       super.factStreamPosition(factStreamPosition);
     }

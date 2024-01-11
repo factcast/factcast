@@ -64,6 +64,14 @@
       <version>${redisson.version}</version>
     </dependency>
 
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-core</artifactId>
+      <scope>test</scope>
+      <type>test-jar</type>
+      <version>${project.version}</version>
+    </dependency>
+
   </dependencies>
   <build>
     <plugins>

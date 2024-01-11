@@ -15,16 +15,18 @@
  */
 package org.factcast.core.subscription.observer;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
-import java.util.UUID;
 import lombok.NonNull;
 import nl.altindag.console.ConsoleCaptor;
 import org.factcast.core.Fact;
+import org.factcast.core.FactStreamPosition;
+import org.factcast.core.TestFactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -49,8 +51,8 @@ class FactObserverTest {
 
     @Test
     void noEffect() {
-      @NonNull UUID ffwd = UUID.randomUUID();
-      @NonNull FactStreamInfo info = new FactStreamInfo(1, 2);
+      FactStreamPosition ffwd = TestFactStreamPosition.random();
+      FactStreamInfo info = new FactStreamInfo(1, 2);
       // none of them can throw an exception
       underTest.onNext(element);
       underTest.onFactStreamInfo(info);

@@ -16,9 +16,9 @@
 package org.factcast.server.grpc;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.Assertions.fail;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import io.grpc.stub.StreamObserver;
@@ -28,13 +28,15 @@ import java.util.UUID;
 import java.util.function.Function;
 import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.factcast.core.FactStreamPosition;
+import org.factcast.core.TestFactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Type;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -169,7 +171,7 @@ public class GrpcObserverAdapterTest {
   void testOnFastForwardIfSupported() {
     ProtoConverter conv = new ProtoConverter();
     GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer);
-    UUID id = UUID.randomUUID();
+    FactStreamPosition id = TestFactStreamPosition.random();
     uut.onFastForward(id);
     verify(observer).onNext(eq(conv.createNotificationForFastForward(id)));
   }
@@ -180,7 +182,7 @@ public class GrpcObserverAdapterTest {
     @NonNull GrpcRequestMetadata meta = mock(GrpcRequestMetadata.class);
     when(meta.supportsFastForward()).thenReturn(false);
     GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, meta);
-    UUID id = UUID.randomUUID();
+    FactStreamPosition id = TestFactStreamPosition.random();
     uut.onFastForward(id);
     verify(observer, never()).onNext(any());
   }

@@ -35,6 +35,7 @@ import lombok.SneakyThrows;
 import lombok.experimental.Delegate;
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
@@ -160,7 +161,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
     @NonNull final UUID id = UUID.randomUUID();
     @NonNull final UUID id2 = UUID.randomUUID();
     @NonNull final UUID id3 = UUID.randomUUID();
-    final AtomicReference<UUID> fwd = new AtomicReference<>();
+    final AtomicReference<FactStreamPosition> fwd = new AtomicReference<>();
 
     @NonNull
     final FactObserver obs =
@@ -175,7 +176,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
           }
 
           @Override
-          public void onFastForward(@NonNull UUID factIdToFfwdTo) {
+          public void onFastForward(@NonNull FactStreamPosition factIdToFfwdTo) {
             fwd.set(factIdToFfwdTo);
             System.out.println("ffwd " + factIdToFfwdTo);
           }
@@ -246,7 +247,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
 
       // ffwd expected
       assertThat(fwd.get()).isNotNull();
-      UUID first = fwd.get();
+      FactStreamPosition first = fwd.get();
 
       // publish unrelated stuff and update ffwd target
       store.publish(
