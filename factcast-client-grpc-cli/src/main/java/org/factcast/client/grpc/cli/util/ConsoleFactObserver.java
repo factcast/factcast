@@ -15,11 +15,11 @@
  */
 package org.factcast.client.grpc.cli.util;
 
-import java.util.*;
-import java.util.concurrent.atomic.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.factcast.core.Fact;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.observer.FactObserver;
 
 @SuppressWarnings("java:S106")
@@ -51,8 +51,8 @@ public class ConsoleFactObserver implements FactObserver {
   }
 
   @Override
-  public void onFastForward(@NonNull UUID factIdToFfwdTo) {
-    System.out.println("-> Signal: Fast Forward to " + factIdToFfwdTo);
+  public void onFastForward(@NonNull FactStreamPosition pos) {
+    System.out.println("-> Signal: Fast Forward to " + pos);
   }
 
   @Override

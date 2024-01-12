@@ -16,19 +16,24 @@
 package org.factcast.core.subscription;
 
 import static org.factcast.core.TestHelper.expect;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.core.TestFact;
+import org.factcast.core.TestFactStreamPosition;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.transformation.FactTransformers;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,8 +41,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+@SuppressWarnings("resource")
 @ExtendWith(MockitoExtension.class)
-public class SubscriptionImplTest {
+class SubscriptionImplTest {
 
   @Mock private FactObserver observer;
 
@@ -110,14 +116,16 @@ public class SubscriptionImplTest {
     uut.awaitComplete();
   }
 
+  @SuppressWarnings("DataFlowIssue")
   @Test
   void testNotifyElementNull() {
-    Assertions.assertThrows(NullPointerException.class, () -> uut.notifyElement(null));
+    assertThrows(NullPointerException.class, () -> uut.notifyElement(null));
   }
 
+  @SuppressWarnings("DataFlowIssue")
   @Test
   void testNotifyErrorNull() {
-    Assertions.assertThrows(NullPointerException.class, () -> uut.notifyError(null));
+    assertThrows(NullPointerException.class, () -> uut.notifyError(null));
   }
 
   @Test
@@ -125,14 +133,15 @@ public class SubscriptionImplTest {
     CountDownLatch l = new CountDownLatch(1);
     uut.onClose(l::countDown);
     uut.close();
-    l.await();
+    org.assertj.core.api.Assertions.assertThat(l.await(10, TimeUnit.SECONDS)).isTrue();
   }
 
   private FactObserver obs;
 
+  @SuppressWarnings("DataFlowIssue")
   @Test
   void testOnNull() {
-    Assertions.assertThrows(NullPointerException.class, () -> SubscriptionImpl.on(null));
+    assertThrows(NullPointerException.class, () -> SubscriptionImpl.on(null));
   }
 
   final Fact testFact = new TestFact();
@@ -201,23 +210,23 @@ public class SubscriptionImplTest {
   @Test
   void testOnFastForwardDelegatesIfNotClosed() throws TransformationException {
     SubscriptionImpl on = SubscriptionImpl.on(obs);
-    @NonNull UUID id = UUID.randomUUID();
-    on.notifyFastForward(id);
-    verify(obs).onFastForward(id);
+    FactStreamPosition p = TestFactStreamPosition.random();
+    on.notifyFastForward(p);
+    verify(obs).onFastForward(p);
   }
 
   @Test
   void testOnFastForwardSkipsIfClosed() throws TransformationException {
     SubscriptionImpl on = SubscriptionImpl.on(obs);
-    @NonNull UUID id = UUID.randomUUID();
+    FactStreamPosition p = TestFactStreamPosition.random();
     on.close();
-    on.notifyFastForward(id);
-    verify(obs, never()).onFastForward(id);
+    on.notifyFastForward(p);
+    verify(obs, never()).onFastForward(p);
   }
 
   @Test
   void testOnErrorCompletesFutureCatchup() {
-    Assertions.assertThrows(
+    assertThrows(
         Throwable.class,
         () -> {
           SubscriptionImpl on = SubscriptionImpl.on(obs);
@@ -230,7 +239,7 @@ public class SubscriptionImplTest {
 
   @Test
   void testOnErrorCompletesFutureComplete() {
-    Assertions.assertThrows(
+    assertThrows(
         Throwable.class,
         () -> {
           SubscriptionImpl on = SubscriptionImpl.on(obs);
@@ -243,7 +252,7 @@ public class SubscriptionImplTest {
 
   @Test
   void testAwaitCatchupLong() {
-    Assertions.assertTimeout(
+    assertTimeout(
         Duration.ofMillis(100),
         () -> {
           uut.notifyCatchup();
@@ -253,7 +262,7 @@ public class SubscriptionImplTest {
 
   @Test
   void testAwaitCompleteLong() {
-    Assertions.assertTimeout(
+    assertTimeout(
         Duration.ofMillis(100),
         () -> {
           uut.notifyComplete();
@@ -262,12 +271,16 @@ public class SubscriptionImplTest {
   }
 
   @Test
-  public void testCloseThrowsException() {
-    uut = spy(uut);
-    doThrow(RuntimeException.class).when(uut).close();
+  void testCloseThrowsException() {
+    org.assertj.core.api.Assertions.assertThatNoException()
+        .isThrownBy(
+            () -> {
+              uut = spy(uut);
+              doThrow(RuntimeException.class).when(uut).close();
 
-    // this must return without exceptions
-    uut.notifyComplete();
+              // this must return without exceptions
+              uut.notifyComplete();
+            });
   }
 
   @Test

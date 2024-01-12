@@ -16,7 +16,10 @@
 package org.factcast.core;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import java.util.*;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.spec.FactSpecCoordinates;
@@ -55,15 +58,27 @@ public interface Fact {
   @NonNull
   String jsonPayload();
 
-  String meta(String key);
+  /**
+   * @param key
+   * @return value as String or null
+   * @deprecated use header.meta(String) instead
+   */
+  @Deprecated
+  @Nullable
+  String meta(@NonNull String key);
 
+  /**
+   * @return meta._ser
+   * @throws IllegalStateException if serial information is missing
+   * @deprecated use header.serial() instead.
+   */
+  @Deprecated
   default long serial() {
-    String s = meta("_ser");
-    if (s != null) {
-      return Long.parseLong(s);
-    } else {
-      throw new IllegalStateException("'_ser' Meta attribute not found. Fact not yet published?");
-    }
+    return Optional.ofNullable(header().serial())
+        .orElseThrow(
+            () ->
+                new IllegalStateException(
+                    "'_ser' Meta attribute not found. Fact not yet published?"));
   }
 
   /**
@@ -71,11 +86,12 @@ public interface Fact {
    *
    * @return timestamp in milliseconds of publishing, or null if this information is not there
    *     (historic events)
+   * @deprecated use header.timestamp() instead.
    */
+  @Nullable
+  @Deprecated
   default Long timestamp() {
-    String s = meta("_ts");
-    if (s != null) return Long.parseLong(s);
-    return null;
+    return header().timestamp();
   }
 
   // hint to where to get the default from
@@ -105,8 +121,14 @@ public interface Fact {
     return b;
   }
 
-  default boolean before(Fact other) {
-    return serial() < other.serial();
+  default boolean before(@NonNull Fact other) {
+    Long serial = header().serial();
+    Long otherSerial = other.header().serial();
+
+    if (serial == null || otherSerial == null)
+      throw new IllegalStateException(
+          "Can only decide if both Facts have been published (have a serial)");
+    else return serial < otherSerial;
   }
 
   @RequiredArgsConstructor

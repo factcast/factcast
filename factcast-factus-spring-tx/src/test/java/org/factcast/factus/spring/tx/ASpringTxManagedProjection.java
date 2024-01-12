@@ -16,8 +16,8 @@
 package org.factcast.factus.spring.tx;
 
 import java.time.Duration;
-import java.util.UUID;
 import lombok.NonNull;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.factus.projection.WriterToken;
 import org.springframework.transaction.PlatformTransactionManager;
 
@@ -29,12 +29,12 @@ public class ASpringTxManagedProjection extends AbstractSpringTxManagedProjectio
   }
 
   @Override
-  public UUID factStreamPosition() {
+  public FactStreamPosition factStreamPosition() {
     return null;
   }
 
   @Override
-  public void factStreamPosition(@NonNull UUID factStreamPosition) {}
+  public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {}
 
   @Override
   public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
