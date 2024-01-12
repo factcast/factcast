@@ -17,11 +17,12 @@ package org.factcast.factus.redis;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.NonNull;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.factus.projection.FactStreamPositionAware;
 import org.factcast.factus.projection.Named;
 import org.factcast.factus.projection.WriterToken;
@@ -39,7 +40,7 @@ abstract class AbstractRedisProjection
 
   @Getter private final String redisKey;
 
-  public AbstractRedisProjection(@NonNull RedissonClient redisson) {
+  protected AbstractRedisProjection(@NonNull RedissonClient redisson) {
     this.redisson = redisson;
 
     redisKey = getScopedName().asString();
@@ -50,25 +51,25 @@ abstract class AbstractRedisProjection
   }
 
   @VisibleForTesting
-  RBucket<UUID> stateBucket(@NonNull RTransaction tx) {
-    return tx.getBucket(stateBucketName, UUIDCodec.INSTANCE);
+  RBucket<FactStreamPosition> stateBucket(@NonNull RTransaction tx) {
+    return tx.getBucket(stateBucketName, FactStreamPositionCodec.INSTANCE);
   }
 
   @VisibleForTesting
-  RBucketAsync<UUID> stateBucket(@NonNull RBatch b) {
-    return b.getBucket(stateBucketName, UUIDCodec.INSTANCE);
+  RBucketAsync<FactStreamPosition> stateBucket(@NonNull RBatch b) {
+    return b.getBucket(stateBucketName, FactStreamPositionCodec.INSTANCE);
   }
 
   @VisibleForTesting
-  RBucket<UUID> stateBucket() {
-    return redisson.getBucket(stateBucketName, UUIDCodec.INSTANCE);
+  RBucket<FactStreamPosition> stateBucket() {
+    return redisson.getBucket(stateBucketName, FactStreamPositionCodec.INSTANCE);
   }
 
   @Override
-  public UUID factStreamPosition() {
+  public FactStreamPosition factStreamPosition() {
     RedissonTxManager man = RedissonTxManager.get(redisson);
     if (man.inTransaction()) {
-      return man.join((Function<RTransaction, UUID>) tx -> stateBucket(tx).get());
+      return man.join((Function<RTransaction, FactStreamPosition>) tx -> stateBucket(tx).get());
     } else {
       return stateBucket().get();
     }
@@ -78,7 +79,9 @@ abstract class AbstractRedisProjection
 
   @SuppressWarnings("ConstantConditions")
   @Override
-  public void factStreamPosition(@NonNull UUID position) {
+  // TODO maybe we can get rid of this?
+  // additionally accepts a null parameter for testing purposes
+  public void factStreamPosition(@Nullable FactStreamPosition position) {
     RedissonTxManager txMan = RedissonTxManager.get(redisson);
     if (txMan.inTransaction()) {
       txMan.join(

@@ -15,9 +15,11 @@
  */
 package org.factcast.core.subscription;
 
+import lombok.AllArgsConstructor;
 import lombok.Value;
 
-@Value
+@Value(staticConstructor = "of")
+@AllArgsConstructor
 public class FactStreamInfo {
   long startSerial;
   long horizonSerial;

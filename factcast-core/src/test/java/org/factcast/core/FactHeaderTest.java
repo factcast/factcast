@@ -16,12 +16,13 @@
 package org.factcast.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
-public class FactHeaderTest {
+class FactHeaderTest {
 
   @Test
   void testDeserializability() throws Exception {
@@ -46,5 +47,49 @@ public class FactHeaderTest {
     assertEquals(UUID.fromString("5d0e3ae9-6684-42bc-87a7-854f76506f7e"), h.id());
     assertEquals("ns", h.ns());
     assertEquals("t", h.type());
+  }
+
+  @Test
+  void testSerialAccess() throws Exception {
+    FactHeader h =
+        new ObjectMapper()
+            .readValue(
+                "{\"id\":\"5d0e3ae9-6684-42bc-87a7-854f76506f7e\",\"ns\":\"ns\",\"meta\":{\"_ser\":5}}",
+                FactHeader.class);
+    assertEquals(UUID.fromString("5d0e3ae9-6684-42bc-87a7-854f76506f7e"), h.id());
+    assertEquals(5, h.serial());
+  }
+
+  @Test
+  void testSerialMissingAccess() throws Exception {
+    FactHeader h =
+        new ObjectMapper()
+            .readValue(
+                "{\"id\":\"5d0e3ae9-6684-42bc-87a7-854f76506f7e\",\"ns\":\"ns\"}",
+                FactHeader.class);
+    assertEquals(UUID.fromString("5d0e3ae9-6684-42bc-87a7-854f76506f7e"), h.id());
+    assertNull(h.serial());
+  }
+
+  @Test
+  void testTimestampAccess() throws Exception {
+    FactHeader h =
+        new ObjectMapper()
+            .readValue(
+                "{\"id\":\"5d0e3ae9-6684-42bc-87a7-854f76506f7e\",\"ns\":\"ns\",\"type\":\"t\",\"meta\":{\"_ts\":5}}",
+                FactHeader.class);
+    assertEquals(UUID.fromString("5d0e3ae9-6684-42bc-87a7-854f76506f7e"), h.id());
+    assertEquals(5, h.timestamp());
+  }
+
+  @Test
+  void testTimestampMissingAccess() throws Exception {
+    FactHeader h =
+        new ObjectMapper()
+            .readValue(
+                "{\"id\":\"5d0e3ae9-6684-42bc-87a7-854f76506f7e\",\"ns\":\"ns\",\"type\":\"t\",\"meta\":{\"_xy\":5}}",
+                FactHeader.class);
+    assertEquals(UUID.fromString("5d0e3ae9-6684-42bc-87a7-854f76506f7e"), h.id());
+    assertNull(h.timestamp());
   }
 }

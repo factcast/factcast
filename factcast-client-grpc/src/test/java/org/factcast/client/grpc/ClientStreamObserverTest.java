@@ -19,13 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.after;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import io.grpc.Metadata;
 import io.grpc.Status;
@@ -38,7 +32,9 @@ import java.util.concurrent.TimeUnit;
 import lombok.SneakyThrows;
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.core.FactValidationException;
+import org.factcast.core.TestFactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.StaleSubscriptionDetectedException;
 import org.factcast.core.subscription.SubscriptionImpl;
@@ -121,10 +117,10 @@ class ClientStreamObserverTest {
 
   @Test
   void testFastForward() {
-    UUID id = UUID.randomUUID();
-    MSG_Notification n = converter.createNotificationForFastForward(id);
+    FactStreamPosition p = TestFactStreamPosition.random();
+    MSG_Notification n = converter.createNotificationForFastForward(p);
     uut.onNext(n);
-    verify(factObserver).onFastForward(id);
+    verify(factObserver).onFastForward(p);
   }
 
   @Test

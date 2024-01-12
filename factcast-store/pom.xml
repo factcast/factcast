@@ -6,10 +6,13 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.7.3-SNAPSHOT</version>
+    <version>0.7.5-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-store</artifactId>
+  <properties>
+    <jetty-javalin.version>11.0.19</jetty-javalin.version>
+  </properties>
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -90,7 +93,7 @@
     <dependency>
       <groupId>com.github.erosb</groupId>
       <artifactId>everit-json-schema</artifactId>
-      <version>1.14.3</version>
+      <version>1.14.4</version>
       <exclusions>
         <exclusion>
           <groupId>commons-logging</groupId>
@@ -137,12 +140,54 @@
       <groupId>org.springframework</groupId>
       <artifactId>spring-aspects</artifactId>
     </dependency>
+
+    <!-- start javalin -->
     <dependency>
       <groupId>io.javalin</groupId>
       <artifactId>javalin</artifactId>
       <version>5.6.3</version>
       <scope>test</scope>
     </dependency>
+    <!-- explicit jetty dependencies to workaround missing jetty12 compat ->
+      https://github.com/javalin/javalin/issues/2067 -->
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-server</artifactId>
+      <version>${jetty-javalin.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-http</artifactId>
+      <version>${jetty-javalin.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-util</artifactId>
+      <version>${jetty-javalin.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-security</artifactId>
+      <version>${jetty-javalin.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-io</artifactId>
+      <version>${jetty-javalin.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-xml</artifactId>
+      <version>${jetty-javalin.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- end javalin -->
+
     <dependency>
       <groupId>es.usc.citius.hipster</groupId>
       <artifactId>hipster-core</artifactId>

@@ -15,7 +15,7 @@
  */
 package org.factcast.client.grpc;
 
-import static io.grpc.stub.ClientCalls.*;
+import static io.grpc.stub.ClientCalls.asyncServerStreamingCall;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.*;
@@ -23,6 +23,7 @@ import io.grpc.stub.MetadataUtils;
 import io.grpc.stub.StreamObserver;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -68,12 +69,12 @@ import org.springframework.beans.factory.annotation.Value;
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Slf4j
 public class GrpcFactStore implements FactStore {
+  public static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 4, 0);
 
   private final CompressionCodecs codecs = new CompressionCodecs();
 
   private static final String CHANNEL_NAME = "factstore";
 
-  private static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 1, 0);
   private final Resilience resilience;
 
   private RemoteFactStoreBlockingStub blockingStub;
@@ -534,5 +535,25 @@ public class GrpcFactStore implements FactStore {
     log.trace("clearing snapshot {} in remote store", id);
     //noinspection ResultOfMethodCallIgnored
     runAndHandle(() -> blockingStub.clearSnapshot(converter.toProto(id)));
+  }
+
+  @Override
+  public long latestSerial() {
+    log.trace("fetching latest serial");
+    return callAndHandle(() -> converter.fromProto(blockingStub.latestSerial(converter.empty())));
+  }
+
+  @Override
+  public long lastSerialBefore(@NonNull LocalDate date) {
+    log.trace("fetching latest serial before {}", date);
+    return callAndHandle(
+        () -> converter.fromProto(blockingStub.lastSerialBefore(converter.toProto(date))));
+  }
+
+  @Override
+  public Optional<Fact> fetchBySerial(long serial) {
+    log.trace("fetching by serial {}", serial);
+    return callAndHandle(
+        () -> converter.fromProto(blockingStub.fetchBySerial(converter.toProto(serial))));
   }
 }

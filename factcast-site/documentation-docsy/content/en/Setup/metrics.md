@@ -25,6 +25,7 @@ At the time of writing, there are six namespaces exposed:
 - `factcast.server.timer`
 - `factcast.server.meter`
 - `factcast.store.timer`
+- `factcast.ui.timer`
 - `factcast.store.meter`
 - `factcast.registry.timer`
 - `factcast.registry.meter`
@@ -49,8 +50,8 @@ As this list is continuously growing, we cannot guarantee
 the documentation's completeness. If you want to see the current list of operations, please look
 at [StoreMetrics.java](https://github.com/factcast/factcast/blob/master/factcast-store/src/main/java/org/factcast/store/internal/StoreMetrics.java)
 , [RegistryMetrics.java](https://github.com/factcast/factcast/blob/master/factcast-store/src/main/java/org/factcast/store/registry/metrics/RegistryMetrics.java)
-,
-or [ServerMetrics.java](https://github.com/factcast/factcast/blob/master/factcast-server-grpc/src/main/java/org/factcast/server/grpc/metrics/ServerMetrics.java)
+, [ServerMetrics.java](https://github.com/factcast/factcast/blob/master/factcast-server-grpc/src/main/java/org/factcast/server/grpc/metrics/ServerMetrics.java),
+or [UIMetrics.java](https://github.com/factcast/factcast/blob/master/factcast-server-ui/src/main/java/org/factcast/server/ui/metrics/UiMetrics.java)
 respectively.
 
 At the **time of writing (0.4.3)**, the metrics exposed by the namespaces group `factcast.server` are:
@@ -132,6 +133,20 @@ You can distinguish them by the `name` tag. Currently, these are:
 - `subscription-factory` - used for incoming new subscriptions
 - `fetching-catchup` - used for buffered transformation while using the fetching catchup strategy
 - `paged-catchup` - used for buffered transformation while using the paged catchup strategy
-- `transformation-cache` - used for inserting/updating entries in the transformation cache (only if you use persisted cache)
+- `transformation-cache` - used for inserting/updating entries in the transformation cache (only if you use persisted
+  cache)
 
 See https://micrometer.io/docs/ref/jvm for more information.
+
+### UI Metrics
+
+Special metrics for the FactCast-Server UI are published via `factcast.ui.timer` namespace.
+
+| operation        | type    | description                                                                                                                                  |
+| ---------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| plugin-execution | `timer` | Time to execute a specific plugin for one fact.                                                                                              |
+| fact-processing  | `timer` | Overall time to process one fact. This includes execution of every plugin, parsing JSON payload and building the final representation model. |
+
+Additionally, all methods of the `org.factcast.server.ui.adapter.FactRepositoryImpl` are measured time-wise, and can be
+visualized via `class` and `method`
+dimension.

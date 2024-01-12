@@ -15,7 +15,7 @@
  */
 package org.factcast.factus;
 
-import static org.factcast.factus.metrics.TagKeys.*;
+import static org.factcast.factus.metrics.TagKeys.CLASS;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -40,6 +40,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.spec.FactSpec;
@@ -154,13 +155,18 @@ public class FactusImpl implements Factus {
   @Override
   public <P extends SubscribedProjection> Subscription subscribeAndBlock(
       @NonNull P subscribedProjection) {
+    return subscribeAndBlock(subscribedProjection, Duration.ofMinutes(5));
+  }
+
+  @Override
+  public <P extends SubscribedProjection> Subscription subscribeAndBlock(
+      @NonNull P subscribedProjection, @NonNull Duration retryWaitTime) {
 
     assertNotClosed();
     InLockedOperation.assertNotInLockedOperation();
 
-    Duration interval = Duration.ofMinutes(5); // TODO should be a property?
     while (!closed.get()) {
-      WriterToken token = subscribedProjection.acquireWriteToken(interval);
+      WriterToken token = subscribedProjection.acquireWriteToken(retryWaitTime);
       if (token != null) {
         log.info("Acquired writer token for {}", subscribedProjection.getClass());
         Subscription subscription = doSubscribe(subscribedProjection, token);
@@ -198,12 +204,12 @@ public class FactusImpl implements Factus {
     FactObserver fo =
         new AbstractFactObserver(subscribedProjection, PROGRESS_INTERVAL, factusMetrics) {
 
-          UUID lastFactIdApplied = null;
+          FactStreamPosition lastFactIdApplied = null;
 
           @Override
           public void onNextFact(@NonNull Fact element) {
             if (token.isValid()) {
-              lastFactIdApplied = element.id();
+              lastFactIdApplied = FactStreamPosition.from(element);
               handler.apply(element);
             } else {
               // token is no longer valid
@@ -228,14 +234,17 @@ public class FactusImpl implements Factus {
           }
 
           @Override
-          public void onFastForward(@NonNull UUID factIdToFfwdTo) {
+          public void onFastForward(@NonNull FactStreamPosition factIdToFfwdTo) {
             subscribedProjection.factStreamPosition(factIdToFfwdTo);
           }
         };
 
     return fc.subscribe(
         SubscriptionRequest.follow(handler.createFactSpecs())
-            .fromNullable(subscribedProjection.factStreamPosition()),
+            .fromNullable(
+                Optional.ofNullable(subscribedProjection.factStreamPosition())
+                    .map(FactStreamPosition::factId)
+                    .orElse(null)),
         fo);
   }
 
@@ -343,24 +352,39 @@ public class FactusImpl implements Factus {
     }
   }
 
+  /**
+   * @return null if no fact was applied
+   */
+  private <P extends Projection> UUID catchupProjection(
+      @NonNull P projection,
+      FactStreamPosition stateOrNull,
+      @Nullable BiConsumer<P, UUID> afterProcessing) {
+    return catchupProjection(
+        projection,
+        Optional.ofNullable(stateOrNull).map(FactStreamPosition::factId).orElse(null),
+        afterProcessing);
+  }
+
+  /**
+   * @return null if no fact was applied
+   */
   @SneakyThrows
   private <P extends Projection> UUID catchupProjection(
       @NonNull P projection, UUID stateOrNull, @Nullable BiConsumer<P, UUID> afterProcessing) {
     Projector<P> handler = ehFactory.create(projection);
-    AtomicReference<UUID> factId = new AtomicReference<>();
     AtomicInteger factCount = new AtomicInteger(0);
+    AtomicReference<FactStreamPosition> positionOfLastFactApplied = new AtomicReference<>();
 
     FactObserver fo =
         new AbstractFactObserver(projection, PROGRESS_INTERVAL, factusMetrics) {
-          UUID id = null;
 
           @Override
           public void onNextFact(@NonNull Fact element) {
-            id = element.id();
+            FactStreamPosition pos = FactStreamPosition.from(element);
+            positionOfLastFactApplied.set(pos);
             handler.apply(element);
-            factId.set(id);
             if (afterProcessing != null) {
-              afterProcessing.accept(projection, id);
+              afterProcessing.accept(projection, pos.factId());
             }
             factCount.incrementAndGet();
           }
@@ -372,7 +396,7 @@ public class FactusImpl implements Factus {
 
           @Override
           public void onCatchupSignal() {
-            handler.onCatchup(id);
+            handler.onCatchup(positionOfLastFactApplied.get());
             projection.onCatchup();
           }
 
@@ -382,7 +406,7 @@ public class FactusImpl implements Factus {
           }
 
           @Override
-          public void onFastForward(@NonNull UUID factIdToFfwdTo) {
+          public void onFastForward(@NonNull FactStreamPosition factIdToFfwdTo) {
             if (projection instanceof FactStreamPositionAware) {
               ((FactStreamPositionAware) projection).factStreamPosition(factIdToFfwdTo);
             }
@@ -398,7 +422,9 @@ public class FactusImpl implements Factus {
       fc.subscribe(SubscriptionRequest.catchup(factSpecs).fromNullable(stateOrNull), fo)
           .awaitComplete();
     }
-    return factId.get();
+    return Optional.ofNullable(positionOfLastFactApplied.get())
+        .map(FactStreamPosition::factId)
+        .orElse(null);
   }
 
   @VisibleForTesting

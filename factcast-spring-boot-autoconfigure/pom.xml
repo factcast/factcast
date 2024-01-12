@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.7.3-SNAPSHOT</version>
+    <version>0.7.5-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-spring-boot-autoconfigure</artifactId>
@@ -59,6 +59,16 @@
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-factus</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-server-security</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-server-ui</artifactId>
       <optional>true</optional>
     </dependency>
     <dependency>

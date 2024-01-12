@@ -43,7 +43,7 @@ More precisely, FactCast maintains a certain number of rolling partial (tail) in
 When asked to query facts from the end of the fact log,
 the Postgres database now has the option to use the smaller tail index, which (as many queries are concerned with the tail of the fact log) is likely to be cached in memory.
 
-Tail index rotation is configurable and described in [the configuration properties]({{< ref "properties.md#performance--reliability" >}}).
+Tail index rotation is configurable and described in [the configuration properties]({{< ref "Setup/properties.md#performance--reliability" >}}).
 
 {{% alert title="Note" %}}
 Tail indexes are implemented as [Postgres Partial Indexes](https://www.postgresql.org/docs/11/indexes-partial.html).
@@ -54,7 +54,7 @@ with enabled [fastupdate](https://www.postgresql.org/docs/11/sql-createindex.htm
 
 Introducing a new index does not come for free. When new facts are INSERTed, the Postgres database needs to maintain
 the indexes of the fact log. Hence, the higher the number of indexes, the slower the INSERT performance.
-See the [recommendations of the configuration section]({{< ref "properties.md#performance--reliability" >}}) for sensible values
+See the [recommendations of the configuration section]({{< ref "Setup/properties.md#performance--reliability" >}}) for sensible values
 on the number of tail index generations.
 
 If you encounter performance issues, see the [Postgres documentation](https://www.postgresql.org/docs/11/gin-implementation.html#GIN-FAST-UPDATE) for further advice.

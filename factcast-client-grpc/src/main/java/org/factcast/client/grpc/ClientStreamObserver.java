@@ -42,9 +42,9 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
  * Bridges GRPC Specific StreamObserver to a subscription by switching over the notification type
  * and dispatching to the appropriate subscription method.
  *
+ * @author <uwe.schaefer@prisma-capacity.eu>
  * @see StreamObserver
  * @see Subscription
- * @author <uwe.schaefer@prisma-capacity.eu>
  */
 @Slf4j
 class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notification> {
@@ -136,7 +136,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
         break;
       case Ffwd:
         log.debug("received fastforward signal");
-        subscription.notifyFastForward(converter.fromProto(f.getId()));
+        subscription.notifyFastForward(converter.fromProto(f.getId(), f.getSerial()));
         break;
 
       default:

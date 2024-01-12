@@ -137,8 +137,16 @@ grpc.server.permit-keep-alive-time=100
 
 ### Testing
 
-| Property                           | Semantics                                                                                                         | Default |
+| Property                           | Description                                                                                                       | Default |
 | ---------------------------------- | :---------------------------------------------------------------------------------------------------------------- | :------ |
 | factcast.store.integrationTestMode | when set to true, disables all non-essential memory-internal caches, timing might differ to production of course. | false   |
+
+---
+
+### UI
+
+| Property              | Description                                                                                                            | Default |
+| --------------------- | :--------------------------------------------------------------------------------------------------------------------- | :------ |
+| vaadin.productionMode | Should be set to true, otherwise vaadin tries to generate a dev bundle which is not necessary, and probably will fail. | false   |
 
 Further details can be found here : `net.devh.boot.grpc.server.config.GrpcServerProperties`.
