@@ -16,7 +16,7 @@
 package org.factcast.spring.boot.autoconfigure.factus;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import java.util.*;
+import java.util.Set;
 import lombok.Generated;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.FactCast;
@@ -30,18 +30,18 @@ import org.factcast.factus.metrics.FactusMetricsImpl;
 import org.factcast.factus.projector.DefaultProjectorFactory;
 import org.factcast.factus.projector.ProjectorFactory;
 import org.factcast.factus.serializer.DefaultSnapshotSerializer;
-import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepositoryImpl;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepositoryImpl;
+import org.factcast.factus.snapshot.SnapshotSerializerFactory;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
 import org.factcast.factus.utils.FactusDependency;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 
 @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
 @AutoConfiguration
@@ -81,15 +81,10 @@ public class FactusAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public SnapshotSerializerSupplier snapshotSerializerSupplier(SnapshotSerializer ser) {
-    return new SnapshotSerializerSupplier(ser);
-  }
-
-  @Bean
-  @ConditionalOnMissingBean
-  @Order(Ordered.LOWEST_PRECEDENCE)
-  public SnapshotSerializer snapshotSerializer() {
-    return new DefaultSnapshotSerializer();
+  public SnapshotSerializerSupplier snapshotSerializerSupplier(ApplicationContext ctx) {
+    return new SnapshotSerializerSupplier(
+        new DefaultSnapshotSerializer(),
+        new SpringSnapshotSerializerFactory(ctx, new SnapshotSerializerFactory.Default()));
   }
 
   @Bean
