@@ -129,7 +129,7 @@ class ClientStreamObserverTest {
   @Test
   void testFastForwardIsSkippedIfSerialIsZero() {
     Mockito.reset(subscription);
-    FactStreamPosition p =  FactStreamPosition.of(UUID.randomUUID(),0L);
+    FactStreamPosition p = FactStreamPosition.of(UUID.randomUUID(), 0L);
     MSG_Notification n = converter.toProto(p);
     uut.onNext(n);
     verifyNoInteractions(subscription);
