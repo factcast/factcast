@@ -137,7 +137,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
         break;
       case Ffwd:
         log.debug("received fastforward signal");
-        // if the server is <0.7.5, the fwd notification dos not contain a serial. In this case, we
+        // if the server is <0.7.5, the fwd notification does not contain a serial. In this case, we
         // just skip it.
         FactStreamPosition pos = converter.fromProto(f.getId(), f.getSerial());
         if (pos.serial() != 0L) {
