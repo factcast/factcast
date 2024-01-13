@@ -225,7 +225,7 @@ public class ProtoConverterTest {
   @Test
   void testCreateNotificationForFastForward() {
     FactStreamPosition probe = TestFactStreamPosition.random();
-    MSG_Notification n = uut.createNotificationForFastForward(probe);
+    MSG_Notification n = uut.toProto(probe);
     assertNotNull(n);
     assertEquals(Type.Ffwd, n.getType());
     assertEquals(probe, uut.fromProto(n.getId(), n.getSerial()));
