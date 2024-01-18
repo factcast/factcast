@@ -24,6 +24,7 @@ import java.nio.charset.Charset;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.FactValidationException;
@@ -59,7 +60,7 @@ public class SchemaCacheTest {
   @DirtiesContext
   class whenDeletingFromSchemaStore {
     @Test
-    public void schemaCacheIsInvalidated() throws Exception {
+    void schemaCacheIsInvalidated() throws Exception {
       CountDownLatch wasOned = new CountDownLatch(1);
       Mockito.doAnswer(
               spy -> {
@@ -85,7 +86,9 @@ public class SchemaCacheTest {
 
       jdbcTemplate.update(
           String.format("DELETE FROM schemastore WHERE type='%s' AND version=%d", v3.type(), 3));
-      wasOned.await();
+      // on-call then invalidates schemaNearCache
+      assertTrue(
+          wasOned.await(3, TimeUnit.SECONDS), "on() was not triggered by SchemaStoreChangeSignal");
 
       assertDoesNotThrow(() -> fc.fetchByIdAndVersion(idv1, 1));
       // assuming that deleting from the schemastore should not remove/change automatically existing
@@ -105,7 +108,7 @@ public class SchemaCacheTest {
   @DirtiesContext
   class whenUpdatingTransformationStore {
     @Test
-    public void schemaCacheIsInvalidated() throws Exception {
+    void schemaCacheIsInvalidated() throws Exception {
       CountDownLatch wasOned = new CountDownLatch(1);
       Mockito.doAnswer(
               spy -> {
@@ -148,7 +151,9 @@ public class SchemaCacheTest {
           String.format(
               "UPDATE schemastore SET jsonschema='%s' WHERE type='%s' AND version=%d",
               newSchemaV3, v3.type(), 3));
-      wasOned.await();
+      // on-call then invalidates schemaNearCache
+      assertTrue(
+          wasOned.await(3, TimeUnit.SECONDS), "on() was not triggered by SchemaStoreChangeSignal");
 
       assertDoesNotThrow(() -> fc.fetchByIdAndVersion(idv1, 1));
       // assuming that updating the schemastore should not remove/change automatically existing
@@ -167,6 +172,57 @@ public class SchemaCacheTest {
               3,
               "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"v3New\",\"newProperty\":\"test\"}");
       assertDoesNotThrow(() -> fc.publish(v3New));
+    }
+  }
+
+  @Nested
+  @DirtiesContext
+  class whenInsertingIntoSchemaStore {
+    @Test
+    void cachedEmptyOptionalInSchemaCacheIsInvalidated() throws Exception {
+      // ARRANGE
+      String schemaV3 =
+          StreamUtils.copyToString(
+              new ClassPathResource("/example-registry/users/UserCreated/3/schema.json")
+                  .getInputStream(),
+              Charset.defaultCharset());
+
+      Fact v3 =
+          createTestFact(
+              UUID.randomUUID(),
+              3,
+              "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"v3\"}");
+
+      jdbcTemplate.update(
+          String.format(
+              "DELETE FROM schemastore WHERE type='%s' AND version=%d", v3.type(), v3.version()));
+
+      // just making sure...
+      assertThrows(FactValidationException.class, () -> fc.publish(v3));
+
+      // after the DELETE, to not capture THAT signal (or the resulting on-call)
+      CountDownLatch wasOned = new CountDownLatch(1);
+      Mockito.doAnswer(
+              spy -> {
+                spy.callRealMethod();
+                wasOned.countDown();
+                return null;
+              })
+          .when(listener)
+          .on(any());
+
+      // ACT
+      jdbcTemplate.update(
+          String.format(
+              "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES ('%s','%s','%s','%s',%s,'%s' :: JSONB)",
+              "id", "hash", v3.ns(), v3.type(), v3.version(), schemaV3));
+
+      // ASSERT
+      // on-call then invalidates schemaNearCache
+      assertTrue(
+          wasOned.await(3, TimeUnit.SECONDS), "on() was not triggered by SchemaStoreChangeSignal");
+      // absent schema not cached anymore
+      assertDoesNotThrow(() -> fc.publish(v3));
     }
   }
 
