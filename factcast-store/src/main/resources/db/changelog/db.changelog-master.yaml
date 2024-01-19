@@ -375,8 +375,15 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
-
-        
-        
-        
-        
+  - changeSet:
+      id: issue2685_notify_schemastore_insert
+      runInTransaction: false
+      author: leflamm
+      comment: add missing trigger on insert into schemastore table
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2685/notify_schemastore_insert.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
