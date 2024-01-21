@@ -1,5 +1,3 @@
 frontend/generated/
 node_modules/
-vite.generated.ts
-package.json
 package-lock.json
