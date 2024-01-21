@@ -204,8 +204,8 @@
       <version>4.12.0</version>
     </dependency>
     <dependency>
-      <groupId>org.graalvm.js</groupId>
-      <artifactId>js</artifactId>
+      <groupId>org.graalvm.polyglot</groupId>
+      <artifactId>polyglot</artifactId>
       <version>${graaljs.version}</version>
     </dependency>
     <dependency>
@@ -214,9 +214,11 @@
       <version>${graaljs.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.graalvm.sdk</groupId>
-      <artifactId>graal-sdk</artifactId>
+      <groupId>org.graalvm.polyglot</groupId>
+      <artifactId>js-community</artifactId>
       <version>${graaljs.version}</version>
+      <type>pom</type>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.graalvm.truffle</groupId>
