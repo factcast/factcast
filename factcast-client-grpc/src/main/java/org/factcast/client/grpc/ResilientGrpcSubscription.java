@@ -155,7 +155,8 @@ public class ResilientGrpcSubscription implements Subscription {
     doConnect();
   }
 
-  private void doConnect() {
+  @VisibleForTesting
+  protected void doConnect() {
     resilience.registerAttempt();
     SubscriptionRequestTO to = SubscriptionRequestTO.forFacts(originalRequest);
     UUID last = lastFactIdSeen.get();
