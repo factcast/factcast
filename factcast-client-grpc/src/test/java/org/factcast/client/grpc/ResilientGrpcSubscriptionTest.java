@@ -325,12 +325,14 @@ class ResilientGrpcSubscriptionTest {
     @Test
     void onErrorReconnecting() {
 
-      doNothing().when(uut).reConnect();
+      doNothing().when(uut).doConnect();
 
       dfo.onError(new RetryableException(new IOException()));
 
       verify(subscription).close();
       verify(uut).reConnect();
+      verify(store).initialize();
+      verify(uut).doConnect();
       assertThat(uut.resilience().numberOfAttemptsInWindow()).isEqualTo(1);
     }
   }
