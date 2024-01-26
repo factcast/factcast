@@ -278,10 +278,11 @@ public class GrpcFactStore implements FactStore {
         });
   }
 
-  synchronized void reinitialize(){
-    // TODO does this really solve the issue of multiple threads trying to reconnect when the flag is immidiately reset
+  synchronized void reinitialize() {
+    // TODO does this really solve the issue of multiple threads trying to reconnect when the flag
+    // is immidiately reset
     // in initialize()? Think about additional flag
-    if (!initialized.get()){
+    if (!initialized.get()) {
       return;
     }
     initialized.set(false);
