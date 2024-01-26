@@ -69,7 +69,7 @@ class ResilientGrpcSubscriptionTest {
   private final ArgumentCaptor<FactObserver> observerAC =
       ArgumentCaptor.forClass(FactObserver.class);
 
-  ResilienceConfiguration config = new ResilienceConfiguration();
+  final ResilienceConfiguration config = new ResilienceConfiguration();
   ResilientGrpcSubscription uut;
 
   @BeforeEach
@@ -324,14 +324,13 @@ class ResilientGrpcSubscriptionTest {
     @SneakyThrows
     @Test
     void onErrorReconnecting() {
-
       doNothing().when(uut).doConnect();
 
       dfo.onError(new RetryableException(new IOException()));
 
       verify(subscription).close();
       verify(uut).reConnect();
-      verify(store).initialize();
+      verify(store).reinitialize();
       verify(uut).doConnect();
       assertThat(uut.resilience().numberOfAttemptsInWindow()).isEqualTo(1);
     }

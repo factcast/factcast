@@ -193,6 +193,7 @@ public class GrpcFactStore implements FactStore {
     for (; ; ) {
       try {
         resilience.registerAttempt();
+        // In theory, we should try to execute a new handshake here in case of a failover.
         block.run();
         return;
       } catch (Exception e) {
@@ -216,6 +217,7 @@ public class GrpcFactStore implements FactStore {
     for (; ; ) {
       try {
         resilience.registerAttempt();
+        // In theory, we should try to execute a new handshake here in case of a failover.
         T call = block.call();
         return call;
       } catch (Exception e) {
@@ -274,6 +276,17 @@ public class GrpcFactStore implements FactStore {
           responseMessage = blockingStub.serialOf(protoMessage);
           return converter.fromProto(responseMessage);
         });
+  }
+
+  synchronized void reinitialize(){
+    // TODO does this really solve the issue of multiple threads trying to reconnect when the flag is immidiately reset
+    // in initialize()? Think about additional flag
+    if (!initialized.get()){
+      return;
+    }
+    initialized.set(false);
+    log.info("Execute new handshake before reconnecting.");
+    initialize();
   }
 
   @PostConstruct

@@ -151,7 +151,7 @@ public class ResilientGrpcSubscription implements Subscription {
   @VisibleForTesting
   synchronized void reConnect() {
     log.debug("Reconnecting ({})", originalRequest);
-    store.initialize();
+    store.reinitialize();
     doConnect();
   }
 
