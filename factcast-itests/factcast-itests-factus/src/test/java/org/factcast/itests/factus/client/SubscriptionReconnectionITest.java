@@ -30,6 +30,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import nl.altindag.console.ConsoleCaptor;
+import nl.altindag.log.LogCaptor;
+import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
@@ -94,6 +96,8 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
         proxy.getName(),
         proxy.getContainerIpAddress(),
         proxy.getProxyPort());
+    LogCaptor logCaptor = LogCaptor.forClass(GrpcFactStore.class);
+    logCaptor.setLogLevelToDebug();
 
     var count = new AtomicInteger();
 
@@ -109,6 +113,7 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
         });
 
     assertThat(count.get()).isEqualTo(MAX_FACTS);
+    assertThat(logCaptor.getDebugLogs()).contains("Invoking handshake");
   }
 
   @SneakyThrows
