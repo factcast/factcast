@@ -180,7 +180,7 @@ class GrpcObserverAdapter implements FactObserver {
     if (supportsFastForward) {
       log.debug("{} sending ffwd notification to fact id {}", id, position);
       // we have not sent any fact. check for ffwding
-      observer.onNext(converter.createNotificationForFastForward(position));
+      observer.onNext(converter.toProto(position));
     }
   }
 
