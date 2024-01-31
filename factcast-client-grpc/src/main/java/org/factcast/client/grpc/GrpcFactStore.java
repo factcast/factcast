@@ -281,8 +281,6 @@ public class GrpcFactStore implements FactStore {
         });
   }
 
-
-
   synchronized void reinitialize(){
     // Make sure only the first thread retrying triggers the handshake
     if(reinitializationRequired.get()){
