@@ -29,6 +29,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import lombok.Generated;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -90,6 +91,8 @@ public class GrpcFactStore implements FactStore {
   private final ProtoConverter converter = new ProtoConverter();
 
   private final AtomicBoolean initialized = new AtomicBoolean(false);
+  @VisibleForTesting @Getter
+  private final AtomicBoolean reinitializationRequired = new AtomicBoolean(false);
   @VisibleForTesting @Setter private boolean fastStateToken;
 
   @Autowired
@@ -278,15 +281,16 @@ public class GrpcFactStore implements FactStore {
         });
   }
 
+
+
   synchronized void reinitialize(){
-    // TODO does this really solve the issue of multiple threads trying to reconnect when the flag is immidiately reset
-    // in initialize()? Think about additional flag
-    if (!initialized.get()){
-      return;
+    // Make sure only the first thread retrying triggers the handshake
+    if(reinitializationRequired.get()){
+      log.info("Execute new handshake before reconnecting.");
+      initialized.set(false);
+      initialize();
+      reinitializationRequired.set(false);
     }
-    initialized.set(false);
-    log.info("Execute new handshake before reconnecting.");
-    initialize();
   }
 
   @PostConstruct

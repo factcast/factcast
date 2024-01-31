@@ -227,6 +227,8 @@ public class ResilientGrpcSubscription implements Subscription {
     public void onError(@NonNull Throwable exception) {
       log.info("Closing subscription due to onError triggered.  ({})", originalRequest, exception);
       closeAndDetachSubscription();
+      // reinitialize the store, as the connection might be broken
+      store.reinitializationRequired().set(true);
 
       if (resilience.shouldRetry(exception)) {
         log.info("Trying to resubscribe ({})", originalRequest);
