@@ -27,8 +27,11 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.Callable;
+import java.util.concurrent.*;
+import java.util.stream.IntStream;
+
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.assertj.core.util.Lists;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 import org.factcast.core.Fact;
@@ -57,10 +60,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Answers;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -240,6 +240,28 @@ class GrpcFactStoreTest {
 
     assertEquals(seven, response);
     assertNotSame(seven, response);
+  }
+
+  @Test
+  @SneakyThrows
+  void testReInitializeWhenNotPreviouslyInitialized()  {
+    uut.reinitializationRequired().set(true);
+    when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
+    when(blockingStub.handshake(any()))
+        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
+
+    CountDownLatch latch = new CountDownLatch(3);
+    final ExecutorService threads = Executors.newFixedThreadPool(3);
+    IntStream.range(0, 3)
+        .forEach(count -> threads.submit(() -> {
+          uut.reinitialize();
+          latch.countDown();
+        }));
+
+    assertThat(latch.await(100, TimeUnit.MILLISECONDS)).isTrue();
+
+    verify(blockingStub, times(1)).handshake(any());
+    assertThat(uut.reinitializationRequired().get()).isFalse();
   }
 
   @Test
