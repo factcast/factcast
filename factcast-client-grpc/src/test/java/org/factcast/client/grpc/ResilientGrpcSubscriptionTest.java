@@ -30,6 +30,7 @@ import java.time.Duration;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -325,11 +326,14 @@ class ResilientGrpcSubscriptionTest {
     @Test
     void onErrorReconnecting() {
       doNothing().when(uut).doConnect();
+      final AtomicBoolean reconnectFlag = spy(AtomicBoolean.class);
+      when(store.reinitializationRequired()).thenReturn(reconnectFlag);
 
       dfo.onError(new RetryableException(new IOException()));
 
       verify(subscription).close();
       verify(uut).reConnect();
+      verify(reconnectFlag).set(true);
       verify(store).reinitialize();
       verify(uut).doConnect();
       assertThat(uut.resilience().numberOfAttemptsInWindow()).isEqualTo(1);
