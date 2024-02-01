@@ -29,7 +29,6 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.IntStream;
-
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.assertj.core.util.Lists;
@@ -244,7 +243,7 @@ class GrpcFactStoreTest {
 
   @Test
   @SneakyThrows
-  void testReInitializeWhenNotPreviouslyInitialized()  {
+  void testReInitializeWhenNotPreviouslyInitialized() {
     uut.reinitializationRequired().set(true);
     when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
     when(blockingStub.handshake(any()))
@@ -253,10 +252,13 @@ class GrpcFactStoreTest {
     CountDownLatch latch = new CountDownLatch(3);
     final ExecutorService threads = Executors.newFixedThreadPool(3);
     IntStream.range(0, 3)
-        .forEach(count -> threads.submit(() -> {
-          uut.reinitialize();
-          latch.countDown();
-        }));
+        .forEach(
+            count ->
+                threads.submit(
+                    () -> {
+                      uut.reinitialize();
+                      latch.countDown();
+                    }));
 
     assertThat(latch.await(100, TimeUnit.MILLISECONDS)).isTrue();
 

@@ -91,8 +91,10 @@ public class GrpcFactStore implements FactStore {
   private final ProtoConverter converter = new ProtoConverter();
 
   private final AtomicBoolean initialized = new AtomicBoolean(false);
+
   @VisibleForTesting @Getter
   private final AtomicBoolean reinitializationRequired = new AtomicBoolean(false);
+
   @VisibleForTesting @Setter private boolean fastStateToken;
 
   @Autowired
@@ -281,9 +283,9 @@ public class GrpcFactStore implements FactStore {
         });
   }
 
-  synchronized void reinitialize(){
+  synchronized void reinitialize() {
     // Make sure only the first thread retrying triggers the handshake
-    if(reinitializationRequired.get()){
+    if (reinitializationRequired.get()) {
       log.info("Execute new handshake before reconnecting.");
       initialized.set(false);
       initialize();
