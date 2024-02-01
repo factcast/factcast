@@ -712,6 +712,10 @@ class GrpcFactStoreTest {
 
     @Test
     void retriesRun() throws Exception {
+      when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
+      when(blockingStub.handshake(any()))
+          .thenReturn(
+              conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
       resilienceConfig.setEnabled(true).setAttempts(100).setInterval(Duration.ofMillis(100));
       doThrow(new RetryableException(new IOException())).doNothing().when(runnable).run();
       uut.runAndHandle(runnable);
