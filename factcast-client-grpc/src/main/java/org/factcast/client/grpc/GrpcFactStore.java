@@ -198,7 +198,7 @@ public class GrpcFactStore implements FactStore {
     for (; ; ) {
       try {
         resilience.registerAttempt();
-        // In theory, we should try to execute a new handshake here in case of a failover.
+        reinitialize();
         block.run();
         return;
       } catch (Exception e) {
@@ -206,6 +206,7 @@ public class GrpcFactStore implements FactStore {
         if (resilience.shouldRetry(decodedException)) {
           log.warn("Temporary failure", decodedException);
           log.info("Retry call to remote server");
+          reinitializationRequired.set(true);
           resilience.sleepForInterval();
           // continue and try next attempt
         } else {
