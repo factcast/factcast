@@ -113,7 +113,7 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
         });
 
     assertThat(count.get()).isEqualTo(MAX_FACTS);
-    assertThat(logCaptor.getDebugLogs()).contains("Invoking handshake");
+    assertThat(logCaptor.getDebugLogs()).containsOnlyOnce("Invoking handshake");
   }
 
   @SneakyThrows
