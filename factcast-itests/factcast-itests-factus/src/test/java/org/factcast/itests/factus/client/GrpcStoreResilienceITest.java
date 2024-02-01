@@ -17,10 +17,17 @@ package org.factcast.itests.factus.client;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.common.collect.Lists;
 import eu.rekawek.toxiproxy.model.ToxicDirection;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import nl.altindag.log.LogCaptor;
+import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.itests.TestFactusApplication;
@@ -82,6 +89,47 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
     }
     // should reconnect like hell
     fc.publish(facts);
+  }
+
+  @SneakyThrows
+  @Test
+  void testConcurrentRetryBehaviorWithoutResponse() {
+    LogCaptor logCaptor = LogCaptor.forClass(GrpcFactStore.class);
+
+    // break upstream call
+    proxy.toxics().timeout("immediate reset", ToxicDirection.UPSTREAM, 10);
+
+    new Timer()
+        .schedule(
+            new TimerTask() {
+              @Override
+              public void run() {
+                // heal the communication
+                log.info("repairing proxy");
+                proxy.reset();
+              }
+            },
+            1000);
+
+    List<Fact> facts = new ArrayList<>(MAX_FACTS);
+    for (int i = 0; i < MAX_FACTS; i++) {
+      facts.add(Fact.builder().ns("ns").type("type").buildWithoutPayload());
+    }
+    List<List<Fact>> factPartitions = Lists.partition(facts, MAX_FACTS / 4);
+    // Reconnect with 4 concurrent threads
+    CountDownLatch latch = new CountDownLatch(4);
+    ExecutorService threads = Executors.newFixedThreadPool(3);
+    for (int i = 0; i < 4; i++) {
+      final List<Fact> f = factPartitions.get(i);
+      threads.submit(
+          () -> {
+            fc.publish(f);
+            latch.countDown();
+          });
+    }
+
+    assertThat(latch.await(3, TimeUnit.SECONDS)).isTrue();
+    assertThat(logCaptor.getInfoLogs()).containsOnlyOnce("Handshake successful.");
   }
 
   @SneakyThrows

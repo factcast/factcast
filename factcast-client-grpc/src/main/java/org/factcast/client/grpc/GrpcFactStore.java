@@ -287,10 +287,11 @@ public class GrpcFactStore implements FactStore {
   synchronized void reinitialize() {
     // Make sure only the first thread retrying triggers the handshake
     if (reinitializationRequired.get()) {
-      log.info("Execute new handshake before reconnecting.");
+      log.info("Trying to execute new handshake before reconnecting.");
       initialized.set(false);
       initialize();
       reinitializationRequired.set(false);
+      log.info("Handshake successful.");
     }
   }
 
