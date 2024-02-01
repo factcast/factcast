@@ -704,9 +704,14 @@ class GrpcFactStoreTest {
 
     @Test
     void retriesCall() throws Exception {
+      when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
+      when(blockingStub.handshake(any()))
+          .thenReturn(
+              conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
       resilienceConfig.setEnabled(true).setAttempts(100).setInterval(Duration.ofMillis(100));
       when(block.call()).thenThrow(new RetryableException(new IOException())).thenReturn(null);
       uut.callAndHandle(block);
+      verify(blockingStub).handshake(any());
       verify(block, times(2)).call();
     }
 
@@ -719,6 +724,7 @@ class GrpcFactStoreTest {
       resilienceConfig.setEnabled(true).setAttempts(100).setInterval(Duration.ofMillis(100));
       doThrow(new RetryableException(new IOException())).doNothing().when(runnable).run();
       uut.runAndHandle(runnable);
+      verify(blockingStub).handshake(any());
       verify(runnable, times(2)).run();
     }
 
