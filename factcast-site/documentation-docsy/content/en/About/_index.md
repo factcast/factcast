@@ -19,7 +19,6 @@ enough' Event-store based on PostgreSQL.</i></div>
 
 <center>
 
-
 [![Actions Status](https://github.com/factcast/factcast/workflows/maven/badge.svg?branch=master)](https://github.com/factcast/factcast/actions)
 [![codecov](https://codecov.io/gh/factcast/factcast/graph/badge.svg?token=0eHdAKj2ZY)](https://codecov.io/gh/factcast/factcast)
 [![CodeFactor](https://www.codefactor.io/repository/github/factcast/factcast/badge)](https://www.codefactor.io/repository/github/factcast/factcast)
@@ -27,9 +26,7 @@ enough' Event-store based on PostgreSQL.</i></div>
 [![DockerHub](https://img.shields.io/docker/v/factcast/factcast?label=dockerhub)](https://hub.docker.com/repository/docker/factcast/factcast/tags)
 [![License](https://img.shields.io/github/license/factcast/factcast)](https://www.apache.org/licenses/LICENSE-2.0)
 
-
 </center>
-
 
 ---
 
