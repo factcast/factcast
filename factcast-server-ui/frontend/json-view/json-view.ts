@@ -1,7 +1,7 @@
 import { css, html, LitElement, PropertyValues } from "lit";
 import { customElement, query } from "lit/decorators.js";
 import * as monaco from "monaco-editor";
-import monacoCss from "monaco-editor/min/vs/editor/editor.main.css";
+import monacoCss from "monaco-editor/min/vs/editor/editor.main.css?inline";
 // @ts-ignore
 import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 // @ts-ignore

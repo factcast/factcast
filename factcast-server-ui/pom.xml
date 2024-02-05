@@ -39,7 +39,7 @@
   </repositories>
   <properties>
     <java.version>17</java.version>
-    <vaadin.version>24.2.3</vaadin.version>
+    <vaadin.version>24.3.3</vaadin.version>
   </properties>
   <dependencies>
     <dependency>
@@ -146,7 +146,7 @@
     <dependency>
       <groupId>com.microsoft.playwright</groupId>
       <artifactId>playwright</artifactId>
-      <version>1.41.0</version>
+      <version>1.41.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
