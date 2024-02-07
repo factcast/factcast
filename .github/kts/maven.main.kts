@@ -87,7 +87,7 @@ public val workflowMaven: Workflow = workflow(
         )
         uses(
             name = "Codecov upload",
-            action = CodecovActionV3(
+            action = CodecovActionV4(
                 token = "${'$'}{{ secrets.CODECOV_TOKEN }}"
             ),
         )
