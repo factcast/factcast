@@ -22,9 +22,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import io.grpc.stub.StreamObserver;
-import java.util.Arrays;
-import java.util.OptionalInt;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 import lombok.NonNull;
 import org.factcast.core.Fact;
@@ -160,11 +158,12 @@ public class GrpcObserverAdapterTest {
     GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer);
     doNothing().when(observer).onNext(msg.capture());
     verify(observer, never()).onNext(any());
-    Fact f = Fact.builder().ns("test").build("{}");
+    List<Fact> f = Collections.singletonList(Fact.builder().ns("test").build("{}"));
     uut.onNext(f);
     verify(observer).onNext(any());
-    assertEquals(MSG_Notification.Type.Fact, msg.getValue().getType());
-    assertEquals(f.id(), conv.fromProto(msg.getValue().getFact()).id());
+    MSG_Notification notification = msg.getValue();
+    assertEquals(MSG_Notification.Type.Facts, notification.getType());
+    assertEquals(f, conv.fromProto(notification.getFacts()));
   }
 
   @Test
