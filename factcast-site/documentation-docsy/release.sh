@@ -13,4 +13,4 @@ docker run --rm -it \
 )
 
 
-rsync --delete -rcv public/* con:/www/docs.factcast.org
+rsync --delete -rcv public/* con2:/www/docs.factcast.org

@@ -1,6 +1,6 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("io.github.typesafegithub:github-workflows-kt:1.9.0")
+@file:DependsOn("io.github.typesafegithub:github-workflows-kt:1.11.0")
 
 
 import io.github.typesafegithub.workflows.actions.actions.CacheV3
@@ -87,7 +87,7 @@ public val workflowMaven: Workflow = workflow(
         )
         uses(
             name = "Codecov upload",
-            action = CodecovActionV3(
+            action = CodecovActionV4(
                 token = "${'$'}{{ secrets.CODECOV_TOKEN }}"
             ),
         )

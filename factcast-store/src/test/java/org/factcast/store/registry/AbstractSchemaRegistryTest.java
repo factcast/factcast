@@ -22,8 +22,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.google.common.cache.LoadingCache;
-import java.util.*;
+import java.util.Optional;
+import java.util.Set;
 import lombok.experimental.FieldDefaults;
 import net.javacrumbs.shedlock.core.LockProvider;
 import net.javacrumbs.shedlock.core.SimpleLock;
@@ -53,7 +53,6 @@ class AbstractSchemaRegistryTest {
   @Mock private SimpleLock lock;
   @Mock private LockProvider lockProvider;
   @Mock private Object mutex;
-  @Mock private LoadingCache<SchemaKey, Schema> cache;
   @InjectMocks private SomeSchemaRegistry underTest;
 
   @Nested
@@ -128,6 +127,44 @@ class AbstractSchemaRegistryTest {
       assertThat(actual).isNotEmpty();
       // new value freshly picked from store
       assertThat(actual.get()).isNotSameAs(firstSchema);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void refetchesSchemaFromStoreAfterInvalidation() {
+      // arrange
+      SchemaKey key = SchemaKey.of("foo", "bar", 122);
+      String schemaString1 = "{}";
+      String schemaString2 = "{}";
+
+      when(schemaStore.get(key))
+          .thenReturn(Optional.empty(), Optional.of(schemaString1), Optional.of(schemaString2));
+
+      // assert #0 - nothing can be fetched, "nothing" is cached
+      assertThat(underTest.get(key)).isEmpty();
+      assertThat(underTest.get(key)).isEmpty();
+      assertThat(underTest.get(key)).isEmpty();
+
+      // act #1
+      underTest.invalidateNearCache(key);
+
+      // assert #1 - after invalidation schema1 is fetched and cached
+      Optional<Schema> schema1 = underTest.get(key);
+      assertThat(schema1).isPresent();
+      assertThat(underTest.get(key)).hasValue(schema1.get());
+      assertThat(underTest.get(key)).hasValue(schema1.get());
+      assertThat(underTest.get(key)).hasValue(schema1.get());
+
+      // act #2
+      underTest.invalidateNearCache(key);
+
+      // assert #2 - after invalidation schema2 is fetched and cached
+      Optional<Schema> schema2 = underTest.get(key);
+      assertThat(schema2).isPresent();
+      assertThat(schema2.get()).isNotSameAs(schema1.get());
+      assertThat(underTest.get(key)).hasValue(schema2.get());
+      assertThat(underTest.get(key)).hasValue(schema2.get());
+      assertThat(underTest.get(key)).hasValue(schema2.get());
     }
   }
 

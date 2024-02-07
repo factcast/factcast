@@ -83,7 +83,7 @@ public class ProtoConverter {
   }
 
   @NonNull
-  public MSG_Notification createNotificationForFastForward(@NonNull FactStreamPosition id) {
+  public MSG_Notification toProto(@NonNull FactStreamPosition id) {
     MSG_Notification.Builder builder =
         MSG_Notification.newBuilder().setType(MSG_Notification.Type.Ffwd);
     builder.setId(toProto(id.factId()));

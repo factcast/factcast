@@ -50,6 +50,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -120,8 +121,10 @@ class ClientStreamObserverTest {
   @Test
   void testFastForward() {
     FactStreamPosition p = TestFactStreamPosition.random();
-    MSG_Notification n = converter.createNotificationForFastForward(p);
+    MSG_Notification n = converter.toProto(p);
     uut.onNext(n);
+
+    verify(subscription).notifyFastForward(p);
     verify(factObserver).onFastForward(p);
   }
 
@@ -136,6 +139,15 @@ class ClientStreamObserverTest {
     ArgumentCaptor<List<Fact>> cap = ArgumentCaptor.forClass(List.class);
     verify(factObserver).onNext(cap.capture());
     org.assertj.core.api.Assertions.assertThat(cap.getValue()).hasSize(2).containsExactly(f1, f2);
+  }
+
+  @Test
+  void testFastForwardIsSkippedIfSerialIsZero() {
+    Mockito.reset(subscription);
+    FactStreamPosition p = FactStreamPosition.of(UUID.randomUUID(), 0L);
+    MSG_Notification n = converter.toProto(p);
+    uut.onNext(n);
+    verifyNoInteractions(subscription);
   }
 
   @Test
