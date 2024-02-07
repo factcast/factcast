@@ -24,7 +24,7 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.BatchingFactObserver;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
@@ -87,7 +87,7 @@ class PgSubscriptionFactory implements AutoCloseable {
             "subscription-factory");
   }
 
-  public Subscription subscribe(SubscriptionRequestTO req, FactObserver observer) {
+  public Subscription subscribe(SubscriptionRequestTO req, BatchingFactObserver observer) {
     SubscriptionImpl subscription = SubscriptionImpl.on(observer);
     PgFactStream pgsub =
         new PgFactStream(

@@ -290,7 +290,7 @@ public class FactRepositoryImplTest {
       when(fs.subscribe(any(), any()))
           .thenAnswer(
               i -> {
-                SubscriptionImpl subscriptionImpl = new SubscriptionImpl(mock(ListObserver.class));
+                SubscriptionImpl subscriptionImpl = SubscriptionImpl.on(mock(ListObserver.class));
                 CompletableFuture.runAsync(
                     () -> {
                       subscriptionImpl.notifyError(new ExampleException());
@@ -314,7 +314,7 @@ public class FactRepositoryImplTest {
       when(fs.subscribe(any(), any()))
           .thenAnswer(
               i -> {
-                SubscriptionImpl subscriptionImpl = new SubscriptionImpl(mock(ListObserver.class));
+                SubscriptionImpl subscriptionImpl = SubscriptionImpl.on(mock(ListObserver.class));
                 CompletableFuture.runAsync(
                     () -> {
                       subscriptionImpl.notifyError(new LimitReachedException());

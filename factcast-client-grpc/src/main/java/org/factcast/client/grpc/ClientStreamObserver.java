@@ -17,6 +17,7 @@ package org.factcast.client.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.stub.StreamObserver;
+import java.util.Collections;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -124,15 +125,12 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
         break;
       case Fact:
         log.trace("received single fact");
-        subscription.notifyElement(converter.fromProto(f.getFact()));
+        subscription.notifyElements(Collections.singletonList(converter.fromProto(f.getFact())));
         break;
       case Facts:
-        List<? extends Fact> facts = converter.fromProto(f.getFacts());
+        List<Fact> facts = converter.fromProto(f.getFacts());
         log.trace("received {} facts", facts.size());
-
-        for (Fact fact : facts) {
-          subscription.notifyElement(fact);
-        }
+        subscription.notifyElements(facts);
         break;
       case Ffwd:
         log.debug("received fastforward signal");

@@ -18,9 +18,11 @@ package org.factcast.factus;
 import static org.factcast.factus.metrics.TagKeys.*;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Iterables;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.time.Instant;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
@@ -28,14 +30,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactStreamInfo;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.BatchingFactObserver;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.metrics.TimedOperation;
 import org.factcast.factus.projection.ProgressAware;
 
 @RequiredArgsConstructor
 @Slf4j
-abstract class AbstractFactObserver implements FactObserver {
+abstract class AbstractFactObserver implements BatchingFactObserver {
 
   private final ProgressAware target;
   private final long interval;
@@ -55,17 +57,18 @@ abstract class AbstractFactObserver implements FactObserver {
   }
 
   @Override
-  public final void onNext(@NonNull Fact element) {
-    onNextFact(element);
+  public final void onNext(@NonNull List<Fact> elements) {
+    onNextFacts(elements);
 
     if (caughtUp) {
-      reportProcessingLatency(element);
+      reportProcessingLatency(elements);
     }
 
     // not yet caught up
-    if (info != null && System.currentTimeMillis() - lastProgress > interval) {
-      lastProgress = System.currentTimeMillis();
-      target.catchupPercentage(info.calculatePercentage(element.serial()));
+    long now = System.currentTimeMillis();
+    if (info != null && now - lastProgress > interval) {
+      lastProgress = now;
+      target.catchupPercentage(info.calculatePercentage(Iterables.getLast(elements).serial()));
     }
   }
 
@@ -83,19 +86,25 @@ abstract class AbstractFactObserver implements FactObserver {
   }
 
   @VisibleForTesting
-  void reportProcessingLatency(@NonNull Fact element) {
-    String ts = element.meta("_ts");
-    // _ts might not be there in unit testing for instance.
-    if (ts != null) {
-      long latency = Instant.now().toEpochMilli() - Long.parseLong(ts);
-      metrics.timed(
-          TimedOperation.EVENT_PROCESSING_LATENCY,
-          Tags.of(Tag.of(CLASS, target.getClass().getName())),
-          latency);
-    }
+  void reportProcessingLatency(@NonNull List<Fact> elements) {
+    long nowInMillis = Instant.now().toEpochMilli();
+
+    // TODO should this be async for batch application performance reasons?
+    elements.forEach(
+        element -> {
+          String ts = element.meta("_ts");
+          // _ts might not be there in unit testing for instance.
+          if (ts != null) {
+            long latency = nowInMillis - Long.parseLong(ts);
+            metrics.timed(
+                TimedOperation.EVENT_PROCESSING_LATENCY,
+                Tags.of(Tag.of(CLASS, target.getClass().getName())),
+                latency);
+          }
+        });
   }
 
   protected abstract void onCatchupSignal();
 
-  protected abstract void onNextFact(Fact element);
+  protected abstract void onNextFacts(List<Fact> element);
 }

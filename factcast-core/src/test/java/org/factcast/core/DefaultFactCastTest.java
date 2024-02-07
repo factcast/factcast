@@ -27,6 +27,7 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.observer.BatchingFactObserver;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.ArgumentCaptor;
@@ -48,14 +49,15 @@ class DefaultFactCastTest {
 
   @Test
   void testSubscribeEphemeral() {
-    when(store.subscribe(csr.capture(), any())).thenReturn(mock(Subscription.class));
+    when(store.subscribe(csr.capture(), any(BatchingFactObserver.class)))
+        .thenReturn(mock(Subscription.class));
     final UUID since = UUID.randomUUID();
     SubscriptionRequest r =
         SubscriptionRequest.follow(FactSpec.ns("foo"))
             .or(FactSpec.ns("some").type("type"))
             .from(since);
     uut.subscribeEphemeral(r, f -> {});
-    verify(store).subscribe(any(), any());
+    verify(store).subscribe(any(), any(BatchingFactObserver.class));
     final SubscriptionRequestTO req = csr.getValue();
     assertTrue(req.continuous());
     assertEquals(since, req.startingAfter().orElse(null));
@@ -137,7 +139,7 @@ class DefaultFactCastTest {
   void testSubscribeClosesDelegate() throws Exception {
 
     Subscription sub = mock(Subscription.class);
-    when(store.subscribe(any(), any())).thenReturn(sub);
+    when(store.subscribe(any(), any(BatchingFactObserver.class))).thenReturn(sub);
 
     Subscription s =
         uut.subscribe(SubscriptionRequest.follow(FactSpec.ns("test")).fromScratch(), element -> {});

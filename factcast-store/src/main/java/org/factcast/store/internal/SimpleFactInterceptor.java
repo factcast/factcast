@@ -15,6 +15,7 @@
  */
 package org.factcast.store.internal;
 
+import java.util.Collections;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
@@ -48,10 +49,10 @@ public class SimpleFactInterceptor extends AbstractFactInterceptor {
       TransformationRequest transformationRequest = transformers.prepareTransformation(f);
 
       if (transformationRequest == null) {
-        targetSubscription.notifyElement(f);
+        targetSubscription.notifyElements(Collections.singletonList(f));
       } else {
         Fact transformed = service.transform(transformationRequest);
-        targetSubscription.notifyElement(transformed);
+        targetSubscription.notifyElements(Collections.singletonList(transformed));
       }
 
       increaseNotifyMetric(1);

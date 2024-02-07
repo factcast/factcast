@@ -25,7 +25,7 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.BatchingFactObserver;
 
 /**
  * A read/Write FactStore.
@@ -44,7 +44,18 @@ public interface FactStore {
   void publish(@NonNull List<? extends Fact> factsToPublish);
 
   @NonNull
-  Subscription subscribe(@NonNull SubscriptionRequestTO request, @NonNull FactObserver observer);
+  Subscription subscribe(
+      @NonNull SubscriptionRequestTO request, @NonNull BatchingFactObserver observer);
+
+  //  @NonNull
+  //  @Deprecated
+  //  // TODO doublecheck if unused from within factus
+  //  // TODO refactor server side to use batchingFO
+  //  // for compatibility, use subscribe(SubscriptionRequestTO,BatchingFactObserver) instead
+  //  default Subscription subscribe(
+  //      @NonNull SubscriptionRequestTO request, @NonNull FactObserver observer) {
+  //    return subscribe(request, BatchingFactObserver.of(observer));
+  //  }
 
   @NonNull
   OptionalLong serialOf(@NonNull UUID l);

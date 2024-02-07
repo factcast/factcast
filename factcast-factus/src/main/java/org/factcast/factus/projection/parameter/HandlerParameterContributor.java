@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2024 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.subscription.observer;
+package org.factcast.factus.projection.parameter;
 
-import lombok.Generated;
+import java.lang.annotation.Annotation;
+import java.util.Set;
+import javax.annotation.Nullable;
 import lombok.NonNull;
-import org.factcast.core.Fact;
 
-/**
- * Callback interface to use when subscribing to Facts from FactCast. consider using {@link
- * BatchingFactObserver} instead.
- *
- * @author uwe.schaefer@prisma-capacity.eu
- */
-@Generated // sneakily skip coverage generation
-public interface FactObserver extends FactStreamObserver {
-
-  void onNext(@NonNull Fact element);
+// TODO reverse to declarative
+public interface HandlerParameterContributor {
+  /**
+   * @return null if provider cannot be created
+   */
+  @Nullable
+  // TODO add parameterName?
+  HandlerParameterProvider providerFor(
+      @NonNull Class<?> type, @NonNull Set<Annotation> annotations);
 }

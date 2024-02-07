@@ -31,7 +31,7 @@ import org.factcast.factus.redis.batch.RedissonBatchManager;
 import org.factcast.factus.redis.tx.RedissonTxManager;
 import org.redisson.api.*;
 
-abstract class AbstractRedisProjection
+abstract class AbstractRedisProjection extends AbstractTransactionalProjection
     implements RedisProjection, FactStreamPositionAware, WriterTokenAware, Named {
   @Getter protected final RedissonClient redisson;
 

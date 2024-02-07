@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2023 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.subscription.observer;
+package org.factcast.factus.projection.tx;
 
-import lombok.Generated;
-import lombok.NonNull;
-import org.factcast.core.Fact;
+public class TransactionAlreadyRunningException extends TransactionException {
+  public TransactionAlreadyRunningException(String msg) {
+    super(msg);
+  }
 
-/**
- * Callback interface to use when subscribing to Facts from FactCast. consider using {@link
- * BatchingFactObserver} instead.
- *
- * @author uwe.schaefer@prisma-capacity.eu
- */
-@Generated // sneakily skip coverage generation
-public interface FactObserver extends FactStreamObserver {
+  public TransactionAlreadyRunningException(Throwable e) {
+    super(e);
+  }
 
-  void onNext(@NonNull Fact element);
+  public TransactionAlreadyRunningException(String msg, Throwable e) {
+    super(msg, e);
+  }
 }
