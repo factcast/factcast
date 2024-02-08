@@ -45,14 +45,12 @@ import org.factcast.factus.projection.parameter.HandlerParameterContributors;
 import org.factcast.factus.projection.parameter.HandlerParameterTransformer;
 import org.factcast.factus.projection.tx.TransactionAware;
 import org.factcast.factus.projection.tx.TransactionException;
-import sun.rmi.server.Dispatcher;
 
 @Slf4j
 public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
   private static final Map<Class<? extends Projection>, Map<FactSpecCoordinates, Dispatcher>>
       dispatcherCache = new ConcurrentHashMap<>();
-  private final EventSerializer serializer;
   private final Projection projection;
   private final Map<FactSpecCoordinates, Dispatcher> dispatchInfo;
   private final HandlerParameterContributors contributors;
@@ -65,7 +63,6 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       @NonNull HandlerParameterContributors parameterContributors) {
     contributors = parameterContributors;
     projection = p;
-    this.serializer = serializer;
     dispatchInfo =
         dispatcherCache.computeIfAbsent(
             ReflectionTools.getRelevantClass(p), c -> discoverDispatchInfo(serializer, p));
