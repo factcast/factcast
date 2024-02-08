@@ -18,7 +18,9 @@ package org.factcast.server.ui.adapter;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.google.common.collect.Lists;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import lombok.NonNull;
@@ -28,6 +30,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,7 +52,7 @@ public class ListObserverTest {
     @Test
     void limits() {
       underTest = new ListObserver(3, 2);
-      assertThatThrownBy(() -> mockFacts.forEach(underTest::onNext))
+      assertThatThrownBy(() -> underTest.onNext(mockFacts))
           .isInstanceOf(LimitReachedException.class);
 
       var result = underTest.list();
@@ -60,7 +63,7 @@ public class ListObserverTest {
     @Test
     void lessThanLimit() {
       underTest = new ListObserver(50, 2);
-      mockFacts.forEach(underTest::onNext);
+      underTest.onNext(mockFacts);
 
       var result = underTest.list();
       Assertions.assertThat(result).isNotNull().hasSize(28);
@@ -70,7 +73,7 @@ public class ListObserverTest {
     @Test
     void usesOffset() {
       underTest = new ListObserver(3, 2);
-      assertThatThrownBy(() -> mockFacts.forEach(underTest::onNext))
+      assertThatThrownBy(() -> underTest.onNext(mockFacts))
           .isInstanceOf(LimitReachedException.class);
 
       var result = underTest.list();
@@ -87,25 +90,26 @@ public class ListObserverTest {
   class WhenCheckingIfIsComplete {
     @Test
     void switchesToComplete() {
+
+      ArgumentCaptor<List> cap = ArgumentCaptor.forClass(List.class);
+
       underTest = new ListObserver(2, 2);
-      // first skipped for offset
-      underTest.onNext(mock(Fact.class));
-      assertThat(underTest.isComplete()).isFalse();
-      // second skipped for offset
-      underTest.onNext(mock(Fact.class));
-      assertThat(underTest.isComplete()).isFalse();
-      // third is taken, reduce limit to 1
-      underTest.onNext(mock(Fact.class));
-      assertThat(underTest.isComplete()).isFalse();
-      // fourth is taken, reduce limit to 0
-      underTest.onNext(mock(Fact.class));
+
+      underTest.onNext(
+          Lists.newArrayList(
+              // first skipped for offset
+              mock(Fact.class),
+              // second skipped for offset
+              mock(Fact.class),
+              // third is taken, reduce limit to 1
+              mock(Fact.class),
+              // fourth is taken, reduce limit to 0
+              mock(Fact.class)));
       assertThat(underTest.isComplete()).isTrue();
 
       // more should trigger an exception
-      assertThatThrownBy(
-              () -> {
-                underTest.onNext(mock(Fact.class));
-              })
+      List<Fact> extraBatch = Collections.singletonList(mock(Fact.class));
+      assertThatThrownBy(() -> underTest.onNext(extraBatch))
           .isInstanceOf(LimitReachedException.class);
     }
 
