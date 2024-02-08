@@ -59,7 +59,7 @@ public class RedisTransactionProjectorBenchmark {
   private static final Projector<TestProjection50> projector50 =
       new ProjectorImpl<>(projection50, ctx);
 
-  private static final Projector<TestProjection50> projector = new ProjectorImpl<>(projection, ctx);
+  private static final Projector<TestProjection> projector = new ProjectorImpl<>(projection, ctx);
 
   static {
     Mockito.when(mockRedisson.createTransaction(any())).thenReturn(tx);
@@ -102,14 +102,10 @@ public class RedisTransactionProjectorBenchmark {
   }
 
   @ProjectionMetaData(name = "peter", revision = 12)
+  @RedisTransactional(bulkSize = 50)
   static class TestProjection50 extends TestProjection {
     public TestProjection50(@NonNull RedissonClient redisson) {
       super(redisson);
-    }
-
-    @Override
-    public int maxBatchSizePerTransaction() {
-      return 50;
     }
   }
 

@@ -27,6 +27,7 @@ import org.factcast.factus.projection.Named;
 import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.projection.WriterTokenAware;
 import org.factcast.factus.projection.tx.AbstractTransactionAwareProjection;
+import org.factcast.factus.redis.tx.RedisTransactional;
 import org.redisson.api.*;
 
 abstract class AbstractRedisProjection extends AbstractTransactionAwareProjection<RTransaction>
@@ -107,7 +108,17 @@ abstract class AbstractRedisProjection extends AbstractTransactionAwareProjectio
     runningTransaction.rollback();
   }
 
-  protected @NonNull TransactionOptions transactionOptions() {
-    return TransactionOptions.defaults();
+  protected final @NonNull TransactionOptions transactionOptions() {
+    RedisTransactional tx = this.getClass().getAnnotation(RedisTransactional.class);
+    if (tx != null) return RedisTransactional.Defaults.with(tx);
+    else return TransactionOptions.defaults();
+  }
+
+  @Override
+  public final int maxBatchSizePerTransaction() {
+    RedisTransactional tx = this.getClass().getAnnotation(RedisTransactional.class);
+    if (tx != null) {
+      return tx.bulkSize();
+    } else return super.maxBatchSizePerTransaction();
   }
 }
