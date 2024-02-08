@@ -18,7 +18,6 @@ package org.factcast.factus.redis;
 import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.NonNull;
@@ -27,11 +26,10 @@ import org.factcast.factus.projection.FactStreamPositionAware;
 import org.factcast.factus.projection.Named;
 import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.projection.WriterTokenAware;
-import org.factcast.factus.redis.batch.RedissonBatchManager;
-import org.factcast.factus.redis.tx.RedissonTxManager;
+import org.factcast.factus.projection.tx.AbstractTransactionAwareProjection;
 import org.redisson.api.*;
 
-abstract class AbstractRedisProjection extends AbstractTransactionalProjection
+abstract class AbstractRedisProjection extends AbstractTransactionAwareProjection<RTransaction>
     implements RedisProjection, FactStreamPositionAware, WriterTokenAware, Named {
   @Getter protected final RedissonClient redisson;
 
@@ -41,6 +39,7 @@ abstract class AbstractRedisProjection extends AbstractTransactionalProjection
   @Getter private final String redisKey;
 
   protected AbstractRedisProjection(@NonNull RedissonClient redisson) {
+    super(RTransaction.class);
     this.redisson = redisson;
 
     redisKey = getScopedName().asString();
@@ -52,12 +51,9 @@ abstract class AbstractRedisProjection extends AbstractTransactionalProjection
 
   @VisibleForTesting
   RBucket<FactStreamPosition> stateBucket(@NonNull RTransaction tx) {
-    return tx.getBucket(stateBucketName, FactStreamPositionCodec.INSTANCE);
-  }
-
-  @VisibleForTesting
-  RBucketAsync<FactStreamPosition> stateBucket(@NonNull RBatch b) {
-    return b.getBucket(stateBucketName, FactStreamPositionCodec.INSTANCE);
+    RBucket<FactStreamPosition> bucket =
+        tx.getBucket(stateBucketName, FactStreamPositionCodec.INSTANCE);
+    return bucket;
   }
 
   @VisibleForTesting
@@ -67,42 +63,26 @@ abstract class AbstractRedisProjection extends AbstractTransactionalProjection
 
   @Override
   public FactStreamPosition factStreamPosition() {
-    RedissonTxManager man = RedissonTxManager.get(redisson);
-    if (man.inTransaction()) {
-      return man.join((Function<RTransaction, FactStreamPosition>) tx -> stateBucket(tx).get());
+    if (inTransaction()) {
+      return stateBucket(runningTransaction()).get();
     } else {
       return stateBucket().get();
     }
-    // note: were not trying to use a bucket from a running batch as it would require to execute the
-    // batch to get a result back.
   }
 
   @SuppressWarnings("ConstantConditions")
   @Override
-  // TODO maybe we can get rid of this?
-  // additionally accepts a null parameter for testing purposes
   public void factStreamPosition(@Nullable FactStreamPosition position) {
-    RedissonTxManager txMan = RedissonTxManager.get(redisson);
-    if (txMan.inTransaction()) {
-      txMan.join(
-          tx -> {
-            stateBucket(txMan.getCurrentTransaction()).set(position);
-          });
+    if (inTransaction()) {
+      stateBucket(runningTransaction()).set(position);
     } else {
-      RedissonBatchManager bman = RedissonBatchManager.get(redisson);
-      if (bman.inBatch()) {
-        bman.join(
-            tx -> {
-              stateBucket(bman.getCurrentBatch()).setAsync(position);
-            });
-      } else {
-        stateBucket().set(position);
-      }
+      stateBucket().set(position);
     }
   }
 
   @Override
   public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
+    assertNoRunningTransaction();
     try {
       if (lock.tryLock(maxWait.toMillis(), TimeUnit.MILLISECONDS))
         return new RedisWriterToken(redisson, lock);
@@ -110,5 +90,24 @@ abstract class AbstractRedisProjection extends AbstractTransactionalProjection
       // assume lock unsuccessful
     }
     return null;
+  }
+
+  @Override
+  protected @NonNull RTransaction beginNewTransaction() {
+    return redisson().createTransaction(transactionOptions());
+  }
+
+  @Override
+  protected void commit(@NonNull RTransaction runningTransaction) {
+    runningTransaction.commit();
+  }
+
+  @Override
+  protected void rollback(@NonNull RTransaction runningTransaction) {
+    runningTransaction.rollback();
+  }
+
+  protected @NonNull TransactionOptions transactionOptions() {
+    return TransactionOptions.defaults();
   }
 }

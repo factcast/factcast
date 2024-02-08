@@ -18,31 +18,31 @@ package org.factcast.factus.projection.tx;
 import java.lang.annotation.Annotation;
 import java.util.Set;
 import javax.annotation.Nullable;
+import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projection.parameter.HandlerParameterContributor;
 import org.factcast.factus.projection.parameter.HandlerParameterProvider;
 
-// TODO move to factus module
 public abstract class AbstractTransactionAwareProjection<T>
     implements TransactionAware, Projection, HandlerParameterContributor {
 
   private final @NonNull Class<T> typeOfTransaction;
-  private T runningTransaction;
+  @Getter private T runningTransaction;
 
-  protected AbstractTransactionAwareProjection(Class<T> typeOfTransaction) {
+  protected AbstractTransactionAwareProjection(@NonNull Class<T> typeOfTransaction) {
     this.typeOfTransaction = typeOfTransaction;
   }
 
   @Override
   public final void begin() throws TransactionException {
-    assertNotRunning();
+    assertNoRunningTransaction();
     runningTransaction = beginNewTransaction();
   }
 
   @Override
   public final void commit() throws TransactionException {
-    assertRunning();
+    assertInTransaction();
     try {
       commit(runningTransaction);
     } finally {
@@ -52,7 +52,7 @@ public abstract class AbstractTransactionAwareProjection<T>
 
   @Override
   public final void rollback() throws TransactionException {
-    assertRunning();
+    assertInTransaction();
     try {
       rollback(runningTransaction);
     } finally {
@@ -60,12 +60,12 @@ public abstract class AbstractTransactionAwareProjection<T>
     }
   }
 
-  protected final void assertNotRunning() throws TransactionException {
+  protected final void assertNoRunningTransaction() throws TransactionException {
     if (this.runningTransaction != null)
       throw new TransactionAlreadyRunningException("Transaction already running");
   }
 
-  protected final void assertRunning() throws TransactionException {
+  protected final void assertInTransaction() throws TransactionException {
     if (this.runningTransaction == null)
       throw new TransactionNotRunningException("Transaction is not running");
   }
@@ -75,10 +75,14 @@ public abstract class AbstractTransactionAwareProjection<T>
       @NonNull Class<?> type, @NonNull Set<Annotation> annotations) {
     if (typeOfTransaction.equals(type)) {
       return f -> {
-        assertRunning();
+        assertInTransaction();
         return runningTransaction;
       };
     } else return null;
+  }
+
+  protected final boolean inTransaction() {
+    return runningTransaction != null;
   }
 
   protected abstract @NonNull T beginNewTransaction();

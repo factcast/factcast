@@ -27,8 +27,6 @@ import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.TestFactStreamPosition;
-import org.factcast.factus.redis.batch.RedissonBatchManager;
-import org.factcast.factus.redis.tx.RedissonTxManager;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -82,28 +80,9 @@ class AbstractRedisManagedProjectionTest {
   }
 
   @Nested
-  class BucketFromBatch {
-    @Test
-    void happyPath() {
-      RBucket<Object> bucket = mock(RBucket.class);
-      RBatch batch = mock(RBatch.class);
-      when(batch.getBucket(any(), any())).thenReturn(bucket);
-
-      assertThat(underTest.stateBucket(batch))
-          .isNotNull()
-          .isInstanceOf(RBucket.class)
-          .isSameAs(bucket);
-      verify(batch)
-          .getBucket(underTest.redisKey() + "_state_tracking", FactStreamPositionCodec.INSTANCE);
-    }
-  }
-
-  @Nested
   class WhenGettingState {
     @Test
     void nonRunningTransaction() {
-      RedissonTxManager man = RedissonTxManager.get(redisson);
-      man.rollback();
 
       UUID id = new UUID(23, 43);
       RBucket<Object> bucket = mock(RBucket.class);
@@ -122,8 +101,7 @@ class AbstractRedisManagedProjectionTest {
       RTransaction tx = mock(RTransaction.class);
       when(redisson.createTransaction(any())).thenReturn(tx);
 
-      RedissonTxManager man = RedissonTxManager.get(redisson);
-      man.startOrJoin();
+      underTest.begin();
 
       FactStreamPosition pos = org.factcast.core.TestFactStreamPosition.random();
       RBucket<Object> bucket = mock(RBucket.class);
@@ -142,8 +120,6 @@ class AbstractRedisManagedProjectionTest {
 
     @Test
     void nonRunningTransaction() {
-      RedissonBatchManager.get(redisson).discard();
-      RedissonTxManager.get(redisson).rollback();
 
       RBucket<Object> bucket = mock(RBucket.class);
       when(redisson.getBucket(any(), any())).thenReturn(bucket);
@@ -155,14 +131,11 @@ class AbstractRedisManagedProjectionTest {
 
     @Test
     void runningTransaction() {
-      RedissonBatchManager.get(redisson).discard();
-      RedissonTxManager.get(redisson).rollback();
 
       RTransaction tx = mock(RTransaction.class);
       when(redisson.createTransaction(any())).thenReturn(tx);
 
-      RedissonTxManager man = RedissonTxManager.get(redisson);
-      man.startOrJoin();
+      underTest.begin();
 
       RBucket<Object> bucket = mock(RBucket.class);
       when(tx.getBucket(any(), any())).thenReturn(bucket);
@@ -173,29 +146,7 @@ class AbstractRedisManagedProjectionTest {
     }
 
     @Test
-    void runningBatch() {
-
-      RedissonBatchManager.get(redisson).discard();
-      RedissonTxManager.get(redisson).rollback();
-
-      RBatch batch = mock(RBatch.class);
-      when(redisson.createBatch(any())).thenReturn(batch);
-
-      RedissonBatchManager man = RedissonBatchManager.get(redisson);
-      man.startOrJoin();
-
-      RBucket<Object> bucket = mock(RBucket.class);
-      when(batch.getBucket(any(), any())).thenReturn(bucket);
-
-      underTest.factStreamPosition(FACT_STREAM_POSITION);
-
-      verify(bucket).setAsync(FACT_STREAM_POSITION);
-    }
-
-    @Test
     void noTxnoBatch() {
-      RedissonBatchManager.get(redisson).discard();
-      RedissonTxManager.get(redisson).rollback();
 
       RBucket<Object> bucket = mock(RBucket.class);
       when(redisson.getBucket(any(), any())).thenReturn(bucket);
