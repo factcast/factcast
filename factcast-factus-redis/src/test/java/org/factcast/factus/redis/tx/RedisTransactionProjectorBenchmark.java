@@ -29,7 +29,6 @@ import org.factcast.factus.projector.Projector;
 import org.factcast.factus.projector.ProjectorImpl;
 import org.factcast.factus.redis.AbstractRedisManagedProjection;
 import org.factcast.factus.redis.FactStreamPositionCodec;
-import org.factcast.factus.redis.UUIDCodec;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.mockito.Mockito;
 import org.openjdk.jmh.annotations.*;
@@ -50,19 +49,23 @@ public class RedisTransactionProjectorBenchmark {
   private static final List<Fact> facts = Collections.nCopies(1000, f);
   private static final RedissonClient mockRedisson = Mockito.mock(RedissonClient.class);
   private static final RTransaction tx = Mockito.mock(RTransaction.class);
-  private static final RBucket<UUID> nopBucket = Mockito.mock(RBucket.class);
+
+  @SuppressWarnings("rawtypes")
+  private static final RBucket nopBucket = Mockito.mock(RBucket.class);
 
   private static final TestProjection50 projection50 = new TestProjection50(mockRedisson);
+  private static final TestProjection projection = new TestProjection(mockRedisson);
 
-  private static final Projector<TestProjection50> projector =
+  private static final Projector<TestProjection50> projector50 =
       new ProjectorImpl<>(projection50, ctx);
+
+  private static final Projector<TestProjection50> projector = new ProjectorImpl<>(projection, ctx);
 
   static {
     Mockito.when(mockRedisson.createTransaction(any())).thenReturn(tx);
-    Mockito.when(mockRedisson.getBucket(any(), same(UUIDCodec.INSTANCE)))
-        .thenReturn((RBucket) nopBucket);
-    Mockito.when(tx.getBucket(any(), same(FactStreamPositionCodec.INSTANCE)))
-        .thenReturn((RBucket) nopBucket);
+    Mockito.when(mockRedisson.getBucket(any(), same(FactStreamPositionCodec.INSTANCE)))
+        .thenReturn(nopBucket);
+    Mockito.when(tx.getBucket(any(), same(FactStreamPositionCodec.INSTANCE))).thenReturn(nopBucket);
   }
 
   @Benchmark
@@ -72,6 +75,16 @@ public class RedisTransactionProjectorBenchmark {
   @Threads(1)
   @Warmup(iterations = 1)
   public void applyBatch() {
+    projector50.apply(facts);
+  }
+
+  @Benchmark
+  @BenchmarkMode({Mode.AverageTime})
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Fork(1)
+  @Threads(1)
+  @Warmup(iterations = 1)
+  public void applyBatchDefaultSize() {
     projector.apply(facts);
   }
 
@@ -92,6 +105,11 @@ public class RedisTransactionProjectorBenchmark {
   static class TestProjection50 extends TestProjection {
     public TestProjection50(@NonNull RedissonClient redisson) {
       super(redisson);
+    }
+
+    @Override
+    public int maxBatchSizePerTransaction() {
+      return 50;
     }
   }
 
