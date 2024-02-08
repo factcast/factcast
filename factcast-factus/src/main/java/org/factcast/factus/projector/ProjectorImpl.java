@@ -16,6 +16,7 @@
 package org.factcast.factus.projector;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -44,6 +45,7 @@ import org.factcast.factus.projection.parameter.HandlerParameterContributors;
 import org.factcast.factus.projection.parameter.HandlerParameterTransformer;
 import org.factcast.factus.projection.tx.TransactionAware;
 import org.factcast.factus.projection.tx.TransactionException;
+import sun.rmi.server.Dispatcher;
 
 @Slf4j
 public class ProjectorImpl<A extends Projection> implements Projector<A> {
@@ -73,8 +75,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
    * for compatibility
    *
    * @param p
-   * @param serializer
-   * @param parameterContributors
+   * @param es
    */
   @Deprecated
   public ProjectorImpl(@NonNull Projection p, @NonNull EventSerializer es) {
@@ -83,6 +84,17 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
   @Override
   public void apply(@NonNull List<Fact> facts) {
+    if (projection instanceof TransactionAware) {
+      int max = ((TransactionAware) projection).maxBatchSizePerTransaction();
+      // needed in order to avoid too long running TXs in the view database(s)
+      // in case processing is complex
+      Lists.partition(facts, max).forEach(this::doApply);
+    } else {
+      doApply(facts);
+    }
+  }
+
+  public void doApply(@NonNull List<Fact> facts) {
 
     // should:
     // * start tx
