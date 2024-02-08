@@ -26,7 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.factus.Factus;
 import org.factcast.factus.event.EventObject;
-import org.factcast.factus.redis.tx.RedisTransactional;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.config.RedissonProjectionConfiguration;
@@ -207,23 +206,30 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
   }
 
   @ProjectionMetaData(revision = 1)
-  @RedisTransactional(bulkSize = 2)
   static class TxRedissonManagedUserNamesSize2 extends TrackingTxRedissonManagedUserNames {
     public TxRedissonManagedUserNamesSize2(RedissonClient redisson) {
       super(redisson);
     }
-  }
 
-  @ProjectionMetaData(revision = 1)
-  @RedisTransactional(bulkSize = 3)
-  static class TxRedissonManagedUserNamesSize3 extends TrackingTxRedissonManagedUserNames {
-    public TxRedissonManagedUserNamesSize3(RedissonClient redisson) {
-      super(redisson);
+    @Override
+    public int maxBatchSizePerTransaction() {
+      return 2;
     }
   }
 
   @ProjectionMetaData(revision = 1)
-  @RedisTransactional(bulkSize = 3000000, timeout = 1000) // will flush after 800ms
+  static class TxRedissonManagedUserNamesSize3 extends TrackingTxRedissonManagedUserNames {
+    public TxRedissonManagedUserNamesSize3(RedissonClient redisson) {
+      super(redisson);
+    }
+
+    @Override
+    public int maxBatchSizePerTransaction() {
+      return 3;
+    }
+  }
+
+  @ProjectionMetaData(revision = 1)
   static class TxRedissonManagedUserNamesTimeout extends TrackingTxRedissonManagedUserNames {
     public TxRedissonManagedUserNamesTimeout(RedissonClient redisson) {
       super(redisson);
@@ -240,23 +246,30 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
   }
 
   @ProjectionMetaData(revision = 1)
-  @RedisTransactional(bulkSize = 2)
   static class TxRedissonSubscribedUserNamesSize2 extends TrackingTxRedissonSubscribedUserNames {
     public TxRedissonSubscribedUserNamesSize2(RedissonClient redisson) {
       super(redisson);
     }
-  }
 
-  @ProjectionMetaData(revision = 1)
-  @RedisTransactional(bulkSize = 3)
-  static class TxRedissonSubscribedUserNamesSize3 extends TrackingTxRedissonSubscribedUserNames {
-    public TxRedissonSubscribedUserNamesSize3(RedissonClient redisson) {
-      super(redisson);
+    @Override
+    public int maxBatchSizePerTransaction() {
+      return 2;
     }
   }
 
   @ProjectionMetaData(revision = 1)
-  @RedisTransactional(bulkSize = 3000000, timeout = 1000) // will flush after 800ms
+  static class TxRedissonSubscribedUserNamesSize3 extends TrackingTxRedissonSubscribedUserNames {
+    public TxRedissonSubscribedUserNamesSize3(RedissonClient redisson) {
+      super(redisson);
+    }
+
+    @Override
+    public int maxBatchSizePerTransaction() {
+      return 3;
+    }
+  }
+
+  @ProjectionMetaData(revision = 1)
   static class TxRedissonSubscribedUserNamesTimeout extends TrackingTxRedissonSubscribedUserNames {
     public TxRedissonSubscribedUserNamesTimeout(RedissonClient redisson) {
       super(redisson);
@@ -273,7 +286,6 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
   }
 
   @ProjectionMetaData(revision = 1)
-  @RedisTransactional(bulkSize = 5)
   static class TxRedissonManagedUserNamesSizeBlowAt7th extends TrackingTxRedissonManagedUserNames {
     private int count;
 
@@ -288,10 +300,14 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
       }
       super.apply(created, tx);
     }
+
+    @Override
+    public int maxBatchSizePerTransaction() {
+      return 5;
+    }
   }
 
   @ProjectionMetaData(revision = 1)
-  @RedisTransactional(bulkSize = 5)
   static class TxRedissonSubscribedUserNamesSizeBlowAt7th
       extends TrackingTxRedissonSubscribedUserNames {
     private int count;
@@ -306,6 +322,11 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
         throw new IllegalStateException("Bad luck");
       }
       super.apply(created, tx);
+    }
+
+    @Override
+    public int maxBatchSizePerTransaction() {
+      return 5;
     }
   }
 }
