@@ -64,8 +64,8 @@ abstract class AbstractSpringTxProjection
   @Override
   public final int maxBatchSizePerTransaction() {
     SpringTransactional tx = getClass().getAnnotation(SpringTransactional.class);
-    if (tx == null || tx.maxBatchSizePerTransaction() < 1) {
+    if (tx == null || tx.bulkSize() < 1) {
       return super.maxBatchSizePerTransaction();
-    } else return tx.maxBatchSizePerTransaction();
+    } else return tx.bulkSize();
   }
 }

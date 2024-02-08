@@ -24,18 +24,13 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 @Target(ElementType.TYPE)
 @Inherited
 public @interface SpringTransactional {
-  int maxBatchSizePerTransaction() default -1;
+  int bulkSize() default -1;
 
-  /**
-   * Due to the nature of the Spring Transaction handling this timeout is in seconds.
-   *
-   * @return
-   */
   int propagationBehavior() default TransactionDefinition.PROPAGATION_REQUIRED;
 
   int isolationLevel() default TransactionDefinition.ISOLATION_DEFAULT;
 
-  int timeout() default TransactionDefinition.TIMEOUT_DEFAULT;
+  int timeoutInSeconds() default 30;
 
   boolean readOnly() default false;
 
@@ -48,7 +43,7 @@ public @interface SpringTransactional {
     public static TransactionDefinition with(@NonNull SpringTransactional transactional) {
       DefaultTransactionDefinition opts = create();
 
-      opts.setTimeout(transactional.timeout());
+      opts.setTimeout(transactional.timeoutInSeconds());
       opts.setIsolationLevel(transactional.isolationLevel());
       opts.setReadOnly(transactional.readOnly());
       opts.setPropagationBehavior(transactional.propagationBehavior());
