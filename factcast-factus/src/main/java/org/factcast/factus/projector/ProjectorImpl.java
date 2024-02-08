@@ -93,27 +93,18 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
   public void doApply(@NonNull List<Fact> facts) {
 
-    // should:
-    // * start tx
-    // * loop apply fact
-    // * catch exception call on error
-    // (** do retry for batch[0,lastFactThatWorked])
-    // * setFSP
-    // * commit
-
     beginIfTransactional();
 
     // remember that IF this fail, we throw an expecption anyway, so that we wont reuse this info
-    FactStreamPosition latestAttempted = null;
+    FactStreamPosition latestSuccessful = null;
 
     for (Fact f : facts) {
 
-      latestAttempted = FactStreamPosition.from(f);
-
       try {
         callHandlerFor(f);
+        latestSuccessful = FactStreamPosition.from(f);
       } catch (InvocationTargetException | IllegalAccessException e) {
-        log.trace("returned with Exception {}:", latestAttempted.factId(), e);
+        log.trace("returned with Exception {}:", latestSuccessful.factId(), e);
 
         rollbackIfTransactional();
         retryApplicableIfTransactional(facts, f);
@@ -132,8 +123,9 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       }
     }
     try {
-      if (latestAttempted != null) {
-        setFactStreamPositionIfAware(latestAttempted);
+      // this is something we only do, if the whole batch was successfully applied
+      if (latestSuccessful != null) {
+        setFactStreamPositionIfAware(latestSuccessful);
       }
     } catch (Exception e) {
 
