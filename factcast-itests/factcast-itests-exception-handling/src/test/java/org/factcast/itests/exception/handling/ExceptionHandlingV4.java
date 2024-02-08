@@ -31,7 +31,7 @@ import org.factcast.core.lock.Attempt;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.TransformationException;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.BatchingFactObserver;
 import org.factcast.factus.Factus;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.FactcastTestConfig;
@@ -47,7 +47,7 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
   @Autowired FactCast fc;
 
   @Test
-  public void testPublish_validationFailed() {
+  void testPublish_validationFailed() {
     // INIT
     UUID aggId = UUID.randomUUID();
 
@@ -63,7 +63,7 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  public void testPublish_validationFailed_withLockOn() {
+  void testPublish_validationFailed_withLockOn() {
     // INIT
     UUID aggId = UUID.randomUUID();
 
@@ -82,7 +82,7 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  public void testProjection_transformationErrors() {
+  void testProjection_transformationErrors() {
     // INIT
     UUID aggId = UUID.randomUUID();
 
@@ -93,7 +93,7 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  public void failingTransformation() {
+  void failingTransformation() {
 
     UUID id = UUID.randomUUID();
     Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}");
@@ -104,13 +104,13 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  public void validationFailsOnSchemaViolation() {
+  void validationFailsOnSchemaViolation() {
     Fact brokenFact = createTestFact(UUID.randomUUID(), 1, "{}");
     assertThatThrownBy(() -> fc.publish(brokenFact)).isInstanceOf(FactValidationException.class);
   }
 
   @Test
-  public void validationFailsOnSchemaViolation_withinLock() {
+  void validationFailsOnSchemaViolation_withinLock() {
     Fact brokenFact = createTestFact(UUID.randomUUID(), 1, "{}");
 
     assertThatThrownBy(
@@ -120,7 +120,7 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
 
   @Test
   @SneakyThrows
-  public void testSubscription_transformationErrors_catchup() {
+  void testSubscription_transformationErrors_catchup() {
     // INIT
     UUID aggId = UUID.randomUUID();
 
@@ -138,7 +138,7 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
 
   @Test
   @SneakyThrows
-  public void testSubscription_transformationErrors_follow() {
+  void testSubscription_transformationErrors_follow() {
     // INIT
     UUID aggId = UUID.randomUUID();
 
@@ -158,7 +158,7 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
 
   @Test
   @SneakyThrows
-  public void testSubscriptionFC_transformationErrors_catchup() {
+  void testSubscriptionFC_transformationErrors_catchup() {
     // INIT
     UUID aggId = UUID.randomUUID();
 
@@ -170,15 +170,15 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
     fc.subscribe(
         SubscriptionRequest.follow(FactSpec.ns("users").type("UserCreated").version(2))
             .fromScratch(),
-        new FactObserver() {
+        new BatchingFactObserver() {
           @Override
-          public void onNext(@NonNull Fact element) {}
+          public void onNext(@NonNull List<Fact> element) {}
 
           @Override
           public void onError(@NonNull Throwable exception) {
             e.set(exception);
             errorLatch.countDown();
-            FactObserver.super.onError(exception);
+            BatchingFactObserver.super.onError(exception);
           }
         });
 
@@ -200,21 +200,21 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
     fc.subscribe(
         SubscriptionRequest.follow(FactSpec.ns("users").type("UserCreated").version(2))
             .fromScratch(),
-        new FactObserver() {
+        new BatchingFactObserver() {
           @Override
-          public void onNext(@NonNull Fact element) {}
+          public void onNext(@NonNull List<Fact> element) {}
 
           @Override
           public void onCatchup() {
             catchupLatch.countDown();
-            FactObserver.super.onCatchup();
+            BatchingFactObserver.super.onCatchup();
           }
 
           @Override
           public void onError(@NonNull Throwable exception) {
             e.set(exception);
             errorLatch.countDown();
-            FactObserver.super.onError(exception);
+            BatchingFactObserver.super.onError(exception);
           }
         });
 
