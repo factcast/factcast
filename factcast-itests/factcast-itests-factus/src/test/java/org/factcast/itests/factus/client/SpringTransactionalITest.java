@@ -116,17 +116,6 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       assertThat(getUsers()).isEqualTo(NUMBER_OF_EVENTS);
     }
 
-    //    @Test
-    //    public void testBulkApplyTimeout() {
-    //      var s = new SpringTxProjectionTimeout(platformTransactionManager, jdbcTemplate);
-    //      factus.update(s);
-    //
-    //      assertThat(s.factStreamPositionModifications())
-    //          .isEqualTo(2); // one for timeout, one for final flush
-    //      assertThat(s.txSeen()).hasSize(2); // one for timeout, one for final flush
-    //      assertThat(getUsers()).isEqualTo(NUMBER_OF_EVENTS);
-    //    }
-
     @SneakyThrows
     @Test
     public void rollsBack() {
@@ -187,23 +176,22 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
-    //    @ProjectionMetaData(revision = 1)
-    //    @SpringTransactional(maxBatchSizePerTransaction = 3000000, timeoutInSeconds = 1) // will
-    // flush after 800ms
-    //    class SpringTxProjectionTimeout extends AbstractTrackingUserProjection {
-    //      public SpringTxProjectionTimeout(
-    //          PlatformTransactionManager platformTransactionManager, JdbcTemplate jdbcTemplate) {
-    //        super(platformTransactionManager, jdbcTemplate);
-    //      }
-    //
-    //      @Override
-    //      @SneakyThrows
-    //      protected void apply(UserCreated created) {
-    //        super.apply(created);
-    //
-    //        Thread.sleep(100);
-    //      }
-    //    }
+    @ProjectionMetaData(revision = 1)
+    @SpringTransactional(bulkSize = 3000000, timeoutInSeconds = 1)
+    class SpringTxProjectionTimeout extends AbstractTrackingUserProjection {
+      public SpringTxProjectionTimeout(
+          PlatformTransactionManager platformTransactionManager, JdbcTemplate jdbcTemplate) {
+        super(platformTransactionManager, jdbcTemplate);
+      }
+
+      @Override
+      @SneakyThrows
+      protected void apply(UserCreated created) {
+        super.apply(created);
+
+        Thread.sleep(100);
+      }
+    }
 
     @ProjectionMetaData(revision = 1)
     @SpringTransactional(bulkSize = 5)
@@ -228,30 +216,6 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
 
   @Nested
   class Subscribed {
-    //    @SneakyThrows
-    //    @Test
-    //    public void txCommitsOnError() {
-    //
-    //      var subscribedProjection =
-    //          new Subscribed.BulkSize3ProjectionErrorAt3(platformTransactionManager,
-    // jdbcTemplate);
-    //      assertThat(subscribedProjection.userCount()).isZero();
-    //
-    //      // exec this in another thread
-    //      CompletableFuture.runAsync(
-    //              () -> {
-    //                Subscription subscription = factus.subscribeAndBlock(subscribedProjection);
-    //                subscribedProjection.subscription((InternalSubscription) subscription);
-    //
-    //                assertThatThrownBy(subscription::awaitComplete)
-    //                    .isInstanceOf(RuntimeException.class);
-    //              })
-    //          .get();
-    //
-    //      // make sure the first two are comitted
-    //      assertThat(subscribedProjection.userCount()).isEqualTo(2);
-    //    }
-
     @Test
     public void testBulkSize3() throws Exception {
       var s = new BulkSize3Projection(platformTransactionManager, jdbcTemplate);
@@ -293,17 +257,6 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       assertThat(s.txSeen()).hasSize(1);
       assertThat(getUsers()).isEqualTo(NUMBER_OF_EVENTS);
     }
-
-    //    @Test
-    //    public void testBulkApplyTimeout() {
-    //      var s = new SpringTxProjectionTimeout(platformTransactionManager, jdbcTemplate);
-    //      factus.subscribeAndBlock(s).awaitCatchup();
-    //
-    //      assertThat(s.factStreamPositionModifications())
-    //          .isEqualTo(2); // one for timeout, one for final flush
-    //      assertThat(s.txSeen()).hasSize(2); // one for timeout, one for final flush
-    //      assertThat(getUsers()).isEqualTo(NUMBER_OF_EVENTS);
-    //    }
 
     @SneakyThrows
     @Test
@@ -363,24 +316,6 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
         super(platformTransactionManager, jdbcTemplate);
       }
     }
-
-    //    @ProjectionMetaData(revision = 1)
-    //    @SpringTransactional(maxBatchSizePerTransaction = 3000000, timeoutInSeconds = 1) // will
-    // flush after 800ms
-    //    class SpringTxProjectionTimeout extends AbstractTrackingUserSubscribedProjection {
-    //      public SpringTxProjectionTimeout(
-    //          PlatformTransactionManager platformTransactionManager, JdbcTemplate jdbcTemplate) {
-    //        super(platformTransactionManager, jdbcTemplate);
-    //      }
-    //
-    //      @Override
-    //      @SneakyThrows
-    //      protected void apply(UserCreated created) {
-    //        super.apply(created);
-    //
-    //        Thread.sleep(100);
-    //      }
-    //    }
 
     @ProjectionMetaData(revision = 1)
     @SpringTransactional(bulkSize = 5)
