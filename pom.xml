@@ -38,7 +38,7 @@
     <module>factcast-core</module>
     <module>factcast-factus</module>
     <module>factcast-factus-redis</module>
-    <module>factcast-factus-spring-tx</module>
+    <!-- <module>factcast-factus-spring-tx</module> -->
     <module>factcast-server-grpc</module>
     <module>factcast-server-security</module>
     <module>factcast-server-ui</module>
