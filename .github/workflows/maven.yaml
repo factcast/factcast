@@ -51,7 +51,7 @@ jobs:
       run: './mvnw -B verify -DskipUnitTests'
     - id: 'step-8'
       name: 'Codecov upload'
-      uses: 'codecov/codecov-action@v3'
+      uses: 'codecov/codecov-action@v4'
       with:
         token: '${{ secrets.CODECOV_TOKEN }}'
   postgres-compatibility:
