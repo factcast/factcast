@@ -213,7 +213,7 @@ class AbstractRedisManagedProjectionTest {
     @Test
     void happyPath() {
 
-      when(redisson.getLock(any())).thenReturn(lock);
+      when(redisson.getLock(anyString())).thenReturn(lock);
       when(redisson.getConfig()).thenReturn(config);
       when(config.getLockWatchdogTimeout()).thenReturn(1000L);
       when(lock.tryLock(anyLong(), any())).thenReturn(true);
@@ -229,7 +229,7 @@ class AbstractRedisManagedProjectionTest {
     @Test
     void passesWaitTime() {
 
-      when(redisson.getLock(any())).thenReturn(lock);
+      when(redisson.getLock(anyString())).thenReturn(lock);
       when(redisson.getConfig()).thenReturn(config);
       when(config.getLockWatchdogTimeout()).thenReturn(1000L);
       when(lock.tryLock(anyLong(), any())).thenReturn(true);
@@ -246,7 +246,7 @@ class AbstractRedisManagedProjectionTest {
     @Test
     void withWaitTimeExpiring() {
 
-      when(redisson.getLock(any())).thenReturn(lock);
+      when(redisson.getLock(anyString())).thenReturn(lock);
       when(lock.tryLock(anyLong(), any())).thenReturn(false);
       AbstractRedisManagedProjection underTest = new TestProjection(redisson);
 
@@ -261,7 +261,7 @@ class AbstractRedisManagedProjectionTest {
     @Test
     void withWaitInterruption() {
 
-      when(redisson.getLock(any())).thenReturn(lock);
+      when(redisson.getLock(anyString())).thenReturn(lock);
       when(lock.tryLock(anyLong(), any())).thenThrow(InterruptedException.class);
       AbstractRedisManagedProjection underTest = new TestProjection(redisson);
 
