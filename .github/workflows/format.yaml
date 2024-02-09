@@ -24,7 +24,7 @@ jobs:
       uses: './.github/actions/install-mvnd'
     - id: 'step-2'
       name: 'Spotless'
-      run: 'mvnd -B --non-recursive spotless:apply --file pom.xml'
+      run: '/tmp/maven-mvnd-1.0-m6-m39-linux-amd64/bin/mvnd  -B --non-recursive spotless:apply --file pom.xml'
     - id: 'step-3'
       name: 'Commit formatting changes'
       uses: 'stefanzweifel/git-auto-commit-action@v5'
