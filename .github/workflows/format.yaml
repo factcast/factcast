@@ -9,8 +9,6 @@ jobs:
   formatting:
     runs-on: 'ubuntu-latest'
     steps:
-    - id: install-mvnd
-      uses: './.github/actions/install-mvnd'
     - id: 'step-0'
       name: 'Checkout'
       uses: 'actions/checkout@v4'
@@ -22,6 +20,8 @@ jobs:
       with:
         java-version: '17'
         distribution: 'corretto'
+    - id: install-mvnd
+      uses: './.github/actions/install-mvnd'
     - id: 'step-2'
       name: 'Spotless'
       run: './mvnd -B --non-recursive spotless:apply --file pom.xml'
