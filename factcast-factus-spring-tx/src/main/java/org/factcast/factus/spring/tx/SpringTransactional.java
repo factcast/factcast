@@ -24,20 +24,25 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 @Target(ElementType.TYPE)
 @Inherited
 public @interface SpringTransactional {
-  int bulkSize() default -1;
+  int bulkSize() default 50;
 
   int propagationBehavior() default TransactionDefinition.PROPAGATION_REQUIRED;
 
   int isolationLevel() default TransactionDefinition.ISOLATION_DEFAULT;
 
-  int timeoutInSeconds() default 30;
+  int timeoutInSeconds() default Defaults.timeoutInSeconds;
 
   boolean readOnly() default false;
 
   class Defaults {
+    static final int timeoutInSeconds = 30;
 
     public static DefaultTransactionDefinition create() {
-      return new DefaultTransactionDefinition();
+      DefaultTransactionDefinition opts = new DefaultTransactionDefinition();
+
+      opts.setTimeout(timeoutInSeconds);
+
+      return opts;
     }
 
     public static TransactionDefinition with(@NonNull SpringTransactional transactional) {
