@@ -34,7 +34,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 @SpringBootTest(
     classes = ExampleUiServer.class,
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Tag("ui")
+@Tag("uitest")
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 @Slf4j
 public abstract class AbstractBrowserTest {
