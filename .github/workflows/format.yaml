@@ -10,7 +10,7 @@ jobs:
     runs-on: 'ubuntu-latest'
     steps:
     - id: install-mvnd
-      uses: ./.github/actions/install-mvnd
+      uses: './.github/actions/install-mvnd'
     - id: 'step-0'
       name: 'Checkout'
       uses: 'actions/checkout@v4'
