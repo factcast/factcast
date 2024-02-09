@@ -9,6 +9,8 @@ jobs:
   formatting:
     runs-on: 'ubuntu-latest'
     steps:
+    - id: install-mvnd
+      uses: ./.github/actions/install-mvnd
     - id: 'step-0'
       name: 'Checkout'
       uses: 'actions/checkout@v4'
@@ -22,7 +24,7 @@ jobs:
         distribution: 'corretto'
     - id: 'step-2'
       name: 'Spotless'
-      run: './mvnw -B --non-recursive spotless:apply --file pom.xml'
+      run: './mvnd -B --non-recursive spotless:apply --file pom.xml'
     - id: 'step-3'
       name: 'Commit formatting changes'
       uses: 'stefanzweifel/git-auto-commit-action@v5'
