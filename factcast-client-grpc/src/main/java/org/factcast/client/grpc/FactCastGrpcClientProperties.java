@@ -34,6 +34,9 @@ public class FactCastGrpcClientProperties {
 
   private String id = null;
 
+  private String user = null;
+  private String password = null;
+
   /**
    * Ignores and skips duplicate exceptions during publishing (does not include conditional
    * publishing when using locks).
