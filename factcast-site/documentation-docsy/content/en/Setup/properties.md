@@ -75,7 +75,7 @@ Properties you can use to configure gRPC:
 
 | Property                                       | Description                                                                                                                                  | Default | Example                     |
 | ---------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------- | :------ | :-------------------------- |
-| grpc.client.factstore.credentials              | Deprecated. Please use `factcast.grpc.client.user` and `factcast.grpc.client.password`                                                       | none    | myUserName:mySecretPassword |
+| grpc.client.factstore.credentials              | Deprecated. Please use `factcast.grpc.client.user` and `factcast.grpc.client.password` instead                                               | none    | myUserName:mySecretPassword |
 | grpc.client.factstore.address                  | the address(es) fo the factcast server                                                                                                       | none    | static://localhost:9090     |
 | grpc.client.factstore.negotiationType          | Usage of TLS or Plaintext?                                                                                                                   | TLS     | PLAINTEXT                   |
 | grpc.client.factstore.enable-keep-alive        | Configures whether keepAlive should be enabled. Recommended for long running (follow) subscriptions                                          | false   | true                        |
