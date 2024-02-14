@@ -470,22 +470,61 @@ class GrpcFactStoreTest {
     assertThat(s).isInstanceOf(ResilientGrpcSubscription.class);
   }
 
-  @Test
-  void testCredentialsWrongFormat() {
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz")));
+  @Nested
+  class Credentials {
+    @Test
+    void testCredentialsWrongFormat() {
+      assertThrows(
+          IllegalArgumentException.class,
+          () -> new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz")));
 
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> new GrpcFactStore(mock(Channel.class), Optional.ofNullable("x:y:z")));
+      assertThrows(
+          IllegalArgumentException.class,
+          () -> new GrpcFactStore(mock(Channel.class), Optional.ofNullable("x:y:z")));
 
-    assertThat(new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz:abc"))).isNotNull();
-  }
+      assertThat(new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz:abc")))
+          .isNotNull();
+    }
 
-  @Test
-  void testCredentialsRightFormat() {
-    assertThat(new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz:abc"))).isNotNull();
+    @Test
+    void testCredentialsRightFormat() {
+      assertThat(new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz:abc")))
+          .isNotNull();
+    }
+
+    @Test
+    void testSeparateCredentials() {
+      final RemoteFactStoreBlockingStub blockingStub = mock(RemoteFactStoreBlockingStub.class);
+      final RemoteFactStoreStub stub = mock(RemoteFactStoreStub.class);
+      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
+      when(stub.withWaitForReady()).thenReturn(stub);
+
+      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
+      props.setUser("foo");
+      props.setPassword("bar");
+
+      assertThat(new GrpcFactStore(blockingStub, stub, Optional.empty(), props, "foo")).isNotNull();
+
+      verify(blockingStub).withCallCredentials(any());
+      verify(stub).withCallCredentials(any());
+    }
+
+    @Test
+    void testLegacyCredentials() {
+      final RemoteFactStoreBlockingStub blockingStub = mock(RemoteFactStoreBlockingStub.class);
+      final RemoteFactStoreStub stub = mock(RemoteFactStoreStub.class);
+      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
+      when(stub.withWaitForReady()).thenReturn(stub);
+
+      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
+
+      assertThat(
+              new GrpcFactStore(blockingStub, stub, Optional.ofNullable("xyz:abc"), props, "foo"))
+          .isNotNull();
+
+      verify(blockingStub).withCallCredentials(any());
+      verify(stub).withCallCredentials(any());
+    }
   }
 
   @Test
