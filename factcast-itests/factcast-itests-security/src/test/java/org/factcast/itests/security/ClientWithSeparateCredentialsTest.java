@@ -27,11 +27,13 @@ import org.factcast.test.FactcastTestConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 
 @ContextConfiguration(classes = {TestApplication.class})
+@TestPropertySource(locations = "/application-separate-creds.properties")
 @Slf4j
 @FactcastTestConfig(securityEnabled = true)
-public class ClientWithCredentialsTest extends AbstractFactCastIntegrationTest {
+public class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrationTest {
   @Autowired FactCast fc;
 
   @Test
