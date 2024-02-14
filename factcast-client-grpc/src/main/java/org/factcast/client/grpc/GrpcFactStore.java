@@ -143,7 +143,14 @@ public class GrpcFactStore implements FactStore {
     blockingStub = rawBlockingStub.withWaitForReady();
     stub = rawStub.withWaitForReady();
 
-    if (credentials.isPresent()) {
+    if (properties.getUser() != null && properties.getPassword() != null) {
+      CallCredentials basic =
+          CallCredentialsHelper.basicAuth(properties.getUser(), properties.getPassword());
+      blockingStub = blockingStub.withCallCredentials(basic);
+      stub = stub.withCallCredentials(basic);
+    }
+    // deprecated way of setting credentials but still supported
+    else if (credentials.isPresent()) {
       String[] sa = credentials.get().split(":");
       if (sa.length != 2) {
         throw new IllegalArgumentException(
