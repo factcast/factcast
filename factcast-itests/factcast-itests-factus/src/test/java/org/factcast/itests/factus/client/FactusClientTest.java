@@ -139,7 +139,8 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       var sw = Stopwatch.createStarted();
       RedissonManagedUserNames p = new RedissonManagedUserNames(redissonClient);
       factus.update(p);
-      log.info("plain {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
+      log.info(
+          "RedissonManagedUserNames {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
       p.clear();
       p.factStreamPosition(null);
     }
@@ -147,7 +148,8 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       var sw = Stopwatch.createStarted();
       RedissonManagedUserNames p = new RedissonManagedUserNames(redissonClient);
       factus.update(p);
-      log.info("plain {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
+      log.info(
+          "RedissonManagedUserNames {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
       p.clear();
       p.factStreamPosition(null);
     }
@@ -156,7 +158,8 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       var sw = Stopwatch.createStarted();
       TxRedissonManagedUserNames p = new TxRedissonManagedUserNames(redissonClient);
       factus.update(p);
-      log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
+      log.info(
+          "TxRedissonManagedUserNames {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
       p.clear();
       p.factStreamPosition(null);
     }
@@ -165,7 +168,8 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       var sw = Stopwatch.createStarted();
       TxRedissonManagedUserNames p = new TxRedissonManagedUserNames(redissonClient);
       factus.update(p);
-      log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
+      log.info(
+          "TxRedissonManagedUserNames {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
       p.clear();
       p.factStreamPosition(null);
     }
@@ -178,7 +182,10 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       TxRedissonSubscribedUserNames p = new TxRedissonSubscribedUserNames(redissonClient);
       var sub = factus.subscribeAndBlock(p);
       sub.awaitCatchup();
-      log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
+      log.info(
+          "TxRedissonSubscribedUserNames {} {}",
+          sw.stop().elapsed().toMillis(),
+          p.userNames().size());
       p.clear();
       p.factStreamPosition(null);
     }
@@ -188,7 +195,10 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       TxRedissonSubscribedUserNames p = new TxRedissonSubscribedUserNames(redissonClient);
       var sub = factus.subscribeAndBlock(p);
       sub.awaitCatchup();
-      log.info("tx {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
+      log.info(
+          "TxRedissonSubscribedUserNames {} {}",
+          sw.stop().elapsed().toMillis(),
+          p.userNames().size());
       p.clear();
       p.factStreamPosition(null);
     }
