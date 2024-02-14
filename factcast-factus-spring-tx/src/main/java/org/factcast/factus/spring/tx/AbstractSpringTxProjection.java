@@ -31,7 +31,6 @@ abstract class AbstractSpringTxProjection
 
   public AbstractSpringTxProjection(
       @NonNull PlatformTransactionManager platformTransactionManager) {
-    super(TransactionStatus.class);
     this.platformTransactionManager = platformTransactionManager;
   }
 

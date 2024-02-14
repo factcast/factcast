@@ -15,8 +15,10 @@
  */
 package org.factcast.factus.projection.parameter;
 
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.factcast.factus.projection.Projection;
 
-public interface HandlerParameterProvider extends Function<@NonNull Fact, Object> {}
+public interface HandlerParameterProvider
+    extends BiFunction<@NonNull Fact, @NonNull Projection, Object> {}

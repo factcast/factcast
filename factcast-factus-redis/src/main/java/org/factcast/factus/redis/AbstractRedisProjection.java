@@ -27,11 +27,12 @@ import org.factcast.factus.projection.Named;
 import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.projection.WriterTokenAware;
 import org.factcast.factus.projection.tx.AbstractTransactionAwareProjection;
+import org.factcast.factus.projection.tx.TransactionAware;
 import org.factcast.factus.redis.tx.RedisTransactional;
 import org.redisson.api.*;
 
 abstract class AbstractRedisProjection extends AbstractTransactionAwareProjection<RTransaction>
-    implements RedisProjection, FactStreamPositionAware, WriterTokenAware, Named {
+    implements RedisProjection, TransactionAware, FactStreamPositionAware, WriterTokenAware, Named {
   @Getter protected final RedissonClient redisson;
 
   private final RLock lock;
@@ -40,7 +41,6 @@ abstract class AbstractRedisProjection extends AbstractTransactionAwareProjectio
   @Getter private final String redisKey;
 
   protected AbstractRedisProjection(@NonNull RedissonClient redisson) {
-    super(RTransaction.class);
     this.redisson = redisson;
 
     redisKey = getScopedName().asString();

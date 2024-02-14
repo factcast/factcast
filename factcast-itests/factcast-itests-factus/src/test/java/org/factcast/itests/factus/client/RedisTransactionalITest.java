@@ -19,12 +19,14 @@ import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.grpc.StatusRuntimeException;
 import java.util.ArrayList;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.factus.Factus;
 import org.factcast.factus.event.EventObject;
@@ -42,7 +44,6 @@ import org.junit.jupiter.api.Test;
 import org.redisson.api.RMap;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
-import org.redisson.transaction.TransactionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
@@ -92,10 +93,13 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     @Test
     void bulkAppliesInTransactionTimeout() {
       TxRedissonManagedUserNamesTimeout p = new TxRedissonManagedUserNamesTimeout(redissonClient);
-      assertThatThrownBy(() -> factus.update(p)).isInstanceOf(TransactionException.class);
+      assertThatThrownBy(() -> factus.update(p)).isInstanceOf(StatusRuntimeException.class);
 
-      assertThat(p.userNames()).isEmpty();
-      assertThat(p.stateModifications()).isZero(); // one for timeout, one for final flush
+      // factStreamPosition was called once, inside the transaction, but its effect
+      // will have been rolled back as commit() fails with a timeout
+      assertThat(p.stateModifications()).isOne();
+      // therefore the FSP must be unset
+      Assertions.assertThat(p.factStreamPosition()).isNull();
     }
 
     @SneakyThrows
@@ -155,10 +159,19 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     void bulkAppliesInTransactionTimeout() {
       TxRedissonSubscribedUserNamesTimeout p =
           new TxRedissonSubscribedUserNamesTimeout(redissonClient);
-      factus.subscribeAndBlock(p).awaitCatchup();
+      Assertions.assertThatThrownBy(
+              () -> {
+                factus.subscribeAndBlock(p).awaitCatchup();
+              })
+          .isInstanceOf(StatusRuntimeException.class);
 
-      assertThat(p.userNames()).hasSize(NUMBER_OF_EVENTS);
-      assertThat(p.stateModifications()).isEqualTo(2); // one for timeout, one for final flush
+      assertThat(p.userNames()).isEmpty();
+
+      // factStreamPosition was called once, inside the transaction, but its effect
+      // will have been rolled back as commit() fails with a timeout
+      assertThat(p.stateModifications()).isOne();
+      // therefore the FSP must be unset
+      Assertions.assertThat(p.factStreamPosition()).isNull();
     }
 
     @SneakyThrows
@@ -205,6 +218,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @Override
     public void factStreamPosition(FactStreamPosition factStreamPosition) {
+      System.out.println(factStreamPosition);
       stateModifications++;
       super.factStreamPosition(factStreamPosition);
     }
@@ -227,7 +241,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
   }
 
   @ProjectionMetaData(revision = 1)
-  @RedisTransactional(timeout = 50, bulkSize = 1)
+  @RedisTransactional(timeout = 50, bulkSize = 100)
   static class TxRedissonManagedUserNamesTimeout extends TrackingTxRedissonManagedUserNames {
     public TxRedissonManagedUserNamesTimeout(RedissonClient redisson) {
       super(redisson);
@@ -265,7 +279,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
   }
 
   @ProjectionMetaData(revision = 1)
-  @RedisTransactional(timeout = 150)
+  @RedisTransactional(timeout = 150, bulkSize = 100)
   static class TxRedissonSubscribedUserNamesTimeout extends TrackingTxRedissonSubscribedUserNames {
     public TxRedissonSubscribedUserNamesTimeout(RedissonClient redisson) {
       super(redisson);

@@ -17,10 +17,8 @@ package org.factcast.factus.projector;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -42,9 +40,10 @@ import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.projection.*;
 import org.factcast.factus.projection.parameter.HandlerParameterContributor;
 import org.factcast.factus.projection.parameter.HandlerParameterContributors;
+import org.factcast.factus.projection.parameter.HandlerParameterProvider;
 import org.factcast.factus.projection.parameter.HandlerParameterTransformer;
+import org.factcast.factus.projection.tx.AbstractTransactionAwareProjection;
 import org.factcast.factus.projection.tx.TransactionAware;
-import org.factcast.factus.projection.tx.TransactionException;
 
 @Slf4j
 public class ProjectorImpl<A extends Projection> implements Projector<A> {
@@ -53,7 +52,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       dispatcherCache = new ConcurrentHashMap<>();
   private final Projection projection;
   private final Map<FactSpecCoordinates, Dispatcher> dispatchInfo;
-  private final HandlerParameterContributors contributors;
+  private final HandlerParameterContributors generalContributors;
 
   interface TargetObjectResolver extends Function<Projection, Object> {}
 
@@ -61,7 +60,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       @NonNull Projection p,
       @NonNull EventSerializer serializer,
       @NonNull HandlerParameterContributors parameterContributors) {
-    contributors = parameterContributors;
+    generalContributors = parameterContributors;
     projection = p;
     dispatchInfo =
         dispatcherCache.computeIfAbsent(
@@ -121,24 +120,17 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
         projection.onError(e);
         throw ExceptionHelper.toRuntime(e);
       }
-    }
+    } // end loop
+
     try {
       // this is something we only do, if the whole batch was successfully applied
       if (latestSuccessful != null) {
         setFactStreamPositionIfAware(latestSuccessful);
       }
+      commitIfTransactional();
     } catch (Exception e) {
 
       rollbackIfTransactional();
-
-      // pass along and potentially rethrow
-      projection.onError(e);
-      throw e;
-    }
-
-    try {
-      commitIfTransactional();
-    } catch (TransactionException e) {
       // pass along and potentially rethrow
       projection.onError(e);
       throw e;
@@ -200,6 +192,28 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       EventSerializer deserializer, Projection p) {
     Map<FactSpecCoordinates, Dispatcher> map = new HashMap<>();
 
+    final HandlerParameterContributors c;
+
+    if (p instanceof AbstractTransactionAwareProjection<?>) {
+
+      Class<?> clazz = getTypeParameter(p);
+
+      // we have a parameter contributor to add, then
+      c =
+          generalContributors.withHighestPrio(
+              new HandlerParameterContributor() {
+                @Nullable
+                @Override
+                public HandlerParameterProvider providerFor(
+                    @NonNull Class<?> type, @NonNull Set<Annotation> annotations) {
+                  if (clazz == type)
+                    return (f, p) ->
+                        ((AbstractTransactionAwareProjection<?>) p).runningTransaction();
+                  else return null;
+                }
+              });
+    } else c = this.generalContributors;
+
     Collection<CallTarget> relevantClasses = ReflectionTools.getRelevantClasses(p);
     relevantClasses.forEach(
         callTarget -> {
@@ -210,13 +224,6 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
                   m -> {
                     FactSpec fs = ReflectionTools.discoverFactSpec(m);
                     FactSpecCoordinates key = FactSpecCoordinates.from(fs);
-
-                    HandlerParameterContributors c = this.contributors;
-
-                    // add projection as top prio contributor if instanceof
-                    if (projection instanceof HandlerParameterContributor) {
-                      c = c.withHighestPrio((HandlerParameterContributor) projection);
-                    }
 
                     Dispatcher dispatcher =
                         new Dispatcher(
@@ -246,6 +253,16 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     }
 
     return map;
+  }
+
+  private static Class<?> getTypeParameter(Projection p) {
+    Class<?> cl = p.getClass();
+
+    // climb to common superclass
+    while (cl.getSuperclass() != AbstractTransactionAwareProjection.class) cl = cl.getSuperclass();
+    // grab type parameter
+    ParameterizedType type = (ParameterizedType) cl.getGenericSuperclass();
+    return (Class<?>) type.getActualTypeArguments()[0];
   }
 
   @Override
@@ -345,7 +362,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       // choose the target object (nested)
       Object targetObject = objectResolver.apply(projection);
       // create actual parameters
-      Object[] parameters = transformer.apply(f);
+      Object[] parameters = transformer.apply(f, projection);
       // fire
       try {
         dispatchMethod.invoke(targetObject, parameters);

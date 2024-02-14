@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Handler;
 import org.factcast.factus.redis.AbstractRedisManagedProjection;
 import org.factcast.factus.redis.UUIDCodec;
+import org.factcast.factus.redis.tx.RedisTransactional;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
@@ -34,6 +35,7 @@ import org.redisson.codec.MarshallingCodec;
 
 @Slf4j
 @ProjectionMetaData(revision = 1)
+@RedisTransactional(timeout = 30000)
 public class TxRedissonManagedUserNames extends AbstractRedisManagedProjection {
 
   protected final Codec codec =

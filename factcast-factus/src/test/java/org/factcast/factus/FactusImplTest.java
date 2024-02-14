@@ -370,12 +370,13 @@ class FactusImplTest {
 
       Fact f1 = Fact.builder().ns("test").type(SimpleEvent.class.getSimpleName()).build("{}");
       Fact f2 = Fact.builder().ns("test").type(SimpleEvent.class.getSimpleName()).build("{}");
+      ArrayList<Fact> facts = Lists.newArrayList(f1, f2);
 
       when(fc.subscribe(any(), observer.capture()))
           .thenAnswer(
               inv -> {
                 BatchingFactObserver obs = observer.getValue();
-                obs.onNext(Lists.newArrayList(f1, f2));
+                obs.onNext(facts);
 
                 return Mockito.mock(Subscription.class);
               });
@@ -385,7 +386,7 @@ class FactusImplTest {
       // that
       // the prepared update happens on the projection and updates its
       // fact stream position.
-      Mockito.verify(ea, times(2)).apply(any(Fact.class));
+      Mockito.verify(ea).apply(facts);
       assertThat(m.factStreamPosition()).isEqualTo(FactStreamPosition.from(f2));
     }
   }
@@ -543,7 +544,7 @@ class FactusImplTest {
 
   @Mock private Projector projector;
 
-  @Captor ArgumentCaptor<Fact> factCaptor;
+  @Captor ArgumentCaptor<List<Fact>> factCaptor;
 
   @Nested
   class WhenFetching {
@@ -623,12 +624,15 @@ class FactusImplTest {
       // them through
       doAnswer(
               inv -> {
-                if (factCaptor.getValue().jsonPayload().contains("abc")) {
-                  projectionCaptor.getValue().apply(new SimpleEventObject("abc"));
-                } else {
-                  projectionCaptor.getValue().apply(new SimpleEventObject("def"));
-                }
-
+                List<Fact> facts = factCaptor.getValue();
+                facts.forEach(
+                    f -> {
+                      if (f.jsonPayload().contains("abc")) {
+                        projectionCaptor.getValue().apply(new SimpleEventObject("abc"));
+                      } else {
+                        projectionCaptor.getValue().apply(new SimpleEventObject("def"));
+                      }
+                    });
                 return Void.TYPE;
               })
           .when(projector)
@@ -673,12 +677,15 @@ class FactusImplTest {
       // them through
       doAnswer(
               inv -> {
-                if (factCaptor.getValue().jsonPayload().contains("abc")) {
-                  projectionCaptor.getValue().apply(new SimpleEventObject("abc"));
-                } else {
-                  projectionCaptor.getValue().apply(new SimpleEventObject("def"));
-                }
-
+                List<Fact> facts = factCaptor.getValue();
+                facts.forEach(
+                    f -> {
+                      if (f.jsonPayload().contains("abc")) {
+                        projectionCaptor.getValue().apply(new SimpleEventObject("abc"));
+                      } else {
+                        projectionCaptor.getValue().apply(new SimpleEventObject("def"));
+                      }
+                    });
                 return Void.TYPE;
               })
           .when(projector)
@@ -754,7 +761,7 @@ class FactusImplTest {
       factObserver.onNext(Collections.singletonList(mockedFact));
 
       // ... and then it should be applied to event projector
-      verify(projector).apply(mockedFact);
+      verify(projector).apply(Collections.singletonList(mockedFact));
 
       // onCatchup()
       // assume onCatchup got called on the fact observer...
@@ -803,12 +810,12 @@ class FactusImplTest {
       when(eventApplier.createFactSpecs()).thenReturn(Arrays.asList(mock(FactSpec.class)));
       doAnswer(
               i -> {
-                Fact argument = (Fact) (i.getArgument(0));
+                Fact argument = (Fact) ((List) i.getArgument(0)).get(0);
                 subscribedProjection.factStreamPosition(FactStreamPosition.from(argument));
                 return null;
               })
           .when(eventApplier)
-          .apply(any(Fact.class));
+          .apply(any(List.class));
 
       Subscription subscription = mock(Subscription.class);
       when(fc.subscribe(any(), any())).thenReturn(subscription);
@@ -832,7 +839,7 @@ class FactusImplTest {
       factObserver.onNext(Collections.singletonList(mockedFact));
 
       // ... and then it should be applied to event projector
-      verify(eventApplier).apply(mockedFact);
+      verify(eventApplier).apply(eq(Lists.newArrayList(mockedFact)));
 
       // ... and the fact stream position should be updated as well
       verify(subscribedProjection).factStreamPosition(FactStreamPosition.of(factId, 12));
@@ -873,12 +880,12 @@ class FactusImplTest {
       when(eventApplier.createFactSpecs()).thenReturn(Arrays.asList(mock(FactSpec.class)));
       doAnswer(
               i -> {
-                Fact argument = (Fact) (i.getArgument(0));
+                Fact argument = (Fact) (((List) i.getArgument(0)).get(0));
                 subscribedProjection.factStreamPosition(FactStreamPosition.from(argument));
                 return null;
               })
           .when(eventApplier)
-          .apply(any(Fact.class));
+          .apply(any(List.class));
 
       Subscription subscription = mock(Subscription.class);
       when(fc.subscribe(any(), any())).thenReturn(subscription);
@@ -902,7 +909,7 @@ class FactusImplTest {
       factObserver.onNext(Collections.singletonList(mockedFact));
 
       // ... and then it should be applied to event projector
-      verify(eventApplier).apply(mockedFact);
+      verify(eventApplier).apply(Collections.singletonList(mockedFact));
 
       // ... and the fact stream position should be updated as well
       verify(subscribedProjection).factStreamPosition(FactStreamPosition.of(factId, 13L));
@@ -1158,7 +1165,7 @@ class FactusImplTest {
       // them through
       doAnswer(
               inv -> {
-                if (factCaptor.getValue().jsonPayload().contains("Barney")) {
+                if (factCaptor.getValue().get(0).jsonPayload().contains("Barney")) {
                   personAggregate.process(new NameEvent("Barney"));
                 }
                 return Void.TYPE;
@@ -1214,7 +1221,7 @@ class FactusImplTest {
       // them through
       doAnswer(
               inv -> {
-                if (factCaptor.getValue().jsonPayload().contains("Barney")) {
+                if (factCaptor.getValue().get(0).jsonPayload().contains("Barney")) {
                   p.apply(new NameEvent("Barney"));
                 }
                 return Void.TYPE;
@@ -1268,7 +1275,7 @@ class FactusImplTest {
       // them through
       doAnswer(
               inv -> {
-                if (factCaptor.getValue().jsonPayload().contains("Barney")) {
+                if (factCaptor.getValue().get(0).jsonPayload().contains("Barney")) {
                   personAggregate.process(new NameEvent("Barney"));
                 }
                 return Void.TYPE;
@@ -1318,7 +1325,7 @@ class FactusImplTest {
       // them through
       doAnswer(
               inv -> {
-                if (factCaptor.getValue().jsonPayload().contains("Barney")) {
+                if (factCaptor.getValue().get(0).jsonPayload().contains("Barney")) {
                   personAggregateCaptor.getValue().process(new NameEvent("Barney"));
                 }
                 return Void.TYPE;
