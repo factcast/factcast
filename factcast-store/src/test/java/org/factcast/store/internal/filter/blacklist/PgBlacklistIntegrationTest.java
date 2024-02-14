@@ -23,7 +23,7 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.BatchingFactObserver;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.BeforeAll;
@@ -51,7 +51,8 @@ class PgBlacklistIntegrationTest {
   private final UUID factId = UUID.fromString("d6554917-5063-4ffb-a184-4e0e46de3218");
   private final Collection<FactSpec> spec = Collections.singletonList(FactSpec.ns("ns1"));
   final Set<UUID> receivedFactIds = new HashSet<>();
-  final FactObserver obs = element -> receivedFactIds.add(element.id());
+  final BatchingFactObserver obs =
+      element -> receivedFactIds.addAll(element.stream().map(Fact::id).toList());
 
   @BeforeAll
   static void configureBlacklistType() {

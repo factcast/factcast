@@ -15,6 +15,7 @@
  */
 package org.factcast.factus.projector;
 
+import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 import lombok.NonNull;
@@ -24,11 +25,13 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.factus.projection.Projection;
 
 public interface Projector<A extends Projection> {
-  void apply(@NonNull Fact element);
 
-  default void apply(@NonNull Iterable<Fact> facts) {
-    facts.forEach(this::apply);
+  @Deprecated
+  default void apply(@NonNull Fact fact) {
+    apply(Collections.singletonList(fact));
   }
+
+  void apply(@NonNull List<Fact> facts);
 
   List<FactSpec> createFactSpecs();
 

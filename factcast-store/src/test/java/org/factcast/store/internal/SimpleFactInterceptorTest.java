@@ -15,8 +15,7 @@
  */
 package org.factcast.store.internal;
 
-import static org.mockito.ArgumentMatchers.same;
-
+import java.util.Collections;
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
@@ -74,7 +73,7 @@ class SimpleFactInterceptorTest {
 
       underTest.accept(f);
 
-      Mockito.verify(targetSubscription).notifyElement(same(t));
+      Mockito.verify(targetSubscription).notifyElements(Collections.singletonList(t));
 
       Mockito.verifyNoMoreInteractions(targetSubscription, transformers, service);
     }
@@ -99,7 +98,7 @@ class SimpleFactInterceptorTest {
 
       underTest.accept(f);
 
-      Mockito.verify(targetSubscription).notifyElement(same(f));
+      Mockito.verify(targetSubscription).notifyElements(Collections.singletonList(f));
 
       Mockito.verifyNoMoreInteractions(targetSubscription, transformers, service);
     }

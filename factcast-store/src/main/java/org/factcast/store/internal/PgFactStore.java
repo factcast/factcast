@@ -36,7 +36,7 @@ import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.BatchingFactObserver;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.TransformationRequest;
 import org.factcast.store.StoreConfigurationProperties;
@@ -177,7 +177,7 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   public @NonNull Subscription subscribe(
-      @NonNull SubscriptionRequestTO request, @NonNull FactObserver observer) {
+      @NonNull SubscriptionRequestTO request, @NonNull BatchingFactObserver observer) {
     StoreMetrics.OP operation =
         request.continuous() ? StoreMetrics.OP.SUBSCRIBE_FOLLOW : StoreMetrics.OP.SUBSCRIBE_CATCHUP;
     return metrics.time(operation, () -> subscriptionFactory.subscribe(request, observer));

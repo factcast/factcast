@@ -16,7 +16,8 @@
 package org.factcast.client.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.util.UUID;
+import com.google.common.collect.Iterables;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -31,7 +32,7 @@ import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionClosedException;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.BatchingFactObserver;
 import org.factcast.core.util.ExceptionHelper;
 
 @Slf4j
@@ -39,10 +40,10 @@ public class ResilientGrpcSubscription implements Subscription {
 
   private final GrpcFactStore store;
   private final SubscriptionRequestTO originalRequest;
-  private final FactObserver originalObserver;
-  private final FactObserver delegatingObserver;
+  private final BatchingFactObserver originalObserver;
+  private final BatchingFactObserver delegatingObserver;
 
-  private final AtomicReference<UUID> lastFactIdSeen = new AtomicReference<>();
+  private final AtomicReference<FactStreamPosition> lastPosition = new AtomicReference<>();
   private final SubscriptionHolder currentSubscription = new SubscriptionHolder();
   private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
@@ -51,7 +52,7 @@ public class ResilientGrpcSubscription implements Subscription {
   public ResilientGrpcSubscription(
       @NonNull GrpcFactStore store,
       @NonNull SubscriptionRequestTO req,
-      @NonNull FactObserver obs,
+      @NonNull BatchingFactObserver obs,
       @NonNull ResilienceConfiguration config) {
     this.store = store;
     resilience = new Resilience(config);
@@ -157,9 +158,9 @@ public class ResilientGrpcSubscription implements Subscription {
   private void doConnect() {
     resilience.registerAttempt();
     SubscriptionRequestTO to = SubscriptionRequestTO.forFacts(originalRequest);
-    UUID last = lastFactIdSeen.get();
+    FactStreamPosition last = lastPosition.get();
     if (last != null) {
-      to.startingAfter(last);
+      to.startingAfter(last.factId());
     }
 
     if (currentSubscription.get() == null) {
@@ -195,12 +196,12 @@ public class ResilientGrpcSubscription implements Subscription {
     void accept(T t, U u) throws TimeoutException;
   }
 
-  class DelegatingFactObserver implements FactObserver {
+  class DelegatingFactObserver implements BatchingFactObserver {
     @Override
-    public void onNext(@NonNull Fact element) {
+    public void onNext(@NonNull List<Fact> element) {
       if (!isClosed.get()) {
         originalObserver.onNext(element);
-        lastFactIdSeen.set(element.id());
+        lastPosition.set(FactStreamPosition.from(Iterables.getLast(element)));
       } else {
         log.warn("Fact arrived after call to .close() [a few of them is ok...]");
       }

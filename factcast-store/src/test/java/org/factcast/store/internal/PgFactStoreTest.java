@@ -35,7 +35,7 @@ import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.BatchingFactObserver;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.TransformationRequest;
 import org.factcast.store.StoreConfigurationProperties;
@@ -164,7 +164,7 @@ class PgFactStoreTest {
   @Nested
   class WhenSubscribing {
     @Mock private @NonNull SubscriptionRequestTO request;
-    @Mock private @NonNull FactObserver observer;
+    @Mock private @NonNull BatchingFactObserver observer;
     @Mock private @NonNull Subscription sub;
 
     @BeforeEach

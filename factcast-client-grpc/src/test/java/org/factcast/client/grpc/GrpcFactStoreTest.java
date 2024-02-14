@@ -41,7 +41,7 @@ import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.BatchingFactObserver;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.Headers;
 import org.factcast.grpc.api.StateForRequest;
@@ -442,10 +442,12 @@ class GrpcFactStoreTest {
   @Test
   void testInternalSubscribe() {
     assertThrows(
-        NullPointerException.class, () -> uut.subscribe(mock(SubscriptionRequestTO.class), null));
+        NullPointerException.class,
+        () -> uut.subscribe(mock(SubscriptionRequestTO.class), (BatchingFactObserver) null));
     assertThrows(NullPointerException.class, () -> uut.internalSubscribe(null, null));
     assertThrows(
-        NullPointerException.class, () -> uut.internalSubscribe(null, mock(FactObserver.class)));
+        NullPointerException.class,
+        () -> uut.internalSubscribe(null, mock(BatchingFactObserver.class)));
   }
 
   @Test
@@ -454,7 +456,7 @@ class GrpcFactStoreTest {
     resilienceConfig.setEnabled(false);
     SubscriptionRequestTO req =
         new SubscriptionRequestTO(SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch());
-    Subscription s = uut.subscribe(req, element -> {});
+    Subscription s = uut.subscribe(req, (BatchingFactObserver) elements -> {});
 
     assertThat(s).isInstanceOf(Subscription.class).isNotInstanceOf(ResilientGrpcSubscription.class);
   }
@@ -465,7 +467,7 @@ class GrpcFactStoreTest {
     resilienceConfig.setEnabled(true);
     SubscriptionRequestTO req =
         new SubscriptionRequestTO(SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch());
-    Subscription s = uut.subscribe(req, element -> {});
+    Subscription s = uut.subscribe(req, (BatchingFactObserver) elements -> {});
 
     assertThat(s).isInstanceOf(ResilientGrpcSubscription.class);
   }

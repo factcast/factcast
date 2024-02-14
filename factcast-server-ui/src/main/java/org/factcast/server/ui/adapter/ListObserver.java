@@ -20,11 +20,12 @@ import java.util.List;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.factcast.core.subscription.observer.BatchingFactObserver;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.slf4j.LoggerFactory;
 
 @Getter
-public class ListObserver implements FactObserver {
+public class ListObserver implements BatchingFactObserver {
   private int limit;
   private int offset;
   private final List<Fact> list = new ArrayList<>();
@@ -35,17 +36,19 @@ public class ListObserver implements FactObserver {
   }
 
   @Override
-  public void onNext(@NonNull Fact element) {
-    if (isComplete()) {
-      throw new LimitReachedException();
-    }
-
-    if (offset > 0) {
-      offset--;
-    } else {
-      limit--;
-      list.add(0, element);
-    }
+  public void onNext(@NonNull List<Fact> element) {
+    element.forEach(
+        f -> {
+          if (isComplete()) {
+            throw new LimitReachedException();
+          }
+          if (offset > 0) {
+            offset--;
+          } else {
+            limit--;
+            list.add(0, f);
+          }
+        });
   }
 
   @Override

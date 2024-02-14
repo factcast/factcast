@@ -86,15 +86,18 @@ class FactusClientFetchingTransformedTest extends AbstractFactCastIntegrationTes
     log.info("subscribing with 1/4 facts already transformed");
     fc.subscribe(
             SubscriptionRequest.catchup(FactSpec.from(UserCreated.class)).fromScratch(),
-            f -> {
-              int idx = index.get();
-              UUID expected = ids.get(idx);
-              UserCreated userCreated = es.deserialize(UserCreated.class, f.jsonPayload());
-              // assert order
-              assertThat(expected).isEqualTo(userCreated.aggregateId());
-              // assert version
-              assertThat(f.version()).isEqualTo(2);
-              index.incrementAndGet();
+            batch -> {
+              batch.forEach(
+                  f -> {
+                    int idx = index.get();
+                    UUID expected = ids.get(idx);
+                    UserCreated userCreated = es.deserialize(UserCreated.class, f.jsonPayload());
+                    // assert order
+                    assertThat(expected).isEqualTo(userCreated.aggregateId());
+                    // assert version
+                    assertThat(f.version()).isEqualTo(2);
+                    index.incrementAndGet();
+                  });
             })
         .awaitCatchup();
     long timeUntilCatchupWithTransformation = sw.elapsed(TimeUnit.MILLISECONDS);
@@ -106,15 +109,18 @@ class FactusClientFetchingTransformedTest extends AbstractFactCastIntegrationTes
     sw = Stopwatch.createStarted();
     fc.subscribe(
             SubscriptionRequest.catchup(FactSpec.from(UserCreated.class)).fromScratch(),
-            f -> {
-              int idx = index.get();
-              UUID expected = ids.get(idx);
-              UserCreated userCreated = es.deserialize(UserCreated.class, f.jsonPayload());
-              // assert order
-              assertThat(expected).isEqualTo(userCreated.aggregateId());
-              // assert version
-              assertThat(f.version()).isEqualTo(2);
-              index.incrementAndGet();
+            batch -> {
+              batch.forEach(
+                  f -> {
+                    int idx = index.get();
+                    UUID expected = ids.get(idx);
+                    UserCreated userCreated = es.deserialize(UserCreated.class, f.jsonPayload());
+                    // assert order
+                    assertThat(expected).isEqualTo(userCreated.aggregateId());
+                    // assert version
+                    assertThat(f.version()).isEqualTo(2);
+                    index.incrementAndGet();
+                  });
             })
         .awaitCatchup();
     long timeUntilCatchupWithoutTransformation = sw.elapsed(TimeUnit.MILLISECONDS);

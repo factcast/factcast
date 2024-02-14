@@ -27,9 +27,7 @@ import org.factcast.core.subscription.FactStreamInfo;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Spy;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +46,7 @@ class FactObserverTest {
   @Nested
   class WhenCallingOnMethod {
     @Mock private @NonNull Fact element;
+    @Mock private @NonNull Fact element2;
 
     @Test
     void noEffect() {

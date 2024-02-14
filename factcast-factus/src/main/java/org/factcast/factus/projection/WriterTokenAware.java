@@ -19,6 +19,7 @@ import java.time.Duration;
 import lombok.NonNull;
 import org.factcast.factus.FactusConstants;
 
+// TODO maybe pass the context in?
 public interface WriterTokenAware {
   default AutoCloseable acquireWriteToken() {
     return acquireWriteToken(FactusConstants.FOREVER);

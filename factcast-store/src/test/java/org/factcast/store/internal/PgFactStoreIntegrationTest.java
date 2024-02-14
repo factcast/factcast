@@ -23,10 +23,7 @@ import static org.mockito.Mockito.verify;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import lombok.NonNull;
@@ -45,7 +42,7 @@ import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.BatchingFactObserver;
 import org.factcast.store.internal.StoreMetrics.OP;
 import org.factcast.store.internal.tail.FastForwardTargetRefresher;
 import org.factcast.store.test.AbstractFactStoreTest;
@@ -164,11 +161,11 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
     final AtomicReference<FactStreamPosition> fwd = new AtomicReference<>();
 
     @NonNull
-    final FactObserver obs =
-        new FactObserver() {
+    final BatchingFactObserver obs =
+        new BatchingFactObserver() {
 
           @Override
-          public void onNext(@NonNull Fact element) {}
+          public void onNext(@NonNull List<Fact> element) {}
 
           @Override
           public void onCatchup() {
@@ -178,7 +175,6 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
           @Override
           public void onFastForward(@NonNull FactStreamPosition factIdToFfwdTo) {
             fwd.set(factIdToFfwdTo);
-            System.out.println("ffwd " + factIdToFfwdTo);
           }
         };
 

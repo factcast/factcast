@@ -26,6 +26,8 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -38,7 +40,7 @@ import org.factcast.core.TestFactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.StaleSubscriptionDetectedException;
 import org.factcast.core.subscription.SubscriptionImpl;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.BatchingFactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Type;
@@ -54,7 +56,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ClientStreamObserverTest {
 
-  @Mock FactObserver factObserver;
+  @Mock BatchingFactObserver factObserver;
 
   ClientStreamObserver uut;
 
@@ -113,7 +115,7 @@ class ClientStreamObserverTest {
     Fact f = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
     MSG_Notification n = converter.createNotificationFor(f);
     uut.onNext(n);
-    verify(factObserver).onNext(f);
+    verify(factObserver).onNext(Collections.singletonList(f));
   }
 
   @Test
@@ -124,6 +126,19 @@ class ClientStreamObserverTest {
 
     verify(subscription).notifyFastForward(p);
     verify(factObserver).onFastForward(p);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  void testOnNextListDelegates() {
+    Fact f1 = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
+    Fact f2 = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
+    ArrayList<Fact> stagedFacts = Lists.newArrayList(f1, f2);
+    MSG_Notification n = converter.createNotificationFor(stagedFacts);
+    uut.onNext(n);
+    ArgumentCaptor<List<Fact>> cap = ArgumentCaptor.forClass(List.class);
+    verify(factObserver).onNext(cap.capture());
+    org.assertj.core.api.Assertions.assertThat(cap.getValue()).hasSize(2).containsExactly(f1, f2);
   }
 
   @Test
@@ -142,7 +157,14 @@ class ClientStreamObserverTest {
     ArrayList<Fact> stagedFacts = Lists.newArrayList(f1, f2);
     MSG_Notification n = converter.createNotificationFor(stagedFacts);
     uut.onNext(n);
-    verify(factObserver, times(2)).onNext(any(Fact.class));
+    @SuppressWarnings("unchecked")
+    ArgumentCaptor<List<Fact>> l = ArgumentCaptor.forClass(List.class);
+    verify(factObserver, times(1)).onNext(l.capture());
+
+    org.assertj.core.api.Assertions.assertThat(l.getValue())
+        .isNotNull()
+        .hasSize(2)
+        .containsExactly(f1, f2);
   }
 
   @Test

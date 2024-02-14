@@ -18,6 +18,7 @@ package org.factcast.server.grpc;
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.stub.StreamObserver;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -28,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.BatchingFactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 
@@ -38,7 +39,7 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
  * @author <uwe.schaefer@prisma-capacity.eu>
  */
 @Slf4j
-class GrpcObserverAdapter implements FactObserver {
+class GrpcObserverAdapter implements BatchingFactObserver {
 
   private final ProtoConverter converter = new ProtoConverter();
 
@@ -164,12 +165,13 @@ class GrpcObserverAdapter implements FactObserver {
   }
 
   @Override
-  public void onNext(@NonNull Fact element) {
+  public void onNext(@NonNull List<Fact> element) {
+    // TODO staging business needs rewrite
     if (catchupBatchSize > 1 && !caughtUp.get()) {
       if (stagedFacts.size() >= catchupBatchSize) {
         flush();
       }
-      stagedFacts.add(element);
+      stagedFacts.addAll(element);
     } else {
       observer.onNext(converter.createNotificationFor(element));
     }

@@ -19,6 +19,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
+// TODO destroys batching for now, needs refactoring
 public abstract class AbstractFactInterceptor implements FactInterceptor {
   @NonNull final PgMetrics metrics;
 
