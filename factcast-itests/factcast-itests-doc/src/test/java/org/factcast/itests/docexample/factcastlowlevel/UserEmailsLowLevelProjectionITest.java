@@ -23,7 +23,7 @@ import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.BatchingFactObserver;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,12 +36,10 @@ class UserEmailsLowLevelProjectionITest extends AbstractFactCastIntegrationTest 
 
   private final UserEmailsLowLevelProjection uut = new UserEmailsLowLevelProjection();
 
-  private class FactObserverImpl implements FactObserver {
+  private class FactObserverImpl implements BatchingFactObserver {
 
     @Override
-    public void onNext(@NonNull Fact fact) {
-      uut.apply(fact);
-    }
+    public void onNext(@NonNull List<Fact> elements) {}
   }
 
   @Test
