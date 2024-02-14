@@ -17,10 +17,12 @@ package org.factcast.itests.factus.client;
 
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.ArrayList;
 import java.util.UUID;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.FactStreamPosition;
@@ -40,6 +42,7 @@ import org.junit.jupiter.api.Test;
 import org.redisson.api.RMap;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
+import org.redisson.transaction.TransactionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
@@ -56,7 +59,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
   @Nested
   class Managed {
     @BeforeEach
-    public void setup() {
+    void setup() {
       var l = new ArrayList<EventObject>(NUMBER_OF_EVENTS);
       for (int i = 0; i < NUMBER_OF_EVENTS; i++) {
         l.add(new UserCreated(randomUUID(), getClass().getSimpleName() + ":" + i));
@@ -67,37 +70,37 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @SneakyThrows
     @Test
-    public void bulkAppliesInTransaction3() {
+    void bulkAppliesInTransaction3() {
       TxRedissonManagedUserNamesSize3 p = new TxRedissonManagedUserNamesSize3(redissonClient);
       factus.update(p);
 
-      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
+      assertThat(p.userNames()).hasSize(NUMBER_OF_EVENTS);
       assertThat(p.stateModifications()).isEqualTo(4); // expected at 3,6,9,10
     }
 
     @SneakyThrows
     @Test
-    public void bulkAppliesInTransaction2() {
+    void bulkAppliesInTransaction2() {
       TxRedissonManagedUserNamesSize2 p = new TxRedissonManagedUserNamesSize2(redissonClient);
       factus.update(p);
 
-      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
+      assertThat(p.userNames()).hasSize(NUMBER_OF_EVENTS);
       assertThat(p.stateModifications()).isEqualTo(5); // expected at 2,4,6,8,10
     }
 
     @SneakyThrows
     @Test
-    public void bulkAppliesInTransactionTimeout() {
+    void bulkAppliesInTransactionTimeout() {
       TxRedissonManagedUserNamesTimeout p = new TxRedissonManagedUserNamesTimeout(redissonClient);
-      factus.update(p);
+      assertThatThrownBy(() -> factus.update(p)).isInstanceOf(TransactionException.class);
 
-      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
-      assertThat(p.stateModifications()).isEqualTo(2); // one for timeout, one for final flush
+      assertThat(p.userNames()).isEmpty();
+      assertThat(p.stateModifications()).isZero(); // one for timeout, one for final flush
     }
 
     @SneakyThrows
     @Test
-    public void rollsBack() {
+    void rollsBack() {
       TxRedissonManagedUserNamesSizeBlowAt7th p =
           new TxRedissonManagedUserNamesSizeBlowAt7th(redissonClient);
 
@@ -110,15 +113,15 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
       }
 
       // only first bulk (size = 5) should be executed
-      assertThat(p.userNames().size()).isEqualTo(5);
-      assertThat(p.stateModifications()).isEqualTo(1);
+      assertThat(p.userNames()).hasSize(6); // 1-5 + 6
+      assertThat(p.stateModifications()).isEqualTo(2); // 5,6
     }
   }
 
   @Nested
   class Subscribed {
     @BeforeEach
-    public void setup() {
+    void setup() {
       var l = new ArrayList<EventObject>(NUMBER_OF_EVENTS);
       for (int i = 0; i < NUMBER_OF_EVENTS; i++) {
         l.add(new UserCreated(randomUUID(), getClass().getSimpleName() + ":" + i));
@@ -129,32 +132,32 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @SneakyThrows
     @Test
-    public void bulkAppliesInTransaction3() {
+    void bulkAppliesInTransaction3() {
       TxRedissonSubscribedUserNamesSize3 p = new TxRedissonSubscribedUserNamesSize3(redissonClient);
       factus.subscribeAndBlock(p).awaitCatchup();
 
-      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
+      assertThat(p.userNames()).hasSize(NUMBER_OF_EVENTS);
       assertThat(p.stateModifications()).isEqualTo(4); // expected at 3,6,9,10
     }
 
     @SneakyThrows
     @Test
-    public void bulkAppliesInTransaction2() {
+    void bulkAppliesInTransaction2() {
       TxRedissonSubscribedUserNamesSize2 p = new TxRedissonSubscribedUserNamesSize2(redissonClient);
       factus.subscribeAndBlock(p).awaitCatchup();
 
-      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
+      assertThat(p.userNames()).hasSize(NUMBER_OF_EVENTS);
       assertThat(p.stateModifications()).isEqualTo(5); // expected at 2,4,6,8,10
     }
 
     @SneakyThrows
     @Test
-    public void bulkAppliesInTransactionTimeout() {
+    void bulkAppliesInTransactionTimeout() {
       TxRedissonSubscribedUserNamesTimeout p =
           new TxRedissonSubscribedUserNamesTimeout(redissonClient);
       factus.subscribeAndBlock(p).awaitCatchup();
 
-      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
+      assertThat(p.userNames()).hasSize(NUMBER_OF_EVENTS);
       assertThat(p.stateModifications()).isEqualTo(2); // one for timeout, one for final flush
     }
 
@@ -174,7 +177,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
 
       // first bulk (size = 5) should be applied successfully
       // second bulk (size = 5) should have the first fact applied (retry after error))
-      assertThat(p.userNames().size()).isEqualTo(7); // [0,6]
+      assertThat(p.userNames()).hasSize(7); // [0,6]
       assertThat(p.stateModifications()).isEqualTo(2); // 0-4 and 5-6
     }
   }
@@ -224,7 +227,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
   }
 
   @ProjectionMetaData(revision = 1)
-  @RedisTransactional(timeout = 1000)
+  @RedisTransactional(timeout = 50, bulkSize = 1)
   static class TxRedissonManagedUserNamesTimeout extends TrackingTxRedissonManagedUserNames {
     public TxRedissonManagedUserNamesTimeout(RedissonClient redisson) {
       super(redisson);
@@ -234,9 +237,14 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     @SneakyThrows
     protected void apply(UserCreated created, RTransaction tx) {
       RMap<UUID, String> userNames = tx.getMap(redisKey(), codec);
-      userNames.fastPut(created.aggregateId(), created.userName());
+      userNames.put(created.aggregateId(), created.userName());
 
       Thread.sleep(100);
+    }
+
+    @Override
+    protected void commit(@NonNull RTransaction runningTransaction) {
+      super.commit(runningTransaction);
     }
   }
 
@@ -257,7 +265,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
   }
 
   @ProjectionMetaData(revision = 1)
-  @RedisTransactional(timeout = 1000)
+  @RedisTransactional(timeout = 150)
   static class TxRedissonSubscribedUserNamesTimeout extends TrackingTxRedissonSubscribedUserNames {
     public TxRedissonSubscribedUserNamesTimeout(RedissonClient redisson) {
       super(redisson);
@@ -267,7 +275,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     @SneakyThrows
     protected void apply(UserCreated created, RTransaction tx) {
       RMap<UUID, String> userNames = tx.getMap(redisKey(), codec);
-      userNames.fastPut(created.aggregateId(), created.userName());
+      userNames.put(created.aggregateId(), created.userName());
 
       Thread.sleep(100);
     }
@@ -284,7 +292,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @Override
     protected void apply(UserCreated created, RTransaction tx) {
-      if (count++ == 8) { // blow the second bulk
+      if (++count == 7) { // blow the second bulk
         throw new IllegalStateException("Bad luck");
       }
       super.apply(created, tx);

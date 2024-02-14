@@ -37,7 +37,11 @@ public abstract class AbstractTransactionAwareProjection<T>
   @Override
   public final void begin() throws TransactionException {
     assertNoRunningTransaction();
-    runningTransaction = beginNewTransaction();
+    try {
+      runningTransaction = beginNewTransaction();
+    } catch (Exception e) {
+      throw new TransactionException(e);
+    }
   }
 
   @Override
@@ -45,6 +49,8 @@ public abstract class AbstractTransactionAwareProjection<T>
     assertInTransaction();
     try {
       commit(runningTransaction);
+    } catch (Exception e) {
+      throw new TransactionException(e);
     } finally {
       runningTransaction = null;
     }
@@ -55,6 +61,8 @@ public abstract class AbstractTransactionAwareProjection<T>
     assertInTransaction();
     try {
       rollback(runningTransaction);
+    } catch (Exception e) {
+      throw new TransactionException(e);
     } finally {
       runningTransaction = null;
     }

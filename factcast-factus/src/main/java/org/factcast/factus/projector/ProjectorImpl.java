@@ -111,7 +111,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
         // pass along and potentially rethrow
         projection.onError(e);
-        throw new IllegalArgumentException(e);
+        throw ExceptionHelper.toRuntime(e);
       } catch (Exception e) {
 
         rollbackIfTransactional();
@@ -119,7 +119,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
         // pass along and potentially rethrow
         projection.onError(e);
-        throw e;
+        throw ExceptionHelper.toRuntime(e);
       }
     }
     try {
