@@ -493,7 +493,7 @@ class GrpcFactStoreTest {
     }
 
     @Test
-    void testSeparateCredentials() {
+    void testNewCredentials() {
       final RemoteFactStoreBlockingStub blockingStub = mock(RemoteFactStoreBlockingStub.class);
       final RemoteFactStoreStub stub = mock(RemoteFactStoreStub.class);
       when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
