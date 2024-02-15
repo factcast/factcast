@@ -16,9 +16,14 @@
 package org.factcast.example.server;
 
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.server.security.CommonSecurityConfiguration;
+import org.factcast.server.security.auth.FactCastSecurityProperties;
 import org.postgresql.Driver;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 /**
@@ -50,5 +55,12 @@ public class ExampleServerWithPostgresContainer {
     System.setProperty("spring.datasource.url", url);
     System.setProperty("spring.datasource.username", postgres.getUsername());
     System.setProperty("spring.datasource.password", postgres.getPassword());
+  }
+
+  @Bean
+  UserDetailsService godModeUserDetailsService(
+      FactCastSecurityProperties factcastSecurityProperties, PasswordEncoder passwordEncoder) {
+    return new CommonSecurityConfiguration()
+        .godModeUserDetailsService(factcastSecurityProperties, passwordEncoder);
   }
 }

@@ -15,6 +15,8 @@
  */
 package org.factcast.example.tls.client.hello;
 
+import com.google.common.collect.Lists;
+import java.util.List;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
@@ -30,20 +32,34 @@ import org.springframework.stereotype.Component;
 @Component
 public class HelloWorldRunner implements CommandLineRunner {
 
+  private static final int MAX = 1000;
+  private static final int SETS = 10;
   @NonNull private final FactCast fc;
 
   @Override
   public void run(String... args) throws Exception {
 
-    Fact fact = Fact.builder().ns("smoke").type("foo").build("{\"bla\":\"fasel\"}");
-    fc.publish(fact);
-    System.out.println("published " + fact);
+    for (int j = 0; j < SETS; j++) {
+      List<Fact> l = Lists.newArrayList();
+      for (int i = 0; i < MAX; i++) {
+        l.add(Fact.builder().ns("smoke").type("foo").build("{\"bla\":\"fasel\"}"));
+      }
+      fc.publish(l);
+      System.out.println("published " + l.size() + " facts");
+    }
 
     Subscription sub =
         fc.subscribe(
                 SubscriptionRequest.follow(FactSpec.ns("smoke")).fromScratch(), System.out::println)
             .awaitCatchup(5000);
 
+    fc.publish(Fact.builder().ns("smoke").type("foo").build("{\"bla\":\"fasel\"}"));
+    fc.publish(Fact.builder().ns("smoke").type("foo").build("{\"bla\":\"fasel\"}"));
+    fc.publish(Fact.builder().ns("smoke").type("foo").build("{\"bla\":\"fasel\"}"));
+
+    Thread.sleep(5000);
+
     sub.close();
   }
 }
+;

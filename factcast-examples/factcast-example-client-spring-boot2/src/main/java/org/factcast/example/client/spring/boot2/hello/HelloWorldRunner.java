@@ -15,13 +15,14 @@
  */
 package org.factcast.example.client.spring.boot2.hello;
 
-import java.util.UUID;
+import com.google.common.collect.Lists;
+import java.util.List;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -29,45 +30,36 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 @Component
 public class HelloWorldRunner implements CommandLineRunner {
-
+  private static final int MAX = 1000;
+  private static final int SETS = 1;
   @NonNull private final FactCast fc;
 
   @Override
   public void run(String... args) throws Exception {
 
-    val id = UUID.randomUUID();
-    Fact fact =
-        Fact.builder()
-            .ns("users")
-            .type("UserCreated")
-            .version(1)
-            .id(id)
-            .build("{\"firstName\":\"Horst\",\"lastName\":\"Lichter\"}");
-    fc.publish(fact);
-    System.out.println("published " + fact);
+    for (int j = 0; j < SETS; j++) {
+      List<Fact> l = Lists.newArrayList();
+      for (int i = 0; i < MAX; i++) {
+        l.add(Fact.builder().ns("smoke").type("foo").version(1).build("{\"bla\":\"fasel\"}"));
+      }
+      fc.publish(l);
+      System.out.println("published " + l.size() + " facts");
+    }
 
-    val uc = fc.fetchById(id);
-    System.out.println(uc.get().jsonPayload());
+    Subscription sub =
+        fc.subscribe(
+                SubscriptionRequest.follow(FactSpec.ns("smoke"))
+                    .withMaxBatchDelayInMs(5000)
+                    .fromScratch(),
+                System.out::println)
+            .awaitCatchup(5000);
 
-    val uc1 = fc.fetchByIdAndVersion(id, 1);
-    System.out.println(uc1.get().jsonPayload());
+    fc.publish(Fact.builder().ns("smoke").type("foo").build("{\"bla\":\"fasel\"}"));
+    fc.publish(Fact.builder().ns("smoke").type("foo").build("{\"bla\":\"fasel\"}"));
+    fc.publish(Fact.builder().ns("smoke").type("foo").build("{\"bla\":\"fasel\"}"));
 
-    val uc2 = fc.fetchByIdAndVersion(id, 2);
-    System.out.println(uc2.get().jsonPayload());
+    Thread.sleep(5000);
 
-    val uc3 = fc.fetchByIdAndVersion(id, 3);
-    System.out.println(uc3.get().jsonPayload());
-
-    fc.subscribe(
-            SubscriptionRequest.catchup(FactSpec.ns("users").type("UserCreated").version(3))
-                .fromScratch(),
-            element -> System.out.println(element))
-        .awaitCatchup();
-
-    fc.subscribe(
-            SubscriptionRequest.catchup(FactSpec.ns("users").type("UserCreated").version(1))
-                .fromScratch(),
-            element -> System.out.println(element))
-        .awaitCatchup();
+    sub.close();
   }
 }

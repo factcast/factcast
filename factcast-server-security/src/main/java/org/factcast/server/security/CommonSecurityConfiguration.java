@@ -112,7 +112,7 @@ public class CommonSecurityConfiguration {
   // security off
   @Bean
   @ConditionalOnMissingBean({FactCastAccessConfiguration.class, UserDetailsService.class})
-  UserDetailsService godModeUserDetailsService(
+  public UserDetailsService godModeUserDetailsService(
       FactCastSecurityProperties factcastSecurityProperties, PasswordEncoder passwordEncoder) {
 
     if (!factcastSecurityProperties.isEnabled()) {
