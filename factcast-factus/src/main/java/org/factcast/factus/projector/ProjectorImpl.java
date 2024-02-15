@@ -24,6 +24,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.experimental.UtilityClass;
@@ -51,7 +53,10 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
   private static final Map<Class<? extends Projection>, Map<FactSpecCoordinates, Dispatcher>>
       dispatcherCache = new ConcurrentHashMap<>();
   private final Projection projection;
+
+  @Getter(value = AccessLevel.PROTECTED, onMethod_ = @VisibleForTesting)
   private final Map<FactSpecCoordinates, Dispatcher> dispatchInfo;
+
   private final HandlerParameterContributors generalContributors;
 
   interface TargetObjectResolver extends Function<Projection, Object> {}
@@ -255,7 +260,8 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     return map;
   }
 
-  private static Class<?> getTypeParameter(Projection p) {
+  @VisibleForTesting
+  protected static Class<?> getTypeParameter(Projection p) {
     Class<?> cl = p.getClass();
 
     // climb to common superclass

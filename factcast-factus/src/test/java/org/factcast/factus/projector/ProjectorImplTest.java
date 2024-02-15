@@ -20,9 +20,8 @@ import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Lists;
 import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import javax.annotation.Nullable;
 import lombok.*;
 import org.assertj.core.util.Maps;
 import org.factcast.core.Fact;
@@ -38,6 +37,8 @@ import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.projection.LocalManagedProjection;
 import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projection.parameter.HandlerParameterContributors;
+import org.factcast.factus.projection.tx.AbstractOpenTransactionAwareProjection;
+import org.factcast.factus.projection.tx.AbstractTransactionAwareProjection;
 import org.factcast.factus.projection.tx.TransactionAware;
 import org.factcast.factus.projection.tx.TransactionException;
 import org.junit.jupiter.api.Nested;
@@ -398,6 +399,124 @@ class ProjectorImplTest {
           NonStaticClass$MockitoMock.class.getDeclaredMethod("apply", SimpleEvent.class);
       assertThat(underTest.isEventHandlerMethod(realMethod)).isFalse();
     }
+  }
+
+  @Nested
+  class WhenDiscoveringDispatchInfo {
+
+    @Test
+    @SneakyThrows
+    void providesDispatcherWithParamForOpenProjection() {
+      // Use projection that has a handler with second parameter of type TestTransaction.
+      final ExtendedOpenExampleProjection projection = new ExtendedOpenExampleProjection();
+
+      assertThatCode(
+              () ->
+                  new ProjectorImpl<>(
+                      projection, new DefaultEventSerializer(FactCastJson.mapper())))
+          .doesNotThrowAnyException();
+    }
+
+    @Test
+    @SneakyThrows
+    void throwsWhenSearchingResolverForNonOpenProjection() {
+      // Projection has a handler with second parameter of type TestTransaction but does not extend
+      // AbstractOpenTransactionAwareProjection.
+      final NonOpenExampleProjection projection = new NonOpenExampleProjection();
+
+      assertThatThrownBy(
+              () ->
+                  new ProjectorImpl<>(
+                      projection, new DefaultEventSerializer(FactCastJson.mapper())))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageStartingWith("Cannot find resolver for parameter 1 of signature void");
+    }
+
+    @Test
+    void getTransactionFromExampleRedisProjection() {
+      final OpenExampleProjection projection = new OpenExampleProjection();
+      final Class<?> typeArgument = ProjectorImpl.getTypeParameter(projection);
+      assertThat(typeArgument).isEqualTo(TestTransaction.class);
+
+      final ExtendedOpenExampleProjection nestedProjection = new ExtendedOpenExampleProjection();
+      final Class<?> typeArgument2 = ProjectorImpl.getTypeParameter(nestedProjection);
+      assertThat(typeArgument2).isEqualTo(TestTransaction.class);
+    }
+
+    @Test
+    void getClassOfExampleSpringProjection() {
+      final NonOpenExampleProjection projection = new NonOpenExampleProjection();
+
+      assertThatThrownBy(() -> ProjectorImpl.getTypeParameter(projection))
+          .isInstanceOf(NullPointerException.class)
+          .hasMessageStartingWith(
+              "Cannot invoke \"java.lang.Class.getSuperclass()\" because \"cl\" is null");
+    }
+
+    class ExtendedOpenExampleProjection extends OpenExampleProjection {
+      @Handler
+      void apply(SimpleEvent f, TestTransaction t) {}
+    }
+
+    class OpenExampleProjection extends AbstractOpenTransactionAwareProjection<TestTransaction> {
+
+      @Nullable
+      @Override
+      public FactStreamPosition factStreamPosition() {
+        return null;
+      }
+
+      @Override
+      public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {}
+
+      @Override
+      protected @NonNull ProjectorImplTest.WhenDiscoveringDispatchInfo.TestTransaction
+          beginNewTransaction() {
+        return null;
+      }
+
+      @Override
+      protected void rollback(
+          @NonNull
+              ProjectorImplTest.WhenDiscoveringDispatchInfo.TestTransaction runningTransaction) {}
+
+      @Override
+      protected void commit(
+          @NonNull
+              ProjectorImplTest.WhenDiscoveringDispatchInfo.TestTransaction runningTransaction) {}
+    }
+
+    class NonOpenExampleProjection extends AbstractTransactionAwareProjection<TestTransaction> {
+      @Handler
+      void apply(SimpleEvent f, TestTransaction t) {}
+
+      @Nullable
+      @Override
+      public FactStreamPosition factStreamPosition() {
+        return null;
+      }
+
+      @Override
+      public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {}
+
+      @Override
+      protected @NonNull ProjectorImplTest.WhenDiscoveringDispatchInfo.TestTransaction
+          beginNewTransaction() {
+        return null;
+      }
+
+      @Override
+      protected void rollback(
+          @NonNull
+              ProjectorImplTest.WhenDiscoveringDispatchInfo.TestTransaction runningTransaction) {}
+
+      @Override
+      protected void commit(
+          @NonNull
+              ProjectorImplTest.WhenDiscoveringDispatchInfo.TestTransaction runningTransaction) {}
+    }
+
+    class TestTransaction {}
   }
 
   class NonStaticClass implements Projection {
