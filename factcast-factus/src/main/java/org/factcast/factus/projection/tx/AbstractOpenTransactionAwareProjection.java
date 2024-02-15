@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2022 factcast.org
+ * Copyright © 2017-2024 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.spring.tx;
+package org.factcast.factus.projection.tx;
 
-import lombok.NonNull;
-import org.factcast.factus.projection.SubscribedProjection;
-import org.springframework.transaction.PlatformTransactionManager;
+public abstract class AbstractOpenTransactionAwareProjection<T>
+    extends AbstractTransactionAwareProjection<T> {
 
-public abstract class AbstractSpringTxSubscribedProjection extends AbstractSpringTxProjection
-    implements SubscribedProjection {
-  protected AbstractSpringTxSubscribedProjection(
-      @NonNull PlatformTransactionManager platformTransactionManager) {
-    super(platformTransactionManager);
+  /**
+   * open this up to be used from the projector in order to be able to inject as a parameter
+   *
+   * @return
+   */
+  @Override
+  public T runningTransaction() {
+    return super.runningTransaction();
   }
 }

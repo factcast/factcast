@@ -42,7 +42,7 @@ import org.factcast.factus.projection.parameter.HandlerParameterContributor;
 import org.factcast.factus.projection.parameter.HandlerParameterContributors;
 import org.factcast.factus.projection.parameter.HandlerParameterProvider;
 import org.factcast.factus.projection.parameter.HandlerParameterTransformer;
-import org.factcast.factus.projection.tx.AbstractTransactionAwareProjection;
+import org.factcast.factus.projection.tx.AbstractOpenTransactionAwareProjection;
 import org.factcast.factus.projection.tx.TransactionAware;
 
 @Slf4j
@@ -194,7 +194,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
     final HandlerParameterContributors c;
 
-    if (p instanceof AbstractTransactionAwareProjection<?>) {
+    if (p instanceof AbstractOpenTransactionAwareProjection<?>) {
 
       Class<?> clazz = getTypeParameter(p);
 
@@ -208,7 +208,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
                     @NonNull Class<?> type, @NonNull Set<Annotation> annotations) {
                   if (clazz == type)
                     return (f, p) ->
-                        ((AbstractTransactionAwareProjection<?>) p).runningTransaction();
+                        ((AbstractOpenTransactionAwareProjection<?>) p).runningTransaction();
                   else return null;
                 }
               });
@@ -259,7 +259,8 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     Class<?> cl = p.getClass();
 
     // climb to common superclass
-    while (cl.getSuperclass() != AbstractTransactionAwareProjection.class) cl = cl.getSuperclass();
+    while (cl.getSuperclass() != AbstractOpenTransactionAwareProjection.class)
+      cl = cl.getSuperclass();
     // grab type parameter
     ParameterizedType type = (ParameterizedType) cl.getGenericSuperclass();
     return (Class<?>) type.getActualTypeArguments()[0];

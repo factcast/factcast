@@ -15,6 +15,7 @@
  */
 package org.factcast.factus.projection.tx;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.factus.projection.Projection;
@@ -22,7 +23,8 @@ import org.factcast.factus.projection.Projection;
 public abstract class AbstractTransactionAwareProjection<T>
     implements TransactionAware, Projection {
 
-  @Getter private T runningTransaction;
+  @Getter(AccessLevel.PROTECTED)
+  private T runningTransaction;
 
   protected AbstractTransactionAwareProjection() {}
 

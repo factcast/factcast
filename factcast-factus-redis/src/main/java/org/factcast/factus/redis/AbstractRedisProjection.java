@@ -26,12 +26,12 @@ import org.factcast.factus.projection.FactStreamPositionAware;
 import org.factcast.factus.projection.Named;
 import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.projection.WriterTokenAware;
-import org.factcast.factus.projection.tx.AbstractTransactionAwareProjection;
+import org.factcast.factus.projection.tx.AbstractOpenTransactionAwareProjection;
 import org.factcast.factus.projection.tx.TransactionAware;
 import org.factcast.factus.redis.tx.RedisTransactional;
 import org.redisson.api.*;
 
-abstract class AbstractRedisProjection extends AbstractTransactionAwareProjection<RTransaction>
+abstract class AbstractRedisProjection extends AbstractOpenTransactionAwareProjection<RTransaction>
     implements RedisProjection, TransactionAware, FactStreamPositionAware, WriterTokenAware, Named {
   @Getter protected final RedissonClient redisson;
 
