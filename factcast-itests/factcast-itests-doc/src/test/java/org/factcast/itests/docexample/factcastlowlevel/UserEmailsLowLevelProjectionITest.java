@@ -39,7 +39,9 @@ class UserEmailsLowLevelProjectionITest extends AbstractFactCastIntegrationTest 
   private class FactObserverImpl implements BatchingFactObserver {
 
     @Override
-    public void onNext(@NonNull List<Fact> elements) {}
+    public void onNext(@NonNull List<Fact> elements) {
+      elements.forEach(uut::apply);
+    }
   }
 
   @Test
