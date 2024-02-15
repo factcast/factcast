@@ -243,32 +243,6 @@ class GrpcFactStoreTest {
     assertNotSame(seven, response);
   }
 
-  //  @Test
-  //  @SneakyThrows
-  //  void testReInitializeWhenNotPreviouslyInitialized() {
-  //
-  //    when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
-  //    when(blockingStub.handshake(any()))
-  //        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new
-  // HashMap<>())));
-  //
-  //    CountDownLatch latch = new CountDownLatch(3);
-  //    final ExecutorService threads = Executors.newFixedThreadPool(3);
-  //    IntStream.range(0, 3)
-  //        .forEach(
-  //            count ->
-  //                threads.submit(
-  //                    () -> {
-  //                      uut.reinitializeIfNecessary();
-  //                      latch.countDown();
-  //                    }));
-  //
-  //    assertThat(latch.await(100, TimeUnit.MILLISECONDS)).isTrue();
-  //
-  //    verify(blockingStub, times(1)).handshake(any());
-  //    assertThat(uut.reinitializationRequired().get()).isFalse();
-  //  }
-
   @Test
   void testInitializePropagatesIncompatibleProtocolVersionsOnUnavailableStatus() {
     Mockito.reset(

@@ -118,7 +118,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
     List<List<Fact>> factPartitions = Lists.partition(facts, MAX_FACTS / 4);
     // Reconnect with 4 concurrent threads
     CountDownLatch latch = new CountDownLatch(4);
-    ExecutorService threads = Executors.newFixedThreadPool(3);
+    ExecutorService threads = Executors.newFixedThreadPool(4);
     for (int i = 0; i < 4; i++) {
       final List<Fact> f = factPartitions.get(i);
       threads.submit(
@@ -180,6 +180,43 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
 
     // should reconnect like hell
     assertThat(fc.enumerateNamespaces()).isNotEmpty();
+  }
+
+  @SneakyThrows
+  @Test
+  void testConcurrentRetryBehaviorWithResponse() {
+    LogCaptor logCaptor = LogCaptor.forClass(GrpcFactStore.class);
+
+    fc.publish(Fact.builder().ns("ns").type("type").buildWithoutPayload());
+
+    // break upstream call
+    proxy.toxics().resetPeer("immediate reset", ToxicDirection.UPSTREAM, 1);
+
+    new Timer()
+        .schedule(
+            new TimerTask() {
+              @Override
+              public void run() {
+                // heal the communication
+                log.info("repairing proxy");
+                proxy.reset();
+              }
+            },
+            1000);
+
+    // Reconnect with 3 concurrent threads
+    CountDownLatch latch = new CountDownLatch(3);
+    ExecutorService threads = Executors.newFixedThreadPool(3);
+    for (int i = 0; i <= 3; ++i) {
+      threads.submit(
+          () -> {
+            assertThat(fc.enumerateNamespaces()).isNotEmpty();
+            latch.countDown();
+          });
+    }
+
+    assertThat(latch.await(3, TimeUnit.SECONDS)).isTrue();
+    assertThat(logCaptor.getInfoLogs()).containsOnlyOnce("Handshake successful.");
   }
 
   @SneakyThrows
