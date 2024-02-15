@@ -498,7 +498,6 @@ class GrpcFactStoreTest {
       when(stub.withWaitForReady()).thenReturn(stub);
       when(stub.withMaxInboundMessageSize(anyInt())).thenReturn(stub);
 
-
       final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
       props.setUser("foo");
       props.setPassword("bar");
