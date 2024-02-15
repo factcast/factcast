@@ -30,7 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class StagedFactsTest {
-  private StagedFacts underTest = new StagedFacts(100);
+  private StagedFacts underTest = new StagedFacts(150);
 
   @Nested
   class WhenAdding {
