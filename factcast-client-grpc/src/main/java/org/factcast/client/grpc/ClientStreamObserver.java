@@ -130,7 +130,10 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
         break;
       case Facts:
         List<Fact> facts = converter.fromProto(f.getFacts());
-        log.trace("received {} facts", facts.size());
+        log.trace(
+            "received {} facts translating to {} decompressed bytes",
+            facts.size(),
+            f.getSerializedSize());
         subscription.notifyElements(facts);
         break;
       case Ffwd:

@@ -17,7 +17,6 @@ package org.factcast.server.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.stub.StreamObserver;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -46,14 +45,13 @@ class GrpcObserverAdapter implements BatchingFactObserver {
   @NonNull private final String id;
 
   @NonNull private final StreamObserver<MSG_Notification> observer;
-  private final int catchupBatchSize;
   @NonNull private final ServerExceptionLogger serverExceptionLogger;
 
   @Getter(AccessLevel.PROTECTED)
   @VisibleForTesting
   private final ServerKeepalive keepalive;
 
-  private final ArrayList<Fact> stagedFacts;
+  private final StagedFacts stagedFacts;
   private final boolean supportsFastForward;
   private final long keepaliveInMilliseconds;
 
@@ -67,10 +65,9 @@ class GrpcObserverAdapter implements BatchingFactObserver {
       long keepaliveInMilliseconds) {
     this.id = id;
     this.observer = observer;
-    catchupBatchSize = meta.catchupBatch().orElse(1);
     supportsFastForward = meta.supportsFastForward();
     this.keepaliveInMilliseconds = keepaliveInMilliseconds;
-    stagedFacts = new ArrayList<>(catchupBatchSize);
+    stagedFacts = new StagedFacts(meta.clientMaxInboundMessageSize());
     this.serverExceptionLogger = serverExceptionLogger;
     if (keepaliveInMilliseconds > 0) {
       keepalive = new ServerKeepalive();
@@ -155,26 +152,28 @@ class GrpcObserverAdapter implements BatchingFactObserver {
     caughtUp.set(true);
   }
 
-  private void flush() {
+  void flush() {
     // yes, it is threadsafe
     if (!stagedFacts.isEmpty()) {
       log.trace("{} flushing batch of {} facts", id, stagedFacts.size());
-      observer.onNext(converter.createNotificationFor(stagedFacts));
-      stagedFacts.clear();
+      observer.onNext(converter.createNotificationFor(stagedFacts.popAll()));
     }
   }
 
   @Override
   public void onNext(@NonNull List<Fact> element) {
-    // TODO staging business needs rewrite
-    if (catchupBatchSize > 1 && !caughtUp.get()) {
-      if (stagedFacts.size() >= catchupBatchSize) {
-        flush();
-      }
-      stagedFacts.addAll(element);
-    } else {
+    if (caughtUp.get()) {
+      // transfer immediately
       observer.onNext(converter.createNotificationFor(element));
-    }
+    } else
+      element.forEach(
+          f -> {
+            if (!stagedFacts.add(f)) {
+              flush();
+              // add it to the next batch
+              stagedFacts.add(f);
+            }
+          });
   }
 
   @Override

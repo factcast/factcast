@@ -140,8 +140,12 @@ public class GrpcFactStore implements FactStore {
     this.clientId = clientId;
 
     // initially use the raw ones...
-    blockingStub = rawBlockingStub.withWaitForReady();
-    stub = rawStub.withWaitForReady();
+    blockingStub =
+        rawBlockingStub
+            .withWaitForReady()
+            .withMaxInboundMessageSize(properties.getMaxInboundMessageSize());
+    stub =
+        rawStub.withWaitForReady().withMaxInboundMessageSize(properties.getMaxInboundMessageSize());
 
     if (properties.getUser() != null && properties.getPassword() != null) {
       CallCredentials basic =
@@ -381,11 +385,9 @@ public class GrpcFactStore implements FactStore {
       meta.put(Headers.FAST_FORWARD, "true");
     }
 
-    // existence of this header will enable the on-the-wire-batching feature
-    int catchupBatchSize = properties.getCatchupBatchsize();
-    if (catchupBatchSize > 1) {
-      meta.put(Headers.CATCHUP_BATCHSIZE, String.valueOf(catchupBatchSize));
-    }
+    meta.put(
+        Headers.CLIENT_MAX_INBOUND_MESSAGE_SIZE,
+        String.valueOf(properties.getMaxInboundMessageSize()));
 
     addClientIdTo(meta);
 

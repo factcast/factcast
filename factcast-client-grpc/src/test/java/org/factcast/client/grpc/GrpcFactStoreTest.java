@@ -132,17 +132,10 @@ class GrpcFactStoreTest {
   }
 
   @Test
-  void configureWithBatchSize1() {
-    when(properties.getCatchupBatchsize()).thenReturn(1);
+  void configureWithMaxMesssageSize() {
+    when(properties.getMaxInboundMessageSize()).thenReturn(1777);
     Metadata meta = uut.prepareMetaData("lz4");
-    assertThat(meta.containsKey(Headers.CATCHUP_BATCHSIZE)).isFalse();
-  }
-
-  @Test
-  void configureWithBatchSize10() {
-    when(properties.getCatchupBatchsize()).thenReturn(10);
-    Metadata meta = uut.prepareMetaData("lz4");
-    assertThat(meta.get(Headers.CATCHUP_BATCHSIZE)).isEqualTo(String.valueOf(10));
+    assertThat(meta.containsKey(Headers.CLIENT_MAX_INBOUND_MESSAGE_SIZE)).isTrue();
   }
 
   @Test
