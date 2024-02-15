@@ -113,12 +113,13 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
         });
 
     assertThat(count.get()).isEqualTo(MAX_FACTS);
-    assertThat(logCaptor.getDebugLogs()).containsOnlyOnce("Invoking handshake");
+    assertThat(logCaptor.getInfoLogs()).containsOnlyOnce("Handshake successful.");
   }
 
   @SneakyThrows
   @Test
   void followWithReconnectAfterCatchup() {
+    LogCaptor logCaptor = LogCaptor.forClass(GrpcFactStore.class);
     var count = new AtomicInteger();
 
     try (var ignored = follow(f -> count.incrementAndGet())) {
@@ -134,6 +135,8 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
           .atMost(1, SECONDS)
           .untilAsserted(() -> assertThat(count.get()).isEqualTo(MAX_FACTS + 1));
     }
+
+    assertThat(logCaptor.getInfoLogs()).containsOnlyOnce("Handshake successful.");
   }
 
   @SneakyThrows
