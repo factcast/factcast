@@ -88,7 +88,9 @@ class GrpcFactStoreTest {
     when(properties.getResilience()).thenReturn(resilienceConfig);
     // preserve deep stub behavior
     when(stub.withWaitForReady()).thenReturn(stub);
+    when(stub.withMaxInboundMessageSize(anyInt())).thenReturn(stub);
     when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
+    when(blockingStub.withMaxInboundMessageSize(anyInt())).thenReturn(blockingStub);
     //
     resilienceConfig.setEnabled(false);
     uut = new GrpcFactStore(blockingStub, stub, credentials, properties, "someTest");
@@ -492,7 +494,10 @@ class GrpcFactStoreTest {
       final RemoteFactStoreBlockingStub blockingStub = mock(RemoteFactStoreBlockingStub.class);
       final RemoteFactStoreStub stub = mock(RemoteFactStoreStub.class);
       when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
+      when(blockingStub.withMaxInboundMessageSize(anyInt())).thenReturn(blockingStub);
       when(stub.withWaitForReady()).thenReturn(stub);
+      when(stub.withMaxInboundMessageSize(anyInt())).thenReturn(stub);
+
 
       final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
       props.setUser("foo");
@@ -509,7 +514,9 @@ class GrpcFactStoreTest {
       final RemoteFactStoreBlockingStub blockingStub = mock(RemoteFactStoreBlockingStub.class);
       final RemoteFactStoreStub stub = mock(RemoteFactStoreStub.class);
       when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
+      when(blockingStub.withMaxInboundMessageSize(anyInt())).thenReturn(blockingStub);
       when(stub.withWaitForReady()).thenReturn(stub);
+      when(stub.withMaxInboundMessageSize(anyInt())).thenReturn(stub);
 
       final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
 
