@@ -15,6 +15,8 @@
  */
 package org.factcast.factus.projection.tx;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -33,7 +35,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class AbstractTransactionAwareProjectionTest {
 
   @Mock private Tx runningTransaction;
-  private TestTransactionAwareProjection underTest = new TestTransactionAwareProjection();
+  private TestTransactionAwareProjection underTest = spy(new TestTransactionAwareProjection());
 
   @Nested
   class WhenBegining {
@@ -41,10 +43,37 @@ class AbstractTransactionAwareProjectionTest {
     void setup() {}
 
     @Test
-    void test() {
+    void beginStarts() {
       Assertions.assertThat(underTest.inTransaction()).isFalse();
       underTest.begin();
       Assertions.assertThat(underTest.inTransaction()).isTrue();
+    }
+
+    @Test
+    void beginDelegates() {
+      underTest.begin();
+      verify(underTest).beginNewTransaction();
+    }
+
+    @Test
+    void remembersTransaction() {
+      @NonNull Tx t = new Tx();
+      when(underTest.beginNewTransaction()).thenReturn(t);
+      underTest.begin();
+      verify(underTest).beginNewTransaction();
+      assertThat(underTest.runningTransaction()).isSameAs(t);
+    }
+
+    @Test
+    void failureOnBeginDoesNotChangeState() {
+      doThrow(RuntimeException.class).when(underTest).beginNewTransaction();
+
+      Assertions.assertThat(underTest.inTransaction()).isFalse();
+      assertThatThrownBy(
+              () -> {
+                underTest.begin();
+              })
+          .isInstanceOf(Exception.class);
     }
   }
 
@@ -52,30 +81,96 @@ class AbstractTransactionAwareProjectionTest {
   class WhenCommitting {
     @BeforeEach
     void setup() {}
+
+    @Test
+    void commitEnds() {
+      Assertions.assertThat(underTest.inTransaction()).isFalse();
+      underTest.begin();
+      Assertions.assertThat(underTest.inTransaction()).isTrue();
+      underTest.commit();
+      verify(underTest).commit(any());
+      Assertions.assertThat(underTest.inTransaction()).isFalse();
+    }
+
+    @Test
+    void failingCommitEnds() {
+
+      doThrow(RuntimeException.class).when(underTest).commit(any());
+
+      Assertions.assertThat(underTest.inTransaction()).isFalse();
+      underTest.begin();
+      Assertions.assertThat(underTest.inTransaction()).isTrue();
+      assertThatThrownBy(
+              () -> {
+                underTest.commit();
+              })
+          .isInstanceOf(Exception.class);
+      verify(underTest).commit(any());
+      Assertions.assertThat(underTest.inTransaction()).isFalse();
+    }
   }
 
   @Nested
   class WhenRollbacking {
     @BeforeEach
     void setup() {}
+
+    @Test
+    void rollbackEnds() {
+      Assertions.assertThat(underTest.inTransaction()).isFalse();
+      underTest.begin();
+      Assertions.assertThat(underTest.inTransaction()).isTrue();
+      underTest.rollback();
+      Assertions.assertThat(underTest.inTransaction()).isFalse();
+      verify(underTest).rollback(any());
+    }
+
+    @Test
+    void failinRollbackEnds() {
+      doThrow(RuntimeException.class).when(underTest).rollback(any());
+
+      Assertions.assertThat(underTest.inTransaction()).isFalse();
+      underTest.begin();
+      Assertions.assertThat(underTest.inTransaction()).isTrue();
+      assertThatThrownBy(
+              () -> {
+                underTest.rollback();
+              })
+          .isInstanceOf(Exception.class);
+      Assertions.assertThat(underTest.inTransaction()).isFalse();
+      verify(underTest).rollback(any());
+    }
   }
 
   @Nested
   class WhenAssertingNoRunningTransaction {
     @BeforeEach
     void setup() {}
+
+    @Test
+    void throwsIfRunning() {
+      underTest.begin();
+      assertThatThrownBy(
+              () -> {
+                underTest.assertNoRunningTransaction();
+              })
+          .isInstanceOf(TransactionAlreadyRunningException.class);
+    }
   }
 
   @Nested
   class WhenAssertingInTransaction {
     @BeforeEach
     void setup() {}
-  }
 
-  @Nested
-  class WhenTestingInTransaction {
-    @BeforeEach
-    void setup() {}
+    @Test
+    void throwsIfRunning() {
+      assertThatThrownBy(
+              () -> {
+                underTest.assertInTransaction();
+              })
+          .isInstanceOf(TransactionNotRunningException.class);
+    }
   }
 }
 
