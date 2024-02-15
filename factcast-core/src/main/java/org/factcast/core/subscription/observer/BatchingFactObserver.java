@@ -15,6 +15,7 @@
  */
 package org.factcast.core.subscription.observer;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
 import lombok.Generated;
 import lombok.NonNull;
@@ -32,38 +33,47 @@ public interface BatchingFactObserver extends FactStreamObserver {
 
   // turns a FactObserver into a BatchingFactObserver for compatibility
   static BatchingFactObserver of(FactObserver o) {
-    return new BatchingFactObserver() {
-      @Override
-      public void onNext(@NonNull List<Fact> elements) {
-        elements.forEach(o::onNext);
-      }
-
-      @Override
-      public void onCatchup() {
-        o.onCatchup();
-      }
-
-      @Override
-      public void onError(@NonNull Throwable exception) {
-        o.onError(exception);
-      }
-
-      @Override
-      public void onComplete() {
-        o.onComplete();
-      }
-
-      @Override
-      public void onFactStreamInfo(@NonNull FactStreamInfo info) {
-        o.onFactStreamInfo(info);
-      }
-
-      @Override
-      public void onFastForward(@NonNull FactStreamPosition pos) {
-        o.onFastForward(pos);
-      }
-    };
+    return new Bridge(o);
   }
 
   void onNext(@NonNull List<Fact> elements);
+
+  @VisibleForTesting
+  class Bridge implements BatchingFactObserver {
+    private final FactObserver o;
+
+    public Bridge(FactObserver o) {
+      this.o = o;
+    }
+
+    @Override
+    public void onNext(@NonNull List<Fact> elements) {
+      elements.forEach(o::onNext);
+    }
+
+    @Override
+    public void onCatchup() {
+      o.onCatchup();
+    }
+
+    @Override
+    public void onError(@NonNull Throwable exception) {
+      o.onError(exception);
+    }
+
+    @Override
+    public void onComplete() {
+      o.onComplete();
+    }
+
+    @Override
+    public void onFactStreamInfo(@NonNull FactStreamInfo info) {
+      o.onFactStreamInfo(info);
+    }
+
+    @Override
+    public void onFastForward(@NonNull FactStreamPosition pos) {
+      o.onFastForward(pos);
+    }
+  }
 }
