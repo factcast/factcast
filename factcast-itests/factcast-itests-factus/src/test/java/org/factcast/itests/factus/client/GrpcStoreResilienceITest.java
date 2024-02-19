@@ -96,8 +96,8 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
   void testConcurrentRetryBehaviorWithoutResponse() {
     LogCaptor logCaptor = LogCaptor.forClass(GrpcFactStore.class);
 
-    // break upstream call
-    proxy.toxics().timeout("immediate reset", ToxicDirection.UPSTREAM, 10);
+    // break upstream call, timeout of 0 will make sure no communication takes place until reset.
+    proxy.toxics().timeout("immediate reset", ToxicDirection.UPSTREAM, 0);
 
     new Timer()
         .schedule(
@@ -207,7 +207,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
     // Reconnect with 3 concurrent threads
     CountDownLatch latch = new CountDownLatch(3);
     ExecutorService threads = Executors.newFixedThreadPool(3);
-    for (int i = 0; i <= 3; ++i) {
+    for (int i = 0; i < 3; ++i) {
       threads.submit(
           () -> {
             assertThat(fc.enumerateNamespaces()).isNotEmpty();
@@ -217,10 +217,5 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
 
     assertThat(latch.await(3, TimeUnit.SECONDS)).isTrue();
     assertThat(logCaptor.getInfoLogs()).containsOnlyOnce("Handshake successful.");
-  }
-
-  @SneakyThrows
-  private void sleep(long ms) {
-    Thread.sleep(ms);
   }
 }
