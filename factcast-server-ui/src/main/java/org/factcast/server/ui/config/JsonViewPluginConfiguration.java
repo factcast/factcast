@@ -37,6 +37,12 @@ public class JsonViewPluginConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
+  public HeaderFilterOptionsPlugin headerFilterOptionsPlugin() {
+    return new HeaderFilterOptionsPlugin();
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
   public HeaderMetaTimestampToDatePlugin headerMetaTimestampToDatePlugin() {
     return new HeaderMetaTimestampToDatePlugin();
   }

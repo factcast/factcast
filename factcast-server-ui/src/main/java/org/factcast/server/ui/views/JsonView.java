@@ -15,13 +15,23 @@
  */
 package org.factcast.server.ui.views;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Tag;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.dependency.CssImport;
+import com.vaadin.flow.component.dependency.JavaScript;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dependency.NpmPackage;
 import java.util.*;
+import java.util.function.Consumer;
+
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.util.NoCoverageReportToBeGenerated;
+import org.factcast.server.ui.plugins.JsonEntryMetaData;
 import org.factcast.server.ui.plugins.JsonViewEntries;
 import org.factcast.server.ui.plugins.JsonViewEntry;
 
@@ -34,13 +44,40 @@ import org.factcast.server.ui.plugins.JsonViewEntry;
 @NpmPackage(value = "jsonc-parser", version = "3.2.0")
 @NpmPackage(value = "jsonpath-plus", version = "7.2.0")
 @NoCoverageReportToBeGenerated
+@RequiredArgsConstructor
+@Slf4j
 public class JsonView extends Component {
+
+  private final Consumer<QuickFilterOptions> filterApplier;
+  private final ObjectMapper om = new ObjectMapper();
+
+  public JsonView() {
+    this(null);
+  }
 
   public void renderFact(JsonViewEntry f) {
     renderFacts(new JsonViewEntries(Collections.singletonList(f)));
   }
 
   public void renderFacts(JsonViewEntries entries) {
-    getElement().callJsFunction("renderJson", entries.json(), entries.meta());
+    getElement().callJsFunction("renderJson", entries.json(), entries.meta(), filterApplier != null, filterApplier != null ? getElement() : null);
   }
+
+  @ClientCallable
+  @SneakyThrows
+  public void updateFilters(String filterOptions) {
+    log.info("Updating filters with {}", filterOptions);
+    filterApplier.accept(om.readValue(filterOptions, QuickFilterOptions.class));
+  }
+
+  public record QuickFilterOptions (
+          UUID aggregateId,
+          MetaFilterOption meta,
+          int affectedCriteria
+  ) {
+
+  }
+  public record MetaFilterOption (String key, String value) {
+  }
+
 }
