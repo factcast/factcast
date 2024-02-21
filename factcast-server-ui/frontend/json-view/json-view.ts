@@ -55,6 +55,7 @@ class JsonView extends LitElement {
     private filterUpdateCommand: string | null = null;
     private quickFilterEnabled: boolean = false;
     private vaadinElement: VaadinJsonViewElement | undefined;
+    private conditionCount: number = 1;
 
     constructor() {
         super();
@@ -142,23 +143,17 @@ class JsonView extends LitElement {
             automaticLayout: true,
         });
 
-        this.filterUpdateCommand = this.editor.addCommand(0, (ctx, arg: FactFilterOptions) => {
-            console.log("!!!!Running command!");
-            console.log(arg);
-            console.log(this.vaadinElement);
-            this.vaadinElement?.$server.updateFilters(JSON.stringify({
-                ...arg,
-                affectedCriteria: -1
-            }))
+        this.filterUpdateCommand = this.editor.addCommand(0, (ctx, arg: UpdateFactFilterOptions) => {
+            this.vaadinElement?.$server.updateFilters(JSON.stringify(arg))
         })
     }
 
-    public renderJson(json: string, metaData: string, enableQuickFilter: boolean, vaadinElement: VaadinJsonViewElement) {
+    public renderJson(json: string, metaData: string, enableQuickFilter: boolean, conditionCount: number, vaadinElement: VaadinJsonViewElement) {
         this.quickFilterEnabled = enableQuickFilter;
         this.vaadinElement = vaadinElement;
+        this.conditionCount = conditionCount;
         if (this.editor) {
             this.metaData = this.parseMetaData(json, metaData);
-            console.log(this.metaData);
             this.editor.setValue(json);
 
             console.dir((JSON.parse(json) as []).reverse());
@@ -259,18 +254,14 @@ class JsonView extends LitElement {
                         ),
                     };
 
-
-                    enrichedMember.contents = [];
-
-                    const encodedArgs = encodeURIComponent(JSON.stringify(filter));
+                    let label: string = "this"; // fallback value
                     if (filter.meta) {
-                        enrichedMember.contents.push({
-                            isTrusted: true,
-                            value: `[Filter for ${filter.meta.key}:${filter.meta.value} on all conditions](command:${that.filterUpdateCommand}?${encodedArgs})`
-                        })
-                        // todo make list of conditions available here and add a "Filter on condition #"
+                        label = `${filter.meta.key}:${filter.meta.value}`;
                     }
-
+                    if (filter.aggregateId) {
+                        label = `aggregate ID ${filter.aggregateId}`
+                    }
+                    enrichedMember.contents = that.buildFilterCommandLinks(label, filter)
 
                     enrichedMembers.push(enrichedMember);
                 }
@@ -279,6 +270,38 @@ class JsonView extends LitElement {
         });
 
         return enrichedMembers;
+    }
+
+    private buildFilterCommandLinks(forText: string, options: FactFilterOptions): monaco.IMarkdownString[] {
+        if (this.conditionCount === 1) {
+            const encodedArgs = encodeURIComponent(JSON.stringify(
+                {...options, affectedCriteria: 0}));
+            return [
+                {
+                    isTrusted: true,
+                    value: `[Filter for ${forText}](command:${this.filterUpdateCommand}?${encodedArgs})`
+                }
+            ]
+        }
+        const encodedArgsForAll = encodeURIComponent(JSON.stringify(
+            {...options, affectedCriteria: -1}));
+        const allLinks: monaco.IMarkdownString[] = [
+            {
+                isTrusted: true,
+                value: `[Filter for ${forText} on all conditions](command:${this.filterUpdateCommand}?${encodedArgsForAll})`
+            }
+        ];
+        for (let i = 0; i < this.conditionCount; i++) {
+            const encodedArgs= encodeURIComponent(JSON.stringify(
+                {...options, affectedCriteria: i}));
+            allLinks.push(
+                {
+                    isTrusted: true,
+                    value: `[Filter for ${forText} on condition ${i + 1}](command:${this.filterUpdateCommand}?${encodedArgs})`
+                }
+            );
+        }
+        return allLinks;
     }
 
     private compilePath(path: string) {
