@@ -97,7 +97,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
     LogCaptor logCaptor = LogCaptor.forClass(GrpcFactStore.class);
 
     // break upstream call, timeout of 0 will make sure no communication takes place until reset.
-    proxy.toxics().timeout("immediate reset", ToxicDirection.UPSTREAM, 0);
+    proxy.toxics().resetPeer("immediate reset", ToxicDirection.UPSTREAM, 0);
 
     new Timer()
         .schedule(
@@ -109,7 +109,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
                 proxy.reset();
               }
             },
-            1000);
+            100);
 
     List<Fact> facts = new ArrayList<>(MAX_FACTS);
     for (int i = 0; i < MAX_FACTS; i++) {
