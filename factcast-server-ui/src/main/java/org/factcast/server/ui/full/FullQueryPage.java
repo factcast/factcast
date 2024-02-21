@@ -208,7 +208,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
       log.info("{} runs query for {}", getLoggedInUserName(), formBean);
       List<Fact> dataFromStore = repo.fetchChunk(formBean);
       JsonViewEntries processedByPlugins = jsonViewPluginService.process(dataFromStore);
-      jsonView.renderFacts(processedByPlugins);
+      jsonView.renderFacts(processedByPlugins, formBean.getCriteria().size());
       queryResult = processedByPlugins;
       exportJsonBtn.setEnabled(true);
     } catch (ValidationException e) {
@@ -236,6 +236,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
           formBean.reset();
           binder.readBean(formBean);
           factCriteriaViews.rebuild();
+          jsonView.renderFacts(queryResult, formBean.getCriteria().size());
         });
 
     final var jsonDownload = configureDownloadWrapper(exportJsonBtn);

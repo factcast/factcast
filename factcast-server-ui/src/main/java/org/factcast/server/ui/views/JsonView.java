@@ -55,12 +55,20 @@ public class JsonView extends Component {
     this(null);
   }
 
-  public void renderFact(JsonViewEntry f) {
-    renderFacts(new JsonViewEntries(Collections.singletonList(f)));
+  public void renderFact(JsonViewEntry f, int conditionCount) {
+    renderFacts(new JsonViewEntries(Collections.singletonList(f)), conditionCount);
   }
 
-  public void renderFacts(JsonViewEntries entries) {
-    getElement().callJsFunction("renderJson", entries.json(), entries.meta(), filterApplier != null, filterApplier != null ? getElement() : null);
+  public void renderFacts(JsonViewEntries entries, int conditionCount) {
+    var enableQuickFiltering = filterApplier != null && conditionCount > 0;
+    getElement().callJsFunction(
+            "renderJson",
+            entries.json(),
+            entries.meta(),
+            enableQuickFiltering, // enable quick filters,
+            conditionCount, // number of filter conditions, needed for quick filtering correct condition
+            enableQuickFiltering ? getElement() : null // element reference for call to updateFilters
+    );
   }
 
   @ClientCallable
