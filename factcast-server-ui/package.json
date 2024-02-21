@@ -18,6 +18,7 @@
     "@vaadin/component-base": "24.3.6",
     "@vaadin/confirm-dialog": "24.3.6",
     "@vaadin/context-menu": "24.3.6",
+    "@vaadin/cookie-consent": "24.3.6",
     "@vaadin/custom-field": "24.3.6",
     "@vaadin/date-picker": "24.3.6",
     "@vaadin/date-time-picker": "24.3.6",
@@ -164,7 +165,8 @@
     "@vaadin-component-factory/vcf-lookup-field": "$@vaadin-component-factory/vcf-lookup-field",
     "monaco-editor": "$monaco-editor",
     "jsonpath-plus": "$jsonpath-plus",
-    "jsonc-parser": "$jsonc-parser"
+    "jsonc-parser": "$jsonc-parser",
+    "@vaadin/cookie-consent": "$@vaadin/cookie-consent"
   },
   "vaadin": {
     "dependencies": {
@@ -185,6 +187,7 @@
       "@vaadin/component-base": "24.3.6",
       "@vaadin/confirm-dialog": "24.3.6",
       "@vaadin/context-menu": "24.3.6",
+      "@vaadin/cookie-consent": "24.3.6",
       "@vaadin/custom-field": "24.3.6",
       "@vaadin/date-picker": "24.3.6",
       "@vaadin/date-time-picker": "24.3.6",
@@ -259,6 +262,6 @@
       "workbox-core": "7.0.0",
       "workbox-precaching": "7.0.0"
     },
-    "hash": "f97bea0c50c825226c579754c644698ba30418b3f02b5683174969cf0da34ee6"
+    "hash": "8c5f57b77c39891dc518642f7eb2144ae6ee6148791f6e6e4c78b38a7eed5e50"
   }
 }

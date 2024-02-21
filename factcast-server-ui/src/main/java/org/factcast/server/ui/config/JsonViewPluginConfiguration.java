@@ -43,6 +43,12 @@ public class JsonViewPluginConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
+  public PayloadFilterOptionsPlugin payloadFilterOptionsPlugin() {
+    return new PayloadFilterOptionsPlugin();
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
   public HeaderMetaTimestampToDatePlugin headerMetaTimestampToDatePlugin() {
     return new HeaderMetaTimestampToDatePlugin();
   }
