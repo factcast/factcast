@@ -15,6 +15,7 @@
  */
 package org.factcast.server.ui.plugins;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.*;
 import lombok.Getter;
@@ -38,6 +39,8 @@ public class JsonViewEntries {
 
     @JsonProperty private final Map<String, Collection<String>> hoverContent = new HashMap<>();
 
+    @JsonProperty private final Map<String, FilterOptions> filterOptions = new HashMap<>();
+
     MetaData(List<JsonViewEntry> entries) {
       for (int index = 0; index < entries.size(); index++) {
         var entry = entries.get(index);
@@ -45,7 +48,23 @@ public class JsonViewEntries {
         JsonEntryMetaData meta = entry.metaData();
         meta.annotations().forEach((k, v) -> annotations.put(prefix + k, v));
         meta.hoverContent().forEach((k, v) -> hoverContent.put(prefix + k, v));
+        meta.filterOptions().forEach((k, v) -> filterOptions.put(prefix + k, FilterOptions.from(v)));
       }
+    }
+  }
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  record FilterOptions (
+          UUID aggregateId,
+          MetaFilterOption meta
+  ) {
+    static FilterOptions from(JsonEntryMetaData.FilterOptions options) {
+      return new FilterOptions(options.aggregateId(), MetaFilterOption.from(options.meta()));
+    }
+  }
+
+  record MetaFilterOption (String key, String value) {
+    static MetaFilterOption from(JsonEntryMetaData.MetaFilterOption option) {
+      return option != null ? new MetaFilterOption(option.key(), option.value()) : null;
     }
   }
 }
