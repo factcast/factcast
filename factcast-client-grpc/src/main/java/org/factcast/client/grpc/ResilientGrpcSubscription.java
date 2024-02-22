@@ -152,10 +152,12 @@ public class ResilientGrpcSubscription implements Subscription {
   @VisibleForTesting
   synchronized void reConnect() {
     log.debug("Reconnecting ({})", originalRequest);
+    store.initializeIfNecessary();
     doConnect();
   }
 
-  private void doConnect() {
+  @VisibleForTesting
+  protected void doConnect() {
     resilience.registerAttempt();
     SubscriptionRequestTO to = SubscriptionRequestTO.forFacts(originalRequest);
     FactStreamPosition last = lastPosition.get();
@@ -226,6 +228,8 @@ public class ResilientGrpcSubscription implements Subscription {
     public void onError(@NonNull Throwable exception) {
       log.info("Closing subscription due to onError triggered.  ({})", originalRequest, exception);
       closeAndDetachSubscription();
+      // reset the store state, as the connection *might* be broken.
+      store.reset();
 
       if (resilience.shouldRetry(exception)) {
         log.info("Trying to resubscribe ({})", originalRequest);

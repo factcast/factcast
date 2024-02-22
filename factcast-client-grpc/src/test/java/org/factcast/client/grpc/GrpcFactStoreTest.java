@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.Callable;
+import java.util.concurrent.*;
 import lombok.NonNull;
 import org.assertj.core.util.Lists;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
@@ -57,10 +57,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Answers;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -94,6 +91,10 @@ class GrpcFactStoreTest {
     //
     resilienceConfig.setEnabled(false);
     uut = new GrpcFactStore(blockingStub, stub, credentials, properties, "someTest");
+
+    when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
+    when(blockingStub.handshake(any()))
+        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
   }
 
   @Test
@@ -239,8 +240,12 @@ class GrpcFactStoreTest {
 
   @Test
   void testInitializePropagatesIncompatibleProtocolVersionsOnUnavailableStatus() {
+    Mockito.reset(
+        blockingStub); // so that re can redefine the handshake behavior, which was set to returning
+    // a correct version in setup()
     when(blockingStub.handshake(any())).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
-    assertThrows(IncompatibleProtocolVersions.class, () -> uut.initialize());
+
+    assertThrows(IncompatibleProtocolVersions.class, () -> uut.initializeIfNecessary());
   }
 
   @Test
@@ -280,7 +285,7 @@ class GrpcFactStoreTest {
     when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
     when(blockingStub.handshake(any()))
         .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
-    uut.initialize();
+    uut.initializeIfNecessary();
   }
 
   @Test
@@ -288,7 +293,7 @@ class GrpcFactStoreTest {
     when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
     when(blockingStub.handshake(any()))
         .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(99, 0, 0), new HashMap<>())));
-    Assertions.assertThrows(IncompatibleProtocolVersions.class, () -> uut.initialize());
+    Assertions.assertThrows(IncompatibleProtocolVersions.class, () -> uut.initializeIfNecessary());
   }
 
   @Test
@@ -296,8 +301,8 @@ class GrpcFactStoreTest {
     when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
     when(blockingStub.handshake(any()))
         .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
-    uut.initialize();
-    uut.initialize();
+    uut.initializeIfNecessary();
+    uut.initializeIfNecessary();
     verify(blockingStub, times(1)).handshake(any());
   }
 
@@ -720,17 +725,27 @@ class GrpcFactStoreTest {
 
     @Test
     void retriesCall() throws Exception {
+      when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
+      when(blockingStub.handshake(any()))
+          .thenReturn(
+              conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
       resilienceConfig.setEnabled(true).setAttempts(100).setInterval(Duration.ofMillis(100));
       when(block.call()).thenThrow(new RetryableException(new IOException())).thenReturn(null);
       uut.callAndHandle(block);
+      verify(blockingStub, times(2)).handshake(any());
       verify(block, times(2)).call();
     }
 
     @Test
     void retriesRun() throws Exception {
+      when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
+      when(blockingStub.handshake(any()))
+          .thenReturn(
+              conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
       resilienceConfig.setEnabled(true).setAttempts(100).setInterval(Duration.ofMillis(100));
       doThrow(new RetryableException(new IOException())).doNothing().when(runnable).run();
       uut.runAndHandle(runnable);
+      verify(blockingStub, times(2)).handshake(any());
       verify(runnable, times(2)).run();
     }
 
