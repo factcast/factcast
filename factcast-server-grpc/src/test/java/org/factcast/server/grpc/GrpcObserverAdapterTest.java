@@ -155,13 +155,13 @@ public class GrpcObserverAdapterTest {
     GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer);
     doNothing().when(observer).onNext(msg.capture());
     verify(observer, never()).onNext(any());
-    List<Fact> f = Collections.singletonList(Fact.builder().ns("test").build("{}"));
+    Fact f = Fact.builder().ns("test").build("{}");
     uut.onNext(f);
     uut.flush();
     verify(observer).onNext(any());
     MSG_Notification notification = msg.getValue();
     assertEquals(MSG_Notification.Type.Facts, notification.getType());
-    assertEquals(f, conv.fromProto(notification.getFacts()));
+    assertEquals(f, conv.fromProto(notification.getFacts()).get(0));
   }
 
   @Test

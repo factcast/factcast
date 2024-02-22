@@ -15,4 +15,4 @@
  */
 package org.factcast.server.grpc;
 
-public class BatchingOnServerSideShouldBeAvoidedException extends Exception {}
+public class BatchingOnServerSideShouldBeAvoidedException extends UnsupportedOperationException {}

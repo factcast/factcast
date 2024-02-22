@@ -162,26 +162,7 @@ class GrpcObserverAdapter implements ServerSideFactObserver {
 
   @Override
   public void onNext(@NonNull List<Fact> element) {
-
-    // might be an error?
-    if (element.size() == 1) {
-      log.error(
-          "We're using batching on the server side, with a list size of one. While we will mitigate, for performance reasons this should be avoided. Please fix the code accordingly (see stsack trace below)",
-          new BatchingOnServerSideShouldBeAvoidedException());
-    }
-
-    if (caughtUp.get()) {
-      // TODO do not transfer immediately
-      observer.onNext(converter.createNotificationFor(element));
-    } else
-      element.forEach(
-          f -> {
-            if (!stagedFacts.add(f)) {
-              flush();
-              // add it to the next batch
-              stagedFacts.add(f);
-            }
-          });
+    throw new BatchingOnServerSideShouldBeAvoidedException();
   }
 
   public void onNext(@NonNull Fact f) {
