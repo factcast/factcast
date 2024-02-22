@@ -85,7 +85,7 @@ class StagedFactsTest {
     @SuppressWarnings("JoinAssertThatStatements")
     @Test
     void delegates() {
-      underTest = new StagedFacts(200);
+      underTest = new StagedFacts(225);
       Fact f =
           Fact.of(
               "{\"ns\":\"foo\",\"id\":\"" + UUID.randomUUID() + "\",\"c\":100}",

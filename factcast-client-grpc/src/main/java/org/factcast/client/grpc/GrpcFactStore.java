@@ -140,12 +140,10 @@ public class GrpcFactStore implements FactStore {
     this.clientId = clientId;
 
     // initially use the raw ones...
+    int maxInboundMessageSize = properties.getMaxInboundMessageSize();
     blockingStub =
-        rawBlockingStub
-            .withWaitForReady()
-            .withMaxInboundMessageSize(properties.getMaxInboundMessageSize());
-    stub =
-        rawStub.withWaitForReady().withMaxInboundMessageSize(properties.getMaxInboundMessageSize());
+        rawBlockingStub.withWaitForReady().withMaxInboundMessageSize(maxInboundMessageSize);
+    stub = rawStub.withWaitForReady().withMaxInboundMessageSize(maxInboundMessageSize);
 
     if (properties.getUser() != null && properties.getPassword() != null) {
       CallCredentials basic =
