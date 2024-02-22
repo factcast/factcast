@@ -16,6 +16,7 @@
 package org.factcast.core.subscription;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -29,6 +30,7 @@ import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.observer.BatchingFactObserver;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.ServerSideFactObserver;
 import org.factcast.core.util.ExceptionHelper;
 
 /**
@@ -184,6 +186,17 @@ public class SubscriptionImpl implements InternalSubscription {
     if (!closed.get()) {
       // note that those facts are already transformed
       observer.onNext(batch);
+    }
+  }
+
+  @Override
+  public void notifyElement(@NonNull Fact f) throws TransformationException {
+    if (!closed.get()) {
+
+      // TODO sucks
+      if (observer instanceof ServerSideFactObserver) {
+        ((ServerSideFactObserver) observer).onNext(f);
+      } else observer.onNext(Collections.singletonList(f));
     }
   }
 

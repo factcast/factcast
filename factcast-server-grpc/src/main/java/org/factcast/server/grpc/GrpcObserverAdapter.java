@@ -28,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
-import org.factcast.core.subscription.observer.BatchingFactObserver;
+import org.factcast.core.subscription.observer.ServerSideFactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 
@@ -38,7 +38,7 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
  * @author <uwe.schaefer@prisma-capacity.eu>
  */
 @Slf4j
-class GrpcObserverAdapter implements BatchingFactObserver {
+class GrpcObserverAdapter implements ServerSideFactObserver {
 
   private final ProtoConverter converter = new ProtoConverter();
 
@@ -162,8 +162,16 @@ class GrpcObserverAdapter implements BatchingFactObserver {
 
   @Override
   public void onNext(@NonNull List<Fact> element) {
+
+    // might be an error?
+    if (element.size() == 1) {
+      log.error(
+          "We're using batching on the server side, with a list size of one. While we will mitigate, for performance reasons this should be avoided. Please fix the code accordingly (see stsack trace below)",
+          new BatchingOnServerSideShouldBeAvoidedException());
+    }
+
     if (caughtUp.get()) {
-      // transfer immediately
+      // TODO do not transfer immediately
       observer.onNext(converter.createNotificationFor(element));
     } else
       element.forEach(
@@ -174,6 +182,17 @@ class GrpcObserverAdapter implements BatchingFactObserver {
               stagedFacts.add(f);
             }
           });
+  }
+
+  public void onNext(@NonNull Fact f) {
+    if (caughtUp.get()) {
+      // TODO do not transfer immediately
+      observer.onNext(converter.createNotificationFor(f));
+    } else if (!stagedFacts.add(f)) {
+      flush();
+      // add it to the next batch
+      stagedFacts.add(f);
+    }
   }
 
   @Override

@@ -154,7 +154,7 @@ class PgTmpPagedCatchupTest {
       // stop iteration after first fetch
       when(metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT)).thenReturn(mock(Counter.class));
       underTest.fetch(jdbc);
-      verify(subscription).notifyElements(Collections.singletonList(testFact));
+      verify(subscription).notifyElement(testFact);
     }
 
     @Test
@@ -180,7 +180,7 @@ class PgTmpPagedCatchupTest {
       when(metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT)).thenReturn(mock(Counter.class));
       underTest.fetch(jdbc);
       verify(subscription, never()).notifyElements(Collections.singletonList(testFact1));
-      verify(subscription, times(2)).notifyElements(Collections.singletonList(testFact2));
+      verify(subscription, times(2)).notifyElement(testFact2);
     }
   }
 }

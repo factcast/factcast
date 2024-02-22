@@ -25,6 +25,7 @@ import java.util.concurrent.Executors;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionImpl;
+import org.factcast.core.subscription.observer.ServerSideFactObserver;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.FactTransformers;
 import org.factcast.core.subscription.transformation.TransformationRequest;
@@ -39,10 +40,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class BufferingFactInterceptorTest {
-  @Mock private FactTransformerService service;
-  @Mock private FactTransformers transformers;
-  @Mock private FactFilter filter;
-  @Mock private SubscriptionImpl targetSubscription;
+  @Mock FactTransformerService service;
+  @Mock FactTransformers transformers;
+  @Mock FactFilter filter;
+  @Mock ServerSideFactObserver obs;
+  @Mock SubscriptionImpl targetSubscription;
 
   private final ExecutorService es = Executors.newSingleThreadExecutor();
   @Mock private @NonNull PgMetrics metrics;
@@ -56,6 +58,7 @@ public class BufferingFactInterceptorTest {
 
     @BeforeEach
     void setUp() {
+      targetSubscription = new SubscriptionImpl(obs);
       uut =
           new BufferingFactInterceptor(
               service, transformers, filter, targetSubscription, 3, metrics, es);
@@ -74,13 +77,13 @@ public class BufferingFactInterceptorTest {
       when(service.transform(anyList())).thenReturn(List.of(fact));
 
       uut.accept(fact);
-      verifyNoInteractions(targetSubscription);
+      verifyNoInteractions(obs);
       uut.accept(fact);
-      verifyNoInteractions(targetSubscription);
+      verifyNoInteractions(obs);
       uut.accept(fact);
 
       // maxBufferSize is 3, so we expect a flush = 3 notifyElement call
-      verify(targetSubscription, times(3)).notifyElement(fact);
+      verify(obs, times(3)).onNext(fact);
       verify(service).transform(List.of(transformationRequest));
     }
 
@@ -102,15 +105,15 @@ public class BufferingFactInterceptorTest {
       when(service.transform(anyList())).thenReturn(List.of(factToTransform, factToTransform2));
 
       uut.accept(factToTransform);
-      verifyNoInteractions(targetSubscription);
+      verifyNoInteractions(obs);
       uut.accept(noopFact);
-      verifyNoInteractions(targetSubscription);
+      verifyNoInteractions(obs);
       uut.accept(factToTransform2);
 
       // maxBufferSize is 3, so we expect a flush = 3 notifyElement call
-      verify(targetSubscription).notifyElement(factToTransform);
-      verify(targetSubscription).notifyElement(noopFact);
-      verify(targetSubscription).notifyElement(factToTransform2);
+      verify(obs).onNext(factToTransform);
+      verify(obs).onNext(noopFact);
+      verify(obs).onNext(factToTransform2);
       verify(service).transform(List.of(transformationRequest, transformationRequest));
     }
   }
@@ -122,6 +125,7 @@ public class BufferingFactInterceptorTest {
 
     @BeforeEach
     void setUp() {
+      targetSubscription = new SubscriptionImpl(obs);
       uut =
           new BufferingFactInterceptor(
               service, transformers, filter, targetSubscription, 50, metrics, es);
@@ -134,11 +138,11 @@ public class BufferingFactInterceptorTest {
       when(filter.test(any())).thenReturn(true);
 
       uut.accept(fact);
-      verify(targetSubscription).notifyElement(fact);
+      verify(obs).onNext(fact);
       uut.accept(fact);
-      verify(targetSubscription, times(2)).notifyElement(fact);
+      verify(obs, times(2)).onNext(fact);
       uut.accept(fact);
-      verify(targetSubscription, times(3)).notifyElement(fact);
+      verify(obs, times(3)).onNext(fact);
 
       verifyNoInteractions(service);
     }

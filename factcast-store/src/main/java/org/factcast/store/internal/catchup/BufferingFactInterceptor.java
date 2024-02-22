@@ -113,7 +113,7 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
   private void acceptInDirectMode(@NonNull Fact f, TransformationRequest transformationRequest) {
     if (transformationRequest == null) {
       // does not need transformation, just pass it down
-      targetSubscription.notifyElements(Collections.singletonList(f));
+      targetSubscription.notifyElement(f);
       increaseNotifyMetric(1);
     } else {
       // needs transformation, so switch to buffering mode
@@ -176,7 +176,7 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
             try {
               // 30 seconds should be enough for almost everything (B.Gates)
               Fact e = p.right().get(30, TimeUnit.SECONDS);
-              targetSubscription.notifyElements(Collections.singletonList(e));
+              targetSubscription.notifyElement(e);
             } catch (InterruptedException i) {
               Thread.currentThread().interrupt();
               throw new TransformationException(i);
