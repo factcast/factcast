@@ -34,11 +34,9 @@ import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.projection.WriterTokenAware;
 import org.factcast.factus.projection.tx.AbstractOpenTransactionAwareProjection;
 import org.factcast.factus.projection.tx.TransactionAware;
-import org.springframework.transaction.PlatformTransactionManager;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
 
-// TODO: is TransactWriteItem the correct as Transaction?
 abstract class AbstractDynamoProjection
     extends AbstractOpenTransactionAwareProjection<DynamoTransaction>
     implements DynamoProjection,
@@ -48,37 +46,28 @@ abstract class AbstractDynamoProjection
         Named {
   @Getter protected final DynamoDbClient dynamoDb;
 
-  // TODO: define table format & document it
-  // "key", <fields from lock>,  "factStreamPosition", "factStreamSerial"
-  private final String stateTableName = "stateTable";
+  private static final String STATE_TABLE_NAME = "_subscribed_projection";
 
   private final AmazonDynamoDBLockClient lockClient;
-  LockItem lockItem;
 
   @Getter private final String projectionKey;
-  Map<String, AttributeValue> dynamoKey;
+  private final Map<String, AttributeValue> dynamoKey;
 
-  protected AbstractDynamoProjection(
-      @NonNull DynamoDbClient dynamoDb,
-      @NonNull PlatformTransactionManager platformTransactionManager) {
+  protected AbstractDynamoProjection(@NonNull DynamoDbClient dynamoDb) {
     this.dynamoDb = dynamoDb;
 
     this.projectionKey = getScopedName().asString() + "_state_tracking";
     this.dynamoKey =
         Collections.singletonMap("key", AttributeValue.builder().s(projectionKey).build());
 
-    // TODO: how
     this.lockClient =
         new AmazonDynamoDBLockClient(
-            AmazonDynamoDBLockClientOptions.builder(dynamoDb, stateTableName)
+            AmazonDynamoDBLockClientOptions.builder(dynamoDb, STATE_TABLE_NAME)
                 .withTimeUnit(TimeUnit.SECONDS)
                 .withLeaseDuration(10L)
                 .withHeartbeatPeriod(3L)
                 .withCreateHeartbeatBackgroundThread(false)
                 .build());
-
-    //    projectionKey.put("id", )
-
   }
 
   @Override
@@ -86,10 +75,11 @@ abstract class AbstractDynamoProjection
     if (inTransaction()) {
       return runningTransaction().initialFactStreamPosition();
     } else {
+
       final GetItemResponse res =
           dynamoDb.getItem(
               GetItemRequest.builder()
-                  .tableName(stateTableName)
+                  .tableName(STATE_TABLE_NAME)
                   .key(dynamoKey)
                   .attributesToGet("factStreamPosition", "factStreamSerial")
                   .build());
@@ -118,7 +108,7 @@ abstract class AbstractDynamoProjection
           TransactWriteItem.builder()
               .update(
                   Update.builder()
-                      .tableName(stateTableName)
+                      .tableName(STATE_TABLE_NAME)
                       .key(dynamoKey)
                       .updateExpression(
                           "SET factStreamPosition = :new_status, factStreamSerial = :new_factStreamSerial")
@@ -133,12 +123,11 @@ abstract class AbstractDynamoProjection
 
       dynamoDb.updateItem(
           UpdateItemRequest.builder()
-              .tableName(stateTableName)
+              .tableName(STATE_TABLE_NAME)
               .key(dynamoKey)
               .updateExpression(
                   "SET factStreamPosition = :new_status, factStreamSerial = :new_factStreamSerial")
               .expressionAttributeValues(expressionAttributeValues)
-              .conditionExpression("factStreamPosition = :expected_status")
               .build());
     }
   }
@@ -169,7 +158,10 @@ abstract class AbstractDynamoProjection
    * DynamoDb does not support rollback. Instead transactions are atomic and will fail completely
    */
   @Override
-  protected void rollback(@NonNull DynamoTransaction runningTransaction) {}
+  protected void rollback(@NonNull DynamoTransaction runningTransaction) {
+    // No rollback option with DynamoDB Transactions, the whole transaction will fail or succeed.
+    // The current transaction is set to null in the super class after calling this method
+  }
 
   @Override
   protected void commit(@NonNull DynamoTransaction runningTransaction) {
@@ -180,8 +172,13 @@ abstract class AbstractDynamoProjection
   @Override
   public final int maxBatchSizePerTransaction() {
     DynamoTransactional tx = getClass().getAnnotation(DynamoTransactional.class);
-    if (tx == null || tx.batchSize() < 1) {
-      return super.maxBatchSizePerTransaction();
-    } else return tx.batchSize();
+    if (tx == null || tx.bulkSize() < 1) {
+      return DynamoTransactional.Defaults.defaultBulkSize;
+    } else {
+      if (tx.bulkSize() > DynamoTransactional.Defaults.maxBulkSize) {
+        throw new IllegalArgumentException("bulkSize cannot be bigger than the maxBulkSize " + DynamoTransactional.Defaults.maxBulkSize);
+      }
+      return tx.bulkSize();
+    }
   }
 }

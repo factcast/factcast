@@ -30,19 +30,15 @@ public class DynamoTransaction {
 
   List<TransactWriteItem> writeItems = new ArrayList<>();
 
-  static int batchSize;
-
   public void add(TransactWriteItem item) {
     writeItems.add(item);
-    if (writeItems.size() > batchSize) {
+    if (writeItems.size() > DynamoTransactional.Defaults.maxBulkSize) {
       // todo: exception type?
       throw new IllegalStateException("Max batch size exceeded");
     }
   }
 
   public TransactWriteItemsRequest buildTransactionRequest() {
-    return TransactWriteItemsRequest.builder()
-        .overrideConfiguration(AwsRequestOverrideConfiguration.builder().build())
-        .build();
+    return TransactWriteItemsRequest.builder().transactItems(writeItems).build();
   }
 }

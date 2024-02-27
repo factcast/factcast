@@ -15,6 +15,8 @@
  */
 package org.factcast.factus.dynamo.tx;
 
+import lombok.Getter;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -24,11 +26,12 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface DynamoTransactional {
   // Reduce this if requests fail with XX
-  int batchSize() default 50;
+  int bulkSize() default Defaults.defaultBulkSize;
 
   class Defaults {
     // Dynamo allows a maximum of 100 items in a single transaction. FactStream position update is
     // the 1.
-    static final int maxBatchSize = 99;
+    public static final int maxBulkSize = 99;
+    public static final int defaultBulkSize = 50;
   }
 }
