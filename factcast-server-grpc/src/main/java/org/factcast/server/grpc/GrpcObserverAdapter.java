@@ -20,7 +20,8 @@ import io.grpc.stub.StreamObserver;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+import javax.annotation.Nullable;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
@@ -38,13 +39,13 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
  * @author <uwe.schaefer@prisma-capacity.eu>
  */
 @Slf4j
-class GrpcObserverAdapter implements ServerSideFactObserver {
+class GrpcObserverAdapter implements ServerSideFactObserver, Consumer<Fact> {
 
   private final ProtoConverter converter = new ProtoConverter();
 
   @NonNull private final String id;
 
-  @NonNull private final StreamObserver<MSG_Notification> observer;
+  @NonNull private final StreamObserver<MSG_Notification> notificationStreamObserver;
   @NonNull private final ServerExceptionLogger serverExceptionLogger;
 
   @Getter(AccessLevel.PROTECTED)
@@ -55,8 +56,6 @@ class GrpcObserverAdapter implements ServerSideFactObserver {
   private final boolean supportsFastForward;
   private final long keepaliveInMilliseconds;
 
-  private final AtomicBoolean caughtUp = new AtomicBoolean(false);
-
   public GrpcObserverAdapter(
       @NonNull String id,
       @NonNull StreamObserver<MSG_Notification> observer,
@@ -64,7 +63,7 @@ class GrpcObserverAdapter implements ServerSideFactObserver {
       @NonNull ServerExceptionLogger serverExceptionLogger,
       long keepaliveInMilliseconds) {
     this.id = id;
-    this.observer = observer;
+    this.notificationStreamObserver = observer;
     supportsFastForward = meta.supportsFastForward();
     this.keepaliveInMilliseconds = keepaliveInMilliseconds;
     stagedFacts = new StagedFacts(meta.clientMaxInboundMessageSize());
@@ -118,7 +117,7 @@ class GrpcObserverAdapter implements ServerSideFactObserver {
     disableKeepalive();
     flush();
     log.debug("{} onComplete – sending complete notification", id);
-    observer.onNext(converter.createCompleteNotification());
+    notificationStreamObserver.onNext(converter.createCompleteNotification());
     tryComplete();
   }
 
@@ -133,12 +132,12 @@ class GrpcObserverAdapter implements ServerSideFactObserver {
     disableKeepalive();
     flush();
     serverExceptionLogger.log(e, id);
-    observer.onError(ServerExceptionHelper.translate(e));
+    notificationStreamObserver.onError(ServerExceptionHelper.translate(e));
   }
 
   private void tryComplete() {
     try {
-      observer.onCompleted();
+      notificationStreamObserver.onCompleted();
     } catch (Throwable e) {
       log.trace("{} Expected exception on completion {}", id, e.getMessage());
     }
@@ -148,15 +147,14 @@ class GrpcObserverAdapter implements ServerSideFactObserver {
   public void onCatchup() {
     flush();
     log.debug("{} onCatchup – sending catchup notification", id);
-    observer.onNext(converter.createCatchupNotification());
-    caughtUp.set(true);
+    notificationStreamObserver.onNext(converter.createCatchupNotification());
   }
 
-  void flush() {
+  public void flush() {
     // yes, it is threadsafe
     if (!stagedFacts.isEmpty()) {
       log.trace("{} flushing batch of {} facts", id, stagedFacts.size());
-      observer.onNext(converter.createNotificationFor(stagedFacts.popAll()));
+      notificationStreamObserver.onNext(converter.createNotificationFor(stagedFacts.popAll()));
     }
   }
 
@@ -165,11 +163,9 @@ class GrpcObserverAdapter implements ServerSideFactObserver {
     throw new BatchingOnServerSideShouldBeAvoidedException();
   }
 
-  public void onNext(@NonNull Fact f) {
-    if (caughtUp.get()) {
-      // TODO do not transfer immediately
-      observer.onNext(converter.createNotificationFor(f));
-    } else if (!stagedFacts.add(f)) {
+  public void onNext(@Nullable Fact f) {
+    if (f == null) flush();
+    else if (!stagedFacts.add(f)) {
       flush();
       // add it to the next batch
       stagedFacts.add(f);
@@ -181,17 +177,22 @@ class GrpcObserverAdapter implements ServerSideFactObserver {
     if (supportsFastForward) {
       log.debug("{} sending ffwd notification to fact id {}", id, position);
       // we have not sent any fact. check for ffwding
-      observer.onNext(converter.toProto(position));
+      notificationStreamObserver.onNext(converter.toProto(position));
     }
   }
 
   @Override
   public void onFactStreamInfo(FactStreamInfo info) {
-    observer.onNext(converter.createInfoNotification(info));
+    notificationStreamObserver.onNext(converter.createInfoNotification(info));
   }
 
   public void shutdown() {
     disableKeepalive();
+  }
+
+  @Override
+  public void accept(Fact fact) {
+    onNext(fact);
   }
 
   class ServerKeepalive {
@@ -209,7 +210,7 @@ class GrpcObserverAdapter implements ServerSideFactObserver {
             new TimerTask() {
               @Override
               public void run() {
-                observer.onNext(converter.createKeepaliveNotification());
+                notificationStreamObserver.onNext(converter.createKeepaliveNotification());
                 reschedule();
               }
             },

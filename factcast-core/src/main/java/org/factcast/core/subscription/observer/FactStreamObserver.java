@@ -20,7 +20,7 @@ import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.slf4j.LoggerFactory;
 
-interface FactStreamObserver {
+public interface FactStreamObserver<T> {
   default void onFastForward(@NonNull FactStreamPosition pos) {}
 
   default void onFactStreamInfo(@NonNull FactStreamInfo info) {}

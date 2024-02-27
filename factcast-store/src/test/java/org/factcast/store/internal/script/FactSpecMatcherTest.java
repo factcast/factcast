@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.filter;
+package org.factcast.store.internal.script;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -24,7 +24,6 @@ import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.factcast.core.TestHelper;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.script.graaljs.GraalJSEngineFactory;
 import org.junit.jupiter.api.Test;
 

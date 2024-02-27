@@ -47,16 +47,6 @@ public interface FactStore {
   Subscription subscribe(
       @NonNull SubscriptionRequestTO request, @NonNull BatchingFactObserver observer);
 
-  //  @NonNull
-  //  @Deprecated
-  //  // TODO doublecheck if unused from within factus
-  //  // TODO refactor server side to use batchingFO
-  //  // for compatibility, use subscribe(SubscriptionRequestTO,BatchingFactObserver) instead
-  //  default Subscription subscribe(
-  //      @NonNull SubscriptionRequestTO request, @NonNull FactObserver observer) {
-  //    return subscribe(request, BatchingFactObserver.of(observer));
-  //  }
-
   @NonNull
   OptionalLong serialOf(@NonNull UUID l);
 

@@ -23,8 +23,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.annotation.Nullable;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
@@ -38,19 +38,26 @@ import org.factcast.core.util.ExceptionHelper;
  *
  * @author <uwe.schaefer@prisma-capacity.eu>
  */
-@RequiredArgsConstructor
 @Slf4j
 public class SubscriptionImpl implements InternalSubscription {
 
-  @NonNull final BatchingFactObserver observer;
+  @NonNull private final FactObserver observer;
+  private final ServerSideFactObserver serverSideFactObserver;
 
-  @NonNull Runnable onClose = () -> {};
+  @NonNull private Runnable onClose = () -> {};
 
-  final AtomicBoolean closed = new AtomicBoolean(false);
+  private final AtomicBoolean closed = new AtomicBoolean(false);
 
-  final CompletableFuture<Void> catchup = new CompletableFuture<>();
+  private final CompletableFuture<Void> catchup = new CompletableFuture<>();
 
-  final CompletableFuture<Void> complete = new CompletableFuture<>();
+  private final CompletableFuture<Void> complete = new CompletableFuture<>();
+
+  public SubscriptionImpl(@NonNull BatchingFactObserver observer) {
+    this.observer = observer;
+    if (observer instanceof ServerSideFactObserver)
+      serverSideFactObserver = ((ServerSideFactObserver) observer);
+    else serverSideFactObserver = null;
+  }
 
   @Override
   public void close() {
@@ -190,13 +197,12 @@ public class SubscriptionImpl implements InternalSubscription {
   }
 
   @Override
-  public void notifyElement(@NonNull Fact f) throws TransformationException {
+  public void notifyElement(@Nullable Fact f) throws TransformationException {
     if (!closed.get()) {
-
-      // TODO sucks
-      if (observer instanceof ServerSideFactObserver) {
-        ((ServerSideFactObserver) observer).onNext(f);
-      } else observer.onNext(Collections.singletonList(f));
+      // TODO how to make this suck less?
+      if (serverSideFactObserver != null) {
+        serverSideFactObserver.onNext(f);
+      } else if (f != null) observer.onNext(Collections.singletonList(f));
     }
   }
 

@@ -15,7 +15,9 @@
  */
 package org.factcast.core.subscription.observer;
 
+import javax.annotation.Nullable;
 import lombok.Generated;
+import org.factcast.core.Fact;
 
 /**
  * Callback interface to use when subscribing to Facts from FactCast on the Server Side only. This
@@ -25,4 +27,11 @@ import lombok.Generated;
  * @author uwe.schaefer@prisma-capacity.eu
  */
 @Generated // sneakily skip coverage generation
-public interface ServerSideFactObserver extends BatchingFactObserver, FactObserver {}
+// TODO should not be a batchObserver actually
+public interface ServerSideFactObserver extends BatchingFactObserver, FactObserver {
+  @Override
+  void onNext(
+      @Nullable Fact element); // TODO null means flush(), we cannot just use a flush call as
+  // transformation is async, and sort order must be maintained. We do not want to have dangeling
+  // Facts after flush, because transformation took longer
+}

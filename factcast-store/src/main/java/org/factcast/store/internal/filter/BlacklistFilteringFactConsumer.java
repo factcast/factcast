@@ -16,45 +16,41 @@
 package org.factcast.store.internal.filter;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.util.function.Consumer;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.store.internal.PostQueryMatcher;
 import org.factcast.store.internal.filter.blacklist.Blacklist;
-import org.factcast.store.internal.script.JSEngineFactory;
 
 @Slf4j
-public class FactFilterImpl implements FactFilter {
+public class BlacklistFilteringFactConsumer implements Consumer<Fact> {
+
+  private final Consumer<Fact> parent;
+
   private final SubscriptionRequest request;
   private final Blacklist blacklist;
-  private final PostQueryMatcher matcher;
-
-  public FactFilterImpl(
-      @NonNull SubscriptionRequest request,
-      @NonNull Blacklist blacklist,
-      @NonNull JSEngineFactory ef) {
-    this(request, blacklist, new PostQueryMatcher(request, ef));
-  }
 
   @VisibleForTesting
-  FactFilterImpl(
+  BlacklistFilteringFactConsumer(
+      @NonNull Consumer<Fact> parent,
       @NonNull SubscriptionRequest request,
-      @NonNull Blacklist blacklist,
-      @NonNull PostQueryMatcher matcher) {
+      @NonNull Blacklist blacklist) {
+    this.parent = parent;
     this.request = request;
     this.blacklist = blacklist;
-    this.matcher = matcher;
   }
 
   @Override
-  public boolean test(@NonNull Fact fact) {
-    if (blacklist.isBlocked(fact.id())) {
-      log.trace("{} filtered blacklisted id={}", request, fact.id());
-      return false;
+  public void accept(@Nullable Fact fact) {
+    if (fact == null) parent.accept(fact);
+    else {
+      if (blacklist.isBlocked(fact.id())) {
+        log.trace("{} filtered blacklisted id={}", request, fact.id());
+      } else {
+        parent.accept(fact);
+      }
     }
-
-    if (matcher.canBeSkipped()) return true;
-    else return matcher.test(fact);
   }
 }

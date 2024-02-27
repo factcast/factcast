@@ -38,7 +38,6 @@ import org.factcast.store.IsReadOnlyEnv;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.catchup.fetching.PgFetchingCatchUpFactory;
-import org.factcast.store.internal.catchup.tmppaged.PgTmpPagedCatchUpFactory;
 import org.factcast.store.internal.check.IndexCheck;
 import org.factcast.store.internal.filter.blacklist.*;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
@@ -99,19 +98,8 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
-  public PgCatchupFactory pgCatchupFactory(
-      StoreConfigurationProperties props,
-      PgConnectionSupplier supp,
-      PgMetrics metrics,
-      FactTransformerService transformerService) {
-    switch (props.getCatchupStrategy()) {
-      case PAGED:
-        return new PgTmpPagedCatchUpFactory(supp, props, metrics, transformerService);
-      case FETCHING:
-        return new PgFetchingCatchUpFactory(supp, props, metrics, transformerService);
-      default:
-        throw new IllegalArgumentException("Unmapped Strategy: " + props.getCatchupStrategy());
-    }
+  public PgCatchupFactory pgCatchupFactory(PgConnectionSupplier supp) {
+    return new PgFetchingCatchUpFactory(supp);
   }
 
   @Bean

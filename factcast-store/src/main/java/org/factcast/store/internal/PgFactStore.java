@@ -180,6 +180,19 @@ public class PgFactStore extends AbstractFactStore {
       @NonNull SubscriptionRequestTO request, @NonNull BatchingFactObserver observer) {
     StoreMetrics.OP operation =
         request.continuous() ? StoreMetrics.OP.SUBSCRIBE_FOLLOW : StoreMetrics.OP.SUBSCRIBE_CATCHUP;
+
+    // todo create stack of consumers
+
+    //    Consumer<Fact> factStreamTarget = observer;
+    //    factStreamTarget = new blackl
+    //
+    //    //      metrics.monitor(
+    //    //              Executors.newWorkStealingPool(
+    //    //                      props.getSizeOfThreadPoolForBufferedTransformations()),
+    //    //              "subscription")
+    //
+    //    // /todo
+
     return metrics.time(operation, () -> subscriptionFactory.subscribe(request, observer));
   }
 

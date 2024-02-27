@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2022 factcast.org
+ * Copyright © 2017-2024 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,20 @@
  */
 package org.factcast.store.internal.filter;
 
-import java.util.function.*;
+import java.util.function.Consumer;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
+import org.factcast.store.internal.PostQueryMatcher;
 
-public interface FactFilter extends Predicate<Fact> {}
+@RequiredArgsConstructor
+public class PostQueryFilteringFactConsumer implements Consumer<Fact> {
+
+  @NonNull private final Consumer<Fact> parent;
+  @NonNull private final PostQueryMatcher pqm;
+
+  @Override
+  public void accept(Fact fact) {
+    if (pqm.canBeSkipped() || fact == null || pqm.test(fact)) parent.accept(fact);
+  }
+}

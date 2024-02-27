@@ -49,6 +49,7 @@ class PgSubscriptionFactory implements AutoCloseable {
 
   final PgLatestSerialFetcher fetcher;
 
+  final StoreConfigurationProperties props;
   final PgCatchupFactory catchupFactory;
 
   final FastForwardTarget target;
@@ -75,6 +76,7 @@ class PgSubscriptionFactory implements AutoCloseable {
     this.eventBus = eventBus;
     this.idToSerialMapper = idToSerialMapper;
     this.fetcher = fetcher;
+    this.props = props;
     this.catchupFactory = catchupFactory;
     this.target = target;
     this.metrics = metrics;
@@ -98,10 +100,8 @@ class PgSubscriptionFactory implements AutoCloseable {
             fetcher,
             catchupFactory,
             target,
-            transformerService,
-            blacklist,
             metrics,
-            ef);
+            props);
 
     // when closing the subscription, also close the PgFactStream
     subscription.onClose(pgsub::close);
