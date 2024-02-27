@@ -162,10 +162,7 @@ class ClientStreamObserverTest {
     ArgumentCaptor<List<Fact>> l = ArgumentCaptor.forClass(List.class);
     verify(factObserver, times(1)).onNext(l.capture());
 
-    assertThat(l.getValue())
-        .isNotNull()
-        .hasSize(2)
-        .containsExactly(f1, f2);
+    assertThat(l.getValue()).isNotNull().hasSize(2).containsExactly(f1, f2);
   }
 
   @Test

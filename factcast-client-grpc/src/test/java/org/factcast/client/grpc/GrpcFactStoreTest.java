@@ -88,7 +88,7 @@ class GrpcFactStoreTest {
     when(blockingStub.withMaxInboundMessageSize(anyInt())).thenReturn(blockingStub);
     when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
     when(blockingStub.handshake(any()))
-            .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
+        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
     //
     resilienceConfig.setEnabled(false);
     uut = new GrpcFactStore(blockingStub, stub, credentials, properties, "someTest");
@@ -438,8 +438,7 @@ class GrpcFactStoreTest {
   @Test
   void testInternalSubscribe() {
     assertThrows(
-        NullPointerException.class,
-        () -> uut.subscribe(mock(SubscriptionRequestTO.class),null));
+        NullPointerException.class, () -> uut.subscribe(mock(SubscriptionRequestTO.class), null));
     assertThrows(NullPointerException.class, () -> uut.internalSubscribe(null, null));
     assertThrows(
         NullPointerException.class,
@@ -479,14 +478,12 @@ class GrpcFactStoreTest {
           IllegalArgumentException.class,
           () -> new GrpcFactStore(mock(Channel.class), Optional.of("x:y:z")));
 
-      assertThat(new GrpcFactStore(mock(Channel.class), Optional.of("xyz:abc")))
-          .isNotNull();
+      assertThat(new GrpcFactStore(mock(Channel.class), Optional.of("xyz:abc"))).isNotNull();
     }
 
     @Test
     void testCredentialsRightFormat() {
-      assertThat(new GrpcFactStore(mock(Channel.class), Optional.of("xyz:abc")))
-          .isNotNull();
+      assertThat(new GrpcFactStore(mock(Channel.class), Optional.of("xyz:abc"))).isNotNull();
     }
 
     @Test
@@ -519,8 +516,7 @@ class GrpcFactStoreTest {
 
       final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
 
-      assertThat(
-              new GrpcFactStore(blockingStub, stub, Optional.of("xyz:abc"), props, "foo"))
+      assertThat(new GrpcFactStore(blockingStub, stub, Optional.of("xyz:abc"), props, "foo"))
           .isNotNull();
 
       verify(blockingStub).withCallCredentials(any());
@@ -657,9 +653,7 @@ class GrpcFactStoreTest {
     void skipsNonSRE() {
       RuntimeException damn = new RuntimeException("damn");
       doThrow(damn).when(block).run();
-      assertThatThrownBy(
-              () -> uut.runAndHandle(block))
-          .isSameAs(damn);
+      assertThatThrownBy(() -> uut.runAndHandle(block)).isSameAs(damn);
     }
 
     @Test
@@ -683,8 +677,7 @@ class GrpcFactStoreTest {
       doThrow(new StatusRuntimeException(Status.UNKNOWN.withDescription("crap"), metadata))
           .when(block)
           .run();
-      assertThatThrownBy(
-              () -> uut.runAndHandle(block))
+      assertThatThrownBy(() -> uut.runAndHandle(block))
           .isNotSameAs(e)
           .isInstanceOf(FactValidationException.class)
           .extracting(Throwable::getMessage)
@@ -701,9 +694,7 @@ class GrpcFactStoreTest {
     void skipsNonSRE() throws Exception {
       RuntimeException damn = new RuntimeException("damn");
       when(block.call()).thenThrow(damn);
-      assertThatThrownBy(
-              () -> uut.callAndHandle(block))
-          .isSameAs(damn);
+      assertThatThrownBy(() -> uut.callAndHandle(block)).isSameAs(damn);
     }
 
     @Test
@@ -752,8 +743,7 @@ class GrpcFactStoreTest {
       when(block.call())
           .thenThrow(new StatusRuntimeException(Status.UNKNOWN.withDescription("crap"), metadata));
 
-      assertThatThrownBy(
-              () -> uut.callAndHandle(block))
+      assertThatThrownBy(() -> uut.callAndHandle(block))
           .isNotSameAs(e)
           .isInstanceOf(FactValidationException.class)
           .extracting(Throwable::getMessage)

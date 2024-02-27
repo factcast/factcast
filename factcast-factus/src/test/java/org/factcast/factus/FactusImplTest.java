@@ -807,7 +807,8 @@ class FactusImplTest {
 
       when(ehFactory.create(subscribedProjection)).thenReturn(eventApplier);
 
-      when(eventApplier.createFactSpecs()).thenReturn(Collections.singletonList(mock(FactSpec.class)));
+      when(eventApplier.createFactSpecs())
+          .thenReturn(Collections.singletonList(mock(FactSpec.class)));
       doAnswer(
               i -> {
                 Fact argument = (Fact) ((List) i.getArgument(0)).get(0);
@@ -877,7 +878,8 @@ class FactusImplTest {
 
       when(ehFactory.create(subscribedProjection)).thenReturn(eventApplier);
 
-      when(eventApplier.createFactSpecs()).thenReturn(Collections.singletonList(mock(FactSpec.class)));
+      when(eventApplier.createFactSpecs())
+          .thenReturn(Collections.singletonList(mock(FactSpec.class)));
       doAnswer(
               i -> {
                 Fact argument = (Fact) (((List) i.getArgument(0)).get(0));
@@ -947,7 +949,8 @@ class FactusImplTest {
 
       when(ehFactory.create(subscribedProjection)).thenReturn(eventApplier);
 
-      when(eventApplier.createFactSpecs()).thenReturn(Collections.singletonList(mock(FactSpec.class)));
+      when(eventApplier.createFactSpecs())
+          .thenReturn(Collections.singletonList(mock(FactSpec.class)));
 
       Subscription subscription1 = mock(Subscription.class);
       Subscription subscription2 = mock(Subscription.class);

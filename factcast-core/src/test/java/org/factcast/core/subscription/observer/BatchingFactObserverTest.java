@@ -16,6 +16,7 @@
 package org.factcast.core.subscription.observer;
 
 import static org.mockito.Mockito.*;
+
 import com.google.common.collect.Lists;
 import java.util.UUID;
 import lombok.NonNull;

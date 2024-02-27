@@ -108,7 +108,8 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
         callHandlerFor(f);
         latestSuccessful = FactStreamPosition.from(f);
       } catch (InvocationTargetException | IllegalAccessException e) {
-        log.trace("returned with Exception {}:", latestSuccessful.factId(), e); // TODO may produce NPE
+        log.trace(
+            "returned with Exception {}:", latestSuccessful.factId(), e); // TODO may produce NPE
 
         rollbackIfTransactional();
         retryApplicableIfTransactional(facts, f);

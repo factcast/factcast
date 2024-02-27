@@ -193,8 +193,7 @@ class ResilientGrpcSubscriptionTest {
           sleep(300);
           throw new RetryableException(new Exception());
         };
-    assertThatThrownBy(() -> uut.delegate(consumer, 1000))
-        .isInstanceOf(TimeoutException.class);
+    assertThatThrownBy(() -> uut.delegate(consumer, 1000)).isInstanceOf(TimeoutException.class);
   }
 
   @Test
@@ -209,9 +208,7 @@ class ResilientGrpcSubscriptionTest {
         .when(consumer)
         .accept(any());
 
-    assertThatThrownBy(
-            () -> uut.delegate(consumer))
-        .isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> uut.delegate(consumer)).isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
@@ -224,16 +221,13 @@ class ResilientGrpcSubscriptionTest {
         .when(consumer)
         .accept(any());
 
-    assertThatThrownBy(
-            () -> uut.delegate(consumer))
-        .isSameAs(initial);
+    assertThatThrownBy(() -> uut.delegate(consumer)).isSameAs(initial);
   }
 
   @Test
   void testFail() {
     IOException ex = new IOException();
-    assertThatThrownBy(
-            () -> uut.fail(ex))
+    assertThatThrownBy(() -> uut.fail(ex))
         .isInstanceOf(RuntimeException.class)
         .cause()
         .isInstanceOf(IOException.class);
@@ -362,9 +356,7 @@ class ResilientGrpcSubscriptionTest {
 
     @Test
     void blocksUntilTimeoutReached() {
-      assertThatThrownBy(
-              () -> sh.getAndBlock(100))
-          .isInstanceOf(TimeoutException.class);
+      assertThatThrownBy(() -> sh.getAndBlock(100)).isInstanceOf(TimeoutException.class);
     }
   }
 }
