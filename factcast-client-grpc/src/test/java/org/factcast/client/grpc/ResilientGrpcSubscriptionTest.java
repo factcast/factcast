@@ -59,7 +59,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class ResilientGrpcSubscriptionTest {
-  @Mock(lenient = true)
+  @Mock(strictness = Mock.Strictness.LENIENT)
   private GrpcFactStore store;
 
   @Mock private SubscriptionRequestTO req;
@@ -140,7 +140,7 @@ class ResilientGrpcSubscriptionTest {
   }
 
   @Test
-  void testAssertSubscriptionStateNotClosed() throws Exception {
+  void testAssertSubscriptionStateNotClosed() {
     uut.close();
     assertThrows(SubscriptionClosedException.class, () -> uut.awaitCatchup());
     assertThrows(SubscriptionClosedException.class, () -> uut.awaitCatchup(1L));
@@ -149,7 +149,7 @@ class ResilientGrpcSubscriptionTest {
   }
 
   @Test
-  void isServerException() throws Exception {
+  void isServerException() {
 
     assertThat(ClientExceptionHelper.isRetryable(new RuntimeException())).isFalse();
     assertThat(ClientExceptionHelper.isRetryable(new IllegalArgumentException())).isFalse();
@@ -176,7 +176,7 @@ class ResilientGrpcSubscriptionTest {
     assertThat(ClientExceptionHelper.isRetryable(new StatusRuntimeException(Status.ABORTED)))
         .isTrue();
 
-    // assertThat(uut.isNotRetryable(new TransformationExceptione());
+    // assertThat(uut.isNotRetryable(new TransformationExceptions());
     // assertThat(uut.isNotRetryable(new MissingTransformationInformationException());
     // important because it needs to reconnect, which only happens if it is NOT categorized as
     // serverException
@@ -184,7 +184,7 @@ class ResilientGrpcSubscriptionTest {
   }
 
   @Test
-  void deletegateWithTimeout() {
+  void delegateWithTimeout() {
 
     config.setEnabled(true).setAttempts(100);
 
@@ -193,15 +193,12 @@ class ResilientGrpcSubscriptionTest {
           sleep(300);
           throw new RetryableException(new Exception());
         };
-    assertThatThrownBy(
-            () -> {
-              uut.delegate(consumer, 1000);
-            })
+    assertThatThrownBy(() -> uut.delegate(consumer, 1000))
         .isInstanceOf(TimeoutException.class);
   }
 
   @Test
-  void deletegateThrowing() {
+  void delegateThrowing() {
     config.setEnabled(true).setAttempts(100);
 
     Consumer<Subscription> consumer = mock(Consumer.class);
@@ -213,14 +210,12 @@ class ResilientGrpcSubscriptionTest {
         .accept(any());
 
     assertThatThrownBy(
-            () -> {
-              uut.delegate(consumer);
-            })
+            () -> uut.delegate(consumer))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
-  void deletegateThrowingWithRetryDisabled() {
+  void delegateThrowingWithRetryDisabled() {
     config.setEnabled(false);
 
     Consumer<Subscription> consumer = mock(Consumer.class);
@@ -230,9 +225,7 @@ class ResilientGrpcSubscriptionTest {
         .accept(any());
 
     assertThatThrownBy(
-            () -> {
-              uut.delegate(consumer);
-            })
+            () -> uut.delegate(consumer))
         .isSameAs(initial);
   }
 
@@ -240,11 +233,9 @@ class ResilientGrpcSubscriptionTest {
   void testFail() {
     IOException ex = new IOException();
     assertThatThrownBy(
-            () -> {
-              uut.fail(ex);
-            })
+            () -> uut.fail(ex))
         .isInstanceOf(RuntimeException.class)
-        .getCause()
+        .cause()
         .isInstanceOf(IOException.class);
 
     verify(obs).onError(ex);
@@ -370,11 +361,9 @@ class ResilientGrpcSubscriptionTest {
     }
 
     @Test
-    void blocksUntilTimeroutReached() {
+    void blocksUntilTimeoutReached() {
       assertThatThrownBy(
-              () -> {
-                sh.getAndBlock(100);
-              })
+              () -> sh.getAndBlock(100))
           .isInstanceOf(TimeoutException.class);
     }
   }

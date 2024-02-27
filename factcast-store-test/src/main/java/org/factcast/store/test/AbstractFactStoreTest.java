@@ -1249,7 +1249,7 @@ public abstract class AbstractFactStoreTest {
     private final List<Fact> values = new CopyOnWriteArrayList<>();
 
     @Override
-    public void onNext(List<Fact> element) {
+    public void onNext(@NonNull List<Fact> element) {
       values.addAll(element);
     }
 

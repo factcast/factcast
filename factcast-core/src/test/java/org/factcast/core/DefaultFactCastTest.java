@@ -148,14 +148,14 @@ class DefaultFactCastTest {
   }
 
   @Test
-  void testFetchByIdDelegates() throws Exception {
+  void testFetchByIdDelegates() {
     UUID id = UUID.randomUUID();
     uut.fetchById(id);
     verify(store).fetchById(id);
   }
 
   @Test
-  void testFetchAndVersionByIdDelegates() throws Exception {
+  void testFetchAndVersionByIdDelegates() {
     UUID id = UUID.randomUUID();
     uut.fetchByIdAndVersion(id, 7);
     verify(store).fetchByIdAndVersion(id, 7);

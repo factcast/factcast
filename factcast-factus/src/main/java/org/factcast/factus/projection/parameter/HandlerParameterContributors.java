@@ -40,6 +40,7 @@ public class HandlerParameterContributors implements Iterable<HandlerParameterCo
   }
 
   @Override
+  @NonNull
   public Iterator<HandlerParameterContributor> iterator() {
     return contributors.iterator();
   }

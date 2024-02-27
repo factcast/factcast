@@ -29,7 +29,6 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.*;
 import lombok.NonNull;
-import org.assertj.core.util.Lists;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 import org.factcast.core.Fact;
 import org.factcast.core.FactValidationException;
@@ -44,7 +43,6 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.BatchingFactObserver;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.Headers;
-import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
 import org.factcast.grpc.api.conv.ServerConfig;
@@ -63,13 +61,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class GrpcFactStoreTest {
 
-  @Mock(lenient = true)
+  @Mock(strictness = Mock.Strictness.LENIENT)
   FactCastGrpcClientProperties properties;
 
-  @Mock(answer = Answers.RETURNS_DEEP_STUBS, lenient = true)
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS, strictness = Mock.Strictness.LENIENT)
   RemoteFactStoreBlockingStub blockingStub;
 
-  @Mock(answer = Answers.RETURNS_DEEP_STUBS, lenient = true)
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS, strictness = Mock.Strictness.LENIENT)
   RemoteFactStoreStub stub;
 
   ProtoConverter conv = new ProtoConverter();
@@ -78,7 +76,7 @@ class GrpcFactStoreTest {
 
   @Mock public Optional<String> credentials;
   private GrpcFactStore uut;
-  private ResilienceConfiguration resilienceConfig = new ResilienceConfiguration();
+  private final ResilienceConfiguration resilienceConfig = new ResilienceConfiguration();
 
   @BeforeEach
   public void setup() {
@@ -88,13 +86,12 @@ class GrpcFactStoreTest {
     when(stub.withMaxInboundMessageSize(anyInt())).thenReturn(stub);
     when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
     when(blockingStub.withMaxInboundMessageSize(anyInt())).thenReturn(blockingStub);
+    when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
+    when(blockingStub.handshake(any()))
+            .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
     //
     resilienceConfig.setEnabled(false);
     uut = new GrpcFactStore(blockingStub, stub, credentials, properties, "someTest");
-
-    when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
-    when(blockingStub.handshake(any()))
-        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
   }
 
   @Test
@@ -139,6 +136,7 @@ class GrpcFactStoreTest {
     when(properties.getMaxInboundMessageSize()).thenReturn(1777);
     Metadata meta = uut.prepareMetaData("lz4");
     assertThat(meta.containsKey(Headers.CLIENT_MAX_INBOUND_MESSAGE_SIZE)).isTrue();
+    assertThat(meta.get(Headers.CLIENT_MAX_INBOUND_MESSAGE_SIZE)).isEqualTo(String.valueOf(1777));
   }
 
   @Test
@@ -195,7 +193,7 @@ class GrpcFactStoreTest {
 
   static class SomeException extends RuntimeException {
 
-    static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
   }
 
   @Test
@@ -310,7 +308,7 @@ class GrpcFactStoreTest {
   void testWrapRetryable_nonRetryable() {
     StatusRuntimeException cause = new StatusRuntimeException(Status.ALREADY_EXISTS);
     RuntimeException e = ClientExceptionHelper.from(cause);
-    assertTrue(e instanceof StatusRuntimeException);
+    assertInstanceOf(StatusRuntimeException.class, e);
     assertSame(e, cause);
   }
 
@@ -318,13 +316,13 @@ class GrpcFactStoreTest {
   void testWrapRetryable() {
     StatusRuntimeException cause = new StatusRuntimeException(Status.UNAVAILABLE);
     RuntimeException e = ClientExceptionHelper.from(cause);
-    assertTrue(e instanceof RetryableException);
+    assertInstanceOf(RetryableException.class, e);
     assertSame(e.getCause(), cause);
   }
 
   @Test
   void testCancelIsPropagated() {
-    ClientCall call = mock(ClientCall.class);
+    ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = mock(ClientCall.class);
     uut.cancel(call);
     verify(call).cancel(any(), any());
   }
@@ -337,7 +335,7 @@ class GrpcFactStoreTest {
       uut.cancel(call);
       fail();
     } catch (Throwable e) {
-      assertTrue(e instanceof StatusRuntimeException);
+      assertInstanceOf(StatusRuntimeException.class, e);
       assertFalse(e instanceof RetryableException);
     }
   }
@@ -371,9 +369,8 @@ class GrpcFactStoreTest {
   void testStateForPositive() {
 
     UUID id = new UUID(0, 1);
-    StateForRequest req = new StateForRequest(Lists.emptyList(), "foo");
     when(blockingStub.stateFor(any())).thenReturn(conv.toProto(id));
-    List<FactSpec> list = Arrays.asList(FactSpec.ns("foo").aggId(id));
+    List<FactSpec> list = Collections.singletonList(FactSpec.ns("foo").aggId(id));
     uut.stateFor(list);
     verify(blockingStub).stateForSpecsJson(conv.toProtoFactSpecs(list));
   }
@@ -383,7 +380,7 @@ class GrpcFactStoreTest {
     when(blockingStub.stateForSpecsJson(any()))
         .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
     try {
-      uut.stateFor(Lists.emptyList());
+      uut.stateFor(Collections.emptyList());
       fail();
     } catch (RetryableException expected) {
     }
@@ -393,9 +390,8 @@ class GrpcFactStoreTest {
   void testCurrentStateForPositive() {
     uut.fastStateToken(true);
     UUID id = new UUID(0, 1);
-    StateForRequest req = new StateForRequest(Lists.emptyList(), "foo");
     when(blockingStub.currentStateForSpecsJson(any())).thenReturn(conv.toProto(id));
-    List<FactSpec> list = Arrays.asList(FactSpec.ns("foo").aggId(id));
+    List<FactSpec> list = Collections.singletonList(FactSpec.ns("foo").aggId(id));
     uut.currentStateFor(list);
     verify(blockingStub).currentStateForSpecsJson(conv.toProtoFactSpecs(list));
   }
@@ -406,7 +402,7 @@ class GrpcFactStoreTest {
     when(blockingStub.currentStateForSpecsJson(any()))
         .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
     try {
-      uut.currentStateFor(Lists.emptyList());
+      uut.currentStateFor(Collections.emptyList());
       fail();
     } catch (RetryableException expected) {
     }
@@ -416,11 +412,11 @@ class GrpcFactStoreTest {
   void testPublishIfUnchangedPositive() {
 
     UUID id = new UUID(0, 1);
-    ConditionalPublishRequest req = new ConditionalPublishRequest(Lists.emptyList(), id);
+    ConditionalPublishRequest req = new ConditionalPublishRequest(Collections.emptyList(), id);
     when(blockingStub.publishConditional(any())).thenReturn(conv.toProto(true));
 
     boolean publishIfUnchanged =
-        uut.publishIfUnchanged(Lists.emptyList(), Optional.of(new StateToken(id)));
+        uut.publishIfUnchanged(Collections.emptyList(), Optional.of(new StateToken(id)));
     assertThat(publishIfUnchanged).isTrue();
 
     verify(blockingStub).publishConditional(conv.toProto(req));
@@ -433,7 +429,7 @@ class GrpcFactStoreTest {
     when(blockingStub.publishConditional(any()))
         .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
     try {
-      uut.publishIfUnchanged(Lists.emptyList(), Optional.of(new StateToken(id)));
+      uut.publishIfUnchanged(Collections.emptyList(), Optional.of(new StateToken(id)));
       fail();
     } catch (RetryableException expected) {
     }
@@ -443,7 +439,7 @@ class GrpcFactStoreTest {
   void testInternalSubscribe() {
     assertThrows(
         NullPointerException.class,
-        () -> uut.subscribe(mock(SubscriptionRequestTO.class), (BatchingFactObserver) null));
+        () -> uut.subscribe(mock(SubscriptionRequestTO.class),null));
     assertThrows(NullPointerException.class, () -> uut.internalSubscribe(null, null));
     assertThrows(
         NullPointerException.class,
@@ -452,11 +448,10 @@ class GrpcFactStoreTest {
 
   @Test
   void testSubscribeWithoutResilience() {
-
     resilienceConfig.setEnabled(false);
     SubscriptionRequestTO req =
         new SubscriptionRequestTO(SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch());
-    Subscription s = uut.subscribe(req, (BatchingFactObserver) elements -> {});
+    Subscription s = uut.subscribe(req, elements -> {});
 
     assertThat(s).isInstanceOf(Subscription.class).isNotInstanceOf(ResilientGrpcSubscription.class);
   }
@@ -467,7 +462,7 @@ class GrpcFactStoreTest {
     resilienceConfig.setEnabled(true);
     SubscriptionRequestTO req =
         new SubscriptionRequestTO(SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch());
-    Subscription s = uut.subscribe(req, (BatchingFactObserver) elements -> {});
+    Subscription s = uut.subscribe(req, elements -> {});
 
     assertThat(s).isInstanceOf(ResilientGrpcSubscription.class);
   }
@@ -478,19 +473,19 @@ class GrpcFactStoreTest {
     void testCredentialsWrongFormat() {
       assertThrows(
           IllegalArgumentException.class,
-          () -> new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz")));
+          () -> new GrpcFactStore(mock(Channel.class), Optional.of("xyz")));
 
       assertThrows(
           IllegalArgumentException.class,
-          () -> new GrpcFactStore(mock(Channel.class), Optional.ofNullable("x:y:z")));
+          () -> new GrpcFactStore(mock(Channel.class), Optional.of("x:y:z")));
 
-      assertThat(new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz:abc")))
+      assertThat(new GrpcFactStore(mock(Channel.class), Optional.of("xyz:abc")))
           .isNotNull();
     }
 
     @Test
     void testCredentialsRightFormat() {
-      assertThat(new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz:abc")))
+      assertThat(new GrpcFactStore(mock(Channel.class), Optional.of("xyz:abc")))
           .isNotNull();
     }
 
@@ -525,7 +520,7 @@ class GrpcFactStoreTest {
       final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
 
       assertThat(
-              new GrpcFactStore(blockingStub, stub, Optional.ofNullable("xyz:abc"), props, "foo"))
+              new GrpcFactStore(blockingStub, stub, Optional.of("xyz:abc"), props, "foo"))
           .isNotNull();
 
       verify(blockingStub).withCallCredentials(any());
@@ -663,9 +658,7 @@ class GrpcFactStoreTest {
       RuntimeException damn = new RuntimeException("damn");
       doThrow(damn).when(block).run();
       assertThatThrownBy(
-              () -> {
-                uut.runAndHandle(block);
-              })
+              () -> uut.runAndHandle(block))
           .isSameAs(damn);
     }
 
@@ -691,9 +684,7 @@ class GrpcFactStoreTest {
           .when(block)
           .run();
       assertThatThrownBy(
-              () -> {
-                uut.runAndHandle(block);
-              })
+              () -> uut.runAndHandle(block))
           .isNotSameAs(e)
           .isInstanceOf(FactValidationException.class)
           .extracting(Throwable::getMessage)
@@ -711,9 +702,7 @@ class GrpcFactStoreTest {
       RuntimeException damn = new RuntimeException("damn");
       when(block.call()).thenThrow(damn);
       assertThatThrownBy(
-              () -> {
-                uut.callAndHandle(block);
-              })
+              () -> uut.callAndHandle(block))
           .isSameAs(damn);
     }
 
@@ -737,7 +726,7 @@ class GrpcFactStoreTest {
     }
 
     @Test
-    void retriesRun() throws Exception {
+    void retriesRun() {
       when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
       when(blockingStub.handshake(any()))
           .thenReturn(
@@ -764,9 +753,7 @@ class GrpcFactStoreTest {
           .thenThrow(new StatusRuntimeException(Status.UNKNOWN.withDescription("crap"), metadata));
 
       assertThatThrownBy(
-              () -> {
-                uut.callAndHandle(block);
-              })
+              () -> uut.callAndHandle(block))
           .isNotSameAs(e)
           .isInstanceOf(FactValidationException.class)
           .extracting(Throwable::getMessage)

@@ -17,7 +17,6 @@ package org.factcast.factus.projection.tx;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import javax.annotation.Nullable;
@@ -35,7 +34,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class AbstractTransactionAwareProjectionTest {
 
   @Mock private Tx runningTransaction;
-  private TestTransactionAwareProjection underTest = spy(new TestTransactionAwareProjection());
+  private final TestTransactionAwareProjection underTest = spy(new TestTransactionAwareProjection());
 
   @Nested
   class WhenBegining {
@@ -70,9 +69,7 @@ class AbstractTransactionAwareProjectionTest {
 
       Assertions.assertThat(underTest.inTransaction()).isFalse();
       assertThatThrownBy(
-              () -> {
-                underTest.begin();
-              })
+              underTest::begin)
           .isInstanceOf(Exception.class);
     }
   }
@@ -101,9 +98,7 @@ class AbstractTransactionAwareProjectionTest {
       underTest.begin();
       Assertions.assertThat(underTest.inTransaction()).isTrue();
       assertThatThrownBy(
-              () -> {
-                underTest.commit();
-              })
+              underTest::commit)
           .isInstanceOf(Exception.class);
       verify(underTest).commit(any());
       Assertions.assertThat(underTest.inTransaction()).isFalse();
@@ -133,9 +128,7 @@ class AbstractTransactionAwareProjectionTest {
       underTest.begin();
       Assertions.assertThat(underTest.inTransaction()).isTrue();
       assertThatThrownBy(
-              () -> {
-                underTest.rollback();
-              })
+              underTest::rollback)
           .isInstanceOf(Exception.class);
       Assertions.assertThat(underTest.inTransaction()).isFalse();
       verify(underTest).rollback(any());
@@ -151,9 +144,7 @@ class AbstractTransactionAwareProjectionTest {
     void throwsIfRunning() {
       underTest.begin();
       assertThatThrownBy(
-              () -> {
-                underTest.assertNoRunningTransaction();
-              })
+              underTest::assertNoRunningTransaction)
           .isInstanceOf(TransactionAlreadyRunningException.class);
     }
   }
@@ -166,9 +157,7 @@ class AbstractTransactionAwareProjectionTest {
     @Test
     void throwsIfRunning() {
       assertThatThrownBy(
-              () -> {
-                underTest.assertInTransaction();
-              })
+              underTest::assertInTransaction)
           .isInstanceOf(TransactionNotRunningException.class);
     }
   }

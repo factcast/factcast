@@ -305,7 +305,8 @@ public class FactusImpl implements Factus {
 
   @Override
   @SneakyThrows
-  public <A extends Aggregate> Optional<A> find(Class<A> aggregateClass, UUID aggregateId) {
+  @NonNull
+  public <A extends Aggregate> Optional<A> find(Class<A> aggregateClass, @NonNull UUID aggregateId) {
     return factusMetrics.timed(
         TimedOperation.FIND_DURATION,
         Tags.of(Tag.of(CLASS, aggregateClass.getName())),

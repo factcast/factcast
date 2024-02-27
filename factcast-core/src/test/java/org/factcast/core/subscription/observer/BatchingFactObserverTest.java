@@ -15,9 +15,7 @@
  */
 package org.factcast.core.subscription.observer;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-
 import com.google.common.collect.Lists;
 import java.util.UUID;
 import lombok.NonNull;
@@ -51,8 +49,8 @@ class BatchingFactObserverTest {
 
   @Nested
   class BridgeTest {
-    FactObserver o = spy(new FactObserverTest.TestFactObserver());
-    BatchingFactObserver.Bridge underTest =
+    final FactObserver o = spy(new FactObserverTest.TestFactObserver());
+    final BatchingFactObserver.Bridge underTest =
         (BatchingFactObserver.Bridge) BatchingFactObserver.of(o);
 
     @BeforeEach

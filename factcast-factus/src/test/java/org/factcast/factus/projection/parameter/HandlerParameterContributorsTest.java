@@ -15,7 +15,6 @@
  */
 package org.factcast.factus.projection.parameter;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.lang.annotation.Annotation;
@@ -35,7 +34,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class HandlerParameterContributorsTest {
 
-  HandlerParameterContributor string =
+  final HandlerParameterContributor string =
       new HandlerParameterContributor() {
         @Nullable
         @Override

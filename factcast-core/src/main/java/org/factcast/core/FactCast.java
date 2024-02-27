@@ -53,14 +53,14 @@ public interface FactCast extends ReadFactCast {
   @Override
   // @Deprecated(since = "0.5.5", forRemoval = true)
   @Deprecated
-  default FactCast retry(int maxAttempts) {
+  default @NonNull FactCast retry(int maxAttempts) {
     return this;
   }
 
   @Override
   // @Deprecated(since = "0.5.5", forRemoval = true)
   @Deprecated
-  default FactCast retry(int maxAttempts, long minimumWaitIntervalMillis) {
+  default @NonNull FactCast retry(int maxAttempts, long minimumWaitIntervalMillis) {
     return this;
   }
 

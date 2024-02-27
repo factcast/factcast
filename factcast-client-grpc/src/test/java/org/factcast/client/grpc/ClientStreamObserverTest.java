@@ -138,7 +138,7 @@ class ClientStreamObserverTest {
     uut.onNext(n);
     ArgumentCaptor<List<Fact>> cap = ArgumentCaptor.forClass(List.class);
     verify(factObserver).onNext(cap.capture());
-    org.assertj.core.api.Assertions.assertThat(cap.getValue()).hasSize(2).containsExactly(f1, f2);
+    assertThat(cap.getValue()).hasSize(2).containsExactly(f1, f2);
   }
 
   @Test
@@ -152,6 +152,7 @@ class ClientStreamObserverTest {
 
   @Test
   void testOnNextList() {
+    // TODO same test repeated above
     Fact f1 = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
     Fact f2 = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
     ArrayList<Fact> stagedFacts = Lists.newArrayList(f1, f2);
@@ -161,7 +162,7 @@ class ClientStreamObserverTest {
     ArgumentCaptor<List<Fact>> l = ArgumentCaptor.forClass(List.class);
     verify(factObserver, times(1)).onNext(l.capture());
 
-    org.assertj.core.api.Assertions.assertThat(l.getValue())
+    assertThat(l.getValue())
         .isNotNull()
         .hasSize(2)
         .containsExactly(f1, f2);

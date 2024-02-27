@@ -70,7 +70,7 @@ public abstract class AbstractFactStore implements FactStore {
   }
 
   @Override
-  public StateToken currentStateFor(@NonNull List<FactSpec> specs) {
+  public @NonNull StateToken currentStateFor(@NonNull List<FactSpec> specs) {
     State state = getCurrentStateFor(specs);
     return tokenStore.create(state);
   }

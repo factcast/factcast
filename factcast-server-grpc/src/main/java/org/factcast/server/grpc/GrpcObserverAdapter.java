@@ -186,7 +186,7 @@ class GrpcObserverAdapter implements ServerSideFactObserver {
   }
 
   @Override
-  public void onFactStreamInfo(FactStreamInfo info) {
+  public void onFactStreamInfo(@NonNull FactStreamInfo info) {
     observer.onNext(converter.createInfoNotification(info));
   }
 
