@@ -105,7 +105,9 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
         latestSuccessful = FactStreamPosition.from(f);
       } catch (Exception e) {
         log.trace(
-            "returned with Exception {}:", latestSuccessful == null ? null : latestSuccessful.factId(), e);
+            "returned with Exception {}:",
+            latestSuccessful == null ? null : latestSuccessful.factId(),
+            e);
         rollbackIfTransactional();
         retryApplicableIfTransactional(facts, f);
         // pass along and potentially rethrow
