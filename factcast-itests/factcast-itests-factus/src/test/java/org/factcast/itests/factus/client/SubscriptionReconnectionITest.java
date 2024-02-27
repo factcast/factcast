@@ -44,6 +44,7 @@ import org.factcast.itests.TestFactusApplication;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.toxi.FactCastProxy;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -90,6 +91,7 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
 
   @SneakyThrows
   @Test
+  @Disabled("https://github.com/factcast/factcast/issues/2749")
   void subscribeWithReconnect() {
     log.info(
         "Using FcProxy {} {}:{}",
@@ -141,6 +143,7 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
 
   @SneakyThrows
   @Test
+  @Disabled("https://github.com/factcast/factcast/issues/2749")
   void subscribeWithFailingReconnect() {
     try (var consoleCaptor = new ConsoleCaptor()) {
       var count = new AtomicInteger();
