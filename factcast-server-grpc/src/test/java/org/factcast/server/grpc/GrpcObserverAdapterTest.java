@@ -202,8 +202,7 @@ public class GrpcObserverAdapterTest {
     uut.shutdown();
 
     // if keepalive is shutdown, reschedule should throw illegalstateexceptions
-    assertThatThrownBy(
-            () -> uut.keepalive().reschedule())
+    assertThatThrownBy(() -> uut.keepalive().reschedule())
         .isInstanceOf(IllegalStateException.class);
   }
 

@@ -159,8 +159,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     void bulkAppliesInTransactionTimeout() {
       TxRedissonSubscribedUserNamesTimeout p =
           new TxRedissonSubscribedUserNamesTimeout(redissonClient);
-      Assertions.assertThatThrownBy(
-              () -> factus.subscribeAndBlock(p).awaitCatchup())
+      Assertions.assertThatThrownBy(() -> factus.subscribeAndBlock(p).awaitCatchup())
           .isInstanceOf(StatusRuntimeException.class);
 
       assertThat(p.userNames()).isEmpty();
