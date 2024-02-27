@@ -40,7 +40,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-@SuppressWarnings({"rawtypes", "unchecked", "deprecation"})
+@SuppressWarnings({"unchecked", "deprecation"})
 @ExtendWith(MockitoExtension.class)
 public class GrpcObserverAdapterTest {
 
@@ -203,9 +203,7 @@ public class GrpcObserverAdapterTest {
 
     // if keepalive is shutdown, reschedule should throw illegalstateexceptions
     assertThatThrownBy(
-            () -> {
-              uut.keepalive().reschedule();
-            })
+            () -> uut.keepalive().reschedule())
         .isInstanceOf(IllegalStateException.class);
   }
 

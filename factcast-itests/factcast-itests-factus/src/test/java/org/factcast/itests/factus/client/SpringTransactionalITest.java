@@ -230,7 +230,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     @Test
     public void testBulkSize5() throws Exception {
       var s = new BulkSize5Projection(platformTransactionManager, jdbcTemplate);
-      try (var sub = factus.subscribeAndBlock(s).awaitCatchup(); ) {
+      try (var sub = factus.subscribeAndBlock(s).awaitCatchup()) {
 
         assertThat(s.factStreamPositionModifications()).isEqualTo(2);
         assertThat(s.txSeen()).hasSize(2);

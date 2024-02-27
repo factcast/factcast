@@ -72,7 +72,7 @@ class FactStreamPositionTest {
     }
 
     @Test
-    void wihoutSerial() {
+    void withoutSerial() {
       UUID id = UUID.randomUUID();
       FactStreamPosition actual = FactStreamPosition.withoutSerial(id);
 

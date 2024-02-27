@@ -190,9 +190,7 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
     SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("ns")).fromScratch();
     fc.subscribe(
             req,
-            batch -> {
-              batch.forEach(o::onNext);
-            })
+            batch -> batch.forEach(o::onNext))
         .awaitComplete()
         .close();
   }
@@ -202,9 +200,7 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
     SubscriptionRequest req = SubscriptionRequest.follow(FactSpec.ns("ns")).fromScratch();
     return fc.subscribe(
         req,
-        batch -> {
-          batch.forEach(o::onNext);
-        });
+        batch -> batch.forEach(o::onNext));
   }
 
   @SneakyThrows

@@ -86,7 +86,7 @@ public class ProtoConverter {
   public MSG_Notification toProto(@NonNull FactStreamPosition id) {
     MSG_Notification.Builder builder =
         MSG_Notification.newBuilder().setType(MSG_Notification.Type.Ffwd);
-    builder.setId(toProto(id.factId()));
+    builder.setId(toProto(id.factId())); // TODO id.factId() is nullable?
     builder.setSerial(toProto(id.serial()));
     return builder.build();
   }

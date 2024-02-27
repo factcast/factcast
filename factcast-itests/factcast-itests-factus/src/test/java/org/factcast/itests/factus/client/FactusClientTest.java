@@ -255,7 +255,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  void simpleAggregateRoundtrip() throws Exception {
+  void simpleAggregateRoundtrip() {
     UUID aggregateId = randomUUID();
     assertThat(factus.find(TestAggregate.class, aggregateId)).isEmpty();
 
@@ -288,7 +288,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  void simpleSnapshotProjectionRoundtrip() throws Exception {
+  void simpleSnapshotProjectionRoundtrip() {
     assertThat(factus.fetch(SnapshotUserNames.class)).isNotNull();
 
     UUID johnsId = randomUUID();
@@ -326,7 +326,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  void simpleProjectionLockingRoundtrip() throws Exception {
+  void simpleProjectionLockingRoundtrip() {
     SnapshotUserNames emptyUserNames = factus.fetch(SnapshotUserNames.class);
     assertThat(emptyUserNames).isNotNull();
     assertThat(emptyUserNames.count()).isEqualTo(0);
@@ -355,7 +355,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  void testPublishSafeguard() throws Exception {
+  void testPublishSafeguard() {
 
     assertThatThrownBy(
             () ->
@@ -373,7 +373,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  void simpleManagedProjectionRoundtrip() throws Exception {
+  void simpleManagedProjectionRoundtrip() {
     // lets consider userCount a springbean
 
     assertThat(userCount.factStreamPosition()).isNull();
@@ -400,7 +400,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  void simpleManagedProjectionRoundtrip_withLock() throws Exception {
+  void simpleManagedProjectionRoundtrip_withLock() {
     // lets consider userCount a springbean
     UserCount userCount = new UserCount();
 
@@ -499,7 +499,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  void simpleAggregateLockRoundtrip() throws Exception {
+  void simpleAggregateLockRoundtrip() {
     UUID aggregateId = randomUUID();
     assertThat(factus.find(TestAggregate.class, aggregateId)).isEmpty();
 
