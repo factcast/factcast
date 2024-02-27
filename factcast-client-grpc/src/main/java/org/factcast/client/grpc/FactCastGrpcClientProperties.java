@@ -15,9 +15,12 @@
  */
 package org.factcast.client.grpc;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import java.time.Duration;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import org.factcast.grpc.api.GrpcConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.context.annotation.Configuration;
@@ -28,7 +31,13 @@ import org.springframework.context.annotation.Configuration;
 @Accessors(fluent = false)
 public class FactCastGrpcClientProperties {
 
-  private int catchupBatchsize = 50;
+  @Min(
+      message = "Minimum value for 'maxInboundMessageSize' is {value}",
+      value = GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE)
+  @Max(
+      message = "Maximum value for 'maxInboundMessageSize' is {value}",
+      value = GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE)
+  private int maxInboundMessageSize = GrpcConstants.DEFAULT_CLIENT_INBOUND_MESSAGE_SIZE;
 
   private boolean enableFastForward = true;
 

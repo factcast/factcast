@@ -59,7 +59,7 @@ class PgSynchronizedQuery {
 
   @NonNull final PreparedStatementSetter setter;
 
-  @NonNull final RowCallbackHandler rowHandler;
+  @NonNull final FactRowCallbackHandler rowHandler;
 
   @NonNull final TransactionTemplate transactionTemplate;
 
@@ -73,7 +73,7 @@ class PgSynchronizedQuery {
       @NonNull JdbcTemplate jdbcTemplate,
       @NonNull String sql,
       @NonNull PreparedStatementSetter setter,
-      @NonNull RowCallbackHandler rowHandler,
+      @NonNull FactRowCallbackHandler rowHandler,
       @NonNull AtomicLong serialToContinueFrom,
       @NonNull PgLatestSerialFetcher fetcher,
       @NonNull CurrentStatementHolder statementHolder) {
@@ -103,13 +103,31 @@ class PgSynchronizedQuery {
               jdbcTemplate.execute("SET LOCAL enable_bitmapscan=0;");
             }
 
+            System.out.println("query executing");
+
+            AtomicInteger count = new AtomicInteger(0);
+            RowCallbackHandler debugHandler =
+                new RowCallbackHandler() {
+
+                  @Override
+                  public void processRow(ResultSet rs) throws SQLException {
+                    System.out.println("debugHandlerCallbackHandler: " + (count.incrementAndGet()));
+                    rowHandler.processRow(rs);
+                  }
+                };
+
             jdbcTemplate.query(
                 sql,
                 ps -> {
                   statementHolder.statement(ps);
                   setter.setValues(ps);
                 },
-                rowHandler);
+                debugHandler);
+
+            System.out.println("flushing rowhandler after " + count.get() + " rows");
+            rowHandler.flush();
+
+            System.out.println("done querying");
             return null;
           });
 
@@ -128,8 +146,6 @@ class PgSynchronizedQuery {
   public static class FactRowCallbackHandler implements RowCallbackHandler {
 
     final SubscriptionImpl subscription;
-
-    final FactInterceptor interceptor;
 
     final Supplier<Boolean> isConnectedSupplier;
 
@@ -152,7 +168,7 @@ class PgSynchronizedQuery {
         Fact f = null;
         try {
           f = PgFact.from(rs);
-          interceptor.accept(f);
+          subscription.notifyElement(f);
           log.trace("{} notifyElement called with id={}", request, f.id());
           serial.set(rs.getLong(PgConstants.COLUMN_SER));
         } catch (PSQLException psql) {
@@ -174,6 +190,10 @@ class PgSynchronizedQuery {
       } catch (Throwable ignore) {
       }
       subscription.notifyError(e);
+    }
+
+    void flush() {
+      subscription.notifyElement(null);
     }
   }
 }

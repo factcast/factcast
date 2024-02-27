@@ -33,7 +33,10 @@ public class FactTransformers {
   private final RequestedVersions requested;
 
   @Nullable
-  public TransformationRequest prepareTransformation(@NonNull Fact e) {
+  public TransformationRequest prepareTransformation(@Nullable Fact e) {
+    // needed to pass flushing null along
+    if (e == null) return null;
+
     String ns = e.ns();
     String type = e.type();
     int version = e.version();

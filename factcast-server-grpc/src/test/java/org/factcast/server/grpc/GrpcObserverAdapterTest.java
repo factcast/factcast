@@ -22,9 +22,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import io.grpc.stub.StreamObserver;
-import java.util.Arrays;
-import java.util.OptionalInt;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 import lombok.NonNull;
 import org.factcast.core.Fact;
@@ -92,7 +90,6 @@ public class GrpcObserverAdapterTest {
 
     GrpcRequestMetadata mockGrpcRequestMetaData = mock(GrpcRequestMetadata.class);
     when(mockGrpcRequestMetaData.supportsFastForward()).thenReturn(true);
-    when(mockGrpcRequestMetaData.catchupBatch()).thenReturn(OptionalInt.of(1));
 
     FastForwardTarget ffwd = FastForwardTarget.of(null, 112);
 
@@ -111,7 +108,6 @@ public class GrpcObserverAdapterTest {
 
     GrpcRequestMetadata mockGrpcRequestMetaData = mock(GrpcRequestMetadata.class);
     when(mockGrpcRequestMetaData.supportsFastForward()).thenReturn(true);
-    when(mockGrpcRequestMetaData.catchupBatch()).thenReturn(OptionalInt.of(1));
 
     FastForwardTarget ffwd = FastForwardTarget.of(new UUID(1, 1), 0);
 
@@ -130,7 +126,6 @@ public class GrpcObserverAdapterTest {
 
     GrpcRequestMetadata mockGrpcRequestMetaData = mock(GrpcRequestMetadata.class);
     when(mockGrpcRequestMetaData.supportsFastForward()).thenReturn(false);
-    when(mockGrpcRequestMetaData.catchupBatch()).thenReturn(OptionalInt.of(1));
 
     FastForwardTarget ffwd = FastForwardTarget.of(new UUID(10, 10), 112);
 
@@ -162,9 +157,11 @@ public class GrpcObserverAdapterTest {
     verify(observer, never()).onNext(any());
     Fact f = Fact.builder().ns("test").build("{}");
     uut.onNext(f);
+    uut.flush();
     verify(observer).onNext(any());
-    assertEquals(MSG_Notification.Type.Fact, msg.getValue().getType());
-    assertEquals(f.id(), conv.fromProto(msg.getValue().getFact()).id());
+    MSG_Notification notification = msg.getValue();
+    assertEquals(MSG_Notification.Type.Facts, notification.getType());
+    assertEquals(f, conv.fromProto(notification.getFacts()).get(0));
   }
 
   @Test

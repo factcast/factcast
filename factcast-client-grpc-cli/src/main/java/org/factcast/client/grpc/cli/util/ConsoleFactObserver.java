@@ -15,15 +15,16 @@
  */
 package org.factcast.client.grpc.cli.util;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.BatchingFactObserver;
 
 @SuppressWarnings("java:S106")
-public class ConsoleFactObserver implements FactObserver {
+public class ConsoleFactObserver implements BatchingFactObserver {
 
   private final FactRenderer factRenderer;
 
@@ -34,8 +35,8 @@ public class ConsoleFactObserver implements FactObserver {
   }
 
   @Override
-  public synchronized void onNext(@NonNull Fact f) {
-    System.out.println(factRenderer.render(f));
+  public synchronized void onNext(@NonNull List<Fact> facts) {
+    facts.forEach(f -> System.out.println(factRenderer.render(f)));
   }
 
   @SneakyThrows

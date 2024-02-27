@@ -45,6 +45,7 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.subscription.observer.FlushingFactObserver;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.ProtoConverter;
@@ -318,11 +319,11 @@ public class FactStoreGrpcServiceTest {
   @Test
   void testSubscribeFacts() {
     SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
-    when(backend.subscribe(reqCaptor.capture(), any())).thenReturn(null);
+    when(backend.subscribe(reqCaptor.capture(), (FlushingFactObserver) any())).thenReturn(null);
     uut.subscribe(
         new ProtoConverter().toProto(SubscriptionRequestTO.forFacts(req)),
         mock(ServerCallStreamObserver.class));
-    verify(backend).subscribe(any(), any());
+    verify(backend).subscribe(any(), (FlushingFactObserver) any());
   }
 
   @Test
@@ -335,7 +336,7 @@ public class FactStoreGrpcServiceTest {
                 .initialNumberOfFollowRequestsAllowedPerClient(3)
                 .numberOfFollowRequestsAllowedPerClientPerMinute(1));
     SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
-    when(backend.subscribe(reqCaptor.capture(), any())).thenReturn(null);
+    when(backend.subscribe(reqCaptor.capture(), (FlushingFactObserver) any())).thenReturn(null);
 
     var sre =
         assertThrows(
@@ -363,7 +364,7 @@ public class FactStoreGrpcServiceTest {
                 .numberOfCatchupRequestsAllowedPerClientPerMinute(1)
                 .initialNumberOfFollowRequestsAllowedPerClient(3)
                 .numberOfFollowRequestsAllowedPerClientPerMinute(3));
-    when(backend.subscribe(reqCaptor.capture(), any())).thenReturn(null);
+    when(backend.subscribe(reqCaptor.capture(), (FlushingFactObserver) any())).thenReturn(null);
 
     // must not throw exception
     for (int i = 0; i < 10; i++) {
@@ -388,7 +389,7 @@ public class FactStoreGrpcServiceTest {
                 .numberOfFollowRequestsAllowedPerClientPerMinute(1)
                 .disabled(true));
     SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
-    when(backend.subscribe(reqCaptor.capture(), any())).thenReturn(null);
+    when(backend.subscribe(reqCaptor.capture(), (FlushingFactObserver) any())).thenReturn(null);
 
     // must not throw exception
     for (int i = 0; i < 10; i++) {
@@ -410,7 +411,7 @@ public class FactStoreGrpcServiceTest {
                 .initialNumberOfFollowRequestsAllowedPerClient(3)
                 .numberOfFollowRequestsAllowedPerClientPerMinute(1));
     SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
-    when(backend.subscribe(reqCaptor.capture(), any())).thenReturn(null);
+    when(backend.subscribe(reqCaptor.capture(), (FlushingFactObserver) any())).thenReturn(null);
 
     var sre =
         assertThrows(

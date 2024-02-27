@@ -25,8 +25,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.stream.*;
+import javax.annotation.Nullable;
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.factcast.core.DuplicateFactException;
 import org.factcast.core.Fact;
@@ -40,7 +40,7 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.FlushingFactObserver;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -87,13 +87,13 @@ public abstract class AbstractFactStoreTest {
     Assertions.assertTimeout(
         Duration.ofMillis(30000),
         () -> {
-          FactObserver observer = mock(FactObserver.class);
+          FlushingFactObserver observer = mock(FlushingFactObserver.class);
           Subscription s = uut.subscribe(SubscriptionRequest.catchup(ANY).fromScratch(), observer);
           s.awaitComplete();
           verify(observer).onCatchup();
           verify(observer).onComplete();
           verify(observer, never()).onError(any());
-          verify(observer, never()).onNext(any());
+          verify(observer, never()).onNext((Fact) notNull());
         });
   }
 
@@ -122,12 +122,12 @@ public abstract class AbstractFactStoreTest {
     Assertions.assertTimeout(
         Duration.ofMillis(30000),
         () -> {
-          TestFactObserver observer = testObserver();
+          TestFlushingFactObserver observer = testObserver();
           uut.subscribe(SubscriptionRequest.follow(ANY).fromScratch(), observer).awaitCatchup();
           verify(observer).onCatchup();
           verify(observer, never()).onComplete();
           verify(observer, never()).onError(any());
-          verify(observer, never()).onNext(any());
+          verify(observer, never()).onNext((Fact) notNull());
           uut.publish(
               Fact.of(
                   "{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}",
@@ -138,12 +138,12 @@ public abstract class AbstractFactStoreTest {
                   "{}"));
           observer.await(2);
           // the mark facts only
-          verify(observer, times(2)).onNext(any());
+          verify(observer, times(2)).onNext((Fact) notNull());
         });
   }
 
-  private TestFactObserver testObserver() {
-    return spy(new TestFactObserver());
+  private TestFlushingFactObserver testObserver() {
+    return spy(new TestFlushingFactObserver());
   }
 
   @Test
@@ -151,12 +151,12 @@ public abstract class AbstractFactStoreTest {
     Assertions.assertTimeout(
         Duration.ofMillis(30000),
         () -> {
-          TestFactObserver observer = testObserver();
+          TestFlushingFactObserver observer = testObserver();
           uut.subscribe(SubscriptionRequest.follow(ANY).fromScratch(), observer).awaitCatchup();
           verify(observer).onCatchup();
           verify(observer, never()).onComplete();
           verify(observer, never()).onError(any());
-          verify(observer, never()).onNext(any());
+          verify(observer, never()).onNext((Fact) notNull());
           uut.publish(
               Fact.of(
                   "{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}",
@@ -182,19 +182,19 @@ public abstract class AbstractFactStoreTest {
               Fact.of(
                   "{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}",
                   "{}"));
-          TestFactObserver observer = testObserver();
+          TestFlushingFactObserver observer = testObserver();
           uut.subscribe(SubscriptionRequest.follow(ANY).fromNowOn(), observer).awaitCatchup();
           // nothing recieved
           verify(observer).onCatchup();
           verify(observer, never()).onComplete();
           verify(observer, never()).onError(any());
-          verify(observer, never()).onNext(any());
+          verify(observer, never()).onNext((Fact) notNull());
           uut.publish(
               Fact.of(
                   "{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}",
                   "{}"));
           observer.await(1);
-          verify(observer, times(1)).onNext(any());
+          verify(observer, times(1)).onNext((Fact) notNull());
         });
   }
 
@@ -203,7 +203,7 @@ public abstract class AbstractFactStoreTest {
     Assertions.assertTimeout(
         Duration.ofMillis(30000),
         () -> {
-          TestFactObserver observer = testObserver();
+          TestFlushingFactObserver observer = testObserver();
           uut.publish(
               Fact.of(
                   "{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}",
@@ -222,13 +222,13 @@ public abstract class AbstractFactStoreTest {
           verify(observer).onCatchup();
           verify(observer, never()).onComplete();
           verify(observer, never()).onError(any());
-          verify(observer, never()).onNext(any());
+          verify(observer, never()).onNext((Fact) notNull());
           uut.publish(
               Fact.of(
                   "{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}",
                   "{}"));
           observer.await(1);
-          verify(observer, times(1)).onNext(any());
+          verify(observer, times(1)).onNext((Fact) notNull());
           subscription.close();
           uut.publish(
               Fact.of(
@@ -236,7 +236,7 @@ public abstract class AbstractFactStoreTest {
                   "{}"));
           Thread.sleep(100);
           // additional event not received
-          verify(observer, times(1)).onNext(any());
+          verify(observer, times(1)).onNext((Fact) notNull());
         });
   }
 
@@ -245,7 +245,7 @@ public abstract class AbstractFactStoreTest {
     Assertions.assertTimeout(
         Duration.ofMillis(30000),
         () -> {
-          TestFactObserver observer = testObserver();
+          TestFlushingFactObserver observer = testObserver();
           uut.publish(
               Fact.of(
                   "{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}",
@@ -264,7 +264,7 @@ public abstract class AbstractFactStoreTest {
           verify(observer).onCatchup();
           verify(observer, never()).onComplete();
           verify(observer, never()).onError(any());
-          verify(observer, times(3)).onNext(any());
+          verify(observer, times(3)).onNext((Fact) notNull());
           uut.publish(
               Fact.of(
                   "{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}",
@@ -277,7 +277,7 @@ public abstract class AbstractFactStoreTest {
                   "{}"));
           Thread.sleep(100);
           // additional event not received
-          verify(observer, times(4)).onNext(any());
+          verify(observer, times(4)).onNext((Fact) notNull());
         });
   }
 
@@ -286,7 +286,7 @@ public abstract class AbstractFactStoreTest {
     Assertions.assertTimeout(
         Duration.ofMillis(30000),
         () -> {
-          FactObserver observer = mock(FactObserver.class);
+          FlushingFactObserver observer = mock(FlushingFactObserver.class);
           uut.publish(
               Fact.of(
                   "{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}",
@@ -295,7 +295,7 @@ public abstract class AbstractFactStoreTest {
           verify(observer).onCatchup();
           verify(observer).onComplete();
           verify(observer, never()).onError(any());
-          verify(observer).onNext(any());
+          verify(observer).onNext((Fact) notNull());
         });
   }
 
@@ -304,7 +304,7 @@ public abstract class AbstractFactStoreTest {
     Assertions.assertTimeout(
         Duration.ofMillis(30000),
         () -> {
-          TestFactObserver observer = testObserver();
+          TestFlushingFactObserver observer = testObserver();
           uut.publish(
               Fact.of(
                   "{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}",
@@ -313,7 +313,7 @@ public abstract class AbstractFactStoreTest {
           verify(observer).onCatchup();
           verify(observer, never()).onComplete();
           verify(observer, never()).onError(any());
-          verify(observer).onNext(any());
+          verify(observer).onNext((Fact) notNull());
           uut.publish(
               Fact.of(
                   "{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}",
@@ -327,7 +327,7 @@ public abstract class AbstractFactStoreTest {
     Assertions.assertTimeout(
         Duration.ofMillis(30000),
         () -> {
-          TestFactObserver observer = testObserver();
+          TestFlushingFactObserver observer = testObserver();
           uut.publish(
               Fact.of(
                   "{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"default\",\"type\":\"t1\"}",
@@ -336,7 +336,7 @@ public abstract class AbstractFactStoreTest {
           verify(observer).onCatchup();
           verify(observer, never()).onComplete();
           verify(observer, never()).onError(any());
-          verify(observer).onNext(any());
+          verify(observer).onNext((Fact) notNull());
           uut.publish(
               Fact.of(
                   "{\"id\":\"" + UUID.randomUUID() + "\",\"ns\":\"other\",\"type\":\"t1\"}", "{}"));
@@ -349,7 +349,7 @@ public abstract class AbstractFactStoreTest {
     Assertions.assertTimeout(
         Duration.ofMillis(30000),
         () -> {
-          FactObserver observer = mock(FactObserver.class);
+          FlushingFactObserver observer = mock(FlushingFactObserver.class);
           uut.publish(
               Fact.of(
                   "{\"id\":\""
@@ -366,7 +366,8 @@ public abstract class AbstractFactStoreTest {
           uut.subscribe(SubscriptionRequest.catchup(REQ_FOO_BAR).fromScratch(), observer)
               .awaitComplete();
           verify(observer).onFactStreamInfo(any());
-          verify(observer).onNext(any());
+          verify(observer).onNext((Fact) notNull());
+          verify(observer, atLeastOnce()).onNext((Fact) null);
           verify(observer).onCatchup();
           verify(observer).onComplete();
           verifyNoMoreInteractions(observer);
@@ -378,7 +379,7 @@ public abstract class AbstractFactStoreTest {
     Assertions.assertTimeout(
         Duration.ofMillis(30000),
         () -> {
-          FactObserver observer = mock(FactObserver.class);
+          FlushingFactObserver observer = mock(FlushingFactObserver.class);
           uut.publish(
               Fact.of(
                   "{\"id\":\""
@@ -396,7 +397,8 @@ public abstract class AbstractFactStoreTest {
           uut.subscribe(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
               .awaitComplete();
           verify(observer).onFactStreamInfo(any());
-          verify(observer).onNext(any());
+          verify(observer).onNext((Fact) notNull());
+          verify(observer, atLeastOnce()).onNext((Fact) null);
           verify(observer).onCatchup();
           verify(observer).onComplete();
           verifyNoMoreInteractions(observer);
@@ -408,7 +410,7 @@ public abstract class AbstractFactStoreTest {
     Assertions.assertTimeout(
         Duration.ofMillis(30000),
         () -> {
-          FactObserver observer = mock(FactObserver.class);
+          FlushingFactObserver observer = mock(FlushingFactObserver.class);
           uut.publish(
               Fact.of(
                   "{\"id\":\""
@@ -426,7 +428,8 @@ public abstract class AbstractFactStoreTest {
           uut.subscribe(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
               .awaitComplete();
           verify(observer).onFactStreamInfo(any());
-          verify(observer).onNext(any());
+          verify(observer).onNext((Fact) notNull());
+          verify(observer, atLeastOnce()).onNext((Fact) null);
           verify(observer).onCatchup();
           verify(observer).onComplete();
           verifyNoMoreInteractions(observer);
@@ -438,7 +441,7 @@ public abstract class AbstractFactStoreTest {
     Assertions.assertTimeout(
         Duration.ofMillis(30000),
         () -> {
-          FactObserver observer = mock(FactObserver.class);
+          FlushingFactObserver observer = mock(FlushingFactObserver.class);
           uut.publish(
               Fact.of(
                   "{\"id\":\""
@@ -455,7 +458,8 @@ public abstract class AbstractFactStoreTest {
           uut.subscribe(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
               .awaitComplete();
           verify(observer).onFactStreamInfo(any());
-          verify(observer, times(2)).onNext(any());
+          verify(observer, times(2)).onNext((Fact) notNull());
+          verify(observer, atLeastOnce()).onNext((Fact) null);
           verify(observer).onCatchup();
           verify(observer).onComplete();
           verifyNoMoreInteractions(observer);
@@ -467,7 +471,7 @@ public abstract class AbstractFactStoreTest {
     Assertions.assertTimeout(
         Duration.ofMillis(30000),
         () -> {
-          FactObserver observer = mock(FactObserver.class);
+          FlushingFactObserver observer = mock(FlushingFactObserver.class);
           uut.publish(
               Fact.of(
                   "{\"id\":\""
@@ -480,11 +484,12 @@ public abstract class AbstractFactStoreTest {
                       + UUID.randomUUID()
                       + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
                   "{}"));
-          FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript("function (h){ return false }");
-          uut.subscribe(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
+          FactSpec scripted = FactSpec.ns("default").jsFilterScript("function (h){ return false }");
+          uut.subscribe(SubscriptionRequest.catchup(scripted).fromScratch(), observer)
               .awaitComplete();
           verify(observer).onFactStreamInfo(any());
           verify(observer).onCatchup();
+          verify(observer, atLeastOnce()).onNext((Fact) null);
           verify(observer).onComplete();
           verifyNoMoreInteractions(observer);
         });
@@ -505,12 +510,12 @@ public abstract class AbstractFactStoreTest {
                       + aggId1
                       + "\"]}",
                   "{}"));
-          FactObserver observer = mock(FactObserver.class);
+          FlushingFactObserver observer = mock(FlushingFactObserver.class);
           uut.subscribe(
                   SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId1)).fromScratch(),
                   observer)
               .awaitComplete();
-          verify(observer, times(1)).onNext(any());
+          verify(observer, times(1)).onNext((Fact) notNull());
         });
   }
 
@@ -532,18 +537,18 @@ public abstract class AbstractFactStoreTest {
                       + aggId2
                       + "\"]}",
                   "{}"));
-          FactObserver observer = mock(FactObserver.class);
+          FlushingFactObserver observer = mock(FlushingFactObserver.class);
           uut.subscribe(
                   SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId1)).fromScratch(),
                   observer)
               .awaitComplete();
-          verify(observer, times(1)).onNext(any());
-          observer = mock(FactObserver.class);
+          verify(observer, times(1)).onNext((Fact) notNull());
+          observer = mock(FlushingFactObserver.class);
           uut.subscribe(
                   SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId2)).fromScratch(),
                   observer)
               .awaitComplete();
-          verify(observer, times(1)).onNext(any());
+          verify(observer, times(1)).onNext((Fact) notNull());
         });
   }
 
@@ -565,12 +570,12 @@ public abstract class AbstractFactStoreTest {
                       + aggId2
                       + "\"]}",
                   "{}"));
-          FactObserver observer = mock(FactObserver.class);
+          FlushingFactObserver observer = mock(FlushingFactObserver.class);
           uut.subscribe(
                   SubscriptionRequest.catchup(FactSpec.ns("default").aggId(aggId2)).fromScratch(),
                   observer)
               .awaitComplete();
-          verify(observer, times(1)).onNext(any());
+          verify(observer, times(1)).onNext((Fact) notNull());
         });
   }
 
@@ -580,7 +585,7 @@ public abstract class AbstractFactStoreTest {
         Duration.ofMillis(30000),
         () -> {
           UUID id = UUID.randomUUID();
-          TestFactObserver obs = new TestFactObserver();
+          TestFlushingFactObserver obs = new TestFlushingFactObserver();
           try (Subscription s =
               uut.subscribe(
                   SubscriptionRequest.follow(500, FactSpec.ns("default").aggId(id)).fromScratch(),
@@ -697,7 +702,10 @@ public abstract class AbstractFactStoreTest {
     AtomicReference<CountDownLatch> l = new AtomicReference<>(new CountDownLatch(1));
     SubscriptionRequest request =
         SubscriptionRequest.follow(FactSpec.ns("followtest")).fromScratch();
-    FactObserver observer = element -> l.get().countDown();
+    FlushingFactObserver observer =
+        element -> {
+          if (element != null) l.get().countDown();
+        };
     uut.subscribe(request, observer);
     // make sure, you got the first one
     assertTrue(l.get().await(1500, TimeUnit.MILLISECONDS));
@@ -718,13 +726,29 @@ public abstract class AbstractFactStoreTest {
 
   @Test
   protected void testCatchup() throws Exception {
+
+    AtomicBoolean failed = new AtomicBoolean(false);
+
     String ns = "catchuptest";
     uut.publish(newTestFact(ns));
     AtomicReference<UUID> last = new AtomicReference<>();
 
     // fetch all there is from scratch
     SubscriptionRequest request = SubscriptionRequest.catchup(FactSpec.ns(ns)).fromScratch();
-    FactObserver observer = element -> last.set(element.id());
+    FlushingFactObserver observer =
+        new FlushingFactObserver() {
+          @Override
+          public void onNext(@Nullable Fact element) {
+            System.out.println("recieve: " + element);
+            if (element != null) last.set(element.id());
+          }
+
+          @Override
+          public void onComplete() {
+            FlushingFactObserver.super.onComplete();
+            System.out.println("complete");
+          }
+        };
     uut.subscribe(request, observer).awaitComplete();
 
     // now we should have the published one in last
@@ -734,10 +758,13 @@ public abstract class AbstractFactStoreTest {
     request = SubscriptionRequest.catchup(FactSpec.ns(ns)).from(last.get());
     observer =
         element -> {
-          System.out.println("unexpected fact recieved");
-          fail();
+          if (element != null) {
+            System.out.println("unexpected fact recieved");
+            failed.set(true);
+          }
         };
     uut.subscribe(request, observer).awaitComplete();
+    if (failed.get()) fail();
 
     // now, add two more
     uut.publish(newTestFact(ns));
@@ -749,14 +776,15 @@ public abstract class AbstractFactStoreTest {
     observer =
         element -> {
           expectingTwo.countDown();
-          if (element.id().equals(last.get())) {
+          if (element != null && last.get().equals(element.id())) {
             System.out.println("duplicate fact recieved");
-            fail();
+            failed.set(true);
           }
         };
     uut.subscribe(request, observer);
-    assertTrue(expectingTwo.await(2, TimeUnit.SECONDS));
 
+    assertTrue(expectingTwo.await(2, TimeUnit.SECONDS));
+    if (failed.get()) fail();
     // apparently, all fine
 
   }
@@ -800,7 +828,10 @@ public abstract class AbstractFactStoreTest {
   private List<Fact> catchup(FactSpec s) {
 
     LinkedList<Fact> l = new LinkedList<>();
-    FactObserver o = l::add;
+    FlushingFactObserver o =
+        f -> {
+          if (f != null) l.add(f);
+        };
     uut.subscribe(SubscriptionRequest.catchup(s).fromScratch(), o).awaitCatchup();
     return l;
   }
@@ -1233,22 +1264,23 @@ public abstract class AbstractFactStoreTest {
     verify(store, times(1)).invalidate(any());
   }
 
-  static class ToListObserver implements FactObserver {
-    @Getter private final List<Fact> list = new LinkedList<>();
+  @Getter
+  static class ToListObserver implements FlushingFactObserver {
+    private final List<Fact> list = new LinkedList<>();
 
     @Override
-    public void onNext(@NonNull Fact element) {
-      list.add(element);
+    public void onNext(@Nullable Fact element) {
+      if (element != null) list.add(element);
     }
   }
 
-  private static class TestFactObserver implements FactObserver {
+  private static class TestFlushingFactObserver implements FlushingFactObserver {
 
     private final List<Fact> values = new CopyOnWriteArrayList<>();
 
     @Override
-    public void onNext(Fact element) {
-      values.add(element);
+    public void onNext(@Nullable Fact element) {
+      if (element != null) values.add(element);
     }
 
     @SneakyThrows

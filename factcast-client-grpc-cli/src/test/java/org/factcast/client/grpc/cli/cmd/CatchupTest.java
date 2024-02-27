@@ -28,7 +28,7 @@ import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.BatchingFactObserver;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.Mock;
@@ -53,7 +53,7 @@ class CatchupTest {
         .thenAnswer(
             invocation -> {
               Object[] args = invocation.getArguments();
-              FactObserver o = (FactObserver) args[1];
+              BatchingFactObserver o = (BatchingFactObserver) args[1];
               o.onCatchup();
               o.onComplete();
 

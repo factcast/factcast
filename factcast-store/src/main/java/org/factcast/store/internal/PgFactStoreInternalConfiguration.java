@@ -38,7 +38,6 @@ import org.factcast.store.IsReadOnlyEnv;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.catchup.fetching.PgFetchingCatchUpFactory;
-import org.factcast.store.internal.catchup.tmppaged.PgTmpPagedCatchUpFactory;
 import org.factcast.store.internal.check.IndexCheck;
 import org.factcast.store.internal.filter.blacklist.*;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
@@ -55,9 +54,11 @@ import org.factcast.store.internal.tail.PGTailIndexingConfiguration;
 import org.factcast.store.registry.PgSchemaStoreChangeListener;
 import org.factcast.store.registry.SchemaRegistry;
 import org.factcast.store.registry.SchemaRegistryConfiguration;
+import org.factcast.store.registry.transformation.TransformationConfiguration;
 import org.factcast.store.registry.transformation.cache.PgTransformationStoreChangeListener;
 import org.factcast.store.registry.transformation.cache.TransformationCache;
 import org.factcast.store.registry.transformation.chains.TransformationChains;
+import org.factcast.store.registry.validation.FactValidatorConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -88,7 +89,9 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @Import({
   SchemaRegistryConfiguration.class,
   SnapshotCacheConfiguration.class,
-  PGTailIndexingConfiguration.class
+  PGTailIndexingConfiguration.class,
+  FactValidatorConfiguration.class,
+  TransformationConfiguration.class
 })
 public class PgFactStoreInternalConfiguration {
 
@@ -99,19 +102,8 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
-  public PgCatchupFactory pgCatchupFactory(
-      StoreConfigurationProperties props,
-      PgConnectionSupplier supp,
-      PgMetrics metrics,
-      FactTransformerService transformerService) {
-    switch (props.getCatchupStrategy()) {
-      case PAGED:
-        return new PgTmpPagedCatchUpFactory(supp, props, metrics, transformerService);
-      case FETCHING:
-        return new PgFetchingCatchUpFactory(supp, props, metrics, transformerService);
-      default:
-        throw new IllegalArgumentException("Unmapped Strategy: " + props.getCatchupStrategy());
-    }
+  public PgCatchupFactory pgCatchupFactory(PgConnectionSupplier supp) {
+    return new PgFetchingCatchUpFactory(supp);
   }
 
   @Bean
@@ -153,10 +145,9 @@ public class PgFactStoreInternalConfiguration {
       StoreConfigurationProperties props,
       PgCatchupFactory pgCatchupFactory,
       FastForwardTarget target,
-      PgMetrics metrics,
-      Blacklist blacklist,
-      JSEngineFactory ef,
-      FactTransformerService transformerService) {
+      FactTransformerService transformService,
+      JSEngineFactory jsef,
+      PgMetrics metrics) {
     return new PgSubscriptionFactory(
         jdbcTemplate,
         eventBus,
@@ -165,10 +156,10 @@ public class PgFactStoreInternalConfiguration {
         props,
         pgCatchupFactory,
         target,
-        metrics,
-        blacklist,
-        transformerService,
-        ef);
+        blacklist(),
+        transformService,
+        jsef,
+        metrics);
   }
 
   @Bean

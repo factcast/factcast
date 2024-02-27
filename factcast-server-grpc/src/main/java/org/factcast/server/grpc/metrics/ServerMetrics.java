@@ -48,7 +48,7 @@ public interface ServerMetrics {
 
   void count(EVENT event, Tags tags);
 
-  enum OP {
+  public enum OP {
     HANDSHAKE("handshake");
 
     @NonNull @Getter final String op;

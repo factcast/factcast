@@ -16,17 +16,18 @@
 package org.factcast.core.subscription;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.annotation.Nullable;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.*;
 import org.factcast.core.util.ExceptionHelper;
 
 /**
@@ -34,19 +35,23 @@ import org.factcast.core.util.ExceptionHelper;
  *
  * @author <uwe.schaefer@prisma-capacity.eu>
  */
-@RequiredArgsConstructor
 @Slf4j
 public class SubscriptionImpl implements InternalSubscription {
 
-  @NonNull final FactObserver observer;
+  @NonNull private final FactStreamObserver observer;
 
-  @NonNull Runnable onClose = () -> {};
+  @NonNull private Runnable onClose = () -> {};
 
-  final AtomicBoolean closed = new AtomicBoolean(false);
+  private final AtomicBoolean closed = new AtomicBoolean(false);
 
-  final CompletableFuture<Void> catchup = new CompletableFuture<>();
+  private final CompletableFuture<Void> catchup = new CompletableFuture<>();
 
-  final CompletableFuture<Void> complete = new CompletableFuture<>();
+  private final CompletableFuture<Void> complete = new CompletableFuture<>();
+
+  // TODO is this necessarily public?
+  public SubscriptionImpl(@NonNull FactStreamObserver observer) {
+    this.observer = observer;
+  }
 
   @Override
   public void close() {
@@ -178,10 +183,17 @@ public class SubscriptionImpl implements InternalSubscription {
   }
 
   @Override
-  public void notifyElement(@NonNull Fact e) throws TransformationException {
+  public void notifyElements(@NonNull List<Fact> batch) throws TransformationException {
     if (!closed.get()) {
-      // note that this fact is already transformed
-      observer.onNext(e);
+      // note that those facts are already transformed
+      observer.onNext(batch);
+    }
+  }
+
+  @Override
+  public void notifyElement(@Nullable Fact f) throws TransformationException {
+    if (!closed.get()) {
+      observer.onNext(f);
     }
   }
 
@@ -204,7 +216,23 @@ public class SubscriptionImpl implements InternalSubscription {
     }
   }
 
+  @NonNull
+  public static SubscriptionImpl on(@NonNull FlushingFactObserver o) {
+    return on(new FactStreamObserver(o));
+  }
+
+  @NonNull
   public static SubscriptionImpl on(@NonNull FactObserver o) {
-    return new SubscriptionImpl(o);
+    return on(new FactStreamObserver(o));
+  }
+
+  @NonNull
+  public static SubscriptionImpl on(@NonNull BatchingFactObserver o) {
+    return on(new FactStreamObserver(o));
+  }
+
+  @NonNull
+  public static SubscriptionImpl on(@NonNull FactStreamObserver observer) {
+    return new SubscriptionImpl(observer);
   }
 }

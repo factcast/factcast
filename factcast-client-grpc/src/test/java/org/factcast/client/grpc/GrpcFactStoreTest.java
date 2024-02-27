@@ -41,7 +41,8 @@ import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.BatchingFactObserver;
+import org.factcast.core.subscription.observer.FactStreamObserver;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.Headers;
 import org.factcast.grpc.api.StateForRequest;
@@ -85,7 +86,9 @@ class GrpcFactStoreTest {
     when(properties.getResilience()).thenReturn(resilienceConfig);
     // preserve deep stub behavior
     when(stub.withWaitForReady()).thenReturn(stub);
+    when(stub.withMaxInboundMessageSize(anyInt())).thenReturn(stub);
     when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
+    when(blockingStub.withMaxInboundMessageSize(anyInt())).thenReturn(blockingStub);
     //
     resilienceConfig.setEnabled(false);
     uut = new GrpcFactStore(blockingStub, stub, credentials, properties, "someTest");
@@ -133,17 +136,10 @@ class GrpcFactStoreTest {
   }
 
   @Test
-  void configureWithBatchSize1() {
-    when(properties.getCatchupBatchsize()).thenReturn(1);
+  void configureWithMaxMesssageSize() {
+    when(properties.getMaxInboundMessageSize()).thenReturn(1777);
     Metadata meta = uut.prepareMetaData("lz4");
-    assertThat(meta.containsKey(Headers.CATCHUP_BATCHSIZE)).isFalse();
-  }
-
-  @Test
-  void configureWithBatchSize10() {
-    when(properties.getCatchupBatchsize()).thenReturn(10);
-    Metadata meta = uut.prepareMetaData("lz4");
-    assertThat(meta.get(Headers.CATCHUP_BATCHSIZE)).isEqualTo(String.valueOf(10));
+    assertThat(meta.containsKey(Headers.CLIENT_MAX_INBOUND_MESSAGE_SIZE)).isTrue();
   }
 
   @Test
@@ -447,10 +443,12 @@ class GrpcFactStoreTest {
   @Test
   void testInternalSubscribe() {
     assertThrows(
-        NullPointerException.class, () -> uut.subscribe(mock(SubscriptionRequestTO.class), null));
+        NullPointerException.class,
+        () -> uut.subscribe(mock(SubscriptionRequestTO.class), (BatchingFactObserver) null));
     assertThrows(NullPointerException.class, () -> uut.internalSubscribe(null, null));
     assertThrows(
-        NullPointerException.class, () -> uut.internalSubscribe(null, mock(FactObserver.class)));
+        NullPointerException.class,
+        () -> uut.internalSubscribe(null, mock(FactStreamObserver.class)));
   }
 
   @Test
@@ -459,7 +457,7 @@ class GrpcFactStoreTest {
     resilienceConfig.setEnabled(false);
     SubscriptionRequestTO req =
         new SubscriptionRequestTO(SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch());
-    Subscription s = uut.subscribe(req, element -> {});
+    Subscription s = uut.subscribe(req, (BatchingFactObserver) elements -> {});
 
     assertThat(s).isInstanceOf(Subscription.class).isNotInstanceOf(ResilientGrpcSubscription.class);
   }
@@ -470,7 +468,7 @@ class GrpcFactStoreTest {
     resilienceConfig.setEnabled(true);
     SubscriptionRequestTO req =
         new SubscriptionRequestTO(SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch());
-    Subscription s = uut.subscribe(req, element -> {});
+    Subscription s = uut.subscribe(req, (BatchingFactObserver) elements -> {});
 
     assertThat(s).isInstanceOf(ResilientGrpcSubscription.class);
   }
@@ -502,7 +500,9 @@ class GrpcFactStoreTest {
       final RemoteFactStoreBlockingStub blockingStub = mock(RemoteFactStoreBlockingStub.class);
       final RemoteFactStoreStub stub = mock(RemoteFactStoreStub.class);
       when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
+      when(blockingStub.withMaxInboundMessageSize(anyInt())).thenReturn(blockingStub);
       when(stub.withWaitForReady()).thenReturn(stub);
+      when(stub.withMaxInboundMessageSize(anyInt())).thenReturn(stub);
 
       final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
       props.setUser("foo");
@@ -519,7 +519,9 @@ class GrpcFactStoreTest {
       final RemoteFactStoreBlockingStub blockingStub = mock(RemoteFactStoreBlockingStub.class);
       final RemoteFactStoreStub stub = mock(RemoteFactStoreStub.class);
       when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
+      when(blockingStub.withMaxInboundMessageSize(anyInt())).thenReturn(blockingStub);
       when(stub.withWaitForReady()).thenReturn(stub);
+      when(stub.withMaxInboundMessageSize(anyInt())).thenReturn(stub);
 
       final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
 

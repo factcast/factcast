@@ -42,7 +42,7 @@ public class FactHeader {
   @Nullable
   // could be null if not yet published to the factcast server. This should only happen in unit
   // tests.
-  Long serial() {
+  public Long serial() {
     String s = meta("_ser");
     if (s != null) {
       return Long.parseLong(s);
@@ -52,7 +52,7 @@ public class FactHeader {
   @Nullable
   // could be null if not yet published to the factcast server. This should only happen in unit
   // tests.
-  Long timestamp() {
+  public Long timestamp() {
     String s = meta("_ts");
     if (s != null) {
       return Long.parseLong(s);

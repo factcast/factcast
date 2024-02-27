@@ -195,7 +195,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
           new BlockingStreamObserver<>(
               req.toString(),
               (ServerCallStreamObserver) responseObserver,
-              grpcRequestMetadata.catchupBatch().orElse(1));
+              grpcRequestMetadata.clientMaxInboundMessageSize());
 
       AtomicReference<Subscription> subRef = new AtomicReference();
 

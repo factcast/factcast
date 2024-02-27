@@ -26,33 +26,32 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 public @interface SpringTransactional {
   int bulkSize() default 50;
 
-  /**
-   * Due to the nature of the Spring Transaction handling this timeout is in seconds.
-   *
-   * @return
-   */
+  int propagationBehavior() default TransactionDefinition.PROPAGATION_REQUIRED;
+
+  int isolationLevel() default TransactionDefinition.ISOLATION_DEFAULT;
+
   int timeoutInSeconds() default Defaults.timeoutInSeconds;
+
+  boolean readOnly() default false;
 
   class Defaults {
     static final int timeoutInSeconds = 30;
 
     public static DefaultTransactionDefinition create() {
-      DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+      DefaultTransactionDefinition opts = new DefaultTransactionDefinition();
 
-      definition.setTimeout(timeoutInSeconds);
-      definition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
+      opts.setTimeout(timeoutInSeconds);
 
-      return definition;
+      return opts;
     }
 
     public static TransactionDefinition with(@NonNull SpringTransactional transactional) {
       DefaultTransactionDefinition opts = create();
 
-      int timeout = transactional.timeoutInSeconds();
-
-      if (timeout > 0) {
-        opts.setTimeout(timeout);
-      }
+      opts.setTimeout(transactional.timeoutInSeconds());
+      opts.setIsolationLevel(transactional.isolationLevel());
+      opts.setReadOnly(transactional.readOnly());
+      opts.setPropagationBehavior(transactional.propagationBehavior());
 
       return opts;
     }

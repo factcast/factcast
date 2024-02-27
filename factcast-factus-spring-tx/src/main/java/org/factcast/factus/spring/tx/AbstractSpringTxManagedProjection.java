@@ -20,7 +20,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 public abstract class AbstractSpringTxManagedProjection extends AbstractSpringTxProjection
     implements SpringTxManagedProjection {
-  public AbstractSpringTxManagedProjection(
+  protected AbstractSpringTxManagedProjection(
       @NonNull PlatformTransactionManager platformTransactionManager) {
     super(platformTransactionManager);
   }

@@ -26,7 +26,9 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
+import org.factcast.core.subscription.observer.BatchingFactObserver;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.FlushingFactObserver;
 
 /**
  * Default impl for FactCast used by FactCast.from* methods.
@@ -41,7 +43,7 @@ class DefaultFactCast implements FactCast {
   @Override
   @NonNull
   public Subscription subscribeEphemeral(
-      @NonNull SubscriptionRequest req, @NonNull FactObserver observer) {
+      @NonNull SubscriptionRequest req, @NonNull BatchingFactObserver observer) {
     return store.subscribe(SubscriptionRequestTO.forFacts(req), observer);
   }
 
@@ -83,7 +85,7 @@ class DefaultFactCast implements FactCast {
 
   @Override
   public Subscription subscribe(
-      @NonNull SubscriptionRequest request, @NonNull FactObserver observer) {
+      @NonNull SubscriptionRequest request, @NonNull BatchingFactObserver observer) {
     return store.subscribe(SubscriptionRequestTO.forFacts(request), observer);
   }
 
@@ -98,5 +100,31 @@ class DefaultFactCast implements FactCast {
       // TODO is transport of this exception reasonable?
       throws TransformationException {
     return store.fetchByIdAndVersion(id, versionExpected);
+  }
+
+  @Override
+  @NonNull
+  public Subscription subscribeEphemeral(
+      @NonNull SubscriptionRequest request, @NonNull FactObserver observer) {
+    return store.subscribe(SubscriptionRequestTO.forFacts(request), observer);
+  }
+
+  @Override
+  @NonNull
+  public Subscription subscribe(
+      @NonNull SubscriptionRequest request, @NonNull FactObserver observer) {
+    return store.subscribe(SubscriptionRequestTO.forFacts(request), observer);
+  }
+
+  @Override
+  public @NonNull Subscription subscribe(
+      @NonNull SubscriptionRequest request, @NonNull FlushingFactObserver observer) {
+    return store.subscribe(SubscriptionRequestTO.forFacts(request), observer);
+  }
+
+  @Override
+  public @NonNull Subscription subscribeEphemeral(
+      @NonNull SubscriptionRequest request, @NonNull FlushingFactObserver observer) {
+    return store.subscribe(SubscriptionRequestTO.forFacts(request), observer);
   }
 }

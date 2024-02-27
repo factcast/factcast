@@ -25,7 +25,6 @@ import org.factcast.factus.Handler;
 import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.factus.spring.tx.AbstractSpringTxManagedProjection;
-import org.factcast.factus.spring.tx.SpringTransactional;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
@@ -36,7 +35,6 @@ public class SpringJdbcTransactionalProjectionExample {
 
   @Slf4j
   @ProjectionMetaData(revision = 1)
-  @SpringTransactional
   public static class UserNames extends AbstractSpringTxManagedProjection {
 
     private final JdbcTemplate jdbcTemplate;

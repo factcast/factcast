@@ -19,7 +19,6 @@ import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.store.internal.filter.FactFilter;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 
 public interface PgCatchupFactory {
@@ -27,7 +26,6 @@ public interface PgCatchupFactory {
   PgCatchup create(
       @NonNull SubscriptionRequestTO request,
       @NonNull SubscriptionImpl subscription,
-      @NonNull FactFilter factFilter,
       @NonNull AtomicLong serial,
       @NonNull CurrentStatementHolder holder);
 }

@@ -21,6 +21,7 @@ import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.grpc.api.GrpcConstants;
 
 /**
  * StreamObserver impl that blocks if the Stream to the consumer is not in writeable state to
@@ -35,23 +36,24 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class BlockingStreamObserver<T> implements StreamObserver<T> {
 
-  private static final int RETRY_COUNT = 100;
+  private static final int RETRY_COUNT = 300;
 
   private static final long WAIT_TIME_MILLIS = 1000;
 
   private final ServerCallStreamObserver<T> delegate;
-  private int batchSize;
+  private int maxMsgSize;
 
   private final Object lock = new Object();
 
   private final String id;
 
   BlockingStreamObserver(
-      @NonNull String id, @NonNull ServerCallStreamObserver<T> delegate, int batchSize) {
-    if (batchSize < 1) throw new IllegalArgumentException("batchSize must be >=1");
+      @NonNull String id, @NonNull ServerCallStreamObserver<T> delegate, int requestedMaxMsgSize) {
+
     this.id = id;
     this.delegate = delegate;
-    this.batchSize = batchSize;
+    this.maxMsgSize = Math.min(requestedMaxMsgSize, GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE);
+
     this.delegate.setOnReadyHandler(this::wakeup);
     this.delegate.setOnCancelHandler(this::wakeup);
   }
@@ -79,10 +81,10 @@ public class BlockingStreamObserver<T> implements StreamObserver<T> {
               throw new TransportLayerException(
                   id
                       + " channel not coming back after waiting "
-                      + (WAIT_TIME_MILLIS * batchSize * RETRY_COUNT)
+                      + (WAIT_TIME_MILLIS * RETRY_COUNT)
                       + "msec ("
                       + WAIT_TIME_MILLIS
-                      + " * batchSize * "
+                      + " * "
                       + RETRY_COUNT
                       + " retries");
             }
@@ -121,7 +123,7 @@ public class BlockingStreamObserver<T> implements StreamObserver<T> {
 
   @VisibleForTesting
   void waitForDelegate() {
-    int retry = RETRY_COUNT * batchSize;
+    int retry = RETRY_COUNT;
     for (int i = 1; i <= retry; i++) {
 
       log.trace("{} channel not ready. Slow client? Attempt: {}/{}", id, i, retry);

@@ -37,6 +37,7 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.observer.BatchingFactObserver;
 import org.factcast.server.ui.full.FullQueryBean;
 import org.factcast.server.ui.id.IdQueryBean;
 import org.factcast.server.ui.security.SecurityService;
@@ -287,10 +288,10 @@ public class FactRepositoryImplTest {
 
       when(securityService.filterReadable(nameSpaces))
           .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
-      when(fs.subscribe(any(), any()))
+      when(fs.subscribe(any(), (BatchingFactObserver) any()))
           .thenAnswer(
               i -> {
-                SubscriptionImpl subscriptionImpl = new SubscriptionImpl(mock(ListObserver.class));
+                SubscriptionImpl subscriptionImpl = SubscriptionImpl.on(mock(ListObserver.class));
                 CompletableFuture.runAsync(
                     () -> {
                       subscriptionImpl.notifyError(new ExampleException());
@@ -311,10 +312,10 @@ public class FactRepositoryImplTest {
 
       when(securityService.filterReadable(nameSpaces))
           .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
-      when(fs.subscribe(any(), any()))
+      when(fs.subscribe(any(), (BatchingFactObserver) any()))
           .thenAnswer(
               i -> {
-                SubscriptionImpl subscriptionImpl = new SubscriptionImpl(mock(ListObserver.class));
+                SubscriptionImpl subscriptionImpl = SubscriptionImpl.on(mock(ListObserver.class));
                 CompletableFuture.runAsync(
                     () -> {
                       subscriptionImpl.notifyError(new LimitReachedException());
