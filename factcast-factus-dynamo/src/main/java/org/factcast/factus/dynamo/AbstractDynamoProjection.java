@@ -176,7 +176,9 @@ abstract class AbstractDynamoProjection
       return DynamoTransactional.Defaults.defaultBulkSize;
     } else {
       if (tx.bulkSize() > DynamoTransactional.Defaults.maxBulkSize) {
-        throw new IllegalArgumentException("bulkSize cannot be bigger than the maxBulkSize " + DynamoTransactional.Defaults.maxBulkSize);
+        throw new IllegalArgumentException(
+            "bulkSize cannot be bigger than the maxBulkSize "
+                + DynamoTransactional.Defaults.maxBulkSize);
       }
       return tx.bulkSize();
     }
