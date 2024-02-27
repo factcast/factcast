@@ -42,7 +42,7 @@ import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.BatchingFactObserver;
+import org.factcast.core.subscription.observer.FlushingFactObserver;
 import org.factcast.store.internal.StoreMetrics.OP;
 import org.factcast.store.internal.tail.FastForwardTargetRefresher;
 import org.factcast.store.test.AbstractFactStoreTest;
@@ -161,11 +161,11 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
     final AtomicReference<FactStreamPosition> fwd = new AtomicReference<>();
 
     @NonNull
-    final BatchingFactObserver obs =
-        new BatchingFactObserver() {
+    final FlushingFactObserver obs =
+        new FlushingFactObserver() {
 
           @Override
-          public void onNext(@NonNull List<Fact> element) {}
+          public void onNext(@javax.annotation.Nullable Fact element) {}
 
           @Override
           public void onCatchup() {

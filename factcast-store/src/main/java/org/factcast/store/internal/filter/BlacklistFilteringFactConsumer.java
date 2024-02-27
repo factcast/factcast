@@ -15,7 +15,6 @@
  */
 package org.factcast.store.internal.filter;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import lombok.NonNull;
@@ -32,8 +31,7 @@ public class BlacklistFilteringFactConsumer implements Consumer<Fact> {
   private final SubscriptionRequest request;
   private final Blacklist blacklist;
 
-  @VisibleForTesting
-  BlacklistFilteringFactConsumer(
+  public BlacklistFilteringFactConsumer(
       @NonNull Consumer<Fact> parent,
       @NonNull SubscriptionRequest request,
       @NonNull Blacklist blacklist) {

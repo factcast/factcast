@@ -32,10 +32,9 @@ import org.factcast.core.FactStreamPosition;
 import org.factcast.core.TestFact;
 import org.factcast.core.TestFactStreamPosition;
 import org.factcast.core.subscription.observer.BatchingFactObserver;
-import org.factcast.core.subscription.transformation.FactTransformers;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -45,9 +44,12 @@ class SubscriptionImplTest {
 
   @Mock private BatchingFactObserver obs;
 
-  @Mock private FactTransformers factTransformers;
+  private SubscriptionImpl uut;
 
-  @InjectMocks private SubscriptionImpl uut;
+  @BeforeEach
+  void setup() {
+    uut = SubscriptionImpl.on(obs);
+  }
 
   @Test
   void testClose() {

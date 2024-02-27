@@ -23,6 +23,7 @@ import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -61,13 +62,13 @@ public class HelloWorldRunner implements CommandLineRunner {
     fc.subscribe(
             SubscriptionRequest.catchup(FactSpec.ns("users").type("UserCreated").version(3))
                 .fromScratch(),
-            element -> System.out.println(element))
+            (FactObserver) element -> System.out.println(element))
         .awaitCatchup();
 
     fc.subscribe(
             SubscriptionRequest.catchup(FactSpec.ns("users").type("UserCreated").version(1))
                 .fromScratch(),
-            element -> System.out.println(element))
+            (FactObserver) element -> System.out.println(element))
         .awaitCatchup();
   }
 }

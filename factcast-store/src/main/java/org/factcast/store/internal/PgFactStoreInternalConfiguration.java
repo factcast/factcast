@@ -54,9 +54,11 @@ import org.factcast.store.internal.tail.PGTailIndexingConfiguration;
 import org.factcast.store.registry.PgSchemaStoreChangeListener;
 import org.factcast.store.registry.SchemaRegistry;
 import org.factcast.store.registry.SchemaRegistryConfiguration;
+import org.factcast.store.registry.transformation.TransformationConfiguration;
 import org.factcast.store.registry.transformation.cache.PgTransformationStoreChangeListener;
 import org.factcast.store.registry.transformation.cache.TransformationCache;
 import org.factcast.store.registry.transformation.chains.TransformationChains;
+import org.factcast.store.registry.validation.FactValidatorConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -87,7 +89,9 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @Import({
   SchemaRegistryConfiguration.class,
   SnapshotCacheConfiguration.class,
-  PGTailIndexingConfiguration.class
+  PGTailIndexingConfiguration.class,
+  FactValidatorConfiguration.class,
+  TransformationConfiguration.class
 })
 public class PgFactStoreInternalConfiguration {
 
@@ -141,10 +145,9 @@ public class PgFactStoreInternalConfiguration {
       StoreConfigurationProperties props,
       PgCatchupFactory pgCatchupFactory,
       FastForwardTarget target,
-      PgMetrics metrics,
-      Blacklist blacklist,
-      JSEngineFactory ef,
-      FactTransformerService transformerService) {
+      FactTransformerService transformService,
+      JSEngineFactory jsef,
+      PgMetrics metrics) {
     return new PgSubscriptionFactory(
         jdbcTemplate,
         eventBus,
@@ -153,10 +156,10 @@ public class PgFactStoreInternalConfiguration {
         props,
         pgCatchupFactory,
         target,
-        metrics,
-        blacklist,
-        transformerService,
-        ef);
+        blacklist(),
+        transformService,
+        jsef,
+        metrics);
   }
 
   @Bean

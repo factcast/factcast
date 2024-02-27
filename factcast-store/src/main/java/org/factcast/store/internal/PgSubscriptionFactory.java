@@ -24,9 +24,9 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
-import org.factcast.core.subscription.observer.BatchingFactObserver;
-import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.subscription.observer.*;
 import org.factcast.core.subscription.transformation.FactTransformerService;
+import org.factcast.core.subscription.transformation.FactTransformers;
 import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
@@ -53,12 +53,12 @@ class PgSubscriptionFactory implements AutoCloseable {
   final PgCatchupFactory catchupFactory;
 
   final FastForwardTarget target;
-  final PgMetrics metrics;
   final Blacklist blacklist;
-  final FactTransformerService transformerService;
-  final JSEngineFactory ef;
+  final JSEngineFactory jsef;
+  final PgMetrics metrics;
 
-  private final ExecutorService es;
+  final ExecutorService es;
+  final FactTransformerService transformerService;
 
   public PgSubscriptionFactory(
       JdbcTemplate jdbcTemplate,
@@ -68,10 +68,10 @@ class PgSubscriptionFactory implements AutoCloseable {
       StoreConfigurationProperties props,
       PgCatchupFactory catchupFactory,
       FastForwardTarget target,
-      PgMetrics metrics,
       Blacklist blacklist,
       FactTransformerService transformerService,
-      JSEngineFactory ef) {
+      JSEngineFactory jsef,
+      PgMetrics metrics) {
     this.jdbcTemplate = jdbcTemplate;
     this.eventBus = eventBus;
     this.idToSerialMapper = idToSerialMapper;
@@ -79,18 +79,47 @@ class PgSubscriptionFactory implements AutoCloseable {
     this.props = props;
     this.catchupFactory = catchupFactory;
     this.target = target;
-    this.metrics = metrics;
     this.blacklist = blacklist;
     this.transformerService = transformerService;
-    this.ef = ef;
+    this.jsef = jsef;
+    this.metrics = metrics;
     this.es =
         metrics.monitor(
             Executors.newFixedThreadPool(props.getSizeOfThreadPoolForSubscriptions()),
             "subscription-factory");
   }
 
+  public Subscription subscribe(SubscriptionRequestTO req, FactStreamObserver observer) {
+    SubscriptionImpl subscription =
+        SubscriptionImpl.on(
+            new PgFactStreamObserver(
+                observer,
+                req,
+                blacklist,
+                FactTransformers.createFor(req),
+                transformerService,
+                jsef,
+                metrics));
+    return doSubscribe(req, subscription);
+  }
+
+  public Subscription subscribe(SubscriptionRequestTO req, FactObserver observer) {
+    SubscriptionImpl subscription = SubscriptionImpl.on(observer);
+    return doSubscribe(req, subscription);
+  }
+
   public Subscription subscribe(SubscriptionRequestTO req, BatchingFactObserver observer) {
     SubscriptionImpl subscription = SubscriptionImpl.on(observer);
+    return doSubscribe(req, subscription);
+  }
+
+  public Subscription subscribe(SubscriptionRequestTO req, FlushingFactObserver observer) {
+    SubscriptionImpl subscription = SubscriptionImpl.on(observer);
+    return doSubscribe(req, subscription);
+  }
+
+  @NonNull
+  private SubscriptionImpl doSubscribe(SubscriptionRequestTO req, SubscriptionImpl subscription) {
     PgFactStream pgsub =
         new PgFactStream(
             jdbcTemplate,

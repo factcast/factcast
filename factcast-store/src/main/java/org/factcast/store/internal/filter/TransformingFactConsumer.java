@@ -28,23 +28,25 @@ import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.FactTransformers;
 import org.factcast.core.subscription.transformation.TransformationRequest;
 import org.factcast.store.internal.Pair;
+import org.factcast.store.internal.PgMetrics;
 
 /** this class is NOT Threadsafe! */
 @Slf4j
 public class TransformingFactConsumer implements Consumer<Fact> {
-  private final int maxBufferSize = 100; // just to not get too far ahead of ourselves
+  private static final int maxBufferSize = 100; // just to not get too far ahead of ourselves
 
   public TransformingFactConsumer(
       @NonNull Consumer<Fact> parent,
       @NonNull FactTransformerService service,
       @NonNull FactTransformers transformers,
-      @NonNull ExecutorService es) {
+      @NonNull PgMetrics pgMetrics) {
     this.service = service;
     this.transformers = transformers;
     this.parent = parent;
     buffer = new ArrayList<>(maxBufferSize);
     index = new HashMap<>(maxBufferSize);
-    this.es = es;
+    // TODO check for name to keep compatible
+    this.es = pgMetrics.monitor(Executors.newCachedThreadPool(), "transformation");
   }
 
   enum Mode {

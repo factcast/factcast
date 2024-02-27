@@ -36,7 +36,7 @@ import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
-import org.factcast.core.subscription.observer.BatchingFactObserver;
+import org.factcast.core.subscription.observer.FactStreamObserver;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.TransformationRequest;
 import org.factcast.store.StoreConfigurationProperties;
@@ -84,6 +84,7 @@ public class PgFactStore extends AbstractFactStore {
   @Autowired
   public PgFactStore(
       @NonNull JdbcTemplate jdbcTemplate,
+      // TODO
       @NonNull PgSubscriptionFactory subscriptionFactory,
       @NonNull TokenStore tokenStore,
       @NonNull SchemaRegistry schemaRegistry,
@@ -177,21 +178,9 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   public @NonNull Subscription subscribe(
-      @NonNull SubscriptionRequestTO request, @NonNull BatchingFactObserver observer) {
+      @NonNull SubscriptionRequestTO request, @NonNull FactStreamObserver observer) {
     StoreMetrics.OP operation =
         request.continuous() ? StoreMetrics.OP.SUBSCRIBE_FOLLOW : StoreMetrics.OP.SUBSCRIBE_CATCHUP;
-
-    // todo create stack of consumers
-
-    //    Consumer<Fact> factStreamTarget = observer;
-    //    factStreamTarget = new blackl
-    //
-    //    //      metrics.monitor(
-    //    //              Executors.newWorkStealingPool(
-    //    //                      props.getSizeOfThreadPoolForBufferedTransformations()),
-    //    //              "subscription")
-    //
-    //    // /todo
 
     return metrics.time(operation, () -> subscriptionFactory.subscribe(request, observer));
   }

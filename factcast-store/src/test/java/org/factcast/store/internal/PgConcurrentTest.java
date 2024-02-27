@@ -26,7 +26,7 @@ import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.subscription.observer.BatchingFactObserver;
+import org.factcast.core.subscription.observer.FlushingFactObserver;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -81,7 +81,7 @@ public class PgConcurrentTest {
   private AtomicReference<CountDownLatch> subscribe(int expectedNoOfFacts) {
     AtomicReference<CountDownLatch> l =
         new AtomicReference<>(new CountDownLatch(expectedNoOfFacts));
-    BatchingFactObserver observer = element -> l.get().countDown();
+    FlushingFactObserver observer = element -> l.get().countDown();
     SubscriptionRequest request =
         SubscriptionRequest.follow(FactSpec.ns("concurrenttest")).fromScratch();
     uut.subscribeEphemeral(request, observer);

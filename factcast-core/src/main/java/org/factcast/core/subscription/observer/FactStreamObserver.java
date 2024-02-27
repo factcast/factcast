@@ -15,25 +15,104 @@
  */
 package org.factcast.core.subscription.observer;
 
+import java.util.List;
+import java.util.Objects;
+import javax.annotation.Nullable;
 import lombok.NonNull;
+import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
-import org.slf4j.LoggerFactory;
+import org.factcast.store.internal.filter.FactStreamObserverGranularityException;
 
-public interface FactStreamObserver<T> {
-  default void onFastForward(@NonNull FactStreamPosition pos) {}
+/**
+ * internal abstraction wrapping any FactStreamObserver and providing the lenient interface needed
+ * for any of them
+ */
+// this should be sealed, once we move the min jdk to 17
+public class FactStreamObserver implements BaseFactStreamObserver {
 
-  default void onFactStreamInfo(@NonNull FactStreamInfo info) {}
+  // ugly as hell.
+  // TODO we should measure, if the instanceOf business has a **measurable** worse performance
+  // profile
 
-  default void onCatchup() {
-    // implement if you are interested in that event
+  private final BaseFactStreamObserver factStreamObserver;
+
+  private final FactObserver factObserver;
+  private final BatchingFactObserver batchingFactObserver;
+  private final FlushingFactObserver flushingFactObserver;
+
+  public FactStreamObserver(FactObserver factObserver) {
+    this.factStreamObserver = factObserver;
+
+    this.factObserver = factObserver;
+    this.batchingFactObserver = null;
+    this.flushingFactObserver = null;
   }
 
-  default void onComplete() {
-    // implement if you are interested in that event
+  public FactStreamObserver(BatchingFactObserver factObserver) {
+    this.factStreamObserver = factObserver;
+
+    this.factObserver = null;
+    this.flushingFactObserver = null;
+    this.batchingFactObserver = factObserver;
   }
 
-  default void onError(@NonNull Throwable exception) {
-    LoggerFactory.getLogger(FactObserver.class).warn("Unhandled onError:", exception);
+  public FactStreamObserver(FlushingFactObserver factObserver) {
+    this.factStreamObserver = factObserver;
+
+    this.factObserver = null;
+    this.flushingFactObserver = factObserver;
+    this.batchingFactObserver = null;
+  }
+
+  protected FactStreamObserver(FactStreamObserver other) {
+    this.factStreamObserver = other.factStreamObserver;
+
+    this.factObserver = other.factObserver;
+    this.flushingFactObserver = other.flushingFactObserver;
+    this.batchingFactObserver = other.batchingFactObserver;
+  }
+
+  public void onNext(@Nullable Fact f) {
+    if (factObserver != null) {
+      factObserver.onNext(Objects.requireNonNull(f));
+    } else if (flushingFactObserver != null) flushingFactObserver.onNext(f);
+    else
+      // questionable, if we mitigate or throw here
+      throw new FactStreamObserverGranularityException(
+          "We expect a onNext(List) call in order to delegate to a BatchingFactObserver.");
+  }
+
+  public void onNext(@NonNull List<Fact> facts) {
+    if (batchingFactObserver != null) {
+      batchingFactObserver.onNext(facts);
+    } else if (factObserver != null) {
+      facts.forEach(factObserver::onNext);
+    } else if (flushingFactObserver != null) facts.forEach(flushingFactObserver::onNext);
+  }
+
+  @Override
+  public void onFastForward(@NonNull FactStreamPosition pos) {
+    factStreamObserver.onFastForward(pos);
+  }
+
+  @Override
+  public void onFactStreamInfo(@NonNull FactStreamInfo info) {
+    factStreamObserver.onFactStreamInfo(info);
+  }
+
+  @Override
+  public void onComplete() {
+    factStreamObserver.onComplete();
+  }
+
+  @Override
+  public void onCatchup() {
+    factStreamObserver.onCatchup();
+  }
+
+  @Override
+  public void onError(@NonNull Throwable exception) {
+    factStreamObserver.onError(exception);
   }
 }

@@ -16,7 +16,6 @@
 package org.factcast.core.subscription;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -28,9 +27,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
-import org.factcast.core.subscription.observer.BatchingFactObserver;
-import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.core.subscription.observer.ServerSideFactObserver;
+import org.factcast.core.subscription.observer.*;
 import org.factcast.core.util.ExceptionHelper;
 
 /**
@@ -41,8 +38,7 @@ import org.factcast.core.util.ExceptionHelper;
 @Slf4j
 public class SubscriptionImpl implements InternalSubscription {
 
-  @NonNull private final FactObserver observer;
-  private final ServerSideFactObserver serverSideFactObserver;
+  @NonNull private final FactStreamObserver observer;
 
   @NonNull private Runnable onClose = () -> {};
 
@@ -52,11 +48,9 @@ public class SubscriptionImpl implements InternalSubscription {
 
   private final CompletableFuture<Void> complete = new CompletableFuture<>();
 
-  public SubscriptionImpl(@NonNull BatchingFactObserver observer) {
+  // TODO is this necessarily public?
+  public SubscriptionImpl(@NonNull FactStreamObserver observer) {
     this.observer = observer;
-    if (observer instanceof ServerSideFactObserver)
-      serverSideFactObserver = ((ServerSideFactObserver) observer);
-    else serverSideFactObserver = null;
   }
 
   @Override
@@ -199,10 +193,7 @@ public class SubscriptionImpl implements InternalSubscription {
   @Override
   public void notifyElement(@Nullable Fact f) throws TransformationException {
     if (!closed.get()) {
-      // TODO how to make this suck less?
-      if (serverSideFactObserver != null) {
-        serverSideFactObserver.onNext(f);
-      } else if (f != null) observer.onNext(Collections.singletonList(f));
+      observer.onNext(f);
     }
   }
 
@@ -225,11 +216,23 @@ public class SubscriptionImpl implements InternalSubscription {
     }
   }
 
-  public static SubscriptionImpl on(@NonNull FactObserver o) {
-    return new SubscriptionImpl(BatchingFactObserver.of(o));
+  @NonNull
+  public static SubscriptionImpl on(@NonNull FlushingFactObserver o) {
+    return on(new FactStreamObserver(o));
   }
 
+  @NonNull
+  public static SubscriptionImpl on(@NonNull FactObserver o) {
+    return on(new FactStreamObserver(o));
+  }
+
+  @NonNull
   public static SubscriptionImpl on(@NonNull BatchingFactObserver o) {
-    return new SubscriptionImpl(o);
+    return on(new FactStreamObserver(o));
+  }
+
+  @NonNull
+  public static SubscriptionImpl on(@NonNull FactStreamObserver observer) {
+    return new SubscriptionImpl(observer);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2024 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.subscription.observer;
+package org.factcast.store.internal.filter;
 
-import lombok.NonNull;
-import org.factcast.core.Fact;
-
-/**
- * Callback interface to use when subscribing to Facts from FactCast. consider using {@link
- * BatchingFactObserver} instead.
- *
- * @author uwe.schaefer@prisma-capacity.eu
- */
-public interface FactObserver extends BaseFactStreamObserver {
-
-  void onNext(@NonNull Fact element);
+public class FactStreamObserverGranularityException extends IllegalArgumentException {
+  public FactStreamObserverGranularityException(String s) {
+    super(s);
+  }
 }

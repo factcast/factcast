@@ -17,7 +17,6 @@ package org.factcast.server.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.stub.StreamObserver;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.Consumer;
@@ -29,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
-import org.factcast.core.subscription.observer.ServerSideFactObserver;
+import org.factcast.core.subscription.observer.FlushingFactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 
@@ -39,7 +38,7 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
  * @author <uwe.schaefer@prisma-capacity.eu>
  */
 @Slf4j
-class GrpcObserverAdapter implements ServerSideFactObserver, Consumer<Fact> {
+class GrpcObserverAdapter implements FlushingFactObserver, Consumer<Fact> {
 
   private final ProtoConverter converter = new ProtoConverter();
 
@@ -158,12 +157,8 @@ class GrpcObserverAdapter implements ServerSideFactObserver, Consumer<Fact> {
     }
   }
 
-  @Override
-  public void onNext(@NonNull List<Fact> element) {
-    throw new BatchingOnServerSideShouldBeAvoidedException();
-  }
-
   public void onNext(@Nullable Fact f) {
+    // TODO replace by special-value-fact?
     if (f == null) flush();
     else if (!stagedFacts.add(f)) {
       flush();
