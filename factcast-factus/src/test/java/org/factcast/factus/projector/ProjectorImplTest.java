@@ -183,6 +183,8 @@ class ProjectorImplTest {
 
       assertThat(projection.factHeader()).isEqualTo(fact.header());
     }
+
+
   }
 
   @Nested

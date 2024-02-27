@@ -76,7 +76,7 @@ class GrpcFactStoreTest {
 
   @Mock public Optional<String> credentials;
   private GrpcFactStore uut;
-  private final ResilienceConfiguration resilienceConfig = new ResilienceConfiguration();
+  private ResilienceConfiguration resilienceConfig = new ResilienceConfiguration();
 
   @BeforeEach
   public void setup() {
