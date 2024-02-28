@@ -35,7 +35,8 @@ import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.BatchingFactObserver;
+import org.factcast.core.subscription.observer.FactStreamObserver;
+import org.factcast.core.subscription.observer.FlushingFactObserver;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.TransformationRequest;
 import org.factcast.store.StoreConfigurationProperties;
@@ -164,7 +165,7 @@ class PgFactStoreTest {
   @Nested
   class WhenSubscribing {
     @Mock private @NonNull SubscriptionRequestTO request;
-    @Mock private @NonNull BatchingFactObserver observer;
+    @Mock private @NonNull FlushingFactObserver observer;
     @Mock private @NonNull Subscription sub;
 
     @BeforeEach
@@ -174,7 +175,8 @@ class PgFactStoreTest {
 
     @Test
     void name() {
-      when(subscriptionFactory.subscribe(request, observer)).thenReturn(sub);
+      when(subscriptionFactory.subscribe(same(request), any(FactStreamObserver.class)))
+          .thenReturn(sub);
       Subscription s = underTest.subscribe(request, observer);
       assertThat(s).isSameAs(sub);
     }

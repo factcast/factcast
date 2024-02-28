@@ -17,6 +17,7 @@ package org.factcast.core.subscription;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.List;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
@@ -38,7 +39,7 @@ public interface InternalSubscription extends Subscription {
   SubscriptionImpl onClose(Runnable e);
 
   /** supposed to be used on server side only */
-  void notifyElement(@NonNull Fact f) throws TransformationException;
+  void notifyElement(@Nullable Fact f) throws TransformationException;
 
   // since 0.7.5
   void notifyElements(@NonNull List<Fact> e) throws TransformationException;

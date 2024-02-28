@@ -26,6 +26,9 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.BatchingFactObserver;
+import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.FactStreamObserver;
+import org.factcast.core.subscription.observer.FlushingFactObserver;
 
 /**
  * A read/Write FactStore.
@@ -44,18 +47,10 @@ public interface FactStore {
   void publish(@NonNull List<? extends Fact> factsToPublish);
 
   @NonNull
-  Subscription subscribe(
-      @NonNull SubscriptionRequestTO request, @NonNull BatchingFactObserver observer);
-
-  //  @NonNull
-  //  @Deprecated
-  //  // TODO doublecheck if unused from within factus
-  //  // TODO refactor server side to use batchingFO
-  //  // for compatibility, use subscribe(SubscriptionRequestTO,BatchingFactObserver) instead
-  //  default Subscription subscribe(
-  //      @NonNull SubscriptionRequestTO request, @NonNull FactObserver observer) {
-  //    return subscribe(request, BatchingFactObserver.of(observer));
-  //  }
+  default Subscription subscribe(
+      @NonNull SubscriptionRequestTO request, @NonNull FactObserver observer) {
+    return subscribe(request, new FactStreamObserver(observer));
+  }
 
   @NonNull
   OptionalLong serialOf(@NonNull UUID l);
@@ -112,4 +107,36 @@ public interface FactStore {
    * @since 0.7.3
    */
   Optional<Fact> fetchBySerial(long serial);
+
+  /**
+   * @param request
+   * @param factStreamObserver
+   * @return
+   * @since 0.8
+   */
+  Subscription subscribe(SubscriptionRequestTO request, FactStreamObserver factStreamObserver);
+
+  /**
+   * @param request
+   * @param observer
+   * @return
+   * @since 0.8
+   */
+  @NonNull
+  default Subscription subscribe(
+      @NonNull SubscriptionRequestTO request, @NonNull BatchingFactObserver observer) {
+    return subscribe(request, new FactStreamObserver(observer));
+  }
+
+  /**
+   * @param request
+   * @param observer
+   * @return
+   * @since 0.8
+   */
+  @NonNull
+  default Subscription subscribe(
+      @NonNull SubscriptionRequestTO request, @NonNull FlushingFactObserver observer) {
+    return subscribe(request, new FactStreamObserver(observer));
+  }
 }

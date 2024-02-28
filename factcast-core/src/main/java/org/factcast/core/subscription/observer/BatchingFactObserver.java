@@ -17,19 +17,17 @@ package org.factcast.core.subscription.observer;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
-import lombok.Generated;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
 
 /**
- * Callback interface to use when subscribing to Facts from FactCast.
+ * a bit dirty as it prefers batching
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
-@Generated // sneakily skip coverage generation
-public interface BatchingFactObserver extends FactStreamObserver {
+public interface BatchingFactObserver extends BaseFactStreamObserver {
 
   // turns a FactObserver into a BatchingFactObserver for compatibility
   static BatchingFactObserver of(FactObserver o) {

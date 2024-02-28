@@ -22,6 +22,7 @@ import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -41,7 +42,8 @@ public class HelloWorldRunner implements CommandLineRunner {
 
     Subscription sub =
         fc.subscribe(
-                SubscriptionRequest.follow(FactSpec.ns("smoke")).fromScratch(), System.out::println)
+                SubscriptionRequest.follow(FactSpec.ns("smoke")).fromScratch(),
+                (FactObserver) System.out::println)
             .awaitCatchup(5000);
 
     sub.close();

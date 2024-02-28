@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2022 factcast.org
+ * Copyright © 2017-2024 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,8 @@
  */
 package org.factcast.store.internal.filter;
 
-import java.util.function.*;
-import org.factcast.core.Fact;
-
-public interface FactFilter extends Predicate<Fact> {}
+public class FactStreamObserverGranularityException extends IllegalArgumentException {
+  public FactStreamObserverGranularityException(String s) {
+    super(s);
+  }
+}

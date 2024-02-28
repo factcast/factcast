@@ -40,7 +40,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 @Slf4j
 @FactcastTestConfig(factcastVersion = "latest")
-public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
+class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
 
   @Autowired Factus ec;
 
@@ -199,6 +199,7 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
 
     fc.subscribe(
         SubscriptionRequest.follow(FactSpec.ns("users").type("UserCreated").version(2))
+            .withMaxBatchDelayInMs(10)
             .fromScratch(),
         new BatchingFactObserver() {
           @Override

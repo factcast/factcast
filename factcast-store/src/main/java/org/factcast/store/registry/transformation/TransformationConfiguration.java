@@ -41,6 +41,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Configuration
 @Slf4j
 public class TransformationConfiguration {
+
   @Bean
   public TransformationStore transformationStore(
       @NonNull JdbcTemplate jdbcTemplate,

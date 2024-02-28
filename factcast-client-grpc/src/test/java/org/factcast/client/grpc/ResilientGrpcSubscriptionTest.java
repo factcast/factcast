@@ -47,7 +47,7 @@ import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionClosedException;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.BatchingFactObserver;
+import org.factcast.core.subscription.observer.FactStreamObserver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -64,12 +64,12 @@ class ResilientGrpcSubscriptionTest {
 
   @Mock private SubscriptionRequestTO req;
 
-  @Mock private BatchingFactObserver obs;
+  @Mock private FactStreamObserver obs;
 
   @Mock private Subscription subscription;
 
-  private final ArgumentCaptor<BatchingFactObserver> observerAC =
-      ArgumentCaptor.forClass(BatchingFactObserver.class);
+  private final ArgumentCaptor<FactStreamObserver> observerAC =
+      ArgumentCaptor.forClass(FactStreamObserver.class);
 
   final ResilienceConfiguration config = new ResilienceConfiguration();
   ResilientGrpcSubscription uut;

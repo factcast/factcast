@@ -22,6 +22,7 @@ import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,13 +41,12 @@ public class NoValidationClientTest extends AbstractFactCastIntegrationTest {
     try (Subscription sub =
         fc.subscribe(
                 SubscriptionRequest.catchup(FactSpec.ns("smoke")).fromScratch(),
-                batch ->
-                    batch.forEach(
-                        f -> {
-                          assertEquals(fact.ns(), f.ns());
-                          assertEquals(fact.type(), f.type());
-                          assertEquals(fact.id(), f.id());
-                        }))
+                (FactObserver)
+                    f -> {
+                      assertEquals(fact.ns(), f.ns());
+                      assertEquals(fact.type(), f.type());
+                      assertEquals(fact.id(), f.id());
+                    })
             .awaitCatchup(1000)) {
       // empty block
     }

@@ -32,9 +32,9 @@ import org.factcast.core.FactStreamPosition;
 import org.factcast.core.TestFact;
 import org.factcast.core.TestFactStreamPosition;
 import org.factcast.core.subscription.observer.BatchingFactObserver;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -44,7 +44,12 @@ class SubscriptionImplTest {
 
   @Mock private BatchingFactObserver obs;
 
-  @InjectMocks private SubscriptionImpl uut;
+  private SubscriptionImpl uut;
+
+  @BeforeEach
+  void setup() {
+    uut = SubscriptionImpl.on(obs);
+  }
 
   @Test
   void testClose() {
@@ -115,6 +120,8 @@ class SubscriptionImplTest {
   }
 
   final Fact testFact = new TestFact();
+  final Fact transformedTestFact =
+      new TestFact().id(testFact.id()); // just a different instance than testfact
 
   @Test
   void testOn() throws TransformationException {

@@ -13,45 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.catchup;
+package org.factcast.store.internal.filter;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Consumer;
 import java.util.stream.*;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.FactTransformers;
 import org.factcast.core.subscription.transformation.TransformationRequest;
-import org.factcast.store.internal.AbstractFactInterceptor;
 import org.factcast.store.internal.Pair;
 import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.filter.FactFilter;
 
 /** this class is NOT Threadsafe! */
-// TODO breaks batching!
 @Slf4j
-public class BufferingFactInterceptor extends AbstractFactInterceptor {
-  public BufferingFactInterceptor(
-      FactTransformerService service,
-      FactTransformers transformers,
-      FactFilter filter,
-      SubscriptionImpl targetSubscription,
-      int maxBufferSize,
-      PgMetrics metrics,
-      ExecutorService es) {
-    super(metrics);
+public class TransformingFactConsumer implements Consumer<Fact> {
+  private static final int maxBufferSize = 100; // just to not get too far ahead of ourselves
+
+  public TransformingFactConsumer(
+      @NonNull Consumer<Fact> parent,
+      @NonNull FactTransformerService service,
+      @NonNull FactTransformers transformers,
+      @NonNull PgMetrics pgMetrics) {
     this.service = service;
     this.transformers = transformers;
-    this.filter = filter;
-    this.targetSubscription = targetSubscription;
-    this.maxBufferSize = maxBufferSize;
+    this.parent = parent;
     buffer = new ArrayList<>(maxBufferSize);
     index = new HashMap<>(maxBufferSize);
-    this.es = es;
+    // TODO check for name to keep compatible
+    this.es = pgMetrics.monitor(Executors.newCachedThreadPool(), "transformation");
   }
 
   enum Mode {
@@ -59,34 +54,31 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
     BUFFERING
   }
 
+  private final Consumer<Fact> parent;
   private final FactTransformerService service;
   private final FactTransformers transformers;
-  private final FactFilter filter;
-  private final SubscriptionImpl targetSubscription;
-  private final int maxBufferSize;
   private Mode mode = Mode.DIRECT;
   private final List<Pair<TransformationRequest, CompletableFuture<Fact>>> buffer;
   private final Map<UUID, CompletableFuture<Fact>> index;
 
   private final ExecutorService es;
 
-  public void accept(@NonNull Fact f) {
-    if (filter.test(f)) {
-      TransformationRequest transformationRequest = transformers.prepareTransformation(f);
-      if (mode == Mode.DIRECT) {
-        acceptInDirectMode(f, transformationRequest);
-      } else {
-        if (mode == Mode.BUFFERING) {
-          acceptInBufferingMode(f, transformationRequest);
-        }
+  public void accept(@Nullable Fact f) {
+    TransformationRequest transformationRequest = transformers.prepareTransformation(f);
+    if (mode == Mode.DIRECT) {
+      acceptInDirectMode(f, transformationRequest);
+    } else {
+      if (mode == Mode.BUFFERING) {
+        acceptInBufferingMode(f, transformationRequest);
       }
     }
   }
 
-  private void acceptInBufferingMode(@NonNull Fact f, TransformationRequest transformationRequest) {
+  private void acceptInBufferingMode(
+      @Nullable Fact f, TransformationRequest transformationRequest) {
     if (transformationRequest == null) {
       // does not need transformation, add as completed
-      buffer.add(completedTransformation(f));
+      this.buffer.add(completedTransformation(f));
 
       flushIfNecessary();
     } else {
@@ -110,11 +102,11 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
     flushIfNecessary();
   }
 
-  private void acceptInDirectMode(@NonNull Fact f, TransformationRequest transformationRequest) {
+  private void acceptInDirectMode(@Nullable Fact f, TransformationRequest transformationRequest) {
     if (transformationRequest == null) {
       // does not need transformation, just pass it down
-      targetSubscription.notifyElement(f);
-      increaseNotifyMetric(1);
+      parent.accept(f);
+
     } else {
       // needs transformation, so switch to buffering mode
       mode = Mode.BUFFERING;
@@ -129,8 +121,7 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
   }
 
   @NonNull
-  private Pair<TransformationRequest, CompletableFuture<Fact>> completedTransformation(
-      @NonNull Fact f) {
+  private Pair<TransformationRequest, CompletableFuture<Fact>> completedTransformation(Fact f) {
     return Pair.of(null, CompletableFuture.completedFuture(f));
   }
 
@@ -176,7 +167,7 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
             try {
               // 30 seconds should be enough for almost everything (B.Gates)
               Fact e = p.right().get(30, TimeUnit.SECONDS);
-              targetSubscription.notifyElement(e);
+              parent.accept(e);
             } catch (InterruptedException i) {
               Thread.currentThread().interrupt();
               throw new TransformationException(i);
@@ -185,7 +176,8 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
             }
           });
 
-      increaseNotifyMetric(buffer.size());
+      // use null as special value to signal that output should be flushed
+      parent.accept(null);
 
       // reset buffer
       buffer.clear();
