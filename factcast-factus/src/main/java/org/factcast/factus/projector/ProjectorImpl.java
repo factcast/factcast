@@ -96,31 +96,20 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
   }
 
   public void doApply(@NonNull List<Fact> facts) {
-
     beginIfTransactional();
-
     // remember that IF this fail, we throw an expecption anyway, so that we wont reuse this info
     FactStreamPosition latestSuccessful = null;
-
     for (Fact f : facts) {
-
       try {
         callHandlerFor(f);
         latestSuccessful = FactStreamPosition.from(f);
-      } catch (InvocationTargetException | IllegalAccessException e) {
-        log.trace("returned with Exception {}:", latestSuccessful.factId(), e);
-
-        rollbackIfTransactional();
-        retryApplicableIfTransactional(facts, f);
-
-        // pass along and potentially rethrow
-        projection.onError(e);
-        throw ExceptionHelper.toRuntime(e);
       } catch (Exception e) {
-
+        log.trace(
+            "returned with Exception {}:",
+            latestSuccessful == null ? null : latestSuccessful.factId(),
+            e);
         rollbackIfTransactional();
         retryApplicableIfTransactional(facts, f);
-
         // pass along and potentially rethrow
         projection.onError(e);
         throw ExceptionHelper.toRuntime(e);
@@ -134,7 +123,6 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       }
       commitIfTransactional();
     } catch (Exception e) {
-
       rollbackIfTransactional();
       // pass along and potentially rethrow
       projection.onError(e);

@@ -15,9 +15,6 @@
  */
 package org.factcast.server.grpc;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 import java.util.UUID;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
@@ -48,7 +45,7 @@ class StagedFactsTest {
       Assertions.assertThat(underTest.add(f)).isTrue();
       Assertions.assertThat(underTest.size()).isOne();
 
-      // should not be added, as thelimit would be exceeded:
+      // should not be added, as the limit would be exceeded:
       Assertions.assertThat(underTest.add(f)).isFalse();
       Assertions.assertThat(underTest.size()).isOne();
     }
@@ -104,7 +101,7 @@ class StagedFactsTest {
   }
 
   @Nested
-  class WhenPopingAll {
+  class WhenPoppingAll {
     @BeforeEach
     void setup() {}
 

@@ -41,7 +41,7 @@ public class BlockingStreamObserver<T> implements StreamObserver<T> {
   private static final long WAIT_TIME_MILLIS = 1000;
 
   private final ServerCallStreamObserver<T> delegate;
-  private int maxMsgSize;
+  private final int maxMsgSize;
 
   private final Object lock = new Object();
 

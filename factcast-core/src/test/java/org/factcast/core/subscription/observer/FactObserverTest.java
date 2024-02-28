@@ -46,7 +46,6 @@ class FactObserverTest {
   @Nested
   class WhenCallingOnMethod {
     @Mock private @NonNull Fact element;
-    @Mock private @NonNull Fact element2;
 
     @Test
     void noEffect() {

@@ -65,11 +65,13 @@ class DefaultFactCast implements FactCast {
   }
 
   @Override
+  @NonNull
   public Set<String> enumerateNamespaces() {
     return store.enumerateNamespaces();
   }
 
   @Override
+  @NonNull
   public Set<String> enumerateTypes(@NonNull String ns) {
     return store.enumerateTypes(ns);
   }
@@ -84,6 +86,7 @@ class DefaultFactCast implements FactCast {
   }
 
   @Override
+  @NonNull
   public Subscription subscribe(
       @NonNull SubscriptionRequest request, @NonNull BatchingFactObserver observer) {
     return store.subscribe(SubscriptionRequestTO.forFacts(request), observer);
@@ -96,6 +99,7 @@ class DefaultFactCast implements FactCast {
   }
 
   @Override
+  @NonNull
   public Optional<Fact> fetchByIdAndVersion(@NonNull UUID id, int versionExpected)
       // TODO is transport of this exception reasonable?
       throws TransformationException {

@@ -256,7 +256,7 @@ class ProjectorImplTest {
       ProjectorImpl<PostProcessingProjection> underTest = new ProjectorImpl<>(p, eventSerializer);
 
       // RUN
-      assertThatThrownBy(() -> underTest.createFactSpecs())
+      assertThatThrownBy(underTest::createFactSpecs)
           // ASSERT
           .isInstanceOf(InvalidHandlerDefinition.class)
           .hasMessageStartingWith("No FactSpecs discovered from");
@@ -269,7 +269,7 @@ class ProjectorImplTest {
       ProjectorImpl<PostProcessingProjection> underTest = new ProjectorImpl<>(p, eventSerializer);
 
       // RUN
-      assertThatThrownBy(() -> underTest.createFactSpecs())
+      assertThatThrownBy(underTest::createFactSpecs)
           // ASSERT
           .isInstanceOf(InvalidHandlerDefinition.class)
           .hasMessageStartingWith("No FactSpecs discovered from");
@@ -538,7 +538,7 @@ class ProjectorImplTest {
   @Value
   static class PostProcessingProjection extends LocalManagedProjection {
 
-    private final List<FactSpec> factSpecs;
+    List<FactSpec> factSpecs;
 
     @Override
     public @NonNull List<FactSpec> postprocess(@NonNull List<FactSpec> specsAsDiscovered) {
@@ -775,11 +775,7 @@ class ProjectorImplTest {
       doThrow(IllegalStateException.class).when(p).apply(any()); // cause the rollback
       doNothing().when(p).rollback();
 
-      assertThatThrownBy(
-              () -> {
-                uut.apply(msg);
-              })
-          .isInstanceOf(IllegalStateException.class);
+      assertThatThrownBy(() -> uut.apply(msg)).isInstanceOf(IllegalStateException.class);
 
       verify(p, times(1)).begin();
       verify(p, times(1)).apply(any());
@@ -803,11 +799,7 @@ class ProjectorImplTest {
       doNothing().when(p).rollback();
 
       // should apply e1,e2,e3 in one tx - fail on e3, then restart e1 & e2 in single tx
-      assertThatThrownBy(
-              () -> {
-                uut.apply(msg);
-              })
-          .isInstanceOf(RuntimeException.class);
+      assertThatThrownBy(() -> uut.apply(msg)).isInstanceOf(RuntimeException.class);
 
       verify(p, times(2)).begin();
       verify(p, times(1)).rollback();
