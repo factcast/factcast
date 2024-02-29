@@ -250,9 +250,9 @@ public class PgConstants {
    *
    * <p>note: when using this, please make sure to reenable it in *EVERY CASE*
    */
-  public static final String DISABLE_SEQSCAN = "SET enable_seqscan=off";
+  public static final String DISABLE_SEQSCAN = "SET LOCAL enable_seqscan=off";
 
-  public static final String ENABLE_SEQSCAN = "SET enable_seqscan=on";
+  public static final String ENABLE_SEQSCAN = "SET LOCAL enable_seqscan=on";
 
   public static final String SELECT_DISTINCT_TYPE_IN_NAMESPACE =
       "SELECT DISTINCT("
