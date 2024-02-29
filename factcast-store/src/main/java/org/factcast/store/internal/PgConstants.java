@@ -242,7 +242,14 @@ public class PgConstants {
           + ALIAS_NS
           + "' IS NOT NULL";
 
-  /** note: when using this, please make sure to reenable it in *EVERY CASE* */
+  /**
+   * discourages the use of seq scan, if any other alternative is possible (force preferring an
+   * index)
+   *
+   * <p>https://www.postgresql.org/docs/current/runtime-config-query.html
+   *
+   * <p>note: when using this, please make sure to reenable it in *EVERY CASE*
+   */
   public static final String DISABLE_SEQSCAN = "SET enable_seqscan=off";
 
   public static final String ENABLE_SEQSCAN = "SET enable_seqscan=on";
