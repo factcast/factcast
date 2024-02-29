@@ -196,7 +196,8 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   public @NonNull Set<String> enumerateNamespaces() {
-    if (schemaRegistry.isActive()) return schemaRegistry.enumerateNamespaces();
+    if (schemaRegistry.isActive() && !props.isEnumerationDirectModeEnabled())
+      return schemaRegistry.enumerateNamespaces();
     else return enumerateNamespacesFromPg();
   }
 
@@ -211,7 +212,8 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   public @NonNull Set<String> enumerateTypes(@NonNull String ns) {
-    if (schemaRegistry.isActive()) return schemaRegistry.enumerateTypes(ns);
+    if (schemaRegistry.isActive() && !props.isEnumerationDirectModeEnabled())
+      return schemaRegistry.enumerateTypes(ns);
     else return enumerateTypesFromPg(ns);
   }
 
