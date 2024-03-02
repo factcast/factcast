@@ -196,22 +196,31 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   public @NonNull Set<String> enumerateNamespaces() {
-    if (schemaRegistry.isActive()) return schemaRegistry.enumerateNamespaces();
+    if (schemaRegistry.isActive() && !props.isEnumerationDirectModeEnabled())
+      return schemaRegistry.enumerateNamespaces();
     else return enumerateNamespacesFromPg();
   }
 
   public @NonNull Set<String> enumerateNamespacesFromPg() {
     return metrics.time(
         StoreMetrics.OP.ENUMERATE_NAMESPACES,
-        () ->
-            new HashSet<>(
+        () -> {
+          try {
+            // used because pg seems to favor the seq scan for even 80k rows over the index
+            jdbcTemplate.execute(PgConstants.DISABLE_SEQSCAN);
+            return new HashSet<>(
                 jdbcTemplate.query(
-                    PgConstants.SELECT_DISTINCT_NAMESPACE, this::extractStringFromResultSet)));
+                    PgConstants.SELECT_DISTINCT_NAMESPACE, this::extractStringFromResultSet));
+          } finally {
+            jdbcTemplate.execute(PgConstants.ENABLE_SEQSCAN);
+          }
+        });
   }
 
   @Override
   public @NonNull Set<String> enumerateTypes(@NonNull String ns) {
-    if (schemaRegistry.isActive()) return schemaRegistry.enumerateTypes(ns);
+    if (schemaRegistry.isActive() && !props.isEnumerationDirectModeEnabled())
+      return schemaRegistry.enumerateTypes(ns);
     else return enumerateTypesFromPg(ns);
   }
 

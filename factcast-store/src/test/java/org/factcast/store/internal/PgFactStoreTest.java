@@ -225,8 +225,18 @@ class PgFactStoreTest {
       assertThat(underTest.enumerateNamespaces()).isSameAs(ns);
       verify(underTest, never()).enumerateNamespacesFromPg();
     }
+
+    @Test
+    void usesDirectMode() {
+      configureMetricTimeSupplier();
+      when(schemaRegistry.isActive()).thenReturn(true);
+      when(storeConfigurationProperties.isEnumerationDirectModeEnabled()).thenReturn(true);
+      underTest.enumerateNamespaces();
+      verify(jdbcTemplate).query(eq(PgConstants.SELECT_DISTINCT_NAMESPACE), any(RowMapper.class));
+    }
   }
 
+  @SuppressWarnings("unchecked")
   @Nested
   class WhenEnumeratingTypes {
     private final String NS = "NS";
@@ -255,6 +265,16 @@ class PgFactStoreTest {
       Assertions.assertThat(underTest.enumerateTypes("foo")).isSameAs(types);
 
       verify(underTest, never()).enumerateTypesFromPg(any());
+    }
+
+    @Test
+    void usesDirectMode() {
+      configureMetricTimeSupplier();
+      when(schemaRegistry.isActive()).thenReturn(true);
+      when(storeConfigurationProperties.isEnumerationDirectModeEnabled()).thenReturn(true);
+      underTest.enumerateTypes(NS);
+      verify(jdbcTemplate)
+          .query(eq(PgConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE), any(RowMapper.class), same(NS));
     }
   }
 
