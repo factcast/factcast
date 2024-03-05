@@ -53,6 +53,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.*;
+import org.springframework.transaction.PlatformTransactionManager;
 
 @SuppressWarnings("rawtypes")
 @ExtendWith(MockitoExtension.class)
@@ -71,6 +72,9 @@ class PgFactStoreTest {
   @Mock private @NonNull TokenStore tokenStore;
   @Mock private StoreConfigurationProperties storeConfigurationProperties;
   @Mock SchemaRegistry schemaRegistry;
+
+  @Mock private PlatformTransactionManager platformTransactionManager;
+
   @InjectMocks private PgFactStore underTest;
 
   @Nested
