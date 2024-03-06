@@ -16,7 +16,6 @@
 package org.factcast.server.ui.plugins;
 
 import java.util.*;
-
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
@@ -73,10 +72,7 @@ public class JsonEntryMetaData {
     filterOptions.put(p, FilterOptions.forAggregateId(aggregateId));
   }
 
-  public record FilterOptions (
-          UUID aggregateId,
-          MetaFilterOption meta
-  ) {
+  public record FilterOptions(UUID aggregateId, MetaFilterOption meta) {
     public static FilterOptions forAggregateId(UUID aggregateId) {
       return new FilterOptions(aggregateId, null);
     }
@@ -86,5 +82,5 @@ public class JsonEntryMetaData {
     }
   }
 
-  public record MetaFilterOption (String key, String value) {}
+  public record MetaFilterOption(String key, String value) {}
 }

@@ -19,19 +19,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Tag;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.dependency.CssImport;
-import com.vaadin.flow.component.dependency.JavaScript;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dependency.NpmPackage;
 import java.util.*;
 import java.util.function.Consumer;
-
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.util.NoCoverageReportToBeGenerated;
-import org.factcast.server.ui.plugins.JsonEntryMetaData;
 import org.factcast.server.ui.plugins.JsonViewEntries;
 import org.factcast.server.ui.plugins.JsonViewEntry;
 
@@ -61,14 +57,18 @@ public class JsonView extends Component {
 
   public void renderFacts(JsonViewEntries entries, int conditionCount) {
     var enableQuickFiltering = filterApplier != null && conditionCount > 0;
-    getElement().callJsFunction(
+    getElement()
+        .callJsFunction(
             "renderJson",
             entries.json(),
             entries.meta(),
             enableQuickFiltering, // enable quick filters,
-            conditionCount, // number of filter conditions, needed for quick filtering correct condition
-            enableQuickFiltering ? getElement() : null // element reference for call to updateFilters
-    );
+            conditionCount, // number of filter conditions, needed for quick filtering correct
+            // condition
+            enableQuickFiltering
+                ? getElement()
+                : null // element reference for call to updateFilters
+            );
   }
 
   @ClientCallable
@@ -78,14 +78,7 @@ public class JsonView extends Component {
     filterApplier.accept(om.readValue(filterOptions, QuickFilterOptions.class));
   }
 
-  public record QuickFilterOptions (
-          UUID aggregateId,
-          MetaFilterOption meta,
-          int affectedCriteria
-  ) {
+  public record QuickFilterOptions(UUID aggregateId, MetaFilterOption meta, int affectedCriteria) {}
 
-  }
-  public record MetaFilterOption (String key, String value) {
-  }
-
+  public record MetaFilterOption(String key, String value) {}
 }
