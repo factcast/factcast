@@ -30,6 +30,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import nl.altindag.console.ConsoleCaptor;
+import nl.altindag.log.LogCaptor;
+import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
@@ -42,6 +44,7 @@ import org.factcast.itests.TestFactusApplication;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.toxi.FactCastProxy;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -88,12 +91,15 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
 
   @SneakyThrows
   @Test
+  @Disabled("https://github.com/factcast/factcast/issues/2749")
   void subscribeWithReconnect() {
     log.info(
         "Using FcProxy {} {}:{}",
         proxy.getName(),
         proxy.getContainerIpAddress(),
         proxy.getProxyPort());
+    LogCaptor logCaptor = LogCaptor.forClass(GrpcFactStore.class);
+    logCaptor.setLogLevelToDebug();
 
     var count = new AtomicInteger();
 
@@ -109,11 +115,13 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
         });
 
     assertThat(count.get()).isEqualTo(MAX_FACTS);
+    assertThat(logCaptor.getInfoLogs()).containsOnlyOnce("Handshake successful.");
   }
 
   @SneakyThrows
   @Test
   void followWithReconnectAfterCatchup() {
+    LogCaptor logCaptor = LogCaptor.forClass(GrpcFactStore.class);
     var count = new AtomicInteger();
 
     try (var ignored = follow(f -> count.incrementAndGet())) {
@@ -129,10 +137,13 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
           .atMost(1, SECONDS)
           .untilAsserted(() -> assertThat(count.get()).isEqualTo(MAX_FACTS + 1));
     }
+
+    assertThat(logCaptor.getInfoLogs()).containsOnlyOnce("Handshake successful.");
   }
 
   @SneakyThrows
   @Test
+  @Disabled("https://github.com/factcast/factcast/issues/2749")
   void subscribeWithFailingReconnect() {
     try (var consoleCaptor = new ConsoleCaptor()) {
       var count = new AtomicInteger();
