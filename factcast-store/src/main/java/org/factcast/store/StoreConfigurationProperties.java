@@ -204,6 +204,13 @@ public class StoreConfigurationProperties implements InitializingBean {
    */
   boolean readOnlyModeEnabled = false;
 
+  /**
+   * used to direct the enumerateTypes/Namespaces calls against the store directly, thus bypass the
+   * schema-registry even it is configured. This is useful, if you want to see ns/types that are not
+   * yet found in the registry, but exist in the factStore.
+   */
+  boolean enumerationDirectModeEnabled = false;
+
   public boolean isSchemaRegistryConfigured() {
     return schemaRegistryUrl != null;
   }
