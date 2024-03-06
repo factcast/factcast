@@ -113,6 +113,11 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     add(serialHelperOverlay);
 
     updateFrom();
+
+    factCriteriaViews.addFilterCriteriaCountUpdateListener((oldCount, newCount) -> {
+      // we need to update the jsonView, so that proper tooltip actions are shown for the update filter component numbers
+      jsonView.renderFacts(queryResult, formBean.getCriteria().size());
+    });
   }
 
   private void updateQuickFilters(JsonView.QuickFilterOptions options) {
