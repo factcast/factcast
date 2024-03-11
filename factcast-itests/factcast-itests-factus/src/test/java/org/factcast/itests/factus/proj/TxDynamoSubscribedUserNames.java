@@ -40,7 +40,7 @@ public class TxDynamoSubscribedUserNames extends AbstractDynamoSubscribedProject
       new CompositeCodec(UUIDCodec.INSTANCE, new LZ4Codec(new MarshallingCodec()));
 
   public TxDynamoSubscribedUserNames(DynamoDbClient client) {
-    super(client);
+    super(client, "UserNames", "DynamoProjectionStateTracking");
   }
 
   public RMap<UUID, String> userNames() {

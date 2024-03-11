@@ -47,31 +47,27 @@ abstract class AbstractDynamoProjection
   @Getter protected final DynamoDbClient dynamoDb;
 
   // TODO  Make this configurable
-  private static final String STATE_TABLE_NAME = "_state";
 
   private final AmazonDynamoDBLockClient lockClient;
 
+  private final String stateTableName;
+  // TODO is the Getter required?
   @Getter private final String projectionKey;
-  @Getter private final String projectionState;
   private final Map<String, AttributeValue> dynamoKey;
 
-  protected AbstractDynamoProjection(@NonNull DynamoDbClient dynamoDb) {
+  protected AbstractDynamoProjection(
+      @NonNull DynamoDbClient dynamoDb, String projectionTableName, String stateTableName) {
     this.dynamoDb = dynamoDb;
 
-    this.projectionKey = getScopedName().asString();
+    this.stateTableName = stateTableName;
 
-    // TODO
-    //    "cama_subscribed_projection"
-    //            "names_state"
-    //            "Job_state"
-    this.projectionState = getScopedName().asString() + "_state_tracking";
-
+    this.projectionKey = projectionTableName;
     this.dynamoKey =
         Collections.singletonMap("key", AttributeValue.builder().s(projectionKey).build());
 
     this.lockClient =
         new AmazonDynamoDBLockClient(
-            AmazonDynamoDBLockClientOptions.builder(dynamoDb, STATE_TABLE_NAME)
+            AmazonDynamoDBLockClientOptions.builder(dynamoDb, stateTableName)
                 .withTimeUnit(TimeUnit.SECONDS)
                 .withLeaseDuration(10L)
                 .withHeartbeatPeriod(3L)
@@ -88,7 +84,7 @@ abstract class AbstractDynamoProjection
       final GetItemResponse res =
           dynamoDb.getItem(
               GetItemRequest.builder()
-                  .tableName(STATE_TABLE_NAME)
+                  .tableName(stateTableName)
                   .key(dynamoKey)
                   .attributesToGet("factStreamPosition", "factStreamSerial")
                   .build());
@@ -117,7 +113,7 @@ abstract class AbstractDynamoProjection
           TransactWriteItem.builder()
               .update(
                   Update.builder()
-                      .tableName(STATE_TABLE_NAME)
+                      .tableName(stateTableName)
                       .key(dynamoKey)
                       .updateExpression(
                           "SET factStreamPosition = :new_status, factStreamSerial = :new_factStreamSerial")
@@ -132,7 +128,7 @@ abstract class AbstractDynamoProjection
 
       dynamoDb.updateItem(
           UpdateItemRequest.builder()
-              .tableName(STATE_TABLE_NAME)
+              .tableName(stateTableName)
               .key(dynamoKey)
               .updateExpression(
                   "SET factStreamPosition = :new_status, factStreamSerial = :new_factStreamSerial")
