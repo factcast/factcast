@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.Value;
 import org.factcast.core.FactStreamPosition;
-import software.amazon.awssdk.awscore.AwsRequestOverrideConfiguration;
 import software.amazon.awssdk.services.dynamodb.model.TransactWriteItem;
 import software.amazon.awssdk.services.dynamodb.model.TransactWriteItemsRequest;
 
