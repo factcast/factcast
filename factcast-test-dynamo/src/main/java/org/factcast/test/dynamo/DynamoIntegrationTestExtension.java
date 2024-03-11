@@ -58,7 +58,8 @@ public class DynamoIntegrationTestExtension implements FactCastIntegrationTestEx
                   DynamoDbClient.builder()
                       .endpointOverride(
                           URI.create(
-                              "http://" + dynamoProxy.get().getContainerIpAddress()
+                              "http://"
+                                  + dynamoProxy.get().getContainerIpAddress()
                                   + ":"
                                   + dynamoProxy.get().getProxyPort()))
                       .build());
