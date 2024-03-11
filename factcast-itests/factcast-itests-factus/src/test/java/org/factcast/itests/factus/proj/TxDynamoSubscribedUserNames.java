@@ -20,6 +20,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Handler;
 import org.factcast.factus.dynamo.AbstractDynamoSubscribedProjection;
+import org.factcast.factus.dynamo.tx.DynamoTransaction;
 import org.factcast.factus.redis.AbstractRedisSubscribedProjection;
 import org.factcast.factus.redis.UUIDCodec;
 import org.factcast.factus.serializer.ProjectionMetaData;
@@ -71,13 +72,16 @@ public class TxDynamoSubscribedUserNames extends AbstractDynamoSubscribedProject
   // variant 1
   @SneakyThrows
   @Handler
-  protected void apply(UserCreated created, RTransaction tx) {
+  protected void apply(UserCreated created, DynamoTransaction tx) {
+    //TODO
 //    RMap<UUID, String> userNames = tx.getMap(redisKey(), codec);
 //    userNames.fastPut(created.aggregateId(), created.userName());
   }
 
   @Handler
-  protected void apply(UserDeleted deleted, RTransaction tx) {
+  protected void apply(UserDeleted deleted, DynamoTransaction tx) {
+    //TODO
+
 //    tx.getMap(redisKey(), codec).fastRemove(deleted.aggregateId());
   }
 }

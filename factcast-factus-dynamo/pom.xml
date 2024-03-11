@@ -32,6 +32,14 @@
       <artifactId>dynamodb</artifactId>
       <version>${aws-sdk.version}</version>
     </dependency>
+
+
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>dynamodb-enhanced</artifactId>
+      <version>${aws-sdk.version}</version>
+    </dependency>
+
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-factus</artifactId>

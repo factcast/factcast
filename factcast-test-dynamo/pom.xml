@@ -24,8 +24,8 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-  <dependencies>
 
+  <dependencies>
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
@@ -52,9 +52,9 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.redisson</groupId>
-      <artifactId>redisson-spring-boot-starter</artifactId>
-      <version>${redisson.version}</version>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>dynamodb-enhanced</artifactId>
+      <version>${aws-sdk.version}</version>
     </dependency>
   </dependencies>
   <build>

@@ -15,11 +15,11 @@
  */
 package org.factcast.itests.factus.config;
 
+import java.net.URI;
 import org.factcast.itests.factus.proj.*;
-import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.testcontainers.containers.GenericContainer;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 @Configuration
@@ -40,8 +40,7 @@ public class DynamoProjectionConfiguration {
   }
 
   @Bean
-  DynamoDbClient dynamoDbClient() {
-    //TODO get it from DynamoIntegrationTestExtension
-    return null;
+  DynamoDbClient dynamoDbClient(@Value("dynamodb.local.host") String url) {
+    return DynamoDbClient.builder().endpointOverride(URI.create(url)).build();
   }
 }

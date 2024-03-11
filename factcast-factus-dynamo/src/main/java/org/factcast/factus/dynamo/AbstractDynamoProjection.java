@@ -46,17 +46,26 @@ abstract class AbstractDynamoProjection
         Named {
   @Getter protected final DynamoDbClient dynamoDb;
 
-  private static final String STATE_TABLE_NAME = "_subscribed_projection";
+  //TODO  Make this configurable
+  private static final String STATE_TABLE_NAME = "_state";
 
   private final AmazonDynamoDBLockClient lockClient;
 
   @Getter private final String projectionKey;
+  @Getter private final String projectionState;
   private final Map<String, AttributeValue> dynamoKey;
 
   protected AbstractDynamoProjection(@NonNull DynamoDbClient dynamoDb) {
     this.dynamoDb = dynamoDb;
 
-    this.projectionKey = getScopedName().asString() + "_state_tracking";
+    this.projectionKey = getScopedName().asString();
+
+    //TODO
+//    "cama_subscribed_projection"
+//            "names_state"
+//            "Job_state"
+    this.projectionState = getScopedName().asString() + "_state_tracking";
+
     this.dynamoKey =
         Collections.singletonMap("key", AttributeValue.builder().s(projectionKey).build());
 

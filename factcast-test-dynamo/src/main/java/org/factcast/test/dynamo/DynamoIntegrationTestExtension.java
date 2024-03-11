@@ -15,9 +15,14 @@
  */
 package org.factcast.test.dynamo;
 
+import java.net.URI;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.test.FactCastIntegrationTestExecutionListener;
@@ -25,6 +30,13 @@ import org.factcast.test.FactCastIntegrationTestExtension;
 import org.springframework.test.context.TestContext;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.ToxiproxyContainer.ContainerProxy;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.dynamodb.model.*;
 
 @SuppressWarnings({"rawtypes", "resource"})
 @Slf4j
@@ -44,28 +56,59 @@ public class DynamoIntegrationTestExtension implements FactCastIntegrationTestEx
                       .withNetwork(FactCastIntegrationTestExecutionListener._docker_network);
               dynamo.start();
 
-              return new Containers(
-                  dynamo,
+              DynamoProxy dynamoProxy =
                   new DynamoProxy(
                       FactCastIntegrationTestExecutionListener.createProxy(dynamo, DYNAMO_PORT),
-                      FactCastIntegrationTestExecutionListener.client()));
+                      FactCastIntegrationTestExecutionListener.client());
+              return new Containers(
+                  dynamo,
+                  dynamoProxy,
+                          DynamoDbClient.builder()
+                              .endpointOverride(URI.create(dynamoProxy.getContainerIpAddress()))
+
+                      .build());
             });
 
-    ContainerProxy redisProxy = container.dynamoProxy().get();
-    System.setProperty("spring.data.redis.host", redisProxy.getContainerIpAddress());
-    System.setProperty("spring.data.redis.port", String.valueOf(redisProxy.getProxyPort()));
+    ContainerProxy dynamoProxy = container.dynamoProxy().get();
+    System.setProperty("dynamodb.local.host", dynamoProxy.getContainerIpAddress());
+    System.setProperty("dynamodb.local.port", String.valueOf(dynamoProxy.getProxyPort()));
   }
 
   @Override
   public void wipeExternalDataStore(TestContext ctx) {
-    //TODO How to wipe out dynamo?
-//    ctx.getApplicationContext()
-//        .getAutowireCapableBeanFactory()
-//        .getBean(RedissonClient.class)
-//        .getKeys()
-//        .flushall();
-  }
+    final DynamoConfig.Config config = discoverConfig(ctx.getTestClass());
+    final DynamoDbClient client = executions.get(config).client;
 
+    // -------------------------- Option 1
+    List<String> tables = client.listTables().tableNames();
+//    // Delete all tables
+//    tables.forEach(t -> client.deleteTable(DeleteTableRequest.builder().tableName(t).build()));
+//    // Create all tables
+//    tables.forEach(t -> client.createTable(CreateTableRequest.builder().tableName(t).build()));
+
+    // -------------------------- Option 2
+    tables.forEach(
+        t -> {
+          DescribeTableResponse table =
+              client.describeTable(DescribeTableRequest.builder().tableName(t).build());
+
+          client.scan(ScanRequest.builder().tableName(t).build())
+              .items()
+              .forEach(
+                  item -> {
+                    Map<String, AttributeValue> itemIdentifier = new HashMap<>();
+                    table
+                        .table()
+                        .keySchema()
+                        .forEach(
+                            k ->
+                                itemIdentifier.put(k.attributeName(), item.get(k.attributeName())));
+
+                    client.deleteItem(
+                        DeleteItemRequest.builder().tableName(t).key(itemIdentifier).build());
+                  });
+        });
+  }
 
   @Override
   public void injectFields(TestContext ctx) {
@@ -76,15 +119,16 @@ public class DynamoIntegrationTestExtension implements FactCastIntegrationTestEx
 
   private DynamoConfig.Config discoverConfig(Class<?> i) {
     return Optional.ofNullable(i)
-            .flatMap(x -> Optional.ofNullable(x.getAnnotation(DynamoConfig.class)))
-            .map(DynamoConfig.Config::from)
-            .orElse(DynamoConfig.Config.defaults());
+        .flatMap(x -> Optional.ofNullable(x.getAnnotation(DynamoConfig.class)))
+        .map(DynamoConfig.Config::from)
+        .orElse(DynamoConfig.Config.defaults());
   }
 
   @Value
   static class Containers {
-    GenericContainer redis;
+    GenericContainer dynamo;
     DynamoProxy dynamoProxy;
+    DynamoDbClient client;
   }
 
   @Override
