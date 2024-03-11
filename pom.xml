@@ -98,8 +98,8 @@
     <etc>${session.executionRootDirectory}/src/etc</etc>
     <spring-boot.version>3.2.3</spring-boot.version>
     <!-- whenever updating spring-grpc make sure to align grpc.version accordingly. -->
-    <spring-grpc.version>2.15.0.RELEASE</spring-grpc.version>
-    <grpc.version>1.59.0</grpc.version>
+    <spring-grpc.version>3.0.0.RELEASE</spring-grpc.version>
+    <grpc.version>1.60.1</grpc.version>
     <!-- lter versions seem to break toxi -->
     <testcontainers.version>1.19.7</testcontainers.version>
     <arrow.version>1.2.3</arrow.version>
@@ -110,7 +110,7 @@
     <mockk.version>1.13.10</mockk.version>
     <redisson.version>3.27.1</redisson.version>
     <graaljs.version>23.0.1</graaljs.version>
-    <shedlock.version>5.11.0</shedlock.version>
+    <shedlock.version>5.12.0</shedlock.version>
     <byte-buddy.version>1.14.12</byte-buddy.version>
     <skipUnitTests>false</skipUnitTests>
     <!-- as long as we promise pg11 compatibility, it might make sense to also
