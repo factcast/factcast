@@ -99,7 +99,22 @@
           <groupId>commons-logging</groupId>
           <artifactId>commons-logging</artifactId>
         </exclusion>
+        <!-- fixes "Found duplicate and different classes" conflict with replacement
+          for org.json:json used by Spring -->
+        <exclusion>
+          <groupId>org.json</groupId>
+          <artifactId>json</artifactId>
+        </exclusion>
       </exclusions>
+    </dependency>
+    <!-- org.json:json replacement used by Spring, see exclusion above -->
+    <!-- - https://stackoverflow.com/a/60952911/2124712 -->
+    <!-- - https://stackoverflow.com/q/52980064/2124712 (1st reply) -->
+    <!-- - there also is "a clean-room Apache-licensed implementation" https://mvnrepository.com/artifact/com.github.openjson/openjson -->
+    <dependency>
+      <groupId>com.vaadin.external.google</groupId>
+      <artifactId>android-json</artifactId>
+      <version>0.0.20131108.vaadin1</version>
     </dependency>
     <!-- spring -->
     <dependency>

@@ -143,9 +143,8 @@ public class SchemaCacheTest {
           .put("newProperty", new JSONObject().put("type", "string"));
       newSchemaV3.put(
           "required",
-          new JSONArray()
-              .putAll(
-                  List.of("firstName", "lastName", "salutation", "displayName", "newProperty")));
+          new JSONArray(
+              List.of("firstName", "lastName", "salutation", "displayName", "newProperty")));
 
       jdbcTemplate.update(
           String.format(
