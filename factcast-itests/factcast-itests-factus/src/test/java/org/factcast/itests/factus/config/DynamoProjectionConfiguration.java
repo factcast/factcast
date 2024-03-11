@@ -40,7 +40,10 @@ public class DynamoProjectionConfiguration {
   }
 
   @Bean
-  DynamoDbClient dynamoDbClient(@Value("${dynamodb.local.host}") String url, @Value("${dynamodb.local.port}") String port) {
-    return DynamoDbClient.builder().endpointOverride(URI.create("http://" + url + ":" + port)).build();
+  DynamoDbClient dynamoDbClient(
+      @Value("${dynamodb.local.host}") String url, @Value("${dynamodb.local.port}") String port) {
+    return DynamoDbClient.builder()
+        .endpointOverride(URI.create("http://" + url + ":" + port))
+        .build();
   }
 }

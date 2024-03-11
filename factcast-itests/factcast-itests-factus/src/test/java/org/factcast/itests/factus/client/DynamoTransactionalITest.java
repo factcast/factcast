@@ -45,10 +45,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
-import software.amazon.awssdk.services.dynamodb.model.CreateTableRequest;
-import software.amazon.awssdk.services.dynamodb.model.Put;
-import software.amazon.awssdk.services.dynamodb.model.TransactWriteItem;
+import software.amazon.awssdk.services.dynamodb.model.*;
 
 @SpringBootTest
 @ContextConfiguration(classes = {TestFactusApplication.class, DynamoProjectionConfiguration.class})
@@ -61,9 +58,38 @@ public class DynamoTransactionalITest extends AbstractFactCastIntegrationTest {
   @BeforeEach
   void setupTables() {
     try {
-      dynamoDbClient.createTable(CreateTableRequest.builder().tableName("UserNames").build());
       dynamoDbClient.createTable(
-          CreateTableRequest.builder().tableName("DynamoProjectionStateTracking").build());
+          CreateTableRequest.builder()
+              .tableName("UserNames")
+              .keySchema(
+                  KeySchemaElement.builder().attributeName("key").keyType(KeyType.HASH).build())
+              .attributeDefinitions(
+                  AttributeDefinition.builder()
+                      .attributeName("key")
+                      .attributeType(ScalarAttributeType.S)
+                      .build())
+              .provisionedThroughput(
+                  ProvisionedThroughput.builder()
+                      .readCapacityUnits(100L)
+                      .writeCapacityUnits(100L)
+                      .build())
+              .build());
+      dynamoDbClient.createTable(
+          CreateTableRequest.builder()
+              .tableName("DynamoProjectionStateTracking")
+              .keySchema(
+                  KeySchemaElement.builder().attributeName("key").keyType(KeyType.HASH).build())
+              .attributeDefinitions(
+                  AttributeDefinition.builder()
+                      .attributeName("key")
+                      .attributeType(ScalarAttributeType.S)
+                      .build())
+              .provisionedThroughput(
+                  ProvisionedThroughput.builder()
+                      .readCapacityUnits(100L)
+                      .writeCapacityUnits(100L)
+                      .build())
+              .build());
     } catch (Exception e) {
       // TODO: rethink where to create the tables so that we don't need to recreate
       log.warn("This will probably fail the second time.", e);

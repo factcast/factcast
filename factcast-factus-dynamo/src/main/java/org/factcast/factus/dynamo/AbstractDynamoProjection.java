@@ -87,9 +87,12 @@ abstract class AbstractDynamoProjection
                   .key(dynamoKey)
                   .attributesToGet("factStreamPosition", "factStreamSerial")
                   .build());
-      return FactStreamPosition.of(
-          UUID.fromString(res.item().get("factStreamPosition").toString()),
-          Long.parseLong(res.item().get("factStreamSerial").toString()));
+      AttributeValue factStreamPosition = res.item().get("factStreamPosition");
+      return factStreamPosition != null
+          ? FactStreamPosition.of(
+              UUID.fromString(res.item().get("factStreamPosition").toString()),
+              Long.parseLong(res.item().get("factStreamSerial").toString()))
+          : null;
     }
   }
 
