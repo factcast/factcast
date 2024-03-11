@@ -112,17 +112,18 @@ abstract class AbstractDynamoProjection
           Update.builder()
               .tableName(stateTableName)
               .key(dynamoKey)
-                  .updateExpression(
-                          "SET factStreamPosition = :new_factStreamPosition, factStreamSerial = :new_factStreamSerial")
+              .updateExpression(
+                  "SET factStreamPosition = :new_factStreamPosition, factStreamSerial = :new_factStreamSerial")
               .expressionAttributeValues(expressionAttributeValues);
 
-//      if (transaction.initialFactStreamPosition() != null) {
-//        expressionAttributeValues.put(
-//            ":expected_status",
-//            AttributeValue.fromS(transaction.initialFactStreamPosition().factId().toString()));
-//
-//        builder.conditionExpression("factStreamPosition = :expected_status");
-//      }
+      //      if (transaction.initialFactStreamPosition() != null) {
+      //        expressionAttributeValues.put(
+      //            ":expected_status",
+      //
+      // AttributeValue.fromS(transaction.initialFactStreamPosition().factId().toString()));
+      //
+      //        builder.conditionExpression("factStreamPosition = :expected_status");
+      //      }
 
       transaction.add(TransactWriteItem.builder().update(builder.build()).build());
     } else {
