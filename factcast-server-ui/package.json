@@ -2,7 +2,7 @@
   "name": "factcast-server-ui",
   "dependencies": {
     "@polymer/polymer": "3.5.1",
-    "@vaadin-component-factory/vcf-lookup-field": "23.3.2",
+    "@vaadin-component-factory/vcf-lookup-field": "23.3.3",
     "@vaadin-component-factory/vcf-popup": "24.0.3",
     "@vaadin/a11y-base": "24.3.7",
     "@vaadin/accordion": "24.3.7",
@@ -169,7 +169,7 @@
   "vaadin": {
     "dependencies": {
       "@polymer/polymer": "3.5.1",
-      "@vaadin-component-factory/vcf-lookup-field": "23.3.2",
+      "@vaadin-component-factory/vcf-lookup-field": "23.3.3",
       "@vaadin-component-factory/vcf-popup": "24.0.3",
       "@vaadin/a11y-base": "24.3.7",
       "@vaadin/accordion": "24.3.7",
@@ -259,6 +259,6 @@
       "workbox-core": "7.0.0",
       "workbox-precaching": "7.0.0"
     },
-    "hash": "b783e508d7558750914c96050180cec298d8430944cf89907f566043b9bfa1f2"
+    "hash": "b7ae547b5d883e07128bf39c6e208a60ff9fbb6a2fb80bacf9759064d4d79033"
   }
 }
