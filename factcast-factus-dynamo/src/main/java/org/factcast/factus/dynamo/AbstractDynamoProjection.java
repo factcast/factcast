@@ -51,7 +51,6 @@ abstract class AbstractDynamoProjection
   private final AmazonDynamoDBLockClient lockClient;
 
   private final String stateTableName;
-  // TODO is the Getter required?
   @Getter private final String projectionKey;
   private final Map<String, AttributeValue> dynamoKey;
 

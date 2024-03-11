@@ -16,7 +16,6 @@
 package org.factcast.test.dynamo;
 
 import java.net.URI;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -74,35 +73,35 @@ public class DynamoIntegrationTestExtension implements FactCastIntegrationTestEx
     // -------------------------- Option 1
     List<String> tables = client.listTables().tableNames();
     //    // Delete all tables
-    //    tables.forEach(t ->
-    // client.deleteTable(DeleteTableRequest.builder().tableName(t).build()));
-    //    // Create all tables
-    //    tables.forEach(t ->
-    // client.createTable(CreateTableRequest.builder().tableName(t).build()));
+    tables.forEach(t -> client.deleteTable(DeleteTableRequest.builder().tableName(t).build()));
+    // Create all tables
+    //        tables.forEach(t ->
+    //     client.createTable(CreateTableRequest.builder().tableName(t).build()));
 
     // -------------------------- Option 2
-    tables.forEach(
-        t -> {
-          DescribeTableResponse table =
-              client.describeTable(DescribeTableRequest.builder().tableName(t).build());
-
-          client
-              .scan(ScanRequest.builder().tableName(t).build())
-              .items()
-              .forEach(
-                  item -> {
-                    Map<String, AttributeValue> itemIdentifier = new HashMap<>();
-                    table
-                        .table()
-                        .keySchema()
-                        .forEach(
-                            k ->
-                                itemIdentifier.put(k.attributeName(), item.get(k.attributeName())));
-
-                    client.deleteItem(
-                        DeleteItemRequest.builder().tableName(t).key(itemIdentifier).build());
-                  });
-        });
+    //    tables.forEach(
+    //        t -> {
+    //          DescribeTableResponse table =
+    //              client.describeTable(DescribeTableRequest.builder().tableName(t).build());
+    //
+    //          client
+    //              .scan(ScanRequest.builder().tableName(t).build())
+    //              .items()
+    //              .forEach(
+    //                  item -> {
+    //                    Map<String, AttributeValue> itemIdentifier = new HashMap<>();
+    //                    table
+    //                        .table()
+    //                        .keySchema()
+    //                        .forEach(
+    //                            k ->
+    //                                itemIdentifier.put(k.attributeName(),
+    // item.get(k.attributeName())));
+    //
+    //                    client.deleteItem(
+    //                        DeleteItemRequest.builder().tableName(t).key(itemIdentifier).build());
+    //                  });
+    //        });
   }
 
   @Override

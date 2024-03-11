@@ -22,7 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import io.grpc.StatusRuntimeException;
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.UUID;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -41,10 +40,7 @@ import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.proj.TxDynamoManagedUserNames;
 import org.factcast.itests.factus.proj.TxDynamoSubscribedUserNames;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.redisson.api.RMap;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
@@ -62,8 +58,16 @@ public class DynamoTransactionalITest extends AbstractFactCastIntegrationTest {
   @Autowired DynamoDbClient dynamoDbClient;
   final int NUMBER_OF_EVENTS = 10;
 
-  private void createTable(String name) {
-    dynamoDbClient.createTable(CreateTableRequest.builder().tableName(name).build());
+  @BeforeEach
+  void setupTables() {
+    try {
+      dynamoDbClient.createTable(CreateTableRequest.builder().tableName("UserNames").build());
+      dynamoDbClient.createTable(
+          CreateTableRequest.builder().tableName("DynamoProjectionStateTracking").build());
+    } catch (Exception e) {
+      // TODO: rethink where to create the tables so that we don't need to recreate
+      log.warn("This will probably fail the second time.", e);
+    }
   }
 
   @Nested
@@ -270,8 +274,19 @@ public class DynamoTransactionalITest extends AbstractFactCastIntegrationTest {
     @Override
     @SneakyThrows
     protected void apply(UserCreated created, DynamoTransaction tx) {
-      RMap<UUID, String> userNames = tx.getMap(redisKey(), codec);
-      userNames.put(created.aggregateId(), created.userName());
+      tx.add(
+          TransactWriteItem.builder()
+              .put(
+                  Put.builder()
+                      .tableName(projectionKey())
+                      .item(
+                          Map.of(
+                              "key",
+                              AttributeValue.fromS(created.aggregateId().toString()),
+                              "value",
+                              AttributeValue.fromS(created.userName())))
+                      .build())
+              .build());
 
       Thread.sleep(100);
     }
