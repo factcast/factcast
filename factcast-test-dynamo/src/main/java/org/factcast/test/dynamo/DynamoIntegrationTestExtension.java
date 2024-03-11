@@ -58,14 +58,13 @@ public class DynamoIntegrationTestExtension implements FactCastIntegrationTestEx
 
   @Override
   public void wipeExternalDataStore(TestContext ctx) {
-    //TODO How to wipe out dynamo?
-//    ctx.getApplicationContext()
-//        .getAutowireCapableBeanFactory()
-//        .getBean(RedissonClient.class)
-//        .getKeys()
-//        .flushall();
+    // TODO How to wipe out dynamo?
+    //    ctx.getApplicationContext()
+    //        .getAutowireCapableBeanFactory()
+    //        .getBean(RedissonClient.class)
+    //        .getKeys()
+    //        .flushall();
   }
-
 
   @Override
   public void injectFields(TestContext ctx) {
@@ -76,9 +75,9 @@ public class DynamoIntegrationTestExtension implements FactCastIntegrationTestEx
 
   private DynamoConfig.Config discoverConfig(Class<?> i) {
     return Optional.ofNullable(i)
-            .flatMap(x -> Optional.ofNullable(x.getAnnotation(DynamoConfig.class)))
-            .map(DynamoConfig.Config::from)
-            .orElse(DynamoConfig.Config.defaults());
+        .flatMap(x -> Optional.ofNullable(x.getAnnotation(DynamoConfig.class)))
+        .map(DynamoConfig.Config::from)
+        .orElse(DynamoConfig.Config.defaults());
   }
 
   @Value

@@ -16,10 +16,8 @@
 package org.factcast.itests.factus.config;
 
 import org.factcast.itests.factus.proj.*;
-import org.redisson.api.RedissonClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.testcontainers.containers.GenericContainer;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 @Configuration
@@ -41,7 +39,7 @@ public class DynamoProjectionConfiguration {
 
   @Bean
   DynamoDbClient dynamoDbClient() {
-    //TODO get it from DynamoIntegrationTestExtension
+    // TODO get it from DynamoIntegrationTestExtension
     return null;
   }
 }

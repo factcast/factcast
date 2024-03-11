@@ -20,7 +20,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Handler;
 import org.factcast.factus.dynamo.AbstractDynamoManagedProjection;
-import org.factcast.factus.redis.AbstractRedisManagedProjection;
 import org.factcast.factus.redis.UUIDCodec;
 import org.factcast.factus.redis.tx.RedisTransactional;
 import org.factcast.factus.serializer.ProjectionMetaData;
@@ -28,7 +27,6 @@ import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.redisson.api.RMap;
 import org.redisson.api.RTransaction;
-import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.Codec;
 import org.redisson.codec.CompositeCodec;
 import org.redisson.codec.LZ4Codec;
@@ -48,7 +46,7 @@ public class TxDynamoManagedUserNames extends AbstractDynamoManagedProjection {
   }
 
   public RMap<UUID, String> userNames() {
-//    return redisson.getMap(redisKey(), codec);
+    //    return redisson.getMap(redisKey(), codec);
     return null;
   }
 
@@ -73,13 +71,13 @@ public class TxDynamoManagedUserNames extends AbstractDynamoManagedProjection {
   @SneakyThrows
   @Handler
   protected void apply(UserCreated created, RTransaction tx) {
-//    RMap<UUID, String> userNames = tx.getMap(redisKey(), codec);
-//    userNames.fastPut(created.aggregateId(), created.userName());
+    //    RMap<UUID, String> userNames = tx.getMap(redisKey(), codec);
+    //    userNames.fastPut(created.aggregateId(), created.userName());
   }
 
   @SneakyThrows
   @Handler
   protected void apply(UserDeleted deleted, RTransaction tx) {
-//    tx.getMap(redisKey(), codec).fastRemove(deleted.aggregateId());
+    //    tx.getMap(redisKey(), codec).fastRemove(deleted.aggregateId());
   }
 }

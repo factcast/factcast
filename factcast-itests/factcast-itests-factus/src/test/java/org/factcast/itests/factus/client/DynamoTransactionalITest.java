@@ -34,7 +34,6 @@ import org.factcast.factus.redis.tx.RedisTransactional;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.config.DynamoProjectionConfiguration;
-import org.factcast.itests.factus.config.RedissonProjectionConfiguration;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.proj.TxRedissonManagedUserNames;
 import org.factcast.itests.factus.proj.TxRedissonSubscribedUserNames;
@@ -50,8 +49,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
-@ContextConfiguration(
-    classes = {TestFactusApplication.class, DynamoProjectionConfiguration.class})
+@ContextConfiguration(classes = {TestFactusApplication.class, DynamoProjectionConfiguration.class})
 @Slf4j
 public class DynamoTransactionalITest extends AbstractFactCastIntegrationTest {
   @Autowired Factus factus;
