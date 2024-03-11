@@ -46,7 +46,7 @@ abstract class AbstractDynamoProjection
         Named {
   @Getter protected final DynamoDbClient dynamoDb;
 
-  //TODO  Make this configurable
+  // TODO  Make this configurable
   private static final String STATE_TABLE_NAME = "_state";
 
   private final AmazonDynamoDBLockClient lockClient;
@@ -60,10 +60,10 @@ abstract class AbstractDynamoProjection
 
     this.projectionKey = getScopedName().asString();
 
-    //TODO
-//    "cama_subscribed_projection"
-//            "names_state"
-//            "Job_state"
+    // TODO
+    //    "cama_subscribed_projection"
+    //            "names_state"
+    //            "Job_state"
     this.projectionState = getScopedName().asString() + "_state_tracking";
 
     this.dynamoKey =

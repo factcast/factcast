@@ -21,8 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.test.FactCastIntegrationTestExecutionListener;
@@ -30,11 +28,6 @@ import org.factcast.test.FactCastIntegrationTestExtension;
 import org.springframework.test.context.TestContext;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.ToxiproxyContainer.ContainerProxy;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
 
@@ -63,9 +56,8 @@ public class DynamoIntegrationTestExtension implements FactCastIntegrationTestEx
               return new Containers(
                   dynamo,
                   dynamoProxy,
-                          DynamoDbClient.builder()
-                              .endpointOverride(URI.create(dynamoProxy.getContainerIpAddress()))
-
+                  DynamoDbClient.builder()
+                      .endpointOverride(URI.create(dynamoProxy.getContainerIpAddress()))
                       .build());
             });
 
@@ -81,10 +73,12 @@ public class DynamoIntegrationTestExtension implements FactCastIntegrationTestEx
 
     // -------------------------- Option 1
     List<String> tables = client.listTables().tableNames();
-//    // Delete all tables
-//    tables.forEach(t -> client.deleteTable(DeleteTableRequest.builder().tableName(t).build()));
-//    // Create all tables
-//    tables.forEach(t -> client.createTable(CreateTableRequest.builder().tableName(t).build()));
+    //    // Delete all tables
+    //    tables.forEach(t ->
+    // client.deleteTable(DeleteTableRequest.builder().tableName(t).build()));
+    //    // Create all tables
+    //    tables.forEach(t ->
+    // client.createTable(CreateTableRequest.builder().tableName(t).build()));
 
     // -------------------------- Option 2
     tables.forEach(
@@ -92,7 +86,8 @@ public class DynamoIntegrationTestExtension implements FactCastIntegrationTestEx
           DescribeTableResponse table =
               client.describeTable(DescribeTableRequest.builder().tableName(t).build());
 
-          client.scan(ScanRequest.builder().tableName(t).build())
+          client
+              .scan(ScanRequest.builder().tableName(t).build())
               .items()
               .forEach(
                   item -> {
