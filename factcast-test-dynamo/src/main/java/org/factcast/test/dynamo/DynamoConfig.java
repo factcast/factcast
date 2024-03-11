@@ -24,7 +24,7 @@ import lombok.With;
 @Target(ElementType.TYPE)
 @Inherited
 public @interface DynamoConfig {
-  String redisVersion() default Config.DYNAMO_VERSION;
+  String dynamoVersion() default Config.DYNAMO_VERSION;
 
   @Value
   @With
@@ -38,7 +38,7 @@ public @interface DynamoConfig {
     }
 
     static Config from(@NonNull DynamoConfig e) {
-      return defaults().withDynamoVersion(e.redisVersion());
+      return defaults().withDynamoVersion(e.dynamoVersion());
     }
   }
 }

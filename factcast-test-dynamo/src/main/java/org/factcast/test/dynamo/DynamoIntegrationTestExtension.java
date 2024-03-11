@@ -55,10 +55,13 @@ public class DynamoIntegrationTestExtension implements FactCastIntegrationTestEx
               return new Containers(
                   dynamo,
                   dynamoProxy,
+                  // TODO should this internal client maybe be pointed at the dynamo container
+                  // itself instead the proxy?
                   DynamoDbClient.builder()
                       .endpointOverride(
                           URI.create(
-                              "http://" + dynamoProxy.get().getContainerIpAddress()
+                              "http://"
+                                  + dynamoProxy.get().getContainerIpAddress()
                                   + ":"
                                   + dynamoProxy.get().getProxyPort()))
                       .build());
