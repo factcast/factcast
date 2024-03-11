@@ -22,6 +22,8 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 import lombok.NonNull;
@@ -34,6 +36,8 @@ public class FilterCriteriaViews extends VerticalLayout {
   private final BeanValidationUrlStateBinder<FullQueryBean> binder;
   private final FullQueryBean bean;
   private final FactRepository repo;
+
+  private final List<FilterCriteriaCountUpdateListener> updateListeners = new ArrayList<>();
 
   FilterCriteriaViews(
       @NonNull FactRepository repo,
@@ -81,14 +85,22 @@ public class FilterCriteriaViews extends VerticalLayout {
   }
 
   private void removeConditionAndBackingBean(@NonNull FilterCriteriaView v) {
+    final var oldCount = bean.getCriteria().size();
     removeCondition(v);
     bean.getCriteria().remove(v.factCriteria());
+    final var newCount = bean.getCriteria().size();
+
+    this.updateListeners.forEach(ul -> ul.onFilterCriteriaCountChanged(oldCount, newCount));
   }
 
   private void addCondition() {
-    FactCriteria criteria = new FactCriteria();
+    final var criteria = new FactCriteria();
+    final var oldCount = bean.getCriteria().size();
     bean.getCriteria().add(criteria);
     addFilterCriteriaView(true, criteria);
+    final var newCount = bean.getCriteria().size();
+
+    this.updateListeners.forEach(ul -> ul.onFilterCriteriaCountChanged(oldCount, newCount));
   }
 
   private void addFilterCriteriaView(boolean withRemoveButton, @NonNull FactCriteria criteria) {
@@ -115,5 +127,17 @@ public class FilterCriteriaViews extends VerticalLayout {
   public void rebuild() {
     getFilterCriteriaViews().forEach(this::removeCondition);
     addViewsAccordingTo(bean);
+  }
+
+  public void addFilterCriteriaCountUpdateListener(FilterCriteriaCountUpdateListener listener) {
+    this.updateListeners.add(listener);
+  }
+
+  public void removeFilterCriteriaCountUpdateListener(FilterCriteriaCountUpdateListener listener) {
+    this.updateListeners.remove(listener);
+  }
+
+  public interface FilterCriteriaCountUpdateListener {
+    void onFilterCriteriaCountChanged(int oldCount, int newCount);
   }
 }

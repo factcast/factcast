@@ -7,12 +7,21 @@ import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 // @ts-ignore
 import jsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
 import { IDisposable, IRange, languages } from "monaco-editor";
-import { visit, JSONPath } from "jsonc-parser";
+import { visit, JSONPath, JSONVisitor } from "jsonc-parser";
 import { JSONPath as jp } from "jsonpath-plus";
+
+type FactFilterOptions = {
+	aggregateId?: string;
+	meta?: {
+		key: string;
+		value: string;
+	};
+};
 
 type FactMetaData = {
 	annotations: Record<string, string[]>;
 	hoverContent: Record<string, string[]>;
+	filterOptions: Record<string, FactFilterOptions>;
 };
 
 type EnrichedMember = { range: IRange } & Partial<languages.CodeLens> &
@@ -21,6 +30,16 @@ type EnrichedMember = { range: IRange } & Partial<languages.CodeLens> &
 type CompiledPath = {
 	originalPath: string;
 	compiledPath: JSONPath;
+};
+
+type UpdateFactFilterOptions = FactFilterOptions & {
+	affectedCriteria: number;
+};
+
+type VaadinJsonViewElement = {
+	$server: {
+		updateFilters: (o: string) => void;
+	};
 };
 
 @customElement("json-view")
@@ -33,6 +52,10 @@ class JsonView extends LitElement {
 	private editorDiv: HTMLDivElement | undefined;
 
 	private metaData: EnrichedMember[] = [];
+	private filterUpdateCommand: string | null = null;
+	private quickFilterEnabled: boolean = false;
+	private vaadinElement: VaadinJsonViewElement | undefined;
+	private conditionCount: number = 1;
 
 	constructor() {
 		super();
@@ -116,9 +139,25 @@ class JsonView extends LitElement {
 			fontLigatures: "",
 			automaticLayout: true,
 		});
+
+		this.filterUpdateCommand = this.editor.addCommand(
+			0,
+			(ctx, arg: UpdateFactFilterOptions) => {
+				this.vaadinElement?.$server.updateFilters(JSON.stringify(arg));
+			}
+		);
 	}
 
-	public renderJson(json: string, metaData: string) {
+	public renderJson(
+		json: string,
+		metaData: string,
+		enableQuickFilter: boolean,
+		conditionCount: number,
+		vaadinElement: VaadinJsonViewElement
+	) {
+		this.quickFilterEnabled = enableQuickFilter;
+		this.vaadinElement = vaadinElement;
+		this.conditionCount = conditionCount;
 		if (this.editor) {
 			this.metaData = this.parseMetaData(json, metaData);
 			this.editor.setValue(json);
@@ -129,7 +168,6 @@ class JsonView extends LitElement {
 
 	private parseMetaData(content: string, metaData: string) {
 		const parsedMetaData = JSON.parse(metaData) as FactMetaData;
-		const enrichedMembers: EnrichedMember[] = [];
 
 		const annotationMap: CompiledPath[] = Object.keys(
 			parsedMetaData.annotations
@@ -145,56 +183,42 @@ class JsonView extends LitElement {
 			compiledPath: this.compilePath(path),
 		}));
 
+		const filterOptionsMap: CompiledPath[] = Object.keys(
+			parsedMetaData.filterOptions
+		).map((path) => ({
+			originalPath: path,
+			compiledPath: this.compilePath(path),
+		}));
+
+		const visitor = new MetaDataJsonVisitor({
+			factMetaData: parsedMetaData,
+			filterUpdateCommand: this.filterUpdateCommand ?? "",
+			conditionCount: this.conditionCount,
+			withQuickFilters: this.quickFilterEnabled,
+			filterOptionsMap,
+			hoverMap,
+			annotationMap,
+		});
 		visit(content, {
-			onObjectProperty(
+			onObjectProperty: (
 				property: string,
 				offset: number,
 				length: number,
 				startLine: number,
 				startCharacter: number,
 				pathSupplier: () => JSONPath
-			) {
-				const finalPath = JSON.stringify([...pathSupplier(), property]);
-				const annotation = annotationMap.find(
-					(x) => JSON.stringify(x.compiledPath) === finalPath
-				);
-
-				const hoverContent = hoverMap.find(
-					(x) => JSON.stringify(x.compiledPath) === finalPath
-				);
-
-				if (!annotation && !hoverContent) return;
-				const enrichedMember: EnrichedMember = {
-					range: new monaco.Range(
-						startLine + 1,
-						startCharacter + 1, // +1  zero based index
-						startLine + 1,
-						startCharacter + property.length + 3 // +2 for the quote and zero based index
-					),
-				};
-
-				if (annotation?.originalPath) {
-					enrichedMember.command = {
-						id: "",
-						title:
-							parsedMetaData.annotations[annotation.originalPath].join(", "),
-					};
-				}
-
-				if (hoverContent?.originalPath) {
-					enrichedMember.contents = parsedMetaData.hoverContent[
-						hoverContent.originalPath
-					].map((x) => ({
-						isTrusted: true,
-						value: x,
-					}));
-				}
-
-				enrichedMembers.push(enrichedMember);
-			},
+			) =>
+				visitor.onObjectProperty(
+					property,
+					offset,
+					length,
+					startLine,
+					startCharacter,
+					pathSupplier
+				),
 		});
 
-		return enrichedMembers;
+		return visitor.enrichedMembers;
 	}
 
 	private compilePath(path: string) {
@@ -230,6 +254,212 @@ class JsonView extends LitElement {
 			}
 		`,
 	];
+}
+
+class MetaDataJsonVisitor implements JSONVisitor {
+	private readonly annotationMap: CompiledPath[];
+	private readonly hoverMap: CompiledPath[];
+	private readonly filterOptionsMap: CompiledPath[];
+	private readonly factMetaData: FactMetaData;
+	private readonly withQuickFilters: boolean;
+	private readonly conditionCount: number;
+	private readonly filterUpdateCommand: string;
+	public readonly enrichedMembers: EnrichedMember[] = [];
+
+	public constructor(data: {
+		factMetaData: FactMetaData;
+		withQuickFilters: boolean;
+		conditionCount: number;
+		annotationMap: CompiledPath[];
+		hoverMap: CompiledPath[];
+		filterOptionsMap: CompiledPath[];
+		filterUpdateCommand: string;
+	}) {
+		this.factMetaData = data.factMetaData;
+		this.annotationMap = data.annotationMap;
+		this.hoverMap = data.hoverMap;
+		this.filterOptionsMap = data.filterOptionsMap;
+		this.withQuickFilters = data.withQuickFilters;
+		this.conditionCount = data.conditionCount;
+		this.filterUpdateCommand = data.filterUpdateCommand;
+	}
+
+	public onObjectProperty(
+		property: string,
+		offset: number,
+		length: number,
+		startLine: number,
+		startCharacter: number,
+		pathSupplier: () => JSONPath
+	) {
+		const finalPath = JSON.stringify([...pathSupplier(), property]);
+
+		this.addEnrichedMembersForPropertyAnnotations(
+			finalPath,
+			property,
+			startLine,
+			startCharacter
+		);
+		this.addEnrichedMembersForPropertyHovers(
+			finalPath,
+			property,
+			startLine,
+			startCharacter
+		);
+		this.addEnrichedMembersForQuickFilters(
+			finalPath,
+			property,
+			startLine,
+			startCharacter
+		);
+	}
+
+	private addEnrichedMembersForPropertyAnnotations(
+		finalPath: string,
+		property: string,
+		startLine: number,
+		startCharacter: number
+	) {
+		const annotation = this.annotationMap.find(
+			(x) => JSON.stringify(x.compiledPath) === finalPath
+		);
+
+		if (!annotation) {
+			return;
+		}
+		if (annotation?.originalPath) {
+			const enrichedMember: EnrichedMember = {
+				range: new monaco.Range(
+					startLine + 1,
+					startCharacter + 1, // +1  zero based index
+					startLine + 1,
+					startCharacter + property.length + 3 // +2 for the quote and zero based index
+				),
+			};
+			enrichedMember.command = {
+				id: "",
+				title:
+					this.factMetaData.annotations[annotation.originalPath].join(", "),
+			};
+			this.enrichedMembers.push(enrichedMember);
+		}
+	}
+
+	private addEnrichedMembersForPropertyHovers(
+		finalPath: string,
+		property: string,
+		startLine: number,
+		startCharacter: number
+	) {
+		const hoverContent = this.hoverMap.find(
+			(x) => JSON.stringify(x.compiledPath) === finalPath
+		);
+
+		if (!hoverContent) {
+			return;
+		}
+		if (hoverContent?.originalPath) {
+			const enrichedMember: EnrichedMember = {
+				range: new monaco.Range(
+					startLine + 1,
+					startCharacter + 1, // +1  zero based index
+					startLine + 1,
+					startCharacter + property.length + 3 // +2 for the quote and zero based index
+				),
+			};
+			enrichedMember.contents = this.factMetaData.hoverContent[
+				hoverContent.originalPath
+			].map((x) => ({
+				isTrusted: true,
+				value: x,
+			}));
+			this.enrichedMembers.push(enrichedMember);
+		}
+	}
+
+	private addEnrichedMembersForQuickFilters(
+		finalPath: string,
+		property: string,
+		startLine: number,
+		startCharacter: number
+	) {
+		if (!this.withQuickFilters) return;
+
+		const filterOptionsContent = this.filterOptionsMap.find(
+			(x) => JSON.stringify(x.compiledPath) === finalPath
+		);
+
+		if (!filterOptionsContent) return;
+
+		if (filterOptionsContent?.originalPath) {
+			const filter =
+				this.factMetaData.filterOptions[filterOptionsContent.originalPath];
+			// expand range to cover value as well
+			const rangeEnd =
+				startCharacter +
+				1 + // for zero based index
+				+property.length +
+				7 + // for quotes around property and value and the " : " in the middle
+				(filter.meta?.value.length ?? filter.aggregateId?.length ?? 0);
+			const enrichedMember: EnrichedMember = {
+				range: new monaco.Range(
+					startLine + 1,
+					startCharacter + 1, // +1  zero based index
+					startLine + 1,
+					rangeEnd
+				),
+			};
+
+			let label: string = "this"; // fallback value
+			if (filter.meta) {
+				label = `${filter.meta.key}:${filter.meta.value}`;
+			}
+			if (filter.aggregateId) {
+				label = `aggregate ID ${filter.aggregateId}`;
+			}
+			enrichedMember.contents = this.buildFilterCommandLinks(label, filter);
+
+			this.enrichedMembers.push(enrichedMember);
+		}
+	}
+
+	private buildFilterCommandLinks(
+		forText: string,
+		options: FactFilterOptions
+	): monaco.IMarkdownString[] {
+		if (this.conditionCount === 1) {
+			const encodedArgs = encodeURIComponent(
+				JSON.stringify({ ...options, affectedCriteria: 0 })
+			);
+			return [
+				{
+					isTrusted: true,
+					value: `[Filter for ${forText}](command:${this.filterUpdateCommand}?${encodedArgs})`,
+				},
+			];
+		}
+		const encodedArgsForAll = encodeURIComponent(
+			JSON.stringify({ ...options, affectedCriteria: -1 })
+		);
+		const allLinks: monaco.IMarkdownString[] = [
+			{
+				isTrusted: true,
+				value: `[Filter for ${forText} on all conditions](command:${this.filterUpdateCommand}?${encodedArgsForAll})`,
+			},
+		];
+		for (let i = 0; i < this.conditionCount; i++) {
+			const encodedArgs = encodeURIComponent(
+				JSON.stringify({ ...options, affectedCriteria: i })
+			);
+			allLinks.push({
+				isTrusted: true,
+				value: `[Filter for ${forText} on condition ${i + 1}](command:${
+					this.filterUpdateCommand
+				}?${encodedArgs})`,
+			});
+		}
+		return allLinks;
+	}
 }
 
 // @ts-ignore
