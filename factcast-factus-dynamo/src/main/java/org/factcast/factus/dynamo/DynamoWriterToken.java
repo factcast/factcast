@@ -36,6 +36,6 @@ public class DynamoWriterToken implements WriterToken {
 
   @Override
   public boolean isValid() {
-    return lock.isExpired();
+    return !lock.isExpired();
   }
 }

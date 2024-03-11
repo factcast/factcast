@@ -90,8 +90,8 @@ abstract class AbstractDynamoProjection
       AttributeValue factStreamPosition = res.item().get("factStreamPosition");
       return factStreamPosition != null
           ? FactStreamPosition.of(
-              UUID.fromString(res.item().get("factStreamPosition").toString()),
-              Long.parseLong(res.item().get("factStreamSerial").toString()))
+              UUID.fromString(res.item().get("factStreamPosition").s()),
+              Long.parseLong(res.item().get("factStreamSerial").s()))
           : null;
     }
   }
@@ -107,22 +107,24 @@ abstract class AbstractDynamoProjection
     if (inTransaction()) {
       // TODO transaction write item + evetl. condition
       DynamoTransaction transaction = runningTransaction();
-      expressionAttributeValues.put(
-          ":expected_status",
-          AttributeValue.fromS(transaction.initialFactStreamPosition().factId().toString()));
 
-      transaction.add(
-          TransactWriteItem.builder()
-              .update(
-                  Update.builder()
-                      .tableName(stateTableName)
-                      .key(dynamoKey)
-                      .updateExpression(
-                          "SET factStreamPosition = :new_status, factStreamSerial = :new_factStreamSerial")
-                      .expressionAttributeValues(expressionAttributeValues)
-                      .conditionExpression("factStreamPosition = :expected_status")
-                      .build())
-              .build());
+      Update.Builder builder =
+          Update.builder()
+              .tableName(stateTableName)
+              .key(dynamoKey)
+                  .updateExpression(
+                          "SET factStreamPosition = :new_factStreamPosition, factStreamSerial = :new_factStreamSerial")
+              .expressionAttributeValues(expressionAttributeValues);
+
+//      if (transaction.initialFactStreamPosition() != null) {
+//        expressionAttributeValues.put(
+//            ":expected_status",
+//            AttributeValue.fromS(transaction.initialFactStreamPosition().factId().toString()));
+//
+//        builder.conditionExpression("factStreamPosition = :expected_status");
+//      }
+
+      transaction.add(TransactWriteItem.builder().update(builder.build()).build());
     } else {
       // TODO: there probably is a cleaner way of serializing this back and forth
       // e.g. using DynamoDbEnhancedClient
@@ -133,7 +135,7 @@ abstract class AbstractDynamoProjection
               .tableName(stateTableName)
               .key(dynamoKey)
               .updateExpression(
-                  "SET factStreamPosition = :new_status, factStreamSerial = :new_factStreamSerial")
+                  "SET factStreamPosition = :new_factStreamPosition, factStreamSerial = :new_factStreamSerial")
               .expressionAttributeValues(expressionAttributeValues)
               .build());
     }
