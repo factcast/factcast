@@ -87,7 +87,8 @@ public class FactusImpl implements Factus {
 
   private final AtomicBoolean closed = new AtomicBoolean();
 
-  private final Set<AutoCloseable> managedObjects = new HashSet<>();
+  private final Set<AutoCloseable> managedObjects =
+      Collections.synchronizedSet(new LinkedHashSet<>());
 
   @Override
   public @NonNull PublishBatch batch() {
@@ -455,7 +456,7 @@ public class FactusImpl implements Factus {
       ArrayList<AutoCloseable> closeables = new ArrayList<>(managedObjects);
       for (AutoCloseable c : closeables) {
         try {
-          c.close();
+          if (c != null) c.close();
         } catch (Exception e) {
           // needs to be swallowed
           log.warn("While closing {} of type {}:", c, c.getClass().getName(), e);
