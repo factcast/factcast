@@ -130,7 +130,8 @@ public class PgFactStoreInternalConfiguration {
       PgFactIdToSerialMapper pgFactIdToSerialMapper,
       SnapshotCache snapCache,
       PgMetrics pgMetrics,
-      StoreConfigurationProperties props) {
+      StoreConfigurationProperties props,
+      PlatformTransactionManager platformTransactionManager) {
     return new PgFactStore(
         jdbcTemplate,
         subscriptionFactory,
@@ -141,7 +142,8 @@ public class PgFactStoreInternalConfiguration {
         pgFactIdToSerialMapper,
         snapCache,
         pgMetrics,
-        props);
+        props,
+        platformTransactionManager);
   }
 
   @Bean
