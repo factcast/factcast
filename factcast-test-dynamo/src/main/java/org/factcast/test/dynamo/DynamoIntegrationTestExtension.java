@@ -34,7 +34,7 @@ import software.amazon.awssdk.services.dynamodb.model.*;
 @Slf4j
 public class DynamoIntegrationTestExtension implements FactCastIntegrationTestExtension {
 
-  public static final int DYNAMO_PORT = 6380;
+  public static final int DYNAMO_PORT = 8000;
   private final Map<DynamoConfig.Config, Containers> executions = new ConcurrentHashMap<>();
 
   private void startOrReuse(DynamoConfig.Config config) {
@@ -43,7 +43,7 @@ public class DynamoIntegrationTestExtension implements FactCastIntegrationTestEx
             config,
             key -> {
               GenericContainer dynamo =
-                  new GenericContainer<>("amazon/dynamodb-local:" + config.redisVersion())
+                  new GenericContainer<>("amazon/dynamodb-local:" + config.dynamoVersion())
                       .withExposedPorts(DYNAMO_PORT)
                       .withNetwork(FactCastIntegrationTestExecutionListener._docker_network);
               dynamo.start();
@@ -56,7 +56,11 @@ public class DynamoIntegrationTestExtension implements FactCastIntegrationTestEx
                   dynamo,
                   dynamoProxy,
                   DynamoDbClient.builder()
-                      .endpointOverride(URI.create(dynamoProxy.getContainerIpAddress()))
+                      .endpointOverride(
+                          URI.create(
+                              "http://" + dynamoProxy.get().getContainerIpAddress()
+                                  + ":"
+                                  + dynamoProxy.get().getProxyPort()))
                       .build());
             });
 

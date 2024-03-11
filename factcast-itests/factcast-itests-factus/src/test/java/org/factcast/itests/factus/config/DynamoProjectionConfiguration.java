@@ -25,22 +25,22 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 @Configuration
 public class DynamoProjectionConfiguration {
   @Bean
-  DynamoManagedUserNames redissonManagedUserNames(DynamoDbClient client) {
+  DynamoManagedUserNames DynamoManagedUserNames(DynamoDbClient client) {
     return new DynamoManagedUserNames(client);
   }
 
   @Bean
-  TxDynamoManagedUserNames txRedissonManagedUserNames(DynamoDbClient client) {
+  TxDynamoManagedUserNames txDynamoManagedUserNames(DynamoDbClient client) {
     return new TxDynamoManagedUserNames(client);
   }
 
   @Bean
-  TxDynamoSubscribedUserNames txRedissonSubscribedUserNames(DynamoDbClient client) {
+  TxDynamoSubscribedUserNames txDynamoSubscribedUserNames(DynamoDbClient client) {
     return new TxDynamoSubscribedUserNames(client);
   }
 
   @Bean
-  DynamoDbClient dynamoDbClient(@Value("dynamodb.local.host") String url) {
-    return DynamoDbClient.builder().endpointOverride(URI.create(url)).build();
+  DynamoDbClient dynamoDbClient(@Value("${dynamodb.local.host}") String url, @Value("${dynamodb.local.port}") String port) {
+    return DynamoDbClient.builder().endpointOverride(URI.create("http://" + url + ":" + port)).build();
   }
 }

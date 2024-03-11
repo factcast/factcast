@@ -29,7 +29,7 @@ public @interface DynamoConfig {
   @Value
   @With
   class Config {
-    String redisVersion;
+    String dynamoVersion;
 
     static final String DYNAMO_VERSION = "2.2.1";
 
@@ -38,7 +38,7 @@ public @interface DynamoConfig {
     }
 
     static Config from(@NonNull DynamoConfig e) {
-      return defaults().withRedisVersion(e.redisVersion());
+      return defaults().withDynamoVersion(e.redisVersion());
     }
   }
 }
