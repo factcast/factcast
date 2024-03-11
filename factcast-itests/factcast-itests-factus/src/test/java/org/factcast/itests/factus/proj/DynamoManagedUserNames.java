@@ -21,8 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.dynamo.AbstractDynamoManagedProjection;
 import org.factcast.factus.redis.tx.RedisTransactional;
 import org.factcast.factus.serializer.ProjectionMetaData;
-import org.redisson.api.RMap;
-import org.redisson.api.RedissonClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 @Slf4j
