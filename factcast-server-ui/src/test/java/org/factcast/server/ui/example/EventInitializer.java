@@ -45,7 +45,14 @@ public class EventInitializer implements InitializingBean {
                 .id(USER1_EVENT_ID)
                 .meta("hugo", "bar")
                 .build(
-                    "{\"firstName\":\"Peter\", \"lastName\":\"Lustig\", \"foo\":[{\"bar\":\"baz\"}]}"),
+                    """
+                {
+                  "firstName":"Peter",
+                  "lastName":"Lustig",
+                  "foo":[{"bar":"baz"}],
+                  "userId":"%s"
+                }"""
+                        .formatted(USER1_AGG_ID)),
             Fact.builder()
                 .ns("users")
                 .type("UserCreated")
@@ -53,6 +60,13 @@ public class EventInitializer implements InitializingBean {
                 .aggId(USER2_AGG_ID)
                 .id(USER2_EVENT_ID)
                 .build(
-                    "{\"firstName\":\"Werner\", \"lastName\":\"Ernst\", \"ping\":[{\"pang\":\"pong\"}]}")));
+                    """
+                {
+                  "firstName":"Werner",
+                  "lastName":"Ernst",
+                  "ping":[{"pang":"pong"}],
+                  "userId":"%s"
+                }"""
+                        .formatted(USER2_AGG_ID))));
   }
 }
