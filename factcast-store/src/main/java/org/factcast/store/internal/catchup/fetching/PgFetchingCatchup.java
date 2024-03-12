@@ -24,9 +24,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.store.internal.catchup.BufferingFactInterceptor;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
+import org.factcast.store.internal.pipeline.FactPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
@@ -46,7 +46,7 @@ public class PgFetchingCatchup implements PgCatchup {
 
   @NonNull final SubscriptionRequestTO req;
 
-  @NonNull final BufferingFactInterceptor interceptor;
+  @NonNull final FactPipeline pipeline;
 
   @NonNull final AtomicLong serial;
 
@@ -66,8 +66,8 @@ public class PgFetchingCatchup implements PgCatchup {
       var jdbc = new JdbcTemplate(ds);
       fetch(jdbc);
     } finally {
-      log.trace("Done fetching, flushing interceptor");
-      interceptor.flush();
+      log.trace("Done fetching, flushing.");
+      pipeline.fact(null);
       ds.destroy();
       statementHolder.clear();
     }
@@ -90,7 +90,7 @@ public class PgFetchingCatchup implements PgCatchup {
         if (statementHolder.wasCanceled() || rs.isClosed()) return;
 
         Fact f = extractor.mapRow(rs, 0);
-        this.interceptor.accept(f);
+        pipeline.fact(f);
       } catch (PSQLException psql) {
         // see #2088
         if (statementHolder.wasCanceled()) {

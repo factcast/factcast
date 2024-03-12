@@ -13,16 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal;
+package org.factcast.store.internal.pipeline;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.factcast.core.FactStreamPosition;
+import org.factcast.core.subscription.FactStreamInfo;
 
 @RequiredArgsConstructor
-public abstract class AbstractFactInterceptor implements FactInterceptor {
-  @NonNull final PgMetrics metrics;
+public abstract class AbstractFactPipeline implements FactPipeline {
+  @NonNull protected final FactPipeline parent;
 
-  protected void increaseNotifyMetric(int count) {
-    metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT).increment(count);
+  @Override
+  public void error(@NonNull Throwable err) {
+    parent.error(err);
+  }
+
+  @Override
+  public void fastForward(FactStreamPosition ffwd) {
+    parent.fastForward(ffwd);
+  }
+
+  @Override
+  public void info(@NonNull FactStreamInfo info) {
+    parent.info(info);
+  }
+
+  @Override
+  public void catchup() {
+    parent.catchup();
+  }
+
+  @Override
+  public void complete() {
+    parent.complete();
   }
 }
