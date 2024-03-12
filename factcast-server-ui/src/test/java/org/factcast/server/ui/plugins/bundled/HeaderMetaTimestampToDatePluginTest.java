@@ -26,6 +26,7 @@ import org.factcast.server.ui.plugins.JsonPayload;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -37,13 +38,15 @@ class HeaderMetaTimestampToDatePluginTest {
 
   @Nested
   class WhenDoingHandle {
-    @Mock private Fact fact;
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+    private Fact fact;
+
     @Mock private JsonPayload payload;
     @Mock private JsonEntryMetaData jsonEntryMetaData;
 
     @Test
     void skipOnNoTimestamp() {
-      when(fact.timestamp()).thenReturn(null);
+      when(fact.header().timestamp()).thenReturn(null);
       underTest.doHandle(fact, payload, jsonEntryMetaData);
 
       verifyNoInteractions(jsonEntryMetaData);
@@ -55,7 +58,7 @@ class HeaderMetaTimestampToDatePluginTest {
       try {
         TimeZone.setDefault(TimeZone.getTimeZone(ZoneId.of("Europe/Paris")));
         Long ts = 1001L;
-        when(fact.timestamp()).thenReturn(ts);
+        when(fact.header().timestamp()).thenReturn(ts);
         underTest.doHandle(fact, payload, jsonEntryMetaData);
 
         verify(jsonEntryMetaData)

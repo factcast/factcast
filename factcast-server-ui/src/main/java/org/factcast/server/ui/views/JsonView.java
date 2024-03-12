@@ -40,6 +40,7 @@ import org.factcast.server.ui.plugins.JsonViewEntry;
 @NpmPackage(value = "jsonc-parser", version = "3.2.0")
 @NpmPackage(value = "jsonpath-plus", version = "7.2.0")
 @NoCoverageReportToBeGenerated
+@SuppressWarnings("java:S1948")
 @RequiredArgsConstructor
 @Slf4j
 public class JsonView extends Component {
