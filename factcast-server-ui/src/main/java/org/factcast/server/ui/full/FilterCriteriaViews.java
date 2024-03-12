@@ -22,9 +22,11 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import lombok.NonNull;
 import org.factcast.core.util.NoCoverageReportToBeGenerated;
@@ -69,6 +71,7 @@ public class FilterCriteriaViews extends VerticalLayout {
     hl.setPadding(false);
     hl.setMargin(false);
     hl.setJustifyContentMode(JustifyContentMode.END);
+    hl.addClassNames(LumoUtility.Border.TOP, LumoUtility.BorderColor.CONTRAST_20);
 
     final var button = new Button("add Condition", new Icon(VaadinIcon.PLUS_CIRCLE_O));
     button.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
@@ -80,7 +83,7 @@ public class FilterCriteriaViews extends VerticalLayout {
   }
 
   private void removeCondition(@NonNull FilterCriteriaView v) {
-    v.getParent().ifPresent(this::remove); // it was wrapped by a container
+    v.getParent().ifPresent(this::remove);
     v.removeBindings();
   }
 
@@ -90,7 +93,7 @@ public class FilterCriteriaViews extends VerticalLayout {
     bean.getCriteria().remove(v.factCriteria());
     final var newCount = bean.getCriteria().size();
 
-    this.updateListeners.forEach(ul -> ul.onFilterCriteriaCountChanged(oldCount, newCount));
+    updateListeners.forEach(ul -> ul.onFilterCriteriaCountChanged(oldCount, newCount));
   }
 
   private void addCondition() {
@@ -100,21 +103,29 @@ public class FilterCriteriaViews extends VerticalLayout {
     addFilterCriteriaView(true, criteria);
     final var newCount = bean.getCriteria().size();
 
-    this.updateListeners.forEach(ul -> ul.onFilterCriteriaCountChanged(oldCount, newCount));
+    updateListeners.forEach(ul -> ul.onFilterCriteriaCountChanged(oldCount, newCount));
   }
 
   private void addFilterCriteriaView(boolean withRemoveButton, @NonNull FactCriteria criteria) {
     FilterCriteriaView c = new FilterCriteriaView(repo, binder, criteria);
+    Supplier<Integer> indexSupplier = () -> bean.getCriteria().indexOf(criteria);
 
-    if (withRemoveButton)
-      addComponentAtIndex(
-          getComponentCount() - 1,
+    FilterCriteriaViewContainer viewContainer;
+    if (withRemoveButton) {
+      viewContainer =
           new FilterCriteriaViewContainer(
-              c, new RemoveButton(() -> removeConditionAndBackingBean(c))));
-    else
-      addComponentAtIndex(
-          getComponentCount() - 1,
-          new FilterCriteriaViewContainer(c)); // maybe need style adaptions
+              c,
+              indexSupplier,
+              (v) -> {
+                removeFilterCriteriaCountUpdateListener(v);
+                removeConditionAndBackingBean(c);
+              });
+    } else {
+      viewContainer = new FilterCriteriaViewContainer(c, indexSupplier);
+    }
+
+    addComponentAtIndex(getComponentCount() - 1, viewContainer);
+    addFilterCriteriaCountUpdateListener(viewContainer);
   }
 
   @NonNull
@@ -130,11 +141,11 @@ public class FilterCriteriaViews extends VerticalLayout {
   }
 
   public void addFilterCriteriaCountUpdateListener(FilterCriteriaCountUpdateListener listener) {
-    this.updateListeners.add(listener);
+    updateListeners.add(listener);
   }
 
   public void removeFilterCriteriaCountUpdateListener(FilterCriteriaCountUpdateListener listener) {
-    this.updateListeners.remove(listener);
+    updateListeners.remove(listener);
   }
 
   public interface FilterCriteriaCountUpdateListener {
