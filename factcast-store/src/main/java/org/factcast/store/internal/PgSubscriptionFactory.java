@@ -88,7 +88,8 @@ class PgSubscriptionFactory implements AutoCloseable {
     SubscriptionImpl subscription = SubscriptionImpl.on(observer);
 
     FactPipeline pipe =
-        pipelineFactory.create(req, subscription, new PostQueryMatcher(req, jsEngineFactory));
+        pipelineFactory.create(
+            req, subscription, new PostQueryMatcher(req, jsEngineFactory), 1024, es);
 
     PgFactStream pgsub =
         new PgFactStream(

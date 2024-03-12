@@ -15,6 +15,7 @@
  */
 package org.factcast.store.internal.pipeline;
 
+import io.micrometer.core.instrument.Counter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
@@ -24,19 +25,20 @@ import org.jetbrains.annotations.Nullable;
 
 @Slf4j
 public class MetricFactPipeline extends AbstractFactPipeline {
-  @NonNull final PgMetrics metrics;
+  private final Counter counter;
 
   public MetricFactPipeline(@NonNull FactPipeline parent, @NonNull PgMetrics metrics) {
     super(parent);
-    this.metrics = metrics;
+    counter = metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT);
   }
 
   @Override
   public void fact(@Nullable Fact fact) {
     log.trace("processing {}", fact);
     if (fact != null) {
-      // TODO catchup is probably wrong here
-      metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT).increment();
+      // TODO catchup is probably wrong here as it will be used to send ANY fact for the
+      // subscription
+      counter.increment();
     }
     // either way:
     parent.fact(fact);
