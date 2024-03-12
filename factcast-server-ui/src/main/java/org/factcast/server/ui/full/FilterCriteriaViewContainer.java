@@ -29,7 +29,6 @@ public class FilterCriteriaViewContainer extends VerticalLayout {
   public FilterCriteriaViewContainer(@NonNull FilterCriteriaView c) {
     super(c);
     this.filterCriteriaView = c;
-    add(c);
     initializeLayout();
   }
 
