@@ -22,6 +22,7 @@ import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.FactTransformers;
 import org.factcast.core.subscription.transformation.TransformationRequest;
 
+// TODO check, if it can just be replaced by the buffered variant
 public class TransformingFactPipeline extends AbstractFactPipeline {
   private final FactTransformerService service;
   private final FactTransformers transformers;

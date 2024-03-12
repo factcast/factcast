@@ -23,7 +23,7 @@ import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.jetbrains.annotations.Nullable;
 
-// might be obsolete, if we can make subscription impl FP. We need to be caeful about the contracts
+// might be obsolete, if we can make subscription impl FP. We need to be careful about the contracts
 // for the client side though, so better safe than sorry, for now.
 @RequiredArgsConstructor
 public class BaseFactPipeline implements FactPipeline {
@@ -31,9 +31,9 @@ public class BaseFactPipeline implements FactPipeline {
 
   @Override
   public void fact(@Nullable Fact fact) {
-    // TODO need to get the FO out of it, and use this instead in order to turn a null into a flush
-    // here.
-    if (fact != null) sub.notifyElement(fact);
+    if (fact == null) {
+      // TODO flush, either on subscription or on FO
+    } else sub.notifyElement(fact);
   }
 
   @Override
