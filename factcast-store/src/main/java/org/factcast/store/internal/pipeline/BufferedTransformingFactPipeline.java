@@ -62,8 +62,10 @@ public class BufferedTransformingFactPipeline extends AbstractFactPipeline {
 
   public void fact(@Nullable Fact f) {
     log.trace("processing {}", f);
-    if (f == null) parent.fact(f);
-    else {
+    if (f == null) {
+      flush();
+      parent.fact(f);
+    } else {
       TransformationRequest transformationRequest = transformers.prepareTransformation(f);
       if (mode == Mode.DIRECT) {
         acceptInDirectMode(f, transformationRequest);
