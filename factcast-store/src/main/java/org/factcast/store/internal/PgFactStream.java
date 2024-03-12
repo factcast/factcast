@@ -54,12 +54,11 @@ public class PgFactStream {
   final JdbcTemplate jdbcTemplate;
   final EventBus eventBus;
   final PgFactIdToSerialMapper idToSerMapper;
-  // final SubscriptionImpl subscription;
   final PgLatestSerialFetcher fetcher;
   final PgCatchupFactory pgCatchupFactory;
   final FastForwardTarget ffwdTarget;
   final FactPipeline pipeline;
-  final PgMetrics metrics;
+  //  final PgMetrics metrics;
 
   CondensedQueryExecutor condensedExecutor;
 

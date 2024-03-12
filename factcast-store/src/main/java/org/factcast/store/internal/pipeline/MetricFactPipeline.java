@@ -16,11 +16,13 @@
 package org.factcast.store.internal.pipeline;
 
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.StoreMetrics;
 import org.jetbrains.annotations.Nullable;
 
+@Slf4j
 public class MetricFactPipeline extends AbstractFactPipeline {
   @NonNull final PgMetrics metrics;
 
@@ -31,10 +33,12 @@ public class MetricFactPipeline extends AbstractFactPipeline {
 
   @Override
   public void fact(@Nullable Fact fact) {
-    if (fact != null) metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT).increment();
+    log.trace("processing {}", fact);
+    if (fact != null) {
+      // TODO catchup is probably wrong here
+      metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT).increment();
+    }
+    // either way:
     parent.fact(fact);
   }
-
-  @Override
-  public void error(@NonNull Throwable err) {}
 }

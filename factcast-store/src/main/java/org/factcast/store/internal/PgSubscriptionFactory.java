@@ -92,14 +92,7 @@ class PgSubscriptionFactory implements AutoCloseable {
 
     PgFactStream pgsub =
         new PgFactStream(
-            jdbcTemplate,
-            eventBus,
-            idToSerialMapper,
-            fetcher,
-            catchupFactory,
-            target,
-            pipe,
-            metrics);
+            jdbcTemplate, eventBus, idToSerialMapper, fetcher, catchupFactory, target, pipe);
 
     // when closing the subscription, also close the PgFactStream
     subscription.onClose(pgsub::close);

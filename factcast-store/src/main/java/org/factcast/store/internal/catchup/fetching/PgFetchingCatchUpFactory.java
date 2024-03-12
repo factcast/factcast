@@ -22,13 +22,11 @@ import lombok.Generated;
 import lombok.NonNull;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.transformation.FactTransformerService;
-import org.factcast.core.subscription.transformation.FactTransformers;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
-import org.factcast.store.internal.pipeline.BufferedTransformingFactPipeline;
 import org.factcast.store.internal.pipeline.FactPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 
@@ -63,18 +61,7 @@ public class PgFetchingCatchUpFactory implements PgCatchupFactory, AutoCloseable
       @NonNull FactPipeline pipeline,
       @NonNull AtomicLong serial,
       @NonNull CurrentStatementHolder holder) {
-    return new PgFetchingCatchup(
-        connectionSupplier,
-        props,
-        request,
-        new BufferedTransformingFactPipeline(
-            pipeline,
-            transformerService,
-            FactTransformers.createFor(request),
-            props.getTransformationCachePageSize(),
-            executorService),
-        serial,
-        holder);
+    return new PgFetchingCatchup(connectionSupplier, props, request, pipeline, serial, holder);
   }
 
   @Override

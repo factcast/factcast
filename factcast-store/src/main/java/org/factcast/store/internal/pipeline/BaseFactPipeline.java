@@ -17,6 +17,7 @@ package org.factcast.store.internal.pipeline;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
@@ -26,11 +27,13 @@ import org.jetbrains.annotations.Nullable;
 // might be obsolete, if we can make subscription impl FP. We need to be careful about the contracts
 // for the client side though, so better safe than sorry, for now.
 @RequiredArgsConstructor
+@Slf4j
 public class BaseFactPipeline implements FactPipeline {
   final SubscriptionImpl sub;
 
   @Override
   public void fact(@Nullable Fact fact) {
+    log.trace("processing {}", fact);
     if (fact == null) {
       // TODO flush, either on subscription or on FO
     } else sub.notifyElement(fact);
