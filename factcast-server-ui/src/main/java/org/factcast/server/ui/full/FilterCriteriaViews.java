@@ -116,7 +116,7 @@ public class FilterCriteriaViews extends VerticalLayout {
           new FilterCriteriaViewContainer(
               c,
               indexSupplier,
-              (v) -> {
+              v -> {
                 removeFilterCriteriaCountUpdateListener(v);
                 removeConditionAndBackingBean(c);
               });

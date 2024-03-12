@@ -29,11 +29,12 @@ import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.core.util.NoCoverageReportToBeGenerated;
 
+@SuppressWarnings("java:S1948")
 @Getter
 @NoCoverageReportToBeGenerated
 public class FilterCriteriaViewContainer extends HorizontalLayout
     implements FilterCriteriaViews.FilterCriteriaCountUpdateListener {
-  @NonNull private final FilterCriteriaView filterCriteriaView;
+  private final FilterCriteriaView filterCriteriaView;
   private final Supplier<Integer> indexSupplier;
   private final Paragraph text;
 
