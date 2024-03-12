@@ -112,7 +112,7 @@ class PgFetchingCatchupTest {
     @BeforeEach
     void setup() {
       Mockito.when(props.getPageSize()).thenReturn(47);
-      when(metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT)).thenReturn(counter);
+      when(metrics.counter(StoreMetrics.EVENT.FACTS_SENT)).thenReturn(counter);
     }
 
     @Test
