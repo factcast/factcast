@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.plugins;
+package org.factcast.server.ui.plugins.bundled;
 
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Optional;
 import org.factcast.core.Fact;
+import org.factcast.server.ui.plugins.JsonEntryMetaData;
+import org.factcast.server.ui.plugins.JsonPayload;
+import org.factcast.server.ui.plugins.JsonViewPlugin;
 
 public class HeaderMetaTimestampToDatePlugin extends JsonViewPlugin {
   @Override

@@ -130,6 +130,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     } else {
       applyQuickFilter(options, formBean.getCriteria().get(options.affectedCriteria()));
     }
+
     binder.readBean(formBean);
     factCriteriaViews.rebuild();
     runQuery();
@@ -139,10 +140,15 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     if (options.aggregateId() != null) {
       factCriteria.setAggId(options.aggregateId());
     }
+
     if (options.meta() != null) {
       final var metaTuple = new MetaTuple();
       metaTuple.setKey(options.meta().key());
       metaTuple.setValue(options.meta().value());
+
+      // first remove meta tuple with the same key, it does not make sense to have the same key
+      // filtered twice with different values
+      factCriteria.getMeta().removeIf(t -> t.getKey().equals(metaTuple.getKey()));
       factCriteria.getMeta().add(metaTuple);
     }
   }
@@ -212,8 +218,10 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
 
   private void runQuery() {
     try {
+      queryBtn.setEnabled(false);
       binder.writeBean(formBean);
       log.info("{} runs query for {}", getLoggedInUserName(), formBean);
+
       List<Fact> dataFromStore = repo.fetchChunk(formBean);
       JsonViewEntries processedByPlugins = jsonViewPluginService.process(dataFromStore);
       jsonView.renderFacts(processedByPlugins, formBean.getCriteria().size());

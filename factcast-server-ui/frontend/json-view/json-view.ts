@@ -36,14 +36,14 @@ type UpdateFactFilterOptions = FactFilterOptions & {
 	affectedCriteria: number;
 };
 
-type VaadinJsonViewElement = {
-	$server: {
-		updateFilters: (o: string) => void;
-	};
+type ServerInterface = {
+	updateFilters: (filterOptionJson: string) => Promise<void>;
 };
 
 @customElement("json-view")
 class JsonView extends LitElement {
+	private $server?: ServerInterface;
+
 	private editor: monaco.editor.IStandaloneCodeEditor | null = null;
 	private codeLensProvider: IDisposable | null = null;
 	private hoverProvider: IDisposable | null = null;
@@ -54,7 +54,6 @@ class JsonView extends LitElement {
 	private metaData: EnrichedMember[] = [];
 	private filterUpdateCommand: string | null = null;
 	private quickFilterEnabled: boolean = false;
-	private vaadinElement: VaadinJsonViewElement | undefined;
 	private conditionCount: number = 1;
 
 	constructor() {
@@ -142,8 +141,8 @@ class JsonView extends LitElement {
 
 		this.filterUpdateCommand = this.editor.addCommand(
 			0,
-			(ctx, arg: UpdateFactFilterOptions) => {
-				this.vaadinElement?.$server.updateFilters(JSON.stringify(arg));
+			async (ctx, arg: UpdateFactFilterOptions) => {
+				await this.$server?.updateFilters(JSON.stringify(arg));
 			}
 		);
 	}
@@ -152,12 +151,11 @@ class JsonView extends LitElement {
 		json: string,
 		metaData: string,
 		enableQuickFilter: boolean,
-		conditionCount: number,
-		vaadinElement: VaadinJsonViewElement
+		conditionCount: number
 	) {
 		this.quickFilterEnabled = enableQuickFilter;
-		this.vaadinElement = vaadinElement;
 		this.conditionCount = conditionCount;
+
 		if (this.editor) {
 			this.metaData = this.parseMetaData(json, metaData);
 			this.editor.setValue(json);
@@ -398,7 +396,7 @@ class MetaDataJsonVisitor implements JSONVisitor {
 			const rangeEnd =
 				startCharacter +
 				1 + // for zero based index
-				+property.length +
+				property.length +
 				7 + // for quotes around property and value and the " : " in the middle
 				(filter.meta?.value.length ?? filter.aggregateId?.length ?? 0);
 			const enrichedMember: EnrichedMember = {
@@ -415,7 +413,7 @@ class MetaDataJsonVisitor implements JSONVisitor {
 				label = `${filter.meta.key}:${filter.meta.value}`;
 			}
 			if (filter.aggregateId) {
-				label = `aggregate ID ${filter.aggregateId}`;
+				label = `Aggregate-ID ${filter.aggregateId}`;
 			}
 			enrichedMember.contents = this.buildFilterCommandLinks(label, filter);
 
