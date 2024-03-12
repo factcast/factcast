@@ -46,7 +46,7 @@ class HeaderMetaFilterOptionsPluginTest {
 
     @Test
     void addsMetaFilterOption() {
-      when(fact.header().meta()).thenReturn(Map.of("foo", "bar"));
+      when(fact.header().meta()).thenReturn(Map.of("foo", "bar", "_ts", "123"));
 
       underTest.doHandle(fact, payload, jsonEntryMetaData);
 
