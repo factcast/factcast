@@ -72,13 +72,15 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
   private final IntegerField offset = new IntegerField("Offset");
   private final BigDecimalField from = new BigDecimalField("Starting Serial");
   private final Popup serialHelperOverlay = new Popup();
-  private final JsonView jsonView = new JsonView();
+  private final JsonView jsonView = new JsonView(this::updateQuickFilters);
 
   private final BeanValidationUrlStateBinder<FullQueryBean> binder;
   private final FactRepository repo;
 
   private final JsonViewPluginService jsonViewPluginService;
   private final FilterCriteriaViews factCriteriaViews;
+  private final Button queryBtn = new Button("Query");
+  private final Button exportJsonBtn = new Button("Export JSON");
   private JsonViewEntries queryResult;
 
   public FullQueryPage(
@@ -111,6 +113,46 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     add(serialHelperOverlay);
 
     updateFrom();
+
+    factCriteriaViews.addFilterCriteriaCountUpdateListener(
+        (oldCount, newCount) -> {
+          // we need to update the jsonView, so that proper tooltip actions are shown for the
+          // update filter component numbers
+          if (queryResult != null) {
+            jsonView.renderFacts(queryResult, formBean.getCriteria().size());
+          }
+        });
+  }
+
+  private void updateQuickFilters(JsonView.QuickFilterOptions options) {
+    if (options.affectedCriteria() < 0
+        || options.affectedCriteria() >= formBean.getCriteria().size()) {
+      // apply to all
+      formBean.getCriteria().forEach(fc -> applyQuickFilter(options, fc));
+    } else {
+      applyQuickFilter(options, formBean.getCriteria().get(options.affectedCriteria()));
+    }
+
+    binder.readBean(formBean);
+    factCriteriaViews.rebuild();
+    runQuery();
+  }
+
+  private void applyQuickFilter(JsonView.QuickFilterOptions options, FactCriteria factCriteria) {
+    if (options.aggregateId() != null) {
+      factCriteria.setAggId(options.aggregateId());
+    }
+
+    if (options.meta() != null) {
+      final var metaTuple = new MetaTuple();
+      metaTuple.setKey(options.meta().key());
+      metaTuple.setValue(options.meta().value());
+
+      // first remove meta tuple with the same key, it does not make sense to have the same key
+      // filtered twice with different values
+      factCriteria.getMeta().removeIf(t -> t.getKey().equals(metaTuple.getKey()));
+      factCriteria.getMeta().add(metaTuple);
+    }
   }
 
   private BeanValidationUrlStateBinder<FullQueryBean> createBinding() {
@@ -176,32 +218,32 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     }
   }
 
+  private void runQuery() {
+    try {
+      queryBtn.setEnabled(false);
+      binder.writeBean(formBean);
+      log.info("{} runs query for {}", getLoggedInUserName(), formBean);
+
+      List<Fact> dataFromStore = repo.fetchChunk(formBean);
+      JsonViewEntries processedByPlugins = jsonViewPluginService.process(dataFromStore);
+      jsonView.renderFacts(processedByPlugins, formBean.getCriteria().size());
+      queryResult = processedByPlugins;
+      exportJsonBtn.setEnabled(true);
+    } catch (ValidationException e) {
+      Notifications.warn(e.getMessage());
+    } catch (Exception e) {
+      Notifications.error(e.getMessage());
+    } finally {
+      queryBtn.setEnabled(true);
+    }
+  }
+
   @NonNull
   private HorizontalLayout formButtons() {
-    final var exportJsonBtn = new Button("Export JSON");
-
-    final var queryBtn = new Button("Query");
     queryBtn.addClickShortcut(Key.ENTER);
     queryBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
     queryBtn.setDisableOnClick(true);
-    queryBtn.addClickListener(
-        event -> {
-          try {
-            binder.writeBean(formBean);
-            log.info("{} runs query for {}", getLoggedInUserName(), formBean);
-            List<Fact> dataFromStore = repo.fetchChunk(formBean);
-            JsonViewEntries processedByPlugins = jsonViewPluginService.process(dataFromStore);
-            jsonView.renderFacts(processedByPlugins);
-            queryResult = processedByPlugins;
-            exportJsonBtn.setEnabled(true);
-          } catch (ValidationException e) {
-            Notifications.warn(e.getMessage());
-          } catch (Exception e) {
-            Notifications.error(e.getMessage());
-          } finally {
-            queryBtn.setEnabled(true);
-          }
-        });
+    queryBtn.addClickListener(event -> runQuery());
 
     final var resetBtn = new Button("Reset");
     resetBtn.addClickListener(
@@ -209,6 +251,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
           formBean.reset();
           binder.readBean(formBean);
           factCriteriaViews.rebuild();
+          jsonView.renderFacts(queryResult, formBean.getCriteria().size());
         });
 
     final var jsonDownload = configureDownloadWrapper(exportJsonBtn);
