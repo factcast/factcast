@@ -26,7 +26,7 @@ import org.factcast.server.ui.plugins.JsonViewPlugin;
 public class HeaderMetaTimestampToDatePlugin extends JsonViewPlugin {
   @Override
   public void doHandle(Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData) {
-    Optional.ofNullable(fact.timestamp())
+    Optional.ofNullable(fact.header().timestamp())
         .ifPresent(
             ts ->
                 jsonEntryMetaData.annotateHeader(
