@@ -99,7 +99,7 @@
     <spring-boot.version>3.2.3</spring-boot.version>
     <!-- whenever updating spring-grpc make sure to align grpc.version accordingly. -->
     <spring-grpc.version>3.0.0.RELEASE</spring-grpc.version>
-    <grpc.version>1.60.1</grpc.version>
+    <grpc.version>1.62.2</grpc.version>
     <!-- lter versions seem to break toxi -->
     <testcontainers.version>1.19.7</testcontainers.version>
     <arrow.version>1.2.3</arrow.version>
