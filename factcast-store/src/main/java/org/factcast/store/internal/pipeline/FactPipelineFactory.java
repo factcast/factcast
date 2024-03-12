@@ -48,8 +48,12 @@ public class FactPipelineFactory {
     chain = new MetricFactPipeline(chain, metrics);
 
     chain =
-        new TransformingFactPipeline(
-            chain, factTransformerService, FactTransformers.createFor(subreq));
+        new BufferedTransformingFactPipeline(
+            chain,
+            factTransformerService,
+            FactTransformers.createFor(subreq),
+            maxBufferSize,
+            executorService);
     chain = new BlacklistFilterFactPipeline(chain, blacklist);
     chain = new PostQueryFilterFactPipeline(chain, perRequestMatcher);
 
