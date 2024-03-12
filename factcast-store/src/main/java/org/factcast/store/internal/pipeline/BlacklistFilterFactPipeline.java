@@ -16,10 +16,12 @@
 package org.factcast.store.internal.pipeline;
 
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.store.internal.filter.blacklist.Blacklist;
 import org.jetbrains.annotations.Nullable;
 
+@Slf4j
 public class BlacklistFilterFactPipeline extends AbstractFactPipeline {
   @NonNull final Blacklist blacklist;
 
@@ -30,7 +32,8 @@ public class BlacklistFilterFactPipeline extends AbstractFactPipeline {
 
   @Override
   public void fact(@Nullable Fact fact) {
-    if (fact == null) parent.fact(fact);
+    log.trace("processing {}", fact);
+    if (fact == null) parent.fact(null);
     else {
       if (!blacklist.isBlocked(fact.header().id())) parent.fact(fact);
     }

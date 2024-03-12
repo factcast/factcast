@@ -16,10 +16,12 @@
 package org.factcast.store.internal.pipeline;
 
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.store.internal.PostQueryMatcher;
 import org.jetbrains.annotations.Nullable;
 
+@Slf4j
 public class PostQueryFilterFactPipeline extends AbstractFactPipeline {
   @NonNull final PostQueryMatcher matcher;
 
@@ -31,7 +33,8 @@ public class PostQueryFilterFactPipeline extends AbstractFactPipeline {
 
   @Override
   public void fact(@Nullable Fact fact) {
-    if (fact == null) parent.fact(fact);
+    log.trace("processing {}", fact);
+    if (fact == null) parent.fact(null);
     else {
       if (matcher.canBeSkipped() || matcher.test(fact)) parent.fact(fact);
     }

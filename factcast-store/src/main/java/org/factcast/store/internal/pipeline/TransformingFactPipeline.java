@@ -17,12 +17,14 @@ package org.factcast.store.internal.pipeline;
 
 import javax.annotation.Nullable;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.FactTransformers;
 import org.factcast.core.subscription.transformation.TransformationRequest;
 
 // TODO check, if it can just be replaced by the buffered variant
+@Slf4j
 public class TransformingFactPipeline extends AbstractFactPipeline {
   private final FactTransformerService service;
   private final FactTransformers transformers;
@@ -38,6 +40,7 @@ public class TransformingFactPipeline extends AbstractFactPipeline {
 
   @Override
   public void fact(@Nullable Fact f) {
+    log.trace("processing {}", f);
     if (f == null) parent.fact(f);
     else {
       TransformationRequest transformationRequest = transformers.prepareTransformation(f);
