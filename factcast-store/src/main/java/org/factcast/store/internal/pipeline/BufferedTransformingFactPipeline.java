@@ -13,40 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.catchup;
+package org.factcast.store.internal.pipeline;
 
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.*;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.FactTransformers;
 import org.factcast.core.subscription.transformation.TransformationRequest;
-import org.factcast.store.internal.AbstractFactInterceptor;
 import org.factcast.store.internal.Pair;
-import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.filter.FactFilter;
 
 /** this class is NOT Threadsafe! */
 @Slf4j
-public class BufferingFactInterceptor extends AbstractFactInterceptor {
-  public BufferingFactInterceptor(
+public class BufferedTransformingFactPipeline extends AbstractFactPipeline {
+  public BufferedTransformingFactPipeline(
+      FactPipeline parent,
       FactTransformerService service,
       FactTransformers transformers,
-      FactFilter filter,
-      SubscriptionImpl targetSubscription,
       int maxBufferSize,
-      PgMetrics metrics,
       ExecutorService es) {
-    super(metrics);
+    super(parent);
     this.service = service;
     this.transformers = transformers;
-    this.filter = filter;
-    this.targetSubscription = targetSubscription;
     this.maxBufferSize = maxBufferSize;
     buffer = new ArrayList<>(maxBufferSize);
     index = new HashMap<>(maxBufferSize);
@@ -60,17 +53,16 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
 
   private final FactTransformerService service;
   private final FactTransformers transformers;
-  private final FactFilter filter;
-  private final SubscriptionImpl targetSubscription;
   private final int maxBufferSize;
-  private Mode mode = Mode.DIRECT;
   private final List<Pair<TransformationRequest, CompletableFuture<Fact>>> buffer;
   private final Map<UUID, CompletableFuture<Fact>> index;
+  private Mode mode = Mode.DIRECT;
 
   private final ExecutorService es;
 
-  public void accept(@NonNull Fact f) {
-    if (filter.test(f)) {
+  public void fact(@Nullable Fact f) {
+    if (f == null) parent.fact(f);
+    else {
       TransformationRequest transformationRequest = transformers.prepareTransformation(f);
       if (mode == Mode.DIRECT) {
         acceptInDirectMode(f, transformationRequest);
@@ -112,8 +104,7 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
   private void acceptInDirectMode(@NonNull Fact f, TransformationRequest transformationRequest) {
     if (transformationRequest == null) {
       // does not need transformation, just pass it down
-      targetSubscription.notifyElement(f);
-      increaseNotifyMetric(1);
+      parent.fact(f);
     } else {
       // needs transformation, so switch to buffering mode
       mode = Mode.BUFFERING;
@@ -175,7 +166,7 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
             try {
               // 30 seconds should be enough for almost everything (B.Gates)
               Fact e = p.right().get(30, TimeUnit.SECONDS);
-              targetSubscription.notifyElement(e);
+              parent.fact(e);
             } catch (InterruptedException i) {
               Thread.currentThread().interrupt();
               throw new TransformationException(i);
@@ -183,8 +174,6 @@ public class BufferingFactInterceptor extends AbstractFactInterceptor {
               throw new TransformationException(e);
             }
           });
-
-      increaseNotifyMetric(buffer.size());
 
       // reset buffer
       buffer.clear();

@@ -13,48 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal;
+package org.factcast.store.internal.pipeline;
 
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.FactTransformers;
 import org.factcast.core.subscription.transformation.TransformationRequest;
-import org.factcast.store.internal.filter.FactFilter;
 
-public class SimpleFactInterceptor extends AbstractFactInterceptor {
+public class TransformingFactPipeline extends AbstractFactPipeline {
   private final FactTransformerService service;
   private final FactTransformers transformers;
-  private final FactFilter filter;
-  private final SubscriptionImpl targetSubscription;
 
-  public SimpleFactInterceptor(
+  public TransformingFactPipeline(
+      @NonNull FactPipeline parent,
       @NonNull FactTransformerService service,
-      @NonNull FactTransformers transformers,
-      @NonNull FactFilter filter,
-      @NonNull SubscriptionImpl targetSubscription,
-      @NonNull PgMetrics metrics) {
-    super(metrics);
+      @NonNull FactTransformers transformers) {
+    super(parent);
     this.service = service;
     this.transformers = transformers;
-    this.filter = filter;
-    this.targetSubscription = targetSubscription;
   }
 
-  public void accept(@NonNull Fact f) {
-    if (filter.test(f)) {
-
+  @Override
+  public void fact(@Nullable Fact f) {
+    if (f == null) parent.fact(f);
+    else {
       TransformationRequest transformationRequest = transformers.prepareTransformation(f);
-
       if (transformationRequest == null) {
-        targetSubscription.notifyElement(f);
+        // pass unmodified
+        parent.fact(f);
       } else {
-        Fact transformed = service.transform(transformationRequest);
-        targetSubscription.notifyElement(transformed);
+        // transform and pass
+        parent.fact(service.transform(transformationRequest));
       }
-
-      increaseNotifyMetric(1);
     }
   }
 }

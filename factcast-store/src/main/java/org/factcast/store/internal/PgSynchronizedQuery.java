@@ -23,8 +23,8 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.store.internal.pipeline.FactPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.postgresql.util.PSQLException;
@@ -127,9 +127,7 @@ class PgSynchronizedQuery {
   @RequiredArgsConstructor
   public static class FactRowCallbackHandler implements RowCallbackHandler {
 
-    final SubscriptionImpl subscription;
-
-    final FactInterceptor interceptor;
+    final FactPipeline pipe;
 
     final Supplier<Boolean> isConnectedSupplier;
 
@@ -152,7 +150,7 @@ class PgSynchronizedQuery {
         Fact f = null;
         try {
           f = PgFact.from(rs);
-          interceptor.accept(f);
+          pipe.fact(f);
           log.trace("{} notifyElement called with id={}", request, f.id());
           serial.set(rs.getLong(PgConstants.COLUMN_SER));
         } catch (PSQLException psql) {
@@ -173,7 +171,7 @@ class PgSynchronizedQuery {
         rs.close();
       } catch (Throwable ignore) {
       }
-      subscription.notifyError(e);
+      pipe.error(e);
     }
   }
 }
