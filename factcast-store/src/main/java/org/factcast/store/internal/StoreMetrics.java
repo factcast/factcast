@@ -79,7 +79,7 @@ public class StoreMetrics {
 
   public enum EVENT implements MetricName {
     MISSED_ROUNDTRIP("missedRoundtrip"),
-    CATCHUP_FACT("catchupFact");
+    FACTS_SENT("factsSent");
 
     @NonNull final String name;
 

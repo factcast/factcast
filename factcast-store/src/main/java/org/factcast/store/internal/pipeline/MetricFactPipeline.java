@@ -29,15 +29,14 @@ public class MetricFactPipeline extends AbstractFactPipeline {
 
   public MetricFactPipeline(@NonNull FactPipeline parent, @NonNull PgMetrics metrics) {
     super(parent);
-    counter = metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT);
+    counter = metrics.counter(StoreMetrics.EVENT.FACTS_SENT);
   }
 
   @Override
   public void fact(@Nullable Fact fact) {
     log.trace("processing {}", fact);
     if (fact != null) {
-      // TODO catchup is probably wrong here as it will be used to send ANY fact for the
-      // subscription
+
       counter.increment();
     }
     // either way:
