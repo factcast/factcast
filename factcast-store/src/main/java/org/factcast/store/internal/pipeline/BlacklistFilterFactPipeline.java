@@ -32,10 +32,10 @@ public class BlacklistFilterFactPipeline extends AbstractFactPipeline {
 
   @Override
   public void fact(@Nullable Fact fact) {
-    log.trace("processing {}", fact);
     if (fact == null) parent.fact(null);
     else {
       if (!blacklist.isBlocked(fact.header().id())) parent.fact(fact);
+      else log.trace("removing blacklisted fact from pipeline {}", fact);
     }
   }
 }

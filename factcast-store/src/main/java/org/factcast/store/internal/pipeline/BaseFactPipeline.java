@@ -33,7 +33,6 @@ public class BaseFactPipeline implements FactPipeline {
 
   @Override
   public void fact(@Nullable Fact fact) {
-    log.trace("processing {}", fact);
     if (fact == null) {
       // TODO flush, either on subscription or on FO
     } else sub.notifyElement(fact);
