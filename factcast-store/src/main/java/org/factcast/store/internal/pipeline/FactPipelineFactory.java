@@ -34,13 +34,14 @@ public class FactPipelineFactory {
   @NonNull final FactTransformerService factTransformerService;
   @NonNull final JSEngineFactory jsEngineFactory;
 
-  public FactPipeline createSimple(
+  public FactPipeline create(
       @NonNull SubscriptionRequest subreq,
       @NonNull SubscriptionImpl sub,
       @NonNull PostQueryMatcher perRequestMatcher) {
 
     FactPipeline chain = new BaseFactPipeline(sub);
     chain = new MetricFactPipeline(chain, metrics);
+    // TODO swap for buffered?
     chain =
         new TransformingFactPipeline(
             chain, factTransformerService, FactTransformers.createFor(subreq));
