@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.plugins;
+package org.factcast.server.ui.plugins.bundled;
 
 import org.factcast.core.Fact;
+import org.factcast.server.ui.plugins.JsonEntryMetaData;
+import org.factcast.server.ui.plugins.JsonPayload;
+import org.factcast.server.ui.plugins.JsonViewPlugin;
 
-public class HeaderFilterOptionsPlugin extends JsonViewPlugin {
-  @Override
-  protected boolean isReady() {
-    return true;
-  }
-
+public class HeaderMetaFilterOptionsPlugin extends JsonViewPlugin {
   @Override
   protected void doHandle(Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData) {
     fact.header()
@@ -36,11 +34,10 @@ public class HeaderFilterOptionsPlugin extends JsonViewPlugin {
               final var keyPath = "$.meta." + key;
               jsonEntryMetaData.addHeaderMetaFilterOption(keyPath, key, value);
             });
-    // todo: how to annotate aggIds properly, set has no defined order
-    // but will be converted to a list with order by jackson
-    // but assuming iteration order here and of json list will match is pure speculation
-    // could in theory also quite safely be done in the FE, after visitor finds "header.aggIds", but
-    // then
-    // part of the data is no longer controlled by plugin and cannot be disabled anymore.
+  }
+
+  @Override
+  protected boolean isReady() {
+    return true;
   }
 }

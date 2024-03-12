@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.plugins;
+package org.factcast.server.ui.plugins.bundled;
 
 import java.util.UUID;
 import org.factcast.core.Fact;
+import org.factcast.server.ui.plugins.JsonEntryMetaData;
+import org.factcast.server.ui.plugins.JsonPayload;
+import org.factcast.server.ui.plugins.JsonViewPlugin;
 
-public class PayloadFilterOptionsPlugin extends JsonViewPlugin {
-  @Override
-  protected boolean isReady() {
-    return true;
-  }
+public class PayloadAggregateIdsFilterOptionsPlugin extends JsonViewPlugin {
 
   @Override
   protected void doHandle(Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData) {
     final var idPaths =
         payload.findPaths("$..*").stream().filter(p -> p.toLowerCase().endsWith("id']")).toList();
+
     idPaths.forEach(
         p -> {
           try {
@@ -37,5 +37,10 @@ public class PayloadFilterOptionsPlugin extends JsonViewPlugin {
             // maybe not a uuid, silently ignore
           }
         });
+  }
+
+  @Override
+  protected boolean isReady() {
+    return true;
   }
 }

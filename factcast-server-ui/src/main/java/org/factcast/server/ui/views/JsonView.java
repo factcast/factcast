@@ -63,12 +63,8 @@ public class JsonView extends Component {
             entries.json(),
             entries.meta(),
             enableQuickFiltering, // enable quick filters,
-            conditionCount, // number of filter conditions, needed for quick filtering correct
-            // condition
-            enableQuickFiltering
-                ? getElement()
-                : null // element reference for call to updateFilters
-            );
+            conditionCount); // number of filter conditions, needed for quick filtering correct
+    // condition
   }
 
   @ClientCallable

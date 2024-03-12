@@ -23,6 +23,10 @@ import lombok.NonNull;
 /** meta-data for one fact (json entry) */
 @Getter(AccessLevel.PROTECTED)
 public class JsonEntryMetaData {
+  public static final String HEADER = "header.";
+
+  public static final String PAYLOAD = "payload.";
+
   private final Map<String, Collection<String>> annotations = new HashMap<>();
 
   private final Map<String, Collection<String>> hoverContent = new HashMap<>();
@@ -30,45 +34,40 @@ public class JsonEntryMetaData {
   private final Map<String, FilterOptions> filterOptions = new HashMap<>();
 
   public void annotateHeader(@NonNull String path, @NonNull String value) {
-    var p = "header." + path;
+    var p = HEADER + path;
     var l = annotations.getOrDefault(p, new ArrayList<>());
     l.add(value);
     annotations.put(p, l);
   }
 
   public void annotatePayload(@NonNull String path, @NonNull String value) {
-    var p = "payload." + path;
+    var p = PAYLOAD + path;
     var l = annotations.getOrDefault(p, new ArrayList<>());
     l.add(value);
     annotations.put(p, l);
   }
 
   public void addHeaderHoverContent(@NonNull String path, @NonNull String value) {
-    var p = "header." + path;
+    var p = HEADER + path;
     var l = hoverContent.getOrDefault(p, new ArrayList<>());
     l.add(value);
     hoverContent.put(p, l);
   }
 
   public void addPayloadHoverContent(@NonNull String path, @NonNull String value) {
-    var p = "payload." + path;
+    var p = PAYLOAD + path;
     var l = hoverContent.getOrDefault(p, new ArrayList<>());
     l.add(value);
     hoverContent.put(p, l);
   }
 
   public void addHeaderMetaFilterOption(@NonNull String path, String key, String value) {
-    var p = "header." + path;
+    var p = HEADER + path;
     filterOptions.put(p, FilterOptions.forMeta(key, value));
   }
 
-  public void addHeaderAggregateIdFilterOption(@NonNull String path, UUID aggregateId) {
-    var p = "header." + path;
-    filterOptions.put(p, FilterOptions.forAggregateId(aggregateId));
-  }
-
   public void addPayloadAggregateIdFilterOption(@NonNull String path, UUID aggregateId) {
-    var p = "payload." + path;
+    var p = PAYLOAD + path;
     filterOptions.put(p, FilterOptions.forAggregateId(aggregateId));
   }
 

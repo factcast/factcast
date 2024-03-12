@@ -20,6 +20,9 @@ import java.util.List;
 import java.util.Optional;
 import org.factcast.server.ui.metrics.UiMetrics;
 import org.factcast.server.ui.plugins.*;
+import org.factcast.server.ui.plugins.bundled.HeaderMetaFilterOptionsPlugin;
+import org.factcast.server.ui.plugins.bundled.HeaderMetaTimestampToDatePlugin;
+import org.factcast.server.ui.plugins.bundled.PayloadAggregateIdsFilterOptionsPlugin;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -37,14 +40,14 @@ public class JsonViewPluginConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public HeaderFilterOptionsPlugin headerFilterOptionsPlugin() {
-    return new HeaderFilterOptionsPlugin();
+  public HeaderMetaFilterOptionsPlugin headerMetaFilterOptionsPlugin() {
+    return new HeaderMetaFilterOptionsPlugin();
   }
 
   @Bean
   @ConditionalOnMissingBean
-  public PayloadFilterOptionsPlugin payloadFilterOptionsPlugin() {
-    return new PayloadFilterOptionsPlugin();
+  public PayloadAggregateIdsFilterOptionsPlugin payloadAggregateIdsFilterOptionsPlugin() {
+    return new PayloadAggregateIdsFilterOptionsPlugin();
   }
 
   @Bean
