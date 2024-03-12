@@ -34,9 +34,7 @@ public class MetricFactPipeline extends AbstractFactPipeline {
 
   @Override
   public void fact(@Nullable Fact fact) {
-    log.trace("processing {}", fact);
     if (fact != null) {
-
       counter.increment();
     }
     // either way:

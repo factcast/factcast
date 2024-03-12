@@ -33,10 +33,11 @@ public class PostQueryFilterFactPipeline extends AbstractFactPipeline {
 
   @Override
   public void fact(@Nullable Fact fact) {
-    log.trace("processing {}", fact);
+
     if (fact == null) parent.fact(null);
     else {
       if (matcher.canBeSkipped() || matcher.test(fact)) parent.fact(fact);
+      else log.trace("removing unmatched fact from pipeline {}", fact);
     }
   }
 }

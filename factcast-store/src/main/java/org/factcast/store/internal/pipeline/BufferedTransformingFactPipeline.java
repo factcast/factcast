@@ -61,7 +61,6 @@ public class BufferedTransformingFactPipeline extends AbstractFactPipeline {
   private final ExecutorService es;
 
   public void fact(@Nullable Fact f) {
-    log.trace("processing {}", f);
     if (f == null) {
       flush();
       parent.fact(f);
