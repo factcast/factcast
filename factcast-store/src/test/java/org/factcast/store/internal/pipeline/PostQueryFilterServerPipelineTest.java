@@ -99,6 +99,7 @@ class PostQueryFilterServerPipelineTest {
       Fact f = mock(Fact.class);
       when(matcher.canBeSkipped()).thenReturn(false);
       when(matcher.test(f)).thenReturn(false);
+      underTest.process(new Signal.FactSignal(f));
       verifyNoInteractions(parent);
     }
   }
