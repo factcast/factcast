@@ -35,7 +35,7 @@ public sealed interface Signal
 
   final class FlushSignal implements Signal {
     @Override
-    public void pass(SubscriptionImpl target) {
+    public void pass(@NonNull SubscriptionImpl target) {
       // TODO not yet implemented, add flush on sub/FO
     }
   }
