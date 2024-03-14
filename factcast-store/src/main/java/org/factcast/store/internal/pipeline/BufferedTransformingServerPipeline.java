@@ -93,7 +93,14 @@ public class BufferedTransformingServerPipeline extends AbstractServerPipeline {
       Pair<TransformationRequest, CompletableFuture<Signal.FactSignal>> scheduledTransformation) {
     // weird indirection to bend the typing rules
     CompletableFuture<Signal> rawFuture = new CompletableFuture<>();
-    scheduledTransformation.right().thenAccept(rawFuture::complete);
+    scheduledTransformation
+        .right()
+        .whenComplete(
+            (v, t) -> {
+              if (v != null) rawFuture.complete(v);
+              else rawFuture.completeExceptionally(t);
+            });
+
     buffer.add(Pair.of(scheduledTransformation.left(), rawFuture));
 
     TransformationRequest req = scheduledTransformation.left();
