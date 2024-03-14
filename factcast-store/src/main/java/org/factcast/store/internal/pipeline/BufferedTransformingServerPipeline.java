@@ -91,16 +91,9 @@ public class BufferedTransformingServerPipeline extends AbstractServerPipeline {
 
   private void addTransformationToBuffer(
       Pair<TransformationRequest, CompletableFuture<Signal.FactSignal>> scheduledTransformation) {
-    // TODO weird indirection to bend the typing rules
-    CompletableFuture<Signal> rawFuture =
-        CompletableFuture.supplyAsync(
-            () -> {
-              try {
-                return scheduledTransformation.right().get();
-              } catch (Exception e) {
-                throw new RuntimeException(e);
-              }
-            });
+    // weird indirection to bend the typing rules
+    CompletableFuture<Signal> rawFuture = new CompletableFuture<>();
+    scheduledTransformation.right().thenAccept(rawFuture::complete);
     buffer.add(Pair.of(scheduledTransformation.left(), rawFuture));
 
     TransformationRequest req = scheduledTransformation.left();
