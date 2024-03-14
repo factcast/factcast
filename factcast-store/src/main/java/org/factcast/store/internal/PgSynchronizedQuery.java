@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.store.internal.pipeline.FactPipeline;
+import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.postgresql.util.PSQLException;
@@ -127,7 +127,7 @@ class PgSynchronizedQuery {
   @RequiredArgsConstructor
   public static class FactRowCallbackHandler implements RowCallbackHandler {
 
-    final FactPipeline pipe;
+    final ServerPipeline pipe;
 
     final Supplier<Boolean> isConnectedSupplier;
 

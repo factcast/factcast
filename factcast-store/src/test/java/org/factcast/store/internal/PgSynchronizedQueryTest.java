@@ -29,7 +29,7 @@ import nl.altindag.log.LogCaptor;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.store.internal.pipeline.FactPipeline;
+import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.junit.jupiter.api.Nested;
@@ -142,7 +142,7 @@ class PgSynchronizedQueryTest {
     @Mock AtomicLong serial;
 
     @Mock SubscriptionRequestTO request;
-    @Mock FactPipeline pipe;
+    @Mock ServerPipeline pipe;
 
     @Mock CurrentStatementHolder statementHolder;
     @InjectMocks private PgSynchronizedQuery.FactRowCallbackHandler uut;

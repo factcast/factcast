@@ -18,14 +18,14 @@ package org.factcast.store.internal.catchup;
 import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.store.internal.pipeline.FactPipeline;
+import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 
 public interface PgCatchupFactory {
 
   PgCatchup create(
       @NonNull SubscriptionRequestTO request,
-      @NonNull FactPipeline pipeline,
+      @NonNull ServerPipeline pipeline,
       @NonNull AtomicLong serial,
       @NonNull CurrentStatementHolder holder);
 }

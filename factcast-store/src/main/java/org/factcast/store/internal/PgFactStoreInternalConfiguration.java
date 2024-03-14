@@ -45,7 +45,7 @@ import org.factcast.store.internal.listen.PgConnectionTester;
 import org.factcast.store.internal.listen.PgListener;
 import org.factcast.store.internal.lock.AdvisoryWriteLock;
 import org.factcast.store.internal.lock.FactTableWriteLock;
-import org.factcast.store.internal.pipeline.FactPipelineFactory;
+import org.factcast.store.internal.pipeline.ServerPipelineFactory;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.script.JSEngineFactory;
@@ -149,8 +149,7 @@ public class PgFactStoreInternalConfiguration {
       PgCatchupFactory pgCatchupFactory,
       FastForwardTarget target,
       JSEngineFactory ef,
-      FactPipelineFactory pipelineFactory,
-      FactTransformerService transformerService,
+      ServerPipelineFactory pipelineFactory,
       PgMetrics metrics) {
     return new PgSubscriptionFactory(
         jdbcTemplate,
@@ -304,12 +303,12 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
-  public FactPipelineFactory factPipelineFactory(
+  public ServerPipelineFactory factPipelineFactory(
       JSEngineFactory jsEngineFactory,
       FactTransformerService transformerService,
       Blacklist blacklist,
       PgMetrics metrics) {
-    return FactPipelineFactory.builder()
+    return ServerPipelineFactory.builder()
         .jsEngineFactory(jsEngineFactory)
         .factTransformerService(transformerService)
         .blacklist(blacklist)

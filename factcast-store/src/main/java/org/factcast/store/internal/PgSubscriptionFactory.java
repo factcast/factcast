@@ -29,8 +29,8 @@ import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
-import org.factcast.store.internal.pipeline.FactPipeline;
-import org.factcast.store.internal.pipeline.FactPipelineFactory;
+import org.factcast.store.internal.pipeline.ServerPipeline;
+import org.factcast.store.internal.pipeline.ServerPipelineFactory;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.script.JSEngineFactory;
@@ -52,9 +52,8 @@ class PgSubscriptionFactory implements AutoCloseable {
   final PgCatchupFactory catchupFactory;
 
   final FastForwardTarget target;
-  final FactPipelineFactory pipelineFactory;
+  final ServerPipelineFactory pipelineFactory;
   final JSEngineFactory jsEngineFactory;
-  final PgMetrics metrics;
   final ExecutorService es;
 
   public PgSubscriptionFactory(
@@ -65,7 +64,7 @@ class PgSubscriptionFactory implements AutoCloseable {
       StoreConfigurationProperties props,
       PgCatchupFactory catchupFactory,
       FastForwardTarget target,
-      FactPipelineFactory pipelineFactory,
+      ServerPipelineFactory pipelineFactory,
       JSEngineFactory jsEngineFactory,
       PgMetrics metrics) {
     this.jdbcTemplate = jdbcTemplate;
@@ -76,7 +75,6 @@ class PgSubscriptionFactory implements AutoCloseable {
     this.target = target;
     this.pipelineFactory = pipelineFactory;
     this.jsEngineFactory = jsEngineFactory;
-    this.metrics = metrics;
 
     this.es =
         metrics.monitor(
@@ -87,7 +85,7 @@ class PgSubscriptionFactory implements AutoCloseable {
   public Subscription subscribe(SubscriptionRequestTO req, FactObserver observer) {
     SubscriptionImpl subscription = SubscriptionImpl.on(observer);
 
-    FactPipeline pipe =
+    ServerPipeline pipe =
         pipelineFactory.create(
             req, subscription, new PostQueryMatcher(req, jsEngineFactory), 1024, es);
 

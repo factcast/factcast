@@ -37,7 +37,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
-import org.factcast.store.internal.pipeline.FactPipeline;
+import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
@@ -99,7 +99,7 @@ public class PgFactStreamTest {
     @Mock PgCatchupFactory pgCatchupFactory;
     @Mock FastForwardTarget ffwdTarget;
     @Mock SubscriptionRequest request;
-    @Mock FactPipeline pipeline;
+    @Mock ServerPipeline pipeline;
     @InjectMocks PgFactStream underTest;
 
     @BeforeEach
@@ -189,7 +189,7 @@ public class PgFactStreamTest {
     @Mock AtomicLong serial;
 
     @Mock SubscriptionRequestTO request;
-    @Mock FactPipeline factPipeline;
+    @Mock ServerPipeline factPipeline;
     @Mock CurrentStatementHolder statementHolder;
 
     @InjectMocks private PgSynchronizedQuery.FactRowCallbackHandler uut;

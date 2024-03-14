@@ -32,7 +32,7 @@ import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.StoreMetrics;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
-import org.factcast.store.internal.pipeline.FactPipeline;
+import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.junit.jupiter.api.BeforeEach;
@@ -62,7 +62,7 @@ class PgFetchingCatchupTest {
   @Mock @NonNull SubscriptionRequestTO req;
   @Mock @NonNull AtomicLong serial;
   @Mock @NonNull CurrentStatementHolder statementHolder;
-  @Mock @NonNull FactPipeline pipeline;
+  @Mock @NonNull ServerPipeline pipeline;
 
   @Mock(lenient = true)
   @NonNull

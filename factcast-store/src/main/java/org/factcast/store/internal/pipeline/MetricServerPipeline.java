@@ -18,26 +18,24 @@ package org.factcast.store.internal.pipeline;
 import io.micrometer.core.instrument.Counter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.Fact;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.StoreMetrics;
-import org.jetbrains.annotations.Nullable;
 
 @Slf4j
-public class MetricFactPipeline extends AbstractFactPipeline {
+public class MetricServerPipeline extends AbstractServerPipeline {
   private final Counter counter;
 
-  public MetricFactPipeline(@NonNull FactPipeline parent, @NonNull PgMetrics metrics) {
+  public MetricServerPipeline(@NonNull ServerPipeline parent, @NonNull PgMetrics metrics) {
     super(parent);
     counter = metrics.counter(StoreMetrics.EVENT.FACTS_SENT);
   }
 
   @Override
-  public void fact(@Nullable Fact fact) {
-    if (fact != null) {
+  public void process(@NonNull Signal s) {
+    if (s instanceof Signal.FactSignal) {
       counter.increment();
     }
-    // either way:
-    parent.fact(fact);
+    // either way
+    parent.process(s);
   }
 }

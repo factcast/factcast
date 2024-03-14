@@ -15,10 +15,10 @@
  */
 package org.factcast.store.internal.pipeline;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import lombok.NonNull;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.factcast.store.internal.filter.blacklist.Blacklist;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,16 +26,17 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class BlacklistFilterFactPipelineTest {
-  @Mock private @NonNull FactPipeline parent;
+class BlacklistFilterServerPipelineTest {
+  @Mock private @NonNull ServerPipeline parent;
 
   @Mock Blacklist blacklist;
-  @InjectMocks private BlacklistFilterFactPipeline underTest;
+  @InjectMocks private BlacklistFilterServerPipeline underTest;
 
   @Nested
   class WhenFacting {
@@ -56,14 +57,17 @@ class BlacklistFilterFactPipelineTest {
     void delegates() {
       when(blacklist.isBlocked(any())).thenReturn(false);
       underTest.fact(fact);
-      verify(parent).fact(fact);
+      ArgumentCaptor<Signal.FactSignal> cap = ArgumentCaptor.forClass(Signal.FactSignal.class);
+      verify(parent).process(cap.capture());
+      Assertions.assertThat(cap.getValue().fact()).isNotNull().isSameAs(fact);
     }
 
     @Test
-    void delegatesNull() {
-      underTest.fact(null);
+    void delegatesNonFactSignal() {
+      Signal signal = new Signal.CatchupSignal();
+      underTest.process(signal);
       verifyNoInteractions(blacklist);
-      verify(parent).fact(null);
+      verify(parent).process(signal);
     }
   }
 }
