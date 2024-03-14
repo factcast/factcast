@@ -236,6 +236,42 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
       // expect that the hover contents are shown
       assertThat(jsonView().locator(".hover-contents")).containsText("J. Edgar Hoover: Ernst");
     }
+
+    @RetryingTest(maxAttempts = 5, minSuccess = 1)
+    void metaFilterOptions() {
+      loginFor("/ui/full");
+      // setup result
+      selectNamespace("users");
+      fromScratch();
+      query();
+
+      assertThat(jsonView()).containsText(USER1_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
+
+      jsonView().getByText("\"hugo\"").first().hover();
+      jsonView().getByText("Filter for hugo:bar").first().click();
+
+      assertThat(jsonView()).containsText(USER1_EVENT_ID.toString());
+      assertThat(jsonView()).not().containsText(USER2_EVENT_ID.toString());
+    }
+
+    @RetryingTest(maxAttempts = 5, minSuccess = 1)
+    void aggIdFilterOptions() {
+      loginFor("/ui/full");
+      // setup result
+      selectNamespace("users");
+      fromScratch();
+      query();
+
+      assertThat(jsonView()).containsText(USER1_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
+
+      jsonView().getByText("\"userId\"").first().hover();
+      jsonView().getByText("Filter for Aggregate-ID").first().click();
+
+      assertThat(jsonView()).not().containsText(USER1_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
+    }
   }
 
   @Nested

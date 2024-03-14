@@ -89,7 +89,7 @@
     <directory-maven-plugin.version>1.0</directory-maven-plugin.version>
     <nexus-staging-maven-plugin.version>1.6.13</nexus-staging-maven-plugin.version>
     <assertj.version>3.25.3</assertj.version>
-    <jackson.version>2.16.2</jackson.version>
+    <jackson.version>2.17.0</jackson.version>
     <mockito.version>5.11.0</mockito.version>
     <junit-jupiter.version>5.10.2</junit-jupiter.version>
     <lombok.version>1.18.30</lombok.version>
@@ -108,7 +108,7 @@
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <kotest.version>5.8.0</kotest.version>
     <mockk.version>1.13.10</mockk.version>
-    <redisson.version>3.27.1</redisson.version>
+    <redisson.version>3.27.2</redisson.version>
     <graaljs.version>23.0.1</graaljs.version>
     <shedlock.version>5.12.0</shedlock.version>
     <byte-buddy.version>1.14.12</byte-buddy.version>
