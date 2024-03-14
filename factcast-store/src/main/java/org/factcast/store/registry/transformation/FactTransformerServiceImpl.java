@@ -100,7 +100,7 @@ public class FactTransformerServiceImpl implements FactTransformerService {
                 return doTransform(e, c.right());
               }
             })
-        .collect(Collectors.toList());
+        .toList();
   }
 
   /**

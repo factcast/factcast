@@ -43,19 +43,13 @@ public class StoreConfigurationProperties implements InitializingBean {
 
   public static final String PROPERTIES_PREFIX = "factcast.store";
 
-  /**
-   * defines the number of Facts being retrieved with one Page Query for PageStrategy.PAGED, or
-   * respectively the fetchSize when using PageStrategy.FETCHING
-   */
+  /** defines the fetchSize of a database query */
   @Positive int pageSize = 50;
 
   /** defines the max number of Facts being scheduled for transformation */
   @Positive
   @Max(32000)
   int transformationCachePageSize = 100;
-
-  /** Defines the Strategy used for Paging in the Catchup Phase. */
-  CatchupStrategy catchupStrategy = CatchupStrategy.getDefault();
 
   /**
    * Optional URL to a Schema Registry. If this is null, validation will be disabled and a warning

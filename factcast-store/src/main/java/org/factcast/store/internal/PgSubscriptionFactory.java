@@ -26,11 +26,11 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.observer.FastForwardTarget;
-import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
-import org.factcast.store.internal.filter.blacklist.Blacklist;
+import org.factcast.store.internal.pipeline.ServerPipeline;
+import org.factcast.store.internal.pipeline.ServerPipelineFactory;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.script.JSEngineFactory;
@@ -52,12 +52,9 @@ class PgSubscriptionFactory implements AutoCloseable {
   final PgCatchupFactory catchupFactory;
 
   final FastForwardTarget target;
-  final PgMetrics metrics;
-  final Blacklist blacklist;
-  final FactTransformerService transformerService;
-  final JSEngineFactory ef;
-
-  private final ExecutorService es;
+  final ServerPipelineFactory pipelineFactory;
+  final JSEngineFactory jsEngineFactory;
+  final ExecutorService es;
 
   public PgSubscriptionFactory(
       JdbcTemplate jdbcTemplate,
@@ -67,20 +64,18 @@ class PgSubscriptionFactory implements AutoCloseable {
       StoreConfigurationProperties props,
       PgCatchupFactory catchupFactory,
       FastForwardTarget target,
-      PgMetrics metrics,
-      Blacklist blacklist,
-      FactTransformerService transformerService,
-      JSEngineFactory ef) {
+      ServerPipelineFactory pipelineFactory,
+      JSEngineFactory jsEngineFactory,
+      PgMetrics metrics) {
     this.jdbcTemplate = jdbcTemplate;
     this.eventBus = eventBus;
     this.idToSerialMapper = idToSerialMapper;
     this.fetcher = fetcher;
     this.catchupFactory = catchupFactory;
     this.target = target;
-    this.metrics = metrics;
-    this.blacklist = blacklist;
-    this.transformerService = transformerService;
-    this.ef = ef;
+    this.pipelineFactory = pipelineFactory;
+    this.jsEngineFactory = jsEngineFactory;
+
     this.es =
         metrics.monitor(
             Executors.newFixedThreadPool(props.getSizeOfThreadPoolForSubscriptions()),
@@ -89,19 +84,14 @@ class PgSubscriptionFactory implements AutoCloseable {
 
   public Subscription subscribe(SubscriptionRequestTO req, FactObserver observer) {
     SubscriptionImpl subscription = SubscriptionImpl.on(observer);
+
+    ServerPipeline pipe =
+        pipelineFactory.create(
+            req, subscription, new PostQueryMatcher(req, jsEngineFactory), 1024, es);
+
     PgFactStream pgsub =
         new PgFactStream(
-            jdbcTemplate,
-            eventBus,
-            idToSerialMapper,
-            subscription,
-            fetcher,
-            catchupFactory,
-            target,
-            transformerService,
-            blacklist,
-            metrics,
-            ef);
+            jdbcTemplate, eventBus, idToSerialMapper, fetcher, catchupFactory, target, pipe);
 
     // when closing the subscription, also close the PgFactStream
     subscription.onClose(pgsub::close);

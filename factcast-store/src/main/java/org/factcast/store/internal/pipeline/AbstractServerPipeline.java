@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.filter;
+package org.factcast.store.internal.pipeline;
 
-import java.util.function.*;
-import org.factcast.core.Fact;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
-public interface FactFilter extends Predicate<Fact> {}
+@RequiredArgsConstructor
+public abstract class AbstractServerPipeline implements ServerPipeline {
+  @NonNull protected final ServerPipeline parent;
+}

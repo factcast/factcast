@@ -20,16 +20,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.*;
 import lombok.Generated;
 import lombok.NonNull;
-import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.transformation.FactTransformerService;
-import org.factcast.core.subscription.transformation.FactTransformers;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.catchup.BufferingFactInterceptor;
+import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
-import org.factcast.store.internal.filter.FactFilter;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
+import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 
 @Generated
@@ -58,26 +56,12 @@ public class PgFetchingCatchUpFactory implements PgCatchupFactory, AutoCloseable
   }
 
   @Override
-  public PgFetchingCatchup create(
+  public PgCatchup create(
       @NonNull SubscriptionRequestTO request,
-      @NonNull SubscriptionImpl subscription,
-      @NonNull FactFilter factFilter,
+      @NonNull ServerPipeline pipeline,
       @NonNull AtomicLong serial,
-      @NonNull CurrentStatementHolder statementHolder) {
-    return new PgFetchingCatchup(
-        connectionSupplier,
-        props,
-        request,
-        new BufferingFactInterceptor(
-            transformerService,
-            FactTransformers.createFor(request),
-            factFilter,
-            subscription,
-            props.getTransformationCachePageSize(),
-            metrics,
-            executorService),
-        serial,
-        statementHolder);
+      @NonNull CurrentStatementHolder holder) {
+    return new PgFetchingCatchup(connectionSupplier, props, request, pipeline, serial, holder);
   }
 
   @Override

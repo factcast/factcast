@@ -17,8 +17,6 @@ package org.factcast.store.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.*;
 
 import ch.qos.logback.classic.Level;
@@ -28,9 +26,10 @@ import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.store.internal.filter.FactFilter;
+import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.junit.jupiter.api.Nested;
@@ -99,7 +98,7 @@ class PgSynchronizedQueryTest {
         .when(jdbcTemplate)
         .query(anyString(), any(PreparedStatementSetter.class), any(RowCallbackHandler.class));
 
-    assertThatThrownBy(
+    Assertions.assertThatThrownBy(
             () -> {
               uut.run(false);
             })
@@ -143,8 +142,7 @@ class PgSynchronizedQueryTest {
     @Mock AtomicLong serial;
 
     @Mock SubscriptionRequestTO request;
-    @Mock FactFilter filter;
-    @Mock FactInterceptor interceptor;
+    @Mock ServerPipeline pipe;
 
     @Mock CurrentStatementHolder statementHolder;
     @InjectMocks private PgSynchronizedQuery.FactRowCallbackHandler uut;
@@ -156,7 +154,7 @@ class PgSynchronizedQueryTest {
 
       uut.processRow(rs);
 
-      verifyNoInteractions(rs, filter, serial, request);
+      verifyNoInteractions(rs, serial, request);
     }
 
     @Test
@@ -167,7 +165,7 @@ class PgSynchronizedQueryTest {
 
       assertThatThrownBy(() -> uut.processRow(rs)).isInstanceOf(IllegalStateException.class);
 
-      verifyNoInteractions(filter, serial, request);
+      verifyNoInteractions(serial, request);
     }
 
     @Test
@@ -208,7 +206,7 @@ class PgSynchronizedQueryTest {
       when(rs.getString(anyString())).thenThrow(mockException);
 
       uut.processRow(rs);
-      verify(subscription).notifyError(mockException);
+      verify(pipe).error(mockException);
     }
 
     @Test
@@ -221,7 +219,7 @@ class PgSynchronizedQueryTest {
       when(rs.getString(anyString())).thenThrow(RuntimeException.class);
 
       uut.processRow(rs);
-      verify(subscription).notifyError(any(RuntimeException.class));
+      verify(pipe).error(any(RuntimeException.class));
     }
 
     @Test
@@ -230,6 +228,7 @@ class PgSynchronizedQueryTest {
       when(isConnectedSupplier.get()).thenReturn(true);
 
       when(rs.isClosed()).thenReturn(false);
+
       when(rs.getString(PgConstants.ALIAS_ID)).thenReturn("550e8400-e29b-11d4-a716-446655440000");
       when(rs.getString(PgConstants.ALIAS_NS)).thenReturn("foo");
       when(rs.getString(PgConstants.COLUMN_HEADER)).thenReturn("{}");
@@ -238,7 +237,7 @@ class PgSynchronizedQueryTest {
 
       uut.processRow(rs);
 
-      verify(interceptor, times(1)).accept(any());
+      verify(pipe, times(1)).fact(any());
       verify(serial).set(10L);
     }
 
@@ -248,6 +247,7 @@ class PgSynchronizedQueryTest {
       when(isConnectedSupplier.get()).thenReturn(true);
 
       when(rs.isClosed()).thenReturn(false);
+
       when(rs.getString(PgConstants.ALIAS_ID)).thenReturn("550e8400-e29b-11d4-a716-446655440000");
       when(rs.getString(PgConstants.ALIAS_NS)).thenReturn("foo");
       when(rs.getString(PgConstants.COLUMN_HEADER)).thenReturn("{}");
@@ -255,12 +255,12 @@ class PgSynchronizedQueryTest {
       when(rs.getLong(PgConstants.COLUMN_SER)).thenReturn(10L);
 
       var exception = new IllegalArgumentException();
-      doThrow(exception).when(interceptor).accept(any());
+      doThrow(exception).when(pipe).fact(any());
 
       uut.processRow(rs);
 
-      verify(interceptor).accept(any());
-      verify(subscription).notifyError(exception);
+      verify(pipe).fact(any());
+      verify(pipe).error(exception);
       verify(rs).close();
       verify(serial, never()).set(10L);
     }

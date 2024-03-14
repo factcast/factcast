@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2022 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store;
+package org.factcast.itests.docexample;
 
-/**
- * Defines the catchup-Strategy to use, as well as the default, if none is specified.
- *
- * @author <uwe.schaefer@prisma-capacity.eu>
- */
-public enum CatchupStrategy {
-  PAGED,
-  FETCHING;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-  @SuppressWarnings("SameReturnValue")
-  public static CatchupStrategy getDefault() {
-    return FETCHING;
+@SpringBootApplication
+@Slf4j
+public class DocExampleApplication {
+
+  public static void main(String[] args) {
+    SpringApplication.run(DocExampleApplication.class, args);
   }
 }

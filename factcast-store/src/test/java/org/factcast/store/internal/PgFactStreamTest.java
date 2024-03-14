@@ -16,7 +16,6 @@
 package org.factcast.store.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
@@ -29,6 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import lombok.SneakyThrows;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.TestFactStreamPosition;
 import org.factcast.core.subscription.SubscriptionImpl;
@@ -37,7 +37,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
-import org.factcast.store.internal.filter.FactFilter;
+import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
@@ -99,6 +99,7 @@ public class PgFactStreamTest {
     @Mock PgCatchupFactory pgCatchupFactory;
     @Mock FastForwardTarget ffwdTarget;
     @Mock SubscriptionRequest request;
+    @Mock ServerPipeline pipeline;
     @InjectMocks PgFactStream underTest;
 
     @BeforeEach
@@ -110,7 +111,7 @@ public class PgFactStreamTest {
     void noFfwdNotConnected() {
 
       underTest.close();
-      underTest.fastForward(request, subscription);
+      underTest.fastForward(request);
 
       verifyNoInteractions(subscription);
     }
@@ -119,7 +120,7 @@ public class PgFactStreamTest {
     void noFfwdFromScratch() {
       when(request.startingAfter()).thenReturn(Optional.empty());
 
-      underTest.fastForward(request, subscription);
+      underTest.fastForward(request);
 
       verifyNoInteractions(subscription);
     }
@@ -131,7 +132,7 @@ public class PgFactStreamTest {
       when(idToSerMapper.retrieve(uuid)).thenReturn(10L);
       when(ffwdTarget.targetId()).thenReturn(null);
 
-      underTest.fastForward(request, subscription);
+      underTest.fastForward(request);
 
       verifyNoInteractions(subscription);
     }
@@ -145,9 +146,9 @@ public class PgFactStreamTest {
       when(ffwdTarget.targetId()).thenReturn(target.factId());
       when(ffwdTarget.targetSer()).thenReturn(target.serial());
 
-      underTest.fastForward(request, subscription);
+      underTest.fastForward(request);
 
-      verify(subscription).notifyFastForward(target);
+      verify(pipeline).fastForward(target);
     }
 
     @Test
@@ -158,7 +159,7 @@ public class PgFactStreamTest {
       when(ffwdTarget.targetId()).thenReturn(UUID.randomUUID());
       when(ffwdTarget.targetSer()).thenReturn(9L);
 
-      underTest.fastForward(request, subscription);
+      underTest.fastForward(request);
 
       verifyNoInteractions(subscription);
     }
@@ -172,9 +173,9 @@ public class PgFactStreamTest {
       when(ffwdTarget.targetId()).thenReturn(target.factId());
       when(ffwdTarget.targetSer()).thenReturn(target.serial());
 
-      underTest.fastForward(request, subscription);
+      underTest.fastForward(request);
 
-      verify(subscription).notifyFastForward(target);
+      verify(pipeline).fastForward(target);
     }
   }
 
@@ -183,14 +184,12 @@ public class PgFactStreamTest {
     @Mock(lenient = true)
     private ResultSet rs;
 
-    @Mock SubscriptionImpl subscription;
-
     @Mock Supplier<Boolean> isConnectedSupplier;
 
     @Mock AtomicLong serial;
 
     @Mock SubscriptionRequestTO request;
-    @Mock FactInterceptor interceptor;
+    @Mock ServerPipeline factPipeline;
     @Mock CurrentStatementHolder statementHolder;
 
     @InjectMocks private PgSynchronizedQuery.FactRowCallbackHandler uut;
@@ -207,7 +206,7 @@ public class PgFactStreamTest {
 
       uut.processRow(rs);
 
-      verifyNoInteractions(rs, interceptor, serial, request);
+      verifyNoInteractions(rs, factPipeline, serial, request);
     }
 
     @Test
@@ -222,7 +221,7 @@ public class PgFactStreamTest {
       PSQLException mockException = new PSQLException(new ServerErrorMessage("och"));
       when(rs.getString(anyString())).thenThrow(mockException);
       uut.processRow(rs);
-      verifyNoMoreInteractions(subscription);
+      verifyNoMoreInteractions(factPipeline);
     }
 
     @Test
@@ -232,7 +231,7 @@ public class PgFactStreamTest {
       when(statementHolder.wasCanceled()).thenReturn(true);
       when(rs.isClosed()).thenReturn(true);
       uut.processRow(rs);
-      verifyNoMoreInteractions(subscription);
+      verifyNoMoreInteractions(factPipeline);
     }
 
     @Test
@@ -248,7 +247,7 @@ public class PgFactStreamTest {
       when(rs.getString(anyString())).thenThrow(mockException);
 
       uut.processRow(rs);
-      verify(subscription).notifyError(mockException);
+      verify(factPipeline).error(mockException);
     }
 
     @Test
@@ -261,7 +260,7 @@ public class PgFactStreamTest {
       when(rs.getString(anyString())).thenThrow(RuntimeException.class);
 
       uut.processRow(rs);
-      verify(subscription).notifyError(any(RuntimeException.class));
+      verify(factPipeline).error(any(RuntimeException.class));
     }
 
     @Test
@@ -270,9 +269,10 @@ public class PgFactStreamTest {
       when(isConnectedSupplier.get()).thenReturn(true);
       when(rs.isClosed()).thenReturn(true);
 
-      assertThatThrownBy(() -> uut.processRow(rs)).isInstanceOf(IllegalStateException.class);
+      Assertions.assertThatThrownBy(() -> uut.processRow(rs))
+          .isInstanceOf(IllegalStateException.class);
 
-      verifyNoInteractions(interceptor, serial, request);
+      verifyNoInteractions(factPipeline, serial, request);
     }
 
     @Test
@@ -281,6 +281,7 @@ public class PgFactStreamTest {
       when(isConnectedSupplier.get()).thenReturn(true);
 
       when(rs.isClosed()).thenReturn(false);
+
       when(rs.getString(PgConstants.ALIAS_ID)).thenReturn("550e8400-e29b-11d4-a716-446655440000");
       when(rs.getString(PgConstants.ALIAS_NS)).thenReturn("foo");
       when(rs.getString(PgConstants.COLUMN_HEADER)).thenReturn("{}");
@@ -289,7 +290,7 @@ public class PgFactStreamTest {
 
       uut.processRow(rs);
 
-      verify(interceptor, times(1)).accept(any());
+      verify(factPipeline, times(1)).fact(any());
       verify(serial).set(10L);
     }
 
@@ -299,6 +300,7 @@ public class PgFactStreamTest {
       when(isConnectedSupplier.get()).thenReturn(true);
 
       when(rs.isClosed()).thenReturn(false);
+
       when(rs.getString(PgConstants.ALIAS_ID)).thenReturn("550e8400-e29b-11d4-a716-446655440000");
       when(rs.getString(PgConstants.ALIAS_NS)).thenReturn("foo");
       when(rs.getString(PgConstants.COLUMN_HEADER)).thenReturn("{}");
@@ -306,12 +308,12 @@ public class PgFactStreamTest {
       when(rs.getLong(PgConstants.COLUMN_SER)).thenReturn(10L);
 
       var exception = new IllegalArgumentException();
-      doThrow(exception).when(interceptor).accept(any());
+      doThrow(exception).when(factPipeline).fact(any());
 
       uut.processRow(rs);
 
-      verify(interceptor, times(1)).accept(any());
-      verify(subscription).notifyError(exception);
+      verify(factPipeline, times(1)).fact(any());
+      verify(factPipeline).error(exception);
       verify(rs).close();
       verify(serial, never()).set(10L);
     }
@@ -329,7 +331,7 @@ public class PgFactStreamTest {
       uut = spy(uut);
       when(uut.isConnected()).thenReturn(false);
 
-      uut.catchup(mock(FactFilter.class));
+      uut.catchup();
 
       verifyNoInteractions(pgCatchupFactory);
     }
@@ -340,10 +342,9 @@ public class PgFactStreamTest {
       PgCatchup catchup1 = mock(PgCatchup.class);
       PgCatchup catchup2 = mock(PgCatchup.class);
       when(uut.isConnected()).thenReturn(true);
-      when(pgCatchupFactory.create(any(), any(), any(), any(), any()))
-          .thenReturn(catchup1, catchup2);
+      when(pgCatchupFactory.create(any(), any(), any(), any())).thenReturn(catchup1, catchup2);
 
-      uut.catchup(mock(FactFilter.class));
+      uut.catchup();
 
       verify(catchup1, times(1)).run();
       verify(catchup2, times(1)).run();
