@@ -17,12 +17,15 @@ package org.factcast.store.internal.pipeline;
 
 import static org.mockito.Mockito.*;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.factcast.core.TestFact;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.FactTransformers;
 import org.factcast.core.subscription.transformation.TransformationRequest;
@@ -118,7 +121,7 @@ public class BufferedTransformingServerPipelineTest {
 
     @BeforeEach
     void setUp() {
-      uut = new BufferedTransformingServerPipeline(parent, service, transformers, 50, es);
+      uut = spy(new BufferedTransformingServerPipeline(parent, service, transformers, 50, es));
     }
 
     @Test
@@ -149,6 +152,46 @@ public class BufferedTransformingServerPipelineTest {
       verify(parent, times(3)).process(any());
 
       verifyNoInteractions(service, transformers);
+    }
+  }
+
+  @Nested
+  class Flushing {
+    @BeforeEach
+    void setUp() {
+      uut = spy(new BufferedTransformingServerPipeline(parent, service, transformers, 50, es));
+    }
+
+    @Test
+    void flushesOnCatchup() {
+      uut.flushIfNecessary(new Signal.CatchupSignal());
+      verify(uut).doFlush();
+    }
+
+    @Test
+    void flushesOnFlush() {
+      uut.flushIfNecessary(new Signal.FlushSignal());
+      verify(uut).doFlush();
+    }
+
+    @Test
+    void flushesOnComplete() {
+      uut.flushIfNecessary(new Signal.CompleteSignal());
+      verify(uut).doFlush();
+    }
+
+    @Test
+    void flushesOnError() {
+      uut.flushIfNecessary(new Signal.ErrorSignal(new IOException("buh")));
+      verify(uut).doFlush();
+    }
+
+    @Test
+    void doesNotFLushOnFact() {
+      @NonNull Fact fact = new TestFact();
+      uut.flushIfNecessary(new Signal.FactSignal(fact));
+      verify(uut).flushIfNecessary(any());
+      verifyNoMoreInteractions(uut);
     }
   }
 }

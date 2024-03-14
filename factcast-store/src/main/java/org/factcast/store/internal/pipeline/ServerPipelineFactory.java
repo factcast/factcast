@@ -22,11 +22,13 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.FactTransformers;
+import org.factcast.core.util.NoCoverageReportToBeGenerated;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.PostQueryMatcher;
 import org.factcast.store.internal.filter.blacklist.Blacklist;
 import org.factcast.store.internal.script.JSEngineFactory;
 
+@NoCoverageReportToBeGenerated("basically configuration code")
 @Builder
 public class ServerPipelineFactory {
 

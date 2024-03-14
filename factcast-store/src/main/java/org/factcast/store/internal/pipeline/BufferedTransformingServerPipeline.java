@@ -78,7 +78,8 @@ public class BufferedTransformingServerPipeline extends AbstractServerPipeline {
     }
   }
 
-  private void flushIfNecessary(@Nullable Signal s) {
+  @VisibleForTesting
+  void flushIfNecessary(@Nullable Signal s) {
     if (buffer.size() >= maxBufferSize
         || s instanceof Signal.FlushSignal
         || s instanceof Signal.CatchupSignal
