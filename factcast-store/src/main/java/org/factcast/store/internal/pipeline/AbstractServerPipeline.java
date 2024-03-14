@@ -17,35 +17,8 @@ package org.factcast.store.internal.pipeline;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.factcast.core.FactStreamPosition;
-import org.factcast.core.subscription.FactStreamInfo;
 
 @RequiredArgsConstructor
-public abstract class AbstractFactPipeline implements FactPipeline {
-  @NonNull protected final FactPipeline parent;
-
-  @Override
-  public void error(@NonNull Throwable err) {
-    parent.error(err);
-  }
-
-  @Override
-  public void fastForward(FactStreamPosition ffwd) {
-    parent.fastForward(ffwd);
-  }
-
-  @Override
-  public void info(@NonNull FactStreamInfo info) {
-    parent.info(info);
-  }
-
-  @Override
-  public void catchup() {
-    parent.catchup();
-  }
-
-  @Override
-  public void complete() {
-    parent.complete();
-  }
+public abstract class AbstractServerPipeline implements ServerPipeline {
+  @NonNull protected final ServerPipeline parent;
 }

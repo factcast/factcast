@@ -32,7 +32,7 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
-import org.factcast.store.internal.pipeline.FactPipeline;
+import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
@@ -57,8 +57,7 @@ public class PgFactStream {
   final PgLatestSerialFetcher fetcher;
   final PgCatchupFactory pgCatchupFactory;
   final FastForwardTarget ffwdTarget;
-  final FactPipeline pipeline;
-  //  final PgMetrics metrics;
+  final ServerPipeline pipeline;
 
   CondensedQueryExecutor condensedExecutor;
 

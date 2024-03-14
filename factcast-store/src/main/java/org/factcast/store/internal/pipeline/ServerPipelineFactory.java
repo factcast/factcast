@@ -28,7 +28,7 @@ import org.factcast.store.internal.filter.blacklist.Blacklist;
 import org.factcast.store.internal.script.JSEngineFactory;
 
 @Builder
-public class FactPipelineFactory {
+public class ServerPipelineFactory {
 
   @NonNull final PgMetrics metrics;
   @NonNull final Blacklist blacklist;
@@ -36,7 +36,7 @@ public class FactPipelineFactory {
   @NonNull final JSEngineFactory jsEngineFactory;
   private ExecutorService executorService;
 
-  public FactPipeline create(
+  public ServerPipeline create(
       @NonNull SubscriptionRequest subreq,
       @NonNull SubscriptionImpl sub,
       @NonNull PostQueryMatcher perRequestMatcher,
@@ -44,18 +44,18 @@ public class FactPipelineFactory {
       @NonNull ExecutorService executorService) {
     this.executorService = executorService;
 
-    FactPipeline chain = new BaseFactPipeline(sub);
-    chain = new MetricFactPipeline(chain, metrics);
+    ServerPipeline chain = new ServerPipelineAdapter(sub);
+    chain = new MetricServerPipeline(chain, metrics);
 
     chain =
-        new BufferedTransformingFactPipeline(
+        new BufferedTransformingServerPipeline(
             chain,
             factTransformerService,
             FactTransformers.createFor(subreq),
             maxBufferSize,
             executorService);
-    chain = new BlacklistFilterFactPipeline(chain, blacklist);
-    chain = new PostQueryFilterFactPipeline(chain, perRequestMatcher);
+    chain = new BlacklistFilterServerPipeline(chain, blacklist);
+    chain = new PostQueryFilterServerPipeline(chain, perRequestMatcher);
 
     return chain;
   }

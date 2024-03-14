@@ -27,7 +27,7 @@ import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
-import org.factcast.store.internal.pipeline.FactPipeline;
+import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 
 @Generated
@@ -58,7 +58,7 @@ public class PgFetchingCatchUpFactory implements PgCatchupFactory, AutoCloseable
   @Override
   public PgCatchup create(
       @NonNull SubscriptionRequestTO request,
-      @NonNull FactPipeline pipeline,
+      @NonNull ServerPipeline pipeline,
       @NonNull AtomicLong serial,
       @NonNull CurrentStatementHolder holder) {
     return new PgFetchingCatchup(connectionSupplier, props, request, pipeline, serial, holder);

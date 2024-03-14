@@ -15,7 +15,6 @@
  */
 package org.factcast.store.internal.pipeline;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import lombok.NonNull;
@@ -32,9 +31,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class BaseFactPipelineTest {
+class ServerPipelineAdapterTest {
   @Mock private SubscriptionImpl sub;
-  @InjectMocks private BaseFactPipeline underTest;
+  @InjectMocks private ServerPipelineAdapter underTest;
 
   @Nested
   class WhenFacting {
@@ -48,12 +47,6 @@ class BaseFactPipelineTest {
       underTest.fact(fact);
       verify(sub).notifyElement(fact);
       verifyNoMoreInteractions(sub);
-    }
-
-    @Test
-    void filtersNull() {
-      underTest.fact(null);
-      verifyNoInteractions(sub);
     }
   }
 

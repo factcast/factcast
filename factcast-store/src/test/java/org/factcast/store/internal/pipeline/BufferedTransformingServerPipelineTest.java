@@ -18,6 +18,7 @@ package org.factcast.store.internal.pipeline;
 import static org.mockito.Mockito.*;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -34,23 +35,24 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class BufferedTransformingFactPipelineTest {
+public class BufferedTransformingServerPipelineTest {
   final ExecutorService es = Executors.newSingleThreadExecutor();
   @Mock FactTransformerService service;
   @Mock FactTransformers transformers;
-  @Mock FactPipeline parent;
+  @Mock ServerPipeline parent;
   @Mock PgMetrics metrics;
-  private BufferedTransformingFactPipeline uut;
+  private BufferedTransformingServerPipeline uut;
 
   @Nested
   class BufferingMode {
     @Mock private TransformationRequest transformationRequest;
+    @Mock private TransformationRequest transformationRequest2;
 
     @Mock private Fact fact;
 
     @BeforeEach
     void setUp() {
-      uut = new BufferedTransformingFactPipeline(parent, service, transformers, 3, es);
+      uut = new BufferedTransformingServerPipeline(parent, service, transformers, 5, es);
     }
 
     @Test
@@ -69,8 +71,12 @@ public class BufferedTransformingFactPipelineTest {
       verifyNoInteractions(parent);
       uut.fact(fact);
 
-      // maxBufferSize is 3, so we expect a flush = 3 notifyElement call
-      verify(parent, times(3)).fact(fact);
+      // maxBufferSize is 5, so we expect nothing yet
+      verifyNoInteractions(parent);
+      uut.flush();
+
+      verify(parent, times(3)).process(any(Signal.FactSignal.class));
+      verify(parent).process(any(Signal.FlushSignal.class));
       verify(service).transform(List.of(transformationRequest));
     }
 
@@ -80,9 +86,12 @@ public class BufferedTransformingFactPipelineTest {
       final var noopFact = mock(Fact.class);
       final var factToTransform2 = mock(Fact.class);
 
+      TransformationRequest transformationRequest =
+          new TransformationRequest(factToTransform, Set.of(1));
+      TransformationRequest transformationRequest2 =
+          new TransformationRequest(factToTransform2, Set.of(1));
       when(transformers.prepareTransformation(any()))
-          .thenReturn(transformationRequest, null, transformationRequest);
-      when(transformationRequest.toTransform()).thenReturn(factToTransform, factToTransform2);
+          .thenReturn(transformationRequest, null, transformationRequest2, null, null);
       when(factToTransform.id()).thenReturn(UUID.randomUUID());
       when(factToTransform2.id()).thenReturn(UUID.randomUUID());
 
@@ -93,12 +102,12 @@ public class BufferedTransformingFactPipelineTest {
       uut.fact(noopFact);
       verifyNoInteractions(parent);
       uut.fact(factToTransform2);
+      uut.fact(noopFact);
+      verifyNoInteractions(parent);
+      uut.fact(noopFact);
 
-      // maxBufferSize is 3, so we expect a flush = 3 notifyElement call
-      verify(parent).fact(factToTransform);
-      verify(parent).fact(noopFact);
-      verify(parent).fact(factToTransform2);
-      verify(service).transform(List.of(transformationRequest, transformationRequest));
+      verify(parent, times(5)).process(any(Signal.FactSignal.class));
+      verify(service).transform(List.of(transformationRequest, transformationRequest2));
     }
   }
 
@@ -109,21 +118,37 @@ public class BufferedTransformingFactPipelineTest {
 
     @BeforeEach
     void setUp() {
-      uut = new BufferedTransformingFactPipeline(parent, service, transformers, 50, es);
+      uut = new BufferedTransformingServerPipeline(parent, service, transformers, 50, es);
     }
 
     @Test
     void simplePassThrough() {
       when(transformers.prepareTransformation(any())).thenReturn(null);
-
-      uut.fact(fact);
-      verify(parent).fact(fact);
-      uut.fact(fact);
-      verify(parent, times(2)).fact(fact);
-      uut.fact(fact);
-      verify(parent, times(3)).fact(fact);
+      Signal signal = new Signal.FactSignal(fact);
+      uut.process(signal);
+      verify(parent).process(signal);
+      uut.process(signal);
+      verify(parent, times(2)).process(signal);
+      uut.process(signal);
+      verify(parent, times(3)).process(signal);
 
       verifyNoInteractions(service);
+    }
+
+    @Test
+    void simplePassNonFact() {
+      Signal signal = new Signal.FlushSignal();
+
+      uut.process(signal);
+      verify(parent).process(signal);
+
+      uut.process(new Signal.CatchupSignal());
+      verify(parent, times(2)).process(any());
+
+      uut.process(new Signal.CompleteSignal());
+      verify(parent, times(3)).process(any());
+
+      verifyNoInteractions(service, transformers);
     }
   }
 }

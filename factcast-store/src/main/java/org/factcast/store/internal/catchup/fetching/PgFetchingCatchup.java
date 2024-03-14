@@ -26,7 +26,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
-import org.factcast.store.internal.pipeline.FactPipeline;
+import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
@@ -46,7 +46,7 @@ public class PgFetchingCatchup implements PgCatchup {
 
   @NonNull final SubscriptionRequestTO req;
 
-  @NonNull final FactPipeline pipeline;
+  @NonNull final ServerPipeline pipeline;
 
   @NonNull final AtomicLong serial;
 
@@ -67,7 +67,7 @@ public class PgFetchingCatchup implements PgCatchup {
       fetch(jdbc);
     } finally {
       log.trace("Done fetching, flushing.");
-      pipeline.fact(null);
+      pipeline.flush();
       ds.destroy();
       statementHolder.clear();
     }

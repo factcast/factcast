@@ -19,25 +19,23 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.store.internal.PostQueryMatcher;
-import org.jetbrains.annotations.Nullable;
 
 @Slf4j
-public class PostQueryFilterFactPipeline extends AbstractFactPipeline {
+public class PostQueryFilterServerPipeline extends AbstractServerPipeline {
   @NonNull final PostQueryMatcher matcher;
 
-  public PostQueryFilterFactPipeline(
-      @NonNull FactPipeline parent, @NonNull PostQueryMatcher matcher) {
+  public PostQueryFilterServerPipeline(
+      @NonNull ServerPipeline parent, @NonNull PostQueryMatcher matcher) {
     super(parent);
     this.matcher = matcher;
   }
 
   @Override
-  public void fact(@Nullable Fact fact) {
-
-    if (fact == null) parent.fact(null);
-    else {
-      if (matcher.canBeSkipped() || matcher.test(fact)) parent.fact(fact);
+  public void process(@NonNull Signal s) {
+    if (s instanceof Signal.FactSignal fs) {
+      Fact fact = fs.fact();
+      if (matcher.canBeSkipped() || matcher.test(fact)) parent.process(s);
       else log.trace("removing unmatched fact from pipeline {}", fact);
-    }
+    } else parent.process(s);
   }
 }

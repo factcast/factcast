@@ -19,23 +19,23 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.store.internal.filter.blacklist.Blacklist;
-import org.jetbrains.annotations.Nullable;
 
 @Slf4j
-public class BlacklistFilterFactPipeline extends AbstractFactPipeline {
+public class BlacklistFilterServerPipeline extends AbstractServerPipeline {
   @NonNull final Blacklist blacklist;
 
-  public BlacklistFilterFactPipeline(@NonNull FactPipeline parent, @NonNull Blacklist blacklist) {
+  public BlacklistFilterServerPipeline(
+      @NonNull ServerPipeline parent, @NonNull Blacklist blacklist) {
     super(parent);
     this.blacklist = blacklist;
   }
 
   @Override
-  public void fact(@Nullable Fact fact) {
-    if (fact == null) parent.fact(null);
-    else {
-      if (!blacklist.isBlocked(fact.header().id())) parent.fact(fact);
+  public void process(@NonNull Signal s) {
+    if (s instanceof Signal.FactSignal fs) {
+      Fact fact = fs.fact();
+      if (!blacklist.isBlocked(fact.header().id())) parent.process(s);
       else log.trace("removing blacklisted fact from pipeline {}", fact);
-    }
+    } else parent.process(s);
   }
 }

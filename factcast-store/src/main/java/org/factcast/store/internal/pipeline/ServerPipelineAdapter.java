@@ -15,26 +15,17 @@
  */
 package org.factcast.store.internal.pipeline;
 
-import javax.annotation.Nullable;
 import lombok.NonNull;
-import org.factcast.core.Fact;
-import org.factcast.core.FactStreamPosition;
-import org.factcast.core.subscription.FactStreamInfo;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.subscription.SubscriptionImpl;
 
-/** used on the server side instead of FactObserver/Subscription */
-public interface FactPipeline {
-  /**
-   * @param fact or null (represents the need to flush)
-   */
-  void fact(@Nullable Fact fact);
+@Slf4j
+@RequiredArgsConstructor
+public class ServerPipelineAdapter implements ServerPipeline {
+  private final SubscriptionImpl sub;
 
-  void info(@NonNull FactStreamInfo info);
-
-  void fastForward(@NonNull FactStreamPosition ffwd);
-
-  void error(@NonNull Throwable err);
-
-  void catchup();
-
-  void complete();
+  public void process(@NonNull Signal signal) {
+    signal.pass(sub);
+  }
 }

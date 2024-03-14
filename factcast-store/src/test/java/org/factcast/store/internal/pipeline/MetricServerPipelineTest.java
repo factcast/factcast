@@ -15,50 +15,56 @@
  */
 package org.factcast.store.internal.pipeline;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import io.micrometer.core.instrument.Counter;
 import lombok.NonNull;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.factcast.store.internal.PgMetrics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class MetricFactPipelineTest {
+class MetricServerPipelineTest {
   @Mock private @NonNull PgMetrics metrics;
-  @Mock private @NonNull FactPipeline parent;
-  @InjectMocks private MetricFactPipeline underTest;
+  @Mock private @NonNull ServerPipeline parent;
+  @InjectMocks private MetricServerPipeline underTest;
 
   @Nested
-  class WhenFacting {
+  class WhenProcessing {
     @Mock Fact fact;
     @Mock Counter count;
 
     @BeforeEach
     void setup() {
       when(metrics.counter(any())).thenReturn(count);
-      underTest = new MetricFactPipeline(parent, metrics);
+      underTest = new MetricServerPipeline(parent, metrics);
     }
 
     @Test
-    void delegates() {
-      underTest.fact(fact);
+    void delegatesAndCountsFact() {
+      underTest.process(new Signal.FactSignal(fact));
       verify(count).increment();
-      verify(parent).fact(fact);
+      ArgumentCaptor<Signal.FactSignal> cap = ArgumentCaptor.forClass(Signal.FactSignal.class);
+      verify(parent).process(cap.capture());
+      Assertions.assertThat(cap.getValue().fact()).isSameAs(fact);
     }
 
     @Test
-    void delegatesNull() {
-      underTest.fact(null);
+    void delegatesNonFactSignal() {
+      Signal signal = new Signal.CatchupSignal();
+      underTest.process(signal);
       verifyNoInteractions(count);
-      verify(parent).fact(null);
+      ArgumentCaptor<Signal> cap = ArgumentCaptor.forClass(Signal.class);
+      verify(parent).process(cap.capture());
+      Assertions.assertThat(cap.getValue()).isSameAs(signal);
     }
   }
 }
