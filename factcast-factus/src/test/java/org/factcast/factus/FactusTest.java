@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
@@ -185,8 +184,10 @@ class FactusTest {
   @Nested
   class WhenWaitingForFact {
 
-    private final FactStreamPosition factStreamPositionMock = Mockito.mock(FactStreamPosition.class);
-    private final SubscribedProjection subscribedProjectionMock = Mockito.mock(SubscribedProjection.class);
+    private final FactStreamPosition factStreamPositionMock =
+        Mockito.mock(FactStreamPosition.class);
+    private final SubscribedProjection subscribedProjectionMock =
+        Mockito.mock(SubscribedProjection.class);
 
     @Test
     void completes() {
@@ -212,7 +213,8 @@ class FactusTest {
       CompletableFuture<Void> future = underTest.waitFor(subscribedProjectionMock, factId);
 
       assertThat(future).isNotCompleted();
-      assertThatThrownBy(() -> future.get(2, TimeUnit.SECONDS)).isInstanceOf(TimeoutException.class);
+      assertThatThrownBy(() -> future.get(2, TimeUnit.SECONDS))
+          .isInstanceOf(TimeoutException.class);
     }
 
     @Test
@@ -224,9 +226,13 @@ class FactusTest {
       CompletableFuture<Void> future = underTest.waitFor(subscribedProjectionMock, factId);
 
       assertThat(future).isNotCompleted();
-      assertThat(future).failsWithin(Duration.ofMillis(100)).withThrowableThat().havingCause()
+      assertThat(future)
+          .failsWithin(Duration.ofMillis(100))
+          .withThrowableThat()
+          .havingCause()
           .isInstanceOf(IllegalArgumentException.class)
-          .withMessage("Fact with id " + factId + " not found. Make sure to publish before waiting for it.");
+          .withMessage(
+              "Fact with id " + factId + " not found. Make sure to publish before waiting for it.");
     }
 
     @Test
@@ -238,7 +244,8 @@ class FactusTest {
       CompletableFuture<Void> future = underTest.waitFor(subscribedProjectionMock, factId);
 
       assertThat(future).isNotCompleted();
-      assertThatThrownBy(() -> future.get(2, TimeUnit.SECONDS)).isInstanceOf(TimeoutException.class);
+      assertThatThrownBy(() -> future.get(2, TimeUnit.SECONDS))
+          .isInstanceOf(TimeoutException.class);
     }
   }
 }
