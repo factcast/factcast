@@ -19,6 +19,12 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.Value;
 import org.factcast.core.FactStreamPosition;
+import software.amazon.awssdk.enhanced.dynamodb.MappedTableResource;
+import software.amazon.awssdk.enhanced.dynamodb.internal.operations.DefaultOperationContext;
+import software.amazon.awssdk.enhanced.dynamodb.internal.operations.DeleteItemOperation;
+import software.amazon.awssdk.enhanced.dynamodb.internal.operations.PutItemOperation;
+import software.amazon.awssdk.enhanced.dynamodb.internal.operations.UpdateItemOperation;
+import software.amazon.awssdk.enhanced.dynamodb.model.*;
 import software.amazon.awssdk.services.dynamodb.model.TransactWriteItem;
 import software.amazon.awssdk.services.dynamodb.model.TransactWriteItemsRequest;
 
@@ -29,19 +35,42 @@ public class DynamoTransaction {
 
   List<TransactWriteItem> writeItems = new ArrayList<>();
 
-  // TODO: can we do this with the enhanced request?
-  //  TransactWriteItemsEnhancedRequest.Builder enhancedWriteTransactionBuilder = new
-  // TransactWriteItemsEnhancedRequest.builder();
-  //  public TransactWriteItemsEnhancedRequest.Builder getTransactionForWrite() {
-  //    return this.enhancedWriteTransactionBuilder();
-  //  }
-
   public void add(TransactWriteItem item) {
     writeItems.add(item);
     if (writeItems.size() > DynamoTransactional.Defaults.maxBulkSize) {
       // todo: exception type?
       throw new IllegalStateException("Max batch size exceeded");
     }
+  }
+
+  public <T> void addPutRequest(
+      MappedTableResource<T> mappedTableResource, TransactPutItemEnhancedRequest<T> request) {
+    PutItemOperation<T> operation = PutItemOperation.create(request);
+    add(
+        operation.generateTransactWriteItem(
+            mappedTableResource.tableSchema(),
+            DefaultOperationContext.create(mappedTableResource.tableName()),
+            mappedTableResource.mapperExtension()));
+  }
+
+  public <T> void addDeleteRequest(
+      MappedTableResource<T> mappedTableResource, TransactDeleteItemEnhancedRequest request) {
+    DeleteItemOperation<T> operation = DeleteItemOperation.create(request);
+    add(
+        operation.generateTransactWriteItem(
+            mappedTableResource.tableSchema(),
+            DefaultOperationContext.create(mappedTableResource.tableName()),
+            mappedTableResource.mapperExtension()));
+  }
+
+  public <T> void addUpdateRequest(
+      MappedTableResource<T> mappedTableResource, TransactUpdateItemEnhancedRequest<T> request) {
+    UpdateItemOperation<T> operation = UpdateItemOperation.create(request);
+    add(
+        operation.generateTransactWriteItem(
+            mappedTableResource.tableSchema(),
+            DefaultOperationContext.create(mappedTableResource.tableName()),
+            mappedTableResource.mapperExtension()));
   }
 
   public TransactWriteItemsRequest buildTransactionRequest() {
