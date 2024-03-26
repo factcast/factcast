@@ -23,8 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.google.common.base.Stopwatch;
-
-import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -705,8 +703,8 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
     factus.waitFor(subscribedUserNames, factId2).orTimeout(2, TimeUnit.SECONDS).get();
 
     assertThat(subscribedUserNames.names())
-            .hasSize(3)
-            .containsExactlyInAnyOrder("John", "Peter", "preexisting");
+        .hasSize(3)
+        .containsExactlyInAnyOrder("John", "Peter", "preexisting");
 
     subscription.close();
   }
