@@ -20,6 +20,7 @@ import org.factcast.itests.factus.proj.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 @Configuration
@@ -44,6 +45,18 @@ public class DynamoProjectionConfiguration {
       @Value("${dynamodb.local.host}") String url, @Value("${dynamodb.local.port}") String port) {
     return DynamoDbClient.builder()
         .endpointOverride(URI.create("http://" + url + ":" + port))
+        .build();
+  }
+
+  // TODO make sure if we can remove the regular client above or pass it as an argument below.
+  @Bean
+  DynamoDbEnhancedClient dynamoDbEnhancedClient(
+      @Value("${dynamodb.local.host}") String url, @Value("${dynamodb.local.port}") String port) {
+    return DynamoDbEnhancedClient.builder()
+        .dynamoDbClient(
+            DynamoDbClient.builder()
+                .endpointOverride(URI.create("http://" + url + ":" + port))
+                .build())
         .build();
   }
 }

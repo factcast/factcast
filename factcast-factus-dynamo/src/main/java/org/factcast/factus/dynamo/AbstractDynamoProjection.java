@@ -34,6 +34,9 @@ import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.projection.WriterTokenAware;
 import org.factcast.factus.projection.tx.AbstractOpenTransactionAwareProjection;
 import org.factcast.factus.projection.tx.TransactionAware;
+import software.amazon.awssdk.enhanced.dynamodb.*;
+import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
 
@@ -45,24 +48,28 @@ abstract class AbstractDynamoProjection
         WriterTokenAware,
         Named {
   @Getter protected final DynamoDbClient dynamoDb;
+  protected final DynamoDbEnhancedClient enhancedClient;
 
   // TODO  Make this configurable
 
   private final AmazonDynamoDBLockClient lockClient;
 
-  private final String stateTableName;
+  private final DynamoDbTable<DynamoProjectionState> stateTable;
+
   @Getter private final String projectionKey;
-  private final Map<String, AttributeValue> dynamoKey;
+  //  private final Map<String, AttributeValue> dynamoKey;
 
   protected AbstractDynamoProjection(
       @NonNull DynamoDbClient dynamoDb, String projectionTableName, String stateTableName) {
     this.dynamoDb = dynamoDb;
+    this.enhancedClient = DynamoDbEnhancedClient.builder().dynamoDbClient(dynamoDb).build();
 
-    this.stateTableName = stateTableName;
+    this.stateTable =
+        enhancedClient.table(stateTableName, TableSchema.fromBean(DynamoProjectionState.class));
 
     this.projectionKey = projectionTableName;
-    this.dynamoKey =
-        Collections.singletonMap("key", AttributeValue.builder().s(projectionKey).build());
+    //    this.dynamoKey =
+    //        Collections.singletonMap("key", AttributeValue.builder().s(projectionKey).build());
 
     this.lockClient =
         new AmazonDynamoDBLockClient(
@@ -79,73 +86,123 @@ abstract class AbstractDynamoProjection
     if (inTransaction()) {
       return runningTransaction().initialFactStreamPosition();
     } else {
-
-      final GetItemResponse res =
-          dynamoDb.getItem(
-              GetItemRequest.builder()
-                  .tableName(stateTableName)
-                  .key(dynamoKey)
-                  .attributesToGet("factStreamPosition", "factStreamSerial")
-                  .build());
-      AttributeValue factStreamPosition = res.item().get("factStreamPosition");
-      return factStreamPosition != null
-          ? FactStreamPosition.of(
-              UUID.fromString(res.item().get("factStreamPosition").toString()),
-              Long.parseLong(res.item().get("factStreamSerial").toString()))
+      DynamoProjectionState state =
+          stateTable.getItem(new DynamoProjectionState().key(projectionKey));
+      return state != null
+          ? FactStreamPosition.of(state.factStreamPosition(), state.serial())
           : null;
+
+      //      final GetItemResponse res =
+      //          dynamoDb.getItem(
+      //              GetItemRequest.builder()
+      //                  .tableName(stateTableName)
+      //                  .key(dynamoKey)
+      //                  .attributesToGet("factStreamPosition", "factStreamSerial")
+      //                  .build());
+      //      AttributeValue factStreamPosition = res.item().get("factStreamPosition");
+      //      return factStreamPosition != null
+      //          ? FactStreamPosition.of(
+      //              UUID.fromString(res.item().get("factStreamPosition").s()),
+      //              Long.parseLong(res.item().get("factStreamSerial").s()))
+      //          : null;
     }
   }
 
   @SuppressWarnings("ConstantConditions")
   @Override
   public void factStreamPosition(@Nullable FactStreamPosition position) {
-    Map<String, AttributeValue> expressionAttributeValues = new HashMap<>();
-    expressionAttributeValues.put(
-        ":new_factStreamPosition", AttributeValue.fromS(position.factId().toString()));
-    expressionAttributeValues.put(
-        ":new_factStreamSerial", AttributeValue.fromS(String.valueOf(position.serial())));
     if (inTransaction()) {
-      // TODO transaction write item + evetl. condition
+      UpdateItemEnhancedRequest.Builder<DynamoProjectionState> updateRequest =
+          UpdateItemEnhancedRequest.builder(DynamoProjectionState.class)
+              .item(
+                  new DynamoProjectionState()
+                      .key(projectionKey)
+                      .factStreamPosition(position.factId())
+                      .serial(position.serial()));
+
       DynamoTransaction transaction = runningTransaction();
+      if (transaction.initialFactStreamPosition().factId() != null) {
+        updateRequest.conditionExpression(
+            Expression.builder()
+                .expression("factStreamPosition = :expected")
+                .putExpressionValue(
+                    ":expected",
+                    AttributeValue.fromS(
+                        transaction.initialFactStreamPosition().factId().toString()))
+                .build());
 
-      if (transaction.initialFactStreamPosition() != null) {
-        expressionAttributeValues.put(
-            ":expected_status",
-            AttributeValue.fromS(transaction.initialFactStreamPosition().factId().toString()));
+        stateTable.updateItem(updateRequest.build());
+      } else {
+        stateTable.putItem(
+            PutItemEnhancedRequest.builder(DynamoProjectionState.class)
+                .item(
+                    new DynamoProjectionState()
+                        .key(projectionKey)
+                        .factStreamPosition(position.factId())
+                        .serial(position.serial()))
+                .conditionExpression(
+                    Expression.builder()
+                        .expression("attribute_not_exists(#key)")
+                        .putExpressionName("#key", projectionKey)
+                        .build())
+                .build());
       }
-
-      transaction.add(
-          TransactWriteItem.builder()
-              .update(
-                  Update.builder()
-                      .tableName(stateTableName)
-                      .key(dynamoKey)
-                      .updateExpression(
-                          "SET factStreamPosition = :new_factStreamPosition, factStreamSerial = :new_factStreamSerial")
-                      .expressionAttributeValues(expressionAttributeValues)
-                      .conditionExpression("factStreamPosition = :expected_status")
-                      .build())
-              .build());
-    } else {
-      // TODO: there probably is a cleaner way of serializing this back and forth
-      // e.g. using DynamoDbEnhancedClient
-      // https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.SDKs.Interfaces.Mapper.html
-
-      dynamoDb.updateItem(
-          UpdateItemRequest.builder()
-              .tableName(stateTableName)
-              .key(dynamoKey)
-              .updateExpression(
-                  "SET factStreamPosition = :new_factStreamPosition, factStreamSerial = :new_factStreamSerial")
-              .expressionAttributeValues(expressionAttributeValues)
-              .build());
     }
+
+    // ---------------------------------
+    //
+    //    Map<String, AttributeValue> expressionAttributeValues = new HashMap<>();
+    //    expressionAttributeValues.put(
+    //        ":new_factStreamPosition", AttributeValue.fromS(position.factId().toString()));
+    //    expressionAttributeValues.put(
+    //        ":new_factStreamSerial", AttributeValue.fromS(String.valueOf(position.serial())));
+    //    if (inTransaction()) {
+    //      DynamoTransaction transaction = runningTransaction();
+    //
+    //      if (transaction.initialFactStreamPosition().factId() != null) {
+    //        expressionAttributeValues.put(
+    //            ":expected_status",
+    //
+    // AttributeValue.fromS(transaction.initialFactStreamPosition().factId().toString()));
+    //      }
+    //
+    //      transaction.add(
+    //          TransactWriteItem.builder()
+    //              .update(
+    //                  Update.builder()
+    //                      .tableName(stateTableName)
+    //                      .key(dynamoKey)
+    //                      .updateExpression(
+    //                          "SET factStreamPosition = :new_factStreamPosition, factStreamSerial
+    // = :new_factStreamSerial")
+    //                      .expressionAttributeValues(expressionAttributeValues)
+    //                      .conditionExpression("factStreamPosition = :expected_status")
+    //                      .build())
+    //              .build());
+    //    } else {
+    //      // TODO: there probably is a cleaner way of serializing this back and forth
+    //      // e.g. using DynamoDbEnhancedClient
+    //      //
+    // https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.SDKs.Interfaces.Mapper.html
+    //
+    //      dynamoDb.updateItem(
+    //          UpdateItemRequest.builder()
+    //              .tableName(stateTableName)
+    //              .key(dynamoKey)
+    //              .updateExpression(
+    //                  "SET factStreamPosition = :new_factStreamPosition, factStreamSerial =
+    // :new_factStreamSerial")
+    //              .expressionAttributeValues(expressionAttributeValues)
+    //              // TODO: Add condition that entry does not exist already
+    //              .build());
+    //    }
   }
 
   @Override
   public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
     assertNoRunningTransaction();
     try {
+      // TODO: configure lease duration?
       Optional<LockItem> lock =
           lockClient.tryAcquireLock(AcquireLockOptions.builder(projectionKey).build());
       if (lock.isPresent()) {

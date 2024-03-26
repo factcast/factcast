@@ -29,6 +29,13 @@ public class DynamoTransaction {
 
   List<TransactWriteItem> writeItems = new ArrayList<>();
 
+  // TODO: can we do this with the enhanced request?
+  //  TransactWriteItemsEnhancedRequest.Builder enhancedWriteTransactionBuilder = new
+  // TransactWriteItemsEnhancedRequest.builder();
+  //  public TransactWriteItemsEnhancedRequest.Builder getTransactionForWrite() {
+  //    return this.enhancedWriteTransactionBuilder();
+  //  }
+
   public void add(TransactWriteItem item) {
     writeItems.add(item);
     if (writeItems.size() > DynamoTransactional.Defaults.maxBulkSize) {

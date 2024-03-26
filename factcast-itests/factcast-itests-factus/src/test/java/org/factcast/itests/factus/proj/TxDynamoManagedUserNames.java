@@ -15,73 +15,88 @@
  */
 package org.factcast.itests.factus.proj;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Handler;
 import org.factcast.factus.dynamo.AbstractDynamoManagedProjection;
 import org.factcast.factus.dynamo.tx.DynamoTransaction;
-import org.factcast.factus.redis.UUIDCodec;
-import org.factcast.factus.redis.tx.RedisTransactional;
+import org.factcast.factus.dynamo.tx.DynamoTransactional;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
-import org.redisson.api.RMap;
-import org.redisson.client.codec.Codec;
-import org.redisson.codec.CompositeCodec;
-import org.redisson.codec.LZ4Codec;
-import org.redisson.codec.MarshallingCodec;
+import software.amazon.awssdk.enhanced.dynamodb.*;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.dynamodb.model.Delete;
+import software.amazon.awssdk.services.dynamodb.model.Put;
+import software.amazon.awssdk.services.dynamodb.model.TransactWriteItem;
 
 @Slf4j
 @ProjectionMetaData(revision = 1)
-@RedisTransactional(timeout = 30000)
+@DynamoTransactional()
 public class TxDynamoManagedUserNames extends AbstractDynamoManagedProjection {
 
-  protected final Codec codec =
-      new CompositeCodec(UUIDCodec.INSTANCE, new LZ4Codec(new MarshallingCodec()));
+  private final DynamoDbTable<UserNamesDynamoSchema> userNames;
 
   public TxDynamoManagedUserNames(DynamoDbClient client) {
-    super(client, "UserNames", "DynamoProjectionStateTracking");
-  }
+    super(client, "UserNamesManaged", "DynamoProjectionStateTracking");
 
-  public RMap<UUID, String> userNames() {
-    //    return redisson.getMap(redisKey(), codec);
-    return null;
+    this.userNames =
+        enhancedClient.table("UserNames", TableSchema.fromBean(UserNamesDynamoSchema.class));
   }
 
   public int count() {
-    return userNames().size();
+    return userNames.describeTable().table().itemCount().intValue();
   }
 
   public boolean contains(String name) {
-    return userNames().containsValue(name);
-  }
-
-  public Set<String> names() {
-    return new HashSet<>(userNames().values());
-  }
-
-  public void clear() {
-    userNames().clear();
+    return userNames
+        .query(
+            QueryEnhancedRequest.builder()
+                .filterExpression(
+                    Expression.builder()
+                        .expression("userName = :name")
+                        .putExpressionValue(":name", AttributeValue.fromS(name))
+                        .build())
+                .limit(1)
+                .build())
+        .iterator()
+        .hasNext();
   }
 
   // ---- processing:
-
   @SneakyThrows
   @Handler
   protected void apply(UserCreated created, DynamoTransaction tx) {
-    // TODO
-
-    //    RMap<UUID, String> userNames = tx.getMap(redisKey(), codec);
-    //    userNames.fastPut(created.aggregateId(), created.userName());
+    // TODO find way to utilize the enhanced client for easy mapping while keeping batch size check
+    // somewhat like: userNames.putItem(new
+    // UserNamesDynamoSchema().userId(created.aggregateId()).userName(created.userName()));
+    HashMap<String, AttributeValue> item = new HashMap<>();
+    item.put("key", AttributeValue.fromS(created.aggregateId().toString()));
+    item.put("userName", AttributeValue.fromS(created.userName()));
+    tx.add(
+        TransactWriteItem.builder()
+            .put(Put.builder().tableName(userNames.tableName()).item(item).build())
+            .build());
   }
 
   @SneakyThrows
   @Handler
   protected void apply(UserDeleted deleted, DynamoTransaction tx) {
-    // TODO
-
-    //    tx.getMap(redisKey(), codec).fastRemove(deleted.aggregateId());
+    // TODO find way to utilize the enhanced client for easy mapping while keeping batch size check
+    //    userNames.deleteItem(new UserNamesDynamoSchema().userId(deleted.aggregateId()));
+    tx.add(
+        TransactWriteItem.builder()
+            .delete(
+                Delete.builder()
+                    .tableName(userNames.tableName())
+                    .key(
+                        Collections.singletonMap(
+                            "key", AttributeValue.fromS(deleted.aggregateId().toString())))
+                    .build())
+            .build());
   }
 }
