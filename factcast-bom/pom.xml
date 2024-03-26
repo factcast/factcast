@@ -90,6 +90,11 @@
       </dependency>
       <dependency>
         <groupId>org.factcast</groupId>
+        <artifactId>factcast-factus-dynamo</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
         <artifactId>factcast-factus-bin-snapser</artifactId>
         <version>${project.version}</version>
       </dependency>

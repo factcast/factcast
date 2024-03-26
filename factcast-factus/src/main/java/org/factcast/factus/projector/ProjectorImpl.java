@@ -99,7 +99,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
     beginIfTransactional();
 
-    // remember that IF this fail, we throw an expecption anyway, so that we wont reuse this info
+    // remember that IF this fail, we throw an exception anyway, so that we wont reuse this info
     FactStreamPosition latestSuccessful = null;
 
     for (Fact f : facts) {
@@ -134,7 +134,8 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       }
       commitIfTransactional();
     } catch (Exception e) {
-
+      // TODO: this will swallow the error because in "commitIfTransactional()" we set the
+      // transaction = null
       rollbackIfTransactional();
       // pass along and potentially rethrow
       projection.onError(e);
