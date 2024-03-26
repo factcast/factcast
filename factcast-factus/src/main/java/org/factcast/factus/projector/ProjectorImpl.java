@@ -134,7 +134,8 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       }
       commitIfTransactional();
     } catch (Exception e) {
-
+      // TODO: this will swallow the error because in "commitIfTransactional()" we set the
+      // transaction = null
       rollbackIfTransactional();
       // pass along and potentially rethrow
       projection.onError(e);

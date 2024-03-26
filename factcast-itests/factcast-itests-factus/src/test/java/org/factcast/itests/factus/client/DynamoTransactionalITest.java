@@ -34,6 +34,7 @@ import org.factcast.itests.factus.config.DynamoProjectionConfiguration;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.proj.TxDynamoManagedUserNames;
 import org.factcast.itests.factus.proj.TxDynamoSubscribedUserNames;
+import org.factcast.itests.factus.proj.UserNamesDynamoSchema;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -55,7 +56,6 @@ import software.amazon.awssdk.services.dynamodb.waiters.DynamoDbWaiter;
 public class DynamoTransactionalITest extends AbstractFactCastIntegrationTest {
   @Autowired Factus factus;
   @Autowired DynamoDbClient dynamoDbClient;
-  // TODO: can we use only the enhanced?
   @Autowired DynamoDbEnhancedClient dynamoDbEnhancedClient;
   static final int NUMBER_OF_EVENTS = 10;
   static final String STATE_TABLE_NAME = "DynamoProjectionStateTracking";
@@ -63,26 +63,10 @@ public class DynamoTransactionalITest extends AbstractFactCastIntegrationTest {
   @BeforeEach
   void setupTables() {
     try {
-      dynamoDbClient.createTable(
-          CreateTableRequest.builder()
-              .tableName("UserNames")
-              .keySchema(
-                  KeySchemaElement.builder().attributeName("key").keyType(KeyType.HASH).build())
-              .attributeDefinitions(
-                  AttributeDefinition.builder()
-                      .attributeName("key")
-                      .attributeType(ScalarAttributeType.S)
-                      .build())
-              .provisionedThroughput(
-                  ProvisionedThroughput.builder()
-                      .readCapacityUnits(100L)
-                      .writeCapacityUnits(100L)
-                      .build())
-              .build());
-
+      // Old config with regular client
       //      dynamoDbClient.createTable(
       //          CreateTableRequest.builder()
-      //              .tableName("DynamoProjectionStateTracking")
+      //              .tableName("UserNames")
       //              .keySchema(
       //
       // KeySchemaElement.builder().attributeName("key").keyType(KeyType.HASH).build())
@@ -98,6 +82,14 @@ public class DynamoTransactionalITest extends AbstractFactCastIntegrationTest {
       //                      .build())
       //              .build());
 
+      DynamoDbTable<UserNamesDynamoSchema> userNamesTable =
+          dynamoDbEnhancedClient.table(
+              "UserNames", TableSchema.fromBean(UserNamesDynamoSchema.class));
+      userNamesTable.createTable(
+          builder ->
+              builder.provisionedThroughput(
+                  b -> b.readCapacityUnits(100L).writeCapacityUnits(100L).build()));
+
       DynamoDbTable<DynamoProjectionState> stateTable =
           dynamoDbEnhancedClient.table(
               STATE_TABLE_NAME, TableSchema.fromBean(DynamoProjectionState.class));
@@ -105,12 +97,7 @@ public class DynamoTransactionalITest extends AbstractFactCastIntegrationTest {
           builder ->
               builder.provisionedThroughput(
                   b -> b.readCapacityUnits(100L).writeCapacityUnits(100L).build()));
-      // The 'dynamoDbClient' instance that's passed to the builder for the DynamoDbWaiter is the
-      // same instance
-      // that was passed to the builder of the DynamoDbEnhancedClient instance used to create the
-      // 'customerDynamoDbTable'.
-      // This means that the same Region that was configured on the standard 'dynamoDbClient'
-      // instance is used for all service clients.
+
       try (DynamoDbWaiter waiter =
           DynamoDbWaiter.builder()
               .client(dynamoDbClient)
@@ -119,17 +106,14 @@ public class DynamoTransactionalITest extends AbstractFactCastIntegrationTest {
             waiter
                 .waitUntilTableExists(builder -> builder.tableName(STATE_TABLE_NAME).build())
                 .matched();
-        DescribeTableResponse tableDescription =
-            response
-                .response()
-                .orElseThrow(() -> new RuntimeException("Customer table was not created."));
-        // The actual error can be inspected in response.exception()
+
+        response
+            .response()
+            .orElseThrow(() -> new RuntimeException("Customer table was not created."));
         log.info("Customer table was created.");
       }
-
     } catch (Exception e) {
-      // TODO: rethink where to create the tables so that we don't need to recreate
-      log.warn("This will probably fail the second time.", e);
+      log.error("Table creation failed.", e);
     }
   }
 
@@ -143,21 +127,6 @@ public class DynamoTransactionalITest extends AbstractFactCastIntegrationTest {
       }
       log.info("publishing {} Events ", NUMBER_OF_EVENTS);
       factus.publish(l);
-
-      //      // Create State table
-      //
-      //      final TableSchema<DynamoProjectionState> stateTableSchema =
-      // TableSchema.fromBean(DynamoProjectionState.class);
-      //
-      //      dynamoDbEnhancedClient.table(STATE_TABLE_NAME, stateTableSchema);
-      //
-      //      // Create individual projection tables
-      //      dynamoDbClient.createTable(
-      //          CreateTableRequest.builder()
-      //              .tableName(
-      //
-      // ScopedName.fromProjectionMetaData(TxDynamoManagedUserNamesSize3.class).asString())
-      //              .build());
     }
 
     @SneakyThrows
@@ -180,11 +149,12 @@ public class DynamoTransactionalITest extends AbstractFactCastIntegrationTest {
       assertThat(p.stateModifications()).isEqualTo(5); // expected at 2,4,6,8,10
     }
 
+    // TODO : does this really test rollback behaviour?
     @SneakyThrows
     @Test
     void rollsBack() {
-      TxDynamoManagedUserNamesSizeBlowAt7Th p =
-          new TxDynamoManagedUserNamesSizeBlowAt7Th(dynamoDbClient);
+      TxDynamoManagedUserNamesSizeBlowAt7th p =
+          new TxDynamoManagedUserNamesSizeBlowAt7th(dynamoDbClient);
 
       assertThat(p.count()).isEqualTo(0);
 
@@ -235,6 +205,7 @@ public class DynamoTransactionalITest extends AbstractFactCastIntegrationTest {
     @SneakyThrows
     @Test
     void rollsBack() {
+      // batch size = 5; throws while applying the 7th event.
       TxDynamoSubscribedUserNamesSizeBlowAt7Th p =
           new TxDynamoSubscribedUserNamesSizeBlowAt7Th(dynamoDbClient);
 
@@ -253,12 +224,13 @@ public class DynamoTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
+  @Getter
   static class TrackingTxDynamoManagedUserNames extends TxDynamoManagedUserNames {
     public TrackingTxDynamoManagedUserNames(DynamoDbClient client) {
       super(client);
     }
 
-    @Getter int stateModifications = 0;
+    int stateModifications = 0;
 
     @Override
     public void factStreamPosition(FactStreamPosition factStreamPosition) {
@@ -267,12 +239,13 @@ public class DynamoTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
+  @Getter
   static class TrackingTxDynamoSubscribedUserNames extends TxDynamoSubscribedUserNames {
     public TrackingTxDynamoSubscribedUserNames(DynamoDbClient dynamoDbClient) {
       super(dynamoDbClient);
     }
 
-    @Getter int stateModifications = 0;
+    int stateModifications = 0;
 
     @Override
     public void factStreamPosition(FactStreamPosition factStreamPosition) {
@@ -316,10 +289,10 @@ public class DynamoTransactionalITest extends AbstractFactCastIntegrationTest {
 
   @ProjectionMetaData(revision = 1)
   @DynamoTransactional(bulkSize = 5)
-  static class TxDynamoManagedUserNamesSizeBlowAt7Th extends TrackingTxDynamoManagedUserNames {
+  static class TxDynamoManagedUserNamesSizeBlowAt7th extends TrackingTxDynamoManagedUserNames {
     private int count;
 
-    public TxDynamoManagedUserNamesSizeBlowAt7Th(DynamoDbClient dynamoDbClient) {
+    public TxDynamoManagedUserNamesSizeBlowAt7th(DynamoDbClient dynamoDbClient) {
       super(dynamoDbClient);
     }
 

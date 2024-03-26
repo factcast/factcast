@@ -44,7 +44,7 @@ public class TxDynamoSubscribedUserNames extends AbstractDynamoSubscribedProject
   public TxDynamoSubscribedUserNames(DynamoDbClient client) {
     super(client, "UserNames", "DynamoProjectionStateTracking");
     this.userNames =
-        enhancedClient.table("UserNamesManaged", TableSchema.fromBean(UserNamesDynamoSchema.class));
+        enhancedClient.table("UserNames", TableSchema.fromBean(UserNamesDynamoSchema.class));
   }
 
   public int count() {
