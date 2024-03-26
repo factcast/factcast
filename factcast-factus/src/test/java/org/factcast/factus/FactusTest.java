@@ -15,6 +15,8 @@
  */
 package org.factcast.factus;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Lists;
@@ -22,11 +24,15 @@ import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.factcast.core.Fact;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.batch.PublishBatch;
@@ -39,6 +45,7 @@ import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.projection.SubscribedProjection;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -172,6 +179,66 @@ class FactusTest {
     @Override
     public Set<UUID> aggregateIds() {
       return Sets.newHashSet();
+    }
+  }
+
+  @Nested
+  class WhenWaitingForFact {
+
+    private final FactStreamPosition factStreamPositionMock = Mockito.mock(FactStreamPosition.class);
+    private final SubscribedProjection subscribedProjectionMock = Mockito.mock(SubscribedProjection.class);
+
+    @Test
+    void completes() {
+      UUID factId = UUID.randomUUID();
+      when(underTest.serialOf(factId)).thenReturn(OptionalLong.of(2));
+      when(subscribedProjectionMock.factStreamPosition()).thenReturn(factStreamPositionMock);
+      when(factStreamPositionMock.serial()).thenReturn(1L);
+
+      CompletableFuture<Void> future = underTest.waitFor(subscribedProjectionMock, factId);
+
+      assertThat(future).isNotCompleted();
+      when(factStreamPositionMock.serial()).thenReturn(2L);
+      assertThat(future).succeedsWithin(Duration.ofSeconds(2));
+    }
+
+    @Test
+    void timesOutOnFactNotConsumed() {
+      UUID factId = UUID.randomUUID();
+      when(underTest.serialOf(factId)).thenReturn(OptionalLong.of(2));
+      when(subscribedProjectionMock.factStreamPosition()).thenReturn(factStreamPositionMock);
+      when(factStreamPositionMock.serial()).thenReturn(1L);
+
+      CompletableFuture<Void> future = underTest.waitFor(subscribedProjectionMock, factId);
+
+      assertThat(future).isNotCompleted();
+      assertThatThrownBy(() -> future.get(2, TimeUnit.SECONDS)).isInstanceOf(TimeoutException.class);
+    }
+
+    @Test
+    void failsEarlyForFactsWithoutSerial() {
+      UUID factId = UUID.randomUUID();
+      when(underTest.serialOf(factId)).thenReturn(OptionalLong.empty());
+      when(subscribedProjectionMock.factStreamPosition()).thenReturn(factStreamPositionMock);
+
+      CompletableFuture<Void> future = underTest.waitFor(subscribedProjectionMock, factId);
+
+      assertThat(future).isNotCompleted();
+      assertThat(future).failsWithin(Duration.ofMillis(100)).withThrowableThat().havingCause()
+          .isInstanceOf(IllegalArgumentException.class)
+          .withMessage("Fact with id " + factId + " not found. Make sure to publish before waiting for it.");
+    }
+
+    @Test
+    void timesOutOnNullFactStreamPosition() {
+      UUID factId = UUID.randomUUID();
+      when(underTest.serialOf(factId)).thenReturn(OptionalLong.of(2));
+      when(subscribedProjectionMock.factStreamPosition()).thenReturn(factStreamPositionMock);
+
+      CompletableFuture<Void> future = underTest.waitFor(subscribedProjectionMock, factId);
+
+      assertThat(future).isNotCompleted();
+      assertThatThrownBy(() -> future.get(2, TimeUnit.SECONDS)).isInstanceOf(TimeoutException.class);
     }
   }
 }
