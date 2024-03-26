@@ -22,8 +22,11 @@ import java.util.OptionalLong;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import java.util.function.Supplier;
+
 import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.batch.PublishBatch;
@@ -139,4 +142,35 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
   LockedOnSpecs withLockOn(@NonNull List<FactSpec> specs);
 
   OptionalLong serialOf(@NonNull UUID factId);
+
+  // TODO javadoc
+  default <P extends SubscribedProjection> CompletableFuture<Void> waitFor(
+      @NonNull P subscribedProjection,
+      @NonNull UUID factId,
+      Function<Integer, Integer> retryBackoffMillis
+  ) {
+    return CompletableFuture.runAsync(() -> {
+      OptionalLong optSerial = this.serialOf(factId);
+      if (!optSerial.isPresent()) {
+        throw new IllegalArgumentException(String.format("Fact with id %s not found. Make sure to publish before waiting for it.", factId));
+      }
+      final long serial = optSerial.getAsLong();
+      FactStreamPosition currentFsp = subscribedProjection.factStreamPosition();
+      int i = 0;
+      while (currentFsp == null || currentFsp.serial() < serial) {
+        try {
+          Thread.sleep(retryBackoffMillis.apply(i));
+          currentFsp = subscribedProjection.factStreamPosition();
+          i++;
+        } catch (InterruptedException e) {
+          LOGGER.info("Interrupted while waiting for fact {} to be consumed.", factId);
+        }
+      }
+    });
+  }
+
+  // TODO javadoc
+  default <P extends SubscribedProjection> CompletableFuture<Void> waitFor(@NonNull P subscribedProjection, @NonNull UUID factId) {
+    return waitFor(subscribedProjection, factId, i -> 100);
+  }
 }

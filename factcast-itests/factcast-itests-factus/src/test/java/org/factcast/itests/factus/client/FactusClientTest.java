@@ -23,6 +23,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.google.common.base.Stopwatch;
+
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -681,5 +683,31 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
     var a3 = factus.fetch(SimpleAggregate.class, aggId);
     assertThat(a3.factsConsumed).isOne();
+  }
+
+  @Test
+  void waitsForOnSubscribedProjection() throws Exception {
+    subscribedUserNames.clear();
+
+    factus.publish(new UserCreated(randomUUID(), "preexisting"));
+
+    Subscription subscription = factus.subscribeAndBlock(subscribedUserNames);
+    // nothing in there yet, so catchup must be received
+    subscription.awaitCatchup();
+    assertThat(subscribedUserNames.names()).hasSize(1);
+
+    var factId1 = factus.publish(new UserCreated(randomUUID(), "Peter"), Fact::id);
+    factus.waitFor(subscribedUserNames, factId1).orTimeout(2, TimeUnit.SECONDS).get();
+
+    assertThat(subscribedUserNames.names()).hasSize(2).contains("preexisting", "Peter");
+
+    var factId2 = factus.publish(new UserCreated(randomUUID(), "John"), Fact::id);
+    factus.waitFor(subscribedUserNames, factId2).orTimeout(2, TimeUnit.SECONDS).get();
+
+    assertThat(subscribedUserNames.names())
+            .hasSize(3)
+            .containsExactlyInAnyOrder("John", "Peter", "preexisting");
+
+    subscription.close();
   }
 }
