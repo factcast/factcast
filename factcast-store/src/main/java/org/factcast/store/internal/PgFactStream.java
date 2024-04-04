@@ -79,7 +79,7 @@ public class PgFactStream {
 
     if (request.streamInfo()) {
       FactStreamInfo factStreamInfo = new FactStreamInfo(serial.get(), fetcher.retrieveLatestSer());
-      pipeline.process(new Signal.FactStreamInfoSignal(factStreamInfo));
+      pipeline.process(Signal.of(factStreamInfo));
     }
 
     String sql = q.createSQL();
@@ -119,7 +119,7 @@ public class PgFactStream {
     // propagate catchup
     if (isConnected()) {
       log.trace("{} signaling catchup", request);
-      pipeline.process(new Signal.CatchupSignal());
+      pipeline.process(Signal.catchup());
     }
     if (isConnected()) {
       if (request.continuous()) {
@@ -151,7 +151,7 @@ public class PgFactStream {
         // slow registration
         condensedExecutor.trigger();
       } else {
-        pipeline.process(new Signal.CompleteSignal());
+        pipeline.process(Signal.complete());
         log.debug("{} completed", request);
       }
     }
@@ -173,7 +173,7 @@ public class PgFactStream {
       long targetSer = ffwdTarget.targetSer();
 
       if (targetId != null && (targetSer > startedSer)) {
-        pipeline.process(new Signal.FastForwardSignal(FactStreamPosition.of(targetId, targetSer)));
+        pipeline.process(Signal.of(FactStreamPosition.of(targetId, targetSer)));
       }
     }
   }

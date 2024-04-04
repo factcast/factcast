@@ -236,7 +236,7 @@ class PgSynchronizedQueryTest {
       when(rs.getString(anyString())).thenThrow(mockException);
 
       uut.processRow(rs);
-      verify(pipe).process(new Signal.ErrorSignal(mockException));
+      verify(pipe).process(Signal.of(mockException));
     }
 
     @Test
@@ -290,7 +290,7 @@ class PgSynchronizedQueryTest {
       uut.processRow(rs);
 
       verify(pipe).process(any(Signal.FactSignal.class));
-      verify(pipe).process(new Signal.ErrorSignal(exception));
+      verify(pipe).process(Signal.of(exception));
       verify(rs).close();
       verify(serial, never()).set(10L);
     }

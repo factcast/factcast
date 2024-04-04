@@ -50,7 +50,7 @@ class MetricServerPipelineTest {
 
     @Test
     void delegatesAndCountsFact() {
-      underTest.process(new Signal.FactSignal(fact));
+      underTest.process(Signal.of(fact));
       verify(count).increment();
       ArgumentCaptor<Signal.FactSignal> cap = ArgumentCaptor.forClass(Signal.FactSignal.class);
       verify(parent).process(cap.capture());
@@ -59,7 +59,7 @@ class MetricServerPipelineTest {
 
     @Test
     void delegatesNonFactSignal() {
-      Signal signal = new Signal.CatchupSignal();
+      Signal signal = Signal.catchup();
       underTest.process(signal);
       verifyNoInteractions(count);
       ArgumentCaptor<Signal> cap = ArgumentCaptor.forClass(Signal.class);

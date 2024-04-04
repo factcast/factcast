@@ -51,7 +51,7 @@ public class TransformingServerPipeline extends AbstractServerPipeline {
         parent.process(s);
       } else {
         // transform and pass
-        parent.process(new Signal.FactSignal(service.transform(transformationRequest)));
+        parent.process(Signal.of(service.transform(transformationRequest)));
       }
     } else parent.process(s);
   }

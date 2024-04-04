@@ -47,32 +47,32 @@ class PostQueryFilterServerPipelineTest {
 
     @Test
     void passesCatchup() {
-      assertPasses(new Signal.CatchupSignal());
+      assertPasses(Signal.catchup());
     }
 
     @Test
     void passesComplete() {
-      assertPasses(new Signal.CompleteSignal());
+      assertPasses(Signal.complete());
     }
 
     @Test
     void passesFlush() {
-      assertPasses(new Signal.FlushSignal());
+      assertPasses(Signal.flush());
     }
 
     @Test
     void passesFfwd() {
-      assertPasses(new Signal.FastForwardSignal(mock(FactStreamPosition.class)));
+      assertPasses(Signal.of(mock(FactStreamPosition.class)));
     }
 
     @Test
     void passesInfo() {
-      assertPasses(new Signal.FactStreamInfoSignal(mock(FactStreamInfo.class)));
+      assertPasses(Signal.of(mock(FactStreamInfo.class)));
     }
 
     @Test
     void passesError() {
-      assertPasses(new Signal.ErrorSignal(new IOException("buh")));
+      assertPasses(Signal.of(new IOException("buh")));
     }
 
     private void assertPasses(Signal s) {
@@ -83,7 +83,7 @@ class PostQueryFilterServerPipelineTest {
     @Test
     void passesFactWithDisabledMatcher() {
       when(matcher.canBeSkipped()).thenReturn(true);
-      assertPasses(new Signal.FactSignal(mock(Fact.class)));
+      assertPasses(Signal.of(mock(Fact.class)));
     }
 
     @Test
@@ -91,7 +91,7 @@ class PostQueryFilterServerPipelineTest {
       Fact f = mock(Fact.class);
       when(matcher.canBeSkipped()).thenReturn(false);
       when(matcher.test(f)).thenReturn(true);
-      assertPasses(new Signal.FactSignal(f));
+      assertPasses(Signal.of(f));
     }
 
     @Test
@@ -99,7 +99,7 @@ class PostQueryFilterServerPipelineTest {
       Fact f = mock(Fact.class);
       when(matcher.canBeSkipped()).thenReturn(false);
       when(matcher.test(f)).thenReturn(false);
-      underTest.process(new Signal.FactSignal(f));
+      underTest.process(Signal.of(f));
       verifyNoInteractions(parent);
     }
   }

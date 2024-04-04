@@ -61,7 +61,7 @@ public class BufferedTransformingServerPipeline extends AbstractServerPipeline {
 
     @Override
     public Signal.FactSignal get() {
-      return new Signal.FactSignal(resolved);
+      return Signal.of(resolved);
     }
   }
 
@@ -170,7 +170,7 @@ public class BufferedTransformingServerPipeline extends AbstractServerPipeline {
           buffer.stream().map(Supplier::get).forEach(parent::process);
         } catch (TransformationException e) {
           // swallows the signals at the beginning of the buffer.
-          parent.process(new Signal.ErrorSignal(e));
+          parent.process(Signal.of(e));
         }
       } finally {
         // reset buffer

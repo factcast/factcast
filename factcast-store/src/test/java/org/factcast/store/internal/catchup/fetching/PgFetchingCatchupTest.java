@@ -143,7 +143,7 @@ class PgFetchingCatchupTest {
       when(extractor.mapRow(rs, 0)).thenReturn(testFact);
       cbh.processRow(rs);
 
-      verify(pipeline).process(new Signal.FactSignal(testFact));
+      verify(pipeline).process(Signal.of(testFact));
     }
 
     @SneakyThrows
@@ -153,9 +153,7 @@ class PgFetchingCatchupTest {
       ResultSet rs = mock(ResultSet.class);
       Fact testFact = new TestFact();
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
-      doThrow(TransformationException.class)
-          .when(pipeline)
-          .process(new Signal.FactSignal(testFact));
+      doThrow(TransformationException.class).when(pipeline).process(Signal.of(testFact));
 
       Assertions.assertThatThrownBy(
               () -> {

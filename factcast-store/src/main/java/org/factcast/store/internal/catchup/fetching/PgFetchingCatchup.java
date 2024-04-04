@@ -68,7 +68,7 @@ public class PgFetchingCatchup implements PgCatchup {
       fetch(jdbc);
     } finally {
       log.trace("Done fetching, flushing.");
-      pipeline.process(new Signal.FlushSignal());
+      pipeline.process(Signal.flush());
       ds.destroy();
       statementHolder.clear();
     }
@@ -91,7 +91,7 @@ public class PgFetchingCatchup implements PgCatchup {
         if (statementHolder.wasCanceled() || rs.isClosed()) return;
 
         Fact f = extractor.mapRow(rs, 0);
-        pipeline.process(new Signal.FactSignal(f));
+        pipeline.process(Signal.of(f));
       } catch (PSQLException psql) {
         // see #2088
         if (statementHolder.wasCanceled()) {
