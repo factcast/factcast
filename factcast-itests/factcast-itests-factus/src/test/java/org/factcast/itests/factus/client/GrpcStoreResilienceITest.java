@@ -17,10 +17,17 @@ package org.factcast.itests.factus.client;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.common.collect.Lists;
 import eu.rekawek.toxiproxy.model.ToxicDirection;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import nl.altindag.log.LogCaptor;
+import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.itests.TestFactusApplication;
@@ -86,6 +93,47 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
 
   @SneakyThrows
   @Test
+  void testConcurrentRetryBehaviorWithoutResponse() {
+    LogCaptor logCaptor = LogCaptor.forClass(GrpcFactStore.class);
+
+    // break upstream call, timeout of 0 will make sure no communication takes place until reset.
+    proxy.toxics().resetPeer("immediate reset", ToxicDirection.UPSTREAM, 0);
+
+    new Timer()
+        .schedule(
+            new TimerTask() {
+              @Override
+              public void run() {
+                // heal the communication
+                log.info("repairing proxy");
+                proxy.reset();
+              }
+            },
+            100);
+
+    List<Fact> facts = new ArrayList<>(MAX_FACTS);
+    for (int i = 0; i < MAX_FACTS; i++) {
+      facts.add(Fact.builder().ns("ns").type("type").buildWithoutPayload());
+    }
+    List<List<Fact>> factPartitions = Lists.partition(facts, MAX_FACTS / 4);
+    // Reconnect with 4 concurrent threads
+    CountDownLatch latch = new CountDownLatch(4);
+    ExecutorService threads = Executors.newFixedThreadPool(4);
+    for (int i = 0; i < 4; i++) {
+      final List<Fact> f = factPartitions.get(i);
+      threads.submit(
+          () -> {
+            fc.publish(f);
+            latch.countDown();
+          });
+    }
+
+    assertThat(latch.await(3, TimeUnit.SECONDS)).isTrue();
+    assertThat(logCaptor.getInfoLogs()).containsOnlyOnce("Handshake successful.");
+  }
+
+  @SneakyThrows
+  @Test
   void testRetryBehaviorWithResponse() {
 
     fc.publish(Fact.builder().ns("ns").type("type").buildWithoutPayload());
@@ -135,7 +183,39 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
   }
 
   @SneakyThrows
-  private void sleep(long ms) {
-    Thread.sleep(ms);
+  @Test
+  void testConcurrentRetryBehaviorWithResponse() {
+    LogCaptor logCaptor = LogCaptor.forClass(GrpcFactStore.class);
+
+    fc.publish(Fact.builder().ns("ns").type("type").buildWithoutPayload());
+
+    // break upstream call
+    proxy.toxics().resetPeer("immediate reset", ToxicDirection.UPSTREAM, 1);
+
+    new Timer()
+        .schedule(
+            new TimerTask() {
+              @Override
+              public void run() {
+                // heal the communication
+                log.info("repairing proxy");
+                proxy.reset();
+              }
+            },
+            1000);
+
+    // Reconnect with 3 concurrent threads
+    CountDownLatch latch = new CountDownLatch(3);
+    ExecutorService threads = Executors.newFixedThreadPool(3);
+    for (int i = 0; i < 3; ++i) {
+      threads.submit(
+          () -> {
+            assertThat(fc.enumerateNamespaces()).isNotEmpty();
+            latch.countDown();
+          });
+    }
+
+    assertThat(latch.await(3, TimeUnit.SECONDS)).isTrue();
+    assertThat(logCaptor.getInfoLogs()).containsOnlyOnce("Handshake successful.");
   }
 }

@@ -15,38 +15,84 @@
  */
 package org.factcast.server.ui.full;
 
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.FlexLayout;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.core.util.NoCoverageReportToBeGenerated;
 
+@SuppressWarnings("java:S1948")
 @Getter
 @NoCoverageReportToBeGenerated
-public class FilterCriteriaViewContainer extends VerticalLayout {
-  @NonNull private final FilterCriteriaView filterCriteriaView;
+public class FilterCriteriaViewContainer extends HorizontalLayout
+    implements FilterCriteriaViews.FilterCriteriaCountUpdateListener {
+  private final FilterCriteriaView filterCriteriaView;
+  private final Supplier<Integer> indexSupplier;
+  private final Paragraph text;
 
-  public FilterCriteriaViewContainer(@NonNull FilterCriteriaView c) {
-    super(c);
-    this.filterCriteriaView = c;
-    add(c);
+  public FilterCriteriaViewContainer(
+      @NonNull FilterCriteriaView c, @NonNull Supplier<Integer> indexSupplier) {
+    this(c, indexSupplier, null);
+  }
+
+  public FilterCriteriaViewContainer(
+      @NonNull FilterCriteriaView filterCriteriaView,
+      @NonNull Supplier<Integer> indexSupplier,
+      Consumer<FilterCriteriaViewContainer> onRemoveClick) {
+    this.filterCriteriaView = filterCriteriaView;
+    this.indexSupplier = indexSupplier;
     initializeLayout();
+
+    this.text = new Paragraph("#" + (indexSupplier.get() + 1));
+    this.text.addClassNames(
+        LumoUtility.TextAlignment.CENTER,
+        LumoUtility.TextColor.SECONDARY,
+        LumoUtility.Margin.Bottom.NONE);
+
+    add(filterCriteriaView);
+    add(createIndexColumn(onRemoveClick));
+  }
+
+  private FlexLayout createIndexColumn(Consumer<FilterCriteriaViewContainer> onRemoveClick) {
+    final var vl = new FlexLayout();
+    vl.addClassName(LumoUtility.Padding.Top.XSMALL);
+    vl.setMinWidth("60px");
+    vl.setFlexDirection(FlexLayout.FlexDirection.COLUMN);
+    vl.getStyle().set("background-color", "var(--lumo-contrast-5pct)");
+    vl.add(this.text);
+
+    if (onRemoveClick != null) {
+      vl.add(createRemoveButton(onRemoveClick));
+    }
+
+    return vl;
+  }
+
+  private Button createRemoveButton(Consumer<FilterCriteriaViewContainer> onRemoveClick) {
+    var btn = new Button(new Icon(VaadinIcon.TRASH));
+    btn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
+    btn.addClickListener(buttonClickEvent -> onRemoveClick.accept(this));
+
+    return btn;
+  }
+
+  @Override
+  public void onFilterCriteriaCountChanged(int oldCount, int newCount) {
+    text.setText("#" + (indexSupplier.get() + 1));
   }
 
   private void initializeLayout() {
     setWidthFull();
-    setSpacing(false);
     setMargin(false);
     setPadding(false);
-    addClassNames(
-        LumoUtility.Border.BOTTOM,
-        LumoUtility.BorderColor.CONTRAST_20,
-        LumoUtility.Padding.Bottom.MEDIUM);
-  }
-
-  public FilterCriteriaViewContainer(@NonNull FilterCriteriaView c, RemoveButton extra) {
-    super(extra, c);
-    this.filterCriteriaView = c;
-    initializeLayout();
+    addClassNames(LumoUtility.Border.TOP, LumoUtility.BorderColor.CONTRAST_20);
   }
 }

@@ -173,7 +173,7 @@ public class GrpcObserverAdapterTest {
     GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer);
     FactStreamPosition id = TestFactStreamPosition.random();
     uut.onFastForward(id);
-    verify(observer).onNext(eq(conv.createNotificationForFastForward(id)));
+    verify(observer).onNext(eq(conv.toProto(id)));
   }
 
   @Test

@@ -90,6 +90,7 @@ public class GrpcFactStore implements FactStore {
   private final ProtoConverter converter = new ProtoConverter();
 
   private final AtomicBoolean initialized = new AtomicBoolean(false);
+
   @VisibleForTesting @Setter private boolean fastStateToken;
 
   @Autowired
@@ -143,7 +144,14 @@ public class GrpcFactStore implements FactStore {
     blockingStub = rawBlockingStub.withWaitForReady();
     stub = rawStub.withWaitForReady();
 
-    if (credentials.isPresent()) {
+    if (properties.getUser() != null && properties.getPassword() != null) {
+      CallCredentials basic =
+          CallCredentialsHelper.basicAuth(properties.getUser(), properties.getPassword());
+      blockingStub = blockingStub.withCallCredentials(basic);
+      stub = stub.withCallCredentials(basic);
+    }
+    // deprecated way of setting credentials but still supported
+    else if (credentials.isPresent()) {
       String[] sa = credentials.get().split(":");
       if (sa.length != 2) {
         throw new IllegalArgumentException(
@@ -193,13 +201,14 @@ public class GrpcFactStore implements FactStore {
     for (; ; ) {
       try {
         resilience.registerAttempt();
+        initializeIfNecessary();
         block.run();
         return;
       } catch (Exception e) {
         RuntimeException decodedException = ClientExceptionHelper.from(e);
         if (resilience.shouldRetry(decodedException)) {
-          log.warn("Temporary failure", decodedException);
-          log.info("Retry call to remote server");
+          log.warn("Temporary failure will be retried", decodedException);
+          initialized.set(false);
           resilience.sleepForInterval();
           // continue and try next attempt
         } else {
@@ -216,13 +225,14 @@ public class GrpcFactStore implements FactStore {
     for (; ; ) {
       try {
         resilience.registerAttempt();
+        initializeIfNecessary();
         T call = block.call();
         return call;
       } catch (Exception e) {
         RuntimeException decodedException = ClientExceptionHelper.from(e);
         if (resilience.shouldRetry(decodedException)) {
-          log.warn("Temporary failure", decodedException);
-          log.info("Retry call to remote server");
+          log.warn("Temporary failure will be retried", decodedException);
+          initialized.set(false);
           resilience.sleepForInterval();
           // continue and try next attempt
         } else {
@@ -277,8 +287,8 @@ public class GrpcFactStore implements FactStore {
   }
 
   @PostConstruct
-  public synchronized void initialize() {
-    if (!initialized.getAndSet(true)) {
+  public synchronized void initializeIfNecessary() {
+    if (!this.initialized.get()) {
       log.debug("Invoking handshake");
       Map<String, String> serverProperties;
       ProtocolVersion serverProtocolVersion;
@@ -302,6 +312,9 @@ public class GrpcFactStore implements FactStore {
           Optional.ofNullable(serverProperties.get(Capabilities.FAST_STATE_TOKEN.toString()))
               .map(Boolean::parseBoolean)
               .orElse(false);
+
+      initialized.set(true);
+      log.info("Handshake successful.");
     }
   }
 
@@ -555,5 +568,11 @@ public class GrpcFactStore implements FactStore {
     log.trace("fetching by serial {}", serial);
     return callAndHandle(
         () -> converter.fromProto(blockingStub.fetchBySerial(converter.toProto(serial))));
+  }
+
+  void reset() {
+    // marks factstore as not initialized, so that a subsequent call needs to go through handshake
+    // first. This is used to signal a faulty connection.
+    this.initialized.set(false);
   }
 }

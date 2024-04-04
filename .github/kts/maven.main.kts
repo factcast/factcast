@@ -1,12 +1,12 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("io.github.typesafegithub:github-workflows-kt:1.9.0")
+@file:DependsOn("io.github.typesafegithub:github-workflows-kt:1.12.0")
 
 
 import io.github.typesafegithub.workflows.actions.actions.CacheV3
 import io.github.typesafegithub.workflows.actions.actions.CheckoutV4
 import io.github.typesafegithub.workflows.actions.actions.SetupJavaV4
-import io.github.typesafegithub.workflows.actions.codecov.CodecovActionV3
+import io.github.typesafegithub.workflows.actions.codecov.*
 import io.github.typesafegithub.workflows.domain.RunnerType
 import io.github.typesafegithub.workflows.domain.Workflow
 import io.github.typesafegithub.workflows.domain.triggers.PullRequest
@@ -87,7 +87,7 @@ public val workflowMaven: Workflow = workflow(
         )
         uses(
             name = "Codecov upload",
-            action = CodecovActionV3(
+            action = CodecovActionV4(
                 token = "${'$'}{{ secrets.CODECOV_TOKEN }}"
             ),
         )
