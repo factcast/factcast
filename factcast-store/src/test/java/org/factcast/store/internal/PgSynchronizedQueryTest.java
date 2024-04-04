@@ -30,6 +30,7 @@ import org.assertj.core.api.Assertions;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.internal.pipeline.ServerPipeline;
+import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.junit.jupiter.api.Nested;
@@ -67,12 +68,20 @@ class PgSynchronizedQueryTest {
 
   @Mock PgLatestSerialFetcher fetcher;
   @Mock CurrentStatementHolder statementHolder;
+  @Mock ServerPipeline pipeline;
 
   @Test
   void testRunWithIndex() {
     uut =
         new PgSynchronizedQuery(
-            jdbcTemplate, sql, setter, rowHandler, serialToContinueFrom, fetcher, statementHolder);
+            pipeline,
+            jdbcTemplate,
+            sql,
+            setter,
+            () -> true,
+            serialToContinueFrom,
+            fetcher,
+            statementHolder);
     uut.run(true);
     verify(jdbcTemplate, never()).execute(startsWith("SET LOCAL enable_bitmapscan"));
   }
@@ -81,7 +90,14 @@ class PgSynchronizedQueryTest {
   void testRunWithoutIndex() {
     uut =
         new PgSynchronizedQuery(
-            jdbcTemplate, sql, setter, rowHandler, serialToContinueFrom, fetcher, statementHolder);
+            pipeline,
+            jdbcTemplate,
+            sql,
+            setter,
+            () -> true,
+            serialToContinueFrom,
+            fetcher,
+            statementHolder);
     uut.run(false);
     verify(jdbcTemplate).execute(startsWith("SET LOCAL enable_bitmapscan"));
   }
@@ -91,7 +107,14 @@ class PgSynchronizedQueryTest {
   void test_exception_during_query() {
     uut =
         new PgSynchronizedQuery(
-            jdbcTemplate, sql, setter, rowHandler, serialToContinueFrom, fetcher, statementHolder);
+            pipeline,
+            jdbcTemplate,
+            sql,
+            setter,
+            () -> true,
+            serialToContinueFrom,
+            fetcher,
+            statementHolder);
     when(statementHolder.wasCanceled()).thenReturn(false);
     DataAccessResourceFailureException exc = new DataAccessResourceFailureException("oh my");
     doThrow(exc)
@@ -115,7 +138,14 @@ class PgSynchronizedQueryTest {
 
     uut =
         new PgSynchronizedQuery(
-            jdbcTemplate, sql, setter, rowHandler, serialToContinueFrom, fetcher, statementHolder);
+            pipeline,
+            jdbcTemplate,
+            sql,
+            setter,
+            () -> true,
+            serialToContinueFrom,
+            fetcher,
+            statementHolder);
     when(statementHolder.wasCanceled()).thenReturn(true);
     doThrow(DataAccessResourceFailureException.class)
         .when(jdbcTemplate)
@@ -206,7 +236,7 @@ class PgSynchronizedQueryTest {
       when(rs.getString(anyString())).thenThrow(mockException);
 
       uut.processRow(rs);
-      verify(pipe).error(mockException);
+      verify(pipe).process(new Signal.ErrorSignal(mockException));
     }
 
     @Test
@@ -219,7 +249,7 @@ class PgSynchronizedQueryTest {
       when(rs.getString(anyString())).thenThrow(RuntimeException.class);
 
       uut.processRow(rs);
-      verify(pipe).error(any(RuntimeException.class));
+      verify(pipe).process(any(Signal.ErrorSignal.class));
     }
 
     @Test
@@ -237,7 +267,7 @@ class PgSynchronizedQueryTest {
 
       uut.processRow(rs);
 
-      verify(pipe, times(1)).fact(any());
+      verify(pipe, times(1)).process(any(Signal.FactSignal.class));
       verify(serial).set(10L);
     }
 
@@ -255,12 +285,12 @@ class PgSynchronizedQueryTest {
       when(rs.getLong(PgConstants.COLUMN_SER)).thenReturn(10L);
 
       var exception = new IllegalArgumentException();
-      doThrow(exception).when(pipe).fact(any());
+      doThrow(exception).when(pipe).process(any(Signal.FactSignal.class));
 
       uut.processRow(rs);
 
-      verify(pipe).fact(any());
-      verify(pipe).error(exception);
+      verify(pipe).process(any(Signal.FactSignal.class));
+      verify(pipe).process(new Signal.ErrorSignal(exception));
       verify(rs).close();
       verify(serial, never()).set(10L);
     }

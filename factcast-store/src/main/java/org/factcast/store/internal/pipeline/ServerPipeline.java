@@ -16,9 +16,6 @@
 package org.factcast.store.internal.pipeline;
 
 import lombok.NonNull;
-import org.factcast.core.Fact;
-import org.factcast.core.FactStreamPosition;
-import org.factcast.core.subscription.FactStreamInfo;
 
 /**
  * used on the server side instead of FactObserver/Subscription
@@ -28,34 +25,4 @@ import org.factcast.core.subscription.FactStreamInfo;
 public interface ServerPipeline {
 
   void process(@NonNull Signal s);
-
-  // convenience
-
-  default void error(@NonNull Throwable err) {
-    process(new Signal.ErrorSignal(err));
-  }
-
-  default void fastForward(@NonNull FactStreamPosition ffwd) {
-    process(new Signal.FastForwardSignal(ffwd));
-  }
-
-  default void info(@NonNull FactStreamInfo info) {
-    process(new Signal.FactStreamInfoSignal(info));
-  }
-
-  default void catchup() {
-    process(new Signal.CatchupSignal());
-  }
-
-  default void complete() {
-    process(new Signal.CompleteSignal());
-  }
-
-  default void flush() {
-    process(new Signal.FlushSignal());
-  }
-
-  default void fact(@NonNull Fact f) {
-    process(new Signal.FactSignal(f));
-  }
 }

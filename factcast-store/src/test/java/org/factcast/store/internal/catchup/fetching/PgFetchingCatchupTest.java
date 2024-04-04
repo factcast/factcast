@@ -33,6 +33,7 @@ import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.StoreMetrics;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.ServerPipeline;
+import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.junit.jupiter.api.BeforeEach;
@@ -142,7 +143,7 @@ class PgFetchingCatchupTest {
       when(extractor.mapRow(rs, 0)).thenReturn(testFact);
       cbh.processRow(rs);
 
-      verify(pipeline).fact(testFact);
+      verify(pipeline).process(new Signal.FactSignal(testFact));
     }
 
     @SneakyThrows
@@ -152,7 +153,9 @@ class PgFetchingCatchupTest {
       ResultSet rs = mock(ResultSet.class);
       Fact testFact = new TestFact();
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
-      doThrow(TransformationException.class).when(pipeline).fact(testFact);
+      doThrow(TransformationException.class)
+          .when(pipeline)
+          .process(new Signal.FactSignal(testFact));
 
       Assertions.assertThatThrownBy(
               () -> {

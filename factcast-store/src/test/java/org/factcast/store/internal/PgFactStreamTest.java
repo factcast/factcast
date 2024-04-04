@@ -38,6 +38,7 @@ import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.pipeline.ServerPipeline;
+import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
@@ -148,7 +149,7 @@ public class PgFactStreamTest {
 
       underTest.fastForward(request);
 
-      verify(pipeline).fastForward(target);
+      verify(pipeline).process(new Signal.FastForwardSignal(target));
     }
 
     @Test
@@ -175,7 +176,7 @@ public class PgFactStreamTest {
 
       underTest.fastForward(request);
 
-      verify(pipeline).fastForward(target);
+      verify(pipeline).process(new Signal.FastForwardSignal(target));
     }
   }
 
@@ -247,7 +248,7 @@ public class PgFactStreamTest {
       when(rs.getString(anyString())).thenThrow(mockException);
 
       uut.processRow(rs);
-      verify(factPipeline).error(mockException);
+      verify(factPipeline).process(new Signal.ErrorSignal(mockException));
     }
 
     @Test
@@ -260,7 +261,7 @@ public class PgFactStreamTest {
       when(rs.getString(anyString())).thenThrow(RuntimeException.class);
 
       uut.processRow(rs);
-      verify(factPipeline).error(any(RuntimeException.class));
+      verify(factPipeline).process(any(Signal.ErrorSignal.class));
     }
 
     @Test
@@ -290,7 +291,7 @@ public class PgFactStreamTest {
 
       uut.processRow(rs);
 
-      verify(factPipeline, times(1)).fact(any());
+      verify(factPipeline, times(1)).process(any(Signal.FactSignal.class));
       verify(serial).set(10L);
     }
 
@@ -308,12 +309,12 @@ public class PgFactStreamTest {
       when(rs.getLong(PgConstants.COLUMN_SER)).thenReturn(10L);
 
       var exception = new IllegalArgumentException();
-      doThrow(exception).when(factPipeline).fact(any());
+      doThrow(exception).when(factPipeline).process(any(Signal.FactSignal.class));
 
       uut.processRow(rs);
 
-      verify(factPipeline, times(1)).fact(any());
-      verify(factPipeline).error(exception);
+      verify(factPipeline, times(1)).process(any(Signal.FactSignal.class));
+      verify(factPipeline).process(new Signal.ErrorSignal(exception));
       verify(rs).close();
       verify(serial, never()).set(10L);
     }

@@ -33,6 +33,34 @@ public sealed interface Signal
 
   void pass(SubscriptionImpl target);
 
+  static Signal flush() {
+    return new FlushSignal();
+  }
+
+  static Signal catchup() {
+    return new CatchupSignal();
+  }
+
+  static Signal complete() {
+    return new CompleteSignal();
+  }
+
+  static Signal of(FactStreamPosition ffwd) {
+    return new FastForwardSignal(ffwd);
+  }
+
+  static Signal of(Fact fact) {
+    return new FactSignal(fact);
+  }
+
+  static Signal of(FactStreamInfo info) {
+    return new FactStreamInfoSignal(info);
+  }
+
+  static Signal of(Throwable e) {
+    return new ErrorSignal(e);
+  }
+
   final class FlushSignal implements Signal {
     @Override
     public void pass(@NonNull SubscriptionImpl target) {

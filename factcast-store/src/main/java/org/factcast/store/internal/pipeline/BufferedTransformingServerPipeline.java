@@ -15,222 +15,168 @@
  */
 package org.factcast.store.internal.pipeline;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.FluentIterable;
 import java.util.*;
-import java.util.concurrent.*;
-import java.util.stream.*;
+import java.util.function.Supplier;
+import javax.annotation.Nullable;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.Fact;
+import org.factcast.core.subscription.TransformationException;
+import org.factcast.core.subscription.transformation.FactTransformerService;
+import org.factcast.core.subscription.transformation.FactTransformers;
+import org.factcast.core.subscription.transformation.TransformationRequest;
 
-/** this class is NOT Threadsafe! */
+/**
+ * this class is NOT Threadsafe!
+ *
+ * <p>Also, we moved away from flushing asynchronously, as it wont have an impact on overall
+ * performance but makes exception handling much harder. Please note that transformations of a list
+ * of requests is handled in parallel already, to minimize the blocking time of flushing afap.
+ */
 @Slf4j
-public class BufferedTransformingServerPipeline {
+public class BufferedTransformingServerPipeline extends AbstractServerPipeline {
 
-  // TODO will be redesigned using a proper deque
+  private final FactTransformerService service;
+  private final FactTransformers transformers;
+  private final int maxBufferSize;
   //
-  //        extends AbstractServerPipeline {
-  //  public BufferedTransformingServerPipeline(
-  //      ServerPipeline parent,
-  //      FactTransformerService service,
-  //      FactTransformers transformers,
-  //      int maxBufferSize,
-  //      ExecutorService es) {
-  //    super(parent);
-  //    this.service = service;
-  //    this.transformers = transformers;
-  //    this.maxBufferSize = maxBufferSize;
-  //    buffer = new ArrayList<>(maxBufferSize);
-  //    index = new HashMap<>(maxBufferSize);
-  //    this.es = es;
-  //  }
-  //
-  //  enum Mode {
-  //    DIRECT,
-  //    BUFFERING
-  //  }
-  //
-  //  private final FactTransformerService service;
-  //  private final FactTransformers transformers;
-  //  private final int maxBufferSize;
-  //
-  //  // maintains the order of *all* signals
-  //  @SuppressWarnings("rawtypes")
-  //  private final List<Pair<TransformationRequest, CompletableFuture<Signal>>> buffer;
-  //
-  //  // enables fast lookup of prepared CFutures
-  //  // note that only FactSignals are indexed
-  //  private final Map<UUID, CompletableFuture<Signal.FactSignal>> index;
-  //
-  //  private Mode mode = Mode.DIRECT;
-  //
-  //  private final ExecutorService es;
-  //
-  //  private void acceptInBufferingMode(
-  //      @NonNull Signal.FactSignal s, TransformationRequest transformationRequest) {
-  //    if (transformationRequest == null) {
-  //      // does not need transformation, add as completed
-  //      addTransformationToBuffer(completedTransformation(s.fact()));
-  //    } else {
-  //      addTransformationToBuffer(futureSignal(transformationRequest));
-  //    }
-  //  }
-  //
-  //  @VisibleForTesting
-  //  void flushIfNecessary(@Nullable Signal s) {
-  //    if (buffer.size() >= maxBufferSize || (s instanceof Signal.FlushSignal)) {
-  //      doFlush();
-  //    }
-  //  }
-  //
-  //  private void addTransformationToBuffer(
-  //      Pair<TransformationRequest, CompletableFuture<Signal.FactSignal>> scheduledTransformation)
-  // {
-  //    // weird indirection to bend the typing rules
-  //
-  //    CompletableFuture transformation = scheduledTransformation.right();
-  //
-  //    CompletableFuture<Signal> rawFuture = new CompletableFuture<>();
-  //    scheduledTransformation
-  //        .right()
-  //        .whenComplete(
-  //            (v, t) -> {
-  //              if (v != null) {
-  //                rawFuture.complete(v);
-  //              } else {
-  //                rawFuture.completeExceptionally(t);
-  //              }
-  //            });
-  //
-  //    buffer.add(Pair.of(scheduledTransformation.left(), transformation));
-  //
-  //    TransformationRequest req = scheduledTransformation.left();
-  //    if (req != null) {
-  //      // index to help with access when completing
-  //      index.put(req.toTransform().id(), scheduledTransformation.right());
-  //    }
-  //    flushIfNecessary();
-  //  }
-  //
-  //  private void flushIfNecessary() {
-  //    flushIfNecessary(null);
-  //  }
-  //
-  //  private void acceptInDirectMode(
-  //      @NonNull Signal.FactSignal f, TransformationRequest transformationRequest) {
-  //    if (transformationRequest == null) {
-  //      // does not need transformation, just pass it to parent
-  //      parent.process(f);
-  //    } else {
-  //      // needs transformation, so switch to buffering mode
-  //      mode = Mode.BUFFERING;
-  //      addTransformationToBuffer(futureSignal(transformationRequest));
-  //    }
-  //  }
-  //
-  //  @NonNull
-  //  private Pair<TransformationRequest, CompletableFuture<Signal.FactSignal>> futureSignal(
-  //      @NonNull TransformationRequest transformationRequest) {
-  //    return Pair.of(transformationRequest, new CompletableFuture<>());
-  //  }
-  //
-  //  @NonNull
-  //  private Pair<TransformationRequest, CompletableFuture<Signal.FactSignal>>
-  // completedTransformation(
-  //      @NonNull Fact f) {
-  //    return Pair.of(null, CompletableFuture.completedFuture(new Signal.FactSignal(f)));
-  //  }
-  //
-  //  @Override
-  //  public void process(Signal s) {
-  //
-  //    // TODO turn into type switch when using JDK21+
-  //
-  //    if (!(s instanceof Signal.FactSignal signal)) {
-  //      if (mode == Mode.DIRECT) {
-  //        parent.process(s);
-  //        return;
-  //      } else {
-  //        // buffered mode
-  //        buffer.add(Pair.of(null, CompletableFuture.completedFuture(s)));
-  //      }
-  //      flushIfNecessary(s);
-  //
-  //    } else {
-  //
-  //      // buffer the signal as is
-  //      TransformationRequest transformationRequest =
-  //          transformers.prepareTransformation(signal.fact());
-  //
-  //      if (mode == Mode.DIRECT) {
-  //        acceptInDirectMode(signal, transformationRequest);
-  //      } else {
-  //        if (mode == Mode.BUFFERING) {
-  //          acceptInBufferingMode(signal, transformationRequest);
-  //        }
-  //      }
-  //    }
-  //  }
-  //
-  //  @VisibleForTesting
-  //  void doFlush() {
-  //    if (!buffer.isEmpty()) {
-  //      log.trace("flushing buffer of size " + buffer.size());
-  //      List<TransformationRequest> factsThatNeedTransformation =
-  //          // filter the scheduled ones
-  //          buffer.stream().map(Pair::left).filter(Objects::nonNull).toList();
-  //
-  //      // resolve futures for the cache hits & transformations
-  //      if (!factsThatNeedTransformation.isEmpty())
-  //        CompletableFuture.runAsync(
-  //            () -> {
-  //              try {
-  //
-  //                // it is important here not to do single lookups
-  //                List<Fact> transformedFacts = service.transform(factsThatNeedTransformation);
-  //                transformedFacts.forEach(
-  //                    f -> {
-  //                      CompletableFuture<Signal.FactSignal> futureSignalToComplete =
-  //                          index.get(f.id());
-  //                      if (futureSignalToComplete != null) {
-  //                        futureSignalToComplete.complete(new Signal.FactSignal(f));
-  //                      } else {
-  //                        log.warn("found unexpected fact id after transformation: {}", f.id());
-  //                      }
-  //                    });
-  //              } catch (Exception e) {
-  //                // make all uncompleted fail
-  //
-  //                index
-  //                    .values()
-  //                    .forEach(
-  //                        cf -> {
-  //                          if (!cf.isDone()) {
-  //                            cf.completeExceptionally(e);
-  //                          }
-  //                        });
-  //              }
-  //            },
-  //            es);
-  //
-  //      // flush out, blocking where the fact is not yet available
-  //
-  //      try {
-  //        buffer.forEach(
-  //            p -> {
-  //              try {
-  //                // all futures are completed by now
-  //                Signal e = p.right().get();
-  //                parent.process(e);
-  //              } catch (InterruptedException i) {
-  //                Thread.currentThread().interrupt();
-  //                throw new TransformationException(i);
-  //              } catch (ExecutionException e) {
-  //                throw new TransformationException(e.getCause());
-  //              }
-  //            });
-  //      } finally {
-  //        // reset buffer
-  //        buffer.clear();
-  //        index.clear();
-  //      }
-  //    }
-  //  }
+  private final List<Supplier<Signal>> buffer;
+  private Mode mode = Mode.DIRECT;
+
+  enum Mode {
+    DIRECT,
+    BUFFERING
+  }
+
+  @RequiredArgsConstructor
+  static class TransformedFactSupplier implements Supplier<Signal> {
+    @Getter final TransformationRequest transformationRequest;
+    @Setter Fact resolved;
+
+    @Override
+    public Signal.FactSignal get() {
+      return new Signal.FactSignal(resolved);
+    }
+  }
+
+  public BufferedTransformingServerPipeline(
+      @NonNull ServerPipeline parent,
+      @NonNull FactTransformerService service,
+      @NonNull FactTransformers transformers,
+      int maxBufferSize) {
+    super(parent);
+    Preconditions.checkArgument(maxBufferSize > 2, "maxBufferSize must be >2");
+    this.service = service;
+    this.transformers = transformers;
+    this.maxBufferSize = maxBufferSize;
+    buffer = new ArrayList<>(maxBufferSize);
+  }
+
+  @Override
+  public void process(@NonNull Signal s) {
+
+    if (!(s instanceof Signal.FactSignal signal)) {
+      // anything but facts go to parent/buffer directly
+      passOrBuffer(s);
+    } else {
+
+      Fact fact = signal.fact();
+
+      TransformationRequest transformationRequest = transformers.prepareTransformation(fact);
+
+      if (transformationRequest == null) {
+        log.trace("passing fact signal without transformation: {}", fact);
+        passOrBuffer(s);
+      } else {
+        // needs transformation
+
+        // switch to buffering no matter what it was before
+        log.trace("passing fact signal WITH transformation: {}", fact);
+        mode = Mode.BUFFERING;
+        buffer(transformationRequest);
+      }
+    }
+  }
+
+  @VisibleForTesting
+  void passOrBuffer(@NonNull Signal s) {
+    if (mode == Mode.DIRECT) {
+      parent.process(s);
+    } else {
+      // buffered mode
+      buffer(s);
+    }
+  }
+
+  void buffer(Signal s) {
+    buffer.add(() -> s);
+    flushIfNecessary(s);
+  }
+
+  void buffer(TransformationRequest transformationRequest) {
+    buffer.add(new TransformedFactSupplier(transformationRequest));
+    flushIfNecessary();
+  }
+
+  void flushIfNecessary(@Nullable Signal s) {
+    if (buffer.size() >= maxBufferSize || (s != null && !(s instanceof Signal.FactSignal))) {
+      doFlush();
+    }
+  }
+
+  void flushIfNecessary() {
+    flushIfNecessary(null);
+  }
+
+  @VisibleForTesting
+  void doFlush() {
+    if (!buffer.isEmpty()) {
+      try {
+        int size = buffer.size();
+        if (size > 2) {
+          // we only want that trace log if this is more that "Fact+Flush"
+          log.trace("flushing buffer of size {}", size);
+        }
+
+        FluentIterable<TransformedFactSupplier> pendingTransformations =
+            FluentIterable.from(buffer).filter(TransformedFactSupplier.class);
+
+        if (pendingTransformations.isEmpty())
+          throw new IllegalStateException("No pending transformations in buffer!");
+
+        try {
+
+          List<TransformationRequest> requests =
+              pendingTransformations.stream()
+                  .map(TransformedFactSupplier::transformationRequest)
+                  .toList();
+
+          List<Fact> transformedFacts = service.transform(requests);
+
+          if (pendingTransformations.size() != transformedFacts.size())
+            throw new IllegalStateException(
+                "transformation resulted in unexpected number of facts");
+
+          // pass results back to TransformedFactSuppliers
+          Iterator<Fact> transformedIterator = transformedFacts.iterator();
+          pendingTransformations.forEach(t -> t.resolved(transformedIterator.next()));
+
+          buffer.stream().map(Supplier::get).forEach(parent::process);
+        } catch (TransformationException e) {
+          // swallows the signals at the beginning of the buffer.
+          parent.process(new Signal.ErrorSignal(e));
+        }
+      } finally {
+        // reset buffer
+        buffer.clear();
+        mode = Mode.DIRECT;
+      }
+    }
+  }
 }

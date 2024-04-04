@@ -33,13 +33,13 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.pipeline.ServerPipeline;
+import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
-import org.springframework.jdbc.core.RowCallbackHandler;
 
 /**
  * Creates and maintains a subscription.
@@ -79,17 +79,21 @@ public class PgFactStream {
 
     if (request.streamInfo()) {
       FactStreamInfo factStreamInfo = new FactStreamInfo(serial.get(), fetcher.retrieveLatestSer());
-      pipeline.info(factStreamInfo);
+      pipeline.process(new Signal.FactStreamInfoSignal(factStreamInfo));
     }
 
     String sql = q.createSQL();
     PreparedStatementSetter setter = q.createStatementSetter(serial);
-    RowCallbackHandler rsHandler =
-        new PgSynchronizedQuery.FactRowCallbackHandler(
-            pipeline, this::isConnected, serial, request, statementHolder);
     PgSynchronizedQuery query =
         new PgSynchronizedQuery(
-            jdbcTemplate, sql, setter, rsHandler, serial, fetcher, statementHolder);
+            pipeline,
+            jdbcTemplate,
+            sql,
+            setter,
+            this::isConnected,
+            serial,
+            fetcher,
+            statementHolder);
     catchupAndFollow(request, query);
   }
 
@@ -115,7 +119,7 @@ public class PgFactStream {
     // propagate catchup
     if (isConnected()) {
       log.trace("{} signaling catchup", request);
-      pipeline.catchup();
+      pipeline.process(new Signal.CatchupSignal());
     }
     if (isConnected()) {
       if (request.continuous()) {
@@ -147,7 +151,7 @@ public class PgFactStream {
         // slow registration
         condensedExecutor.trigger();
       } else {
-        pipeline.complete();
+        pipeline.process(new Signal.CompleteSignal());
         log.debug("{} completed", request);
       }
     }
@@ -169,7 +173,7 @@ public class PgFactStream {
       long targetSer = ffwdTarget.targetSer();
 
       if (targetId != null && (targetSer > startedSer)) {
-        pipeline.fastForward(FactStreamPosition.of(targetId, targetSer));
+        pipeline.process(new Signal.FastForwardSignal(FactStreamPosition.of(targetId, targetSer)));
       }
     }
   }

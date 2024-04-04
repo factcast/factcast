@@ -49,18 +49,9 @@ public class ServerPipelineFactory {
     ServerPipeline chain = new ServerPipelineAdapter(sub);
     chain = new MetricServerPipeline(chain, metrics);
 
-    // TODO
-    //    chain =
-    //        new BufferedTransformingServerPipeline(
-    //            chain,
-    //            factTransformerService,
-    //            FactTransformers.createFor(subreq),
-    //            maxBufferSize,
-    //            executorService);
-
     chain =
-        new TransformingServerPipeline(
-            chain, factTransformerService, FactTransformers.createFor(subreq));
+        new BufferedTransformingServerPipeline(
+            chain, factTransformerService, FactTransformers.createFor(subreq), maxBufferSize);
 
     chain = new BlacklistFilterServerPipeline(chain, blacklist);
     chain = new PostQueryFilterServerPipeline(chain, perRequestMatcher);

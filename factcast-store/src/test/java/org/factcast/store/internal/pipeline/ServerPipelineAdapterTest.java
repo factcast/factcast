@@ -44,7 +44,7 @@ class ServerPipelineAdapterTest {
 
     @Test
     void delegates() {
-      underTest.fact(fact);
+      underTest.process(Signal.of(fact));
       verify(sub).notifyElement(fact);
       verifyNoMoreInteractions(sub);
     }
@@ -59,7 +59,7 @@ class ServerPipelineAdapterTest {
 
     @Test
     void delegates() {
-      underTest.info(info);
+      underTest.process(Signal.of(info));
       verify(sub).notifyFactStreamInfo(info);
       verifyNoMoreInteractions(sub);
     }
@@ -74,7 +74,7 @@ class ServerPipelineAdapterTest {
 
     @Test
     void delegates() {
-      underTest.fastForward(ffwd);
+      underTest.process(Signal.of(ffwd));
       verify(sub).notifyFastForward(ffwd);
       verifyNoMoreInteractions(sub);
     }
@@ -89,7 +89,7 @@ class ServerPipelineAdapterTest {
 
     @Test
     void delegates() {
-      underTest.error(err);
+      underTest.process(Signal.of(err));
       verify(sub).notifyError(err);
       verifyNoMoreInteractions(sub);
     }
@@ -102,7 +102,7 @@ class ServerPipelineAdapterTest {
 
     @Test
     void delegates() {
-      underTest.catchup();
+      underTest.process(Signal.catchup());
       verify(sub).notifyCatchup();
       verifyNoMoreInteractions(sub);
     }
@@ -115,7 +115,7 @@ class ServerPipelineAdapterTest {
 
     @Test
     void delegates() {
-      underTest.complete();
+      underTest.process(Signal.complete());
       verify(sub).notifyComplete();
       verifyNoMoreInteractions(sub);
     }
