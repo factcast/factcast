@@ -102,7 +102,7 @@
     <grpc.version>1.60.1</grpc.version>
     <!-- lter versions seem to break toxi -->
     <testcontainers.version>1.19.7</testcontainers.version>
-    <arrow.version>1.2.3</arrow.version>
+    <arrow.version>1.2.4</arrow.version>
     <micronaut.version>4.3.7</micronaut.version>
     <kotlin.version>1.9.23</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
