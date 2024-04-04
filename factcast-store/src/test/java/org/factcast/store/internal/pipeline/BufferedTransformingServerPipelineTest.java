@@ -63,15 +63,15 @@ public class BufferedTransformingServerPipelineTest {
 
       when(service.transform(anyList())).thenReturn(List.of(fact));
 
-      uut.process(new Signal.FactSignal(fact));
+      uut.process(Signal.of(fact));
       verifyNoInteractions(parent);
-      uut.process(new Signal.FactSignal(fact));
+      uut.process(Signal.of(fact));
       verifyNoInteractions(parent);
-      uut.process(new Signal.FactSignal(fact));
+      uut.process(Signal.of(fact));
 
       // maxBufferSize is 5, so we expect nothing yet
       verifyNoInteractions(parent);
-      uut.process(new Signal.FlushSignal());
+      uut.process(Signal.flush());
 
       verify(parent, times(3)).process(any(Signal.FactSignal.class));
       verify(parent).process(any(Signal.FlushSignal.class));
@@ -94,14 +94,14 @@ public class BufferedTransformingServerPipelineTest {
       when(service.transform(List.of(transformationRequest, transformationRequest2)))
           .thenReturn(List.of(factToTransform, factToTransform2));
 
-      uut.process(new Signal.FactSignal(factToTransform));
+      uut.process(Signal.of(factToTransform));
       verifyNoInteractions(parent);
-      uut.process(new Signal.FactSignal(noopFact));
+      uut.process(Signal.of(noopFact));
       verifyNoInteractions(parent);
-      uut.process(new Signal.FactSignal(factToTransform2));
-      uut.process(new Signal.FactSignal(noopFact));
+      uut.process(Signal.of(factToTransform2));
+      uut.process(Signal.of(noopFact));
       verifyNoInteractions(parent);
-      uut.process(new Signal.FactSignal(noopFact));
+      uut.process(Signal.of(noopFact));
 
       verify(parent, times(5)).process(any(Signal.FactSignal.class));
       verify(service).transform(List.of(transformationRequest, transformationRequest2));
@@ -123,15 +123,15 @@ public class BufferedTransformingServerPipelineTest {
       when(service.transform(List.of(transformationRequest, transformationRequest2)))
           .thenThrow(new TransformationException("bad luck"));
 
-      uut.process(new Signal.FactSignal(factToTransform));
+      uut.process(Signal.of(factToTransform));
       verifyNoInteractions(parent);
-      uut.process(new Signal.FactSignal(noopFact));
+      uut.process(Signal.of(noopFact));
       verifyNoInteractions(parent);
-      uut.process(new Signal.FactSignal(factToTransform2));
-      uut.process(new Signal.FactSignal(noopFact));
+      uut.process(Signal.of(factToTransform2));
+      uut.process(Signal.of(noopFact));
       verifyNoInteractions(parent);
       // should trigger flush
-      uut.process(new Signal.FactSignal(noopFact));
+      uut.process(Signal.of(noopFact));
 
       verify(parent).process(any(Signal.ErrorSignal.class));
       verify(parent, never()).process(any(Signal.FactSignal.class));
@@ -151,7 +151,7 @@ public class BufferedTransformingServerPipelineTest {
     @Test
     void simplePassThrough() {
       when(transformers.prepareTransformation(any())).thenReturn(null);
-      Signal signal = new Signal.FactSignal(fact);
+      Signal signal = Signal.of(fact);
       uut.process(signal);
       verify(parent).process(signal);
       uut.process(signal);
@@ -164,15 +164,15 @@ public class BufferedTransformingServerPipelineTest {
 
     @Test
     void simplePassNonFact() {
-      Signal signal = new Signal.FlushSignal();
+      Signal signal = Signal.flush();
 
       uut.process(signal);
       verify(parent).process(signal);
 
-      uut.process(new Signal.CatchupSignal());
+      uut.process(Signal.catchup());
       verify(parent, times(2)).process(any());
 
-      uut.process(new Signal.CompleteSignal());
+      uut.process(Signal.complete());
       verify(parent, times(3)).process(any());
 
       verifyNoInteractions(service, transformers);
@@ -188,19 +188,19 @@ public class BufferedTransformingServerPipelineTest {
 
     @Test
     void flushesOnCatchup() {
-      uut.flushIfNecessary(new Signal.CatchupSignal());
+      uut.flushIfNecessary(Signal.catchup());
       verify(uut).doFlush();
     }
 
     @Test
     void flushesOnComplete() {
-      uut.flushIfNecessary(new Signal.CompleteSignal());
+      uut.flushIfNecessary(Signal.complete());
       verify(uut).doFlush();
     }
 
     @Test
     void flushesOnError() {
-      uut.flushIfNecessary(new Signal.ErrorSignal(new IOException("buh")));
+      uut.flushIfNecessary(Signal.of(new IOException("buh")));
       verify(uut).doFlush();
     }
 
@@ -208,14 +208,14 @@ public class BufferedTransformingServerPipelineTest {
     @Test
     void doesNotFLushOnFact() {
       @NonNull Fact fact = new TestFact();
-      uut.flushIfNecessary(new Signal.FactSignal(fact));
+      uut.flushIfNecessary(Signal.of(fact));
       verify(uut).flushIfNecessary(any());
       verifyNoMoreInteractions(uut);
     }
 
     @Test
     void flushesOnFlush() {
-      uut.flushIfNecessary(new Signal.FlushSignal());
+      uut.flushIfNecessary(Signal.flush());
       verify(uut).doFlush();
     }
   }

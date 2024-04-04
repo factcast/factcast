@@ -116,7 +116,7 @@ class PgSynchronizedQuery {
                 },
                 rowHandler);
 
-            pipe.process(new Signal.FlushSignal());
+            pipe.process(Signal.flush());
 
             return null;
           });
@@ -155,7 +155,7 @@ class PgSynchronizedQuery {
         Fact f = null;
         try {
           f = PgFact.from(rs);
-          pipe.process(new Signal.FactSignal(f));
+          pipe.process(Signal.of(f));
           serial.set(rs.getLong(PgConstants.COLUMN_SER));
         } catch (PSQLException psql) {
           // see #2088
@@ -174,7 +174,7 @@ class PgSynchronizedQuery {
         rs.close();
       } catch (Exception ignore) {
       }
-      pipe.process(new Signal.ErrorSignal(e));
+      pipe.process(Signal.of(e));
     }
   }
 }

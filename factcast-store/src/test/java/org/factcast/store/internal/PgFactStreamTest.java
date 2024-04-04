@@ -149,7 +149,7 @@ public class PgFactStreamTest {
 
       underTest.fastForward(request);
 
-      verify(pipeline).process(new Signal.FastForwardSignal(target));
+      verify(pipeline).process(Signal.of(target));
     }
 
     @Test
@@ -176,7 +176,7 @@ public class PgFactStreamTest {
 
       underTest.fastForward(request);
 
-      verify(pipeline).process(new Signal.FastForwardSignal(target));
+      verify(pipeline).process(Signal.of(target));
     }
   }
 
@@ -248,7 +248,7 @@ public class PgFactStreamTest {
       when(rs.getString(anyString())).thenThrow(mockException);
 
       uut.processRow(rs);
-      verify(factPipeline).process(new Signal.ErrorSignal(mockException));
+      verify(factPipeline).process(Signal.of(mockException));
     }
 
     @Test
@@ -314,7 +314,7 @@ public class PgFactStreamTest {
       uut.processRow(rs);
 
       verify(factPipeline, times(1)).process(any(Signal.FactSignal.class));
-      verify(factPipeline).process(new Signal.ErrorSignal(exception));
+      verify(factPipeline).process(Signal.of(exception));
       verify(rs).close();
       verify(serial, never()).set(10L);
     }

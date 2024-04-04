@@ -49,14 +49,14 @@ class BlacklistFilterServerPipelineTest {
     @Test
     void filters() {
       when(blacklist.isBlocked(any())).thenReturn(true);
-      underTest.process(new Signal.FactSignal(fact));
+      underTest.process(Signal.of(fact));
       verifyNoInteractions(parent);
     }
 
     @Test
     void delegates() {
       when(blacklist.isBlocked(any())).thenReturn(false);
-      underTest.process(new Signal.FactSignal(fact));
+      underTest.process(Signal.of(fact));
       ArgumentCaptor<Signal.FactSignal> cap = ArgumentCaptor.forClass(Signal.FactSignal.class);
       verify(parent).process(cap.capture());
       Assertions.assertThat(cap.getValue().fact()).isNotNull().isSameAs(fact);
@@ -64,7 +64,7 @@ class BlacklistFilterServerPipelineTest {
 
     @Test
     void delegatesNonFactSignal() {
-      Signal signal = new Signal.CatchupSignal();
+      Signal signal = Signal.catchup();
       underTest.process(signal);
       verifyNoInteractions(blacklist);
       verify(parent).process(signal);

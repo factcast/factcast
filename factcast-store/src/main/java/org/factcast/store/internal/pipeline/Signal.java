@@ -33,31 +33,31 @@ public sealed interface Signal
 
   void pass(SubscriptionImpl target);
 
-  static Signal flush() {
+  static FlushSignal flush() {
     return new FlushSignal();
   }
 
-  static Signal catchup() {
+  static CatchupSignal catchup() {
     return new CatchupSignal();
   }
 
-  static Signal complete() {
+  static CompleteSignal complete() {
     return new CompleteSignal();
   }
 
-  static Signal of(FactStreamPosition ffwd) {
+  static FastForwardSignal of(FactStreamPosition ffwd) {
     return new FastForwardSignal(ffwd);
   }
 
-  static Signal of(Fact fact) {
+  static FactSignal of(Fact fact) {
     return new FactSignal(fact);
   }
 
-  static Signal of(FactStreamInfo info) {
+  static FactStreamInfoSignal of(FactStreamInfo info) {
     return new FactStreamInfoSignal(info);
   }
 
-  static Signal of(Throwable e) {
+  static ErrorSignal of(Throwable e) {
     return new ErrorSignal(e);
   }
 
