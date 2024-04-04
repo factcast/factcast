@@ -3,10 +3,10 @@
 @file:DependsOn("io.github.typesafegithub:github-workflows-kt:1.13.0")
 
 
-import io.github.typesafegithub.workflows.actions.actions.CacheV3
+import io.github.typesafegithub.workflows.actions.actions.CacheV4
 import io.github.typesafegithub.workflows.actions.actions.CheckoutV4
 import io.github.typesafegithub.workflows.actions.actions.SetupJavaV4
-import io.github.typesafegithub.workflows.actions.codecov.*
+import io.github.typesafegithub.workflows.actions.codecov.CodecovActionV4
 import io.github.typesafegithub.workflows.domain.RunnerType
 import io.github.typesafegithub.workflows.domain.Workflow
 import io.github.typesafegithub.workflows.domain.triggers.PullRequest
@@ -14,7 +14,6 @@ import io.github.typesafegithub.workflows.domain.triggers.Push
 import io.github.typesafegithub.workflows.dsl.expressions.expr
 import io.github.typesafegithub.workflows.dsl.workflow
 import io.github.typesafegithub.workflows.yaml.writeToFile
-import java.nio.file.Paths
 
 public val workflowMaven: Workflow = workflow(
     name = "Maven all in one",
@@ -24,7 +23,7 @@ public val workflowMaven: Workflow = workflow(
             branches = listOf("master"),
         ),
     ),
-    sourceFile =  __FILE__.toPath(),
+    sourceFile = __FILE__.toPath(),
 ) {
     job(
         id = "build",
@@ -36,7 +35,7 @@ public val workflowMaven: Workflow = workflow(
         )
         uses(
             name = "Cache - Maven Repository",
-            action = CacheV3(
+            action = CacheV4(
                 path = listOf(
                     "~/.m2/repository",
                 ),
@@ -48,7 +47,7 @@ public val workflowMaven: Workflow = workflow(
         )
         uses(
             name = "Cache - Sonar cache",
-            action = CacheV3(
+            action = CacheV4(
                 path = listOf(
                     "~/.sonar/cache",
                 ),
@@ -108,7 +107,7 @@ public val workflowMaven: Workflow = workflow(
         )
         uses(
             name = "Cache - Maven Repository",
-            action = CacheV3(
+            action = CacheV4(
                 path = listOf(
                     "~/.m2/repository",
                 ),
