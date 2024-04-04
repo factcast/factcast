@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast-itests</artifactId>
-    <version>0.7.5-SNAPSHOT</version>
+    <version>0.7.6-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-itests-security</artifactId>
@@ -79,7 +79,7 @@
     <dependency>
       <groupId>net.javacrumbs.json-unit</groupId>
       <artifactId>json-unit-assertj</artifactId>
-      <version>3.2.2</version>
+      <version>3.2.7</version>
       <scope>test</scope>
     </dependency>
     <dependency>

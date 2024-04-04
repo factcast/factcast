@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.7.5-SNAPSHOT</version>
+    <version>0.7.6-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-factus</artifactId>
@@ -50,7 +50,7 @@
     <dependency>
       <groupId>net.javacrumbs.json-unit</groupId>
       <artifactId>json-unit-assertj</artifactId>
-      <version>3.2.2</version>
+      <version>3.2.7</version>
       <scope>test</scope>
     </dependency>
 
@@ -64,7 +64,7 @@
     <dependency>
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-core</artifactId>
-      <version>1.12.2</version>
+      <version>1.12.4</version>
     </dependency>
 
     <dependency>

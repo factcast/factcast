@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.7.5-SNAPSHOT</version>
+    <version>0.7.6-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-spring-boot-autoconfigure</artifactId>
@@ -44,11 +44,6 @@
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-client-grpc</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>org.factcast</groupId>
-      <artifactId>factcast-store-rds</artifactId>
       <optional>true</optional>
     </dependency>
     <dependency>
@@ -104,7 +99,7 @@
     <dependency>
       <groupId>org.redisson</groupId>
       <artifactId>redisson-spring-boot-starter</artifactId>
-      <version>${redisson-spring-boot-starter.version}</version>
+      <version>${redisson.version}</version>
       <optional>true</optional>
     </dependency>
   </dependencies>

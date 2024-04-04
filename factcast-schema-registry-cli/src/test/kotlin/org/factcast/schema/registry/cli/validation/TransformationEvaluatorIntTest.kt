@@ -13,8 +13,10 @@ import org.factcast.schema.registry.cli.domain.Namespace
 import org.factcast.schema.registry.cli.domain.Transformation
 import org.factcast.schema.registry.cli.fixture
 import org.factcast.schema.registry.cli.fs.FileSystemService
+import org.junit.jupiter.api.Tag
 
 @MicronautTest
+@Tag("integration")
 class TransformationEvaluatorIntTest(private val uut: TransformationEvaluator, private val fs: FileSystemService) :
     StringSpec() {
 
