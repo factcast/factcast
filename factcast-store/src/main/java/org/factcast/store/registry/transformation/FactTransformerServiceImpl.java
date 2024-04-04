@@ -21,15 +21,18 @@ import com.google.common.annotations.VisibleForTesting;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.util.*;
-import java.util.stream.*;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.TransformationRequest;
+import org.factcast.core.util.ExceptionHelper;
 import org.factcast.core.util.FactCastJson;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.Pair;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.cache.TransformationCache;
@@ -38,7 +41,6 @@ import org.factcast.store.registry.transformation.chains.TransformationChains;
 import org.factcast.store.registry.transformation.chains.Transformer;
 
 @Slf4j
-@RequiredArgsConstructor
 public class FactTransformerServiceImpl implements FactTransformerService {
 
   @NonNull private final TransformationChains chains;
@@ -48,6 +50,23 @@ public class FactTransformerServiceImpl implements FactTransformerService {
   @NonNull private final TransformationCache cache;
 
   @NonNull private final RegistryMetrics registryMetrics;
+
+  @NonNull private final StoreConfigurationProperties props;
+  private final ExecutorService pool;
+
+  public FactTransformerServiceImpl(
+      @NonNull TransformationChains chains,
+      @NonNull Transformer trans,
+      @NonNull TransformationCache cache,
+      @NonNull RegistryMetrics registryMetrics,
+      @NonNull StoreConfigurationProperties props) {
+    this.chains = chains;
+    this.trans = trans;
+    this.cache = cache;
+    this.registryMetrics = registryMetrics;
+    this.props = props;
+    this.pool = Executors.newFixedThreadPool(props.getSizeOfThreadPoolForBufferedTransformations());
+  }
 
   @Override
   public Fact transform(@NonNull TransformationRequest req) throws TransformationException {
@@ -72,35 +91,56 @@ public class FactTransformerServiceImpl implements FactTransformerService {
 
     if (req.isEmpty()) return Collections.emptyList();
 
-    log.trace("batch processing  " + req.size() + " transformation requests");
+    try {
+      return CompletableFuture.supplyAsync(
+              () -> {
+                log.trace("batch processing {} transformation requests", req.size());
 
-    List<Pair<TransformationRequest, TransformationChain>> pairs =
-        req.stream().map(r -> Pair.of(r, toChain(r))).collect(Collectors.toList());
-    Set<TransformationCache.Key> keys =
-        pairs.parallelStream()
-            .map(
-                p ->
-                    TransformationCache.Key.of(
-                        p.left().toTransform().id(), p.right().toVersion(), p.right().id()))
-            .collect(Collectors.toSet());
+                List<Pair<TransformationRequest, TransformationChain>> pairs =
+                    req.stream().map(r -> Pair.of(r, toChain(r))).toList();
+                Set<TransformationCache.Key> keys =
+                    pairs.parallelStream()
+                        .map(
+                            p ->
+                                TransformationCache.Key.of(
+                                    p.left().toTransform().id(),
+                                    p.right().toVersion(),
+                                    p.right().id()))
+                        .collect(Collectors.toSet());
 
-    Map<UUID, Fact> found =
-        cache.findAll(keys).stream().collect(Collectors.toMap(Fact::id, f -> f));
-    log.trace("batch lookup found {} out of {} pre transformed facts", found.size(), req.size());
+                Map<UUID, Fact> found =
+                    cache.findAll(keys).stream().collect(Collectors.toMap(Fact::id, f -> f));
+                log.trace(
+                    "batch lookup found {} out of {} pre transformed facts",
+                    found.size(),
+                    req.size());
 
-    Stream<Pair<TransformationRequest, TransformationChain>> pairStream = pairs.stream();
-    if (shouldBeParallel(pairs.stream().map(Pair::right))) pairStream = pairStream.parallel();
-    return pairStream
-        .map(
-            c -> {
-              Fact e = c.left().toTransform();
-              Fact cached = found.get(e.id());
-              if (cached != null) return cached;
-              else {
-                return doTransform(e, c.right());
-              }
-            })
-        .toList();
+                Stream<Pair<TransformationRequest, TransformationChain>> pairStream =
+                    pairs.stream();
+                if (shouldBeParallel(pairs.stream().map(Pair::right))) {
+                  //noinspection DataFlowIssue
+                  pairStream = pairStream.parallel();
+                }
+                return pairStream
+                    .map(
+                        c -> {
+                          Fact e = c.left().toTransform();
+                          Fact cached = found.get(e.id());
+                          if (cached != null) return cached;
+                          else {
+                            return doTransform(e, c.right());
+                          }
+                        })
+                    .toList();
+              })
+          .get();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw ExceptionHelper.toRuntime(e);
+    } catch (ExecutionException e) {
+      // make sure TransformationExceptions are escalated as such
+      throw ExceptionHelper.toRuntime(e.getCause());
+    }
   }
 
   /**

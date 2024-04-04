@@ -21,6 +21,10 @@ import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.FactTransformers;
 import org.factcast.core.subscription.transformation.TransformationRequest;
 
+@Deprecated
+// TODO delete
+// This pipeline creates an n+1 query problem on the transformationCache, so that it should not be
+// used
 public class TransformingServerPipeline extends AbstractServerPipeline {
 
   private final FactTransformerService service;
@@ -47,7 +51,7 @@ public class TransformingServerPipeline extends AbstractServerPipeline {
         parent.process(s);
       } else {
         // transform and pass
-        parent.fact(service.transform(transformationRequest));
+        parent.process(new Signal.FactSignal(service.transform(transformationRequest)));
       }
     } else parent.process(s);
   }

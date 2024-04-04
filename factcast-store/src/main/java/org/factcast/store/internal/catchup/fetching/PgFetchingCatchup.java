@@ -27,6 +27,7 @@ import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.ServerPipeline;
+import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
@@ -67,7 +68,7 @@ public class PgFetchingCatchup implements PgCatchup {
       fetch(jdbc);
     } finally {
       log.trace("Done fetching, flushing.");
-      pipeline.flush();
+      pipeline.process(new Signal.FlushSignal());
       ds.destroy();
       statementHolder.clear();
     }
@@ -90,7 +91,7 @@ public class PgFetchingCatchup implements PgCatchup {
         if (statementHolder.wasCanceled() || rs.isClosed()) return;
 
         Fact f = extractor.mapRow(rs, 0);
-        pipeline.fact(f);
+        pipeline.process(new Signal.FactSignal(f));
       } catch (PSQLException psql) {
         // see #2088
         if (statementHolder.wasCanceled()) {
