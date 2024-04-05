@@ -173,6 +173,7 @@ class PgSynchronizedQuery {
       try {
         rs.close();
       } catch (Exception ignore) {
+        // this one will be ignored
       }
       pipe.process(Signal.of(e));
     }
