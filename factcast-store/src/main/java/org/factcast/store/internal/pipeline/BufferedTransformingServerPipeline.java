@@ -125,7 +125,7 @@ public class BufferedTransformingServerPipeline extends AbstractServerPipeline {
   }
 
   void flushIfNecessary(@Nullable Signal s) {
-    if (buffer.size() >= maxBufferSize || (s != null && !(s instanceof Signal.FactSignal))) {
+    if (buffer.size() >= maxBufferSize || (s != null && s.indicatesFlush())) {
       doFlush();
     }
   }

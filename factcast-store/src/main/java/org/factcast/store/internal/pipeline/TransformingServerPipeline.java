@@ -56,17 +56,3 @@ public class TransformingServerPipeline extends AbstractServerPipeline {
     } else parent.process(s);
   }
 }
-  //        @Override
-  //        public void fact(@Nullable Fact f) {
-  //            else {
-  //                TransformationRequest transformationRequest =
-  // transformers.prepareTransformation(f);
-  //                if (transformationRequest == null) {
-  //                    // pass unmodified
-  //                    parent.fact(f);
-  //                } else {
-  //                    // transform and pass
-  //                    parent.fact(service.transform(transformationRequest));
-  //                }
-  //            }
-  //        }

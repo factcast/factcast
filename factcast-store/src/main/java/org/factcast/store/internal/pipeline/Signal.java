@@ -61,6 +61,10 @@ public sealed interface Signal
     return new ErrorSignal(e);
   }
 
+  default boolean indicatesFlush() {
+    return true;
+  }
+
   final class FlushSignal implements Signal {
     @Override
     public void pass(@NonNull SubscriptionImpl target) {
@@ -109,6 +113,11 @@ public sealed interface Signal
     @Override
     public void pass(SubscriptionImpl target) {
       target.notifyElement(fact);
+    }
+
+    @Override
+    public boolean indicatesFlush() {
+      return false;
     }
   }
 

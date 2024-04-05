@@ -41,7 +41,7 @@ import org.factcast.store.registry.transformation.chains.TransformationChains;
 import org.factcast.store.registry.transformation.chains.Transformer;
 
 @Slf4j
-public class FactTransformerServiceImpl implements FactTransformerService {
+public class FactTransformerServiceImpl implements FactTransformerService, AutoCloseable {
 
   @NonNull private final TransformationChains chains;
 
@@ -51,7 +51,6 @@ public class FactTransformerServiceImpl implements FactTransformerService {
 
   @NonNull private final RegistryMetrics registryMetrics;
 
-  @NonNull private final StoreConfigurationProperties props;
   private final ExecutorService pool;
 
   public FactTransformerServiceImpl(
@@ -64,8 +63,10 @@ public class FactTransformerServiceImpl implements FactTransformerService {
     this.trans = trans;
     this.cache = cache;
     this.registryMetrics = registryMetrics;
-    this.props = props;
-    this.pool = Executors.newFixedThreadPool(props.getSizeOfThreadPoolForBufferedTransformations());
+    this.pool =
+        registryMetrics.monitor(
+            Executors.newWorkStealingPool(props.getSizeOfThreadPoolForBufferedTransformations()),
+            "parallel-transformation");
   }
 
   @Override
@@ -132,7 +133,8 @@ public class FactTransformerServiceImpl implements FactTransformerService {
                           }
                         })
                     .toList();
-              })
+              },
+              pool)
           .get();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -192,5 +194,10 @@ public class FactTransformerServiceImpl implements FactTransformerService {
     int sourceVersion = e.version();
     TransformationKey key = TransformationKey.of(e.ns(), e.type());
     return chains.get(key, sourceVersion, req.targetVersions());
+  }
+
+  @Override
+  public void close() throws Exception {
+    pool.shutdownNow();
   }
 }

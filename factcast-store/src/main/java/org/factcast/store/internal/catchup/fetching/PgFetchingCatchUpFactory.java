@@ -15,15 +15,11 @@
  */
 package org.factcast.store.internal.catchup.fetching;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.*;
 import lombok.Generated;
 import lombok.NonNull;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
@@ -31,28 +27,16 @@ import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 
 @Generated
-public class PgFetchingCatchUpFactory implements PgCatchupFactory, AutoCloseable {
+public class PgFetchingCatchUpFactory implements PgCatchupFactory {
 
   @NonNull final PgConnectionSupplier connectionSupplier;
   @NonNull final StoreConfigurationProperties props;
-  @NonNull final PgMetrics metrics;
-  @NonNull final FactTransformerService transformerService;
-
-  private final ExecutorService executorService;
 
   public PgFetchingCatchUpFactory(
       @NonNull PgConnectionSupplier connectionSupplier,
-      @NonNull StoreConfigurationProperties props,
-      @NonNull PgMetrics metrics,
-      @NonNull FactTransformerService transformerService) {
+      @NonNull StoreConfigurationProperties props) {
     this.connectionSupplier = connectionSupplier;
     this.props = props;
-    this.metrics = metrics;
-    this.transformerService = transformerService;
-    this.executorService =
-        metrics.monitor(
-            Executors.newWorkStealingPool(props.getSizeOfThreadPoolForBufferedTransformations()),
-            "fetching-catchup");
   }
 
   @Override
@@ -62,10 +46,5 @@ public class PgFetchingCatchUpFactory implements PgCatchupFactory, AutoCloseable
       @NonNull AtomicLong serial,
       @NonNull CurrentStatementHolder holder) {
     return new PgFetchingCatchup(connectionSupplier, props, request, pipeline, serial, holder);
-  }
-
-  @Override
-  public void close() throws Exception {
-    executorService.shutdown();
   }
 }
