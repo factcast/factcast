@@ -23,8 +23,11 @@ import java.util.stream.*;
 import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+import org.factcast.grpc.api.GrpcConstants;
 import org.factcast.grpc.api.Headers;
 
+@Slf4j
 public class GrpcRequestMetadata {
 
   public static final String UNKNOWN = "unknown";
@@ -32,15 +35,26 @@ public class GrpcRequestMetadata {
   @Setter(AccessLevel.PROTECTED)
   Metadata headers;
 
-  OptionalInt catchupBatch() {
+  int clientMaxInboundMessageSize() {
 
     Preconditions.checkNotNull(
         headers, "GrpcRequestMetadata has not been provided with headers via Interceptor");
 
-    return Stream.of(headers.get(Headers.CATCHUP_BATCHSIZE))
-        .filter(Objects::nonNull)
-        .mapToInt(Integer::parseInt)
-        .findFirst();
+    int requested =
+        Stream.of(headers.get(Headers.CLIENT_MAX_INBOUND_MESSAGE_SIZE))
+            .filter(Objects::nonNull)
+            .mapToInt(Integer::parseInt)
+            .findFirst()
+            .orElse(GrpcConstants.DEFAULT_CLIENT_INBOUND_MESSAGE_SIZE);
+
+    if (requested > GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE) {
+      log.warn(
+          "maxMsgSize requested from client exceeds "
+              + GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE
+              + ". Limiting it to upper bound.");
+    }
+
+    return Math.min(requested, GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE);
   }
 
   boolean supportsFastForward() {
