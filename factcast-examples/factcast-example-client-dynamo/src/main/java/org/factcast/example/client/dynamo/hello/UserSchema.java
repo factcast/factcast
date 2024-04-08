@@ -16,22 +16,19 @@
 package org.factcast.example.client.dynamo.hello;
 
 import lombok.*;
-import org.factcast.factus.event.Specification;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbImmutable;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 
-@Specification(ns = "users", version = 3)
 @ToString
 @Value
 @Builder
-@DynamoDbImmutable(builder = UserCreated.UserCreatedBuilder.class)
-public class UserCreated {
-  String lastName;
-
-  String firstName;
-
-  String salutation;
+@DynamoDbImmutable(builder = UserSchema.UserSchemaBuilder.class)
+public class UserSchema {
 
   @Getter(onMethod_ = @DynamoDbPartitionKey)
+  String firstName;
+
+  String lastName;
+
   String displayName;
 }

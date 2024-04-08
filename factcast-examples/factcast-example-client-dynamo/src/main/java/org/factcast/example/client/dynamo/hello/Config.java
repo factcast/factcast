@@ -58,8 +58,8 @@ public class Config {
       log.info("Created state table");
     }
 
-    DynamoDbTable<UserCreated> userTable =
-        c.table("users", TableSchema.fromImmutableClass(UserCreated.class));
+    DynamoDbTable<UserSchema> userTable =
+        c.table("users", TableSchema.fromImmutableClass(UserSchema.class));
     try {
       userTable.describeTable();
     } catch (ResourceNotFoundException e) {

@@ -15,6 +15,7 @@
  */
 package org.factcast.example.client.dynamo.hello;
 
+import com.google.common.collect.Lists;
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -40,40 +41,36 @@ public class HelloWorldRunner implements CommandLineRunner {
   @Override
   public void run(String... args) throws Exception {
 
-    val id = UUID.randomUUID();
-    Fact fact =
+    val factId1 = UUID.randomUUID();
+    val firstNameUuid = UUID.randomUUID();
+    Fact created =
         Fact.builder()
             .ns("users")
             .type("UserCreated")
             .version(1)
-            .id(id)
-            .build("{\"firstName\":\"Horst\",\"lastName\":\"Lichter\"}");
-    fc.publish(fact);
-    System.out.println("published " + fact);
-    //
-    //    val uc = fc.fetchById(id);
-    //    System.out.println(uc.get().jsonPayload());
-    //
-    //    val uc1 = fc.fetchByIdAndVersion(id, 1);
-    //    System.out.println(uc1.get().jsonPayload());
-    //
-    //    val uc2 = fc.fetchByIdAndVersion(id, 2);
-    //    System.out.println(uc2.get().jsonPayload());
-    //
-    //    val uc3 = fc.fetchByIdAndVersion(id, 3);
-    //    System.out.println(uc3.get().jsonPayload());
+            .id(factId1)
+            .build("{\"firstName\":\"" + firstNameUuid + "\",\"lastName\":\"Lichter\"}");
 
-    //    fc.subscribe(
-    //            SubscriptionRequest.catchup(FactSpec.ns("users").type("UserCreated").version(3))
-    //                .fromScratch(),
-    //            element -> System.out.println(element))
-    //        .awaitCatchup();
-    //
-    //    fc.subscribe(
-    //            SubscriptionRequest.catchup(FactSpec.ns("users").type("UserCreated").version(1))
-    //                .fromScratch(),
-    //            element -> System.out.println(element))
-    //        .awaitCatchup();
+    val factId2 = UUID.randomUUID();
+    Fact changed =
+        Fact.builder()
+            .ns("users")
+            .type("UserChanged")
+            .version(1)
+            .id(factId2)
+            .build("{\"firstName\":\"" + firstNameUuid + "\",\"lastName\":\"Lauch\"}");
+
+    val factId3 = UUID.randomUUID();
+    val firstNameUuid2 = UUID.randomUUID();
+    Fact created2 =
+        Fact.builder()
+            .ns("users")
+            .type("UserCreated")
+            .version(1)
+            .id(factId3)
+            .build("{\"firstName\":\"" + firstNameUuid2 + "\",\"lastName\":\"August\"}");
+
+    fc.publish(Lists.newArrayList(created, changed, created2));
 
     final DynamoProjection projection = new DynamoProjection(dynamoDbClient, "users", "stateTable");
     factus.update(projection);

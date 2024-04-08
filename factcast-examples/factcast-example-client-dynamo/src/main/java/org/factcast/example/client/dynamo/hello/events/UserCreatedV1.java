@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.example.client.dynamo.hello;
+package org.factcast.example.client.dynamo.hello.events;
 
 import com.google.common.collect.Sets;
 import java.util.Set;

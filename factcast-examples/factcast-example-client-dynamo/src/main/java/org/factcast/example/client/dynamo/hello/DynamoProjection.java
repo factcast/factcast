@@ -17,6 +17,8 @@ package org.factcast.example.client.dynamo.hello;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.example.client.dynamo.hello.events.UserChangedV1;
+import org.factcast.example.client.dynamo.hello.events.UserCreatedV1;
 import org.factcast.factus.Handler;
 import org.factcast.factus.dynamo.AbstractDynamoManagedProjection;
 import org.factcast.factus.dynamo.tx.DynamoTransaction;
@@ -25,6 +27,7 @@ import org.factcast.factus.serializer.ProjectionMetaData;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.TransactPutItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.TransactUpdateItemEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 @ProjectionMetaData(revision = 1)
@@ -32,7 +35,7 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 @DynamoTransactional()
 public class DynamoProjection extends AbstractDynamoManagedProjection {
 
-  private final DynamoDbTable<UserCreated> userTable;
+  private final DynamoDbTable<UserSchema> userTable;
 
   public DynamoProjection(
       @NonNull DynamoDbClient dynamoDbClient,
@@ -41,33 +44,40 @@ public class DynamoProjection extends AbstractDynamoManagedProjection {
 
     super(dynamoDbClient, projectionTableName, stateTableName);
 
-    userTable = enhancedClient.table("users", TableSchema.fromImmutableClass(UserCreated.class));
+    userTable = enhancedClient.table("users", TableSchema.fromImmutableClass(UserSchema.class));
   }
 
-  //  @Handler
-  //    void apply(UserCreatedV1 e) {
-  //        userTable.putItem(
-  //            new UserCreated()
-  //                .displayName(e.lastName() + e.firstName())
-  //                .firstName(e.firstName())
-  //                .lastName(e.lastName())
-  //                .salutation("Hi there")
-  //                );
-  //    }
-  //
   @Handler
   void apply(UserCreatedV1 e, DynamoTransaction tx) {
     tx.addPutRequest(
         userTable,
-        TransactPutItemEnhancedRequest.builder(UserCreated.class)
+        TransactPutItemEnhancedRequest.builder(UserSchema.class)
             .item(
-                UserCreated.builder()
+                UserSchema.builder()
                     .displayName(e.lastName() + e.firstName())
                     .firstName(e.firstName())
                     .lastName(e.lastName())
-                    .salutation("Hi there")
                     .build())
             .build());
-    log.info("Event processed");
+    log.info("UserCreated processed");
+  }
+
+  @Handler
+  void apply(UserChangedV1 e, DynamoTransaction tx) {
+    //    UserSchema user = .getItem(Key.builder().partitionValue(e.firstName()).build());
+
+    // Only the last name can be changed.
+    tx.addUpdateRequest(
+        userTable,
+        TransactUpdateItemEnhancedRequest.builder(UserSchema.class)
+            .item(
+                UserSchema.builder()
+                    .firstName(e.firstName())
+                    .displayName(e.lastName() + e.firstName())
+                    .lastName(e.lastName())
+                    .build())
+            .build());
+
+    log.info("UserChanged processed");
   }
 }
