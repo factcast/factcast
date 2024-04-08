@@ -24,8 +24,6 @@ import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import lombok.NonNull;
@@ -190,17 +188,13 @@ class FactusTest {
         Mockito.mock(SubscribedProjection.class);
 
     @Test
-    void completes() {
+    void returns() throws Exception {
       UUID factId = UUID.randomUUID();
       when(underTest.serialOf(factId)).thenReturn(OptionalLong.of(2));
       when(subscribedProjectionMock.factStreamPosition()).thenReturn(factStreamPositionMock);
-      when(factStreamPositionMock.serial()).thenReturn(1L);
-
-      CompletableFuture<Void> future = underTest.waitFor(subscribedProjectionMock, factId);
-
-      assertThat(future).isNotCompleted();
       when(factStreamPositionMock.serial()).thenReturn(2L);
-      assertThat(future).succeedsWithin(Duration.ofSeconds(2));
+
+      underTest.waitFor(subscribedProjectionMock, factId, Duration.ofMillis(100));
     }
 
     @Test
@@ -210,10 +204,7 @@ class FactusTest {
       when(subscribedProjectionMock.factStreamPosition()).thenReturn(factStreamPositionMock);
       when(factStreamPositionMock.serial()).thenReturn(1L);
 
-      CompletableFuture<Void> future = underTest.waitFor(subscribedProjectionMock, factId);
-
-      assertThat(future).isNotCompleted();
-      assertThatThrownBy(() -> future.get(2, TimeUnit.SECONDS))
+      assertThatThrownBy(() -> underTest.waitFor(subscribedProjectionMock, factId, Duration.ofMillis(100)))
           .isInstanceOf(TimeoutException.class);
     }
 
@@ -223,16 +214,9 @@ class FactusTest {
       when(underTest.serialOf(factId)).thenReturn(OptionalLong.empty());
       when(subscribedProjectionMock.factStreamPosition()).thenReturn(factStreamPositionMock);
 
-      CompletableFuture<Void> future = underTest.waitFor(subscribedProjectionMock, factId);
-
-      assertThat(future).isNotCompleted();
-      assertThat(future)
-          .failsWithin(Duration.ofMillis(100))
-          .withThrowableThat()
-          .havingCause()
-          .isInstanceOf(IllegalArgumentException.class)
-          .withMessage(
-              "Fact with id " + factId + " not found. Make sure to publish before waiting for it.");
+      assertThatThrownBy(() -> underTest.waitFor(subscribedProjectionMock, factId, Duration.ofMillis(100)))
+          .hasRootCauseInstanceOf(IllegalArgumentException.class)
+          .hasRootCauseMessage("Fact with id " + factId + " not found. Make sure to publish before waiting for it.");
     }
 
     @Test
@@ -241,11 +225,62 @@ class FactusTest {
       when(underTest.serialOf(factId)).thenReturn(OptionalLong.of(2));
       when(subscribedProjectionMock.factStreamPosition()).thenReturn(factStreamPositionMock);
 
-      CompletableFuture<Void> future = underTest.waitFor(subscribedProjectionMock, factId);
-
-      assertThat(future).isNotCompleted();
-      assertThatThrownBy(() -> future.get(2, TimeUnit.SECONDS))
+      assertThatThrownBy(() -> underTest.waitFor(subscribedProjectionMock, factId, Duration.ofMillis(100)))
           .isInstanceOf(TimeoutException.class);
+    }
+
+    @Test
+    void retriesWithConstantBackoffStrategy() {
+      long timeoutMillis = 100;
+      long backoffMillis = 10;
+      UUID factId = UUID.randomUUID();
+      when(underTest.serialOf(factId)).thenReturn(OptionalLong.of(2));
+      when(subscribedProjectionMock.factStreamPosition()).thenReturn(factStreamPositionMock);
+      when(factStreamPositionMock.serial()).thenReturn(1L);
+
+      // constant backoff strategy every 10ms
+      assertThatThrownBy(() -> underTest.waitFor(subscribedProjectionMock, factId, Duration.ofMillis(timeoutMillis), i -> backoffMillis))
+          .isInstanceOf(TimeoutException.class);
+
+      // only once, because of cache
+      verify(underTest, times(1)).serialOf(factId);
+      verify(subscribedProjectionMock, atMost(10)).factStreamPosition();
+    }
+
+    @Test
+    void retriesWithLinearBackoffStrategy() {
+      long timeoutMillis = 100;
+      long backoffMillis = 10;
+      UUID factId = UUID.randomUUID();
+      when(underTest.serialOf(factId)).thenReturn(OptionalLong.of(2));
+      when(subscribedProjectionMock.factStreamPosition()).thenReturn(factStreamPositionMock);
+      when(factStreamPositionMock.serial()).thenReturn(1L);
+
+      // linear backoff strategy every 10ms
+      assertThatThrownBy(() -> underTest.waitFor(subscribedProjectionMock, factId, Duration.ofMillis(timeoutMillis), i -> i*backoffMillis))
+          .isInstanceOf(TimeoutException.class);
+
+      // only once, because of cache
+      verify(underTest, times(1)).serialOf(factId);
+      verify(subscribedProjectionMock, atMost(5)).factStreamPosition();
+    }
+
+    @Test
+    void retriesWithExponentialBackoffStrategy() {
+      long timeoutMillis = 100;
+      long backoffMillis = 10;
+      UUID factId = UUID.randomUUID();
+      when(underTest.serialOf(factId)).thenReturn(OptionalLong.of(2));
+      when(subscribedProjectionMock.factStreamPosition()).thenReturn(factStreamPositionMock);
+      when(factStreamPositionMock.serial()).thenReturn(1L);
+
+      // linear backoff strategy every 10ms
+      assertThatThrownBy(() -> underTest.waitFor(subscribedProjectionMock, factId, Duration.ofMillis(timeoutMillis), i -> (long) Math.pow(backoffMillis, i)))
+          .isInstanceOf(TimeoutException.class);
+
+      // only once, because of cache
+      verify(underTest, times(1)).serialOf(factId);
+      verify(subscribedProjectionMock, atMost(3)).factStreamPosition();
     }
   }
 }
