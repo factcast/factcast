@@ -103,7 +103,7 @@ public class ExampleUiServer {
   }
 
   @Bean
-  public JsonViewPlugin hoverIdslugin() {
+  public JsonViewPlugin hoverIdsPlugin() {
     return new JsonViewPlugin() {
       @Override
       public void doHandle(Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData) {
