@@ -28,10 +28,10 @@ import org.springframework.context.annotation.Bean;
 @SuppressWarnings("ALL")
 @SpringBootApplication
 @Slf4j
-public class Application {
+public class ExceptionHandlingApplication {
 
   public static void main(String[] args) {
-    SpringApplication.run(Application.class, args);
+    SpringApplication.run(ExceptionHandlingApplication.class, args);
   }
 
   @Bean

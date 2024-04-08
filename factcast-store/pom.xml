@@ -11,6 +11,8 @@
   </parent>
   <artifactId>factcast-store</artifactId>
   <properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
     <jetty-javalin.version>11.0.20</jetty-javalin.version>
   </properties>
   <dependencyManagement>

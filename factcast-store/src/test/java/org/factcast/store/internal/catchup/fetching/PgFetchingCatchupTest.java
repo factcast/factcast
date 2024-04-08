@@ -15,7 +15,6 @@
  */
 package org.factcast.store.internal.catchup.fetching;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 import io.micrometer.core.instrument.Counter;
@@ -24,17 +23,17 @@ import java.sql.SQLException;
 import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
-import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.StoreMetrics;
-import org.factcast.store.internal.catchup.BufferingFactInterceptor;
-import org.factcast.store.internal.filter.FactFilter;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
+import org.factcast.store.internal.pipeline.ServerPipeline;
+import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.junit.jupiter.api.BeforeEach;
@@ -62,11 +61,9 @@ class PgFetchingCatchupTest {
   StoreConfigurationProperties props;
 
   @Mock @NonNull SubscriptionRequestTO req;
-  @Mock @NonNull FactFilter filter;
-  @Mock @NonNull SubscriptionImpl subscription;
   @Mock @NonNull AtomicLong serial;
   @Mock @NonNull CurrentStatementHolder statementHolder;
-  @Mock @NonNull BufferingFactInterceptor interceptor;
+  @Mock @NonNull ServerPipeline pipeline;
 
   @Mock(lenient = true)
   @NonNull
@@ -116,7 +113,7 @@ class PgFetchingCatchupTest {
     @BeforeEach
     void setup() {
       Mockito.when(props.getPageSize()).thenReturn(47);
-      when(metrics.counter(StoreMetrics.EVENT.CATCHUP_FACT)).thenReturn(counter);
+      when(metrics.counter(StoreMetrics.EVENT.FACTS_SENT)).thenReturn(counter);
     }
 
     @Test
@@ -146,7 +143,7 @@ class PgFetchingCatchupTest {
       when(extractor.mapRow(rs, 0)).thenReturn(testFact);
       cbh.processRow(rs);
 
-      verify(interceptor).accept(testFact);
+      verify(pipeline).process(Signal.of(testFact));
     }
 
     @SneakyThrows
@@ -156,9 +153,9 @@ class PgFetchingCatchupTest {
       ResultSet rs = mock(ResultSet.class);
       Fact testFact = new TestFact();
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
-      doThrow(TransformationException.class).when(interceptor).accept(testFact);
+      doThrow(TransformationException.class).when(pipeline).process(Signal.of(testFact));
 
-      assertThatThrownBy(
+      Assertions.assertThatThrownBy(
               () -> {
                 cbh.processRow(rs);
               })
@@ -201,7 +198,7 @@ class PgFetchingCatchupTest {
           mock(PSQLException.class, withSettings().strictness(Strictness.LENIENT));
       when(rs.getString(anyString())).thenThrow(mockException);
 
-      assertThatThrownBy(
+      Assertions.assertThatThrownBy(
               () -> {
                 cbh.processRow(rs);
               })
@@ -218,7 +215,7 @@ class PgFetchingCatchupTest {
       // until
       when(extractor.mapRow(any(), anyInt())).thenThrow(RuntimeException.class);
 
-      assertThatThrownBy(
+      Assertions.assertThatThrownBy(
               () -> {
                 cbh.processRow(rs);
               })
