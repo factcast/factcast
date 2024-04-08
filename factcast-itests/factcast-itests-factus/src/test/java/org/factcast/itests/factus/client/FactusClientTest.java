@@ -250,7 +250,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
     SubscribedUserNames subscribedUserNames = new SubscribedUserNames();
     subscribedUserNames.clear();
 
-    try(Subscription subscription = factus.subscribeAndBlock(subscribedUserNames)) {
+    try (Subscription subscription = factus.subscribeAndBlock(subscribedUserNames)) {
       // nothing in there yet, so catchup must be received
       subscription.awaitCatchup();
       assertThat(subscribedUserNames.names()).hasSize(1);
@@ -686,7 +686,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
     SubscribedUserNames subscribedUserNames = new SubscribedUserNames();
     subscribedUserNames.clear();
 
-    try(Subscription subscriptionWaiting = factus.subscribeAndBlock(subscribedUserNames)) {
+    try (Subscription subscriptionWaiting = factus.subscribeAndBlock(subscribedUserNames)) {
       // nothing in there yet, so catchup must be received
       subscriptionWaiting.awaitCatchup();
       assertThat(subscribedUserNames.names()).hasSize(1);
