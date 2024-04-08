@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2023 factcast.org
+ * Copyright © 2017-2024 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.plugins;
+package org.factcast.server.ui.plugins.bundled;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.time.ZoneId;
-import java.util.TimeZone;
+import com.jayway.jsonpath.spi.mapper.MappingException;
+import java.util.List;
+import java.util.UUID;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
+import org.factcast.server.ui.plugins.JsonEntryMetaData;
+import org.factcast.server.ui.plugins.JsonPayload;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,9 +33,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class HeaderMetaTimestampToDatePluginTest {
+class PayloadAggregateIdsFilterOptionsPluginTest {
 
-  @InjectMocks private HeaderMetaTimestampToDatePlugin underTest;
+  @InjectMocks private PayloadAggregateIdsFilterOptionsPlugin underTest;
 
   @Nested
   class WhenDoingHandle {
@@ -40,27 +44,20 @@ class HeaderMetaTimestampToDatePluginTest {
     @Mock private JsonEntryMetaData jsonEntryMetaData;
 
     @Test
-    void skipOnNoTimestamp() {
-      when(fact.timestamp()).thenReturn(null);
+    void addsUuidFilterOption() {
+      final var id = UUID.randomUUID();
+      final var uuidPath = "uuid']";
+      final var noUuidPath = "noUuid']";
+
+      when(payload.findPaths("$..*")).thenReturn(List.of(uuidPath, noUuidPath));
+      when(payload.read(uuidPath, UUID.class)).thenReturn(id);
+      when(payload.read(noUuidPath, UUID.class))
+          .thenThrow(new MappingException(new RuntimeException()));
+
       underTest.doHandle(fact, payload, jsonEntryMetaData);
 
-      verifyNoInteractions(jsonEntryMetaData);
-    }
-
-    @Test
-    void addsTimestamp() {
-      TimeZone oldDefault = TimeZone.getDefault();
-      try {
-        TimeZone.setDefault(TimeZone.getTimeZone(ZoneId.of("Europe/Paris")));
-        Long ts = 1001L;
-        when(fact.timestamp()).thenReturn(ts);
-        underTest.doHandle(fact, payload, jsonEntryMetaData);
-
-        verify(jsonEntryMetaData)
-            .annotateHeader("$.meta._ts", "1970-01-01T01:00:01.001+01:00[Europe/Paris]");
-      } finally {
-        TimeZone.setDefault(oldDefault);
-      }
+      verify(jsonEntryMetaData).addPayloadAggregateIdFilterOption(uuidPath, id);
+      verifyNoMoreInteractions(jsonEntryMetaData);
     }
   }
 
