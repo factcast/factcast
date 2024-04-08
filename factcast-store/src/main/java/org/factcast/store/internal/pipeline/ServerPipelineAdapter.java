@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2024 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store;
+package org.factcast.store.internal.pipeline;
 
-/**
- * Defines the catchup-Strategy to use, as well as the default, if none is specified.
- *
- * @author <uwe.schaefer@prisma-capacity.eu>
- */
-public enum CatchupStrategy {
-  PAGED,
-  FETCHING;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.subscription.SubscriptionImpl;
 
-  @SuppressWarnings("SameReturnValue")
-  public static CatchupStrategy getDefault() {
-    return FETCHING;
+@Slf4j
+@RequiredArgsConstructor
+public class ServerPipelineAdapter implements ServerPipeline {
+  private final SubscriptionImpl sub;
+
+  public void process(@NonNull Signal signal) {
+    signal.pass(sub);
   }
 }

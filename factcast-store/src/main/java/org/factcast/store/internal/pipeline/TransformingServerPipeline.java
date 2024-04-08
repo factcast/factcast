@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2022 factcast.org
+ * Copyright © 2017-2024 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,48 +13,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal;
+package org.factcast.store.internal.pipeline;
 
 import lombok.NonNull;
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.FactTransformers;
 import org.factcast.core.subscription.transformation.TransformationRequest;
-import org.factcast.store.internal.filter.FactFilter;
 
-public class SimpleFactInterceptor extends AbstractFactInterceptor {
+@Deprecated
+// TODO delete
+// This pipeline creates an n+1 query problem on the transformationCache, so that it should not be
+// used
+public class TransformingServerPipeline extends AbstractServerPipeline {
+
   private final FactTransformerService service;
   private final FactTransformers transformers;
-  private final FactFilter filter;
-  private final SubscriptionImpl targetSubscription;
 
-  public SimpleFactInterceptor(
+  public TransformingServerPipeline(
+      @NonNull ServerPipeline parent,
       @NonNull FactTransformerService service,
-      @NonNull FactTransformers transformers,
-      @NonNull FactFilter filter,
-      @NonNull SubscriptionImpl targetSubscription,
-      @NonNull PgMetrics metrics) {
-    super(metrics);
+      @NonNull FactTransformers transformers) {
+    super(parent);
     this.service = service;
     this.transformers = transformers;
-    this.filter = filter;
-    this.targetSubscription = targetSubscription;
   }
 
-  public void accept(@NonNull Fact f) {
-    if (filter.test(f)) {
+  @Override
+  public void process(@NonNull Signal s) {
 
+    if (s instanceof Signal.FactSignal fs) {
+
+      Fact f = fs.fact();
       TransformationRequest transformationRequest = transformers.prepareTransformation(f);
-
       if (transformationRequest == null) {
-        targetSubscription.notifyElement(f);
+        // pass unmodified
+        parent.process(s);
       } else {
-        Fact transformed = service.transform(transformationRequest);
-        targetSubscription.notifyElement(transformed);
+        // transform and pass
+        parent.process(Signal.of(service.transform(transformationRequest)));
       }
-
-      increaseNotifyMetric(1);
-    }
+    } else parent.process(s);
   }
 }
