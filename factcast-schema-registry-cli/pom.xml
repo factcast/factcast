@@ -126,19 +126,19 @@
     <dependency>
       <groupId>io.micronaut.picocli</groupId>
       <artifactId>micronaut-picocli</artifactId>
-      <version>5.2.0</version>
+      <version>5.3.0</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.module</groupId>
       <artifactId>jackson-module-kotlin</artifactId>
       <!-- even though all other modules are avail for 2.13.2, this one is missing -->
-      <version>2.16.2</version>
+      <version>2.17.0</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>io.github.oshai</groupId>
       <artifactId>kotlin-logging-jvm</artifactId>
-      <version>6.0.3</version>
+      <version>6.0.4</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -163,7 +163,7 @@
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-      <version>2.15.1</version>
+      <version>2.16.0</version>
     </dependency>
     <dependency>
       <groupId>commons-codec</groupId>
@@ -222,11 +222,6 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.graalvm.sdk</groupId>
-      <artifactId>graal-sdk</artifactId>
-      <version>${graaljs.version}</version>
     </dependency>
   </dependencies>
 
@@ -368,12 +363,12 @@
                 <annotationProcessorPath>
                   <groupId>io.micronaut</groupId>
                   <artifactId>micronaut-inject-java</artifactId>
-                  <version>4.3.10</version>
+                  <version>4.3.12</version>
                 </annotationProcessorPath>
                 <annotationProcessorPath>
                   <groupId>io.micronaut.validation</groupId>
                   <artifactId>micronaut-validation-processor</artifactId>
-                  <version>4.4.4</version>
+                  <version>4.5.0</version>
                 </annotationProcessorPath>
               </annotationProcessorPaths>
             </configuration>
@@ -407,12 +402,12 @@
                 <annotationProcessorPath>
                   <groupId>io.micronaut</groupId>
                   <artifactId>micronaut-inject-java</artifactId>
-                  <version>4.3.10</version>
+                  <version>4.3.12</version>
                 </annotationProcessorPath>
                 <annotationProcessorPath>
                   <groupId>io.micronaut.validation</groupId>
                   <artifactId>micronaut-validation-processor</artifactId>
-                  <version>4.4.4</version>
+                  <version>4.5.0</version>
                 </annotationProcessorPath>
               </annotationProcessorPaths>
             </configuration>
