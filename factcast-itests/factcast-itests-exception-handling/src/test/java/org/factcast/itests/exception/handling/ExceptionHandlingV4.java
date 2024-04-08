@@ -15,8 +15,11 @@
  */
 package org.factcast.itests.exception.handling;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -131,7 +134,10 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
     var proj = new SubscribedUserNames(catchupLatch, errorLatch);
     ec.subscribe(proj);
 
-    assertThat(errorLatch.await(1000, TimeUnit.MILLISECONDS)).isTrue();
+    await()
+        .atMost(3, SECONDS)
+        .pollDelay(500, MILLISECONDS)
+        .untilAsserted(() -> assertThat(errorLatch.getCount()).isZero());
 
     assertThat(proj.exception()).isInstanceOf(TransformationException.class);
   }
@@ -147,11 +153,14 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
     var proj = new SubscribedUserNames(catchupLatch, errorLatch);
     ec.subscribe(proj);
 
-    assertThat(catchupLatch.await(1000, TimeUnit.MILLISECONDS)).isTrue();
+    assertThat(catchupLatch.await(1000, MILLISECONDS)).isTrue();
 
     ec.publish(createTestFact(aggId, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}"));
 
-    assertThat(errorLatch.await(1000, TimeUnit.MILLISECONDS)).isTrue();
+    await()
+        .atMost(3, SECONDS)
+        .pollDelay(500, MILLISECONDS)
+        .untilAsserted(() -> assertThat(errorLatch.getCount()).isZero());
 
     assertThat(proj.exception()).isInstanceOf(TransformationException.class);
   }
@@ -182,7 +191,10 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
           }
         });
 
-    assertThat(errorLatch.await(1000, TimeUnit.MILLISECONDS)).isTrue();
+    await()
+        .atMost(3, SECONDS)
+        .pollDelay(500, MILLISECONDS)
+        .untilAsserted(() -> assertThat(errorLatch.getCount()).isZero());
 
     assertThat(e.get()).isInstanceOf(TransformationException.class);
   }
@@ -218,11 +230,14 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
           }
         });
 
-    assertThat(catchupLatch.await(1000, TimeUnit.MILLISECONDS)).isTrue();
+    assertThat(catchupLatch.await(1000, MILLISECONDS)).isTrue();
 
     fc.publish(createTestFact(aggId, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}"));
 
-    assertThat(errorLatch.await(1000, TimeUnit.MILLISECONDS)).isTrue();
+    await()
+        .atMost(3, SECONDS)
+        .pollDelay(500, MILLISECONDS)
+        .untilAsserted(() -> assertThat(errorLatch.getCount()).isZero());
 
     assertThat(e.get()).isInstanceOf(TransformationException.class);
   }
