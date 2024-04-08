@@ -16,7 +16,6 @@
 package org.factcast.client.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -42,7 +41,7 @@ public class ResilientGrpcSubscription implements Subscription {
   private final FactObserver originalObserver;
   private final FactObserver delegatingObserver;
 
-  private final AtomicReference<UUID> lastFactIdSeen = new AtomicReference<>();
+  private final AtomicReference<FactStreamPosition> lastPosition = new AtomicReference<>();
   private final SubscriptionHolder currentSubscription = new SubscriptionHolder();
   private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
@@ -159,9 +158,9 @@ public class ResilientGrpcSubscription implements Subscription {
   protected void doConnect() {
     resilience.registerAttempt();
     SubscriptionRequestTO to = SubscriptionRequestTO.forFacts(originalRequest);
-    UUID last = lastFactIdSeen.get();
+    FactStreamPosition last = lastPosition.get();
     if (last != null) {
-      to.startingAfter(last);
+      to.startingAfter(last.factId());
     }
 
     if (currentSubscription.get() == null) {
@@ -197,12 +196,13 @@ public class ResilientGrpcSubscription implements Subscription {
     void accept(T t, U u) throws TimeoutException;
   }
 
+  // TODO batching
   class DelegatingFactObserver implements FactObserver {
     @Override
     public void onNext(@NonNull Fact element) {
       if (!isClosed.get()) {
         originalObserver.onNext(element);
-        lastFactIdSeen.set(element.id());
+        lastPosition.set(FactStreamPosition.from(element));
       } else {
         log.warn("Fact arrived after call to .close() [a few of them is ok...]");
       }
