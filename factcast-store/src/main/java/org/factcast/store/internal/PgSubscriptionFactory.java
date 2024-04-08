@@ -55,6 +55,7 @@ class PgSubscriptionFactory implements AutoCloseable {
   final ServerPipelineFactory pipelineFactory;
   final JSEngineFactory jsEngineFactory;
   final ExecutorService es;
+  private final int maxPipelineBufferSize;
 
   public PgSubscriptionFactory(
       JdbcTemplate jdbcTemplate,
@@ -76,6 +77,8 @@ class PgSubscriptionFactory implements AutoCloseable {
     this.pipelineFactory = pipelineFactory;
     this.jsEngineFactory = jsEngineFactory;
 
+    this.maxPipelineBufferSize = props.getTransformationCachePageSize();
+
     this.es =
         metrics.monitor(
             Executors.newFixedThreadPool(props.getSizeOfThreadPoolForSubscriptions()),
@@ -87,7 +90,7 @@ class PgSubscriptionFactory implements AutoCloseable {
 
     ServerPipeline pipe =
         pipelineFactory.create(
-            req, subscription, new PostQueryMatcher(req, jsEngineFactory), 1024, es);
+            req, subscription, new PostQueryMatcher(req, jsEngineFactory), maxPipelineBufferSize);
 
     PgFactStream pgsub =
         new PgFactStream(
