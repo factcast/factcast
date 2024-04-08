@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2024 factcast.org
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.dynamo;
+package org.factcast.example.client.dynamo.hello;
 
+import com.google.common.collect.Sets;
+import java.util.Set;
 import java.util.UUID;
-import lombok.*;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbImmutable;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
+import lombok.Getter;
+import lombok.ToString;
+import org.factcast.factus.event.EventObject;
+import org.factcast.factus.event.Specification;
 
-@DynamoDbImmutable(builder = DynamoProjectionState.DynamoProjectionStateBuilder.class)
-@Value
-@Builder
-public class DynamoProjectionState {
-  @Getter(onMethod_ = @DynamoDbPartitionKey)
-  String key;
+@Specification(ns = "users", type = "UserCreated", version = 1)
+@ToString
+@Getter
+public class UserCreatedV1 implements EventObject {
+  String lastName;
 
-  UUID factStreamPosition;
-  long serial;
+  String firstName;
+
+  private UUID aggregateId;
+
+  @Override
+  public Set<UUID> aggregateIds() {
+    return Sets.newHashSet(aggregateId);
+  }
 }

@@ -43,11 +43,11 @@ public abstract class AbstractTransactionAwareProjection<T>
     assertInTransaction();
     try {
       commit(runningTransaction);
+      runningTransaction = null;
     } catch (Exception e) {
       throw new TransactionException(e);
     } finally {
       // TODO: This causes the ProjectorImpl to swallow the error if the commit fails
-      runningTransaction = null;
     }
   }
 

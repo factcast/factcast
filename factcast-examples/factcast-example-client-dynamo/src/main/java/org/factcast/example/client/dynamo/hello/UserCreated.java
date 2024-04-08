@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2024 factcast.org
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.dynamo;
+package org.factcast.example.client.dynamo.hello;
 
-import java.util.UUID;
 import lombok.*;
+import org.factcast.factus.event.Specification;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbImmutable;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 
-@DynamoDbImmutable(builder = DynamoProjectionState.DynamoProjectionStateBuilder.class)
+@Specification(ns = "users", version = 3)
+@ToString
 @Value
 @Builder
-public class DynamoProjectionState {
-  @Getter(onMethod_ = @DynamoDbPartitionKey)
-  String key;
+@DynamoDbImmutable(builder = UserCreated.UserCreatedBuilder.class)
+public class UserCreated {
+  String lastName;
 
-  UUID factStreamPosition;
-  long serial;
+  String firstName;
+
+  String salutation;
+
+  @Getter(onMethod_ = @DynamoDbPartitionKey)
+  String displayName;
 }

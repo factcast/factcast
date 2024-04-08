@@ -47,6 +47,8 @@ abstract class AbstractDynamoProjection
         FactStreamPositionAware,
         WriterTokenAware,
         Named {
+
+  // Add nested wrapper
   @Getter protected final DynamoDbClient dynamoDb;
   protected final DynamoDbEnhancedClient enhancedClient;
 
@@ -65,7 +67,8 @@ abstract class AbstractDynamoProjection
     this.enhancedClient = DynamoDbEnhancedClient.builder().dynamoDbClient(dynamoDb).build();
 
     this.stateTable =
-        enhancedClient.table(stateTableName, TableSchema.fromBean(DynamoProjectionState.class));
+        enhancedClient.table(
+            stateTableName, TableSchema.fromImmutableClass(DynamoProjectionState.class));
 
     this.projectionKey = projectionTableName;
     //    this.dynamoKey =
@@ -87,7 +90,7 @@ abstract class AbstractDynamoProjection
       return runningTransaction().initialFactStreamPosition();
     } else {
       DynamoProjectionState state =
-          stateTable.getItem(new DynamoProjectionState().key(projectionKey));
+          stateTable.getItem(DynamoProjectionState.builder().key(projectionKey).build());
       return state != null
           ? FactStreamPosition.of(state.factStreamPosition(), state.serial())
           : null;
@@ -112,17 +115,19 @@ abstract class AbstractDynamoProjection
   @Override
   public void factStreamPosition(@Nullable FactStreamPosition position) {
     if (inTransaction()) {
-      UpdateItemEnhancedRequest.Builder<DynamoProjectionState> updateRequest =
+      UpdateItemEnhancedRequest.Builder<DynamoProjectionState> updateRequestBuilder =
           UpdateItemEnhancedRequest.builder(DynamoProjectionState.class)
               .item(
-                  new DynamoProjectionState()
+                  DynamoProjectionState.builder()
                       .key(projectionKey)
                       .factStreamPosition(position.factId())
-                      .serial(position.serial()));
+                      .serial(position.serial())
+                      .build());
 
       DynamoTransaction transaction = runningTransaction();
-      if (transaction.initialFactStreamPosition().factId() != null) {
-        updateRequest.conditionExpression(
+      if (transaction.initialFactStreamPosition() != null
+          && transaction.initialFactStreamPosition().factId() != null) {
+        updateRequestBuilder.conditionExpression(
             Expression.builder()
                 .expression("factStreamPosition = :expected")
                 .putExpressionValue(
@@ -131,15 +136,16 @@ abstract class AbstractDynamoProjection
                         transaction.initialFactStreamPosition().factId().toString()))
                 .build());
 
-        stateTable.updateItem(updateRequest.build());
+        stateTable.updateItem(updateRequestBuilder.build());
       } else {
         stateTable.putItem(
             PutItemEnhancedRequest.builder(DynamoProjectionState.class)
                 .item(
-                    new DynamoProjectionState()
+                    DynamoProjectionState.builder()
                         .key(projectionKey)
                         .factStreamPosition(position.factId())
-                        .serial(position.serial()))
+                        .serial(position.serial())
+                        .build())
                 .conditionExpression(
                     Expression.builder()
                         .expression("attribute_not_exists(#key)")
@@ -203,8 +209,9 @@ abstract class AbstractDynamoProjection
     assertNoRunningTransaction();
     try {
       // TODO: configure lease duration?
+      String lockKey = projectionKey + "_lock";
       Optional<LockItem> lock =
-          lockClient.tryAcquireLock(AcquireLockOptions.builder(projectionKey).build());
+          lockClient.tryAcquireLock(AcquireLockOptions.builder(lockKey).build());
       if (lock.isPresent()) {
         return new DynamoWriterToken(lock.get());
       }

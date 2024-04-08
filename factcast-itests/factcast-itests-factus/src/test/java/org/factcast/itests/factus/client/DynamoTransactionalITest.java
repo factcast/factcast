@@ -92,7 +92,7 @@ public class DynamoTransactionalITest extends AbstractFactCastIntegrationTest {
 
       DynamoDbTable<DynamoProjectionState> stateTable =
           dynamoDbEnhancedClient.table(
-              STATE_TABLE_NAME, TableSchema.fromBean(DynamoProjectionState.class));
+              STATE_TABLE_NAME, TableSchema.fromImmutableClass(DynamoProjectionState.class));
       stateTable.createTable(
           builder ->
               builder.provisionedThroughput(
