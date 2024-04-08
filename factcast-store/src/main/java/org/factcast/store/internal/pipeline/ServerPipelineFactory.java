@@ -15,7 +15,6 @@
  */
 package org.factcast.store.internal.pipeline;
 
-import java.util.concurrent.ExecutorService;
 import lombok.Builder;
 import lombok.NonNull;
 import org.factcast.core.subscription.SubscriptionImpl;
@@ -36,15 +35,12 @@ public class ServerPipelineFactory {
   @NonNull final Blacklist blacklist;
   @NonNull final FactTransformerService factTransformerService;
   @NonNull final JSEngineFactory jsEngineFactory;
-  private ExecutorService executorService;
 
   public ServerPipeline create(
       @NonNull SubscriptionRequest subreq,
       @NonNull SubscriptionImpl sub,
       @NonNull PostQueryMatcher perRequestMatcher,
-      int maxBufferSize,
-      @NonNull ExecutorService executorService) {
-    this.executorService = executorService;
+      int maxBufferSize) {
 
     ServerPipeline chain = new ServerPipelineAdapter(sub);
     chain = new MetricServerPipeline(chain, metrics);
