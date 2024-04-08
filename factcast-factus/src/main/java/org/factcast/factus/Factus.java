@@ -21,7 +21,11 @@ import java.util.List;
 import java.util.OptionalLong;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
@@ -42,6 +46,9 @@ import org.slf4j.LoggerFactory;
 public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
 
   Logger LOGGER = LoggerFactory.getLogger(Factus.class);
+  Cache<UUID, Long> serialCache = CacheBuilder.newBuilder()
+      .expireAfterAccess(Duration.ofSeconds(5)) // TODO double check cache config
+      .build();
   //// Publishing
 
   /** publishes a single event immediately */
@@ -96,7 +103,7 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
       @NonNull P subscribedProjection, @NonNull Duration retryWaitTime);
 
   /**
-   * Method returns immediately, but you wont know if subscription was sucessful (kind of "keep
+   * Method returns immediately, but you won't know if subscription was sucessful (kind of "keep
    * trying to subscribe" and forget)
    */
   default <P extends SubscribedProjection> void subscribe(@NonNull P subscribedProjection) {
@@ -142,37 +149,43 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
   OptionalLong serialOf(@NonNull UUID factId);
 
   // TODO javadoc
-  default <P extends SubscribedProjection> CompletableFuture<Void> waitFor(
+  default <P extends SubscribedProjection> void waitFor(
       @NonNull P subscribedProjection,
       @NonNull UUID factId,
-      Function<Integer, Integer> retryBackoffMillis) {
-    return CompletableFuture.runAsync(
-        () -> {
-          OptionalLong optSerial = this.serialOf(factId);
-          if (!optSerial.isPresent()) {
-            throw new IllegalArgumentException(
-                String.format(
-                    "Fact with id %s not found. Make sure to publish before waiting for it.",
-                    factId));
-          }
-          final long serial = optSerial.getAsLong();
-          FactStreamPosition currentFsp = subscribedProjection.factStreamPosition();
-          int i = 0;
-          while (currentFsp == null || currentFsp.serial() < serial) {
-            try {
-              Thread.sleep(retryBackoffMillis.apply(i));
-              currentFsp = subscribedProjection.factStreamPosition();
-              i++;
-            } catch (InterruptedException e) {
-              LOGGER.info("Interrupted while waiting for fact {} to be consumed.", factId);
-            }
-          }
-        });
+      @NonNull Duration timeout,
+      Function<Integer, Long> retryBackoffMillis) throws TimeoutException, ExecutionException {
+    long start = System.currentTimeMillis();
+    Long serial = serialCache.get(factId, () -> {
+      OptionalLong optSerial = this.serialOf(factId);
+      if (!optSerial.isPresent()) {
+        throw new IllegalArgumentException(String.format(
+                "Fact with id %s not found. Make sure to publish before waiting for it.",
+                factId));
+      }
+      return optSerial.getAsLong();
+    });
+    FactStreamPosition currentFsp = subscribedProjection.factStreamPosition();
+    int i = 1;
+    // until timeout is met or the factStreamPosition is greater than the serial
+    while (currentFsp == null || currentFsp.serial() < serial) {
+      if (System.currentTimeMillis() - start > timeout.toMillis()) {
+        throw new TimeoutException(String.format(
+            "Timeout waiting for fact %s to be consumed. Current serial: %s, expected: %s.",
+            factId, currentFsp, serial));
+      }
+      try {
+        Thread.sleep(retryBackoffMillis.apply(i));
+        currentFsp = subscribedProjection.factStreamPosition();
+        i++;
+      } catch (InterruptedException e) {
+        LOGGER.info("Interrupted while waiting for fact {} to be consumed.", factId);
+      }
+    }
   }
 
   // TODO javadoc
-  default <P extends SubscribedProjection> CompletableFuture<Void> waitFor(
-      @NonNull P subscribedProjection, @NonNull UUID factId) {
-    return waitFor(subscribedProjection, factId, i -> 100);
+  default <P extends SubscribedProjection> void waitFor(
+      @NonNull P subscribedProjection, @NonNull UUID factId, Duration timeout) throws TimeoutException, ExecutionException {
+    waitFor(subscribedProjection, factId, timeout, i -> 100L);
   }
 }
