@@ -217,7 +217,6 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
     }
   }
 
-
   @ProjectionMetaData(revision = 1)
   static class DynamoSubscribedUserNames extends TrackingDynamoSubscribedUserNames {
     public DynamoSubscribedUserNames(DynamoDbClient dynamoDbClient) {
@@ -243,8 +242,7 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
   }
 
   @ProjectionMetaData(revision = 1)
-  static class DynamoSubscribedUserNamesSizeBlowAt7Th
-      extends TrackingDynamoSubscribedUserNames {
+  static class DynamoSubscribedUserNamesSizeBlowAt7Th extends TrackingDynamoSubscribedUserNames {
     private int count;
 
     public DynamoSubscribedUserNamesSizeBlowAt7Th(DynamoDbClient dynamoDbClient) {

@@ -68,20 +68,20 @@ public class TxDynamoSubscribedUserNames extends AbstractDynamoSubscribedProject
   @Handler
   protected void apply(UserCreated created) {
     userNames.putItem(
-            PutItemEnhancedRequest.builder(UserNamesDynamoSchema.class)
-                    .item(
-                            new UserNamesDynamoSchema()
-                                    .userId(created.aggregateId())
-                                    .userName(created.userName()))
-                    .build());
+        PutItemEnhancedRequest.builder(UserNamesDynamoSchema.class)
+            .item(
+                new UserNamesDynamoSchema()
+                    .userId(created.aggregateId())
+                    .userName(created.userName()))
+            .build());
   }
 
   @SneakyThrows
   @Handler
   protected void apply(UserDeleted deleted) {
     userNames.deleteItem(
-            DeleteItemEnhancedRequest.builder()
-                    .key(Key.builder().partitionValue(deleted.aggregateId().toString()).build())
-                    .build());
+        DeleteItemEnhancedRequest.builder()
+            .key(Key.builder().partitionValue(deleted.aggregateId().toString()).build())
+            .build());
   }
 }
