@@ -22,6 +22,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +33,7 @@ import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionClosedException;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.BatchingFactObserver;
+import org.factcast.core.subscription.observer.FactStreamObserver;
 import org.factcast.core.util.ExceptionHelper;
 
 @Slf4j
@@ -40,8 +41,8 @@ public class ResilientGrpcSubscription implements Subscription {
 
   private final GrpcFactStore store;
   private final SubscriptionRequestTO originalRequest;
-  private final BatchingFactObserver originalObserver;
-  private final BatchingFactObserver delegatingObserver;
+  private final FactStreamObserver originalObserver;
+  private final FactStreamObserver delegatingObserver;
 
   private final AtomicReference<FactStreamPosition> lastPosition = new AtomicReference<>();
   private final SubscriptionHolder currentSubscription = new SubscriptionHolder();
@@ -52,7 +53,7 @@ public class ResilientGrpcSubscription implements Subscription {
   public ResilientGrpcSubscription(
       @NonNull GrpcFactStore store,
       @NonNull SubscriptionRequestTO req,
-      @NonNull BatchingFactObserver obs,
+      @NonNull FactStreamObserver obs,
       @NonNull ResilienceConfiguration config) {
     this.store = store;
     resilience = new Resilience(config);
@@ -198,12 +199,27 @@ public class ResilientGrpcSubscription implements Subscription {
     void accept(T t, U u) throws TimeoutException;
   }
 
-  class DelegatingFactObserver implements BatchingFactObserver {
+  // TODO superweird, find another solution for this
+  class DelegatingFactObserver extends FactStreamObserver {
+    public DelegatingFactObserver() {
+      super(originalObserver);
+    }
+
     @Override
     public void onNext(@NonNull List<Fact> element) {
       if (!isClosed.get()) {
         originalObserver.onNext(element);
         lastPosition.set(FactStreamPosition.from(Iterables.getLast(element)));
+      } else {
+        log.warn("Fact arrived after call to .close() [a few of them is ok...]");
+      }
+    }
+
+    @Override
+    public void onNext(@Nullable Fact element) {
+      if (!isClosed.get()) {
+        originalObserver.onNext(element);
+        if (element != null) lastPosition.set(FactStreamPosition.from(element));
       } else {
         log.warn("Fact arrived after call to .close() [a few of them is ok...]");
       }

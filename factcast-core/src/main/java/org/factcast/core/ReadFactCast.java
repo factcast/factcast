@@ -24,6 +24,8 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.BatchingFactObserver;
+import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.FlushingFactObserver;
 
 /**
  * A read-only interface to a FactCast, that only offers subscription and Fact-by-id lookup.
@@ -35,11 +37,11 @@ public interface ReadFactCast {
   /** Same as subscribeToFacts, but adds automatic reconnection. */
   @NonNull
   Subscription subscribe(
-      @NonNull SubscriptionRequest request, @NonNull BatchingFactObserver observer);
+      @NonNull SubscriptionRequest request, @NonNull FlushingFactObserver observer);
 
   @NonNull
   Subscription subscribeEphemeral(
-      @NonNull SubscriptionRequest request, @NonNull BatchingFactObserver observer);
+      @NonNull SubscriptionRequest request, @NonNull FlushingFactObserver observer);
 
   @NonNull
   OptionalLong serialOf(@NonNull UUID id);
@@ -67,4 +69,22 @@ public interface ReadFactCast {
   // @Deprecated(since = "0.5.6", forRemoval = true)
   @Deprecated
   ReadFactCast retry(int maxAttempts, long minimumWaitIntervalMillis);
+
+  /**
+   * @since 0.8
+   */
+  @NonNull
+  Subscription subscribe(@NonNull SubscriptionRequest request, @NonNull FactObserver observer);
+
+  @NonNull
+  Subscription subscribeEphemeral(
+      @NonNull SubscriptionRequest request, @NonNull FactObserver observer);
+
+  @NonNull
+  Subscription subscribe(
+      @NonNull SubscriptionRequest request, @NonNull BatchingFactObserver observer);
+
+  @NonNull
+  Subscription subscribeEphemeral(
+      @NonNull SubscriptionRequest request, @NonNull BatchingFactObserver observer);
 }

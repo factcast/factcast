@@ -16,14 +16,24 @@
 package org.factcast.store.internal;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import liquibase.integration.spring.SpringLiquibase;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.PgFactStoreConfiguration;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.script.graaljs.GraalJSEngineFactory;
+import org.factcast.store.registry.metrics.RegistryMetrics;
+import org.factcast.store.registry.transformation.TransformationStore;
+import org.factcast.store.registry.transformation.cache.InMemTransformationCache;
+import org.factcast.store.registry.transformation.cache.TransformationCache;
+import org.factcast.store.registry.transformation.store.InMemTransformationStoreImpl;
+import org.factcast.store.registry.validation.schema.SchemaStore;
+import org.factcast.store.registry.validation.schema.store.InMemSchemaStoreImpl;
 import org.factcast.test.PostgresVersion;
 import org.mockito.Mockito;
 import org.postgresql.Driver;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration;
@@ -33,6 +43,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 @SuppressWarnings("resource")
@@ -77,5 +90,36 @@ public class PgTestConfiguration {
   @Bean
   JSEngineFactory engineFactory() {
     return new GraalJSEngineFactory();
+  }
+
+  @Bean
+  public SchemaStore schemaStore(
+      @NonNull JdbcTemplate jdbcTemplate,
+      @NonNull StoreConfigurationProperties props,
+      @NonNull RegistryMetrics registryMetrics,
+      @Autowired(required = false) SpringLiquibase unused) {
+    return new InMemSchemaStoreImpl(registryMetrics);
+  }
+
+  @Bean
+  public TransformationStore transformationStore(
+      @NonNull JdbcTemplate jdbcTemplate,
+      @NonNull TransactionTemplate txTemplate,
+      @NonNull StoreConfigurationProperties props,
+      @NonNull RegistryMetrics registryMetrics,
+      @Autowired(required = false) SpringLiquibase unused) {
+
+    return new InMemTransformationStoreImpl(registryMetrics);
+  }
+
+  @Bean
+  public TransformationCache transformationCache(
+      @NonNull JdbcTemplate jdbcTemplate,
+      @NonNull NamedParameterJdbcTemplate namedJdbcTemplate,
+      @NonNull StoreConfigurationProperties props,
+      @NonNull RegistryMetrics registryMetrics,
+      @Autowired(required = false) SpringLiquibase unused) {
+    return new InMemTransformationCache(
+        props.getInMemTransformationCacheCapacity(), registryMetrics);
   }
 }

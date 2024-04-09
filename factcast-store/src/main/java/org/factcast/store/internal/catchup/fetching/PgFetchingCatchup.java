@@ -22,9 +22,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
+import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.store.internal.catchup.BufferingFactInterceptor;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.query.CurrentStatementHolder;
@@ -40,13 +39,12 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 @RequiredArgsConstructor
 public class PgFetchingCatchup implements PgCatchup {
 
+  public static final int FETCH_SIZE = 100;
   @NonNull final PgConnectionSupplier connectionSupplier;
 
-  @NonNull final StoreConfigurationProperties props;
+  @NonNull final SubscriptionImpl subscription;
 
   @NonNull final SubscriptionRequestTO req;
-
-  @NonNull final BufferingFactInterceptor interceptor;
 
   @NonNull final AtomicLong serial;
 
@@ -66,8 +64,9 @@ public class PgFetchingCatchup implements PgCatchup {
       var jdbc = new JdbcTemplate(ds);
       fetch(jdbc);
     } finally {
-      log.trace("Done fetching, flushing interceptor");
-      interceptor.flush();
+      log.trace("Done fetching, flushing.");
+      subscription.notifyElement(null);
+
       ds.destroy();
       statementHolder.clear();
     }
@@ -75,7 +74,7 @@ public class PgFetchingCatchup implements PgCatchup {
 
   @VisibleForTesting
   void fetch(JdbcTemplate jdbc) {
-    jdbc.setFetchSize(props.getPageSize());
+    jdbc.setFetchSize(FETCH_SIZE);
     jdbc.setQueryTimeout(0); // disable query timeout
     PgQueryBuilder b = new PgQueryBuilder(req.specs(), statementHolder);
     var extractor = new PgFactExtractor(serial);
@@ -90,7 +89,7 @@ public class PgFetchingCatchup implements PgCatchup {
         if (statementHolder.wasCanceled() || rs.isClosed()) return;
 
         Fact f = extractor.mapRow(rs, 0);
-        this.interceptor.accept(f);
+        subscription.notifyElement(f);
       } catch (PSQLException psql) {
         // see #2088
         if (statementHolder.wasCanceled()) {

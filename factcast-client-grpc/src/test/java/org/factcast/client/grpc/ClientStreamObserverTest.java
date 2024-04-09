@@ -66,7 +66,7 @@ class ClientStreamObserverTest {
 
   @BeforeEach
   void setUp() {
-    SubscriptionImpl subscriptionImpl = new SubscriptionImpl(factObserver);
+    SubscriptionImpl subscriptionImpl = SubscriptionImpl.on(factObserver);
     subscription = spy(subscriptionImpl);
     uut = new ClientStreamObserver(subscription, 0L);
   }

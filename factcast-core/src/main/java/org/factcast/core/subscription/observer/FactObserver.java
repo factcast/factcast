@@ -15,7 +15,6 @@
  */
 package org.factcast.core.subscription.observer;
 
-import lombok.Generated;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 
@@ -25,8 +24,7 @@ import org.factcast.core.Fact;
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
-@Generated // sneakily skip coverage generation
-public interface FactObserver extends FactStreamObserver {
+public interface FactObserver extends BaseFactStreamObserver {
 
   void onNext(@NonNull Fact element);
 }

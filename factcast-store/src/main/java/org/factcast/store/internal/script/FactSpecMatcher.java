@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.filter;
+package org.factcast.store.internal.script;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.*;
@@ -26,9 +26,6 @@ import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.spec.FilterScript;
 import org.factcast.core.util.FactCastJson;
-import org.factcast.store.internal.script.JSArgument;
-import org.factcast.store.internal.script.JSEngine;
-import org.factcast.store.internal.script.JSEngineFactory;
 
 /**
  * Matches facts against specifications.

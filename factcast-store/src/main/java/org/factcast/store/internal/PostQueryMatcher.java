@@ -24,7 +24,7 @@ import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.store.internal.filter.FactSpecMatcher;
+import org.factcast.store.internal.script.FactSpecMatcher;
 import org.factcast.store.internal.script.JSEngineFactory;
 
 /**

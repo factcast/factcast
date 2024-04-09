@@ -490,7 +490,8 @@ class FactusImplTest {
 
       when(projector.createFactSpecs()).thenReturn(specs);
 
-      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
+      when(fc.subscribe(any(), any(BatchingFactObserver.class)))
+          .thenReturn(mock(Subscription.class));
 
       // RUN
       UUID aggId = randomUUID();
@@ -519,7 +520,8 @@ class FactusImplTest {
 
       when(projector.createFactSpecs()).thenReturn(specs);
 
-      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
+      when(fc.subscribe(any(), any(BatchingFactObserver.class)))
+          .thenReturn(mock(Subscription.class));
 
       // RUN
       Locked<ConcatCodesProjection> locked = underTest.withLockOn(ConcatCodesProjection.class);
@@ -569,7 +571,8 @@ class FactusImplTest {
 
       when(projector.createFactSpecs()).thenReturn(specs);
 
-      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
+      when(fc.subscribe(any(), any(BatchingFactObserver.class)))
+          .thenReturn(mock(Subscription.class));
 
       // RUN
       ConcatCodesProjection concatCodes = underTest.fetch(ConcatCodesProjection.class);
@@ -592,7 +595,8 @@ class FactusImplTest {
 
       when(projector.createFactSpecs()).thenReturn(specs);
 
-      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
+      when(fc.subscribe(any(), any(BatchingFactObserver.class)))
+          .thenReturn(mock(Subscription.class));
 
       ConcatCodesProjection concatCodesProjection = new ConcatCodesProjection();
       concatCodesProjection.codes = "foo";
@@ -818,7 +822,7 @@ class FactusImplTest {
           .apply(any(List.class));
 
       Subscription subscription = mock(Subscription.class);
-      when(fc.subscribe(any(), any())).thenReturn(subscription);
+      when(fc.subscribe(any(), any(BatchingFactObserver.class))).thenReturn(subscription);
 
       // RUN
       underTest.subscribeAndBlock(subscribedProjection);
@@ -888,7 +892,7 @@ class FactusImplTest {
           .apply(any(List.class));
 
       Subscription subscription = mock(Subscription.class);
-      when(fc.subscribe(any(), any())).thenReturn(subscription);
+      when(fc.subscribe(any(), any(BatchingFactObserver.class))).thenReturn(subscription);
 
       // RUN
       underTest.subscribeAndBlock(subscribedProjection, Duration.ofMinutes(10));
@@ -951,7 +955,8 @@ class FactusImplTest {
 
       Subscription subscription1 = mock(Subscription.class);
       Subscription subscription2 = mock(Subscription.class);
-      when(fc.subscribe(any(), any())).thenReturn(subscription1, subscription2);
+      when(fc.subscribe(any(), any(BatchingFactObserver.class)))
+          .thenReturn(subscription1, subscription2);
 
       doThrow(new Exception()).when(subscription1).close();
 
@@ -1027,7 +1032,8 @@ class FactusImplTest {
 
       when(projector.createFactSpecs()).thenReturn(specs);
 
-      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
+      when(fc.subscribe(any(), any(BatchingFactObserver.class)))
+          .thenReturn(mock(Subscription.class));
 
       // RUN
       Optional<PersonAggregate> personAggregate =
@@ -1036,7 +1042,7 @@ class FactusImplTest {
       // ASSERT
       assertThat(personAggregate).isEmpty();
 
-      verify(fc).subscribe(any(), any());
+      verify(fc).subscribe(any(), any(BatchingFactObserver.class));
 
       verify(projector, never()).apply(any(Fact.class));
       verify(projector, never()).apply(any(List.class));
@@ -1056,7 +1062,8 @@ class FactusImplTest {
 
       when(projector.createFactSpecs()).thenReturn(specs);
 
-      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
+      when(fc.subscribe(any(), any(BatchingFactObserver.class)))
+          .thenReturn(mock(Subscription.class));
 
       PersonAggregate personAggregate = new PersonAggregate();
       personAggregate.name("Fred");
@@ -1091,7 +1098,8 @@ class FactusImplTest {
 
       when(projector.createFactSpecs()).thenReturn(specs);
 
-      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
+      when(fc.subscribe(any(), any(BatchingFactObserver.class)))
+          .thenReturn(mock(Subscription.class));
 
       PersonAggregate personAggregate = spy(new PersonAggregate());
       personAggregate.name("Fred");
@@ -1126,7 +1134,8 @@ class FactusImplTest {
 
       when(ehFactory.create(any(SomeSnapshotProjection.class))).thenReturn(projector);
       when(projector.createFactSpecs()).thenReturn(specs);
-      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
+      when(fc.subscribe(any(), any(BatchingFactObserver.class)))
+          .thenReturn(mock(Subscription.class));
 
       when(snapshotSerializer.deserialize(SomeSnapshotProjection.class, "{}".getBytes()))
           .thenReturn(spy(new SomeSnapshotProjection()));
@@ -1151,8 +1160,6 @@ class FactusImplTest {
       when(ehFactory.create(any(PersonAggregate.class))).thenReturn(projector);
 
       when(projector.createFactSpecs()).thenReturn(specs);
-
-      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
 
       PersonAggregate personAggregate = spy(new PersonAggregate());
       personAggregate.name("Fred");
@@ -1212,7 +1219,8 @@ class FactusImplTest {
 
       when(ehFactory.create(any(SomeSnapshotProjection.class))).thenReturn(projector);
       when(projector.createFactSpecs()).thenReturn(specs);
-      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
+      //      when(fc.subscribe(any(), any(BatchingFactObserver.class)))
+      //          .thenReturn(mock(Subscription.class));
       SomeSnapshotProjection p = spy(new SomeSnapshotProjection());
       when(snapshotSerializer.deserialize(SomeSnapshotProjection.class, "Fred".getBytes()))
           .thenReturn(p);
@@ -1261,8 +1269,6 @@ class FactusImplTest {
       when(ehFactory.create(any(PersonAggregate.class))).thenReturn(projector);
 
       when(projector.createFactSpecs()).thenReturn(specs);
-
-      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
 
       PersonAggregate personAggregate = new PersonAggregate();
       personAggregate.name("Fred");
@@ -1318,8 +1324,6 @@ class FactusImplTest {
       when(ehFactory.create(personAggregateCaptor.capture())).thenReturn(projector);
 
       when(projector.createFactSpecs()).thenReturn(specs);
-
-      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
 
       // make sure when event projector is asked to apply events, to wire
       // them through

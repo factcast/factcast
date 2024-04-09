@@ -44,7 +44,7 @@ import org.factcast.core.subscription.InternalSubscription;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.BatchingFactObserver;
+import org.factcast.core.subscription.observer.FactStreamObserver;
 import org.factcast.core.util.MavenHelper;
 import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.CompressionCodecs;
@@ -247,14 +247,14 @@ public class GrpcFactStore implements FactStore {
   @Override
   @NonNull
   public Subscription subscribe(
-      @NonNull SubscriptionRequestTO req, @NonNull BatchingFactObserver observer) {
+      @NonNull SubscriptionRequestTO req, @NonNull FactStreamObserver observer) {
     if (properties.getResilience().isEnabled())
       return new ResilientGrpcSubscription(this, req, observer, properties.getResilience());
     else return internalSubscribe(req, observer);
   }
 
   public Subscription internalSubscribe(
-      @NonNull SubscriptionRequestTO req, @NonNull BatchingFactObserver observer) {
+      @NonNull SubscriptionRequestTO req, @NonNull FactStreamObserver observer) {
     return callAndHandle(
         () -> {
           InternalSubscription subscription = SubscriptionImpl.on(observer);

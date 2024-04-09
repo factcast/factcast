@@ -42,6 +42,7 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.BatchingFactObserver;
+import org.factcast.core.subscription.observer.FactStreamObserver;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.Headers;
 import org.factcast.grpc.api.StateForRequest;
@@ -447,7 +448,7 @@ class GrpcFactStoreTest {
     assertThrows(NullPointerException.class, () -> uut.internalSubscribe(null, null));
     assertThrows(
         NullPointerException.class,
-        () -> uut.internalSubscribe(null, mock(BatchingFactObserver.class)));
+        () -> uut.internalSubscribe(null, mock(FactStreamObserver.class)));
   }
 
   @Test
