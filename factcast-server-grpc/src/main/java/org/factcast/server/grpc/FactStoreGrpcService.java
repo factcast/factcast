@@ -246,12 +246,11 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
                     Refill refill =
                         Refill.intervally(
-                            grpcLimitProperties
-                                .getNumberOfFollowRequestsAllowedPerClientPerMinute(),
+                            grpcLimitProperties.numberOfFollowRequestsAllowedPerClientPerMinute(),
                             Duration.ofMinutes(1));
                     Bandwidth limit =
                         Bandwidth.classic(
-                            grpcLimitProperties.getInitialNumberOfFollowRequestsAllowedPerClient(),
+                            grpcLimitProperties.initialNumberOfFollowRequestsAllowedPerClient(),
                             refill);
                     return Bucket4j.builder().addLimit(limit).build();
                   } else {
