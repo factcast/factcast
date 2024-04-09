@@ -15,30 +15,23 @@
  */
 package org.factcast.client.grpc;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import java.time.Duration;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.grpc.api.GrpcConstants;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.validation.annotation.Validated;
 
 @Configuration
 @ConfigurationProperties(prefix = "factcast.grpc.client")
 @Data
 @Accessors(fluent = false)
-@Validated
-public class FactCastGrpcClientProperties {
+@Slf4j
+public class FactCastGrpcClientProperties implements InitializingBean {
 
-  @Min(
-      message = "Minimum value for 'maxInboundMessageSize' is {value}",
-      value = GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE)
-  @Max(
-      message = "Maximum value for 'maxInboundMessageSize' is {value}",
-      value = GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE)
   private int maxInboundMessageSize = GrpcConstants.DEFAULT_CLIENT_INBOUND_MESSAGE_SIZE;
 
   private boolean enableFastForward = true;
@@ -74,6 +67,21 @@ public class FactCastGrpcClientProperties {
 
   @NestedConfigurationProperty
   private ResilienceConfiguration resilience = new ResilienceConfiguration();
+
+  @Override
+  public void afterPropertiesSet() throws Exception {
+    // we just warn here. If the value is out of range, it will nevertheless be sent to the server,
+    // so that the serverlogs contain the client's misconfiguration. However, a default will be used
+    // instead.
+    if (maxInboundMessageSize < GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE)
+      log.warn(
+          "Minimum value for 'maxInboundMessageSize' is {}",
+          GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE);
+    if (maxInboundMessageSize > GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE)
+      log.warn(
+          "Maximum value for 'maxInboundMessageSize' is {}",
+          GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE);
+  }
 
   @Data
   @Accessors(fluent = false)
