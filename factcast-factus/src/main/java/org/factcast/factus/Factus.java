@@ -15,6 +15,7 @@
  */
 package org.factcast.factus;
 
+import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.io.Closeable;
@@ -27,6 +28,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.IntToLongFunction;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
@@ -148,50 +150,45 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
   OptionalLong serialOf(@NonNull UUID factId);
 
   /**
-   * Blocks until the subscribedProjection has consumed the fact with the given factId or a
-   * subsequent one. The method will retry to check the state of the projection, until timeout. The
+   * Blocks until the subscribedProjection has consumed the fact with the given factId or one that was published after it.
+   * The method will retry to check the state of the projection, until timeout. The
    * retry interval can be customized by providing a retryBackoffMillis function, that takes the
    * number of retries as input and returns the number of milliseconds to wait before the next
    * retry.
+   *
+   * @throws TimeoutException if the fact with the given id or a subsequent one is not consumed within the timeout.
+   * @throws IllegalArgumentException if the fact with the given id is not published yet or can't be found.
    */
   default <P extends SubscribedProjection> void waitFor(
       @NonNull P subscribedProjection,
       @NonNull UUID factId,
       @NonNull Duration timeout,
-      IntToLongFunction retryBackoffMillis)
-      throws TimeoutException, ExecutionException {
-    long start = System.currentTimeMillis();
-    Long serial =
-        serialCache.get(
-            factId,
-            () -> {
-              OptionalLong optSerial = this.serialOf(factId);
-              if (!optSerial.isPresent()) {
-                throw new IllegalArgumentException(
-                    String.format(
-                        "Fact with id %s not found. Make sure to publish before waiting for it.",
-                        factId));
-              }
-              return optSerial.getAsLong();
-            });
-    FactStreamPosition currentFsp = subscribedProjection.factStreamPosition();
-    int i = 1;
-    // until timeout is met or the factStreamPosition is greater than the serial
-    while (currentFsp == null || currentFsp.serial() < serial) {
-      if (System.currentTimeMillis() - start > timeout.toMillis()) {
-        throw new TimeoutException(
-            String.format(
-                "Timeout waiting for fact %s to be consumed. Current serial: %s, expected: %s.",
-                factId, currentFsp, serial));
-      }
-      try {
+      @NonNull IntToLongFunction retryBackoffMillis)
+      throws TimeoutException, IllegalArgumentException {
+    try {
+      long start = System.currentTimeMillis();
+      long serial = serialCache.get(
+          factId,
+          () -> this.serialOf(factId).orElseThrow(
+              () -> new IllegalArgumentException(String.format("Fact with id %s not found. Make sure to publish before waiting for it.", factId))));
+      FactStreamPosition currentFsp = subscribedProjection.factStreamPosition();
+      // until timeout is met or the factStreamPosition is greater than the serial
+      for (int i = 1; currentFsp == null || currentFsp.serial() < serial; i++) {
+        if (System.currentTimeMillis() - start > timeout.toMillis()) {
+          throw new TimeoutException(
+              String.format(
+                  "Timeout waiting for fact %s to be consumed.", factId));
+        }
         Thread.sleep(retryBackoffMillis.applyAsLong(i));
         currentFsp = subscribedProjection.factStreamPosition();
-        i++;
-      } catch (InterruptedException e) {
-        LOGGER.info("Interrupted while waiting for fact {} to be consumed.", factId);
-        Thread.currentThread().interrupt();
       }
+    } catch (UncheckedExecutionException | ExecutionException e) {
+      // unwrap ExecutionExceptions from the cache
+      Throwables.throwIfUnchecked(e.getCause());
+      throw new IllegalStateException(e);
+    }  catch (InterruptedException e) {
+      LOGGER.info("Interrupted while waiting for fact {} to be consumed.", factId);
+      Thread.currentThread().interrupt();
     }
   }
 
@@ -199,10 +196,13 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
    * Blocks until the subscribedProjection has consumed the fact with the given factId or a
    * subsequent one. The method will retry every 100ms to check the state of the projection, until
    * timeout.
+   *
+   * @throws TimeoutException if the fact with the given id or a subsequent one is not consumed within the timeout.
+   * @throws IllegalArgumentException if the fact with the given id is not published yet or can't be found.
    */
   default <P extends SubscribedProjection> void waitFor(
-      @NonNull P subscribedProjection, @NonNull UUID factId, Duration timeout)
-      throws TimeoutException, ExecutionException {
+      @NonNull P subscribedProjection, @NonNull UUID factId, @NonNull Duration timeout)
+      throws TimeoutException, IllegalArgumentException {
     waitFor(subscribedProjection, factId, timeout, i -> 100L);
   }
 }

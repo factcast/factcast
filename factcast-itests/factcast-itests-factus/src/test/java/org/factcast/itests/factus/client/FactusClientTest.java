@@ -721,7 +721,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       UUID unknownFactId = randomUUID();
       assertThatThrownBy(
               () -> factus.waitFor(subscribedUserNames, unknownFactId, Duration.ofSeconds(1)))
-          .hasCauseInstanceOf(IllegalArgumentException.class);
+          .isInstanceOf(IllegalArgumentException.class);
     }
   }
 

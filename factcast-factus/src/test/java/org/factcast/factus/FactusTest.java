@@ -219,9 +219,8 @@ class FactusTest {
 
       assertThatThrownBy(
               () -> underTest.waitFor(subscribedProjectionMock, factId, Duration.ofMillis(100)))
-          .hasRootCauseInstanceOf(IllegalArgumentException.class)
-          .hasRootCauseMessage(
-              "Fact with id " + factId + " not found. Make sure to publish before waiting for it.");
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("Fact with id " + factId + " not found. Make sure to publish before waiting for it.");
     }
 
     @Test
