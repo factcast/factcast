@@ -70,7 +70,7 @@ public class GrpcRequestMetadata {
 
   @VisibleForTesting
   public static GrpcRequestMetadata forTest() {
-    return forTest(1024 * 1024);
+    return forTest(1024 * 1024L);
   }
 
   @VisibleForTesting
