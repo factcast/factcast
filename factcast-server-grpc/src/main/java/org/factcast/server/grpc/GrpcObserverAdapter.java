@@ -16,7 +16,6 @@
 package org.factcast.server.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
-import io.grpc.stub.StreamObserver;
 import java.util.Timer;
 import java.util.TimerTask;
 import lombok.AccessLevel;
@@ -43,7 +42,7 @@ class GrpcObserverAdapter implements FactObserver, Flushable {
 
   @NonNull private final String id;
 
-  @NonNull private final StreamObserver<MSG_Notification> notificationStreamObserver;
+  @NonNull private final io.grpc.stub.StreamObserver<MSG_Notification> notificationStreamObserver;
   @NonNull private final ServerExceptionLogger serverExceptionLogger;
 
   @Getter(AccessLevel.PROTECTED)
@@ -56,7 +55,7 @@ class GrpcObserverAdapter implements FactObserver, Flushable {
 
   public GrpcObserverAdapter(
       @NonNull String id,
-      @NonNull StreamObserver<MSG_Notification> observer,
+      @NonNull io.grpc.stub.StreamObserver<MSG_Notification> observer,
       @NonNull GrpcRequestMetadata meta,
       @NonNull ServerExceptionLogger serverExceptionLogger,
       long keepaliveInMilliseconds) {
@@ -76,35 +75,38 @@ class GrpcObserverAdapter implements FactObserver, Flushable {
   @VisibleForTesting
   GrpcObserverAdapter(
       @NonNull String id,
-      @NonNull StreamObserver<MSG_Notification> observer,
+      @NonNull io.grpc.stub.StreamObserver<MSG_Notification> observer,
       @NonNull ServerExceptionLogger serverExceptionLogger) {
     this(id, observer, GrpcRequestMetadata.forTest(), serverExceptionLogger, 0);
   }
 
   @VisibleForTesting
   @Deprecated
-  GrpcObserverAdapter(@NonNull String id, @NonNull StreamObserver<MSG_Notification> observer) {
+  GrpcObserverAdapter(
+      @NonNull String id, @NonNull io.grpc.stub.StreamObserver<MSG_Notification> observer) {
     this(id, observer, GrpcRequestMetadata.forTest(), new ServerExceptionLogger(), 0);
   }
 
   @VisibleForTesting
   GrpcObserverAdapter(
       @NonNull String id,
-      @NonNull StreamObserver<MSG_Notification> observer,
+      @NonNull io.grpc.stub.StreamObserver<MSG_Notification> observer,
       GrpcRequestMetadata meta) {
     this(id, observer, meta, new ServerExceptionLogger(), 0);
   }
 
   @VisibleForTesting
   GrpcObserverAdapter(
-      @NonNull String id, @NonNull StreamObserver<MSG_Notification> observer, long keepalive) {
+      @NonNull String id,
+      @NonNull io.grpc.stub.StreamObserver<MSG_Notification> observer,
+      long keepalive) {
     this(id, observer, GrpcRequestMetadata.forTest(), new ServerExceptionLogger(), keepalive);
   }
 
   @VisibleForTesting
   GrpcObserverAdapter(
       @NonNull String id,
-      @NonNull StreamObserver<MSG_Notification> observer,
+      @NonNull io.grpc.stub.StreamObserver<MSG_Notification> observer,
       @NonNull GrpcRequestMetadata meta,
       @NonNull ServerExceptionLogger serverExceptionLogger) {
     this(id, observer, meta, serverExceptionLogger, 0);

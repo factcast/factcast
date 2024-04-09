@@ -27,6 +27,8 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeoutException;
@@ -45,7 +47,7 @@ import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionClosedException;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.StreamObserver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -62,12 +64,12 @@ class ResilientGrpcSubscriptionTest {
 
   @Mock private SubscriptionRequestTO req;
 
-  @Mock private FactObserver obs;
+  @Mock private StreamObserver obs;
 
   @Mock private Subscription subscription;
 
-  private final ArgumentCaptor<FactObserver> observerAC =
-      ArgumentCaptor.forClass(FactObserver.class);
+  private final ArgumentCaptor<StreamObserver> observerAC =
+      ArgumentCaptor.forClass(StreamObserver.class);
 
   final ResilienceConfiguration config = new ResilienceConfiguration();
   ResilientGrpcSubscription uut;
@@ -275,7 +277,8 @@ class ResilientGrpcSubscriptionTest {
 
     @Test
     void nextDelegates() {
-      @NonNull Fact f = Fact.builder().ns("foo").type("bar").buildWithoutPayload();
+      List<Fact> f =
+          Collections.singletonList(Fact.builder().ns("foo").type("bar").buildWithoutPayload());
       dfo.onNext(f);
       verify(obs).onNext(f);
     }
@@ -283,7 +286,8 @@ class ResilientGrpcSubscriptionTest {
     @Test
     void nextChecksForClosing() {
       uut.close();
-      @NonNull Fact f = Fact.builder().ns("foo").type("bar").buildWithoutPayload();
+      List<Fact> f =
+          Collections.singletonList(Fact.builder().ns("foo").type("bar").buildWithoutPayload());
       dfo.onNext(f);
       verify(obs, never()).onNext(f);
     }

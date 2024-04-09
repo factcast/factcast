@@ -19,6 +19,7 @@ import static org.factcast.factus.metrics.TagKeys.CLASS;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.lang.reflect.Constructor;
@@ -46,7 +47,7 @@ import org.factcast.core.snap.Snapshot;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.StreamObserver;
 import org.factcast.factus.batch.DefaultPublishBatch;
 import org.factcast.factus.batch.PublishBatch;
 import org.factcast.factus.event.EventObject;
@@ -202,15 +203,16 @@ public class FactusImpl implements Factus {
   private <P extends SubscribedProjection> Subscription doSubscribe(
       @NonNull P subscribedProjection, @NonNull WriterToken token) {
     Projector<P> handler = ehFactory.create(subscribedProjection);
-    FactObserver fo =
+    StreamObserver fo =
         new AbstractFactObserver(subscribedProjection, PROGRESS_INTERVAL, factusMetrics) {
 
           FactStreamPosition lastFactIdApplied = null;
 
           @Override
-          public void onNextFact(@NonNull Fact element) {
+          public void onNextFacts(@NonNull List<Fact> element) {
             if (token.isValid()) {
-              lastFactIdApplied = FactStreamPosition.from(element);
+              // TODO order looks wrong
+              lastFactIdApplied = FactStreamPosition.from(Iterables.getLast(element));
               handler.apply(element);
             } else {
               // token is no longer valid
@@ -376,12 +378,13 @@ public class FactusImpl implements Factus {
     AtomicInteger factCount = new AtomicInteger(0);
     AtomicReference<FactStreamPosition> positionOfLastFactApplied = new AtomicReference<>();
 
-    FactObserver fo =
+    StreamObserver fo =
         new AbstractFactObserver(projection, PROGRESS_INTERVAL, factusMetrics) {
 
           @Override
-          public void onNextFact(@NonNull Fact element) {
-            FactStreamPosition pos = FactStreamPosition.from(element);
+          public void onNextFacts(@NonNull List<Fact> element) {
+            // TODO order looks wrong here
+            FactStreamPosition pos = FactStreamPosition.from(Iterables.getLast(element));
             positionOfLastFactApplied.set(pos);
             handler.apply(element);
             if (afterProcessing != null) {

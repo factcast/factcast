@@ -42,7 +42,7 @@ class FactObserverTest {
     public void onNext(@NonNull Fact element) {}
   }
 
-  @Spy Logger logger = LoggerFactory.getLogger(FactObserver.class);
+  @Spy Logger logger = LoggerFactory.getLogger(StreamObserver.class);
   @InjectMocks private TestFactObserver underTest;
 
   @Nested

@@ -20,7 +20,6 @@ import static io.grpc.stub.ClientCalls.asyncServerStreamingCall;
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.*;
 import io.grpc.stub.MetadataUtils;
-import io.grpc.stub.StreamObserver;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import java.time.LocalDate;
@@ -44,7 +43,7 @@ import org.factcast.core.subscription.InternalSubscription;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.StreamObserver;
 import org.factcast.core.util.MavenHelper;
 import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.CompressionCodecs;
@@ -53,7 +52,6 @@ import org.factcast.grpc.api.Headers;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
 import org.factcast.grpc.api.conv.ServerConfig;
-import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
@@ -250,7 +248,7 @@ public class GrpcFactStore implements FactStore {
       @NonNull SubscriptionRequestTO req,
 
       // TODO batching
-      @NonNull FactObserver observer) {
+      @NonNull StreamObserver observer) {
     if (properties.getResilience().isEnabled())
       return new ResilientGrpcSubscription(this, req, observer, properties.getResilience());
     else return internalSubscribe(req, observer);
@@ -259,11 +257,11 @@ public class GrpcFactStore implements FactStore {
   public Subscription internalSubscribe(
       @NonNull SubscriptionRequestTO req,
       // TODO batching
-      @NonNull FactObserver observer) {
+      @NonNull StreamObserver observer) {
     return callAndHandle(
         () -> {
           InternalSubscription subscription = SubscriptionImpl.on(observer);
-          StreamObserver<FactStoreProto.MSG_Notification> responseObserver =
+          io.grpc.stub.StreamObserver<MSG_Notification> responseObserver =
               new ClientStreamObserver(subscription, req.keepaliveIntervalInMs());
           ClientCall<MSG_SubscriptionRequest, MSG_Notification> call =
               stub.getChannel()

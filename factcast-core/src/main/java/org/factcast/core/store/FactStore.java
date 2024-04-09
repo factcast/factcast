@@ -25,7 +25,7 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.StreamObserver;
 
 /**
  * A read/Write FactStore.
@@ -44,7 +44,7 @@ public interface FactStore {
   void publish(@NonNull List<? extends Fact> factsToPublish);
 
   @NonNull
-  Subscription subscribe(@NonNull SubscriptionRequestTO request, @NonNull FactObserver observer);
+  Subscription subscribe(@NonNull SubscriptionRequestTO request, @NonNull StreamObserver observer);
 
   @NonNull
   OptionalLong serialOf(@NonNull UUID l);

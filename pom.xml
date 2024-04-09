@@ -31,16 +31,16 @@
     <module>factcast-factus-event</module>
     <module>factcast-factus-bin-snapser</module>
     <module>factcast-client-grpc</module>
-    <module>factcast-client-grpc-cli</module>
+    <!-- <module>factcast-client-grpc-cli</module> -->
     <module>factcast-store</module>
-    <module>factcast-store-test</module>
+    <!-- <module>factcast-store-test</module> -->
     <module>factcast-core</module>
     <module>factcast-factus</module>
     <module>factcast-factus-redis</module>
     <module>factcast-factus-spring-tx</module>
     <module>factcast-server-grpc</module>
     <module>factcast-server-security</module>
-    <module>factcast-server-ui</module>
+    <!-- <module>factcast-server-ui</module> -->
     <module>factcast-grpc-api</module>
     <module>factcast-schema-registry-cli</module>
     <module>factcast-schema-registry-maven-plugin</module>

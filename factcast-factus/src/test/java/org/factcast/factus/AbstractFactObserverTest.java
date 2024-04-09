@@ -19,6 +19,8 @@ import static java.lang.Thread.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.util.Collections;
+import java.util.List;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.factcast.core.Fact;
@@ -51,7 +53,7 @@ class AbstractFactObserverTest {
               protected void onCatchupSignal() {}
 
               @Override
-              protected void onNextFact(Fact element) {}
+              protected void onNextFacts(List<Fact> element) {}
             });
   }
 
@@ -72,11 +74,11 @@ class AbstractFactObserverTest {
 
     @Test
     void delegates() {
-      Fact e = Fact.builder().ns("foo").buildWithoutPayload();
+      List<Fact> e = Collections.singletonList(Fact.builder().ns("foo").buildWithoutPayload());
 
       underTest.onNext(e);
 
-      verify(underTest).onNextFact(e);
+      verify(underTest).onNextFacts(e);
     }
 
     @SneakyThrows
@@ -84,7 +86,9 @@ class AbstractFactObserverTest {
     void reportsProgress() {
       underTest.onFactStreamInfo(new FactStreamInfo(0, 1000));
       sleep(100); // make sure
-      Fact e = Fact.builder().ns("foo").meta("_ser", "1000").buildWithoutPayload();
+      List<Fact> e =
+          Collections.singletonList(
+              Fact.builder().ns("foo").meta("_ser", "1000").buildWithoutPayload());
       underTest.onNext(e);
 
       verify(target).catchupPercentage(100);
@@ -115,11 +119,12 @@ class AbstractFactObserverTest {
 
     @Test
     void addsMetricAfterCatchup() {
-      Fact e =
-          Fact.builder()
-              .ns("foo")
-              .meta("_ts", String.valueOf(System.currentTimeMillis() - 1000))
-              .buildWithoutPayload();
+      List<Fact> e =
+          Collections.singletonList(
+              Fact.builder()
+                  .ns("foo")
+                  .meta("_ts", String.valueOf(System.currentTimeMillis() - 1000))
+                  .buildWithoutPayload());
       underTest.onCatchup();
       underTest.onNext(e);
       verify(metrics).timed(eq(TimedOperation.EVENT_PROCESSING_LATENCY), any(), anyLong());
@@ -127,11 +132,12 @@ class AbstractFactObserverTest {
 
     @Test
     void supressesMetricBeforeCatchup() {
-      Fact e =
-          Fact.builder()
-              .ns("foo")
-              .meta("_ts", String.valueOf(System.currentTimeMillis() - 1000))
-              .buildWithoutPayload();
+      List<Fact> e =
+          Collections.singletonList(
+              Fact.builder()
+                  .ns("foo")
+                  .meta("_ts", String.valueOf(System.currentTimeMillis() - 1000))
+                  .buildWithoutPayload());
       underTest.onNext(e);
       verifyNoInteractions(metrics);
     }

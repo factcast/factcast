@@ -18,9 +18,11 @@ package org.factcast.factus;
 import static org.factcast.factus.metrics.TagKeys.*;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Iterables;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.time.Instant;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
@@ -28,14 +30,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactStreamInfo;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.StreamObserver;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.metrics.TimedOperation;
 import org.factcast.factus.projection.ProgressAware;
 
 @RequiredArgsConstructor
 @Slf4j
-abstract class AbstractFactObserver implements FactObserver {
+abstract class AbstractFactObserver implements StreamObserver {
 
   private final ProgressAware target;
   private final long interval;
@@ -55,17 +57,21 @@ abstract class AbstractFactObserver implements FactObserver {
   }
 
   @Override
-  public final void onNext(@NonNull Fact element) {
-    onNextFact(element);
+  public final void onNext(@NonNull List<Fact> element) {
+    onNextFacts(element);
 
-    if (caughtUp) {
-      reportProcessingLatency(element);
-    }
+    if (!element.isEmpty()) {
+      if (caughtUp) {
+        // TODO shouldn't this be async?
+        element.forEach(this::reportProcessingLatency);
+      }
 
-    // not yet caught up
-    if (info != null && System.currentTimeMillis() - lastProgress > interval) {
-      lastProgress = System.currentTimeMillis();
-      target.catchupPercentage(info.calculatePercentage(element.serial()));
+      Fact last = Iterables.getLast(element);
+      // not yet caught up
+      if (info != null && System.currentTimeMillis() - lastProgress > interval) {
+        lastProgress = System.currentTimeMillis();
+        target.catchupPercentage(info.calculatePercentage(last.serial()));
+      }
     }
   }
 
@@ -97,5 +103,5 @@ abstract class AbstractFactObserver implements FactObserver {
 
   protected abstract void onCatchupSignal();
 
-  protected abstract void onNextFact(Fact element);
+  protected abstract void onNextFacts(List<Fact> element);
 }

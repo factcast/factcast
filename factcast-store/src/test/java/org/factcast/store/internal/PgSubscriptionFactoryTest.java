@@ -24,8 +24,8 @@ import java.util.concurrent.Executors;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
-import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.subscription.observer.StreamObserver;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
 import org.factcast.store.StoreConfigurationProperties;
@@ -86,7 +86,7 @@ class PgSubscriptionFactoryTest {
   @Nested
   class WhenSubscribing {
     @Mock private SubscriptionRequestTO req;
-    @Mock private FactObserver observer;
+    @Mock private StreamObserver observer;
 
     @Test
     void testSubscribe_happyCase() {

@@ -101,7 +101,7 @@ class ClientStreamObserverTest {
 
   @Test
   void rethrowsProcessingError() {
-    doThrow(new UnsupportedOperationException()).when(factObserver).onNext(any());
+    doThrow(new UnsupportedOperationException()).when(factObserver).onNext((Fact) any());
 
     Fact f = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
     MSG_Notification n = converter.createNotificationFor(f);

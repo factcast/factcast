@@ -46,6 +46,7 @@ import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.StreamObserver;
 import org.factcast.store.internal.StoreMetrics.OP;
 import org.factcast.store.internal.tail.FastForwardTargetRefresher;
 import org.factcast.store.test.AbstractFactStoreTest;
@@ -164,7 +165,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
     final AtomicReference<FactStreamPosition> fwd = new AtomicReference<>();
 
     @NonNull
-    final FactObserver obs =
+    final StreamObserver obs =
         new FactObserver() {
 
           @Override

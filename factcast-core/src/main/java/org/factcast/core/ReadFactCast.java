@@ -23,7 +23,7 @@ import lombok.NonNull;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.TransformationException;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.StreamObserver;
 
 /**
  * A read-only interface to a FactCast, that only offers subscription and Fact-by-id lookup.
@@ -34,11 +34,11 @@ public interface ReadFactCast {
 
   /** Same as subscribeToFacts, but adds automatic reconnection. */
   @NonNull
-  Subscription subscribe(@NonNull SubscriptionRequest request, @NonNull FactObserver observer);
+  Subscription subscribe(@NonNull SubscriptionRequest request, @NonNull StreamObserver observer);
 
   @NonNull
   Subscription subscribeEphemeral(
-      @NonNull SubscriptionRequest request, @NonNull FactObserver observer);
+      @NonNull SubscriptionRequest request, @NonNull StreamObserver observer);
 
   @NonNull
   OptionalLong serialOf(@NonNull UUID id);

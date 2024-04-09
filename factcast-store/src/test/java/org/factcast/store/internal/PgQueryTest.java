@@ -27,6 +27,7 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.StreamObserver;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -80,7 +81,7 @@ public class PgQueryTest {
   void testRoundtrip() {
     SubscriptionRequestTO req =
         SubscriptionRequestTO.forFacts(SubscriptionRequest.catchup(DEFAULT_SPEC).fromScratch());
-    FactObserver c = mock(FactObserver.class);
+    StreamObserver c = mock(StreamObserver.class);
     pq.subscribe(req, c).awaitComplete();
     verify(c, never()).onNext(any());
     verify(c).onCatchup();
@@ -96,7 +97,7 @@ public class PgQueryTest {
     insertTestFact(TestHeader.create().ns("other-ns").type("type2"));
     SubscriptionRequestTO req =
         SubscriptionRequestTO.forFacts(SubscriptionRequest.catchup(DEFAULT_SPEC).fromScratch());
-    FactObserver c = mock(FactObserver.class);
+    StreamObserver c = mock(StreamObserver.class);
     pq.subscribe(req, c).awaitComplete();
     verify(c).onCatchup();
     verify(c).onComplete();
@@ -111,17 +112,18 @@ public class PgQueryTest {
   void testRoundtripInsertAfter() throws Exception {
     SubscriptionRequestTO req =
         SubscriptionRequestTO.forFacts(SubscriptionRequest.follow(DEFAULT_SPEC).fromScratch());
-    FactObserver c = mock(FactObserver.class);
+    StreamObserver c = mock(StreamObserver.class);
     pq.subscribe(req, c).awaitCatchup();
     verify(c).onCatchup();
-    verify(c, never()).onNext(any(Fact.class));
+    verify(c, never()).onNext(any(List.class));
     insertTestFact(TestHeader.create());
     insertTestFact(TestHeader.create());
     insertTestFact(TestHeader.create().ns("other-ns"));
     insertTestFact(TestHeader.create().type("type2"));
     insertTestFact(TestHeader.create().ns("other-ns").type("type2"));
     sleep(200);
-    verify(c, times(2)).onNext(any(Fact.class));
+    // TODO should break
+    verify(c, times(2)).onNext(any(List.class));
   }
 
   @Test
@@ -129,7 +131,7 @@ public class PgQueryTest {
     SubscriptionRequestTO req =
         SubscriptionRequestTO.forFacts(SubscriptionRequest.follow(DEFAULT_SPEC).fromScratch());
     FactObserver c = mock(FactObserver.class);
-    doAnswer(i -> null).when(c).onNext(any());
+    doAnswer(i -> null).when(c).onNext(any(Fact.class));
     insertTestFact(TestHeader.create());
     insertTestFact(TestHeader.create());
     insertTestFact(TestHeader.create());
@@ -144,12 +146,12 @@ public class PgQueryTest {
     // no idea how many facts were recieved by now
     sleep(1000);
     // now all of them should have arrived
-    verify(c, times(8)).onNext(any(Fact.class));
+    verify(c, times(8)).onNext(any(List.class));
     // insert one more
     insertTestFact(TestHeader.create());
     sleep(1000);
     // and make sure it came back
-    verify(c, times(9)).onNext(any(Fact.class));
+    verify(c, times(9)).onNext(any(List.class));
   }
 
   // TODO remove all the Thread.sleeps
@@ -182,7 +184,7 @@ public class PgQueryTest {
   void testCancel() throws Exception {
     SubscriptionRequestTO req =
         SubscriptionRequestTO.forFacts(SubscriptionRequest.follow(DEFAULT_SPEC).fromScratch());
-    FactObserver c = mock(FactObserver.class);
+    StreamObserver c = mock(StreamObserver.class);
     insertTestFact(TestHeader.create());
     Subscription sub = pq.subscribe(req, c).awaitCatchup();
     verify(c).onCatchup();

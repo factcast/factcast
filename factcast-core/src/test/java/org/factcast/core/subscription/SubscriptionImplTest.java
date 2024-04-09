@@ -151,7 +151,7 @@ class SubscriptionImplTest {
   @Test
   void testOn() throws TransformationException {
     SubscriptionImpl on = SubscriptionImpl.on(obs);
-    verify(obs, never()).onNext(any());
+    verify(obs, never()).onNext(any(Fact.class));
     on.notifyElement(testFact);
     verify(obs).onNext(testFact);
     verify(obs, never()).onCatchup();
@@ -181,7 +181,7 @@ class SubscriptionImplTest {
     on.notifyComplete();
     verify(obs, never()).onComplete();
     verify(obs, never()).onCatchup();
-    verify(obs, never()).onNext(any());
+    verify(obs, never()).onNext(any(Fact.class));
   }
 
   @Test
@@ -193,7 +193,7 @@ class SubscriptionImplTest {
     on.notifyError(new Throwable("ignore me"));
     verify(obs, never()).onError(any());
     verify(obs, never()).onCatchup();
-    verify(obs, never()).onNext(any());
+    verify(obs, never()).onNext(any(Fact.class));
   }
 
   @Test

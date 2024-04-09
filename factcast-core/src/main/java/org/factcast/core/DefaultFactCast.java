@@ -26,7 +26,7 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.StreamObserver;
 
 /**
  * Default impl for FactCast used by FactCast.from* methods.
@@ -41,7 +41,7 @@ class DefaultFactCast implements FactCast {
   @Override
   @NonNull
   public Subscription subscribeEphemeral(
-      @NonNull SubscriptionRequest req, @NonNull FactObserver observer) {
+      @NonNull SubscriptionRequest req, @NonNull StreamObserver observer) {
     return store.subscribe(SubscriptionRequestTO.forFacts(req), observer);
   }
 
@@ -83,7 +83,7 @@ class DefaultFactCast implements FactCast {
 
   @Override
   public Subscription subscribe(
-      @NonNull SubscriptionRequest request, @NonNull FactObserver observer) {
+      @NonNull SubscriptionRequest request, @NonNull StreamObserver observer) {
     return store.subscribe(SubscriptionRequestTO.forFacts(request), observer);
   }
 

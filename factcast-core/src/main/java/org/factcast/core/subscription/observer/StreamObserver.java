@@ -19,6 +19,9 @@ import java.util.List;
 import lombok.Generated;
 import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.factcast.core.FactStreamPosition;
+import org.factcast.core.subscription.FactStreamInfo;
+import org.slf4j.LoggerFactory;
 
 /**
  * Callback interface to use when subscribing to Facts from FactCast.
@@ -26,11 +29,23 @@ import org.factcast.core.Fact;
  * @author uwe.schaefer@prisma-capacity.eu
  */
 @Generated // sneakily skip coverage generation
-public interface FactObserver extends StreamObserver {
+public interface StreamObserver {
 
-  void onNext(@NonNull Fact element);
+  void onNext(@NonNull List<Fact> element);
 
-  default void onNext(@NonNull List<Fact> element) {
-    element.forEach(this::onNext);
+  default void onFastForward(@NonNull FactStreamPosition pos) {}
+
+  default void onFactStreamInfo(@NonNull FactStreamInfo info) {}
+
+  default void onCatchup() {
+    // implement if you are interested in that event
+  }
+
+  default void onComplete() {
+    // implement if you are interested in that event
+  }
+
+  default void onError(@NonNull Throwable exception) {
+    LoggerFactory.getLogger(StreamObserver.class).warn("Unhandled onError:", exception);
   }
 }

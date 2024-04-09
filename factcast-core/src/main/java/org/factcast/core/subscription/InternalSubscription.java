@@ -16,6 +16,7 @@
 package org.factcast.core.subscription;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.util.List;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
@@ -34,6 +35,9 @@ public interface InternalSubscription extends Subscription {
 
   void notifyError(Throwable e);
 
+  void notifyElements(@NonNull List<Fact> e) throws TransformationException;
+
+  // TODO get rid of this somehow?
   void notifyElement(@NonNull Fact e) throws TransformationException;
 
   void flush();

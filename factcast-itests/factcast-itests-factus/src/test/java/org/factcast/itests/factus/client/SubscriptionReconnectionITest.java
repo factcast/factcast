@@ -40,6 +40,7 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionClosedException;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.StreamObserver;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.toxi.FactCastProxy;
@@ -103,7 +104,7 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
 
     var count = new AtomicInteger();
 
-    fetchAll(
+    FactObserver obs =
         f -> {
           if (f.serial() == MAX_FACTS / 4) {
             proxy.disable();
@@ -112,7 +113,8 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
           }
           log.info("Got {}", f.serial());
           count.incrementAndGet();
-        });
+        };
+    fetchAll(obs);
 
     assertThat(count.get()).isEqualTo(MAX_FACTS);
     assertThat(logCaptor.getInfoLogs()).containsOnlyOnce("Handshake successful.");
@@ -147,22 +149,23 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
   void subscribeWithFailingReconnect() {
     try (var consoleCaptor = new ConsoleCaptor()) {
       var count = new AtomicInteger();
-      assertThatThrownBy(
-              () ->
-                  fetchAll(
-                      f -> {
-                        if (f.serial() == MAX_FACTS / 32) {
-                          try {
-                            // let it repeatedly fail after each 1k sent...
-                            proxy.toxics().limitData("limit", ToxicDirection.DOWNSTREAM, 1024);
-                          } catch (IOException e) {
-                            throw new RuntimeException(e);
-                          }
-                          // and don't turn it on again
-                        }
-                        log.info("Got {}", f.serial());
-                        count.incrementAndGet();
-                      }))
+
+      FactObserver obs =
+          f -> {
+            if (f.serial() == MAX_FACTS / 32) {
+              try {
+                // let it repeatedly fail after each 1k sent...
+                proxy.toxics().limitData("limit", ToxicDirection.DOWNSTREAM, 1024);
+              } catch (IOException e) {
+                throw new RuntimeException(e);
+              }
+              // and don't turn it on again
+            }
+            log.info("Got {}", f.serial());
+            count.incrementAndGet();
+          };
+
+      assertThatThrownBy(() -> fetchAll(obs))
           .isInstanceOfAny(
               SubscriptionClosedException.class,
               StatusRuntimeException.class,
@@ -185,7 +188,7 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
   }
 
   @SneakyThrows
-  private void fetchAll(FactObserver o) {
+  private void fetchAll(StreamObserver o) {
     log.info("Fetching");
     SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("ns")).fromScratch();
     fc.subscribe(
@@ -197,7 +200,7 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
         .close();
   }
 
-  private Subscription follow(FactObserver o) {
+  private Subscription follow(StreamObserver o) {
     log.info("Following");
     SubscriptionRequest req = SubscriptionRequest.follow(FactSpec.ns("ns")).fromScratch();
     return fc.subscribe(req, o::onNext);

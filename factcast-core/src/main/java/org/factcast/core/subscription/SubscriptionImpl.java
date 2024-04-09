@@ -16,6 +16,8 @@
 package org.factcast.core.subscription;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -26,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.StreamObserver;
 import org.factcast.core.util.ExceptionHelper;
 
 /**
@@ -38,7 +40,7 @@ import org.factcast.core.util.ExceptionHelper;
 @Slf4j
 public class SubscriptionImpl implements InternalSubscription {
 
-  @NonNull final FactObserver observer;
+  @NonNull final StreamObserver observer;
 
   @NonNull Runnable onClose = () -> {};
 
@@ -181,6 +183,15 @@ public class SubscriptionImpl implements InternalSubscription {
   public void notifyElement(@NonNull Fact e) throws TransformationException {
     if (!closed.get()) {
       // note that this fact is already transformed
+      // TODO get rid of this somehow
+      observer.onNext(Collections.singletonList(e));
+    }
+  }
+
+  @Override
+  public void notifyElements(@NonNull List<Fact> e) throws TransformationException {
+    if (!closed.get()) {
+      // note that this fact is already transformed
       observer.onNext(e);
     }
   }
@@ -209,7 +220,7 @@ public class SubscriptionImpl implements InternalSubscription {
     }
   }
 
-  public static SubscriptionImpl on(@NonNull FactObserver o) {
+  public static SubscriptionImpl on(@NonNull StreamObserver o) {
     return new SubscriptionImpl(o);
   }
 }
