@@ -25,8 +25,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.factus.Factus;
 import org.factcast.factus.dynamo.DynamoProjectionState;
-import org.factcast.factus.dynamo.tx.DynamoTransaction;
-import org.factcast.factus.dynamo.tx.DynamoTransactional;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.TestFactusApplication;
@@ -53,7 +51,7 @@ import software.amazon.awssdk.services.dynamodb.waiters.DynamoDbWaiter;
 @SpringBootTest
 @ContextConfiguration(classes = {TestFactusApplication.class, DynamoProjectionConfiguration.class})
 @Slf4j
-public class DynamoTransactionalITest extends AbstractFactCastIntegrationTest {
+public class DynamoITest extends AbstractFactCastIntegrationTest {
   @Autowired Factus factus;
   @Autowired DynamoDbClient dynamoDbClient;
   @Autowired DynamoDbEnhancedClient dynamoDbEnhancedClient;
@@ -63,25 +61,6 @@ public class DynamoTransactionalITest extends AbstractFactCastIntegrationTest {
   @BeforeEach
   void setupTables() {
     try {
-      // Old config with regular client
-      //      dynamoDbClient.createTable(
-      //          CreateTableRequest.builder()
-      //              .tableName("UserNames")
-      //              .keySchema(
-      //
-      // KeySchemaElement.builder().attributeName("key").keyType(KeyType.HASH).build())
-      //              .attributeDefinitions(
-      //                  AttributeDefinition.builder()
-      //                      .attributeName("key")
-      //                      .attributeType(ScalarAttributeType.S)
-      //                      .build())
-      //              .provisionedThroughput(
-      //                  ProvisionedThroughput.builder()
-      //                      .readCapacityUnits(100L)
-      //                      .writeCapacityUnits(100L)
-      //                      .build())
-      //              .build());
-
       DynamoDbTable<UserNamesDynamoSchema> userNamesTable =
           dynamoDbEnhancedClient.table(
               "UserNames", TableSchema.fromBean(UserNamesDynamoSchema.class));
@@ -131,30 +110,19 @@ public class DynamoTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @SneakyThrows
     @Test
-    void bulkAppliesInTransaction3() {
-      TxDynamoManagedUserNamesSize3 p = new TxDynamoManagedUserNamesSize3(dynamoDbClient);
-      factus.update(p);
-
-      assertThat(p.count()).isEqualTo(NUMBER_OF_EVENTS);
-      assertThat(p.stateModifications()).isEqualTo(4); // expected at 3,6,9,10
-    }
-
-    @SneakyThrows
-    @Test
     void bulkAppliesInTransaction2() {
-      TxDynamoManagedUserNamesSize2 p = new TxDynamoManagedUserNamesSize2(dynamoDbClient);
+      DynamoManagedUserNames p = new DynamoManagedUserNames(dynamoDbClient);
       factus.update(p);
 
       assertThat(p.count()).isEqualTo(NUMBER_OF_EVENTS);
-      assertThat(p.stateModifications()).isEqualTo(5); // expected at 2,4,6,8,10
+      assertThat(p.stateModifications()).isEqualTo(10); // expected at 2,4,6,8,10
     }
 
-    // TODO : does this really test rollback behaviour?
     @SneakyThrows
     @Test
-    void rollsBack() {
-      TxDynamoManagedUserNamesSizeBlowAt7th p =
-          new TxDynamoManagedUserNamesSizeBlowAt7th(dynamoDbClient);
+    void projectionStoppedAtException() {
+      DynamoManagedUserNamesSizeBlowAt7th p =
+          new DynamoManagedUserNamesSizeBlowAt7th(dynamoDbClient);
 
       assertThat(p.count()).isEqualTo(0);
 
@@ -164,9 +132,8 @@ public class DynamoTransactionalITest extends AbstractFactCastIntegrationTest {
         // ignore
       }
 
-      // only first bulk (size = 5) should be executed
-      assertThat(p.count()).isEqualTo(6); // 1-5 + 6
-      assertThat(p.stateModifications()).isEqualTo(2); // 5,6
+      assertThat(p.count()).isEqualTo(6);
+      assertThat(p.stateModifications()).isEqualTo(6);
     }
   }
 
@@ -184,30 +151,20 @@ public class DynamoTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @SneakyThrows
     @Test
-    void bulkAppliesInTransaction3() {
-      TxDynamoSubscribedUserNamesSize3 p = new TxDynamoSubscribedUserNamesSize3(dynamoDbClient);
-      factus.subscribeAndBlock(p).awaitCatchup();
-
-      assertThat(p.count()).isEqualTo(NUMBER_OF_EVENTS);
-      assertThat(p.stateModifications()).isEqualTo(4); // expected at 3,6,9,10
-    }
-
-    @SneakyThrows
-    @Test
     void bulkAppliesInTransaction2() {
-      TxDynamoSubscribedUserNamesSize2 p = new TxDynamoSubscribedUserNamesSize2(dynamoDbClient);
+      DynamoSubscribedUserNames p = new DynamoSubscribedUserNames(dynamoDbClient);
       factus.subscribeAndBlock(p).awaitCatchup();
 
       assertThat(p.count()).isEqualTo(NUMBER_OF_EVENTS);
-      assertThat(p.stateModifications()).isEqualTo(5); // expected at 2,4,6,8,10
+      assertThat(p.stateModifications()).isEqualTo(10); // expected at 2,4,6,8,10
     }
 
     @SneakyThrows
     @Test
-    void rollsBack() {
+    void projectionStoppedAtException() {
       // batch size = 5; throws while applying the 7th event.
-      TxDynamoSubscribedUserNamesSizeBlowAt7Th p =
-          new TxDynamoSubscribedUserNamesSizeBlowAt7Th(dynamoDbClient);
+      DynamoSubscribedUserNamesSizeBlowAt7Th p =
+          new DynamoSubscribedUserNamesSizeBlowAt7Th(dynamoDbClient);
 
       assertThat(p.count()).isEqualTo(0);
 
@@ -217,16 +174,14 @@ public class DynamoTransactionalITest extends AbstractFactCastIntegrationTest {
         // ignore
       }
 
-      // first bulk (size = 5) should be applied successfully
-      // second bulk (size = 5) should have the first fact applied (retry after error))
-      assertThat(p.count()).isEqualTo(7); // [0,6]
-      assertThat(p.stateModifications()).isEqualTo(2); // 0-4 and 5-6
+      assertThat(p.count()).isEqualTo(7);
+      assertThat(p.stateModifications()).isEqualTo(7);
     }
   }
 
   @Getter
-  static class TrackingTxDynamoManagedUserNames extends TxDynamoManagedUserNames {
-    public TrackingTxDynamoManagedUserNames(DynamoDbClient client) {
+  static class TrackingDynamoManagedUserNames extends TxDynamoManagedUserNames {
+    public TrackingDynamoManagedUserNames(DynamoDbClient client) {
       super(client);
     }
 
@@ -240,8 +195,8 @@ public class DynamoTransactionalITest extends AbstractFactCastIntegrationTest {
   }
 
   @Getter
-  static class TrackingTxDynamoSubscribedUserNames extends TxDynamoSubscribedUserNames {
-    public TrackingTxDynamoSubscribedUserNames(DynamoDbClient dynamoDbClient) {
+  static class TrackingDynamoSubscribedUserNames extends TxDynamoSubscribedUserNames {
+    public TrackingDynamoSubscribedUserNames(DynamoDbClient dynamoDbClient) {
       super(dynamoDbClient);
     }
 
@@ -256,71 +211,52 @@ public class DynamoTransactionalITest extends AbstractFactCastIntegrationTest {
   }
 
   @ProjectionMetaData(revision = 1)
-  @DynamoTransactional(bulkSize = 2)
-  static class TxDynamoManagedUserNamesSize2 extends TrackingTxDynamoManagedUserNames {
-    public TxDynamoManagedUserNamesSize2(DynamoDbClient dynamoDbClient) {
+  static class DynamoManagedUserNames extends TrackingDynamoManagedUserNames {
+    public DynamoManagedUserNames(DynamoDbClient dynamoDbClient) {
+      super(dynamoDbClient);
+    }
+  }
+
+
+  @ProjectionMetaData(revision = 1)
+  static class DynamoSubscribedUserNames extends TrackingDynamoSubscribedUserNames {
+    public DynamoSubscribedUserNames(DynamoDbClient dynamoDbClient) {
       super(dynamoDbClient);
     }
   }
 
   @ProjectionMetaData(revision = 1)
-  @DynamoTransactional(bulkSize = 3)
-  static class TxDynamoManagedUserNamesSize3 extends TrackingTxDynamoManagedUserNames {
-    public TxDynamoManagedUserNamesSize3(DynamoDbClient dynamoDbClient) {
-      super(dynamoDbClient);
-    }
-  }
-
-  @ProjectionMetaData(revision = 1)
-  @DynamoTransactional(bulkSize = 2)
-  static class TxDynamoSubscribedUserNamesSize2 extends TrackingTxDynamoSubscribedUserNames {
-    public TxDynamoSubscribedUserNamesSize2(DynamoDbClient dynamoDbClient) {
-      super(dynamoDbClient);
-    }
-  }
-
-  @ProjectionMetaData(revision = 1)
-  @DynamoTransactional(bulkSize = 3)
-  static class TxDynamoSubscribedUserNamesSize3 extends TrackingTxDynamoSubscribedUserNames {
-    public TxDynamoSubscribedUserNamesSize3(DynamoDbClient dynamoDbClient) {
-      super(dynamoDbClient);
-    }
-  }
-
-  @ProjectionMetaData(revision = 1)
-  @DynamoTransactional(bulkSize = 5)
-  static class TxDynamoManagedUserNamesSizeBlowAt7th extends TrackingTxDynamoManagedUserNames {
+  static class DynamoManagedUserNamesSizeBlowAt7th extends TrackingDynamoManagedUserNames {
     private int count;
 
-    public TxDynamoManagedUserNamesSizeBlowAt7th(DynamoDbClient dynamoDbClient) {
+    public DynamoManagedUserNamesSizeBlowAt7th(DynamoDbClient dynamoDbClient) {
       super(dynamoDbClient);
     }
 
     @Override
-    protected void apply(UserCreated created, DynamoTransaction tx) {
+    protected void apply(UserCreated created) {
       if (++count == 7) { // blow the second bulk
         throw new IllegalStateException("Bad luck");
       }
-      super.apply(created, tx);
+      super.apply(created);
     }
   }
 
   @ProjectionMetaData(revision = 1)
-  @DynamoTransactional(bulkSize = 5)
-  static class TxDynamoSubscribedUserNamesSizeBlowAt7Th
-      extends TrackingTxDynamoSubscribedUserNames {
+  static class DynamoSubscribedUserNamesSizeBlowAt7Th
+      extends TrackingDynamoSubscribedUserNames {
     private int count;
 
-    public TxDynamoSubscribedUserNamesSizeBlowAt7Th(DynamoDbClient dynamoDbClient) {
+    public DynamoSubscribedUserNamesSizeBlowAt7Th(DynamoDbClient dynamoDbClient) {
       super(dynamoDbClient);
     }
 
     @Override
-    protected void apply(UserCreated created, DynamoTransaction tx) {
+    protected void apply(UserCreated created) {
       if (count++ == 7) { // blow the second bulk
         throw new IllegalStateException("Bad luck");
       }
-      super.apply(created, tx);
+      super.apply(created);
     }
   }
 }

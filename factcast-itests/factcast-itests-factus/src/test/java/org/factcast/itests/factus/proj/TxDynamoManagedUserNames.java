@@ -19,21 +19,16 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Handler;
 import org.factcast.factus.dynamo.AbstractDynamoManagedProjection;
-import org.factcast.factus.dynamo.tx.DynamoTransaction;
-import org.factcast.factus.dynamo.tx.DynamoTransactional;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import software.amazon.awssdk.enhanced.dynamodb.*;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
-import software.amazon.awssdk.enhanced.dynamodb.model.TransactDeleteItemEnhancedRequest;
-import software.amazon.awssdk.enhanced.dynamodb.model.TransactPutItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.*;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 @Slf4j
 @ProjectionMetaData(revision = 1)
-@DynamoTransactional()
 public class TxDynamoManagedUserNames extends AbstractDynamoManagedProjection {
 
   private final DynamoDbTable<UserNamesDynamoSchema> userNames;
@@ -67,10 +62,9 @@ public class TxDynamoManagedUserNames extends AbstractDynamoManagedProjection {
   // ---- processing:
   @SneakyThrows
   @Handler
-  protected void apply(UserCreated created, DynamoTransaction tx) {
-    tx.addPutRequest(
-        userNames,
-        TransactPutItemEnhancedRequest.builder(UserNamesDynamoSchema.class)
+  protected void apply(UserCreated created) {
+    userNames.putItem(
+        PutItemEnhancedRequest.builder(UserNamesDynamoSchema.class)
             .item(
                 new UserNamesDynamoSchema()
                     .userId(created.aggregateId())
@@ -80,10 +74,9 @@ public class TxDynamoManagedUserNames extends AbstractDynamoManagedProjection {
 
   @SneakyThrows
   @Handler
-  protected void apply(UserDeleted deleted, DynamoTransaction tx) {
-    tx.addDeleteRequest(
-        userNames,
-        TransactDeleteItemEnhancedRequest.builder()
+  protected void apply(UserDeleted deleted) {
+    userNames.deleteItem(
+        DeleteItemEnhancedRequest.builder()
             .key(Key.builder().partitionValue(deleted.aggregateId().toString()).build())
             .build());
   }

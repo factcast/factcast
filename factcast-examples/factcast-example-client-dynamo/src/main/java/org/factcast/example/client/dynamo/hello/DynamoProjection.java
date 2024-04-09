@@ -21,18 +21,15 @@ import org.factcast.example.client.dynamo.hello.events.UserChangedV1;
 import org.factcast.example.client.dynamo.hello.events.UserCreatedV1;
 import org.factcast.factus.Handler;
 import org.factcast.factus.dynamo.AbstractDynamoManagedProjection;
-import org.factcast.factus.dynamo.tx.DynamoTransaction;
-import org.factcast.factus.dynamo.tx.DynamoTransactional;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.enhanced.dynamodb.model.TransactPutItemEnhancedRequest;
-import software.amazon.awssdk.enhanced.dynamodb.model.TransactUpdateItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 @ProjectionMetaData(revision = 1)
 @Slf4j
-@DynamoTransactional()
 public class DynamoProjection extends AbstractDynamoManagedProjection {
 
   private final DynamoDbTable<UserSchema> userTable;
@@ -48,10 +45,9 @@ public class DynamoProjection extends AbstractDynamoManagedProjection {
   }
 
   @Handler
-  void apply(UserCreatedV1 e, DynamoTransaction tx) {
-    tx.addPutRequest(
-        userTable,
-        TransactPutItemEnhancedRequest.builder(UserSchema.class)
+  void apply(UserCreatedV1 e) {
+    userTable.putItem(
+        PutItemEnhancedRequest.builder(UserSchema.class)
             .item(
                 UserSchema.builder()
                     .displayName(e.lastName() + e.firstName())
@@ -63,13 +59,13 @@ public class DynamoProjection extends AbstractDynamoManagedProjection {
   }
 
   @Handler
-  void apply(UserChangedV1 e, DynamoTransaction tx) {
+  void apply(UserChangedV1 e) {
     //    UserSchema user = .getItem(Key.builder().partitionValue(e.firstName()).build());
 
     // Only the last name can be changed.
-    tx.addUpdateRequest(
-        userTable,
-        TransactUpdateItemEnhancedRequest.builder(UserSchema.class)
+
+    userTable.updateItem(
+        UpdateItemEnhancedRequest.builder(UserSchema.class)
             .item(
                 UserSchema.builder()
                     .firstName(e.firstName())
