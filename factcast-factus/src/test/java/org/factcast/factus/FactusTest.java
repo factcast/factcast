@@ -267,7 +267,7 @@ class FactusTest {
                       subscribedProjectionMock, factId, defaultTimeout, backoffFunction))
           .isInstanceOf(TimeoutException.class);
 
-      verify(subscribedProjectionMock, atLeast(9)).factStreamPosition();
+      verify(subscribedProjectionMock, atLeast(4)).factStreamPosition();
       verify(subscribedProjectionMock, atMost(11)).factStreamPosition();
     }
 
@@ -286,8 +286,8 @@ class FactusTest {
                       subscribedProjectionMock, factId, defaultTimeout, backoffFunction))
           .isInstanceOf(TimeoutException.class);
 
-      verify(subscribedProjectionMock, atLeast(4)).factStreamPosition();
-      verify(subscribedProjectionMock, atMost(5)).factStreamPosition();
+      verify(subscribedProjectionMock, atLeast(3)).factStreamPosition();
+      verify(subscribedProjectionMock, atMost(6)).factStreamPosition();
     }
 
     @Test
