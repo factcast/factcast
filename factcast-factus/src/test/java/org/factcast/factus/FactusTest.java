@@ -197,6 +197,7 @@ class FactusTest {
       assertThatNoException()
           .isThrownBy(
               () -> underTest.waitFor(subscribedProjectionMock, factId, Duration.ofMillis(100)));
+      verify(subscribedProjectionMock, times(1)).factStreamPosition();
     }
 
     @Test
@@ -207,8 +208,9 @@ class FactusTest {
       when(factStreamPositionMock.serial()).thenReturn(1L);
 
       assertThatThrownBy(
-              () -> underTest.waitFor(subscribedProjectionMock, factId, Duration.ofMillis(100)))
+              () -> underTest.waitFor(subscribedProjectionMock, factId, Duration.ofMillis(200)))
           .isInstanceOf(TimeoutException.class);
+      verify(subscribedProjectionMock, atLeast(2)).factStreamPosition();
     }
 
     @Test
@@ -220,8 +222,8 @@ class FactusTest {
       assertThatThrownBy(
               () -> underTest.waitFor(subscribedProjectionMock, factId, Duration.ofMillis(100)))
           .isInstanceOf(IllegalArgumentException.class)
-          .hasMessage(
-              "Fact with id " + factId + " not found. Make sure to publish before waiting for it.");
+          .hasMessage("Fact with id " + factId + " not found. Make sure to publish before waiting for it.");
+      verify(subscribedProjectionMock, never()).factStreamPosition();
     }
 
     @Test
@@ -261,7 +263,7 @@ class FactusTest {
       when(subscribedProjectionMock.factStreamPosition()).thenReturn(factStreamPositionMock);
       when(factStreamPositionMock.serial()).thenReturn(1L);
 
-      // constant backoff strategy every 10ms
+      // constant backoff strategy
       assertThatThrownBy(
               () ->
                   underTest.waitFor(
@@ -284,7 +286,7 @@ class FactusTest {
       when(subscribedProjectionMock.factStreamPosition()).thenReturn(factStreamPositionMock);
       when(factStreamPositionMock.serial()).thenReturn(1L);
 
-      // linear backoff strategy every 10ms
+      // linear backoff strategy
       assertThatThrownBy(
               () ->
                   underTest.waitFor(
@@ -307,7 +309,7 @@ class FactusTest {
       when(subscribedProjectionMock.factStreamPosition()).thenReturn(factStreamPositionMock);
       when(factStreamPositionMock.serial()).thenReturn(1L);
 
-      // linear backoff strategy every 10ms
+      // exponential backoff strategy
       assertThatThrownBy(
               () ->
                   underTest.waitFor(
@@ -319,6 +321,25 @@ class FactusTest {
 
       verify(subscribedProjectionMock, atLeast(2)).factStreamPosition();
       verify(subscribedProjectionMock, atMost(3)).factStreamPosition();
+    }
+
+    @Test
+    void interruptsSilently() {
+      UUID factId = UUID.randomUUID();
+      when(underTest.serialOf(factId)).thenReturn(OptionalLong.of(2));
+      when(subscribedProjectionMock.factStreamPosition()).thenReturn(factStreamPositionMock);
+      when(factStreamPositionMock.serial()).thenReturn(1L);
+
+      Thread t = new Thread(() -> {
+        try {
+          underTest.waitFor(subscribedProjectionMock, factId, Duration.ofMillis(100));
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      });
+      t.start();
+
+      assertThatNoException().isThrownBy(t::interrupt);
     }
   }
 }
