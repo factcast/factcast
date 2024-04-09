@@ -46,10 +46,7 @@ import org.slf4j.LoggerFactory;
 public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
 
   Logger LOGGER = LoggerFactory.getLogger(Factus.class);
-  Cache<UUID, Long> serialCache =
-      CacheBuilder.newBuilder()
-          .expireAfterAccess(Duration.ofSeconds(5)) // TODO double check cache config
-          .build();
+  Cache<UUID, Long> serialCache = CacheBuilder.newBuilder().maximumSize(1000).build();
   //// Publishing
 
   /** publishes a single event immediately */
@@ -149,7 +146,12 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
 
   OptionalLong serialOf(@NonNull UUID factId);
 
-  // TODO javadoc
+  /**
+   * Blocks until the subscribedProjection has consumed the fact with the given factId or a subsequent one.
+   * The method will retry to check the state of the projection, until timeout.
+   * The retry interval can be customized by providing a retryBackoffMillis function, that takes the number of retries
+   * as input and returns the number of milliseconds to wait before the next retry.
+   */
   default <P extends SubscribedProjection> void waitFor(
       @NonNull P subscribedProjection,
       @NonNull UUID factId,
@@ -190,7 +192,10 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
     }
   }
 
-  // TODO javadoc
+  /**
+   * Blocks until the subscribedProjection has consumed the fact with the given factId or a subsequent one.
+   * The method will retry every 100ms to check the state of the projection, until timeout.
+   */
   default <P extends SubscribedProjection> void waitFor(
       @NonNull P subscribedProjection, @NonNull UUID factId, Duration timeout)
       throws TimeoutException, ExecutionException {

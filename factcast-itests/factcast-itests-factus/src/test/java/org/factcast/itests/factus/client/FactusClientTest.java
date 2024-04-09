@@ -27,6 +27,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +44,7 @@ import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.config.RedissonProjectionConfiguration;
 import org.factcast.itests.factus.event.TestAggregateIncremented;
+import org.factcast.itests.factus.event.UserBored;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.*;
@@ -122,7 +124,6 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
   @SneakyThrows
   @Test
-  @Disabled
   void txBatchProcessingPerformance() {
 
     int MAX = 10000;
@@ -250,6 +251,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
     SubscribedUserNames subscribedUserNames = new SubscribedUserNames();
     subscribedUserNames.clear();
 
+    factus.publish(new UserCreated(randomUUID(), "preexisting"));
     try (Subscription subscription = factus.subscribeAndBlock(subscribedUserNames)) {
       // nothing in there yet, so catchup must be received
       subscription.awaitCatchup();
@@ -682,26 +684,61 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  void waitsForOnSubscribedProjection() throws Exception {
+  void waitsForFacts() throws Exception {
     SubscribedUserNames subscribedUserNames = new SubscribedUserNames();
     subscribedUserNames.clear();
 
+    factus.publish(new UserCreated("Mark"));
     try (Subscription subscriptionWaiting = factus.subscribeAndBlock(subscribedUserNames)) {
       // nothing in there yet, so catchup must be received
       subscriptionWaiting.awaitCatchup();
       assertThat(subscribedUserNames.names()).hasSize(1);
 
-      var factId1 = factus.publish(new UserCreated(randomUUID(), "Tom"), Fact::id);
+      var factId1 = factus.publish(new UserCreated("Tom"), Fact::id);
       factus.waitFor(subscribedUserNames, factId1, Duration.ofSeconds(1));
+      assertThat(subscribedUserNames.names()).hasSize(2);
 
-      assertThat(subscribedUserNames.names()).hasSize(2).contains("Mark", "Tom");
-
-      var factId2 = factus.publish(new UserCreated(randomUUID(), "Sasha"), Fact::id);
-      factus.waitFor(subscribedUserNames, factId2, Duration.ofSeconds(1));
-
+      var factId2 = factus.publish(new UserCreated("Sasha"), Fact::id);
+      factus.waitFor(subscribedUserNames, factId2, Duration.ofSeconds(1), i -> (long) Math.pow(10, i));
       assertThat(subscribedUserNames.names())
           .hasSize(3)
           .containsExactlyInAnyOrder("Sasha", "Tom", "Mark");
+    }
+  }
+
+  @Test
+  void waitingForFactFailsOnUnknownId() throws Exception {
+    SubscribedUserNames subscribedUserNames = new SubscribedUserNames();
+    subscribedUserNames.clear();
+
+    factus.publish(new UserCreated("Kyle"));
+    try (Subscription subscriptionWaiting = factus.subscribeAndBlock(subscribedUserNames)) {
+      // nothing in there yet, so catchup must be received
+      subscriptionWaiting.awaitCatchup();
+      assertThat(subscribedUserNames.names()).hasSize(1);
+
+      // wait for a fact id that does not exist
+      UUID unknownFactId = randomUUID();
+      assertThatThrownBy(() -> factus.waitFor(subscribedUserNames, unknownFactId, Duration.ofSeconds(1)))
+          .hasCauseInstanceOf(IllegalArgumentException.class);
+    }
+  }
+
+  @Test
+  void waitingForFactTimesOut() throws Exception {
+    SubscribedUserNames subscribedUserNames = new SubscribedUserNames();
+    subscribedUserNames.clear();
+
+    factus.publish(new UserCreated("Kyle"));
+    try (Subscription subscriptionWaiting = factus.subscribeAndBlock(subscribedUserNames)) {
+      // nothing in there yet, so catchup must be received
+      subscriptionWaiting.awaitCatchup();
+      assertThat(subscribedUserNames.names()).hasSize(1);
+
+      // publish an event that is not consumed by the subscribed projection
+      var factId1 = factus.publish(new UserBored("Kenny"), Fact::id);
+      assertThatThrownBy(() -> factus.waitFor(subscribedUserNames, factId1, Duration.ofSeconds(1)))
+          .isInstanceOf(TimeoutException.class);
     }
   }
 }
