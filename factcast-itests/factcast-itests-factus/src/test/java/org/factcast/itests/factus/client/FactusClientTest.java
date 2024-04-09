@@ -686,6 +686,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   void waitsForFacts() throws Exception {
     SubscribedUserNames subscribedUserNames = new SubscribedUserNames();
     subscribedUserNames.clear();
+    Duration timeout = Duration.ofSeconds(3);
 
     factus.publish(new UserCreated("Mark"));
     try (Subscription subscriptionWaiting = factus.subscribeAndBlock(subscribedUserNames)) {
@@ -694,12 +695,12 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       assertThat(subscribedUserNames.names()).hasSize(1);
 
       var factId1 = factus.publish(new UserCreated("Tom"), Fact::id);
-      factus.waitFor(subscribedUserNames, factId1, Duration.ofSeconds(3));
+      factus.waitFor(subscribedUserNames, factId1, timeout);
       assertThat(subscribedUserNames.names()).hasSize(2);
 
       var factId2 = factus.publish(new UserCreated("Sasha"), Fact::id);
       factus.waitFor(
-          subscribedUserNames, factId2, Duration.ofSeconds(3), i -> (long) Math.pow(10, i));
+          subscribedUserNames, factId2, timeout, i -> (long) Math.pow(10, i));
       assertThat(subscribedUserNames.names())
           .hasSize(3)
           .containsExactlyInAnyOrder("Sasha", "Tom", "Mark");
@@ -710,6 +711,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   void waitingForFactFailsOnUnknownId() throws Exception {
     SubscribedUserNames subscribedUserNames = new SubscribedUserNames();
     subscribedUserNames.clear();
+    Duration timeout = Duration.ofSeconds(3);
 
     factus.publish(new UserCreated("Kyle"));
     try (Subscription subscriptionWaiting = factus.subscribeAndBlock(subscribedUserNames)) {
@@ -720,7 +722,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       // wait for a fact id that does not exist
       UUID unknownFactId = randomUUID();
       assertThatThrownBy(
-              () -> factus.waitFor(subscribedUserNames, unknownFactId, Duration.ofSeconds(3)))
+              () -> factus.waitFor(subscribedUserNames, unknownFactId, timeout))
           .isInstanceOf(IllegalArgumentException.class);
     }
   }
@@ -729,6 +731,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   void waitingForFactTimesOut() throws Exception {
     SubscribedUserNames subscribedUserNames = new SubscribedUserNames();
     subscribedUserNames.clear();
+    Duration timeout = Duration.ofSeconds(1);
 
     factus.publish(new UserCreated("Kyle"));
     try (Subscription subscriptionWaiting = factus.subscribeAndBlock(subscribedUserNames)) {
@@ -738,7 +741,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
       // publish an event that is not consumed by the subscribed projection
       var factId1 = factus.publish(new UserBored("Kenny"), Fact::id);
-      assertThatThrownBy(() -> factus.waitFor(subscribedUserNames, factId1, Duration.ofSeconds(1)))
+      assertThatThrownBy(() -> factus.waitFor(subscribedUserNames, factId1, timeout))
           .isInstanceOf(TimeoutException.class);
     }
   }
