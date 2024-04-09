@@ -15,6 +15,7 @@
  */
 package org.factcast.factus;
 
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
@@ -187,13 +188,14 @@ class FactusTest {
         Mockito.mock(SubscribedProjection.class);
 
     @Test
-    void returns() throws Exception {
+    void returns() {
       UUID factId = UUID.randomUUID();
       when(underTest.serialOf(factId)).thenReturn(OptionalLong.of(2));
       when(subscribedProjectionMock.factStreamPosition()).thenReturn(factStreamPositionMock);
       when(factStreamPositionMock.serial()).thenReturn(2L);
 
-      underTest.waitFor(subscribedProjectionMock, factId, Duration.ofMillis(100));
+      assertThatNoException().isThrownBy(
+          () -> underTest.waitFor(subscribedProjectionMock, factId, Duration.ofMillis(100)));
     }
 
     @Test
@@ -233,6 +235,23 @@ class FactusTest {
     }
 
     @Test
+    void cachesSerials() throws Exception {
+      UUID factId1 = UUID.randomUUID();
+      UUID factId2 = UUID.randomUUID();
+      when(underTest.serialOf(factId1)).thenReturn(OptionalLong.of(2));
+      when(underTest.serialOf(factId2)).thenReturn(OptionalLong.of(4));
+      when(subscribedProjectionMock.factStreamPosition()).thenReturn(factStreamPositionMock);
+      when(factStreamPositionMock.serial()).thenReturn(5L);
+
+      underTest.waitFor(subscribedProjectionMock, factId1, Duration.ofMillis(100));
+      underTest.waitFor(subscribedProjectionMock, factId2, Duration.ofMillis(100));
+      underTest.waitFor(subscribedProjectionMock, factId1, Duration.ofMillis(100));
+
+      verify(underTest, times(1)).serialOf(factId1);
+      verify(underTest, times(1)).serialOf(factId2);
+    }
+
+    @Test
     void retriesWithConstantBackoffStrategy() {
       long timeoutMillis = 100;
       long backoffMillis = 10;
@@ -251,9 +270,8 @@ class FactusTest {
                       i -> backoffMillis))
           .isInstanceOf(TimeoutException.class);
 
-      // only once, because of cache
-      verify(underTest, times(1)).serialOf(factId);
-      verify(subscribedProjectionMock, atMost(10)).factStreamPosition();
+      verify(subscribedProjectionMock, atLeast(9)).factStreamPosition();
+      verify(subscribedProjectionMock, atMost(11)).factStreamPosition();
     }
 
     @Test
@@ -275,8 +293,7 @@ class FactusTest {
                       i -> i * backoffMillis))
           .isInstanceOf(TimeoutException.class);
 
-      // only once, because of cache
-      verify(underTest, times(1)).serialOf(factId);
+      verify(subscribedProjectionMock, atLeast(4)).factStreamPosition();
       verify(subscribedProjectionMock, atMost(5)).factStreamPosition();
     }
 
@@ -299,8 +316,7 @@ class FactusTest {
                       i -> (long) Math.pow(backoffMillis, i)))
           .isInstanceOf(TimeoutException.class);
 
-      // only once, because of cache
-      verify(underTest, times(1)).serialOf(factId);
+      verify(subscribedProjectionMock, atLeast(2)).factStreamPosition();
       verify(subscribedProjectionMock, atMost(3)).factStreamPosition();
     }
   }
