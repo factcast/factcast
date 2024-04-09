@@ -147,10 +147,11 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
   OptionalLong serialOf(@NonNull UUID factId);
 
   /**
-   * Blocks until the subscribedProjection has consumed the fact with the given factId or a subsequent one.
-   * The method will retry to check the state of the projection, until timeout.
-   * The retry interval can be customized by providing a retryBackoffMillis function, that takes the number of retries
-   * as input and returns the number of milliseconds to wait before the next retry.
+   * Blocks until the subscribedProjection has consumed the fact with the given factId or a
+   * subsequent one. The method will retry to check the state of the projection, until timeout. The
+   * retry interval can be customized by providing a retryBackoffMillis function, that takes the
+   * number of retries as input and returns the number of milliseconds to wait before the next
+   * retry.
    */
   default <P extends SubscribedProjection> void waitFor(
       @NonNull P subscribedProjection,
@@ -193,8 +194,9 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
   }
 
   /**
-   * Blocks until the subscribedProjection has consumed the fact with the given factId or a subsequent one.
-   * The method will retry every 100ms to check the state of the projection, until timeout.
+   * Blocks until the subscribedProjection has consumed the fact with the given factId or a
+   * subsequent one. The method will retry every 100ms to check the state of the projection, until
+   * timeout.
    */
   default <P extends SubscribedProjection> void waitFor(
       @NonNull P subscribedProjection, @NonNull UUID factId, Duration timeout)

@@ -49,7 +49,6 @@ import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.*;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
@@ -699,7 +698,8 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       assertThat(subscribedUserNames.names()).hasSize(2);
 
       var factId2 = factus.publish(new UserCreated("Sasha"), Fact::id);
-      factus.waitFor(subscribedUserNames, factId2, Duration.ofSeconds(1), i -> (long) Math.pow(10, i));
+      factus.waitFor(
+          subscribedUserNames, factId2, Duration.ofSeconds(1), i -> (long) Math.pow(10, i));
       assertThat(subscribedUserNames.names())
           .hasSize(3)
           .containsExactlyInAnyOrder("Sasha", "Tom", "Mark");
@@ -719,7 +719,8 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
       // wait for a fact id that does not exist
       UUID unknownFactId = randomUUID();
-      assertThatThrownBy(() -> factus.waitFor(subscribedUserNames, unknownFactId, Duration.ofSeconds(1)))
+      assertThatThrownBy(
+              () -> factus.waitFor(subscribedUserNames, unknownFactId, Duration.ofSeconds(1)))
           .hasCauseInstanceOf(IllegalArgumentException.class);
     }
   }
