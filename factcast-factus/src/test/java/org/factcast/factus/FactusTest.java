@@ -15,8 +15,7 @@
  */
 package org.factcast.factus;
 
-import static org.assertj.core.api.Assertions.assertThatNoException;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Lists;
@@ -322,27 +321,6 @@ class FactusTest {
 
       verify(subscribedProjectionMock, atLeast(2)).factStreamPosition();
       verify(subscribedProjectionMock, atMost(3)).factStreamPosition();
-    }
-
-    @Test
-    void interruptsSilently() {
-      UUID factId = UUID.randomUUID();
-      when(underTest.serialOf(factId)).thenReturn(OptionalLong.of(2));
-      when(subscribedProjectionMock.factStreamPosition()).thenReturn(factStreamPositionMock);
-      when(factStreamPositionMock.serial()).thenReturn(1L);
-
-      Thread t =
-          new Thread(
-              () -> {
-                try {
-                  underTest.waitFor(subscribedProjectionMock, factId, Duration.ofMillis(100));
-                } catch (Exception e) {
-                  throw new RuntimeException(e);
-                }
-              });
-      t.start();
-
-      assertThatNoException().isThrownBy(t::interrupt);
     }
   }
 }

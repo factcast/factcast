@@ -48,6 +48,7 @@ import org.slf4j.LoggerFactory;
 @SuppressWarnings({"unused", "UnusedReturnValue"})
 public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
 
+  IntToLongFunction DEFAULT_RETRY_BACKOFF = i -> 100;
   Logger LOGGER = LoggerFactory.getLogger(Factus.class);
   Cache<UUID, Long> serialCache = CacheBuilder.newBuilder().maximumSize(1000).build();
   //// Publishing
@@ -194,7 +195,7 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
       // unwrap ExecutionExceptions from the cache
       Throwables.throwIfUnchecked(e.getCause());
       throw new IllegalStateException(e);
-    } catch (InterruptedException e) {
+    } catch (InterruptedException e1) {
       LOGGER.info("Interrupted while waiting for fact {} to be consumed.", factId);
       Thread.currentThread().interrupt();
     }
@@ -213,6 +214,6 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
   default <P extends SubscribedProjection> void waitFor(
       @NonNull P subscribedProjection, @NonNull UUID factId, @NonNull Duration timeout)
       throws TimeoutException, IllegalArgumentException {
-    waitFor(subscribedProjection, factId, timeout, i -> 100L);
+    waitFor(subscribedProjection, factId, timeout, DEFAULT_RETRY_BACKOFF);
   }
 }
