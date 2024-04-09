@@ -103,7 +103,6 @@ class GrpcRequestMetadataTest {
     @Test
     void createForTest() {
       GrpcRequestMetadata t = GrpcRequestMetadata.forTest();
-      // assertThat(t.catchupBatch()).isEmpty();
       assertThat(t.clientId()).isEmpty();
       assertThat(t.supportsFastForward()).isTrue();
     }

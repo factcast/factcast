@@ -24,11 +24,13 @@ import org.factcast.grpc.api.GrpcConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.validation.annotation.Validated;
 
 @Configuration
 @ConfigurationProperties(prefix = "factcast.grpc.client")
 @Data
 @Accessors(fluent = false)
+@Validated
 public class FactCastGrpcClientProperties {
 
   @Min(
