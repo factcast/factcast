@@ -196,8 +196,7 @@ class FactusTest {
       when(factStreamPositionMock.serial()).thenReturn(2L);
 
       assertThatNoException()
-          .isThrownBy(
-              () -> underTest.waitFor(subscribedProjectionMock, factId, defaultTimeout));
+          .isThrownBy(() -> underTest.waitFor(subscribedProjectionMock, factId, defaultTimeout));
       verify(subscribedProjectionMock, times(1)).factStreamPosition();
     }
 
@@ -208,8 +207,7 @@ class FactusTest {
       when(subscribedProjectionMock.factStreamPosition()).thenReturn(factStreamPositionMock);
       when(factStreamPositionMock.serial()).thenReturn(1L);
 
-      assertThatThrownBy(
-              () -> underTest.waitFor(subscribedProjectionMock, factId, defaultTimeout))
+      assertThatThrownBy(() -> underTest.waitFor(subscribedProjectionMock, factId, defaultTimeout))
           .isInstanceOf(TimeoutException.class);
       verify(subscribedProjectionMock, atLeast(2)).factStreamPosition();
     }
@@ -220,8 +218,7 @@ class FactusTest {
       when(underTest.serialOf(factId)).thenReturn(OptionalLong.empty());
       when(subscribedProjectionMock.factStreamPosition()).thenReturn(factStreamPositionMock);
 
-      assertThatThrownBy(
-              () -> underTest.waitFor(subscribedProjectionMock, factId, defaultTimeout))
+      assertThatThrownBy(() -> underTest.waitFor(subscribedProjectionMock, factId, defaultTimeout))
           .isInstanceOf(IllegalArgumentException.class)
           .hasMessage(
               "Fact with id " + factId + " not found. Make sure to publish before waiting for it.");
@@ -234,8 +231,7 @@ class FactusTest {
       when(underTest.serialOf(factId)).thenReturn(OptionalLong.of(2));
       when(subscribedProjectionMock.factStreamPosition()).thenReturn(factStreamPositionMock);
 
-      assertThatThrownBy(
-              () -> underTest.waitFor(subscribedProjectionMock, factId, defaultTimeout))
+      assertThatThrownBy(() -> underTest.waitFor(subscribedProjectionMock, factId, defaultTimeout))
           .isInstanceOf(TimeoutException.class);
     }
 
@@ -268,10 +264,7 @@ class FactusTest {
       assertThatThrownBy(
               () ->
                   underTest.waitFor(
-                      subscribedProjectionMock,
-                      factId,
-                      defaultTimeout,
-                      backoffFunction))
+                      subscribedProjectionMock, factId, defaultTimeout, backoffFunction))
           .isInstanceOf(TimeoutException.class);
 
       verify(subscribedProjectionMock, atLeast(9)).factStreamPosition();
@@ -290,10 +283,7 @@ class FactusTest {
       assertThatThrownBy(
               () ->
                   underTest.waitFor(
-                      subscribedProjectionMock,
-                      factId,
-                      defaultTimeout,
-                      backoffFunction))
+                      subscribedProjectionMock, factId, defaultTimeout, backoffFunction))
           .isInstanceOf(TimeoutException.class);
 
       verify(subscribedProjectionMock, atLeast(4)).factStreamPosition();
@@ -312,10 +302,7 @@ class FactusTest {
       assertThatThrownBy(
               () ->
                   underTest.waitFor(
-                      subscribedProjectionMock,
-                      factId,
-                      defaultTimeout,
-                      backoffFunction))
+                      subscribedProjectionMock, factId, defaultTimeout, backoffFunction))
           .isInstanceOf(TimeoutException.class);
 
       verify(subscribedProjectionMock, atLeast(2)).factStreamPosition();
