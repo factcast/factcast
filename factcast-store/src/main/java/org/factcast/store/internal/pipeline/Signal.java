@@ -112,6 +112,8 @@ public sealed interface Signal
 
     @Override
     public void pass(SubscriptionImpl target) {
+
+      // no batching on server side before GRPC layer
       target.notifyElement(fact);
     }
 

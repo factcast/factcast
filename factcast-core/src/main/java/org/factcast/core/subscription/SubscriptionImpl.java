@@ -16,6 +16,8 @@
 package org.factcast.core.subscription;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -23,10 +25,13 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
+import org.factcast.core.subscription.observer.BatchFactObserver;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.StreamObserver;
 import org.factcast.core.util.ExceptionHelper;
 
 /**
@@ -38,7 +43,7 @@ import org.factcast.core.util.ExceptionHelper;
 @Slf4j
 public class SubscriptionImpl implements InternalSubscription {
 
-  @NonNull final FactObserver observer;
+  @NonNull final StreamObserver observer;
 
   @NonNull Runnable onClose = () -> {};
 
@@ -180,8 +185,14 @@ public class SubscriptionImpl implements InternalSubscription {
   @Override
   public void notifyElement(@NonNull Fact e) throws TransformationException {
     if (!closed.get()) {
-      // note that this fact is already transformed
-      observer.onNext(e);
+      Dispatch.onNext(observer, e);
+    }
+  }
+
+  @Override
+  public void notifyElements(@NonNull List<Fact> e) throws TransformationException {
+    if (!closed.get()) {
+      Dispatch.onNext(observer, e);
     }
   }
 
@@ -209,7 +220,54 @@ public class SubscriptionImpl implements InternalSubscription {
     }
   }
 
-  public static SubscriptionImpl on(@NonNull FactObserver o) {
+  /**
+   * you can use onFact/onBatch instead to prevent casting
+   *
+   * @since 0.8
+   */
+  public static SubscriptionImpl on(@NonNull StreamObserver o) {
     return new SubscriptionImpl(o);
+  }
+
+  public static SubscriptionImpl onFact(@NonNull FactObserver o) {
+    return new SubscriptionImpl(o);
+  }
+
+  public static SubscriptionImpl onBatch(@NonNull BatchFactObserver o) {
+    return new SubscriptionImpl(o);
+  }
+
+  @UtilityClass
+  public static final class Dispatch {
+
+    private static void onNext(@NonNull FactObserver observer, @NonNull Fact e) {
+      observer.onNext(e);
+    }
+
+    private static void onNext(@NonNull FactObserver observer, @NonNull List<Fact> e) {
+      e.forEach(observer::onNext);
+    }
+
+    private static void onNext(@NonNull BatchFactObserver observer, @NonNull Fact e) {
+      observer.onNext(Collections.singletonList(e));
+    }
+
+    private static void onNext(@NonNull BatchFactObserver observer, @NonNull List<Fact> e) {
+      observer.onNext(e);
+    }
+
+    // must not be actually called
+    public static void onNext(@NonNull StreamObserver observer, @NonNull List<Fact> e) {
+      if (observer instanceof FactObserver) onNext((FactObserver) observer, e);
+      else if (observer instanceof BatchFactObserver) onNext((BatchFactObserver) observer, e);
+      else throw new UnsupportedOperationException();
+    }
+
+    // must not be actually called
+    public static void onNext(@NonNull StreamObserver observer, @NonNull Fact e) {
+      if (observer instanceof FactObserver) onNext((FactObserver) observer, e);
+      else if (observer instanceof BatchFactObserver) onNext((BatchFactObserver) observer, e);
+      else throw new UnsupportedOperationException();
+    }
   }
 }

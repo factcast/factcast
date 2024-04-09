@@ -37,7 +37,6 @@ import org.factcast.core.subscription.transformation.FactTransformers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -45,15 +44,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class SubscriptionImplTest {
 
-  @Mock private FactObserver observer;
-
   @Mock private FactTransformers factTransformers;
 
-  @InjectMocks private SubscriptionImpl uut;
+  private SubscriptionImpl uut;
+  private FactObserver obs;
 
   @BeforeEach
   void setUp() {
     obs = mock(FactObserver.class);
+    uut = SubscriptionImpl.on(obs);
   }
 
   @Test
@@ -135,8 +134,6 @@ class SubscriptionImplTest {
     uut.close();
     org.assertj.core.api.Assertions.assertThat(l.await(10, TimeUnit.SECONDS)).isTrue();
   }
-
-  private FactObserver obs;
 
   @SuppressWarnings("DataFlowIssue")
   @Test
@@ -289,7 +286,7 @@ class SubscriptionImplTest {
     FactStreamInfo fsi = new FactStreamInfo(1, 10);
     uut.notifyFactStreamInfo(fsi);
 
-    verify(observer).onFactStreamInfo(eq(fsi));
+    verify(obs).onFactStreamInfo(eq(fsi));
   }
 
   @Test

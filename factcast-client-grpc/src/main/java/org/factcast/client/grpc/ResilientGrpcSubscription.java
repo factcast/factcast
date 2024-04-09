@@ -16,6 +16,8 @@
 package org.factcast.client.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Iterables;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -30,7 +32,7 @@ import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionClosedException;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.BatchFactObserver;
 import org.factcast.core.util.ExceptionHelper;
 
 @Slf4j
@@ -38,8 +40,8 @@ public class ResilientGrpcSubscription implements Subscription {
 
   private final GrpcFactStore store;
   private final SubscriptionRequestTO originalRequest;
-  private final FactObserver originalObserver;
-  private final FactObserver delegatingObserver;
+  private final BatchFactObserver originalObserver;
+  private final BatchFactObserver delegatingObserver;
 
   private final AtomicReference<FactStreamPosition> lastPosition = new AtomicReference<>();
   private final SubscriptionHolder currentSubscription = new SubscriptionHolder();
@@ -50,7 +52,7 @@ public class ResilientGrpcSubscription implements Subscription {
   public ResilientGrpcSubscription(
       @NonNull GrpcFactStore store,
       @NonNull SubscriptionRequestTO req,
-      @NonNull FactObserver obs,
+      @NonNull BatchFactObserver obs,
       @NonNull ResilienceConfiguration config) {
     this.store = store;
     resilience = new Resilience(config);
@@ -196,13 +198,13 @@ public class ResilientGrpcSubscription implements Subscription {
     void accept(T t, U u) throws TimeoutException;
   }
 
-  // TODO batching
-  class DelegatingFactObserver implements FactObserver {
+  class DelegatingFactObserver implements BatchFactObserver {
     @Override
-    public void onNext(@NonNull Fact element) {
+    public void onNext(@NonNull List<Fact> element) {
       if (!isClosed.get()) {
+        // TODO order looks weird
         originalObserver.onNext(element);
-        lastPosition.set(FactStreamPosition.from(element));
+        lastPosition.set(FactStreamPosition.from(Iterables.getLast(element)));
       } else {
         log.warn("Fact arrived after call to .close() [a few of them is ok...]");
       }
