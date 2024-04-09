@@ -16,18 +16,15 @@
 package org.factcast.itests.factus.event;
 
 import com.google.common.collect.Sets;
+import java.util.Set;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.Specification;
 
-import java.util.Set;
-import java.util.UUID;
-
-/**
- * UserBored event. Created to assert on facts that are not consumed by any projection.
- */
+/** UserBored event. Created to assert on facts that are not consumed by any projection. */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

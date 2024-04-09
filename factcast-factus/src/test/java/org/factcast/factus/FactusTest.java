@@ -194,8 +194,9 @@ class FactusTest {
       when(subscribedProjectionMock.factStreamPosition()).thenReturn(factStreamPositionMock);
       when(factStreamPositionMock.serial()).thenReturn(2L);
 
-      assertThatNoException().isThrownBy(
-          () -> underTest.waitFor(subscribedProjectionMock, factId, Duration.ofMillis(100)));
+      assertThatNoException()
+          .isThrownBy(
+              () -> underTest.waitFor(subscribedProjectionMock, factId, Duration.ofMillis(100)));
     }
 
     @Test
