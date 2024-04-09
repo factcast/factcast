@@ -222,7 +222,8 @@ class FactusTest {
       assertThatThrownBy(
               () -> underTest.waitFor(subscribedProjectionMock, factId, Duration.ofMillis(100)))
           .isInstanceOf(IllegalArgumentException.class)
-          .hasMessage("Fact with id " + factId + " not found. Make sure to publish before waiting for it.");
+          .hasMessage(
+              "Fact with id " + factId + " not found. Make sure to publish before waiting for it.");
       verify(subscribedProjectionMock, never()).factStreamPosition();
     }
 
@@ -330,13 +331,15 @@ class FactusTest {
       when(subscribedProjectionMock.factStreamPosition()).thenReturn(factStreamPositionMock);
       when(factStreamPositionMock.serial()).thenReturn(1L);
 
-      Thread t = new Thread(() -> {
-        try {
-          underTest.waitFor(subscribedProjectionMock, factId, Duration.ofMillis(100));
-        } catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      });
+      Thread t =
+          new Thread(
+              () -> {
+                try {
+                  underTest.waitFor(subscribedProjectionMock, factId, Duration.ofMillis(100));
+                } catch (Exception e) {
+                  throw new RuntimeException(e);
+                }
+              });
       t.start();
 
       assertThatNoException().isThrownBy(t::interrupt);
