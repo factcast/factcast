@@ -27,6 +27,12 @@ public class StagedFacts {
   private int currentBytes;
   private final List<Fact> staged = new ArrayList<>(128);
 
+  /**
+   * Note that the buffer will only utilize 90% of the maxBytes size. The reason is that byteSizeOf
+   * might become inadequate at some point, if protobuf encoding changes.
+   *
+   * @param maxBytes maximum number of bytes the buffer should hold
+   */
   StagedFacts(int maxBytes) {
     this.maxBytes = maxBytes - (int) (maxBytes * .1);
   }
