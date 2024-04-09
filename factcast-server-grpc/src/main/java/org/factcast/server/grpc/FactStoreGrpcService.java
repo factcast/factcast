@@ -192,10 +192,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
       resetDebugInfo(req, grpcRequestMetadata);
       BlockingStreamObserver<MSG_Notification> resp =
-          new BlockingStreamObserver<>(
-              req.toString(),
-              (ServerCallStreamObserver) responseObserver,
-              grpcRequestMetadata.clientMaxInboundMessageSize());
+          new BlockingStreamObserver<>(req.toString(), (ServerCallStreamObserver) responseObserver);
 
       AtomicReference<Subscription> subRef = new AtomicReference();
 

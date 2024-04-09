@@ -38,13 +38,27 @@ class GrpcRequestMetadataTest {
     void setup() {}
 
     @Test
-    void extracts() {
+    void respectsMinimum() {
       Metadata headers = new Metadata();
       headers.put(Headers.CLIENT_MAX_INBOUND_MESSAGE_SIZE, "127");
 
       underTest.headers(headers);
 
-      assertThat(underTest.clientMaxInboundMessageSize()).isEqualTo(127);
+      assertThat(underTest.clientMaxInboundMessageSize())
+          .isEqualTo(GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE);
+    }
+
+    @Test
+    void respectsMaximum() {
+      Metadata headers = new Metadata();
+      headers.put(
+          Headers.CLIENT_MAX_INBOUND_MESSAGE_SIZE,
+          String.valueOf(GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE + 100000));
+
+      underTest.headers(headers);
+
+      assertThat(underTest.clientMaxInboundMessageSize())
+          .isEqualTo(GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE);
     }
 
     @Test

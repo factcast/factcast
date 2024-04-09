@@ -45,8 +45,7 @@ public class BlockingStreamObserver<T> implements StreamObserver<T> {
 
   private final String id;
 
-  BlockingStreamObserver(
-      @NonNull String id, @NonNull ServerCallStreamObserver<T> delegate, int requestedMaxMsgSize) {
+  BlockingStreamObserver(@NonNull String id, @NonNull ServerCallStreamObserver<T> delegate) {
 
     this.id = id;
     this.delegate = delegate;

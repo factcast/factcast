@@ -49,12 +49,19 @@ public class GrpcRequestMetadata {
 
     if (requested > GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE) {
       log.warn(
-          "maxMsgSize requested from client exceeds "
-              + GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE
-              + ". Limiting it to upper bound.");
+          "maxMsgSize requested from client exceeds {}. Limiting it to upper bound.",
+          GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE);
     }
 
-    return Math.min(requested, GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE);
+    if (requested < GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE) {
+      log.warn(
+          "maxMsgSize requested from client is smaller than {}, Limiting it to lower bound.",
+          GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE);
+    }
+
+    return Math.max(
+        GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE,
+        Math.min(requested, GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE));
   }
 
   boolean supportsFastForward() {
@@ -63,9 +70,16 @@ public class GrpcRequestMetadata {
 
   @VisibleForTesting
   public static GrpcRequestMetadata forTest() {
+    return forTest(1024 * 1024);
+  }
+
+  @VisibleForTesting
+  public static GrpcRequestMetadata forTest(long maxInboundMessageSize) {
     GrpcRequestMetadata grpcRequestMetadata = new GrpcRequestMetadata();
     grpcRequestMetadata.headers = new Metadata();
     grpcRequestMetadata.headers.put(Headers.FAST_FORWARD, "true");
+    grpcRequestMetadata.headers.put(
+        Headers.CLIENT_MAX_INBOUND_MESSAGE_SIZE, String.valueOf(maxInboundMessageSize));
     return grpcRequestMetadata;
   }
 

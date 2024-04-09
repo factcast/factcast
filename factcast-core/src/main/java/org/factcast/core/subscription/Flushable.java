@@ -13,18 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.grpc.api;
+package org.factcast.core.subscription;
 
-import lombok.experimental.UtilityClass;
-
-@UtilityClass
-public class GrpcConstants {
-  public static final int DEFAULT_CLIENT_INBOUND_MESSAGE_SIZE = 8 * 1024 * 1024;
-
-  // supposed to prevent a client from shooting himself in the foot. We have seen Events in the wild
-  // that are >600kb already.
-  public static final int MIN_CLIENT_INBOUND_MESSAGE_SIZE = 2 * 1024 * 1024;
-
-  // supposed to prevent a client from driving the server to OOM
-  public static final int MAX_CLIENT_INBOUND_MESSAGE_SIZE = 32 * 1024 * 1024;
+// we don't want no stinking IOExceptions
+public interface Flushable {
+  void flush();
 }

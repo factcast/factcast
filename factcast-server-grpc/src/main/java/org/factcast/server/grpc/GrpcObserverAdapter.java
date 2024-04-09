@@ -19,8 +19,6 @@ import com.google.common.annotations.VisibleForTesting;
 import io.grpc.stub.StreamObserver;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.atomic.AtomicBoolean;
-import javax.annotation.Nullable;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
@@ -28,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
+import org.factcast.core.subscription.Flushable;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
@@ -38,7 +37,7 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
  * @author <uwe.schaefer@prisma-capacity.eu>
  */
 @Slf4j
-class GrpcObserverAdapter implements FactObserver {
+class GrpcObserverAdapter implements FactObserver, Flushable {
 
   private final ProtoConverter converter = new ProtoConverter();
 
@@ -54,8 +53,6 @@ class GrpcObserverAdapter implements FactObserver {
   private final StagedFacts stagedFacts;
   private final boolean supportsFastForward;
   private final long keepaliveInMilliseconds;
-
-  private final AtomicBoolean caughtUp = new AtomicBoolean(false);
 
   public GrpcObserverAdapter(
       @NonNull String id,
@@ -151,19 +148,17 @@ class GrpcObserverAdapter implements FactObserver {
     notificationStreamObserver.onNext(converter.createCatchupNotification());
   }
 
+  @Override
   public void flush() {
-    // yes, it is threadsafe
+    // yes, it is used in a threadsafe manner
     if (!stagedFacts.isEmpty()) {
       log.trace("{} flushing batch of {} facts", id, stagedFacts.size());
       notificationStreamObserver.onNext(converter.createNotificationFor(stagedFacts.popAll()));
     }
   }
 
-  // TODO recieve signals instead
-  public void onNext(@Nullable Fact f) {
-    // TODO replace by special-value-fact?
-    if (f == null) flush();
-    else if (!stagedFacts.add(f)) {
+  public void onNext(@NonNull Fact f) {
+    if (!stagedFacts.add(f)) {
       flush();
       // add it to the next batch
       stagedFacts.add(f);
