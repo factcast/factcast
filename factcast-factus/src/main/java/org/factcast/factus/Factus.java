@@ -26,6 +26,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
+import java.util.function.IntToLongFunction;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
@@ -157,7 +158,7 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
       @NonNull P subscribedProjection,
       @NonNull UUID factId,
       @NonNull Duration timeout,
-      Function<Integer, Long> retryBackoffMillis)
+      IntToLongFunction retryBackoffMillis)
       throws TimeoutException, ExecutionException {
     long start = System.currentTimeMillis();
     Long serial =
@@ -184,11 +185,12 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
                 factId, currentFsp, serial));
       }
       try {
-        Thread.sleep(retryBackoffMillis.apply(i));
+        Thread.sleep(retryBackoffMillis.applyAsLong(i));
         currentFsp = subscribedProjection.factStreamPosition();
         i++;
       } catch (InterruptedException e) {
         LOGGER.info("Interrupted while waiting for fact {} to be consumed.", factId);
+        Thread.currentThread().interrupt();
       }
     }
   }
