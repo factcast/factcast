@@ -141,8 +141,10 @@ public class GrpcFactStore implements FactStore {
     this.clientId = clientId;
 
     // initially use the raw ones...
-    blockingStub = rawBlockingStub.withWaitForReady();
-    stub = rawStub.withWaitForReady();
+    int maxInboundMessageSize = properties.getMaxInboundMessageSize();
+    blockingStub =
+        rawBlockingStub.withWaitForReady().withMaxInboundMessageSize(maxInboundMessageSize);
+    stub = rawStub.withWaitForReady().withMaxInboundMessageSize(maxInboundMessageSize);
 
     if (properties.getUser() != null && properties.getPassword() != null) {
       CallCredentials basic =
@@ -245,14 +247,19 @@ public class GrpcFactStore implements FactStore {
   @Override
   @NonNull
   public Subscription subscribe(
-      @NonNull SubscriptionRequestTO req, @NonNull FactObserver observer) {
+      @NonNull SubscriptionRequestTO req,
+
+      // TODO batching
+      @NonNull FactObserver observer) {
     if (properties.getResilience().isEnabled())
       return new ResilientGrpcSubscription(this, req, observer, properties.getResilience());
     else return internalSubscribe(req, observer);
   }
 
   public Subscription internalSubscribe(
-      @NonNull SubscriptionRequestTO req, @NonNull FactObserver observer) {
+      @NonNull SubscriptionRequestTO req,
+      // TODO batching
+      @NonNull FactObserver observer) {
     return callAndHandle(
         () -> {
           InternalSubscription subscription = SubscriptionImpl.on(observer);
@@ -387,11 +394,9 @@ public class GrpcFactStore implements FactStore {
       meta.put(Headers.FAST_FORWARD, "true");
     }
 
-    // existence of this header will enable the on-the-wire-batching feature
-    int catchupBatchSize = properties.getCatchupBatchsize();
-    if (catchupBatchSize > 1) {
-      meta.put(Headers.CATCHUP_BATCHSIZE, String.valueOf(catchupBatchSize));
-    }
+    meta.put(
+        Headers.CLIENT_MAX_INBOUND_MESSAGE_SIZE,
+        String.valueOf(properties.getMaxInboundMessageSize()));
 
     addClientIdTo(meta);
 
