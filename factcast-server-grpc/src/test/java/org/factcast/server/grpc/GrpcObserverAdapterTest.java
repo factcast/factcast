@@ -44,7 +44,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @SuppressWarnings({"rawtypes", "unchecked", "deprecation"})
 @ExtendWith(MockitoExtension.class)
-public class GrpcObserverAdapterTest {
+class GrpcObserverAdapterTest {
 
   @Mock private StreamObserver<MSG_Notification> observer;
 
