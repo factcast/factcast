@@ -6,7 +6,7 @@ import monacoCss from "monaco-editor/min/vs/editor/editor.main.css?inline";
 import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 // @ts-ignore
 import jsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
-import { IDisposable, IRange, languages } from "monaco-editor";
+import { IDisposable, languages, Range } from "monaco-editor";
 import { visit, JSONPath, JSONVisitor } from "jsonc-parser";
 import { JSONPath as jp } from "jsonpath-plus";
 
@@ -24,7 +24,7 @@ type FactMetaData = {
 	filterOptions: Record<string, FactFilterOptions>;
 };
 
-type EnrichedMember = { range: IRange } & Partial<languages.CodeLens> &
+type EnrichedMember = { range: Range } & Partial<languages.CodeLens> &
 	Partial<languages.Hover>;
 
 type CompiledPath = {
@@ -112,20 +112,21 @@ class JsonView extends LitElement {
 					return null;
 				}
 
-				const payload = that.metaData.find(
-					({ range }) =>
-						(range.startLineNumber < position.lineNumber ||
-							(range.startLineNumber === position.lineNumber &&
-								range.startColumn <= position.column)) &&
-						(range.endLineNumber > position.lineNumber ||
-							(range.endLineNumber === position.lineNumber &&
-								range.endColumn >= position.column))
+				const hoverContents = that.metaData.filter(
+					({ contents, range }) =>
+						contents != null && range.containsPosition(position)
 				);
-				if (!payload) return null;
 
-				if (!payload.contents) return null;
+				if (hoverContents.length === 0) {
+					return null;
+				}
 
-				return payload as languages.Hover;
+				return {
+					range: hoverContents
+						.slice(1)
+						.reduce((acc, r) => acc.plusRange(r.range), hoverContents[0].range),
+					contents: hoverContents.flatMap((x) => x.contents),
+				} as languages.Hover;
 			},
 		});
 
@@ -399,6 +400,7 @@ class MetaDataJsonVisitor implements JSONVisitor {
 				property.length +
 				7 + // for quotes around property and value and the " : " in the middle
 				(filter.meta?.value.length ?? filter.aggregateId?.length ?? 0);
+
 			const enrichedMember: EnrichedMember = {
 				range: new monaco.Range(
 					startLine + 1,
