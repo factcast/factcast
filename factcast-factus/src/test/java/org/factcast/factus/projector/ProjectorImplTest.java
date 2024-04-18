@@ -38,11 +38,13 @@ import org.factcast.factus.*;
 import org.factcast.factus.event.DefaultEventSerializer;
 import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.projection.Projection;
+import org.factcast.factus.projection.parameter.HandlerParameterContributors;
 import org.factcast.factus.projector.ProjectorImpl.ReflectionTools;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 /** Blackbox test, we are wiring real objects into the test class, no mocks. */
+// TODO switch to collections
 class ProjectorImplTest {
 
   private final DefaultEventSerializer eventSerializer =
@@ -64,7 +66,7 @@ class ProjectorImplTest {
 
       SimpleProjection projection = new SimpleProjection();
 
-      ProjectorImpl<SimpleProjection> underTest = new ProjectorImpl<>(eventSerializer, projection);
+      ProjectorImpl<SimpleProjection> underTest = new ProjectorImpl<>(projection, eventSerializer);
 
       // RUN
       underTest.apply(fact);
@@ -84,7 +86,9 @@ class ProjectorImplTest {
 
       SimpleProjection projection = new SimpleProjection();
 
-      DefaultProjectorFactory factory = new DefaultProjectorFactory(eventSerializer);
+      DefaultProjectorFactory factory =
+          new DefaultProjectorFactory(
+              eventSerializer, new HandlerParameterContributors(eventSerializer));
       Projector<SimpleProjection> underTest = factory.create(projection);
 
       // RUN

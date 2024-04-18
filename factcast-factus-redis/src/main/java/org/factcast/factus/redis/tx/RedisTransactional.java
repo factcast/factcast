@@ -24,7 +24,8 @@ import org.redisson.api.TransactionOptions;
 @Target(ElementType.TYPE)
 @Inherited
 public @interface RedisTransactional {
-  int bulkSize() default 50;
+  // TODO: document the change from 50 -> 1000
+  int bulkSize() default 1000;
 
   long timeout() default Defaults.timeout;
 
@@ -36,7 +37,7 @@ public @interface RedisTransactional {
 
   class Defaults {
     static final long timeout = 30000;
-    static final long responseTimeout = 5000;
+    static final long responseTimeout = 5001;
     static final int retryAttempts = 5;
     static final long retryInterval = 3000;
 

@@ -47,8 +47,6 @@ public abstract class BatchingFactObserver implements FactObserver, Flushable {
 
   @Override
   public void flush() {
-    FactObserver.super.flush();
-
     if (!buffer.isEmpty()) {
       List<Fact> current = buffer;
       buffer = new ArrayList<>(maxNumberOfFactsToBuffer);
