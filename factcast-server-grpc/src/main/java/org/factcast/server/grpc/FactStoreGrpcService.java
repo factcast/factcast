@@ -439,7 +439,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
     initialize(responseObserver);
 
     StateForRequest req = converter.fromProto(request);
-    String ns = req.ns(); // TODO is this gets null, we're screwed
+    String ns = req.ns(); // TODO if this becomes null, we're screwed
     assertCanRead(ns);
     StateToken token =
         store.stateFor(

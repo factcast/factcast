@@ -45,7 +45,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 /** Blackbox test, we are wiring real objects into the test class, no mocks. */
-// TODO switch to collections
 class ProjectorImplTest {
 
   private final DefaultEventSerializer eventSerializer =

@@ -23,7 +23,9 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.observer.BatchingFactObserver;
@@ -31,12 +33,11 @@ import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.metrics.TimedOperation;
 import org.factcast.factus.projection.ProgressAware;
 import org.factcast.factus.projection.tx.TransactionAware;
-import org.slf4j.Logger;
 
+@Slf4j
 abstract class AbstractFactObserver extends BatchingFactObserver {
+  private static final int MAX_DEFAULT = 1000;
 
-  private static final Logger log = org.slf4j.LoggerFactory.getLogger(AbstractFactObserver.class);
-  private static final int MAX_DEFAULT = 1024;
   private final ProgressAware target;
   private final long interval;
   private final FactusMetrics metrics;
@@ -58,7 +59,6 @@ abstract class AbstractFactObserver extends BatchingFactObserver {
     if (target instanceof TransactionAware) {
       return ((TransactionAware) target).maxBatchSizePerTransaction();
     }
-    // TODO decide what to apply here...
     return MAX_DEFAULT;
   }
 
@@ -99,20 +99,23 @@ abstract class AbstractFactObserver extends BatchingFactObserver {
 
   @VisibleForTesting
   void reportProcessingLatency(@NonNull List<Fact> elements) {
-    long nowInMillis = Instant.now().toEpochMilli();
+    // TODO Reviewer: shouldn't this be async for batch application performance reasons?
+    CompletableFuture.runAsync(
+        () -> {
+          long nowInMillis = Instant.now().toEpochMilli();
 
-    // TODO should this be async for batch application performance reasons?
-    elements.forEach(
-        element -> {
-          String ts = element.meta("_ts");
-          // _ts might not be there in unit testing for instance.
-          if (ts != null) {
-            long latency = nowInMillis - Long.parseLong(ts);
-            metrics.timed(
-                TimedOperation.EVENT_PROCESSING_LATENCY,
-                Tags.of(Tag.of(CLASS, target.getClass().getName())),
-                latency);
-          }
+          elements.forEach(
+              element -> {
+                String ts = element.meta("_ts");
+                // _ts might not be there in unit testing for instance.
+                if (ts != null) {
+                  long latency = nowInMillis - Long.parseLong(ts);
+                  metrics.timed(
+                      TimedOperation.EVENT_PROCESSING_LATENCY,
+                      Tags.of(Tag.of(CLASS, target.getClass().getName())),
+                      latency);
+                }
+              });
         });
   }
 

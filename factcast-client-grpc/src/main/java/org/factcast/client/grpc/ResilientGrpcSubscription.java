@@ -154,7 +154,7 @@ public class ResilientGrpcSubscription implements Subscription {
   @VisibleForTesting
   protected void doConnect() {
     resilience.registerAttempt();
-    SubscriptionRequestTO to = SubscriptionRequestTO.forFacts(originalRequest);
+    SubscriptionRequestTO to = SubscriptionRequestTO.from(originalRequest);
     FactStreamPosition last = lastPosition.get();
     if (last != null) {
       to.startingAfter(last.factId());

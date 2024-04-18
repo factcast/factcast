@@ -329,12 +329,6 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
         }
       }
 
-      // TODO create Trans for fast failure, still needed?
-      //            for (Class<?> type : m.getParameterTypes()) {
-      //                // trigger transformer creation in order to fail fast
-      //                createSingleParameterTransformer(m, type);
-      //            }
-
       // exclude MockitoMocks
       return !m.getDeclaringClass().getName().contains("$MockitoMock");
     }

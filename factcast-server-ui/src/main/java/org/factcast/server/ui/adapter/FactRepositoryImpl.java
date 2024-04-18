@@ -112,7 +112,7 @@ public class FactRepositoryImpl implements FactRepository {
       request = sr.fromScratch();
     }
 
-    try (Subscription subscription = fs.subscribe(SubscriptionRequestTO.forFacts(request), obs)) {
+    try (Subscription subscription = fs.subscribe(SubscriptionRequestTO.from(request), obs)) {
       subscription.awaitCatchup();
     } catch (Exception e) {
       // in case the limit is reached, it makes no sense to stream the rest of the
