@@ -36,10 +36,9 @@ import org.factcast.core.FactStreamPosition;
 import org.factcast.core.FactValidationException;
 import org.factcast.core.TestFactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
-import org.factcast.core.subscription.Flushable;
 import org.factcast.core.subscription.StaleSubscriptionDetectedException;
 import org.factcast.core.subscription.SubscriptionImpl;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.FlushableFactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Type;
@@ -54,8 +53,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class ClientStreamObserverTest {
-
-  interface FlushableFactObserver extends FactObserver, Flushable {}
 
   @Mock FlushableFactObserver factObserver;
 

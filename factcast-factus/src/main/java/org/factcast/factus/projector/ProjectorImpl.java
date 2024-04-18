@@ -297,19 +297,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
   }
 
   @Override
-  public void onCatchup(@Nullable FactStreamPosition idOfLastFactApplied) {
-    // TODO why is this needed?
-
-    //    // needs to be taken care if BEFORE delegating to the lenses as they might commit/execute
-    // and we
-    //    // want that state in there.
-    //    if (projection instanceof FactStreamPositionAware) {
-    //      if (idOfLastFactApplied != null && (!(idOfLastFactApplied.equals(lastStateSet)))) {
-    //        ((FactStreamPositionAware) projection).factStreamPosition(idOfLastFactApplied);
-    //      }
-    //    }
-
-  }
+  public void onCatchup(@Nullable FactStreamPosition idOfLastFactApplied) {}
 
   /**
    * expensive method that should be used on initialization only
