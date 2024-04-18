@@ -126,6 +126,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
       case Fact:
         log.trace("received single fact");
         subscription.notifyElement(converter.fromProto(f.getFact()));
+        subscription.flush();
         break;
       case Facts:
         List<Fact> facts = converter.fromProto(f.getFacts());

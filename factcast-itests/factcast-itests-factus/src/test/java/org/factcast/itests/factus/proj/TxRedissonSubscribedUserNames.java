@@ -35,7 +35,7 @@ import org.redisson.codec.MarshallingCodec;
 
 @Slf4j
 @ProjectionMetaData(revision = 1)
-@RedisTransactional(bulkSize = 50)
+@RedisTransactional(bulkSize = 5000)
 public class TxRedissonSubscribedUserNames extends AbstractRedisSubscribedProjection {
 
   protected final Codec codec =

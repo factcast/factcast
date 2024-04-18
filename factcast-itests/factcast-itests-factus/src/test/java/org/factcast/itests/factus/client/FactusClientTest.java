@@ -203,24 +203,6 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       p.clear();
       p.factStreamPosition(null);
     }
-
-    // ------------ batch
-    {
-      var sw = Stopwatch.createStarted();
-      BatchRedissonManagedUserNames p = new BatchRedissonManagedUserNames(redissonClient);
-      factus.update(p);
-      log.info("batch {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
-      p.clear();
-      p.factStreamPosition(null);
-    }
-    {
-      var sw = Stopwatch.createStarted();
-      BatchRedissonManagedUserNames p = new BatchRedissonManagedUserNames(redissonClient);
-      factus.update(p);
-      log.info("batch {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
-      p.clear();
-      p.factStreamPosition(null);
-    }
   }
 
   @SneakyThrows

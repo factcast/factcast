@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2023 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.projector;
+package org.factcast.factus.projection.tx;
 
-import java.util.List;
-import javax.annotation.Nullable;
-import lombok.NonNull;
-import org.factcast.core.Fact;
-import org.factcast.core.FactStreamPosition;
-import org.factcast.core.spec.FactSpec;
-import org.factcast.factus.projection.Projection;
+public class TransactionNotRunningException extends TransactionException {
+  public TransactionNotRunningException(String msg) {
+    super(msg);
+  }
 
-public interface Projector<A extends Projection> {
-  void apply(@NonNull List<Fact> facts);
+  public TransactionNotRunningException(Throwable e) {
+    super(e);
+  }
 
-  List<FactSpec> createFactSpecs();
-
-  void onCatchup(@Nullable FactStreamPosition lastFactApplied);
+  public TransactionNotRunningException(String msg, Throwable e) {
+    super(msg, e);
+  }
 }
