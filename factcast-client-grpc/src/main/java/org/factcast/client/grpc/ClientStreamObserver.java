@@ -133,9 +133,8 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
             "received {} facts translating to {} decompressed bytes",
             facts.size(),
             f.getSerializedSize());
-        // TODO batching
-        // subscription.notifyElements(facts);
         facts.forEach(subscription::notifyElement);
+        subscription.flush();
         break;
       case Ffwd:
         log.debug("received fastforward signal");
