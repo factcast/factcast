@@ -41,7 +41,6 @@ import org.factcast.core.event.EventConverter;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.subscription.Flushable;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.factus.batch.BatchAbortedException;
@@ -372,7 +371,7 @@ class FactusImplTest {
                 FactObserver obs = (FactObserver) inv.getArgument(1);
                 obs.onNext(f1);
                 obs.onNext(f2);
-                ((Flushable) obs).flush();
+                obs.flush();
 
                 return Mockito.mock(Subscription.class);
               });
@@ -646,7 +645,7 @@ class FactusImplTest {
                 // apply some new facts
                 factObserver.onNext(toFact(new SimpleEventObject("abc")));
                 factObserver.onNext(toFact(new SimpleEventObject("def")));
-                ((Flushable) factObserver).flush();
+                factObserver.flush();
                 return mock(Subscription.class);
               });
 
@@ -698,7 +697,7 @@ class FactusImplTest {
                 // apply some new facts
                 factObserver.onNext(toFact(new SimpleEventObject("abc")));
                 factObserver.onNext(toFact(new SimpleEventObject("def")));
-                ((Flushable) factObserver).flush();
+                factObserver.flush();
                 return mock(Subscription.class);
               });
 
@@ -754,7 +753,7 @@ class FactusImplTest {
       // onNext(...)
       // now assume a new fact has been observed...
       factObserver.onNext(mockedFact);
-      ((Flushable) factObserver).flush();
+      factObserver.flush();
 
       // ... and then it should be applied to event projector
       verify(projector).apply(Collections.singletonList(mockedFact));
@@ -833,7 +832,7 @@ class FactusImplTest {
       // onNext(...)
       // now assume a new fact has been observed...
       factObserver.onNext(mockedFact);
-      ((Flushable) factObserver).flush();
+      factObserver.flush();
 
       // ... and then it should be applied to event projector
       verify(eventApplier).apply(Lists.newArrayList(mockedFact));
@@ -904,7 +903,7 @@ class FactusImplTest {
       // onNext(...)
       // now assume a new fact has been observed...
       factObserver.onNext(mockedFact);
-      ((Flushable) factObserver).flush();
+      factObserver.flush();
 
       // ... and then it should be applied to event projector
       verify(eventApplier).apply(Lists.newArrayList(mockedFact));
@@ -1184,7 +1183,7 @@ class FactusImplTest {
 
                 // apply some new facts
                 factObserver.onNext(toFact(new NameEvent("Barney")));
-                ((Flushable) factObserver).flush();
+                factObserver.flush();
                 return mock(Subscription.class);
               });
 
@@ -1244,7 +1243,7 @@ class FactusImplTest {
 
                 // apply some new facts
                 factObserver.onNext(toFact(new NameEvent("Barney")));
-                ((Flushable) factObserver).flush();
+                factObserver.flush();
                 return mock(Subscription.class);
               });
 
@@ -1302,7 +1301,7 @@ class FactusImplTest {
 
                 // apply some new facts
                 factObserver.onNext(toFact(new NameEvent("Barney")));
-                ((Flushable) factObserver).flush();
+                factObserver.flush();
                 return mock(Subscription.class);
               });
 
@@ -1356,7 +1355,7 @@ class FactusImplTest {
 
                 // apply some new facts
                 factObserver.onNext(toFact(new NameEvent("Barney")));
-                ((Flushable) factObserver).flush();
+                factObserver.flush();
                 return mock(Subscription.class);
               });
 
