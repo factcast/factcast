@@ -28,7 +28,6 @@ public abstract class AbstractSpringTxSubscribedProjection extends AbstractSprin
     super(platformTransactionManager);
   }
 
-  // TODO why?
   @Override
   public abstract WriterToken acquireWriteToken(@NonNull Duration maxWait);
 }

@@ -42,7 +42,7 @@ class DefaultFactCast implements FactCast {
   @NonNull
   public Subscription subscribeEphemeral(
       @NonNull SubscriptionRequest req, @NonNull FactObserver observer) {
-    return store.subscribe(SubscriptionRequestTO.forFacts(req), observer);
+    return store.subscribe(SubscriptionRequestTO.from(req), observer);
   }
 
   @Override
@@ -84,7 +84,7 @@ class DefaultFactCast implements FactCast {
   @Override
   public Subscription subscribe(
       @NonNull SubscriptionRequest request, @NonNull FactObserver observer) {
-    return store.subscribe(SubscriptionRequestTO.forFacts(request), observer);
+    return store.subscribe(SubscriptionRequestTO.from(request), observer);
   }
 
   @Override
@@ -95,7 +95,6 @@ class DefaultFactCast implements FactCast {
 
   @Override
   public Optional<Fact> fetchByIdAndVersion(@NonNull UUID id, int versionExpected)
-      // TODO is transport of this exception reasonable?
       throws TransformationException {
     return store.fetchByIdAndVersion(id, versionExpected);
   }
