@@ -72,8 +72,8 @@
     <maven-clean-plugin.version>3.3.2</maven-clean-plugin.version>
     <maven-javadoc-plugin.version>3.6.3</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
-    <maven-gpg-plugin.version>3.2.2</maven-gpg-plugin.version>
-    <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
+    <maven-gpg-plugin.version>3.2.3</maven-gpg-plugin.version>
+    <maven-jar-plugin.version>3.4.0</maven-jar-plugin.version>
     <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
     <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
     <maven-failsafe-plugin.version>3.2.5</maven-failsafe-plugin.version>
@@ -93,7 +93,7 @@
     <mockito.version>5.11.0</mockito.version>
     <junit-jupiter.version>5.10.2</junit-jupiter.version>
     <lombok.version>1.18.32</lombok.version>
-    <slf4j-api.version>2.0.12</slf4j-api.version>
+    <slf4j-api.version>2.0.13</slf4j-api.version>
     <!--suppress UnresolvedMavenProperty -->
     <etc>${session.executionRootDirectory}/src/etc</etc>
     <spring-boot.version>3.2.4</spring-boot.version>
@@ -108,7 +108,7 @@
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <kotest.version>5.8.0</kotest.version>
     <mockk.version>1.13.10</mockk.version>
-    <redisson.version>3.27.2</redisson.version>
+    <redisson.version>3.28.0</redisson.version>
     <graaljs.version>24.0.0</graaljs.version>
     <shedlock.version>5.13.0</shedlock.version>
     <byte-buddy.version>1.14.13</byte-buddy.version>
