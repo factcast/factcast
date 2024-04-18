@@ -13,19 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.projection.parameter;
+package org.factcast.core.subscription.observer;
 
-import java.lang.annotation.Annotation;
-import java.util.Set;
-import javax.annotation.Nullable;
-import lombok.NonNull;
+import org.factcast.core.subscription.Flushable;
 
-public interface HandlerParameterContributor {
-  /**
-   * @return null if provider cannot be created
-   */
-  @Nullable
-  // ENHANCEMENT add parameterName?
-  HandlerParameterProvider providerFor(
-      @NonNull Class<?> type, @NonNull Set<Annotation> annotations);
-}
+public interface FlushableFactObserver extends FactObserver, Flushable {}
