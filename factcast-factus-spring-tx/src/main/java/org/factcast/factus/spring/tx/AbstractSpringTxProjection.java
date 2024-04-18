@@ -29,9 +29,8 @@ abstract class AbstractSpringTxProjection
     implements SpringTxProjection, FactStreamPositionAware, WriterTokenAware, Named {
   private final PlatformTransactionManager platformTransactionManager;
 
-  public AbstractSpringTxProjection(
+  protected AbstractSpringTxProjection(
       @NonNull PlatformTransactionManager platformTransactionManager) {
-    super(TransactionStatus.class);
     this.platformTransactionManager = platformTransactionManager;
   }
 

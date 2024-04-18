@@ -23,6 +23,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
 import org.factcast.core.FactHeader;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.EventSerializer;
 
@@ -35,20 +36,22 @@ public class DefaultHandlerParameterContributor implements HandlerParameterContr
   public HandlerParameterProvider providerFor(
       @NonNull Class<?> type, @NonNull Set<Annotation> annotations) {
     if (EventObject.class.isAssignableFrom(type)) {
-      return (f) -> serializer.deserialize((Class<? extends EventObject>) type, f.jsonPayload());
+      return (f, p) -> serializer.deserialize((Class<? extends EventObject>) type, f.jsonPayload());
     }
 
     if (Fact.class == type) {
-      return f -> f;
+      return (f, p) -> f;
     }
 
     if (FactHeader.class == type) {
-      return Fact::header;
+      return (f, p) -> f.header();
     }
 
     if (UUID.class == type) {
-      return Fact::id;
+      return (f, p) -> f.id();
     }
+
+    if (FactStreamPosition.class == type) return (f, p) -> FactStreamPosition.from(f);
 
     return null;
   }
