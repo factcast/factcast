@@ -176,11 +176,7 @@ class AbstractTransactionAwareProjectionTest {
 
 class Tx {}
 
-class TestTransactionAwareProjection extends AbstractTransactionAwareProjection<Tx> {
-
-  TestTransactionAwareProjection() {
-    super(Tx.class);
-  }
+class TestTransactionAwareProjection extends AbstractOpenTransactionAwareProjection<Tx> {
 
   @Nullable
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2023 factcast.org
+ * Copyright © 2017-2024 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.projection.parameter;
+package org.factcast.factus.projection.tx;
 
-import java.util.function.BiFunction;
-import lombok.NonNull;
-import org.factcast.core.Fact;
-import org.factcast.factus.projection.Projection;
+public abstract class AbstractOpenTransactionAwareProjection<T>
+    extends AbstractTransactionAwareProjection<T> {
 
-public interface HandlerParameterProvider
-    extends BiFunction<@NonNull Fact, @NonNull Projection, Object> {}
+  /**
+   * open this up to be used from the projector in order to be able to inject as a parameter
+   *
+   * @return
+   */
+  @Override
+  public T runningTransaction() {
+    return super.runningTransaction();
+  }
+}

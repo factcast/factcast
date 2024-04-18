@@ -43,7 +43,7 @@ class HandlerParameterContributorsTest {
         @Override
         public HandlerParameterProvider providerFor(
             @NonNull Class<?> type, @NonNull Set<Annotation> annotations) {
-          return (f) -> "Hi There";
+          return (f, p) -> "Hi There";
         }
       };
   private HandlerParameterContributors underTest;

@@ -15,29 +15,27 @@
  */
 package org.factcast.factus.projection.tx;
 
-import java.lang.annotation.Annotation;
-import java.util.Set;
-import javax.annotation.Nullable;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.factus.projection.Projection;
-import org.factcast.factus.projection.parameter.HandlerParameterContributor;
-import org.factcast.factus.projection.parameter.HandlerParameterProvider;
 
 public abstract class AbstractTransactionAwareProjection<T>
-    implements TransactionAware, Projection, HandlerParameterContributor {
+    implements TransactionAware, Projection {
 
-  private final @NonNull Class<T> typeOfTransaction;
-  @Getter private T runningTransaction;
+  @Getter(AccessLevel.PROTECTED)
+  private T runningTransaction;
 
-  protected AbstractTransactionAwareProjection(@NonNull Class<T> typeOfTransaction) {
-    this.typeOfTransaction = typeOfTransaction;
-  }
+  protected AbstractTransactionAwareProjection() {}
 
   @Override
   public final void begin() throws TransactionException {
     assertNoRunningTransaction();
-    runningTransaction = beginNewTransaction();
+    try {
+      runningTransaction = beginNewTransaction();
+    } catch (Exception e) {
+      throw new TransactionException(e);
+    }
   }
 
   @Override
@@ -45,6 +43,8 @@ public abstract class AbstractTransactionAwareProjection<T>
     assertInTransaction();
     try {
       commit(runningTransaction);
+    } catch (Exception e) {
+      throw new TransactionException(e);
     } finally {
       runningTransaction = null;
     }
@@ -55,6 +55,8 @@ public abstract class AbstractTransactionAwareProjection<T>
     assertInTransaction();
     try {
       rollback(runningTransaction);
+    } catch (Exception e) {
+      throw new TransactionException(e);
     } finally {
       runningTransaction = null;
     }
@@ -68,17 +70,6 @@ public abstract class AbstractTransactionAwareProjection<T>
   protected final void assertInTransaction() throws TransactionException {
     if (this.runningTransaction == null)
       throw new TransactionNotRunningException("Transaction is not running");
-  }
-
-  @Nullable
-  public final HandlerParameterProvider providerFor(
-      @NonNull Class<?> type, @NonNull Set<Annotation> annotations) {
-    if (typeOfTransaction.equals(type)) {
-      return f -> {
-        assertInTransaction();
-        return runningTransaction;
-      };
-    } else return null;
   }
 
   protected final boolean inTransaction() {
