@@ -253,7 +253,7 @@ class ProjectorImplTest {
           new ProjectorImpl<>(new PostProcessingProjection(null), eventSerializer);
 
       // RUN
-      assertThatThrownBy(() -> underTest.createFactSpecs())
+      assertThatThrownBy(underTest::createFactSpecs)
           // ASSERT
           .isInstanceOf(InvalidHandlerDefinition.class)
           .hasMessageStartingWith("No FactSpecs discovered from");
@@ -267,7 +267,7 @@ class ProjectorImplTest {
               new PostProcessingProjection(Collections.emptyList()), eventSerializer);
 
       // RUN
-      assertThatThrownBy(() -> underTest.createFactSpecs())
+      assertThatThrownBy(underTest::createFactSpecs)
           // ASSERT
           .isInstanceOf(InvalidHandlerDefinition.class)
           .hasMessageStartingWith("No FactSpecs discovered from");
@@ -364,14 +364,12 @@ class ProjectorImplTest {
     @Test
     void resolveTargetFromStaticClass() {
       assertThat(ReflectionTools.resolveTargetObject(this, StaticClass.class))
-          .isNotNull()
           .isInstanceOf(StaticClass.class);
     }
 
     @Test
     void resolveTargetFromNonStaticClass() {
       assertThat(ReflectionTools.resolveTargetObject(ProjectorImplTest.this, NonStaticClass.class))
-          .isNotNull()
           .isInstanceOf(NonStaticClass.class);
     }
   }
@@ -396,13 +394,14 @@ class ProjectorImplTest {
     }
   }
 
+  @SuppressWarnings("InnerClassMayBeStatic")
   class NonStaticClass implements Projection {
     @Handler
     void apply(SimpleEvent e) {}
   }
 
+  @SuppressWarnings("RedundantMethodOverride")
   class NonStaticClass$MockitoMock extends NonStaticClass {
-    @Override
     @Handler
     void apply(SimpleEvent e) {}
   }
@@ -414,7 +413,7 @@ class ProjectorImplTest {
   @Value
   static class PostProcessingProjection implements Projection {
 
-    private final List<FactSpec> factSpecs;
+    List<FactSpec> factSpecs;
 
     @Override
     public @NonNull List<FactSpec> postprocess(@NonNull List<FactSpec> specsAsDiscovered) {

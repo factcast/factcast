@@ -87,7 +87,7 @@ class FactusImplTest {
 
   @Mock private AtomicBoolean closed;
 
-  @Mock(lenient = true)
+  @Mock(strictness = Mock.Strictness.LENIENT)
   private WriterToken token;
 
   @Spy private final FactusMetrics factusMetrics = new FactusMetricsImpl(new SimpleMeterRegistry());
@@ -786,6 +786,7 @@ class FactusImplTest {
     when(snapFactory.retrieveSerializer(any())).thenReturn(snapshotSerializer);
   }
 
+  @SuppressWarnings("unchecked")
   @Nested
   class WhenSubscribing {
 
@@ -793,7 +794,7 @@ class FactusImplTest {
     @Captor ArgumentCaptor<Duration> retryWaitTime;
 
     @Test
-    void subscribe() throws Exception {
+    void subscribe() {
       // INIT
       SubscribedProjection subscribedProjection = mock(SubscribedProjection.class);
       Projector<SubscribedProjection> eventApplier = mock(Projector.class);
@@ -802,7 +803,8 @@ class FactusImplTest {
 
       when(ehFactory.create(subscribedProjection)).thenReturn(eventApplier);
 
-      when(eventApplier.createFactSpecs()).thenReturn(Arrays.asList(mock(FactSpec.class)));
+      when(eventApplier.createFactSpecs())
+          .thenReturn(Collections.singletonList(mock(FactSpec.class)));
       doAnswer(
               i -> {
                 Fact argument = Iterables.getLast((List<Fact>) (i.getArgument(0)));
@@ -864,7 +866,7 @@ class FactusImplTest {
     }
 
     @Test
-    void subscribeWithCustomRetryWaitTime() throws Exception {
+    void subscribeWithCustomRetryWaitTime() {
       // INIT
       SubscribedProjection subscribedProjection = mock(SubscribedProjection.class);
       Projector<SubscribedProjection> eventApplier = mock(Projector.class);
@@ -873,7 +875,8 @@ class FactusImplTest {
 
       when(ehFactory.create(subscribedProjection)).thenReturn(eventApplier);
 
-      when(eventApplier.createFactSpecs()).thenReturn(Arrays.asList(mock(FactSpec.class)));
+      when(eventApplier.createFactSpecs())
+          .thenReturn(Collections.singletonList(mock(FactSpec.class)));
       doAnswer(
               i -> {
                 Fact argument = Iterables.getLast((List<Fact>) (i.getArgument(0)));
@@ -944,7 +947,8 @@ class FactusImplTest {
 
       when(ehFactory.create(subscribedProjection)).thenReturn(eventApplier);
 
-      when(eventApplier.createFactSpecs()).thenReturn(Arrays.asList(mock(FactSpec.class)));
+      when(eventApplier.createFactSpecs())
+          .thenReturn(Collections.singletonList(mock(FactSpec.class)));
 
       Subscription subscription1 = mock(Subscription.class);
       Subscription subscription2 = mock(Subscription.class);
