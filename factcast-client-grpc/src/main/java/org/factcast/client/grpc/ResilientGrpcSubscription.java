@@ -193,7 +193,7 @@ public class ResilientGrpcSubscription implements Subscription {
     void accept(T t, U u) throws TimeoutException;
   }
 
-  class DelegatingFactObserver implements FactObserver, Flushable {
+  class DelegatingFactObserver implements FactObserver {
     @Override
     public void onNext(@NonNull Fact element) {
       if (!isClosed.get()) {
@@ -242,7 +242,7 @@ public class ResilientGrpcSubscription implements Subscription {
 
     @Override
     public void flush() {
-      if (originalObserver instanceof Flushable) ((Flushable) originalObserver).flush();
+      originalObserver.flush();
     }
   }
 

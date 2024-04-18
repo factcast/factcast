@@ -187,7 +187,7 @@ public class SubscriptionImpl implements InternalSubscription {
 
   @Override
   public void flush() {
-    if (observer instanceof Flushable) ((Flushable) observer).flush();
+    observer.flush();
   }
 
   @Override

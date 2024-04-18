@@ -20,14 +20,13 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.NonNull;
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.Flushable;
 
 /**
  * This is supposed to be used on the client side only. It'll recieve a flush() call when the GRPC
  * layer fully processed one Message, so that the max number of Facts to buffer is ultimately
  * limited by the size of a GRPC message
  */
-public abstract class BatchingFactObserver implements FactObserver, Flushable {
+public abstract class BatchingFactObserver implements FactObserver {
   /** for example could come from transaction size */
   final int maxNumberOfFactsToBuffer;
 
