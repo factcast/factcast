@@ -78,7 +78,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
   @Nested
   class Managed {
     @Test
-    public void testBulkSize3() {
+    void testBulkSize3() {
       var s = new BulkSize3Projection(platformTransactionManager, jdbcTemplate);
       factus.update(s);
 
@@ -88,7 +88,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @Test
-    public void testBulkSize5() {
+    void testBulkSize5() {
       var s = new BulkSize5Projection(platformTransactionManager, jdbcTemplate);
       factus.update(s);
 
@@ -98,7 +98,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @Test
-    public void testBulkSize10() {
+    void testBulkSize10() {
       var s = new BulkSize10Projection(platformTransactionManager, jdbcTemplate);
       factus.update(s);
 
@@ -224,9 +224,9 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     //    }
 
     @Test
-    public void testBulkSize3() throws Exception {
+    void testBulkSize3() throws Exception {
       var s = new BulkSize3Projection(platformTransactionManager, jdbcTemplate);
-      try (var sub = factus.subscribeAndBlock(s).awaitCatchup(); ) {
+      try (var sub = factus.subscribeAndBlock(s).awaitCatchup()) {
 
         assertThat(s.factStreamPositionModifications()).isEqualTo(4);
         assertThat(s.txSeen()).hasSize(4);
@@ -235,9 +235,9 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @Test
-    public void testBulkSize5() throws Exception {
+    void testBulkSize5() throws Exception {
       var s = new BulkSize5Projection(platformTransactionManager, jdbcTemplate);
-      try (var sub = factus.subscribeAndBlock(s).awaitCatchup(); ) {
+      try (var sub = factus.subscribeAndBlock(s).awaitCatchup()) {
 
         assertThat(s.factStreamPositionModifications()).isEqualTo(2);
         assertThat(s.txSeen()).hasSize(2);
@@ -246,28 +246,28 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @Test
-    public void testBulkSize10() {
+    void testBulkSize10() {
       var s = new BulkSize10Projection(platformTransactionManager, jdbcTemplate);
       factus.subscribeAndBlock(s).awaitCatchup();
 
-      assertThat(s.factStreamPositionModifications()).isEqualTo(1);
+      assertThat(s.factStreamPositionModifications()).isOne();
       assertThat(s.txSeen()).hasSize(1);
       assertThat(getUsers()).isEqualTo(NUMBER_OF_EVENTS);
     }
 
     @Test
-    public void testBulkSize20() {
+    void testBulkSize20() {
       var s = new BulkSize20Projection(platformTransactionManager, jdbcTemplate);
       factus.subscribeAndBlock(s).awaitCatchup();
 
-      assertThat(s.factStreamPositionModifications()).isEqualTo(1);
+      assertThat(s.factStreamPositionModifications()).isOne();
       assertThat(s.txSeen()).hasSize(1);
       assertThat(getUsers()).isEqualTo(NUMBER_OF_EVENTS);
     }
 
     @SneakyThrows
     @Test
-    public void rollsBack() {
+    void rollsBack() {
       SpringTxProjectionSizeBlowAt7th p =
           new SpringTxProjectionSizeBlowAt7th(platformTransactionManager, jdbcTemplate);
 

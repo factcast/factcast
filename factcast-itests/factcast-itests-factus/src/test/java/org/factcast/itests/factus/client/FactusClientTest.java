@@ -587,7 +587,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
     factus.update(externalizedUserNames);
 
-    assertThat(externalizedUserNames.count()).isEqualTo(1);
+    assertThat(externalizedUserNames.count()).isOne();
     assertThat(externalizedUserNames.contains("One")).isTrue();
   }
 

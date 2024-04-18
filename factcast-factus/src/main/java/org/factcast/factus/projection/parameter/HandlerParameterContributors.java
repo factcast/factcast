@@ -40,14 +40,17 @@ public class HandlerParameterContributors implements Iterable<HandlerParameterCo
   }
 
   @Override
+  @NonNull
   public Iterator<HandlerParameterContributor> iterator() {
     return contributors.iterator();
   }
 
+  @NonNull
   public Stream<HandlerParameterContributor> stream() {
     return this.contributors.stream();
   }
 
+  @NonNull
   public HandlerParameterContributors withHighestPrio(
       @NonNull HandlerParameterContributor topPrioContributor) {
     return new HandlerParameterContributors(contributors, topPrioContributor);

@@ -100,17 +100,11 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       try {
         callHandlerFor(f);
         latestSuccessful = FactStreamPosition.from(f);
-      } catch (InvocationTargetException | IllegalAccessException e) {
-        log.trace("returned with Exception {}:", latestSuccessful.factId(), e);
-
-        rollbackIfTransactional();
-        retryApplicableIfTransactional(facts, f);
-
-        // pass along and potentially rethrow
-        projection.onError(e);
-        throw ExceptionHelper.toRuntime(e);
       } catch (Exception e) {
-
+        log.trace(
+            "returned with Exception {}:",
+            latestSuccessful == null ? null : latestSuccessful.factId(),
+            e);
         rollbackIfTransactional();
         retryApplicableIfTransactional(facts, f);
 

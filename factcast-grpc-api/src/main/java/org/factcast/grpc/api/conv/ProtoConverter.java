@@ -82,10 +82,13 @@ public class ProtoConverter {
     return builder.build();
   }
 
+  @SuppressWarnings("DataFlowIssue")
   @NonNull
   public MSG_Notification toProto(@NonNull FactStreamPosition id) {
     MSG_Notification.Builder builder =
         MSG_Notification.newBuilder().setType(MSG_Notification.Type.Ffwd);
+    // technically this could throw a NPE, but it would be a programming
+    // error as we do use this only onFastForward
     builder.setId(toProto(id.factId()));
     builder.setSerial(toProto(id.serial()));
     return builder.build();
