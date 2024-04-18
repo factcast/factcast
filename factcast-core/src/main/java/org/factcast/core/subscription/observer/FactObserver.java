@@ -47,4 +47,6 @@ public interface FactObserver {
   default void onError(@NonNull Throwable exception) {
     LoggerFactory.getLogger(FactObserver.class).warn("Unhandled onError:", exception);
   }
+
+  default void flush() {}
 }
