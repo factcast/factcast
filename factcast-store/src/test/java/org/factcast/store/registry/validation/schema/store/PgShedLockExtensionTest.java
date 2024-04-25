@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import net.javacrumbs.shedlock.core.LockConfiguration;
@@ -41,8 +43,7 @@ class PgShedLockExtensionTest {
   @Test
   @SneakyThrows
   void keepsLockAlive() {
-    LockConfiguration config = buildLockConfig();
-    final var lock = lockProvider.lock(config);
+    final var lock = lockProvider.lock(buildLockConfig());
 
     assertThat(lock).isPresent();
 
@@ -50,11 +51,12 @@ class PgShedLockExtensionTest {
     Thread.sleep(Duration.ofSeconds(35).toMillis());
 
     // this lock should still be held by the first one, so no new lock
-    assertThat(lockProvider.lock(config)).isEmpty();
+    assertThat(lockProvider.lock(buildLockConfig())).isEmpty();
 
     lock.get().unlock();
   }
 
+  /** intentionally called twice, as creation time is part of the config */
   private static @NonNull LockConfiguration buildLockConfig() {
     return new LockConfiguration(
         Instant.now(),
