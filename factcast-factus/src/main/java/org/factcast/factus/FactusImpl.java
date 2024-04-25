@@ -356,11 +356,11 @@ public class FactusImpl implements Factus {
   /**
    * @return null if no fact was applied
    */
-  private <P extends Projection> UUID catchupProjection(
+  private <P extends Projection> void catchupProjection(
       @NonNull P projection,
       FactStreamPosition stateOrNull,
       @Nullable BiConsumer<P, UUID> afterProcessing) {
-    return catchupProjection(
+    catchupProjection(
         projection,
         Optional.ofNullable(stateOrNull).map(FactStreamPosition::factId).orElse(null),
         afterProcessing);
@@ -411,6 +411,7 @@ public class FactusImpl implements Factus {
             if (projection instanceof FactStreamPositionAware) {
               ((FactStreamPositionAware) projection).factStreamPosition(factIdToFfwdTo);
             }
+            positionOfLastFactApplied.set(factIdToFfwdTo);
           }
         };
 
