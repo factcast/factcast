@@ -27,6 +27,7 @@ import com.google.common.collect.Sets;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -34,15 +35,18 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.FactStreamPosition;
+import org.factcast.core.TestFact;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.factus.FactusImpl.IntervalSnapshotter;
 import org.factcast.factus.batch.BatchAbortedException;
@@ -1384,6 +1388,65 @@ class FactusImplTest {
       uut.accept(null, UUID.randomUUID());
 
       assertThat(calls.get()).isEqualTo(2);
+    }
+  }
+
+  @SuppressWarnings("resource")
+  @Nested
+  class WhenCatchingUp {
+
+    @Test
+    @SneakyThrows
+    void returnsFactIdOfLastFactApplied() {
+      Projector pro = mock(Projector.class);
+      Subscription sub = mock(Subscription.class);
+      FactSpec spec1 = FactSpec.from(NameEvent.class);
+      CompletableFuture<Void> cf = new CompletableFuture<>();
+
+      Fact f = new TestFact();
+      UUID id = f.id();
+
+      when(ehFactory.create(any())).thenReturn(pro);
+      when(fc.subscribe(any(SubscriptionRequest.class), any(FactObserver.class)))
+          .thenAnswer(
+              i -> {
+                FactObserver fo = i.getArgument(1);
+                fo.onNext(f);
+                return sub;
+              });
+      when(pro.createFactSpecs()).thenReturn(Lists.newArrayList(spec1));
+
+      SomeSnapshotProjection p = new SomeSnapshotProjection();
+      UUID ret = underTest.catchupProjection(p, null, null);
+
+      Assertions.assertThat(ret).isNotNull().isEqualTo(id);
+    }
+
+    @Test
+    void returnsFactIdForwardTarget() {
+
+      Projector pro = mock(Projector.class);
+      Subscription sub = mock(Subscription.class);
+      FactSpec spec1 = FactSpec.from(NameEvent.class);
+      CompletableFuture<Void> cf = new CompletableFuture<>();
+
+      UUID id = randomUUID();
+      FactStreamPosition pos = FactStreamPosition.of(id, 42L);
+
+      when(ehFactory.create(any())).thenReturn(pro);
+      when(fc.subscribe(any(SubscriptionRequest.class), any(FactObserver.class)))
+          .thenAnswer(
+              i -> {
+                FactObserver fo = i.getArgument(1);
+                fo.onFastForward(pos);
+                return sub;
+              });
+      when(pro.createFactSpecs()).thenReturn(Lists.newArrayList(spec1));
+
+      SomeSnapshotProjection p = new SomeSnapshotProjection();
+      UUID ret = underTest.catchupProjection(p, null, null);
+
+      Assertions.assertThat(ret).isNotNull().isEqualTo(id);
     }
   }
 }
