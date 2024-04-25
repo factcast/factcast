@@ -19,8 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import net.javacrumbs.shedlock.core.LockConfiguration;
@@ -33,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+@SuppressWarnings("java:S2925")
 @ContextConfiguration(classes = {PgTestConfiguration.class})
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
@@ -41,16 +40,17 @@ class PgShedLockExtensionTest {
 
   @Test
   @SneakyThrows
-  void extendsLock() {
-    final var lock = lockProvider.lock(buildLockConfig());
+  void keepsLockAlive() {
+    LockConfiguration config = buildLockConfig();
+    final var lock = lockProvider.lock(config);
 
     assertThat(lock).isPresent();
 
-    // now we have to sleep for at least 30s, better 45s
-    Thread.sleep(Duration.ofSeconds(45).toMillis());
+    // now we have to sleep for at least 30s, better 35s
+    Thread.sleep(Duration.ofSeconds(35).toMillis());
 
     // this lock should still be held by the first one, so no new lock
-    assertThat(lockProvider.lock(buildLockConfig())).isEmpty();
+    assertThat(lockProvider.lock(config)).isEmpty();
 
     lock.get().unlock();
   }
@@ -59,8 +59,9 @@ class PgShedLockExtensionTest {
     return new LockConfiguration(
         Instant.now(),
         "hugo",
-        Duration.ofSeconds(30), // we cannot go lower than 30s here because this is the min for
+        // we cannot go lower than 30s here because this is the min for
         // KeepAliveLockProvider
+        Duration.ofSeconds(30),
         Duration.ofSeconds(2));
   }
 }
