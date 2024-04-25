@@ -36,7 +36,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ContextConfiguration(classes = {PgTestConfiguration.class})
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
-public class PgShedLockExtensionTest {
+class PgShedLockExtensionTest {
   @Autowired LockProvider lockProvider;
 
   @Test

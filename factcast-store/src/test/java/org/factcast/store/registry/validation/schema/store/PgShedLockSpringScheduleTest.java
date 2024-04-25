@@ -36,7 +36,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ContextConfiguration(classes = {PgTestConfiguration.class, PgSchedLockTestConfiguration.class})
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
-public class PgShedLockSpringScheduleTest {
+class PgShedLockSpringScheduleTest {
   static final CountDownLatch latch = new CountDownLatch(1);
 
   static AtomicReference<SqlRowSet> rs = new AtomicReference<>();
