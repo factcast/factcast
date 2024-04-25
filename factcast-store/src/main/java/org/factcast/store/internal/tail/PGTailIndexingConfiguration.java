@@ -18,6 +18,7 @@ package org.factcast.store.internal.tail;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.store.IsReadAndWriteEnv;
 import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,8 +30,8 @@ public class PGTailIndexingConfiguration {
   @Bean
   @IsReadAndWriteEnv
   public PGTailIndexManager pgTailIndexManager(
-      JdbcTemplate jdbc, StoreConfigurationProperties props) {
-    return new PGTailIndexManagerImpl(jdbc, props);
+      PgConnectionSupplier pgConnectionSupplier, StoreConfigurationProperties props) {
+    return new PGTailIndexManagerImpl(pgConnectionSupplier, props);
   }
 
   @Bean

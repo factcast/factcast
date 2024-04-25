@@ -23,22 +23,26 @@ import java.util.concurrent.*;
 import java.util.stream.*;
 import javax.sql.DataSource;
 import lombok.SneakyThrows;
+import net.javacrumbs.shedlock.core.AbstractSimpleLock;
+import net.javacrumbs.shedlock.core.LockProvider;
 import nl.altindag.log.LogCaptor;
 import org.factcast.core.store.FactStore;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledForJreRange;
-import org.junit.jupiter.api.condition.JRE;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@ContextConfiguration(classes = {PgTestConfiguration.class})
+@ContextConfiguration(
+    classes = {PGTailIndexManagerImplIntTest.TestConfig.class, PgTestConfiguration.class})
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
@@ -60,9 +64,8 @@ class PGTailIndexManagerImplIntTest {
 
   @Test
   @SneakyThrows
-  @DisabledForJreRange(min = JRE.JAVA_9)
   void doesNotCreateIndexConcurrently() {
-    LogCaptor logCaptor = LogCaptor.forClass(tailManager.getClass());
+    LogCaptor logCaptor = LogCaptor.forClass(PGTailIndexManagerImpl.class);
 
     var c = dataSource.getConnection();
     c.setAutoCommit(false);
@@ -159,5 +162,19 @@ class PGTailIndexManagerImplIntTest {
   private boolean indexFound(long before) {
     return jdbcTemplate.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION).stream()
         .anyMatch(m -> m.get(INDEX_NAME_COLUMN).toString().compareTo(tailIndexName(before)) >= 0);
+  }
+
+  @Configuration
+  static class TestConfig {
+    @Bean
+    @Primary
+    public LockProvider noLockProvider() {
+      return lockConfiguration ->
+          Optional.of(
+              new AbstractSimpleLock(lockConfiguration) {
+                @Override
+                public void doUnlock() {}
+              });
+    }
   }
 }

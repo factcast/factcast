@@ -22,10 +22,12 @@ import static org.mockito.Mockito.*;
 
 import java.time.Duration;
 import java.util.*;
+import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Lists;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
+import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -33,11 +35,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.postgresql.jdbc.PgConnection;
 
 @ExtendWith(MockitoExtension.class)
 class PGTailIndexManagerImplTest {
-  @Mock private JdbcTemplate jdbc;
+  @Mock private PGTailIndexManagerImpl.CloseableJdbcTemplate jdbc;
+  @Mock private PgConnectionSupplier pgConnectionSupplier;
   @Mock private StoreConfigurationProperties props;
   @InjectMocks private PGTailIndexManagerImpl underTest;
 
@@ -53,25 +56,28 @@ class PGTailIndexManagerImplTest {
 
       uut.triggerTailCreation();
 
-      verifyNoInteractions(jdbc);
+      verify(uut, never()).buildTemplate();
     }
 
     @Test
     void createsTailIfIndexesEmpty() {
       var uut = spy(underTest);
       when(props.isTailIndexingEnabled()).thenReturn(true);
+      doReturn(jdbc).when(uut).buildTemplate();
       when(jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION)).thenReturn(new LinkedList<>());
-      doNothing().when(uut).createNewTail();
+      doNothing().when(uut).createNewTail(jdbc);
 
       uut.triggerTailCreation();
 
-      verify(uut).createNewTail();
+      verify(uut).createNewTail(jdbc);
     }
 
     @Test
     void createsTailIfYoungestIndexTooOld() {
       var uut = spy(underTest);
       when(props.isTailIndexingEnabled()).thenReturn(true);
+      doReturn(jdbc).when(uut).buildTemplate();
+
       when(jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION))
           .thenReturn(
               Lists.newArrayList(
@@ -80,19 +86,21 @@ class PGTailIndexManagerImplTest {
                       PgConstants.TAIL_INDEX_NAME_PREFIX + "0",
                       VALID_COLUMN,
                       IS_VALID)));
-      doNothing().when(uut).createNewTail();
+      doNothing().when(uut).createNewTail(jdbc);
 
       uut.triggerTailCreation();
 
-      verify(uut).createNewTail();
+      verify(uut).createNewTail(jdbc);
     }
 
     @Test
     void createsNoTailIfYoungestIndexIsRecent_issue2571() {
       var uut = spy(underTest);
       when(props.isTailIndexingEnabled()).thenReturn(true);
+      doReturn(jdbc).when(uut).buildTemplate();
       when(props.getMinimumTailAge()).thenReturn(Duration.ofDays(1));
       when(props.getTailGenerationsToKeep()).thenReturn(3);
+
       final String t1 =
           PgConstants.TAIL_INDEX_NAME_PREFIX + (System.currentTimeMillis() - 43200000); // 12 hours
       final String t2 =
@@ -108,7 +116,7 @@ class PGTailIndexManagerImplTest {
 
       uut.triggerTailCreation();
 
-      verify(uut, never()).createNewTail();
+      verify(uut, never()).createNewTail(jdbc);
     }
 
     @Test
@@ -116,6 +124,7 @@ class PGTailIndexManagerImplTest {
       var uut = spy(underTest);
       when(props.isTailIndexingEnabled()).thenReturn(true);
       when(props.getMinimumTailAge()).thenReturn(Duration.ofDays(1));
+      doReturn(jdbc).when(uut).buildTemplate();
       when(props.getTailGenerationsToKeep()).thenReturn(2);
       String t1 = PgConstants.TAIL_INDEX_NAME_PREFIX + (System.currentTimeMillis() - 10000);
       String t2 = PgConstants.TAIL_INDEX_NAME_PREFIX + (System.currentTimeMillis() - 11000);
@@ -134,17 +143,18 @@ class PGTailIndexManagerImplTest {
 
       uut.triggerTailCreation();
 
-      verify(uut, never()).createNewTail();
-      verify(uut, times(3)).removeIndex(anyString());
-      verify(uut).removeIndex(t3);
-      verify(uut).removeIndex(t4);
-      verify(uut).removeIndex(t5);
+      verify(uut, never()).createNewTail(jdbc);
+      verify(uut, times(3)).removeIndex(eq(jdbc), anyString());
+      verify(uut).removeIndex(jdbc, t3);
+      verify(uut).removeIndex(jdbc, t4);
+      verify(uut).removeIndex(jdbc, t5);
     }
 
     @Test
     void removesStaleInvalidIndexes() {
       var uut = spy(underTest);
       when(props.isTailIndexingEnabled()).thenReturn(true);
+      doReturn(jdbc).when(uut).buildTemplate();
       when(props.getMinimumTailAge()).thenReturn(Duration.ofDays(1));
       when(props.getTailGenerationsToKeep()).thenReturn(2);
       when(props.getTailCreationTimeout()).thenReturn(Duration.ofSeconds(5));
@@ -173,12 +183,12 @@ class PGTailIndexManagerImplTest {
 
       uut.triggerTailCreation();
 
-      verify(uut, never()).createNewTail();
+      verify(uut, never()).createNewTail(jdbc);
       // must not have removed valid recent indices, and also not invalid recent ones
       // (t3)
-      verify(uut).removeIndex(t4Invalid);
-      verify(uut).removeIndex(t5Invalid);
-      verify(uut, times(2)).removeIndex(anyString());
+      verify(uut).removeIndex(jdbc, t4Invalid);
+      verify(uut).removeIndex(jdbc, t5Invalid);
+      verify(uut, times(2)).removeIndex(eq(jdbc), anyString());
     }
   }
 
@@ -193,7 +203,7 @@ class PGTailIndexManagerImplTest {
     void dropsIndex() {
 
       var uut = spy(underTest);
-      uut.removeIndex(INDEX_NAME);
+      uut.removeIndex(jdbc, INDEX_NAME);
 
       verify(jdbc).update("DROP INDEX CONCURRENTLY IF EXISTS INDEX_NAME");
     }
@@ -214,7 +224,7 @@ class PGTailIndexManagerImplTest {
       var uut = spy(underTest);
 
       List<String> input = new ArrayList<String>(List.of("5", "4", "3", "2", "1"));
-      uut.removeOldestValidIndices(input);
+      uut.removeOldestValidIndices(jdbc, input);
 
       Assertions.assertThat(input).hasSize(3).containsExactly("5", "4", "3");
     }
@@ -255,7 +265,7 @@ class PGTailIndexManagerImplTest {
 
       var uut = spy(underTest);
       when(jdbc.queryForObject(anyString(), eq(Long.class))).thenReturn(118L);
-      uut.createNewTail();
+      uut.createNewTail(jdbc);
 
       long ts = System.currentTimeMillis() / 10000;
       verify(jdbc)
@@ -274,7 +284,7 @@ class PGTailIndexManagerImplTest {
           .thenThrow(new RuntimeException("Some exception!"));
 
       // RUN
-      uut.createNewTail();
+      uut.createNewTail(jdbc);
 
       verify(jdbc).update(startsWith("create index concurrently " + tailIndexName(ts)));
       verify(jdbc).update(startsWith(dropTailIndex(tailIndexName(ts))));
@@ -293,12 +303,32 @@ class PGTailIndexManagerImplTest {
           .thenThrow(new RuntimeException("Another exception!"));
 
       // RUN
-      uut.createNewTail();
+      uut.createNewTail(jdbc);
 
       verify(jdbc).update(startsWith("create index concurrently " + tailIndexName(ts)));
       verify(jdbc).update(startsWith(dropTailIndex(tailIndexName(ts))));
       // this must still happen:
       verify(jdbc).update(endsWith("WHERE ser>118"));
+    }
+  }
+
+  @Nested
+  class WhenBuildingTemplate {
+    @Mock PgConnection pgConnection;
+
+    @Test
+    @SneakyThrows
+    void createsTemplate() {
+      var uut = spy(underTest);
+      when(pgConnectionSupplier.get()).thenReturn(pgConnection);
+
+      var closeableJdbcTemplate = uut.buildTemplate();
+      closeableJdbcTemplate.close();
+
+      assertThat(closeableJdbcTemplate).isNotNull();
+
+      verify(pgConnectionSupplier).get();
+      verify(pgConnection).close();
     }
   }
 

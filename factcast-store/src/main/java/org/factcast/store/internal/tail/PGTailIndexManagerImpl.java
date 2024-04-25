@@ -21,50 +21,70 @@ import static org.factcast.store.internal.PgConstants.*;
 import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
 import java.util.*;
-import java.util.stream.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
+import org.factcast.store.internal.listen.PgConnectionSupplier;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 import org.springframework.scheduling.annotation.Scheduled;
 
-@RequiredArgsConstructor
 @Slf4j
+@RequiredArgsConstructor
 public class PGTailIndexManagerImpl implements PGTailIndexManager {
 
-  private final JdbcTemplate jdbc;
+  private final PgConnectionSupplier pgConnectionSupplier;
   private final StoreConfigurationProperties props;
 
   @Override
   @Scheduled(cron = "${factcast.store.tailManagementCron:0 0 0 * * *}")
   // Here we only need to ensure not two tasks are running in parallel until index
-  // creation
-  // was triggered. 5 minutes should be more than enough.
+  // creation was triggered. Lock is automatically refreshed every 2,5minutes
   @SchedulerLock(name = "triggerTailCreation", lockAtMostFor = "5m")
+  @SneakyThrows
   public void triggerTailCreation() {
 
     if (!props.isTailIndexingEnabled()) {
       return;
     }
 
-    log.debug("Triggering tail index maintenance");
+    try (var jdbc = buildTemplate()) {
+      log.debug("Triggering tail index maintenance");
 
-    var indexesOrderedByTimeWithValidityFlag = jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION);
-    var validIndexes = getValidIndices(indexesOrderedByTimeWithValidityFlag);
-    // delete first
-    removeOldestValidIndices(validIndexes);
-    removeNonRecentInvalidIndices(indexesOrderedByTimeWithValidityFlag);
+      var indexesOrderedByTimeWithValidityFlag =
+          jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION);
+      var validIndexes = getValidIndices(indexesOrderedByTimeWithValidityFlag);
 
-    // THEN create
-    if (timeToCreateANewTail(validIndexes)
-        && !indexCreationInProgress(indexesOrderedByTimeWithValidityFlag)) {
-      createNewTail();
+      // create if necessary
+      if (timeToCreateANewTail(validIndexes)
+          && !indexCreationInProgress(indexesOrderedByTimeWithValidityFlag)) {
+        createNewTail(jdbc);
+      }
+
+      processExistingIndices(jdbc);
     }
 
     log.debug("Done with tail index maintenance");
+  }
+
+  @VisibleForTesting
+  @SneakyThrows
+  protected CloseableJdbcTemplate buildTemplate() {
+    var singleConnectionDataSource =
+        new SingleConnectionDataSource(pgConnectionSupplier.get(), true);
+    return new CloseableJdbcTemplate(singleConnectionDataSource);
+  }
+
+  private void processExistingIndices(JdbcTemplate jdbc) {
+    var indexesOrderedByTimeWithValidityFlag = jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION);
+    var validIndexes = getValidIndices(indexesOrderedByTimeWithValidityFlag);
+    removeOldestValidIndices(jdbc, validIndexes);
+    removeNonRecentInvalidIndices(jdbc, indexesOrderedByTimeWithValidityFlag);
   }
 
   @NonNull
@@ -96,7 +116,7 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
 
   @SuppressWarnings("ConstantConditions")
   @VisibleForTesting
-  void createNewTail() {
+  void createNewTail(JdbcTemplate jdbc) {
     long serial = jdbc.queryForObject(PgConstants.LAST_SERIAL_IN_LOG, Long.class);
     var currentTimeMillis = System.currentTimeMillis();
     var indexName = PgConstants.tailIndexName(currentTimeMillis);
@@ -118,7 +138,7 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
       log.error("Error creating tail index {}, trying to drop it...", indexName, e);
 
       try {
-        jdbc.update(PgConstants.dropTailIndex(indexName));
+        removeIndex(jdbc, indexName);
         log.debug(
             "Successfully dropped tail index {} after running into an error during creation.",
             indexName);
@@ -136,24 +156,31 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
   }
 
   @VisibleForTesting
-  protected void removeOldestValidIndices(List<String> validIndexesOrdered) {
+  protected void removeOldestValidIndices(JdbcTemplate jdbc, List<String> validIndexesOrdered) {
     while (validIndexesOrdered.size() > props.getTailGenerationsToKeep()) {
       // Oldest is last in list as order is descending by name.
-      removeIndex(validIndexesOrdered.remove(validIndexesOrdered.size() - 1));
+      removeIndex(jdbc, validIndexesOrdered.remove(validIndexesOrdered.size() - 1));
     }
   }
 
-  private void removeNonRecentInvalidIndices(List<Map<String, Object>> indexesWithValidityFlag) {
+  private void removeNonRecentInvalidIndices(
+      JdbcTemplate jdbc, List<Map<String, Object>> indexesWithValidityFlag) {
     indexesWithValidityFlag.stream()
         .filter(r -> r.get(VALID_COLUMN).equals(IS_INVALID))
         .map(r -> r.get(INDEX_NAME_COLUMN).toString())
         .filter(this::isNotRecent)
-        .forEach(this::removeIndex);
+        .forEach(i -> removeIndex(jdbc, i));
   }
 
   @VisibleForTesting
-  void removeIndex(@NonNull String indexName) {
-    jdbc.update(PgConstants.dropTailIndex(indexName));
+  void removeIndex(@NonNull JdbcTemplate jdbc, @NonNull String indexName) {
+    try {
+      log.debug("Dropping tail index {}", indexName);
+      jdbc.execute(PgConstants.setStatementTimeout(Duration.ofHours(1).toMillis()));
+      jdbc.update(PgConstants.dropTailIndex(indexName));
+    } catch (DataAccessException e) {
+      log.warn("Error dropping tail index {}.", indexName, e);
+    }
   }
 
   /**
@@ -191,5 +218,20 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
     Duration minAge = props.getTailCreationTimeout();
 
     return minAge.minus(age).isNegative();
+  }
+
+  @VisibleForTesting
+  protected static class CloseableJdbcTemplate extends JdbcTemplate implements AutoCloseable {
+    private final SingleConnectionDataSource singleConnectionDataSource;
+
+    public CloseableJdbcTemplate(SingleConnectionDataSource dataSource) {
+      super(dataSource);
+      this.singleConnectionDataSource = dataSource;
+    }
+
+    @Override
+    public void close() {
+      singleConnectionDataSource.destroy();
+    }
   }
 }
