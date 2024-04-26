@@ -106,7 +106,9 @@ class PGTailIndexManagerImplIntTest {
 
       // we should only see that from the second call, but not from the blocking one
       assertThat(logCaptor.getLogEvents())
-          .filteredOn("formattedMessage", "Done with tail index maintenance")
+          .filteredOn(
+              "formattedMessage",
+              "Done with tail index maintenance. Result: skipped because of ongoing index operations")
           .hasSize(1);
 
       s.close();
@@ -135,8 +137,8 @@ class PGTailIndexManagerImplIntTest {
 
       // now we should see it twice
       assertThat(logCaptor.getLogEvents())
-          .filteredOn("formattedMessage", "Done with tail index maintenance")
-          .hasSize(2);
+          .filteredOn("formattedMessage", "Done with tail index maintenance. Result: executed")
+          .hasSize(1);
 
     } catch (RuntimeException e) {
       c.rollback();

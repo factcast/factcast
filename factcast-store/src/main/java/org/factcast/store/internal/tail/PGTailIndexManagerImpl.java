@@ -15,7 +15,6 @@
  */
 package org.factcast.store.internal.tail;
 
-import static java.util.function.Predicate.*;
 import static org.factcast.store.internal.PgConstants.*;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -40,11 +39,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 @Slf4j
 @RequiredArgsConstructor
 public class PGTailIndexManagerImpl implements PGTailIndexManager {
-
-  private static final String STATE = "state";
-  private static final String STATE_VALID = "valid";
-  private static final String STATE_INVALID = "invalid";
-
   private final PgConnectionSupplier pgConnectionSupplier;
   private final StoreConfigurationProperties props;
   private final PgMetrics pgMetrics;
@@ -64,25 +58,22 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
     try (var jdbc = buildTemplate()) {
       log.debug("Triggering tail index maintenance");
 
-      var indexesOrderedByTimeWithValidityFlag = getTailIndices(jdbc);
-      var validIndexes = getValidIndices(indexesOrderedByTimeWithValidityFlag);
-
-      if (!indexCreationInProgress(indexesOrderedByTimeWithValidityFlag)) {
+      var maintenancePossible = !anyIndexOperationInProgress(jdbc);
+      if (maintenancePossible) {
         // create if necessary
-        if (timeToCreateANewTail(validIndexes)) {
+        if (timeToCreateANewTail(jdbc)) {
           createNewTail(jdbc);
         }
 
-        // delete old/invalid ones if necessary; we only want to do this if no creation is in
-        // progress otherwise we might block publishs again
+        // delete old/invalid ones if necessary
         processExistingIndices(jdbc);
       }
 
       // write metrics for invalid/valid indices
-      reportMetrics(jdbc);
-    }
+      reportMetrics(jdbc, maintenancePossible);
 
-    log.debug("Done with tail index maintenance");
+      log.debug("Done with tail index maintenance. Result: {}", getResultText(maintenancePossible));
+    }
   }
 
   @SuppressWarnings("ConstantConditions")
@@ -102,7 +93,6 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
 
     try {
       jdbc.update(PgConstants.createTailIndex(indexName, serial));
-
     } catch (RuntimeException e) {
       // keep log message in sync with asserts in
       // PGTailIndexManagerImplIntTest.doesNotCreateIndexConcurrently
@@ -112,33 +102,27 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
     }
   }
 
-  private void reportMetrics(JdbcTemplate jdbc) {
+  @VisibleForTesting
+  protected void reportMetrics(JdbcTemplate jdbc, boolean maintenancePossible) {
     var indexesOrderedByTimeWithValidityFlag = getTailIndices(jdbc);
     var validIndexes = getValidIndices(indexesOrderedByTimeWithValidityFlag);
     var invalidIndexes = getInvalidIndices(indexesOrderedByTimeWithValidityFlag);
 
+    var maintenance = Tag.of(MAINTENANCE, maintenancePossible ? EXECUTED : SKIPPED);
     pgMetrics
-        .distributionSummary(StoreMetrics.VALUE.TAIL_INDICES, Tags.of(Tag.of(STATE, STATE_VALID)))
+        .distributionSummary(
+            StoreMetrics.VALUE.TAIL_INDICES, Tags.of(Tag.of(STATE, STATE_VALID), maintenance))
         .record(validIndexes.size());
-
     pgMetrics
-        .distributionSummary(StoreMetrics.VALUE.TAIL_INDICES, Tags.of(Tag.of(STATE, STATE_INVALID)))
+        .distributionSummary(
+            StoreMetrics.VALUE.TAIL_INDICES, Tags.of(Tag.of(STATE, STATE_INVALID), maintenance))
         .record(invalidIndexes.size());
-  }
-
-  @VisibleForTesting
-  @SneakyThrows
-  protected CloseableJdbcTemplate buildTemplate() {
-    var singleConnectionDataSource =
-        new SingleConnectionDataSource(pgConnectionSupplier.get(), true);
-    return new CloseableJdbcTemplate(singleConnectionDataSource);
   }
 
   private void processExistingIndices(JdbcTemplate jdbc) {
     var indexesOrderedByTimeWithValidityFlag = getTailIndices(jdbc);
-    var validIndexes = getValidIndices(indexesOrderedByTimeWithValidityFlag);
-    removeOldestValidIndices(jdbc, validIndexes);
-    removeNonRecentInvalidIndices(jdbc, indexesOrderedByTimeWithValidityFlag);
+    removeOldestValidIndices(jdbc, indexesOrderedByTimeWithValidityFlag);
+    removeInvalidIndices(jdbc, indexesOrderedByTimeWithValidityFlag);
   }
 
   @NonNull
@@ -150,29 +134,49 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
             .toList());
   }
 
+  private @NonNull List<String> getInvalidIndices(
+      List<Map<String, Object>> indexesWithValidityFlag) {
+    return indexesWithValidityFlag.stream()
+        .filter(r -> r.get(VALID_COLUMN).equals(IS_INVALID))
+        .map(r -> r.get(INDEX_NAME_COLUMN).toString())
+        .toList();
+  }
+
   @VisibleForTesting
-  boolean timeToCreateANewTail(@NonNull List<String> indexes) {
-    if (indexes.isEmpty()) {
+  boolean timeToCreateANewTail(JdbcTemplate jdbc) {
+    var indexesOrderedByTimeWithValidityFlag = getTailIndices(jdbc);
+    var indices = getValidIndices(indexesOrderedByTimeWithValidityFlag);
+
+    if (indices.isEmpty()) {
       return true;
     }
 
-    var newestIndex = indexes.get(0);
+    var newestIndex = indices.get(0);
 
     return exceedsMinimumTailAge(newestIndex);
   }
 
-  private boolean indexCreationInProgress(List<Map<String, Object>> indexesWithValidityFlag) {
-    return indexesWithValidityFlag.stream()
-        .filter(r -> r.get(VALID_COLUMN).equals(IS_INVALID))
-        .map(r -> r.get(INDEX_NAME_COLUMN).toString())
-        .anyMatch(not(this::isNotRecent));
+  @VisibleForTesting
+  protected boolean anyIndexOperationInProgress(JdbcTemplate jdbc) {
+    final var operations = jdbc.queryForList(INDEX_OPERATIONS_IN_PROGRESS);
+
+    if (operations.isEmpty()) {
+      return false;
+    }
+
+    log.debug("Index operations in progress: {}", operations);
+
+    return true;
   }
 
   @VisibleForTesting
-  protected void removeOldestValidIndices(JdbcTemplate jdbc, List<String> validIndexesOrdered) {
-    while (validIndexesOrdered.size() > props.getTailGenerationsToKeep()) {
+  protected void removeOldestValidIndices(
+      JdbcTemplate jdbc, List<Map<String, Object>> indexesWithValidityFlag) {
+    var validIndexes = getValidIndices(indexesWithValidityFlag);
+
+    while (validIndexes.size() > props.getTailGenerationsToKeep()) {
       // Oldest is last in list as order is descending by name.
-      removeIndex(jdbc, validIndexesOrdered.remove(validIndexesOrdered.size() - 1));
+      removeIndex(jdbc, validIndexes.remove(validIndexes.size() - 1));
     }
   }
 
@@ -180,18 +184,9 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
     return jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION);
   }
 
-  private void removeNonRecentInvalidIndices(
+  private void removeInvalidIndices(
       JdbcTemplate jdbc, List<Map<String, Object>> indexesWithValidityFlag) {
     getInvalidIndices(indexesWithValidityFlag).forEach(i -> removeIndex(jdbc, i));
-  }
-
-  private @NonNull List<String> getInvalidIndices(
-      List<Map<String, Object>> indexesOrderedByTimeWithValidityFlag) {
-    return indexesOrderedByTimeWithValidityFlag.stream()
-        .filter(r -> r.get(VALID_COLUMN).equals(IS_INVALID))
-        .map(r -> r.get(INDEX_NAME_COLUMN).toString())
-        .filter(this::isNotRecent)
-        .toList();
   }
 
   @VisibleForTesting
@@ -218,28 +213,16 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
     return minAge.minus(age).isNegative();
   }
 
-  /**
-   * If an index was not created recently.
-   *
-   * <p>Recently created (but invalid) indices might still turn valid, hence do not touch them.
-   *
-   * <p>Not recently created indices that are invalid will most likely not recover any more, hence
-   * drop them.
-   *
-   * @param index name of the index
-   * @return true, if the given index has not been created recently; false otherwise.
-   */
-  private boolean isNotRecent(@NonNull String index) {
-    long indexTimestamp =
-        Long.parseLong(index.substring(PgConstants.TAIL_INDEX_NAME_PREFIX.length()));
+  private static @NonNull String getResultText(boolean maintenancePossible) {
+    return maintenancePossible ? EXECUTED : "skipped because of ongoing index operations";
+  }
 
-    Duration age = Duration.ofMillis(System.currentTimeMillis() - indexTimestamp);
-    // use the time after which a hanging index creation would run into a timeout,
-    // plus 5 extra seconds, as the millis are obtained before the index creation is
-    // started
-    Duration minAge = props.getTailCreationTimeout();
-
-    return minAge.minus(age).isNegative();
+  @VisibleForTesting
+  @SneakyThrows
+  protected CloseableJdbcTemplate buildTemplate() {
+    var singleConnectionDataSource =
+        new SingleConnectionDataSource(pgConnectionSupplier.get(), true);
+    return new CloseableJdbcTemplate(singleConnectionDataSource);
   }
 
   @VisibleForTesting
@@ -256,4 +239,11 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
       singleConnectionDataSource.destroy();
     }
   }
+
+  private static final String STATE = "state";
+  private static final String STATE_VALID = "valid";
+  private static final String STATE_INVALID = "invalid";
+  private static final String MAINTENANCE = "maintenance";
+  private static final String EXECUTED = "executed";
+  private static final String SKIPPED = "skipped";
 }
