@@ -230,7 +230,7 @@ class PGTailIndexManagerImplTest {
       var uut = spy(underTest);
       uut.removeIndex(jdbc, INDEX_NAME);
 
-      verify(jdbc).execute(anyString());
+      verify(jdbc).execute("set statement_timeout to 3600000");
       verify(jdbc).update("DROP INDEX CONCURRENTLY IF EXISTS INDEX_NAME");
     }
 
@@ -245,7 +245,7 @@ class PGTailIndexManagerImplTest {
 
       assertThat(logCaptor.getErrorLogs()).contains("Error dropping tail index INDEX_NAME.");
 
-      verify(jdbc).execute(anyString());
+      verify(jdbc).execute("set statement_timeout to 3600000");
       verify(jdbc).update("DROP INDEX CONCURRENTLY IF EXISTS INDEX_NAME");
     }
   }
