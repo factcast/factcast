@@ -27,7 +27,6 @@ import java.time.Duration;
 import java.util.*;
 import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
-import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Lists;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
@@ -57,13 +56,6 @@ class PGTailIndexManagerImplTest {
 
   @Nested
   class WhenTriggeringTailCreation {
-    @Mock DistributionSummary distributionSummary;
-
-    @BeforeEach
-    void setup() {
-      when(pgMetrics.distributionSummary(any(), any(Tags.class))).thenReturn(distributionSummary);
-    }
-
     @Test
     void returnsIfTailCreationIsDisabled() {
       var uut = spy(underTest);
@@ -78,50 +70,47 @@ class PGTailIndexManagerImplTest {
     @Test
     void createsTailIfIndexesEmpty() {
       var uut = spy(underTest);
-      when(props.isTailIndexingEnabled()).thenReturn(true);
       doReturn(jdbc).when(uut).buildTemplate();
-      when(jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION)).thenReturn(new LinkedList<>());
       doNothing().when(uut).createNewTail(jdbc);
+      doReturn(false).when(uut).anyIndexOperationInProgress(jdbc);
+      doNothing().when(uut).reportMetrics(jdbc, true);
+
+      when(props.isTailIndexingEnabled()).thenReturn(true);
+      when(jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION)).thenReturn(new LinkedList<>());
 
       uut.triggerTailCreation();
 
       verify(uut).createNewTail(jdbc);
-      verify(pgMetrics)
-          .distributionSummary(StoreMetrics.VALUE.TAIL_INDICES, Tags.of(Tag.of("state", "valid")));
-      verify(pgMetrics)
-          .distributionSummary(
-              StoreMetrics.VALUE.TAIL_INDICES, Tags.of(Tag.of("state", "invalid")));
-      verify(distributionSummary, times(2)).record(0);
+      verify(uut, never()).removeIndex(any(), anyString());
+      verify(uut).reportMetrics(jdbc, true);
     }
 
     @Test
     void createsTailIfYoungestIndexTooOld() {
       var uut = spy(underTest);
-      when(props.isTailIndexingEnabled()).thenReturn(true);
       doReturn(jdbc).when(uut).buildTemplate();
-
-      when(jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION))
-          .thenReturn(
-              Lists.newArrayList(
-                  map(
-                      INDEX_NAME_COLUMN,
-                      PgConstants.TAIL_INDEX_NAME_PREFIX + "0",
-                      VALID_COLUMN,
-                      IS_VALID)));
+      doReturn(false).when(uut).anyIndexOperationInProgress(jdbc);
+      doNothing().when(uut).reportMetrics(jdbc, true);
       doNothing().when(uut).createNewTail(jdbc);
+
+      when(props.isTailIndexingEnabled()).thenReturn(true);
+      when(jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION))
+          .thenReturn(Lists.newArrayList(valid(PgConstants.TAIL_INDEX_NAME_PREFIX + "0")));
 
       uut.triggerTailCreation();
 
       verify(uut).createNewTail(jdbc);
-      verify(distributionSummary).record(1);
-      verify(distributionSummary).record(0);
+      verify(uut).reportMetrics(jdbc, true);
     }
 
     @Test
     void createsNoTailIfYoungestIndexIsRecent_issue2571() {
       var uut = spy(underTest);
-      when(props.isTailIndexingEnabled()).thenReturn(true);
       doReturn(jdbc).when(uut).buildTemplate();
+      doReturn(false).when(uut).anyIndexOperationInProgress(jdbc);
+      doNothing().when(uut).reportMetrics(jdbc, true);
+
+      when(props.isTailIndexingEnabled()).thenReturn(true);
       when(props.getMinimumTailAge()).thenReturn(Duration.ofDays(1));
       when(props.getTailGenerationsToKeep()).thenReturn(3);
 
@@ -132,11 +121,7 @@ class PGTailIndexManagerImplTest {
       final String t3 =
           PgConstants.TAIL_INDEX_NAME_PREFIX + (System.currentTimeMillis() - 259200000); // 3 days
       when(jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION))
-          .thenReturn(
-              Lists.newArrayList(
-                  map(INDEX_NAME_COLUMN, t1, VALID_COLUMN, IS_VALID),
-                  map(INDEX_NAME_COLUMN, t2, VALID_COLUMN, IS_VALID),
-                  map(INDEX_NAME_COLUMN, t3, VALID_COLUMN, IS_VALID)));
+          .thenReturn(Lists.newArrayList(valid(t1), valid(t2), valid(t3)));
 
       uut.triggerTailCreation();
 
@@ -146,10 +131,14 @@ class PGTailIndexManagerImplTest {
     @Test
     void removesStaleIndexes() {
       var uut = spy(underTest);
+      doReturn(jdbc).when(uut).buildTemplate();
+      doReturn(false).when(uut).anyIndexOperationInProgress(jdbc);
+      doNothing().when(uut).reportMetrics(jdbc, true);
+
       when(props.isTailIndexingEnabled()).thenReturn(true);
       when(props.getMinimumTailAge()).thenReturn(Duration.ofDays(1));
-      doReturn(jdbc).when(uut).buildTemplate();
       when(props.getTailGenerationsToKeep()).thenReturn(2);
+
       String t1 = PgConstants.TAIL_INDEX_NAME_PREFIX + (System.currentTimeMillis() - 10000);
       String t2 = PgConstants.TAIL_INDEX_NAME_PREFIX + (System.currentTimeMillis() - 11000);
       String t3 = PgConstants.TAIL_INDEX_NAME_PREFIX + (System.currentTimeMillis() - 12000);
@@ -157,13 +146,7 @@ class PGTailIndexManagerImplTest {
       String t5 = PgConstants.TAIL_INDEX_NAME_PREFIX + (System.currentTimeMillis() - 14000);
 
       when(jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION))
-          .thenReturn(
-              Lists.newArrayList(
-                  map(INDEX_NAME_COLUMN, t1, VALID_COLUMN, IS_VALID),
-                  map(INDEX_NAME_COLUMN, t2, VALID_COLUMN, IS_VALID),
-                  map(INDEX_NAME_COLUMN, t3, VALID_COLUMN, IS_VALID),
-                  map(INDEX_NAME_COLUMN, t4, VALID_COLUMN, IS_VALID),
-                  map(INDEX_NAME_COLUMN, t5, VALID_COLUMN, IS_VALID)));
+          .thenReturn(Lists.newArrayList(valid(t1), valid(t2), valid(t3), valid(t4), valid(t5)));
 
       uut.triggerTailCreation();
 
@@ -175,69 +158,40 @@ class PGTailIndexManagerImplTest {
     }
 
     @Test
-    void doesNotTryToDropIndicesIfCreationInProgress() {
+    void noMaintenanceWhenIndexOperationInProgress() {
       var uut = spy(underTest);
       when(props.isTailIndexingEnabled()).thenReturn(true);
       doReturn(jdbc).when(uut).buildTemplate();
-      when(props.getTailCreationTimeout()).thenReturn(Duration.ofSeconds(5));
-
-      long now = System.currentTimeMillis();
-      String t1Valid = PgConstants.TAIL_INDEX_NAME_PREFIX + (now - 10000);
-      String t2Valid = PgConstants.TAIL_INDEX_NAME_PREFIX + (now - 11000);
-      String t3InvalidButRecent = PgConstants.TAIL_INDEX_NAME_PREFIX + (now - 60);
-
-      // we remove invalid indices older than 2 hours from now, so use a timestamp
-      // older than that
-      var threeHours = Duration.ofHours(3).toMillis();
-      String t4Invalid = PgConstants.TAIL_INDEX_NAME_PREFIX + (now - threeHours);
-
-      var fourHours = Duration.ofHours(4).toMillis();
-      String t5Invalid = PgConstants.TAIL_INDEX_NAME_PREFIX + (now - fourHours);
-
-      when(jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION))
-          .thenReturn(
-              Lists.newArrayList(
-                  map(INDEX_NAME_COLUMN, t1Valid, VALID_COLUMN, IS_VALID),
-                  map(INDEX_NAME_COLUMN, t2Valid, VALID_COLUMN, IS_VALID),
-                  map(INDEX_NAME_COLUMN, t3InvalidButRecent, VALID_COLUMN, IS_INVALID),
-                  map(INDEX_NAME_COLUMN, t4Invalid, VALID_COLUMN, IS_INVALID),
-                  map(INDEX_NAME_COLUMN, t5Invalid, VALID_COLUMN, IS_INVALID)));
+      doReturn(true).when(uut).anyIndexOperationInProgress(jdbc);
+      doNothing().when(uut).reportMetrics(jdbc, false);
 
       uut.triggerTailCreation();
 
       verify(uut, never()).createNewTail(jdbc);
       verify(uut, never()).removeIndex(any(), anyString());
-      verify(distributionSummary, times(2)).record(2);
+      verify(uut).reportMetrics(jdbc, false);
     }
 
     @Test
-    void removesStaleInvalidIndexes() {
+    void removesInvalidIndexes() {
       var uut = spy(underTest);
       when(props.isTailIndexingEnabled()).thenReturn(true);
       when(props.getMinimumTailAge()).thenReturn(Duration.ofDays(1));
       when(props.getTailGenerationsToKeep()).thenReturn(2);
       doReturn(jdbc).when(uut).buildTemplate();
-      when(props.getTailCreationTimeout()).thenReturn(Duration.ofSeconds(5));
+      doReturn(false).when(uut).anyIndexOperationInProgress(jdbc);
+      doNothing().when(uut).reportMetrics(jdbc, true);
 
       long now = System.currentTimeMillis();
       String t1Valid = PgConstants.TAIL_INDEX_NAME_PREFIX + (now - 10000);
       String t2ValidAndRecent = PgConstants.TAIL_INDEX_NAME_PREFIX + (now - 60);
-
-      // we remove invalid indices older than 2 hours from now, so use a timestamp
-      // older than that
-      var threeHours = Duration.ofHours(3).toMillis();
-      String t3Invalid = PgConstants.TAIL_INDEX_NAME_PREFIX + (now - threeHours);
-
-      var fourHours = Duration.ofHours(4).toMillis();
-      String t4Invalid = PgConstants.TAIL_INDEX_NAME_PREFIX + (now - fourHours);
+      String t3Invalid = PgConstants.TAIL_INDEX_NAME_PREFIX + 42;
+      String t4Invalid = PgConstants.TAIL_INDEX_NAME_PREFIX + 43;
 
       when(jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION))
           .thenReturn(
               Lists.newArrayList(
-                  map(INDEX_NAME_COLUMN, t1Valid, VALID_COLUMN, IS_VALID),
-                  map(INDEX_NAME_COLUMN, t2ValidAndRecent, VALID_COLUMN, IS_VALID),
-                  map(INDEX_NAME_COLUMN, t3Invalid, VALID_COLUMN, IS_INVALID),
-                  map(INDEX_NAME_COLUMN, t4Invalid, VALID_COLUMN, IS_INVALID)));
+                  valid(t1Valid), valid(t2ValidAndRecent), invalid(t3Invalid), invalid(t4Invalid)));
 
       uut.triggerTailCreation();
 
@@ -245,7 +199,6 @@ class PGTailIndexManagerImplTest {
       verify(uut).removeIndex(jdbc, t3Invalid);
       verify(uut).removeIndex(jdbc, t4Invalid);
       verify(uut, times(2)).removeIndex(eq(jdbc), anyString());
-      verify(distributionSummary, times(2)).record(2);
     }
   }
 
@@ -296,10 +249,13 @@ class PGTailIndexManagerImplTest {
     void removeOldestValidIndicies() {
       var uut = spy(underTest);
 
-      List<String> input = new ArrayList<String>(List.of("5", "4", "3", "2", "1"));
+      List<Map<String, Object>> input =
+          new ArrayList<>(List.of(valid("5"), valid("4"), valid("3"), valid("2"), valid("1")));
+
       uut.removeOldestValidIndices(jdbc, input);
 
-      Assertions.assertThat(input).hasSize(3).containsExactly("5", "4", "3");
+      verify(uut).removeIndex(jdbc, "2");
+      verify(uut).removeIndex(jdbc, "1");
     }
   }
 
@@ -317,10 +273,12 @@ class PGTailIndexManagerImplTest {
 
       var ts = System.currentTimeMillis() - (1000 * 60 * 30); // half hour before
 
-      ArrayList<String> indexes = Lists.newArrayList(PgConstants.TAIL_INDEX_NAME_PREFIX + ts);
-      var ret1 = uut.timeToCreateANewTail(indexes);
-      var ret2 = uut.timeToCreateANewTail(indexes);
-      var ret3 = uut.timeToCreateANewTail(indexes);
+      when(jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION))
+          .thenReturn(List.of(valid(PgConstants.TAIL_INDEX_NAME_PREFIX + ts)));
+
+      var ret1 = uut.timeToCreateANewTail(jdbc);
+      var ret2 = uut.timeToCreateANewTail(jdbc);
+      var ret3 = uut.timeToCreateANewTail(jdbc);
 
       assertThat(ret1).isFalse();
       assertThat(ret2).isFalse();
@@ -405,19 +363,81 @@ class PGTailIndexManagerImplTest {
     }
   }
 
-  private Map<String, Object> map(String... keyValuePairs) {
-    if (keyValuePairs == null) {
-      return null;
+  @Nested
+  class WhenReportingMetrics {
+    @Mock DistributionSummary distributionSummary;
+
+    @BeforeEach
+    void setup() {
+      when(pgMetrics.distributionSummary(any(), any(Tags.class))).thenReturn(distributionSummary);
     }
 
-    if ((keyValuePairs.length % 2) != 0) {
-      throw new IllegalArgumentException("Uneven list of key value pairs received, aborting...");
+    @Test
+    void reportsMetrics_maintenancePossible() {
+      List<Map<String, Object>> indices =
+          new ArrayList<>(List.of(valid("5"), valid("4"), invalid("3")));
+
+      when(jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION)).thenReturn(indices);
+
+      underTest.reportMetrics(jdbc, true);
+
+      verify(pgMetrics)
+          .distributionSummary(
+              StoreMetrics.VALUE.TAIL_INDICES,
+              Tags.of(Tag.of("state", "valid"), Tag.of("maintenance", "executed")));
+      verify(pgMetrics)
+          .distributionSummary(
+              StoreMetrics.VALUE.TAIL_INDICES,
+              Tags.of(Tag.of("state", "invalid"), Tag.of("maintenance", "executed")));
+      verify(distributionSummary).record(2.0);
+      verify(distributionSummary).record(1.0);
     }
 
-    Map<String, Object> resultMap = new HashMap<>();
-    for (int i = 0; i < (keyValuePairs.length / 2); i++) {
-      resultMap.put(keyValuePairs[i * 2], keyValuePairs[(i * 2) + 1]);
+    @Test
+    void reportsMetrics_maintenanceNotPossible() {
+      List<Map<String, Object>> indices =
+          new ArrayList<>(List.of(valid("5"), valid("4"), invalid("3")));
+
+      when(jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION)).thenReturn(indices);
+
+      underTest.reportMetrics(jdbc, false);
+
+      verify(pgMetrics)
+          .distributionSummary(
+              StoreMetrics.VALUE.TAIL_INDICES,
+              Tags.of(Tag.of("state", "valid"), Tag.of("maintenance", "skipped")));
+      verify(pgMetrics)
+          .distributionSummary(
+              StoreMetrics.VALUE.TAIL_INDICES,
+              Tags.of(Tag.of("state", "invalid"), Tag.of("maintenance", "skipped")));
+      verify(distributionSummary).record(2.0);
+      verify(distributionSummary).record(1.0);
     }
-    return resultMap;
+  }
+
+  @Nested
+  class WhenAnyIndexOperationInProgress {
+    @Test
+    void noIndexOperations() {
+      when(jdbc.queryForList(INDEX_OPERATIONS_IN_PROGRESS)).thenReturn(List.of());
+
+      assertThat(underTest.anyIndexOperationInProgress(jdbc)).isFalse();
+    }
+
+    @Test
+    void reportsMetrics_maintenanceNotPossible() {
+      when(jdbc.queryForList(INDEX_OPERATIONS_IN_PROGRESS))
+          .thenReturn(List.of(Map.of("foo", "bar")));
+
+      assertThat(underTest.anyIndexOperationInProgress(jdbc)).isTrue();
+    }
+  }
+
+  private static Map<String, Object> valid(String name) {
+    return Map.of(INDEX_NAME_COLUMN, name, VALID_COLUMN, IS_VALID);
+  }
+
+  private static Map<String, Object> invalid(String name) {
+    return Map.of(INDEX_NAME_COLUMN, name, VALID_COLUMN, IS_INVALID);
   }
 }

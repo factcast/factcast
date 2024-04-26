@@ -331,6 +331,14 @@ public class PgConstants {
         + ser;
   }
 
+  // ~* is case-insensitive regex match
+  public static String INDEX_OPERATIONS_IN_PROGRESS =
+      "SELECT * FROM pg_stat_activity WHERE pid != pg_backend_pid() "
+          + "AND ("
+          + " (query ~* 'create.*index' OR query ~* 'drop.*index') "
+          + " OR query ~* 'reindex'"
+          + ")";
+
   @NonNull
   public static String tailIndexName(long epoch) {
     return TAIL_INDEX_NAME_PREFIX + epoch;
