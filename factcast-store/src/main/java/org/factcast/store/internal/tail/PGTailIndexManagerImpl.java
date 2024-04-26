@@ -76,6 +76,7 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
       // delete old/invalid ones if necessary
       processExistingIndices(jdbc);
 
+      // write metrics for invalid/valid indices
       reportMetrics(jdbc);
     }
 
