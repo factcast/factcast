@@ -20,13 +20,19 @@ import static org.factcast.store.internal.PgConstants.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import java.time.Duration;
 import java.util.*;
 import lombok.SneakyThrows;
+import nl.altindag.log.LogCaptor;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Lists;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
+import org.factcast.store.internal.PgMetrics;
+import org.factcast.store.internal.StoreMetrics;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -36,18 +42,27 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.postgresql.jdbc.PgConnection;
+import org.springframework.dao.DataAccessResourceFailureException;
 
 @ExtendWith(MockitoExtension.class)
 class PGTailIndexManagerImplTest {
   @Mock private PGTailIndexManagerImpl.CloseableJdbcTemplate jdbc;
   @Mock private PgConnectionSupplier pgConnectionSupplier;
   @Mock private StoreConfigurationProperties props;
+
+  @Mock(strictness = Mock.Strictness.LENIENT)
+  private PgMetrics pgMetrics;
+
   @InjectMocks private PGTailIndexManagerImpl underTest;
 
   @Nested
   class WhenTriggeringTailCreation {
+    @Mock DistributionSummary distributionSummary;
+
     @BeforeEach
-    void setup() {}
+    void setup() {
+      when(pgMetrics.distributionSummary(any(), any(Tags.class))).thenReturn(distributionSummary);
+    }
 
     @Test
     void returnsIfTailCreationIsDisabled() {
@@ -57,6 +72,7 @@ class PGTailIndexManagerImplTest {
       uut.triggerTailCreation();
 
       verify(uut, never()).buildTemplate();
+      verifyNoInteractions(pgMetrics);
     }
 
     @Test
@@ -70,6 +86,12 @@ class PGTailIndexManagerImplTest {
       uut.triggerTailCreation();
 
       verify(uut).createNewTail(jdbc);
+      verify(pgMetrics)
+          .distributionSummary(StoreMetrics.VALUE.TAIL_INDICES, Tags.of(Tag.of("state", "valid")));
+      verify(pgMetrics)
+          .distributionSummary(
+              StoreMetrics.VALUE.TAIL_INDICES, Tags.of(Tag.of("state", "invalid")));
+      verify(distributionSummary, times(2)).record(0);
     }
 
     @Test
@@ -91,6 +113,8 @@ class PGTailIndexManagerImplTest {
       uut.triggerTailCreation();
 
       verify(uut).createNewTail(jdbc);
+      verify(distributionSummary).record(1);
+      verify(distributionSummary).record(0);
     }
 
     @Test
@@ -189,6 +213,7 @@ class PGTailIndexManagerImplTest {
       verify(uut).removeIndex(jdbc, t4Invalid);
       verify(uut).removeIndex(jdbc, t5Invalid);
       verify(uut, times(2)).removeIndex(eq(jdbc), anyString());
+      verify(distributionSummary, times(2)).record(2);
     }
   }
 
@@ -205,6 +230,22 @@ class PGTailIndexManagerImplTest {
       var uut = spy(underTest);
       uut.removeIndex(jdbc, INDEX_NAME);
 
+      verify(jdbc).execute(anyString());
+      verify(jdbc).update("DROP INDEX CONCURRENTLY IF EXISTS INDEX_NAME");
+    }
+
+    @Test
+    void doesNotThrow() {
+      var logCaptor = LogCaptor.forClass(PGTailIndexManagerImpl.class);
+      when(jdbc.update(anyString()))
+          .thenThrow(new DataAccessResourceFailureException("Some exception!"));
+
+      var uut = spy(underTest);
+      uut.removeIndex(jdbc, INDEX_NAME);
+
+      assertThat(logCaptor.getErrorLogs()).contains("Error dropping tail index INDEX_NAME.");
+
+      verify(jdbc).execute(anyString());
       verify(jdbc).update("DROP INDEX CONCURRENTLY IF EXISTS INDEX_NAME");
     }
   }

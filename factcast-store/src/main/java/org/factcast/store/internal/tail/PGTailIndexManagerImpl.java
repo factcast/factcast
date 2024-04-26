@@ -19,6 +19,8 @@ import static java.util.function.Predicate.*;
 import static org.factcast.store.internal.PgConstants.*;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import java.time.Duration;
 import java.util.*;
 import lombok.NonNull;
@@ -28,8 +30,9 @@ import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgConstants;
+import org.factcast.store.internal.PgMetrics;
+import org.factcast.store.internal.StoreMetrics;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
-import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -38,8 +41,13 @@ import org.springframework.scheduling.annotation.Scheduled;
 @RequiredArgsConstructor
 public class PGTailIndexManagerImpl implements PGTailIndexManager {
 
+  private static final String STATE = "state";
+  private static final String STATE_VALID = "valid";
+  private static final String STATE_INVALID = "invalid";
+
   private final PgConnectionSupplier pgConnectionSupplier;
   private final StoreConfigurationProperties props;
+  private final PgMetrics pgMetrics;
 
   @Override
   @Scheduled(cron = "${factcast.store.tailManagementCron:0 0 0 * * *}")
@@ -56,8 +64,7 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
     try (var jdbc = buildTemplate()) {
       log.debug("Triggering tail index maintenance");
 
-      var indexesOrderedByTimeWithValidityFlag =
-          jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION);
+      var indexesOrderedByTimeWithValidityFlag = getTailIndices(jdbc);
       var validIndexes = getValidIndices(indexesOrderedByTimeWithValidityFlag);
 
       // create if necessary
@@ -66,10 +73,54 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
         createNewTail(jdbc);
       }
 
+      // delete old/invalid ones if necessary
       processExistingIndices(jdbc);
+
+      reportMetrics(jdbc);
     }
 
     log.debug("Done with tail index maintenance");
+  }
+
+  @SuppressWarnings("ConstantConditions")
+  @VisibleForTesting
+  void createNewTail(JdbcTemplate jdbc) {
+    long serial = jdbc.queryForObject(PgConstants.LAST_SERIAL_IN_LOG, Long.class);
+    var currentTimeMillis = System.currentTimeMillis();
+    var indexName = PgConstants.tailIndexName(currentTimeMillis);
+
+    log.debug("Creating tail index {}.", indexName);
+
+    // make sure index creation does not hang forever.
+    // make 5 seconds shorter to compensate for the gap between currentTimeMillis
+    // and create index
+    jdbc.execute(
+        PgConstants.setStatementTimeout(props.getTailCreationTimeout().minusSeconds(5).toMillis()));
+
+    try {
+      jdbc.update(PgConstants.createTailIndex(indexName, serial));
+
+    } catch (RuntimeException e) {
+      // keep log message in sync with asserts in
+      // PGTailIndexManagerImplIntTest.doesNotCreateIndexConcurrently
+      log.error("Error creating tail index {}, trying to drop it...", indexName, e);
+
+      removeIndex(jdbc, indexName);
+    }
+  }
+
+  private void reportMetrics(JdbcTemplate jdbc) {
+    var indexesOrderedByTimeWithValidityFlag = getTailIndices(jdbc);
+    var validIndexes = getValidIndices(indexesOrderedByTimeWithValidityFlag);
+    var invalidIndexes = getInvalidIndices(indexesOrderedByTimeWithValidityFlag);
+
+    pgMetrics
+        .distributionSummary(StoreMetrics.VALUE.TAIL_INDICES, Tags.of(Tag.of(STATE, STATE_VALID)))
+        .record(validIndexes.size());
+
+    pgMetrics
+        .distributionSummary(StoreMetrics.VALUE.TAIL_INDICES, Tags.of(Tag.of(STATE, STATE_INVALID)))
+        .record(invalidIndexes.size());
   }
 
   @VisibleForTesting
@@ -81,7 +132,7 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
   }
 
   private void processExistingIndices(JdbcTemplate jdbc) {
-    var indexesOrderedByTimeWithValidityFlag = jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION);
+    var indexesOrderedByTimeWithValidityFlag = getTailIndices(jdbc);
     var validIndexes = getValidIndices(indexesOrderedByTimeWithValidityFlag);
     removeOldestValidIndices(jdbc, validIndexes);
     removeNonRecentInvalidIndices(jdbc, indexesOrderedByTimeWithValidityFlag);
@@ -114,47 +165,6 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
         .anyMatch(not(this::isNotRecent));
   }
 
-  @SuppressWarnings("ConstantConditions")
-  @VisibleForTesting
-  void createNewTail(JdbcTemplate jdbc) {
-    long serial = jdbc.queryForObject(PgConstants.LAST_SERIAL_IN_LOG, Long.class);
-    var currentTimeMillis = System.currentTimeMillis();
-    var indexName = PgConstants.tailIndexName(currentTimeMillis);
-
-    log.debug("Creating tail index {}.", indexName);
-
-    // make sure index creation does not hang forever.
-    // make 5 seconds shorter to compensate for the gap between currentTimeMillis
-    // and create index
-    jdbc.execute(
-        PgConstants.setStatementTimeout(props.getTailCreationTimeout().minusSeconds(5).toMillis()));
-
-    try {
-      jdbc.update(PgConstants.createTailIndex(indexName, serial));
-
-    } catch (RuntimeException e) {
-      // keep log message in sync with asserts in
-      // PGTailIndexManagerImplIntTest.doesNotCreateIndexConcurrently
-      log.error("Error creating tail index {}, trying to drop it...", indexName, e);
-
-      try {
-        removeIndex(jdbc, indexName);
-        log.debug(
-            "Successfully dropped tail index {} after running into an error during creation.",
-            indexName);
-
-      } catch (RuntimeException e2) {
-        // keep log message in sync with asserts in
-        // PGTailIndexManagerImplIntTest.doesNotCreateIndexConcurrently
-        log.error(
-            "After error, tried to drop the index that could not be created ({}), but received"
-                + " another error:",
-            indexName,
-            e2);
-      }
-    }
-  }
-
   @VisibleForTesting
   protected void removeOldestValidIndices(JdbcTemplate jdbc, List<String> validIndexesOrdered) {
     while (validIndexesOrdered.size() > props.getTailGenerationsToKeep()) {
@@ -163,13 +173,22 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
     }
   }
 
+  private static @NonNull List<Map<String, Object>> getTailIndices(JdbcTemplate jdbc) {
+    return jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION);
+  }
+
   private void removeNonRecentInvalidIndices(
       JdbcTemplate jdbc, List<Map<String, Object>> indexesWithValidityFlag) {
-    indexesWithValidityFlag.stream()
+    getInvalidIndices(indexesWithValidityFlag).forEach(i -> removeIndex(jdbc, i));
+  }
+
+  private @NonNull List<String> getInvalidIndices(
+      List<Map<String, Object>> indexesOrderedByTimeWithValidityFlag) {
+    return indexesOrderedByTimeWithValidityFlag.stream()
         .filter(r -> r.get(VALID_COLUMN).equals(IS_INVALID))
         .map(r -> r.get(INDEX_NAME_COLUMN).toString())
         .filter(this::isNotRecent)
-        .forEach(i -> removeIndex(jdbc, i));
+        .toList();
   }
 
   @VisibleForTesting
@@ -178,8 +197,8 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
       log.debug("Dropping tail index {}", indexName);
       jdbc.execute(PgConstants.setStatementTimeout(Duration.ofHours(1).toMillis()));
       jdbc.update(PgConstants.dropTailIndex(indexName));
-    } catch (DataAccessException e) {
-      log.warn("Error dropping tail index {}.", indexName, e);
+    } catch (RuntimeException e) {
+      log.error("Error dropping tail index {}.", indexName, e);
     }
   }
 
