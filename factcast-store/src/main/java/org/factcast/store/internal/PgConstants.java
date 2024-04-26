@@ -331,6 +331,8 @@ public class PgConstants {
         + ser;
   }
 
+  // this might be too sensitive in some cases (like create table myIndex), however skipping one
+  // tail index maintenance window is not as bad as blocking fact publishing
   // ~* is case-insensitive regex match
   public static String INDEX_OPERATIONS_IN_PROGRESS =
       "SELECT * FROM pg_stat_activity WHERE pid != pg_backend_pid() "
