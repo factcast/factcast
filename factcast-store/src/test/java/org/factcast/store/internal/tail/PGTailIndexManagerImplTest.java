@@ -175,12 +175,10 @@ class PGTailIndexManagerImplTest {
     }
 
     @Test
-    void removesStaleInvalidIndexes() {
+    void doesNotTryToDropIndicesIfCreationInProgress() {
       var uut = spy(underTest);
       when(props.isTailIndexingEnabled()).thenReturn(true);
       doReturn(jdbc).when(uut).buildTemplate();
-      when(props.getMinimumTailAge()).thenReturn(Duration.ofDays(1));
-      when(props.getTailGenerationsToKeep()).thenReturn(2);
       when(props.getTailCreationTimeout()).thenReturn(Duration.ofSeconds(5));
 
       long now = System.currentTimeMillis();
@@ -208,10 +206,44 @@ class PGTailIndexManagerImplTest {
       uut.triggerTailCreation();
 
       verify(uut, never()).createNewTail(jdbc);
-      // must not have removed valid recent indices, and also not invalid recent ones
-      // (t3)
+      verify(uut, never()).removeIndex(any(), anyString());
+      verify(distributionSummary, times(2)).record(2);
+    }
+
+    @Test
+    void removesStaleInvalidIndexes() {
+      var uut = spy(underTest);
+      when(props.isTailIndexingEnabled()).thenReturn(true);
+      when(props.getMinimumTailAge()).thenReturn(Duration.ofDays(1));
+      when(props.getTailGenerationsToKeep()).thenReturn(2);
+      doReturn(jdbc).when(uut).buildTemplate();
+      when(props.getTailCreationTimeout()).thenReturn(Duration.ofSeconds(5));
+
+      long now = System.currentTimeMillis();
+      String t1Valid = PgConstants.TAIL_INDEX_NAME_PREFIX + (now - 10000);
+      String t2ValidAndRecent = PgConstants.TAIL_INDEX_NAME_PREFIX + (now - 60);
+
+      // we remove invalid indices older than 2 hours from now, so use a timestamp
+      // older than that
+      var threeHours = Duration.ofHours(3).toMillis();
+      String t3Invalid = PgConstants.TAIL_INDEX_NAME_PREFIX + (now - threeHours);
+
+      var fourHours = Duration.ofHours(4).toMillis();
+      String t4Invalid = PgConstants.TAIL_INDEX_NAME_PREFIX + (now - fourHours);
+
+      when(jdbc.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION))
+          .thenReturn(
+              Lists.newArrayList(
+                  map(INDEX_NAME_COLUMN, t1Valid, VALID_COLUMN, IS_VALID),
+                  map(INDEX_NAME_COLUMN, t2ValidAndRecent, VALID_COLUMN, IS_VALID),
+                  map(INDEX_NAME_COLUMN, t3Invalid, VALID_COLUMN, IS_INVALID),
+                  map(INDEX_NAME_COLUMN, t4Invalid, VALID_COLUMN, IS_INVALID)));
+
+      uut.triggerTailCreation();
+
+      verify(uut, never()).createNewTail(jdbc);
+      verify(uut).removeIndex(jdbc, t3Invalid);
       verify(uut).removeIndex(jdbc, t4Invalid);
-      verify(uut).removeIndex(jdbc, t5Invalid);
       verify(uut, times(2)).removeIndex(eq(jdbc), anyString());
       verify(distributionSummary, times(2)).record(2);
     }

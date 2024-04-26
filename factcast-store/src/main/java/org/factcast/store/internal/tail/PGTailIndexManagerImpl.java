@@ -67,14 +67,16 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
       var indexesOrderedByTimeWithValidityFlag = getTailIndices(jdbc);
       var validIndexes = getValidIndices(indexesOrderedByTimeWithValidityFlag);
 
-      // create if necessary
-      if (timeToCreateANewTail(validIndexes)
-          && !indexCreationInProgress(indexesOrderedByTimeWithValidityFlag)) {
-        createNewTail(jdbc);
-      }
+      if (!indexCreationInProgress(indexesOrderedByTimeWithValidityFlag)) {
+        // create if necessary
+        if (timeToCreateANewTail(validIndexes)) {
+          createNewTail(jdbc);
+        }
 
-      // delete old/invalid ones if necessary
-      processExistingIndices(jdbc);
+        // delete old/invalid ones if necessary; we only want to do this if no creation is in
+        // progress otherwise we might block publishs again
+        processExistingIndices(jdbc);
+      }
 
       // write metrics for invalid/valid indices
       reportMetrics(jdbc);
