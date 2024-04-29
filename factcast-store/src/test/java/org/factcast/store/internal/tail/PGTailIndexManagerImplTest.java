@@ -72,7 +72,7 @@ class PGTailIndexManagerImplTest {
       var uut = spy(underTest);
       doReturn(jdbc).when(uut).buildTemplate();
       doNothing().when(uut).createNewTail(jdbc);
-      doReturn(false).when(uut).anyIndexOperationInProgress(jdbc);
+      doReturn(false).when(uut).isAnyIndexOperationInProgress(jdbc);
       doNothing().when(uut).reportMetrics(jdbc, true);
 
       when(props.isTailIndexingEnabled()).thenReturn(true);
@@ -81,7 +81,7 @@ class PGTailIndexManagerImplTest {
       uut.triggerTailCreation();
 
       verify(uut).createNewTail(jdbc);
-      verify(uut, never()).removeIndex(any(), anyString());
+      verify(uut, never()).removeTailIndex(any(), anyString());
       verify(uut).reportMetrics(jdbc, true);
     }
 
@@ -89,7 +89,7 @@ class PGTailIndexManagerImplTest {
     void createsTailIfYoungestIndexTooOld() {
       var uut = spy(underTest);
       doReturn(jdbc).when(uut).buildTemplate();
-      doReturn(false).when(uut).anyIndexOperationInProgress(jdbc);
+      doReturn(false).when(uut).isAnyIndexOperationInProgress(jdbc);
       doNothing().when(uut).reportMetrics(jdbc, true);
       doNothing().when(uut).createNewTail(jdbc);
 
@@ -107,7 +107,7 @@ class PGTailIndexManagerImplTest {
     void createsNoTailIfYoungestIndexIsRecent_issue2571() {
       var uut = spy(underTest);
       doReturn(jdbc).when(uut).buildTemplate();
-      doReturn(false).when(uut).anyIndexOperationInProgress(jdbc);
+      doReturn(false).when(uut).isAnyIndexOperationInProgress(jdbc);
       doNothing().when(uut).reportMetrics(jdbc, true);
 
       when(props.isTailIndexingEnabled()).thenReturn(true);
@@ -132,7 +132,7 @@ class PGTailIndexManagerImplTest {
     void removesStaleIndexes() {
       var uut = spy(underTest);
       doReturn(jdbc).when(uut).buildTemplate();
-      doReturn(false).when(uut).anyIndexOperationInProgress(jdbc);
+      doReturn(false).when(uut).isAnyIndexOperationInProgress(jdbc);
       doNothing().when(uut).reportMetrics(jdbc, true);
 
       when(props.isTailIndexingEnabled()).thenReturn(true);
@@ -151,10 +151,10 @@ class PGTailIndexManagerImplTest {
       uut.triggerTailCreation();
 
       verify(uut, never()).createNewTail(jdbc);
-      verify(uut, times(3)).removeIndex(eq(jdbc), anyString());
-      verify(uut).removeIndex(jdbc, t3);
-      verify(uut).removeIndex(jdbc, t4);
-      verify(uut).removeIndex(jdbc, t5);
+      verify(uut, times(3)).removeTailIndex(eq(jdbc), anyString());
+      verify(uut).removeTailIndex(jdbc, t3);
+      verify(uut).removeTailIndex(jdbc, t4);
+      verify(uut).removeTailIndex(jdbc, t5);
     }
 
     @Test
@@ -162,13 +162,13 @@ class PGTailIndexManagerImplTest {
       var uut = spy(underTest);
       when(props.isTailIndexingEnabled()).thenReturn(true);
       doReturn(jdbc).when(uut).buildTemplate();
-      doReturn(true).when(uut).anyIndexOperationInProgress(jdbc);
+      doReturn(true).when(uut).isAnyIndexOperationInProgress(jdbc);
       doNothing().when(uut).reportMetrics(jdbc, false);
 
       uut.triggerTailCreation();
 
       verify(uut, never()).createNewTail(jdbc);
-      verify(uut, never()).removeIndex(any(), anyString());
+      verify(uut, never()).removeTailIndex(any(), anyString());
       verify(uut).reportMetrics(jdbc, false);
     }
 
@@ -179,7 +179,7 @@ class PGTailIndexManagerImplTest {
       when(props.getMinimumTailAge()).thenReturn(Duration.ofDays(1));
       when(props.getTailGenerationsToKeep()).thenReturn(2);
       doReturn(jdbc).when(uut).buildTemplate();
-      doReturn(false).when(uut).anyIndexOperationInProgress(jdbc);
+      doReturn(false).when(uut).isAnyIndexOperationInProgress(jdbc);
       doNothing().when(uut).reportMetrics(jdbc, true);
 
       long now = System.currentTimeMillis();
@@ -196,15 +196,15 @@ class PGTailIndexManagerImplTest {
       uut.triggerTailCreation();
 
       verify(uut, never()).createNewTail(jdbc);
-      verify(uut).removeIndex(jdbc, t3Invalid);
-      verify(uut).removeIndex(jdbc, t4Invalid);
-      verify(uut, times(2)).removeIndex(eq(jdbc), anyString());
+      verify(uut).removeTailIndex(jdbc, t3Invalid);
+      verify(uut).removeTailIndex(jdbc, t4Invalid);
+      verify(uut, times(2)).removeTailIndex(eq(jdbc), anyString());
     }
   }
 
   @Nested
   class WhenRemovingIndex {
-    private final String INDEX_NAME = "INDEX_NAME";
+    private final String INDEX_NAME = PgConstants.TAIL_INDEX_NAME_PREFIX + "42";
 
     @BeforeEach
     void setup() {}
@@ -213,10 +213,10 @@ class PGTailIndexManagerImplTest {
     void dropsIndex() {
 
       var uut = spy(underTest);
-      uut.removeIndex(jdbc, INDEX_NAME);
+      uut.removeTailIndex(jdbc, INDEX_NAME);
 
       verify(jdbc).execute("set statement_timeout to 3600000");
-      verify(jdbc).update("DROP INDEX CONCURRENTLY IF EXISTS INDEX_NAME");
+      verify(jdbc).update("DROP INDEX CONCURRENTLY IF EXISTS " + INDEX_NAME);
     }
 
     @Test
@@ -226,12 +226,13 @@ class PGTailIndexManagerImplTest {
           .thenThrow(new DataAccessResourceFailureException("Some exception!"));
 
       var uut = spy(underTest);
-      uut.removeIndex(jdbc, INDEX_NAME);
+      uut.removeTailIndex(jdbc, INDEX_NAME);
 
-      assertThat(logCaptor.getErrorLogs()).contains("Error dropping tail index INDEX_NAME.");
+      assertThat(logCaptor.getErrorLogs())
+          .contains("Error dropping tail index " + INDEX_NAME + ".");
 
       verify(jdbc).execute("set statement_timeout to 3600000");
-      verify(jdbc).update("DROP INDEX CONCURRENTLY IF EXISTS INDEX_NAME");
+      verify(jdbc).update("DROP INDEX CONCURRENTLY IF EXISTS " + INDEX_NAME);
     }
   }
 
@@ -250,12 +251,18 @@ class PGTailIndexManagerImplTest {
       var uut = spy(underTest);
 
       List<Map<String, Object>> input =
-          new ArrayList<>(List.of(valid("5"), valid("4"), valid("3"), valid("2"), valid("1")));
+          new ArrayList<>(
+              List.of(
+                  valid(PgConstants.TAIL_INDEX_NAME_PREFIX + "5"),
+                  valid(PgConstants.TAIL_INDEX_NAME_PREFIX + "4"),
+                  valid(PgConstants.TAIL_INDEX_NAME_PREFIX + "3"),
+                  valid(PgConstants.TAIL_INDEX_NAME_PREFIX + "2"),
+                  valid(PgConstants.TAIL_INDEX_NAME_PREFIX + "1")));
 
       uut.removeOldestValidIndices(jdbc, input);
 
-      verify(uut).removeIndex(jdbc, "2");
-      verify(uut).removeIndex(jdbc, "1");
+      verify(uut).removeTailIndex(jdbc, PgConstants.TAIL_INDEX_NAME_PREFIX + "2");
+      verify(uut).removeTailIndex(jdbc, PgConstants.TAIL_INDEX_NAME_PREFIX + "1");
     }
   }
 
@@ -421,7 +428,7 @@ class PGTailIndexManagerImplTest {
     void noIndexOperations() {
       when(jdbc.queryForList(INDEX_OPERATIONS_IN_PROGRESS)).thenReturn(List.of());
 
-      assertThat(underTest.anyIndexOperationInProgress(jdbc)).isFalse();
+      assertThat(underTest.isAnyIndexOperationInProgress(jdbc)).isFalse();
     }
 
     @Test
@@ -429,7 +436,7 @@ class PGTailIndexManagerImplTest {
       when(jdbc.queryForList(INDEX_OPERATIONS_IN_PROGRESS))
           .thenReturn(List.of(Map.of("foo", "bar")));
 
-      assertThat(underTest.anyIndexOperationInProgress(jdbc)).isTrue();
+      assertThat(underTest.isAnyIndexOperationInProgress(jdbc)).isTrue();
     }
   }
 

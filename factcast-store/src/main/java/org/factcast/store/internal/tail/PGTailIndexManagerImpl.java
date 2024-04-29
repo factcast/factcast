@@ -18,6 +18,7 @@ package org.factcast.store.internal.tail;
 import static org.factcast.store.internal.PgConstants.*;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.time.Duration;
@@ -56,9 +57,9 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
     }
 
     try (var jdbc = buildTemplate()) {
-      log.debug("Triggering tail index maintenance");
+      log.info("Triggering tail index maintenance");
 
-      var maintenancePossible = !anyIndexOperationInProgress(jdbc);
+      var maintenancePossible = !isAnyIndexOperationInProgress(jdbc);
       if (maintenancePossible) {
         // create if necessary
         if (timeToCreateANewTail(jdbc)) {
@@ -72,13 +73,13 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
       // write metrics for invalid/valid indices
       reportMetrics(jdbc, maintenancePossible);
 
-      log.debug("Done with tail index maintenance. Result: {}", getResultText(maintenancePossible));
+      log.info("Done with tail index maintenance. Result: {}", getResultText(maintenancePossible));
     }
   }
 
   @SuppressWarnings("ConstantConditions")
   @VisibleForTesting
-  void createNewTail(JdbcTemplate jdbc) {
+  void createNewTail(@NonNull JdbcTemplate jdbc) {
     long serial = jdbc.queryForObject(PgConstants.LAST_SERIAL_IN_LOG, Long.class);
     var currentTimeMillis = System.currentTimeMillis();
     var indexName = PgConstants.tailIndexName(currentTimeMillis);
@@ -98,12 +99,12 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
       // PGTailIndexManagerImplIntTest.doesNotCreateIndexConcurrently
       log.error("Error creating tail index {}, trying to drop it...", indexName, e);
 
-      removeIndex(jdbc, indexName);
+      removeTailIndex(jdbc, indexName);
     }
   }
 
   @VisibleForTesting
-  protected void reportMetrics(JdbcTemplate jdbc, boolean maintenancePossible) {
+  protected void reportMetrics(@NonNull JdbcTemplate jdbc, boolean maintenancePossible) {
     var indexesOrderedByTimeWithValidityFlag = getTailIndices(jdbc);
     var validIndexes = getValidIndices(indexesOrderedByTimeWithValidityFlag);
     var invalidIndexes = getInvalidIndices(indexesOrderedByTimeWithValidityFlag);
@@ -119,7 +120,7 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
         .record(invalidIndexes.size());
   }
 
-  private void processExistingIndices(JdbcTemplate jdbc) {
+  private void processExistingIndices(@NonNull JdbcTemplate jdbc) {
     var indexesOrderedByTimeWithValidityFlag = getTailIndices(jdbc);
     removeOldestValidIndices(jdbc, indexesOrderedByTimeWithValidityFlag);
     removeInvalidIndices(jdbc, indexesOrderedByTimeWithValidityFlag);
@@ -143,7 +144,7 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
   }
 
   @VisibleForTesting
-  boolean timeToCreateANewTail(JdbcTemplate jdbc) {
+  boolean timeToCreateANewTail(@NonNull JdbcTemplate jdbc) {
     var indexesOrderedByTimeWithValidityFlag = getTailIndices(jdbc);
     var indices = getValidIndices(indexesOrderedByTimeWithValidityFlag);
 
@@ -157,7 +158,7 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
   }
 
   @VisibleForTesting
-  protected boolean anyIndexOperationInProgress(JdbcTemplate jdbc) {
+  protected boolean isAnyIndexOperationInProgress(@NonNull JdbcTemplate jdbc) {
     final var operations = jdbc.queryForList(INDEX_OPERATIONS_IN_PROGRESS);
 
     if (operations.isEmpty()) {
@@ -171,12 +172,12 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
 
   @VisibleForTesting
   protected void removeOldestValidIndices(
-      JdbcTemplate jdbc, List<Map<String, Object>> indexesWithValidityFlag) {
+      @NonNull JdbcTemplate jdbc, @NonNull List<Map<String, Object>> indexesWithValidityFlag) {
     var validIndexes = getValidIndices(indexesWithValidityFlag);
 
     while (validIndexes.size() > props.getTailGenerationsToKeep()) {
       // Oldest is last in list as order is descending by name.
-      removeIndex(jdbc, validIndexes.remove(validIndexes.size() - 1));
+      removeTailIndex(jdbc, validIndexes.remove(validIndexes.size() - 1));
     }
   }
 
@@ -186,11 +187,13 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
 
   private void removeInvalidIndices(
       JdbcTemplate jdbc, List<Map<String, Object>> indexesWithValidityFlag) {
-    getInvalidIndices(indexesWithValidityFlag).forEach(i -> removeIndex(jdbc, i));
+    getInvalidIndices(indexesWithValidityFlag).forEach(i -> removeTailIndex(jdbc, i));
   }
 
   @VisibleForTesting
-  void removeIndex(@NonNull JdbcTemplate jdbc, @NonNull String indexName) {
+  void removeTailIndex(@NonNull JdbcTemplate jdbc, @NonNull String indexName) {
+    Preconditions.checkArgument(indexName.startsWith(TAIL_INDEX_NAME_PREFIX), "Invalid index name");
+
     try {
       log.debug("Dropping tail index {}", indexName);
       jdbc.execute(PgConstants.setStatementTimeout(Duration.ofHours(1).toMillis()));
@@ -214,7 +217,7 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
   }
 
   private static @NonNull String getResultText(boolean maintenancePossible) {
-    return maintenancePossible ? EXECUTED : "skipped because of ongoing index operations";
+    return maintenancePossible ? EXECUTED : SKIPPED + " because of ongoing index operations";
   }
 
   @VisibleForTesting
