@@ -42,7 +42,7 @@ public interface HandlerParameterTransformer
     // select providers according to type & annotations
     for (int i = 0; i < parameterTypes.length; i++) {
       Class<?> type = parameterTypes[i];
-      int index = i; // final
+      final int index = i;
       providers[i] =
           chooseProvider(handlerParameterContributors, type, annotations.get(i))
               .orElseThrow(

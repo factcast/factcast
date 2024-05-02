@@ -20,12 +20,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.HashSet;
-import java.util.UUID;
 import javax.annotation.Nullable;
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
+import org.factcast.core.TestFact;
 import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.projection.FactStreamPositionAware;
 import org.factcast.factus.projection.Projection;
@@ -39,11 +39,12 @@ class DefaultHandlerParameterContributorTest {
     HandlerParameterProvider provider =
         undertest.providerFor(FactStreamPosition.class, new HashSet<>());
 
-    FactStreamPosition fsp = FactStreamPosition.of(UUID.randomUUID(), 127L);
+    Fact fact = new TestFact();
+    FactStreamPosition fsp = FactStreamPosition.from(fact);
     TestProjection p = mock(TestProjection.class);
     when(p.factStreamPosition()).thenReturn(fsp);
 
-    Assertions.assertThat(provider.apply(mock(Fact.class), p)).isSameAs(fsp);
+    Assertions.assertThat(provider.apply(fact, p)).isEqualTo(fsp);
   }
 
   static class TestProjection implements Projection, FactStreamPositionAware {
