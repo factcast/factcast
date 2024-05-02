@@ -77,6 +77,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
    *
    * @param p
    * @param es
+   * @deprecated
    */
   @Deprecated
   public ProjectorImpl(@NonNull Projection p, @NonNull EventSerializer es) {
@@ -291,7 +292,9 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
   }
 
   @Override
-  public void onCatchup(@Nullable FactStreamPosition idOfLastFactApplied) {}
+  public void onCatchup(@Nullable FactStreamPosition idOfLastFactApplied) {
+    // no longer used, might still be interesting as a hook
+  }
 
   /**
    * expensive method that should be used on initialization only
@@ -351,7 +354,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       try {
         dispatchMethod.invoke(targetObject, parameters);
       } catch (IllegalAccessException e) {
-        throw new RuntimeException(e);
+        throw ExceptionHelper.toRuntime(e);
       } catch (InvocationTargetException e) {
         // unwrap
         throw ExceptionHelper.toRuntime(e.getCause());

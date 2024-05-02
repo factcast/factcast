@@ -24,7 +24,6 @@ import org.redisson.api.TransactionOptions;
 @Target(ElementType.TYPE)
 @Inherited
 public @interface RedisTransactional {
-  // TODO: document the change from 50 -> 1000
   int bulkSize() default 1000;
 
   long timeout() default Defaults.timeout;
