@@ -51,9 +51,7 @@ abstract class AbstractRedisProjection extends AbstractOpenTransactionAwareProje
 
   @VisibleForTesting
   RBucket<FactStreamPosition> stateBucket(@NonNull RTransaction tx) {
-    RBucket<FactStreamPosition> bucket =
-        tx.getBucket(stateBucketName, FactStreamPositionCodec.INSTANCE);
-    return bucket;
+    return tx.getBucket(stateBucketName, FactStreamPositionCodec.INSTANCE);
   }
 
   @VisibleForTesting

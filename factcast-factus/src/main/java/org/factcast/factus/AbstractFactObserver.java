@@ -69,6 +69,7 @@ abstract class AbstractFactObserver extends BatchingFactObserver {
     this.info = info;
   }
 
+  @SuppressWarnings("java:S2142")
   @Override
   public final void onNext(@NonNull List<Fact> elements) {
 
@@ -85,7 +86,11 @@ abstract class AbstractFactObserver extends BatchingFactObserver {
     long now = System.currentTimeMillis();
     if (info != null && now - lastProgress > interval) {
       lastProgress = now;
-      target.catchupPercentage(info.calculatePercentage(Iterables.getLast(elements).serial()));
+      Fact last = Iterables.getLast(elements);
+      if (last != null) {
+        //noinspection DataFlowIssue
+        target.catchupPercentage(info.calculatePercentage(last.header().serial()));
+      }
     }
 
     if (reported != null) {
@@ -112,7 +117,7 @@ abstract class AbstractFactObserver extends BatchingFactObserver {
   }
 
   @VisibleForTesting
-  // TODO Reviewer: shouldn't this be async for batch application performance reasons?
+  // intentionally not async, as metrics timed already is.
   void reportProcessingLatency(@NonNull List<Fact> elements) {
     long nowInMillis = Instant.now().toEpochMilli();
     elements.forEach(

@@ -67,10 +67,8 @@ public interface HandlerParameterTransformer
   }
 
   @NonNull
-  // Set
-  static Optional<? extends HandlerParameterProvider> chooseProvider(
+  static Optional<HandlerParameterProvider> chooseProvider(
       HandlerParameterContributors contributors, Class<?> type, Set<Annotation> annotation) {
-    // revert to declarative
     return contributors.stream()
         .map(c -> c.providerFor(type, annotation))
         .filter(Objects::nonNull)
