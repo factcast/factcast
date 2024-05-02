@@ -15,7 +15,12 @@
  */
 package org.factcast.store.internal;
 
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.Timer.Sample;
 import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
 import java.util.concurrent.ExecutorService;
@@ -42,9 +47,15 @@ public class PgMetrics implements InitializingBean {
 
   @NonNull
   public DistributionSummary distributionSummary(@NonNull StoreMetrics.VALUE operation) {
-    Tags tags = forOperation(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
+    return distributionSummary(operation, Tags.empty());
+  }
+
+  @NonNull
+  public DistributionSummary distributionSummary(
+      @NonNull StoreMetrics.VALUE operation, @NonNull Tags tags) {
+    Tags finalTags = forOperation(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE).and(tags);
     return DistributionSummary.builder(StoreMetrics.METER_METRIC_NAME)
-        .tags(tags)
+        .tags(finalTags)
         .register(registry);
   }
 

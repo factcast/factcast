@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
+import org.assertj.core.api.Assertions;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
@@ -36,20 +37,18 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ContextConfiguration(classes = {PgTestConfiguration.class, PgSchedLockTestConfiguration.class})
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
-public class PgSchedLockTest {
-
+class PgShedLockSpringScheduleTest {
   static final CountDownLatch latch = new CountDownLatch(1);
 
   static AtomicReference<SqlRowSet> rs = new AtomicReference<>();
 
   @Test
-  public void schedLockEffectiveWithScheduledMethod() throws InterruptedException {
-
+  void shedLockEffectiveWithScheduledMethod() throws InterruptedException {
     // wait for the intercepted bean to finish it's work (and release the lock
-
-    latch.await(5, TimeUnit.SECONDS);
+    boolean await = latch.await(5, TimeUnit.SECONDS);
 
     // and make sure it had one when executing the scheduled method
+    Assertions.assertThat(await).isTrue();
     assertTrue(rs.get().next(), "Lock should have been found");
   }
 }
@@ -68,10 +67,8 @@ class BeanToIntercept {
 
   @Scheduled(initialDelay = 1000, fixedDelay = 1000)
   @SchedulerLock(name = "hubba")
-  public void scheduled() throws InterruptedException {
-    log.info("hubba");
-
-    PgSchedLockTest.rs.set(tpl.queryForRowSet("select * from shedlock"));
-    PgSchedLockTest.latch.countDown();
+  void scheduled() throws InterruptedException {
+    PgShedLockSpringScheduleTest.rs.set(tpl.queryForRowSet("select * from shedlock"));
+    PgShedLockSpringScheduleTest.latch.countDown();
   }
 }
