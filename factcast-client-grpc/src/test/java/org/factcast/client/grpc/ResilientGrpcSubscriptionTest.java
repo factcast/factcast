@@ -334,6 +334,12 @@ class ResilientGrpcSubscriptionTest {
       verify(uut).doConnect();
       assertThat(uut.resilience().numberOfAttemptsInWindow()).isOne();
     }
+
+    @Test
+    void delegatesFlush() {
+      dfo.flush();
+      verify(obs).flush();
+    }
   }
 
   @Nested
