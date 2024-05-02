@@ -25,8 +25,10 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.TestFactStreamPosition;
+import org.factcast.factus.redis.tx.RedisTransactional;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -58,6 +60,53 @@ class AbstractRedisManagedProjectionTest {
       assertThat(underTest.stateBucket()).isNotNull().isInstanceOf(RBucket.class).isSameAs(bucket);
       verify(redisson)
           .getBucket(underTest.redisKey() + "_state_tracking", FactStreamPositionCodec.INSTANCE);
+    }
+  }
+
+  @Nested
+  class WhenInspectingClass {
+    @Test
+    void getMaxSizeDefault() {
+      Assertions.assertThat(underTest.maxBatchSizePerTransaction()).isEqualTo(1000);
+    }
+
+    @Test
+    void getOptionsDefault() {
+      // unfortunately, TransactionOptions do not implement hashcode/equals, so we have to compare
+      // field by field
+      // https://github.com/redisson/redisson/issues/5834
+      Assertions.assertThat(underTest.transactionOptions().getResponseTimeout())
+          .isEqualTo(TransactionOptions.defaults().getResponseTimeout());
+      Assertions.assertThat(underTest.transactionOptions().getTimeout())
+          .isEqualTo(TransactionOptions.defaults().getTimeout());
+      Assertions.assertThat(underTest.transactionOptions().getRetryAttempts())
+          .isEqualTo(TransactionOptions.defaults().getRetryAttempts());
+      Assertions.assertThat(underTest.transactionOptions().getRetryInterval())
+          .isEqualTo(TransactionOptions.defaults().getRetryInterval());
+      Assertions.assertThat(underTest.transactionOptions().getSyncSlaves())
+          .isEqualTo(TransactionOptions.defaults().getSyncSlaves());
+      Assertions.assertThat(underTest.transactionOptions().getSyncTimeout())
+          .isEqualTo(TransactionOptions.defaults().getSyncTimeout());
+    }
+
+    @Test
+    void getOptionsTweaked() {
+      AbstractRedisProjection underTest = new ProjectionWithBulkSet(mock(RedissonClient.class));
+      Assertions.assertThat(underTest.transactionOptions().getResponseTimeout()).isEqualTo(112);
+    }
+
+    @RedisTransactional(bulkSize = 12, responseTimeout = 112)
+    @ProjectionMetaData(revision = 1)
+    class ProjectionWithBulkSet extends AbstractRedisProjection {
+      protected ProjectionWithBulkSet(@NonNull RedissonClient redisson) {
+        super(redisson);
+      }
+    }
+
+    @Test
+    void getMaxSize() {
+      AbstractRedisProjection underTest = new ProjectionWithBulkSet(mock(RedissonClient.class));
+      assertThat(underTest.maxBatchSizePerTransaction()).isEqualTo(12);
     }
   }
 

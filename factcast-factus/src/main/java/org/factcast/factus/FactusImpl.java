@@ -401,22 +401,26 @@ public class FactusImpl implements Factus {
 
           @Override
           public void onComplete() {
+            flush();
             projection.onComplete();
           }
 
           @Override
           public void onCatchupSignal() {
+            flush();
             handler.onCatchup(positionOfLastFactApplied.get());
             projection.onCatchup();
           }
 
           @Override
           public void onError(@NonNull Throwable exception) {
+            flush();
             projection.onError(exception);
           }
 
           @Override
           public void onFastForward(@NonNull FactStreamPosition factIdToFfwdTo) {
+            flush();
             if (projection instanceof FactStreamPositionAware) {
               ((FactStreamPositionAware) projection).factStreamPosition(factIdToFfwdTo);
             }

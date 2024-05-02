@@ -36,7 +36,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
-import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.FactStreamPosition;
@@ -1442,6 +1441,7 @@ class FactusImplTest {
               i -> {
                 FactObserver fo = i.getArgument(1);
                 fo.onNext(f);
+                fo.onComplete();
                 return sub;
               });
       when(pro.createFactSpecs()).thenReturn(Lists.newArrayList(spec1));

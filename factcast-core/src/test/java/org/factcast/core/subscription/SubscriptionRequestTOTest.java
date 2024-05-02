@@ -21,12 +21,20 @@ import java.util.Collections;
 import org.factcast.core.spec.FactSpec;
 import org.junit.jupiter.api.*;
 
+@SuppressWarnings("deprecation")
 public class SubscriptionRequestTOTest {
 
   @Test
   void testDebugInfo() {
     SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch();
     SubscriptionRequestTO uut = SubscriptionRequestTO.from(r);
+    assertEquals(r.debugInfo(), uut.debugInfo());
+  }
+
+  @Test
+  void testForFacts() {
+    SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch();
+    SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
     assertEquals(r.debugInfo(), uut.debugInfo());
   }
 
