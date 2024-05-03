@@ -135,7 +135,7 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
 
       await()
           .atMost(1, SECONDS)
-          .untilAsserted(() -> assertThat(count.get()).isEqualTo(MAX_FACTS + 1));
+          .untilAsserted(() -> assertThat(count.get()).isEqualTo(MAX_FACTS));
     }
 
     assertThat(logCaptor.getInfoLogs()).containsOnlyOnce("Handshake successful.");
