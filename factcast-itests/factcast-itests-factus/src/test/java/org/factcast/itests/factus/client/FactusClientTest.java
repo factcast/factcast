@@ -50,7 +50,6 @@ import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.*;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
@@ -83,7 +82,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
   @Test
   void multipleReInitializations() {
-    for (int i= 0; i < 100; i++) {
+    for (int i = 0; i < 100; i++) {
       store.initializeIfNecessary();
       // TODO should reset here
     }

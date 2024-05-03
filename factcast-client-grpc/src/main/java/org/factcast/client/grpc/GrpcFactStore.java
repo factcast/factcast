@@ -29,7 +29,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import lombok.Generated;
-import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -111,11 +110,7 @@ public class GrpcFactStore implements FactStore {
   @Generated
   @VisibleForTesting
   GrpcFactStore(@NonNull Channel channel, @NonNull Optional<String> credentials) {
-    this(
-        channel,
-        credentials,
-        new FactCastGrpcClientProperties(),
-        null);
+    this(channel, credentials, new FactCastGrpcClientProperties(), null);
   }
 
   @VisibleForTesting
