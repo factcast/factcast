@@ -31,6 +31,7 @@ import java.util.concurrent.TimeoutException;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.core.Fact;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.subscription.Subscription;
@@ -49,6 +50,7 @@ import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.*;
 import org.factcast.test.AbstractFactCastIntegrationTest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
@@ -76,6 +78,20 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
   @Autowired UserCount userCount;
   @Autowired RedissonClient redissonClient;
+
+  @Autowired GrpcFactStore store;
+
+  @Test
+  void multipleReInitializations() {
+    for (int i= 0; i < 100; i++) {
+      store.initializeIfNecessary();
+      // TODO should reset here
+    }
+    store.initializeIfNecessary();
+    store.currentTime();
+  }
+
+  // test init actually creates new instances of stubs
 
   @Test
   void allWaysToPublish() {

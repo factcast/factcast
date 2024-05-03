@@ -29,6 +29,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import lombok.Generated;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -75,6 +76,10 @@ public class GrpcFactStore implements FactStore {
 
   private static final String CHANNEL_NAME = "factstore";
 
+  private final Channel channel;
+
+  private final Optional<String> credentials;
+
   private final Resilience resilience;
 
   private RemoteFactStoreBlockingStub blockingStub;
@@ -104,25 +109,10 @@ public class GrpcFactStore implements FactStore {
   }
 
   @Generated
-  GrpcFactStore(
-      @NonNull Channel channel,
-      @NonNull Optional<String> credentials,
-      @NonNull FactCastGrpcClientProperties properties,
-      String clientId) {
-    this(
-        RemoteFactStoreGrpc.newBlockingStub(channel),
-        RemoteFactStoreGrpc.newStub(channel),
-        credentials,
-        properties,
-        clientId);
-  }
-
-  @Generated
   @VisibleForTesting
   GrpcFactStore(@NonNull Channel channel, @NonNull Optional<String> credentials) {
     this(
-        RemoteFactStoreGrpc.newBlockingStub(channel),
-        RemoteFactStoreGrpc.newStub(channel),
+        channel,
         credentials,
         new FactCastGrpcClientProperties(),
         null);
@@ -130,40 +120,15 @@ public class GrpcFactStore implements FactStore {
 
   @VisibleForTesting
   GrpcFactStore(
-      @NonNull RemoteFactStoreBlockingStub newBlockingStub,
-      @NonNull RemoteFactStoreStub newStub,
+      @NonNull Channel channel,
       @NonNull Optional<String> credentials,
       @NonNull FactCastGrpcClientProperties properties,
       @Nullable String clientId) {
-    rawBlockingStub = newBlockingStub;
-    rawStub = newStub;
+    this.channel = channel;
+    this.credentials = credentials;
     this.properties = properties;
     this.clientId = clientId;
-
-    // initially use the raw ones...
-    blockingStub = rawBlockingStub.withWaitForReady();
-    stub = rawStub.withWaitForReady();
-
-    if (properties.getUser() != null && properties.getPassword() != null) {
-      CallCredentials basic =
-          CallCredentialsHelper.basicAuth(properties.getUser(), properties.getPassword());
-      blockingStub = blockingStub.withCallCredentials(basic);
-      stub = stub.withCallCredentials(basic);
-    }
-    // deprecated way of setting credentials but still supported
-    else if (credentials.isPresent()) {
-      String[] sa = credentials.get().split(":");
-      if (sa.length != 2) {
-        throw new IllegalArgumentException(
-            "Credentials in 'grpc.client.factstore.credentials' have to be defined as"
-                + " 'username:password'");
-      }
-      CallCredentials basic = CallCredentialsHelper.basicAuth(sa[0], sa[1]);
-      blockingStub = blockingStub.withCallCredentials(basic);
-      stub = stub.withCallCredentials(basic);
-    }
-
-    resilience = new Resilience(properties.getResilience());
+    this.resilience = new Resilience(properties.getResilience());
   }
 
   @Override
@@ -289,12 +254,38 @@ public class GrpcFactStore implements FactStore {
   @PostConstruct
   public synchronized void initializeIfNecessary() {
     if (!this.initialized.get()) {
+      rawBlockingStub = RemoteFactStoreGrpc.newBlockingStub(channel);
+      rawStub = RemoteFactStoreGrpc.newStub(channel);
+
+      // initially use the raw ones...
+      blockingStub = rawBlockingStub.withWaitForReady();
+      stub = rawStub.withWaitForReady();
+
+      if (properties.getUser() != null && properties.getPassword() != null) {
+        CallCredentials basic =
+            CallCredentialsHelper.basicAuth(properties.getUser(), properties.getPassword());
+        blockingStub = blockingStub.withCallCredentials(basic);
+        stub = stub.withCallCredentials(basic);
+      }
+      // deprecated way of setting credentials but still supported
+      else if (credentials.isPresent()) {
+        String[] sa = credentials.get().split(":");
+        if (sa.length != 2) {
+          throw new IllegalArgumentException(
+              "Credentials in 'grpc.client.factstore.credentials' have to be defined as"
+                  + " 'username:password'");
+        }
+        CallCredentials basic = CallCredentialsHelper.basicAuth(sa[0], sa[1]);
+        blockingStub = blockingStub.withCallCredentials(basic);
+        stub = stub.withCallCredentials(basic);
+      }
+
       log.debug("Invoking handshake");
       Map<String, String> serverProperties;
       ProtocolVersion serverProtocolVersion;
       try {
         MSG_ServerConfig handshake =
-            blockingStub
+            rawBlockingStub
                 .withInterceptors(
                     MetadataUtils.newAttachHeadersInterceptor(createHandshakeMetadata()))
                 .handshake(converter.empty());
@@ -570,6 +561,7 @@ public class GrpcFactStore implements FactStore {
         () -> converter.fromProto(blockingStub.fetchBySerial(converter.toProto(serial))));
   }
 
+  @VisibleForTesting
   void reset() {
     // marks factstore as not initialized, so that a subsequent call needs to go through handshake
     // first. This is used to signal a faulty connection.
