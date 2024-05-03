@@ -133,9 +133,7 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
       proxy.enable();
       fc.publish(Fact.builder().ns("ns").type("type").buildWithoutPayload());
 
-      await()
-          .atMost(1, SECONDS)
-          .untilAsserted(() -> assertThat(count.get()).isEqualTo(MAX_FACTS));
+      await().atMost(1, SECONDS).untilAsserted(() -> assertThat(count.get()).isEqualTo(MAX_FACTS));
     }
 
     assertThat(logCaptor.getInfoLogs()).containsOnlyOnce("Handshake successful.");
