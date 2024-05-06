@@ -16,10 +16,11 @@
 package org.factcast.factus.redis;
 
 import lombok.NonNull;
+import org.factcast.factus.projection.ManagedProjection;
 import org.redisson.api.RedissonClient;
 
 public abstract class AbstractRedisManagedProjection extends AbstractRedisProjection
-    implements RedisManagedProjection {
+    implements ManagedProjection {
   public AbstractRedisManagedProjection(@NonNull RedissonClient redisson) {
     super(redisson);
   }

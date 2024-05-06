@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2022 factcast.org
+ * Copyright © 2017-2023 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.redis;
+package org.factcast.factus.projection.tx;
 
-import org.factcast.factus.projection.ManagedProjection;
+public class TransactionAlreadyRunningException extends TransactionException {
+  public TransactionAlreadyRunningException(String msg) {
+    super(msg);
+  }
 
-public interface RedisManagedProjection extends ManagedProjection, RedisProjection {}
+  public TransactionAlreadyRunningException(Throwable e) {
+    super(e);
+  }
+
+  public TransactionAlreadyRunningException(String msg, Throwable e) {
+    super(msg, e);
+  }
+}

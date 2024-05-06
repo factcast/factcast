@@ -15,38 +15,51 @@
  */
 package org.factcast.factus;
 
-import static org.factcast.factus.metrics.TagKeys.*;
+import static org.factcast.factus.metrics.TagKeys.CLASS;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Iterables;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.time.Instant;
-import lombok.AccessLevel;
-import lombok.Getter;
+import java.util.List;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactStreamInfo;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.BatchingFactObserver;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.metrics.TimedOperation;
 import org.factcast.factus.projection.ProgressAware;
+import org.factcast.factus.projection.tx.TransactionAware;
 
-@RequiredArgsConstructor
 @Slf4j
-abstract class AbstractFactObserver implements FactObserver {
+abstract class AbstractFactObserver extends BatchingFactObserver {
+  private static final int MAX_DEFAULT = 1000;
 
   private final ProgressAware target;
   private final long interval;
   private final FactusMetrics metrics;
 
-  @Getter(AccessLevel.PACKAGE)
-  @VisibleForTesting
-  private FactStreamInfo info;
+  @VisibleForTesting private FactStreamInfo info;
 
   private long lastProgress = System.currentTimeMillis();
   private boolean caughtUp = false;
+
+  protected AbstractFactObserver(ProgressAware target, long interval, FactusMetrics metrics) {
+    super(discoverMaxSize(target));
+
+    this.target = target;
+    this.interval = interval;
+    this.metrics = metrics;
+  }
+
+  private static int discoverMaxSize(ProgressAware target) {
+    if (target instanceof TransactionAware) {
+      return ((TransactionAware) target).maxBatchSizePerTransaction();
+    }
+    return MAX_DEFAULT;
+  }
 
   @Override
   public final void onFactStreamInfo(@NonNull FactStreamInfo info) {
@@ -54,18 +67,26 @@ abstract class AbstractFactObserver implements FactObserver {
     this.info = info;
   }
 
+  @SuppressWarnings("java:S2142")
   @Override
-  public final void onNext(@NonNull Fact element) {
-    onNextFact(element);
+  public final void onNext(@NonNull List<Fact> elements) {
 
-    if (caughtUp) {
-      reportProcessingLatency(element);
+    if (caughtUp && !elements.isEmpty()) {
+      // only the first will be reported as it is the oldest one
+      reportProcessingLatency(elements.get(0));
     }
 
+    onNextFacts(elements);
+
     // not yet caught up
-    if (info != null && System.currentTimeMillis() - lastProgress > interval) {
-      lastProgress = System.currentTimeMillis();
-      target.catchupPercentage(info.calculatePercentage(element.serial()));
+    long now = System.currentTimeMillis();
+    if (info != null && now - lastProgress > interval) {
+      lastProgress = now;
+      Fact last = Iterables.getLast(elements);
+      if (last != null) {
+        //noinspection DataFlowIssue
+        target.catchupPercentage(info.calculatePercentage(last.header().serial()));
+      }
     }
   }
 
@@ -83,11 +104,13 @@ abstract class AbstractFactObserver implements FactObserver {
   }
 
   @VisibleForTesting
+  // intentionally not async, as metrics timed already is.
   void reportProcessingLatency(@NonNull Fact element) {
+    long nowInMillis = Instant.now().toEpochMilli();
     String ts = element.meta("_ts");
     // _ts might not be there in unit testing for instance.
     if (ts != null) {
-      long latency = Instant.now().toEpochMilli() - Long.parseLong(ts);
+      long latency = nowInMillis - Long.parseLong(ts);
       metrics.timed(
           TimedOperation.EVENT_PROCESSING_LATENCY,
           Tags.of(Tag.of(CLASS, target.getClass().getName())),
@@ -97,5 +120,9 @@ abstract class AbstractFactObserver implements FactObserver {
 
   protected abstract void onCatchupSignal();
 
-  protected abstract void onNextFact(Fact element);
+  protected abstract void onNextFacts(List<Fact> element);
+
+  FactStreamInfo info() {
+    return this.info;
+  }
 }

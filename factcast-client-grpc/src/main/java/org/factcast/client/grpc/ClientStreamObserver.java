@@ -126,6 +126,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
       case Fact:
         log.trace("received single fact");
         subscription.notifyElement(converter.fromProto(f.getFact()));
+        subscription.flush();
         break;
       case Facts:
         List<Fact> facts = converter.fromProto(f.getFacts());
@@ -133,9 +134,8 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
             "received {} facts translating to {} decompressed bytes",
             facts.size(),
             f.getSerializedSize());
-        // TODO batching
-        // subscription.notifyElements(facts);
         facts.forEach(subscription::notifyElement);
+        subscription.flush();
         break;
       case Ffwd:
         log.debug("received fastforward signal");

@@ -26,10 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
-import org.factcast.core.subscription.FactStreamInfo;
-import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionClosedException;
-import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.util.ExceptionHelper;
 
@@ -157,7 +154,7 @@ public class ResilientGrpcSubscription implements Subscription {
   @VisibleForTesting
   protected void doConnect() {
     resilience.registerAttempt();
-    SubscriptionRequestTO to = SubscriptionRequestTO.forFacts(originalRequest);
+    SubscriptionRequestTO to = SubscriptionRequestTO.from(originalRequest);
     FactStreamPosition last = lastPosition.get();
     if (last != null) {
       to.startingAfter(last.factId());
@@ -196,7 +193,6 @@ public class ResilientGrpcSubscription implements Subscription {
     void accept(T t, U u) throws TimeoutException;
   }
 
-  // TODO batching
   class DelegatingFactObserver implements FactObserver {
     @Override
     public void onNext(@NonNull Fact element) {
@@ -242,6 +238,11 @@ public class ResilientGrpcSubscription implements Subscription {
     @Override
     public void onFactStreamInfo(@NonNull FactStreamInfo info) {
       originalObserver.onFactStreamInfo(info);
+    }
+
+    @Override
+    public void flush() {
+      originalObserver.flush();
     }
   }
 

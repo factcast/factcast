@@ -247,19 +247,14 @@ public class GrpcFactStore implements FactStore {
   @Override
   @NonNull
   public Subscription subscribe(
-      @NonNull SubscriptionRequestTO req,
-
-      // TODO batching
-      @NonNull FactObserver observer) {
+      @NonNull SubscriptionRequestTO req, @NonNull FactObserver observer) {
     if (properties.getResilience().isEnabled())
       return new ResilientGrpcSubscription(this, req, observer, properties.getResilience());
     else return internalSubscribe(req, observer);
   }
 
   public Subscription internalSubscribe(
-      @NonNull SubscriptionRequestTO req,
-      // TODO batching
-      @NonNull FactObserver observer) {
+      @NonNull SubscriptionRequestTO req, @NonNull FactObserver observer) {
     return callAndHandle(
         () -> {
           InternalSubscription subscription = SubscriptionImpl.on(observer);

@@ -25,10 +25,10 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.TestFactStreamPosition;
-import org.factcast.factus.redis.batch.RedissonBatchManager;
-import org.factcast.factus.redis.tx.RedissonTxManager;
+import org.factcast.factus.redis.tx.RedisTransactional;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -64,6 +64,53 @@ class AbstractRedisManagedProjectionTest {
   }
 
   @Nested
+  class WhenInspectingClass {
+    @Test
+    void getMaxSizeDefault() {
+      Assertions.assertThat(underTest.maxBatchSizePerTransaction()).isEqualTo(1000);
+    }
+
+    @Test
+    void getOptionsDefault() {
+      // unfortunately, TransactionOptions do not implement hashcode/equals, so we have to compare
+      // field by field
+      // https://github.com/redisson/redisson/issues/5834
+      Assertions.assertThat(underTest.transactionOptions().getResponseTimeout())
+          .isEqualTo(TransactionOptions.defaults().getResponseTimeout());
+      Assertions.assertThat(underTest.transactionOptions().getTimeout())
+          .isEqualTo(TransactionOptions.defaults().getTimeout());
+      Assertions.assertThat(underTest.transactionOptions().getRetryAttempts())
+          .isEqualTo(TransactionOptions.defaults().getRetryAttempts());
+      Assertions.assertThat(underTest.transactionOptions().getRetryInterval())
+          .isEqualTo(TransactionOptions.defaults().getRetryInterval());
+      Assertions.assertThat(underTest.transactionOptions().getSyncSlaves())
+          .isEqualTo(TransactionOptions.defaults().getSyncSlaves());
+      Assertions.assertThat(underTest.transactionOptions().getSyncTimeout())
+          .isEqualTo(TransactionOptions.defaults().getSyncTimeout());
+    }
+
+    @Test
+    void getOptionsTweaked() {
+      AbstractRedisProjection underTest = new ProjectionWithBulkSet(mock(RedissonClient.class));
+      Assertions.assertThat(underTest.transactionOptions().getResponseTimeout()).isEqualTo(112);
+    }
+
+    @RedisTransactional(bulkSize = 12, responseTimeout = 112)
+    @ProjectionMetaData(revision = 1)
+    class ProjectionWithBulkSet extends AbstractRedisProjection {
+      protected ProjectionWithBulkSet(@NonNull RedissonClient redisson) {
+        super(redisson);
+      }
+    }
+
+    @Test
+    void getMaxSize() {
+      AbstractRedisProjection underTest = new ProjectionWithBulkSet(mock(RedissonClient.class));
+      assertThat(underTest.maxBatchSizePerTransaction()).isEqualTo(12);
+    }
+  }
+
+  @Nested
   class BucketFromTx {
 
     @Test
@@ -82,28 +129,9 @@ class AbstractRedisManagedProjectionTest {
   }
 
   @Nested
-  class BucketFromBatch {
-    @Test
-    void happyPath() {
-      RBucket<Object> bucket = mock(RBucket.class);
-      RBatch batch = mock(RBatch.class);
-      when(batch.getBucket(any(), any())).thenReturn(bucket);
-
-      assertThat(underTest.stateBucket(batch))
-          .isNotNull()
-          .isInstanceOf(RBucket.class)
-          .isSameAs(bucket);
-      verify(batch)
-          .getBucket(underTest.redisKey() + "_state_tracking", FactStreamPositionCodec.INSTANCE);
-    }
-  }
-
-  @Nested
   class WhenGettingState {
     @Test
     void nonRunningTransaction() {
-      RedissonTxManager man = RedissonTxManager.get(redisson);
-      man.rollback();
 
       UUID id = new UUID(23, 43);
       RBucket<Object> bucket = mock(RBucket.class);
@@ -122,8 +150,7 @@ class AbstractRedisManagedProjectionTest {
       RTransaction tx = mock(RTransaction.class);
       when(redisson.createTransaction(any())).thenReturn(tx);
 
-      RedissonTxManager man = RedissonTxManager.get(redisson);
-      man.startOrJoin();
+      underTest.begin();
 
       FactStreamPosition pos = org.factcast.core.TestFactStreamPosition.random();
       RBucket<Object> bucket = mock(RBucket.class);
@@ -142,8 +169,6 @@ class AbstractRedisManagedProjectionTest {
 
     @Test
     void nonRunningTransaction() {
-      RedissonBatchManager.get(redisson).discard();
-      RedissonTxManager.get(redisson).rollback();
 
       RBucket<Object> bucket = mock(RBucket.class);
       when(redisson.getBucket(any(), any())).thenReturn(bucket);
@@ -155,14 +180,11 @@ class AbstractRedisManagedProjectionTest {
 
     @Test
     void runningTransaction() {
-      RedissonBatchManager.get(redisson).discard();
-      RedissonTxManager.get(redisson).rollback();
 
       RTransaction tx = mock(RTransaction.class);
       when(redisson.createTransaction(any())).thenReturn(tx);
 
-      RedissonTxManager man = RedissonTxManager.get(redisson);
-      man.startOrJoin();
+      underTest.begin();
 
       RBucket<Object> bucket = mock(RBucket.class);
       when(tx.getBucket(any(), any())).thenReturn(bucket);
@@ -173,29 +195,7 @@ class AbstractRedisManagedProjectionTest {
     }
 
     @Test
-    void runningBatch() {
-
-      RedissonBatchManager.get(redisson).discard();
-      RedissonTxManager.get(redisson).rollback();
-
-      RBatch batch = mock(RBatch.class);
-      when(redisson.createBatch(any())).thenReturn(batch);
-
-      RedissonBatchManager man = RedissonBatchManager.get(redisson);
-      man.startOrJoin();
-
-      RBucket<Object> bucket = mock(RBucket.class);
-      when(batch.getBucket(any(), any())).thenReturn(bucket);
-
-      underTest.factStreamPosition(FACT_STREAM_POSITION);
-
-      verify(bucket).setAsync(FACT_STREAM_POSITION);
-    }
-
-    @Test
     void noTxnoBatch() {
-      RedissonBatchManager.get(redisson).discard();
-      RedissonTxManager.get(redisson).rollback();
 
       RBucket<Object> bucket = mock(RBucket.class);
       when(redisson.getBucket(any(), any())).thenReturn(bucket);
@@ -203,6 +203,26 @@ class AbstractRedisManagedProjectionTest {
       underTest.factStreamPosition(FACT_STREAM_POSITION);
 
       verify(bucket).set(FACT_STREAM_POSITION);
+    }
+  }
+
+  @Nested
+  class WhenComitting {
+    @Test
+    void delegates() {
+      underTest.commit(tx);
+
+      verify(tx).commit();
+    }
+  }
+
+  @Nested
+  class WhenRollingBack {
+    @Test
+    void delegates() {
+      underTest.rollback(tx);
+
+      verify(tx).rollback();
     }
   }
 

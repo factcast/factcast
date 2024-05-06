@@ -16,112 +16,163 @@
 package org.factcast.factus.projector;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
-import org.factcast.core.FactHeader;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.spec.FactSpecCoordinates;
+import org.factcast.core.util.ExceptionHelper;
 import org.factcast.factus.*;
 import org.factcast.factus.SuppressFactusWarnings.Warning;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.EventSerializer;
-import org.factcast.factus.projection.Aggregate;
-import org.factcast.factus.projection.AggregateUtil;
-import org.factcast.factus.projection.FactStreamPositionAware;
-import org.factcast.factus.projection.Projection;
+import org.factcast.factus.projection.*;
+import org.factcast.factus.projection.parameter.HandlerParameterContributor;
+import org.factcast.factus.projection.parameter.HandlerParameterContributors;
+import org.factcast.factus.projection.parameter.HandlerParameterProvider;
+import org.factcast.factus.projection.parameter.HandlerParameterTransformer;
+import org.factcast.factus.projection.tx.AbstractOpenTransactionAwareProjection;
+import org.factcast.factus.projection.tx.TransactionAware;
+import org.factcast.factus.projection.tx.TransactionException;
 
 @Slf4j
 public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
   private static final Map<Class<? extends Projection>, Map<FactSpecCoordinates, Dispatcher>>
       dispatcherCache = new ConcurrentHashMap<>();
-  private final EventSerializer serializer;
   private final Projection projection;
+
+  @Getter(value = AccessLevel.PROTECTED, onMethod_ = @VisibleForTesting)
   private final Map<FactSpecCoordinates, Dispatcher> dispatchInfo;
-  private final List<ProjectorLens> lenses;
-  private FactStreamPosition lastStateSet = null;
+
+  private final HandlerParameterContributors generalContributors;
 
   interface TargetObjectResolver extends Function<Projection, Object> {}
 
-  interface ParameterTransformer extends Function<Fact, Object[]> {}
-
-  @VisibleForTesting
-  public ProjectorImpl(EventSerializer ctx, Projection p) {
-    serializer = ctx;
+  public ProjectorImpl(
+      @NonNull Projection p,
+      @NonNull EventSerializer serializer,
+      @NonNull HandlerParameterContributors parameterContributors) {
+    generalContributors = parameterContributors;
     projection = p;
-    lenses =
-        ProjectorPlugin.discovered.stream()
-            .map(plugin -> plugin.lensFor(p))
-            .filter(Objects::nonNull)
-            .flatMap(Collection::stream)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
-
     dispatchInfo =
         dispatcherCache.computeIfAbsent(
-            ReflectionTools.getRelevantClass(p), c -> discoverDispatchInfo(ctx, p));
+            ReflectionTools.getRelevantClass(p), c -> discoverDispatchInfo(serializer, p));
   }
 
-  private ParameterTransformer createParameterTransformer(Method m) {
-
-    Class<?>[] parameterTypes = m.getParameterTypes();
-    return p -> {
-      Object[] parameters = new Object[parameterTypes.length];
-
-      for (int i = 0; i < parameterTypes.length; i++) {
-        Class<?> type = parameterTypes[i];
-        Function<Fact, ?> transformer = createSingleParameterTransformer(m, type);
-        parameters[i] = transformer.apply(p);
-      }
-      return parameters;
-    };
-  }
-
-  @SuppressWarnings("unchecked")
-  private Function<Fact, ?> createSingleParameterTransformer(Method m, Class<?> type) {
-
-    if (EventObject.class.isAssignableFrom(type)) {
-      return p -> serializer.deserialize((Class<? extends EventObject>) type, p.jsonPayload());
-    }
-
-    if (Fact.class == type) {
-      return p -> p;
-    }
-
-    if (FactHeader.class == type) {
-      return Fact::header;
-    }
-
-    if (UUID.class == type) {
-      return Fact::id;
-    }
-
-    for (ProjectorLens p : lenses) {
-      Function<Fact, ?> transformerOrNull = p.parameterTransformerFor(type);
-      if (transformerOrNull != null) {
-        // first one wins
-        return transformerOrNull;
-      }
-    }
-
-    throw new InvalidHandlerDefinition(
-        "Don't know how resolve " + type + " from a Fact for a parameter to method:\n " + m);
+  /**
+   * for compatibility
+   *
+   * @param p
+   * @param es
+   * @deprecated
+   */
+  @Deprecated
+  public ProjectorImpl(@NonNull Projection p, @NonNull EventSerializer es) {
+    this(p, es, new HandlerParameterContributors(es));
   }
 
   @Override
-  public void apply(@NonNull Fact f) {
+  public void apply(@NonNull List<Fact> facts) {
+    doApply(facts);
+  }
+
+  public void doApply(@NonNull List<Fact> facts) {
+
+    beginIfTransactional();
+
+    // remember that IF this fails, we throw an expecption anyway, so that we wont reuse this info
+    FactStreamPosition latestSuccessful = null;
+
+    for (Fact f : facts) {
+
+      try {
+        callHandlerFor(f);
+        latestSuccessful = FactStreamPosition.from(f);
+      } catch (Exception e) {
+        log.trace(
+            "returned with Exception {}:",
+            latestSuccessful == null ? null : latestSuccessful.factId(),
+            e);
+        rollbackIfTransactional();
+        retryApplicableIfTransactional(facts, f);
+
+        // pass along and potentially rethrow
+        projection.onError(e);
+        throw ExceptionHelper.toRuntime(e);
+      }
+    } // end loop
+
+    try {
+      // this is something we only do, if the whole batch was successfully applied
+      if (latestSuccessful != null) {
+        setFactStreamPositionIfAware(latestSuccessful);
+      }
+    } catch (Exception e) {
+
+      rollbackIfTransactional();
+
+      // pass along and potentially rethrow
+      projection.onError(e);
+      throw e;
+    }
+
+    try {
+      commitIfTransactional();
+    } catch (TransactionException e) {
+      // pass along and potentially rethrow
+      projection.onError(e);
+      throw e;
+    }
+  }
+
+  @VisibleForTesting
+  void retryApplicableIfTransactional(List<Fact> facts, Fact f) {
+    if (projection instanceof TransactionAware) {
+      // retry [0,n-1]
+      List<Fact> applicableFacts = facts.subList(0, facts.indexOf(f));
+      int applicableSize = applicableFacts.size();
+      if (applicableSize > 0) {
+        log.warn("Exception during batch application, reapplying {} facts.", applicableSize);
+        apply(applicableFacts);
+      }
+    }
+  }
+
+  @VisibleForTesting
+  void beginIfTransactional() {
+    if (projection instanceof TransactionAware) ((TransactionAware) projection).begin();
+  }
+
+  @VisibleForTesting
+  void rollbackIfTransactional() {
+    if (projection instanceof TransactionAware) ((TransactionAware) projection).rollback();
+  }
+
+  @VisibleForTesting
+  void commitIfTransactional() {
+    if (projection instanceof TransactionAware) ((TransactionAware) projection).commit();
+  }
+
+  private void setFactStreamPositionIfAware(@NonNull FactStreamPosition latestAttempted) {
+    if (projection instanceof FactStreamPositionAware)
+      ((FactStreamPositionAware) projection).factStreamPosition(latestAttempted);
+  }
+
+  private UUID callHandlerFor(@NonNull Fact f)
+      throws InvocationTargetException, IllegalAccessException {
     UUID factId = f.id();
     log.trace("Dispatching fact {}", factId);
     FactSpecCoordinates coords = FactSpecCoordinates.from(f);
@@ -137,49 +188,36 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       projection.onError(ihd);
       throw ihd;
     }
+    dispatch.invoke(projection, f);
 
-    try {
-      lenses.forEach(l -> l.beforeFactProcessing(f));
-      dispatch.invoke(projection, f, createParameterTransformer(dispatch.dispatchMethod));
-
-      if (projection instanceof FactStreamPositionAware) {
-        boolean skip =
-            lenses.stream()
-                .map(ProjectorLens::skipStateUpdate)
-                .reduce(false, (r, lens) -> r || lens);
-
-        if (!skip) {
-          FactStreamPosition pos = FactStreamPosition.from(f);
-          ((FactStreamPositionAware) projection).factStreamPosition(pos);
-          lastStateSet = pos;
-        }
-      }
-
-      lenses.forEach(l -> l.afterFactProcessing(f));
-
-    } catch (InvocationTargetException | IllegalAccessException e) {
-      log.trace("returned with Exception {}:", factId, e);
-
-      // inform the lenses
-      lenses.forEach(l -> l.afterFactProcessingFailed(f, e));
-
-      // pass along and potentially rethrow
-      projection.onError(e);
-      throw new IllegalArgumentException(e);
-    } catch (Exception e) {
-
-      // inform the lenses
-      lenses.forEach(l -> l.afterFactProcessingFailed(f, e));
-
-      // pass along and potentially rethrow
-      projection.onError(e);
-      throw e;
-    }
+    return factId;
   }
 
   private Map<FactSpecCoordinates, Dispatcher> discoverDispatchInfo(
       EventSerializer deserializer, Projection p) {
     Map<FactSpecCoordinates, Dispatcher> map = new HashMap<>();
+
+    final HandlerParameterContributors c;
+
+    if (p instanceof AbstractOpenTransactionAwareProjection<?>) {
+
+      Class<?> clazz = ReflectionTools.getTypeParameter((AbstractOpenTransactionAwareProjection) p);
+
+      // we have a parameter contributor to add, then
+      c =
+          generalContributors.withHighestPrio(
+              new HandlerParameterContributor() {
+                @Nullable
+                @Override
+                public HandlerParameterProvider providerFor(
+                    @NonNull Class<?> type, @NonNull Set<Annotation> annotations) {
+                  if (clazz == type)
+                    return (f, p) ->
+                        ((AbstractOpenTransactionAwareProjection<?>) p).runningTransaction();
+                  else return null;
+                }
+              });
+    } else c = this.generalContributors;
 
     Collection<CallTarget> relevantClasses = ReflectionTools.getRelevantClasses(p);
     relevantClasses.forEach(
@@ -193,7 +231,12 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
                     FactSpecCoordinates key = FactSpecCoordinates.from(fs);
 
                     Dispatcher dispatcher =
-                        new Dispatcher(m, callTarget.resolver, fs, deserializer);
+                        new Dispatcher(
+                            m,
+                            HandlerParameterTransformer.forCalling(m, c),
+                            callTarget.resolver,
+                            fs,
+                            deserializer);
                     Dispatcher before = map.put(key, dispatcher);
                     if (before != null) {
                       throw new InvalidHandlerDefinition(
@@ -242,19 +285,15 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
   @Override
   public void onCatchup(@Nullable FactStreamPosition idOfLastFactApplied) {
-    // needs to be taken care if BEFORE delegating to the lenses as they might commit/execute and we
-    // want that state in there.
-    if (projection instanceof FactStreamPositionAware) {
-      if (idOfLastFactApplied != null && (!(idOfLastFactApplied.equals(lastStateSet)))) {
-        ((FactStreamPositionAware) projection).factStreamPosition(idOfLastFactApplied);
-      }
-    }
-
-    for (ProjectorLens lens : lenses) {
-      lens.onCatchup(projection);
-    }
+    // no longer used, might still be interesting as a hook
   }
 
+  /**
+   * expensive method that should be used on initialization only
+   *
+   * @param m
+   * @return
+   */
   @VisibleForTesting
   boolean isEventHandlerMethod(Method m) {
     if (m.getAnnotation(Handler.class) != null || m.getAnnotation(HandlerFor.class) != null) {
@@ -279,11 +318,6 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
         }
       }
 
-      for (Class<?> type : m.getParameterTypes()) {
-        // trigger transformer creation in order to fail fast
-        createSingleParameterTransformer(m, type);
-      }
-
       // exclude MockitoMocks
       return !m.getDeclaringClass().getName().contains("$MockitoMock");
     }
@@ -295,18 +329,28 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
   static class Dispatcher {
 
     @NonNull Method dispatchMethod;
+    @NonNull HandlerParameterTransformer transformer;
 
-    @NonNull ProjectorImpl.TargetObjectResolver objectResolver;
+    @NonNull TargetObjectResolver objectResolver;
 
     @NonNull FactSpec spec;
 
     @NonNull EventSerializer deserializer;
 
-    void invoke(Projection projection, Fact f, ParameterTransformer pt)
-        throws InvocationTargetException, IllegalAccessException {
+    void invoke(Projection projection, Fact f) {
+      // choose the target object (nested)
       Object targetObject = objectResolver.apply(projection);
-      Object[] parameters = pt.apply(f);
-      dispatchMethod.invoke(targetObject, parameters);
+      // create actual parameters
+      Object[] parameters = transformer.apply(f, projection);
+      // fire
+      try {
+        dispatchMethod.invoke(targetObject, parameters);
+      } catch (IllegalAccessException e) {
+        throw ExceptionHelper.toRuntime(e);
+      } catch (InvocationTargetException e) {
+        // unwrap
+        throw ExceptionHelper.toRuntime(e.getCause());
+      }
     }
   }
 
@@ -317,6 +361,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     TargetObjectResolver resolver;
   }
 
+  @UtilityClass
   static class ReflectionTools {
     private static Class<? extends Projection> getRelevantClass(@NonNull Projection p) {
       Class<? extends Projection> c = p.getClass();
@@ -431,6 +476,19 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
           | InvocationTargetException e) {
         throw new IllegalStateException("Cannot instantiate " + c, e);
       }
+    }
+
+    @NonNull
+    @VisibleForTesting
+    static Class<?> getTypeParameter(@NonNull AbstractOpenTransactionAwareProjection<?> p) {
+      Class<?> cl = p.getClass();
+
+      // climb to common superclass
+      while (cl.getSuperclass() != AbstractOpenTransactionAwareProjection.class)
+        cl = cl.getSuperclass();
+      // grab type parameter
+      ParameterizedType type = (ParameterizedType) cl.getGenericSuperclass();
+      return (Class<?>) type.getActualTypeArguments()[0];
     }
   }
 }
