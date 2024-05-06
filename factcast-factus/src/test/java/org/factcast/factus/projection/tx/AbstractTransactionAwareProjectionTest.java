@@ -39,7 +39,7 @@ class AbstractTransactionAwareProjectionTest {
   TestTransactionAwareProjection underTest = spy(new TestTransactionAwareProjection());
 
   @Nested
-  class WhenBegining {
+  class WhenBeginning {
     @BeforeEach
     void setup() {}
 
