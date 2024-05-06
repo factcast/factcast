@@ -50,7 +50,6 @@ import org.factcast.grpc.api.conv.ProtocolVersion;
 import org.factcast.grpc.api.conv.ServerConfig;
 import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.FactStoreProto.*;
-import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
 import org.junit.jupiter.api.*;
@@ -61,16 +60,18 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class GrpcFactStoreTest {
 
-  @Mock(lenient = true)
+  @Mock(strictness = Mock.Strictness.LENIENT)
   FactCastGrpcClientProperties properties;
 
-  @Mock(answer = Answers.RETURNS_DEEP_STUBS, lenient = true)
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS, strictness = Mock.Strictness.LENIENT)
   RemoteFactStoreBlockingStub blockingStub;
 
-  @Mock(answer = Answers.RETURNS_DEEP_STUBS, lenient = true)
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS, strictness = Mock.Strictness.LENIENT)
   RemoteFactStoreStub stub;
 
   @Mock Channel channel;
+
+  @Mock FactCastGrpcStubsFactory stubsFactory;
 
   ProtoConverter conv = new ProtoConverter();
 
@@ -87,24 +88,15 @@ class GrpcFactStoreTest {
     when(stub.withWaitForReady()).thenReturn(stub);
     when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
     resilienceConfig.setEnabled(false);
+    when(stubsFactory.createStub(channel)).thenReturn(stub);
+    when(stubsFactory.createBlockingStub(channel)).thenReturn(blockingStub);
 
-    uut = new GrpcFactStore(channel, credentials, properties, "someTest");
-
-    // FIXME refactoring
-    try (MockedStatic<RemoteFactStoreGrpc> remoteStore =
-        Mockito.mockStatic(RemoteFactStoreGrpc.class)) {
-      remoteStore.when(() -> RemoteFactStoreGrpc.newBlockingStub(channel)).thenReturn(blockingStub);
-      remoteStore.when(() -> RemoteFactStoreGrpc.newStub(channel)).thenReturn(stub);
-      when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
-      when(blockingStub.handshake(any()))
-          .thenReturn(
-              conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
-      uut.initializeIfNecessary();
-    }
+    uut = new GrpcFactStore(channel, stubsFactory, credentials, properties, "someTest");
 
     when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
     when(blockingStub.handshake(any()))
         .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
+    uut.initializeIfNecessary();
   }
 
   @Test
@@ -257,19 +249,11 @@ class GrpcFactStoreTest {
 
   @Test
   void testInitializePropagatesIncompatibleProtocolVersionsOnUnavailableStatus() {
-    // FIXME refactoring
-    try (MockedStatic<RemoteFactStoreGrpc> remoteStore =
-        Mockito.mockStatic(RemoteFactStoreGrpc.class)) {
-      remoteStore.when(() -> RemoteFactStoreGrpc.newBlockingStub(channel)).thenReturn(blockingStub);
-      remoteStore.when(() -> RemoteFactStoreGrpc.newStub(channel)).thenReturn(stub);
-      Mockito.reset(
-          blockingStub); // so that re can redefine the handshake behavior, which was set to
-      // returning
-      // a correct version in setup()
-      when(blockingStub.handshake(any())).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
-      uut.reset();
-      assertThrows(IncompatibleProtocolVersions.class, () -> uut.initializeIfNecessary());
-    }
+    Mockito.reset(blockingStub); // so that re can redefine the handshake behavior,
+    // which was set to returning a correct version in setup()
+    when(blockingStub.handshake(any())).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
+    uut.reset();
+    assertThrows(IncompatibleProtocolVersions.class, () -> uut.initializeIfNecessary());
   }
 
   @Test
@@ -314,17 +298,10 @@ class GrpcFactStoreTest {
 
   @Test
   void testIncompatibleProtocolVersion() {
-    // FIXME refactoring
-    try (MockedStatic<RemoteFactStoreGrpc> remoteStore =
-        Mockito.mockStatic(RemoteFactStoreGrpc.class)) {
-      remoteStore.when(() -> RemoteFactStoreGrpc.newBlockingStub(channel)).thenReturn(blockingStub);
-      remoteStore.when(() -> RemoteFactStoreGrpc.newStub(channel)).thenReturn(stub);
-      when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
-      when(blockingStub.handshake(any()))
-          .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(99, 0, 0), new HashMap<>())));
-      uut.reset();
-      assertThrows(IncompatibleProtocolVersions.class, () -> uut.initializeIfNecessary());
-    }
+    when(blockingStub.handshake(any()))
+        .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(99, 0, 0), new HashMap<>())));
+    uut.reset();
+    assertThrows(IncompatibleProtocolVersions.class, () -> uut.initializeIfNecessary());
   }
 
   @Test
@@ -508,50 +485,45 @@ class GrpcFactStoreTest {
       assertThrows(
           IllegalArgumentException.class,
           () ->
-              new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz"))
+              new GrpcFactStore(channel, stubsFactory, Optional.ofNullable("xyz"))
                   .initializeIfNecessary());
 
       assertThrows(
           IllegalArgumentException.class,
           () ->
-              new GrpcFactStore(mock(Channel.class), Optional.ofNullable("x:y:z"))
+              new GrpcFactStore(channel, stubsFactory, Optional.ofNullable("x:y:z"))
                   .initializeIfNecessary());
 
-      assertThat(new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz:abc")))
+      assertThat(new GrpcFactStore(channel, stubsFactory, Optional.ofNullable("xyz:abc")))
           .isNotNull();
     }
 
     @Test
     void testCredentialsRightFormat() {
-      assertThat(new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz:abc")))
+      assertThat(new GrpcFactStore(channel, stubsFactory, Optional.ofNullable("xyz:abc")))
           .isNotNull();
     }
 
     @Test
     void testNewCredentials() {
+      final FactCastGrpcStubsFactory stubsFactory = mock(FactCastGrpcStubsFactory.class);
       final RemoteFactStoreBlockingStub blockingStub = mock(RemoteFactStoreBlockingStub.class);
       final RemoteFactStoreStub stub = mock(RemoteFactStoreStub.class);
       when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
       when(stub.withWaitForReady()).thenReturn(stub);
+      when(stubsFactory.createBlockingStub(channel)).thenReturn(blockingStub);
+      when(stubsFactory.createStub(channel)).thenReturn(stub);
+      when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
+      when(blockingStub.handshake(any()))
+          .thenReturn(
+              conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
 
       final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
       props.setUser("foo");
       props.setPassword("bar");
 
-      GrpcFactStore uutNewCredentials = new GrpcFactStore(channel, Optional.empty(), props, "foo");
-      // FIXME refactoring
-      try (MockedStatic<RemoteFactStoreGrpc> remoteStore =
-          Mockito.mockStatic(RemoteFactStoreGrpc.class)) {
-        remoteStore
-            .when(() -> RemoteFactStoreGrpc.newBlockingStub(channel))
-            .thenReturn(blockingStub);
-        remoteStore.when(() -> RemoteFactStoreGrpc.newStub(channel)).thenReturn(stub);
-        when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
-        when(blockingStub.handshake(any()))
-            .thenReturn(
-                conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
-        uutNewCredentials.initializeIfNecessary();
-      }
+      GrpcFactStore uutNewCredentials = new GrpcFactStore(channel, stubsFactory, Optional.empty(), props, "foo");
+      uutNewCredentials.initializeIfNecessary();
 
       verify(blockingStub).withCallCredentials(any());
       verify(stub).withCallCredentials(any());
@@ -559,29 +531,23 @@ class GrpcFactStoreTest {
 
     @Test
     void testLegacyCredentials() {
+      final FactCastGrpcStubsFactory stubsFactory = mock(FactCastGrpcStubsFactory.class);
       final RemoteFactStoreBlockingStub blockingStub = mock(RemoteFactStoreBlockingStub.class);
       final RemoteFactStoreStub stub = mock(RemoteFactStoreStub.class);
       when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
       when(stub.withWaitForReady()).thenReturn(stub);
+      when(stubsFactory.createBlockingStub(channel)).thenReturn(blockingStub);
+      when(stubsFactory.createStub(channel)).thenReturn(stub);
+      when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
+      when(blockingStub.handshake(any()))
+          .thenReturn(
+              conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
 
       final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
 
       GrpcFactStore uutLegacyCredentials =
-          new GrpcFactStore(channel, Optional.ofNullable("xyz:abc"), props, "foo");
-
-      // FIXME refactoring
-      try (MockedStatic<RemoteFactStoreGrpc> remoteStore =
-          Mockito.mockStatic(RemoteFactStoreGrpc.class)) {
-        remoteStore
-            .when(() -> RemoteFactStoreGrpc.newBlockingStub(channel))
-            .thenReturn(blockingStub);
-        remoteStore.when(() -> RemoteFactStoreGrpc.newStub(channel)).thenReturn(stub);
-        when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
-        when(blockingStub.handshake(any()))
-            .thenReturn(
-                conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
-        uutLegacyCredentials.initializeIfNecessary();
-      }
+          new GrpcFactStore(channel, stubsFactory, Optional.ofNullable("xyz:abc"), props, "foo");
+      uutLegacyCredentials.initializeIfNecessary();
 
       verify(blockingStub).withCallCredentials(any());
       verify(stub).withCallCredentials(any());
@@ -675,6 +641,7 @@ class GrpcFactStoreTest {
     uut =
         new GrpcFactStore(
             mock(Channel.class),
+            mock(FactCastGrpcStubsFactory.class),
             Optional.of("foo:bar"),
             new FactCastGrpcClientProperties(),
             "gurke");
@@ -690,6 +657,7 @@ class GrpcFactStoreTest {
     uut =
         new GrpcFactStore(
             mock(Channel.class),
+            mock(FactCastGrpcStubsFactory.class),
             Optional.of("foo:bar"),
             new FactCastGrpcClientProperties(),
             "gurke");
@@ -702,7 +670,7 @@ class GrpcFactStoreTest {
   @Test
   void testAddClientIdToMetaDoesNotUseNull() {
     Metadata meta = mock(Metadata.class);
-    uut = new GrpcFactStore(mock(Channel.class), Optional.of("foo:bar"));
+    uut = new GrpcFactStore(mock(Channel.class), mock(FactCastGrpcStubsFactory.class), Optional.of("foo:bar"));
 
     uut.addClientIdTo(meta);
 
@@ -780,44 +748,20 @@ class GrpcFactStoreTest {
 
     @Test
     void retriesCall() throws Exception {
-      // FIXME refactoring
-      try (MockedStatic<RemoteFactStoreGrpc> remoteStore =
-          Mockito.mockStatic(RemoteFactStoreGrpc.class)) {
-        remoteStore
-            .when(() -> RemoteFactStoreGrpc.newBlockingStub(channel))
-            .thenReturn(blockingStub);
-        remoteStore.when(() -> RemoteFactStoreGrpc.newStub(channel)).thenReturn(stub);
-        when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
-        when(blockingStub.handshake(any()))
-            .thenReturn(
-                conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
-        resilienceConfig.setEnabled(true).setAttempts(100).setInterval(Duration.ofMillis(100));
-        when(block.call()).thenThrow(new RetryableException(new IOException())).thenReturn(null);
-        uut.callAndHandle(block);
-        verify(blockingStub, times(2)).handshake(any());
-        verify(block, times(2)).call();
-      }
+      resilienceConfig.setEnabled(true).setAttempts(100).setInterval(Duration.ofMillis(100));
+      when(block.call()).thenThrow(new RetryableException(new IOException())).thenReturn(null);
+      uut.callAndHandle(block);
+      verify(blockingStub, times(2)).handshake(any());
+      verify(block, times(2)).call();
     }
 
     @Test
     void retriesRun() throws Exception {
-      // FIXME refactoring
-      try (MockedStatic<RemoteFactStoreGrpc> remoteStore =
-          Mockito.mockStatic(RemoteFactStoreGrpc.class)) {
-        remoteStore
-            .when(() -> RemoteFactStoreGrpc.newBlockingStub(channel))
-            .thenReturn(blockingStub);
-        remoteStore.when(() -> RemoteFactStoreGrpc.newStub(channel)).thenReturn(stub);
-        when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
-        when(blockingStub.handshake(any()))
-            .thenReturn(
-                conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
-        resilienceConfig.setEnabled(true).setAttempts(100).setInterval(Duration.ofMillis(100));
-        doThrow(new RetryableException(new IOException())).doNothing().when(runnable).run();
-        uut.runAndHandle(runnable);
-        verify(blockingStub, times(2)).handshake(any());
-        verify(runnable, times(2)).run();
-      }
+      resilienceConfig.setEnabled(true).setAttempts(100).setInterval(Duration.ofMillis(100));
+      doThrow(new RetryableException(new IOException())).doNothing().when(runnable).run();
+      uut.runAndHandle(runnable);
+      verify(blockingStub, times(2)).handshake(any());
+      verify(runnable, times(2)).run();
     }
 
     @Test
@@ -870,5 +814,19 @@ class GrpcFactStoreTest {
 
     Optional<Fact> result = uut.fetchBySerial(serial);
     assertThat(result).isPresent();
+  }
+
+  @Test
+  void initializationCreatesNewStubs() {
+    int nReInitializations = 100;
+    for (int i = 0; i < nReInitializations; i++) {
+      uut.initializeIfNecessary();
+      uut.reset();
+    }
+    verify(stubsFactory, times(nReInitializations)).createBlockingStub(channel);
+    verify(stubsFactory, times(nReInitializations)).createStub(channel);
+    // should work after multiple re-initializations (issue #2868)
+    uut.initializeIfNecessary();
+    uut.currentTime();
   }
 }
