@@ -48,7 +48,7 @@ class StagedFactsTest {
       Assertions.assertThat(underTest.add(f)).isTrue();
       Assertions.assertThat(underTest.size()).isOne();
 
-      // should not be added, as thelimit would be exceeded:
+      // should not be added, as the limit would be exceeded:
       Assertions.assertThat(underTest.add(f)).isFalse();
       Assertions.assertThat(underTest.size()).isOne();
     }

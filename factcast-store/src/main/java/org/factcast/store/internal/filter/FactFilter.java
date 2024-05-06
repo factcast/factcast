@@ -13,22 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.redis;
+package org.factcast.store.internal.filter;
 
-import lombok.NonNull;
+import java.util.function.*;
 import org.factcast.core.Fact;
-import org.factcast.factus.Handler;
-import org.factcast.factus.redis.batch.RedisBatched;
-import org.factcast.factus.serializer.ProjectionMetaData;
-import org.redisson.api.RedissonClient;
 
-@ProjectionMetaData(revision = 1)
-@RedisBatched
-public class ARedisBatchedManagedProjection extends AbstractRedisManagedProjection {
-  public ARedisBatchedManagedProjection(@NonNull RedissonClient redisson) {
-    super(redisson);
-  }
-
-  @Handler
-  void apply(Fact f) {}
-}
+public interface FactFilter extends Predicate<Fact> {}

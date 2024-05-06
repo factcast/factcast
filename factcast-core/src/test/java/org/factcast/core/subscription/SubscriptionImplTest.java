@@ -305,10 +305,7 @@ class SubscriptionImplTest {
   @Test
   void flushes() {
 
-    class TestObserver implements FactObserver, Flushable {
-      @Override
-      public void flush() {}
-
+    class TestObserver implements FactObserver {
       @Override
       public void onNext(@NonNull Fact element) {}
     }
@@ -317,12 +314,5 @@ class SubscriptionImplTest {
     uut = SubscriptionImpl.on(mock);
     uut.flush();
     verify(mock).flush();
-  }
-
-  @Test
-  void skipsFlushingIfObserverNotFlushable() {
-    uut = SubscriptionImpl.on(obs);
-    uut.flush();
-    verifyNoInteractions(obs);
   }
 }
