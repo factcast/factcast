@@ -23,7 +23,6 @@ import lombok.NonNull;
 import net.devh.boot.grpc.client.channelfactory.GrpcChannelConfigurer;
 import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
 import org.factcast.client.grpc.FactCastGrpcClientProperties;
-import org.factcast.client.grpc.FactCastGrpcStubsFactory;
 import org.factcast.client.grpc.FactCastGrpcStubsFactoryImpl;
 import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.core.store.FactStore;

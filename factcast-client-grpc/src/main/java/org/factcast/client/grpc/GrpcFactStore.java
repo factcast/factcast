@@ -107,7 +107,12 @@ public class GrpcFactStore implements FactStore {
       @NonNull @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
       @NonNull FactCastGrpcClientProperties properties,
       @Nullable String clientId) {
-    this(channelFactory.createChannel(CHANNEL_NAME), stubsFactory, credentials, properties, clientId);
+    this(
+        channelFactory.createChannel(CHANNEL_NAME),
+        stubsFactory,
+        credentials,
+        properties,
+        clientId);
   }
 
   @Generated
