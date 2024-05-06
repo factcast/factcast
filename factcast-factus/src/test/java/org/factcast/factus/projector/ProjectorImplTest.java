@@ -598,6 +598,24 @@ class ProjectorImplTest {
     verify(underTest).apply(Lists.newArrayList(f1, f2, f3, f4, f5, f6));
   }
 
+  @Test
+  void retrySkippedIfFirstIsFailing() {
+    TransactionalProjection projection = new TransactionalProjection();
+    ProjectorImpl<SimpleProjection> underTest =
+        spy(new ProjectorImpl<>(projection, eventSerializer));
+
+    TestFact f1 = new TestFact();
+    TestFact f2 = new TestFact();
+
+    TestFact failing = new TestFact();
+
+    List<Fact> batch = Lists.newArrayList(failing, f1, f2);
+
+    underTest.retryApplicableIfTransactional(batch, failing);
+
+    verify(underTest, never()).apply(any());
+  }
+
   interface SomeTransactionInterface {}
 
   class TransactionalProjection
