@@ -249,31 +249,7 @@ public class GrpcFactStore implements FactStore {
   @PostConstruct
   public synchronized void initializeIfNecessary() {
     if (!this.initialized.get()) {
-      rawBlockingStub = RemoteFactStoreGrpc.newBlockingStub(channel);
-      rawStub = RemoteFactStoreGrpc.newStub(channel);
-
-      // initially use the raw ones...
-      blockingStub = rawBlockingStub.withWaitForReady();
-      stub = rawStub.withWaitForReady();
-
-      if (properties.getUser() != null && properties.getPassword() != null) {
-        CallCredentials basic =
-            CallCredentialsHelper.basicAuth(properties.getUser(), properties.getPassword());
-        blockingStub = blockingStub.withCallCredentials(basic);
-        stub = stub.withCallCredentials(basic);
-      }
-      // deprecated way of setting credentials but still supported
-      else if (credentials.isPresent()) {
-        String[] sa = credentials.get().split(":");
-        if (sa.length != 2) {
-          throw new IllegalArgumentException(
-              "Credentials in 'grpc.client.factstore.credentials' have to be defined as"
-                  + " 'username:password'");
-        }
-        CallCredentials basic = CallCredentialsHelper.basicAuth(sa[0], sa[1]);
-        blockingStub = blockingStub.withCallCredentials(basic);
-        stub = stub.withCallCredentials(basic);
-      }
+      setupStubs();
 
       log.debug("Invoking handshake");
       Map<String, String> serverProperties;
@@ -301,6 +277,34 @@ public class GrpcFactStore implements FactStore {
 
       initialized.set(true);
       log.info("Handshake successful.");
+    }
+  }
+
+  private void setupStubs() {
+    rawBlockingStub = RemoteFactStoreGrpc.newBlockingStub(channel);
+    rawStub = RemoteFactStoreGrpc.newStub(channel);
+
+    // initially use the raw ones...
+    blockingStub = rawBlockingStub.withWaitForReady();
+    stub = rawStub.withWaitForReady();
+
+    if (properties.getUser() != null && properties.getPassword() != null) {
+      CallCredentials basic =
+          CallCredentialsHelper.basicAuth(properties.getUser(), properties.getPassword());
+      blockingStub = blockingStub.withCallCredentials(basic);
+      stub = stub.withCallCredentials(basic);
+    }
+    // deprecated way of setting credentials but still supported
+    else if (credentials.isPresent()) {
+      String[] sa = credentials.get().split(":");
+      if (sa.length != 2) {
+        throw new IllegalArgumentException(
+            "Credentials in 'grpc.client.factstore.credentials' have to be defined as"
+                + " 'username:password'");
+      }
+      CallCredentials basic = CallCredentialsHelper.basicAuth(sa[0], sa[1]);
+      blockingStub = blockingStub.withCallCredentials(basic);
+      stub = stub.withCallCredentials(basic);
     }
   }
 

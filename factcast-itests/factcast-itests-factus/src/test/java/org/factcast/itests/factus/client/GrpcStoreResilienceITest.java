@@ -37,6 +37,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 
@@ -50,7 +51,6 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
   static final int NUMBER_OF_ATTEMPTS = 99;
 
   private static final int MAX_FACTS = 10000;
-  private static final long LATENCY = 2000;
   @Autowired FactCast fc;
   FactCastProxy proxy;
 
@@ -65,6 +65,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
   }
 
   @SneakyThrows
+  @DirtiesContext
   @Test
   void testRetryBehaviorWithoutResponse() {
 
@@ -92,6 +93,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
   }
 
   @SneakyThrows
+  @DirtiesContext
   @Test
   void testConcurrentRetryBehaviorWithoutResponse() {
     LogCaptor logCaptor = LogCaptor.forClass(GrpcFactStore.class);
@@ -133,6 +135,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
   }
 
   @SneakyThrows
+  @DirtiesContext
   @Test
   void testRetryBehaviorWithResponse() {
 
@@ -158,12 +161,13 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
   }
 
   @SneakyThrows
+  @DirtiesContext
   @Test
   void testRetryBehaviorWithResponseBreakingDownstream() {
 
     fc.publish(Fact.builder().ns("ns").type("type").buildWithoutPayload());
 
-    // break upstream call
+    // break downstream call
     proxy.toxics().limitData("break every byte", ToxicDirection.DOWNSTREAM, 1);
 
     new Timer()
@@ -183,6 +187,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
   }
 
   @SneakyThrows
+  @DirtiesContext
   @Test
   void testConcurrentRetryBehaviorWithResponse() {
     LogCaptor logCaptor = LogCaptor.forClass(GrpcFactStore.class);
