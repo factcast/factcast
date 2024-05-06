@@ -54,7 +54,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       dispatcherCache = new ConcurrentHashMap<>();
   private final Projection projection;
 
-  @Getter(value = AccessLevel.PROTECTED, onMethod_ = @VisibleForTesting)
+  @Getter(value = AccessLevel.PROTECTED)
   private final Map<FactSpecCoordinates, Dispatcher> dispatchInfo;
 
   private final HandlerParameterContributors generalContributors;
