@@ -522,7 +522,8 @@ class GrpcFactStoreTest {
       props.setUser("foo");
       props.setPassword("bar");
 
-      GrpcFactStore uutNewCredentials = new GrpcFactStore(channel, stubsFactory, Optional.empty(), props, "foo");
+      GrpcFactStore uutNewCredentials =
+          new GrpcFactStore(channel, stubsFactory, Optional.empty(), props, "foo");
       uutNewCredentials.initializeIfNecessary();
 
       verify(blockingStub).withCallCredentials(any());
@@ -670,7 +671,9 @@ class GrpcFactStoreTest {
   @Test
   void testAddClientIdToMetaDoesNotUseNull() {
     Metadata meta = mock(Metadata.class);
-    uut = new GrpcFactStore(mock(Channel.class), mock(FactCastGrpcStubsFactory.class), Optional.of("foo:bar"));
+    uut =
+        new GrpcFactStore(
+            mock(Channel.class), mock(FactCastGrpcStubsFactory.class), Optional.of("foo:bar"));
 
     uut.addClientIdTo(meta);
 
