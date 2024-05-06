@@ -506,18 +506,6 @@ class GrpcFactStoreTest {
 
     @Test
     void testNewCredentials() {
-      final FactCastGrpcStubsFactory stubsFactory = mock(FactCastGrpcStubsFactory.class);
-      final RemoteFactStoreBlockingStub blockingStub = mock(RemoteFactStoreBlockingStub.class);
-      final RemoteFactStoreStub stub = mock(RemoteFactStoreStub.class);
-      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
-      when(stub.withWaitForReady()).thenReturn(stub);
-      when(stubsFactory.createBlockingStub(channel)).thenReturn(blockingStub);
-      when(stubsFactory.createStub(channel)).thenReturn(stub);
-      when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
-      when(blockingStub.handshake(any()))
-          .thenReturn(
-              conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
-
       final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
       props.setUser("foo");
       props.setPassword("bar");
@@ -532,18 +520,6 @@ class GrpcFactStoreTest {
 
     @Test
     void testLegacyCredentials() {
-      final FactCastGrpcStubsFactory stubsFactory = mock(FactCastGrpcStubsFactory.class);
-      final RemoteFactStoreBlockingStub blockingStub = mock(RemoteFactStoreBlockingStub.class);
-      final RemoteFactStoreStub stub = mock(RemoteFactStoreStub.class);
-      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
-      when(stub.withWaitForReady()).thenReturn(stub);
-      when(stubsFactory.createBlockingStub(channel)).thenReturn(blockingStub);
-      when(stubsFactory.createStub(channel)).thenReturn(stub);
-      when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
-      when(blockingStub.handshake(any()))
-          .thenReturn(
-              conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
-
       final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
 
       GrpcFactStore uutLegacyCredentials =
