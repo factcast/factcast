@@ -480,7 +480,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
     @NonNull
     @VisibleForTesting
-    static Class<?> getTypeParameter(@NonNull AbstractOpenTransactionAwareProjection p) {
+    static Class<?> getTypeParameter(@NonNull AbstractOpenTransactionAwareProjection<?> p) {
       Class<?> cl = p.getClass();
 
       // climb to common superclass
