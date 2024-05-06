@@ -58,8 +58,19 @@ When designing a projector plugin you'll need to consider the following aspects:
 
 ### Projections without Transaction Safety
 
+- Implement the `Projection` interface
+
 ### Transaction Aware Projections
 
-### Open Transaction Aware Projections
+There are two types of transaction aware projections. No matter which one you choose the implementation for your custom XX
+will mostly the same.
+
+#### Normal Transaction Aware Projections
+
+- Implement the `AbstractTransactionAwareProjection` interface
+
+#### Open Transaction Aware Projections
+
+- Implement the `AbstractOpenTransactionAwareProjection` interface
 
 - the database needs to support the capability of batching write items (that might affect the same entity) within a transaction that can be collectively rolled back in case of failure.
