@@ -16,7 +16,7 @@
 package org.factcast.factus.projector;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Lists;
 import java.lang.reflect.Method;
@@ -28,23 +28,22 @@ import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.Value;
 import org.assertj.core.util.Maps;
-import org.factcast.core.Fact;
-import org.factcast.core.FactHeader;
-import org.factcast.core.FactStreamPosition;
-import org.factcast.core.TestFactStreamPosition;
+import org.factcast.core.*;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.*;
 import org.factcast.factus.event.DefaultEventSerializer;
 import org.factcast.factus.event.EventSerializer;
+import org.factcast.factus.projection.LocalManagedProjection;
 import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projection.parameter.HandlerParameterContributors;
+import org.factcast.factus.projection.tx.TransactionAware;
+import org.factcast.factus.projection.tx.TransactionException;
 import org.factcast.factus.projector.ProjectorImpl.ReflectionTools;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-/** Blackbox test, we are wiring real objects into the test class, no mocks. */
 class ProjectorImplTest {
 
   private final DefaultEventSerializer eventSerializer =
@@ -539,27 +538,24 @@ class ProjectorImplTest {
   public void detectsSingleMeta() {
     FactSpec spec = FactSpec.ns("ns");
     Method m = HandlerMethdsWithAdditionalFilters.class.getMethod("applyWithOneMeta", Fact.class);
-    ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
+    ReflectionTools.addOptionalFilterInfo(m, spec);
 
-    assertThat(spec.meta()).containsEntry("foo", "bar");
-    assertThat(spec.meta()).hasSize(1);
+    assertThat(spec.meta()).containsEntry("foo", "bar").hasSize(1);
   }
 
   @SneakyThrows
   @Test
-  public void detectsMultiMeta() {
+  void detectsMultiMeta() {
     FactSpec spec = FactSpec.ns("ns");
     Method m = HandlerMethdsWithAdditionalFilters.class.getMethod("applyWithMultiMeta", Fact.class);
-    ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
+    ReflectionTools.addOptionalFilterInfo(m, spec);
 
-    assertThat(spec.meta()).containsEntry("foo", "bar");
-    assertThat(spec.meta()).containsEntry("bar", "baz");
-    assertThat(spec.meta()).hasSize(2);
+    assertThat(spec.meta()).containsEntry("foo", "bar").containsEntry("bar", "baz").hasSize(2);
   }
 
   @SneakyThrows
   @Test
-  public void detectsAggId() {
+  void detectsAggId() {
     FactSpec spec = FactSpec.ns("ns");
     Method m = HandlerMethdsWithAdditionalFilters.class.getMethod("applyWithAggId", Fact.class);
     ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
@@ -569,7 +565,7 @@ class ProjectorImplTest {
 
   @SneakyThrows
   @Test
-  public void detectsFilterScript() {
+  void detectsFilterScript() {
     FactSpec spec = FactSpec.ns("ns");
     Method m =
         HandlerMethdsWithAdditionalFilters.class.getMethod("applyWithFilterScript", Fact.class);
@@ -577,5 +573,72 @@ class ProjectorImplTest {
 
     assertThat(spec.filterScript())
         .isEqualTo(org.factcast.core.spec.FilterScript.js("function myfilter(e){}"));
+  }
+
+  @Test
+  void retryBatchUntilfailingFact() {
+    TransactionalProjection projection = new TransactionalProjection();
+    ProjectorImpl<SimpleProjection> underTest =
+        spy(new ProjectorImpl<>(projection, eventSerializer));
+
+    TestFact f1 = new TestFact();
+    TestFact f2 = new TestFact();
+    TestFact f3 = new TestFact();
+    TestFact f4 = new TestFact();
+    TestFact f5 = new TestFact();
+    TestFact f6 = new TestFact();
+    TestFact f8 = new TestFact();
+    TestFact failing = new TestFact();
+
+    List<Fact> batch = Lists.newArrayList(f1, f2, f3, f4, f5, f6, failing, f8);
+
+    underTest.retryApplicableIfTransactional(batch, failing);
+
+    verify(underTest).apply(Lists.newArrayList(f1, f2, f3, f4, f5, f6));
+  }
+
+  class TransactionalProjection extends LocalManagedProjection implements TransactionAware {
+
+    @Override
+    public void begin() throws TransactionException {}
+
+    @Override
+    public void commit() throws TransactionException {}
+
+    @Override
+    public void rollback() throws TransactionException {}
+
+    @HandlerFor(ns = "default", type = "test")
+    void apply(Fact f) {}
+  }
+
+  @Test
+  void commitTx() {
+    TransactionalProjection projection = spy(new TransactionalProjection());
+    ProjectorImpl<SimpleProjection> underTest =
+        spy(new ProjectorImpl<>(projection, eventSerializer));
+    underTest.commitIfTransactional();
+
+    verify(projection).commit();
+  }
+
+  @Test
+  void rollbackTx() {
+    TransactionalProjection projection = spy(new TransactionalProjection());
+    ProjectorImpl<SimpleProjection> underTest =
+        spy(new ProjectorImpl<>(projection, eventSerializer));
+    underTest.rollbackIfTransactional();
+
+    verify(projection).rollback();
+  }
+
+  @Test
+  void beginTx() {
+    TransactionalProjection projection = spy(new TransactionalProjection());
+    ProjectorImpl<SimpleProjection> underTest =
+        spy(new ProjectorImpl<>(projection, eventSerializer));
+    underTest.beginIfTransactional();
+
+    verify(projection).begin();
   }
 }

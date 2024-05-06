@@ -138,7 +138,8 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     }
   }
 
-  private void retryApplicableIfTransactional(List<Fact> facts, Fact f) {
+  @VisibleForTesting
+  void retryApplicableIfTransactional(List<Fact> facts, Fact f) {
     if (projection instanceof TransactionAware) {
       // retry [0,n-1]
       List<Fact> applicableFacts = facts.subList(0, facts.indexOf(f));
@@ -150,15 +151,18 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     }
   }
 
-  private void beginIfTransactional() {
+  @VisibleForTesting
+  void beginIfTransactional() {
     if (projection instanceof TransactionAware) ((TransactionAware) projection).begin();
   }
 
-  private void rollbackIfTransactional() {
+  @VisibleForTesting
+  void rollbackIfTransactional() {
     if (projection instanceof TransactionAware) ((TransactionAware) projection).rollback();
   }
 
-  private void commitIfTransactional() {
+  @VisibleForTesting
+  void commitIfTransactional() {
     if (projection instanceof TransactionAware) ((TransactionAware) projection).commit();
   }
 
