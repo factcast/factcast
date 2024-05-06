@@ -666,10 +666,10 @@ class ProjectorImplTest {
   }
 
   @Nested
-  class WhanFindingTypeParameter {
+  class WhenFindingTypeParameter {
 
     @Test
-    void beginTx() {
+    void determinesTypeParameter() {
       TransactionalProjection projection = spy(new TransactionalProjection());
       Assertions.assertThat(ReflectionTools.getTypeParameter(projection))
           .isSameAs(SomeTransactionInterface.class);
