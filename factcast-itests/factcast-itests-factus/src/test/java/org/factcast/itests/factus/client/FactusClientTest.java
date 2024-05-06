@@ -46,7 +46,6 @@ import org.factcast.factus.projection.LocalManagedProjection;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ServerConfig;
-import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.config.RedissonProjectionConfiguration;
@@ -91,10 +90,13 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   @Test
   void initializationCreatesNewStubs() {
     // FIXME refactoring
-    try (MockedStatic<RemoteFactStoreGrpc> remoteStore = Mockito.mockStatic(RemoteFactStoreGrpc.class)) {
+    try (MockedStatic<RemoteFactStoreGrpc> remoteStore =
+        Mockito.mockStatic(RemoteFactStoreGrpc.class)) {
       ProtoConverter converter = new ProtoConverter();
-      RemoteFactStoreGrpc.RemoteFactStoreBlockingStub blockingStub = Mockito.mock(RemoteFactStoreGrpc.RemoteFactStoreBlockingStub.class);
-      RemoteFactStoreGrpc.RemoteFactStoreStub stub = Mockito.mock(RemoteFactStoreGrpc.RemoteFactStoreStub.class);
+      RemoteFactStoreGrpc.RemoteFactStoreBlockingStub blockingStub =
+          Mockito.mock(RemoteFactStoreGrpc.RemoteFactStoreBlockingStub.class);
+      RemoteFactStoreGrpc.RemoteFactStoreStub stub =
+          Mockito.mock(RemoteFactStoreGrpc.RemoteFactStoreStub.class);
       remoteStore.when(() -> RemoteFactStoreGrpc.newBlockingStub(any())).thenReturn(blockingStub);
       remoteStore.when(() -> RemoteFactStoreGrpc.newStub(any())).thenReturn(stub);
       when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
@@ -102,14 +104,17 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       when(blockingStub.handshake(any()))
           .thenReturn(
               converter.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
-      when(blockingStub.currentTime(converter.empty())).thenReturn(converter.toProtoTime(new Date().getTime()));
+      when(blockingStub.currentTime(converter.empty()))
+          .thenReturn(converter.toProtoTime(new Date().getTime()));
       int nReInitializations = 100;
       for (int i = 0; i <= nReInitializations; i++) {
         store.initializeIfNecessary();
         store.reset();
       }
-      remoteStore.verify(() -> RemoteFactStoreGrpc.newBlockingStub(any()), Mockito.times(nReInitializations));
-      remoteStore.verify(() -> RemoteFactStoreGrpc.newStub(any()), Mockito.times(nReInitializations));
+      remoteStore.verify(
+          () -> RemoteFactStoreGrpc.newBlockingStub(any()), Mockito.times(nReInitializations));
+      remoteStore.verify(
+          () -> RemoteFactStoreGrpc.newStub(any()), Mockito.times(nReInitializations));
       // should work after retries
       store.initializeIfNecessary();
       store.currentTime();
