@@ -21,8 +21,6 @@ import static java.util.stream.Collectors.toList;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 import com.google.common.base.Stopwatch;
 import java.time.Duration;
@@ -33,7 +31,6 @@ import java.util.concurrent.TimeoutException;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.core.Fact;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.subscription.Subscription;
@@ -44,9 +41,6 @@ import org.factcast.factus.lock.LockedOperationAbortedException;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.LocalManagedProjection;
 import org.factcast.factus.serializer.ProjectionMetaData;
-import org.factcast.grpc.api.conv.ProtoConverter;
-import org.factcast.grpc.api.conv.ServerConfig;
-import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.config.RedissonProjectionConfiguration;
 import org.factcast.itests.factus.event.TestAggregateIncremented;
@@ -56,8 +50,6 @@ import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.*;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
 import org.redisson.api.TransactionOptions;
@@ -84,42 +76,6 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
   @Autowired UserCount userCount;
   @Autowired RedissonClient redissonClient;
-
-  @Autowired GrpcFactStore store;
-
-  @Test
-  void initializationCreatesNewStubs() {
-    // FIXME refactoring
-    try (MockedStatic<RemoteFactStoreGrpc> remoteStore =
-        Mockito.mockStatic(RemoteFactStoreGrpc.class)) {
-      ProtoConverter converter = new ProtoConverter();
-      RemoteFactStoreGrpc.RemoteFactStoreBlockingStub blockingStub =
-          Mockito.mock(RemoteFactStoreGrpc.RemoteFactStoreBlockingStub.class);
-      RemoteFactStoreGrpc.RemoteFactStoreStub stub =
-          Mockito.mock(RemoteFactStoreGrpc.RemoteFactStoreStub.class);
-      remoteStore.when(() -> RemoteFactStoreGrpc.newBlockingStub(any())).thenReturn(blockingStub);
-      remoteStore.when(() -> RemoteFactStoreGrpc.newStub(any())).thenReturn(stub);
-      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
-      when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
-      when(blockingStub.handshake(any()))
-          .thenReturn(
-              converter.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
-      when(blockingStub.currentTime(converter.empty()))
-          .thenReturn(converter.toProtoTime(new Date().getTime()));
-      int nReInitializations = 100;
-      for (int i = 0; i <= nReInitializations; i++) {
-        store.initializeIfNecessary();
-        store.reset();
-      }
-      remoteStore.verify(
-          () -> RemoteFactStoreGrpc.newBlockingStub(any()), Mockito.times(nReInitializations));
-      remoteStore.verify(
-          () -> RemoteFactStoreGrpc.newStub(any()), Mockito.times(nReInitializations));
-      // should work after retries
-      store.initializeIfNecessary();
-      store.currentTime();
-    }
-  }
 
   @Test
   void allWaysToPublish() {

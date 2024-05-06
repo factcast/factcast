@@ -77,6 +77,8 @@ public class GrpcFactStore implements FactStore {
 
   private final Channel channel;
 
+  private final FactCastGrpcStubsFactory stubsFactory;
+
   private final Optional<String> credentials;
 
   private final Resilience resilience;
@@ -101,25 +103,31 @@ public class GrpcFactStore implements FactStore {
   @Generated
   public GrpcFactStore(
       @NonNull FactCastGrpcChannelFactory channelFactory,
+      @NonNull FactCastGrpcStubsFactory stubsFactory,
       @NonNull @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
       @NonNull FactCastGrpcClientProperties properties,
       @Nullable String clientId) {
-    this(channelFactory.createChannel(CHANNEL_NAME), credentials, properties, clientId);
+    this(channelFactory.createChannel(CHANNEL_NAME), stubsFactory, credentials, properties, clientId);
   }
 
   @Generated
   @VisibleForTesting
-  GrpcFactStore(@NonNull Channel channel, @NonNull Optional<String> credentials) {
-    this(channel, credentials, new FactCastGrpcClientProperties(), null);
+  GrpcFactStore(
+      @NonNull Channel channel,
+      @NonNull FactCastGrpcStubsFactory stubsFactory,
+      @NonNull Optional<String> credentials) {
+    this(channel, stubsFactory, credentials, new FactCastGrpcClientProperties(), null);
   }
 
   @VisibleForTesting
   GrpcFactStore(
       @NonNull Channel channel,
+      @NonNull FactCastGrpcStubsFactory stubsFactory,
       @NonNull Optional<String> credentials,
       @NonNull FactCastGrpcClientProperties properties,
       @Nullable String clientId) {
     this.channel = channel;
+    this.stubsFactory = stubsFactory;
     this.credentials = credentials;
     this.properties = properties;
     this.clientId = clientId;
@@ -281,8 +289,8 @@ public class GrpcFactStore implements FactStore {
   }
 
   private void setupStubs() {
-    rawBlockingStub = RemoteFactStoreGrpc.newBlockingStub(channel);
-    rawStub = RemoteFactStoreGrpc.newStub(channel);
+    rawBlockingStub = stubsFactory.createBlockingStub(channel);
+    rawStub = stubsFactory.createStub(channel);
 
     // initially use the raw ones...
     blockingStub = rawBlockingStub.withWaitForReady();
@@ -561,7 +569,7 @@ public class GrpcFactStore implements FactStore {
   }
 
   @VisibleForTesting
-  public void reset() {
+  void reset() {
     // marks factstore as not initialized, so that a subsequent call needs to go through handshake
     // first. This is used to signal a faulty connection.
     this.initialized.set(false);
