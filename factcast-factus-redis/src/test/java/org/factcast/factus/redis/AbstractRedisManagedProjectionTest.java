@@ -207,6 +207,26 @@ class AbstractRedisManagedProjectionTest {
   }
 
   @Nested
+  class WhenComitting {
+    @Test
+    void delegates() {
+      underTest.commit(tx);
+
+      verify(tx).commit();
+    }
+  }
+
+  @Nested
+  class WhenRollingBack {
+    @Test
+    void delegates() {
+      underTest.rollback(tx);
+
+      verify(tx).rollback();
+    }
+  }
+
+  @Nested
   class WhenAcquiringWriteToken {
 
     @SneakyThrows

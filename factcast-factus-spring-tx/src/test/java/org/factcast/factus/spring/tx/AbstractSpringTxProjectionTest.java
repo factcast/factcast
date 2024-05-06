@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 
-class ASpringTxProjectionTest {
+class AbstractSpringTxProjectionTest {
 
   final PlatformTransactionManager transactionManager = mock(PlatformTransactionManager.class);
   final NotAnnotatedSpringTxProjection uutNotAnnotated =
