@@ -561,7 +561,7 @@ public class GrpcFactStore implements FactStore {
   }
 
   @VisibleForTesting
-  void reset() {
+  public void reset() {
     // marks factstore as not initialized, so that a subsequent call needs to go through handshake
     // first. This is used to signal a faulty connection.
     this.initialized.set(false);
