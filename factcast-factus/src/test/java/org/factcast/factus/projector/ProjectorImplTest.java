@@ -23,6 +23,7 @@ import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -35,11 +36,10 @@ import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.*;
 import org.factcast.factus.event.DefaultEventSerializer;
 import org.factcast.factus.event.EventSerializer;
-import org.factcast.factus.projection.LocalManagedProjection;
 import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projection.parameter.HandlerParameterContributors;
+import org.factcast.factus.projection.tx.AbstractOpenTransactionAwareProjection;
 import org.factcast.factus.projection.tx.TransactionAware;
-import org.factcast.factus.projection.tx.TransactionException;
 import org.factcast.factus.projector.ProjectorImpl.ReflectionTools;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -597,19 +597,39 @@ class ProjectorImplTest {
     verify(underTest).apply(Lists.newArrayList(f1, f2, f3, f4, f5, f6));
   }
 
-  class TransactionalProjection extends LocalManagedProjection implements TransactionAware {
+  interface SomeTransactionInterface {}
 
-    @Override
-    public void begin() throws TransactionException {}
-
-    @Override
-    public void commit() throws TransactionException {}
-
-    @Override
-    public void rollback() throws TransactionException {}
+  class TransactionalProjection
+      extends AbstractOpenTransactionAwareProjection<SomeTransactionInterface>
+      implements TransactionAware {
 
     @HandlerFor(ns = "default", type = "test")
     void apply(Fact f) {}
+
+    @Nullable
+    @Override
+    public FactStreamPosition factStreamPosition() {
+      return TestFactStreamPosition.random();
+    }
+
+    @Override
+    public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {}
+
+    @Override
+    protected @NonNull SomeTransactionInterface beginNewTransaction() {
+      return new SomeTransactionInterface() {
+        @Override
+        public int hashCode() {
+          return super.hashCode();
+        }
+      };
+    }
+
+    @Override
+    protected void rollback(@NonNull SomeTransactionInterface runningTransaction) {}
+
+    @Override
+    protected void commit(@NonNull SomeTransactionInterface runningTransaction) {}
   }
 
   @Test
@@ -640,5 +660,17 @@ class ProjectorImplTest {
     underTest.beginIfTransactional();
 
     verify(projection).begin();
+  }
+
+  @Nested
+  class WhanFindingTypeParameter {
+
+    @Test
+    void beginTx() {
+      TransactionalProjection projection = spy(new TransactionalProjection());
+      ReflectionTools.getTypeParameter(projection);
+
+      verify(projection).begin();
+    }
   }
 }

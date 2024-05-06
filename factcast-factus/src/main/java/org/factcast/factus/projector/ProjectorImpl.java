@@ -44,6 +44,7 @@ import org.factcast.factus.projection.parameter.HandlerParameterContributors;
 import org.factcast.factus.projection.parameter.HandlerParameterProvider;
 import org.factcast.factus.projection.parameter.HandlerParameterTransformer;
 import org.factcast.factus.projection.tx.AbstractOpenTransactionAwareProjection;
+import org.factcast.factus.projection.tx.AbstractTransactionAwareProjection;
 import org.factcast.factus.projection.tx.TransactionAware;
 import org.factcast.factus.projection.tx.TransactionException;
 
@@ -201,7 +202,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
     if (p instanceof AbstractOpenTransactionAwareProjection<?>) {
 
-      Class<?> clazz = getTypeParameter(p);
+      Class<?> clazz = ReflectionTools.getTypeParameter((AbstractOpenTransactionAwareProjection) p);
 
       // we have a parameter contributor to add, then
       c =
@@ -258,18 +259,6 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     }
 
     return map;
-  }
-
-  @VisibleForTesting
-  protected static Class<?> getTypeParameter(Projection p) {
-    Class<?> cl = p.getClass();
-
-    // climb to common superclass
-    while (cl.getSuperclass() != AbstractOpenTransactionAwareProjection.class)
-      cl = cl.getSuperclass();
-    // grab type parameter
-    ParameterizedType type = (ParameterizedType) cl.getGenericSuperclass();
-    return (Class<?>) type.getActualTypeArguments()[0];
   }
 
   @Override
@@ -488,6 +477,18 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
           | InvocationTargetException e) {
         throw new IllegalStateException("Cannot instantiate " + c, e);
       }
+    }
+
+    @VisibleForTesting
+    protected static Class<?> getTypeParameter(AbstractTransactionAwareProjection<?> p) {
+      Class<?> cl = p.getClass();
+
+      // climb to common superclass
+      while (cl.getSuperclass() != AbstractTransactionAwareProjection.class)
+        cl = cl.getSuperclass();
+      // grab type parameter
+      ParameterizedType type = (ParameterizedType) cl.getGenericSuperclass();
+      return (Class<?>) type.getActualTypeArguments()[0];
     }
   }
 }
