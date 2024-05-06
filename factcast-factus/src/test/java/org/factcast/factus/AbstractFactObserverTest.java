@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.factus.metrics.FactusMetrics;
@@ -105,7 +106,11 @@ class AbstractFactObserverTest {
               Fact.builder().ns("foo").meta("_ser", "1000").buildWithoutPayload());
 
       // should not throw anything
-      Assertions.assertDoesNotThrow(() -> underTest.onNext(e));
+      Assertions.assertThatThrownBy(
+              () -> {
+                underTest.onNext(e);
+              })
+          .isInstanceOf(IllegalArgumentException.class);
     }
   }
 

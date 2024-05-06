@@ -23,7 +23,6 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.time.Instant;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
@@ -72,11 +71,9 @@ abstract class AbstractFactObserver extends BatchingFactObserver {
   @Override
   public final void onNext(@NonNull List<Fact> elements) {
 
-    CompletableFuture<Void> reported = null;
-
-    if (caughtUp) {
-      // start async
-      reported = CompletableFuture.runAsync(() -> reportProcessingLatency(elements));
+    if (caughtUp && !elements.isEmpty()) {
+      // only the first will be reported as it is the oldest one
+      reportProcessingLatency(elements.get(0));
     }
 
     onNextFacts(elements);
@@ -89,15 +86,6 @@ abstract class AbstractFactObserver extends BatchingFactObserver {
       if (last != null) {
         //noinspection DataFlowIssue
         target.catchupPercentage(info.calculatePercentage(last.header().serial()));
-      }
-    }
-
-    if (reported != null) {
-      // wait for async report to return
-      try {
-        reported.get();
-      } catch (Exception e) {
-        log.error("While reporting latencies", e);
       }
     }
   }
@@ -117,20 +105,17 @@ abstract class AbstractFactObserver extends BatchingFactObserver {
 
   @VisibleForTesting
   // intentionally not async, as metrics timed already is.
-  void reportProcessingLatency(@NonNull List<Fact> elements) {
+  void reportProcessingLatency(@NonNull Fact element) {
     long nowInMillis = Instant.now().toEpochMilli();
-    elements.forEach(
-        element -> {
-          String ts = element.meta("_ts");
-          // _ts might not be there in unit testing for instance.
-          if (ts != null) {
-            long latency = nowInMillis - Long.parseLong(ts);
-            metrics.timed(
-                TimedOperation.EVENT_PROCESSING_LATENCY,
-                Tags.of(Tag.of(CLASS, target.getClass().getName())),
-                latency);
-          }
-        });
+    String ts = element.meta("_ts");
+    // _ts might not be there in unit testing for instance.
+    if (ts != null) {
+      long latency = nowInMillis - Long.parseLong(ts);
+      metrics.timed(
+          TimedOperation.EVENT_PROCESSING_LATENCY,
+          Tags.of(Tag.of(CLASS, target.getClass().getName())),
+          latency);
+    }
   }
 
   protected abstract void onCatchupSignal();
