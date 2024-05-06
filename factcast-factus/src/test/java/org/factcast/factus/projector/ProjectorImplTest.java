@@ -28,6 +28,7 @@ import lombok.Data;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.Value;
+import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Maps;
 import org.factcast.core.*;
 import org.factcast.core.event.EventConverter;
@@ -637,6 +638,7 @@ class ProjectorImplTest {
     TransactionalProjection projection = spy(new TransactionalProjection());
     ProjectorImpl<SimpleProjection> underTest =
         spy(new ProjectorImpl<>(projection, eventSerializer));
+    underTest.beginIfTransactional();
     underTest.commitIfTransactional();
 
     verify(projection).commit();
@@ -647,6 +649,7 @@ class ProjectorImplTest {
     TransactionalProjection projection = spy(new TransactionalProjection());
     ProjectorImpl<SimpleProjection> underTest =
         spy(new ProjectorImpl<>(projection, eventSerializer));
+    underTest.beginIfTransactional();
     underTest.rollbackIfTransactional();
 
     verify(projection).rollback();
@@ -668,9 +671,8 @@ class ProjectorImplTest {
     @Test
     void beginTx() {
       TransactionalProjection projection = spy(new TransactionalProjection());
-      ReflectionTools.getTypeParameter(projection);
-
-      verify(projection).begin();
+      Assertions.assertThat(ReflectionTools.getTypeParameter(projection))
+          .isSameAs(SomeTransactionInterface.class);
     }
   }
 }
