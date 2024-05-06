@@ -93,7 +93,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
     beginIfTransactional();
 
-    // remember that IF this fails, we throw an expecption anyway, so that we wont reuse this info
+    // remember that IF this fails, we throw an exception anyway, so that we won't reuse this info
     FactStreamPosition latestSuccessful = null;
 
     for (Fact f : facts) {
