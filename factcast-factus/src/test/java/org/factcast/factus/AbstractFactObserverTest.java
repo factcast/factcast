@@ -91,6 +91,22 @@ class AbstractFactObserverTest {
 
       verify(target).catchupPercentage(100);
     }
+
+    @SneakyThrows
+    @Test
+    void gracefullyIgnoresFailureToReportLatency() {
+      underTest.onCatchup();
+      doThrow(new IllegalArgumentException("bad luck"))
+          .when(underTest)
+          .reportProcessingLatency(any());
+
+      List<Fact> e =
+          Collections.singletonList(
+              Fact.builder().ns("foo").meta("_ser", "1000").buildWithoutPayload());
+
+      // should not throw anything
+      Assertions.assertDoesNotThrow(() -> underTest.onNext(e));
+    }
   }
 
   @Nested

@@ -29,7 +29,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.observer.BatchingFactObserver;
-import org.factcast.core.util.ExceptionHelper;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.metrics.TimedOperation;
 import org.factcast.factus.projection.ProgressAware;
@@ -98,7 +97,7 @@ abstract class AbstractFactObserver extends BatchingFactObserver {
       try {
         reported.get();
       } catch (Exception e) {
-        throw ExceptionHelper.toRuntime(e);
+        log.error("While reporting latencies", e);
       }
     }
   }
