@@ -87,9 +87,10 @@ public class GrpcFactStore implements FactStore {
 
   private RemoteFactStoreStub stub;
 
-  private RemoteFactStoreStub rawStub;
+  private RemoteFactStoreStub uncompressedStub;
 
-  private RemoteFactStoreBlockingStub rawBlockingStub;
+  private RemoteFactStoreBlockingStub uncompressedBlockingStub;
+
   private final FactCastGrpcClientProperties properties;
   @Nullable private final String clientId;
 
@@ -262,14 +263,16 @@ public class GrpcFactStore implements FactStore {
   @PostConstruct
   public synchronized void initializeIfNecessary() {
     if (!this.initialized.get()) {
-      setupStubs();
+      uncompressedBlockingStub = stubsFactory.createBlockingStub(channel).withWaitForReady();
+      uncompressedStub = stubsFactory.createStub(channel).withWaitForReady();
+      configureCredentials();
 
       log.debug("Invoking handshake");
       Map<String, String> serverProperties;
       ProtocolVersion serverProtocolVersion;
       try {
         MSG_ServerConfig handshake =
-            blockingStub
+            uncompressedBlockingStub
                 .withInterceptors(
                     MetadataUtils.newAttachHeadersInterceptor(createHandshakeMetadata()))
                 .handshake(converter.empty());
@@ -281,6 +284,8 @@ public class GrpcFactStore implements FactStore {
       }
       logProtocolVersion(serverProtocolVersion);
       logServerVersion(serverProperties);
+      blockingStub = uncompressedBlockingStub;
+      stub = uncompressedStub;
       configureCompressionAndMetaData(serverProperties.get(Capabilities.CODECS.toString()));
 
       this.fastStateToken =
@@ -293,19 +298,12 @@ public class GrpcFactStore implements FactStore {
     }
   }
 
-  private void setupStubs() {
-    rawBlockingStub = stubsFactory.createBlockingStub(channel);
-    rawStub = stubsFactory.createStub(channel);
-
-    // initially use the raw ones...
-    blockingStub = rawBlockingStub.withWaitForReady();
-    stub = rawStub.withWaitForReady();
-
+  private void configureCredentials() {
     if (properties.getUser() != null && properties.getPassword() != null) {
       CallCredentials basic =
           CallCredentialsHelper.basicAuth(properties.getUser(), properties.getPassword());
-      blockingStub = blockingStub.withCallCredentials(basic);
-      stub = stub.withCallCredentials(basic);
+      uncompressedBlockingStub = uncompressedBlockingStub.withCallCredentials(basic);
+      uncompressedStub = uncompressedStub.withCallCredentials(basic);
     }
     // deprecated way of setting credentials but still supported
     else if (credentials.isPresent()) {
@@ -316,8 +314,8 @@ public class GrpcFactStore implements FactStore {
                 + " 'username:password'");
       }
       CallCredentials basic = CallCredentialsHelper.basicAuth(sa[0], sa[1]);
-      blockingStub = blockingStub.withCallCredentials(basic);
-      stub = stub.withCallCredentials(basic);
+      uncompressedBlockingStub = uncompressedBlockingStub.withCallCredentials(basic);
+      uncompressedStub = uncompressedStub.withCallCredentials(basic);
     }
   }
 
@@ -355,8 +353,7 @@ public class GrpcFactStore implements FactStore {
     }
   }
 
-  @VisibleForTesting
-  void configureCompressionAndMetaData(String codecListFromServer) {
+  private void configureCompressionAndMetaData(String codecListFromServer) {
     codecs
         .selectFrom(codecListFromServer)
         .ifPresent(
@@ -365,17 +362,14 @@ public class GrpcFactStore implements FactStore {
               // configure compression used for sending messages and header
               // to request compressed messages from server
               Metadata meta = prepareMetaData(c);
-
-              rawBlockingStub = blockingStub;
-              rawStub = stub;
-
               // add compression info
               blockingStub =
-                  blockingStub
+                  uncompressedBlockingStub
                       .withCompression(c)
                       .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(meta));
               stub =
-                  stub.withCompression(c)
+                  uncompressedStub
+                      .withCompression(c)
                       .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(meta));
             });
   }
@@ -539,7 +533,7 @@ public class GrpcFactStore implements FactStore {
           log.trace("sending snapshot {} to remote store ({}kb)", id, bytes.length / 1024);
 
           RemoteFactStoreBlockingStub stubToUse =
-              alreadyCompressed ? rawBlockingStub : blockingStub;
+              alreadyCompressed ? uncompressedBlockingStub : blockingStub;
 
           //noinspection ResultOfMethodCallIgnored
           stubToUse.setSnapshot(converter.toProto(id, state, bytes, alreadyCompressed));
