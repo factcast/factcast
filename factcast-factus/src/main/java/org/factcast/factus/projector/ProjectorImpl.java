@@ -54,7 +54,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       dispatcherCache = new ConcurrentHashMap<>();
   private final Projection projection;
 
-  @Getter(value = AccessLevel.PROTECTED, onMethod_ = @VisibleForTesting)
+  @Getter(value = AccessLevel.PROTECTED)
   private final Map<FactSpecCoordinates, Dispatcher> dispatchInfo;
 
   private final HandlerParameterContributors generalContributors;
@@ -480,7 +480,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
     @NonNull
     @VisibleForTesting
-    static Class<?> getTypeParameter(@NonNull AbstractOpenTransactionAwareProjection p) {
+    static Class<?> getTypeParameter(@NonNull AbstractOpenTransactionAwareProjection<?> p) {
       Class<?> cl = p.getClass();
 
       // climb to common superclass

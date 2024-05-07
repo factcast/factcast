@@ -47,5 +47,4 @@ At the time of writing (Factcast version 0.3.13) the following metrics are suppo
   "factus snapshot projections")
 - `find_duration` - duration in milliseconds it took to find a specific [Aggregate]({{< ref "aggregates.md" >}}
   "factus aggregates")
-- `event_processing_latency` - time difference in milliseconds between a fact was published and a consuming  
-  [Subscribed projection]({{< ref "subscribed-projection.md" >}} "factus subscribed projection") was updated
+- `event_processing_latency` - for those facts that arrive after catchup: time difference in milliseconds between a fact was published and recieved by a client. (In case of batch processing, this is only reported for the first/oldest fact of a batch)

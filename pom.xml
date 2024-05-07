@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.7.7-SNAPSHOT</version>
+  <version>0.8.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <organization>
     <name>factcast</name>
@@ -657,11 +657,11 @@
       <distributionManagement>
         <snapshotRepository>
           <id>ossrh</id>
-          <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+          <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </snapshotRepository>
         <repository>
           <id>ossrh</id>
-          <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+          <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
       </distributionManagement>
       <build>
