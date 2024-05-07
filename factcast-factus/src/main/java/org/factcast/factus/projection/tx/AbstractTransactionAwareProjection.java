@@ -43,9 +43,10 @@ public abstract class AbstractTransactionAwareProjection<T>
     assertInTransaction();
     try {
       commit(runningTransaction);
-      runningTransaction = null;
     } catch (Exception e) {
       throw new TransactionException(e);
+    } finally {
+      runningTransaction = null;
     }
   }
 
