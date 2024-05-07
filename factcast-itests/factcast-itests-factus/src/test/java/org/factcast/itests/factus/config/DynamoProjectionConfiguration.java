@@ -33,16 +33,9 @@ public class DynamoProjectionConfiguration {
         .build();
   }
 
-  //   TODO make sure if we can remove the regular client above or pass it as an argument below.
   @Bean
-  DynamoDbEnhancedClient dynamoDbEnhancedClient(
-      @Value("${dynamodb.local.host}") String url, @Value("${dynamodb.local.port}") String port) {
-    return DynamoDbEnhancedClient.builder()
-        .dynamoDbClient(
-            DynamoDbClient.builder()
-                .endpointOverride(URI.create("http://" + url + ":" + port))
-                .build())
-        .build();
+  DynamoDbEnhancedClient dynamoDbEnhancedClient(DynamoDbClient dynamoDbClient) {
+    return DynamoDbEnhancedClient.builder().dynamoDbClient(dynamoDbClient).build();
   }
 
   @Bean
