@@ -39,7 +39,7 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 abstract class AbstractDynamoProjection
     implements DynamoProjection, FactStreamPositionAware, WriterTokenAware, Named {
-
+  @Getter protected final DynamoDbClient dynamoDb;
   protected final DynamoDbEnhancedClient enhancedClient;
   private final AmazonDynamoDBLockClient lockClient;
 
@@ -50,6 +50,7 @@ abstract class AbstractDynamoProjection
 
   protected AbstractDynamoProjection(
       @NonNull DynamoDbClient dynamoDb, String projectionTableName, String stateTableName) {
+    this.dynamoDb = dynamoDb;
     this.enhancedClient = DynamoDbEnhancedClient.builder().dynamoDbClient(dynamoDb).build();
 
     this.stateTable =
