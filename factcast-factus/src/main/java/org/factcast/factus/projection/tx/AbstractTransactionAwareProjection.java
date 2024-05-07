@@ -15,16 +15,11 @@
  */
 package org.factcast.factus.projection.tx;
 
-import lombok.AccessLevel;
-import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.factus.projection.Projection;
 
-public abstract class AbstractTransactionAwareProjection<T>
+public abstract class AbstractTransactionAwareProjection<T> extends AbstractTransactionalState<T>
     implements TransactionAware, Projection {
-
-  @Getter(AccessLevel.PROTECTED)
-  private T runningTransaction;
 
   protected AbstractTransactionAwareProjection() {}
 
@@ -32,7 +27,7 @@ public abstract class AbstractTransactionAwareProjection<T>
   public final void begin() throws TransactionException {
     assertNoRunningTransaction();
     try {
-      runningTransaction = beginNewTransaction();
+      runningTransaction(beginNewTransaction());
     } catch (Exception e) {
       throw new TransactionException(e);
     }
@@ -42,11 +37,11 @@ public abstract class AbstractTransactionAwareProjection<T>
   public final void commit() throws TransactionException {
     assertInTransaction();
     try {
-      commit(runningTransaction);
+      commit(runningTransaction());
     } catch (Exception e) {
       throw new TransactionException(e);
     } finally {
-      runningTransaction = null;
+      runningTransaction(null);
     }
   }
 
@@ -54,26 +49,26 @@ public abstract class AbstractTransactionAwareProjection<T>
   public final void rollback() throws TransactionException {
     assertInTransaction();
     try {
-      rollback(runningTransaction);
+      rollback(runningTransaction());
     } catch (Exception e) {
       throw new TransactionException(e);
     } finally {
-      runningTransaction = null;
+      runningTransaction(null);
     }
   }
 
   protected final void assertNoRunningTransaction() throws TransactionException {
-    if (this.runningTransaction != null)
+    if (this.runningTransaction() != null)
       throw new TransactionAlreadyRunningException("Transaction already running");
   }
 
   protected final void assertInTransaction() throws TransactionException {
-    if (this.runningTransaction == null)
+    if (this.runningTransaction() == null)
       throw new TransactionNotRunningException("Transaction is not running");
   }
 
   protected final boolean inTransaction() {
-    return runningTransaction != null;
+    return runningTransaction() != null;
   }
 
   protected abstract @NonNull T beginNewTransaction();
