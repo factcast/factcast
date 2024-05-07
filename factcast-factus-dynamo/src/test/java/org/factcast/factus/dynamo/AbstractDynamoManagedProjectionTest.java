@@ -68,6 +68,7 @@ class AbstractDynamoManagedProjectionTest {
   class WhenInspectingClass {
     @Test
     void getProjectionKey() {
+      final TestProjection uut = new TestProjection(dynamoDbClient);
       assertThat(uut.projectionKey()).isEqualTo(SCOPED_NAME);
     }
   }
@@ -198,6 +199,11 @@ class AbstractDynamoManagedProjectionTest {
 
   @ProjectionMetaData(revision = 1)
   static class TestProjection extends AbstractDynamoManagedProjection {
+
+    public TestProjection(@NonNull DynamoDbClient dynamoDb) {
+      super(dynamoDb, "stateTable");
+    }
+
     public TestProjection(
         @NonNull DynamoDbClient dynamoDb,
         @NonNull DynamoDbEnhancedClient enhancedClient,

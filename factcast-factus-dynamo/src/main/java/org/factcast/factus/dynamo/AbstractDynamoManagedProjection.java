@@ -28,7 +28,8 @@ public abstract class AbstractDynamoManagedProjection extends AbstractDynamoProj
     super(dynamoDbClient, stateTableName);
   }
 
-  public AbstractDynamoManagedProjection(
+  // For testing only
+  protected AbstractDynamoManagedProjection(
       @NonNull DynamoDbClient dynamoDb,
       @NonNull DynamoDbEnhancedClient enhancedClient,
       @NonNull AmazonDynamoDBLockClient lockClient,
