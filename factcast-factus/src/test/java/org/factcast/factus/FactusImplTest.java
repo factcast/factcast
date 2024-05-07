@@ -67,14 +67,12 @@ import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-@Tag("integration") // technically unit, but it takes some time due to waiting
 class FactusImplTest {
 
   @Mock private FactCast fc;
@@ -1423,6 +1421,33 @@ class FactusImplTest {
   @SuppressWarnings("resource")
   @Nested
   class WhenCatchingUp {
+    @Test
+    @SneakyThrows
+    void returnsFactIdOfFastForward() {
+      Projector pro = mock(Projector.class);
+      Subscription sub = mock(Subscription.class);
+      FactSpec spec1 = FactSpec.from(NameEvent.class);
+      CompletableFuture<Void> cf = new CompletableFuture<>();
+
+      Fact f = new TestFact();
+      UUID id = f.id();
+      FactStreamPosition pos = FactStreamPosition.of(id, 42L);
+
+      when(ehFactory.create(any())).thenReturn(pro);
+      when(fc.subscribe(any(SubscriptionRequest.class), any(FactObserver.class)))
+          .thenAnswer(
+              i -> {
+                FactObserver fo = i.getArgument(1);
+                fo.onFastForward(pos);
+                return sub;
+              });
+      when(pro.createFactSpecs()).thenReturn(Lists.newArrayList(spec1));
+
+      SomeSnapshotProjection p = new SomeSnapshotProjection();
+      UUID ret = underTest.catchupProjection(p, UUID.randomUUID(), null);
+
+      Assertions.assertThat(ret).isNotNull().isEqualTo(id);
+    }
 
     @Test
     @SneakyThrows
@@ -1453,7 +1478,7 @@ class FactusImplTest {
     }
 
     @Test
-    void returnsFactIdForwardTarget() {
+    void returnsNoFactIdForwardTarget() {
 
       Projector pro = mock(Projector.class);
       Subscription sub = mock(Subscription.class);
@@ -1476,7 +1501,7 @@ class FactusImplTest {
       SomeSnapshotProjection p = new SomeSnapshotProjection();
       UUID ret = underTest.catchupProjection(p, null, null);
 
-      Assertions.assertThat(ret).isNotNull().isEqualTo(id);
+      Assertions.assertThat(ret).isNull();
     }
   }
 }
