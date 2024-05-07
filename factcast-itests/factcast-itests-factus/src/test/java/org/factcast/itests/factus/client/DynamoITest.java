@@ -110,12 +110,12 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
 
     @SneakyThrows
     @Test
-    void bulkAppliesInTransaction2() {
+    void batchProcessing() {
       ManagedUserNames p = new ManagedUserNames(dynamoDbClient);
       factus.update(p);
 
       assertThat(p.count()).isEqualTo(NUMBER_OF_EVENTS);
-      assertThat(p.stateModifications()).isEqualTo(10); // expected at 2,4,6,8,10
+      assertThat(p.stateModifications()).isEqualTo(1);
     }
 
     @SneakyThrows
@@ -133,7 +133,7 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
       }
 
       assertThat(p.count()).isEqualTo(6);
-      assertThat(p.stateModifications()).isEqualTo(6);
+      assertThat(p.stateModifications()).isEqualTo(0);
     }
   }
 
@@ -151,18 +151,19 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
 
     @SneakyThrows
     @Test
-    void bulkAppliesInTransaction2() {
+    void batchProcessing() {
       SubscribedUserNames p = new SubscribedUserNames(dynamoDbClient);
       factus.subscribeAndBlock(p).awaitCatchup();
 
       assertThat(p.count()).isEqualTo(NUMBER_OF_EVENTS);
-      assertThat(p.stateModifications()).isEqualTo(10); // expected at 2,4,6,8,10
+      assertThat(p.stateModifications())
+          .isEqualTo(1); // Due to internal batching only one update is done.
     }
 
     @SneakyThrows
     @Test
     void projectionStoppedAtException() {
-      // batch size = 5; throws while applying the 7th event.
+      // throws while applying the 7th event.
       DynamoSubscribedUserNamesSizeBlowAt7Th p =
           new DynamoSubscribedUserNamesSizeBlowAt7Th(dynamoDbClient);
 
@@ -175,7 +176,7 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
       }
 
       assertThat(p.count()).isEqualTo(7);
-      assertThat(p.stateModifications()).isEqualTo(7);
+      assertThat(p.stateModifications()).isEqualTo(0);
     }
   }
 

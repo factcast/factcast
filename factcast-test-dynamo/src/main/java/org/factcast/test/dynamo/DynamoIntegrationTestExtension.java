@@ -78,7 +78,7 @@ public class DynamoIntegrationTestExtension implements FactCastIntegrationTestEx
     final DynamoDbClient client = executions.get(config).client;
 
     List<String> tables = client.listTables().tableNames();
-    //    // Delete all tables
+    // Delete all tables
     tables.forEach(t -> client.deleteTable(DeleteTableRequest.builder().tableName(t).build()));
   }
 
