@@ -26,7 +26,6 @@ public class DynamoWriterToken implements WriterToken {
   @VisibleForTesting
   protected DynamoWriterToken(@NonNull LockItem lock) {
     this.lock = lock;
-    // TODO: do we need to manually manage the timer??
   }
 
   @Override
