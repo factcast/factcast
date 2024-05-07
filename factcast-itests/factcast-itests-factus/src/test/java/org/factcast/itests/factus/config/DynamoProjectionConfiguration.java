@@ -19,12 +19,10 @@ import java.net.URI;
 import org.factcast.itests.factus.proj.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
-@Configuration
 public class DynamoProjectionConfiguration {
   @Bean
   DynamoDbClient dynamoDbClient(
