@@ -33,7 +33,6 @@ import org.factcast.factus.projection.WriterTokenAware;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
@@ -48,14 +47,15 @@ abstract class AbstractDynamoProjection
   @Getter private final String projectionKey;
   private static final long LEASE_DURATION = 10L;
 
-  protected AbstractDynamoProjection(@NonNull DynamoDbClient dynamoDb, String stateTableName) {
+  protected AbstractDynamoProjection(
+      @NonNull DynamoDbClient dynamoDb, @NonNull String stateTableName) {
     this.dynamoDb = dynamoDb;
     this.enhancedClient = DynamoDbEnhancedClient.builder().dynamoDbClient(dynamoDb).build();
 
     this.stateTable =
         enhancedClient.table(
             stateTableName, TableSchema.fromImmutableClass(DynamoProjectionState.class));
-    this.projectionKey = this.getScopedName().toString();
+    this.projectionKey = this.getScopedName().asString();
 
     this.lockClient =
         new AmazonDynamoDBLockClient(
@@ -65,6 +65,21 @@ abstract class AbstractDynamoProjection
                 .withHeartbeatPeriod(2L)
                 .withCreateHeartbeatBackgroundThread(false)
                 .build());
+  }
+
+  // For testing
+  protected AbstractDynamoProjection(
+      @NonNull DynamoDbClient dynamoDb,
+      @NonNull DynamoDbEnhancedClient enhancedClient,
+      @NonNull AmazonDynamoDBLockClient lockClient,
+      @NonNull String stateTableName) {
+    this.dynamoDb = dynamoDb;
+    this.enhancedClient = enhancedClient;
+    this.lockClient = lockClient;
+    this.stateTable =
+        enhancedClient.table(
+            stateTableName, TableSchema.fromImmutableClass(DynamoProjectionState.class));
+    this.projectionKey = this.getScopedName().asString();
   }
 
   @Override
@@ -79,16 +94,6 @@ abstract class AbstractDynamoProjection
   public void factStreamPosition(@Nullable FactStreamPosition position) {
     stateTable.updateItem(
         UpdateItemEnhancedRequest.builder(DynamoProjectionState.class)
-            .item(
-                DynamoProjectionState.builder()
-                    .key(projectionKey)
-                    .factStreamPosition(position.factId())
-                    .serial(position.serial())
-                    .build())
-            .build());
-
-    stateTable.putItem(
-        PutItemEnhancedRequest.builder(DynamoProjectionState.class)
             .item(
                 DynamoProjectionState.builder()
                     .key(projectionKey)
