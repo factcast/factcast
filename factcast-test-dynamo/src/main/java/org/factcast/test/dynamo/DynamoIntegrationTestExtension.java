@@ -27,6 +27,8 @@ import org.factcast.test.FactCastIntegrationTestExtension;
 import org.springframework.test.context.TestContext;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.ToxiproxyContainer.ContainerProxy;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
@@ -58,6 +60,11 @@ public class DynamoIntegrationTestExtension implements FactCastIntegrationTestEx
                   dynamoProxy,
                   DynamoDbClient.builder()
                       .region(Region.EU_CENTRAL_1)
+                      .credentialsProvider(
+                          StaticCredentialsProvider.create(
+                              AwsBasicCredentials.create(
+                                  "AKIAIOSFODNN7EXAMPLE",
+                                  "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY")))
                       .endpointOverride(
                           URI.create(
                               "http://"
@@ -70,9 +77,6 @@ public class DynamoIntegrationTestExtension implements FactCastIntegrationTestEx
     ContainerProxy dynamoProxy = container.dynamoProxy().get();
     System.setProperty("dynamodb.local.host", dynamoProxy.getContainerIpAddress());
     System.setProperty("dynamodb.local.port", String.valueOf(dynamoProxy.getProxyPort()));
-    // Must be system properties, not spring properties
-    System.setProperty("aws.accessKeyId", "AKIAIOSFODNN7EXAMPLE");
-    System.setProperty("aws.secretKey", "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY");
   }
 
   @Override

@@ -19,6 +19,8 @@ import java.net.URI;
 import org.factcast.itests.factus.proj.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
@@ -30,6 +32,10 @@ public class DynamoProjectionConfiguration {
     return DynamoDbClient.builder()
         .region(Region.EU_CENTRAL_1)
         .endpointOverride(URI.create("http://" + url + ":" + port))
+        .credentialsProvider(
+            StaticCredentialsProvider.create(
+                AwsBasicCredentials.create(
+                    "AKIAIOSFODNN7EXAMPLE", "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY")))
         .build();
   }
 
