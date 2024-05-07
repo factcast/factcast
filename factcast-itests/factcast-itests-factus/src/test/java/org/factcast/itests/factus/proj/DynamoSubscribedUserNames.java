@@ -39,7 +39,7 @@ public class DynamoSubscribedUserNames extends AbstractDynamoSubscribedProjectio
   private final DynamoDbTable<DynamoUserNamesSchema> userNames;
 
   public DynamoSubscribedUserNames(DynamoDbClient client) {
-    super(client, "UserNames", "DynamoProjectionStateTracking");
+    super(client, "DynamoProjectionStateTracking");
     this.userNames =
         enhancedClient.table("UserNames", TableSchema.fromBean(DynamoUserNamesSchema.class));
   }
