@@ -269,7 +269,7 @@ public class GrpcFactStore implements FactStore {
       ProtocolVersion serverProtocolVersion;
       try {
         MSG_ServerConfig handshake =
-            rawBlockingStub
+            blockingStub
                 .withInterceptors(
                     MetadataUtils.newAttachHeadersInterceptor(createHandshakeMetadata()))
                 .handshake(converter.empty());

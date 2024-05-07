@@ -16,6 +16,7 @@
 package org.factcast.itests.factus.client;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
 import com.google.common.collect.Lists;
 import eu.rekawek.toxiproxy.model.ToxicDirection;
@@ -44,8 +45,11 @@ import org.springframework.test.context.TestPropertySource;
 @SpringBootTest
 @ContextConfiguration(classes = TestFactusApplication.class)
 @TestPropertySource(
-    properties =
-        "factcast.grpc.client.resilience.attempts=" + GrpcStoreResilienceITest.NUMBER_OF_ATTEMPTS)
+    properties = {
+        "factcast.grpc.client.resilience.attempts=" + GrpcStoreResilienceITest.NUMBER_OF_ATTEMPTS,
+        "factcast.grpc.client.id=d38cb1af-ea5c-49d7-8aca-cd74cdcf75c9",
+    }
+)
 @Slf4j
 class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
   static final int NUMBER_OF_ATTEMPTS = 99;
@@ -167,7 +171,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
 
     fc.publish(Fact.builder().ns("ns").type("type").buildWithoutPayload());
 
-    // break downstream call
+    // break upstream call
     proxy.toxics().limitData("break every byte", ToxicDirection.DOWNSTREAM, 1);
 
     new Timer()
@@ -222,5 +226,30 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
 
     assertThat(latch.await(3, TimeUnit.SECONDS)).isTrue();
     assertThat(logCaptor.getInfoLogs()).containsOnlyOnce("Handshake successful.");
+  }
+
+  @SneakyThrows
+  @DirtiesContext
+  @Test
+  void testMultipleRetriesWithResponse() {
+    // see issue #2868
+    // assuming two attempts on each iteration using blockingStub.withWaitForReady
+    for (int i = 1; i < NUMBER_OF_ATTEMPTS/2; i++) {
+      // break upstream call
+      proxy.toxics().resetPeer("immediate reset", ToxicDirection.UPSTREAM, 1);
+      new Timer()
+          .schedule(
+              new TimerTask() {
+                @Override
+                public void run() {
+                  // heal the communication
+                  log.info("repairing proxy");
+                  proxy.reset();
+                }
+              },
+              100);
+      log.info("attempt {}", i);
+      assertThatNoException().isThrownBy(() -> fc.enumerateNamespaces());
+    }
   }
 }
