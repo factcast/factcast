@@ -27,7 +27,7 @@ import org.factcast.test.FactCastIntegrationTestExtension;
 import org.springframework.test.context.TestContext;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.ToxiproxyContainer.ContainerProxy;
-import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
@@ -59,7 +59,7 @@ public class DynamoIntegrationTestExtension implements FactCastIntegrationTestEx
                   dynamoProxy,
                   DynamoDbClient.builder()
                       .region(Region.EU_CENTRAL_1)
-                      .credentialsProvider(AnonymousCredentialsProvider.create())
+                      .credentialsProvider(DefaultCredentialsProvider.create())
                       .endpointOverride(
                           URI.create(
                               "http://"
@@ -78,6 +78,8 @@ public class DynamoIntegrationTestExtension implements FactCastIntegrationTestEx
   public void wipeExternalDataStore(TestContext ctx) {
     final DynamoConfig.Config config = discoverConfig(ctx.getTestClass());
     final DynamoDbClient client = executions.get(config).client;
+    log.warn(
+        "Endpoints for Dynamo are: {}", client.serviceClientConfiguration().endpointOverride());
 
     List<String> tables = client.listTables().tableNames();
     // Delete all tables
