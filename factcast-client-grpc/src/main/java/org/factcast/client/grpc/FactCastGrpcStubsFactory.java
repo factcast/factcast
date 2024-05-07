@@ -21,9 +21,21 @@ import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 
 public interface FactCastGrpcStubsFactory {
 
+  /**
+   * Creates a new blocking stub (synchronous) for the given channel.
+   *
+   * @param channel used to create the stub.
+   * @return the newly created blocking stub.
+   */
   @NonNull
   RemoteFactStoreGrpc.RemoteFactStoreBlockingStub createBlockingStub(@NonNull Channel channel);
 
+  /**
+   * Creates a new stub (asynchronous) for the given channel.
+   *
+   * @param channel used to create the stub.
+   * @return the newly created stub.
+   */
   @NonNull
   RemoteFactStoreGrpc.RemoteFactStoreStub createStub(@NonNull Channel channel);
 }

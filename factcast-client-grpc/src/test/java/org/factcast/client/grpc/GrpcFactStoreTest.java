@@ -42,6 +42,7 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.Headers;
 import org.factcast.grpc.api.StateForRequest;
@@ -71,7 +72,8 @@ class GrpcFactStoreTest {
 
   @Mock Channel channel;
 
-  @Mock FactCastGrpcStubsFactory stubsFactory;
+  @Mock(strictness = Mock.Strictness.LENIENT)
+  FactCastGrpcStubsFactory stubsFactory;
 
   ProtoConverter conv = new ProtoConverter();
 
@@ -84,19 +86,22 @@ class GrpcFactStoreTest {
   @BeforeEach
   public void setup() {
     when(properties.getResilience()).thenReturn(resilienceConfig);
-    // preserve deep stub behavior
-    when(stub.withWaitForReady()).thenReturn(stub);
-    when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
     resilienceConfig.setEnabled(false);
+    // setup stubs
     when(stubsFactory.createStub(channel)).thenReturn(stub);
     when(stubsFactory.createBlockingStub(channel)).thenReturn(blockingStub);
+    when(stub.withWaitForReady()).thenReturn(stub);
+    when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
 
     uut = new GrpcFactStore(channel, stubsFactory, credentials, properties, "someTest");
 
+    // mock initialization
+    when(blockingStub.withCallCredentials(any())).thenReturn(blockingStub);
+    when(stub.withCallCredentials(any())).thenReturn(stub);
     when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
+    when(stub.withInterceptors(any())).thenReturn(stub);
     when(blockingStub.handshake(any()))
         .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
-    uut.initializeIfNecessary();
   }
 
   @Test
@@ -112,13 +117,23 @@ class GrpcFactStoreTest {
 
   @Test
   void configureCompressionChooseGzipIfAvail() {
-    uut.configureCompressionAndMetaData(" gzip,lz3,lz4, lz99");
+    Map<String, String> serverProps = new HashMap<>();
+    serverProps.put(Capabilities.CODECS.toString(), " gzip,lz3,lz4, lz99");
+    when(blockingStub.handshake(any()))
+        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, serverProps)));
+    uut.reset();
+    uut.initializeIfNecessary();
     verify(stub).withCompression("gzip");
   }
 
   @Test
   void configureCompressionSkipCompression() {
-    uut.configureCompressionAndMetaData("zip,lz3,lz4, lz99");
+    Map<String, String> serverProps = new HashMap<>();
+    serverProps.put(Capabilities.CODECS.toString(), "zip,lz3,lz4, lz99");
+    when(blockingStub.handshake(any()))
+        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, serverProps)));
+    uut.reset();
+    uut.initializeIfNecessary();
     verify(stub, never()).withCompression(anyString());
   }
 
@@ -293,6 +308,7 @@ class GrpcFactStoreTest {
     when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
     when(blockingStub.handshake(any()))
         .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
+    uut.reset();
     uut.initializeIfNecessary();
   }
 
@@ -309,6 +325,7 @@ class GrpcFactStoreTest {
     when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
     when(blockingStub.handshake(any()))
         .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
+    uut.reset();
     uut.initializeIfNecessary();
     uut.initializeIfNecessary();
     verify(blockingStub, times(1)).handshake(any());
@@ -799,13 +816,12 @@ class GrpcFactStoreTest {
   void initializationCreatesNewStubs() {
     int nReInitializations = 100;
     for (int i = 0; i < nReInitializations; i++) {
-      uut.initializeIfNecessary();
       uut.reset();
+      uut.initializeIfNecessary();
     }
     verify(stubsFactory, times(nReInitializations)).createBlockingStub(channel);
     verify(stubsFactory, times(nReInitializations)).createStub(channel);
     // should work after multiple re-initializations (issue #2868)
-    uut.initializeIfNecessary();
     uut.currentTime();
   }
 }
