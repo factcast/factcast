@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 @Configuration
@@ -29,6 +30,7 @@ public class DynamoProjectionConfiguration {
   DynamoDbClient dynamoDbClient(
       @Value("${dynamodb.local.host}") String url, @Value("${dynamodb.local.port}") String port) {
     return DynamoDbClient.builder()
+        .region(Region.EU_CENTRAL_1)
         .endpointOverride(URI.create("http://" + url + ":" + port))
         .build();
   }
