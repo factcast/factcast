@@ -29,7 +29,7 @@ public class DynamoManagedUserNames extends AbstractDynamoManagedProjection impl
   @Getter private final Map<UUID, String> userNames;
 
   public DynamoManagedUserNames(DynamoDbClient dynamoDbClient) {
-    super(dynamoDbClient, "UserNames", "DynamoProjectionStateTracking");
+    super(dynamoDbClient, "DynamoProjectionStateTracking");
     userNames = new HashMap<>();
   }
 }

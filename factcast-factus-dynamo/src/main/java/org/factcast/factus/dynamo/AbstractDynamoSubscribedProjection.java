@@ -22,7 +22,7 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 public abstract class AbstractDynamoSubscribedProjection extends AbstractDynamoProjection
     implements SubscribedProjection {
   public AbstractDynamoSubscribedProjection(
-      @NonNull DynamoDbClient dynamoDbClient, String projectionTableName, String stateTableName) {
-    super(dynamoDbClient, projectionTableName, stateTableName);
+      @NonNull DynamoDbClient dynamoDbClient, String stateTableName) {
+    super(dynamoDbClient, stateTableName);
   }
 }

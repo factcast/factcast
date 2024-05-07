@@ -72,7 +72,7 @@ public class HelloWorldRunner implements CommandLineRunner {
 
     fc.publish(Lists.newArrayList(created, changed, created2));
 
-    final DynamoProjection projection = new DynamoProjection(dynamoDbClient, "users", "stateTable");
+    final DynamoProjection projection = new DynamoProjection(dynamoDbClient, "stateTable");
     factus.update(projection);
     log.info("Position is {}", projection.factStreamPosition());
   }

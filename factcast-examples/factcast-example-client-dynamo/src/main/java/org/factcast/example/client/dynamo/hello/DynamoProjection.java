@@ -34,12 +34,9 @@ public class DynamoProjection extends AbstractDynamoManagedProjection {
 
   private final DynamoDbTable<UserSchema> userTable;
 
-  public DynamoProjection(
-      @NonNull DynamoDbClient dynamoDbClient,
-      @NonNull String projectionTableName,
-      @NonNull String stateTableName) {
+  public DynamoProjection(@NonNull DynamoDbClient dynamoDbClient, @NonNull String stateTableName) {
 
-    super(dynamoDbClient, projectionTableName, stateTableName);
+    super(dynamoDbClient, stateTableName);
 
     userTable = enhancedClient.table("users", TableSchema.fromImmutableClass(UserSchema.class));
   }
@@ -60,10 +57,7 @@ public class DynamoProjection extends AbstractDynamoManagedProjection {
 
   @Handler
   void apply(UserChangedV1 e) {
-    //    UserSchema user = .getItem(Key.builder().partitionValue(e.firstName()).build());
-
     // Only the last name can be changed.
-
     userTable.updateItem(
         UpdateItemEnhancedRequest.builder(UserSchema.class)
             .item(

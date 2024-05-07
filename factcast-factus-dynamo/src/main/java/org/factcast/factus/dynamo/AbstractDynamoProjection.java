@@ -48,15 +48,14 @@ abstract class AbstractDynamoProjection
   @Getter private final String projectionKey;
   private static final long LEASE_DURATION = 10L;
 
-  protected AbstractDynamoProjection(
-      @NonNull DynamoDbClient dynamoDb, String projectionTableName, String stateTableName) {
+  protected AbstractDynamoProjection(@NonNull DynamoDbClient dynamoDb, String stateTableName) {
     this.dynamoDb = dynamoDb;
     this.enhancedClient = DynamoDbEnhancedClient.builder().dynamoDbClient(dynamoDb).build();
 
     this.stateTable =
         enhancedClient.table(
             stateTableName, TableSchema.fromImmutableClass(DynamoProjectionState.class));
-    this.projectionKey = projectionTableName;
+    this.projectionKey = this.getScopedName().toString();
 
     this.lockClient =
         new AmazonDynamoDBLockClient(
