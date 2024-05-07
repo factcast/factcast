@@ -15,8 +15,10 @@
  */
 package org.factcast.factus.dynamo;
 
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBLockClient;
 import lombok.NonNull;
 import org.factcast.factus.projection.ManagedProjection;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 public abstract class AbstractDynamoManagedProjection extends AbstractDynamoProjection
@@ -24,5 +26,13 @@ public abstract class AbstractDynamoManagedProjection extends AbstractDynamoProj
   public AbstractDynamoManagedProjection(
       @NonNull DynamoDbClient dynamoDbClient, @NonNull String stateTableName) {
     super(dynamoDbClient, stateTableName);
+  }
+
+  public AbstractDynamoManagedProjection(
+      @NonNull DynamoDbClient dynamoDb,
+      @NonNull DynamoDbEnhancedClient enhancedClient,
+      @NonNull AmazonDynamoDBLockClient lockClient,
+      @NonNull String stateTableName) {
+    super(dynamoDb, enhancedClient, lockClient, stateTableName);
   }
 }
