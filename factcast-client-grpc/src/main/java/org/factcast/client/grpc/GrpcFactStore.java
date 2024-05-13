@@ -567,7 +567,6 @@ public class GrpcFactStore implements FactStore {
         () -> converter.fromProto(blockingStub.fetchBySerial(converter.toProto(serial))));
   }
 
-  @VisibleForTesting
   void reset() {
     // marks factstore as not initialized, so that a subsequent call needs to go through handshake
     // first. This is used to signal a faulty connection.

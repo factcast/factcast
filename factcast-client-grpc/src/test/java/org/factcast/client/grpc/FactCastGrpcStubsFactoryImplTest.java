@@ -34,7 +34,7 @@ class FactCastGrpcStubsFactoryImplTest {
   final FactCastGrpcStubsFactory uut = new FactCastGrpcStubsFactoryImpl();
 
   @Test
-  public void createsBlockingStub() {
+  void createsBlockingStub() {
     try (MockedStatic<RemoteFactStoreGrpc> mock = mockStatic(RemoteFactStoreGrpc.class)) {
       RemoteFactStoreGrpc.RemoteFactStoreBlockingStub stub =
           mock(RemoteFactStoreGrpc.RemoteFactStoreBlockingStub.class);
@@ -44,7 +44,7 @@ class FactCastGrpcStubsFactoryImplTest {
   }
 
   @Test
-  public void createsStub() {
+  void createsStub() {
     try (MockedStatic<RemoteFactStoreGrpc> mock = mockStatic(RemoteFactStoreGrpc.class)) {
       RemoteFactStoreGrpc.RemoteFactStoreStub stub =
           mock(RemoteFactStoreGrpc.RemoteFactStoreStub.class);
