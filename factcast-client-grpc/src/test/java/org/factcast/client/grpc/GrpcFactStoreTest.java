@@ -603,10 +603,55 @@ class GrpcFactStoreTest {
   void setSnapshot() {
     SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
     Snapshot snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
-    when(blockingStub.setSnapshot(eq(conv.toProto(snap)))).thenReturn(conv.empty());
 
     uut.setSnapshot(snap);
 
+    verify(blockingStub).setSnapshot(conv.toProto(snap));
+  }
+
+  @Test
+  void setSnapshotWithCompressionInTransit() {
+    // set compression and mock
+    RemoteFactStoreBlockingStub compBlockingStub = mock(RemoteFactStoreBlockingStub.class);
+    RemoteFactStoreStub compStub = mock(RemoteFactStoreStub.class);
+    Map<String, String> serverProps = new HashMap<>();
+    serverProps.put(Capabilities.CODECS.toString(), "gzip");
+    when(blockingStub.handshake(any()))
+        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, serverProps)));
+    when(blockingStub.withCompression(any())).thenReturn(compBlockingStub);
+    when(compBlockingStub.withInterceptors(any())).thenReturn(compBlockingStub);
+    when(stub.withCompression(any())).thenReturn(compStub);
+    when(compStub.withInterceptors(any())).thenReturn(compStub);
+
+    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
+    Snapshot snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
+
+    uut.setSnapshot(snap);
+
+    // uses the stub w compression enabled
+    verify(compBlockingStub).setSnapshot(conv.toProto(snap));
+  }
+
+  @Test
+  void setSnapshotAlreadyCompressed() {
+    // set compression and mock
+    RemoteFactStoreBlockingStub compBlockingStub = mock(RemoteFactStoreBlockingStub.class);
+    RemoteFactStoreStub compStub = mock(RemoteFactStoreStub.class);
+    Map<String, String> serverProps = new HashMap<>();
+    serverProps.put(Capabilities.CODECS.toString(), "gzip");
+    when(blockingStub.handshake(any()))
+        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, serverProps)));
+    when(blockingStub.withCompression(any())).thenReturn(compBlockingStub);
+    when(compBlockingStub.withInterceptors(any())).thenReturn(compBlockingStub);
+    when(stub.withCompression(any())).thenReturn(compStub);
+    when(compStub.withInterceptors(any())).thenReturn(compStub);
+
+    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
+    Snapshot snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), true);
+
+    uut.setSnapshot(snap);
+
+    // uses the stub w/o compression
     verify(blockingStub).setSnapshot(conv.toProto(snap));
   }
 
@@ -823,5 +868,14 @@ class GrpcFactStoreTest {
     verify(stubsFactory, times(nReInitializations)).createStub(channel);
     // should work after multiple re-initializations (issue #2868)
     uut.currentTime();
+  }
+
+  @Test
+  void resetsInitializationFlag() {
+    uut.reset();
+    uut.initializeIfNecessary();
+    uut.reset();
+    uut.initializeIfNecessary();
+    verify(blockingStub, times(2)).handshake(any());
   }
 }
