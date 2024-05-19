@@ -16,10 +16,7 @@
 package org.factcast.factus.serializer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
-import java.util.function.Function;
 import lombok.NonNull;
-import lombok.Setter;
 import lombok.SneakyThrows;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.projection.SnapshotProjection;
@@ -27,13 +24,9 @@ import org.factcast.factus.projection.SnapshotProjection;
 public class JacksonSnapshotSerializer implements SnapshotSerializer {
 
   private final ObjectMapper objectMapper;
-  private final JsonSchemaGenerator schemaGen;
-
-  @Setter private static Function<String, String> schemaModifier = Function.identity();
 
   public JacksonSnapshotSerializer(@NonNull ObjectMapper configuredObjectMapper) {
     this.objectMapper = configuredObjectMapper;
-    schemaGen = new JsonSchemaGenerator(objectMapper);
   }
 
   public JacksonSnapshotSerializer() {

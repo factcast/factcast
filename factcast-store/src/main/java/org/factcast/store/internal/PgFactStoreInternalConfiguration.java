@@ -29,6 +29,7 @@ import net.javacrumbs.shedlock.provider.inmemory.InMemoryLockProvider;
 import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
 import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
 import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMode;
+import net.javacrumbs.shedlock.support.KeepAliveLockProvider;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.observer.FastForwardTarget;
@@ -245,7 +246,8 @@ public class PgFactStoreInternalConfiguration {
             .usingDbTime()
             .build();
 
-    return new JdbcTemplateLockProvider(config);
+    return new KeepAliveLockProvider(
+        new JdbcTemplateLockProvider(config), Executors.newSingleThreadScheduledExecutor());
   }
 
   @Bean
@@ -253,7 +255,8 @@ public class PgFactStoreInternalConfiguration {
   public LockProvider inMemoryLockProvider() {
     log.debug("Configuring lock provider: IN MEMORY.");
 
-    return new InMemoryLockProvider();
+    return new KeepAliveLockProvider(
+        new InMemoryLockProvider(), Executors.newSingleThreadScheduledExecutor());
   }
 
   @Bean
