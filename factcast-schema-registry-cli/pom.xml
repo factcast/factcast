@@ -121,7 +121,7 @@
     <dependency>
       <groupId>info.picocli</groupId>
       <artifactId>picocli</artifactId>
-      <version>4.7.5</version>
+      <version>4.7.6</version>
     </dependency>
     <dependency>
       <groupId>io.micronaut.picocli</groupId>
@@ -358,7 +358,7 @@
                 <annotationProcessorPath>
                   <groupId>info.picocli</groupId>
                   <artifactId>picocli-codegen</artifactId>
-                  <version>4.7.5</version>
+                  <version>4.7.6</version>
                 </annotationProcessorPath>
                 <annotationProcessorPath>
                   <groupId>io.micronaut</groupId>
@@ -397,7 +397,7 @@
                 <annotationProcessorPath>
                   <groupId>info.picocli</groupId>
                   <artifactId>picocli-codegen</artifactId>
-                  <version>4.7.5</version>
+                  <version>4.7.6</version>
                 </annotationProcessorPath>
                 <annotationProcessorPath>
                   <groupId>io.micronaut</groupId>
