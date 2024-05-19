@@ -414,7 +414,11 @@ public class FactusImpl implements Factus {
             if (projection instanceof FactStreamPositionAware) {
               ((FactStreamPositionAware) projection).factStreamPosition(factIdToFfwdTo);
             }
-            positionOfLastFactApplied.set(factIdToFfwdTo);
+
+            // only persist ffwd if we ever had a state or applied facts in this catchup
+            if (stateOrNull != null || positionOfLastFactApplied.get() != null) {
+              positionOfLastFactApplied.set(factIdToFfwdTo);
+            }
           }
         };
 
