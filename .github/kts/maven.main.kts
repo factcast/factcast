@@ -1,6 +1,6 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("io.github.typesafegithub:github-workflows-kt:1.14.0")
+@file:DependsOn("io.github.typesafegithub:github-workflows-kt:1.15.0")
 
 
 import io.github.typesafegithub.workflows.actions.actions.CacheV4
@@ -27,7 +27,7 @@ public val workflowMaven: Workflow = workflow(
 ) {
     job(
         id = "build",
-        runsOn = RunnerType.UbuntuLatest,
+        runsOn = RunnerType.selfHosted(),
     ) {
         uses(
             name = "Checkout",
@@ -94,7 +94,7 @@ public val workflowMaven: Workflow = workflow(
 
     job(
         id = "postgres-compatibility",
-        runsOn = RunnerType.UbuntuLatest,
+        runsOn = RunnerType.selfHosted(),
         strategyMatrix = mapOf(
             // note that 11 is tested already in the regular build job
             // removed 12-14 for now to improve throughput regarding actions
