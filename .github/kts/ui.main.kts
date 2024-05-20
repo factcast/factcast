@@ -1,6 +1,6 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("io.github.typesafegithub:github-workflows-kt:1.14.0")
+@file:DependsOn("io.github.typesafegithub:github-workflows-kt:1.15.0")
 
 import io.github.typesafegithub.workflows.actions.actions.CacheV4
 import io.github.typesafegithub.workflows.actions.actions.CheckoutV4
@@ -24,7 +24,7 @@ public val workflowMaven: Workflow = workflow(
 ) {
     job(
         id = "build",
-        runsOn = RunnerType.UbuntuLatest,
+        runsOn = RunnerType.selfHosted(),
     ) {
         uses(
             name = "Checkout",
