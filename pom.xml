@@ -104,7 +104,7 @@
     <testcontainers.version>1.19.7</testcontainers.version>
     <arrow.version>1.2.4</arrow.version>
     <micronaut.version>4.3.7</micronaut.version>
-    <kotlin.version>1.9.23</kotlin.version>
+    <kotlin.version>1.9.24</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <kotest.version>5.8.0</kotest.version>
     <mockk.version>1.13.10</mockk.version>
