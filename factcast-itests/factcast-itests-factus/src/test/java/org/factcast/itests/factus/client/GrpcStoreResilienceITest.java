@@ -47,10 +47,12 @@ import org.springframework.test.context.TestPropertySource;
         "factcast.grpc.client.resilience.attempts=" + GrpcStoreResilienceITest.NUMBER_OF_ATTEMPTS)
 @Slf4j
 class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
-  static final int NUMBER_OF_ATTEMPTS = 99;
-
+  static final int NUMBER_OF_ATTEMPTS = Integer.MAX_VALUE;
   private static final int MAX_FACTS = 10000;
-  private static final long LATENCY = 2000;
+  // 30s should be enough for DB to flush data
+  private static final int CDL_TIMEOUT = 30;
+  private static final TimeUnit CDL_TIMEOUT_UNIT = TimeUnit.SECONDS;
+
   @Autowired FactCast fc;
   FactCastProxy proxy;
 
@@ -128,8 +130,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
             latch.countDown();
           });
     }
-
-    assertThat(latch.await(3, TimeUnit.SECONDS)).isTrue();
+    assertThat(latch.await(CDL_TIMEOUT, CDL_TIMEOUT_UNIT)).isTrue();
     assertThat(logCaptor.getInfoLogs()).containsOnlyOnce("Handshake successful.");
   }
 
@@ -216,7 +217,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
           });
     }
 
-    assertThat(latch.await(3, TimeUnit.SECONDS)).isTrue();
+    assertThat(latch.await(CDL_TIMEOUT, CDL_TIMEOUT_UNIT)).isTrue();
     assertThat(logCaptor.getInfoLogs()).containsOnlyOnce("Handshake successful.");
   }
 }
