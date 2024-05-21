@@ -39,6 +39,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.security.authentication.BadCredentialsException;
 
 @ExtendWith(MockitoExtension.class)
 class GrpcServerExceptionInterceptorTest {
@@ -182,9 +184,7 @@ class GrpcServerExceptionInterceptorTest {
 
       @Test
       void handlesCancelByClient() {
-
         ExceptionHandlingServerCallListener<Req, Res> uut = spy(underTest);
-
         String msg = "123";
         var ex = new RequestCanceledByClientException(msg);
 
@@ -192,29 +192,26 @@ class GrpcServerExceptionInterceptorTest {
 
         var cap = ArgumentCaptor.forClass(Status.class);
         verify(serverCall).close(cap.capture(), same(metadata));
-
         assertThat(cap.getValue().getCode()).isEqualTo(Code.CANCELLED);
         assertThat(cap.getValue().getDescription()).isEqualTo(msg);
       }
 
       @Test
       void closesOnStatusRuntimeException() {
-
         ExceptionHandlingServerCallListener<Req, Res> uut = spy(underTest);
         String msg = "456";
-        var ex = new StatusRuntimeException(Status.ALREADY_EXISTS.withDescription(msg));
+        var metadata = new Metadata();
+        var ex = new StatusRuntimeException(Status.ALREADY_EXISTS.withDescription(msg), metadata);
         uut.handleException(ex, serverCall, metadata);
 
         var cap = ArgumentCaptor.forClass(Status.class);
         verify(serverCall).close(cap.capture(), same(metadata));
-
         assertThat(cap.getValue().getCode()).isEqualTo(Code.ALREADY_EXISTS);
         assertThat(cap.getValue().getDescription()).isEqualTo(msg);
       }
 
       @Test
       void closesWithTranslatedException() {
-
         ExceptionHandlingServerCallListener<Req, Res> uut = spy(underTest);
         String msg = "456";
         var ex = new FactValidationException(msg);
@@ -223,7 +220,6 @@ class GrpcServerExceptionInterceptorTest {
 
         var cap = ArgumentCaptor.forClass(Metadata.class);
         verify(serverCall).close(any(), cap.capture());
-
         assertThat(
                 cap.getValue()
                     .containsKey(Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER)))
@@ -232,6 +228,30 @@ class GrpcServerExceptionInterceptorTest {
                 cap.getValue()
                     .containsKey(Metadata.Key.of("exc-bin", Metadata.BINARY_BYTE_MARSHALLER)))
             .isTrue();
+      }
+
+      @Test
+      void translatesCredentialsNotFoundException() {
+        ExceptionHandlingServerCallListener<Req, Res> uut = spy(underTest);
+        var ex = new AuthenticationCredentialsNotFoundException("test");
+
+        uut.handleException(ex, serverCall, metadata);
+
+        var cap = ArgumentCaptor.forClass(Status.class);
+        verify(serverCall).close(cap.capture(), any());
+        assertThat(cap.getValue().getCode()).isEqualTo(Code.UNAUTHENTICATED);
+      }
+
+      @Test
+      void translatesAuthenticationException() {
+        ExceptionHandlingServerCallListener<Req, Res> uut = spy(underTest);
+        var ex = new BadCredentialsException("test");
+
+        uut.handleException(ex, serverCall, metadata);
+
+        var cap = ArgumentCaptor.forClass(Status.class);
+        verify(serverCall).close(cap.capture(), any());
+        assertThat(cap.getValue().getCode()).isEqualTo(Code.PERMISSION_DENIED);
       }
     }
   }
