@@ -17,13 +17,21 @@ package org.factcast.core.snap;
 
 import java.util.Optional;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.store.FactStore;
 
-@RequiredArgsConstructor
+@Deprecated
+@Slf4j
 public class FactCastSnapshotCache implements SnapshotCache {
 
-  @NonNull final FactStore store;
+  @NonNull private final FactStore store;
+
+  public FactCastSnapshotCache(@NonNull FactStore store) {
+    this.store = store;
+    //noinspection deprecation
+    log.warn(
+        "You configured factus to use the default FactCastSnapshotCache instead of a client-local cache. This implemenation is deprecated and will be removed soon. Please consider alternative SnapshotCache implementations (like factcast-snapshotcache-redisson for instance).");
+  }
 
   @Override
   public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
