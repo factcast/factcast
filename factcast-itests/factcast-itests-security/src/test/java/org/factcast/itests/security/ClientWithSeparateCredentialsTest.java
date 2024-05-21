@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.*;
 
 import io.grpc.Channel;
 import io.grpc.StatusRuntimeException;
-
 import java.util.List;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -48,27 +47,33 @@ import org.springframework.test.context.TestPropertySource;
 public class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrationTest {
   @Autowired FactCast fc;
 
-  @Autowired
-  FactCastGrpcStubsFactory stubsFactory;
+  @Autowired FactCastGrpcStubsFactory stubsFactory;
 
-  @Autowired
-  GrpcChannelFactory channelFactory;
+  @Autowired GrpcChannelFactory channelFactory;
 
-  @Autowired
-  JdbcTemplate jdbcTemplate;
+  @Autowired JdbcTemplate jdbcTemplate;
 
   private final ProtoConverter converter = new ProtoConverter();
 
-  private final FactObserver nopFactObserver = f -> {
-    // do nothing
-  };
+  private final FactObserver nopFactObserver =
+      f -> {
+        // do nothing
+      };
 
   @BeforeEach
   void setup() {
-    List<Fact> facts = List.of(
-        Fact.of("{\"id\":\"" + UUID.randomUUID() + "\", \"ns\":\"users\",\"type\":\"UserCreated\"}", "{}"),
-        Fact.of("{\"id\":\"" + UUID.randomUUID() + "\", \"ns\":\"no-permissions\",\"type\":\"UserCreated\"}", "{}"));
-    String insertFact = "INSERT INTO fact(header,payload) VALUES (cast(? as jsonb),cast (? as jsonb))";
+    List<Fact> facts =
+        List.of(
+            Fact.of(
+                "{\"id\":\"" + UUID.randomUUID() + "\", \"ns\":\"users\",\"type\":\"UserCreated\"}",
+                "{}"),
+            Fact.of(
+                "{\"id\":\""
+                    + UUID.randomUUID()
+                    + "\", \"ns\":\"no-permissions\",\"type\":\"UserCreated\"}",
+                "{}"));
+    String insertFact =
+        "INSERT INTO fact(header,payload) VALUES (cast(? as jsonb),cast (? as jsonb))";
     jdbcTemplate.batchUpdate(
         insertFact,
         facts,
@@ -103,18 +108,20 @@ public class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrati
 
   @Test
   public void allowedToCatchup() throws Exception {
-    SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("users").type("UserCreated")).fromScratch();
-    try(Subscription sub = fc.subscribe(req, nopFactObserver)) {
+    SubscriptionRequest req =
+        SubscriptionRequest.catchup(FactSpec.ns("users").type("UserCreated")).fromScratch();
+    try (Subscription sub = fc.subscribe(req, nopFactObserver)) {
       sub.awaitCatchup();
     }
   }
 
   @Test
   public void failsToCatchup() throws Exception {
-    SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("no-permissions").type("UserCreated")).fromScratch();
-    try(Subscription sub = fc.subscribe(req, nopFactObserver)) {
-      assertThatThrownBy(
-          sub::awaitCatchup)
+    SubscriptionRequest req =
+        SubscriptionRequest.catchup(FactSpec.ns("no-permissions").type("UserCreated"))
+            .fromScratch();
+    try (Subscription sub = fc.subscribe(req, nopFactObserver)) {
+      assertThatThrownBy(sub::awaitCatchup)
           .isInstanceOf(StatusRuntimeException.class)
           .hasMessageContaining("PERMISSION_DENIED");
     }
@@ -122,18 +129,19 @@ public class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrati
 
   @Test
   public void allowedToFollow() throws Exception {
-    SubscriptionRequest req = SubscriptionRequest.follow(FactSpec.ns("users").type("UserCreated")).fromScratch();
-    try(Subscription sub = fc.subscribe(req, nopFactObserver)) {
+    SubscriptionRequest req =
+        SubscriptionRequest.follow(FactSpec.ns("users").type("UserCreated")).fromScratch();
+    try (Subscription sub = fc.subscribe(req, nopFactObserver)) {
       sub.awaitCatchup();
     }
   }
 
   @Test
   public void failsToFollow() throws Exception {
-    SubscriptionRequest req = SubscriptionRequest.follow(FactSpec.ns("no-permissions").type("UserCreated")).fromScratch();
-    try(Subscription sub = fc.subscribe(req, nopFactObserver)) {
-      assertThatThrownBy(
-          sub::awaitCatchup)
+    SubscriptionRequest req =
+        SubscriptionRequest.follow(FactSpec.ns("no-permissions").type("UserCreated")).fromScratch();
+    try (Subscription sub = fc.subscribe(req, nopFactObserver)) {
+      assertThatThrownBy(sub::awaitCatchup)
           .isInstanceOf(StatusRuntimeException.class)
           .hasMessageContaining("PERMISSION_DENIED");
     }

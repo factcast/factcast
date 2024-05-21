@@ -69,8 +69,7 @@ class ClientExceptionHelperTest {
       Metadata metadata = new Metadata();
 
       StatusRuntimeException ex = new StatusRuntimeException(Status.UNAUTHENTICATED, metadata);
-      assertThat(ClientExceptionHelper.from(ex))
-          .isInstanceOf(StatusRuntimeException.class);
+      assertThat(ClientExceptionHelper.from(ex)).isInstanceOf(StatusRuntimeException.class);
     }
 
     @Test
@@ -78,8 +77,7 @@ class ClientExceptionHelperTest {
       Metadata metadata = new Metadata();
 
       StatusRuntimeException ex = new StatusRuntimeException(Status.PERMISSION_DENIED, metadata);
-      assertThat(ClientExceptionHelper.from(ex))
-          .isInstanceOf(StatusRuntimeException.class);
+      assertThat(ClientExceptionHelper.from(ex)).isInstanceOf(StatusRuntimeException.class);
     }
 
     @Test
