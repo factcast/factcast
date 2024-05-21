@@ -99,6 +99,15 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
     // break upstream call, timeout of 0 will make sure no communication takes place until reset.
     proxy.toxics().resetPeer("immediate reset", ToxicDirection.UPSTREAM, 0);
 
+    List<Fact> facts = new ArrayList<>(MAX_FACTS);
+    for (int i = 0; i < MAX_FACTS; i++) {
+      facts.add(Fact.builder().ns("ns").type("type").buildWithoutPayload());
+    }
+    List<List<Fact>> factPartitions = Lists.partition(facts, MAX_FACTS / 4);
+    // Reconnect with 4 concurrent threads
+    CountDownLatch latch = new CountDownLatch(4);
+    ExecutorService threads = Executors.newFixedThreadPool(4);
+
     new Timer()
         .schedule(
             new TimerTask() {
@@ -111,14 +120,6 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
             },
             1000);
 
-    List<Fact> facts = new ArrayList<>(MAX_FACTS);
-    for (int i = 0; i < MAX_FACTS; i++) {
-      facts.add(Fact.builder().ns("ns").type("type").buildWithoutPayload());
-    }
-    List<List<Fact>> factPartitions = Lists.partition(facts, MAX_FACTS / 4);
-    // Reconnect with 4 concurrent threads
-    CountDownLatch latch = new CountDownLatch(4);
-    ExecutorService threads = Executors.newFixedThreadPool(4);
     for (int i = 0; i < 4; i++) {
       final List<Fact> f = factPartitions.get(i);
       threads.submit(
