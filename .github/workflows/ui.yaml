@@ -10,8 +10,7 @@ on:
     - 'master'
 jobs:
   build:
-    runs-on:
-    - 'self-hosted'
+    runs-on: 'ubuntu-latest'
     steps:
     - id: 'step-0'
       name: 'Checkout'
