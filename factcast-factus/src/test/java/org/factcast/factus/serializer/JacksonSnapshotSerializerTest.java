@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.UUID;
 import lombok.Data;
+import org.factcast.factus.projection.ProgressAware;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -51,7 +52,7 @@ class JacksonSnapshotSerializerTest {
   }
 
   @Data
-  static class SimpleSnapshotProjection implements SnapshotProjection {
+  static class SimpleSnapshotProjection implements SnapshotProjection, ProgressAware {
     String val;
   }
 
