@@ -62,6 +62,7 @@ public final class FactCastJson {
   }
 
   private static void initializeObjectMapper() {
+    // don't even think about changing the configuration, ever.
     objectMapper = new ObjectMapper();
     objectMapper
         .setVisibility(PropertyAccessor.FIELD, Visibility.ANY)

@@ -15,11 +15,11 @@
  */
 package org.factcast.server.ui.plugins;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,15 +35,13 @@ class JsonEntryMetaDataTest {
 
   @Nested
   class WhenAnnotatingHeader {
-    private final String PATH = "PATH";
-    private final String VALUE = "VALUE";
 
     @Test
     void delegates() {
       underTest.annotateHeader("foo", "bar");
       underTest.annotateHeader("foo", "baz");
-      Assertions.assertThat(underTest.annotations()).hasSize(1);
-      Assertions.assertThat(underTest.annotations().get("header.foo"))
+      assertThat(underTest.annotations()).hasSize(1);
+      assertThat(underTest.annotations().get("header.foo"))
           .hasSize(2)
           .containsExactlyInAnyOrder("bar", "baz");
     }
@@ -51,15 +49,13 @@ class JsonEntryMetaDataTest {
 
   @Nested
   class WhenAnnotatingPayload {
-    private final String PATH = "PATH";
-    private final String VALUE = "VALUE";
 
     @Test
     void delegates() {
       underTest.annotatePayload("foo", "bar");
       underTest.annotatePayload("foo", "baz");
-      Assertions.assertThat(underTest.annotations()).hasSize(1);
-      Assertions.assertThat(underTest.annotations().get("payload.foo"))
+      assertThat(underTest.annotations()).hasSize(1);
+      assertThat(underTest.annotations().get("payload.foo"))
           .hasSize(2)
           .containsExactlyInAnyOrder("bar", "baz");
     }
@@ -67,15 +63,13 @@ class JsonEntryMetaDataTest {
 
   @Nested
   class WhenAddingHeaderHoverContent {
-    private final String PATH = "PATH";
-    private final String VALUE = "VALUE";
 
     @Test
     void delegates() {
       underTest.addHeaderHoverContent("foo", "bar");
       underTest.addHeaderHoverContent("foo", "baz");
-      Assertions.assertThat(underTest.hoverContent()).hasSize(1);
-      Assertions.assertThat(underTest.hoverContent().get("header.foo"))
+      assertThat(underTest.hoverContent()).hasSize(1);
+      assertThat(underTest.hoverContent().get("header.foo"))
           .hasSize(2)
           .containsExactlyInAnyOrder("bar", "baz");
     }
@@ -83,17 +77,46 @@ class JsonEntryMetaDataTest {
 
   @Nested
   class WhenAddingPayloadHoverContent {
-    private final String PATH = "PATH";
-    private final String VALUE = "VALUE";
 
     @Test
     void delegates() {
       underTest.addPayloadHoverContent("foo", "bar");
       underTest.addPayloadHoverContent("foo", "baz");
-      Assertions.assertThat(underTest.hoverContent()).hasSize(1);
-      Assertions.assertThat(underTest.hoverContent().get("payload.foo"))
+      assertThat(underTest.hoverContent()).hasSize(1);
+      assertThat(underTest.hoverContent().get("payload.foo"))
           .hasSize(2)
           .containsExactlyInAnyOrder("bar", "baz");
+    }
+  }
+
+  @Nested
+  class WhenAddingHeaderMetaFilterOption {
+
+    @Test
+    void delegates() {
+      underTest.addHeaderMetaFilterOption("path", "foo", "bar");
+
+      assertThat(underTest.filterOptions()).hasSize(1);
+      assertThat(underTest.filterOptions().get("header.path"))
+          .extracting(JsonEntryMetaData.FilterOptions::meta)
+          .extracting(
+              JsonEntryMetaData.MetaFilterOption::key, JsonEntryMetaData.MetaFilterOption::value)
+          .containsExactlyInAnyOrder("foo", "bar");
+    }
+  }
+
+  @Nested
+  class WhenAddingPayloadAggregateIdFilterOption {
+
+    @Test
+    void delegates() {
+      final var aggregateId = UUID.randomUUID();
+      underTest.addPayloadAggregateIdFilterOption("path", aggregateId);
+
+      assertThat(underTest.filterOptions()).hasSize(1);
+      assertThat(underTest.filterOptions().get("payload.path"))
+          .extracting(JsonEntryMetaData.FilterOptions::aggregateId)
+          .isEqualTo(aggregateId);
     }
   }
 }

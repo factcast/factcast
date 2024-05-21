@@ -102,6 +102,32 @@ public class ExampleUiServer {
     };
   }
 
+  @Bean
+  public JsonViewPlugin hoverIdsPlugin() {
+    return new JsonViewPlugin() {
+      @Override
+      public void doHandle(Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData) {
+        final var idPaths =
+            payload.findPaths("$..*").stream()
+                .filter(p -> p.toLowerCase().endsWith("id']"))
+                .toList();
+
+        idPaths.forEach(
+            p -> jsonEntryMetaData.addPayloadHoverContent(p, "This is most likely an ID."));
+      }
+
+      @Override
+      public boolean isReady() {
+        return true;
+      }
+
+      @Override
+      public @NonNull String getDisplayName() {
+        return "HoverIdsPlugin";
+      }
+    };
+  }
+
   public static void main(String[] args) {
     SpringApplication.run(ExampleUiServer.class, args);
   }
