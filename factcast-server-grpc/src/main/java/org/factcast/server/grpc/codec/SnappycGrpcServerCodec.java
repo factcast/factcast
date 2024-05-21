@@ -19,28 +19,30 @@ import io.grpc.Codec;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import lombok.SneakyThrows;
 import net.devh.boot.grpc.common.codec.CodecType;
 import net.devh.boot.grpc.common.codec.GrpcCodec;
-import org.xerial.snappy.SnappyInputStream;
-import org.xerial.snappy.SnappyOutputStream;
+import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorInputStream;
+import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorOutputStream;
 
 @SuppressWarnings("DeprecatedIsStillUsed")
 @GrpcCodec(advertised = true, codecType = CodecType.ALL)
 @Deprecated
-public class SnappyGrpcServerCodec implements Codec {
+public class SnappycGrpcServerCodec implements Codec {
 
   @Override
   public String getMessageEncoding() {
-    return "snappy";
+    return "snappyc";
   }
 
   @Override
   public InputStream decompress(InputStream inputStream) throws IOException {
-    return new SnappyInputStream(inputStream);
+    return new FramedSnappyCompressorInputStream(inputStream);
   }
 
+  @SneakyThrows
   @Override
   public OutputStream compress(OutputStream outputStream) {
-    return new SnappyOutputStream(outputStream);
+    return new FramedSnappyCompressorOutputStream(outputStream);
   }
 }

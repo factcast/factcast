@@ -13,34 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.grpc.codec;
+package org.factcast.client.grpc.codec;
 
 import io.grpc.Codec;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import lombok.SneakyThrows;
 import net.devh.boot.grpc.common.codec.CodecType;
 import net.devh.boot.grpc.common.codec.GrpcCodec;
-import org.xerial.snappy.SnappyInputStream;
-import org.xerial.snappy.SnappyOutputStream;
+import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorInputStream;
+import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorOutputStream;
 
-@SuppressWarnings("DeprecatedIsStillUsed")
 @GrpcCodec(advertised = true, codecType = CodecType.ALL)
-@Deprecated
-public class SnappyGrpcServerCodec implements Codec {
+public class SnappycGrpcClientCodec implements Codec {
 
   @Override
   public String getMessageEncoding() {
-    return "snappy";
+    return "snappyc";
+  }
+
+  @SneakyThrows
+  @Override
+  public OutputStream compress(OutputStream os) {
+    return new FramedSnappyCompressorOutputStream(os);
   }
 
   @Override
-  public InputStream decompress(InputStream inputStream) throws IOException {
-    return new SnappyInputStream(inputStream);
-  }
-
-  @Override
-  public OutputStream compress(OutputStream outputStream) {
-    return new SnappyOutputStream(outputStream);
+  public InputStream decompress(InputStream is) throws IOException {
+    return new FramedSnappyCompressorInputStream(is);
   }
 }
