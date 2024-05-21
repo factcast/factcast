@@ -31,6 +31,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 @Slf4j
 @RequiredArgsConstructor
+@Deprecated(forRemoval = true)
+/**
+ * @deprecated to be removed in 0.8
+ *     <p>Users should be encouraged to use application local snapshot caching instead of hogging on
+ *     a central resource
+ */
 public class PgSnapshotCache implements SnapshotCache {
   private static final String SELECT_SNAPSHOT =
       "SELECT factid,data,compressed FROM snapshot_cache WHERE uuid=? AND cache_key=?";
@@ -94,5 +100,11 @@ public class PgSnapshotCache implements SnapshotCache {
             "DELETE FROM snapshot_cache WHERE last_access < ?", thresholdDate.toOffsetDateTime());
     metrics.distributionSummary(StoreMetrics.VALUE.SNAPSHOTS_COMPACTED).record(deleted);
     log.debug("compaction removed {} stale snapshots from the snapshot_cache", deleted);
+  }
+
+  {
+    log.warn(
+        "This server uses the {}. This functionality will be removed from the store interface in 0.8 - please make sure, your clients do no longer use it.",
+        getClass().getSimpleName());
   }
 }
