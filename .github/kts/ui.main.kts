@@ -1,10 +1,9 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("io.github.typesafegithub:github-workflows-kt:1.12.0")
+@file:DependsOn("io.github.typesafegithub:github-workflows-kt:1.15.0")
 
-import io.github.typesafegithub.workflows.actions.actions.CacheV3
+import io.github.typesafegithub.workflows.actions.actions.CacheV4
 import io.github.typesafegithub.workflows.actions.actions.CheckoutV4
-import io.github.typesafegithub.workflows.actions.actions.SetupJavaV3
 import io.github.typesafegithub.workflows.actions.actions.SetupJavaV4
 import io.github.typesafegithub.workflows.domain.RunnerType
 import io.github.typesafegithub.workflows.domain.Workflow
@@ -12,7 +11,6 @@ import io.github.typesafegithub.workflows.domain.triggers.PullRequest
 import io.github.typesafegithub.workflows.domain.triggers.Push
 import io.github.typesafegithub.workflows.dsl.workflow
 import io.github.typesafegithub.workflows.yaml.writeToFile
-import java.nio.file.Paths
 
 public val workflowMaven: Workflow = workflow(
     name = "Maven UITest",
@@ -22,7 +20,7 @@ public val workflowMaven: Workflow = workflow(
             branches = listOf("master"),
         ),
     ),
-    sourceFile =  __FILE__.toPath(),
+    sourceFile = __FILE__.toPath(),
 ) {
     job(
         id = "build",
@@ -34,7 +32,7 @@ public val workflowMaven: Workflow = workflow(
         )
         uses(
             name = "Cache - Maven Repository",
-            action = CacheV3(
+            action = CacheV4(
                 path = listOf(
                     "~/.m2/repository",
                 ),

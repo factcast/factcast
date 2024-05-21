@@ -104,7 +104,7 @@ public class IdQueryPage extends VerticalLayout implements HasUrlParameter<Strin
         var fact = fc.findBy(formBean);
 
         fact.ifPresentOrElse(
-            f -> jsonView.renderFact(jsonViewPluginService.process(f)),
+            f -> jsonView.renderFact(jsonViewPluginService.process(f), 0),
             () -> Notifications.warn("Fact not found"));
       }
 
