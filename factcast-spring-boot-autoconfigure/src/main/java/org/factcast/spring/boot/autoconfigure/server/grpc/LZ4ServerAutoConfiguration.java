@@ -24,6 +24,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 
+@SuppressWarnings("deprecation")
 @Generated
 @AutoConfiguration
 @ConditionalOnClass({FactStoreGrpcService.class, LZ4Compressor.class, Lz4GrpcServerCodec.class})

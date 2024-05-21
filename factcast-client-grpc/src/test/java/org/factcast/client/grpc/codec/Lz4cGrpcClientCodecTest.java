@@ -21,14 +21,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.IOException;
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings("deprecation")
-class Lz4GrpcClientCodecTest {
+class Lz4cGrpcClientCodecTest {
 
-  final Lz4GrpcClientCodec uut = new Lz4GrpcClientCodec();
+  final Lz4cGrpcClientCodec uut = new Lz4cGrpcClientCodec();
 
   @Test
   void getMessageEncoding() {
-    assertEquals("lz4", uut.getMessageEncoding());
+    assertEquals("lz4c", uut.getMessageEncoding());
   }
 
   @Test
