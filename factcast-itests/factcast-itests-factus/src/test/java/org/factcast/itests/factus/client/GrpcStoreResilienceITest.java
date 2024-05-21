@@ -109,7 +109,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
                 proxy.reset();
               }
             },
-            100);
+            1000);
 
     List<Fact> facts = new ArrayList<>(MAX_FACTS);
     for (int i = 0; i < MAX_FACTS; i++) {
