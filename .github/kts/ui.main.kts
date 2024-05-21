@@ -24,7 +24,7 @@ public val workflowMaven: Workflow = workflow(
 ) {
     job(
         id = "build",
-        runsOn = RunnerType.selfHosted(),
+        runsOn = RunnerType.UbuntuLatest,
     ) {
         uses(
             name = "Checkout",
