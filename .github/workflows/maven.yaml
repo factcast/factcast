@@ -10,8 +10,7 @@ on:
     - 'master'
 jobs:
   build:
-    runs-on:
-    - 'self-hosted'
+    runs-on: 'ubuntu-latest'
     steps:
     - id: 'step-0'
       name: 'Checkout'
@@ -56,8 +55,7 @@ jobs:
       with:
         token: '${{ secrets.CODECOV_TOKEN }}'
   postgres-compatibility:
-    runs-on:
-    - 'self-hosted'
+    runs-on: 'ubuntu-latest'
     strategy:
       matrix:
         postgresVersion:
