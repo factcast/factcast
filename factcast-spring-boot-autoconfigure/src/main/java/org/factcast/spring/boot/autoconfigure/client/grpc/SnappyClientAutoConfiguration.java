@@ -29,6 +29,7 @@ import org.xerial.snappy.SnappyOutputStream;
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
+@SuppressWarnings("deprecation")
 @AutoConfiguration
 @ConditionalOnClass({
   SnappyInputStream.class,
