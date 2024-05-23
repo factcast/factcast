@@ -358,14 +358,14 @@ class PGTailIndexManagerImplTest {
     @SneakyThrows
     void createsTemplate() {
       var uut = spy(underTest);
-      when(pgConnectionSupplier.get()).thenReturn(pgConnection);
+      when(pgConnectionSupplier.get(any())).thenReturn(pgConnection);
 
       var closeableJdbcTemplate = uut.buildTemplate();
       closeableJdbcTemplate.close();
 
       assertThat(closeableJdbcTemplate).isNotNull();
 
-      verify(pgConnectionSupplier).get();
+      verify(pgConnectionSupplier).get("tail-index-maintenance");
       verify(pgConnection).close();
     }
   }

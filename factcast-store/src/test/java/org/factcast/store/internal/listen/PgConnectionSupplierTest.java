@@ -21,6 +21,7 @@ import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.*;
 
 import com.google.common.base.Splitter;
+import com.google.common.base.Supplier;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
@@ -31,6 +32,7 @@ import javax.sql.DataSource;
 import lombok.SneakyThrows;
 import org.apache.tomcat.jdbc.pool.PoolConfiguration;
 import org.junit.jupiter.api.*;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.postgresql.jdbc.PgConnection;
 
@@ -40,10 +42,12 @@ public class PgConnectionSupplierTest {
 
   @Mock private org.apache.tomcat.jdbc.pool.DataSource ds;
 
+  @Mock private Supplier<String> clientIdSupplier;
+
   @BeforeEach
   void setUp() {
     initMocks(this);
-    uut = new PgConnectionSupplier(ds);
+    uut = new PgConnectionSupplier(ds, clientIdSupplier);
   }
 
   private void setupConnectionProperties(String properties) {
@@ -65,7 +69,7 @@ public class PgConnectionSupplierTest {
         IllegalArgumentException.class,
         () -> {
           DataSource ds = mock(DataSource.class);
-          new PgConnectionSupplier(ds);
+          new PgConnectionSupplier(ds, clientIdSupplier);
           failBecauseExceptionWasNotThrown(IllegalStateException.class);
         });
   }
@@ -164,7 +168,7 @@ public class PgConnectionSupplierTest {
     Assertions.assertThrows(
         NullPointerException.class,
         () -> {
-          new PgConnectionSupplier(null);
+          new PgConnectionSupplier(null, null);
           failBecauseExceptionWasNotThrown(NullPointerException.class);
         });
   }
@@ -174,14 +178,14 @@ public class PgConnectionSupplierTest {
     String url = "jdbc:xyz:foo";
     org.apache.tomcat.jdbc.pool.DataSource ds = new org.apache.tomcat.jdbc.pool.DataSource();
     ds.setUrl(url);
-    PgConnectionSupplier uut = new PgConnectionSupplier(ds);
+    PgConnectionSupplier uut = new PgConnectionSupplier(ds, clientIdSupplier);
     assertThatThrownBy(uut::get).isInstanceOf(SQLException.class);
   }
 
   @Test
   void testTomcatDataSourceIsUsed() {
     org.apache.tomcat.jdbc.pool.DataSource ds = new org.apache.tomcat.jdbc.pool.DataSource();
-    PgConnectionSupplier uut = new PgConnectionSupplier(ds);
+    PgConnectionSupplier uut = new PgConnectionSupplier(ds, clientIdSupplier);
     assertThat(uut.ds).isSameAs(ds);
   }
 
@@ -191,6 +195,7 @@ public class PgConnectionSupplierTest {
     final var driver = mock(Driver.class);
     final var connection = mock(Connection.class);
     final var pgConnection = mock(PgConnection.class);
+    final var propertiesCaptor = ArgumentCaptor.forClass(Properties.class);
 
     when(driver.connect(anyString(), any(Properties.class))).thenReturn(connection);
     when(connection.unwrap(any())).thenReturn(pgConnection);
@@ -205,7 +210,65 @@ public class PgConnectionSupplierTest {
       driverManager.verify(() -> DriverManager.getDriver(ds.getUrl()));
     }
 
-    verify(driver).connect(eq("hugo"), any(Properties.class));
+    verify(driver).connect(eq("hugo"), propertiesCaptor.capture());
     verify(connection).unwrap(PgConnection.class);
+    final var actualProperties = propertiesCaptor.getValue();
+    assertThat(actualProperties.getProperty("ApplicationName")).isEqualTo("factcast");
+  }
+
+  @Test
+  @SneakyThrows
+  void getConnectionWithClientIdSupplier() {
+    final var driver = mock(Driver.class);
+    final var connection = mock(Connection.class);
+    final var pgConnection = mock(PgConnection.class);
+    final var propertiesCaptor = ArgumentCaptor.forClass(Properties.class);
+
+    when(driver.connect(anyString(), any(Properties.class))).thenReturn(connection);
+    when(connection.unwrap(any())).thenReturn(pgConnection);
+    when(ds.getUrl()).thenReturn("hugo");
+    when(clientIdSupplier.get()).thenReturn("some-service");
+
+    try (var driverManager = mockStatic(DriverManager.class)) {
+
+      driverManager.when(() -> DriverManager.getDriver(anyString())).thenReturn(driver);
+
+      assertThat(uut.get()).isSameAs(pgConnection);
+
+      driverManager.verify(() -> DriverManager.getDriver(ds.getUrl()));
+    }
+
+    verify(connection).unwrap(PgConnection.class);
+    verify(driver).connect(eq("hugo"), propertiesCaptor.capture());
+    final var actualProperties = propertiesCaptor.getValue();
+    assertThat(actualProperties.getProperty("ApplicationName")).isEqualTo("factcast/some-service");
+  }
+
+  @Test
+  @SneakyThrows
+  void getConnectionClientIdProvided() {
+    final var driver = mock(Driver.class);
+    final var connection = mock(Connection.class);
+    final var pgConnection = mock(PgConnection.class);
+    final var propertiesCaptor = ArgumentCaptor.forClass(Properties.class);
+
+    when(driver.connect(anyString(), any(Properties.class))).thenReturn(connection);
+    when(connection.unwrap(any())).thenReturn(pgConnection);
+    when(ds.getUrl()).thenReturn("hugo");
+
+    try (var driverManager = mockStatic(DriverManager.class)) {
+
+      driverManager.when(() -> DriverManager.getDriver(anyString())).thenReturn(driver);
+
+      assertThat(uut.get("another-client")).isSameAs(pgConnection);
+
+      driverManager.verify(() -> DriverManager.getDriver(ds.getUrl()));
+    }
+
+    verify(connection).unwrap(PgConnection.class);
+    verify(driver).connect(eq("hugo"), propertiesCaptor.capture());
+    final var actualProperties = propertiesCaptor.getValue();
+    assertThat(actualProperties.getProperty("ApplicationName"))
+        .isEqualTo("factcast/another-client");
   }
 }

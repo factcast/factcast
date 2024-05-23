@@ -90,7 +90,7 @@ public class PgListener implements InitializingBean, DisposableBean {
       while (running.get()) {
 
         // new connection
-        try (PgConnection pc = pgConnectionSupplier.get()) {
+        try (PgConnection pc = pgConnectionSupplier.get("notification-receiver-loop")) {
           connectionSetup(pc);
 
           while (running.get()) {
