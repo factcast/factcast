@@ -316,6 +316,7 @@ public class PgFactStoreInternalConfiguration {
     return liquibase;
   }
 
+  @Bean
   @ConditionalOnMissingBean
   public Supplier<String> clientIdSupplier() {
     return () -> "unknown";
