@@ -31,6 +31,7 @@ import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import org.factcast.core.FactValidationException;
 import org.factcast.server.grpc.GrpcServerExceptionInterceptor.ExceptionHandlingServerCallListener;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -109,7 +110,7 @@ class GrpcServerExceptionInterceptorTest {
 
       @Test
       void happyPath() {
-        underTest.onMessage(null);
+        Assertions.assertDoesNotThrow(() -> underTest.onMessage(null));
       }
     }
 
@@ -131,7 +132,7 @@ class GrpcServerExceptionInterceptorTest {
 
       @Test
       void happyPath() {
-        underTest.onReady();
+        Assertions.assertDoesNotThrow(() -> underTest.onReady());
       }
     }
 
@@ -153,7 +154,7 @@ class GrpcServerExceptionInterceptorTest {
 
       @Test
       void happyPath() {
-        underTest.onCancel();
+        Assertions.assertDoesNotThrow(() -> underTest.onCancel());
       }
     }
 
@@ -162,7 +163,6 @@ class GrpcServerExceptionInterceptorTest {
 
       @Test
       void handlesException() {
-
         ExceptionHandlingServerCallListener<Req, Res> uut = spy(underTest);
         doThrow(ex).when(listener).onComplete();
 
@@ -175,7 +175,7 @@ class GrpcServerExceptionInterceptorTest {
 
       @Test
       void happyPath() {
-        underTest.onComplete();
+        Assertions.assertDoesNotThrow(() -> underTest.onComplete());
       }
     }
 
@@ -186,9 +186,9 @@ class GrpcServerExceptionInterceptorTest {
       void handlesCancelByClient() {
         ExceptionHandlingServerCallListener<Req, Res> uut = spy(underTest);
         String msg = "123";
-        var ex = new RequestCanceledByClientException(msg);
+        var exception = new RequestCanceledByClientException(msg);
 
-        uut.handleException(ex, serverCall, metadata);
+        uut.handleException(exception, serverCall, metadata);
 
         var cap = ArgumentCaptor.forClass(Status.class);
         verify(serverCall).close(cap.capture(), same(metadata));
@@ -200,12 +200,12 @@ class GrpcServerExceptionInterceptorTest {
       void closesOnStatusRuntimeException() {
         ExceptionHandlingServerCallListener<Req, Res> uut = spy(underTest);
         String msg = "456";
-        var metadata = new Metadata();
-        var ex = new StatusRuntimeException(Status.ALREADY_EXISTS.withDescription(msg), metadata);
-        uut.handleException(ex, serverCall, metadata);
+        var md = new Metadata();
+        var statusExc = new StatusRuntimeException(Status.ALREADY_EXISTS.withDescription(msg), md);
+        uut.handleException(statusExc, serverCall, md);
 
         var cap = ArgumentCaptor.forClass(Status.class);
-        verify(serverCall).close(cap.capture(), same(metadata));
+        verify(serverCall).close(cap.capture(), same(md));
         assertThat(cap.getValue().getCode()).isEqualTo(Code.ALREADY_EXISTS);
         assertThat(cap.getValue().getDescription()).isEqualTo(msg);
       }
@@ -214,9 +214,9 @@ class GrpcServerExceptionInterceptorTest {
       void closesWithTranslatedException() {
         ExceptionHandlingServerCallListener<Req, Res> uut = spy(underTest);
         String msg = "456";
-        var ex = new FactValidationException(msg);
-        var metadata = new Metadata(); // dont use mock here
-        uut.handleException(ex, serverCall, metadata);
+        var exception = new FactValidationException(msg);
+        var md = new Metadata(); // dont use mock here
+        uut.handleException(exception, serverCall, md);
 
         var cap = ArgumentCaptor.forClass(Metadata.class);
         verify(serverCall).close(any(), cap.capture());
@@ -233,9 +233,9 @@ class GrpcServerExceptionInterceptorTest {
       @Test
       void translatesCredentialsNotFoundException() {
         ExceptionHandlingServerCallListener<Req, Res> uut = spy(underTest);
-        var ex = new AuthenticationCredentialsNotFoundException("test");
+        var exception = new AuthenticationCredentialsNotFoundException("test");
 
-        uut.handleException(ex, serverCall, metadata);
+        uut.handleException(exception, serverCall, metadata);
 
         var cap = ArgumentCaptor.forClass(Status.class);
         verify(serverCall).close(cap.capture(), any());
@@ -245,9 +245,9 @@ class GrpcServerExceptionInterceptorTest {
       @Test
       void translatesAuthenticationException() {
         ExceptionHandlingServerCallListener<Req, Res> uut = spy(underTest);
-        var ex = new BadCredentialsException("test");
+        var exception = new BadCredentialsException("test");
 
-        uut.handleException(ex, serverCall, metadata);
+        uut.handleException(exception, serverCall, metadata);
 
         var cap = ArgumentCaptor.forClass(Status.class);
         verify(serverCall).close(cap.capture(), any());
