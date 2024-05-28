@@ -1,6 +1,6 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("io.github.typesafegithub:github-workflows-kt:1.15.0")
+@file:DependsOn("io.github.typesafegithub:github-workflows-kt:2.0.0")
 
 
 import io.github.typesafegithub.workflows.actions.actions.CacheV4
@@ -8,14 +8,13 @@ import io.github.typesafegithub.workflows.actions.actions.CheckoutV4
 import io.github.typesafegithub.workflows.actions.actions.SetupJavaV4
 import io.github.typesafegithub.workflows.actions.codecov.CodecovActionV4
 import io.github.typesafegithub.workflows.domain.RunnerType
-import io.github.typesafegithub.workflows.domain.Workflow
 import io.github.typesafegithub.workflows.domain.triggers.PullRequest
 import io.github.typesafegithub.workflows.domain.triggers.Push
 import io.github.typesafegithub.workflows.dsl.expressions.expr
 import io.github.typesafegithub.workflows.dsl.workflow
-import io.github.typesafegithub.workflows.yaml.writeToFile
+import io.github.typesafegithub.workflows.yaml.ConsistencyCheckJobConfig
 
-public val workflowMaven: Workflow = workflow(
+workflow(
     name = "Maven all in one",
     on = listOf(
         PullRequest(),
@@ -23,11 +22,12 @@ public val workflowMaven: Workflow = workflow(
             branches = listOf("master"),
         ),
     ),
-    sourceFile = __FILE__.toPath(),
+    sourceFile = __FILE__,
+    consistencyCheckJobConfig = ConsistencyCheckJobConfig.Disabled
 ) {
     job(
         id = "build",
-        runsOn = RunnerType.selfHosted(),
+        runsOn = RunnerType.UbuntuLatest,
     ) {
         uses(
             name = "Checkout",
@@ -94,7 +94,7 @@ public val workflowMaven: Workflow = workflow(
 
     job(
         id = "postgres-compatibility",
-        runsOn = RunnerType.selfHosted(),
+        runsOn = RunnerType.UbuntuLatest,
         strategyMatrix = mapOf(
             // note that 11 is tested already in the regular build job
             // removed 12-14 for now to improve throughput regarding actions
@@ -133,6 +133,4 @@ public val workflowMaven: Workflow = workflow(
     }
 }
 
-
-workflowMaven.writeToFile(addConsistencyCheck = false)
 
