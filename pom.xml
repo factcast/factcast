@@ -111,7 +111,7 @@
     <redisson.version>3.28.0</redisson.version>
     <graaljs.version>24.0.1</graaljs.version>
     <shedlock.version>5.13.0</shedlock.version>
-    <byte-buddy.version>1.14.16</byte-buddy.version>
+    <byte-buddy.version>1.14.17</byte-buddy.version>
     <skipUnitTests>false</skipUnitTests>
     <!-- as long as we promise pg11 compatibility, it might make sense to also
       test against it -->
