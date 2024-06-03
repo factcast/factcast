@@ -20,10 +20,8 @@ import org.slf4j.LoggerFactory;
 
 public interface ProgressAware {
   default void catchupPercentage(int percent) {
-    getLogger().debug("catchup progress {}%", percent);
-  }
-
-  default Logger getLogger() {
-    return LoggerFactory.getLogger(getClass());
+    Class<? extends ProgressAware> aClass = getClass();
+    Logger logger = LoggerFactory.getLogger(aClass);
+    logger.debug("catchup progress {}%", percent);
   }
 }
