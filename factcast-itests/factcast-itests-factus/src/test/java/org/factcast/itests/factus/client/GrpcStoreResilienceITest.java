@@ -237,7 +237,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
   void testMultipleRetriesWithResponse() {
     // see issue #2868
     // assuming two attempts on each iteration using blockingStub.withWaitForReady
-    for (int i = 1; i < NUMBER_OF_ATTEMPTS / 2; i++) {
+    for (int i = 1; i < 100 / 2; i++) {
       // break upstream call
       proxy.toxics().resetPeer("immediate reset", ToxicDirection.UPSTREAM, 1);
       new Timer()
