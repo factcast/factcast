@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.client.grpc.codec;
+package org.factcast.grpc.lz4;
 
 import io.grpc.Codec;
 import java.io.InputStream;

@@ -28,8 +28,9 @@ import org.xerial.snappy.SnappyOutputStream;
  * Configures optional Snappy Codec
  *
  * @author uwe.schaefer@prisma-capacity.eu
+ * @deprecated in 0.8
  */
-@SuppressWarnings("deprecation")
+@SuppressWarnings("DeprecatedIsStillUsed")
 @AutoConfiguration
 @ConditionalOnClass({
   SnappyInputStream.class,
@@ -37,6 +38,7 @@ import org.xerial.snappy.SnappyOutputStream;
   SnappyGrpcClientCodec.class
 })
 @AutoConfigureBefore(GrpcFactStoreAutoConfiguration.class)
+@Deprecated
 public class SnappyClientAutoConfiguration {
 
   @Bean

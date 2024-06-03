@@ -13,34 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.grpc.codec;
+package org.factcast.grpc.snappy;
 
 import io.grpc.Codec;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import lombok.SneakyThrows;
 import net.devh.boot.grpc.common.codec.CodecType;
 import net.devh.boot.grpc.common.codec.GrpcCodec;
-import org.apache.commons.compress.compressors.lz4.FramedLZ4CompressorInputStream;
-import org.apache.commons.compress.compressors.lz4.FramedLZ4CompressorOutputStream;
+import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorInputStream;
+import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorOutputStream;
 
+@SuppressWarnings("DeprecatedIsStillUsed")
 @GrpcCodec(advertised = true, codecType = CodecType.ALL)
-public class Lz4cGrpcServerCodec implements Codec {
+public class SnappycGrpcServerCodec implements Codec {
 
   @Override
   public String getMessageEncoding() {
-    return "lz4c";
+    return "snappyc";
   }
 
-  @SneakyThrows
   @Override
-  public InputStream decompress(InputStream inputStream) {
-    return new FramedLZ4CompressorInputStream(inputStream);
+  public InputStream decompress(InputStream inputStream) throws IOException {
+    return new FramedSnappyCompressorInputStream(inputStream);
   }
 
   @SneakyThrows
   @Override
   public OutputStream compress(OutputStream outputStream) {
-    return new FramedLZ4CompressorOutputStream(outputStream);
+    return new FramedSnappyCompressorOutputStream(outputStream);
   }
 }
