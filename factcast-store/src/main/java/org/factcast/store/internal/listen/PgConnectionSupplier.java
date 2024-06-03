@@ -20,7 +20,6 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.function.Supplier;
 import javax.sql.DataSource;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -32,13 +31,13 @@ public class PgConnectionSupplier {
 
   @NonNull @VisibleForTesting protected final org.apache.tomcat.jdbc.pool.DataSource ds;
   @NonNull @VisibleForTesting protected final Properties props;
-  @NonNull @VisibleForTesting private final Supplier<String> clientIdSupplier;
 
-  public PgConnectionSupplier(DataSource dataSource, @NonNull Supplier<String> clientIdSupplier) {
+  public static final String APPLICATION_NAME = "ApplicationName";
+
+  public PgConnectionSupplier(DataSource dataSource) {
     if (org.apache.tomcat.jdbc.pool.DataSource.class.isAssignableFrom(dataSource.getClass())) {
       ds = (org.apache.tomcat.jdbc.pool.DataSource) dataSource;
       props = buildPgConnectionProperties(ds);
-      this.clientIdSupplier = clientIdSupplier;
     } else {
       throw new IllegalArgumentException(
           "expected "
@@ -48,20 +47,14 @@ public class PgConnectionSupplier {
     }
   }
 
-  @SuppressWarnings("resource")
-  public PgConnection get() throws SQLException {
-    getClientId()
-        .ifPresentOrElse(
-            this::setClientIdProperty, () -> setProperty(props, "ApplicationName", "factcast"));
-    return getConnection();
-  }
-
   public PgConnection get(@NonNull String clientId) throws SQLException {
-    setClientIdProperty(clientId);
-    return getConnection();
+    Properties connectionProps = new Properties();
+    connectionProps.putAll(props);
+    setClientIdProperty(connectionProps, clientId);
+    return getConnection(connectionProps);
   }
 
-  private PgConnection getConnection() throws SQLException {
+  private PgConnection getConnection(Properties props) throws SQLException {
     try {
       return DriverManager.getDriver(ds.getUrl())
           .connect(ds.getUrl(), props)
@@ -79,13 +72,11 @@ public class PgConnectionSupplier {
     }
   }
 
-  private Optional<String> getClientId() {
-    return Optional.ofNullable(clientIdSupplier.get());
-  }
-
-  private void setClientIdProperty(String clientId) {
+  private void setClientIdProperty(Properties properties, String clientId) {
     log.debug("Setting clientId on connection for {}", clientId);
-    setProperty(props, "ApplicationName", "factcast/" + clientId);
+    final var applicationName =
+        Optional.ofNullable(properties.getProperty(APPLICATION_NAME)).orElse("factcast");
+    setProperty(properties, APPLICATION_NAME, applicationName + "/" + clientId);
   }
 
   @VisibleForTesting
