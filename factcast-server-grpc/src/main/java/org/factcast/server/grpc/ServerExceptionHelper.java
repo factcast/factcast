@@ -26,12 +26,11 @@ import org.springframework.security.core.AuthenticationException;
 public class ServerExceptionHelper {
 
   public static StatusRuntimeException translate(Throwable e, Metadata meta) {
-    if (e instanceof StatusRuntimeException) // prevent double wrap
+    if (e instanceof StatusRuntimeException sre) // prevent double wrap
     {
-      return (StatusRuntimeException) e;
+      return sre;
     } else if (e instanceof RuntimeException
         && e.getClass().getName().startsWith("org.factcast.core")) {
-
       return new StatusRuntimeException(Status.UNKNOWN, addMetaData(meta, e));
     } else if (e instanceof UnsupportedOperationException) {
       // UNIMPLEMENTED is technically not fully correct but best we can do here
@@ -39,8 +38,7 @@ public class ServerExceptionHelper {
     } else if (e instanceof AuthenticationException) {
       if (e instanceof AuthenticationCredentialsNotFoundException) {
         return new StatusRuntimeException(Status.UNAUTHENTICATED, meta);
-      }
-      return new StatusRuntimeException(Status.PERMISSION_DENIED, meta);
+      } else return new StatusRuntimeException(Status.PERMISSION_DENIED, meta);
     } else {
       return new StatusRuntimeException(Status.UNKNOWN, meta);
     }
