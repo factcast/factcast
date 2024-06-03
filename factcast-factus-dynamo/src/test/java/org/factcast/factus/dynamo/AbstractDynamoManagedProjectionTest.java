@@ -99,7 +99,7 @@ class AbstractDynamoManagedProjectionTest {
 
       verify(table).getItem(DynamoProjectionState.builder().key(SCOPED_NAME).build());
 
-      assertThat(res).isEqualTo(null);
+      assertThat(res).isNull();
     }
 
     @Test
@@ -140,7 +140,7 @@ class AbstractDynamoManagedProjectionTest {
                   .withTimeUnit(TimeUnit.SECONDS)
                   .build());
 
-      assertThat(res.isValid()).isEqualTo(true);
+      assertThat(res.isValid()).isTrue();
     }
 
     @Test
@@ -153,7 +153,7 @@ class AbstractDynamoManagedProjectionTest {
 
       final WriterToken res = uut.acquireWriteToken(maxWaitDuration);
 
-      assertThat(res.isValid()).isEqualTo(false);
+      assertThat(res.isValid()).isFalse();
     }
 
     @Test

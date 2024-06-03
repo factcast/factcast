@@ -16,14 +16,12 @@
 package org.factcast.factus.dynamo;
 
 import com.amazonaws.services.dynamodbv2.LockItem;
-import com.google.common.annotations.VisibleForTesting;
 import lombok.NonNull;
 import org.factcast.factus.projection.WriterToken;
 
 public class DynamoWriterToken implements WriterToken {
   private final @NonNull LockItem lock;
 
-  @VisibleForTesting
   protected DynamoWriterToken(@NonNull LockItem lock) {
     this.lock = lock;
   }

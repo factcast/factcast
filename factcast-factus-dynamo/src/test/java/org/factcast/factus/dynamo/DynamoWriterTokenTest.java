@@ -38,6 +38,7 @@ class DynamoWriterTokenTest {
   void testClose() throws Exception {
     doNothing().when(lock).close();
     uut.close();
+    verify(lock).close();
   }
 
   @Test
