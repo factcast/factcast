@@ -20,7 +20,6 @@ import com.google.common.eventbus.EventBus;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.concurrent.Executors;
-import java.util.function.Supplier;
 import javax.sql.DataSource;
 import liquibase.integration.spring.SpringLiquibase;
 import lombok.NonNull;
@@ -184,9 +183,8 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
-  public PgConnectionSupplier pgConnectionSupplier(
-      DataSource ds, Supplier<String> clientIdSupplier) {
-    return new PgConnectionSupplier(ds, clientIdSupplier);
+  public PgConnectionSupplier pgConnectionSupplier(DataSource ds) {
+    return new PgConnectionSupplier(ds);
   }
 
   @Bean
@@ -322,11 +320,5 @@ public class PgFactStoreInternalConfiguration {
     final var liquibase = new SpringLiquibase();
     liquibase.setShouldRun(false);
     return liquibase;
-  }
-
-  @Bean
-  @ConditionalOnMissingBean
-  public Supplier<String> clientIdSupplier() {
-    return () -> "unknown";
   }
 }
