@@ -17,8 +17,8 @@ package org.factcast.spring.boot.autoconfigure.server.grpc;
 
 import lombok.Generated;
 import org.apache.commons.compress.compressors.lz4.FramedLZ4CompressorInputStream;
+import org.factcast.grpc.lz4.Lz4cGrpcServerCodec;
 import org.factcast.server.grpc.FactStoreGrpcService;
-import org.factcast.server.grpc.codec.Lz4cGrpcServerCodec;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;

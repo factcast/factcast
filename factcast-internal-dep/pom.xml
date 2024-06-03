@@ -34,6 +34,11 @@
         <version>${grpc.version}</version>
       </dependency>
       <dependency>
+        <groupId>net.devh</groupId>
+        <artifactId>grpc-client-spring-boot-starter</artifactId>
+        <version>${spring-grpc.version}</version>
+      </dependency>
+      <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>33.2.1-jre</version>

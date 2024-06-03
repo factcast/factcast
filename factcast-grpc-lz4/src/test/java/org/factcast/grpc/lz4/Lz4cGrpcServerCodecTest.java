@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.client.grpc.codec;
+package org.factcast.grpc.lz4;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
-class Lz4cGrpcClientCodecTest {
+class Lz4cGrpcServerCodecTest {
 
-  final Lz4cGrpcClientCodec uut = new Lz4cGrpcClientCodec();
+  final Lz4cGrpcServerCodec uut = new Lz4cGrpcServerCodec();
 
   @Test
   void getMessageEncoding() {

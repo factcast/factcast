@@ -68,8 +68,12 @@
     </dependency>
     <!-- /will be deprecated -->
     <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-compress</artifactId>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-grpc-lz4</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-grpc-snappy</artifactId>
     </dependency>
     <dependency>
       <groupId>com.github.vladimir-bukhtoyarov</groupId>

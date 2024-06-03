@@ -32,9 +32,11 @@ public class CompressionCodecs {
 
   private final String orderedListOfAvailableCodecsAsString;
 
+  private static final String[] AVAIL_CODECS = {"lz4c", "snappyc", "lz4", "snappy", "gzip"};
+
   public CompressionCodecs() {
     orderedListOfAvailableCodecs =
-        Stream.of("lz4c", "snappyc", "lz4", "snappy", "gzip")
+        Stream.of(AVAIL_CODECS)
             .filter(CompressionCodecs::locallyAvailable)
             .collect(Collectors.toList());
     orderedListOfAvailableCodecsAsString = String.join(",", orderedListOfAvailableCodecs);
