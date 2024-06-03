@@ -16,6 +16,7 @@
 package org.factcast.itests.factus.client;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
 import com.google.common.collect.Lists;
 import eu.rekawek.toxiproxy.model.ToxicDirection;
@@ -37,20 +38,26 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest
 @ContextConfiguration(classes = TestFactusApplication.class)
 @TestPropertySource(
-    properties =
-        "factcast.grpc.client.resilience.attempts=" + GrpcStoreResilienceITest.NUMBER_OF_ATTEMPTS)
+    properties = {
+      "factcast.grpc.client.resilience.attempts=" + GrpcStoreResilienceITest.NUMBER_OF_ATTEMPTS,
+      "factcast.grpc.client.id=d38cb1af-ea5c-49d7-8aca-cd74cdcf75c9",
+    })
 @Slf4j
 class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
-  static final int NUMBER_OF_ATTEMPTS = 99;
-
+  static final int NUMBER_OF_ATTEMPTS = Integer.MAX_VALUE;
   private static final int MAX_FACTS = 10000;
-  private static final long LATENCY = 2000;
+
+  // 30s should be enough for DB to flush data
+  private static final int CDL_TIMEOUT = 30;
+  private static final TimeUnit CDL_TIMEOUT_UNIT = TimeUnit.SECONDS;
+
   @Autowired FactCast fc;
   FactCastProxy proxy;
 
@@ -65,6 +72,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
   }
 
   @SneakyThrows
+  @DirtiesContext
   @Test
   void testRetryBehaviorWithoutResponse() {
 
@@ -92,12 +100,22 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
   }
 
   @SneakyThrows
+  @DirtiesContext
   @Test
   void testConcurrentRetryBehaviorWithoutResponse() {
     LogCaptor logCaptor = LogCaptor.forClass(GrpcFactStore.class);
 
     // break upstream call, timeout of 0 will make sure no communication takes place until reset.
     proxy.toxics().resetPeer("immediate reset", ToxicDirection.UPSTREAM, 0);
+
+    List<Fact> facts = new ArrayList<>(MAX_FACTS);
+    for (int i = 0; i < MAX_FACTS; i++) {
+      facts.add(Fact.builder().ns("ns").type("type").buildWithoutPayload());
+    }
+    List<List<Fact>> factPartitions = Lists.partition(facts, MAX_FACTS / 4);
+    // Reconnect with 4 concurrent threads
+    CountDownLatch latch = new CountDownLatch(4);
+    ExecutorService threads = Executors.newFixedThreadPool(4);
 
     new Timer()
         .schedule(
@@ -109,16 +127,8 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
                 proxy.reset();
               }
             },
-            100);
+            1000);
 
-    List<Fact> facts = new ArrayList<>(MAX_FACTS);
-    for (int i = 0; i < MAX_FACTS; i++) {
-      facts.add(Fact.builder().ns("ns").type("type").buildWithoutPayload());
-    }
-    List<List<Fact>> factPartitions = Lists.partition(facts, MAX_FACTS / 4);
-    // Reconnect with 4 concurrent threads
-    CountDownLatch latch = new CountDownLatch(4);
-    ExecutorService threads = Executors.newFixedThreadPool(4);
     for (int i = 0; i < 4; i++) {
       final List<Fact> f = factPartitions.get(i);
       threads.submit(
@@ -127,12 +137,12 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
             latch.countDown();
           });
     }
-
-    assertThat(latch.await(3, TimeUnit.SECONDS)).isTrue();
+    assertThat(latch.await(CDL_TIMEOUT, CDL_TIMEOUT_UNIT)).isTrue();
     assertThat(logCaptor.getInfoLogs()).containsOnlyOnce("Handshake successful.");
   }
 
   @SneakyThrows
+  @DirtiesContext
   @Test
   void testRetryBehaviorWithResponse() {
 
@@ -158,6 +168,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
   }
 
   @SneakyThrows
+  @DirtiesContext
   @Test
   void testRetryBehaviorWithResponseBreakingDownstream() {
 
@@ -183,6 +194,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
   }
 
   @SneakyThrows
+  @DirtiesContext
   @Test
   void testConcurrentRetryBehaviorWithResponse() {
     LogCaptor logCaptor = LogCaptor.forClass(GrpcFactStore.class);
@@ -215,7 +227,32 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
           });
     }
 
-    assertThat(latch.await(3, TimeUnit.SECONDS)).isTrue();
+    assertThat(latch.await(CDL_TIMEOUT, CDL_TIMEOUT_UNIT)).isTrue();
     assertThat(logCaptor.getInfoLogs()).containsOnlyOnce("Handshake successful.");
+  }
+
+  @SneakyThrows
+  @DirtiesContext
+  @Test
+  void testMultipleRetriesWithResponse() {
+    // see issue #2868
+    // assuming two attempts on each iteration using blockingStub.withWaitForReady
+    for (int i = 1; i < 100 / 2; i++) {
+      // break upstream call
+      proxy.toxics().resetPeer("immediate reset", ToxicDirection.UPSTREAM, 1);
+      new Timer()
+          .schedule(
+              new TimerTask() {
+                @Override
+                public void run() {
+                  // heal the communication
+                  log.info("repairing proxy");
+                  proxy.reset();
+                }
+              },
+              100);
+      log.info("attempt {}", i);
+      assertThatNoException().isThrownBy(() -> fc.enumerateNamespaces());
+    }
   }
 }
