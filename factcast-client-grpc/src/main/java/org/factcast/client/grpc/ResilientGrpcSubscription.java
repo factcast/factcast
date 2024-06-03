@@ -141,6 +141,7 @@ public class ResilientGrpcSubscription implements Subscription {
 
   private synchronized void connect() {
     log.debug("Connecting ({})", originalRequest);
+    store.initializeIfNecessary();
     doConnect();
   }
 

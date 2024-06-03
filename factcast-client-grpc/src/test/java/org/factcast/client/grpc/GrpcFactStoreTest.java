@@ -42,6 +42,7 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.Headers;
 import org.factcast.grpc.api.StateForRequest;
@@ -52,10 +53,7 @@ import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -72,6 +70,11 @@ class GrpcFactStoreTest {
   @Mock(answer = Answers.RETURNS_DEEP_STUBS, strictness = Mock.Strictness.LENIENT)
   RemoteFactStoreStub stub;
 
+  @Mock Channel channel;
+
+  @Mock(strictness = Mock.Strictness.LENIENT)
+  FactCastGrpcStubsFactory stubsFactory;
+
   ProtoConverter conv = new ProtoConverter();
 
   @Captor ArgumentCaptor<MSG_Facts> factsCap;
@@ -83,18 +86,23 @@ class GrpcFactStoreTest {
   @BeforeEach
   public void setup() {
     when(properties.getResilience()).thenReturn(resilienceConfig);
-    // preserve deep stub behavior
+    resilienceConfig.setEnabled(false);
+    // setup stubs
+    when(stubsFactory.createStub(channel)).thenReturn(stub);
+    when(stubsFactory.createBlockingStub(channel)).thenReturn(blockingStub);
     when(stub.withWaitForReady()).thenReturn(stub);
     when(stub.withMaxInboundMessageSize(anyInt())).thenReturn(stub);
     when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
     when(blockingStub.withMaxInboundMessageSize(anyInt())).thenReturn(blockingStub);
-
+    // mock initialization
+    when(blockingStub.withCallCredentials(any())).thenReturn(blockingStub);
+    when(stub.withCallCredentials(any())).thenReturn(stub);
     when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
+    when(stub.withInterceptors(any())).thenReturn(stub);
     when(blockingStub.handshake(any()))
         .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
 
-    resilienceConfig.setEnabled(false);
-    uut = new GrpcFactStore(blockingStub, stub, credentials, properties, "someTest");
+    uut = new GrpcFactStore(channel, stubsFactory, credentials, properties, "someTest");
   }
 
   @Test
@@ -110,13 +118,23 @@ class GrpcFactStoreTest {
 
   @Test
   void configureCompressionChooseGzipIfAvail() {
-    uut.configureCompressionAndMetaData(" gzip,lz3,lz4, lz99");
+    Map<String, String> serverProps = new HashMap<>();
+    serverProps.put(Capabilities.CODECS.toString(), " gzip,lz3,lz4, lz99");
+    when(blockingStub.handshake(any()))
+        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, serverProps)));
+    uut.reset();
+    uut.initializeIfNecessary();
     verify(stub).withCompression("gzip");
   }
 
   @Test
   void configureCompressionSkipCompression() {
-    uut.configureCompressionAndMetaData("zip,lz3,lz4, lz99");
+    Map<String, String> serverProps = new HashMap<>();
+    serverProps.put(Capabilities.CODECS.toString(), "zip,lz3,lz4, lz99");
+    when(blockingStub.handshake(any()))
+        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, serverProps)));
+    uut.reset();
+    uut.initializeIfNecessary();
     verify(stub, never()).withCompression(anyString());
   }
 
@@ -241,11 +259,10 @@ class GrpcFactStoreTest {
 
   @Test
   void testInitializePropagatesIncompatibleProtocolVersionsOnUnavailableStatus() {
-    Mockito.reset(
-        blockingStub); // so that re can redefine the handshake behavior, which was set to returning
-    // a correct version in setup()
+    Mockito.reset(blockingStub); // so that re can redefine the handshake behavior,
+    // which was set to returning a correct version in setup()
     when(blockingStub.handshake(any())).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
-
+    uut.reset();
     assertThrows(IncompatibleProtocolVersions.class, () -> uut.initializeIfNecessary());
   }
 
@@ -286,15 +303,16 @@ class GrpcFactStoreTest {
     when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
     when(blockingStub.handshake(any()))
         .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
+    uut.reset();
     uut.initializeIfNecessary();
   }
 
   @Test
   void testIncompatibleProtocolVersion() {
-    when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
     when(blockingStub.handshake(any()))
         .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(99, 0, 0), new HashMap<>())));
-    Assertions.assertThrows(IncompatibleProtocolVersions.class, () -> uut.initializeIfNecessary());
+    uut.reset();
+    assertThrows(IncompatibleProtocolVersions.class, () -> uut.initializeIfNecessary());
   }
 
   @Test
@@ -302,6 +320,7 @@ class GrpcFactStoreTest {
     when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
     when(blockingStub.handshake(any()))
         .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
+    uut.reset();
     uut.initializeIfNecessary();
     uut.initializeIfNecessary();
     verify(blockingStub, times(1)).handshake(any());
@@ -477,18 +496,20 @@ class GrpcFactStoreTest {
     void testCredentialsWrongFormat() {
       assertThrows(
           IllegalArgumentException.class,
-          () -> new GrpcFactStore(mock(Channel.class), Optional.of("xyz")));
+          () -> new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz")));
 
       assertThrows(
           IllegalArgumentException.class,
-          () -> new GrpcFactStore(mock(Channel.class), Optional.of("x:y:z")));
+          () -> new GrpcFactStore(mock(Channel.class), Optional.ofNullable("x:y:z")));
 
-      assertThat(new GrpcFactStore(mock(Channel.class), Optional.of("xyz:abc"))).isNotNull();
+      assertThat(new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz:abc")))
+          .isNotNull();
     }
 
     @Test
     void testCredentialsRightFormat() {
-      assertThat(new GrpcFactStore(mock(Channel.class), Optional.of("xyz:abc"))).isNotNull();
+      assertThat(new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz:abc")))
+          .isNotNull();
     }
 
     @Test
@@ -496,15 +517,15 @@ class GrpcFactStoreTest {
       final RemoteFactStoreBlockingStub blockingStub = mock(RemoteFactStoreBlockingStub.class);
       final RemoteFactStoreStub stub = mock(RemoteFactStoreStub.class);
       when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
-      when(blockingStub.withMaxInboundMessageSize(anyInt())).thenReturn(blockingStub);
       when(stub.withWaitForReady()).thenReturn(stub);
-      when(stub.withMaxInboundMessageSize(anyInt())).thenReturn(stub);
 
       final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
       props.setUser("foo");
       props.setPassword("bar");
 
-      assertThat(new GrpcFactStore(blockingStub, stub, Optional.empty(), props, "foo")).isNotNull();
+      GrpcFactStore uutNewCredentials =
+          new GrpcFactStore(channel, stubsFactory, Optional.empty(), props, "foo");
+      uutNewCredentials.initializeIfNecessary();
 
       verify(blockingStub).withCallCredentials(any());
       verify(stub).withCallCredentials(any());
@@ -515,13 +536,12 @@ class GrpcFactStoreTest {
       final RemoteFactStoreBlockingStub blockingStub = mock(RemoteFactStoreBlockingStub.class);
       final RemoteFactStoreStub stub = mock(RemoteFactStoreStub.class);
       when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
-      when(blockingStub.withMaxInboundMessageSize(anyInt())).thenReturn(blockingStub);
       when(stub.withWaitForReady()).thenReturn(stub);
-      when(stub.withMaxInboundMessageSize(anyInt())).thenReturn(stub);
 
       final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
 
-      assertThat(new GrpcFactStore(blockingStub, stub, Optional.of("xyz:abc"), props, "foo"))
+      assertThat(
+              new GrpcFactStore(blockingStub, stub, Optional.ofNullable("xyz:abc"), props, "foo"))
           .isNotNull();
 
       verify(blockingStub).withCallCredentials(any());
@@ -584,10 +604,55 @@ class GrpcFactStoreTest {
   void setSnapshot() {
     SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
     Snapshot snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
-    when(blockingStub.setSnapshot(eq(conv.toProto(snap)))).thenReturn(conv.empty());
 
     uut.setSnapshot(snap);
 
+    verify(blockingStub).setSnapshot(conv.toProto(snap));
+  }
+
+  @Test
+  void setSnapshotWithCompressionInTransit() {
+    // set compression and mock
+    RemoteFactStoreBlockingStub compBlockingStub = mock(RemoteFactStoreBlockingStub.class);
+    RemoteFactStoreStub compStub = mock(RemoteFactStoreStub.class);
+    Map<String, String> serverProps = new HashMap<>();
+    serverProps.put(Capabilities.CODECS.toString(), "gzip");
+    when(blockingStub.handshake(any()))
+        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, serverProps)));
+    when(blockingStub.withCompression(any())).thenReturn(compBlockingStub);
+    when(compBlockingStub.withInterceptors(any())).thenReturn(compBlockingStub);
+    when(stub.withCompression(any())).thenReturn(compStub);
+    when(compStub.withInterceptors(any())).thenReturn(compStub);
+
+    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
+    Snapshot snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
+
+    uut.setSnapshot(snap);
+
+    // uses the stub w compression enabled
+    verify(compBlockingStub).setSnapshot(conv.toProto(snap));
+  }
+
+  @Test
+  void setSnapshotAlreadyCompressed() {
+    // set compression and mock
+    RemoteFactStoreBlockingStub compBlockingStub = mock(RemoteFactStoreBlockingStub.class);
+    RemoteFactStoreStub compStub = mock(RemoteFactStoreStub.class);
+    Map<String, String> serverProps = new HashMap<>();
+    serverProps.put(Capabilities.CODECS.toString(), "gzip");
+    when(blockingStub.handshake(any()))
+        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, serverProps)));
+    when(blockingStub.withCompression(any())).thenReturn(compBlockingStub);
+    when(compBlockingStub.withInterceptors(any())).thenReturn(compBlockingStub);
+    when(stub.withCompression(any())).thenReturn(compStub);
+    when(compStub.withInterceptors(any())).thenReturn(compStub);
+
+    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
+    Snapshot snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), true);
+
+    uut.setSnapshot(snap);
+
+    // uses the stub w/o compression
     verify(blockingStub).setSnapshot(conv.toProto(snap));
   }
 
@@ -616,6 +681,7 @@ class GrpcFactStoreTest {
     uut =
         new GrpcFactStore(
             mock(Channel.class),
+            mock(FactCastGrpcStubsFactory.class),
             Optional.of("foo:bar"),
             new FactCastGrpcClientProperties(),
             "gurke");
@@ -631,6 +697,7 @@ class GrpcFactStoreTest {
     uut =
         new GrpcFactStore(
             mock(Channel.class),
+            mock(FactCastGrpcStubsFactory.class),
             Optional.of("foo:bar"),
             new FactCastGrpcClientProperties(),
             "gurke");
@@ -643,7 +710,9 @@ class GrpcFactStoreTest {
   @Test
   void testAddClientIdToMetaDoesNotUseNull() {
     Metadata meta = mock(Metadata.class);
-    uut = new GrpcFactStore(mock(Channel.class), Optional.of("foo:bar"));
+    uut =
+        new GrpcFactStore(
+            mock(Channel.class), mock(FactCastGrpcStubsFactory.class), Optional.of("foo:bar"));
 
     uut.addClientIdTo(meta);
 
@@ -721,10 +790,6 @@ class GrpcFactStoreTest {
 
     @Test
     void retriesCall() throws Exception {
-      when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
-      when(blockingStub.handshake(any()))
-          .thenReturn(
-              conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
       resilienceConfig.setEnabled(true).setAttempts(100).setInterval(Duration.ofMillis(100));
       when(block.call()).thenThrow(new RetryableException(new IOException())).thenReturn(null);
       uut.callAndHandle(block);
@@ -733,7 +798,7 @@ class GrpcFactStoreTest {
     }
 
     @Test
-    void retriesRun() {
+    void retriesRun() throws Exception {
       when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
       when(blockingStub.handshake(any()))
           .thenReturn(
@@ -795,5 +860,27 @@ class GrpcFactStoreTest {
 
     Optional<Fact> result = uut.fetchBySerial(serial);
     assertThat(result).isPresent();
+  }
+
+  @Test
+  void initializationCreatesNewStubs() {
+    int nReInitializations = 100;
+    for (int i = 0; i < nReInitializations; i++) {
+      uut.reset();
+      uut.initializeIfNecessary();
+    }
+    verify(stubsFactory, times(nReInitializations)).createBlockingStub(channel);
+    verify(stubsFactory, times(nReInitializations)).createStub(channel);
+    // should work after multiple re-initializations (issue #2868)
+    uut.currentTime();
+  }
+
+  @Test
+  void resetsInitializationFlag() {
+    uut.reset();
+    uut.initializeIfNecessary();
+    uut.reset();
+    uut.initializeIfNecessary();
+    verify(blockingStub, times(2)).handshake(any());
   }
 }
