@@ -23,7 +23,7 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 public abstract class AbstractDynamoManagedProjection extends AbstractDynamoProjection
     implements ManagedProjection {
-  public AbstractDynamoManagedProjection(
+  protected AbstractDynamoManagedProjection(
       @NonNull DynamoDbClient dynamoDbClient, @NonNull String stateTableName) {
     super(dynamoDbClient, stateTableName);
   }
