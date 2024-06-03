@@ -17,15 +17,26 @@ package org.factcast.itests.security;
 
 import static org.assertj.core.api.Assertions.*;
 
+import io.grpc.Channel;
 import io.grpc.StatusRuntimeException;
+import java.util.List;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
+import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
+import org.factcast.client.grpc.FactCastGrpcStubsFactory;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
+import org.factcast.core.spec.FactSpec;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.FactcastTestConfig;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 
@@ -36,6 +47,43 @@ import org.springframework.test.context.TestPropertySource;
 public class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrationTest {
   @Autowired FactCast fc;
 
+  @Autowired FactCastGrpcStubsFactory stubsFactory;
+
+  @Autowired GrpcChannelFactory channelFactory;
+
+  @Autowired JdbcTemplate jdbcTemplate;
+
+  private final ProtoConverter converter = new ProtoConverter();
+
+  private final FactObserver nopFactObserver =
+      f -> {
+        // do nothing
+      };
+
+  @BeforeEach
+  void setup() {
+    List<Fact> facts =
+        List.of(
+            Fact.of(
+                "{\"id\":\"" + UUID.randomUUID() + "\", \"ns\":\"users\",\"type\":\"UserCreated\"}",
+                "{}"),
+            Fact.of(
+                "{\"id\":\""
+                    + UUID.randomUUID()
+                    + "\", \"ns\":\"no-permissions\",\"type\":\"UserCreated\"}",
+                "{}"));
+    String insertFact =
+        "INSERT INTO fact(header,payload) VALUES (cast(? as jsonb),cast (? as jsonb))";
+    jdbcTemplate.batchUpdate(
+        insertFact,
+        facts,
+        Integer.MAX_VALUE,
+        (statement, fact) -> {
+          statement.setString(1, fact.jsonHeader());
+          statement.setString(2, fact.jsonPayload());
+        });
+  }
+
   @Test
   public void allowedToPublish() {
     fc.publish(
@@ -45,7 +93,7 @@ public class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrati
   }
 
   @Test
-  public void failToPublish() {
+  public void failsToPublish() {
     assertThatThrownBy(
             () ->
                 fc.publish(
@@ -56,5 +104,68 @@ public class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrati
                         "{}")))
         .isInstanceOf(StatusRuntimeException.class)
         .hasMessageContaining("PERMISSION_DENIED");
+  }
+
+  @Test
+  public void allowedToCatchup() throws Exception {
+    SubscriptionRequest req =
+        SubscriptionRequest.catchup(FactSpec.ns("users").type("UserCreated")).fromScratch();
+    try (Subscription sub = fc.subscribe(req, nopFactObserver)) {
+      sub.awaitCatchup();
+    }
+  }
+
+  @Test
+  public void failsToCatchup() throws Exception {
+    SubscriptionRequest req =
+        SubscriptionRequest.catchup(FactSpec.ns("no-permissions").type("UserCreated"))
+            .fromScratch();
+    try (Subscription sub = fc.subscribe(req, nopFactObserver)) {
+      assertThatThrownBy(sub::awaitCatchup)
+          .isInstanceOf(StatusRuntimeException.class)
+          .hasMessageContaining("PERMISSION_DENIED");
+    }
+  }
+
+  @Test
+  public void allowedToFollow() throws Exception {
+    SubscriptionRequest req =
+        SubscriptionRequest.follow(FactSpec.ns("users").type("UserCreated")).fromScratch();
+    try (Subscription sub = fc.subscribe(req, nopFactObserver)) {
+      sub.awaitCatchup();
+    }
+  }
+
+  @Test
+  public void failsToFollow() throws Exception {
+    SubscriptionRequest req =
+        SubscriptionRequest.follow(FactSpec.ns("no-permissions").type("UserCreated")).fromScratch();
+    try (Subscription sub = fc.subscribe(req, nopFactObserver)) {
+      assertThatThrownBy(sub::awaitCatchup)
+          .isInstanceOf(StatusRuntimeException.class)
+          .hasMessageContaining("PERMISSION_DENIED");
+    }
+  }
+
+  @Test
+  public void allowedToEnumerate() {
+    assertThat(fc.enumerateNamespaces()).contains("users");
+    assertThat(fc.enumerateTypes("users")).contains("UserCreated");
+  }
+
+  @Test
+  public void failsToEnumerate() {
+    assertThat(fc.enumerateNamespaces()).doesNotContain("no-permissions");
+    assertThatThrownBy(() -> fc.enumerateTypes("no-permissions"))
+        .isInstanceOf(StatusRuntimeException.class)
+        .hasMessageContaining("PERMISSION_DENIED");
+  }
+
+  @Test
+  public void failsUnauthenticatedHandshake() {
+    Channel channel = channelFactory.createChannel("factstore");
+    assertThatThrownBy(() -> stubsFactory.createBlockingStub(channel).handshake(converter.empty()))
+        .isInstanceOf(StatusRuntimeException.class)
+        .hasMessageContaining("UNAUTHENTICATED");
   }
 }

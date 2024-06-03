@@ -314,6 +314,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
   }
 
   @Override
+  @Secured(FactCastAuthority.AUTHENTICATED)
   public void handshake(MSG_Empty request, StreamObserver<MSG_ServerConfig> responseObserver) {
     metrics.timed(
         OP.HANDSHAKE,
@@ -501,6 +502,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
   }
 
   @Override
+  @Secured(FactCastAuthority.AUTHENTICATED)
   public void currentTime(
       MSG_Empty request, StreamObserver<MSG_CurrentDatabaseTime> responseObserver) {
     initialize(responseObserver);
@@ -639,6 +641,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
   }
 
   @Override
+  @Secured(FactCastAuthority.AUTHENTICATED)
   public void setSnapshot(MSG_Snapshot request, StreamObserver<MSG_Empty> responseObserver) {
     initialize(responseObserver);
 

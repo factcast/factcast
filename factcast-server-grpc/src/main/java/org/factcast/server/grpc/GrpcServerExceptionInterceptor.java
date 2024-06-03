@@ -114,18 +114,8 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
         return;
       }
 
-      // in case someone knows exactly what status to throw
-      if (exception instanceof StatusRuntimeException) {
-        var e = (StatusRuntimeException) exception;
-        if (!Status.PERMISSION_DENIED.equals(e.getStatus())) {
-          log.error("", e);
-        }
-        serverCall.close(e.getStatus(), metadata);
-        return;
-      }
-
       logIfNecessary(log, exception);
-      StatusRuntimeException sre = ServerExceptionHelper.translate(exception);
+      StatusRuntimeException sre = ServerExceptionHelper.translate(exception, metadata);
       serverCall.close(sre.getStatus(), sre.getTrailers());
     }
 
