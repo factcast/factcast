@@ -56,7 +56,7 @@ public class PgFetchingCatchup implements PgCatchup {
   @Override
   public void run() {
 
-    PgConnection connection = connectionSupplier.get();
+    PgConnection connection = connectionSupplier.get(req.debugInfo());
     connection.setAutoCommit(false); // necessary for using cursors
 
     // connection may stay open quite a while, and we do not want a CPool to interfere
@@ -87,6 +87,7 @@ public class PgFetchingCatchup implements PgCatchup {
   RowCallbackHandler createRowCallbackHandler(PgFactExtractor extractor) {
     return rs -> {
       try {
+        Thread.sleep(10000);
         if (statementHolder.wasCanceled() || rs.isClosed()) return;
 
         Fact f = extractor.mapRow(rs, 0);
@@ -97,6 +98,8 @@ public class PgFetchingCatchup implements PgCatchup {
           // then we just swallow the exception
           log.trace("Swallowing because statement was cancelled", psql);
         } else throw psql;
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
       }
     };
   }
