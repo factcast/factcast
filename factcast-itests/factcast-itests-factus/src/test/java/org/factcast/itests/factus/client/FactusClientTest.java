@@ -70,7 +70,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
   @Autowired EventConverter eventConverter;
 
-  @Autowired RedissonManagedUserNames externalizedUserNames;
+  @Autowired RedissonTxManagedUserNames externalizedUserNames;
   @Autowired TxRedissonManagedUserNames transactionalExternalizedUserNames;
   @Autowired TxRedissonSubscribedUserNames transactionalExternalizedSubscribedUserNames;
 
@@ -138,7 +138,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
     {
       var sw = Stopwatch.createStarted();
-      RedissonManagedUserNames p = new RedissonManagedUserNames(redissonClient);
+      RedissonTxManagedUserNames p = new RedissonTxManagedUserNames(redissonClient);
       factus.update(p);
       log.info(
           "RedissonManagedUserNames {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
@@ -147,7 +147,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
     }
     {
       var sw = Stopwatch.createStarted();
-      RedissonManagedUserNames p = new RedissonManagedUserNames(redissonClient);
+      RedissonTxManagedUserNames p = new RedissonTxManagedUserNames(redissonClient);
       factus.update(p);
       log.info(
           "RedissonManagedUserNames {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.redis;
+package org.factcast.factus.redis.tx;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -28,7 +28,8 @@ import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.TestFactStreamPosition;
-import org.factcast.factus.redis.tx.RedisTransactional;
+import org.factcast.factus.redis.FactStreamPositionCodec;
+import org.factcast.factus.redis.RedisWriterToken;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -40,7 +41,7 @@ import org.redisson.api.*;
 import org.redisson.config.Config;
 
 @ExtendWith(MockitoExtension.class)
-class AbstractRedisManagedProjectionTest {
+class AbstractRedisTxManagedProjectionTest {
 
   @Mock private RedissonClient redisson;
   @Mock private RLock lock;
@@ -91,13 +92,13 @@ class AbstractRedisManagedProjectionTest {
 
     @Test
     void getOptionsTweaked() {
-      AbstractRedisProjection underTest = new ProjectionWithBulkSet(mock(RedissonClient.class));
+      AbstractRedisTxProjection underTest = new ProjectionWithBulkSet(mock(RedissonClient.class));
       Assertions.assertThat(underTest.transactionOptions().getResponseTimeout()).isEqualTo(112);
     }
 
     @RedisTransactional(bulkSize = 12, responseTimeout = 112)
     @ProjectionMetaData(revision = 1)
-    class ProjectionWithBulkSet extends AbstractRedisProjection {
+    class ProjectionWithBulkSet extends AbstractRedisTxProjection {
       protected ProjectionWithBulkSet(@NonNull RedissonClient redisson) {
         super(redisson);
       }
@@ -105,7 +106,7 @@ class AbstractRedisManagedProjectionTest {
 
     @Test
     void getMaxSize() {
-      AbstractRedisProjection underTest = new ProjectionWithBulkSet(mock(RedissonClient.class));
+      AbstractRedisTxProjection underTest = new ProjectionWithBulkSet(mock(RedissonClient.class));
       assertThat(underTest.maxBatchSizePerTransaction()).isEqualTo(12);
     }
   }
@@ -237,7 +238,7 @@ class AbstractRedisManagedProjectionTest {
       when(redisson.getConfig()).thenReturn(config);
       when(config.getLockWatchdogTimeout()).thenReturn(1000L);
       when(lock.tryLock(anyLong(), any())).thenReturn(true);
-      AbstractRedisManagedProjection underTest = new TestProjection(redisson);
+      AbstractRedisTxManagedProjection underTest = new TestProjection(redisson);
 
       AutoCloseable wt = underTest.acquireWriteToken();
 
@@ -253,7 +254,7 @@ class AbstractRedisManagedProjectionTest {
       when(redisson.getConfig()).thenReturn(config);
       when(config.getLockWatchdogTimeout()).thenReturn(1000L);
       when(lock.tryLock(anyLong(), any())).thenReturn(true);
-      AbstractRedisManagedProjection underTest = new TestProjection(redisson);
+      AbstractRedisTxManagedProjection underTest = new TestProjection(redisson);
 
       @NonNull Duration dur = Duration.ofMillis(127);
       AutoCloseable wt = underTest.acquireWriteToken(dur);
@@ -268,7 +269,7 @@ class AbstractRedisManagedProjectionTest {
 
       when(redisson.getLock(anyString())).thenReturn(lock);
       when(lock.tryLock(anyLong(), any())).thenReturn(false);
-      AbstractRedisManagedProjection underTest = new TestProjection(redisson);
+      AbstractRedisTxManagedProjection underTest = new TestProjection(redisson);
 
       @NonNull Duration dur = Duration.ofMillis(127);
       AutoCloseable wt = underTest.acquireWriteToken(dur);
@@ -283,7 +284,7 @@ class AbstractRedisManagedProjectionTest {
 
       when(redisson.getLock(anyString())).thenReturn(lock);
       when(lock.tryLock(anyLong(), any())).thenThrow(InterruptedException.class);
-      AbstractRedisManagedProjection underTest = new TestProjection(redisson);
+      AbstractRedisTxManagedProjection underTest = new TestProjection(redisson);
 
       @NonNull Duration dur = Duration.ofMillis(127);
       AutoCloseable wt = underTest.acquireWriteToken(dur);
@@ -304,14 +305,14 @@ class AbstractRedisManagedProjectionTest {
   }
 
   @ProjectionMetaData(revision = 1)
-  static class TestProjection extends AbstractRedisManagedProjection {
+  static class TestProjection extends AbstractRedisTxManagedProjection {
 
     public TestProjection(@NonNull RedissonClient redisson) {
       super(redisson);
     }
   }
 
-  static class MissingAnnotationTestProjection extends AbstractRedisManagedProjection {
+  static class MissingAnnotationTestProjection extends AbstractRedisTxManagedProjection {
 
     public MissingAnnotationTestProjection(@NonNull RedissonClient redisson) {
       super(redisson);

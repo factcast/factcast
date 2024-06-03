@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2022 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.itests.factus.proj;
+package org.factcast.factus.redis.tx;
 
-import java.util.*;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-import org.factcast.factus.redis.AbstractRedisManagedProjection;
-import org.factcast.factus.serializer.ProjectionMetaData;
-import org.redisson.api.RMap;
+import lombok.NonNull;
+import org.factcast.factus.projection.SubscribedProjection;
 import org.redisson.api.RedissonClient;
 
-@Slf4j
-@ProjectionMetaData(revision = 1)
-public class RedissonManagedUserNames extends AbstractRedisManagedProjection implements UserNames {
-
-  @Getter private final RMap<UUID, String> userNames;
-
-  public RedissonManagedUserNames(RedissonClient redisson) {
+public abstract class AbstractRedisTxSubscribedProjection extends AbstractRedisTxProjection
+    implements SubscribedProjection {
+  public AbstractRedisTxSubscribedProjection(@NonNull RedissonClient redisson) {
     super(redisson);
-    userNames = redisson.getMap(getClass().getSimpleName());
   }
 }

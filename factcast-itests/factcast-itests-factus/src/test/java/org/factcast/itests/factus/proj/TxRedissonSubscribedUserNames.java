@@ -19,8 +19,8 @@ import java.util.*;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Handler;
-import org.factcast.factus.redis.AbstractRedisSubscribedProjection;
 import org.factcast.factus.redis.UUIDCodec;
+import org.factcast.factus.redis.tx.AbstractRedisTxSubscribedProjection;
 import org.factcast.factus.redis.tx.RedisTransactional;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.factus.event.UserCreated;
@@ -36,7 +36,7 @@ import org.redisson.codec.MarshallingCodec;
 @Slf4j
 @ProjectionMetaData(revision = 1)
 @RedisTransactional(bulkSize = 5000)
-public class TxRedissonSubscribedUserNames extends AbstractRedisSubscribedProjection {
+public class TxRedissonSubscribedUserNames extends AbstractRedisTxSubscribedProjection {
 
   protected final Codec codec =
       new CompositeCodec(UUIDCodec.INSTANCE, new LZ4Codec(new MarshallingCodec()));

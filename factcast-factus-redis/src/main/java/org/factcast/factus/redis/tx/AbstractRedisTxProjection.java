@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.redis;
+package org.factcast.factus.redis.tx;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
@@ -27,10 +27,13 @@ import org.factcast.factus.projection.Named;
 import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.projection.WriterTokenAware;
 import org.factcast.factus.projection.tx.AbstractOpenTransactionAwareProjection;
-import org.factcast.factus.redis.tx.RedisTransactional;
+import org.factcast.factus.redis.FactStreamPositionCodec;
+import org.factcast.factus.redis.RedisProjection;
+import org.factcast.factus.redis.RedisWriterToken;
 import org.redisson.api.*;
 
-abstract class AbstractRedisProjection extends AbstractOpenTransactionAwareProjection<RTransaction>
+abstract class AbstractRedisTxProjection
+    extends AbstractOpenTransactionAwareProjection<RTransaction>
     implements RedisProjection, FactStreamPositionAware, WriterTokenAware, Named {
   @Getter protected final RedissonClient redisson;
 
@@ -39,7 +42,7 @@ abstract class AbstractRedisProjection extends AbstractOpenTransactionAwareProje
 
   @Getter private final String redisKey;
 
-  protected AbstractRedisProjection(@NonNull RedissonClient redisson) {
+  protected AbstractRedisTxProjection(@NonNull RedissonClient redisson) {
     this.redisson = redisson;
 
     redisKey = getScopedName().asString();
