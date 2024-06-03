@@ -17,7 +17,7 @@ package org.factcast.itests.factus.proj;
 
 import java.util.*;
 import org.factcast.factus.Handler;
-import org.factcast.factus.redis.AbstractRedisManagedProjection;
+import org.factcast.factus.redis.tx.AbstractRedisTxManagedProjection;
 import org.factcast.factus.redis.tx.RedisTransactional;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.factus.event.UserCreated;
@@ -25,11 +25,11 @@ import org.factcast.itests.factus.event.UserDeleted;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
 
-public class RedisTransactionalProjectionExample {
+public class RedisTxProjectionExample {
 
   @ProjectionMetaData(revision = 1)
   @RedisTransactional
-  public static class UserNames extends AbstractRedisManagedProjection {
+  public static class UserNames extends AbstractRedisTxManagedProjection {
 
     public UserNames(RedissonClient redisson) {
       super(redisson);

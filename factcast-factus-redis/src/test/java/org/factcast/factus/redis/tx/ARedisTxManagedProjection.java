@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.redis;
+package org.factcast.factus.redis.tx;
 
 import lombok.NonNull;
-import org.factcast.factus.projection.SubscribedProjection;
+import org.factcast.factus.serializer.ProjectionMetaData;
 import org.redisson.api.RedissonClient;
 
-public abstract class AbstractRedisSubscribedProjection extends AbstractRedisProjection
-    implements SubscribedProjection {
-  public AbstractRedisSubscribedProjection(@NonNull RedissonClient redisson) {
+@ProjectionMetaData(revision = 1)
+public class ARedisTxManagedProjection extends AbstractRedisTxManagedProjection {
+  public ARedisTxManagedProjection(@NonNull RedissonClient redisson) {
     super(redisson);
   }
 }
