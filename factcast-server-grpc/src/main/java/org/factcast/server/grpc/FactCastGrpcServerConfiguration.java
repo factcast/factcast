@@ -16,7 +16,6 @@
 package org.factcast.server.grpc;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import java.util.function.Supplier;
 import lombok.NonNull;
 import net.devh.boot.grpc.server.scope.GrpcRequestScope;
 import org.factcast.core.store.FactStore;
@@ -24,8 +23,6 @@ import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.grpc.api.CompressionCodecs;
 import org.factcast.server.grpc.metrics.ServerMetrics;
 import org.factcast.server.grpc.metrics.ServerMetricsImpl;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.*;
 
@@ -65,18 +62,6 @@ public class FactCastGrpcServerConfiguration {
       proxyMode = ScopedProxyMode.TARGET_CLASS)
   GrpcRequestMetadata grpcMetaData() {
     return new GrpcRequestMetadata();
-  }
-
-  @Primary
-  @Bean
-  public Supplier<String> clientIdSupplier(ObjectFactory<GrpcRequestMetadata> metadataSupplier) {
-    return () -> {
-      try {
-        return metadataSupplier.getObject().clientIdAsString();
-      } catch (BeansException e) {
-        return null;
-      }
-    };
   }
 
   @Bean
