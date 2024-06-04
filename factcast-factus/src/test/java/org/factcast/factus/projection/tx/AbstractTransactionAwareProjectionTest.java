@@ -22,8 +22,10 @@ import static org.mockito.Mockito.*;
 
 import javax.annotation.Nullable;
 import lombok.NonNull;
+import lombok.experimental.Delegate;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.FactStreamPosition;
+import org.factcast.factus.projection.Projection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -160,7 +162,14 @@ class AbstractTransactionAwareProjectionTest {
 
 class Tx {}
 
-class TestTransactionAwareProjection extends AbstractOpenTransactionAwareProjection<Tx> {
+class TestTransactionAwareProjection
+    implements OpenTransactionAware<Tx>, TransactionAdapter<Tx>, Projection {
+
+  @Delegate private final TransactionBehavior<Tx> tx;
+
+  TestTransactionAwareProjection() {
+    this.tx = new TransactionBehavior<>(this);
+  }
 
   @Nullable
   @Override
@@ -172,13 +181,13 @@ class TestTransactionAwareProjection extends AbstractOpenTransactionAwareProject
   public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {}
 
   @Override
-  protected @NonNull Tx beginNewTransaction() {
+  public @NonNull Tx beginNewTransaction() {
     return new Tx();
   }
 
   @Override
-  protected void rollback(@NonNull Tx runningTransaction) {}
+  public void rollback(@NonNull Tx runningTransaction) {}
 
   @Override
-  protected void commit(@NonNull Tx runningTransaction) {}
+  public void commit(@NonNull Tx runningTransaction) {}
 }

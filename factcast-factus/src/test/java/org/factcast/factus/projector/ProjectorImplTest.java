@@ -28,6 +28,7 @@ import lombok.Data;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.Value;
+import lombok.experimental.Delegate;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Maps;
 import org.factcast.core.*;
@@ -39,8 +40,9 @@ import org.factcast.factus.event.DefaultEventSerializer;
 import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projection.parameter.HandlerParameterContributors;
-import org.factcast.factus.projection.tx.AbstractOpenTransactionAwareProjection;
-import org.factcast.factus.projection.tx.TransactionAware;
+import org.factcast.factus.projection.tx.OpenTransactionAware;
+import org.factcast.factus.projection.tx.TransactionAdapter;
+import org.factcast.factus.projection.tx.TransactionBehavior;
 import org.factcast.factus.projector.ProjectorImpl.ReflectionTools;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -618,9 +620,13 @@ class ProjectorImplTest {
 
   interface SomeTransactionInterface {}
 
-  class TransactionalProjection
-      extends AbstractOpenTransactionAwareProjection<SomeTransactionInterface>
-      implements TransactionAware {
+  static class TransactionalProjection
+      implements OpenTransactionAware, TransactionAdapter<SomeTransactionInterface>, Projection {
+    @Delegate private final TransactionBehavior<SomeTransactionInterface> transactionalBehavior;
+
+    TransactionalProjection() {
+      transactionalBehavior = new TransactionBehavior<>(this);
+    }
 
     @HandlerFor(ns = "default", type = "test")
     void apply(Fact f) {}
@@ -635,7 +641,7 @@ class ProjectorImplTest {
     public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {}
 
     @Override
-    protected @NonNull SomeTransactionInterface beginNewTransaction() {
+    public @NonNull SomeTransactionInterface beginNewTransaction() {
       return new SomeTransactionInterface() {
         @Override
         public int hashCode() {
@@ -645,10 +651,10 @@ class ProjectorImplTest {
     }
 
     @Override
-    protected void rollback(@NonNull SomeTransactionInterface runningTransaction) {}
+    public void rollback(@NonNull SomeTransactionInterface runningTransaction) {}
 
     @Override
-    protected void commit(@NonNull SomeTransactionInterface runningTransaction) {}
+    public void commit(@NonNull SomeTransactionInterface runningTransaction) {}
   }
 
   @Test

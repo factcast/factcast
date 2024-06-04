@@ -15,18 +15,12 @@
  */
 package org.factcast.factus.projection.tx;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
+public interface OpenTransactionAware<T> extends TransactionAware {
 
-/**
- * please do not add any behavior into this class. This is just meant to give (CGLib-ready) access
- * to the current state and nothing else.
- *
- * @param <T>
- */
-public class AbstractTransactionalState<T> {
-  @Getter(AccessLevel.PROTECTED)
-  @Setter(AccessLevel.PROTECTED)
-  private T runningTransaction;
+  /**
+   * open this up to be used from the projector in order to be able to inject as a parameter
+   *
+   * @return
+   */
+  T runningTransaction();
 }

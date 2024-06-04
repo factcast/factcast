@@ -18,13 +18,17 @@ package org.factcast.factus.redis.tx;
 import java.lang.annotation.*;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import lombok.experimental.UtilityClass;
 import org.redisson.api.TransactionOptions;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Inherited
 public @interface RedisTransactional {
-  int bulkSize() default 1000;
+
+  int DEFAULT_BULK_SIZE = 1000;
+
+  int bulkSize() default DEFAULT_BULK_SIZE;
 
   long timeout() default Defaults.timeout;
 
@@ -34,6 +38,7 @@ public @interface RedisTransactional {
 
   long retryInterval() default Defaults.retryInterval;
 
+  @UtilityClass
   class Defaults {
     static final long timeout = 30000;
     static final long responseTimeout = 5001;

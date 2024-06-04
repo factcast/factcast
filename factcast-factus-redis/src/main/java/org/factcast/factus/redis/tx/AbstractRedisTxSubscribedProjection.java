@@ -21,7 +21,7 @@ import org.redisson.api.RedissonClient;
 
 public abstract class AbstractRedisTxSubscribedProjection extends AbstractRedisTxProjection
     implements SubscribedProjection {
-  public AbstractRedisTxSubscribedProjection(@NonNull RedissonClient redisson) {
+  AbstractRedisTxSubscribedProjection(@NonNull RedissonClient redisson) {
     super(redisson);
   }
 }
