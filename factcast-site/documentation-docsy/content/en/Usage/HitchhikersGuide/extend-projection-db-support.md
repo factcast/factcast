@@ -56,7 +56,7 @@ services. Apart from your Db specific implementation you'll need to implement th
 
 ### Projections with Transactional Safety
 
-There are two types of transaction aware projections. No matter which one you choose the implementation will mostly the
+There are two types of transaction aware projections. No matter which one you choose the implementation will mostly be the
 same.
 
 #### Transaction Aware Projection
