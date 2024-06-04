@@ -32,6 +32,7 @@ import org.factcast.factus.Factus;
 import org.factcast.factus.Handler;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.projection.WriterToken;
+import org.factcast.factus.projection.tx.TransactionException;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.factus.spring.tx.AbstractSpringTxManagedProjection;
 import org.factcast.factus.spring.tx.AbstractSpringTxSubscribedProjection;
@@ -49,7 +50,6 @@ import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @SpringBootTest
@@ -385,10 +385,9 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    protected @NonNull TransactionStatus beginNewTransaction() {
-      TransactionStatus transactionStatus = super.beginNewTransaction();
+    public void begin() throws TransactionException {
+      super.begin();
       txSeen.add(jdbcTemplate.queryForObject("select txid_current()", String.class));
-      return transactionStatus;
     }
 
     @Handler
@@ -448,10 +447,9 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    protected @NonNull TransactionStatus beginNewTransaction() {
-      TransactionStatus transactionStatus = super.beginNewTransaction();
+    public void begin() throws TransactionException {
+      super.begin();
       txSeen.add(jdbcTemplate.queryForObject("select txid_current()", String.class));
-      return transactionStatus;
     }
 
     @Handler

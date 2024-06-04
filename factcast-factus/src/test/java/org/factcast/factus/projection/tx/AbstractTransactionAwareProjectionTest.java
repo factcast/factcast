@@ -15,7 +15,6 @@
  */
 package org.factcast.factus.projection.tx;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -38,7 +37,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class AbstractTransactionAwareProjectionTest {
 
   @Mock private Tx runningTransaction;
-  TestTransactionAwareProjection underTest = spy(new TestTransactionAwareProjection());
+  @Mock private TransactionBehavior<Tx> tb = mock(TransactionBehavior.class);
+  TestTransactionAwareProjection underTest = spy(new TestTransactionAwareProjection(tb));
 
   @Nested
   class WhenBegining {
@@ -50,29 +50,6 @@ class AbstractTransactionAwareProjectionTest {
       Assertions.assertThat(underTest.inTransaction()).isFalse();
       underTest.begin();
       Assertions.assertThat(underTest.inTransaction()).isTrue();
-    }
-
-    @Test
-    void beginDelegates() {
-      underTest.begin();
-      verify(underTest).beginNewTransaction();
-    }
-
-    @Test
-    void remembersTransaction() {
-      @NonNull Tx t = new Tx();
-      when(underTest.beginNewTransaction()).thenReturn(t);
-      underTest.begin();
-      verify(underTest).beginNewTransaction();
-      assertThat(underTest.runningTransaction()).isSameAs(t);
-    }
-
-    @Test
-    void failureOnBeginDoesNotChangeState() {
-      doThrow(RuntimeException.class).when(underTest).beginNewTransaction();
-
-      Assertions.assertThat(underTest.inTransaction()).isFalse();
-      assertThatThrownBy(underTest::begin).isInstanceOf(Exception.class);
     }
   }
 
@@ -146,18 +123,6 @@ class AbstractTransactionAwareProjectionTest {
           .isInstanceOf(TransactionAlreadyRunningException.class);
     }
   }
-
-  @Nested
-  class WhenAssertingInTransaction {
-    @BeforeEach
-    void setup() {}
-
-    @Test
-    void throwsIfRunning() {
-      assertThatThrownBy(underTest::assertInTransaction)
-          .isInstanceOf(TransactionNotRunningException.class);
-    }
-  }
 }
 
 class Tx {}
@@ -167,8 +132,8 @@ class TestTransactionAwareProjection
 
   @Delegate private final TransactionBehavior<Tx> tx;
 
-  TestTransactionAwareProjection() {
-    this.tx = new TransactionBehavior<>(this);
+  TestTransactionAwareProjection(@NonNull TransactionBehavior<Tx> tb) {
+    this.tx = tb;
   }
 
   @Nullable
