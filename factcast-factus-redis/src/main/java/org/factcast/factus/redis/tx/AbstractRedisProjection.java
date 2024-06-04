@@ -17,70 +17,63 @@ package org.factcast.factus.redis.tx;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import lombok.Getter;
 import lombok.NonNull;
-import lombok.experimental.Delegate;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.factus.projection.FactStreamPositionAware;
 import org.factcast.factus.projection.Named;
 import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.projection.WriterTokenAware;
-import org.factcast.factus.projection.tx.OpenTransactionAware;
-import org.factcast.factus.projection.tx.TransactionBehavior;
 import org.factcast.factus.redis.FactStreamPositionCodec;
 import org.factcast.factus.redis.RedisProjection;
+import org.factcast.factus.redis.RedisWriterToken;
 import org.redisson.api.*;
 
-abstract class AbstractRedisTxProjection extends AbstractRedisProjection
-    implements OpenTransactionAware<RTransaction>,
-        RedisProjection,
-        FactStreamPositionAware,
-        WriterTokenAware,
-        Named {
+abstract class AbstractRedisProjection
+    implements RedisProjection, FactStreamPositionAware, WriterTokenAware, Named {
+  @Getter protected final RedissonClient redisson;
 
-  @Delegate private final TransactionBehavior<RTransaction> tx;
+  protected final RLock lock;
+  protected final String stateBucketName;
 
-  protected AbstractRedisTxProjection(@NonNull RedissonClient redisson) {
-    super(redisson);
-    this.tx =
-        new TransactionBehavior<>(
-            new RedisTransactionAdapter(
-                redisson, getClass().getAnnotation(RedisTransactional.class)));
+  @Getter protected final String redisKey;
+
+  protected AbstractRedisProjection(@NonNull RedissonClient redisson) {
+    this.redisson = redisson;
+
+    redisKey = getScopedName().asString();
+    stateBucketName = redisKey + "_state_tracking";
+
+    // needs to be free from transactions, obviously
+    lock = redisson.getLock(redisKey + "_lock");
   }
 
   @VisibleForTesting
-  RBucket<FactStreamPosition> stateBucket(@NonNull RTransaction tx) {
-    return tx.getBucket(stateBucketName, FactStreamPositionCodec.INSTANCE);
+  RBucket<FactStreamPosition> stateBucket() {
+    return redisson.getBucket(stateBucketName, FactStreamPositionCodec.INSTANCE);
   }
 
   @Override
   public FactStreamPosition factStreamPosition() {
-    if (inTransaction()) {
-      return stateBucket(runningTransaction()).get();
-    } else {
-      return super.factStreamPosition();
-    }
+    return stateBucket().get();
   }
 
   @SuppressWarnings("ConstantConditions")
   @Override
   public void factStreamPosition(@Nullable FactStreamPosition position) {
-    if (inTransaction()) {
-      stateBucket(runningTransaction()).set(position);
-    } else {
-      super.factStreamPosition(position);
-    }
+    stateBucket().set(position);
   }
 
   @Override
   public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
-    assertNoRunningTransaction();
-    return super.acquireWriteToken(maxWait);
-  }
-
-  @Override
-  public AutoCloseable acquireWriteToken() {
-    assertNoRunningTransaction();
-    return super.acquireWriteToken();
+    try {
+      if (lock.tryLock(maxWait.toMillis(), TimeUnit.MILLISECONDS))
+        return new RedisWriterToken(redisson, lock);
+    } catch (InterruptedException e) {
+      // assume lock unsuccessful
+    }
+    return null;
   }
 }

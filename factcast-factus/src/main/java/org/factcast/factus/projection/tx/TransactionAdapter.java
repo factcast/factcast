@@ -15,16 +15,17 @@
  */
 package org.factcast.factus.projection.tx;
 
-public abstract class AbstractOpenTransactionAwareProjection<T>
-    extends AbstractTransactionAwareProjection<T> {
+import lombok.NonNull;
 
-  /**
-   * open this up to be used from the projector in order to be able to inject as a parameter
-   *
-   * @return
-   */
-  @Override
-  public T runningTransaction() {
-    return super.runningTransaction();
+public interface TransactionAdapter<T> {
+  @NonNull
+  T beginNewTransaction();
+
+  void rollback(@NonNull T runningTransaction);
+
+  void commit(@NonNull T runningTransaction);
+
+  default int maxBatchSizePerTransaction() {
+    return 1000;
   }
 }

@@ -21,7 +21,7 @@ import org.redisson.api.RedissonClient;
 
 public abstract class AbstractRedisTxManagedProjection extends AbstractRedisTxProjection
     implements ManagedProjection {
-  public AbstractRedisTxManagedProjection(@NonNull RedissonClient redisson) {
+  protected AbstractRedisTxManagedProjection(@NonNull RedissonClient redisson) {
     super(redisson);
   }
 }

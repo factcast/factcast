@@ -24,7 +24,10 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 @Target(ElementType.TYPE)
 @Inherited
 public @interface SpringTransactional {
-  int bulkSize() default 50;
+
+  int DEFAULT_BULK_SIZE = 1000;
+
+  int bulkSize() default DEFAULT_BULK_SIZE;
 
   int propagationBehavior() default TransactionDefinition.PROPAGATION_REQUIRED;
 
