@@ -34,34 +34,45 @@ and options you need to keep in mind in this situation.
 When designing a projection implementation you'll need to consider the following aspects:
 
 1. Should the projection provide transactional safety across multiple operations?
-   1.2. If yes, do you need to read the latest state while adding changes to a transaction?
-2.
+   1. If yes, do you need to read the latest state while adding changes to a transaction?
+2. How to implement locking?
+3. Where to store the projection state aka the FactStreamPosition?
 
 ### General Structure
 
-### Projections without Transaction Safety
+Projection implementations are provided via an abstract class that is extended by the actual projections within your
+services. Apart from your Db specific implementation you'll need to implement the "FactStreamPositionAware",
+"WriterTokenAware" and "Named" interfaces.
+
+### Projections without Transactional Safety
 
 - Implement the `Projection` interface
+- Override the Getter and Setter for the FactStreamPosition, which represents the information up to which event your projection has consumed the event stream.
+  While the actual implementation will depend on your choice of datastore, one central table per service should be sufficient.
+- Override the `acquireWriteToken` method to provide a locking mechanism for your projection. This is necessary to ensure that only one instance of your projection is processing
+  the event stream and therefore writing to the database at a time.
 
-### Transaction Aware Projections
+### Projections with Transactional Safety
 
 There are two types of transaction aware projections. No matter which one you choose the implementation will mostly the
 same.
 
-- Transaction Aware Projection
-- Open Transaction Aware Projection
-
 #### Transaction Aware Projection
 
+In order to implement the TransactionAwareProjection the datastore needs to support the capability of batching write
+items that might affect the same entity within a transaction that can be collectively rolled back in case of failure.
+
 - Implement the `AbstractTransactionAwareProjection` interface
+- Follow the steps for Projections without Transaction Safety
+- Override the `begin`, `commit` and `rollback` methods to provide transactional safety for your projection
+  while updating. This is necessary to ensure that all changes to the database are either committed or rolled back
+  together. Also make sure to define the maximum batch size by overwriting the `maxBatchSizePerTransaction` method,
+  which otherwise defaults to 1000.
 
 #### Open Transaction Aware Projection
 
-- Implement the `AbstractOpenTransactionAwareProjection` interface
-
 Projections that are "Open" share all the characteristic of the Transaction Aware Projection, but they also provide the
-event handler access to the transaction in progress, so that it can read the latest state. This does not affect your
-implementation but requires that the database is able to  
-this does not require any changes
+event handler access to the transaction that is currently in progress, so that it can read the latest state of your data
+before updating it.
 
-- the database needs to support the capability of batching write items (that might affect the same entity) within a transaction that can be collectively rolled back in case of failure.
+- Implement the `AbstractOpenTransactionAwareProjection` interface.
