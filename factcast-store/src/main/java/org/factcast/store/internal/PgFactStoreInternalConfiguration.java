@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.concurrent.Executors;
 import javax.sql.DataSource;
+
 import liquibase.integration.spring.SpringLiquibase;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +46,7 @@ import org.factcast.store.internal.filter.blacklist.*;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.listen.PgConnectionTester;
 import org.factcast.store.internal.listen.PgListener;
+import org.factcast.store.internal.telemetry.FactStreamTelemetryPublisher;
 import org.factcast.store.internal.lock.AdvisoryWriteLock;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
@@ -121,6 +123,11 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
+  public FactStreamTelemetryPublisher telemetryPublisher() {
+    return new FactStreamTelemetryPublisher();
+  }
+
+  @Bean
   public FactStore factStore(
       JdbcTemplate jdbcTemplate,
       PgSubscriptionFactory subscriptionFactory,
@@ -159,7 +166,8 @@ public class PgFactStoreInternalConfiguration {
       PgMetrics metrics,
       Blacklist blacklist,
       JSEngineFactory ef,
-      FactTransformerService transformerService) {
+      FactTransformerService transformerService,
+      FactStreamTelemetryPublisher telemetryPublisher) {
     return new PgSubscriptionFactory(
         jdbcTemplate,
         eventBus,
@@ -171,7 +179,8 @@ public class PgFactStoreInternalConfiguration {
         metrics,
         blacklist,
         transformerService,
-        ef);
+        ef,
+        telemetryPublisher);
   }
 
   @Bean
