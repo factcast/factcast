@@ -13,29 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.spring.boot.autoconfigure.server.grpc;
+package org.factcast.spring.boot.autoconfigure.client.grpc;
 
-import lombok.Generated;
-import net.jpountz.lz4.LZ4Compressor;
-import org.factcast.server.grpc.FactStoreGrpcService;
-import org.factcast.server.grpc.codec.Lz4GrpcServerCodec;
+import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
+import org.apache.commons.compress.compressors.lz4.FramedLZ4CompressorInputStream;
+import org.factcast.client.grpc.GrpcFactStore;
+import org.factcast.grpc.lz4.Lz4cGrpcClientCodec;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 
 /**
- * @deprecated in 0.8
+ * Configures optional LZ4 Codec
+ *
+ * @author uwe.schaefer@prisma-capacity.eu
  */
-@SuppressWarnings("DeprecatedIsStillUsed")
-@Generated
 @AutoConfiguration
-@ConditionalOnClass({FactStoreGrpcService.class, LZ4Compressor.class, Lz4GrpcServerCodec.class})
-@Deprecated
-public class LZ4ServerAutoConfiguration {
+@ConditionalOnClass({
+  FramedLZ4CompressorInputStream.class,
+  GrpcFactStore.class,
+  GrpcChannelFactory.class
+})
+@AutoConfigureBefore(GrpcFactStoreAutoConfiguration.class)
+public class LZ4cClientAutoConfiguration {
+
   @Bean
   @ConditionalOnMissingBean
-  public Lz4GrpcServerCodec lz4ServerCodec() {
-    return new Lz4GrpcServerCodec();
+  public Lz4cGrpcClientCodec lz4cCodec() {
+    return new Lz4cGrpcClientCodec();
   }
 }

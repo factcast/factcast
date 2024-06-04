@@ -16,26 +16,23 @@
 package org.factcast.spring.boot.autoconfigure.server.grpc;
 
 import lombok.Generated;
-import net.jpountz.lz4.LZ4Compressor;
+import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorOutputStream;
+import org.factcast.grpc.snappy.SnappycGrpcServerCodec;
 import org.factcast.server.grpc.FactStoreGrpcService;
-import org.factcast.server.grpc.codec.Lz4GrpcServerCodec;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 
-/**
- * @deprecated in 0.8
- */
-@SuppressWarnings("DeprecatedIsStillUsed")
 @Generated
 @AutoConfiguration
-@ConditionalOnClass({FactStoreGrpcService.class, LZ4Compressor.class, Lz4GrpcServerCodec.class})
-@Deprecated
-public class LZ4ServerAutoConfiguration {
+@ConditionalOnClass({FactStoreGrpcService.class, FramedSnappyCompressorOutputStream.class})
+@AutoConfigureBefore(FactCastGrpcServerAutoConfiguration.class)
+public class SnappycServerAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean
-  public Lz4GrpcServerCodec lz4ServerCodec() {
-    return new Lz4GrpcServerCodec();
+  public SnappycGrpcServerCodec snappycServerCodec() {
+    return new SnappycGrpcServerCodec();
   }
 }

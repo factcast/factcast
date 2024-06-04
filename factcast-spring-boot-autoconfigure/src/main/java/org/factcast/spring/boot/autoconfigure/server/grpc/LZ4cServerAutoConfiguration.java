@@ -16,26 +16,21 @@
 package org.factcast.spring.boot.autoconfigure.server.grpc;
 
 import lombok.Generated;
-import net.jpountz.lz4.LZ4Compressor;
+import org.apache.commons.compress.compressors.lz4.FramedLZ4CompressorInputStream;
+import org.factcast.grpc.lz4.Lz4cGrpcServerCodec;
 import org.factcast.server.grpc.FactStoreGrpcService;
-import org.factcast.server.grpc.codec.Lz4GrpcServerCodec;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 
-/**
- * @deprecated in 0.8
- */
-@SuppressWarnings("DeprecatedIsStillUsed")
 @Generated
 @AutoConfiguration
-@ConditionalOnClass({FactStoreGrpcService.class, LZ4Compressor.class, Lz4GrpcServerCodec.class})
-@Deprecated
-public class LZ4ServerAutoConfiguration {
+@ConditionalOnClass({FactStoreGrpcService.class, FramedLZ4CompressorInputStream.class})
+public class LZ4cServerAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean
-  public Lz4GrpcServerCodec lz4ServerCodec() {
-    return new Lz4GrpcServerCodec();
+  public Lz4cGrpcServerCodec lz4cServerCodec() {
+    return new Lz4cGrpcServerCodec();
   }
 }
