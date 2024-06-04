@@ -23,6 +23,7 @@ import net.devh.boot.grpc.common.codec.GrpcCodec;
 import net.jpountz.lz4.*;
 
 @GrpcCodec(advertised = true, codecType = CodecType.ALL)
+@Deprecated
 public class Lz4GrpcClientCodec implements Codec {
   private static final LZ4FastDecompressor decomp = LZ4Factory.fastestInstance().fastDecompressor();
 
