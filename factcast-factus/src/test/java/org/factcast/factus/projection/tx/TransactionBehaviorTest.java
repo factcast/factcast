@@ -15,6 +15,7 @@
  */
 package org.factcast.factus.projection.tx;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -40,13 +41,10 @@ class TransactionBehaviorTest {
 
   @Nested
   class WhenBegining {
-    @BeforeEach
-    void setup() {
-      when(adapter.beginNewTransaction()).thenReturn(runningTransaction);
-    }
 
     @Test
     void failsOnRunningTransaction() {
+      when(adapter.beginNewTransaction()).thenReturn(runningTransaction);
       underTest.begin();
       Assertions.assertThat(underTest.runningTransaction()).isNotNull();
 
@@ -59,9 +57,18 @@ class TransactionBehaviorTest {
 
     @Test
     void beginsTransaction() {
+      when(adapter.beginNewTransaction()).thenReturn(runningTransaction);
       Assertions.assertThat(underTest.runningTransaction()).isNull();
       underTest.begin();
       Assertions.assertThat(underTest.runningTransaction()).isSameAs(runningTransaction);
+    }
+
+    @Test
+    void failureOnBeginDoesNotChangeState() {
+      doThrow(RuntimeException.class).when(adapter).beginNewTransaction();
+
+      assertThatThrownBy(underTest::begin).isInstanceOf(Exception.class);
+      Assertions.assertThat(underTest.inTransaction()).isFalse();
     }
   }
 
@@ -193,5 +200,13 @@ class TransactionBehaviorTest {
       when(adapter.maxBatchSizePerTransaction()).thenReturn(n);
       Assertions.assertThat(underTest.maxBatchSizePerTransaction()).isEqualTo(n);
     }
+  }
+
+  @Test
+  void remembersTransaction() {
+    when(adapter.beginNewTransaction()).thenReturn(runningTransaction);
+    underTest.begin();
+    verify(adapter).beginNewTransaction();
+    assertThat(underTest.runningTransaction()).isSameAs(runningTransaction);
   }
 }
