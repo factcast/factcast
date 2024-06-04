@@ -15,56 +15,44 @@
  */
 package org.factcast.store.internal.telemetry;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.junit.jupiter.api.Test;
 
-class FactStreamTelemetryPublisherTest {
+class PgStoreTelemetryTest {
 
   @Test
   void setsEventBusOnConstruction() {
     var eventBus = mock(EventBus.class);
-    var listener = new TestListener();
+    var listener = new Object();
 
-    var uut = new FactStreamTelemetryPublisher(eventBus);
+    var uut = new PgStoreTelemetry(eventBus);
     uut.register(listener);
 
     verify(eventBus).register(listener);
   }
 
   @Test
-  void delegatesPostToEventBus() throws InterruptedException {
-    var signal = new FactStreamTelemetrySignal.Catchup(new SubscriptionRequestTO());
-    var listener = new TestListener();
-    var uut = new FactStreamTelemetryPublisher();
-    uut.register(listener);
+  void delegatesPostToEventBus() {
+    var eventBus = mock(EventBus.class);
+    var req = new SubscriptionRequestTO();
+    var uut = new PgStoreTelemetry(eventBus);
 
-    uut.post(signal);
+    uut.onConnect(req);
 
-    assertThat(listener.latestSignal).isEqualTo(signal);
+    verify(eventBus).post(new PgStoreTelemetry.Connect(req));
   }
 
   @Test
   void catchesExceptionsOnPost() {
     var eventBus = mock(EventBus.class);
-    var signal = new FactStreamTelemetrySignal.Catchup(new SubscriptionRequestTO());
-    var uut = new FactStreamTelemetryPublisher(eventBus);
-    doThrow(new RuntimeException("expected")).when(eventBus).post(signal);
+    var req = new SubscriptionRequestTO();
+    var uut = new PgStoreTelemetry(eventBus);
+    doThrow(new RuntimeException("expected")).when(eventBus).post(any());
 
-    assertThatNoException().isThrownBy(() -> uut.post(signal));
-  }
-
-  static class TestListener {
-    FactStreamTelemetrySignal latestSignal;
-
-    @Subscribe
-    void on(FactStreamTelemetrySignal.Catchup signal) {
-      this.latestSignal = signal;
-    }
+    assertThatNoException().isThrownBy(() -> uut.onConnect(req));
   }
 }

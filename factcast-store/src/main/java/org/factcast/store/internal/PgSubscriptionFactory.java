@@ -34,7 +34,7 @@ import org.factcast.store.internal.filter.blacklist.Blacklist;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.script.JSEngineFactory;
-import org.factcast.store.internal.telemetry.FactStreamTelemetryPublisher;
+import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 // TODO integrate with PGQuery
@@ -57,7 +57,7 @@ class PgSubscriptionFactory implements AutoCloseable {
   final Blacklist blacklist;
   final FactTransformerService transformerService;
   final JSEngineFactory ef;
-  final FactStreamTelemetryPublisher telemetryPublisher;
+  final PgStoreTelemetry telemetryPublisher;
 
   private final ExecutorService es;
 
@@ -73,7 +73,7 @@ class PgSubscriptionFactory implements AutoCloseable {
       Blacklist blacklist,
       FactTransformerService transformerService,
       JSEngineFactory ef,
-      FactStreamTelemetryPublisher telemetryPublisher) {
+      PgStoreTelemetry telemetryPublisher) {
     this.jdbcTemplate = jdbcTemplate;
     this.eventBus = eventBus;
     this.idToSerialMapper = idToSerialMapper;
