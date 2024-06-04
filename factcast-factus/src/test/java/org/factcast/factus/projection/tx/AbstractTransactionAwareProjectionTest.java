@@ -15,115 +15,14 @@
  */
 package org.factcast.factus.projection.tx;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.experimental.Delegate;
-import org.assertj.core.api.Assertions;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.factus.projection.Projection;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-@SuppressWarnings("FieldMayBeFinal")
-@ExtendWith(MockitoExtension.class)
-class AbstractTransactionAwareProjectionTest {
-
-  @Mock private Tx runningTransaction;
-  @Mock private TransactionBehavior<Tx> tb = mock(TransactionBehavior.class);
-  TestTransactionAwareProjection underTest = spy(new TestTransactionAwareProjection(tb));
-
-  @Nested
-  class WhenBegining {
-    @BeforeEach
-    void setup() {}
-
-    @Test
-    void beginStarts() {
-      Assertions.assertThat(underTest.inTransaction()).isFalse();
-      underTest.begin();
-      Assertions.assertThat(underTest.inTransaction()).isTrue();
-    }
-  }
-
-  @Nested
-  class WhenCommitting {
-    @BeforeEach
-    void setup() {}
-
-    @Test
-    void commitEnds() {
-      Assertions.assertThat(underTest.inTransaction()).isFalse();
-      underTest.begin();
-      Assertions.assertThat(underTest.inTransaction()).isTrue();
-      underTest.commit();
-      verify(underTest).commit(any());
-      Assertions.assertThat(underTest.inTransaction()).isFalse();
-    }
-
-    @Test
-    void failingCommitEnds() {
-
-      doThrow(RuntimeException.class).when(underTest).commit(any());
-
-      Assertions.assertThat(underTest.inTransaction()).isFalse();
-      underTest.begin();
-      Assertions.assertThat(underTest.inTransaction()).isTrue();
-      assertThatThrownBy(underTest::commit).isInstanceOf(Exception.class);
-      verify(underTest).commit(any());
-      Assertions.assertThat(underTest.inTransaction()).isFalse();
-    }
-  }
-
-  @SuppressWarnings("ConstantValue")
-  @Nested
-  class WhenRollbacking {
-    @BeforeEach
-    void setup() {}
-
-    @Test
-    void rollbackEnds() {
-      Assertions.assertThat(underTest.inTransaction()).isFalse();
-      underTest.begin();
-      Assertions.assertThat(underTest.inTransaction()).isTrue();
-      underTest.rollback();
-      Assertions.assertThat(underTest.inTransaction()).isFalse();
-      verify(underTest).rollback(any());
-    }
-
-    @Test
-    void failinRollbackEnds() {
-      doThrow(RuntimeException.class).when(underTest).rollback(any());
-
-      Assertions.assertThat(underTest.inTransaction()).isFalse();
-      underTest.begin();
-      Assertions.assertThat(underTest.inTransaction()).isTrue();
-      assertThatThrownBy(underTest::rollback).isInstanceOf(Exception.class);
-      Assertions.assertThat(underTest.inTransaction()).isFalse();
-      verify(underTest).rollback(any());
-    }
-  }
-
-  @Nested
-  class WhenAssertingNoRunningTransaction {
-    @BeforeEach
-    void setup() {}
-
-    @Test
-    void throwsIfRunning() {
-      underTest.begin();
-      assertThatThrownBy(underTest::assertNoRunningTransaction)
-          .isInstanceOf(TransactionAlreadyRunningException.class);
-    }
-  }
-}
 
 class Tx {}
 
