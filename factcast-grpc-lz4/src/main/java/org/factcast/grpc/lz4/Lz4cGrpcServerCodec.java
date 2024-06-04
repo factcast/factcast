@@ -13,34 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.grpc.codec;
+package org.factcast.grpc.lz4;
 
 import io.grpc.Codec;
 import java.io.InputStream;
 import java.io.OutputStream;
+import lombok.SneakyThrows;
 import net.devh.boot.grpc.common.codec.CodecType;
 import net.devh.boot.grpc.common.codec.GrpcCodec;
-import net.jpountz.lz4.*;
+import org.apache.commons.compress.compressors.lz4.FramedLZ4CompressorInputStream;
+import org.apache.commons.compress.compressors.lz4.FramedLZ4CompressorOutputStream;
 
 @GrpcCodec(advertised = true, codecType = CodecType.ALL)
-@Deprecated
-public class Lz4GrpcServerCodec implements Codec {
-  private static final LZ4FastDecompressor decomp = LZ4Factory.fastestInstance().fastDecompressor();
-
-  private static final LZ4Compressor comp = LZ4Factory.fastestInstance().fastCompressor();
+public class Lz4cGrpcServerCodec implements Codec {
 
   @Override
   public String getMessageEncoding() {
-    return "lz4";
+    return "lz4c";
   }
 
+  @SneakyThrows
   @Override
   public InputStream decompress(InputStream inputStream) {
-    return new LZ4BlockInputStream(inputStream, decomp);
+    return new FramedLZ4CompressorInputStream(inputStream);
   }
 
+  @SneakyThrows
   @Override
   public OutputStream compress(OutputStream outputStream) {
-    return new LZ4BlockOutputStream(outputStream, 65536, comp);
+    return new FramedLZ4CompressorOutputStream(outputStream);
   }
 }
