@@ -31,6 +31,7 @@ import org.factcast.factus.redis.RedisProjection;
 import org.factcast.factus.redis.RedisWriterToken;
 import org.redisson.api.*;
 
+@SuppressWarnings("java:S2142")
 abstract class AbstractRedisProjection
     implements RedisProjection, FactStreamPositionAware, WriterTokenAware, Named {
   @Getter protected final RedissonClient redisson;
