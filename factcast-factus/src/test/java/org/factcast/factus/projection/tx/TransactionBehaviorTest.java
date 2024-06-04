@@ -37,7 +37,7 @@ class TransactionBehaviorTest {
 
   @Mock private @NonNull TransactionAdapter<Tx> adapter;
   @Mock private Tx runningTransaction;
-  @InjectMocks private TransactionBehavior underTest;
+  @InjectMocks private TransactionBehavior<Tx> underTest;
 
   @Nested
   class WhenBegining {
