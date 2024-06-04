@@ -25,7 +25,7 @@ import org.apache.commons.compress.utils.IOUtils;
 
 @UtilityClass
 public class CodecTestHelper {
-  byte[] fromByteArray(Codec uut, byte[] compressedBytes) throws IOException {
+  byte[] fromByteArray(Codec codec, byte[] compressedBytes) throws IOException {
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     IOUtils.copy(uut.decompress(new ByteArrayInputStream(compressedBytes)), os);
     os.close();
