@@ -299,24 +299,48 @@ public class GrpcFactStore implements FactStore {
   }
 
   private void configureCredentials() {
-    if (properties.getUser() != null && properties.getPassword() != null) {
+    if (areCredentialsSetViaProperties()) {
+      log.info("Using credentials from properties");
       CallCredentials basic =
-          CallCredentialsHelper.basicAuth(properties.getUser(), properties.getPassword());
+          buildCallCredentialsOrThrow(properties.getUser(), properties.getPassword());
       uncompressedBlockingStub = uncompressedBlockingStub.withCallCredentials(basic);
       uncompressedStub = uncompressedStub.withCallCredentials(basic);
     }
     // deprecated way of setting credentials but still supported
     else if (credentials.isPresent()) {
-      String[] sa = credentials.get().split(":");
-      if (sa.length != 2) {
-        throw new IllegalArgumentException(
-            "Credentials in 'grpc.client.factstore.credentials' have to be defined as"
-                + " 'username:password'");
-      }
-      CallCredentials basic = CallCredentialsHelper.basicAuth(sa[0], sa[1]);
+      log.info("Using deprecated credentials");
+      CallCredentials basic = useDeprecatedCredentialsOrThrow(credentials.get());
       uncompressedBlockingStub = uncompressedBlockingStub.withCallCredentials(basic);
       uncompressedStub = uncompressedStub.withCallCredentials(basic);
     }
+  }
+
+  private boolean areCredentialsSetViaProperties() {
+    // if one is set, both must be set
+    return properties.getUser() != null || properties.getPassword() != null;
+  }
+
+  private CallCredentials useDeprecatedCredentialsOrThrow(String credentials) {
+    final String[] sa = credentials.split(":");
+    if (sa.length != 2) {
+      throw new IllegalArgumentException(
+          "Credentials in 'grpc.client.factstore.credentials' have to be defined as"
+              + " 'username:password'");
+    }
+    return buildCallCredentialsOrThrow(sa[0], sa[1]);
+  }
+
+  private CallCredentials buildCallCredentialsOrThrow(String user, String password) {
+    // even just empty hints to a serious misconfiguration
+    if (user == null || user.isEmpty() || password == null || password.isEmpty()) {
+      throw new IllegalArgumentException(
+          "BOTH user and password have to be non-null and non-empty. Given user=\""
+              + user
+              + "\", password=\""
+              + password
+              + "\".");
+    }
+    return CallCredentialsHelper.basicAuth(user, password);
   }
 
   @NonNull

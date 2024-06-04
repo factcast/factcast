@@ -532,6 +532,84 @@ class GrpcFactStoreTest {
     }
 
     @Test
+    void testNewCredentialsNoPassword() {
+      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
+      when(stub.withWaitForReady()).thenReturn(stub);
+
+      credentials = Optional.empty();
+      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
+      props.setUser("user");
+
+      GrpcFactStore uutNewCredentials =
+          new GrpcFactStore(channel, stubsFactory, credentials, props, "foo");
+
+      assertThrows(
+          IllegalArgumentException.class,
+          () -> {
+            uutNewCredentials.initializeIfNecessary();
+          });
+    }
+
+    @Test
+    void testNewCredentialsEmptyPassword() {
+      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
+      when(stub.withWaitForReady()).thenReturn(stub);
+
+      credentials = Optional.empty();
+      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
+      props.setUser("user");
+      props.setPassword("");
+
+      GrpcFactStore uutNewCredentials =
+          new GrpcFactStore(channel, stubsFactory, credentials, props, "foo");
+
+      assertThrows(
+          IllegalArgumentException.class,
+          () -> {
+            uutNewCredentials.initializeIfNecessary();
+          });
+    }
+
+    @Test
+    void testNewCredentialsNoUsername() {
+      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
+      when(stub.withWaitForReady()).thenReturn(stub);
+
+      credentials = Optional.empty();
+      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
+      props.setPassword("password");
+
+      GrpcFactStore uutNewCredentials =
+          new GrpcFactStore(channel, stubsFactory, credentials, props, "foo");
+
+      assertThrows(
+          IllegalArgumentException.class,
+          () -> {
+            uutNewCredentials.initializeIfNecessary();
+          });
+    }
+
+    @Test
+    void testNewCredentialsEmptyUsername() {
+      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
+      when(stub.withWaitForReady()).thenReturn(stub);
+
+      credentials = Optional.empty();
+      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
+      props.setUser("");
+      props.setPassword("password");
+
+      GrpcFactStore uutNewCredentials =
+          new GrpcFactStore(channel, stubsFactory, credentials, props, "foo");
+
+      assertThrows(
+          IllegalArgumentException.class,
+          () -> {
+            uutNewCredentials.initializeIfNecessary();
+          });
+    }
+
+    @Test
     void testLegacyCredentials() {
       final RemoteFactStoreBlockingStub blockingStub = mock(RemoteFactStoreBlockingStub.class);
       final RemoteFactStoreStub stub = mock(RemoteFactStoreStub.class);
@@ -546,6 +624,36 @@ class GrpcFactStoreTest {
 
       verify(blockingStub).withCallCredentials(any());
       verify(stub).withCallCredentials(any());
+    }
+
+    @Test
+    void testLegacyCredentialsEmptyUsername() {
+      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
+      when(stub.withWaitForReady()).thenReturn(stub);
+
+      credentials = Optional.of(":abc");
+      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
+
+      GrpcFactStore uutLegacyCredentials =
+          new GrpcFactStore(channel, stubsFactory, credentials, props, "foo");
+
+      assertThrows(
+          IllegalArgumentException.class, () -> uutLegacyCredentials.initializeIfNecessary());
+    }
+
+    @Test
+    void testLegacyCredentialsEmptyPassword() {
+      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
+      when(stub.withWaitForReady()).thenReturn(stub);
+
+      credentials = Optional.of("xyz:");
+      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
+
+      GrpcFactStore uutLegacyCredentials =
+          new GrpcFactStore(channel, stubsFactory, credentials, props, "foo");
+
+      assertThrows(
+          IllegalArgumentException.class, () -> uutLegacyCredentials.initializeIfNecessary());
     }
   }
 
