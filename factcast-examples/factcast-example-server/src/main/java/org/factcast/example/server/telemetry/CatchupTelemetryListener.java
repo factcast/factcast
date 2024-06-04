@@ -24,8 +24,8 @@ import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 @Slf4j
 public class CatchupTelemetryListener {
 
-  public CatchupTelemetryListener(PgStoreTelemetry publisher) {
-    publisher.register(this);
+  public CatchupTelemetryListener(PgStoreTelemetry telemetry) {
+    telemetry.register(this);
   }
 
   @Subscribe

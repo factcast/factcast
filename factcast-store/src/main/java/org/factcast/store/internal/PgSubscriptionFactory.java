@@ -57,7 +57,7 @@ class PgSubscriptionFactory implements AutoCloseable {
   final Blacklist blacklist;
   final FactTransformerService transformerService;
   final JSEngineFactory ef;
-  final PgStoreTelemetry telemetryPublisher;
+  final PgStoreTelemetry telemetry;
 
   private final ExecutorService es;
 
@@ -73,7 +73,7 @@ class PgSubscriptionFactory implements AutoCloseable {
       Blacklist blacklist,
       FactTransformerService transformerService,
       JSEngineFactory ef,
-      PgStoreTelemetry telemetryPublisher) {
+      PgStoreTelemetry telemetry) {
     this.jdbcTemplate = jdbcTemplate;
     this.eventBus = eventBus;
     this.idToSerialMapper = idToSerialMapper;
@@ -84,7 +84,7 @@ class PgSubscriptionFactory implements AutoCloseable {
     this.blacklist = blacklist;
     this.transformerService = transformerService;
     this.ef = ef;
-    this.telemetryPublisher = telemetryPublisher;
+    this.telemetry = telemetry;
     this.es =
         metrics.monitor(
             Executors.newFixedThreadPool(props.getSizeOfThreadPoolForSubscriptions()),
@@ -106,7 +106,7 @@ class PgSubscriptionFactory implements AutoCloseable {
             blacklist,
             metrics,
             ef,
-            telemetryPublisher);
+            telemetry);
 
     // when closing the subscription, also close the PgFactStream
     subscription.onClose(pgsub::close);

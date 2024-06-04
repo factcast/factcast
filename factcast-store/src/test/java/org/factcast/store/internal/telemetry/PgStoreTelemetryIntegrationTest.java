@@ -47,7 +47,7 @@ public class PgStoreTelemetryIntegrationTest {
 
   @Autowired FactStore store;
 
-  @Autowired PgStoreTelemetry telemetryPublisher;
+  @Autowired PgStoreTelemetry telemetry;
 
   FactCast uut;
 
@@ -106,7 +106,7 @@ public class PgStoreTelemetryIntegrationTest {
     final List<Object> consumedSignals = Lists.newArrayList();
 
     TelemetryListener() {
-      telemetryPublisher.register(this);
+      telemetry.register(this);
     }
 
     @Subscribe
