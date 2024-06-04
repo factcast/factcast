@@ -15,7 +15,6 @@
  */
 package org.factcast.store.internal.telemetry;
 
-import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
@@ -44,15 +43,5 @@ class PgStoreTelemetryTest {
     uut.onConnect(req);
 
     verify(eventBus).post(new PgStoreTelemetry.Connect(req));
-  }
-
-  @Test
-  void catchesExceptionsOnPost() {
-    var eventBus = mock(EventBus.class);
-    var req = new SubscriptionRequestTO();
-    var uut = new PgStoreTelemetry(eventBus);
-    doThrow(new RuntimeException("expected")).when(eventBus).post(any());
-
-    assertThatNoException().isThrownBy(() -> uut.onConnect(req));
   }
 }

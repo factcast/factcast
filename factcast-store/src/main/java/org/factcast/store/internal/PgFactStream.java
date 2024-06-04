@@ -69,7 +69,7 @@ public class PgFactStream {
   final Blacklist blacklist;
   final PgMetrics metrics;
   final JSEngineFactory ef;
-  final PgStoreTelemetry telemetryPublisher;
+  final PgStoreTelemetry telemetry;
 
   CondensedQueryExecutor condensedExecutor;
 
@@ -87,7 +87,7 @@ public class PgFactStream {
   void connect(@NonNull SubscriptionRequestTO request) {
     log.debug("{} connect subscription {}", request, request.dump());
     // signal connect
-    telemetryPublisher.onConnect(request);
+    telemetry.onConnect(request);
     this.request = request;
     this.filter = new FactFilterImpl(request, blacklist, ef);
     SimpleFactInterceptor interceptor =
@@ -140,14 +140,14 @@ public class PgFactStream {
     if (isConnected()) {
       log.trace("{} signaling catchup", request);
       // signal catchup
-      telemetryPublisher.onCatchup(this.request);
+      telemetry.onCatchup(this.request);
       subscription.notifyCatchup();
     }
     if (isConnected()) {
       if (request.continuous()) {
         log.debug("{} entering follow mode", request);
         // signal follow
-        telemetryPublisher.onFollow(this.request);
+        telemetry.onFollow(this.request);
         long delayInMs;
         if (request.maxBatchDelayInMs() < 1) {
           // ok, instant query after NOTIFY
@@ -178,7 +178,7 @@ public class PgFactStream {
         subscription.notifyComplete();
         log.debug("{} completed", request);
         // signal complete
-        telemetryPublisher.onComplete(this.request);
+        telemetry.onComplete(this.request);
       }
     }
   }
@@ -232,6 +232,6 @@ public class PgFactStream {
     statementHolder.close();
     log.debug("{} disconnected ", request);
     // signal close
-    telemetryPublisher.onClose(this.request);
+    telemetry.onClose(this.request);
   }
 }

@@ -48,7 +48,7 @@ public class PgFactStreamTelemetryTest {
   @Mock Blacklist blacklist;
   @Mock PgMetrics metrics;
   @Mock JSEngineFactory ef;
-  @Mock PgStoreTelemetry telemetryPublisher;
+  @Mock PgStoreTelemetry telemetry;
   @Mock DataSource dataSource;
 
   @InjectMocks PgFactStream uut;
@@ -67,10 +67,10 @@ public class PgFactStreamTelemetryTest {
 
     uut.connect(req);
 
-    InOrder inOrder = inOrder(telemetryPublisher);
-    inOrder.verify(telemetryPublisher).onConnect(req);
-    inOrder.verify(telemetryPublisher).onCatchup(req);
-    inOrder.verify(telemetryPublisher).onComplete(req);
+    InOrder inOrder = inOrder(telemetry);
+    inOrder.verify(telemetry).onConnect(req);
+    inOrder.verify(telemetry).onCatchup(req);
+    inOrder.verify(telemetry).onComplete(req);
   }
 
   @SneakyThrows
@@ -85,10 +85,10 @@ public class PgFactStreamTelemetryTest {
 
     uut.connect(req);
 
-    InOrder inOrder = inOrder(telemetryPublisher);
-    inOrder.verify(telemetryPublisher).onConnect(req);
-    inOrder.verify(telemetryPublisher).onCatchup(req);
-    inOrder.verify(telemetryPublisher).onFollow(req);
+    InOrder inOrder = inOrder(telemetry);
+    inOrder.verify(telemetry).onConnect(req);
+    inOrder.verify(telemetry).onCatchup(req);
+    inOrder.verify(telemetry).onFollow(req);
   }
 
   @SneakyThrows
@@ -104,6 +104,6 @@ public class PgFactStreamTelemetryTest {
 
     uut.close();
 
-    verify(telemetryPublisher).onClose(req);
+    verify(telemetry).onClose(req);
   }
 }

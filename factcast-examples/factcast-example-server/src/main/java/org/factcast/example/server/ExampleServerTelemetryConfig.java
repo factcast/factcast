@@ -24,7 +24,7 @@ import org.springframework.context.annotation.Configuration;
 public class ExampleServerTelemetryConfig {
 
   @Bean
-  public CatchupTelemetryListener catchupTelemetryListener(PgStoreTelemetry publisher) {
-    return new CatchupTelemetryListener(publisher);
+  public CatchupTelemetryListener catchupTelemetryListener(PgStoreTelemetry telemetry) {
+    return new CatchupTelemetryListener(telemetry);
   }
 }

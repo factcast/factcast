@@ -122,7 +122,7 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
-  public PgStoreTelemetry telemetryPublisher() {
+  public PgStoreTelemetry telemetry() {
     return new PgStoreTelemetry();
   }
 
@@ -166,7 +166,7 @@ public class PgFactStoreInternalConfiguration {
       Blacklist blacklist,
       JSEngineFactory ef,
       FactTransformerService transformerService,
-      PgStoreTelemetry telemetryPublisher) {
+      PgStoreTelemetry telemetry) {
     return new PgSubscriptionFactory(
         jdbcTemplate,
         eventBus,
@@ -179,7 +179,7 @@ public class PgFactStoreInternalConfiguration {
         blacklist,
         transformerService,
         ef,
-        telemetryPublisher);
+        telemetry);
   }
 
   @Bean

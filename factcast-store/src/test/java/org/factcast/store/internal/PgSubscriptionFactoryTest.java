@@ -60,7 +60,7 @@ class PgSubscriptionFactoryTest {
   @Mock private FastForwardTarget target;
   @Mock private FactTransformerService transformerService;
   @Mock private PgMetrics metrics;
-  @Mock private PgStoreTelemetry telemetryPublisher;
+  @Mock private PgStoreTelemetry telemetry;
 
   @Mock private JSEngineFactory engineFactory;
 
@@ -84,7 +84,7 @@ class PgSubscriptionFactoryTest {
             blacklist,
             transformerService,
             engineFactory,
-            telemetryPublisher);
+            telemetry);
   }
 
   @Nested
