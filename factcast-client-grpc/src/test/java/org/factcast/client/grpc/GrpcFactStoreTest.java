@@ -166,7 +166,7 @@ class GrpcFactStoreTest {
     UUID uuid = fact.id();
     conv = new ProtoConverter();
     @NonNull FactStoreProto.MSG_UUID id = conv.toProto(uuid);
-    when(blockingStub.fetchById(eq(id)))
+    when(blockingStub.fetchById(id))
         .thenReturn(
             MSG_OptionalFact.newBuilder().setFact(conv.toProto(fact)).setPresent(true).build());
 
@@ -413,7 +413,7 @@ class GrpcFactStoreTest {
   void testCurrentStateForPositive() {
     uut.fastStateToken(true);
     UUID id = new UUID(0, 1);
-    StateForRequest req = new StateForRequest(Collections.emptyList(), "foo");
+
     when(blockingStub.currentStateForSpecsJson(any())).thenReturn(conv.toProto(id));
     List<FactSpec> list = Collections.singletonList(FactSpec.ns("foo").aggId(id));
     uut.currentStateFor(list);
@@ -516,8 +516,7 @@ class GrpcFactStoreTest {
 
     @Test
     void testCredentialsRightFormat() {
-      assertThat(
-              new GrpcFactStore(mock(Channel.class), stubsFactory, Optional.ofNullable("xyz:abc")))
+      assertThat(new GrpcFactStore(channel, stubsFactory, Optional.ofNullable("xyz:abc")))
           .isNotNull();
     }
 
@@ -620,8 +619,6 @@ class GrpcFactStoreTest {
 
       GrpcFactStore store =
           new GrpcFactStore(channel, stubsFactory, Optional.ofNullable("xyz:abc"), props, "foo");
-      assertThat(store).isNotNull();
-
       store.initializeIfNecessary();
 
       // just check, if stubs were configured
@@ -659,7 +656,7 @@ class GrpcFactStoreTest {
   }
 
   @Test
-  public void testCurrentTime() {
+  void testCurrentTime() {
     long l = 123L;
     when(blockingStub.currentTime(conv.empty())).thenReturn(conv.toProtoTime(l));
     Long t = uut.currentTime();
@@ -907,11 +904,7 @@ class GrpcFactStoreTest {
     }
 
     @Test
-    void retriesRun() throws Exception {
-      when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
-      when(blockingStub.handshake(any()))
-          .thenReturn(
-              conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
+    void retriesRun() {
       resilienceConfig.setEnabled(true).setAttempts(100).setInterval(Duration.ofMillis(100));
       doThrow(new RetryableException(new IOException())).doNothing().when(runnable).run();
       uut.runAndHandle(runnable);
