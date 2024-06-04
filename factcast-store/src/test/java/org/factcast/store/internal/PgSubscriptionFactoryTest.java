@@ -31,6 +31,7 @@ import org.factcast.core.subscription.transformation.MissingTransformationInform
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.filter.blacklist.Blacklist;
+import org.factcast.store.internal.telemetry.FactStreamTelemetryPublisher;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.script.JSEngineFactory;
@@ -59,6 +60,7 @@ class PgSubscriptionFactoryTest {
   @Mock private FastForwardTarget target;
   @Mock private FactTransformerService transformerService;
   @Mock private PgMetrics metrics;
+  @Mock private FactStreamTelemetryPublisher telemetryPublisher;
 
   @Mock private JSEngineFactory engineFactory;
 
@@ -81,7 +83,8 @@ class PgSubscriptionFactoryTest {
             metrics,
             blacklist,
             transformerService,
-            engineFactory);
+            engineFactory,
+            telemetryPublisher);
   }
 
   @Nested

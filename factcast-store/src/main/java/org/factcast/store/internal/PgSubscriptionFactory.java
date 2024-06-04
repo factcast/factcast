@@ -31,6 +31,7 @@ import org.factcast.core.subscription.transformation.MissingTransformationInform
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.filter.blacklist.Blacklist;
+import org.factcast.store.internal.telemetry.FactStreamTelemetryPublisher;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.script.JSEngineFactory;
@@ -56,6 +57,7 @@ class PgSubscriptionFactory implements AutoCloseable {
   final Blacklist blacklist;
   final FactTransformerService transformerService;
   final JSEngineFactory ef;
+  final FactStreamTelemetryPublisher telemetryPublisher;
 
   private final ExecutorService es;
 
@@ -70,7 +72,8 @@ class PgSubscriptionFactory implements AutoCloseable {
       PgMetrics metrics,
       Blacklist blacklist,
       FactTransformerService transformerService,
-      JSEngineFactory ef) {
+      JSEngineFactory ef,
+      FactStreamTelemetryPublisher telemetryPublisher) {
     this.jdbcTemplate = jdbcTemplate;
     this.eventBus = eventBus;
     this.idToSerialMapper = idToSerialMapper;
@@ -81,6 +84,7 @@ class PgSubscriptionFactory implements AutoCloseable {
     this.blacklist = blacklist;
     this.transformerService = transformerService;
     this.ef = ef;
+    this.telemetryPublisher = telemetryPublisher;
     this.es =
         metrics.monitor(
             Executors.newFixedThreadPool(props.getSizeOfThreadPoolForSubscriptions()),
@@ -101,7 +105,8 @@ class PgSubscriptionFactory implements AutoCloseable {
             transformerService,
             blacklist,
             metrics,
-            ef);
+            ef,
+            telemetryPublisher);
 
     // when closing the subscription, also close the PgFactStream
     subscription.onClose(pgsub::close);

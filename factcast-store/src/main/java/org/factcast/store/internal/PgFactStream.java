@@ -38,6 +38,8 @@ import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.filter.FactFilter;
 import org.factcast.store.internal.filter.FactFilterImpl;
 import org.factcast.store.internal.filter.blacklist.Blacklist;
+import org.factcast.store.internal.telemetry.FactStreamTelemetryPublisher;
+import org.factcast.store.internal.telemetry.FactStreamTelemetrySignal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
@@ -68,6 +70,7 @@ public class PgFactStream {
   final Blacklist blacklist;
   final PgMetrics metrics;
   final JSEngineFactory ef;
+  final FactStreamTelemetryPublisher telemetryPublisher;
 
   CondensedQueryExecutor condensedExecutor;
 
@@ -84,6 +87,10 @@ public class PgFactStream {
 
   void connect(@NonNull SubscriptionRequestTO request) {
     log.debug("{} connect subscription {}", request, request.dump());
+
+    // signal connect
+    telemetryPublisher.post(new FactStreamTelemetrySignal.Connect(request));
+
     this.request = request;
     this.filter = new FactFilterImpl(request, blacklist, ef);
     SimpleFactInterceptor interceptor =
@@ -135,11 +142,19 @@ public class PgFactStream {
     // propagate catchup
     if (isConnected()) {
       log.trace("{} signaling catchup", request);
+
+      // signal catchup
+      telemetryPublisher.post(new FactStreamTelemetrySignal.Catchup(this.request));
+
       subscription.notifyCatchup();
     }
     if (isConnected()) {
       if (request.continuous()) {
         log.debug("{} entering follow mode", request);
+
+        // signal follow
+        telemetryPublisher.post(new FactStreamTelemetrySignal.Follow(this.request));
+
         long delayInMs;
         if (request.maxBatchDelayInMs() < 1) {
           // ok, instant query after NOTIFY
@@ -169,6 +184,10 @@ public class PgFactStream {
       } else {
         subscription.notifyComplete();
         log.debug("{} completed", request);
+
+        // signal complete
+        telemetryPublisher.post(new FactStreamTelemetrySignal.Complete(this.request));
+
       }
     }
   }
@@ -221,5 +240,9 @@ public class PgFactStream {
     }
     statementHolder.close();
     log.debug("{} disconnected ", request);
+
+    // signal close
+    telemetryPublisher.post(new FactStreamTelemetrySignal.Close(this.request));
+
   }
 }
