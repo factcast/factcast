@@ -15,7 +15,6 @@
  */
 package org.factcast.factus.spring.tx;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import lombok.NonNull;
