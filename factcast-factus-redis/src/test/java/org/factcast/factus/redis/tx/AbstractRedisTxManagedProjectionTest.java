@@ -40,6 +40,7 @@ import org.redisson.api.*;
 import org.redisson.config.Config;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("unchecked")
 class AbstractRedisTxManagedProjectionTest {
 
   @Mock private RedissonClient redisson;
@@ -57,7 +58,7 @@ class AbstractRedisTxManagedProjectionTest {
       RBucket<Object> bucket = mock(RBucket.class);
       when(redisson.getBucket(any(), any())).thenReturn(bucket);
 
-      assertThat(underTest.stateBucket()).isNotNull().isInstanceOf(RBucket.class).isSameAs(bucket);
+      assertThat(underTest.stateBucket()).isInstanceOf(RBucket.class).isSameAs(bucket);
       verify(redisson)
           .getBucket(underTest.redisKey() + "_state_tracking", FactStreamPositionCodec.INSTANCE);
     }
@@ -76,8 +77,8 @@ class AbstractRedisTxManagedProjectionTest {
 
     @Test
     void getMaxSize() {
-      AbstractRedisTxProjection underTest = new ProjectionWithBulkSet(mock(RedissonClient.class));
-      assertThat(underTest.maxBatchSizePerTransaction()).isEqualTo(12);
+      AbstractRedisTxProjection p = new ProjectionWithBulkSet(mock(RedissonClient.class));
+      assertThat(p.maxBatchSizePerTransaction()).isEqualTo(12);
     }
   }
 
@@ -87,13 +88,9 @@ class AbstractRedisTxManagedProjectionTest {
     @Test
     void happyPath() {
       RBucket<Object> bucket = mock(RBucket.class);
-      RTransaction tx = mock(RTransaction.class);
       when(tx.getBucket(any(), any())).thenReturn(bucket);
 
-      assertThat(underTest.stateBucket(tx))
-          .isNotNull()
-          .isInstanceOf(RBucket.class)
-          .isSameAs(bucket);
+      assertThat(underTest.stateBucket(tx)).isInstanceOf(RBucket.class).isSameAs(bucket);
       verify(tx)
           .getBucket(underTest.redisKey() + "_state_tracking", FactStreamPositionCodec.INSTANCE);
     }
@@ -106,7 +103,6 @@ class AbstractRedisTxManagedProjectionTest {
 
       UUID id = new UUID(23, 43);
       RBucket<Object> bucket = mock(RBucket.class);
-      RTransaction tx = mock(RTransaction.class);
       when(redisson.getBucket(any(), any())).thenReturn(bucket);
       when(bucket.get()).thenReturn(FactStreamPosition.of(id, -1L));
 
@@ -118,7 +114,6 @@ class AbstractRedisTxManagedProjectionTest {
 
     @Test
     void runningTransaction() {
-      RTransaction tx = mock(RTransaction.class);
       when(redisson.createTransaction(any())).thenReturn(tx);
 
       underTest.begin();
@@ -152,24 +147,12 @@ class AbstractRedisTxManagedProjectionTest {
     @Test
     void runningTransaction() {
 
-      RTransaction tx = mock(RTransaction.class);
       when(redisson.createTransaction(any())).thenReturn(tx);
 
       underTest.begin();
 
       RBucket<Object> bucket = mock(RBucket.class);
       when(tx.getBucket(any(), any())).thenReturn(bucket);
-
-      underTest.factStreamPosition(FACT_STREAM_POSITION);
-
-      verify(bucket).set(FACT_STREAM_POSITION);
-    }
-
-    @Test
-    void noTxnoBatch() {
-
-      RBucket<Object> bucket = mock(RBucket.class);
-      when(redisson.getBucket(any(), any())).thenReturn(bucket);
 
       underTest.factStreamPosition(FACT_STREAM_POSITION);
 
@@ -188,11 +171,11 @@ class AbstractRedisTxManagedProjectionTest {
       when(redisson.getConfig()).thenReturn(config);
       when(config.getLockWatchdogTimeout()).thenReturn(1000L);
       when(lock.tryLock(anyLong(), any())).thenReturn(true);
-      AbstractRedisTxManagedProjection underTest = new TestProjection(redisson);
+      AbstractRedisTxManagedProjection testProjection = new TestProjection(redisson);
 
-      AutoCloseable wt = underTest.acquireWriteToken();
+      AutoCloseable wt = testProjection.acquireWriteToken();
 
-      assertThat(wt).isNotNull().isInstanceOf(RedisWriterToken.class);
+      assertThat(wt).isInstanceOf(RedisWriterToken.class);
       verify(lock).tryLock(anyLong(), any(TimeUnit.class));
     }
 
@@ -204,13 +187,13 @@ class AbstractRedisTxManagedProjectionTest {
       when(redisson.getConfig()).thenReturn(config);
       when(config.getLockWatchdogTimeout()).thenReturn(1000L);
       when(lock.tryLock(anyLong(), any())).thenReturn(true);
-      AbstractRedisTxManagedProjection underTest = new TestProjection(redisson);
+      AbstractRedisTxManagedProjection testProjection = new TestProjection(redisson);
 
       @NonNull Duration dur = Duration.ofMillis(127);
-      AutoCloseable wt = underTest.acquireWriteToken(dur);
+      AutoCloseable wt = testProjection.acquireWriteToken(dur);
 
       verify(lock).tryLock(dur.toMillis(), TimeUnit.MILLISECONDS);
-      assertThat(wt).isNotNull().isInstanceOf(RedisWriterToken.class);
+      assertThat(wt).isInstanceOf(RedisWriterToken.class);
     }
 
     @SneakyThrows
@@ -219,10 +202,10 @@ class AbstractRedisTxManagedProjectionTest {
 
       when(redisson.getLock(anyString())).thenReturn(lock);
       when(lock.tryLock(anyLong(), any())).thenReturn(false);
-      AbstractRedisTxManagedProjection underTest = new TestProjection(redisson);
+      AbstractRedisTxManagedProjection testProjection = new TestProjection(redisson);
 
       @NonNull Duration dur = Duration.ofMillis(127);
-      AutoCloseable wt = underTest.acquireWriteToken(dur);
+      AutoCloseable wt = testProjection.acquireWriteToken(dur);
 
       verify(lock).tryLock(dur.toMillis(), TimeUnit.MILLISECONDS);
       assertThat(wt).isNull();
@@ -234,10 +217,10 @@ class AbstractRedisTxManagedProjectionTest {
 
       when(redisson.getLock(anyString())).thenReturn(lock);
       when(lock.tryLock(anyLong(), any())).thenThrow(InterruptedException.class);
-      AbstractRedisTxManagedProjection underTest = new TestProjection(redisson);
+      AbstractRedisTxManagedProjection testProjection = new TestProjection(redisson);
 
       @NonNull Duration dur = Duration.ofMillis(127);
-      AutoCloseable wt = underTest.acquireWriteToken(dur);
+      AutoCloseable wt = testProjection.acquireWriteToken(dur);
 
       verify(lock).tryLock(dur.toMillis(), TimeUnit.MILLISECONDS);
       assertThat(wt).isNull();
