@@ -18,44 +18,38 @@ package org.factcast.example.server.telemetry;
 import com.google.common.eventbus.Subscribe;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.store.internal.telemetry.FactStreamTelemetryPublisher;
-import org.factcast.store.internal.telemetry.FactStreamTelemetrySignal;
+import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 
 @RequiredArgsConstructor
 @Slf4j
 public class CatchupTelemetryListener {
 
-  public CatchupTelemetryListener(FactStreamTelemetryPublisher publisher) {
+  public CatchupTelemetryListener(PgStoreTelemetry publisher) {
     publisher.register(this);
   }
 
   @Subscribe
-  public void on(FactStreamTelemetrySignal.Connect signal) {
+  public void on(PgStoreTelemetry.Connect signal) {
     log.info("### FactStreamTelemetry Connect: {}", signal.request());
   }
 
   @Subscribe
-  public void on(FactStreamTelemetrySignal.Catchup signal) {
+  public void on(PgStoreTelemetry.Catchup signal) {
     log.info("### FactStreamTelemetry Catchup: {}", signal.request());
   }
 
   @Subscribe
-  public void on(FactStreamTelemetrySignal.FastForward signal) {
-    log.info("### FactStreamTelemetry FastForward: {}", signal.request());
-  }
-
-  @Subscribe
-  public void on(FactStreamTelemetrySignal.Follow signal) {
+  public void on(PgStoreTelemetry.Follow signal) {
     log.info("### FactStreamTelemetry Follow: {}", signal.request());
   }
 
   @Subscribe
-  public void on(FactStreamTelemetrySignal.Complete signal) {
+  public void on(PgStoreTelemetry.Complete signal) {
     log.info("### FactStreamTelemetry Complete: {}", signal.request());
   }
 
   @Subscribe
-  public void on(FactStreamTelemetrySignal.Close signal) {
+  public void on(PgStoreTelemetry.Close signal) {
     log.info("### FactStreamTelemetry Close: {}", signal.request());
   }
 }

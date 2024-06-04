@@ -16,7 +16,7 @@
 package org.factcast.example.server;
 
 import org.factcast.example.server.telemetry.CatchupTelemetryListener;
-import org.factcast.store.internal.telemetry.FactStreamTelemetryPublisher;
+import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -24,7 +24,7 @@ import org.springframework.context.annotation.Configuration;
 public class ExampleServerTelemetryConfig {
 
   @Bean
-  public CatchupTelemetryListener catchupTelemetryListener(FactStreamTelemetryPublisher publisher) {
+  public CatchupTelemetryListener catchupTelemetryListener(PgStoreTelemetry publisher) {
     return new CatchupTelemetryListener(publisher);
   }
 }

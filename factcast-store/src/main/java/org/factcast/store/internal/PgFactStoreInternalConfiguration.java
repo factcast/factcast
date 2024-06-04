@@ -53,7 +53,7 @@ import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.snapcache.SnapshotCache;
 import org.factcast.store.internal.snapcache.SnapshotCacheConfiguration;
 import org.factcast.store.internal.tail.PGTailIndexingConfiguration;
-import org.factcast.store.internal.telemetry.FactStreamTelemetryPublisher;
+import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.factcast.store.registry.PgSchemaStoreChangeListener;
 import org.factcast.store.registry.SchemaRegistry;
 import org.factcast.store.registry.SchemaRegistryConfiguration;
@@ -122,8 +122,8 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
-  public FactStreamTelemetryPublisher telemetryPublisher() {
-    return new FactStreamTelemetryPublisher();
+  public PgStoreTelemetry telemetryPublisher() {
+    return new PgStoreTelemetry();
   }
 
   @Bean
@@ -166,7 +166,7 @@ public class PgFactStoreInternalConfiguration {
       Blacklist blacklist,
       JSEngineFactory ef,
       FactTransformerService transformerService,
-      FactStreamTelemetryPublisher telemetryPublisher) {
+      PgStoreTelemetry telemetryPublisher) {
     return new PgSubscriptionFactory(
         jdbcTemplate,
         eventBus,
