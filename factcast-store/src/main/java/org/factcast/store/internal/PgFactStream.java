@@ -38,13 +38,13 @@ import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.filter.FactFilter;
 import org.factcast.store.internal.filter.FactFilterImpl;
 import org.factcast.store.internal.filter.blacklist.Blacklist;
-import org.factcast.store.internal.telemetry.FactStreamTelemetryPublisher;
-import org.factcast.store.internal.telemetry.FactStreamTelemetrySignal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.script.JSEngineFactory;
+import org.factcast.store.internal.telemetry.FactStreamTelemetryPublisher;
+import org.factcast.store.internal.telemetry.FactStreamTelemetrySignal;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
@@ -187,7 +187,6 @@ public class PgFactStream {
 
         // signal complete
         telemetryPublisher.post(new FactStreamTelemetrySignal.Complete(this.request));
-
       }
     }
   }
@@ -243,6 +242,5 @@ public class PgFactStream {
 
     // signal close
     telemetryPublisher.post(new FactStreamTelemetrySignal.Close(this.request));
-
   }
 }

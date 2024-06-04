@@ -31,10 +31,10 @@ import org.factcast.core.subscription.transformation.MissingTransformationInform
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.filter.blacklist.Blacklist;
-import org.factcast.store.internal.telemetry.FactStreamTelemetryPublisher;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.script.JSEngineFactory;
+import org.factcast.store.internal.telemetry.FactStreamTelemetryPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
