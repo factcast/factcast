@@ -24,10 +24,7 @@ import org.factcast.grpc.api.CompressionCodecs;
 import org.factcast.server.grpc.metrics.ServerMetrics;
 import org.factcast.server.grpc.metrics.ServerMetricsImpl;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-import org.springframework.context.annotation.ScopedProxyMode;
+import org.springframework.context.annotation.*;
 
 @Configuration
 @EnableConfigurationProperties(GrpcLimitProperties.class)
