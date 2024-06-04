@@ -32,7 +32,7 @@ public class CodecTestHelper {
     return os.toByteArray();
   }
 
-  byte[] toByteArray(Codec uut, byte[] uncompressed) throws IOException {
+  byte[] toByteArray(Codec codec, byte[] uncompressed) throws IOException {
     ByteArrayOutputStream target = new ByteArrayOutputStream();
     OutputStream compressedStream = codec.compress(target);
     IOUtils.copy(new ByteArrayInputStream(uncompressed), compressedStream);
