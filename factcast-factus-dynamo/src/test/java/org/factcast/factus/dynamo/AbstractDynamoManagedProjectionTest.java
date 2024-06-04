@@ -163,16 +163,17 @@ class AbstractDynamoManagedProjectionTest {
       LockItem lock = mock(LockItem.class);
       when(lockClient.tryAcquireLock(any())).thenReturn(Optional.of(lock));
 
-      final WriterToken res = uut.acquireWriteToken(maxWaitDuration);
+      try (WriterToken ignored = uut.acquireWriteToken(maxWaitDuration); ) {
 
-      verify(lockClient).tryAcquireLock(captor.capture());
-      assertThat(captor.getValue())
-          .isEqualTo(
-              AcquireLockOptions.builder(SCOPED_NAME + "_lock")
-                  // maxWait is applied on top of leaseDuration period.
-                  .withAdditionalTimeToWaitForLock(23L)
-                  .withTimeUnit(TimeUnit.SECONDS)
-                  .build());
+        verify(lockClient).tryAcquireLock(captor.capture());
+        assertThat(captor.getValue())
+            .isEqualTo(
+                AcquireLockOptions.builder(SCOPED_NAME + "_lock")
+                    // maxWait is applied on top of leaseDuration period.
+                    .withAdditionalTimeToWaitForLock(23L)
+                    .withTimeUnit(TimeUnit.SECONDS)
+                    .build());
+      }
     }
 
     @Test
