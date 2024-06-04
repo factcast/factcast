@@ -108,7 +108,9 @@
         </plugin>
         <plugin>
           <artifactId>maven-plugin-plugin</artifactId>
-          <version>3.13.1</version>
+          <!-- Higher versions currently cause the snapshot deployment to fail. -->
+          <!-- See: https://github.com/factcast/factcast/issues/2941 -->
+          <version>3.12.0</version>
         </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
