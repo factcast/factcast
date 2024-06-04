@@ -50,11 +50,11 @@ services. Apart from your Db specific implementation you'll need to implement th
 - Override the Getter and Setter for the FactStreamPosition, which represents the information up to which event your projection has consumed the event stream.
   While the actual implementation will depend on your choice of datastore, one central table per service should be sufficient.
 - Override the `acquireWriteToken` method to provide a locking mechanism for your projection. This is necessary to ensure that only one instance of your projection is processing
-  the event stream and therefore writing to the database at a time.
+  the event stream and therefore only one instance is writing to the database at a time.
 
 ### Projections with Transactional Safety
 
-There are two types of transaction aware projections. No matter which one you choose the implementation will mostly the
+There are two types of transaction aware projections. No matter which one you choose the implementation will mostly be the
 same.
 
 #### Transaction Aware Projection
