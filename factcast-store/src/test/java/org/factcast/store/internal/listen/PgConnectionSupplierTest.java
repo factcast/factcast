@@ -210,7 +210,7 @@ public class PgConnectionSupplierTest {
     verify(connection).unwrap(PgConnection.class);
     verify(driver).connect(eq("hugo"), propertiesCaptor.capture());
     final var actualProperties = propertiesCaptor.getValue();
-    assertThat(actualProperties.getProperty("ApplicationName")).isEqualTo("factcast/client-id");
+    assertThat(actualProperties.getProperty("ApplicationName")).isEqualTo("factcast|client-id");
   }
 
   @Test
@@ -244,6 +244,6 @@ public class PgConnectionSupplierTest {
     verify(connection).unwrap(PgConnection.class);
     verify(driver).connect(eq("hugo"), propertiesCaptor.capture());
     final var actualProperties = propertiesCaptor.getValue();
-    assertThat(actualProperties.getProperty("ApplicationName")).isEqualTo("foo/client-id");
+    assertThat(actualProperties.getProperty("ApplicationName")).isEqualTo("foo|client-id");
   }
 }
