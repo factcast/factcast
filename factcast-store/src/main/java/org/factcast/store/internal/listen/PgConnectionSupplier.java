@@ -73,10 +73,9 @@ public class PgConnectionSupplier {
   }
 
   private void setClientIdProperty(Properties properties, String clientId) {
-    log.debug("Setting clientId on connection for {}", clientId);
     final var applicationName =
         Optional.ofNullable(properties.getProperty(APPLICATION_NAME)).orElse("factcast");
-    setProperty(properties, APPLICATION_NAME, applicationName + "/" + clientId);
+    setProperty(properties, APPLICATION_NAME, applicationName + "|" + clientId);
   }
 
   @VisibleForTesting
