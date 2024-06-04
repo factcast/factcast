@@ -33,17 +33,17 @@ public @interface SpringTransactional {
 
   int isolationLevel() default TransactionDefinition.ISOLATION_DEFAULT;
 
-  int timeoutInSeconds() default Defaults.timeoutInSeconds;
+  int timeoutInSeconds() default Defaults.TIMEOUT_IN_SECONDS;
 
   boolean readOnly() default false;
 
   class Defaults {
-    static final int timeoutInSeconds = 30;
+    static final int TIMEOUT_IN_SECONDS = 30;
 
     public static DefaultTransactionDefinition create() {
       DefaultTransactionDefinition opts = new DefaultTransactionDefinition();
 
-      opts.setTimeout(timeoutInSeconds);
+      opts.setTimeout(TIMEOUT_IN_SECONDS);
 
       return opts;
     }

@@ -70,6 +70,14 @@ class TransactionBehaviorTest {
       assertThatThrownBy(underTest::begin).isInstanceOf(Exception.class);
       Assertions.assertThat(underTest.inTransaction()).isFalse();
     }
+
+    @Test
+    void remembersTransaction() {
+      when(adapter.beginNewTransaction()).thenReturn(runningTransaction);
+      underTest.begin();
+      verify(adapter).beginNewTransaction();
+      assertThat(underTest.runningTransaction()).isSameAs(runningTransaction);
+    }
   }
 
   @Nested
@@ -97,6 +105,30 @@ class TransactionBehaviorTest {
       Assertions.assertThat(underTest.runningTransaction()).isNull();
       verify(adapter).commit(runningTransaction);
     }
+
+    @Test
+    void commitEnds() {
+      when(adapter.beginNewTransaction()).thenReturn(runningTransaction);
+      Assertions.assertThat(underTest.inTransaction()).isFalse();
+      underTest.begin();
+      Assertions.assertThat(underTest.inTransaction()).isTrue();
+      underTest.commit();
+      verify(adapter).commit(any());
+      Assertions.assertThat(underTest.inTransaction()).isFalse();
+    }
+
+    @Test
+    void failingCommitEnds() {
+      when(adapter.beginNewTransaction()).thenReturn(runningTransaction);
+
+      doThrow(RuntimeException.class).when(adapter).commit(any());
+
+      Assertions.assertThat(underTest.inTransaction()).isFalse();
+      underTest.begin();
+      Assertions.assertThat(underTest.inTransaction()).isTrue();
+      assertThatThrownBy(underTest::commit).isInstanceOf(Exception.class);
+      Assertions.assertThat(underTest.inTransaction()).isFalse();
+    }
   }
 
   @Nested
@@ -114,7 +146,7 @@ class TransactionBehaviorTest {
     }
 
     @Test
-    void commitsTransaction() {
+    void rollsBackTransaction() {
       when(adapter.beginNewTransaction()).thenReturn(runningTransaction);
 
       Assertions.assertThat(underTest.runningTransaction()).isNull();
@@ -123,6 +155,29 @@ class TransactionBehaviorTest {
       underTest.rollback();
       Assertions.assertThat(underTest.runningTransaction()).isNull();
       verify(adapter).rollback(runningTransaction);
+    }
+
+    @Test
+    void rollbackEnds() {
+      when(adapter.beginNewTransaction()).thenReturn(runningTransaction);
+      Assertions.assertThat(underTest.inTransaction()).isFalse();
+      underTest.begin();
+      Assertions.assertThat(underTest.inTransaction()).isTrue();
+      underTest.rollback();
+      Assertions.assertThat(underTest.inTransaction()).isFalse();
+      verify(adapter).rollback(any());
+    }
+
+    @Test
+    void failinRollbackEnds() {
+      when(adapter.beginNewTransaction()).thenReturn(runningTransaction);
+      doThrow(RuntimeException.class).when(adapter).rollback(any());
+
+      Assertions.assertThat(underTest.inTransaction()).isFalse();
+      underTest.begin();
+      Assertions.assertThat(underTest.inTransaction()).isTrue();
+      assertThatThrownBy(underTest::rollback).isInstanceOf(Exception.class);
+      Assertions.assertThat(underTest.inTransaction()).isFalse();
     }
   }
 
@@ -200,13 +255,5 @@ class TransactionBehaviorTest {
       when(adapter.maxBatchSizePerTransaction()).thenReturn(n);
       Assertions.assertThat(underTest.maxBatchSizePerTransaction()).isEqualTo(n);
     }
-  }
-
-  @Test
-  void remembersTransaction() {
-    when(adapter.beginNewTransaction()).thenReturn(runningTransaction);
-    underTest.begin();
-    verify(adapter).beginNewTransaction();
-    assertThat(underTest.runningTransaction()).isSameAs(runningTransaction);
   }
 }
