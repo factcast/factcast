@@ -52,7 +52,8 @@ public class PgTmpPagedCatchup implements PgCatchup {
   @Override
   public void run() {
 
-    SingleConnectionDataSource ds = new SingleConnectionDataSource(connectionSupplier.get(), true);
+    SingleConnectionDataSource ds =
+        new SingleConnectionDataSource(connectionSupplier.get(request.debugInfo()), true);
     try {
       var jdbc = new JdbcTemplate(ds);
       fetch(jdbc);
