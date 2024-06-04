@@ -16,10 +16,10 @@ before delving into this guide.
 
 ## Introduction
 
-When projections consume a lot of events or are complex to calculate it usually makes sense to persist their state in an
-external data store instead of using local projections. This way the state is not lost when the service is restarted and the load
-on the server is reduced. FactCast currently supports Redis, Spring Tx and AWS DynamoDb out of the box. But if you want to use a
-different database you can implement your own projection implementation.
+When projections consume a lot of events or are complex to calculate it usually makes sense to persist their state in
+an external data store instead of using local projections. This way the state is not lost when the service is restarted
+and the load on the server is reduced. FactCast currently supports Redis, Spring Tx and AWS DynamoDb out of the box.
+But if you want to use a different database you can implement your own projection implementation.
 
 ---
 
@@ -33,10 +33,13 @@ and options you need to keep in mind in this situation.
 
 When designing a projection implementation you'll need to consider the following aspects:
 
-1. Should the projection provide transactional safety across multiple operations?
-   1. If yes, do you need to read the latest state while adding changes to a transaction?
-2. How to implement locking?
-3. Where to store the projection state aka the FactStreamPosition?
+1. You'll need to provide some kind of locking mechanism for writing into your datastore. So that only one instance at
+   a time can update the projection.
+2. Define a place to store your projection's state (the last processed event). For example this can be a table in your
+   datastore that holds one entry for every projection within your service.
+3. Does your datastore provide transactionality? If yes, you can leverage this to batch changes together when updating
+   your projection in order to increase performance and to provide atomicity to your changes. Otherwise, go with a
+   basic projection, but keep in mind that this approach has its limitations with write intensive data models.
 
 ### General Structure
 
@@ -56,8 +59,8 @@ services. Apart from your Db specific implementation you'll need to implement th
 
 ### Projections with Transactional Safety
 
-There are two types of transaction aware projections. No matter which one you choose the implementation will mostly be the
-same.
+There are two types of transaction aware projections. No matter which one you choose the implementation will mostly be
+the same.
 
 #### Transaction Aware Projection
 
@@ -74,7 +77,7 @@ items that might affect the same entity within a transaction that can be collect
 #### Open Transaction Aware Projection
 
 Projections that are "Open" share all the characteristic of the Transaction Aware Projection, but they also provide the
-event handler access to the transaction that is currently in progress, so that it can read the latest state of your data
-before updating it.
+event handler access to the transaction that is currently in progress, so that it can read the latest state of your
+data before updating it.
 
 - Implement the `AbstractOpenTransactionAwareProjection` interface.
