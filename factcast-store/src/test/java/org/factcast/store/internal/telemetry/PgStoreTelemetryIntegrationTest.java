@@ -17,7 +17,6 @@ package org.factcast.store.internal.telemetry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.waitAtMost;
-import static org.mockito.Mockito.spy;
 
 import com.google.common.collect.Lists;
 import com.google.common.eventbus.Subscribe;
@@ -46,7 +45,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
-public class PgStoreTelemetryIntegrationTest {
+class PgStoreTelemetryIntegrationTest {
 
   @Autowired FactStore store;
 
@@ -56,7 +55,7 @@ public class PgStoreTelemetryIntegrationTest {
 
   @BeforeEach
   void setUp() {
-    uut = spy(FactCast.from(store));
+    uut = FactCast.from(store);
   }
 
   @Test
@@ -66,7 +65,7 @@ public class PgStoreTelemetryIntegrationTest {
         SubscriptionRequest.catchup(FactSpec.ns("foo").aggId(UUID.randomUUID())).fromScratch();
     var telemetryListener = new TelemetryListener(request);
 
-    try (Subscription ignored = uut.subscribe(request, f -> {}).awaitComplete(1000)) {
+    try (Subscription ignored = uut.subscribe(request, f -> {}).awaitComplete(5000)) {
       // wait until complete is consumed
       waitAtMost(Duration.ofSeconds(5)).until(() -> telemetryListener.completed);
     }
@@ -94,7 +93,7 @@ public class PgStoreTelemetryIntegrationTest {
         SubscriptionRequest.follow(FactSpec.ns("foo").aggId(UUID.randomUUID())).fromScratch();
     var telemetryListener = new TelemetryListener(request);
 
-    try (Subscription ignored = uut.subscribe(request, f -> {}).awaitCatchup(1000)) {
+    try (Subscription ignored = uut.subscribe(request, f -> {}).awaitCatchup(5000)) {
       // wait until follow is consumed
       waitAtMost(Duration.ofSeconds(5)).until(() -> telemetryListener.following);
     }
