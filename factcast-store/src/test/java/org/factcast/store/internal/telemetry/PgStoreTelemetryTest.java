@@ -41,7 +41,15 @@ class PgStoreTelemetryTest {
     var uut = new PgStoreTelemetry(eventBus);
 
     uut.onConnect(req);
+    uut.onCatchup(req);
+    uut.onComplete(req);
+    uut.onFollow(req);
+    uut.onClose(req);
 
     verify(eventBus).post(new PgStoreTelemetry.Connect(req));
+    verify(eventBus).post(new PgStoreTelemetry.Catchup(req));
+    verify(eventBus).post(new PgStoreTelemetry.Complete(req));
+    verify(eventBus).post(new PgStoreTelemetry.Follow(req));
+    verify(eventBus).post(new PgStoreTelemetry.Close(req));
   }
 }

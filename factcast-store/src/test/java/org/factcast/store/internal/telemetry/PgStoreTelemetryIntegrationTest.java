@@ -23,10 +23,13 @@ import com.google.common.collect.Lists;
 import com.google.common.eventbus.Subscribe;
 import java.time.Duration;
 import java.util.List;
+import java.util.UUID;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
+import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.test.IntegrationTest;
@@ -59,11 +62,16 @@ public class PgStoreTelemetryIntegrationTest {
   @Test
   @SneakyThrows
   void publishesTelemetryOnCatchup() {
-    var telemetryListener = new TelemetryListener();
-    var request = SubscriptionRequest.catchup(FactSpec.ns("whatever")).fromScratch();
+    var request =
+        SubscriptionRequest.catchup(FactSpec.ns("foo").aggId(UUID.randomUUID())).fromScratch();
+    var telemetryListener = new TelemetryListener(request);
 
-    uut.subscribe(request, f -> {}).awaitComplete(1000).close();
+    try (Subscription ignored = uut.subscribe(request, f -> {}).awaitComplete(1000)) {
+      // wait until complete is consumed
+      waitAtMost(Duration.ofSeconds(5)).until(() -> telemetryListener.completed);
+    }
 
+    // wait once more to ensure that all signals are consumed
     waitAtMost(Duration.ofSeconds(5))
         .untilAsserted(
             () -> {
@@ -82,11 +90,16 @@ public class PgStoreTelemetryIntegrationTest {
   @Test
   @SneakyThrows
   void publishesTelemetryOnFollow() {
-    var telemetryListener = new TelemetryListener();
-    var request = SubscriptionRequest.follow(FactSpec.ns("whatever")).fromScratch();
+    var request =
+        SubscriptionRequest.follow(FactSpec.ns("foo").aggId(UUID.randomUUID())).fromScratch();
+    var telemetryListener = new TelemetryListener(request);
 
-    uut.subscribe(request, f -> {}).awaitCatchup(1000).close();
+    try (Subscription ignored = uut.subscribe(request, f -> {}).awaitCatchup(1000)) {
+      // wait until follow is consumed
+      waitAtMost(Duration.ofSeconds(5)).until(() -> telemetryListener.following);
+    }
 
+    // wait once more to ensure that all signals are consumed
     waitAtMost(Duration.ofSeconds(5))
         .untilAsserted(
             () -> {
@@ -104,34 +117,50 @@ public class PgStoreTelemetryIntegrationTest {
 
   class TelemetryListener {
     final List<Object> consumedSignals = Lists.newArrayList();
+    final SubscriptionRequest origRequest;
+    Boolean following = false;
+    Boolean completed = false;
 
-    TelemetryListener() {
+    TelemetryListener(@NonNull SubscriptionRequest origRequest) {
+      this.origRequest = origRequest;
       telemetry.register(this);
     }
 
     @Subscribe
     void on(PgStoreTelemetry.Connect signal) {
-      consumedSignals.add(signal);
+      if (origRequest.specs().equals(signal.request().specs())) {
+        consumedSignals.add(signal);
+      }
     }
 
     @Subscribe
     void on(PgStoreTelemetry.Catchup signal) {
-      consumedSignals.add(signal);
+      if (origRequest.specs().equals(signal.request().specs())) {
+        consumedSignals.add(signal);
+      }
     }
 
     @Subscribe
     void on(PgStoreTelemetry.Follow signal) {
-      consumedSignals.add(signal);
+      if (origRequest.specs().equals(signal.request().specs())) {
+        consumedSignals.add(signal);
+        following = true;
+      }
     }
 
     @Subscribe
     void on(PgStoreTelemetry.Complete signal) {
-      consumedSignals.add(signal);
+      if (origRequest.specs().equals(signal.request().specs())) {
+        consumedSignals.add(signal);
+        completed = true;
+      }
     }
 
     @Subscribe
     void on(PgStoreTelemetry.Close signal) {
-      consumedSignals.add(signal);
+      if (origRequest.specs().equals(signal.request().specs())) {
+        consumedSignals.add(signal);
+      }
     }
   }
 }
