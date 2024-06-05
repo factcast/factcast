@@ -34,6 +34,10 @@ public class JsonPayload {
     return pathReturningDocumentContext().read(path);
   }
 
+  public List<String> findAnyPaths() {
+    return findPaths("$..*");
+  }
+
   public JsonNode get(@NonNull String path) {
     return documentContext().read(path);
   }
@@ -44,14 +48,17 @@ public class JsonPayload {
 
   public void set(@NonNull String path, Object value) {
     documentContext().set(path, value);
+    resetPathReturningContent();
   }
 
   public void add(@NonNull String path, Object value) {
     documentContext().add(path, value);
+    resetPathReturningContent();
   }
 
   public void remove(@NonNull String path) {
     documentContext().delete(path);
+    resetPathReturningContent();
   }
 
   private synchronized DocumentContext documentContext() {
@@ -63,9 +70,19 @@ public class JsonPayload {
 
   private synchronized DocumentContext pathReturningDocumentContext() {
     if (pathReturningDocumentContext == null) {
-      pathReturningDocumentContext = pathReturningContext.parse(json);
+      pathReturningDocumentContext =
+          pathReturningContext.parse(documentContext().json().toString());
     }
     return pathReturningDocumentContext;
+  }
+
+  /**
+   * Resets the path returning content to force a parse of the json content. This is necessary
+   * because the underlying json might change its structure (remove keys, new keys) and plugins
+   * further down the road might access non exisiting paths.
+   */
+  private void resetPathReturningContent() {
+    pathReturningDocumentContext = null;
   }
 
   public JsonNode getPayload() {
