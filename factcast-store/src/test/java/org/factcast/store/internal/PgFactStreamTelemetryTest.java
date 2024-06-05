@@ -36,7 +36,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-public class PgFactStreamTelemetryTest {
+class PgFactStreamTelemetryTest {
   @Mock JdbcTemplate jdbcTemplate;
   @Mock EventBus eventBus;
   @Mock PgFactIdToSerialMapper idToSerMapper;
