@@ -17,11 +17,10 @@ package org.factcast.example.server.telemetry;
 
 import com.google.common.collect.Lists;
 import com.google.common.eventbus.Subscribe;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
-
-import java.util.List;
 
 @RequiredArgsConstructor
 @Slf4j
