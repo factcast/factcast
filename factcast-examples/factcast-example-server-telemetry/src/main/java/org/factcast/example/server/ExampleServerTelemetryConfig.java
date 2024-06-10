@@ -31,8 +31,7 @@ public class ExampleServerTelemetryConfig {
   }
 
   @Bean
-  public SecurityFilterChain filterChain(
-      HttpSecurity http) throws Exception {
+  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     return http.authorizeHttpRequests(x -> x.anyRequest().permitAll()).build();
   }
 }
