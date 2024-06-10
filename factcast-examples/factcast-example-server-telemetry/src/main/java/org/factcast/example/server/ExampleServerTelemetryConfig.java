@@ -15,16 +15,24 @@
  */
 package org.factcast.example.server;
 
-import org.factcast.example.server.telemetry.CatchupTelemetryListener;
+import org.factcast.example.server.telemetry.MyTelemetryListener;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 public class ExampleServerTelemetryConfig {
 
   @Bean
-  public CatchupTelemetryListener catchupTelemetryListener(PgStoreTelemetry telemetry) {
-    return new CatchupTelemetryListener(telemetry);
+  public MyTelemetryListener catchupTelemetryListener(PgStoreTelemetry telemetry) {
+    return new MyTelemetryListener(telemetry);
+  }
+
+  @Bean
+  public SecurityFilterChain filterChain(
+      HttpSecurity http) throws Exception {
+    return http.authorizeHttpRequests(x -> x.anyRequest().permitAll()).build();
   }
 }
