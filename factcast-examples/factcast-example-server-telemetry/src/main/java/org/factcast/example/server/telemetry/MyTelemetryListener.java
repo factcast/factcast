@@ -15,16 +15,21 @@
  */
 package org.factcast.example.server.telemetry;
 
+import com.google.common.collect.Lists;
 import com.google.common.eventbus.Subscribe;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 
+import java.util.List;
+
 @RequiredArgsConstructor
 @Slf4j
-public class CatchupTelemetryListener {
+public class MyTelemetryListener {
 
-  public CatchupTelemetryListener(PgStoreTelemetry telemetry) {
+  final List<String> followingSubscriptionsInfo = Lists.newArrayList();
+
+  public MyTelemetryListener(PgStoreTelemetry telemetry) {
     telemetry.register(this);
   }
 
@@ -41,6 +46,7 @@ public class CatchupTelemetryListener {
   @Subscribe
   public void on(PgStoreTelemetry.Follow signal) {
     log.info("### FactStreamTelemetry Follow: {}", signal.request());
+    followingSubscriptionsInfo.add(signal.request().debugInfo());
   }
 
   @Subscribe
@@ -51,5 +57,10 @@ public class CatchupTelemetryListener {
   @Subscribe
   public void on(PgStoreTelemetry.Close signal) {
     log.info("### FactStreamTelemetry Close: {}", signal.request());
+    followingSubscriptionsInfo.remove(signal.request().debugInfo());
+  }
+
+  public List<String> getFollowingSubscriptionsInfo() {
+    return followingSubscriptionsInfo;
   }
 }
