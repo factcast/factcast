@@ -20,13 +20,14 @@ import com.google.common.eventbus.Subscribe;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.time.StopWatch;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 
 @RequiredArgsConstructor
 @Slf4j
 public class MyTelemetryListener {
 
-  final List<String> followingSubscriptionsInfo = Lists.newArrayList();
+  final List<StopWatch> followingSubscriptionsInfo = Lists.newArrayList();
 
   public MyTelemetryListener(PgStoreTelemetry telemetry) {
     telemetry.register(this);
@@ -34,32 +35,34 @@ public class MyTelemetryListener {
 
   @Subscribe
   public void on(PgStoreTelemetry.Connect signal) {
-    log.info("### FactStreamTelemetry Connect: {}", signal.request());
+    log.info("FactStreamTelemetry Connect: {}", signal.request());
   }
 
   @Subscribe
   public void on(PgStoreTelemetry.Catchup signal) {
-    log.info("### FactStreamTelemetry Catchup: {}", signal.request());
+    log.info("FactStreamTelemetry Catchup: {}", signal.request());
   }
 
   @Subscribe
   public void on(PgStoreTelemetry.Follow signal) {
-    log.info("### FactStreamTelemetry Follow: {}", signal.request());
-    followingSubscriptionsInfo.add(signal.request().debugInfo());
+    log.info("FactStreamTelemetry Follow: {}", signal.request());
+    StopWatch stopWatch = new StopWatch(signal.request().debugInfo());
+    stopWatch.start();
+    followingSubscriptionsInfo.add(stopWatch);
   }
 
   @Subscribe
   public void on(PgStoreTelemetry.Complete signal) {
-    log.info("### FactStreamTelemetry Complete: {}", signal.request());
+    log.info("FactStreamTelemetry Complete: {}", signal.request());
   }
 
   @Subscribe
   public void on(PgStoreTelemetry.Close signal) {
-    log.info("### FactStreamTelemetry Close: {}", signal.request());
-    followingSubscriptionsInfo.remove(signal.request().debugInfo());
+    log.info("FactStreamTelemetry Close: {}", signal.request());
+    followingSubscriptionsInfo.removeIf(i -> i.getMessage().equals(signal.request().debugInfo()));
   }
 
-  public List<String> getFollowingSubscriptionsInfo() {
+  public List<StopWatch> getFollowingSubscriptionsInfo() {
     return followingSubscriptionsInfo;
   }
 }

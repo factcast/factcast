@@ -15,6 +15,7 @@
  */
 package org.factcast.example.server;
 
+import java.util.concurrent.TimeUnit;
 import org.factcast.example.server.telemetry.MyTelemetryListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.info.Info;
@@ -27,6 +28,10 @@ public class ActuatorContributor implements InfoContributor {
   @Autowired MyTelemetryListener listener;
 
   public void contribute(Info.Builder builder) {
-    builder.withDetail("followingSubscriptionsInfo", listener.getFollowingSubscriptionsInfo());
+    builder.withDetail(
+        "followingSubscriptionsInfo",
+        listener.getFollowingSubscriptionsInfo().stream()
+            .map(i -> i.getMessage() + " following for " + i.getTime(TimeUnit.SECONDS) + "s")
+            .toList());
   }
 }
