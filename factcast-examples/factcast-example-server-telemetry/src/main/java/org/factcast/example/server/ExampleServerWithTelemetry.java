@@ -31,14 +31,14 @@ import org.testcontainers.containers.PostgreSQLContainer;
 @SuppressWarnings("ALL")
 @SpringBootApplication
 @Slf4j
-public class ExampleServerWithTelemtry {
+public class ExampleServerWithTelemetry {
 
   public static void main(String[] args) {
     // you will want to replace this with RDS, a local pgsql database or
     // whatever your usecase is.
     startPostgresContainer();
 
-    SpringApplication.run(ExampleServerWithTelemtry.class, args);
+    SpringApplication.run(ExampleServerWithTelemetry.class, args);
   }
 
   private static void startPostgresContainer() {
