@@ -17,7 +17,7 @@ before delving into this guide.
 ## Introduction
 
 When projections consume a lot of events or are complex to calculate it usually makes sense to persist their state into
-an external data store instead of using local projections. This way the state is not lost when the service is restarted, can be shared between service instances, 
+an external data store instead of using local projections. This way the state is not lost when the service is restarted, can be shared between service instances,
 and the load on the server is reduced. Factus currently supports Redis, all Datastores that support Spring Transactions and AWS DynamoDb out of the box.
 If you want to use a different data store you can implement your own support for projecting into the desired data store.
 
@@ -36,7 +36,7 @@ When designing a projection implementation you'll need to consider the following
 1. You'll need to provide some kind of locking mechanism for writing into your datastore, so that only one instance at
    a time can update the projection. (WriterTokenAware)
 2. Define a place to store your projection's state (the last processed event). For example this can be a table in your
-   data store that holds one entry for every projection within your service. (FactStreamPositionAware) 
+   data store that holds one entry for every projection within your service. (FactStreamPositionAware)
 3. Does your datastore provide transactionality? If yes, you can leverage this to batch changes together when updating
    your projection in order to increase performance and to provide atomicity to your changes. Otherwise, go with a
    basic projection, but keep in mind that this approach has its limitations in terms of atomicity and throughput.
@@ -66,18 +66,18 @@ the same.
 
 #### Transaction Aware Projection
 
-In order to implement the `TransactionAware` interface, the data store needs to support atomicity for multiple writes 
+In order to implement the `TransactionAware` interface, the data store needs to support atomicity for multiple writes
 within a transaction that can be collectively rolled back in case of failure.
 
 - Create a class `XYZTransactionAdapter` that implements the `TransactionAdapter` interface repective to your data store.
 - Extend your `AbstractXYZProjection` to `AbstractXYZTxProjection` implementing `TransactionAware`
-- Now in order to implement the `TransactionAware` interface, you can use 
+- Now in order to implement the `TransactionAware` interface, you can use
   - `@Delegate TransactionalBehavior<YourTransactionType> txBehavior = new TransactionalBehavior<>( myXYZTransactionAdapter )` to put your XYZTranactionAdapter to good use.
 
 #### Open Transaction Aware Projection
 
 TransactionAware projections that are "Open" share all the characteristic of the Transaction Aware Projection, but they also provide the
-projection access to the transaction representation that is currently in progress, in case it is necessary to interact 
+projection access to the transaction representation that is currently in progress, in case it is necessary to interact
 with the data store in a transactional manner.
 
 - Implement the `OpenTransactionAware` interface instead of `TransactionAware`.
