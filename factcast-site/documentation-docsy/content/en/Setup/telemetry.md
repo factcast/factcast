@@ -5,7 +5,7 @@ weight: 155
 description: Listen to internal telemetry events
 ---
 
-Starting from factcast version 0.7.9, you can extend your server implementation to listen internal telemetry events.
+Starting from factcast version 0.7.9, you can extend your server implementation to listen for internal telemetry events.
 This can be useful for monitoring and debugging purposes.
 
 The telemetry events are emitted using a dedicated internal [Guava EventBus](https://github.com/google/guava/wiki/EventBusExplained).
