@@ -15,17 +15,12 @@
  */
 package org.factcast.factus.redis.tx;
 
-import static org.mockito.ArgumentMatchers.*;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.*;
-import java.util.concurrent.*;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.factus.Handler;
 import org.factcast.factus.event.DefaultEventSerializer;
 import org.factcast.factus.event.EventSerializer;
-import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projector.Projector;
 import org.factcast.factus.projector.ProjectorImpl;
 import org.factcast.factus.redis.FactStreamPositionCodec;
@@ -35,6 +30,13 @@ import org.openjdk.jmh.annotations.*;
 import org.redisson.api.RBucket;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.same;
 
 @SuppressWarnings({"unchecked", "deprecation"})
 public class RedisTransactionProjectorBenchmark {
