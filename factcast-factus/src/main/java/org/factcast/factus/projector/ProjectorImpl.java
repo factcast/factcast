@@ -98,6 +98,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       try {
         callHandlerFor(f);
         latestSuccessful = FactStreamPosition.from(f);
+        setFactStreamPositionIfAwareButNotTransactional(latestSuccessful);
       } catch (Exception e) {
         log.trace(
             "returned with Exception {}:",
@@ -113,10 +114,11 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     } // end loop
 
     try {
-      // this is something we only do, if the whole batch was successfully applied
-      if (latestSuccessful != null) {
-        setFactStreamPositionIfAware(latestSuccessful);
-      }
+      if (projection instanceof TransactionAware)
+        // this is something we only do, if the whole batch was successfully applied
+        if (latestSuccessful != null) {
+          setFactStreamPositionIfAware(latestSuccessful);
+        }
     } catch (Exception e) {
 
       rollbackIfTransactional();
@@ -132,6 +134,14 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       // pass along and potentially rethrow
       projection.onError(e);
       throw e;
+    }
+  }
+
+  private void setFactStreamPositionIfAwareButNotTransactional(
+      @NonNull FactStreamPosition latestSuccessful) {
+    if (!(projection instanceof TransactionAware)
+        && projection instanceof FactStreamPositionAware) {
+      ((FactStreamPositionAware) projection).factStreamPosition(latestSuccessful);
     }
   }
 
