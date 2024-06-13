@@ -37,6 +37,7 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.server.security.auth.FactCastUser;
 import org.factcast.server.ui.full.FullQueryBean;
 import org.factcast.server.ui.id.IdQueryBean;
 import org.factcast.server.ui.security.SecurityService;
@@ -213,16 +214,21 @@ public class FactRepositoryImplTest {
   @Nested
   class WhenFetchingChunk {
     @Mock private FullQueryBean bean;
+    @Mock private FactCastUser userMock;
+
+    private final String USER_NAME = "user@auth.eu";
 
     @BeforeEach
     void setup() {
       when(bean.createFactSpecs()).thenReturn(nameSpaces);
+      when(userMock.getUsername()).thenReturn(USER_NAME);
     }
 
     @Test
     void testFilters() {
       when(securityService.filterReadable(nameSpaces))
           .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
+      when(securityService.getAuthenticatedUser()).thenReturn(userMock);
       ArgumentCaptor<SubscriptionRequestTO> srCaptor =
           ArgumentCaptor.forClass(SubscriptionRequestTO.class);
       when(fs.subscribe(srCaptor.capture(), any(ListObserver.class)))
@@ -246,6 +252,7 @@ public class FactRepositoryImplTest {
 
       when(securityService.filterReadable(nameSpaces))
           .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
+      when(securityService.getAuthenticatedUser()).thenReturn(userMock);
       ArgumentCaptor<ListObserver> captor = ArgumentCaptor.forClass(ListObserver.class);
       when(fs.subscribe(any(), captor.capture())).thenReturn(mock(Subscription.class));
 
@@ -273,6 +280,7 @@ public class FactRepositoryImplTest {
       when(fs.fetchBySerial(1984)).thenReturn(Optional.of(factWithId));
       when(securityService.filterReadable(nameSpaces))
           .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
+      when(securityService.getAuthenticatedUser()).thenReturn(userMock);
       when(fs.subscribe(srCaptor.capture(), any(ListObserver.class)))
           .thenReturn(mock(Subscription.class));
 
@@ -287,6 +295,7 @@ public class FactRepositoryImplTest {
 
       when(securityService.filterReadable(nameSpaces))
           .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
+      when(securityService.getAuthenticatedUser()).thenReturn(userMock);
       when(fs.subscribe(any(), any()))
           .thenAnswer(
               i -> {
@@ -311,6 +320,7 @@ public class FactRepositoryImplTest {
 
       when(securityService.filterReadable(nameSpaces))
           .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
+      when(securityService.getAuthenticatedUser()).thenReturn(userMock);
       when(fs.subscribe(any(), any()))
           .thenAnswer(
               i -> {
@@ -326,6 +336,22 @@ public class FactRepositoryImplTest {
           () -> {
             underTest.fetchChunk(bean);
           });
+    }
+
+    @Test
+    @SneakyThrows
+    void propagatesUsernameToDebugInfo() {
+      ArgumentCaptor<SubscriptionRequestTO> srCaptor =
+          ArgumentCaptor.forClass(SubscriptionRequestTO.class);
+      when(securityService.filterReadable(nameSpaces))
+          .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
+      when(securityService.getAuthenticatedUser()).thenReturn(userMock);
+      when(fs.subscribe(srCaptor.capture(), any(ListObserver.class)))
+          .thenReturn(mock(Subscription.class));
+
+      underTest.fetchChunk(bean);
+
+      assertThat(srCaptor.getValue().debugInfo()).isEqualTo(USER_NAME);
     }
   }
 

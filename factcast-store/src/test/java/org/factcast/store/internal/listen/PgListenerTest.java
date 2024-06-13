@@ -198,7 +198,7 @@ public class PgListenerTest {
 
   @Test
   public void notificationLoopHandlesSqlException() throws SQLException {
-    when(pgConnectionSupplier.get())
+    when(pgConnectionSupplier.get(any()))
         .thenThrow(SQLException.class, RuntimeException.class, Error.class);
 
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
@@ -206,7 +206,7 @@ public class PgListenerTest {
         pgListener.new NotificationReceiverLoop();
 
     Assertions.assertThrows(Error.class, notificationReceiverLoop::run);
-    verify(pgConnectionSupplier, times(3)).get();
+    verify(pgConnectionSupplier, times(3)).get("notification-receiver-loop");
   }
 
   @Test
@@ -214,7 +214,7 @@ public class PgListenerTest {
 
     CountDownLatch latch = new CountDownLatch(1);
 
-    when(pgConnectionSupplier.get()).thenReturn(conn);
+    when(pgConnectionSupplier.get(any())).thenReturn(conn);
     when(conn.prepareStatement(anyString())).thenReturn(ps);
     when(conn.prepareCall(anyString()).execute()).thenReturn(true);
     when(conn.getNotifications(anyInt()))
@@ -319,7 +319,7 @@ public class PgListenerTest {
             1,
             "{\"ns\":\"namespace\",\"type\":\"theType\",\"version\":2}");
 
-    when(pgConnectionSupplier.get()).thenReturn(conn);
+    when(pgConnectionSupplier.get(any())).thenReturn(conn);
     when(conn.prepareStatement(anyString())).thenReturn(ps);
     when(conn.getNotifications(anyInt()))
         .thenReturn(
@@ -373,7 +373,7 @@ public class PgListenerTest {
             1,
             "{\"ns\":\"namespace\",\"type\":\"theOtherType\"}");
 
-    when(pgConnectionSupplier.get()).thenReturn(conn);
+    when(pgConnectionSupplier.get(any())).thenReturn(conn);
     when(conn.prepareStatement(anyString())).thenReturn(ps);
     when(conn.getNotifications(anyInt()))
         .thenReturn(
@@ -407,7 +407,7 @@ public class PgListenerTest {
 
   @Test
   void testConnectionIsStopped() throws Exception {
-    when(pgConnectionSupplier.get()).thenReturn(conn);
+    when(pgConnectionSupplier.get(any())).thenReturn(conn);
     when(conn.prepareStatement(anyString())).thenReturn(mock(PreparedStatement.class));
 
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);

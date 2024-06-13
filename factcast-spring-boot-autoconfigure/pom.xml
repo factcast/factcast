@@ -58,6 +58,16 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
+      <artifactId>factcast-grpc-lz4</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-grpc-snappy</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
       <artifactId>factcast-server-security</artifactId>
       <optional>true</optional>
     </dependency>

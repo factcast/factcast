@@ -29,7 +29,9 @@ import org.springframework.context.annotation.Bean;
  * Configures optional LZ4 Codec
  *
  * @author uwe.schaefer@prisma-capacity.eu
+ * @deprecated in 0.8
  */
+@SuppressWarnings({"DeprecatedIsStillUsed"})
 @AutoConfiguration
 @ConditionalOnClass({
   LZ4Compressor.class,
@@ -38,11 +40,12 @@ import org.springframework.context.annotation.Bean;
   GrpcChannelFactory.class
 })
 @AutoConfigureBefore(GrpcFactStoreAutoConfiguration.class)
+@Deprecated
 public class LZ4ClientAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public Lz4GrpcClientCodec snappyCodec() {
+  public Lz4GrpcClientCodec lz4Codec() {
     return new Lz4GrpcClientCodec();
   }
 }
