@@ -44,7 +44,7 @@ When designing a projection implementation you'll need to consider the following
 ### General Structure
 
 Projection implementations are usually provided via an abstract class that is extended by the actual projections within your
-services. Apart from to your desired class hierarchy, projections need to implement the `FactStreamPositionAware`,
+services. Apart from your desired class hierarchy, projections need to implement the `FactStreamPositionAware`,
 `WriterTokenAware` and `Projection` interfaces and optionally also `Named`.
 
 Let's imagine you implement support for the XYZ data store.
