@@ -25,7 +25,6 @@ import org.factcast.core.Fact;
 import org.factcast.factus.Handler;
 import org.factcast.factus.event.DefaultEventSerializer;
 import org.factcast.factus.event.EventSerializer;
-import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projector.Projector;
 import org.factcast.factus.projector.ProjectorImpl;
 import org.factcast.factus.redis.FactStreamPositionCodec;

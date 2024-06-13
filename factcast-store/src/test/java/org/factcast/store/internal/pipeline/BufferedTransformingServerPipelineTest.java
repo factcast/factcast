@@ -15,6 +15,11 @@
  */
 package org.factcast.store.internal.pipeline;
 
+import static org.mockito.Mockito.*;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Set;
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.factcast.core.subscription.TransformationException;
@@ -30,12 +35,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.testcontainers.shaded.org.checkerframework.checker.nullness.qual.NonNull;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Set;
-
-import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 public class BufferedTransformingServerPipelineTest {
   @Mock FactTransformerService service;
@@ -47,7 +46,6 @@ public class BufferedTransformingServerPipelineTest {
   @Nested
   class BufferingMode {
     @Mock private TransformationRequest transformationRequest;
-
 
     @Mock private Fact fact;
 
