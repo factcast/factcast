@@ -15,6 +15,9 @@
  */
 package org.factcast.factus.projection.parameter;
 
+import static org.mockito.Mockito.mock;
+
+import java.lang.reflect.Method;
 import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
@@ -25,10 +28,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.lang.reflect.Method;
-
-import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 class HandlerParameterTransformerTest {

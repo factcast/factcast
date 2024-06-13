@@ -15,7 +15,10 @@
  */
 package org.factcast.core.subscription.observer;
 
+import static org.mockito.Mockito.*;
+
 import com.google.common.collect.Lists;
+import java.util.List;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
@@ -24,10 +27,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.List;
-
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class BatchingFactObserverTest {

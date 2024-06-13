@@ -15,6 +15,12 @@
  */
 package org.factcast.factus.projection.parameter;
 
+import static org.mockito.Mockito.mock;
+
+import java.lang.annotation.Annotation;
+import java.util.Iterator;
+import java.util.Set;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
 import org.factcast.factus.event.EventSerializer;
@@ -24,13 +30,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import javax.annotation.Nullable;
-import java.lang.annotation.Annotation;
-import java.util.Iterator;
-import java.util.Set;
-
-import static org.mockito.Mockito.mock;
 
 // TODO find unit tests for parameter package
 

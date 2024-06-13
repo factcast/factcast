@@ -15,6 +15,9 @@
  */
 package org.factcast.store.internal.pipeline;
 
+import static org.mockito.Mockito.*;
+
+import java.io.IOException;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
@@ -27,10 +30,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.io.IOException;
-
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PostQueryFilterServerPipelineTest {
