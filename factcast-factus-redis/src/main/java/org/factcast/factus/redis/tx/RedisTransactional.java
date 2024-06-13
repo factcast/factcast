@@ -30,27 +30,27 @@ public @interface RedisTransactional {
 
   int bulkSize() default DEFAULT_BULK_SIZE;
 
-  long timeout() default Defaults.timeout;
+  long timeout() default Defaults.TIMEOUT;
 
-  long responseTimeout() default Defaults.responseTimeout;
+  long responseTimeout() default Defaults.RESPONSE_TIMEOUT;
 
-  int retryAttempts() default Defaults.retryAttempts;
+  int retryAttempts() default Defaults.RETRY_ATTEMPTS;
 
-  long retryInterval() default Defaults.retryInterval;
+  long retryInterval() default Defaults.RETRY_INTERVAL;
 
   @UtilityClass
   class Defaults {
-    static final long timeout = 30000;
-    static final long responseTimeout = 5001;
-    static final int retryAttempts = 5;
-    static final long retryInterval = 3000;
+    static final long TIMEOUT = 30000;
+    static final long RESPONSE_TIMEOUT = 5001;
+    static final int RETRY_ATTEMPTS = 5;
+    static final long RETRY_INTERVAL = 3000;
 
     public static TransactionOptions create() {
       return TransactionOptions.defaults()
-          .timeout(timeout, TimeUnit.MILLISECONDS)
-          .responseTimeout(responseTimeout, TimeUnit.MILLISECONDS)
-          .retryAttempts(retryAttempts)
-          .retryInterval(retryInterval, TimeUnit.MILLISECONDS);
+          .timeout(TIMEOUT, TimeUnit.MILLISECONDS)
+          .responseTimeout(RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS)
+          .retryAttempts(RETRY_ATTEMPTS)
+          .retryInterval(RETRY_INTERVAL, TimeUnit.MILLISECONDS);
     }
 
     public static TransactionOptions with(@Nullable RedisTransactional transactional) {

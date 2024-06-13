@@ -73,6 +73,7 @@ import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("deprecation")
 class FactusImplTest {
 
   @Mock private FactCast fc;
