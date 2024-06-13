@@ -15,6 +15,11 @@
  */
 package org.factcast.factus.projection.parameter;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.HashSet;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
@@ -24,12 +29,6 @@ import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.projection.FactStreamPositionAware;
 import org.factcast.factus.projection.Projection;
 import org.junit.jupiter.api.Test;
-
-import javax.annotation.Nullable;
-import java.util.HashSet;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 class DefaultHandlerParameterContributorTest {
   @Test
