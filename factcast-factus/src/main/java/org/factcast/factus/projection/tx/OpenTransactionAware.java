@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2022 factcast.org
+ * Copyright © 2017-2024 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.spring.tx;
+package org.factcast.factus.projection.tx;
 
-import org.factcast.factus.projection.Projection;
-import org.factcast.factus.projection.tx.TransactionAware;
+public interface OpenTransactionAware<T> extends TransactionAware {
 
-@SpringTransactional
-public interface SpringTxProjection extends Projection, TransactionAware {}
+  /**
+   * open this up to be used from the projector in order to be able to inject as a parameter
+   *
+   * @return
+   */
+  T runningTransaction();
+}
