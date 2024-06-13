@@ -77,7 +77,7 @@ public class JsonPayload {
   }
 
   /**
-   * Resets the path returning content to force a parse of the json content. This is necessary
+   * Resets the path returning context to force a parse of the json content. This is necessary
    * because the underlying json might change its structure (remove keys, new keys) and plugins
    * further down the road might access non exisiting paths.
    */
