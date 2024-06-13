@@ -27,6 +27,7 @@ import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.projection.WriterTokenAware;
 import org.factcast.factus.projection.tx.OpenTransactionAware;
 import org.factcast.factus.projection.tx.TransactionBehavior;
+import org.factcast.factus.redis.AbstractRedisProjection;
 import org.factcast.factus.redis.FactStreamPositionCodec;
 import org.factcast.factus.redis.RedisProjection;
 import org.redisson.api.*;
@@ -44,12 +45,11 @@ abstract class AbstractRedisTxProjection extends AbstractRedisProjection
     super(redisson);
     this.tx =
         new TransactionBehavior<>(
-            new RedisTransactionAdapter(
-                redisson, getClass().getAnnotation(RedisTransactional.class)));
+            new RedisTxAdapter(redisson, getClass().getAnnotation(RedisTransactional.class)));
   }
 
   @VisibleForTesting
-  RBucket<FactStreamPosition> stateBucket(@NonNull RTransaction tx) {
+  protected RBucket<FactStreamPosition> stateBucket(@NonNull RTransaction tx) {
     return tx.getBucket(stateBucketName, FactStreamPositionCodec.INSTANCE);
   }
 
