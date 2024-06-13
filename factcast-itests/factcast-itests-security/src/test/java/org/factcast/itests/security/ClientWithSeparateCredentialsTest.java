@@ -44,7 +44,7 @@ import org.springframework.test.context.TestPropertySource;
 @TestPropertySource(locations = "/application-separate-creds.properties")
 @Slf4j
 @FactcastTestConfig(securityEnabled = true)
-public class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrationTest {
+class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrationTest {
   @Autowired FactCast fc;
 
   @Autowired FactCastGrpcStubsFactory stubsFactory;
@@ -85,7 +85,7 @@ public class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrati
   }
 
   @Test
-  public void allowedToPublish() {
+  void allowedToPublish() {
     fc.publish(
         Fact.of(
             "{\"id\":\"" + UUID.randomUUID() + "\", \"ns\":\"users\",\"type\":\"UserCreated\"}",
@@ -93,7 +93,7 @@ public class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrati
   }
 
   @Test
-  public void failsToPublish() {
+  void failsToPublish() {
     assertThatThrownBy(
             () ->
                 fc.publish(
@@ -107,7 +107,7 @@ public class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrati
   }
 
   @Test
-  public void allowedToCatchup() throws Exception {
+  void allowedToCatchup() throws Exception {
     SubscriptionRequest req =
         SubscriptionRequest.catchup(FactSpec.ns("users").type("UserCreated")).fromScratch();
     try (Subscription sub = fc.subscribe(req, nopFactObserver)) {
@@ -116,7 +116,7 @@ public class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrati
   }
 
   @Test
-  public void failsToCatchup() throws Exception {
+  void failsToCatchup() throws Exception {
     SubscriptionRequest req =
         SubscriptionRequest.catchup(FactSpec.ns("no-permissions").type("UserCreated"))
             .fromScratch();
@@ -128,7 +128,7 @@ public class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrati
   }
 
   @Test
-  public void allowedToFollow() throws Exception {
+  void allowedToFollow() throws Exception {
     SubscriptionRequest req =
         SubscriptionRequest.follow(FactSpec.ns("users").type("UserCreated")).fromScratch();
     try (Subscription sub = fc.subscribe(req, nopFactObserver)) {
@@ -137,7 +137,7 @@ public class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrati
   }
 
   @Test
-  public void failsToFollow() throws Exception {
+  void failsToFollow() throws Exception {
     SubscriptionRequest req =
         SubscriptionRequest.follow(FactSpec.ns("no-permissions").type("UserCreated")).fromScratch();
     try (Subscription sub = fc.subscribe(req, nopFactObserver)) {
@@ -148,13 +148,13 @@ public class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrati
   }
 
   @Test
-  public void allowedToEnumerate() {
+  void allowedToEnumerate() {
     assertThat(fc.enumerateNamespaces()).contains("users");
     assertThat(fc.enumerateTypes("users")).contains("UserCreated");
   }
 
   @Test
-  public void failsToEnumerate() {
+  void failsToEnumerate() {
     assertThat(fc.enumerateNamespaces()).doesNotContain("no-permissions");
     assertThatThrownBy(() -> fc.enumerateTypes("no-permissions"))
         .isInstanceOf(StatusRuntimeException.class)
@@ -162,7 +162,7 @@ public class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrati
   }
 
   @Test
-  public void failsUnauthenticatedHandshake() {
+  void failsUnauthenticatedHandshake() {
     Channel channel = channelFactory.createChannel("factstore");
     assertThatThrownBy(() -> stubsFactory.createBlockingStub(channel).handshake(converter.empty()))
         .isInstanceOf(StatusRuntimeException.class)

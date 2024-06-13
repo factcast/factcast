@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.spring.tx;
+package org.factcast.factus.redis;
 
-import org.factcast.factus.projection.Projection;
-import org.factcast.factus.projection.tx.TransactionAware;
+import org.factcast.factus.projection.ManagedProjection;
 
-@SpringTransactional
-public interface SpringTxProjection extends Projection, TransactionAware {}
+public interface RedisManagedProjection extends ManagedProjection, RedisProjection {}

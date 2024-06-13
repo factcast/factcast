@@ -27,7 +27,6 @@ import org.factcast.factus.event.DefaultEventSerializer;
 import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.projector.Projector;
 import org.factcast.factus.projector.ProjectorImpl;
-import org.factcast.factus.redis.AbstractRedisManagedProjection;
 import org.factcast.factus.redis.FactStreamPositionCodec;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.mockito.Mockito;
@@ -89,7 +88,7 @@ public class RedisTransactionProjectorBenchmark {
   }
 
   @ProjectionMetaData(name = "peter", revision = 12)
-  static class TestProjection extends AbstractRedisManagedProjection {
+  static class TestProjection extends AbstractRedisTxManagedProjection {
 
     protected int count;
 
@@ -111,6 +110,6 @@ public class RedisTransactionProjectorBenchmark {
 
   public static void main(String[] args) throws Exception {
     org.openjdk.jmh.Main.main(args);
-    // new RedisTransactionProjectorBenchmark().applyBatch10();
+    new RedisTransactionProjectorBenchmark().applyBatchDefaultSize();
   }
 }
