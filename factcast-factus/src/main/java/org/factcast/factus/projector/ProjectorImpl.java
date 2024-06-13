@@ -139,10 +139,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
   private void setFactStreamPositionIfAwareButNotTransactional(
       @NonNull FactStreamPosition latestSuccessful) {
-    if (!(projection instanceof TransactionAware)
-        && projection instanceof FactStreamPositionAware) {
-      ((FactStreamPositionAware) projection).factStreamPosition(latestSuccessful);
-    }
+    if (!(projection instanceof TransactionAware)) setFactStreamPositionIfAware(latestSuccessful);
   }
 
   @VisibleForTesting
