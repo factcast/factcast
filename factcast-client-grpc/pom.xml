@@ -69,6 +69,7 @@
       <groupId>net.devh</groupId>
       <artifactId>grpc-client-spring-boot-starter</artifactId>
     </dependency>
+    <!-- deprecated, will be removed -->
     <dependency>
       <groupId>net.jpountz.lz4</groupId>
       <artifactId>lz4</artifactId>
@@ -79,11 +80,11 @@
       <artifactId>snappy-java</artifactId>
       <optional>true</optional>
     </dependency>
+    <!--/deprecated -->
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-compress</artifactId>
-      <version>1.26.2</version>
-      <scope>test</scope>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>io.micrometer</groupId>

@@ -42,6 +42,8 @@
     <module>factcast-server-security</module>
     <module>factcast-server-ui</module>
     <module>factcast-grpc-api</module>
+    <module>factcast-grpc-lz4</module>
+    <module>factcast-grpc-snappy</module>
     <module>factcast-schema-registry-cli</module>
     <module>factcast-schema-registry-maven-plugin</module>
     <module>factcast-snapshotcache-redisson</module>
