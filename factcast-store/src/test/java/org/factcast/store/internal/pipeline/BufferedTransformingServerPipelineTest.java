@@ -83,12 +83,9 @@ public class BufferedTransformingServerPipelineTest {
       final var noopFact = mock(Fact.class);
       final var factToTransform2 = mock(Fact.class);
 
-      TransformationRequest t1 =
-          new TransformationRequest(factToTransform, Set.of(1));
-      TransformationRequest t2 =
-          new TransformationRequest(factToTransform2, Set.of(1));
-      when(transformers.prepareTransformation(any()))
-          .thenReturn(t1, null, t2, null, null);
+      TransformationRequest t1 = new TransformationRequest(factToTransform, Set.of(1));
+      TransformationRequest t2 = new TransformationRequest(factToTransform2, Set.of(1));
+      when(transformers.prepareTransformation(any())).thenReturn(t1, null, t2, null, null);
 
       when(service.transform(List.of(t1, t2)))
           .thenReturn(List.of(factToTransform, factToTransform2));
