@@ -240,14 +240,14 @@ class AbstractRedisTxManagedProjectionTest {
   @ProjectionMetaData(revision = 1)
   static class TestProjection extends AbstractRedisTxManagedProjection {
 
-    public TestProjection(@NonNull RedissonClient redisson) {
+    TestProjection(@NonNull RedissonClient redisson) {
       super(redisson);
     }
   }
 
   static class MissingAnnotationTestProjection extends AbstractRedisTxManagedProjection {
 
-    public MissingAnnotationTestProjection(@NonNull RedissonClient redisson) {
+    MissingAnnotationTestProjection(@NonNull RedissonClient redisson) {
       super(redisson);
     }
   }

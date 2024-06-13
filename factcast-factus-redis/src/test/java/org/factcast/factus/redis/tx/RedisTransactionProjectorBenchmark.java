@@ -110,6 +110,6 @@ public class RedisTransactionProjectorBenchmark {
 
   public static void main(String[] args) throws Exception {
     org.openjdk.jmh.Main.main(args);
-    // new RedisTransactionProjectorBenchmark().applyBatch10();
+    new RedisTransactionProjectorBenchmark().applyBatchDefaultSize();
   }
 }
