@@ -39,7 +39,7 @@ class RedisTransactionAdapterTest {
   @Mock private RedisTransactional annotation;
   @Mock private RTransaction tx;
   @Mock private TransactionOptions opt;
-  @InjectMocks private RedisTransactionAdapter underTest;
+  @InjectMocks private RedisTxAdapter underTest;
 
   @Nested
   class WhenBeginingNewTransaction {
@@ -72,8 +72,7 @@ class RedisTransactionAdapterTest {
     void overridesOptions() {
 
       underTest =
-          new RedisTransactionAdapter(
-              client, Timeout12.class.getAnnotation(RedisTransactional.class));
+          new RedisTxAdapter(client, Timeout12.class.getAnnotation(RedisTransactional.class));
 
       // TOptions does not support equals, so we're extracting the state to compare
       Assertions.assertThat(FactCastJson.writeValueAsBytes(underTest.transactionOptions()))
@@ -126,8 +125,7 @@ class RedisTransactionAdapterTest {
 
     @Test
     void readAnnotation() {
-      underTest =
-          new RedisTransactionAdapter(client, Bulk31.class.getAnnotation(RedisTransactional.class));
+      underTest = new RedisTxAdapter(client, Bulk31.class.getAnnotation(RedisTransactional.class));
 
       // TOptions does not support equals, so we're extracting the state to compare
       Assertions.assertThat(FactCastJson.writeValueAsBytes(underTest.transactionOptions()))
@@ -137,7 +135,7 @@ class RedisTransactionAdapterTest {
 
     @Test
     void usesDefault() {
-      underTest = new RedisTransactionAdapter(client, null);
+      underTest = new RedisTxAdapter(client, null);
       Assertions.assertThat(underTest.maxBatchSizePerTransaction())
           .isEqualTo(
               new TransactionAdapter() {

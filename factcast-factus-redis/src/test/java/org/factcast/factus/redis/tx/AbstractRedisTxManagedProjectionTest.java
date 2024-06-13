@@ -54,12 +54,12 @@ class AbstractRedisTxManagedProjectionTest {
   class BucketFromThinAir {
 
     @Test
-    void happyPath() {
+    void happyPathTx() {
       RBucket<Object> bucket = mock(RBucket.class);
-      when(redisson.getBucket(any(), any())).thenReturn(bucket);
+      when(tx.getBucket(any(), any())).thenReturn(bucket);
 
-      assertThat(underTest.stateBucket()).isInstanceOf(RBucket.class).isSameAs(bucket);
-      verify(redisson)
+      assertThat(underTest.stateBucket(tx)).isInstanceOf(RBucket.class).isSameAs(bucket);
+      verify(tx)
           .getBucket(underTest.redisKey() + "_state_tracking", FactStreamPositionCodec.INSTANCE);
     }
   }

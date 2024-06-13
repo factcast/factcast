@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.redis.tx;
+package org.factcast.factus.redis;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
@@ -26,13 +26,10 @@ import org.factcast.factus.projection.FactStreamPositionAware;
 import org.factcast.factus.projection.Named;
 import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.projection.WriterTokenAware;
-import org.factcast.factus.redis.FactStreamPositionCodec;
-import org.factcast.factus.redis.RedisProjection;
-import org.factcast.factus.redis.RedisWriterToken;
 import org.redisson.api.*;
 
 @SuppressWarnings("java:S2142")
-abstract class AbstractRedisProjection
+public abstract class AbstractRedisProjection
     implements RedisProjection, FactStreamPositionAware, WriterTokenAware, Named {
   @Getter protected final RedissonClient redisson;
 
@@ -52,7 +49,7 @@ abstract class AbstractRedisProjection
   }
 
   @VisibleForTesting
-  RBucket<FactStreamPosition> stateBucket() {
+  protected RBucket<FactStreamPosition> stateBucket() {
     return redisson.getBucket(stateBucketName, FactStreamPositionCodec.INSTANCE);
   }
 

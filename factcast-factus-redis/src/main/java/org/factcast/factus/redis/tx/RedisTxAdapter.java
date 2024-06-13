@@ -25,7 +25,7 @@ import org.redisson.api.RedissonClient;
 import org.redisson.api.TransactionOptions;
 
 @RequiredArgsConstructor
-public class RedisTransactionAdapter implements TransactionAdapter<RTransaction> {
+public class RedisTxAdapter implements TransactionAdapter<RTransaction> {
   @NonNull private final RedissonClient client;
   @Nullable private final RedisTransactional annotation;
 
