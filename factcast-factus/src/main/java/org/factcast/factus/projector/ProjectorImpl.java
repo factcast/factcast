@@ -114,11 +114,10 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     } // end loop
 
     try {
-      if (projection instanceof TransactionAware)
-        // this is something we only do, if the whole batch was successfully applied
-        if (latestSuccessful != null) {
-          setFactStreamPositionIfAware(latestSuccessful);
-        }
+      // this is something we only do, if the whole batch was successfully applied
+      if (projection instanceof TransactionAware && latestSuccessful != null) {
+        setFactStreamPositionIfAware(latestSuccessful);
+      }
     } catch (Exception e) {
 
       rollbackIfTransactional();
