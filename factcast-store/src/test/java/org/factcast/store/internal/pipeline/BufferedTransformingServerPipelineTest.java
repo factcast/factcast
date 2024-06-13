@@ -20,6 +20,7 @@ import static org.mockito.Mockito.*;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
+
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.factcast.core.subscription.TransformationException;
@@ -37,182 +38,187 @@ import org.testcontainers.shaded.org.checkerframework.checker.nullness.qual.NonN
 
 @ExtendWith(MockitoExtension.class)
 public class BufferedTransformingServerPipelineTest {
-  @Mock FactTransformerService service;
-  @Mock FactTransformers transformers;
-  @Mock ServerPipeline parent;
-  @Mock PgMetrics metrics;
-  private BufferedTransformingServerPipeline uut;
+    @Mock
+    FactTransformerService service;
+    @Mock
+    FactTransformers transformers;
+    @Mock
+    ServerPipeline parent;
+    @Mock
+    PgMetrics metrics;
+    private BufferedTransformingServerPipeline uut;
 
-  @Nested
-  class BufferingMode {
-    @Mock private TransformationRequest transformationRequest;
+    @Nested
+    class BufferingMode {
+        @Mock
+        private TransformationRequest transformationRequest;
 
-    @Mock private Fact fact;
+        @Mock
+        private Fact fact;
 
-    @BeforeEach
-    void setUp() {
-      uut = new BufferedTransformingServerPipeline(parent, service, transformers, 5);
+        @BeforeEach
+        void setUp() {
+            uut = new BufferedTransformingServerPipeline(parent, service, transformers, 5);
+        }
+
+        @Test
+        void afterSwitchingToBufferingModeFlushesForNoopTransformations() {
+            when(transformers.prepareTransformation(any()))
+                    .thenReturn(transformationRequest)
+                    .thenReturn(null);
+
+            when(service.transform(anyList())).thenReturn(List.of(fact));
+
+            uut.process(Signal.of(fact));
+            verifyNoInteractions(parent);
+            uut.process(Signal.of(fact));
+            verifyNoInteractions(parent);
+            uut.process(Signal.of(fact));
+
+            // maxBufferSize is 5, so we expect nothing yet
+            verifyNoInteractions(parent);
+            uut.process(Signal.flush());
+
+            verify(parent, times(3)).process(any(Signal.FactSignal.class));
+            verify(parent).process(any(Signal.FlushSignal.class));
+            verify(service).transform(List.of(transformationRequest));
+        }
+
+        @Test
+        void afterSwitchingToBufferingModeFlushesAfterMaxSizeReached() {
+            final var factToTransform = mock(Fact.class);
+            final var noopFact = mock(Fact.class);
+            final var factToTransform2 = mock(Fact.class);
+
+            TransformationRequest t1 = new TransformationRequest(factToTransform, Set.of(1));
+            TransformationRequest t2 = new TransformationRequest(factToTransform2, Set.of(1));
+            when(transformers.prepareTransformation(any())).thenReturn(t1, null, t2, null, null);
+
+            when(service.transform(List.of(t1, t2)))
+                    .thenReturn(List.of(factToTransform, factToTransform2));
+
+            uut.process(Signal.of(factToTransform));
+            verifyNoInteractions(parent);
+            uut.process(Signal.of(noopFact));
+            verifyNoInteractions(parent);
+            uut.process(Signal.of(factToTransform2));
+            uut.process(Signal.of(noopFact));
+            verifyNoInteractions(parent);
+            uut.process(Signal.of(noopFact));
+
+            verify(parent, times(5)).process(any(Signal.FactSignal.class));
+            verify(service).transform(List.of(t1, t2));
+        }
+
+        @Test
+        void escalatesTransformationException() {
+            final var factToTransform = mock(Fact.class);
+            final var noopFact = mock(Fact.class);
+            final var factToTransform2 = mock(Fact.class);
+
+            TransformationRequest t1 = new TransformationRequest(factToTransform, Set.of(1));
+            TransformationRequest t2 = new TransformationRequest(factToTransform2, Set.of(1));
+            when(transformers.prepareTransformation(any()))
+                    .thenReturn(t1, null, t2, null, null);
+
+            when(service.transform(List.of(t1, t2)))
+                    .thenThrow(new TransformationException("bad luck"));
+
+            uut.process(Signal.of(factToTransform));
+            verifyNoInteractions(parent);
+            uut.process(Signal.of(noopFact));
+            verifyNoInteractions(parent);
+            uut.process(Signal.of(factToTransform2));
+            uut.process(Signal.of(noopFact));
+            verifyNoInteractions(parent);
+            // should trigger flush
+            uut.process(Signal.of(noopFact));
+
+            verify(parent).process(any(Signal.ErrorSignal.class));
+            verify(parent, never()).process(any(Signal.FactSignal.class));
+        }
     }
 
-    @Test
-    void afterSwitchingToBufferingModeFlushesForNoopTransformations() {
-      when(transformers.prepareTransformation(any()))
-          .thenReturn(transformationRequest)
-          .thenReturn(null);
+    @Nested
+    class DirectMode {
 
-      when(service.transform(anyList())).thenReturn(List.of(fact));
+        @Mock
+        private Fact fact;
 
-      uut.process(Signal.of(fact));
-      verifyNoInteractions(parent);
-      uut.process(Signal.of(fact));
-      verifyNoInteractions(parent);
-      uut.process(Signal.of(fact));
+        @BeforeEach
+        void setUp() {
+            uut = spy(new BufferedTransformingServerPipeline(parent, service, transformers, 50));
+        }
 
-      // maxBufferSize is 5, so we expect nothing yet
-      verifyNoInteractions(parent);
-      uut.process(Signal.flush());
+        @Test
+        void simplePassThrough() {
+            when(transformers.prepareTransformation(any())).thenReturn(null);
+            Signal signal = Signal.of(fact);
+            uut.process(signal);
+            verify(parent).process(signal);
+            uut.process(signal);
+            verify(parent, times(2)).process(signal);
+            uut.process(signal);
+            verify(parent, times(3)).process(signal);
 
-      verify(parent, times(3)).process(any(Signal.FactSignal.class));
-      verify(parent).process(any(Signal.FlushSignal.class));
-      verify(service).transform(List.of(transformationRequest));
+            verifyNoInteractions(service);
+        }
+
+        @Test
+        void simplePassNonFact() {
+            Signal signal = Signal.flush();
+
+            uut.process(signal);
+            verify(parent).process(signal);
+
+            uut.process(Signal.catchup());
+            verify(parent, times(2)).process(any());
+
+            uut.process(Signal.complete());
+            verify(parent, times(3)).process(any());
+
+            verifyNoInteractions(service, transformers);
+        }
     }
 
-    @Test
-    void afterSwitchingToBufferingModeFlushesAfterMaxSizeReached() {
-      final var factToTransform = mock(Fact.class);
-      final var noopFact = mock(Fact.class);
-      final var factToTransform2 = mock(Fact.class);
+    @Nested
+    class Flushing {
+        @BeforeEach
+        void setUp() {
+            uut = spy(new BufferedTransformingServerPipeline(parent, service, transformers, 50));
+        }
 
-      TransformationRequest t1 = new TransformationRequest(factToTransform, Set.of(1));
-      TransformationRequest t2 = new TransformationRequest(factToTransform2, Set.of(1));
-      when(transformers.prepareTransformation(any())).thenReturn(t1, null, t2, null, null);
+        @Test
+        void flushesOnCatchup() {
+            uut.flushIfNecessary(Signal.catchup());
+            verify(uut).doFlush();
+        }
 
-      when(service.transform(List.of(t1, t2)))
-          .thenReturn(List.of(factToTransform, factToTransform2));
+        @Test
+        void flushesOnComplete() {
+            uut.flushIfNecessary(Signal.complete());
+            verify(uut).doFlush();
+        }
 
-      uut.process(Signal.of(factToTransform));
-      verifyNoInteractions(parent);
-      uut.process(Signal.of(noopFact));
-      verifyNoInteractions(parent);
-      uut.process(Signal.of(factToTransform2));
-      uut.process(Signal.of(noopFact));
-      verifyNoInteractions(parent);
-      uut.process(Signal.of(noopFact));
+        @Test
+        void flushesOnError() {
+            uut.flushIfNecessary(Signal.of(new IOException("buh")));
+            verify(uut).doFlush();
+        }
 
-      verify(parent, times(5)).process(any(Signal.FactSignal.class));
-      verify(service).transform(List.of(t1, t2));
+        //
+        @Test
+        void doesNotFLushOnFact() {
+            @NonNull Fact fact = new TestFact();
+            uut.flushIfNecessary(Signal.of(fact));
+            verify(uut).flushIfNecessary(any());
+            verifyNoMoreInteractions(uut);
+        }
+
+        @Test
+        void flushesOnFlush() {
+            uut.flushIfNecessary(Signal.flush());
+            verify(uut).doFlush();
+        }
     }
-
-    @Test
-    void escalatesTransformationException() {
-      final var factToTransform = mock(Fact.class);
-      final var noopFact = mock(Fact.class);
-      final var factToTransform2 = mock(Fact.class);
-
-      TransformationRequest transformationRequest =
-          new TransformationRequest(factToTransform, Set.of(1));
-      TransformationRequest transformationRequest2 =
-          new TransformationRequest(factToTransform2, Set.of(1));
-      when(transformers.prepareTransformation(any()))
-          .thenReturn(transformationRequest, null, transformationRequest2, null, null);
-
-      when(service.transform(List.of(transformationRequest, transformationRequest2)))
-          .thenThrow(new TransformationException("bad luck"));
-
-      uut.process(Signal.of(factToTransform));
-      verifyNoInteractions(parent);
-      uut.process(Signal.of(noopFact));
-      verifyNoInteractions(parent);
-      uut.process(Signal.of(factToTransform2));
-      uut.process(Signal.of(noopFact));
-      verifyNoInteractions(parent);
-      // should trigger flush
-      uut.process(Signal.of(noopFact));
-
-      verify(parent).process(any(Signal.ErrorSignal.class));
-      verify(parent, never()).process(any(Signal.FactSignal.class));
-    }
-  }
-
-  @Nested
-  class DirectMode {
-
-    @Mock private Fact fact;
-
-    @BeforeEach
-    void setUp() {
-      uut = spy(new BufferedTransformingServerPipeline(parent, service, transformers, 50));
-    }
-
-    @Test
-    void simplePassThrough() {
-      when(transformers.prepareTransformation(any())).thenReturn(null);
-      Signal signal = Signal.of(fact);
-      uut.process(signal);
-      verify(parent).process(signal);
-      uut.process(signal);
-      verify(parent, times(2)).process(signal);
-      uut.process(signal);
-      verify(parent, times(3)).process(signal);
-
-      verifyNoInteractions(service);
-    }
-
-    @Test
-    void simplePassNonFact() {
-      Signal signal = Signal.flush();
-
-      uut.process(signal);
-      verify(parent).process(signal);
-
-      uut.process(Signal.catchup());
-      verify(parent, times(2)).process(any());
-
-      uut.process(Signal.complete());
-      verify(parent, times(3)).process(any());
-
-      verifyNoInteractions(service, transformers);
-    }
-  }
-
-  @Nested
-  class Flushing {
-    @BeforeEach
-    void setUp() {
-      uut = spy(new BufferedTransformingServerPipeline(parent, service, transformers, 50));
-    }
-
-    @Test
-    void flushesOnCatchup() {
-      uut.flushIfNecessary(Signal.catchup());
-      verify(uut).doFlush();
-    }
-
-    @Test
-    void flushesOnComplete() {
-      uut.flushIfNecessary(Signal.complete());
-      verify(uut).doFlush();
-    }
-
-    @Test
-    void flushesOnError() {
-      uut.flushIfNecessary(Signal.of(new IOException("buh")));
-      verify(uut).doFlush();
-    }
-
-    //
-    @Test
-    void doesNotFLushOnFact() {
-      @NonNull Fact fact = new TestFact();
-      uut.flushIfNecessary(Signal.of(fact));
-      verify(uut).flushIfNecessary(any());
-      verifyNoMoreInteractions(uut);
-    }
-
-    @Test
-    void flushesOnFlush() {
-      uut.flushIfNecessary(Signal.flush());
-      verify(uut).doFlush();
-    }
-  }
 }
