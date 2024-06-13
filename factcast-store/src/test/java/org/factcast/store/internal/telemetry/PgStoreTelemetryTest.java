@@ -18,17 +18,30 @@ package org.factcast.store.internal.telemetry;
 import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
+import java.util.concurrent.ExecutorService;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.store.internal.PgMetrics;
 import org.junit.jupiter.api.Test;
 
 class PgStoreTelemetryTest {
 
   @Test
-  void setsEventBusOnConstruction() {
+  void setsEventBusOnConstructionWithMetrics() {
+    var metrics = mock(PgMetrics.class);
+    when(metrics.monitor(any(ExecutorService.class), eq("telemetry")))
+        .thenReturn(mock(ExecutorService.class));
+
+    new PgStoreTelemetry(metrics);
+
+    verify(metrics).monitor(any(ExecutorService.class), eq("telemetry"));
+  }
+
+  @Test
+  void delegatesRegistrationToEventBus() {
     var eventBus = mock(EventBus.class);
     var listener = new Object();
-
     var uut = new PgStoreTelemetry(eventBus);
+
     uut.register(listener);
 
     verify(eventBus).register(listener);

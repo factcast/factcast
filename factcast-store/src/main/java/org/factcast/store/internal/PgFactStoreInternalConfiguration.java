@@ -96,8 +96,10 @@ public class PgFactStoreInternalConfiguration {
 
   @Bean
   @ConditionalOnMissingBean(EventBus.class)
-  public EventBus eventBus() {
-    return new AsyncEventBus(getClass().getSimpleName(), Executors.newCachedThreadPool());
+  public EventBus eventBus(@NonNull PgMetrics metrics) {
+    return new AsyncEventBus(
+        getClass().getSimpleName(),
+        metrics.monitor(Executors.newCachedThreadPool(), "pg-listener"));
   }
 
   @Bean
@@ -122,8 +124,8 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
-  public PgStoreTelemetry telemetry() {
-    return new PgStoreTelemetry();
+  public PgStoreTelemetry telemetry(@NonNull PgMetrics metrics) {
+    return new PgStoreTelemetry(metrics);
   }
 
   @Bean
