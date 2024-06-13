@@ -15,28 +15,33 @@
  */
 package org.factcast.store.internal.telemetry;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.store.internal.PgMetrics;
 
 @Slf4j
 public final class PgStoreTelemetry {
 
   private final EventBus eventBus;
 
-  public PgStoreTelemetry() {
-    this(
-        new AsyncEventBus(
-            PgStoreTelemetry.class.getSimpleName(),
-            // needs to be a singleThread executor to ensure that the order of events is
-            // respected
-            Executors.newSingleThreadExecutor()));
+  public PgStoreTelemetry(@NonNull PgMetrics metrics) {
+    // needs to be a singleThread executor to ensure that the order of events is respected
+    this(metrics.monitor(Executors.newSingleThreadExecutor(), "telemetry"));
   }
 
-  public PgStoreTelemetry(@NonNull EventBus eventBus) {
+  @VisibleForTesting
+  PgStoreTelemetry(@NonNull ExecutorService executorService) {
+    this(new AsyncEventBus(PgStoreTelemetry.class.getSimpleName(), executorService));
+  }
+
+  @VisibleForTesting
+  PgStoreTelemetry(@NonNull EventBus eventBus) {
     this.eventBus = eventBus;
   }
 
