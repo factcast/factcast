@@ -48,17 +48,17 @@ public class JsonPayload {
 
   public void set(@NonNull String path, Object value) {
     documentContext().set(path, value);
-    resetPathReturningContent();
+    resetPathReturningContext();
   }
 
   public void add(@NonNull String path, Object value) {
     documentContext().add(path, value);
-    resetPathReturningContent();
+    resetPathReturningContext();
   }
 
   public void remove(@NonNull String path) {
     documentContext().delete(path);
-    resetPathReturningContent();
+    resetPathReturningContext();
   }
 
   private synchronized DocumentContext documentContext() {
@@ -81,7 +81,7 @@ public class JsonPayload {
    * because the underlying json might change its structure (remove keys, new keys) and plugins
    * further down the road might access non exisiting paths.
    */
-  private void resetPathReturningContent() {
+  private void resetPathReturningContext() {
     pathReturningDocumentContext = null;
   }
 
