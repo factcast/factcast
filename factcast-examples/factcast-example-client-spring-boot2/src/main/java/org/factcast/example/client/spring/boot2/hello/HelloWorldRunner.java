@@ -22,6 +22,7 @@ import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -61,13 +62,33 @@ public class HelloWorldRunner implements CommandLineRunner {
     fc.subscribe(
             SubscriptionRequest.catchup(FactSpec.ns("users").type("UserCreated").version(3))
                 .fromScratch(),
-            element -> System.out.println(element))
+            System.out::println)
         .awaitCatchup();
 
     fc.subscribe(
             SubscriptionRequest.catchup(FactSpec.ns("users").type("UserCreated").version(1))
                 .fromScratch(),
-            element -> System.out.println(element))
+            System.out::println)
         .awaitCatchup();
+
+    // Follow subscription
+    Subscription followSub =
+        fc.subscribe(
+            SubscriptionRequest.follow(FactSpec.ns("users").type("UserCreated").version(3))
+                .fromScratch(),
+            System.out::println);
+
+    Fact anotherFact =
+        Fact.builder()
+            .ns("users")
+            .type("UserCreated")
+            .version(3)
+            .id(UUID.randomUUID())
+            .build(
+                "{\"firstName\":\"John\",\"lastName\":\"Wayne\",\"salutation\":\"Mr\",\"displayName\":\"JW\"}");
+    fc.publish(anotherFact);
+    System.out.println("published " + anotherFact);
+
+    followSub.awaitCatchup(5000).close();
   }
 }
