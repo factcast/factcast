@@ -31,8 +31,8 @@ import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 class GrpcStubsImpl implements GrpcStubs {
 
   private final @NonNull Channel channel;
-  private final Metadata meta;
-  private final CallCredentials basic;
+  private final @NonNull Metadata meta;
+  private final @Nullable CallCredentials basic;
   private RemoteFactStoreGrpc.RemoteFactStoreBlockingStub compressedBlocking;
   private RemoteFactStoreGrpc.RemoteFactStoreBlockingStub uncompressedBlocking;
   private RemoteFactStoreGrpc.RemoteFactStoreStub compressedNonBlocking;
@@ -51,18 +51,20 @@ class GrpcStubsImpl implements GrpcStubs {
 
   @NonNull
   private RemoteFactStoreGrpc.RemoteFactStoreBlockingStub createBlockingStub() {
+    ClientInterceptor clientInterceptor = MetadataUtils.newAttachHeadersInterceptor(meta);
     RemoteFactStoreGrpc.RemoteFactStoreBlockingStub stub =
         RemoteFactStoreGrpc.newBlockingStub(channel);
     if (basic != null) stub = stub.withCallCredentials(basic);
-    return stub;
+    return stub.withInterceptors(clientInterceptor);
   }
 
   @NonNull
   private RemoteFactStoreGrpc.RemoteFactStoreStub createStub() {
+    ClientInterceptor clientInterceptor = MetadataUtils.newAttachHeadersInterceptor(meta);
     RemoteFactStoreGrpc.RemoteFactStoreStub remoteFactStoreStub =
         RemoteFactStoreGrpc.newStub(channel);
     if (basic != null) remoteFactStoreStub = remoteFactStoreStub.withCallCredentials(basic);
-    return remoteFactStoreStub;
+    return remoteFactStoreStub.withInterceptors(clientInterceptor);
   }
 
   @Override
@@ -85,11 +87,10 @@ class GrpcStubsImpl implements GrpcStubs {
 
   @Override
   public void resetStubs() {
-    ClientInterceptor clientInterceptor = MetadataUtils.newAttachHeadersInterceptor(meta);
-
-    uncompressedBlocking = createBlockingStub().withInterceptors(clientInterceptor);
-    compressedBlocking = createBlockingStub().withInterceptors(clientInterceptor);
-    compressedNonBlocking = createStub().withInterceptors(clientInterceptor);
+    uncompressedBlocking = createBlockingStub();
+    // do not use compression until setCompression was called
+    compressedBlocking = uncompressedBlocking;
+    compressedNonBlocking = createStub();
   }
 
   @Override
