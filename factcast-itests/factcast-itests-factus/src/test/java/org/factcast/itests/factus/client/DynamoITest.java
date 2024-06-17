@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.FactStreamPosition;
@@ -188,7 +189,7 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
     int stateModifications = 0;
 
     @Override
-    public void factStreamPosition(FactStreamPosition factStreamPosition) {
+    public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {
       stateModifications++;
       super.factStreamPosition(factStreamPosition);
     }
@@ -203,7 +204,7 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
     int stateModifications = 0;
 
     @Override
-    public void factStreamPosition(FactStreamPosition factStreamPosition) {
+    public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {
       System.out.println(factStreamPosition);
       stateModifications++;
       super.factStreamPosition(factStreamPosition);

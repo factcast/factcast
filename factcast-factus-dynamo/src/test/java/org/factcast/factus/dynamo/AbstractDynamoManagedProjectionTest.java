@@ -123,7 +123,7 @@ class AbstractDynamoManagedProjectionTest {
 
     @Test
     @SneakyThrows
-    void TokenIsValidAndMaxWaitShorterThanLeaseDuration() {
+    void tokenIsValidAndMaxWaitShorterThanLeaseDuration() {
       Duration maxWaitDuration = Duration.ofSeconds(7);
       LockItem lock = mock(LockItem.class);
       when(lock.isExpired()).thenReturn(false);
@@ -133,12 +133,7 @@ class AbstractDynamoManagedProjectionTest {
 
       verify(lockClient).tryAcquireLock(captor.capture());
       assertThat(captor.getValue())
-          .isEqualTo(
-              AcquireLockOptions.builder(SCOPED_NAME + "_lock")
-                  // maxWait is applied on top of leaseDuration period.
-                  .withAdditionalTimeToWaitForLock(0L)
-                  .withTimeUnit(TimeUnit.SECONDS)
-                  .build());
+          .isEqualTo(AcquireLockOptions.builder(SCOPED_NAME + "_lock").build());
 
       assertThat(res.isValid()).isTrue();
     }
@@ -198,6 +193,7 @@ class AbstractDynamoManagedProjectionTest {
     }
   }
 
+  @SuppressWarnings("deprecation")
   @ProjectionMetaData(revision = 1)
   static class TestProjection extends AbstractDynamoManagedProjection {
 
