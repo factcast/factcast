@@ -16,6 +16,7 @@
 package org.factcast.factus.spring.tx;
 
 import org.factcast.factus.projection.ExternalizedProjection;
+import org.factcast.factus.projection.tx.TransactionAware;
 
 @SpringTransactional
-public interface SpringTxProjection extends ExternalizedProjection {}
+public interface SpringTxProjection extends ExternalizedProjection, TransactionAware {}
