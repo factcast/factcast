@@ -15,7 +15,6 @@
  */
 package org.factcast.core.subscription.observer;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Lists;

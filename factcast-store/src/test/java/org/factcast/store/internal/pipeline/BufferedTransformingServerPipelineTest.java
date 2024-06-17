@@ -46,7 +46,6 @@ public class BufferedTransformingServerPipelineTest {
   @Nested
   class BufferingMode {
     @Mock private TransformationRequest transformationRequest;
-    @Mock private TransformationRequest transformationRequest2;
 
     @Mock private Fact fact;
 
@@ -84,14 +83,11 @@ public class BufferedTransformingServerPipelineTest {
       final var noopFact = mock(Fact.class);
       final var factToTransform2 = mock(Fact.class);
 
-      TransformationRequest transformationRequest =
-          new TransformationRequest(factToTransform, Set.of(1));
-      TransformationRequest transformationRequest2 =
-          new TransformationRequest(factToTransform2, Set.of(1));
-      when(transformers.prepareTransformation(any()))
-          .thenReturn(transformationRequest, null, transformationRequest2, null, null);
+      TransformationRequest t1 = new TransformationRequest(factToTransform, Set.of(1));
+      TransformationRequest t2 = new TransformationRequest(factToTransform2, Set.of(1));
+      when(transformers.prepareTransformation(any())).thenReturn(t1, null, t2, null, null);
 
-      when(service.transform(List.of(transformationRequest, transformationRequest2)))
+      when(service.transform(List.of(t1, t2)))
           .thenReturn(List.of(factToTransform, factToTransform2));
 
       uut.process(Signal.of(factToTransform));
@@ -104,7 +100,7 @@ public class BufferedTransformingServerPipelineTest {
       uut.process(Signal.of(noopFact));
 
       verify(parent, times(5)).process(any(Signal.FactSignal.class));
-      verify(service).transform(List.of(transformationRequest, transformationRequest2));
+      verify(service).transform(List.of(t1, t2));
     }
 
     @Test
@@ -113,15 +109,11 @@ public class BufferedTransformingServerPipelineTest {
       final var noopFact = mock(Fact.class);
       final var factToTransform2 = mock(Fact.class);
 
-      TransformationRequest transformationRequest =
-          new TransformationRequest(factToTransform, Set.of(1));
-      TransformationRequest transformationRequest2 =
-          new TransformationRequest(factToTransform2, Set.of(1));
-      when(transformers.prepareTransformation(any()))
-          .thenReturn(transformationRequest, null, transformationRequest2, null, null);
+      TransformationRequest t1 = new TransformationRequest(factToTransform, Set.of(1));
+      TransformationRequest t2 = new TransformationRequest(factToTransform2, Set.of(1));
+      when(transformers.prepareTransformation(any())).thenReturn(t1, null, t2, null, null);
 
-      when(service.transform(List.of(transformationRequest, transformationRequest2)))
-          .thenThrow(new TransformationException("bad luck"));
+      when(service.transform(List.of(t1, t2))).thenThrow(new TransformationException("bad luck"));
 
       uut.process(Signal.of(factToTransform));
       verifyNoInteractions(parent);

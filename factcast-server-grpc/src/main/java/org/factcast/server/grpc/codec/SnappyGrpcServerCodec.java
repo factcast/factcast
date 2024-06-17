@@ -24,7 +24,9 @@ import net.devh.boot.grpc.common.codec.GrpcCodec;
 import org.xerial.snappy.SnappyInputStream;
 import org.xerial.snappy.SnappyOutputStream;
 
+@SuppressWarnings("DeprecatedIsStillUsed")
 @GrpcCodec(advertised = true, codecType = CodecType.ALL)
+@Deprecated
 public class SnappyGrpcServerCodec implements Codec {
 
   @Override

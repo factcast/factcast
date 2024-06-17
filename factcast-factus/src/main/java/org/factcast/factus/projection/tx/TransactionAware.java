@@ -34,8 +34,5 @@ public interface TransactionAware extends FactStreamPositionAware {
    */
   void rollback() throws TransactionException;
 
-  /** defaults to 1000 */
-  default int maxBatchSizePerTransaction() {
-    return 1000;
-  }
+  int maxBatchSizePerTransaction();
 }

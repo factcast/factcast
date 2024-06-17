@@ -32,9 +32,12 @@ public class CompressionCodecs {
 
   private final String orderedListOfAvailableCodecsAsString;
 
+  // lz4c/snappyc originate from commons.compress, see dedicated modules.
+  private static final String[] AVAIL_CODECS = {"lz4c", "snappyc", "lz4", "snappy", "gzip"};
+
   public CompressionCodecs() {
     orderedListOfAvailableCodecs =
-        Stream.of("lz4", "snappy", "gzip")
+        Stream.of(AVAIL_CODECS)
             .filter(CompressionCodecs::locallyAvailable)
             .collect(Collectors.toList());
     orderedListOfAvailableCodecsAsString = String.join(",", orderedListOfAvailableCodecs);

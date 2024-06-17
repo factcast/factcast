@@ -20,6 +20,7 @@ import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Lists;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -28,6 +29,7 @@ import lombok.Data;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.Value;
+import lombok.experimental.Delegate;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Maps;
 import org.factcast.core.*;
@@ -37,14 +39,17 @@ import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.*;
 import org.factcast.factus.event.DefaultEventSerializer;
 import org.factcast.factus.event.EventSerializer;
+import org.factcast.factus.projection.FactStreamPositionAware;
 import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projection.parameter.HandlerParameterContributors;
-import org.factcast.factus.projection.tx.AbstractOpenTransactionAwareProjection;
-import org.factcast.factus.projection.tx.TransactionAware;
+import org.factcast.factus.projection.tx.OpenTransactionAware;
+import org.factcast.factus.projection.tx.TransactionAdapter;
+import org.factcast.factus.projection.tx.TransactionBehavior;
 import org.factcast.factus.projector.ProjectorImpl.ReflectionTools;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+@SuppressWarnings("deprecation")
 class ProjectorImplTest {
 
   private final DefaultEventSerializer eventSerializer =
@@ -618,9 +623,13 @@ class ProjectorImplTest {
 
   interface SomeTransactionInterface {}
 
-  class TransactionalProjection
-      extends AbstractOpenTransactionAwareProjection<SomeTransactionInterface>
-      implements TransactionAware {
+  static class TransactionalProjection
+      implements OpenTransactionAware, TransactionAdapter<SomeTransactionInterface>, Projection {
+    @Delegate private final TransactionBehavior<SomeTransactionInterface> transactionalBehavior;
+
+    TransactionalProjection() {
+      transactionalBehavior = new TransactionBehavior<>(this);
+    }
 
     @HandlerFor(ns = "default", type = "test")
     void apply(Fact f) {}
@@ -635,7 +644,7 @@ class ProjectorImplTest {
     public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {}
 
     @Override
-    protected @NonNull SomeTransactionInterface beginNewTransaction() {
+    public @NonNull SomeTransactionInterface beginNewTransaction() {
       return new SomeTransactionInterface() {
         @Override
         public int hashCode() {
@@ -645,10 +654,10 @@ class ProjectorImplTest {
     }
 
     @Override
-    protected void rollback(@NonNull SomeTransactionInterface runningTransaction) {}
+    public void rollback(@NonNull SomeTransactionInterface runningTransaction) {}
 
     @Override
-    protected void commit(@NonNull SomeTransactionInterface runningTransaction) {}
+    public void commit(@NonNull SomeTransactionInterface runningTransaction) {}
   }
 
   @Test
@@ -691,6 +700,67 @@ class ProjectorImplTest {
       TransactionalProjection projection = spy(new TransactionalProjection());
       Assertions.assertThat(ReflectionTools.getTypeParameter(projection))
           .isSameAs(SomeTransactionInterface.class);
+    }
+  }
+
+  @Nested
+  class WhenApplyingToFSPAwareNonTx {
+
+    class FSAProjection implements FactStreamPositionAware, Projection {
+      private FactStreamPosition p;
+
+      @Nullable
+      @Override
+      public FactStreamPosition factStreamPosition() {
+        return p;
+      }
+
+      @Override
+      public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {
+        this.p = factStreamPosition;
+      }
+
+      @HandlerFor(ns = "test", type = "test")
+      void apply(Fact f) {
+        if (f.header().meta().containsKey("pleaseThrow"))
+          throw new RuntimeException("you asked me to");
+      }
+    }
+
+    @Test
+    void hasFSPosSetToFactBeforeErrorOccured() {
+      Fact f1 = Fact.builder().ns("test").type("test").build("");
+      Fact f2 = Fact.builder().ns("test").type("test").build("");
+      Fact f3 = Fact.builder().ns("test").type("test").meta("pleaseThrow", "").build("");
+      Fact f4 = Fact.builder().ns("test").type("test").build("");
+
+      ArrayList<Fact> facts = Lists.newArrayList(f1, f2, f3, f4);
+
+      FSAProjection projection = new FSAProjection();
+      ProjectorImpl<Projection> uut = new ProjectorImpl<>(projection, eventSerializer);
+      assertThatThrownBy(
+              () -> {
+                uut.apply(facts);
+              })
+          .isInstanceOf(Exception.class);
+
+      Assertions.assertThat(projection.factStreamPosition()).isEqualTo(FactStreamPosition.from(f2));
+    }
+
+    @Test
+    void hasFSPosSetOnEveryApply() {
+      Fact f1 = Fact.builder().ns("test").type("test").build("");
+      Fact f2 = Fact.builder().ns("test").type("test").build("");
+      Fact f3 = Fact.builder().ns("test").type("test").build("");
+      Fact f4 = Fact.builder().ns("test").type("test").build("");
+
+      ArrayList<Fact> facts = Lists.newArrayList(f1, f2, f3, f4);
+
+      FSAProjection projection = spy(new FSAProjection());
+      ProjectorImpl<Projection> uut = new ProjectorImpl<>(projection, eventSerializer);
+      uut.apply(facts);
+
+      verify(projection, times(4)).factStreamPosition(any());
     }
   }
 }

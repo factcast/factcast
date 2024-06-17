@@ -15,8 +15,7 @@
  */
 package org.factcast.store.internal.pipeline;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
 
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;

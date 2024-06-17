@@ -57,7 +57,7 @@ public class PgFetchingCatchup implements PgCatchup {
   @Override
   public void run() {
 
-    PgConnection connection = connectionSupplier.get();
+    PgConnection connection = connectionSupplier.get(req.debugInfo());
     connection.setAutoCommit(false); // necessary for using cursors
 
     // connection may stay open quite a while, and we do not want a CPool to interfere

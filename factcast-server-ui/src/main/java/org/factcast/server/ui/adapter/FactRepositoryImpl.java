@@ -112,7 +112,10 @@ public class FactRepositoryImpl implements FactRepository {
       request = sr.fromScratch();
     }
 
-    try (Subscription subscription = fs.subscribe(SubscriptionRequestTO.from(request), obs)) {
+    final SubscriptionRequestTO requestTO = SubscriptionRequestTO.forFacts(request);
+    setDebugInfo(requestTO);
+
+    try (Subscription subscription = fs.subscribe(requestTO, obs)) {
       subscription.awaitCatchup();
     } catch (Exception e) {
       // in case the limit is reached, it makes no sense to stream the rest of the
@@ -125,6 +128,10 @@ public class FactRepositoryImpl implements FactRepository {
       }
     }
     return obs.list();
+  }
+
+  private void setDebugInfo(SubscriptionRequestTO req) {
+    req.debugInfo(securityService.getAuthenticatedUser().getUsername());
   }
 
   @Override

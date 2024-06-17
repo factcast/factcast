@@ -15,8 +15,7 @@
  */
 package org.factcast.factus.projection.parameter;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
 
 import java.lang.annotation.Annotation;
 import java.util.Iterator;
