@@ -15,44 +15,14 @@
  */
 package org.factcast.client.grpc;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.google.common.collect.Sets;
 import io.grpc.*;
-import java.io.IOException;
-import java.time.Duration;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.*;
-import lombok.NonNull;
-import org.assertj.core.util.Lists;
-import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
-import org.factcast.core.Fact;
-import org.factcast.core.FactValidationException;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
-import org.factcast.core.spec.FactSpec;
-import org.factcast.core.store.RetryableException;
-import org.factcast.core.store.StateToken;
-import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.grpc.api.Capabilities;
-import org.factcast.grpc.api.ConditionalPublishRequest;
-import org.factcast.grpc.api.Headers;
-import org.factcast.grpc.api.StateForRequest;
-import org.factcast.grpc.api.conv.ProtoConverter;
-import org.factcast.grpc.api.conv.ProtocolVersion;
-import org.factcast.grpc.api.conv.ServerConfig;
-import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.FactStoreProto.*;
-import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
-import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -60,930 +30,947 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class GrpcFactStoreTest {
-
-  @Mock(strictness = Mock.Strictness.LENIENT)
-  FactCastGrpcClientProperties properties;
-
-  @Mock(answer = Answers.RETURNS_DEEP_STUBS, strictness = Mock.Strictness.LENIENT)
-  RemoteFactStoreBlockingStub blockingStub;
-
-  @Mock(answer = Answers.RETURNS_DEEP_STUBS, strictness = Mock.Strictness.LENIENT)
-  RemoteFactStoreStub stub;
-
-  @Mock Channel channel;
-
-  @Mock(strictness = Mock.Strictness.LENIENT)
-  FactCastGrpcStubsFactory stubsFactory;
-
-  ProtoConverter conv = new ProtoConverter();
-
-  @Captor ArgumentCaptor<MSG_Facts> factsCap;
-
-  @Mock public Optional<String> credentials;
-  private GrpcFactStore uut;
-  private ResilienceConfiguration resilienceConfig = new ResilienceConfiguration();
-
-  @BeforeEach
-  public void setup() {
-    when(properties.getResilience()).thenReturn(resilienceConfig);
-    resilienceConfig.setEnabled(false);
-    // setup stubs
-    when(stubsFactory.createStub(channel)).thenReturn(stub);
-    when(stubsFactory.createBlockingStub(channel)).thenReturn(blockingStub);
-    when(stub.withWaitForReady()).thenReturn(stub);
-    when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
-
-    uut = new GrpcFactStore(channel, stubsFactory, credentials, properties, "someTest");
-
-    // mock initialization
-    when(blockingStub.withCallCredentials(any())).thenReturn(blockingStub);
-    when(stub.withCallCredentials(any())).thenReturn(stub);
-    when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
-    when(stub.withInterceptors(any())).thenReturn(stub);
-    when(blockingStub.handshake(any()))
-        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
-  }
-
-  @Test
-  void testPublish() {
-    when(blockingStub.publish(factsCap.capture())).thenReturn(MSG_Empty.newBuilder().build());
-    TestFact fact = new TestFact();
-    uut.publish(Collections.singletonList(fact));
-    verify(blockingStub).publish(any());
-    MSG_Facts pfacts = factsCap.getValue();
-    Fact published = conv.fromProto(pfacts.getFact(0));
-    assertEquals(fact.id(), published.id());
-  }
-
-  @Test
-  void configureCompressionChooseGzipIfAvail() {
-    Map<String, String> serverProps = new HashMap<>();
-    serverProps.put(Capabilities.CODECS.toString(), " gzip,lz3,lz4, lz99");
-    when(blockingStub.handshake(any()))
-        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, serverProps)));
-    uut.reset();
-    uut.initializeIfNecessary();
-    verify(stub).withCompression("gzip");
-  }
-
-  @Test
-  void configureCompressionSkipCompression() {
-    Map<String, String> serverProps = new HashMap<>();
-    serverProps.put(Capabilities.CODECS.toString(), "zip,lz3,lz4, lz99");
-    when(blockingStub.handshake(any()))
-        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, serverProps)));
-    uut.reset();
-    uut.initializeIfNecessary();
-    verify(stub, never()).withCompression(anyString());
-  }
-
-  @Test
-  void configureWithFastForwardEnabled() {
-    when(properties.isEnableFastForward()).thenReturn(true);
-    Metadata meta = uut.prepareMetaData("lz4");
-    assertThat(meta.containsKey(Headers.FAST_FORWARD)).isTrue();
-  }
-
-  @Test
-  void configureWithFastForwardDisabled() {
-    when(properties.isEnableFastForward()).thenReturn(false);
-    Metadata meta = uut.prepareMetaData("lz4");
-    assertThat(meta.containsKey(Headers.FAST_FORWARD)).isFalse();
-  }
-
-  @Test
-  void configureWithBatchSize1() {
-    when(properties.getCatchupBatchsize()).thenReturn(1);
-    Metadata meta = uut.prepareMetaData("lz4");
-    assertThat(meta.containsKey(Headers.CATCHUP_BATCHSIZE)).isFalse();
-  }
-
-  @Test
-  void configureWithBatchSize10() {
-    when(properties.getCatchupBatchsize()).thenReturn(10);
-    Metadata meta = uut.prepareMetaData("lz4");
-    assertThat(meta.get(Headers.CATCHUP_BATCHSIZE)).isEqualTo(String.valueOf(10));
-  }
-
-  @Test
-  void fetchById() {
-    TestFact fact = new TestFact();
-    UUID uuid = fact.id();
-    conv = new ProtoConverter();
-    @NonNull FactStoreProto.MSG_UUID id = conv.toProto(uuid);
-    when(blockingStub.fetchById(eq(id)))
-        .thenReturn(
-            MSG_OptionalFact.newBuilder().setFact(conv.toProto(fact)).setPresent(true).build());
-
-    Optional<Fact> result = uut.fetchById(fact.id());
-    assertThat(result).isPresent();
-    assertThat(result.get().id()).isEqualTo(uuid);
-  }
-
-  @Test
-  void fetchByIdAndVersion() {
-    TestFact fact = new TestFact();
-    UUID uuid = fact.id();
-    conv = new ProtoConverter();
-    @NonNull FactStoreProto.MSG_UUID_AND_VERSION id = conv.toProto(uuid, 100);
-    when(blockingStub.fetchByIdAndVersion(eq(id)))
-        .thenReturn(
-            MSG_OptionalFact.newBuilder().setFact(conv.toProto(fact)).setPresent(true).build());
-
-    Optional<Fact> result = uut.fetchByIdAndVersion(fact.id(), 100);
-    assertThat(result).isPresent();
-    assertThat(result.get().id()).isEqualTo(uuid);
-  }
-
-  @Test
-  void fetchByIdThrowsRetryable() {
-    TestFact fact = new TestFact();
-    UUID uuid = fact.id();
-    @NonNull FactStoreProto.MSG_UUID id = conv.toProto(uuid);
-    when(blockingStub.fetchById(eq(id))).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
-
-    assertThatThrownBy(() -> uut.fetchById(fact.id())).isInstanceOf(RetryableException.class);
-  }
-
-  @Test
-  void fetchByIdAndVersionThrowsRetryable() {
-    TestFact fact = new TestFact();
-    UUID uuid = fact.id();
-    @NonNull FactStoreProto.MSG_UUID_AND_VERSION id = conv.toProto(uuid, 100);
-    when(blockingStub.fetchByIdAndVersion(eq(id)))
-        .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
-
-    assertThatThrownBy(() -> uut.fetchByIdAndVersion(fact.id(), 100))
-        .isInstanceOf(RetryableException.class);
-  }
-
-  static class SomeException extends RuntimeException {
-
-    static final long serialVersionUID = 1L;
-  }
-
-  @Test
-  void testPublishPropagatesException() {
-    when(blockingStub.publish(any())).thenThrow(new SomeException());
-    assertThrows(
-        SomeException.class,
-        () -> uut.publish(Collections.singletonList(Fact.builder().build("{}"))));
-  }
-
-  @Test
-  void testPublishPropagatesRetryableExceptionOnUnavailableStatus() {
-    when(blockingStub.publish(any())).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
-    assertThrows(
-        RetryableException.class,
-        () -> uut.publish(Collections.singletonList(Fact.builder().build("{}"))));
-  }
-
-  @Test
-  void testCancelNotRetryableExceptionOnUnavailableStatus() {
-    ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = mock(ClientCall.class);
-    doThrow(new StatusRuntimeException(Status.UNAVAILABLE)).when(call).cancel(any(), any());
-    assertThrows(StatusRuntimeException.class, () -> uut.cancel(call));
-  }
-
-  @Test
-  void testSerialOfPropagatesRetryableExceptionOnUnavailableStatus() {
-    when(blockingStub.serialOf(any())).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
-    assertThrows(RetryableException.class, () -> uut.serialOf(mock(UUID.class)));
-  }
-
-  @Test
-  void testSerialOf() {
-    OptionalLong seven = OptionalLong.of(7);
-    when(blockingStub.serialOf(any())).thenReturn(conv.toProto(seven));
-
-    OptionalLong response = uut.serialOf(mock(UUID.class));
-
-    assertEquals(seven, response);
-    assertNotSame(seven, response);
-  }
-
-  @Test
-  void testInitializePropagatesIncompatibleProtocolVersionsOnUnavailableStatus() {
-    Mockito.reset(blockingStub); // so that re can redefine the handshake behavior,
-    // which was set to returning a correct version in setup()
-    when(blockingStub.handshake(any())).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
-    uut.reset();
-    assertThrows(IncompatibleProtocolVersions.class, () -> uut.initializeIfNecessary());
-  }
-
-  @Test
-  void testEnumerateNamespacesPropagatesRetryableExceptionOnUnavailableStatus() {
-    when(blockingStub.enumerateNamespaces(any()))
-        .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
-    assertThrows(RetryableException.class, () -> uut.enumerateNamespaces());
-  }
-
-  @Test
-  void testEnumerateNamespaces() {
-    HashSet<String> ns = Sets.newHashSet("foo", "bar");
-    when(blockingStub.enumerateNamespaces(conv.empty())).thenReturn(conv.toProto(ns));
-    Set<String> enumerateNamespaces = uut.enumerateNamespaces();
-    assertEquals(ns, enumerateNamespaces);
-    assertNotSame(ns, enumerateNamespaces);
-  }
-
-  @Test
-  void testEnumerateTypesPropagatesRetryableExceptionOnUnavailableStatus() {
-    when(blockingStub.enumerateTypes(any()))
-        .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
-    assertThrows(RetryableException.class, () -> uut.enumerateTypes("ns"));
-  }
-
-  @Test
-  void testEnumerateTypes() {
-    HashSet<String> types = Sets.newHashSet("foo", "bar");
-    when(blockingStub.enumerateTypes(any())).thenReturn(conv.toProto(types));
-    Set<String> enumerateTypes = uut.enumerateTypes("ns");
-    assertEquals(types, enumerateTypes);
-    assertNotSame(types, enumerateTypes);
-  }
-
-  @Test
-  void testCompatibleProtocolVersion() {
-    when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
-    when(blockingStub.handshake(any()))
-        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
-    uut.reset();
-    uut.initializeIfNecessary();
-  }
-
-  @Test
-  void testIncompatibleProtocolVersion() {
-    when(blockingStub.handshake(any()))
-        .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(99, 0, 0), new HashMap<>())));
-    uut.reset();
-    assertThrows(IncompatibleProtocolVersions.class, () -> uut.initializeIfNecessary());
-  }
-
-  @Test
-  void testInitializationExecutesHandshakeOnlyOnce() {
-    when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
-    when(blockingStub.handshake(any()))
-        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
-    uut.reset();
-    uut.initializeIfNecessary();
-    uut.initializeIfNecessary();
-    verify(blockingStub, times(1)).handshake(any());
-  }
-
-  @Test
-  void testWrapRetryable_nonRetryable() {
-    StatusRuntimeException cause = new StatusRuntimeException(Status.ALREADY_EXISTS);
-    RuntimeException e = ClientExceptionHelper.from(cause);
-    assertTrue(e instanceof StatusRuntimeException);
-    assertSame(e, cause);
-  }
-
-  @Test
-  void testWrapRetryable() {
-    StatusRuntimeException cause = new StatusRuntimeException(Status.UNAVAILABLE);
-    RuntimeException e = ClientExceptionHelper.from(cause);
-    assertTrue(e instanceof RetryableException);
-    assertSame(e.getCause(), cause);
-  }
-
-  @Test
-  void testCancelIsPropagated() {
-    ClientCall call = mock(ClientCall.class);
-    uut.cancel(call);
-    verify(call).cancel(any(), any());
-  }
-
-  @Test
-  void testCancelIsNotRetryable() {
-    ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = mock(ClientCall.class);
-    doThrow(StatusRuntimeException.class).when(call).cancel(any(), any());
-    try {
-      uut.cancel(call);
-      fail();
-    } catch (Throwable e) {
-      assertTrue(e instanceof StatusRuntimeException);
-      assertFalse(e instanceof RetryableException);
-    }
-  }
-
-  @Test
-  void testInvalidate() {
-    assertThrows(NullPointerException.class, () -> uut.invalidate(null));
-
-    {
-      UUID id = new UUID(0, 1);
-      StateToken token = new StateToken(id);
-      uut.invalidate(token);
-      verify(blockingStub).invalidate(eq(conv.toProto(id)));
-    }
-
-    {
-      when(blockingStub.invalidate(any()))
-          .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
-
-      UUID id = new UUID(0, 1);
-      StateToken token = new StateToken(id);
-      try {
-        uut.invalidate(token);
-        fail();
-      } catch (RetryableException expected) {
-      }
-    }
-  }
-
-  @Test
-  void testStateForPositive() {
-
-    UUID id = new UUID(0, 1);
-    StateForRequest req = new StateForRequest(Lists.emptyList(), "foo");
-    when(blockingStub.stateFor(any())).thenReturn(conv.toProto(id));
-    List<FactSpec> list = Arrays.asList(FactSpec.ns("foo").aggId(id));
-    uut.stateFor(list);
-    verify(blockingStub).stateForSpecsJson(conv.toProtoFactSpecs(list));
-  }
-
-  @Test
-  void testStateForNegative() {
-    when(blockingStub.stateForSpecsJson(any()))
-        .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
-    try {
-      uut.stateFor(Lists.emptyList());
-      fail();
-    } catch (RetryableException expected) {
-    }
-  }
-
-  @Test
-  void testCurrentStateForPositive() {
-    uut.fastStateToken(true);
-    UUID id = new UUID(0, 1);
-    StateForRequest req = new StateForRequest(Lists.emptyList(), "foo");
-    when(blockingStub.currentStateForSpecsJson(any())).thenReturn(conv.toProto(id));
-    List<FactSpec> list = Arrays.asList(FactSpec.ns("foo").aggId(id));
-    uut.currentStateFor(list);
-    verify(blockingStub).currentStateForSpecsJson(conv.toProtoFactSpecs(list));
-  }
-
-  @Test
-  void testCurrentStateForNegative() {
-    uut.fastStateToken(true);
-    when(blockingStub.currentStateForSpecsJson(any()))
-        .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
-    try {
-      uut.currentStateFor(Lists.emptyList());
-      fail();
-    } catch (RetryableException expected) {
-    }
-  }
-
-  @Test
-  void testPublishIfUnchangedPositive() {
-
-    UUID id = new UUID(0, 1);
-    ConditionalPublishRequest req = new ConditionalPublishRequest(Lists.emptyList(), id);
-    when(blockingStub.publishConditional(any())).thenReturn(conv.toProto(true));
-
-    boolean publishIfUnchanged =
-        uut.publishIfUnchanged(Lists.emptyList(), Optional.of(new StateToken(id)));
-    assertThat(publishIfUnchanged).isTrue();
-
-    verify(blockingStub).publishConditional(conv.toProto(req));
-  }
-
-  @Test
-  void testPublishIfUnchangedNegative() {
-
-    UUID id = new UUID(0, 1);
-    when(blockingStub.publishConditional(any()))
-        .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
-    try {
-      uut.publishIfUnchanged(Lists.emptyList(), Optional.of(new StateToken(id)));
-      fail();
-    } catch (RetryableException expected) {
-    }
-  }
-
-  @Test
-  void testInternalSubscribe() {
-    assertThrows(
-        NullPointerException.class, () -> uut.subscribe(mock(SubscriptionRequestTO.class), null));
-    assertThrows(NullPointerException.class, () -> uut.internalSubscribe(null, null));
-    assertThrows(
-        NullPointerException.class, () -> uut.internalSubscribe(null, mock(FactObserver.class)));
-  }
-
-  @Test
-  void testSubscribeWithoutResilience() {
-
-    resilienceConfig.setEnabled(false);
-    SubscriptionRequestTO req =
-        new SubscriptionRequestTO(SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch());
-    Subscription s = uut.subscribe(req, element -> {});
-
-    assertThat(s).isInstanceOf(Subscription.class).isNotInstanceOf(ResilientGrpcSubscription.class);
-  }
-
-  @Test
-  void testSubscribeWithResilience() {
-
-    resilienceConfig.setEnabled(true);
-    SubscriptionRequestTO req =
-        new SubscriptionRequestTO(SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch());
-    Subscription s = uut.subscribe(req, element -> {});
-
-    assertThat(s).isInstanceOf(ResilientGrpcSubscription.class);
-  }
-
-  @Nested
-  class Credentials {
-    @Test
-    void testCredentialsWrongFormat() {
-      assertThrows(
-          IllegalArgumentException.class,
-          () ->
-              new GrpcFactStore(channel, stubsFactory, Optional.ofNullable("xyz"))
-                  .initializeIfNecessary());
-
-      assertThrows(
-          IllegalArgumentException.class,
-          () ->
-              new GrpcFactStore(channel, stubsFactory, Optional.ofNullable("x:y:z"))
-                  .initializeIfNecessary());
-
-      assertThat(new GrpcFactStore(channel, stubsFactory, Optional.ofNullable("xyz:abc")))
-          .isNotNull();
-    }
-
-    @Test
-    void testCredentialsRightFormat() {
-      assertThat(new GrpcFactStore(channel, stubsFactory, Optional.ofNullable("xyz:abc")))
-          .isNotNull();
-    }
-
-    @Test
-    void testNewCredentials() {
-      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
-      props.setUser("foo");
-      props.setPassword("bar");
-
-      GrpcFactStore uutNewCredentials =
-          new GrpcFactStore(channel, stubsFactory, Optional.empty(), props, "foo");
-      uutNewCredentials.initializeIfNecessary();
-
-      verify(blockingStub).withCallCredentials(any());
-      verify(stub).withCallCredentials(any());
-    }
-
-    @Test
-    void testNewCredentialsNoPassword() {
-      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
-      when(stub.withWaitForReady()).thenReturn(stub);
-
-      credentials = Optional.empty();
-      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
-      props.setUser("user");
-
-      GrpcFactStore uutNewCredentials =
-          new GrpcFactStore(channel, stubsFactory, credentials, props, "foo");
-
-      assertThrows(
-          IllegalArgumentException.class,
-          () -> {
-            uutNewCredentials.initializeIfNecessary();
-          });
-    }
-
-    @Test
-    void testNewCredentialsEmptyPassword() {
-      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
-      when(stub.withWaitForReady()).thenReturn(stub);
-
-      credentials = Optional.empty();
-      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
-      props.setUser("user");
-      props.setPassword("");
-
-      GrpcFactStore uutNewCredentials =
-          new GrpcFactStore(channel, stubsFactory, credentials, props, "foo");
-
-      assertThrows(
-          IllegalArgumentException.class,
-          () -> {
-            uutNewCredentials.initializeIfNecessary();
-          });
-    }
-
-    @Test
-    void testNewCredentialsNoUsername() {
-      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
-      when(stub.withWaitForReady()).thenReturn(stub);
-
-      credentials = Optional.empty();
-      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
-      props.setPassword("password");
-
-      GrpcFactStore uutNewCredentials =
-          new GrpcFactStore(channel, stubsFactory, credentials, props, "foo");
-
-      assertThrows(
-          IllegalArgumentException.class,
-          () -> {
-            uutNewCredentials.initializeIfNecessary();
-          });
-    }
-
-    @Test
-    void testNewCredentialsEmptyUsername() {
-      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
-      when(stub.withWaitForReady()).thenReturn(stub);
-
-      credentials = Optional.empty();
-      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
-      props.setUser("");
-      props.setPassword("password");
-
-      GrpcFactStore uutNewCredentials =
-          new GrpcFactStore(channel, stubsFactory, credentials, props, "foo");
-
-      assertThrows(
-          IllegalArgumentException.class,
-          () -> {
-            uutNewCredentials.initializeIfNecessary();
-          });
-    }
-
-    @Test
-    void testLegacyCredentials() {
-      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
-
-      GrpcFactStore uutLegacyCredentials =
-          new GrpcFactStore(channel, stubsFactory, Optional.ofNullable("xyz:abc"), props, "foo");
-      uutLegacyCredentials.initializeIfNecessary();
-
-      verify(blockingStub).withCallCredentials(any());
-      verify(stub).withCallCredentials(any());
-    }
-
-    @Test
-    void testLegacyCredentialsEmptyUsername() {
-      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
-      when(stub.withWaitForReady()).thenReturn(stub);
-
-      credentials = Optional.of(":abc");
-      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
-
-      GrpcFactStore uutLegacyCredentials =
-          new GrpcFactStore(channel, stubsFactory, credentials, props, "foo");
-
-      assertThrows(
-          IllegalArgumentException.class, () -> uutLegacyCredentials.initializeIfNecessary());
-    }
-
-    @Test
-    void testLegacyCredentialsEmptyPassword() {
-      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
-      when(stub.withWaitForReady()).thenReturn(stub);
-
-      credentials = Optional.of("xyz:");
-      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
-
-      GrpcFactStore uutLegacyCredentials =
-          new GrpcFactStore(channel, stubsFactory, credentials, props, "foo");
-
-      assertThrows(
-          IllegalArgumentException.class, () -> uutLegacyCredentials.initializeIfNecessary());
-    }
-  }
-
-  @Test
-  public void testCurrentTime() {
-    long l = 123L;
-    when(blockingStub.currentTime(conv.empty())).thenReturn(conv.toProtoTime(l));
-    Long t = uut.currentTime();
-    assertEquals(t, l);
-  }
-
-  @Test
-  void testCurrentTimePropagatesRetryableExceptionOnUnavailableStatus() {
-    when(blockingStub.currentTime(any())).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
-    assertThrows(RetryableException.class, () -> uut.currentTime());
-  }
-
-  @Test
-  void getSnapshotEmpty() {
-    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-    when(blockingStub.getSnapshot(eq(conv.toProto(id))))
-        .thenReturn(conv.toProtoSnapshot(Optional.empty()));
-    assertThat(uut.getSnapshot(id)).isEmpty();
-  }
-
-  @Test
-  void getSnapshotException() {
-    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-    when(blockingStub.getSnapshot(eq(conv.toProto(id))))
-        .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
-
-    assertThatThrownBy(() -> uut.getSnapshot(id)).isInstanceOf(RetryableException.class);
-  }
-
-  @Test
-  void getSnapshot() {
-    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-    Snapshot snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
-    when(blockingStub.getSnapshot(eq(conv.toProto(id))))
-        .thenReturn(conv.toProtoSnapshot(Optional.of(snap)));
-
-    assertThat(uut.getSnapshot(id)).isPresent().contains(snap);
-  }
-
-  @Test
-  void setSnapshotException() {
-    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-    Snapshot snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
-    when(blockingStub.setSnapshot(eq(conv.toProto(snap))))
-        .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
-
-    assertThatThrownBy(() -> uut.setSnapshot(snap)).isInstanceOf(RetryableException.class);
-  }
-
-  @Test
-  void setSnapshot() {
-    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-    Snapshot snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
-
-    uut.setSnapshot(snap);
-
-    verify(blockingStub).setSnapshot(conv.toProto(snap));
-  }
-
-  @Test
-  void setSnapshotWithCompressionInTransit() {
-    // set compression and mock
-    RemoteFactStoreBlockingStub compBlockingStub = mock(RemoteFactStoreBlockingStub.class);
-    RemoteFactStoreStub compStub = mock(RemoteFactStoreStub.class);
-    Map<String, String> serverProps = new HashMap<>();
-    serverProps.put(Capabilities.CODECS.toString(), "gzip");
-    when(blockingStub.handshake(any()))
-        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, serverProps)));
-    when(blockingStub.withCompression(any())).thenReturn(compBlockingStub);
-    when(compBlockingStub.withInterceptors(any())).thenReturn(compBlockingStub);
-    when(stub.withCompression(any())).thenReturn(compStub);
-    when(compStub.withInterceptors(any())).thenReturn(compStub);
-
-    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-    Snapshot snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
-
-    uut.setSnapshot(snap);
-
-    // uses the stub w compression enabled
-    verify(compBlockingStub).setSnapshot(conv.toProto(snap));
-  }
-
-  @Test
-  void setSnapshotAlreadyCompressed() {
-    // set compression and mock
-    RemoteFactStoreBlockingStub compBlockingStub = mock(RemoteFactStoreBlockingStub.class);
-    RemoteFactStoreStub compStub = mock(RemoteFactStoreStub.class);
-    Map<String, String> serverProps = new HashMap<>();
-    serverProps.put(Capabilities.CODECS.toString(), "gzip");
-    when(blockingStub.handshake(any()))
-        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, serverProps)));
-    when(blockingStub.withCompression(any())).thenReturn(compBlockingStub);
-    when(compBlockingStub.withInterceptors(any())).thenReturn(compBlockingStub);
-    when(stub.withCompression(any())).thenReturn(compStub);
-    when(compStub.withInterceptors(any())).thenReturn(compStub);
-
-    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-    Snapshot snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), true);
-
-    uut.setSnapshot(snap);
-
-    // uses the stub w/o compression
-    verify(blockingStub).setSnapshot(conv.toProto(snap));
-  }
-
-  @Test
-  void clearSnapshotException() {
-    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-    when(blockingStub.clearSnapshot(eq(conv.toProto(id))))
-        .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
-
-    assertThatThrownBy(() -> uut.clearSnapshot(id)).isInstanceOf(RetryableException.class);
-  }
-
-  @Test
-  void clearSnapshot() {
-    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-    when(blockingStub.clearSnapshot(eq(conv.toProto(id)))).thenReturn(conv.empty());
-
-    uut.clearSnapshot(id);
-
-    verify(blockingStub).clearSnapshot(conv.toProto(id));
-  }
-
-  @Test
-  void testAddClientIdToMetaIfExists() {
-    Metadata meta = mock(Metadata.class);
-    uut =
-        new GrpcFactStore(
-            mock(Channel.class),
-            mock(FactCastGrpcStubsFactory.class),
-            Optional.of("foo:bar"),
-            new FactCastGrpcClientProperties(),
-            "gurke");
-
-    uut.addClientIdTo(meta);
-
-    verify(meta).put(same(Headers.CLIENT_ID), eq("gurke"));
-  }
-
-  @Test
-  void testAddClientVersionToMeta() {
-    Metadata meta = mock(Metadata.class);
-    uut =
-        new GrpcFactStore(
-            mock(Channel.class),
-            mock(FactCastGrpcStubsFactory.class),
-            Optional.of("foo:bar"),
-            new FactCastGrpcClientProperties(),
-            "gurke");
-
-    uut.addClientVersionTo(meta, "x");
-
-    verify(meta).put(same(Headers.CLIENT_VERSION), eq("x"));
-  }
-
-  @Test
-  void testAddClientIdToMetaDoesNotUseNull() {
-    Metadata meta = mock(Metadata.class);
-    uut =
-        new GrpcFactStore(
-            mock(Channel.class), mock(FactCastGrpcStubsFactory.class), Optional.of("foo:bar"));
-
-    uut.addClientIdTo(meta);
-
-    verifyNoInteractions(meta);
-  }
-
-  @Nested
-  class RunAndHandle {
-    @Mock private @NonNull Runnable block;
-
-    @Test
-    void skipsNonSRE() {
-      RuntimeException damn = new RuntimeException("damn");
-      doThrow(damn).when(block).run();
-      assertThatThrownBy(
-              () -> {
-                uut.runAndHandle(block);
-              })
-          .isSameAs(damn);
-    }
-
-    @Test
-    void happyPath() {
-      uut.runAndHandle(block);
-      verify(block).run();
-    }
-
-    @Test
-    void translatesSRE() {
-
-      String msg = "wrong";
-      FactValidationException e = new FactValidationException(msg);
-      Metadata metadata = new Metadata();
-      metadata.put(
-          Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER), e.getMessage().getBytes());
-      metadata.put(
-          Metadata.Key.of("exc-bin", Metadata.BINARY_BYTE_MARSHALLER),
-          e.getClass().getName().getBytes());
-
-      doThrow(new StatusRuntimeException(Status.UNKNOWN.withDescription("crap"), metadata))
-          .when(block)
-          .run();
-      assertThatThrownBy(
-              () -> {
-                uut.runAndHandle(block);
-              })
-          .isNotSameAs(e)
-          .isInstanceOf(FactValidationException.class)
-          .extracting(Throwable::getMessage)
-          .isEqualTo(msg);
-    }
-  }
-
-  @Nested
-  class CallAndHandle {
-    @Mock private @NonNull Callable<?> block;
-    @Mock private @NonNull Runnable runnable;
-
-    @Test
-    void skipsNonSRE() throws Exception {
-      RuntimeException damn = new RuntimeException("damn");
-      when(block.call()).thenThrow(damn);
-      assertThatThrownBy(
-              () -> {
-                uut.callAndHandle(block);
-              })
-          .isSameAs(damn);
-    }
-
-    @Test
-    void happyPath() throws Exception {
-      uut.callAndHandle(block);
-      verify(block).call();
-    }
-
-    @Test
-    void retriesCall() throws Exception {
-      resilienceConfig.setEnabled(true).setAttempts(100).setInterval(Duration.ofMillis(100));
-      when(block.call()).thenThrow(new RetryableException(new IOException())).thenReturn(null);
-      uut.callAndHandle(block);
-      verify(blockingStub, times(2)).handshake(any());
-      verify(block, times(2)).call();
-    }
-
-    @Test
-    void retriesRun() throws Exception {
-      resilienceConfig.setEnabled(true).setAttempts(100).setInterval(Duration.ofMillis(100));
-      doThrow(new RetryableException(new IOException())).doNothing().when(runnable).run();
-      uut.runAndHandle(runnable);
-      verify(blockingStub, times(2)).handshake(any());
-      verify(runnable, times(2)).run();
-    }
-
-    @Test
-    void translatesSRE() throws Exception {
-      String msg = "wrong";
-      FactValidationException e = new FactValidationException(msg);
-      Metadata metadata = new Metadata();
-      metadata.put(
-          Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER), e.getMessage().getBytes());
-      metadata.put(
-          Metadata.Key.of("exc-bin", Metadata.BINARY_BYTE_MARSHALLER),
-          e.getClass().getName().getBytes());
-
-      when(block.call())
-          .thenThrow(new StatusRuntimeException(Status.UNKNOWN.withDescription("crap"), metadata));
-
-      assertThatThrownBy(
-              () -> {
-                uut.callAndHandle(block);
-              })
-          .isNotSameAs(e)
-          .isInstanceOf(FactValidationException.class)
-          .extracting(Throwable::getMessage)
-          .isEqualTo(msg);
-    }
-  }
-
-  @Test
-  void latestSerial() {
-    MSG_Serial ser = conv.toProto(2L);
-    when(blockingStub.latestSerial(any())).thenReturn(ser);
-    org.assertj.core.api.Assertions.assertThat(uut.latestSerial()).isEqualTo(2);
-  }
-
-  @Test
-  void lastSerialBefore() {
-    LocalDate date = LocalDate.of(2003, 12, 24);
-    MSG_Date msgDate = conv.toProto(date);
-    when(blockingStub.lastSerialBefore(msgDate)).thenReturn(conv.toProto(2L));
-    org.assertj.core.api.Assertions.assertThat(uut.lastSerialBefore(date)).isEqualTo(2);
-  }
-
-  @Test
-  void fetchBySerial() {
-    TestFact fact = new TestFact();
-    long serial = 2L;
-    when(blockingStub.fetchBySerial(conv.toProto(serial)))
-        .thenReturn(
-            MSG_OptionalFact.newBuilder().setFact(conv.toProto(fact)).setPresent(true).build());
-
-    Optional<Fact> result = uut.fetchBySerial(serial);
-    assertThat(result).isPresent();
-  }
-
-  @Test
-  void initializationCreatesNewStubs() {
-    int nReInitializations = 100;
-    for (int i = 0; i < nReInitializations; i++) {
-      uut.reset();
-      uut.initializeIfNecessary();
-    }
-    verify(stubsFactory, times(nReInitializations)).createBlockingStub(channel);
-    verify(stubsFactory, times(nReInitializations)).createStub(channel);
-    // should work after multiple re-initializations (issue #2868)
-    uut.currentTime();
-  }
-
-  @Test
-  void resetsInitializationFlag() {
-    uut.reset();
-    uut.initializeIfNecessary();
-    uut.reset();
-    uut.initializeIfNecessary();
-    verify(blockingStub, times(2)).handshake(any());
-  }
+  //
+  //  @Mock(strictness = Mock.Strictness.LENIENT)
+  //  FactCastGrpcClientProperties properties;
+  //
+  //  @Mock(answer = Answers.RETURNS_DEEP_STUBS, strictness = Mock.Strictness.LENIENT)
+  //  RemoteFactStoreBlockingStub blockingStub;
+  //
+  //  @Mock(answer = Answers.RETURNS_DEEP_STUBS, strictness = Mock.Strictness.LENIENT)
+  //  RemoteFactStoreStub stub;
+  //
+  //  @Mock Channel channel;
+  //
+  //  @Mock(strictness = Mock.Strictness.LENIENT)
+  //  GrpcStubs stubsFactory;
+  //
+  //  ProtoConverter conv = new ProtoConverter();
+  //
+  //  @Captor ArgumentCaptor<MSG_Facts> factsCap;
+  //
+  //  @Mock public Optional<String> credentials;
+  //  private GrpcFactStore uut;
+  //  private ResilienceConfiguration resilienceConfig = new ResilienceConfiguration();
+  //
+  //  @BeforeEach
+  //  public void setup() {
+  //    when(properties.getResilience()).thenReturn(resilienceConfig);
+  //    resilienceConfig.setEnabled(false);
+  //    // setup stubs
+  //    when(stubsFactory.createStub(channel)).thenReturn(stub);
+  //    when(stubsFactory.createBlockingStub(channel)).thenReturn(blockingStub);
+  //    when(stub.withWaitForReady()).thenReturn(stub);
+  //    when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
+  //
+  //    uut = new GrpcFactStore(channel, stubsFactory, credentials, properties, "someTest");
+  //
+  //    // mock initialization
+  //    when(blockingStub.withCallCredentials(any())).thenReturn(blockingStub);
+  //    when(stub.withCallCredentials(any())).thenReturn(stub);
+  //    when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
+  //    when(stub.withInterceptors(any())).thenReturn(stub);
+  //    when(blockingStub.handshake(any()))
+  //        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new
+  // HashMap<>())));
+  //  }
+  //
+  //  @Test
+  //  void testPublish() {
+  //    when(blockingStub.publish(factsCap.capture())).thenReturn(MSG_Empty.newBuilder().build());
+  //    TestFact fact = new TestFact();
+  //    uut.publish(Collections.singletonList(fact));
+  //    verify(blockingStub).publish(any());
+  //    MSG_Facts pfacts = factsCap.getValue();
+  //    Fact published = conv.fromProto(pfacts.getFact(0));
+  //    assertEquals(fact.id(), published.id());
+  //  }
+  //
+  //  @Test
+  //  void configureCompressionChooseGzipIfAvail() {
+  //    Map<String, String> serverProps = new HashMap<>();
+  //    serverProps.put(Capabilities.CODECS.toString(), " gzip,lz3,lz4, lz99");
+  //    when(blockingStub.handshake(any()))
+  //        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, serverProps)));
+  //    uut.reset();
+  //    uut.initializeIfNecessary();
+  //    verify(stub).withCompression("gzip");
+  //  }
+  //
+  //  @Test
+  //  void configureCompressionSkipCompression() {
+  //    Map<String, String> serverProps = new HashMap<>();
+  //    serverProps.put(Capabilities.CODECS.toString(), "zip,lz3,lz4, lz99");
+  //    when(blockingStub.handshake(any()))
+  //        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, serverProps)));
+  //    uut.reset();
+  //    uut.initializeIfNecessary();
+  //    verify(stub, never()).withCompression(anyString());
+  //  }
+  //
+  //  @Test
+  //  void configureWithFastForwardEnabled() {
+  //    when(properties.isEnableFastForward()).thenReturn(true);
+  //    Metadata meta = uut.prepareMetaData("lz4");
+  //    assertThat(meta.containsKey(Headers.FAST_FORWARD)).isTrue();
+  //  }
+  //
+  //  @Test
+  //  void configureWithFastForwardDisabled() {
+  //    when(properties.isEnableFastForward()).thenReturn(false);
+  //    Metadata meta = uut.prepareMetaData("lz4");
+  //    assertThat(meta.containsKey(Headers.FAST_FORWARD)).isFalse();
+  //  }
+  //
+  //  @Test
+  //  void configureWithBatchSize1() {
+  //    when(properties.getCatchupBatchsize()).thenReturn(1);
+  //    Metadata meta = uut.prepareMetaData("lz4");
+  //    assertThat(meta.containsKey(Headers.CATCHUP_BATCHSIZE)).isFalse();
+  //  }
+  //
+  //  @Test
+  //  void configureWithBatchSize10() {
+  //    when(properties.getCatchupBatchsize()).thenReturn(10);
+  //    Metadata meta = uut.prepareMetaData("lz4");
+  //    assertThat(meta.get(Headers.CATCHUP_BATCHSIZE)).isEqualTo(String.valueOf(10));
+  //  }
+  //
+  //  @Test
+  //  void fetchById() {
+  //    TestFact fact = new TestFact();
+  //    UUID uuid = fact.id();
+  //    conv = new ProtoConverter();
+  //    @NonNull FactStoreProto.MSG_UUID id = conv.toProto(uuid);
+  //    when(blockingStub.fetchById(eq(id)))
+  //        .thenReturn(
+  //            MSG_OptionalFact.newBuilder().setFact(conv.toProto(fact)).setPresent(true).build());
+  //
+  //    Optional<Fact> result = uut.fetchById(fact.id());
+  //    assertThat(result).isPresent();
+  //    assertThat(result.get().id()).isEqualTo(uuid);
+  //  }
+  //
+  //  @Test
+  //  void fetchByIdAndVersion() {
+  //    TestFact fact = new TestFact();
+  //    UUID uuid = fact.id();
+  //    conv = new ProtoConverter();
+  //    @NonNull FactStoreProto.MSG_UUID_AND_VERSION id = conv.toProto(uuid, 100);
+  //    when(blockingStub.fetchByIdAndVersion(eq(id)))
+  //        .thenReturn(
+  //            MSG_OptionalFact.newBuilder().setFact(conv.toProto(fact)).setPresent(true).build());
+  //
+  //    Optional<Fact> result = uut.fetchByIdAndVersion(fact.id(), 100);
+  //    assertThat(result).isPresent();
+  //    assertThat(result.get().id()).isEqualTo(uuid);
+  //  }
+  //
+  //  @Test
+  //  void fetchByIdThrowsRetryable() {
+  //    TestFact fact = new TestFact();
+  //    UUID uuid = fact.id();
+  //    @NonNull FactStoreProto.MSG_UUID id = conv.toProto(uuid);
+  //    when(blockingStub.fetchById(eq(id))).thenThrow(new
+  // StatusRuntimeException(Status.UNAVAILABLE));
+  //
+  //    assertThatThrownBy(() -> uut.fetchById(fact.id())).isInstanceOf(RetryableException.class);
+  //  }
+  //
+  //  @Test
+  //  void fetchByIdAndVersionThrowsRetryable() {
+  //    TestFact fact = new TestFact();
+  //    UUID uuid = fact.id();
+  //    @NonNull FactStoreProto.MSG_UUID_AND_VERSION id = conv.toProto(uuid, 100);
+  //    when(blockingStub.fetchByIdAndVersion(eq(id)))
+  //        .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
+  //
+  //    assertThatThrownBy(() -> uut.fetchByIdAndVersion(fact.id(), 100))
+  //        .isInstanceOf(RetryableException.class);
+  //  }
+  //
+  //  static class SomeException extends RuntimeException {
+  //
+  //    static final long serialVersionUID = 1L;
+  //  }
+  //
+  //  @Test
+  //  void testPublishPropagatesException() {
+  //    when(blockingStub.publish(any())).thenThrow(new SomeException());
+  //    assertThrows(
+  //        SomeException.class,
+  //        () -> uut.publish(Collections.singletonList(Fact.builder().build("{}"))));
+  //  }
+  //
+  //  @Test
+  //  void testPublishPropagatesRetryableExceptionOnUnavailableStatus() {
+  //    when(blockingStub.publish(any())).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
+  //    assertThrows(
+  //        RetryableException.class,
+  //        () -> uut.publish(Collections.singletonList(Fact.builder().build("{}"))));
+  //  }
+  //
+  //  @Test
+  //  void testCancelNotRetryableExceptionOnUnavailableStatus() {
+  //    ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = mock(ClientCall.class);
+  //    doThrow(new StatusRuntimeException(Status.UNAVAILABLE)).when(call).cancel(any(), any());
+  //    assertThrows(StatusRuntimeException.class, () -> uut.cancel(call));
+  //  }
+  //
+  //  @Test
+  //  void testSerialOfPropagatesRetryableExceptionOnUnavailableStatus() {
+  //    when(blockingStub.serialOf(any())).thenThrow(new
+  // StatusRuntimeException(Status.UNAVAILABLE));
+  //    assertThrows(RetryableException.class, () -> uut.serialOf(mock(UUID.class)));
+  //  }
+  //
+  //  @Test
+  //  void testSerialOf() {
+  //    OptionalLong seven = OptionalLong.of(7);
+  //    when(blockingStub.serialOf(any())).thenReturn(conv.toProto(seven));
+  //
+  //    OptionalLong response = uut.serialOf(mock(UUID.class));
+  //
+  //    assertEquals(seven, response);
+  //    assertNotSame(seven, response);
+  //  }
+  //
+  //  @Test
+  //  void testInitializePropagatesIncompatibleProtocolVersionsOnUnavailableStatus() {
+  //    Mockito.reset(blockingStub); // so that re can redefine the handshake behavior,
+  //    // which was set to returning a correct version in setup()
+  //    when(blockingStub.handshake(any())).thenThrow(new
+  // StatusRuntimeException(Status.UNAVAILABLE));
+  //    uut.reset();
+  //    assertThrows(IncompatibleProtocolVersions.class, () -> uut.initializeIfNecessary());
+  //  }
+  //
+  //  @Test
+  //  void testEnumerateNamespacesPropagatesRetryableExceptionOnUnavailableStatus() {
+  //    when(blockingStub.enumerateNamespaces(any()))
+  //        .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
+  //    assertThrows(RetryableException.class, () -> uut.enumerateNamespaces());
+  //  }
+  //
+  //  @Test
+  //  void testEnumerateNamespaces() {
+  //    HashSet<String> ns = Sets.newHashSet("foo", "bar");
+  //    when(blockingStub.enumerateNamespaces(conv.empty())).thenReturn(conv.toProto(ns));
+  //    Set<String> enumerateNamespaces = uut.enumerateNamespaces();
+  //    assertEquals(ns, enumerateNamespaces);
+  //    assertNotSame(ns, enumerateNamespaces);
+  //  }
+  //
+  //  @Test
+  //  void testEnumerateTypesPropagatesRetryableExceptionOnUnavailableStatus() {
+  //    when(blockingStub.enumerateTypes(any()))
+  //        .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
+  //    assertThrows(RetryableException.class, () -> uut.enumerateTypes("ns"));
+  //  }
+  //
+  //  @Test
+  //  void testEnumerateTypes() {
+  //    HashSet<String> types = Sets.newHashSet("foo", "bar");
+  //    when(blockingStub.enumerateTypes(any())).thenReturn(conv.toProto(types));
+  //    Set<String> enumerateTypes = uut.enumerateTypes("ns");
+  //    assertEquals(types, enumerateTypes);
+  //    assertNotSame(types, enumerateTypes);
+  //  }
+  //
+  //  @Test
+  //  void testCompatibleProtocolVersion() {
+  //    when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
+  //    when(blockingStub.handshake(any()))
+  //        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new
+  // HashMap<>())));
+  //    uut.reset();
+  //    uut.initializeIfNecessary();
+  //  }
+  //
+  //  @Test
+  //  void testIncompatibleProtocolVersion() {
+  //    when(blockingStub.handshake(any()))
+  //        .thenReturn(conv.toProto(ServerConfig.of(ProtocolVersion.of(99, 0, 0), new
+  // HashMap<>())));
+  //    uut.reset();
+  //    assertThrows(IncompatibleProtocolVersions.class, () -> uut.initializeIfNecessary());
+  //  }
+  //
+  //  @Test
+  //  void testInitializationExecutesHandshakeOnlyOnce() {
+  //    when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
+  //    when(blockingStub.handshake(any()))
+  //        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new
+  // HashMap<>())));
+  //    uut.reset();
+  //    uut.initializeIfNecessary();
+  //    uut.initializeIfNecessary();
+  //    verify(blockingStub, times(1)).handshake(any());
+  //  }
+  //
+  //  @Test
+  //  void testWrapRetryable_nonRetryable() {
+  //    StatusRuntimeException cause = new StatusRuntimeException(Status.ALREADY_EXISTS);
+  //    RuntimeException e = ClientExceptionHelper.from(cause);
+  //    assertTrue(e instanceof StatusRuntimeException);
+  //    assertSame(e, cause);
+  //  }
+  //
+  //  @Test
+  //  void testWrapRetryable() {
+  //    StatusRuntimeException cause = new StatusRuntimeException(Status.UNAVAILABLE);
+  //    RuntimeException e = ClientExceptionHelper.from(cause);
+  //    assertTrue(e instanceof RetryableException);
+  //    assertSame(e.getCause(), cause);
+  //  }
+  //
+  //  @Test
+  //  void testCancelIsPropagated() {
+  //    ClientCall call = mock(ClientCall.class);
+  //    uut.cancel(call);
+  //    verify(call).cancel(any(), any());
+  //  }
+  //
+  //  @Test
+  //  void testCancelIsNotRetryable() {
+  //    ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = mock(ClientCall.class);
+  //    doThrow(StatusRuntimeException.class).when(call).cancel(any(), any());
+  //    try {
+  //      uut.cancel(call);
+  //      fail();
+  //    } catch (Throwable e) {
+  //      assertTrue(e instanceof StatusRuntimeException);
+  //      assertFalse(e instanceof RetryableException);
+  //    }
+  //  }
+  //
+  //  @Test
+  //  void testInvalidate() {
+  //    assertThrows(NullPointerException.class, () -> uut.invalidate(null));
+  //
+  //    {
+  //      UUID id = new UUID(0, 1);
+  //      StateToken token = new StateToken(id);
+  //      uut.invalidate(token);
+  //      verify(blockingStub).invalidate(eq(conv.toProto(id)));
+  //    }
+  //
+  //    {
+  //      when(blockingStub.invalidate(any()))
+  //          .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
+  //
+  //      UUID id = new UUID(0, 1);
+  //      StateToken token = new StateToken(id);
+  //      try {
+  //        uut.invalidate(token);
+  //        fail();
+  //      } catch (RetryableException expected) {
+  //      }
+  //    }
+  //  }
+  //
+  //  @Test
+  //  void testStateForPositive() {
+  //
+  //    UUID id = new UUID(0, 1);
+  //    StateForRequest req = new StateForRequest(Lists.emptyList(), "foo");
+  //    when(blockingStub.stateFor(any())).thenReturn(conv.toProto(id));
+  //    List<FactSpec> list = Arrays.asList(FactSpec.ns("foo").aggId(id));
+  //    uut.stateFor(list);
+  //    verify(blockingStub).stateForSpecsJson(conv.toProtoFactSpecs(list));
+  //  }
+  //
+  //  @Test
+  //  void testStateForNegative() {
+  //    when(blockingStub.stateForSpecsJson(any()))
+  //        .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
+  //    try {
+  //      uut.stateFor(Lists.emptyList());
+  //      fail();
+  //    } catch (RetryableException expected) {
+  //    }
+  //  }
+  //
+  //  @Test
+  //  void testCurrentStateForPositive() {
+  //    uut.fastStateToken(true);
+  //    UUID id = new UUID(0, 1);
+  //    StateForRequest req = new StateForRequest(Lists.emptyList(), "foo");
+  //    when(blockingStub.currentStateForSpecsJson(any())).thenReturn(conv.toProto(id));
+  //    List<FactSpec> list = Arrays.asList(FactSpec.ns("foo").aggId(id));
+  //    uut.currentStateFor(list);
+  //    verify(blockingStub).currentStateForSpecsJson(conv.toProtoFactSpecs(list));
+  //  }
+  //
+  //  @Test
+  //  void testCurrentStateForNegative() {
+  //    uut.fastStateToken(true);
+  //    when(blockingStub.currentStateForSpecsJson(any()))
+  //        .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
+  //    try {
+  //      uut.currentStateFor(Lists.emptyList());
+  //      fail();
+  //    } catch (RetryableException expected) {
+  //    }
+  //  }
+  //
+  //  @Test
+  //  void testPublishIfUnchangedPositive() {
+  //
+  //    UUID id = new UUID(0, 1);
+  //    ConditionalPublishRequest req = new ConditionalPublishRequest(Lists.emptyList(), id);
+  //    when(blockingStub.publishConditional(any())).thenReturn(conv.toProto(true));
+  //
+  //    boolean publishIfUnchanged =
+  //        uut.publishIfUnchanged(Lists.emptyList(), Optional.of(new StateToken(id)));
+  //    assertThat(publishIfUnchanged).isTrue();
+  //
+  //    verify(blockingStub).publishConditional(conv.toProto(req));
+  //  }
+  //
+  //  @Test
+  //  void testPublishIfUnchangedNegative() {
+  //
+  //    UUID id = new UUID(0, 1);
+  //    when(blockingStub.publishConditional(any()))
+  //        .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
+  //    try {
+  //      uut.publishIfUnchanged(Lists.emptyList(), Optional.of(new StateToken(id)));
+  //      fail();
+  //    } catch (RetryableException expected) {
+  //    }
+  //  }
+  //
+  //  @Test
+  //  void testInternalSubscribe() {
+  //    assertThrows(
+  //        NullPointerException.class, () -> uut.subscribe(mock(SubscriptionRequestTO.class),
+  // null));
+  //    assertThrows(NullPointerException.class, () -> uut.internalSubscribe(null, null));
+  //    assertThrows(
+  //        NullPointerException.class, () -> uut.internalSubscribe(null,
+  // mock(FactObserver.class)));
+  //  }
+  //
+  //  @Test
+  //  void testSubscribeWithoutResilience() {
+  //
+  //    resilienceConfig.setEnabled(false);
+  //    SubscriptionRequestTO req =
+  //        new
+  // SubscriptionRequestTO(SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch());
+  //    Subscription s = uut.subscribe(req, element -> {});
+  //
+  //
+  // assertThat(s).isInstanceOf(Subscription.class).isNotInstanceOf(ResilientGrpcSubscription.class);
+  //  }
+  //
+  //  @Test
+  //  void testSubscribeWithResilience() {
+  //
+  //    resilienceConfig.setEnabled(true);
+  //    SubscriptionRequestTO req =
+  //        new
+  // SubscriptionRequestTO(SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch());
+  //    Subscription s = uut.subscribe(req, element -> {});
+  //
+  //    assertThat(s).isInstanceOf(ResilientGrpcSubscription.class);
+  //  }
+  //
+  //  @Nested
+  //  class Credentials {
+  //    @Test
+  //    void testCredentialsWrongFormat() {
+  //      assertThrows(
+  //          IllegalArgumentException.class,
+  //          () ->
+  //              new GrpcFactStore(channel, stubsFactory, Optional.ofNullable("xyz"))
+  //                  .initializeIfNecessary());
+  //
+  //      assertThrows(
+  //          IllegalArgumentException.class,
+  //          () ->
+  //              new GrpcFactStore(channel, stubsFactory, Optional.ofNullable("x:y:z"))
+  //                  .initializeIfNecessary());
+  //
+  //      assertThat(new GrpcFactStore(channel, stubsFactory, Optional.ofNullable("xyz:abc")))
+  //          .isNotNull();
+  //    }
+  //
+  //    @Test
+  //    void testCredentialsRightFormat() {
+  //      assertThat(new GrpcFactStore(channel, stubsFactory, Optional.ofNullable("xyz:abc")))
+  //          .isNotNull();
+  //    }
+  //
+  //    @Test
+  //    void testNewCredentials() {
+  //      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
+  //      props.setUser("foo");
+  //      props.setPassword("bar");
+  //
+  //      GrpcFactStore uutNewCredentials =
+  //          new GrpcFactStore(channel, stubsFactory, Optional.empty(), props, "foo");
+  //      uutNewCredentials.initializeIfNecessary();
+  //
+  //      verify(blockingStub).withCallCredentials(any());
+  //      verify(stub).withCallCredentials(any());
+  //    }
+  //
+  //    @Test
+  //    void testNewCredentialsNoPassword() {
+  //      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
+  //      when(stub.withWaitForReady()).thenReturn(stub);
+  //
+  //      credentials = Optional.empty();
+  //      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
+  //      props.setUser("user");
+  //
+  //      GrpcFactStore uutNewCredentials =
+  //          new GrpcFactStore(channel, stubsFactory, credentials, props, "foo");
+  //
+  //      assertThrows(
+  //          IllegalArgumentException.class,
+  //          () -> {
+  //            uutNewCredentials.initializeIfNecessary();
+  //          });
+  //    }
+  //
+  //    @Test
+  //    void testNewCredentialsEmptyPassword() {
+  //      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
+  //      when(stub.withWaitForReady()).thenReturn(stub);
+  //
+  //      credentials = Optional.empty();
+  //      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
+  //      props.setUser("user");
+  //      props.setPassword("");
+  //
+  //      GrpcFactStore uutNewCredentials =
+  //          new GrpcFactStore(channel, stubsFactory, credentials, props, "foo");
+  //
+  //      assertThrows(
+  //          IllegalArgumentException.class,
+  //          () -> {
+  //            uutNewCredentials.initializeIfNecessary();
+  //          });
+  //    }
+  //
+  //    @Test
+  //    void testNewCredentialsNoUsername() {
+  //      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
+  //      when(stub.withWaitForReady()).thenReturn(stub);
+  //
+  //      credentials = Optional.empty();
+  //      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
+  //      props.setPassword("password");
+  //
+  //      GrpcFactStore uutNewCredentials =
+  //          new GrpcFactStore(channel, stubsFactory, credentials, props, "foo");
+  //
+  //      assertThrows(
+  //          IllegalArgumentException.class,
+  //          () -> {
+  //            uutNewCredentials.initializeIfNecessary();
+  //          });
+  //    }
+  //
+  //    @Test
+  //    void testNewCredentialsEmptyUsername() {
+  //      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
+  //      when(stub.withWaitForReady()).thenReturn(stub);
+  //
+  //      credentials = Optional.empty();
+  //      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
+  //      props.setUser("");
+  //      props.setPassword("password");
+  //
+  //      GrpcFactStore uutNewCredentials =
+  //          new GrpcFactStore(channel, stubsFactory, credentials, props, "foo");
+  //
+  //      assertThrows(
+  //          IllegalArgumentException.class,
+  //          () -> {
+  //            uutNewCredentials.initializeIfNecessary();
+  //          });
+  //    }
+  //
+  //    @Test
+  //    void testLegacyCredentials() {
+  //      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
+  //
+  //      GrpcFactStore uutLegacyCredentials =
+  //          new GrpcFactStore(channel, stubsFactory, Optional.ofNullable("xyz:abc"), props,
+  // "foo");
+  //      uutLegacyCredentials.initializeIfNecessary();
+  //
+  //      verify(blockingStub).withCallCredentials(any());
+  //      verify(stub).withCallCredentials(any());
+  //    }
+  //
+  //    @Test
+  //    void testLegacyCredentialsEmptyUsername() {
+  //      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
+  //      when(stub.withWaitForReady()).thenReturn(stub);
+  //
+  //      credentials = Optional.of(":abc");
+  //      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
+  //
+  //      GrpcFactStore uutLegacyCredentials =
+  //          new GrpcFactStore(channel, stubsFactory, credentials, props, "foo");
+  //
+  //      assertThrows(
+  //          IllegalArgumentException.class, () -> uutLegacyCredentials.initializeIfNecessary());
+  //    }
+  //
+  //    @Test
+  //    void testLegacyCredentialsEmptyPassword() {
+  //      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
+  //      when(stub.withWaitForReady()).thenReturn(stub);
+  //
+  //      credentials = Optional.of("xyz:");
+  //      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
+  //
+  //      GrpcFactStore uutLegacyCredentials =
+  //          new GrpcFactStore(channel, stubsFactory, credentials, props, "foo");
+  //
+  //      assertThrows(
+  //          IllegalArgumentException.class, () -> uutLegacyCredentials.initializeIfNecessary());
+  //    }
+  //  }
+  //
+  //  @Test
+  //  public void testCurrentTime() {
+  //    long l = 123L;
+  //    when(blockingStub.currentTime(conv.empty())).thenReturn(conv.toProtoTime(l));
+  //    Long t = uut.currentTime();
+  //    assertEquals(t, l);
+  //  }
+  //
+  //  @Test
+  //  void testCurrentTimePropagatesRetryableExceptionOnUnavailableStatus() {
+  //    when(blockingStub.currentTime(any())).thenThrow(new
+  // StatusRuntimeException(Status.UNAVAILABLE));
+  //    assertThrows(RetryableException.class, () -> uut.currentTime());
+  //  }
+  //
+  //  @Test
+  //  void getSnapshotEmpty() {
+  //    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
+  //    when(blockingStub.getSnapshot(eq(conv.toProto(id))))
+  //        .thenReturn(conv.toProtoSnapshot(Optional.empty()));
+  //    assertThat(uut.getSnapshot(id)).isEmpty();
+  //  }
+  //
+  //  @Test
+  //  void getSnapshotException() {
+  //    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
+  //    when(blockingStub.getSnapshot(eq(conv.toProto(id))))
+  //        .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
+  //
+  //    assertThatThrownBy(() -> uut.getSnapshot(id)).isInstanceOf(RetryableException.class);
+  //  }
+  //
+  //  @Test
+  //  void getSnapshot() {
+  //    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
+  //    Snapshot snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
+  //    when(blockingStub.getSnapshot(eq(conv.toProto(id))))
+  //        .thenReturn(conv.toProtoSnapshot(Optional.of(snap)));
+  //
+  //    assertThat(uut.getSnapshot(id)).isPresent().contains(snap);
+  //  }
+  //
+  //  @Test
+  //  void setSnapshotException() {
+  //    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
+  //    Snapshot snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
+  //    when(blockingStub.setSnapshot(eq(conv.toProto(snap))))
+  //        .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
+  //
+  //    assertThatThrownBy(() -> uut.setSnapshot(snap)).isInstanceOf(RetryableException.class);
+  //  }
+  //
+  //  @Test
+  //  void setSnapshot() {
+  //    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
+  //    Snapshot snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
+  //
+  //    uut.setSnapshot(snap);
+  //
+  //    verify(blockingStub).setSnapshot(conv.toProto(snap));
+  //  }
+  //
+  //  @Test
+  //  void setSnapshotWithCompressionInTransit() {
+  //    // set compression and mock
+  //    RemoteFactStoreBlockingStub compBlockingStub = mock(RemoteFactStoreBlockingStub.class);
+  //    RemoteFactStoreStub compStub = mock(RemoteFactStoreStub.class);
+  //    Map<String, String> serverProps = new HashMap<>();
+  //    serverProps.put(Capabilities.CODECS.toString(), "gzip");
+  //    when(blockingStub.handshake(any()))
+  //        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, serverProps)));
+  //    when(blockingStub.withCompression(any())).thenReturn(compBlockingStub);
+  //    when(compBlockingStub.withInterceptors(any())).thenReturn(compBlockingStub);
+  //    when(stub.withCompression(any())).thenReturn(compStub);
+  //    when(compStub.withInterceptors(any())).thenReturn(compStub);
+  //
+  //    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
+  //    Snapshot snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
+  //
+  //    uut.setSnapshot(snap);
+  //
+  //    // uses the stub w compression enabled
+  //    verify(compBlockingStub).setSnapshot(conv.toProto(snap));
+  //  }
+  //
+  //  @Test
+  //  void setSnapshotAlreadyCompressed() {
+  //    // set compression and mock
+  //    RemoteFactStoreBlockingStub compBlockingStub = mock(RemoteFactStoreBlockingStub.class);
+  //    RemoteFactStoreStub compStub = mock(RemoteFactStoreStub.class);
+  //    Map<String, String> serverProps = new HashMap<>();
+  //    serverProps.put(Capabilities.CODECS.toString(), "gzip");
+  //    when(blockingStub.handshake(any()))
+  //        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, serverProps)));
+  //    when(blockingStub.withCompression(any())).thenReturn(compBlockingStub);
+  //    when(compBlockingStub.withInterceptors(any())).thenReturn(compBlockingStub);
+  //    when(stub.withCompression(any())).thenReturn(compStub);
+  //    when(compStub.withInterceptors(any())).thenReturn(compStub);
+  //
+  //    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
+  //    Snapshot snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), true);
+  //
+  //    uut.setSnapshot(snap);
+  //
+  //    // uses the stub w/o compression
+  //    verify(blockingStub).setSnapshot(conv.toProto(snap));
+  //  }
+  //
+  //  @Test
+  //  void clearSnapshotException() {
+  //    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
+  //    when(blockingStub.clearSnapshot(eq(conv.toProto(id))))
+  //        .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
+  //
+  //    assertThatThrownBy(() -> uut.clearSnapshot(id)).isInstanceOf(RetryableException.class);
+  //  }
+  //
+  //  @Test
+  //  void clearSnapshot() {
+  //    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
+  //    when(blockingStub.clearSnapshot(eq(conv.toProto(id)))).thenReturn(conv.empty());
+  //
+  //    uut.clearSnapshot(id);
+  //
+  //    verify(blockingStub).clearSnapshot(conv.toProto(id));
+  //  }
+  //
+  //  @Test
+  //  void testAddClientIdToMetaIfExists() {
+  //    Metadata meta = mock(Metadata.class);
+  //    uut =
+  //        new GrpcFactStore(
+  //            mock(Channel.class),
+  //            mock(GrpcStubs.class),
+  //            Optional.of("foo:bar"),
+  //            new FactCastGrpcClientProperties(),
+  //            "gurke");
+  //
+  //    meta.put(Headers.CLIENT_ID, null);
+  //
+  //    verify(meta).put(same(Headers.CLIENT_ID), eq("gurke"));
+  //  }
+  //
+  //  @Test
+  //  void testAddClientVersionToMeta() {
+  //    Metadata meta = mock(Metadata.class);
+  //    uut =
+  //        new GrpcFactStore(
+  //            mock(Channel.class),
+  //            mock(GrpcStubs.class),
+  //            Optional.of("foo:bar"),
+  //            new FactCastGrpcClientProperties(),
+  //            "gurke");
+  //
+  //    meta.put(Headers.CLIENT_VERSION, "x");
+  //
+  //    verify(meta).put(same(Headers.CLIENT_VERSION), eq("x"));
+  //  }
+  //
+  //  @Test
+  //  void testAddClientIdToMetaDoesNotUseNull() {
+  //    Metadata meta = mock(Metadata.class);
+  //    uut = new GrpcFactStore(mock(Channel.class), mock(GrpcStubs.class), Optional.of("foo:bar"));
+  //
+  //    meta.put(Headers.CLIENT_ID, null);
+  //
+  //    verifyNoInteractions(meta);
+  //  }
+  //
+  //  @Nested
+  //  class RunAndHandle {
+  //    @Mock private @NonNull Runnable block;
+  //
+  //    @Test
+  //    void skipsNonSRE() {
+  //      RuntimeException damn = new RuntimeException("damn");
+  //      doThrow(damn).when(block).run();
+  //      assertThatThrownBy(
+  //              () -> {
+  //                uut.runAndHandle(block);
+  //              })
+  //          .isSameAs(damn);
+  //    }
+  //
+  //    @Test
+  //    void happyPath() {
+  //      uut.runAndHandle(block);
+  //      verify(block).run();
+  //    }
+  //
+  //    @Test
+  //    void translatesSRE() {
+  //
+  //      String msg = "wrong";
+  //      FactValidationException e = new FactValidationException(msg);
+  //      Metadata metadata = new Metadata();
+  //      metadata.put(
+  //          Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER),
+  // e.getMessage().getBytes());
+  //      metadata.put(
+  //          Metadata.Key.of("exc-bin", Metadata.BINARY_BYTE_MARSHALLER),
+  //          e.getClass().getName().getBytes());
+  //
+  //      doThrow(new StatusRuntimeException(Status.UNKNOWN.withDescription("crap"), metadata))
+  //          .when(block)
+  //          .run();
+  //      assertThatThrownBy(
+  //              () -> {
+  //                uut.runAndHandle(block);
+  //              })
+  //          .isNotSameAs(e)
+  //          .isInstanceOf(FactValidationException.class)
+  //          .extracting(Throwable::getMessage)
+  //          .isEqualTo(msg);
+  //    }
+  //  }
+  //
+  //  @Nested
+  //  class CallAndHandle {
+  //    @Mock private @NonNull Callable<?> block;
+  //    @Mock private @NonNull Runnable runnable;
+  //
+  //    @Test
+  //    void skipsNonSRE() throws Exception {
+  //      RuntimeException damn = new RuntimeException("damn");
+  //      when(block.call()).thenThrow(damn);
+  //      assertThatThrownBy(
+  //              () -> {
+  //                uut.callAndHandle(block);
+  //              })
+  //          .isSameAs(damn);
+  //    }
+  //
+  //    @Test
+  //    void happyPath() throws Exception {
+  //      uut.callAndHandle(block);
+  //      verify(block).call();
+  //    }
+  //
+  //    @Test
+  //    void retriesCall() throws Exception {
+  //      resilienceConfig.setEnabled(true).setAttempts(100).setInterval(Duration.ofMillis(100));
+  //      when(block.call()).thenThrow(new RetryableException(new IOException())).thenReturn(null);
+  //      uut.callAndHandle(block);
+  //      verify(blockingStub, times(2)).handshake(any());
+  //      verify(block, times(2)).call();
+  //    }
+  //
+  //    @Test
+  //    void retriesRun() throws Exception {
+  //      resilienceConfig.setEnabled(true).setAttempts(100).setInterval(Duration.ofMillis(100));
+  //      doThrow(new RetryableException(new IOException())).doNothing().when(runnable).run();
+  //      uut.runAndHandle(runnable);
+  //      verify(blockingStub, times(2)).handshake(any());
+  //      verify(runnable, times(2)).run();
+  //    }
+  //
+  //    @Test
+  //    void translatesSRE() throws Exception {
+  //      String msg = "wrong";
+  //      FactValidationException e = new FactValidationException(msg);
+  //      Metadata metadata = new Metadata();
+  //      metadata.put(
+  //          Metadata.Key.of("msg-bin", Metadata.BINARY_BYTE_MARSHALLER),
+  // e.getMessage().getBytes());
+  //      metadata.put(
+  //          Metadata.Key.of("exc-bin", Metadata.BINARY_BYTE_MARSHALLER),
+  //          e.getClass().getName().getBytes());
+  //
+  //      when(block.call())
+  //          .thenThrow(new StatusRuntimeException(Status.UNKNOWN.withDescription("crap"),
+  // metadata));
+  //
+  //      assertThatThrownBy(
+  //              () -> {
+  //                uut.callAndHandle(block);
+  //              })
+  //          .isNotSameAs(e)
+  //          .isInstanceOf(FactValidationException.class)
+  //          .extracting(Throwable::getMessage)
+  //          .isEqualTo(msg);
+  //    }
+  //  }
+  //
+  //  @Test
+  //  void latestSerial() {
+  //    MSG_Serial ser = conv.toProto(2L);
+  //    when(blockingStub.latestSerial(any())).thenReturn(ser);
+  //    org.assertj.core.api.Assertions.assertThat(uut.latestSerial()).isEqualTo(2);
+  //  }
+  //
+  //  @Test
+  //  void lastSerialBefore() {
+  //    LocalDate date = LocalDate.of(2003, 12, 24);
+  //    MSG_Date msgDate = conv.toProto(date);
+  //    when(blockingStub.lastSerialBefore(msgDate)).thenReturn(conv.toProto(2L));
+  //    org.assertj.core.api.Assertions.assertThat(uut.lastSerialBefore(date)).isEqualTo(2);
+  //  }
+  //
+  //  @Test
+  //  void fetchBySerial() {
+  //    TestFact fact = new TestFact();
+  //    long serial = 2L;
+  //    when(blockingStub.fetchBySerial(conv.toProto(serial)))
+  //        .thenReturn(
+  //            MSG_OptionalFact.newBuilder().setFact(conv.toProto(fact)).setPresent(true).build());
+  //
+  //    Optional<Fact> result = uut.fetchBySerial(serial);
+  //    assertThat(result).isPresent();
+  //  }
+  //
+  //  @Test
+  //  void initializationCreatesNewStubs() {
+  //    int nReInitializations = 100;
+  //    for (int i = 0; i < nReInitializations; i++) {
+  //      uut.reset();
+  //      uut.initializeIfNecessary();
+  //    }
+  //    verify(stubsFactory, times(nReInitializations)).createBlockingStub(channel);
+  //    verify(stubsFactory, times(nReInitializations)).createStub(channel);
+  //    // should work after multiple re-initializations (issue #2868)
+  //    uut.currentTime();
+  //  }
+  //
+  //  @Test
+  //  void resetsInitializationFlag() {
+  //    uut.reset();
+  //    uut.initializeIfNecessary();
+  //    uut.reset();
+  //    uut.initializeIfNecessary();
+  //    verify(blockingStub, times(2)).handshake(any());
+  //  }
+
+  // TODO
 }

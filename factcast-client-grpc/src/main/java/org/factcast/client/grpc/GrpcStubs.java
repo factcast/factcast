@@ -15,22 +15,23 @@
  */
 package org.factcast.client.grpc;
 
-import io.grpc.Channel;
-import lombok.NonNull;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 
-public class FactCastGrpcStubsFactoryImpl implements FactCastGrpcStubsFactory {
+public interface GrpcStubs {
+  // TODO remove?
+  RemoteFactStoreGrpc.RemoteFactStoreBlockingStub uncompressedBlocking();
 
-  @NonNull
-  @Override
-  public RemoteFactStoreGrpc.RemoteFactStoreBlockingStub createBlockingStub(
-      @NonNull Channel channel) {
-    return RemoteFactStoreGrpc.newBlockingStub(channel);
-  }
+  /**
+   * @return RemoteFactStoreBlockingStub with compression if already configured
+   */
+  RemoteFactStoreGrpc.RemoteFactStoreBlockingStub blocking();
 
-  @NonNull
-  @Override
-  public RemoteFactStoreGrpc.RemoteFactStoreStub createStub(@NonNull Channel channel) {
-    return RemoteFactStoreGrpc.newStub(channel);
-  }
+  /**
+   * @return RemoteFactStoreStub with compression if already configured
+   */
+  RemoteFactStoreGrpc.RemoteFactStoreStub nonBlocking();
+
+  void resetStubs();
+
+  void setCompression(String compressionId);
 }
