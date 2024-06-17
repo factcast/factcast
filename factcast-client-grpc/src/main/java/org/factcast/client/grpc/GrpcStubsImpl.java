@@ -15,14 +15,17 @@
  */
 package org.factcast.client.grpc;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.grpc.CallCredentials;
 import io.grpc.Channel;
-import io.grpc.ClientInterceptor;
 import io.grpc.Metadata;
+import io.grpc.stub.AbstractStub;
 import io.grpc.stub.MetadataUtils;
 import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 import org.factcast.grpc.api.Headers;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 
@@ -33,9 +36,10 @@ class GrpcStubsImpl implements GrpcStubs {
   private final @NonNull Channel channel;
   private final @NonNull Metadata meta;
   private final @Nullable CallCredentials basic;
-  private RemoteFactStoreGrpc.RemoteFactStoreBlockingStub compressedBlocking;
-  private RemoteFactStoreGrpc.RemoteFactStoreBlockingStub uncompressedBlocking;
-  private RemoteFactStoreGrpc.RemoteFactStoreStub compressedNonBlocking;
+
+  @Setter
+  @Accessors(chain = false)
+  private String compression = null;
 
   public GrpcStubsImpl(
       @NonNull FactCastGrpcChannelFactory channelFactory,
@@ -45,72 +49,56 @@ class GrpcStubsImpl implements GrpcStubs {
     this.meta = meta;
     this.basic = basic;
     this.channel = channelFactory.createChannel(channelName);
-
-    resetStubs();
-  }
-
-  @NonNull
-  private RemoteFactStoreGrpc.RemoteFactStoreBlockingStub createBlockingStub() {
-    ClientInterceptor clientInterceptor = MetadataUtils.newAttachHeadersInterceptor(meta);
-    RemoteFactStoreGrpc.RemoteFactStoreBlockingStub stub =
-        RemoteFactStoreGrpc.newBlockingStub(channel);
-    if (basic != null) stub = stub.withCallCredentials(basic);
-    return stub.withInterceptors(clientInterceptor);
-  }
-
-  @NonNull
-  private RemoteFactStoreGrpc.RemoteFactStoreStub createStub() {
-    ClientInterceptor clientInterceptor = MetadataUtils.newAttachHeadersInterceptor(meta);
-    RemoteFactStoreGrpc.RemoteFactStoreStub remoteFactStoreStub =
-        RemoteFactStoreGrpc.newStub(channel);
-    if (basic != null) remoteFactStoreStub = remoteFactStoreStub.withCallCredentials(basic);
-    return remoteFactStoreStub.withInterceptors(clientInterceptor);
   }
 
   @Override
   @NonNull
   public RemoteFactStoreGrpc.RemoteFactStoreBlockingStub uncompressedBlocking() {
-    return uncompressedBlocking;
+    return configure(RemoteFactStoreGrpc.newBlockingStub(channel));
   }
 
   @Override
   @NonNull
   public RemoteFactStoreGrpc.RemoteFactStoreBlockingStub blocking() {
-    return compressedBlocking;
+    return configureCompression(configure(RemoteFactStoreGrpc.newBlockingStub(channel)));
   }
 
   @Override
   @NonNull
   public RemoteFactStoreGrpc.RemoteFactStoreStub nonBlocking() {
-    return compressedNonBlocking;
+    return configureCompression(configure(RemoteFactStoreGrpc.newStub(channel)));
   }
 
-  @Override
-  public void resetStubs() {
-    uncompressedBlocking = createBlockingStub();
-    // do not use compression until setCompression was called
-    compressedBlocking = uncompressedBlocking;
-    compressedNonBlocking = createStub();
+  @VisibleForTesting
+  RemoteFactStoreGrpc.RemoteFactStoreStub configure(
+      RemoteFactStoreGrpc.@NonNull RemoteFactStoreStub stub) {
+    if (basic != null) stub = stub.withCallCredentials(basic);
+    stub = stub.withInterceptors(MetadataUtils.newAttachHeadersInterceptor(meta));
+    return stub;
   }
 
-  @Override
-  public void setCompression(@NonNull String compressionId) {
-    compressedBlocking =
-        createBlockingStub()
-            .withInterceptors(
-                MetadataUtils.newAttachHeadersInterceptor(forCompression(compressionId)))
-            .withCompression(compressionId);
-    compressedNonBlocking =
-        createStub()
-            .withInterceptors(
-                MetadataUtils.newAttachHeadersInterceptor(forCompression(compressionId)))
-            .withCompression(compressionId);
+  @VisibleForTesting
+  RemoteFactStoreGrpc.RemoteFactStoreBlockingStub configure(
+      RemoteFactStoreGrpc.@NonNull RemoteFactStoreBlockingStub stub) {
+    if (basic != null) stub = stub.withCallCredentials(basic);
+    stub = stub.withInterceptors(MetadataUtils.newAttachHeadersInterceptor(meta));
+    return stub;
+  }
+
+  @SuppressWarnings("unchecked")
+  @VisibleForTesting
+  <T extends AbstractStub<?>> T configureCompression(T stub) {
+    if (compression != null)
+      return (T)
+          stub.withCompression(compression)
+              .withInterceptors(
+                  MetadataUtils.newAttachHeadersInterceptor(forCompression(compression)));
+    else return stub;
   }
 
   private Metadata forCompression(String compressionId) {
     Metadata m = new Metadata();
     m.put(Headers.MESSAGE_COMPRESSION, compressionId);
-    m.merge(this.meta);
     return m;
   }
 }
