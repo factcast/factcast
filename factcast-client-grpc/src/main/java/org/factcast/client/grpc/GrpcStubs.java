@@ -15,8 +15,10 @@
  */
 package org.factcast.client.grpc;
 
+import javax.annotation.Nullable;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 
+@SuppressWarnings("DeprecatedIsStillUsed")
 public interface GrpcStubs {
   // TODO remove in 0.8
   @Deprecated
@@ -32,7 +34,5 @@ public interface GrpcStubs {
    */
   RemoteFactStoreGrpc.RemoteFactStoreStub nonBlocking();
 
-  void resetStubs();
-
-  void setCompression(String compressionId);
+  void compression(@Nullable String compressionId);
 }

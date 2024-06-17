@@ -242,8 +242,6 @@ public class GrpcFactStore implements FactStore {
   public synchronized void initializeIfNecessary() {
     if (!this.initialized.get()) {
 
-      stubs.resetStubs();
-
       log.debug("Invoking handshake");
       Map<String, String> serverProperties;
       ProtocolVersion serverProtocolVersion;
@@ -352,7 +350,7 @@ public class GrpcFactStore implements FactStore {
               // configure compression used for sending messages and header
               // to request compressed messages from server
               // add compression info
-              stubs.setCompression(c);
+              stubs.compression(c);
             });
   }
 

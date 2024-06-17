@@ -20,6 +20,7 @@ import static org.mockito.Mockito.*;
 
 import io.grpc.CallCredentials;
 import io.grpc.Channel;
+import io.grpc.ClientInterceptor;
 import io.grpc.Metadata;
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
@@ -28,6 +29,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -45,37 +47,88 @@ class GrpcStubsImplTest {
   @Nested
   class WhenCreating {
 
+    private static final String COMP = "COMP";
+
     @BeforeEach
     void setup() {
       when(factory.createChannel(CHANNEL_NAME)).thenReturn(channel);
     }
 
     @Test
-    // kill this when recreated every time
-    void beforeCompressionSetAllTheSame() {
-      underTest = new GrpcStubsImpl(factory, CHANNEL_NAME, meta, creds);
-      Assertions.assertThat(underTest.uncompressedBlocking()).isNotNull();
-      Assertions.assertThat(underTest.blocking())
-          .isNotNull()
-          .isSameAs(underTest.uncompressedBlocking());
-    }
-  }
+    void blockingHasMeta() {
+      underTest = new GrpcStubsImpl(factory, CHANNEL_NAME, meta, null);
+      RemoteFactStoreGrpc.RemoteFactStoreBlockingStub stub =
+          mock(RemoteFactStoreGrpc.RemoteFactStoreBlockingStub.class);
+      underTest.configure(stub);
+      ArgumentCaptor<ClientInterceptor> captor = ArgumentCaptor.forClass(ClientInterceptor.class);
+      verify(stub).withInterceptors(captor.capture());
 
-  @Nested
-  class WhenResetingStubs {
-    @BeforeEach
-    void setup() {
-      when(factory.createChannel(CHANNEL_NAME)).thenReturn(channel);
+      Assertions.assertThat(captor.getValue()).hasFieldOrPropertyWithValue("extraHeaders", meta);
     }
 
     @Test
-    // kill this when recreated every time
-    void newStubsAreCreated() {
+    void nonBlockingHasMeta() {
+      underTest = new GrpcStubsImpl(factory, CHANNEL_NAME, meta, null);
+      RemoteFactStoreGrpc.RemoteFactStoreStub stub =
+          mock(RemoteFactStoreGrpc.RemoteFactStoreStub.class);
+      underTest.configure(stub);
+      ArgumentCaptor<ClientInterceptor> captor = ArgumentCaptor.forClass(ClientInterceptor.class);
+      verify(stub).withInterceptors(captor.capture());
+
+      Assertions.assertThat(captor.getValue()).hasFieldOrPropertyWithValue("extraHeaders", meta);
+    }
+
+    @Test
+    void withCredentials() {
       underTest = new GrpcStubsImpl(factory, CHANNEL_NAME, meta, creds);
-      RemoteFactStoreGrpc.RemoteFactStoreBlockingStub before = underTest.uncompressedBlocking();
-      Assertions.assertThat(before).isNotNull();
-      underTest.resetStubs();
-      Assertions.assertThat(underTest.uncompressedBlocking()).isNotSameAs(before);
+      {
+        RemoteFactStoreGrpc.RemoteFactStoreBlockingStub stub = underTest.uncompressedBlocking();
+        Assertions.assertThat(stub.getCallOptions().getCredentials()).isSameAs(creds);
+      }
+      {
+        RemoteFactStoreGrpc.RemoteFactStoreBlockingStub stub = underTest.blocking();
+        Assertions.assertThat(stub.getCallOptions().getCredentials()).isSameAs(creds);
+      }
+      {
+        RemoteFactStoreGrpc.RemoteFactStoreStub stub = underTest.nonBlocking();
+        Assertions.assertThat(stub.getCallOptions().getCredentials()).isSameAs(creds);
+      }
+    }
+
+    @Test
+    void withoutCredentials() {
+      underTest = new GrpcStubsImpl(factory, CHANNEL_NAME, meta, null);
+      {
+        RemoteFactStoreGrpc.RemoteFactStoreBlockingStub stub = underTest.uncompressedBlocking();
+        Assertions.assertThat(stub.getCallOptions().getCredentials()).isNull();
+      }
+      {
+        RemoteFactStoreGrpc.RemoteFactStoreBlockingStub stub = underTest.blocking();
+        Assertions.assertThat(stub.getCallOptions().getCredentials()).isNull();
+      }
+      {
+        RemoteFactStoreGrpc.RemoteFactStoreStub stub = underTest.nonBlocking();
+        Assertions.assertThat(stub.getCallOptions().getCredentials()).isNull();
+      }
+    }
+
+    @Test
+    void withCompression() {
+      underTest = new GrpcStubsImpl(factory, CHANNEL_NAME, meta, creds);
+      underTest.compression(COMP);
+
+      {
+        RemoteFactStoreGrpc.RemoteFactStoreBlockingStub stub = underTest.uncompressedBlocking();
+        Assertions.assertThat(stub.getCallOptions().getCompressor()).isNull();
+      }
+      {
+        RemoteFactStoreGrpc.RemoteFactStoreBlockingStub stub = underTest.blocking();
+        Assertions.assertThat(stub.getCallOptions().getCompressor()).isEqualTo(COMP);
+      }
+      {
+        RemoteFactStoreGrpc.RemoteFactStoreStub stub = underTest.nonBlocking();
+        Assertions.assertThat(stub.getCallOptions().getCompressor()).isEqualTo(COMP);
+      }
     }
   }
 }
