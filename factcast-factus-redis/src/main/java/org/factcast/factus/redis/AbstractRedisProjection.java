@@ -22,15 +22,11 @@ import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.core.FactStreamPosition;
-import org.factcast.factus.projection.FactStreamPositionAware;
-import org.factcast.factus.projection.Named;
 import org.factcast.factus.projection.WriterToken;
-import org.factcast.factus.projection.WriterTokenAware;
 import org.redisson.api.*;
 
 @SuppressWarnings("java:S2142")
-public abstract class AbstractRedisProjection
-    implements RedisProjection, FactStreamPositionAware, WriterTokenAware, Named {
+public abstract class AbstractRedisProjection implements RedisProjection {
   @Getter protected final RedissonClient redisson;
 
   protected final RLock lock;
