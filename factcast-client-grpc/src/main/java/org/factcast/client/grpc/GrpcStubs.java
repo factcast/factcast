@@ -15,23 +15,31 @@
  */
 package org.factcast.client.grpc;
 
+import io.grpc.Deadline;
 import javax.annotation.Nullable;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 
-@SuppressWarnings("DeprecatedIsStillUsed")
 public interface GrpcStubs {
-  // TODO remove in 0.8
-  @Deprecated
+  // deadline does not make sense here? (Only used for handshake from 0.8 on)
   RemoteFactStoreGrpc.RemoteFactStoreBlockingStub uncompressedBlocking();
 
   /**
    * @return RemoteFactStoreBlockingStub with compression if already configured
    */
-  RemoteFactStoreGrpc.RemoteFactStoreBlockingStub blocking();
+  default RemoteFactStoreGrpc.RemoteFactStoreBlockingStub blocking() {
+    return blocking(null);
+  }
+
+  /**
+   * @param deadline null or deadline after which request will be terminated
+   * @return RemoteFactStoreBlockingStub with compression if already configured
+   */
+  RemoteFactStoreGrpc.RemoteFactStoreBlockingStub blocking(@Nullable Deadline deadline);
 
   /**
    * @return RemoteFactStoreStub with compression if already configured
    */
+  // deadline does not make sense here?
   RemoteFactStoreGrpc.RemoteFactStoreStub nonBlocking();
 
   GrpcStubs compression(@Nullable String compressionId);

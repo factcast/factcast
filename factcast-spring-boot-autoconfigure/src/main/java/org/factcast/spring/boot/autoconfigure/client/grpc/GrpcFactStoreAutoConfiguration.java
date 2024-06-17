@@ -33,6 +33,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.util.StringUtils;
 
 /**
  * Provides a GrpcFactStore as a FactStore implementation.
@@ -74,13 +75,14 @@ public class GrpcFactStoreAutoConfiguration {
           }
         };
 
-    String id = properties.getId();
-    if (id == null) {
-      // fall back to applicationName if set
-      if (applicationName != null && !applicationName.trim().isEmpty()) {
-        id = Optional.ofNullable(applicationName).orElse("UNKNOWN");
-      }
-    }
+    String id =
+        Optional.ofNullable(properties.getId())
+            .orElseGet(
+                () ->
+                    Optional.ofNullable(applicationName)
+                        .map(String::trim)
+                        .filter(StringUtils::hasText)
+                        .orElse("UNKNOWN"));
 
     return new GrpcFactStore(f, credentials, properties, id);
   }

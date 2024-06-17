@@ -18,6 +18,7 @@ package org.factcast.client.grpc;
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.CallCredentials;
 import io.grpc.Channel;
+import io.grpc.Deadline;
 import io.grpc.Metadata;
 import io.grpc.stub.AbstractStub;
 import io.grpc.stub.MetadataUtils;
@@ -36,6 +37,7 @@ class GrpcStubsImpl implements GrpcStubs {
   private final @NonNull Metadata meta;
   private final @Nullable CallCredentials basic;
 
+  // can change at runtime (failover)
   @Setter @Nullable private String compression = null;
 
   public GrpcStubsImpl(
@@ -51,49 +53,47 @@ class GrpcStubsImpl implements GrpcStubs {
   @Override
   @NonNull
   public RemoteFactStoreGrpc.RemoteFactStoreBlockingStub uncompressedBlocking() {
-    return configure(RemoteFactStoreGrpc.newBlockingStub(channel));
+    return configure(RemoteFactStoreGrpc.newBlockingStub(channel), null);
   }
 
   @Override
   @NonNull
-  public RemoteFactStoreGrpc.RemoteFactStoreBlockingStub blocking() {
-    return configureCompression(configure(RemoteFactStoreGrpc.newBlockingStub(channel)));
+  public RemoteFactStoreGrpc.RemoteFactStoreBlockingStub blocking(@Nullable Deadline deadline) {
+    return configureCompression(configure(RemoteFactStoreGrpc.newBlockingStub(channel), deadline));
   }
 
   @Override
   @NonNull
   public RemoteFactStoreGrpc.RemoteFactStoreStub nonBlocking() {
-    return configureCompression(configure(RemoteFactStoreGrpc.newStub(channel)));
+    return configureCompression(configure(RemoteFactStoreGrpc.newStub(channel), null));
   }
 
   @VisibleForTesting
-  RemoteFactStoreGrpc.RemoteFactStoreStub configure(
-      RemoteFactStoreGrpc.@NonNull RemoteFactStoreStub stub) {
+  @NonNull
+  <T extends AbstractStub<T>> T configure(@NonNull T stub, @Nullable Deadline deadline) {
     if (basic != null) stub = stub.withCallCredentials(basic);
+    if (deadline != null) stub = stub.withDeadline(deadline);
     stub = stub.withInterceptors(MetadataUtils.newAttachHeadersInterceptor(meta));
     return stub;
   }
 
   @VisibleForTesting
-  RemoteFactStoreGrpc.RemoteFactStoreBlockingStub configure(
-      RemoteFactStoreGrpc.@NonNull RemoteFactStoreBlockingStub stub) {
-    if (basic != null) stub = stub.withCallCredentials(basic);
-    stub = stub.withInterceptors(MetadataUtils.newAttachHeadersInterceptor(meta));
-    return stub;
+  @NonNull
+  <T extends AbstractStub<T>> T configure(@NonNull T stub) {
+    return configure(stub, null);
   }
 
-  @SuppressWarnings("unchecked")
   @VisibleForTesting
-  <T extends AbstractStub<?>> T configureCompression(T stub) {
+  @NonNull
+  <T extends AbstractStub<T>> T configureCompression(@NonNull T stub) {
     if (compression != null)
-      return (T)
-          stub.withCompression(compression)
-              .withInterceptors(
-                  MetadataUtils.newAttachHeadersInterceptor(forCompression(compression)));
+      return stub.withCompression(compression)
+          .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(forCompression(compression)));
     else return stub;
   }
 
-  private Metadata forCompression(String compressionId) {
+  @NonNull
+  private Metadata forCompression(@NonNull String compressionId) {
     Metadata m = new Metadata();
     m.put(Headers.MESSAGE_COMPRESSION, compressionId);
     return m;

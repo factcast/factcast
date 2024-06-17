@@ -20,6 +20,7 @@ import static io.grpc.stub.ClientCalls.asyncServerStreamingCall;
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.*;
 import io.grpc.stub.StreamObserver;
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import java.time.LocalDate;
 import java.util.*;
@@ -257,10 +258,6 @@ public class GrpcFactStore implements FactStore {
       logProtocolVersion(serverProtocolVersion);
       logServerVersion(serverProperties);
 
-      // TODO initialize stubs?
-      //      blockingStub = uncompressedBlockingStub;
-      //      stub = uncompressedStub;
-
       String codecListFromServer = serverProperties.get(Capabilities.CODECS.toString());
       configureCompressionAndMetaData(codecListFromServer);
 
@@ -274,6 +271,7 @@ public class GrpcFactStore implements FactStore {
     }
   }
 
+  @Nullable
   private static CallCredentials configureCredentials(
       Optional<String> legacyCredentials, FactCastGrpcClientProperties p) {
     CallCredentials basic = null;
@@ -342,6 +340,9 @@ public class GrpcFactStore implements FactStore {
   }
 
   private void configureCompressionAndMetaData(String codecListFromServer) {
+    // reset to uncompressed
+    stubs.compression(null);
+    // reconfigure according to server's capabilities
     codecs
         .selectFrom(codecListFromServer)
         .ifPresent(
