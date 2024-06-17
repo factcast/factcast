@@ -64,6 +64,7 @@ public class FactusAutoConfiguration {
       ProjectorFactory projectorFactory,
       /** not used but part of parameters to ensure the dependency graph can be inspected */
       @SuppressWarnings("unused") Set<FactusDependency> dependencies) {
+
     return new FactusImpl(
         fc,
         projectorFactory,

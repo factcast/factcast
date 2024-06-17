@@ -16,55 +16,20 @@
 package org.factcast.factus.spring.tx;
 
 import lombok.NonNull;
-import org.factcast.factus.projection.FactStreamPositionAware;
-import org.factcast.factus.projection.Named;
-import org.factcast.factus.projection.WriterTokenAware;
-import org.factcast.factus.projection.tx.AbstractTransactionAwareProjection;
+import lombok.experimental.Delegate;
+import org.factcast.factus.projection.tx.TransactionBehavior;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 
-abstract class AbstractSpringTxProjection
-    extends AbstractTransactionAwareProjection<TransactionStatus>
-    implements SpringTxProjection, FactStreamPositionAware, WriterTokenAware, Named {
-  private final PlatformTransactionManager platformTransactionManager;
+abstract class AbstractSpringTxProjection implements SpringTxProjection {
+
+  @Delegate private final TransactionBehavior<TransactionStatus> tx;
 
   protected AbstractSpringTxProjection(
       @NonNull PlatformTransactionManager platformTransactionManager) {
-    this.platformTransactionManager = platformTransactionManager;
-  }
-
-  @Override
-  public PlatformTransactionManager platformTransactionManager() {
-    return platformTransactionManager;
-  }
-
-  @Override
-  protected @NonNull TransactionStatus beginNewTransaction() {
-    return platformTransactionManager().getTransaction(transactionOptions());
-  }
-
-  @Override
-  protected void rollback(@NonNull TransactionStatus runningTransaction) {
-    platformTransactionManager().rollback(runningTransaction);
-  }
-
-  @Override
-  protected void commit(@NonNull TransactionStatus runningTransaction) {
-    platformTransactionManager().commit(runningTransaction);
-  }
-
-  protected final @NonNull TransactionDefinition transactionOptions() {
-    SpringTransactional tx = getClass().getAnnotation(SpringTransactional.class);
-    if (tx != null) return SpringTransactional.Defaults.with(tx);
-    else return SpringTransactional.Defaults.create();
-  }
-
-  @Override
-  public final int maxBatchSizePerTransaction() {
-    SpringTransactional tx = getClass().getAnnotation(SpringTransactional.class);
-    if (tx == null || tx.bulkSize() < 1) {
-      return super.maxBatchSizePerTransaction();
-    } else return tx.bulkSize();
+    this.tx =
+        new TransactionBehavior<>(
+            new SpringTxAdapter(
+                platformTransactionManager, getClass().getAnnotation(SpringTransactional.class)));
   }
 }

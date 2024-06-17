@@ -22,22 +22,17 @@ import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.core.FactStreamPosition;
-import org.factcast.factus.projection.FactStreamPositionAware;
-import org.factcast.factus.projection.Named;
 import org.factcast.factus.projection.WriterToken;
-import org.factcast.factus.projection.WriterTokenAware;
-import org.factcast.factus.projection.tx.AbstractOpenTransactionAwareProjection;
-import org.factcast.factus.redis.tx.RedisTransactional;
 import org.redisson.api.*;
 
-abstract class AbstractRedisProjection extends AbstractOpenTransactionAwareProjection<RTransaction>
-    implements RedisProjection, FactStreamPositionAware, WriterTokenAware, Named {
+@SuppressWarnings("java:S2142")
+public abstract class AbstractRedisProjection implements RedisProjection {
   @Getter protected final RedissonClient redisson;
 
-  private final RLock lock;
-  private final String stateBucketName;
+  protected final RLock lock;
+  protected final String stateBucketName;
 
-  @Getter private final String redisKey;
+  @Getter protected final String redisKey;
 
   protected AbstractRedisProjection(@NonNull RedissonClient redisson) {
     this.redisson = redisson;
@@ -50,37 +45,23 @@ abstract class AbstractRedisProjection extends AbstractOpenTransactionAwareProje
   }
 
   @VisibleForTesting
-  RBucket<FactStreamPosition> stateBucket(@NonNull RTransaction tx) {
-    return tx.getBucket(stateBucketName, FactStreamPositionCodec.INSTANCE);
-  }
-
-  @VisibleForTesting
-  RBucket<FactStreamPosition> stateBucket() {
+  protected RBucket<FactStreamPosition> stateBucket() {
     return redisson.getBucket(stateBucketName, FactStreamPositionCodec.INSTANCE);
   }
 
   @Override
   public FactStreamPosition factStreamPosition() {
-    if (inTransaction()) {
-      return stateBucket(runningTransaction()).get();
-    } else {
-      return stateBucket().get();
-    }
+    return stateBucket().get();
   }
 
   @SuppressWarnings("ConstantConditions")
   @Override
   public void factStreamPosition(@Nullable FactStreamPosition position) {
-    if (inTransaction()) {
-      stateBucket(runningTransaction()).set(position);
-    } else {
-      stateBucket().set(position);
-    }
+    stateBucket().set(position);
   }
 
   @Override
   public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
-    assertNoRunningTransaction();
     try {
       if (lock.tryLock(maxWait.toMillis(), TimeUnit.MILLISECONDS))
         return new RedisWriterToken(redisson, lock);
@@ -88,34 +69,5 @@ abstract class AbstractRedisProjection extends AbstractOpenTransactionAwareProje
       // assume lock unsuccessful
     }
     return null;
-  }
-
-  @Override
-  protected @NonNull RTransaction beginNewTransaction() {
-    return redisson().createTransaction(transactionOptions());
-  }
-
-  @Override
-  protected void commit(@NonNull RTransaction runningTransaction) {
-    runningTransaction.commit();
-  }
-
-  @Override
-  protected void rollback(@NonNull RTransaction runningTransaction) {
-    runningTransaction.rollback();
-  }
-
-  protected final @NonNull TransactionOptions transactionOptions() {
-    RedisTransactional tx = this.getClass().getAnnotation(RedisTransactional.class);
-    if (tx != null) return RedisTransactional.Defaults.with(tx);
-    else return TransactionOptions.defaults();
-  }
-
-  @Override
-  public final int maxBatchSizePerTransaction() {
-    RedisTransactional tx = this.getClass().getAnnotation(RedisTransactional.class);
-    if (tx != null) {
-      return tx.bulkSize();
-    } else return super.maxBatchSizePerTransaction();
   }
 }

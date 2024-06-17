@@ -19,6 +19,7 @@ import java.util.*;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.server.security.auth.FactCastUser;
 
 public interface SecurityService {
   void logout();
@@ -30,4 +31,6 @@ public interface SecurityService {
   boolean canRead(@NonNull FactSpec f);
 
   Set<FactSpec> filterReadable(@NonNull Collection<FactSpec> all);
+
+  FactCastUser getAuthenticatedUser();
 }

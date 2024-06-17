@@ -110,12 +110,12 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
 
     @SneakyThrows
     @Test
-    void batchProcessing() {
+    void happyPath() {
       ManagedUserNames p = new ManagedUserNames(dynamoDbClient);
       factus.update(p);
 
       assertThat(p.count()).isEqualTo(NUMBER_OF_EVENTS);
-      assertThat(p.stateModifications()).isEqualTo(1);
+      assertThat(p.stateModifications()).isEqualTo(10);
     }
 
     @SneakyThrows
@@ -124,7 +124,7 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
       DynamoManagedUserNamesSizeBlowAt7th p =
           new DynamoManagedUserNamesSizeBlowAt7th(dynamoDbClient);
 
-      assertThat(p.count()).isEqualTo(0);
+      assertThat(p.count()).isZero();
 
       try {
         factus.update(p);
@@ -133,7 +133,7 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
       }
 
       assertThat(p.count()).isEqualTo(6);
-      assertThat(p.stateModifications()).isEqualTo(0);
+      assertThat(p.stateModifications()).isEqualTo(6);
     }
   }
 
@@ -151,13 +151,12 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
 
     @SneakyThrows
     @Test
-    void batchProcessing() {
+    void happyPath() {
       SubscribedUserNames p = new SubscribedUserNames(dynamoDbClient);
       factus.subscribeAndBlock(p).awaitCatchup();
 
       assertThat(p.count()).isEqualTo(NUMBER_OF_EVENTS);
-      assertThat(p.stateModifications())
-          .isEqualTo(1); // Due to internal batching only one update is done.
+      assertThat(p.stateModifications()).isEqualTo(10);
     }
 
     @SneakyThrows
@@ -167,7 +166,7 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
       DynamoSubscribedUserNamesSizeBlowAt7Th p =
           new DynamoSubscribedUserNamesSizeBlowAt7Th(dynamoDbClient);
 
-      assertThat(p.count()).isEqualTo(0);
+      assertThat(p.count()).isZero();
 
       try {
         factus.subscribeAndBlock(p).awaitCatchup();
@@ -175,8 +174,8 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
         // ignore
       }
 
-      assertThat(p.count()).isEqualTo(7);
-      assertThat(p.stateModifications()).isEqualTo(0);
+      assertThat(p.count()).isEqualTo(6);
+      assertThat(p.stateModifications()).isEqualTo(6);
     }
   }
 
@@ -252,7 +251,7 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
 
     @Override
     protected void apply(UserCreated created) {
-      if (count++ == 7) { // blow the second bulk
+      if (++count == 7) { // blow the second bulk
         throw new IllegalStateException("Bad luck");
       }
       super.apply(created);

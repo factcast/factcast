@@ -16,10 +16,10 @@
 package org.factcast.factus.dynamo;
 
 import lombok.NonNull;
-import org.factcast.factus.projection.Projection;
+import org.factcast.factus.projection.ExternalizedProjection;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
-public interface DynamoProjection extends Projection {
+public interface DynamoProjection extends ExternalizedProjection {
   @NonNull
   DynamoDbClient dynamoDb();
 }

@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.io.IOException;
 import org.junit.jupiter.api.*;
 
+@SuppressWarnings("deprecation")
 class SnappyGrpcServerCodecTest {
 
   final SnappyGrpcServerCodec uut = new SnappyGrpcServerCodec();
