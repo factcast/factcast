@@ -26,6 +26,11 @@ import org.springframework.context.annotation.Bean;
 import org.xerial.snappy.SnappyInputStream;
 import org.xerial.snappy.SnappyOutputStream;
 
+/**
+ * @deprecated in 0.8
+ */
+@SuppressWarnings("DeprecatedIsStillUsed")
+@Deprecated
 @Generated
 @AutoConfiguration
 @ConditionalOnClass({

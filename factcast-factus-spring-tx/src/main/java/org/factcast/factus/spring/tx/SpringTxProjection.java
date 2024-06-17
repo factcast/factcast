@@ -16,9 +16,6 @@
 package org.factcast.factus.spring.tx;
 
 import org.factcast.factus.projection.ExternalizedProjection;
-import org.springframework.transaction.PlatformTransactionManager;
 
 @SpringTransactional
-public interface SpringTxProjection extends ExternalizedProjection {
-  PlatformTransactionManager platformTransactionManager();
-}
+public interface SpringTxProjection extends ExternalizedProjection {}

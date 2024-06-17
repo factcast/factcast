@@ -15,9 +15,6 @@
  */
 package org.factcast.server.grpc;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 import java.util.UUID;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;

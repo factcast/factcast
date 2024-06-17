@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2024 factcast.org
+ * Copyright © 2017-2022 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.projection.tx;
+package org.factcast.factus.redis.tx;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.NonNull;
+import org.factcast.factus.projection.SubscribedProjection;
+import org.redisson.api.RedissonClient;
 
-/**
- * please do not add any behavior into this class. This is just meant to give (CGLib-ready) access
- * to the current state and nothing else.
- *
- * @param <T>
- */
-public class AbstractTransactionalState<T> {
-  @Getter(AccessLevel.PROTECTED)
-  @Setter(AccessLevel.PROTECTED)
-  private T runningTransaction;
+public abstract class AbstractRedisTxSubscribedProjection extends AbstractRedisTxProjection
+    implements SubscribedProjection {
+  protected AbstractRedisTxSubscribedProjection(@NonNull RedissonClient redisson) {
+    super(redisson);
+  }
 }

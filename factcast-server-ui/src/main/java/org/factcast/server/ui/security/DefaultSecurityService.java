@@ -29,7 +29,7 @@ public class DefaultSecurityService implements SecurityService {
 
   private final AuthenticationContext authenticationContext;
 
-  private FactCastUser getAuthenticatedUser() {
+  public FactCastUser getAuthenticatedUser() {
     return authenticationContext.getAuthenticatedUser(FactCastUser.class).orElseThrow();
   }
 
