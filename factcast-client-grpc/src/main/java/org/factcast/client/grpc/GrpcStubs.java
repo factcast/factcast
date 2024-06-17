@@ -34,5 +34,5 @@ public interface GrpcStubs {
    */
   RemoteFactStoreGrpc.RemoteFactStoreStub nonBlocking();
 
-  void compression(@Nullable String compressionId);
+  GrpcStubs compression(@Nullable String compressionId);
 }

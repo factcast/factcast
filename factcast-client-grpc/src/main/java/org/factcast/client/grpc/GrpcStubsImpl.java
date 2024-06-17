@@ -25,7 +25,6 @@ import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import lombok.experimental.Accessors;
 import org.factcast.grpc.api.Headers;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 
@@ -37,9 +36,7 @@ class GrpcStubsImpl implements GrpcStubs {
   private final @NonNull Metadata meta;
   private final @Nullable CallCredentials basic;
 
-  @Setter
-  @Accessors(chain = false)
-  private String compression = null;
+  @Setter @Nullable private String compression = null;
 
   public GrpcStubsImpl(
       @NonNull FactCastGrpcChannelFactory channelFactory,
