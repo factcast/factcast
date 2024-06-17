@@ -16,11 +16,13 @@
 package org.factcast.factus.dynamo;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBLockClient;
+import com.google.common.annotations.VisibleForTesting;
 import lombok.NonNull;
 import org.factcast.factus.projection.ManagedProjection;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
+@SuppressWarnings({"DeprecatedIsStillUsed", "java:S1133"})
 public abstract class AbstractDynamoManagedProjection extends AbstractDynamoProjection
     implements ManagedProjection {
   protected AbstractDynamoManagedProjection(
@@ -28,7 +30,11 @@ public abstract class AbstractDynamoManagedProjection extends AbstractDynamoProj
     super(dynamoDbClient, stateTableName);
   }
 
-  // For testing only
+  /**
+   * @deprecated for testing only
+   */
+  @VisibleForTesting
+  @Deprecated
   protected AbstractDynamoManagedProjection(
       @NonNull DynamoDbClient dynamoDb,
       @NonNull DynamoDbEnhancedClient enhancedClient,
