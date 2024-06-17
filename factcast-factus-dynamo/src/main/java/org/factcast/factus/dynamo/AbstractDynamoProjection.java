@@ -26,18 +26,14 @@ import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.core.FactStreamPosition;
-import org.factcast.factus.projection.FactStreamPositionAware;
-import org.factcast.factus.projection.Named;
 import org.factcast.factus.projection.WriterToken;
-import org.factcast.factus.projection.WriterTokenAware;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
-abstract class AbstractDynamoProjection
-    implements DynamoProjection, FactStreamPositionAware, WriterTokenAware, Named {
+abstract class AbstractDynamoProjection implements DynamoProjection {
   @Getter protected final DynamoDbClient dynamoDb;
   protected final DynamoDbEnhancedClient enhancedClient;
   private final AmazonDynamoDBLockClient lockClient;

@@ -23,10 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.Value;
+import lombok.*;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
@@ -43,7 +40,7 @@ import org.factcast.factus.projection.parameter.HandlerParameterContributor;
 import org.factcast.factus.projection.parameter.HandlerParameterContributors;
 import org.factcast.factus.projection.parameter.HandlerParameterProvider;
 import org.factcast.factus.projection.parameter.HandlerParameterTransformer;
-import org.factcast.factus.projection.tx.AbstractOpenTransactionAwareProjection;
+import org.factcast.factus.projection.tx.OpenTransactionAware;
 import org.factcast.factus.projection.tx.TransactionAware;
 import org.factcast.factus.projection.tx.TransactionException;
 
@@ -101,6 +98,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       try {
         callHandlerFor(f);
         latestSuccessful = FactStreamPosition.from(f);
+        setFactStreamPositionIfAwareButNotTransactional(latestSuccessful);
       } catch (Exception e) {
         log.trace(
             "returned with Exception {}:",
@@ -117,7 +115,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
     try {
       // this is something we only do, if the whole batch was successfully applied
-      if (latestSuccessful != null) {
+      if (projection instanceof TransactionAware && latestSuccessful != null) {
         setFactStreamPositionIfAware(latestSuccessful);
       }
     } catch (Exception e) {
@@ -136,6 +134,11 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       projection.onError(e);
       throw e;
     }
+  }
+
+  private void setFactStreamPositionIfAwareButNotTransactional(
+      @NonNull FactStreamPosition latestSuccessful) {
+    if (!(projection instanceof TransactionAware)) setFactStreamPositionIfAware(latestSuccessful);
   }
 
   @VisibleForTesting
@@ -199,9 +202,9 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
     final HandlerParameterContributors c;
 
-    if (p instanceof AbstractOpenTransactionAwareProjection<?>) {
+    if (p instanceof OpenTransactionAware<?>) {
 
-      Class<?> clazz = ReflectionTools.getTypeParameter((AbstractOpenTransactionAwareProjection) p);
+      Class<?> clazz = ReflectionTools.getTypeParameter((OpenTransactionAware<?>) p);
 
       // we have a parameter contributor to add, then
       c =
@@ -212,8 +215,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
                 public HandlerParameterProvider providerFor(
                     @NonNull Class<?> type, @NonNull Set<Annotation> annotations) {
                   if (clazz == type)
-                    return (f, p) ->
-                        ((AbstractOpenTransactionAwareProjection<?>) p).runningTransaction();
+                    return (f, p) -> ((OpenTransactionAware<?>) p).runningTransaction();
                   else return null;
                 }
               });
@@ -478,17 +480,11 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       }
     }
 
+    @SneakyThrows
     @NonNull
     @VisibleForTesting
-    static Class<?> getTypeParameter(@NonNull AbstractOpenTransactionAwareProjection<?> p) {
-      Class<?> cl = p.getClass();
-
-      // climb to common superclass
-      while (cl.getSuperclass() != AbstractOpenTransactionAwareProjection.class)
-        cl = cl.getSuperclass();
-      // grab type parameter
-      ParameterizedType type = (ParameterizedType) cl.getGenericSuperclass();
-      return (Class<?>) type.getActualTypeArguments()[0];
+    static Class<?> getTypeParameter(@NonNull OpenTransactionAware<?> p) {
+      return p.getClass().getMethod("runningTransaction").getReturnType();
     }
   }
 }

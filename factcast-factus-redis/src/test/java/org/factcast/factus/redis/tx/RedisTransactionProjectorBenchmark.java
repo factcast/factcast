@@ -15,11 +15,13 @@
  */
 package org.factcast.factus.redis.tx;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.same;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.factus.Handler;
@@ -27,7 +29,6 @@ import org.factcast.factus.event.DefaultEventSerializer;
 import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.projector.Projector;
 import org.factcast.factus.projector.ProjectorImpl;
-import org.factcast.factus.redis.AbstractRedisManagedProjection;
 import org.factcast.factus.redis.FactStreamPositionCodec;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.mockito.Mockito;
@@ -36,7 +37,7 @@ import org.redisson.api.RBucket;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "deprecation"})
 public class RedisTransactionProjectorBenchmark {
   private static final EventSerializer ctx = new DefaultEventSerializer(new ObjectMapper());
   private static final Fact f =
@@ -89,7 +90,7 @@ public class RedisTransactionProjectorBenchmark {
   }
 
   @ProjectionMetaData(name = "peter", revision = 12)
-  static class TestProjection extends AbstractRedisManagedProjection {
+  static class TestProjection extends AbstractRedisTxManagedProjection {
 
     protected int count;
 
@@ -111,6 +112,6 @@ public class RedisTransactionProjectorBenchmark {
 
   public static void main(String[] args) throws Exception {
     org.openjdk.jmh.Main.main(args);
-    // new RedisTransactionProjectorBenchmark().applyBatch10();
+    new RedisTransactionProjectorBenchmark().applyBatchDefaultSize();
   }
 }

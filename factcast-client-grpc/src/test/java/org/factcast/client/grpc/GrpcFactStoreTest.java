@@ -166,7 +166,7 @@ class GrpcFactStoreTest {
     UUID uuid = fact.id();
     conv = new ProtoConverter();
     @NonNull FactStoreProto.MSG_UUID id = conv.toProto(uuid);
-    when(blockingStub.fetchById(eq(id)))
+    when(blockingStub.fetchById(id))
         .thenReturn(
             MSG_OptionalFact.newBuilder().setFact(conv.toProto(fact)).setPresent(true).build());
 
@@ -413,7 +413,7 @@ class GrpcFactStoreTest {
   void testCurrentStateForPositive() {
     uut.fastStateToken(true);
     UUID id = new UUID(0, 1);
-    StateForRequest req = new StateForRequest(Collections.emptyList(), "foo");
+
     when(blockingStub.currentStateForSpecsJson(any())).thenReturn(conv.toProto(id));
     List<FactSpec> list = Collections.singletonList(FactSpec.ns("foo").aggId(id));
     uut.currentStateFor(list);
@@ -491,34 +491,37 @@ class GrpcFactStoreTest {
   }
 
   @Nested
+  @SuppressWarnings("java:S5778")
   class Credentials {
     @Test
     void testCredentialsWrongFormat() {
       assertThrows(
           IllegalArgumentException.class,
-          () -> new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz")));
+          () ->
+              new GrpcFactStore(channel, stubsFactory, Optional.ofNullable("xyz"))
+                  .initializeIfNecessary());
 
       assertThrows(
           IllegalArgumentException.class,
-          () -> new GrpcFactStore(mock(Channel.class), Optional.ofNullable("x:y:z")));
+          () ->
+              new GrpcFactStore(channel, stubsFactory, Optional.ofNullable("x:y:z"))
+                  .initializeIfNecessary());
 
-      assertThat(new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz:abc")))
-          .isNotNull();
+      Assertions.assertDoesNotThrow(
+          () -> {
+            new GrpcFactStore(channel, stubsFactory, Optional.ofNullable("xyz:abc"))
+                .initializeIfNecessary();
+          });
     }
 
     @Test
     void testCredentialsRightFormat() {
-      assertThat(new GrpcFactStore(mock(Channel.class), Optional.ofNullable("xyz:abc")))
+      assertThat(new GrpcFactStore(channel, stubsFactory, Optional.ofNullable("xyz:abc")))
           .isNotNull();
     }
 
     @Test
     void testNewCredentials() {
-      final RemoteFactStoreBlockingStub blockingStub = mock(RemoteFactStoreBlockingStub.class);
-      final RemoteFactStoreStub stub = mock(RemoteFactStoreStub.class);
-      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
-      when(stub.withWaitForReady()).thenReturn(stub);
-
       final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
       props.setUser("foo");
       props.setPassword("bar");
@@ -532,25 +535,128 @@ class GrpcFactStoreTest {
     }
 
     @Test
-    void testLegacyCredentials() {
-      final RemoteFactStoreBlockingStub blockingStub = mock(RemoteFactStoreBlockingStub.class);
-      final RemoteFactStoreStub stub = mock(RemoteFactStoreStub.class);
+    void testNewCredentialsNoPassword() {
       when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
       when(stub.withWaitForReady()).thenReturn(stub);
 
+      credentials = Optional.empty();
+      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
+      props.setUser("user");
+
+      GrpcFactStore uutNewCredentials =
+          new GrpcFactStore(channel, stubsFactory, credentials, props, "foo");
+
+      assertThrows(
+          IllegalArgumentException.class,
+          () -> {
+            uutNewCredentials.initializeIfNecessary();
+          });
+    }
+
+    @Test
+    void testNewCredentialsEmptyPassword() {
+      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
+      when(stub.withWaitForReady()).thenReturn(stub);
+
+      credentials = Optional.empty();
+      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
+      props.setUser("user");
+      props.setPassword("");
+
+      GrpcFactStore uutNewCredentials =
+          new GrpcFactStore(channel, stubsFactory, credentials, props, "foo");
+
+      assertThrows(
+          IllegalArgumentException.class,
+          () -> {
+            uutNewCredentials.initializeIfNecessary();
+          });
+    }
+
+    @Test
+    void testNewCredentialsNoUsername() {
+      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
+      when(stub.withWaitForReady()).thenReturn(stub);
+
+      credentials = Optional.empty();
+      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
+      props.setPassword("password");
+
+      GrpcFactStore uutNewCredentials =
+          new GrpcFactStore(channel, stubsFactory, credentials, props, "foo");
+
+      assertThrows(
+          IllegalArgumentException.class,
+          () -> {
+            uutNewCredentials.initializeIfNecessary();
+          });
+    }
+
+    @Test
+    void testNewCredentialsEmptyUsername() {
+      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
+      when(stub.withWaitForReady()).thenReturn(stub);
+
+      credentials = Optional.empty();
+      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
+      props.setUser("");
+      props.setPassword("password");
+
+      GrpcFactStore uutNewCredentials =
+          new GrpcFactStore(channel, stubsFactory, credentials, props, "foo");
+
+      assertThrows(
+          IllegalArgumentException.class,
+          () -> {
+            uutNewCredentials.initializeIfNecessary();
+          });
+    }
+
+    @Test
+    void testLegacyCredentials() {
+
       final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
 
-      assertThat(
-              new GrpcFactStore(blockingStub, stub, Optional.ofNullable("xyz:abc"), props, "foo"))
-          .isNotNull();
+      GrpcFactStore store =
+          new GrpcFactStore(channel, stubsFactory, Optional.ofNullable("xyz:abc"), props, "foo");
+      store.initializeIfNecessary();
 
+      // just check, if stubs were configured
       verify(blockingStub).withCallCredentials(any());
       verify(stub).withCallCredentials(any());
+    }
+
+    @Test
+    void testLegacyCredentialsEmptyUsername() {
+
+      credentials = Optional.of(":abc");
+      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
+
+      GrpcFactStore uutLegacyCredentials =
+          new GrpcFactStore(channel, stubsFactory, credentials, props, "foo");
+
+      assertThrows(
+          IllegalArgumentException.class, () -> uutLegacyCredentials.initializeIfNecessary());
+    }
+
+    @Test
+    void testLegacyCredentialsEmptyPassword() {
+      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
+      when(stub.withWaitForReady()).thenReturn(stub);
+
+      credentials = Optional.of("xyz:");
+      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
+
+      GrpcFactStore uutLegacyCredentials =
+          new GrpcFactStore(channel, stubsFactory, credentials, props, "foo");
+
+      assertThrows(
+          IllegalArgumentException.class, () -> uutLegacyCredentials.initializeIfNecessary());
     }
   }
 
   @Test
-  public void testCurrentTime() {
+  void testCurrentTime() {
     long l = 123L;
     when(blockingStub.currentTime(conv.empty())).thenReturn(conv.toProtoTime(l));
     Long t = uut.currentTime();
@@ -798,11 +904,7 @@ class GrpcFactStoreTest {
     }
 
     @Test
-    void retriesRun() throws Exception {
-      when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
-      when(blockingStub.handshake(any()))
-          .thenReturn(
-              conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
+    void retriesRun() {
       resilienceConfig.setEnabled(true).setAttempts(100).setInterval(Duration.ofMillis(100));
       doThrow(new RetryableException(new IOException())).doNothing().when(runnable).run();
       uut.runAndHandle(runnable);

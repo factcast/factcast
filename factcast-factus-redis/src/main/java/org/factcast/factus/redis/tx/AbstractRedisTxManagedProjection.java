@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2024 factcast.org
+ * Copyright © 2017-2022 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.projection.tx;
+package org.factcast.factus.redis.tx;
 
-public abstract class AbstractOpenTransactionAwareProjection<T>
-    extends AbstractTransactionAwareProjection<T> {
+import lombok.NonNull;
+import org.factcast.factus.projection.ManagedProjection;
+import org.redisson.api.RedissonClient;
 
-  /**
-   * open this up to be used from the projector in order to be able to inject as a parameter
-   *
-   * @return
-   */
-  @Override
-  public T runningTransaction() {
-    return super.runningTransaction();
+public abstract class AbstractRedisTxManagedProjection extends AbstractRedisTxProjection
+    implements ManagedProjection {
+  protected AbstractRedisTxManagedProjection(@NonNull RedissonClient redisson) {
+    super(redisson);
   }
 }
