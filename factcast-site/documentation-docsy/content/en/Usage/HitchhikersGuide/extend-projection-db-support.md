@@ -34,9 +34,9 @@ and options you need to keep in mind in this situation.
 When designing a projection implementation you'll need to consider the following aspects:
 
 1. You'll need to provide some kind of locking mechanism for writing into your datastore, so that only one instance at
-   a time can update the projection. (WriterTokenAware)
+   a time can update the projection. (`WriterTokenAware`)
 2. Define a place to store your projection's state (the last processed event). For example this can be a table in your
-   data store that holds one entry for every projection within your service. (FactStreamPositionAware)
+   data store that holds one entry for every projection within your service. (`FactStreamPositionAware`)
 3. Does your datastore provide transactionality? If yes, you can leverage this to batch changes together when updating
    your projection in order to increase performance and to provide atomicity to your changes. Otherwise, go with a
    basic projection, but keep in mind that this approach has its limitations in terms of atomicity and throughput.
@@ -44,14 +44,14 @@ When designing a projection implementation you'll need to consider the following
 ### General Structure
 
 Projection implementations are usually provided via an abstract class that is extended by the actual projections within your
-services. Apart from your desired class hierarchy, projections need to implement the `FactStreamPositionAware`,
-`WriterTokenAware` and `Projection` interfaces and optionally also `Named`.
+services. Apart from your desired class hierarchy, projections need to implement `ExternalizedProjection`
+(which includes `Projection`,`FactStreamPositionAware`,`WriterTokenAware` and `Named`).
 
 Let's imagine you implement support for the XYZ data store.
 
 ### Projections without Transactional Safety
 
-- Create an `AbstractXYZProjection` that implements `Projection`, `WriterTokenAware`, `FactStreamPositionAware`
+- Create an `AbstractXYZProjection` that implements `ExternalizedProjection`
 - Override the Getter and Setter for the FactStreamPosition, which represents the information up to which fact your
   projection has consumed the fact stream. While the actual implementation will depend on your choice of data store,
   one central table per service can be sufficient.
@@ -83,3 +83,6 @@ with the data store in a transactional manner.
 - Implement the `OpenTransactionAware` interface instead of `TransactionAware`.
 
 You can have a look at `AbstractSpringTxProjection` or `AbstractRedisTxProjection` as a template.
+
+Please consider giving back to the community by either re-integrating into the factcast project or by publishing your extension
+as a separate project. Please lets know at `info@factcast.org`.
