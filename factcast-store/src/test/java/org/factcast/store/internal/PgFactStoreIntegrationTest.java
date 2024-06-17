@@ -33,7 +33,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.experimental.Delegate;
-import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
@@ -64,14 +63,15 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@Slf4j
 @ContextConfiguration(classes = {PgTestConfiguration.class})
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
 class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
 
-  private static final int ALLOWED_OS_DB_TIME_DRIFT_IN_MS = 100;
+  // see db/changelog/factcast/issue1483/augmentation_trigger_truncate_ts.sql
+  static final String DB_TIME_QUERY =
+      "select TRUNC(EXTRACT(EPOCH FROM now()::timestamptz(3)) * 1000);";
 
   @Autowired FactStore fs;
 
@@ -141,41 +141,31 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
     // RUN
     // we need to check if the timestamp that is added to meta makes sense, hence
     // capture current millis before and after publishing, and compare against the
-    // timestamp
-    // set in meta.
-    var before = System.currentTimeMillis();
-    var beforeDb = getCurrentDbTime();
-
-    var dbTimeBehindOsTime = (before - beforeDb) > 0;
-    if (dbTimeBehindOsTime) {
-      log.warn(
-          "Database time is behind OS time, this might lead to flaky tests, trying to include this into assertions");
-    }
-
-    assertThat(before - beforeDb)
-        .as(
-            "Time drift between OS and database is considered too large, this might lead to flaky tests and might indicate a broken test setup")
-        .isLessThanOrEqualTo(ALLOWED_OS_DB_TIME_DRIFT_IN_MS);
+    // timestamp set in meta.
+    //
+    // Not using "System.currentTimeMillis()" because a difference (by a few millis) to DB time has
+    // been observed.
+    var before = getCurrentDbTimeInMillis();
 
     uut.publish(Fact.builder().ns("augmentation").type("test").id(id).buildWithoutPayload());
 
     // ASSERT
     var fact = uut.fetchById(id);
     // fetching after here, as the trigger seems to be delayed
-    var after = System.currentTimeMillis();
+    var after = getCurrentDbTimeInMillis();
 
     assertThat(fact).isPresent();
 
     assertThat(Long.parseLong(fact.get().meta("_ser"))).isPositive();
 
     assertThat(Long.parseLong(fact.get().meta("_ts")))
-        .isGreaterThanOrEqualTo(dbTimeBehindOsTime ? beforeDb : before)
+        .isGreaterThanOrEqualTo(before)
         .isLessThanOrEqualTo(after);
   }
 
-  private @Nullable long getCurrentDbTime() {
-    return jdbcTemplate.queryForObject(
-        "select TRUNC(EXTRACT(EPOCH FROM now()::timestamptz(3)) * 1000);", Long.class);
+  private long getCurrentDbTimeInMillis() {
+    Long time = jdbcTemplate.queryForObject(DB_TIME_QUERY, Long.class);
+    return time == null ? 0 : time;
   }
 
   @Nested
