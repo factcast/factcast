@@ -22,16 +22,13 @@ import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.core.FactStreamPosition;
-import org.factcast.factus.projection.FactStreamPositionAware;
-import org.factcast.factus.projection.Named;
 import org.factcast.factus.projection.WriterToken;
-import org.factcast.factus.projection.WriterTokenAware;
 import org.factcast.factus.projection.tx.AbstractOpenTransactionAwareProjection;
 import org.factcast.factus.redis.tx.RedisTransactional;
 import org.redisson.api.*;
 
 abstract class AbstractRedisProjection extends AbstractOpenTransactionAwareProjection<RTransaction>
-    implements RedisProjection, FactStreamPositionAware, WriterTokenAware, Named {
+    implements RedisProjection {
   @Getter protected final RedissonClient redisson;
 
   private final RLock lock;

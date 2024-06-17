@@ -16,4 +16,4 @@
 package org.factcast.factus.projection;
 
 public interface ExternalizedProjection
-    extends Projection, WriterTokenAware, FactStreamPositionAware {}
+    extends Projection, WriterTokenAware, FactStreamPositionAware, Named {}
