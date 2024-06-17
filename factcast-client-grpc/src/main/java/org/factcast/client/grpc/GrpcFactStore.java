@@ -19,9 +19,7 @@ import static io.grpc.stub.ClientCalls.asyncServerStreamingCall;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.*;
-import io.grpc.stub.MetadataUtils;
 import io.grpc.stub.StreamObserver;
-import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import java.time.LocalDate;
 import java.util.*;
@@ -57,7 +55,6 @@ import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
-import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreStub;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -75,24 +72,12 @@ public class GrpcFactStore implements FactStore {
 
   private static final String CHANNEL_NAME = "factstore";
 
-  private final Channel channel;
-
-  private final FactCastGrpcStubsFactory stubsFactory;
-
-  private final Optional<String> credentials;
-
   private final Resilience resilience;
 
-  private RemoteFactStoreBlockingStub blockingStub;
+  private final GrpcStubs stubs;
 
-  private RemoteFactStoreStub stub;
-
-  private RemoteFactStoreStub uncompressedStub;
-
-  private RemoteFactStoreBlockingStub uncompressedBlockingStub;
-
+  // TODO
   private final FactCastGrpcClientProperties properties;
-  @Nullable private final String clientId;
 
   private final ProtoConverter converter = new ProtoConverter();
 
@@ -104,39 +89,30 @@ public class GrpcFactStore implements FactStore {
   @Generated
   public GrpcFactStore(
       @NonNull FactCastGrpcChannelFactory channelFactory,
-      @NonNull FactCastGrpcStubsFactory stubsFactory,
       @NonNull @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
       @NonNull FactCastGrpcClientProperties properties,
-      @Nullable String clientId) {
+      @NonNull String clientId) {
+
     this(
-        channelFactory.createChannel(CHANNEL_NAME),
-        stubsFactory,
-        credentials,
-        properties,
-        clientId);
+        new GrpcStubsImpl(
+            channelFactory,
+            CHANNEL_NAME,
+            prepareMetaData(properties, clientId),
+            configureCredentials(credentials, properties)),
+        properties);
   }
 
-  @Generated
-  @VisibleForTesting
-  GrpcFactStore(
-      @NonNull Channel channel,
-      @NonNull FactCastGrpcStubsFactory stubsFactory,
-      @NonNull Optional<String> credentials) {
-    this(channel, stubsFactory, credentials, new FactCastGrpcClientProperties(), null);
-  }
+  //  @Generated
+  //  @VisibleForTesting
+  //  // TODO needed?
+  //  GrpcFactStore(@NonNull GrpcStubs stubs, @NonNull Optional<String> credentials) {
+  //    this(stubs, credentials, new FactCastGrpcClientProperties(), null);
+  //  }
 
   @VisibleForTesting
-  GrpcFactStore(
-      @NonNull Channel channel,
-      @NonNull FactCastGrpcStubsFactory stubsFactory,
-      @NonNull Optional<String> credentials,
-      @NonNull FactCastGrpcClientProperties properties,
-      @Nullable String clientId) {
-    this.channel = channel;
-    this.stubsFactory = stubsFactory;
-    this.credentials = credentials;
+  GrpcFactStore(@NonNull GrpcStubs stubs, @NonNull FactCastGrpcClientProperties properties) {
+    this.stubs = stubs;
     this.properties = properties;
-    this.clientId = clientId;
     this.resilience = new Resilience(properties.getResilience());
   }
 
@@ -151,7 +127,7 @@ public class GrpcFactStore implements FactStore {
             MSG_Facts mfs = MSG_Facts.newBuilder().addAllFact(mf).build();
 
             //noinspection ResultOfMethodCallIgnored
-            blockingStub.publish(mfs);
+            stubs.blocking().publish(mfs);
           } catch (Exception e) {
             RuntimeException decodedException = ClientExceptionHelper.from(e);
             if (decodedException instanceof DuplicateFactException
@@ -232,11 +208,13 @@ public class GrpcFactStore implements FactStore {
           InternalSubscription subscription = SubscriptionImpl.on(observer);
           StreamObserver<FactStoreProto.MSG_Notification> responseObserver =
               new ClientStreamObserver(subscription, req.keepaliveIntervalInMs());
+          RemoteFactStoreGrpc.RemoteFactStoreStub remoteFactStoreStub = stubs.nonBlocking();
           ClientCall<MSG_SubscriptionRequest, MSG_Notification> call =
-              stub.getChannel()
+              remoteFactStoreStub
+                  .getChannel()
                   .newCall(
                       RemoteFactStoreGrpc.getSubscribeMethod(),
-                      stub.getCallOptions().withWaitForReady());
+                      remoteFactStoreStub.getCallOptions().withWaitForReady());
           asyncServerStreamingCall(call, converter.toProto(req), responseObserver);
           return subscription.onClose(() -> cancel(call));
         });
@@ -255,7 +233,7 @@ public class GrpcFactStore implements FactStore {
         () -> {
           MSG_UUID protoMessage = converter.toProto(l);
           MSG_OptionalSerial responseMessage;
-          responseMessage = blockingStub.serialOf(protoMessage);
+          responseMessage = stubs.blocking().serialOf(protoMessage);
           return converter.fromProto(responseMessage);
         });
   }
@@ -263,19 +241,15 @@ public class GrpcFactStore implements FactStore {
   @PostConstruct
   public synchronized void initializeIfNecessary() {
     if (!this.initialized.get()) {
-      uncompressedBlockingStub = stubsFactory.createBlockingStub(channel).withWaitForReady();
-      uncompressedStub = stubsFactory.createStub(channel).withWaitForReady();
-      configureCredentials();
+
+      stubs.resetStubs();
 
       log.debug("Invoking handshake");
       Map<String, String> serverProperties;
       ProtocolVersion serverProtocolVersion;
       try {
-        MSG_ServerConfig handshake =
-            uncompressedBlockingStub
-                .withInterceptors(
-                    MetadataUtils.newAttachHeadersInterceptor(createHandshakeMetadata()))
-                .handshake(converter.empty());
+        MSG_ServerConfig handshake = stubs.uncompressedBlocking().handshake(converter.empty());
+
         ServerConfig cfg = converter.fromProto(handshake);
         serverProtocolVersion = cfg.version();
         serverProperties = cfg.properties();
@@ -284,9 +258,13 @@ public class GrpcFactStore implements FactStore {
       }
       logProtocolVersion(serverProtocolVersion);
       logServerVersion(serverProperties);
-      blockingStub = uncompressedBlockingStub;
-      stub = uncompressedStub;
-      configureCompressionAndMetaData(serverProperties.get(Capabilities.CODECS.toString()));
+
+      // TODO initialize stubs?
+      //      blockingStub = uncompressedBlockingStub;
+      //      stub = uncompressedStub;
+
+      String codecListFromServer = serverProperties.get(Capabilities.CODECS.toString());
+      configureCompressionAndMetaData(codecListFromServer);
 
       this.fastStateToken =
           Optional.ofNullable(serverProperties.get(Capabilities.FAST_STATE_TOKEN.toString()))
@@ -298,29 +276,27 @@ public class GrpcFactStore implements FactStore {
     }
   }
 
-  private void configureCredentials() {
-    if (areCredentialsSetViaProperties()) {
+  private static CallCredentials configureCredentials(
+      Optional<String> legacyCredentials, FactCastGrpcClientProperties p) {
+    CallCredentials basic = null;
+    if (areCredentialsSetViaProperties(p)) {
       log.info("Using credentials from properties");
-      CallCredentials basic =
-          buildCallCredentialsOrThrow(properties.getUser(), properties.getPassword());
-      uncompressedBlockingStub = uncompressedBlockingStub.withCallCredentials(basic);
-      uncompressedStub = uncompressedStub.withCallCredentials(basic);
+      basic = buildCallCredentialsOrThrow(p.getUser(), p.getPassword());
     }
     // deprecated way of setting credentials but still supported
-    else if (credentials.isPresent()) {
+    else if (legacyCredentials.isPresent()) {
       log.info("Using deprecated credentials");
-      CallCredentials basic = useDeprecatedCredentialsOrThrow(credentials.get());
-      uncompressedBlockingStub = uncompressedBlockingStub.withCallCredentials(basic);
-      uncompressedStub = uncompressedStub.withCallCredentials(basic);
+      basic = useDeprecatedCredentialsOrThrow(legacyCredentials.get());
     }
+    return basic;
   }
 
-  private boolean areCredentialsSetViaProperties() {
+  private static boolean areCredentialsSetViaProperties(FactCastGrpcClientProperties p) {
     // if one is set, both must be set
-    return properties.getUser() != null || properties.getPassword() != null;
+    return p.getUser() != null || p.getPassword() != null;
   }
 
-  private CallCredentials useDeprecatedCredentialsOrThrow(String credentials) {
+  private static CallCredentials useDeprecatedCredentialsOrThrow(String credentials) {
     final String[] sa = credentials.split(":");
     if (sa.length != 2) {
       throw new IllegalArgumentException(
@@ -330,7 +306,7 @@ public class GrpcFactStore implements FactStore {
     return buildCallCredentialsOrThrow(sa[0], sa[1]);
   }
 
-  private CallCredentials buildCallCredentialsOrThrow(String user, String password) {
+  private static CallCredentials buildCallCredentialsOrThrow(String user, String password) {
     // even just empty hints to a serious misconfiguration
     if (user == null || user.isEmpty() || password == null || password.isEmpty()) {
       throw new IllegalArgumentException(
@@ -341,16 +317,6 @@ public class GrpcFactStore implements FactStore {
               + "\".");
     }
     return CallCredentialsHelper.basicAuth(user, password);
-  }
-
-  @NonNull
-  private Metadata createHandshakeMetadata() {
-    Metadata metadata = new Metadata();
-    addClientIdTo(metadata);
-    addClientVersionTo(
-        metadata,
-        MavenHelper.getVersion("factcast-client-grpc", GrpcFactStore.class).orElse("UNKNOWN"));
-    return metadata;
   }
 
   private static void logServerVersion(Map<String, String> serverProperties) {
@@ -385,50 +351,32 @@ public class GrpcFactStore implements FactStore {
               log.info("configuring Codec for sending {}", c);
               // configure compression used for sending messages and header
               // to request compressed messages from server
-              Metadata meta = prepareMetaData(c);
               // add compression info
-              blockingStub =
-                  uncompressedBlockingStub
-                      .withCompression(c)
-                      .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(meta));
-              stub =
-                  uncompressedStub
-                      .withCompression(c)
-                      .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(meta));
+              stubs.setCompression(c);
             });
   }
 
   @VisibleForTesting
-  Metadata prepareMetaData(String c) {
+  static Metadata prepareMetaData(
+      @NonNull FactCastGrpcClientProperties p, @NonNull String clientId) {
     Metadata meta = new Metadata();
-    meta.put(Headers.MESSAGE_COMPRESSION, c);
 
     // existence of this header will enable the fast forward feature
-    if (properties.isEnableFastForward()) {
+    if (p.isEnableFastForward()) {
       meta.put(Headers.FAST_FORWARD, "true");
     }
 
     // existence of this header will enable the on-the-wire-batching feature
-    int catchupBatchSize = properties.getCatchupBatchsize();
+    int catchupBatchSize = p.getCatchupBatchsize();
     if (catchupBatchSize > 1) {
       meta.put(Headers.CATCHUP_BATCHSIZE, String.valueOf(catchupBatchSize));
     }
 
-    addClientIdTo(meta);
-
+    meta.put(Headers.CLIENT_ID, clientId);
+    meta.put(
+        Headers.CLIENT_VERSION,
+        MavenHelper.getVersion("factcast-client-grpc", GrpcFactStore.class).orElse("UNKNOWN"));
     return meta;
-  }
-
-  @VisibleForTesting
-  void addClientIdTo(@NonNull Metadata meta) {
-    if (clientId != null) {
-      meta.put(Headers.CLIENT_ID, clientId);
-    }
-  }
-
-  @VisibleForTesting
-  void addClientVersionTo(@NonNull Metadata metadata, @NonNull String version) {
-    metadata.put(Headers.CLIENT_VERSION, version);
   }
 
   @Override
@@ -437,7 +385,7 @@ public class GrpcFactStore implements FactStore {
     return callAndHandle(
         () -> {
           MSG_Empty empty = converter.empty();
-          return converter.fromProto(blockingStub.enumerateNamespaces(empty));
+          return converter.fromProto(stubs.blocking().enumerateNamespaces(empty));
         });
   }
 
@@ -445,7 +393,7 @@ public class GrpcFactStore implements FactStore {
   @NonNull
   public Set<String> enumerateTypes(@NonNull String ns) {
     return callAndHandle(
-        () -> converter.fromProto(blockingStub.enumerateTypes(converter.toProto(ns))));
+        () -> converter.fromProto(stubs.blocking().enumerateTypes(converter.toProto(ns))));
   }
 
   @Override
@@ -458,7 +406,7 @@ public class GrpcFactStore implements FactStore {
               new ConditionalPublishRequest(
                   factsToPublish, token.map(StateToken::uuid).orElse(null));
           MSG_ConditionalPublishRequest msg = converter.toProto(req);
-          MSG_ConditionalPublishResult r = blockingStub.publishConditional(msg);
+          MSG_ConditionalPublishResult r = stubs.blocking().publishConditional(msg);
           return r.getSuccess();
         });
   }
@@ -469,7 +417,7 @@ public class GrpcFactStore implements FactStore {
     return callAndHandle(
         () -> {
           MSG_FactSpecsJson msg = converter.toProtoFactSpecs(specs);
-          MSG_UUID result = blockingStub.stateForSpecsJson(msg);
+          MSG_UUID result = stubs.blocking().stateForSpecsJson(msg);
           return new StateToken(converter.fromProto(result));
         });
   }
@@ -482,7 +430,7 @@ public class GrpcFactStore implements FactStore {
       return callAndHandle(
           () -> {
             MSG_FactSpecsJson msg = converter.toProtoFactSpecs(specs);
-            MSG_UUID result = blockingStub.currentStateForSpecsJson(msg);
+            MSG_UUID result = stubs.blocking().currentStateForSpecsJson(msg);
             return new StateToken(converter.fromProto(result));
           });
   }
@@ -493,7 +441,7 @@ public class GrpcFactStore implements FactStore {
         () -> {
           MSG_UUID msg = converter.toProto(token.uuid());
           //noinspection ResultOfMethodCallIgnored
-          blockingStub.invalidate(msg);
+          stubs.blocking().invalidate(msg);
         });
   }
 
@@ -503,7 +451,7 @@ public class GrpcFactStore implements FactStore {
         () -> {
           MSG_Empty empty = converter.empty();
           MSG_CurrentDatabaseTime resp;
-          resp = blockingStub.currentTime(empty);
+          resp = stubs.blocking().currentTime(empty);
           return converter.fromProto(resp);
         });
   }
@@ -516,7 +464,7 @@ public class GrpcFactStore implements FactStore {
     return callAndHandle(
         () -> {
           MSG_OptionalFact fetchById;
-          fetchById = blockingStub.fetchById(converter.toProto(id));
+          fetchById = stubs.blocking().fetchById(converter.toProto(id));
           return converter.fromProto(fetchById);
         });
   }
@@ -528,7 +476,7 @@ public class GrpcFactStore implements FactStore {
     return callAndHandle(
         () -> {
           MSG_OptionalFact fetchById;
-          fetchById = blockingStub.fetchByIdAndVersion(converter.toProto(id, versionExpected));
+          fetchById = stubs.blocking().fetchByIdAndVersion(converter.toProto(id, versionExpected));
           return converter.fromProto(fetchById);
         });
   }
@@ -540,7 +488,7 @@ public class GrpcFactStore implements FactStore {
     return callAndHandle(
         () -> {
           MSG_OptionalSnapshot snap;
-          snap = blockingStub.getSnapshot(converter.toProto(id));
+          snap = stubs.blocking().getSnapshot(converter.toProto(id));
           return converter.fromProto(snap);
         });
   }
@@ -557,7 +505,7 @@ public class GrpcFactStore implements FactStore {
           log.trace("sending snapshot {} to remote store ({}kb)", id, bytes.length / 1024);
 
           RemoteFactStoreBlockingStub stubToUse =
-              alreadyCompressed ? uncompressedBlockingStub : blockingStub;
+              alreadyCompressed ? stubs.uncompressedBlocking() : stubs.blocking();
 
           //noinspection ResultOfMethodCallIgnored
           stubToUse.setSnapshot(converter.toProto(id, state, bytes, alreadyCompressed));
@@ -568,27 +516,28 @@ public class GrpcFactStore implements FactStore {
   public void clearSnapshot(@NonNull SnapshotId id) {
     log.trace("clearing snapshot {} in remote store", id);
     //noinspection ResultOfMethodCallIgnored
-    runAndHandle(() -> blockingStub.clearSnapshot(converter.toProto(id)));
+    runAndHandle(() -> stubs.blocking().clearSnapshot(converter.toProto(id)));
   }
 
   @Override
   public long latestSerial() {
     log.trace("fetching latest serial");
-    return callAndHandle(() -> converter.fromProto(blockingStub.latestSerial(converter.empty())));
+    return callAndHandle(
+        () -> converter.fromProto(stubs.blocking().latestSerial(converter.empty())));
   }
 
   @Override
   public long lastSerialBefore(@NonNull LocalDate date) {
     log.trace("fetching latest serial before {}", date);
     return callAndHandle(
-        () -> converter.fromProto(blockingStub.lastSerialBefore(converter.toProto(date))));
+        () -> converter.fromProto(stubs.blocking().lastSerialBefore(converter.toProto(date))));
   }
 
   @Override
   public Optional<Fact> fetchBySerial(long serial) {
     log.trace("fetching by serial {}", serial);
     return callAndHandle(
-        () -> converter.fromProto(blockingStub.fetchBySerial(converter.toProto(serial))));
+        () -> converter.fromProto(stubs.blocking().fetchBySerial(converter.toProto(serial))));
   }
 
   void reset() {
