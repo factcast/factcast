@@ -18,7 +18,8 @@ package org.factcast.client.grpc;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 
 public interface GrpcStubs {
-  // TODO remove?
+  // TODO remove in 0.8
+  @Deprecated
   RemoteFactStoreGrpc.RemoteFactStoreBlockingStub uncompressedBlocking();
 
   /**
