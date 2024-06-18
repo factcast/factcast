@@ -29,6 +29,7 @@ import org.springframework.boot.actuate.autoconfigure.metrics.CompositeMeterRegi
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 
 @SuppressWarnings("ALL")
 @SpringBootApplication
@@ -51,6 +52,7 @@ public class TestFactusApplication {
   }
 
   @Bean
+  @Primary
   public MeterRegistry meterRegistry() {
     return new SimpleMeterRegistry();
   }
