@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast-itests</artifactId>
-    <version>0.7.9-SNAPSHOT</version>
+    <version>0.8.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-itests-factus</artifactId>
@@ -38,11 +38,20 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
+      <artifactId>factcast-test-dynamo</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
       <artifactId>factcast-spring-boot-autoconfigure</artifactId>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-factus-redis</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-factus-dynamo</artifactId>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
@@ -93,6 +102,12 @@
       <!-- only for dependency and build order analysis -->
       <groupId>org.factcast</groupId>
       <artifactId>factcast-docker-dep</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers</artifactId>
+      <version>1.19.6</version>
       <scope>test</scope>
     </dependency>
     <dependency>
