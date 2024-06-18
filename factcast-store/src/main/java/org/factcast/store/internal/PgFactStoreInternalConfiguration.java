@@ -29,6 +29,7 @@ import net.javacrumbs.shedlock.provider.inmemory.InMemoryLockProvider;
 import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
 import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
 import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMode;
+import net.javacrumbs.shedlock.support.KeepAliveLockProvider;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.observer.FastForwardTarget;
@@ -52,6 +53,7 @@ import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.snapcache.SnapshotCache;
 import org.factcast.store.internal.snapcache.SnapshotCacheConfiguration;
 import org.factcast.store.internal.tail.PGTailIndexingConfiguration;
+import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.factcast.store.registry.PgSchemaStoreChangeListener;
 import org.factcast.store.registry.SchemaRegistry;
 import org.factcast.store.registry.SchemaRegistryConfiguration;
@@ -94,8 +96,10 @@ public class PgFactStoreInternalConfiguration {
 
   @Bean
   @ConditionalOnMissingBean(EventBus.class)
-  public EventBus eventBus() {
-    return new AsyncEventBus(getClass().getSimpleName(), Executors.newCachedThreadPool());
+  public EventBus eventBus(@NonNull PgMetrics metrics) {
+    return new AsyncEventBus(
+        getClass().getSimpleName(),
+        metrics.monitor(Executors.newCachedThreadPool(), "pg-listener"));
   }
 
   @Bean
@@ -120,6 +124,11 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
+  public PgStoreTelemetry telemetry(@NonNull PgMetrics metrics) {
+    return new PgStoreTelemetry(metrics);
+  }
+
+  @Bean
   public FactStore factStore(
       JdbcTemplate jdbcTemplate,
       PgSubscriptionFactory subscriptionFactory,
@@ -130,7 +139,8 @@ public class PgFactStoreInternalConfiguration {
       PgFactIdToSerialMapper pgFactIdToSerialMapper,
       SnapshotCache snapCache,
       PgMetrics pgMetrics,
-      StoreConfigurationProperties props) {
+      StoreConfigurationProperties props,
+      PlatformTransactionManager platformTransactionManager) {
     return new PgFactStore(
         jdbcTemplate,
         subscriptionFactory,
@@ -141,7 +151,8 @@ public class PgFactStoreInternalConfiguration {
         pgFactIdToSerialMapper,
         snapCache,
         pgMetrics,
-        props);
+        props,
+        platformTransactionManager);
   }
 
   @Bean
@@ -156,7 +167,8 @@ public class PgFactStoreInternalConfiguration {
       PgMetrics metrics,
       Blacklist blacklist,
       JSEngineFactory ef,
-      FactTransformerService transformerService) {
+      FactTransformerService transformerService,
+      PgStoreTelemetry telemetry) {
     return new PgSubscriptionFactory(
         jdbcTemplate,
         eventBus,
@@ -168,7 +180,8 @@ public class PgFactStoreInternalConfiguration {
         metrics,
         blacklist,
         transformerService,
-        ef);
+        ef,
+        telemetry);
   }
 
   @Bean
@@ -243,7 +256,8 @@ public class PgFactStoreInternalConfiguration {
             .usingDbTime()
             .build();
 
-    return new JdbcTemplateLockProvider(config);
+    return new KeepAliveLockProvider(
+        new JdbcTemplateLockProvider(config), Executors.newSingleThreadScheduledExecutor());
   }
 
   @Bean
@@ -251,7 +265,8 @@ public class PgFactStoreInternalConfiguration {
   public LockProvider inMemoryLockProvider() {
     log.debug("Configuring lock provider: IN MEMORY.");
 
-    return new InMemoryLockProvider();
+    return new KeepAliveLockProvider(
+        new InMemoryLockProvider(), Executors.newSingleThreadScheduledExecutor());
   }
 
   @Bean

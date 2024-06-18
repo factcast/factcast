@@ -87,7 +87,8 @@ public class FactusImpl implements Factus {
 
   private final AtomicBoolean closed = new AtomicBoolean();
 
-  private final Set<AutoCloseable> managedObjects = new HashSet<>();
+  private final Set<AutoCloseable> managedObjects =
+      Collections.synchronizedSet(new LinkedHashSet<>());
 
   @Override
   public @NonNull PublishBatch batch() {
@@ -355,11 +356,11 @@ public class FactusImpl implements Factus {
   /**
    * @return null if no fact was applied
    */
-  private <P extends Projection> UUID catchupProjection(
+  private <P extends Projection> void catchupProjection(
       @NonNull P projection,
       FactStreamPosition stateOrNull,
       @Nullable BiConsumer<P, UUID> afterProcessing) {
-    return catchupProjection(
+    catchupProjection(
         projection,
         Optional.ofNullable(stateOrNull).map(FactStreamPosition::factId).orElse(null),
         afterProcessing);
@@ -369,8 +370,11 @@ public class FactusImpl implements Factus {
    * @return null if no fact was applied
    */
   @SneakyThrows
-  private <P extends Projection> UUID catchupProjection(
-      @NonNull P projection, UUID stateOrNull, @Nullable BiConsumer<P, UUID> afterProcessing) {
+  @VisibleForTesting
+  protected <P extends Projection> UUID catchupProjection(
+      @NonNull P projection,
+      @Nullable UUID stateOrNull,
+      @Nullable BiConsumer<P, UUID> afterProcessing) {
     Projector<P> handler = ehFactory.create(projection);
     AtomicInteger factCount = new AtomicInteger(0);
     AtomicReference<FactStreamPosition> positionOfLastFactApplied = new AtomicReference<>();
@@ -409,6 +413,11 @@ public class FactusImpl implements Factus {
           public void onFastForward(@NonNull FactStreamPosition factIdToFfwdTo) {
             if (projection instanceof FactStreamPositionAware) {
               ((FactStreamPositionAware) projection).factStreamPosition(factIdToFfwdTo);
+            }
+
+            // only persist ffwd if we ever had a state or applied facts in this catchup
+            if (stateOrNull != null || positionOfLastFactApplied.get() != null) {
+              positionOfLastFactApplied.set(factIdToFfwdTo);
             }
           }
         };
@@ -455,7 +464,7 @@ public class FactusImpl implements Factus {
       ArrayList<AutoCloseable> closeables = new ArrayList<>(managedObjects);
       for (AutoCloseable c : closeables) {
         try {
-          c.close();
+          if (c != null) c.close();
         } catch (Exception e) {
           // needs to be swallowed
           log.warn("While closing {} of type {}:", c, c.getClass().getName(), e);

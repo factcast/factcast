@@ -15,10 +15,6 @@
  */
 package org.factcast.server.grpc;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -151,7 +147,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
     final var clientId = grpcRequestMetadata.clientId();
     if (clientId.isPresent()) {
       final var id = clientId.get();
-      facts = facts.stream().map(f -> tagFactSource(f, id)).collect(Collectors.toList());
+      facts = facts.stream().map(f -> tagFactSource(f, id)).toList();
     }
     log.debug("{}publish {} fact{}", clientIdPrefix(), size, size > 1 ? "s" : "");
     store.publish(facts);
@@ -161,15 +157,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
   @VisibleForTesting
   Fact tagFactSource(@NonNull Fact f, @NonNull String source) {
-    try {
-      JsonNode h = FactCastJson.readTree(f.jsonHeader());
-      ObjectNode meta = (ObjectNode) h.get("meta");
-      meta.set("source", TextNode.valueOf(source));
-      return Fact.of(h.toString(), f.jsonPayload());
-    } catch (JsonProcessingException e) {
-      // skip it - this will break later anyway....
-      return f;
-    }
+    f.header().meta().put("source", source);
+    return Fact.of(FactCastJson.writeValueAsString(f.header()), f.jsonPayload());
   }
 
   private String clientIdPrefix() {
@@ -317,6 +306,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
   }
 
   @Override
+  @Secured(FactCastAuthority.AUTHENTICATED)
   public void handshake(MSG_Empty request, StreamObserver<MSG_ServerConfig> responseObserver) {
     metrics.timed(
         OP.HANDSHAKE,
@@ -428,7 +418,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
     final var clientId = grpcRequestMetadata.clientId();
     if (clientId.isPresent()) {
       final var id = clientId.get();
-      facts = facts.stream().map(f -> tagFactSource(f, id)).collect(Collectors.toList());
+      facts = facts.stream().map(f -> tagFactSource(f, id)).toList();
     }
 
     boolean result = store.publishIfUnchanged(facts, req.token());
@@ -504,6 +494,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
   }
 
   @Override
+  @Secured(FactCastAuthority.AUTHENTICATED)
   public void currentTime(
       MSG_Empty request, StreamObserver<MSG_CurrentDatabaseTime> responseObserver) {
     initialize(responseObserver);
@@ -642,6 +633,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
   }
 
   @Override
+  @Secured(FactCastAuthority.AUTHENTICATED)
   public void setSnapshot(MSG_Snapshot request, StreamObserver<MSG_Empty> responseObserver) {
     initialize(responseObserver);
 

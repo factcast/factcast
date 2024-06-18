@@ -242,6 +242,18 @@ public class PgConstants {
           + ALIAS_NS
           + "' IS NOT NULL";
 
+  /**
+   * discourages the use of seq scan, if any other alternative is possible (force preferring an
+   * index)
+   *
+   * <p>https://www.postgresql.org/docs/current/runtime-config-query.html
+   *
+   * <p>note: when using this, please make sure to reenable it in *EVERY CASE*
+   */
+  public static final String DISABLE_SEQSCAN = "SET LOCAL enable_seqscan=off";
+
+  public static final String ENABLE_SEQSCAN = "SET LOCAL enable_seqscan=on";
+
   public static final String SELECT_DISTINCT_TYPE_IN_NAMESPACE =
       "SELECT DISTINCT("
           + COLUMN_HEADER
@@ -318,6 +330,16 @@ public class PgConstants {
         + ">"
         + ser;
   }
+
+  // this might be too sensitive in some cases (like create table myIndex), however skipping one
+  // tail index maintenance window is not as bad as blocking fact publishing
+  // ~* is case-insensitive regex match
+  public static final String INDEX_OPERATIONS_IN_PROGRESS =
+      "SELECT * FROM pg_stat_activity WHERE pid != pg_backend_pid() "
+          + "AND ("
+          + " (query ~* 'create.*index' OR query ~* 'drop.*index') "
+          + " OR query ~* 'reindex'"
+          + ")";
 
   @NonNull
   public static String tailIndexName(long epoch) {

@@ -6,12 +6,12 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.7.5-SNAPSHOT</version>
+    <version>0.7.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-store</artifactId>
   <properties>
-    <jetty-javalin.version>11.0.19</jetty-javalin.version>
+    <jetty-javalin.version>11.0.21</jetty-javalin.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -99,7 +99,22 @@
           <groupId>commons-logging</groupId>
           <artifactId>commons-logging</artifactId>
         </exclusion>
+        <!-- fixes "Found duplicate and different classes" conflict with replacement
+          for org.json:json used by Spring -->
+        <exclusion>
+          <groupId>org.json</groupId>
+          <artifactId>json</artifactId>
+        </exclusion>
       </exclusions>
+    </dependency>
+    <!-- org.json:json replacement used by Spring, see exclusion above -->
+    <!-- - https://stackoverflow.com/a/60952911/2124712 -->
+    <!-- - https://stackoverflow.com/q/52980064/2124712 (1st reply) -->
+    <!-- - there also is "a clean-room Apache-licensed implementation" https://mvnrepository.com/artifact/com.github.openjson/openjson -->
+    <dependency>
+      <groupId>com.vaadin.external.google</groupId>
+      <artifactId>android-json</artifactId>
+      <version>0.0.20131108.vaadin1</version>
     </dependency>
     <!-- spring -->
     <dependency>
@@ -145,7 +160,7 @@
     <dependency>
       <groupId>io.javalin</groupId>
       <artifactId>javalin</artifactId>
-      <version>5.6.3</version>
+      <version>6.1.6</version>
       <scope>test</scope>
     </dependency>
     <!-- explicit jetty dependencies to workaround missing jetty12 compat ->
@@ -204,8 +219,8 @@
       <version>4.12.0</version>
     </dependency>
     <dependency>
-      <groupId>org.graalvm.js</groupId>
-      <artifactId>js</artifactId>
+      <groupId>org.graalvm.polyglot</groupId>
+      <artifactId>polyglot</artifactId>
       <version>${graaljs.version}</version>
     </dependency>
     <dependency>
@@ -214,9 +229,11 @@
       <version>${graaljs.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.graalvm.sdk</groupId>
-      <artifactId>graal-sdk</artifactId>
+      <groupId>org.graalvm.polyglot</groupId>
+      <artifactId>js-community</artifactId>
       <version>${graaljs.version}</version>
+      <type>pom</type>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.graalvm.truffle</groupId>

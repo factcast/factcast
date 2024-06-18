@@ -23,4 +23,9 @@ public class TestHttpServer implements AutoCloseable {
   public TestHttpServer() {
     instance.start(0);
   }
+
+  @Override
+  public void close() throws Exception {
+    instance.stop();
+  }
 }
