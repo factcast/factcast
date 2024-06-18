@@ -97,9 +97,7 @@ class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrationTest 
   void allowedToPublish() {
     fc.publish(
         Fact.of(
-            "{\"id\":\""
-                + UUID.randomUUID()
-                + "\", \"ns\":\"users\",\"type\":\"UserCreated\", \"meta\":{}}",
+            "{\"id\":\"" + UUID.randomUUID() + "\", \"ns\":\"users\",\"type\":\"UserCreated\"}",
             "{}"));
   }
 

@@ -92,7 +92,7 @@ public class GrpcFactStore implements FactStore {
       @NonNull FactCastGrpcChannelFactory channelFactory,
       @NonNull @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
       @NonNull FactCastGrpcClientProperties properties,
-      @NonNull String clientId) {
+      @Nullable String clientId) {
 
     this(
         new GrpcStubsImpl(
@@ -355,7 +355,7 @@ public class GrpcFactStore implements FactStore {
 
   @VisibleForTesting
   static Metadata prepareMetaData(
-      @NonNull FactCastGrpcClientProperties p, @NonNull String clientId) {
+      @NonNull FactCastGrpcClientProperties p, @Nullable String clientId) {
     Metadata meta = new Metadata();
 
     // existence of this header will enable the fast forward feature
@@ -369,7 +369,7 @@ public class GrpcFactStore implements FactStore {
       meta.put(Headers.CATCHUP_BATCHSIZE, String.valueOf(catchupBatchSize));
     }
 
-    meta.put(Headers.CLIENT_ID, clientId);
+    if (clientId != null) meta.put(Headers.CLIENT_ID, clientId);
     meta.put(
         Headers.CLIENT_VERSION,
         MavenHelper.getVersion("factcast-client-grpc", GrpcFactStore.class).orElse("UNKNOWN"));

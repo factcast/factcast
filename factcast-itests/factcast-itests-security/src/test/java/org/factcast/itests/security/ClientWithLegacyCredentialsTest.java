@@ -40,9 +40,7 @@ class ClientWithLegacyCredentialsTest extends AbstractFactCastIntegrationTest {
   void allowedToPublish() {
     fc.publish(
         Fact.of(
-            "{\"id\":\""
-                + UUID.randomUUID()
-                + "\", \"ns\":\"users\",\"type\":\"UserCreated\",\"meta\":{}}",
+            "{\"id\":\"" + UUID.randomUUID() + "\", \"ns\":\"users\",\"type\":\"UserCreated\"}",
             "{}"));
   }
 
@@ -54,7 +52,7 @@ class ClientWithLegacyCredentialsTest extends AbstractFactCastIntegrationTest {
                     Fact.of(
                         "{\"id\":\""
                             + UUID.randomUUID()
-                            + "\", \"ns\":\"no-permissions\",\"type\":\"UserCreated\",\"meta\":{}}",
+                            + "\", \"ns\":\"no-permissions\",\"type\":\"UserCreated\"}",
                         "{}")))
         .isInstanceOf(StatusRuntimeException.class)
         .hasMessageContaining("PERMISSION_DENIED");

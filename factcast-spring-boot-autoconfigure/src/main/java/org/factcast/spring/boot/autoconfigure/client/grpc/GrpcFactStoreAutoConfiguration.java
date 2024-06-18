@@ -64,7 +64,7 @@ public class GrpcFactStoreAutoConfiguration {
                     Optional.ofNullable(applicationName)
                         .map(String::trim)
                         .filter(StringUtils::hasText)
-                        .orElse("UNKNOWN"));
+                        .orElse(null));
 
     return new GrpcFactStore(f, credentials, properties, id);
   }
