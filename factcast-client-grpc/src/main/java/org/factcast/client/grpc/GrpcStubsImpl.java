@@ -53,7 +53,7 @@ class GrpcStubsImpl implements GrpcStubs {
   @Override
   @NonNull
   public RemoteFactStoreGrpc.RemoteFactStoreBlockingStub uncompressedBlocking(
-      @NonNull Deadline deadline) {
+      @Nullable Deadline deadline) {
     return configure(RemoteFactStoreGrpc.newBlockingStub(channel), deadline);
   }
 
