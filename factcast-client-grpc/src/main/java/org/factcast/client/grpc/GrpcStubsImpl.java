@@ -31,7 +31,7 @@ import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 
 @SuppressWarnings("ReassignedVariable")
 @RequiredArgsConstructor
-class GrpcStubsImpl implements GrpcStubs {
+public class GrpcStubsImpl implements GrpcStubs {
 
   private final @NonNull Channel channel;
   private final @NonNull Metadata meta;

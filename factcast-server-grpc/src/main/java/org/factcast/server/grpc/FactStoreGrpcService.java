@@ -164,7 +164,9 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
     try {
       JsonNode h = FactCastJson.readTree(f.jsonHeader());
       ObjectNode meta = (ObjectNode) h.get("meta");
-      meta.set("source", TextNode.valueOf(source));
+      if (meta != null) {
+        meta.set("source", TextNode.valueOf(source));
+      }
       return Fact.of(h.toString(), f.jsonPayload());
     } catch (JsonProcessingException e) {
       // skip it - this will break later anyway....
