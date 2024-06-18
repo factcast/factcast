@@ -192,10 +192,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
       resetDebugInfo(req, grpcRequestMetadata);
       BlockingStreamObserver<MSG_Notification> resp =
-          new BlockingStreamObserver<>(
-              req.toString(),
-              (ServerCallStreamObserver) responseObserver,
-              grpcRequestMetadata.catchupBatch().orElse(1));
+          new BlockingStreamObserver<>(req.toString(), (ServerCallStreamObserver) responseObserver);
 
       AtomicReference<Subscription> subRef = new AtomicReference();
 
@@ -443,7 +440,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
     initialize(responseObserver);
 
     StateForRequest req = converter.fromProto(request);
-    String ns = req.ns(); // TODO is this gets null, we're screwed
+    String ns = req.ns(); // TODO if this becomes null, we're screwed
     assertCanRead(ns);
     StateToken token =
         store.stateFor(

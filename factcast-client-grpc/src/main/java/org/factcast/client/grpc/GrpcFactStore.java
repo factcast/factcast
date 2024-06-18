@@ -408,11 +408,9 @@ public class GrpcFactStore implements FactStore {
       meta.put(Headers.FAST_FORWARD, "true");
     }
 
-    // existence of this header will enable the on-the-wire-batching feature
-    int catchupBatchSize = properties.getCatchupBatchsize();
-    if (catchupBatchSize > 1) {
-      meta.put(Headers.CATCHUP_BATCHSIZE, String.valueOf(catchupBatchSize));
-    }
+    meta.put(
+        Headers.CLIENT_MAX_INBOUND_MESSAGE_SIZE,
+        String.valueOf(properties.getMaxInboundMessageSize()));
 
     addClientIdTo(meta);
 

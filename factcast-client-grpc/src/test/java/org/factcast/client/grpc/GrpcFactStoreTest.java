@@ -91,10 +91,9 @@ class GrpcFactStoreTest {
     when(stubsFactory.createStub(channel)).thenReturn(stub);
     when(stubsFactory.createBlockingStub(channel)).thenReturn(blockingStub);
     when(stub.withWaitForReady()).thenReturn(stub);
+    when(stub.withMaxInboundMessageSize(anyInt())).thenReturn(stub);
     when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
-
-    uut = new GrpcFactStore(channel, stubsFactory, credentials, properties, "someTest");
-
+    when(blockingStub.withMaxInboundMessageSize(anyInt())).thenReturn(blockingStub);
     // mock initialization
     when(blockingStub.withCallCredentials(any())).thenReturn(blockingStub);
     when(stub.withCallCredentials(any())).thenReturn(stub);
@@ -102,6 +101,8 @@ class GrpcFactStoreTest {
     when(stub.withInterceptors(any())).thenReturn(stub);
     when(blockingStub.handshake(any()))
         .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
+
+    uut = new GrpcFactStore(channel, stubsFactory, credentials, properties, "someTest");
   }
 
   @Test
@@ -152,17 +153,11 @@ class GrpcFactStoreTest {
   }
 
   @Test
-  void configureWithBatchSize1() {
-    when(properties.getCatchupBatchsize()).thenReturn(1);
+  void configureWithMaxMesssageSize() {
+    when(properties.getMaxInboundMessageSize()).thenReturn(1777);
     Metadata meta = uut.prepareMetaData("lz4");
-    assertThat(meta.containsKey(Headers.CATCHUP_BATCHSIZE)).isFalse();
-  }
-
-  @Test
-  void configureWithBatchSize10() {
-    when(properties.getCatchupBatchsize()).thenReturn(10);
-    Metadata meta = uut.prepareMetaData("lz4");
-    assertThat(meta.get(Headers.CATCHUP_BATCHSIZE)).isEqualTo(String.valueOf(10));
+    assertThat(meta.containsKey(Headers.CLIENT_MAX_INBOUND_MESSAGE_SIZE)).isTrue();
+    assertThat(meta.get(Headers.CLIENT_MAX_INBOUND_MESSAGE_SIZE)).isEqualTo(String.valueOf(1777));
   }
 
   @Test
@@ -171,7 +166,7 @@ class GrpcFactStoreTest {
     UUID uuid = fact.id();
     conv = new ProtoConverter();
     @NonNull FactStoreProto.MSG_UUID id = conv.toProto(uuid);
-    when(blockingStub.fetchById(eq(id)))
+    when(blockingStub.fetchById(id))
         .thenReturn(
             MSG_OptionalFact.newBuilder().setFact(conv.toProto(fact)).setPresent(true).build());
 
@@ -219,7 +214,7 @@ class GrpcFactStoreTest {
 
   static class SomeException extends RuntimeException {
 
-    static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
   }
 
   @Test
@@ -335,7 +330,7 @@ class GrpcFactStoreTest {
   void testWrapRetryable_nonRetryable() {
     StatusRuntimeException cause = new StatusRuntimeException(Status.ALREADY_EXISTS);
     RuntimeException e = ClientExceptionHelper.from(cause);
-    assertTrue(e instanceof StatusRuntimeException);
+    assertInstanceOf(StatusRuntimeException.class, e);
     assertSame(e, cause);
   }
 
@@ -343,13 +338,13 @@ class GrpcFactStoreTest {
   void testWrapRetryable() {
     StatusRuntimeException cause = new StatusRuntimeException(Status.UNAVAILABLE);
     RuntimeException e = ClientExceptionHelper.from(cause);
-    assertTrue(e instanceof RetryableException);
+    assertInstanceOf(RetryableException.class, e);
     assertSame(e.getCause(), cause);
   }
 
   @Test
   void testCancelIsPropagated() {
-    ClientCall call = mock(ClientCall.class);
+    ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = mock(ClientCall.class);
     uut.cancel(call);
     verify(call).cancel(any(), any());
   }
@@ -362,7 +357,7 @@ class GrpcFactStoreTest {
       uut.cancel(call);
       fail();
     } catch (Throwable e) {
-      assertTrue(e instanceof StatusRuntimeException);
+      assertInstanceOf(StatusRuntimeException.class, e);
       assertFalse(e instanceof RetryableException);
     }
   }
@@ -418,9 +413,9 @@ class GrpcFactStoreTest {
   void testCurrentStateForPositive() {
     uut.fastStateToken(true);
     UUID id = new UUID(0, 1);
-    StateForRequest req = new StateForRequest(Lists.emptyList(), "foo");
+
     when(blockingStub.currentStateForSpecsJson(any())).thenReturn(conv.toProto(id));
-    List<FactSpec> list = Arrays.asList(FactSpec.ns("foo").aggId(id));
+    List<FactSpec> list = Collections.singletonList(FactSpec.ns("foo").aggId(id));
     uut.currentStateFor(list);
     verify(blockingStub).currentStateForSpecsJson(conv.toProtoFactSpecs(list));
   }
@@ -431,7 +426,7 @@ class GrpcFactStoreTest {
     when(blockingStub.currentStateForSpecsJson(any()))
         .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
     try {
-      uut.currentStateFor(Lists.emptyList());
+      uut.currentStateFor(Collections.emptyList());
       fail();
     } catch (RetryableException expected) {
     }
@@ -445,7 +440,7 @@ class GrpcFactStoreTest {
     when(blockingStub.publishConditional(any())).thenReturn(conv.toProto(true));
 
     boolean publishIfUnchanged =
-        uut.publishIfUnchanged(Lists.emptyList(), Optional.of(new StateToken(id)));
+        uut.publishIfUnchanged(Collections.emptyList(), Optional.of(new StateToken(id)));
     assertThat(publishIfUnchanged).isTrue();
 
     verify(blockingStub).publishConditional(conv.toProto(req));
@@ -458,7 +453,7 @@ class GrpcFactStoreTest {
     when(blockingStub.publishConditional(any()))
         .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
     try {
-      uut.publishIfUnchanged(Lists.emptyList(), Optional.of(new StateToken(id)));
+      uut.publishIfUnchanged(Collections.emptyList(), Optional.of(new StateToken(id)));
       fail();
     } catch (RetryableException expected) {
     }
@@ -479,7 +474,7 @@ class GrpcFactStoreTest {
     resilienceConfig.setEnabled(false);
     SubscriptionRequestTO req =
         new SubscriptionRequestTO(SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch());
-    Subscription s = uut.subscribe(req, element -> {});
+    Subscription s = uut.subscribe(req, elements -> {});
 
     assertThat(s).isInstanceOf(Subscription.class).isNotInstanceOf(ResilientGrpcSubscription.class);
   }
@@ -496,6 +491,7 @@ class GrpcFactStoreTest {
   }
 
   @Nested
+  @SuppressWarnings("java:S5778")
   class Credentials {
     @Test
     void testCredentialsWrongFormat() {
@@ -511,8 +507,11 @@ class GrpcFactStoreTest {
               new GrpcFactStore(channel, stubsFactory, Optional.ofNullable("x:y:z"))
                   .initializeIfNecessary());
 
-      assertThat(new GrpcFactStore(channel, stubsFactory, Optional.ofNullable("xyz:abc")))
-          .isNotNull();
+      Assertions.assertDoesNotThrow(
+          () -> {
+            new GrpcFactStore(channel, stubsFactory, Optional.ofNullable("xyz:abc"))
+                .initializeIfNecessary();
+          });
     }
 
     @Test
@@ -615,20 +614,20 @@ class GrpcFactStoreTest {
 
     @Test
     void testLegacyCredentials() {
+
       final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
 
-      GrpcFactStore uutLegacyCredentials =
+      GrpcFactStore store =
           new GrpcFactStore(channel, stubsFactory, Optional.ofNullable("xyz:abc"), props, "foo");
-      uutLegacyCredentials.initializeIfNecessary();
+      store.initializeIfNecessary();
 
+      // just check, if stubs were configured
       verify(blockingStub).withCallCredentials(any());
       verify(stub).withCallCredentials(any());
     }
 
     @Test
     void testLegacyCredentialsEmptyUsername() {
-      when(blockingStub.withWaitForReady()).thenReturn(blockingStub);
-      when(stub.withWaitForReady()).thenReturn(stub);
 
       credentials = Optional.of(":abc");
       final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
@@ -657,7 +656,7 @@ class GrpcFactStoreTest {
   }
 
   @Test
-  public void testCurrentTime() {
+  void testCurrentTime() {
     long l = 123L;
     when(blockingStub.currentTime(conv.empty())).thenReturn(conv.toProtoTime(l));
     Long t = uut.currentTime();
@@ -905,7 +904,7 @@ class GrpcFactStoreTest {
     }
 
     @Test
-    void retriesRun() throws Exception {
+    void retriesRun() {
       resilienceConfig.setEnabled(true).setAttempts(100).setInterval(Duration.ofMillis(100));
       doThrow(new RetryableException(new IOException())).doNothing().when(runnable).run();
       uut.runAndHandle(runnable);
