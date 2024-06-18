@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.7.5-SNAPSHOT</version>
+    <version>0.7.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-examples</artifactId>
@@ -23,6 +23,7 @@
     <module>factcast-example-tls-client</module>
     <module>factcast-example-tls-server</module>
     <module>factcast-example-schema-registry</module>
+    <module>factcast-example-server-telemetry</module>
   </modules>
   <dependencies>
     <dependency>

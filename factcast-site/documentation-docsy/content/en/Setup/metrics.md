@@ -60,7 +60,7 @@ At the **time of writing (0.4.3)**, the metrics exposed by the namespaces group 
 | --------- | ------- | ---------------------------------- |
 | handshake | `timer` | Duration of the initial handshake. |
 
-At the **time of writing (0.4.3)**, the metrics exposed by the namespaces group `factcast.store` are:
+At the **time of writing (0.7.6)**, the metrics exposed by the namespaces group `factcast.store` are:
 
 | operation                  | type    | description                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | -------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -83,6 +83,7 @@ At the **time of writing (0.4.3)**, the metrics exposed by the namespaces group 
 | catchupTransformationRatio | `meter` | [deprecated] Percentage of facts transformed (downcasted/upcasted) by the server in response to a subscribed client. Useful for debugging the amount of overhead due to transforming, for subscription returning a significant amount of facts.<br />Ref: [transformation](/concept/transformation)                                                                                                                                                               |
 | missedRoundtrip            | `meter` | If inactive for more than a configured interval (`factcast.store.factNotificationBlockingWaitTimeInMillis`), the server validates the health of the database connection. For this purpose it sends an internal notification to the database and waits to receive back an answer in the interval defined by `factcast.store.factNotificationMaxRoundTripLatencyInMillis`. This metric counts the number of notifications sent without an answer from the database. |
 | snapshotsCompacted         | `meter` | Counts the number of old snapshots deleted. This runs as a dedicated scheduled job, configured by `factcast.store.snapshotCacheCompactCron`.<br />Ref: [snapshots](/usage/factus/projections/snapshotting/)                                                                                                                                                                                                                                                       |
+| tailIndices                | `meter` | Counts the number of tail indices being present after tail index maintenance. They have a "state" tag which can be used to distinguish between valid/invalid ones and they carry a "maintenance" tag which can be either skipped or executed and reflects whether maintenance was actually executed due to ongoing index operations.                                                                                                                              |
 
 At the **time of writing (0.4.3)**, the metrics exposed by the namespaces group `factcast.registry` are:
 
@@ -135,6 +136,8 @@ You can distinguish them by the `name` tag. Currently, these are:
 - `paged-catchup` - used for buffered transformation while using the paged catchup strategy
 - `transformation-cache` - used for inserting/updating entries in the transformation cache (only if you use persisted
   cache)
+- `pg-listener` - used by the Guava EventBus that receives signals from the PostgreSQL
+- `telemetry` - used by the Guava EventBus that receives signals from the FactCast Server (see [telemetry](./telemetry.md))
 
 See https://micrometer.io/docs/ref/jvm for more information.
 

@@ -65,6 +65,22 @@ class ClientExceptionHelperTest {
     }
 
     @Test
+    void extractsCredentialsNotFoundException() {
+      Metadata metadata = new Metadata();
+
+      StatusRuntimeException ex = new StatusRuntimeException(Status.UNAUTHENTICATED, metadata);
+      assertThat(ClientExceptionHelper.from(ex)).isInstanceOf(StatusRuntimeException.class);
+    }
+
+    @Test
+    void extractsAuthenticationException() {
+      Metadata metadata = new Metadata();
+
+      StatusRuntimeException ex = new StatusRuntimeException(Status.PERMISSION_DENIED, metadata);
+      assertThat(ClientExceptionHelper.from(ex)).isInstanceOf(StatusRuntimeException.class);
+    }
+
+    @Test
     void wrapsRetryable() {
       StatusRuntimeException ex = new StatusRuntimeException(Status.UNKNOWN);
       assertThat(ClientExceptionHelper.from(ex))

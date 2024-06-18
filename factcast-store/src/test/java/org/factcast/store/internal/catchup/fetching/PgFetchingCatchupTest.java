@@ -84,7 +84,7 @@ class PgFetchingCatchupTest {
     @Test
     void connectionHandling() {
       PgConnection con = mock(PgConnection.class);
-      when(connectionSupplier.get()).thenReturn(con);
+      when(connectionSupplier.get(any())).thenReturn(con);
 
       var uut = spy(underTest);
       doNothing().when(uut).fetch(any());
@@ -99,7 +99,7 @@ class PgFetchingCatchupTest {
     @Test
     void removesCurrentStatement() {
       PgConnection con = mock(PgConnection.class);
-      when(connectionSupplier.get()).thenReturn(con);
+      when(connectionSupplier.get(any())).thenReturn(con);
       var uut = spy(underTest);
       doNothing().when(uut).fetch(any());
 

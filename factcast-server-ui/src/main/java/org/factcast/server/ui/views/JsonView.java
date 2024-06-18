@@ -15,12 +15,18 @@
  */
 package org.factcast.server.ui.views;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dependency.NpmPackage;
 import java.util.*;
+import java.util.function.Consumer;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.util.NoCoverageReportToBeGenerated;
 import org.factcast.server.ui.plugins.JsonViewEntries;
 import org.factcast.server.ui.plugins.JsonViewEntry;
@@ -34,13 +40,42 @@ import org.factcast.server.ui.plugins.JsonViewEntry;
 @NpmPackage(value = "jsonc-parser", version = "3.2.0")
 @NpmPackage(value = "jsonpath-plus", version = "7.2.0")
 @NoCoverageReportToBeGenerated
+@SuppressWarnings("java:S1948")
+@RequiredArgsConstructor
+@Slf4j
 public class JsonView extends Component {
 
-  public void renderFact(JsonViewEntry f) {
-    renderFacts(new JsonViewEntries(Collections.singletonList(f)));
+  private final Consumer<QuickFilterOptions> filterApplier;
+  private final ObjectMapper om = new ObjectMapper();
+
+  public JsonView() {
+    this(null);
   }
 
-  public void renderFacts(JsonViewEntries entries) {
-    getElement().callJsFunction("renderJson", entries.json(), entries.meta());
+  public void renderFact(JsonViewEntry f, int conditionCount) {
+    renderFacts(new JsonViewEntries(Collections.singletonList(f)), conditionCount);
   }
+
+  public void renderFacts(JsonViewEntries entries, int conditionCount) {
+    var enableQuickFiltering = filterApplier != null && conditionCount > 0;
+    getElement()
+        .callJsFunction(
+            "renderJson",
+            entries.json(),
+            entries.meta(),
+            enableQuickFiltering, // enable quick filters,
+            conditionCount); // number of filter conditions, needed for quick filtering correct
+    // condition
+  }
+
+  @ClientCallable
+  @SneakyThrows
+  public void updateFilters(String filterOptions) {
+    log.info("Updating filters with {}", filterOptions);
+    filterApplier.accept(om.readValue(filterOptions, QuickFilterOptions.class));
+  }
+
+  public record QuickFilterOptions(UUID aggregateId, MetaFilterOption meta, int affectedCriteria) {}
+
+  public record MetaFilterOption(String key, String value) {}
 }

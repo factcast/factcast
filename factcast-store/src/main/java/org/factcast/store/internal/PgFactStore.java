@@ -46,7 +46,6 @@ import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.snapcache.SnapshotCache;
 import org.factcast.store.registry.SchemaRegistry;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -54,8 +53,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * A PostgreSQL based FactStore implementation
@@ -81,7 +82,8 @@ public class PgFactStore extends AbstractFactStore {
 
   @NonNull private final StoreConfigurationProperties props;
 
-  @Autowired
+  @NonNull private final PlatformTransactionManager platformTransactionManager;
+
   public PgFactStore(
       @NonNull JdbcTemplate jdbcTemplate,
       @NonNull PgSubscriptionFactory subscriptionFactory,
@@ -92,7 +94,8 @@ public class PgFactStore extends AbstractFactStore {
       @NonNull PgFactIdToSerialMapper pgFactIdToSerialMapper,
       @NonNull SnapshotCache snapCache,
       @NonNull PgMetrics metrics,
-      @NonNull StoreConfigurationProperties props) {
+      @NonNull StoreConfigurationProperties props,
+      @NonNull PlatformTransactionManager platformTransactionManager) {
     super(tokenStore);
 
     this.jdbcTemplate = jdbcTemplate;
@@ -104,6 +107,7 @@ public class PgFactStore extends AbstractFactStore {
     this.metrics = metrics;
     this.factTransformerService = factTransformerService;
     this.props = props;
+    this.platformTransactionManager = platformTransactionManager;
   }
 
   @Override
@@ -196,22 +200,37 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   public @NonNull Set<String> enumerateNamespaces() {
-    if (schemaRegistry.isActive()) return schemaRegistry.enumerateNamespaces();
+    if (schemaRegistry.isActive() && !props.isEnumerationDirectModeEnabled())
+      return schemaRegistry.enumerateNamespaces();
     else return enumerateNamespacesFromPg();
   }
 
   public @NonNull Set<String> enumerateNamespacesFromPg() {
-    return metrics.time(
-        StoreMetrics.OP.ENUMERATE_NAMESPACES,
-        () ->
-            new HashSet<>(
-                jdbcTemplate.query(
-                    PgConstants.SELECT_DISTINCT_NAMESPACE, this::extractStringFromResultSet)));
+    // wrap in TX to make SET LOCAL work properly (and auto revert on commit/rollback)
+    final var result =
+        new TransactionTemplate(platformTransactionManager)
+            .execute(
+                status ->
+                    metrics.time(
+                        StoreMetrics.OP.ENUMERATE_NAMESPACES,
+                        () -> {
+                          // used because pg seems to favor the seq scan for even 80k rows over the
+                          // index
+                          jdbcTemplate.execute(PgConstants.DISABLE_SEQSCAN);
+
+                          return new HashSet<>(
+                              jdbcTemplate.query(
+                                  PgConstants.SELECT_DISTINCT_NAMESPACE,
+                                  this::extractStringFromResultSet));
+                        }));
+
+    return Objects.requireNonNull(result);
   }
 
   @Override
   public @NonNull Set<String> enumerateTypes(@NonNull String ns) {
-    if (schemaRegistry.isActive()) return schemaRegistry.enumerateTypes(ns);
+    if (schemaRegistry.isActive() && !props.isEnumerationDirectModeEnabled())
+      return schemaRegistry.enumerateTypes(ns);
     else return enumerateTypesFromPg(ns);
   }
 

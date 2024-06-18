@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.7.5-SNAPSHOT</version>
+    <version>0.7.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-snapshotcache-redisson</artifactId>
@@ -67,7 +67,7 @@
     <dependency>
       <groupId>org.redisson</groupId>
       <artifactId>redisson-spring-boot-starter</artifactId>
-      <version>${redisson-spring-boot-starter.version}</version>
+      <version>${redisson.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
