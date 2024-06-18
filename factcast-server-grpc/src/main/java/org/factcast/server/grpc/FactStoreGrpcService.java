@@ -54,6 +54,7 @@ import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.util.FactCastJson;
 import org.factcast.core.util.MavenHelper;
 import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.CompressionCodecs;
@@ -146,7 +147,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
     final var clientId = grpcRequestMetadata.clientId();
     if (clientId.isPresent()) {
       final var id = clientId.get();
-      facts.forEach(f -> tagFactSource(f, id));
+      facts = facts.stream().map(f -> tagFactSource(f, id)).toList();
     }
     log.debug("{}publish {} fact{}", clientIdPrefix(), size, size > 1 ? "s" : "");
     store.publish(facts);
@@ -155,8 +156,9 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
   }
 
   @VisibleForTesting
-  void tagFactSource(@NonNull Fact f, @NonNull String source) {
+  Fact tagFactSource(@NonNull Fact f, @NonNull String source) {
     f.header().meta().put("source", source);
+    return Fact.of(FactCastJson.writeValueAsString(f.header()), f.jsonPayload());
   }
 
   private String clientIdPrefix() {
@@ -416,7 +418,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
     final var clientId = grpcRequestMetadata.clientId();
     if (clientId.isPresent()) {
       final var id = clientId.get();
-      facts.forEach(f -> tagFactSource(f, id));
+      facts = facts.stream().map(f -> tagFactSource(f, id)).toList();
     }
 
     boolean result = store.publishIfUnchanged(facts, req.token());
