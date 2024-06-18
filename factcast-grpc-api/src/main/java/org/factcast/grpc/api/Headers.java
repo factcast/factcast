@@ -21,19 +21,15 @@ public class Headers {
 
   private static final String GRPC_COMPRESSION_HEADER = "fc-msgcomp";
 
-  private static final String GRPC_CATCHUP_BATCHSIZE = "fc-cbat";
-
   // questionable, should be part of request?
   private static final String GRPC_FAST_FORWARD = "fc-ffwd";
 
   private static final String GRPC_CLIENT_ID = "fc-id";
   private static final String GRPC_CLIENT_VERSION = "fc-version";
+  private static final String GRPC_CLIENT_MAX_INBOUND_MESSAGE_SIZE = "fc-maxmsg";
 
   public static final Metadata.Key<String> MESSAGE_COMPRESSION =
       Metadata.Key.of(Headers.GRPC_COMPRESSION_HEADER, Metadata.ASCII_STRING_MARSHALLER);
-
-  public static final Metadata.Key<String> CATCHUP_BATCHSIZE =
-      Metadata.Key.of(Headers.GRPC_CATCHUP_BATCHSIZE, Metadata.ASCII_STRING_MARSHALLER);
 
   public static final Metadata.Key<String> FAST_FORWARD =
       Metadata.Key.of(Headers.GRPC_FAST_FORWARD, Metadata.ASCII_STRING_MARSHALLER);
@@ -43,4 +39,8 @@ public class Headers {
 
   public static final Metadata.Key<String> CLIENT_VERSION =
       Metadata.Key.of(Headers.GRPC_CLIENT_VERSION, Metadata.ASCII_STRING_MARSHALLER);
+
+  public static final Metadata.Key<String> CLIENT_MAX_INBOUND_MESSAGE_SIZE =
+      Metadata.Key.of(
+          Headers.GRPC_CLIENT_MAX_INBOUND_MESSAGE_SIZE, Metadata.ASCII_STRING_MARSHALLER);
 }
