@@ -18,7 +18,7 @@ package org.factcast.schema.registry.cli.utils
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import java.nio.file.Path
-import javax.inject.Singleton
+import jakarta.inject.Singleton
 import org.apache.commons.codec.digest.DigestUtils
 import org.factcast.schema.registry.cli.fs.FileSystemService
 

@@ -33,7 +33,7 @@ class FactcastIndexCreatorImplTest : StringSpec() {
 
     val titleFiltered = setOf("title")
 
-    override fun afterTest(testCase: TestCase, result: TestResult) {
+    override suspend fun afterTest(testCase: TestCase, result: TestResult) {
         clearAllMocks()
     }
 
@@ -62,10 +62,14 @@ class FactcastIndexCreatorImplTest : StringSpec() {
             verifyAll {
                 fs.copyFilteredJson(
                     any(),
-                    match { it.path.platformIndependent().endsWith(getEventId(namespace1, event1, version1)) }, titleFiltered)
+                    match { it.path.platformIndependent().endsWith(getEventId(namespace1, event1, version1)) },
+                    titleFiltered
+                )
                 fs.copyFilteredJson(
                     any(),
-                    match { it.path.platformIndependent().endsWith(getEventId(namespace1, event1, version2)) }, titleFiltered)
+                    match { it.path.platformIndependent().endsWith(getEventId(namespace1, event1, version2)) },
+                    titleFiltered
+                )
             }
             confirmVerified(fs)
         }

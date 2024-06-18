@@ -18,7 +18,7 @@ class FileSystemServiceImplTest : StringSpec() {
     var tmp = Files.createTempDirectory("fc-test")
     val uut = FileSystemServiceImpl()
 
-    override fun afterTest(testCase: TestCase, result: TestResult) {
+    override suspend fun afterTest(testCase: TestCase, result: TestResult) {
         try {
             Files.delete(tmp)
         } catch (e: Exception) {

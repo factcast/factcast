@@ -22,10 +22,10 @@ matching Facts from the FactCast Server, it updates the projection. The expected
 variety of parameters, but under normal circumstances it is expected to be <100ms, sometimes <10ms.
 
 However, its strength (being updated in the background) is also its weakness: the application never knows what state the
-projection is in (*eventual consistency*).
+projection is in (_eventual consistency_).
 
 While this is a perfect projection type for occasionally connected operations or public query models, the inherent
-eventual consistency might be confusing to users, for instance in a *read-after-write* scenario, where the user
+eventual consistency might be confusing to users, for instance in a _read-after-write_ scenario, where the user
 does not see his own write. This can lead to suboptimal UX und thus should be used cautiously after carefully
 considering the trade-offs.
 

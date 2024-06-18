@@ -29,6 +29,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.InternalSubscription;
 import org.factcast.core.subscription.StaleSubscriptionDetectedException;
@@ -42,9 +43,9 @@ import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
  * Bridges GRPC Specific StreamObserver to a subscription by switching over the notification type
  * and dispatching to the appropriate subscription method.
  *
+ * @author <uwe.schaefer@prisma-capacity.eu>
  * @see StreamObserver
  * @see Subscription
- * @author <uwe.schaefer@prisma-capacity.eu>
  */
 @Slf4j
 class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notification> {
@@ -136,7 +137,15 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
         break;
       case Ffwd:
         log.debug("received fastforward signal");
-        subscription.notifyFastForward(converter.fromProto(f.getId()));
+        // if the server is <0.7.5, the fwd notification does not contain a serial. In this case, we
+        // just skip it.
+        FactStreamPosition pos = converter.fromProto(f.getId(), f.getSerial());
+        if (pos.serial() != 0L) {
+          subscription.notifyFastForward(pos);
+        } else {
+          log.warn(
+              "Server sent FFWD without serial information. Either downgrade the client or upgrade the server (to 0.7.5+) in order for FFWD to be enabled.");
+        }
         break;
 
       default:

@@ -15,17 +15,15 @@
  */
 package org.factcast.factus.lock;
 
-import static org.factcast.factus.metrics.TagKeys.*;
+import static org.factcast.factus.metrics.TagKeys.CLASS;
 
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.TimeoutException;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
+import java.util.concurrent.*;
+import java.util.function.*;
+import java.util.stream.*;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -109,7 +107,7 @@ public class Locked<I extends Projection> {
                       try {
                         InLockedOperation.enterLockedOperation();
                         bodyToExecute.accept(updatedProjection, txWithLockOnSpecs);
-                        return Attempt.publish(
+                        return Attempt.publishUnlessEmpty(
                             toPublish.stream().map(Supplier::get).collect(Collectors.toList()));
                       } finally {
                         InLockedOperation.exitLockedOperation();

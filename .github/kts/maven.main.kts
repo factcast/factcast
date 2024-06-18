@@ -1,52 +1,41 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("it.krzeminski:github-actions-kotlin-dsl:0.20.0")
+@file:DependsOn("io.github.typesafegithub:github-workflows-kt:2.1.0")
 
-import it.krzeminski.githubactions.actions.actions.CacheV3
-import it.krzeminski.githubactions.actions.actions.CheckoutV3
-import it.krzeminski.githubactions.actions.actions.SetupJavaV3
-import it.krzeminski.githubactions.actions.codecov.CodecovActionV3
-import it.krzeminski.githubactions.actions.docker.LoginActionV2
-import it.krzeminski.githubactions.domain.RunnerType
-import it.krzeminski.githubactions.domain.Workflow
-import it.krzeminski.githubactions.domain.triggers.PullRequest
-import it.krzeminski.githubactions.domain.triggers.Push
-import it.krzeminski.githubactions.dsl.workflow
-import it.krzeminski.githubactions.yaml.writeToFile
-import java.io.File
-import java.io.IOException
-import java.nio.file.Paths
 
-public val workflowMaven: Workflow = workflow(
-    name = "maven",
+import io.github.typesafegithub.workflows.actions.actions.CacheV4
+import io.github.typesafegithub.workflows.actions.actions.CheckoutV4
+import io.github.typesafegithub.workflows.actions.actions.SetupJavaV4
+import io.github.typesafegithub.workflows.actions.codecov.CodecovActionV4
+import io.github.typesafegithub.workflows.domain.RunnerType
+import io.github.typesafegithub.workflows.domain.triggers.PullRequest
+import io.github.typesafegithub.workflows.domain.triggers.Push
+import io.github.typesafegithub.workflows.dsl.expressions.expr
+import io.github.typesafegithub.workflows.dsl.workflow
+import io.github.typesafegithub.workflows.yaml.ConsistencyCheckJobConfig
+
+workflow(
+    name = "Maven all in one",
     on = listOf(
-        PullRequest(
-            branches = listOf("master"),
-        ),
+        PullRequest(),
         Push(
             branches = listOf("master"),
         ),
     ),
-    sourceFile = Paths.get(".github/kts/maven.main.kts"),
+    sourceFile = __FILE__,
+    consistencyCheckJobConfig = ConsistencyCheckJobConfig.Disabled
 ) {
     job(
         id = "build",
         runsOn = RunnerType.UbuntuLatest,
     ) {
         uses(
-            name = "Login to Docker Hub",
-            action = LoginActionV2(
-                username = "${'$'}{{ secrets.DOCKERHUB_USERNAME }}",
-                password = "${'$'}{{ secrets.DOCKERHUB_TOKEN }}",
-            ),
+            name = "Checkout",
+            action = CheckoutV4(fetchDepth = CheckoutV4.FetchDepth.Infinite)
         )
         uses(
-            name = "CheckoutV3",
-            action = CheckoutV3(),
-        )
-        uses(
-            name = "CacheV3",
-            action = CacheV3(
+            name = "Cache - Maven Repository",
+            action = CacheV4(
                 path = listOf(
                     "~/.m2/repository",
                 ),
@@ -57,43 +46,91 @@ public val workflowMaven: Workflow = workflow(
             ),
         )
         uses(
-            name = "CacheV3",
-            action = CacheV3(
+            name = "Cache - Sonar cache",
+            action = CacheV4(
                 path = listOf(
-                    "/var/lib/docker/",
+                    "~/.sonar/cache",
                 ),
-                key = "factcast-docker-cache-unversioned",
+                key = "${'$'}{{ runner.os }}-sonar-${'$'}{{ hashFiles('**/pom.xml') }}",
                 restoreKeys = listOf(
-                    "factcast-docker-cache-unversioned",
+                    "${'$'}{{ runner.os }}-sonar-",
                 ),
             ),
         )
         uses(
-            name = "Set up JDK 11",
-            action = SetupJavaV3(
-                distribution = SetupJavaV3.Distribution.Custom("corretto"),
-                javaVersion = "11",
+            name = "JDK 17",
+            action = SetupJavaV4(
+                distribution = SetupJavaV4.Distribution.Corretto,
+                javaVersion = "17",
             ),
         )
+
         run(
-            name = "Build with Maven",
-            command = "./mvnw -B clean verify --file pom.xml",
+            name = "Build with Maven, no testing",
+            command = "./mvnw -B clean install -DskipTests",
         )
+
         run(
-            name = "Remove partial execution reports",
-            command = "find -wholename \"**/target/jacoco-output\" -exec rm -rf {} +",
+            name = "Test - Unit",
+            command = "./mvnw -B test",
+        )
+
+        run(
+            name = "Sonar upload",
+            command = "./mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=\${{ secrets.SONAR_TOKEN }}"
+        )
+
+        run(
+            name = "Test - Integration",
+            command = "./mvnw -B verify -DskipUnitTests",
         )
         uses(
-            name = "CodecovActionV3",
-            action = CodecovActionV3(
-                token = "${'$'}{{ secrets.CODECOV_TOKEN }}",
+            name = "Codecov upload",
+            action = CodecovActionV4(
+                token = "${'$'}{{ secrets.CODECOV_TOKEN }}"
             ),
         )
     }
 
+    job(
+        id = "postgres-compatibility",
+        runsOn = RunnerType.UbuntuLatest,
+        strategyMatrix = mapOf(
+            // note that 11 is tested already in the regular build job
+            // removed 12-14 for now to improve throughput regarding actions
+            "postgresVersion" to listOf("15"),
+        ),
+    ) {
+        uses(
+            name = "Checkout",
+            action = CheckoutV4(fetchDepth = CheckoutV4.FetchDepth.Infinite)
+        )
+        uses(
+            name = "Cache - Maven Repository",
+            action = CacheV4(
+                path = listOf(
+                    "~/.m2/repository",
+                ),
+                key = "${'$'}{{ runner.os }}-maven-${'$'}{{ hashFiles('**/pom.xml') }}",
+                restoreKeys = listOf(
+                    "${'$'}{{ runner.os }}-maven-",
+                ),
+            ),
+        )
+
+        uses(
+            name = "JDK 17",
+            action = SetupJavaV4(
+                distribution = SetupJavaV4.Distribution.Corretto,
+                javaVersion = "17",
+            ),
+        )
+
+        run(
+            name = "Test - Integration",
+            command = "./mvnw -B -Dpostgres.version=${expr("matrix.postgresVersion")} verify -DskipUnitTests",
+        )
+    }
 }
 
-if (!File(".github").isDirectory)
-    throw IOException("Run from project root")
 
-workflowMaven.writeToFile(addConsistencyCheck = false)

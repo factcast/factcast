@@ -51,7 +51,7 @@ class TransformationValidationServiceImplTest : StringSpec() {
         transformationEvaluator
     )
 
-    override fun afterTest(testCase: TestCase, result: TestResult) {
+    override suspend fun afterTest(testCase: TestCase, result: TestResult) {
         clearAllMocks()
     }
 
@@ -67,7 +67,7 @@ class TransformationValidationServiceImplTest : StringSpec() {
             confirmVerified(missingTransformationCalculator)
         }
 
-        "calculateMissingUpcastTransformations - should return no errors for valid transformations " {
+        "calculateMissingUpcastTransformations - should return no errors for valid transformations v2" {
             val namespace = Namespace("foo", dummyPath, listOf(event1, event1))
             val dummyProject = Project(null, listOf(namespace))
 

@@ -17,17 +17,17 @@ package org.factcast.schema.registry.cli.project.structure
 
 import io.micronaut.core.annotation.Introspected
 import java.nio.file.Path
-import javax.validation.constraints.NotNull
+import jakarta.validation.constraints.NotNull
 import org.factcast.schema.registry.cli.domain.Transformation
 import org.factcast.schema.registry.cli.validation.NO_TRANSFORMATION_FILE
 import org.factcast.schema.registry.cli.validation.validators.ValidTransformationFolder
 
 @Introspected
 data class TransformationFolder(
-    @get:ValidTransformationFolder
+    @field:ValidTransformationFolder
     override val path: Path,
 
-    @get:NotNull(message = NO_TRANSFORMATION_FILE)
+    @field:NotNull(message = NO_TRANSFORMATION_FILE)
     val transformation: Path?
 ) : Folder {
     override fun getChildren(): List<Folder> = emptyList()

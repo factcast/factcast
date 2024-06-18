@@ -27,9 +27,10 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.function.*;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
@@ -37,6 +38,8 @@ import org.factcast.client.grpc.ResilientGrpcSubscription.DelegatingFactObserver
 import org.factcast.client.grpc.ResilientGrpcSubscription.SubscriptionHolder;
 import org.factcast.client.grpc.ResilientGrpcSubscription.ThrowingBiConsumer;
 import org.factcast.core.Fact;
+import org.factcast.core.FactStreamPosition;
+import org.factcast.core.TestFactStreamPosition;
 import org.factcast.core.store.RetryableException;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.Subscription;
@@ -66,7 +69,7 @@ class ResilientGrpcSubscriptionTest {
   private final ArgumentCaptor<FactObserver> observerAC =
       ArgumentCaptor.forClass(FactObserver.class);
 
-  ResilienceConfiguration config = new ResilienceConfiguration();
+  final ResilienceConfiguration config = new ResilienceConfiguration();
   ResilientGrpcSubscription uut;
 
   @BeforeEach
@@ -293,9 +296,9 @@ class ResilientGrpcSubscriptionTest {
 
     @Test
     void ffwDelegates() {
-      @NonNull UUID id = UUID.randomUUID();
-      dfo.onFastForward(id);
-      verify(obs).onFastForward(id);
+      FactStreamPosition pos = TestFactStreamPosition.random();
+      dfo.onFastForward(pos);
+      verify(obs).onFastForward(pos);
     }
 
     @Test
@@ -321,14 +324,15 @@ class ResilientGrpcSubscriptionTest {
     @SneakyThrows
     @Test
     void onErrorReconnecting() {
-
-      doNothing().when(uut).reConnect();
+      doNothing().when(uut).doConnect();
 
       dfo.onError(new RetryableException(new IOException()));
 
       verify(subscription).close();
       verify(uut).reConnect();
-      assertThat(uut.resilience().numberOfAttemptsInWindow()).isEqualTo(1);
+      verify(store).reset();
+      verify(uut).doConnect();
+      assertThat(uut.resilience().numberOfAttemptsInWindow()).isOne();
     }
   }
 

@@ -19,22 +19,28 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
 import java.util.concurrent.*;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.subscription.*;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionImpl;
+import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.subscription.transformation.FactTransformerService;
+import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
-import org.factcast.store.internal.filter.PgBlacklist;
+import org.factcast.store.internal.filter.blacklist.Blacklist;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
+import org.factcast.store.internal.script.JSEngineFactory;
+import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 // TODO integrate with PGQuery
 @SuppressWarnings("UnstableApiUsage")
-@RequiredArgsConstructor
 @Slf4j
-class PgSubscriptionFactory {
+class PgSubscriptionFactory implements AutoCloseable {
 
   final JdbcTemplate jdbcTemplate;
 
@@ -46,14 +52,47 @@ class PgSubscriptionFactory {
 
   final PgCatchupFactory catchupFactory;
 
-  final FactTransformersFactory transformersFactory;
   final FastForwardTarget target;
   final PgMetrics metrics;
-  final PgBlacklist blacklist;
+  final Blacklist blacklist;
+  final FactTransformerService transformerService;
+  final JSEngineFactory ef;
+  final PgStoreTelemetry telemetry;
+
+  private final ExecutorService es;
+
+  public PgSubscriptionFactory(
+      JdbcTemplate jdbcTemplate,
+      EventBus eventBus,
+      PgFactIdToSerialMapper idToSerialMapper,
+      PgLatestSerialFetcher fetcher,
+      StoreConfigurationProperties props,
+      PgCatchupFactory catchupFactory,
+      FastForwardTarget target,
+      PgMetrics metrics,
+      Blacklist blacklist,
+      FactTransformerService transformerService,
+      JSEngineFactory ef,
+      PgStoreTelemetry telemetry) {
+    this.jdbcTemplate = jdbcTemplate;
+    this.eventBus = eventBus;
+    this.idToSerialMapper = idToSerialMapper;
+    this.fetcher = fetcher;
+    this.catchupFactory = catchupFactory;
+    this.target = target;
+    this.metrics = metrics;
+    this.blacklist = blacklist;
+    this.transformerService = transformerService;
+    this.ef = ef;
+    this.telemetry = telemetry;
+    this.es =
+        metrics.monitor(
+            Executors.newFixedThreadPool(props.getSizeOfThreadPoolForSubscriptions()),
+            "subscription-factory");
+  }
 
   public Subscription subscribe(SubscriptionRequestTO req, FactObserver observer) {
-    SubscriptionImpl subscription =
-        SubscriptionImpl.on(observer, transformersFactory.createFor(req));
+    SubscriptionImpl subscription = SubscriptionImpl.on(observer);
     PgFactStream pgsub =
         new PgFactStream(
             jdbcTemplate,
@@ -63,12 +102,15 @@ class PgSubscriptionFactory {
             fetcher,
             catchupFactory,
             target,
+            transformerService,
+            blacklist,
             metrics,
-            blacklist);
+            ef,
+            telemetry);
 
     // when closing the subscription, also close the PgFactStream
     subscription.onClose(pgsub::close);
-    CompletableFuture.runAsync(connect(req, subscription, pgsub));
+    CompletableFuture.runAsync(connect(req, subscription, pgsub), es);
 
     return subscription;
   }
@@ -84,7 +126,7 @@ class PgSubscriptionFactory {
         warnAndNotify(subscription, req, "missing transformation", e);
       } catch (TransformationException e) {
         errorAndNotify(subscription, req, "failing transformation", e);
-      } catch (RuntimeException e) {
+      } catch (Exception e) {
         // warn level because it is unexpected and unlikely to be a client induced error
         // not limiting to RuntimeException, in case anyone used @SneakyThrows
         warnAndNotify(subscription, req, "runtime", e);
@@ -112,5 +154,11 @@ class PgSubscriptionFactory {
       @NonNull Exception e) {
     log.error(LOGLINE, req, typeOfError, e.getMessage());
     sub.notifyError(e);
+  }
+
+  @Override
+  public void close() throws Exception {
+    es.shutdown();
+    es.awaitTermination(2, TimeUnit.SECONDS);
   }
 }

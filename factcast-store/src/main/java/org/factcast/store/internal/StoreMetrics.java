@@ -41,6 +41,7 @@ public class StoreMetrics {
     SUBSCRIBE_CATCHUP("subscribe-catchup"),
 
     FETCH_BY_ID("fetchById"),
+    FETCH_BY_SER("fetchBySer"),
 
     SERIAL_OF("serialOf"),
 
@@ -94,7 +95,8 @@ public class StoreMetrics {
 
   public enum VALUE implements MetricName {
     CATCHUP_TRANSFORMATION_RATIO("catchupTransformationRatio"),
-    SNAPSHOTS_COMPACTED("snapshotsCompacted");
+    SNAPSHOTS_COMPACTED("snapshotsCompacted"),
+    TAIL_INDICES("tailIndices");
 
     @NonNull final String name;
 

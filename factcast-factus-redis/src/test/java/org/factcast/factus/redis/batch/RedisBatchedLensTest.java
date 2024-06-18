@@ -15,7 +15,8 @@
  */
 package org.factcast.factus.redis.batch;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
@@ -24,13 +25,16 @@ import java.util.UUID;
 import java.util.function.Function;
 import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.redis.ARedisBatchedManagedProjection;
 import org.factcast.factus.redis.RedisManagedProjection;
 import org.factcast.factus.redis.batch.RedisBatched.Defaults;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.redisson.api.RBatch;
@@ -183,7 +187,7 @@ class RedisBatchedLensTest {
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
       RedissonBatchManager tx = mock(RedissonBatchManager.class);
       when(tx.inBatch()).thenReturn(true);
-      RedisBatchedLens underTest = new RedisBatchedLens(p, tx, Defaults.create());
+      RedisBatchedLens underTest = new RedisBatchedLens(p, () -> tx, Defaults.create());
 
       underTest.doClear();
 
@@ -201,7 +205,7 @@ class RedisBatchedLensTest {
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
       RedissonBatchManager tx = mock(RedissonBatchManager.class);
       when(tx.inBatch()).thenReturn(true);
-      RedisBatchedLens underTest = new RedisBatchedLens(p, tx, Defaults.create());
+      RedisBatchedLens underTest = new RedisBatchedLens(p, () -> tx, Defaults.create());
 
       underTest.doFlush();
 
@@ -263,9 +267,9 @@ class RedisBatchedLensTest {
     @Test
     void returnsCurrentBatch() {
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
-      RedissonBatchManager man = mock(RedissonBatchManager.class);
-      when(man.getCurrentBatch()).thenReturn(current);
-      RedisBatchedLens underTest = new RedisBatchedLens(p, man, Defaults.create());
+      RedissonBatchManager tx = mock(RedissonBatchManager.class);
+      when(tx.getCurrentBatch()).thenReturn(current);
+      RedisBatchedLens underTest = new RedisBatchedLens(p, () -> tx, Defaults.create());
 
       Function<Fact, ?> t = underTest.parameterTransformerFor(RBatch.class);
       assertThat(t).isNotNull();
@@ -276,7 +280,7 @@ class RedisBatchedLensTest {
     void returnsNullForOtherType() {
       RedisManagedProjection p = new ARedisBatchedManagedProjection(client);
       RedissonBatchManager tx = mock(RedissonBatchManager.class);
-      RedisBatchedLens underTest = new RedisBatchedLens(p, tx, Defaults.create());
+      RedisBatchedLens underTest = new RedisBatchedLens(p, () -> tx, Defaults.create());
 
       Function<Fact, ?> t = underTest.parameterTransformerFor(Fact.class);
       assertThat(t).isNull();
@@ -291,12 +295,12 @@ class NonAnnotatedRedisManagedProjection implements RedisManagedProjection {
   }
 
   @Override
-  public UUID factStreamPosition() {
+  public FactStreamPosition factStreamPosition() {
     return null;
   }
 
   @Override
-  public void factStreamPosition(@NonNull UUID factStreamPosition) {}
+  public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {}
 
   @Override
   public WriterToken acquireWriteToken(@NonNull Duration maxWait) {

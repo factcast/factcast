@@ -15,9 +15,7 @@
  */
 package org.factcast.core.lock;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 
@@ -39,7 +37,17 @@ public interface Attempt {
   static IntermediatePublishResult publish(@NonNull List<Fact> factsToPublish) {
     if (factsToPublish.isEmpty())
       throw new IllegalArgumentException("List of Facts to publish must not be empty");
-    return new IntermediatePublishResult(factsToPublish);
+    return new IntermediatePublishResult(factsToPublish, false);
+  }
+
+  static IntermediatePublishResult publishUnlessEmpty(
+      @NonNull List<Fact> factsToPublishOrEmptyList) {
+    if (factsToPublishOrEmptyList.isEmpty()) return withoutPublication();
+    else return publish(factsToPublishOrEmptyList);
+  }
+
+  static IntermediatePublishResult withoutPublication() {
+    return new IntermediatePublishResult(Collections.emptyList(), true);
   }
 
   // convenience

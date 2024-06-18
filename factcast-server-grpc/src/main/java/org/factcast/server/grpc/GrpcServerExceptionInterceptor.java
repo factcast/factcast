@@ -61,7 +61,7 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
     public void onReady() {
       try {
         super.onReady();
-      } catch (RuntimeException ex) {
+      } catch (Exception ex) {
         handleException(ex, serverCall, metadata);
       }
     }
@@ -70,7 +70,7 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
     public void onCancel() {
       try {
         super.onCancel();
-      } catch (RuntimeException ex) {
+      } catch (Exception ex) {
         handleException(ex, serverCall, metadata);
       }
     }
@@ -79,7 +79,7 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
     public void onComplete() {
       try {
         super.onComplete();
-      } catch (RuntimeException ex) {
+      } catch (Exception ex) {
         handleException(ex, serverCall, metadata);
       }
     }
@@ -88,7 +88,7 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
     public void onMessage(ReqT message) {
       try {
         super.onMessage(message);
-      } catch (RuntimeException ex) {
+      } catch (Exception ex) {
         handleException(ex, serverCall, metadata);
       }
     }
@@ -97,14 +97,14 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
     public void onHalfClose() {
       try {
         super.onHalfClose();
-      } catch (RuntimeException ex) {
+      } catch (Exception ex) {
         handleException(ex, serverCall, metadata);
       }
     }
 
     @VisibleForTesting
     void handleException(
-        RuntimeException exception, ServerCall<ReqT, RespT> serverCall, Metadata metadata) {
+        Exception exception, ServerCall<ReqT, RespT> serverCall, Metadata metadata) {
 
       if (exception instanceof RequestCanceledByClientException) {
         // maybe we can even skip this close call?
@@ -114,23 +114,13 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
         return;
       }
 
-      // in case someone knows exactly what status to throw
-      if (exception instanceof StatusRuntimeException) {
-        var e = (StatusRuntimeException) exception;
-        if (!Status.PERMISSION_DENIED.equals(e.getStatus())) {
-          log.error("", e);
-        }
-        serverCall.close(e.getStatus(), metadata);
-        return;
-      }
-
       logIfNecessary(log, exception);
-      StatusRuntimeException sre = ServerExceptionHelper.translate(exception);
+      StatusRuntimeException sre = ServerExceptionHelper.translate(exception, metadata);
       serverCall.close(sre.getStatus(), sre.getTrailers());
     }
 
     @VisibleForTesting
-    protected void logIfNecessary(@NonNull Logger logger, @NonNull RuntimeException exception) {
+    protected void logIfNecessary(@NonNull Logger logger, @NonNull Exception exception) {
       String clientId = grpcMetadata.clientIdAsString();
       if (exception instanceof FactValidationException) {
         logger.warn("Exception triggered by client '{}':", clientId, exception);

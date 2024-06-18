@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.5.9-SNAPSHOT</version>
+    <version>0.7.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-factus-redis</artifactId>
@@ -27,6 +27,18 @@
   </dependencyManagement>
 
   <dependencies>
+    <dependency>
+      <groupId>org.openjdk.jmh</groupId>
+      <artifactId>jmh-core</artifactId>
+      <version>1.37</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.openjdk.jmh</groupId>
+      <artifactId>jmh-generator-annprocess</artifactId>
+      <version>1.37</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
@@ -50,6 +62,14 @@
       <groupId>org.redisson</groupId>
       <artifactId>redisson</artifactId>
       <version>${redisson.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-core</artifactId>
+      <scope>test</scope>
+      <type>test-jar</type>
+      <version>${project.version}</version>
     </dependency>
 
   </dependencies>

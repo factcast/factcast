@@ -17,8 +17,8 @@ package org.factcast.schema.registry.cli.project.structure
 
 import io.micronaut.core.annotation.Introspected
 import java.nio.file.Path
-import javax.validation.constraints.NotEmpty
-import javax.validation.constraints.NotNull
+import jakarta.validation.constraints.NotEmpty
+import jakarta.validation.constraints.NotNull
 import org.factcast.schema.registry.cli.domain.Example
 import org.factcast.schema.registry.cli.domain.Version
 import org.factcast.schema.registry.cli.validation.NO_DESCRIPTION
@@ -28,16 +28,16 @@ import org.factcast.schema.registry.cli.validation.validators.ValidVersionFolder
 
 @Introspected
 data class EventVersionFolder(
-    @get:ValidVersionFolder
+    @field:ValidVersionFolder
     override val path: Path,
 
-    @get:NotNull(message = NO_SCHEMA)
+    @field:NotNull(message = NO_SCHEMA)
     val schema: Path?,
 
-    @get:NotNull(message = NO_DESCRIPTION)
+    @field:NotNull(message = NO_DESCRIPTION)
     val description: Path?,
 
-    @get:NotEmpty(message = NO_EXAMPLES)
+    @field:NotEmpty(message = NO_EXAMPLES)
     val examples: List<Path>
 ) : Folder {
     override fun getChildren(): List<Folder> = emptyList()

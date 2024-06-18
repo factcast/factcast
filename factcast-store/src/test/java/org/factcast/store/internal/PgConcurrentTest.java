@@ -27,7 +27,7 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.store.test.IntegrationTest;
+import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,7 +54,7 @@ public class PgConcurrentTest {
   }
 
   @Test
-  public void testConcurrent() throws Exception {
+  void testConcurrent() throws Exception {
     // prepare facts
     List<Fact> factsForAsyncBatchPublish =
         IntStream.range(0, 1000)
@@ -65,18 +65,11 @@ public class PgConcurrentTest {
 
     AtomicReference<CountDownLatch> subscriptionBeforePublish = subscribe(totalNoOfFacts);
 
-    boolean letTestFail = true;
-
     CompletableFuture<Void> batchPublishFuture =
         CompletableFuture.runAsync(() -> uut.publish(factsForAsyncBatchPublish));
     Thread.sleep(200);
-    if (letTestFail) {
-      uut.publish(lonelyFact);
-      batchPublishFuture.get(10, TimeUnit.SECONDS);
-    } else {
-      batchPublishFuture.get(10, TimeUnit.SECONDS);
-      uut.publish(lonelyFact);
-    }
+    batchPublishFuture.get(10, TimeUnit.SECONDS);
+    uut.publish(lonelyFact);
 
     AtomicReference<CountDownLatch> subscriptionAfterPublish = subscribe(totalNoOfFacts);
     assertTrue(subscriptionAfterPublish.get().await(5, TimeUnit.SECONDS));

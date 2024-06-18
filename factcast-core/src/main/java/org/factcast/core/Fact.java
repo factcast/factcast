@@ -16,9 +16,17 @@
 package org.factcast.core;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import org.factcast.core.spec.FactSpecCoordinates;
+import org.factcast.core.util.FactCastJson;
+import org.factcast.factus.event.DefaultEventSerializer;
+import org.factcast.factus.event.EventObject;
+import org.factcast.factus.event.EventSerializer;
 
 /**
  * Defines a fact to be either published or consumed. Consists of two JSON Strings: jsonHeader and
@@ -45,17 +53,32 @@ public interface Fact {
   String jsonHeader();
 
   @NonNull
+  FactHeader header();
+
+  @NonNull
   String jsonPayload();
 
-  String meta(String key);
+  /**
+   * @param key
+   * @return value as String or null
+   * @deprecated use header.meta(String) instead
+   */
+  @Deprecated
+  @Nullable
+  String meta(@NonNull String key);
 
+  /**
+   * @return meta._ser
+   * @throws IllegalStateException if serial information is missing
+   * @deprecated use header.serial() instead.
+   */
+  @Deprecated
   default long serial() {
-    String s = meta("_ser");
-    if (s != null) {
-      return Long.parseLong(s);
-    } else {
-      throw new IllegalStateException("'_ser' Meta attribute not found. Fact not yet published?");
-    }
+    return Optional.ofNullable(header().serial())
+        .orElseThrow(
+            () ->
+                new IllegalStateException(
+                    "'_ser' Meta attribute not found. Fact not yet published?"));
   }
 
   /**
@@ -63,11 +86,12 @@ public interface Fact {
    *
    * @return timestamp in milliseconds of publishing, or null if this information is not there
    *     (historic events)
+   * @deprecated use header.timestamp() instead.
    */
+  @Nullable
+  @Deprecated
   default Long timestamp() {
-    String s = meta("_ts");
-    if (s != null) return Long.parseLong(s);
-    return null;
+    return header().timestamp();
   }
 
   // hint to where to get the default from
@@ -79,8 +103,84 @@ public interface Fact {
     return DefaultFact.of(jsonHeader.toString(), jsonPayload.toString());
   }
 
-  default boolean before(Fact other) {
-    return serial() < other.serial();
+  // create a fact from the event, especially useful for testing purposes
+
+  static FactFromEventBuilder buildFrom(@NonNull EventObject event) {
+    FactFromEventBuilder b = new FactFromEventBuilder(event);
+    // from event
+    FactSpecCoordinates coords = FactSpecCoordinates.from(event.getClass());
+    b.type(coords.type()).ns(coords.ns());
+
+    int v = coords.version();
+    if (v > 0) b.version(v);
+    // defaults
+    b.serial(1).id(UUID.randomUUID());
+
+    event.aggregateIds().forEach(b::aggId);
+    event.additionalMetaMap().forEach(b::meta);
+    return b;
+  }
+
+  default boolean before(@NonNull Fact other) {
+    Long serial = header().serial();
+    Long otherSerial = other.header().serial();
+
+    if (serial == null || otherSerial == null)
+      throw new IllegalStateException(
+          "Can only decide if both Facts have been published (have a serial)");
+    else return serial < otherSerial;
+  }
+
+  @RequiredArgsConstructor
+  class FactFromEventBuilder {
+    @NonNull private final EventObject event;
+    private final Builder builder = new Builder();
+
+    private EventSerializer ser = new DefaultEventSerializer(FactCastJson.mapper());
+
+    public FactFromEventBuilder using(@NonNull EventSerializer ser) {
+      this.ser = ser;
+      return this;
+    }
+
+    public FactFromEventBuilder aggId(@NonNull UUID aggId) {
+      builder.aggId(aggId);
+      return this;
+    }
+
+    public FactFromEventBuilder ns(@NonNull String ns) {
+      builder.ns(ns);
+      return this;
+    }
+
+    public FactFromEventBuilder id(@NonNull UUID id) {
+      builder.id(id);
+      return this;
+    }
+
+    public FactFromEventBuilder type(@NonNull String type) {
+      builder.type(type);
+      return this;
+    }
+
+    public FactFromEventBuilder serial(long id) {
+      builder.serial(id);
+      return this;
+    }
+
+    public FactFromEventBuilder version(int version) {
+      builder.version(version);
+      return this;
+    }
+
+    public FactFromEventBuilder meta(@NonNull String key, String value) {
+      builder.meta(key, value);
+      return this;
+    }
+
+    public Fact build() {
+      return builder.build(ser.serialize(event));
+    }
   }
 
   static Fact.Builder builder() {
@@ -118,11 +218,15 @@ public interface Fact {
       return this;
     }
 
+    public Builder serial(long id) {
+      meta("_ser", String.valueOf(id));
+      return this;
+    }
+
     public Builder version(int version) {
       if (version < 1) {
         throw new IllegalArgumentException("version must be >=1");
       }
-
       header.version(version);
       return this;
     }
@@ -144,7 +248,4 @@ public interface Fact {
       return new DefaultFact(header, pl);
     }
   }
-
-  @NonNull
-  FactHeader header();
 }

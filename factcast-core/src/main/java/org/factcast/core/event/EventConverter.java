@@ -19,8 +19,6 @@ import java.util.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
-import org.factcast.core.Fact.Builder;
-import org.factcast.core.spec.FactSpecCoordinates;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.EventSerializer;
 
@@ -33,38 +31,11 @@ public class EventConverter {
   }
 
   public Fact toFact(@NonNull EventObject p, @NonNull UUID factId) {
-    FactSpecCoordinates spec = FactSpecCoordinates.from(p.getClass());
+    // keep compatibility to older code that expects this to throw an IllegalArgException instead of
+    // an NPE, when a key in the meta map is null
+    if (p.additionalMetaMap().keySet().stream().anyMatch(Objects::isNull))
+      throw new IllegalArgumentException("Meta-Keys cannot be null");
 
-    Builder b = Fact.builder();
-    b.id(factId);
-    b.ns(spec.ns());
-    String type = spec.type();
-    if (type == null || type.trim().isEmpty()) {
-      type = p.getClass().getSimpleName();
-    }
-    b.type(type);
-    int version = spec.version();
-    if (version > 0) // 0 is not allowed on publishing
-    {
-      b.version(version);
-    }
-
-    p.aggregateIds().forEach(b::aggId);
-
-    p.additionalMetaMap()
-        .forEach(
-            (key, value) -> {
-              if (key == null) {
-                throw new IllegalArgumentException(
-                    "Keys of additional fact headers must not be null ('"
-                        + key
-                        + "':'"
-                        + value
-                        + "')");
-              }
-              b.meta(key, value);
-            });
-
-    return b.build(ser.serialize(p));
+    return Fact.buildFrom(p).using(ser).id(factId).build();
   }
 }

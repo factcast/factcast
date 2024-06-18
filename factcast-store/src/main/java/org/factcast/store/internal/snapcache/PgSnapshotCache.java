@@ -17,6 +17,7 @@ package org.factcast.store.internal.snapcache;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.NonNull;
@@ -26,12 +27,17 @@ import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.StoreMetrics;
-import org.joda.time.DateTime;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @Slf4j
 @RequiredArgsConstructor
-public class PgSnapshotCache {
+@Deprecated(forRemoval = true)
+/**
+ * @deprecated to be removed in 0.8
+ *     <p>Users should be encouraged to use application local snapshot caching instead of hogging on
+ *     a central resource
+ */
+public class PgSnapshotCache implements SnapshotCache {
   private static final String SELECT_SNAPSHOT =
       "SELECT factid,data,compressed FROM snapshot_cache WHERE uuid=? AND cache_key=?";
 
@@ -48,6 +54,7 @@ public class PgSnapshotCache {
   final JdbcTemplate jdbcTemplate;
   final PgMetrics metrics;
 
+  @Override
   public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
 
     jdbcTemplate.update(TOUCH_SNAPSHOT_ACCESSTIME, id.uuid(), id.key());
@@ -61,6 +68,7 @@ public class PgSnapshotCache {
                 new Snapshot(id, snapData.factId(), snapData.bytes(), snapData.compressed()));
   }
 
+  @Override
   public void setSnapshot(@NonNull Snapshot snap) {
     jdbcTemplate.update(
         UPSERT_SNAPSHOT,
@@ -74,6 +82,7 @@ public class PgSnapshotCache {
         snap.compressed());
   }
 
+  @Override
   public void clearSnapshot(@NonNull SnapshotId id) {
     jdbcTemplate.update(CLEAR_SNAPSHOT, id.uuid(), id.key());
   }
@@ -84,11 +93,18 @@ public class PgSnapshotCache {
         UUID.fromString(resultSet.getString(1)), resultSet.getBytes(2), resultSet.getBoolean(3));
   }
 
-  public void compact(@NonNull DateTime thresholdDate) {
+  @Override
+  public void compact(@NonNull ZonedDateTime thresholdDate) {
     var deleted =
         jdbcTemplate.update(
-            "DELETE FROM snapshot_cache WHERE last_access < ?", thresholdDate.toDate());
+            "DELETE FROM snapshot_cache WHERE last_access < ?", thresholdDate.toOffsetDateTime());
     metrics.distributionSummary(StoreMetrics.VALUE.SNAPSHOTS_COMPACTED).record(deleted);
     log.debug("compaction removed {} stale snapshots from the snapshot_cache", deleted);
+  }
+
+  {
+    log.warn(
+        "This server uses the {}. This functionality will be removed from the store interface in 0.8 - please make sure, your clients do no longer use it.",
+        getClass().getSimpleName());
   }
 }

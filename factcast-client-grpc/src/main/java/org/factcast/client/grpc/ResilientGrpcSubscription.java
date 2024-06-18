@@ -16,15 +16,17 @@
 package org.factcast.client.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
-import java.util.function.*;
+import java.util.UUID;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 import org.factcast.core.Fact;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionClosedException;
@@ -143,16 +145,19 @@ public class ResilientGrpcSubscription implements Subscription {
 
   private synchronized void connect() {
     log.debug("Connecting ({})", originalRequest);
+    store.initializeIfNecessary();
     doConnect();
   }
 
   @VisibleForTesting
   synchronized void reConnect() {
     log.debug("Reconnecting ({})", originalRequest);
+    store.initializeIfNecessary();
     doConnect();
   }
 
-  private void doConnect() {
+  @VisibleForTesting
+  protected void doConnect() {
     resilience.registerAttempt();
     SubscriptionRequestTO to = SubscriptionRequestTO.forFacts(originalRequest);
     UUID last = lastFactIdSeen.get();
@@ -215,7 +220,7 @@ public class ResilientGrpcSubscription implements Subscription {
     }
 
     @Override
-    public void onFastForward(@NonNull UUID factIdToFfwdTo) {
+    public void onFastForward(@NonNull FactStreamPosition factIdToFfwdTo) {
       originalObserver.onFastForward(factIdToFfwdTo);
     }
 
@@ -223,6 +228,8 @@ public class ResilientGrpcSubscription implements Subscription {
     public void onError(@NonNull Throwable exception) {
       log.info("Closing subscription due to onError triggered.  ({})", originalRequest, exception);
       closeAndDetachSubscription();
+      // reset the store state, as the connection *might* be broken.
+      store.reset();
 
       if (resilience.shouldRetry(exception)) {
         log.info("Trying to resubscribe ({})", originalRequest);

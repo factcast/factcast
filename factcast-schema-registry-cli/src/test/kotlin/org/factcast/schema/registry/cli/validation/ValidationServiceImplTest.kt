@@ -34,7 +34,7 @@ class ValidationServiceImplTest : StringSpec() {
         validateProjectStructureServiceMock
     )
 
-    override fun afterTest(testCase: TestCase, result: TestResult) {
+    override suspend fun afterTest(testCase: TestCase, result: TestResult) {
         clearAllMocks()
     }
 

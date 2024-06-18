@@ -16,8 +16,10 @@
 package org.factcast.store.internal;
 
 import com.google.common.collect.Lists;
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
@@ -31,25 +33,30 @@ import org.factcast.core.store.AbstractFactStore;
 import org.factcast.core.store.State;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
-import org.factcast.core.subscription.FactTransformerService;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.transformation.FactTransformerService;
+import org.factcast.core.subscription.transformation.TransformationRequest;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
-import org.factcast.store.internal.snapcache.PgSnapshotCache;
+import org.factcast.store.internal.snapcache.SnapshotCache;
+import org.factcast.store.registry.SchemaRegistry;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.SingleColumnRowMapper;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * A PostgreSQL based FactStore implementation
@@ -60,6 +67,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PgFactStore extends AbstractFactStore {
 
   @NonNull private final JdbcTemplate jdbcTemplate;
+  @NonNull private final SchemaRegistry schemaRegistry;
 
   @NonNull private final PgSubscriptionFactory subscriptionFactory;
 
@@ -70,27 +78,36 @@ public class PgFactStore extends AbstractFactStore {
 
   @NonNull private final PgMetrics metrics;
 
-  @NonNull private final PgSnapshotCache snapCache;
+  @NonNull private final SnapshotCache snapCache;
 
-  @Autowired
+  @NonNull private final StoreConfigurationProperties props;
+
+  @NonNull private final PlatformTransactionManager platformTransactionManager;
+
   public PgFactStore(
       @NonNull JdbcTemplate jdbcTemplate,
       @NonNull PgSubscriptionFactory subscriptionFactory,
       @NonNull TokenStore tokenStore,
+      @NonNull SchemaRegistry schemaRegistry,
       @NonNull FactTableWriteLock lock,
       @NonNull FactTransformerService factTransformerService,
       @NonNull PgFactIdToSerialMapper pgFactIdToSerialMapper,
-      @NonNull PgSnapshotCache snapCache,
-      @NonNull PgMetrics metrics) {
+      @NonNull SnapshotCache snapCache,
+      @NonNull PgMetrics metrics,
+      @NonNull StoreConfigurationProperties props,
+      @NonNull PlatformTransactionManager platformTransactionManager) {
     super(tokenStore);
 
     this.jdbcTemplate = jdbcTemplate;
     this.subscriptionFactory = subscriptionFactory;
+    this.schemaRegistry = schemaRegistry;
     this.lock = lock;
     this.pgFactIdToSerialMapper = pgFactIdToSerialMapper;
     this.snapCache = snapCache;
     this.metrics = metrics;
     this.factTransformerService = factTransformerService;
+    this.props = props;
+    this.platformTransactionManager = platformTransactionManager;
   }
 
   @Override
@@ -111,19 +128,20 @@ public class PgFactStore extends AbstractFactStore {
   @Override
   public @NonNull Optional<Fact> fetchByIdAndVersion(@NonNull UUID id, int version)
       throws TransformationException {
-
-    var fact = fetchById(id);
-    // map does not work here due to checked exception
-    if (fact.isPresent()) {
-      return Optional.of(factTransformerService.transformIfNecessary(fact.get(), version));
-    } else {
-      return fact;
-    }
+    return fetchById(id)
+        .map(
+            value ->
+                factTransformerService.transform(
+                    new TransformationRequest(value, Collections.singleton(version))));
   }
 
   @Override
   @Transactional(propagation = Propagation.REQUIRED)
   public void publish(@NonNull List<? extends Fact> factsToPublish) {
+    if (props.isReadOnlyModeEnabled()) {
+      throw new UnsupportedOperationException("Publishing is not allowed in read-only mode");
+    }
+
     metrics.time(
         StoreMetrics.OP.PUBLISH,
         () -> {
@@ -182,30 +200,59 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   public @NonNull Set<String> enumerateNamespaces() {
-    return metrics.time(
-        StoreMetrics.OP.ENUMERATE_NAMESPACES,
-        () ->
-            new HashSet<>(
-                jdbcTemplate.query(
-                    PgConstants.SELECT_DISTINCT_NAMESPACE, this::extractStringFromResultSet)));
+    if (schemaRegistry.isActive() && !props.isEnumerationDirectModeEnabled())
+      return schemaRegistry.enumerateNamespaces();
+    else return enumerateNamespacesFromPg();
+  }
+
+  public @NonNull Set<String> enumerateNamespacesFromPg() {
+    // wrap in TX to make SET LOCAL work properly (and auto revert on commit/rollback)
+    final var result =
+        new TransactionTemplate(platformTransactionManager)
+            .execute(
+                status ->
+                    metrics.time(
+                        StoreMetrics.OP.ENUMERATE_NAMESPACES,
+                        () -> {
+                          // used because pg seems to favor the seq scan for even 80k rows over the
+                          // index
+                          jdbcTemplate.execute(PgConstants.DISABLE_SEQSCAN);
+
+                          return new HashSet<>(
+                              jdbcTemplate.query(
+                                  PgConstants.SELECT_DISTINCT_NAMESPACE,
+                                  this::extractStringFromResultSet));
+                        }));
+
+    return Objects.requireNonNull(result);
   }
 
   @Override
   public @NonNull Set<String> enumerateTypes(@NonNull String ns) {
+    if (schemaRegistry.isActive() && !props.isEnumerationDirectModeEnabled())
+      return schemaRegistry.enumerateTypes(ns);
+    else return enumerateTypesFromPg(ns);
+  }
+
+  public @NonNull Set<String> enumerateTypesFromPg(@NonNull String ns) {
     return metrics.time(
         StoreMetrics.OP.ENUMERATE_TYPES,
         () ->
             new HashSet<>(
                 jdbcTemplate.query(
                     PgConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE,
-                    new Object[] {ns},
-                    this::extractStringFromResultSet)));
+                    this::extractStringFromResultSet,
+                    ns)));
   }
 
   @Override
   @Transactional(propagation = Propagation.REQUIRED)
   public boolean publishIfUnchanged(
       @NonNull List<? extends Fact> factsToPublish, @NonNull Optional<StateToken> optionalToken) {
+    if (props.isReadOnlyModeEnabled()) {
+      throw new UnsupportedOperationException("Publishing is not allowed in read-only mode");
+    }
+
     return metrics.time(
         StoreMetrics.OP.PUBLISH_IF_UNCHANGED,
         () -> {
@@ -233,24 +280,20 @@ public class PgFactStore extends AbstractFactStore {
           PreparedStatementSetter statementSetter =
               pgQueryBuilder.createStatementSetter(new AtomicLong(lastMatchingSerial));
 
-          try {
-            ResultSetExtractor<Long> rch =
-                new ResultSetExtractor<>() {
-                  @Override
-                  public Long extractData(ResultSet resultSet)
-                      throws SQLException, DataAccessException {
-                    if (!resultSet.next()) {
-                      return 0L;
-                    } else {
-                      return resultSet.getLong(1);
-                    }
+          ResultSetExtractor<Long> rch =
+              new ResultSetExtractor<>() {
+                @Override
+                public Long extractData(ResultSet resultSet)
+                    throws SQLException, DataAccessException {
+                  if (!resultSet.next()) {
+                    return 0L;
+                  } else {
+                    return resultSet.getLong(1);
                   }
-                };
-            long lastSerial = jdbcTemplate.query(stateSQL, statementSetter, rch);
-            return State.of(specs, lastSerial);
-          } catch (EmptyResultDataAccessException lastSerialIs0Then) {
-            return State.of(specs, 0);
-          }
+                }
+              };
+          long lastSerial = jdbcTemplate.query(stateSQL, statementSetter, rch);
+          return State.of(specs, lastSerial);
         });
   }
 
@@ -284,5 +327,46 @@ public class PgFactStore extends AbstractFactStore {
   @Override
   public void clearSnapshot(@NonNull SnapshotId id) {
     metrics.time(StoreMetrics.OP.CLEAR_SNAPSHOT, () -> snapCache.clearSnapshot(id));
+  }
+
+  @Override
+  public @NonNull Optional<Fact> fetchBySerial(long serial) {
+    return metrics.time(
+        StoreMetrics.OP.FETCH_BY_SER,
+        () -> {
+          try {
+            return Optional.ofNullable(
+                jdbcTemplate.queryForObject(
+                    PgConstants.SELECT_BY_SER, this::extractFactFromResultSet, serial));
+          } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+          }
+        });
+  }
+
+  @Override
+  public long latestSerial() {
+    try {
+      Long l =
+          jdbcTemplate.queryForObject(
+              PgConstants.HIGHWATER_SERIAL, new SingleColumnRowMapper<>(Long.class));
+      return Optional.ofNullable(l).orElse(0L);
+    } catch (EmptyResultDataAccessException noFactsAtAll) {
+      return 0L;
+    }
+  }
+
+  @Override
+  public long lastSerialBefore(@NonNull LocalDate date) {
+    try {
+      Long lastSer =
+          jdbcTemplate.queryForObject(
+              PgConstants.LAST_SERIAL_BEFORE_DATE,
+              new SingleColumnRowMapper<>(Long.class),
+              Date.valueOf(date));
+      return Optional.ofNullable(lastSer).orElse(0L);
+    } catch (EmptyResultDataAccessException noFactsAtAll) {
+      return 0L;
+    }
   }
 }

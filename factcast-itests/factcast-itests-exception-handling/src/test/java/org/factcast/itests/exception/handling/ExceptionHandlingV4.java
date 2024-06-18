@@ -15,13 +15,12 @@
  */
 package org.factcast.itests.exception.handling;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.util.Collections;
-import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -36,25 +35,21 @@ import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.factus.Factus;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.FactcastTestConfig;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ContextConfiguration;
 
-@SpringBootTest
-@EnableAutoConfiguration
-@ContextConfiguration(classes = {Application.class})
-@FactcastTestConfig(factcastVersion = "latest")
 @Slf4j
+@FactcastTestConfig(factcastVersion = "latest")
 public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
+
+  public static final int LATCH_TIMEOUT = 3000;
 
   @Autowired Factus ec;
 
   @Autowired FactCast fc;
 
   @Test
-  public void testPublish_validationFailed() {
+  void testPublish_validationFailed() {
     // INIT
     UUID aggId = UUID.randomUUID();
 
@@ -70,7 +65,7 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  public void testPublish_validationFailed_withLockOn() {
+  void testPublish_validationFailed_withLockOn() {
     // INIT
     UUID aggId = UUID.randomUUID();
 
@@ -89,7 +84,7 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  public void testProjection_transformationErrors() {
+  void testProjection_transformationErrors() {
     // INIT
     UUID aggId = UUID.randomUUID();
 
@@ -100,7 +95,7 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  public void failingTransformation() {
+  void failingTransformation() {
 
     UUID id = UUID.randomUUID();
     Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}");
@@ -111,13 +106,13 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  public void validationFailsOnSchemaViolation() {
+  void validationFailsOnSchemaViolation() {
     Fact brokenFact = createTestFact(UUID.randomUUID(), 1, "{}");
     assertThatThrownBy(() -> fc.publish(brokenFact)).isInstanceOf(FactValidationException.class);
   }
 
   @Test
-  public void validationFailsOnSchemaViolation_withinLock() {
+  void validationFailsOnSchemaViolation_withinLock() {
     Fact brokenFact = createTestFact(UUID.randomUUID(), 1, "{}");
 
     assertThatThrownBy(
@@ -127,7 +122,7 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
 
   @Test
   @SneakyThrows
-  public void testSubscription_transformationErrors_catchup() {
+  void testSubscription_transformationErrors_catchup() {
     // INIT
     UUID aggId = UUID.randomUUID();
 
@@ -138,14 +133,14 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
     var proj = new SubscribedUserNames(catchupLatch, errorLatch);
     ec.subscribe(proj);
 
-    assertThat(errorLatch.await(1000, TimeUnit.MILLISECONDS)).isTrue();
+    assertThat(errorLatch.await(LATCH_TIMEOUT, TimeUnit.MILLISECONDS)).isTrue();
 
     assertThat(proj.exception()).isInstanceOf(TransformationException.class);
   }
 
   @Test
   @SneakyThrows
-  public void testSubscription_transformationErrors_follow() {
+  void testSubscription_transformationErrors_follow() {
     // INIT
     UUID aggId = UUID.randomUUID();
 
@@ -158,14 +153,14 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
 
     ec.publish(createTestFact(aggId, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}"));
 
-    assertThat(errorLatch.await(1000, TimeUnit.MILLISECONDS)).isTrue();
+    assertThat(errorLatch.await(LATCH_TIMEOUT, TimeUnit.MILLISECONDS)).isTrue();
 
     assertThat(proj.exception()).isInstanceOf(TransformationException.class);
   }
 
   @Test
   @SneakyThrows
-  public void testSubscriptionFC_transformationErrors_catchup() {
+  void testSubscriptionFC_transformationErrors_catchup() {
     // INIT
     UUID aggId = UUID.randomUUID();
 
@@ -189,14 +184,14 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
           }
         });
 
-    assertThat(errorLatch.await(1000, TimeUnit.MILLISECONDS)).isTrue();
+    assertThat(errorLatch.await(LATCH_TIMEOUT, TimeUnit.MILLISECONDS)).isTrue();
 
     assertThat(e.get()).isInstanceOf(TransformationException.class);
   }
 
   @Test
   @SneakyThrows
-  public void testSubscriptionFC_transformationErrors_follow() {
+  void testSubscriptionFC_transformationErrors_follow() {
     // INIT
     UUID aggId = UUID.randomUUID();
 
@@ -229,7 +224,7 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
 
     fc.publish(createTestFact(aggId, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Zwegert\"}"));
 
-    assertThat(errorLatch.await(1000, TimeUnit.MILLISECONDS)).isTrue();
+    assertThat(errorLatch.await(LATCH_TIMEOUT, TimeUnit.MILLISECONDS)).isTrue();
 
     assertThat(e.get()).isInstanceOf(TransformationException.class);
   }

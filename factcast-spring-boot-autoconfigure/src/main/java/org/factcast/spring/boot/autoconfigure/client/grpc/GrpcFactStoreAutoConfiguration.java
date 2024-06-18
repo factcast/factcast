@@ -15,24 +15,24 @@
  */
 package org.factcast.spring.boot.autoconfigure.client.grpc;
 
-import io.grpc.Channel;
-import io.grpc.ClientInterceptor;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import javax.annotation.Nullable;
 import lombok.NonNull;
 import net.devh.boot.grpc.client.channelfactory.GrpcChannelConfigurer;
 import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
+import org.factcast.client.grpc.FactCastGrpcChannelFactory;
 import org.factcast.client.grpc.FactCastGrpcClientProperties;
 import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.core.store.FactStore;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.util.StringUtils;
 
 /**
  * Provides a GrpcFactStore as a FactStore implementation.
@@ -40,7 +40,7 @@ import org.springframework.context.annotation.Import;
  * @author uwe.schaefer@prisma-capacity.eu
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-@Configuration
+@AutoConfiguration
 @ConditionalOnClass({GrpcFactStore.class, GrpcChannelFactory.class})
 @Import(FactCastGrpcClientProperties.class)
 @EnableConfigurationProperties
@@ -48,38 +48,23 @@ public class GrpcFactStoreAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean(FactStore.class)
+  @Lazy
   public FactStore factStore(
       @NonNull GrpcChannelFactory af,
       // we need a new namespace for those client properties
       @NonNull @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
       @NonNull FactCastGrpcClientProperties properties,
       @Nullable @Value("${spring.application.name:#{null}}") String applicationName) {
-    org.factcast.client.grpc.FactCastGrpcChannelFactory f =
-        new org.factcast.client.grpc.FactCastGrpcChannelFactory() {
 
-          @Override
-          public Channel createChannel(String name, List<ClientInterceptor> interceptors) {
-            return af.createChannel(name, interceptors);
-          }
-
-          @Override
-          public Channel createChannel(String name) {
-            return af.createChannel(name);
-          }
-
-          @Override
-          public void close() {
-            af.close();
-          }
-        };
-
-    String id = properties.getId();
-    if (id == null) {
-      // fall back to applicationName if set
-      if (applicationName != null && !applicationName.trim().isEmpty()) {
-        id = applicationName;
-      }
-    }
+    FactCastGrpcChannelFactory f = FactCastGrpcChannelFactory.createDefault(af);
+    String id =
+        Optional.ofNullable(properties.getId())
+            .orElseGet(
+                () ->
+                    Optional.ofNullable(applicationName)
+                        .map(String::trim)
+                        .filter(StringUtils::hasText)
+                        .orElse(null));
 
     return new GrpcFactStore(f, credentials, properties, id);
   }

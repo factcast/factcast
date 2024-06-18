@@ -20,9 +20,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.collect.Sets;
 import java.util.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.factcast.core.util.FactCastJson;
-import org.junit.jupiter.api.Assertions;
+import org.factcast.factus.event.EventObject;
+import org.factcast.factus.event.Specification;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -30,27 +35,27 @@ public class FactTest {
 
   @Test
   void testOfNull1() {
-    Assertions.assertThrows(NullPointerException.class, () -> Fact.of(null, ""));
+    assertThrows(NullPointerException.class, () -> Fact.of(null, ""));
   }
 
   @Test
   void testOfNull2() {
-    Assertions.assertThrows(NullPointerException.class, () -> Fact.of("", null));
+    assertThrows(NullPointerException.class, () -> Fact.of("", null));
   }
 
   @Test
   void testOfNull() {
-    Assertions.assertThrows(NullPointerException.class, () -> Fact.of((String) null, null));
+    assertThrows(NullPointerException.class, () -> Fact.of((String) null, null));
   }
 
   @Test
   void testVersion0() {
-    Assertions.assertThrows(IllegalArgumentException.class, () -> Fact.builder().version(0));
+    assertThrows(IllegalArgumentException.class, () -> Fact.builder().version(0));
   }
 
   @Test
   void testVersionNegative() {
-    Assertions.assertThrows(IllegalArgumentException.class, () -> Fact.builder().version(-3));
+    assertThrows(IllegalArgumentException.class, () -> Fact.builder().version(-3));
   }
 
   @Test
@@ -135,8 +140,38 @@ public class FactTest {
   }
 
   @Test
+  void beforeFailsIfSerialUnknown() {
+    Fact one =
+        Fact.of(
+            "{" + "\"ns\":\"ns\"," + "\"id\":\"" + UUID.randomUUID() + "\"," + "\"meta\":{ }" + "}",
+            "{}");
+    Fact two =
+        Fact.of(
+            "{"
+                + "\"ns\":\"ns\","
+                + "\"id\":\""
+                + UUID.randomUUID()
+                + "\","
+                + "\"meta\":{ \"_ser\":2 }"
+                + "}",
+            "{}");
+
+    org.assertj.core.api.Assertions.assertThatThrownBy(
+            () -> {
+              one.before(two);
+            })
+        .isInstanceOf(IllegalStateException.class);
+
+    org.assertj.core.api.Assertions.assertThatThrownBy(
+            () -> {
+              two.before(one);
+            })
+        .isInstanceOf(IllegalStateException.class);
+  }
+
+  @Test
   void testSerialUnset() {
-    Assertions.assertThrows(
+    assertThrows(
         IllegalStateException.class,
         () ->
             Fact.of("{" + "\"ns\":\"ns\"," + "\"id\":\"" + UUID.randomUUID() + "\"" + "}", "{}")
@@ -181,19 +216,17 @@ public class FactTest {
 
   @Test
   void testOfJsonNodeJsonNodeNull1() {
-    Assertions.assertThrows(
-        NullPointerException.class, () -> Fact.of(null, Mockito.mock(JsonNode.class)));
+    assertThrows(NullPointerException.class, () -> Fact.of(null, Mockito.mock(JsonNode.class)));
   }
 
   @Test
   void testOfJsonNodeJsonNodeNull2() {
-    Assertions.assertThrows(
-        NullPointerException.class, () -> Fact.of(Mockito.mock(JsonNode.class), null));
+    assertThrows(NullPointerException.class, () -> Fact.of(Mockito.mock(JsonNode.class), null));
   }
 
   @Test
   void testOfJsonNodeJsonNodeNull() {
-    Assertions.assertThrows(NullPointerException.class, () -> Fact.of((JsonNode) null, null));
+    assertThrows(NullPointerException.class, () -> Fact.of((JsonNode) null, null));
   }
 
   @Test
@@ -205,30 +238,30 @@ public class FactTest {
   }
 
   @Test
-  public void testBuildWithoutPayload() {
+  void testBuildWithoutPayload() {
     Fact f = Fact.builder().ns("foo").buildWithoutPayload();
     assertThat(f.ns()).isEqualTo("foo");
     assertThat(f.jsonPayload()).isEqualTo("{}");
   }
 
   @Test
-  public void testMeta() {
+  void testMeta() {
     Fact f = Fact.builder().ns("foo").meta("a", "1").buildWithoutPayload();
     assertThat(f.meta("a")).isEqualTo("1");
   }
 
   @Test
-  public void testTypeEmpty() {
+  void testTypeEmpty() {
     assertThrows(IllegalArgumentException.class, () -> Fact.builder().type(""));
   }
 
   @Test
-  public void testNsEmpty() {
+  void testNsEmpty() {
     assertThrows(IllegalArgumentException.class, () -> Fact.builder().ns(""));
   }
 
   @Test
-  public void testSerialMustExistInMeta() {
+  void testSerialMustExistInMeta() {
     assertThrows(
         IllegalStateException.class,
         () -> {
@@ -238,7 +271,7 @@ public class FactTest {
   }
 
   @Test
-  public void testOfJsonNodeJsonNode() {
+  void testOfJsonNodeJsonNode() {
     ObjectNode h = FactCastJson.toObjectNode("{\"id\":\"" + new UUID(0, 1) + "\",\"ns\":\"foo\"}");
     ObjectNode p = FactCastJson.toObjectNode("{}");
     Fact f = Fact.of(h, p);
@@ -247,8 +280,43 @@ public class FactTest {
   }
 
   @Test
-  public void testEmptyPayload() {
+  void testEmptyPayload() {
     assertThat(Fact.builder().build("").jsonPayload()).isEqualTo("{}");
     assertThat(Fact.builder().build("   ").jsonPayload()).isEqualTo("{}");
+  }
+
+  @Test
+  void buildFromEventObject() {
+    UUID userId = UUID.randomUUID();
+    UUID factId = UUID.randomUUID();
+    String name = "Peter";
+    SomeUserCreatedEvent event = new SomeUserCreatedEvent(userId, name);
+    Fact.FactFromEventBuilder b = Fact.buildFrom(event);
+    assertThat(b).isNotNull();
+
+    Fact f = b.serial(12).id(factId).build();
+
+    assertThat(f.serial()).isEqualTo(12);
+    assertThat(f.id()).isEqualTo(factId);
+    assertThat(f.jsonPayload()).isEqualTo(FactCastJson.writeValueAsString(event));
+    assertThat(f.aggIds()).hasSize(1).containsExactly(userId);
+    assertThat(f.ns()).isEqualTo("test");
+    assertThat(f.type()).isEqualTo("SomeUserCreatedEvent");
+    assertThat(f.version()).isZero();
+  }
+
+  @Data
+  @NoArgsConstructor
+  @AllArgsConstructor
+  @Specification(ns = "test")
+  public class SomeUserCreatedEvent implements EventObject {
+    UUID aggregateId;
+
+    String userName;
+
+    @Override
+    public Set<UUID> aggregateIds() {
+      return Sets.newHashSet(aggregateId);
+    }
   }
 }

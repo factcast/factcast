@@ -15,30 +15,45 @@
  */
 package org.factcast.store;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.ConsoleAppender;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import java.time.Duration;
+import java.util.*;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.validation.annotation.Validated;
 
 @SuppressWarnings("DefaultAnnotationParam")
 @ConfigurationProperties(prefix = StoreConfigurationProperties.PROPERTIES_PREFIX)
 @Data
 @Slf4j
 @Accessors(fluent = false)
+@Validated
 public class StoreConfigurationProperties implements InitializingBean {
 
   public static final String PROPERTIES_PREFIX = "factcast.store";
-
-  @Autowired private PgLegacyConfigurationProperties legacyProperties;
 
   /**
    * defines the number of Facts being retrieved with one Page Query for PageStrategy.PAGED, or
    * respectively the fetchSize when using PageStrategy.FETCHING
    */
-  int pageSize = 50;
+  @Positive int pageSize = 50;
+
+  /** defines the max number of Facts being scheduled for transformation */
+  @Positive
+  @Max(32000)
+  int transformationCachePageSize = 100;
+
   /** Defines the Strategy used for Paging in the Catchup Phase. */
   CatchupStrategy catchupStrategy = CatchupStrategy.getDefault();
 
@@ -68,13 +83,13 @@ public class StoreConfigurationProperties implements InitializingBean {
    * transformation result is not read in order to be considered stale. This should free some space
    * in a regular cleanup job
    */
-  int deleteTransformationsStaleForDays = 14;
+  @Positive int deleteTransformationsStaleForDays = 14;
 
   /**
    * this is the min number of days a snapshot is not read in order to be considered stale. This
    * should free some space in a regular cleanup job
    */
-  int deleteSnapshotStaleForDays = 90;
+  @Positive int deleteSnapshotStaleForDays = 90;
 
   /**
    * If validation is enabled, this controls if transformed facts are persistently cached in
@@ -86,7 +101,9 @@ public class StoreConfigurationProperties implements InitializingBean {
    * when using the inmem impl of the transformation cache, this is the max number of entries
    * cached.
    */
-  int inMemTransformationCacheCapacity = 1_000_000;
+  @Positive
+  @Min(100)
+  int inMemTransformationCacheCapacity = 100;
 
   /**
    * If validation is enabled, this controls if publishing facts, that are not validatable (due to
@@ -106,6 +123,7 @@ public class StoreConfigurationProperties implements InitializingBean {
    * NOTIFY mechanism). When this time exceeds the health of the database connection is checked.
    * After that waiting for new notifications is repeated.
    */
+  @Min(5000)
   int factNotificationBlockingWaitTimeInMillis = 1000 * 15;
 
   /**
@@ -115,6 +133,7 @@ public class StoreConfigurationProperties implements InitializingBean {
    *
    * <p>If the time is exceeded the database connection is renewed.
    */
+  @Min(50)
   int factNotificationMaxRoundTripLatencyInMillis = 200;
 
   /**
@@ -122,6 +141,7 @@ public class StoreConfigurationProperties implements InitializingBean {
    * is only applied in the part of Factcast which deals with receiving and forwarding database
    * notifications.
    */
+  @Min(10)
   int factNotificationNewConnectionWaitTimeInMillis = 100;
 
   /**
@@ -139,6 +159,8 @@ public class StoreConfigurationProperties implements InitializingBean {
    * or 3 is a good value unless you have a very high tail rebuild frequency and not permanently
    * connected applications (like offline clients for instance)
    */
+  @Positive
+  @Max(128)
   int tailGenerationsToKeep = 3;
 
   /** Minimum age of the youngest tail index, before a new one is created. Defaults to 7 days */
@@ -157,46 +179,48 @@ public class StoreConfigurationProperties implements InitializingBean {
    */
   Duration tailCreationTimeout = Duration.ofDays(1).minusMinutes(1);
 
+  /**
+   * This is the number of threads we create for handling new subscriptions requests. It's
+   * implemented via a fixed thread pool. As soon as the subscription request finishes or enters
+   * phase 3 (follow) the thread is freed up again. In earlier versions we used the common FJP which
+   * limits the parallelism to the number of cores - 1. If you ever encounter too much database load
+   * or too high waiting time for subscriptions this can be an option.
+   */
+  int sizeOfThreadPoolForSubscriptions = 100;
+
+  /**
+   * This is the number of threads we create for handling buffered transformations. It's implemented
+   * via work stealing thread pool. In early versions we used the common FJP which limits the
+   * parallelism to the number of cores - 1.
+   */
+  int sizeOfThreadPoolForBufferedTransformations = 25;
+
+  /**
+   * Configures the FactStore to work in read-only mode. You cannot publish any events in this mode
+   * and certain functionality like tail index generation or state token generation is disabled.
+   *
+   * <p>You can still use a persistent schema store and transformation cache, however they will work
+   * in read-only mode. Additionally, liquibase is disabled.
+   */
+  boolean readOnlyModeEnabled = false;
+
+  /**
+   * used to direct the enumerateTypes/Namespaces calls against the store directly, thus bypass the
+   * schema-registry even it is configured. This is useful, if you want to see ns/types that are not
+   * yet found in the registry, but exist in the factStore.
+   */
+  boolean enumerationDirectModeEnabled = false;
+
   public boolean isSchemaRegistryConfigured() {
     return schemaRegistryUrl != null;
   }
 
   @Override
   public void afterPropertiesSet() throws Exception {
-    legacyProperties.getPageSize().ifPresent(this::setPageSize);
-    legacyProperties.getCatchupStrategy().ifPresent(this::setCatchupStrategy);
-    legacyProperties.getSchemaRegistryUrl().ifPresent(this::setSchemaRegistryUrl);
-    legacyProperties.getPersistentRegistry().ifPresent(this::setPersistentRegistry);
-    legacyProperties
-        .getDeleteTransformationsStaleForDays()
-        .ifPresent(this::setDeleteTransformationsStaleForDays);
-    legacyProperties
-        .getPersistentTransformationCache()
-        .ifPresent(this::setPersistentTransformationCache);
-    legacyProperties
-        .getPersistentTransformationCache()
-        .ifPresent(this::setPersistentTransformationCache);
-    legacyProperties
-        .getInMemTransformationCacheCapacity()
-        .ifPresent(this::setInMemTransformationCacheCapacity);
-    legacyProperties.getAllowUnvalidatedPublish().ifPresent(this::setAllowUnvalidatedPublish);
-    legacyProperties.getAllowSchemaReplace().ifPresent(this::setAllowSchemaReplace);
-    legacyProperties
-        .getFactNotificationMaxRoundTripLatencyInMillis()
-        .ifPresent(this::setFactNotificationMaxRoundTripLatencyInMillis);
-    legacyProperties
-        .getFactNotificationBlockingWaitTimeInMillis()
-        .ifPresent(this::setFactNotificationBlockingWaitTimeInMillis);
-    legacyProperties
-        .getFactNotificationNewConnectionWaitTimeInMillis()
-        .ifPresent(this::setFactNotificationNewConnectionWaitTimeInMillis);
-    legacyProperties.getIntegrationTestMode().ifPresent(this::setIntegrationTestMode);
-    legacyProperties.getTailIndexingEnabled().ifPresent(this::setTailIndexingEnabled);
-    legacyProperties.getTailGenerationsToKeep().ifPresent(this::setTailGenerationsToKeep);
-    legacyProperties.getMinimumTailAge().ifPresent(this::setMinimumTailAge);
-    legacyProperties.getTailManagementCron().ifPresent(this::setTailManagementCron);
-
     if (integrationTestMode) {
+
+      adjustLogbackAppender();
+
       log.warn(
           "**** You are running in INTEGRATION TEST MODE. If you see this in production, "
               + "this would be a good time to panic. (See "
@@ -214,6 +238,20 @@ public class StoreConfigurationProperties implements InitializingBean {
         log.warn(
             "**** SchemaRegistry-mode is enabled but validation of Facts is disabled. This is"
                 + " discouraged for production environments. You have been warned. ****");
+      }
+    }
+  }
+
+  private void adjustLogbackAppender() {
+    LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+    for (Logger logger : context.getLoggerList()) {
+      Iterator<Appender<ILoggingEvent>> iter = logger.iteratorForAppenders();
+      while (iter.hasNext()) {
+        Appender<ILoggingEvent> appender = iter.next();
+        if (appender instanceof ConsoleAppender) {
+          log.debug("Setting " + appender.getClass() + " to immediate flush");
+          ((ConsoleAppender<?>) appender).setImmediateFlush(true);
+        }
       }
     }
   }

@@ -17,10 +17,11 @@ package org.factcast.store.registry;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import java.net.MalformedURLException;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
+import java.util.stream.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.core.LockProvider;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.classpath.ClasspathSchemaRegistryFactory;
 import org.factcast.store.registry.filesystem.FilesystemSchemaRegistryFactory;
@@ -48,18 +49,19 @@ public class SchemaRegistryConfiguration {
   }
 
   @Bean
-  public FilesystemSchemaRegistryFactory filesystemSchemaRegistryFactory() {
-    return new FilesystemSchemaRegistryFactory();
+  public FilesystemSchemaRegistryFactory filesystemSchemaRegistryFactory(
+      LockProvider lockProvider) {
+    return new FilesystemSchemaRegistryFactory(lockProvider);
   }
 
   @Bean
-  public ClasspathSchemaRegistryFactory classpathSchemaRegistryFactory() {
-    return new ClasspathSchemaRegistryFactory();
+  public ClasspathSchemaRegistryFactory classpathSchemaRegistryFactory(LockProvider lockProvider) {
+    return new ClasspathSchemaRegistryFactory(lockProvider);
   }
 
   @Bean
-  public HttpSchemaRegistryFactory httpSchemaRegistryFactory() {
-    return new HttpSchemaRegistryFactory();
+  public HttpSchemaRegistryFactory httpSchemaRegistryFactory(LockProvider lockProvider) {
+    return new HttpSchemaRegistryFactory(lockProvider);
   }
 
   @Bean

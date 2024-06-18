@@ -15,10 +15,11 @@
  */
 package org.factcast.store.registry.http;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.MalformedURLException;
 import lombok.NonNull;
+import net.javacrumbs.shedlock.core.LockProvider;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.TransformationStore;
@@ -33,6 +34,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class HttpSchemaRegistryFactoryTest {
 
+  @Mock private @NonNull SchemaStore schemaStore;
+
+  @Mock private @NonNull TransformationStore transformationStore;
+
+  @Mock private @NonNull RegistryMetrics registryMetrics;
+
+  @Mock private @NonNull StoreConfigurationProperties props;
+  @Mock private @NonNull LockProvider lockProvider;
   @InjectMocks private HttpSchemaRegistryFactory underTest;
 
   @Test
@@ -43,14 +52,6 @@ class HttpSchemaRegistryFactoryTest {
   @Nested
   class WhenCreatingInstance {
     private final String FULL_URL = "https://xxx";
-
-    @Mock private @NonNull SchemaStore schemaStore;
-
-    @Mock private @NonNull TransformationStore transformationStore;
-
-    @Mock private @NonNull RegistryMetrics registryMetrics;
-
-    @Mock private @NonNull StoreConfigurationProperties props;
 
     @Test
     void createInstance() throws MalformedURLException {

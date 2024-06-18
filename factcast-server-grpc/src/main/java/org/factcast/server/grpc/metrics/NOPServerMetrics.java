@@ -16,9 +16,9 @@
 package org.factcast.server.grpc.metrics;
 
 import io.micrometer.core.instrument.Tags;
-import java.util.function.Supplier;
-import org.factcast.factus.metrics.RunnableWithException;
-import org.factcast.factus.metrics.SupplierWithException;
+import java.util.function.*;
+import org.factcast.core.util.RunnableWithException;
+import org.factcast.core.util.SupplierWithException;
 
 public class NOPServerMetrics implements ServerMetrics {
   @Override

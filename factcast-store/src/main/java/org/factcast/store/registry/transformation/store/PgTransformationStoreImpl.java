@@ -21,11 +21,14 @@ import java.util.List;
 import java.util.Optional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.support.TransactionTemplate;
 
+@Slf4j
 @RequiredArgsConstructor
 public class PgTransformationStoreImpl extends AbstractTransformationStore {
   @NonNull private final JdbcTemplate jdbcTemplate;
@@ -34,9 +37,16 @@ public class PgTransformationStoreImpl extends AbstractTransformationStore {
 
   @NonNull private final RegistryMetrics registryMetrics;
 
+  @NonNull private final StoreConfigurationProperties storeConfigurationProperties;
+
   @Override
   protected void doStore(@NonNull TransformationSource source, String transformation)
       throws TransformationConflictException {
+
+    if (storeConfigurationProperties.isReadOnlyModeEnabled()) {
+      log.info("Skipping transformation registration in read-only mode");
+      return;
+    }
 
     // transformationstore allows transformations to be updated (use with extreme care)
     txTemplate.execute(

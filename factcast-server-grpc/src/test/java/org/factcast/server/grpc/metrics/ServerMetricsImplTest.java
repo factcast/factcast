@@ -15,7 +15,7 @@
  */
 package org.factcast.server.grpc.metrics;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import io.micrometer.core.instrument.Counter;
@@ -23,11 +23,12 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import java.time.Duration;
-import java.util.function.Supplier;
+import java.util.function.*;
 import org.factcast.server.grpc.metrics.ServerMetrics.EVENT;
 import org.factcast.server.grpc.metrics.ServerMetrics.OP;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;

@@ -10,59 +10,60 @@ to choose a backend/store for your metrics. Micrometer
 has [lots of prebuilt bindings to choose from](https://micrometer.io/docs). Please refer to the respective documentation
 in the **Setup** section of the micrometer docs.
 
-When it comes to metrics, you'll have to know what you're looking for. There are 
+When it comes to metrics, you'll have to know what you're looking for. There are
 
-* **Server** metrics in FactCast Server as well as
-* **Client** metrics in the factcast client and additionally in the
-* [factus client library](/usage/factus/metrics). 
-  
-We're focussing on *Server* metrics here.
+- **Server** metrics in FactCast Server as well as
+- **Client** metrics in the factcast client and additionally in the
+- [factus client library](/usage/factus/metrics).
+
+We're focussing on _Server_ metrics here.
 
 ### Metric namespaces and their organization
 
 At the time of writing, there are six namespaces exposed:
 
-* `factcast.server.timer`
-* `factcast.server.meter`
-* `factcast.store.timer`
-* `factcast.store.meter`
-* `factcast.registry.timer`
-* `factcast.registry.meter`
+- `factcast.server.timer`
+- `factcast.server.meter`
+- `factcast.store.timer`
+- `factcast.ui.timer`
+- `factcast.store.meter`
+- `factcast.registry.timer`
+- `factcast.registry.meter`
 
 Depending on your micrometer binding, you may see a slightly different spelling in your data (like '
 factcast_store_timer`, if your datasource has a special meaning for the '.'-character)
 
-Furthermore, metrics in operations are automatically tagged with 
+Furthermore, metrics in operations are automatically tagged with
 
-* an operation name 
-* a store name ('pgsql' currently) and 
-* an exception tag ('None' if unset).
+- an operation name
+- a store name ('pgsql' currently) and
+- an exception tag ('None' if unset).
 
 ### Existing metrics
 
 There are a bunch of metrics already emitted in the server. These metrics can be grouped by type:
 
-* Timers (collecting durations of code execution)
-* Meters (collecting metric events, for example, occurrences of errors)
+- Timers (collecting durations of code execution)
+- Meters (collecting metric events, for example, occurrences of errors)
 
 As this list is continuously growing, we cannot guarantee
 the documentation's completeness. If you want to see the current list of operations, please look
 at [StoreMetrics.java](https://github.com/factcast/factcast/blob/master/factcast-store/src/main/java/org/factcast/store/internal/StoreMetrics.java)
 , [RegistryMetrics.java](https://github.com/factcast/factcast/blob/master/factcast-store/src/main/java/org/factcast/store/registry/metrics/RegistryMetrics.java)
-, or [ServerMetrics.java](https://github.com/factcast/factcast/blob/master/factcast-server-grpc/src/main/java/org/factcast/server/grpc/metrics/ServerMetrics.java) respectively.
-
-
+, [ServerMetrics.java](https://github.com/factcast/factcast/blob/master/factcast-server-grpc/src/main/java/org/factcast/server/grpc/metrics/ServerMetrics.java),
+or [UIMetrics.java](https://github.com/factcast/factcast/blob/master/factcast-server-ui/src/main/java/org/factcast/server/ui/metrics/UiMetrics.java)
+respectively.
 
 At the **time of writing (0.4.3)**, the metrics exposed by the namespaces group `factcast.server` are:
 
-| operation               | type    | description                                                                                                                        |
-|-------------------------|---------|------------------------------------------------------------------------------------------------------------------------------------|
-| handshake               | `timer` | Duration of the initial handshake. |
+| operation | type    | description                        |
+| --------- | ------- | ---------------------------------- |
+| handshake | `timer` | Duration of the initial handshake. |
 
-At the **time of writing (0.4.3)**, the metrics exposed by the namespaces group `factcast.store` are:
+At the **time of writing (0.7.6)**, the metrics exposed by the namespaces group `factcast.store` are:
 
 | operation                  | type    | description                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-|----------------------------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| -------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | publish                    | `timer` | Time to publish (write) a fact or a list of facts sent by the client.<br />Ref: [concepts](/concept)                                                                                                                                                                                                                                                                                                                                                              |
 | subscribe-follow           | `timer` | Time to create and return a follow subscription (not the actual stream of facts).<br />Ref: [concepts](/concept)                                                                                                                                                                                                                                                                                                                                                  |
 | subscribe-catchup          | `timer` | Time to create and return a catchup subscription (not the actual stream of facts).<br />Ref: [concepts](/concept)                                                                                                                                                                                                                                                                                                                                                 |
@@ -82,11 +83,12 @@ At the **time of writing (0.4.3)**, the metrics exposed by the namespaces group 
 | catchupTransformationRatio | `meter` | [deprecated] Percentage of facts transformed (downcasted/upcasted) by the server in response to a subscribed client. Useful for debugging the amount of overhead due to transforming, for subscription returning a significant amount of facts.<br />Ref: [transformation](/concept/transformation)                                                                                                                                                               |
 | missedRoundtrip            | `meter` | If inactive for more than a configured interval (`factcast.store.factNotificationBlockingWaitTimeInMillis`), the server validates the health of the database connection. For this purpose it sends an internal notification to the database and waits to receive back an answer in the interval defined by `factcast.store.factNotificationMaxRoundTripLatencyInMillis`. This metric counts the number of notifications sent without an answer from the database. |
 | snapshotsCompacted         | `meter` | Counts the number of old snapshots deleted. This runs as a dedicated scheduled job, configured by `factcast.store.snapshotCacheCompactCron`.<br />Ref: [snapshots](/usage/factus/projections/snapshotting/)                                                                                                                                                                                                                                                       |
+| tailIndices                | `meter` | Counts the number of tail indices being present after tail index maintenance. They have a "state" tag which can be used to distinguish between valid/invalid ones and they carry a "maintenance" tag which can be either skipped or executed and reflects whether maintenance was actually executed due to ongoing index operations.                                                                                                                              |
 
 At the **time of writing (0.4.3)**, the metrics exposed by the namespaces group `factcast.registry` are:
 
 | operation                        | type    | description                                                                                                                                                                         |
-|----------------------------------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| -------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | transformEvent                   | `timer` | Time to transform (upcast/downcast) a single fact.<br />Ref: [transformation](/concept/transformation)                                                                              |
 | fetchRegistryFile                | `timer` | Time to retrieve a file from the schema registry.<br />Ref: [facts validation](/concept/schema-registry/)                                                                           |
 | refreshRegistry                  | `timer` | Time to execute the schema registry refresh, in order to get the latest schema and transformation updates.                                                                          |
@@ -105,12 +107,49 @@ At the **time of writing (0.4.3)**, the metrics exposed by the namespaces group 
 
 ### gRPC Metrics
 
-If you're looking for remote calls and their execution times (including marshalling/demarshalling from protobuf), you can have a look at the metrics automatically added by the [gRPC library](https://yidongnan.github.io/grpc-spring-boot-starter/en/)
+If you're looking for remote calls and their execution times (including marshalling/de-marshalling from protobuf), you
+can have a look at the metrics automatically added by
+the [gRPC library](https://yidongnan.github.io/grpc-spring-boot-starter/en/)
 that we use.
 The relevant namespaces are:
 
-* `grpcServerRequestsReceived` and
-* `grpcServerResponsesSent`
+- `grpcServerRequestsReceived` and
+- `grpcServerResponsesSent`
 
-These automatically added metrics only focus on service methods defined in the [protocol buffer specs](https://github.com/factcast/factcast/blob/master/factcast-grpc-api/src/main/proto/FactStore.proto). 
-Since a gRPC remote call triggers not everything we want to measure, we introduced additional metrics. When comparing, for instance, the automatically added durations of gRPC vs. the 'factcast.store.duration', you will find a subtle difference. The reason for this is that instead of including the gRPC overhead, we chose to only measure the actual invocations on the FactStore/TokenStore implementation. Depending on your needs, you may want to focus on one or the other.
+These automatically added metrics only focus on service methods defined in
+the [protocol buffer specs](https://github.com/factcast/factcast/blob/master/factcast-grpc-api/src/main/proto/FactStore.proto).
+Since a gRPC remote call triggers not everything we want to measure, we introduced additional metrics. When comparing,
+for instance, the automatically added durations of gRPC vs. the 'factcast.store.duration', you will find a subtle
+difference. The reason for this is that instead of including the gRPC overhead, we chose to only measure the actual
+invocations on the FactStore/TokenStore implementation. Depending on your needs, you may want to focus on one or the
+other.
+
+### Executor Metrics
+
+Micrometer provides an integration to monitor the default thread pool executor created by Spring Boot.
+Under the same namespace `executor.*`, we publish metrics for our own thread pool executors used inside FactCast.
+
+You can distinguish them by the `name` tag. Currently, these are:
+
+- `subscription-factory` - used for incoming new subscriptions
+- `fetching-catchup` - used for buffered transformation while using the fetching catchup strategy
+- `paged-catchup` - used for buffered transformation while using the paged catchup strategy
+- `transformation-cache` - used for inserting/updating entries in the transformation cache (only if you use persisted
+  cache)
+- `pg-listener` - used by the Guava EventBus that receives signals from the PostgreSQL
+- `telemetry` - used by the Guava EventBus that receives signals from the FactCast Server (see [telemetry](./telemetry.md))
+
+See https://micrometer.io/docs/ref/jvm for more information.
+
+### UI Metrics
+
+Special metrics for the FactCast-Server UI are published via `factcast.ui.timer` namespace.
+
+| operation        | type    | description                                                                                                                                  |
+| ---------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| plugin-execution | `timer` | Time to execute a specific plugin for one fact.                                                                                              |
+| fact-processing  | `timer` | Overall time to process one fact. This includes execution of every plugin, parsing JSON payload and building the final representation model. |
+
+Additionally, all methods of the `org.factcast.server.ui.adapter.FactRepositoryImpl` are measured time-wise, and can be
+visualized via `class` and `method`
+dimension.

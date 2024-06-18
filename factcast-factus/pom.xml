@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.5.9-SNAPSHOT</version>
+    <version>0.7.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-factus</artifactId>
@@ -40,23 +40,25 @@
     </dependency>
 
     <dependency>
-      <groupId>net.javacrumbs.json-unit</groupId>
-      <artifactId>json-unit-assertj</artifactId>
-      <version>2.35.0</version>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-core</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
       <scope>test</scope>
     </dependency>
 
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-simple</artifactId>
-      <version>${slf4j-api.version}</version>
+      <groupId>net.javacrumbs.json-unit</groupId>
+      <artifactId>json-unit-assertj</artifactId>
+      <version>3.2.7</version>
       <scope>test</scope>
     </dependency>
+
 
     <dependency>
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-core</artifactId>
-      <version>1.9.1</version>
+      <version>1.13.1</version>
     </dependency>
 
     <dependency>
@@ -65,12 +67,11 @@
     </dependency>
 
     <dependency>
-      <groupId>com.portingle</groupId>
-      <artifactId>slf4jtesting</artifactId>
-      <version>1.2.0</version>
+      <groupId>io.github.hakky54</groupId>
+      <artifactId>logcaptor</artifactId>
+      <version>2.9.2</version>
       <scope>test</scope>
     </dependency>
-
   </dependencies>
 
   <build>

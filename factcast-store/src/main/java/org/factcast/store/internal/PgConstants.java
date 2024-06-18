@@ -15,7 +15,7 @@
  */
 package org.factcast.store.internal;
 
-import java.util.*;
+import java.util.Random;
 import lombok.AccessLevel;
 import lombok.Generated;
 import lombok.NonNull;
@@ -35,6 +35,9 @@ public class PgConstants {
   public static final String TABLE_CATCHUP = "catchup";
 
   public static final String TABLE_FACT = "fact";
+
+  public static final String TABLE_DATE2SERIAL = "date2serial";
+
   public static final String TAIL_INDEX_NAME_PREFIX = "idx_fact_tail_";
 
   public static final String INDEX_NAME_COLUMN = "index_name";
@@ -71,9 +74,15 @@ public class PgConstants {
   public static final String CHANNEL_FACT_INSERT = "fact_insert";
   public static final String CHANNEL_SCHEDULED_POLL = "scheduled-poll";
   public static final String CHANNEL_BLACKLIST_CHANGE = "blacklist_change";
+  public static final String CHANNEL_SCHEMASTORE_CHANGE = "schemastore_change";
+  public static final String CHANNEL_TRANSFORMATIONSTORE_CHANGE = "transformationstore_change";
+
+  @SuppressWarnings("java:S2245") // jesus christ, YES IT IS SAFE
+  public static final Random RANDOM = new Random();
+
+  @SuppressWarnings("java:S2676") // we just want a fricking random number without a - sign
   public static final String CHANNEL_ROUNDTRIP =
-      "roundtrip_channel_"
-          + Math.abs(new Random().nextLong()); // using the pid lead to a sql exception
+      "roundtrip_channel_" + Math.abs(RANDOM.nextLong()); // using the pid lead to a sql exception
 
   public static final String COLUMN_PAYLOAD = "payload";
 
@@ -143,6 +152,9 @@ public class PgConstants {
           + COLUMN_HEADER
           + " @> cast (? as jsonb)";
 
+  public static final String SELECT_BY_SER =
+      "SELECT " + PROJECTION_FACT + " FROM " + TABLE_FACT + " WHERE " + COLUMN_SER + " = ?";
+
   public static final //
   String SELECT_FACT_FROM_CATCHUP = //
       "SELECT "
@@ -192,6 +204,15 @@ public class PgConstants {
 
   public static final String LISTEN_ROUNDTRIP_CHANNEL_SQL = "LISTEN " + CHANNEL_ROUNDTRIP;
 
+  public static final String LISTEN_BLACKLIST_CHANGE_CHANNEL_SQL =
+      "LISTEN " + CHANNEL_BLACKLIST_CHANGE;
+
+  public static final String LISTEN_SCHEMASTORE_CHANGE_CHANNEL_SQL =
+      "LISTEN " + CHANNEL_SCHEMASTORE_CHANGE;
+
+  public static final String LISTEN_TRANSFORMATIONSTORE_CHANGE_CHANNEL_SQL =
+      "LISTEN " + CHANNEL_TRANSFORMATIONSTORE_CHANGE;
+
   public static final String UPDATE_FACT_SERIALS =
       "update "
           + TABLE_FACT
@@ -220,6 +241,18 @@ public class PgConstants {
           + "->>'"
           + ALIAS_NS
           + "' IS NOT NULL";
+
+  /**
+   * discourages the use of seq scan, if any other alternative is possible (force preferring an
+   * index)
+   *
+   * <p>https://www.postgresql.org/docs/current/runtime-config-query.html
+   *
+   * <p>note: when using this, please make sure to reenable it in *EVERY CASE*
+   */
+  public static final String DISABLE_SEQSCAN = "SET LOCAL enable_seqscan=off";
+
+  public static final String ENABLE_SEQSCAN = "SET LOCAL enable_seqscan=on";
 
   public static final String SELECT_DISTINCT_TYPE_IN_NAMESPACE =
       "SELECT DISTINCT("
@@ -260,19 +293,26 @@ public class PgConstants {
   public static final String LAST_SERIAL_IN_LOG =
       "SELECT COALESCE(MAX(" + COLUMN_SER + "),0) from " + TABLE_FACT;
   public static final String HIGHWATER_MARK =
-      "select ("
+      "SELECT ("
           + COLUMN_HEADER
           + "->>'"
           + ALIAS_ID
-          + "')::uuid as targetId, ser as targetSer from "
+          + "')::uuid AS targetId, ser AS targetSer FROM "
           + TABLE_FACT
-          + " where "
+          + " WHERE "
           + COLUMN_SER
-          + "=(select max("
+          + "=(SELECT max("
           + COLUMN_SER
-          + ") from "
+          + ") FROM "
           + TABLE_FACT
           + ")";
+
+  public static final String HIGHWATER_SERIAL = "SELECT max(" + COLUMN_SER + ") FROM " + TABLE_FACT;
+
+  public static final String LAST_SERIAL_BEFORE_DATE =
+      "SELECT COALESCE(max(lastSer),0) AS lastSer FROM "
+          + TABLE_DATE2SERIAL
+          + " where factDate < ?";
 
   private static String fromHeader(String attributeName) {
     return PgConstants.COLUMN_HEADER + "->>'" + attributeName + "' AS " + attributeName;
@@ -290,6 +330,16 @@ public class PgConstants {
         + ">"
         + ser;
   }
+
+  // this might be too sensitive in some cases (like create table myIndex), however skipping one
+  // tail index maintenance window is not as bad as blocking fact publishing
+  // ~* is case-insensitive regex match
+  public static final String INDEX_OPERATIONS_IN_PROGRESS =
+      "SELECT * FROM pg_stat_activity WHERE pid != pg_backend_pid() "
+          + "AND ("
+          + " (query ~* 'create.*index' OR query ~* 'drop.*index') "
+          + " OR query ~* 'reindex'"
+          + ")";
 
   @NonNull
   public static String tailIndexName(long epoch) {

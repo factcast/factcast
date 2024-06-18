@@ -15,9 +15,10 @@
  */
 package org.factcast.client.grpc;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import io.grpc.Metadata;
@@ -30,21 +31,24 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import lombok.SneakyThrows;
 import org.assertj.core.util.Lists;
-import org.factcast.client.grpc.ClientStreamObserver.ClientKeepalive;
 import org.factcast.core.Fact;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.core.FactValidationException;
+import org.factcast.core.TestFactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
-import org.factcast.core.subscription.FactTransformers;
 import org.factcast.core.subscription.StaleSubscriptionDetectedException;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Type;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -60,8 +64,7 @@ class ClientStreamObserverTest {
 
   @BeforeEach
   void setUp() {
-    FactTransformers trans = new NullFactTransformer();
-    SubscriptionImpl subscriptionImpl = new SubscriptionImpl(factObserver, trans);
+    SubscriptionImpl subscriptionImpl = new SubscriptionImpl(factObserver);
     subscription = spy(subscriptionImpl);
     uut = new ClientStreamObserver(subscription, 0L);
   }
@@ -102,11 +105,7 @@ class ClientStreamObserverTest {
 
     Fact f = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
     MSG_Notification n = converter.createNotificationFor(f);
-    assertThatThrownBy(
-            () -> {
-              uut.onNext(n);
-            })
-        .isInstanceOf(UnsupportedOperationException.class);
+    assertThatThrownBy(() -> uut.onNext(n)).isInstanceOf(UnsupportedOperationException.class);
   }
 
   @Test
@@ -114,15 +113,26 @@ class ClientStreamObserverTest {
     Fact f = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
     MSG_Notification n = converter.createNotificationFor(f);
     uut.onNext(n);
-    verify(factObserver).onNext(eq(f));
+    verify(factObserver).onNext(f);
   }
 
   @Test
   void testFastForward() {
-    UUID id = UUID.randomUUID();
-    MSG_Notification n = converter.createNotificationForFastForward(id);
+    FactStreamPosition p = TestFactStreamPosition.random();
+    MSG_Notification n = converter.toProto(p);
     uut.onNext(n);
-    verify(factObserver).onFastForward(eq(id));
+
+    verify(subscription).notifyFastForward(p);
+    verify(factObserver).onFastForward(p);
+  }
+
+  @Test
+  void testFastForwardIsSkippedIfSerialIsZero() {
+    Mockito.reset(subscription);
+    FactStreamPosition p = FactStreamPosition.of(UUID.randomUUID(), 0L);
+    MSG_Notification n = converter.toProto(p);
+    uut.onNext(n);
+    verifyNoInteractions(subscription);
   }
 
   @Test
@@ -230,7 +240,7 @@ class ClientStreamObserverTest {
 
     for (int i = 0; i < 10; i++) {
       uut.onNext(MSG_Notification.newBuilder().setType(Type.KeepAlive).build());
-      Thread.sleep(10);
+      sleep(10);
     }
 
     boolean await = latch.await(300L, TimeUnit.MILLISECONDS);
@@ -240,38 +250,36 @@ class ClientStreamObserverTest {
   }
 
   @Test
-  void disablesKeepaliveCheckingOnError() throws InterruptedException {
-    CountDownLatch latch = new CountDownLatch(1);
+  void disablesKeepaliveCheckingOnError() {
     uut = spy(new ClientStreamObserver(subscription, 10L));
     uut.onError(new RuntimeException());
     verify(uut).disableKeepalive();
   }
 
   @Test
-  void disablesKeepaliveCheckingOnComplete() throws InterruptedException {
-    CountDownLatch latch = new CountDownLatch(1);
+  void disablesKeepaliveCheckingOnComplete() {
     uut = spy(new ClientStreamObserver(subscription, 10L));
     uut.onCompleted();
     verify(uut).disableKeepalive();
   }
 
   @Test
-  void detectsMissingKeepalives() throws InterruptedException {
-    CountDownLatch latch = new CountDownLatch(1);
+  void detectsMissingKeepalives() {
     uut = spy(new ClientStreamObserver(subscription, 10L));
     int interval = 50;
-    ClientKeepalive clientKeepalive = uut.new ClientKeepalive(interval);
-    // wait for it
-    sleep(150);
-    verify(uut, never()).onError(any());
+    uut.new ClientKeepalive(interval);
 
-    sleep(250);
+    // wait for it
+    // after awaits full duration
+    verify(uut, after(150).never()).onError(any());
     // fails due to NO notification received during interval (50*2+200)
-    verify(uut, times(1)).onError(any(StaleSubscriptionDetectedException.class));
+    // timeout exits immediately, so passed value in millis could be even w/o unnecessarily
+    // prolonging test
+    verify(uut, timeout(250).times(1)).onError(any(StaleSubscriptionDetectedException.class));
   }
 
   @Test
-  void detectSubscriptionStarvation() throws InterruptedException {
+  void detectSubscriptionStarvation() {
 
     long interval = 100L;
     long grace = 2 * interval + 200;
@@ -284,18 +292,19 @@ class ClientStreamObserverTest {
 
     // prolong interval
     for (int i = 0; i < 5; i++) {
-      sleep(50);
+      sleep(interval);
       // any notification will reset the time
       uut.onNext(converter.createKeepaliveNotification());
     }
 
-    sleep(200);
     // still fine because it is < grace
-    verify(subscription, never()).notifyError(any());
-
-    sleep(grace);
+    // after awaits full duration
+    verify(subscription, after(grace - 50).never()).notifyError(any());
     // now it should have triggered an error
-    verify(subscription, times(1)).notifyError(any(StaleSubscriptionDetectedException.class));
+    // timeout exits immediately, so passed value in millis could be even larger w/o unnecessarily
+    // prolonging test
+    verify(subscription, timeout(grace).times(1))
+        .notifyError(any(StaleSubscriptionDetectedException.class));
   }
 
   @Test
@@ -303,7 +312,7 @@ class ClientStreamObserverTest {
     FactStreamInfo fsi = new FactStreamInfo(1, 10);
     uut.onNext(converter.createInfoNotification(fsi));
 
-    verify(subscription).notifyFactStreamInfo(eq(fsi));
+    verify(subscription).notifyFactStreamInfo(fsi);
   }
 
   @SneakyThrows

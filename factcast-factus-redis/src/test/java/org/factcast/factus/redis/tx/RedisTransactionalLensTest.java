@@ -15,7 +15,8 @@
  */
 package org.factcast.factus.redis.tx;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
@@ -25,13 +26,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.redis.ARedisTransactionalManagedProjection;
 import org.factcast.factus.redis.RedisManagedProjection;
 import org.factcast.factus.redis.tx.RedisTransactional.Defaults;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.redisson.api.RTransaction;
@@ -184,7 +188,7 @@ class RedisTransactionalLensTest {
     void delegates() {
       RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
       RedissonTxManager tx = mock(RedissonTxManager.class);
-      RedisTransactionalLens underTest = new RedisTransactionalLens(p, tx, Defaults.create());
+      RedisTransactionalLens underTest = new RedisTransactionalLens(p, () -> tx, Defaults.create());
 
       underTest.doClear();
 
@@ -201,7 +205,7 @@ class RedisTransactionalLensTest {
     void delegates() {
       RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
       RedissonTxManager tx = mock(RedissonTxManager.class);
-      RedisTransactionalLens underTest = new RedisTransactionalLens(p, tx, Defaults.create());
+      RedisTransactionalLens underTest = new RedisTransactionalLens(p, () -> tx, Defaults.create());
 
       underTest.doFlush();
 
@@ -295,7 +299,7 @@ class RedisTransactionalLensTest {
       RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
       RedissonTxManager tx = mock(RedissonTxManager.class);
       when(tx.getCurrentTransaction()).thenReturn(current);
-      RedisTransactionalLens underTest = new RedisTransactionalLens(p, tx, Defaults.create());
+      RedisTransactionalLens underTest = new RedisTransactionalLens(p, () -> tx, Defaults.create());
 
       Function<Fact, ?> t = underTest.parameterTransformerFor(RTransaction.class);
       assertThat(t).isNotNull();
@@ -306,7 +310,7 @@ class RedisTransactionalLensTest {
     void returnsNullForOtherType() {
       RedisManagedProjection p = new ARedisTransactionalManagedProjection(client);
       RedissonTxManager tx = mock(RedissonTxManager.class);
-      RedisTransactionalLens underTest = new RedisTransactionalLens(p, tx, Defaults.create());
+      RedisTransactionalLens underTest = new RedisTransactionalLens(p, () -> tx, Defaults.create());
 
       Function<Fact, ?> t = underTest.parameterTransformerFor(Fact.class);
       assertThat(t).isNull();
@@ -321,12 +325,12 @@ class NonAnnotatedRedisManagedProjection implements RedisManagedProjection {
   }
 
   @Override
-  public UUID factStreamPosition() {
+  public FactStreamPosition factStreamPosition() {
     return null;
   }
 
   @Override
-  public void factStreamPosition(@NonNull UUID factStreamPosition) {}
+  public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {}
 
   @Override
   public WriterToken acquireWriteToken(@NonNull Duration maxWait) {

@@ -6,10 +6,13 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.5.9-SNAPSHOT</version>
+    <version>0.7.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-store</artifactId>
+  <properties>
+    <jetty-javalin.version>11.0.21</jetty-javalin.version>
+  </properties>
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -35,6 +38,11 @@
     <dependency>
       <groupId>net.javacrumbs.shedlock</groupId>
       <artifactId>shedlock-provider-jdbc-template</artifactId>
+      <version>${shedlock.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>net.javacrumbs.shedlock</groupId>
+      <artifactId>shedlock-provider-inmemory</artifactId>
       <version>${shedlock.version}</version>
     </dependency>
     <dependency>
@@ -67,7 +75,6 @@
     <dependency>
       <groupId>org.liquibase</groupId>
       <artifactId>liquibase-core</artifactId>
-      <version>4.12.0</version><!--$NO-MVN-MAN-VER$ -->
       <exclusions>
         <exclusion>
           <groupId>ch.qos.logback</groupId>
@@ -78,20 +85,36 @@
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <version>42.4.0</version><!--$NO-MVN-MAN-VER$ -->
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.github.java-json-tools</groupId>
-      <artifactId>json-schema-validator</artifactId>
+      <groupId>com.github.erosb</groupId>
+      <artifactId>everit-json-schema</artifactId>
+      <version>1.14.4</version>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+        <!-- fixes "Found duplicate and different classes" conflict with replacement
+          for org.json:json used by Spring -->
+        <exclusion>
+          <groupId>org.json</groupId>
+          <artifactId>json</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
+    <!-- org.json:json replacement used by Spring, see exclusion above -->
+    <!-- - https://stackoverflow.com/a/60952911/2124712 -->
+    <!-- - https://stackoverflow.com/q/52980064/2124712 (1st reply) -->
+    <!-- - there also is "a clean-room Apache-licensed implementation" https://mvnrepository.com/artifact/com.github.openjson/openjson -->
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-simple</artifactId>
-      <scope>test</scope>
+      <groupId>com.vaadin.external.google</groupId>
+      <artifactId>android-json</artifactId>
+      <version>0.0.20131108.vaadin1</version>
     </dependency>
     <!-- spring -->
     <dependency>
@@ -132,12 +155,54 @@
       <groupId>org.springframework</groupId>
       <artifactId>spring-aspects</artifactId>
     </dependency>
+
+    <!-- start javalin -->
     <dependency>
       <groupId>io.javalin</groupId>
       <artifactId>javalin</artifactId>
-      <version>4.6.3</version>
+      <version>6.1.6</version>
       <scope>test</scope>
     </dependency>
+    <!-- explicit jetty dependencies to workaround missing jetty12 compat ->
+      https://github.com/javalin/javalin/issues/2067 -->
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-server</artifactId>
+      <version>${jetty-javalin.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-http</artifactId>
+      <version>${jetty-javalin.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-util</artifactId>
+      <version>${jetty-javalin.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-security</artifactId>
+      <version>${jetty-javalin.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-io</artifactId>
+      <version>${jetty-javalin.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-xml</artifactId>
+      <version>${jetty-javalin.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- end javalin -->
+
     <dependency>
       <groupId>es.usc.citius.hipster</groupId>
       <artifactId>hipster-core</artifactId>
@@ -151,11 +216,11 @@
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>okhttp</artifactId>
-      <version>4.10.0</version>
+      <version>4.12.0</version>
     </dependency>
     <dependency>
-      <groupId>org.graalvm.js</groupId>
-      <artifactId>js</artifactId>
+      <groupId>org.graalvm.polyglot</groupId>
+      <artifactId>polyglot</artifactId>
       <version>${graaljs.version}</version>
     </dependency>
     <dependency>
@@ -164,9 +229,11 @@
       <version>${graaljs.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.graalvm.sdk</groupId>
-      <artifactId>graal-sdk</artifactId>
+      <groupId>org.graalvm.polyglot</groupId>
+      <artifactId>js-community</artifactId>
       <version>${graaljs.version}</version>
+      <type>pom</type>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.graalvm.truffle</groupId>
@@ -176,6 +243,10 @@
     <dependency>
       <groupId>org.springframework.retry</groupId>
       <artifactId>spring-retry</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
     </dependency>
   </dependencies>
 </project>

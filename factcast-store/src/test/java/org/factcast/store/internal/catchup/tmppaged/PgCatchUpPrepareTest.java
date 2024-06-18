@@ -57,7 +57,7 @@ class PgCatchUpPrepareTest {
       underTest.prepareCatchup(serial);
 
       PreparedStatementCallback<Long> value = captor.getValue();
-      verify(statementHolder).statement(null);
+      verify(statementHolder).clear();
 
       PreparedStatement ps = mock(PreparedStatement.class);
       when(ps.executeUpdate()).thenReturn(0, 3).thenThrow(SQLException.class);

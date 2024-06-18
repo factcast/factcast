@@ -24,11 +24,13 @@ import java.lang.reflect.Constructor;
 import java.util.Objects;
 import java.util.Set;
 import lombok.NonNull;
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.store.RetryableException;
 import org.factcast.core.util.ExceptionHelper;
 
 @Slf4j
+@UtilityClass
 public class ClientExceptionHelper {
 
   public static RuntimeException from(Throwable e) {

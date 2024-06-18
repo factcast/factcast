@@ -15,27 +15,35 @@
  */
 package org.factcast.core.subscription;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.factcast.core.TestHelper.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.factcast.core.TestHelper.expect;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeout;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.core.TestFact;
+import org.factcast.core.TestFactStreamPosition;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.factcast.core.subscription.transformation.FactTransformers;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+@SuppressWarnings("resource")
 @ExtendWith(MockitoExtension.class)
-public class SubscriptionImplTest {
+class SubscriptionImplTest {
 
   @Mock private FactObserver observer;
 
@@ -108,14 +116,16 @@ public class SubscriptionImplTest {
     uut.awaitComplete();
   }
 
+  @SuppressWarnings("DataFlowIssue")
   @Test
   void testNotifyElementNull() {
-    Assertions.assertThrows(NullPointerException.class, () -> uut.notifyElement(null));
+    assertThrows(NullPointerException.class, () -> uut.notifyElement(null));
   }
 
+  @SuppressWarnings("DataFlowIssue")
   @Test
   void testNotifyErrorNull() {
-    Assertions.assertThrows(NullPointerException.class, () -> uut.notifyError(null));
+    assertThrows(NullPointerException.class, () -> uut.notifyError(null));
   }
 
   @Test
@@ -123,16 +133,15 @@ public class SubscriptionImplTest {
     CountDownLatch l = new CountDownLatch(1);
     uut.onClose(l::countDown);
     uut.close();
-    l.await();
+    org.assertj.core.api.Assertions.assertThat(l.await(10, TimeUnit.SECONDS)).isTrue();
   }
 
   private FactObserver obs;
 
-  private final FactTransformers ft = e -> e;
-
+  @SuppressWarnings("DataFlowIssue")
   @Test
   void testOnNull() {
-    Assertions.assertThrows(NullPointerException.class, () -> SubscriptionImpl.on(null, null));
+    assertThrows(NullPointerException.class, () -> SubscriptionImpl.on(null));
   }
 
   final Fact testFact = new TestFact();
@@ -141,7 +150,7 @@ public class SubscriptionImplTest {
 
   @Test
   void testOn() throws TransformationException {
-    SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
+    SubscriptionImpl on = SubscriptionImpl.on(obs);
     verify(obs, never()).onNext(any());
     on.notifyElement(testFact);
     verify(obs).onNext(testFact);
@@ -156,31 +165,8 @@ public class SubscriptionImplTest {
   }
 
   @Test
-  void testOnElementIncrementsCounters() throws TransformationException {
-    SubscriptionImpl on = SubscriptionImpl.on(obs, factTransformers);
-    verify(obs, never()).onNext(any());
-    when(factTransformers.transformIfNecessary(testFact))
-        .thenReturn(testFact, testFact, transformedTestFact);
-
-    on.notifyElement(testFact);
-    verify(obs).onNext(testFact);
-    assertThat(on.factsTransformed().get()).isEqualTo(0);
-    assertThat(on.factsNotTransformed().get()).isEqualTo(1);
-
-    on.notifyElement(testFact);
-    verify(obs, times(2)).onNext(testFact);
-    assertThat(on.factsTransformed().get()).isEqualTo(0);
-    assertThat(on.factsNotTransformed().get()).isEqualTo(2);
-
-    on.notifyElement(testFact);
-    verify(obs, times(3)).onNext(testFact);
-    assertThat(on.factsTransformed().get()).isEqualTo(1);
-    assertThat(on.factsNotTransformed().get()).isEqualTo(2);
-  }
-
-  @Test
   void testOnError() {
-    SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
+    SubscriptionImpl on = SubscriptionImpl.on(obs);
     verify(obs, never()).onError(any());
     on.notifyError(new Throwable("ignore me"));
     verify(obs).onError(any());
@@ -188,7 +174,7 @@ public class SubscriptionImplTest {
 
   @Test
   void testOnErrorCloses() throws TransformationException {
-    SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
+    SubscriptionImpl on = SubscriptionImpl.on(obs);
     on.notifyError(new Throwable("ignore me"));
     on.notifyElement(testFact);
     on.notifyCatchup();
@@ -200,7 +186,7 @@ public class SubscriptionImplTest {
 
   @Test
   void testOnCompleteCloses() throws TransformationException {
-    SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
+    SubscriptionImpl on = SubscriptionImpl.on(obs);
     on.notifyComplete();
     on.notifyElement(testFact);
     on.notifyCatchup();
@@ -212,7 +198,7 @@ public class SubscriptionImplTest {
 
   @Test
   void testOnCatchupDoesNotClose() throws TransformationException {
-    SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
+    SubscriptionImpl on = SubscriptionImpl.on(obs);
     on.notifyCatchup();
     on.notifyElement(testFact);
     on.notifyError(new Throwable("ignore me"));
@@ -223,27 +209,27 @@ public class SubscriptionImplTest {
 
   @Test
   void testOnFastForwardDelegatesIfNotClosed() throws TransformationException {
-    SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
-    @NonNull UUID id = UUID.randomUUID();
-    on.notifyFastForward(id);
-    verify(obs).onFastForward(id);
+    SubscriptionImpl on = SubscriptionImpl.on(obs);
+    FactStreamPosition p = TestFactStreamPosition.random();
+    on.notifyFastForward(p);
+    verify(obs).onFastForward(p);
   }
 
   @Test
   void testOnFastForwardSkipsIfClosed() throws TransformationException {
-    SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
-    @NonNull UUID id = UUID.randomUUID();
+    SubscriptionImpl on = SubscriptionImpl.on(obs);
+    FactStreamPosition p = TestFactStreamPosition.random();
     on.close();
-    on.notifyFastForward(id);
-    verify(obs, never()).onFastForward(id);
+    on.notifyFastForward(p);
+    verify(obs, never()).onFastForward(p);
   }
 
   @Test
   void testOnErrorCompletesFutureCatchup() {
-    Assertions.assertThrows(
+    assertThrows(
         Throwable.class,
         () -> {
-          SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
+          SubscriptionImpl on = SubscriptionImpl.on(obs);
           verify(obs, never()).onError(any());
           on.notifyError(new Throwable("ignore me"));
           verify(obs).onError(any());
@@ -253,10 +239,10 @@ public class SubscriptionImplTest {
 
   @Test
   void testOnErrorCompletesFutureComplete() {
-    Assertions.assertThrows(
+    assertThrows(
         Throwable.class,
         () -> {
-          SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
+          SubscriptionImpl on = SubscriptionImpl.on(obs);
           verify(obs, never()).onError(any());
           on.notifyError(new Throwable("ignore me"));
           verify(obs).onError(any());
@@ -266,7 +252,7 @@ public class SubscriptionImplTest {
 
   @Test
   void testAwaitCatchupLong() {
-    Assertions.assertTimeout(
+    assertTimeout(
         Duration.ofMillis(100),
         () -> {
           uut.notifyCatchup();
@@ -276,7 +262,7 @@ public class SubscriptionImplTest {
 
   @Test
   void testAwaitCompleteLong() {
-    Assertions.assertTimeout(
+    assertTimeout(
         Duration.ofMillis(100),
         () -> {
           uut.notifyComplete();
@@ -285,12 +271,16 @@ public class SubscriptionImplTest {
   }
 
   @Test
-  public void testCloseThrowsException() {
-    uut = spy(uut);
-    doThrow(RuntimeException.class).when(uut).close();
+  void testCloseThrowsException() {
+    org.assertj.core.api.Assertions.assertThatNoException()
+        .isThrownBy(
+            () -> {
+              uut = spy(uut);
+              doThrow(RuntimeException.class).when(uut).close();
 
-    // this must return without exceptions
-    uut.notifyComplete();
+              // this must return without exceptions
+              uut.notifyComplete();
+            });
   }
 
   @Test
@@ -304,7 +294,7 @@ public class SubscriptionImplTest {
 
   @Test
   void notifyInfoSkipsIfClosed() throws TransformationException {
-    SubscriptionImpl on = SubscriptionImpl.on(obs, ft);
+    SubscriptionImpl on = SubscriptionImpl.on(obs);
     @NonNull UUID id = UUID.randomUUID();
     FactStreamInfo fsi = new FactStreamInfo(1, 10);
     uut.notifyFactStreamInfo(fsi);

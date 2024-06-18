@@ -15,47 +15,47 @@
  */
 package org.factcast.core.lock;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.util.LinkedList;
+import java.util.*;
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
 
-public class AttemptTest {
+class AttemptTest {
 
   @Test
-  public void testAbort() {
+  void testAbort() {
     assertThrows(AttemptAbortedException.class, () -> Attempt.abort("foo"));
     assertThrows(NullPointerException.class, () -> Attempt.abort(null));
   }
 
   @Test
-  public void testPublishNPE() {
+  void testPublishNPE() {
     assertThrows(NullPointerException.class, () -> Attempt.publish(null));
     assertThrows(NullPointerException.class, () -> Attempt.publish((Fact) null));
   }
 
   @Test
-  public void testPublish() {
+  void throwsWhenEmptyListIsPublished() {
     assertThrows(IllegalArgumentException.class, () -> Attempt.publish(new LinkedList<>()));
   }
 
   @Test
-  public void testPublishFactFactArray() {
+  void testPublishFactFactArray() {
     Fact f1 = new TestFact();
     Fact f2 = new TestFact();
     Fact f3 = new TestFact();
     IntermediatePublishResult r = Attempt.publish(f1, f2, f3);
-    assertThat(r.factsToPublish().size()).isEqualTo(3);
+    assertThat(r.factsToPublish()).hasSize(3);
   }
 
   @Test
-  public void testPublishFact() {
+  void testPublishFact() {
     Fact f1 = new TestFact();
     IntermediatePublishResult r = Attempt.publish(f1);
-    assertThat(r.factsToPublish().size()).isEqualTo(1);
+    assertThat(r.factsToPublish()).hasSize(1);
     assertThat(r.factsToPublish().get(0)).isSameAs(f1);
   }
 }

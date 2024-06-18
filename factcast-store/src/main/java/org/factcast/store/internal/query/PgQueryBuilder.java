@@ -141,7 +141,7 @@ public class PgQueryBuilder {
             + " ORDER BY "
             + PgConstants.COLUMN_SER
             + " ASC";
-    log.trace("{} createSQL={}", factSpecs, sql);
+    log.trace("creating query SQL for {} - SQL={}", factSpecs, sql);
     return sql;
   }
 
@@ -156,7 +156,7 @@ public class PgQueryBuilder {
             + " ORDER BY "
             + PgConstants.COLUMN_SER
             + " DESC LIMIT 1";
-    log.trace("{} createStateSQL={}", factSpecs, sql);
+    log.trace("creating state SQL for {} - SQL={}", factSpecs, sql);
     return sql;
   }
 
@@ -176,7 +176,7 @@ public class PgQueryBuilder {
             + createWhereClause()
             + //
             "))";
-    log.trace("{} catchupSQL={}", factSpecs, sql);
+    log.trace("creating catchup-table SQL for {} - SQL={}", factSpecs, sql);
     return sql;
   }
 }

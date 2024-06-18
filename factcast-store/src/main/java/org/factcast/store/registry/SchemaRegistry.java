@@ -15,9 +15,10 @@
  */
 package org.factcast.store.registry;
 
-import com.github.fge.jsonschema.main.JsonSchema;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import org.everit.json.schema.Schema;
 import org.factcast.store.registry.transformation.Transformation;
 import org.factcast.store.registry.transformation.TransformationKey;
 import org.factcast.store.registry.transformation.TransformationStoreListener;
@@ -25,7 +26,9 @@ import org.factcast.store.registry.validation.schema.SchemaKey;
 
 public interface SchemaRegistry {
 
-  Optional<JsonSchema> get(SchemaKey key);
+  String LOCK_NAME = "schemareg_update";
+
+  Optional<Schema> get(SchemaKey key);
 
   List<Transformation> get(TransformationKey key);
 
@@ -34,4 +37,16 @@ public interface SchemaRegistry {
   void refresh();
 
   void register(TransformationStoreListener listener);
+
+  void invalidateNearCache(SchemaKey key);
+
+  Set<String> enumerateNamespaces();
+
+  Set<String> enumerateTypes(String n);
+
+  default boolean isActive() {
+    // only false for NOP, which is used when SR is not configured.
+    // shortcut to avoid using StoreConfigurationProperties.isSchemaRegistryConfigured()
+    return true;
+  }
 }

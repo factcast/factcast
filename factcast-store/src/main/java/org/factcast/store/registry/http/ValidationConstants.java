@@ -16,12 +16,15 @@
 package org.factcast.store.registry.http;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.fge.jsonschema.main.JsonSchemaFactory;
+import com.google.common.annotations.VisibleForTesting;
+import java.util.function.*;
+import lombok.NonNull;
 import okhttp3.OkHttpClient;
+import org.everit.json.schema.Schema;
+import org.everit.json.schema.loader.SchemaLoader;
+import org.json.JSONObject;
 
 public class ValidationConstants {
-
-  public static final JsonSchemaFactory JSON_SCHEMA_FACTORY = JsonSchemaFactory.byDefault();
 
   public static final ObjectMapper JACKSON = new ObjectMapper();
 
@@ -36,4 +39,24 @@ public class ValidationConstants {
   public static final int HTTP_OK = 200;
 
   public static final int HTTP_NOT_MODIFIED = 304;
+
+  public static Function<String, Schema> jsonString2SchemaV7() {
+    return s -> {
+      try {
+        SchemaLoader loader = getLoaderBuilder().schemaJson(new JSONObject(s)).build();
+        return loader.load().build();
+      } catch (Exception e) {
+        throw new IllegalArgumentException("Cannot create schema from: \n " + s, e);
+      }
+    };
+  }
+
+  @VisibleForTesting
+  static SchemaLoader.SchemaLoaderBuilder getLoaderBuilder() {
+    return SchemaLoader.builder().draftV7Support();
+  }
+
+  public static Schema jsonString2SchemaV7(@NonNull String schemaJson) {
+    return jsonString2SchemaV7().apply(schemaJson);
+  }
 }

@@ -15,7 +15,8 @@ class HugoTemplateServiceImplTest : StringSpec() {
 
     val uut = HugoTemplateServiceImpl(fs)
 
-    override fun afterTest(testCase: TestCase, result: TestResult) {
+
+    override suspend fun afterTest(testCase: TestCase, result: TestResult) {
         clearAllMocks()
     }
 

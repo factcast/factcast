@@ -15,9 +15,10 @@
  */
 package org.factcast.store.registry.classpath;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import lombok.NonNull;
+import net.javacrumbs.shedlock.core.LockProvider;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.TransformationStore;
@@ -31,6 +32,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class ClasspathSchemaRegistryFactoryTest {
+  @Mock private @NonNull SchemaStore schemaStore;
+
+  @Mock private @NonNull TransformationStore transformationStore;
+
+  @Mock private @NonNull RegistryMetrics registryMetrics;
+
+  @Mock private @NonNull StoreConfigurationProperties props;
+
+  @Mock private @NonNull LockProvider lockProvider;
 
   @InjectMocks private ClasspathSchemaRegistryFactory underTest;
 
@@ -42,14 +52,6 @@ class ClasspathSchemaRegistryFactoryTest {
   @Nested
   class WhenCreatingInstance {
     private final String FULL_URL = "classpath:xxx";
-
-    @Mock private @NonNull SchemaStore schemaStore;
-
-    @Mock private @NonNull TransformationStore transformationStore;
-
-    @Mock private @NonNull RegistryMetrics registryMetrics;
-
-    @Mock private @NonNull StoreConfigurationProperties props;
 
     @Test
     void createInstance() {

@@ -16,25 +16,22 @@
 package org.factcast.store.internal.catchup.fetching;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.util.*;
 import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.StoreMetrics.EVENT;
+import org.factcast.store.internal.catchup.BufferingFactInterceptor;
 import org.factcast.store.internal.catchup.PgCatchup;
-import org.factcast.store.internal.filter.PgFactFilter;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.postgresql.jdbc.PgConnection;
+import org.postgresql.util.PSQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
@@ -49,23 +46,17 @@ public class PgFetchingCatchup implements PgCatchup {
 
   @NonNull final SubscriptionRequestTO req;
 
-  @NonNull final PgFactFilter factFilter;
-
-  @NonNull final SubscriptionImpl subscription;
+  @NonNull final BufferingFactInterceptor interceptor;
 
   @NonNull final AtomicLong serial;
 
-  @NonNull final PgMetrics metrics;
-
   @NonNull final CurrentStatementHolder statementHolder;
-
-  protected long factCounter = 0L;
 
   @SneakyThrows
   @Override
   public void run() {
 
-    PgConnection connection = connectionSupplier.get();
+    PgConnection connection = connectionSupplier.get(req.debugInfo());
     connection.setAutoCommit(false); // necessary for using cursors
 
     // connection may stay open quite a while, and we do not want a CPool to interfere
@@ -75,8 +66,10 @@ public class PgFetchingCatchup implements PgCatchup {
       var jdbc = new JdbcTemplate(ds);
       fetch(jdbc);
     } finally {
+      log.trace("Done fetching, flushing interceptor");
+      interceptor.flush();
       ds.destroy();
-      statementHolder.statement(null);
+      statementHolder.clear();
     }
   }
 
@@ -87,22 +80,23 @@ public class PgFetchingCatchup implements PgCatchup {
     PgQueryBuilder b = new PgQueryBuilder(req.specs(), statementHolder);
     var extractor = new PgFactExtractor(serial);
     String catchupSQL = b.createSQL();
-    jdbc.query(
-        catchupSQL,
-        b.createStatementSetter(serial),
-        createRowCallbackHandler(factFilter, extractor));
-    metrics
-        .counter(EVENT.CATCHUP_FACT)
-        .increment(factCounter); // TODO this needs to TAG it for each subscription?
+    jdbc.query(catchupSQL, b.createStatementSetter(serial), createRowCallbackHandler(extractor));
   }
 
   @VisibleForTesting
-  RowCallbackHandler createRowCallbackHandler(PgFactFilter filter, PgFactExtractor extractor) {
+  RowCallbackHandler createRowCallbackHandler(PgFactExtractor extractor) {
     return rs -> {
-      Fact f = Objects.requireNonNull(extractor.mapRow(rs, 0)); // does not use the rowNum anyway
-      if (filter.test(f)) {
-        subscription.notifyElement(f);
-        factCounter++;
+      try {
+        if (statementHolder.wasCanceled() || rs.isClosed()) return;
+
+        Fact f = extractor.mapRow(rs, 0);
+        this.interceptor.accept(f);
+      } catch (PSQLException psql) {
+        // see #2088
+        if (statementHolder.wasCanceled()) {
+          // then we just swallow the exception
+          log.trace("Swallowing because statement was cancelled", psql);
+        } else throw psql;
       }
     };
   }
