@@ -38,6 +38,7 @@ import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.query.PgQueryBuilder;
+import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 
@@ -58,6 +59,7 @@ public class PgFactStream {
   final PgCatchupFactory pgCatchupFactory;
   final FastForwardTarget ffwdTarget;
   final ServerPipeline pipeline;
+  final PgStoreTelemetry telemetry;
 
   CondensedQueryExecutor condensedExecutor;
 
@@ -73,6 +75,8 @@ public class PgFactStream {
 
   void connect(@NonNull SubscriptionRequestTO request) {
     log.debug("{} connect subscription {}", request, request.dump());
+    // signal connect
+    telemetry.onConnect(request);
     this.request = request;
     PgQueryBuilder q = new PgQueryBuilder(request.specs(), statementHolder);
     initializeSerialToStartAfter();
@@ -119,11 +123,15 @@ public class PgFactStream {
     // propagate catchup
     if (isConnected()) {
       log.trace("{} signaling catchup", request);
+      // signal catchup
+      telemetry.onCatchup(this.request);
       pipeline.process(Signal.catchup());
     }
     if (isConnected()) {
       if (request.continuous()) {
         log.debug("{} entering follow mode", request);
+        // signal follow
+        telemetry.onFollow(this.request);
         long delayInMs;
         if (request.maxBatchDelayInMs() < 1) {
           // ok, instant query after NOTIFY
@@ -153,6 +161,8 @@ public class PgFactStream {
       } else {
         pipeline.process(Signal.complete());
         log.debug("{} completed", request);
+        // signal complete
+        telemetry.onComplete(this.request);
       }
     }
   }
@@ -205,5 +215,7 @@ public class PgFactStream {
     }
     statementHolder.close();
     log.debug("{} disconnected ", request);
+    // signal close
+    telemetry.onClose(this.request);
   }
 }
