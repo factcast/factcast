@@ -367,6 +367,7 @@ public abstract class AbstractFactStoreTest {
               .awaitComplete();
           verify(observer).onFactStreamInfo(any());
           verify(observer).onNext(any());
+          verify(observer, atLeastOnce()).flush();
           verify(observer).onCatchup();
           verify(observer).onComplete();
           verifyNoMoreInteractions(observer);
@@ -396,6 +397,7 @@ public abstract class AbstractFactStoreTest {
           uut.subscribe(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
               .awaitComplete();
           verify(observer).onFactStreamInfo(any());
+          verify(observer, atLeastOnce()).flush();
           verify(observer).onNext(any());
           verify(observer).onCatchup();
           verify(observer).onComplete();
@@ -427,6 +429,7 @@ public abstract class AbstractFactStoreTest {
               .awaitComplete();
           verify(observer).onFactStreamInfo(any());
           verify(observer).onNext(any());
+          verify(observer, atLeastOnce()).flush();
           verify(observer).onCatchup();
           verify(observer).onComplete();
           verifyNoMoreInteractions(observer);
@@ -456,6 +459,7 @@ public abstract class AbstractFactStoreTest {
               .awaitComplete();
           verify(observer).onFactStreamInfo(any());
           verify(observer, times(2)).onNext(any());
+          verify(observer, atLeastOnce()).flush();
           verify(observer).onCatchup();
           verify(observer).onComplete();
           verifyNoMoreInteractions(observer);
@@ -483,6 +487,7 @@ public abstract class AbstractFactStoreTest {
           FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript("function (h){ return false }");
           uut.subscribe(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
               .awaitComplete();
+          verify(observer, atLeastOnce()).flush();
           verify(observer).onFactStreamInfo(any());
           verify(observer).onCatchup();
           verify(observer).onComplete();
