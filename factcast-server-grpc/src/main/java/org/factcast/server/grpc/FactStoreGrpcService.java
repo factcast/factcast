@@ -15,10 +15,6 @@
  */
 package org.factcast.server.grpc;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -58,7 +54,6 @@ import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
-import org.factcast.core.util.FactCastJson;
 import org.factcast.core.util.MavenHelper;
 import org.factcast.grpc.api.Capabilities;
 import org.factcast.grpc.api.CompressionCodecs;
@@ -151,7 +146,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
     final var clientId = grpcRequestMetadata.clientId();
     if (clientId.isPresent()) {
       final var id = clientId.get();
-      facts = facts.stream().map(f -> tagFactSource(f, id)).collect(Collectors.toList());
+      facts.forEach(f -> tagFactSource(f, id));
     }
     log.debug("{}publish {} fact{}", clientIdPrefix(), size, size > 1 ? "s" : "");
     store.publish(facts);
@@ -160,18 +155,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
   }
 
   @VisibleForTesting
-  Fact tagFactSource(@NonNull Fact f, @NonNull String source) {
-    try {
-      JsonNode h = FactCastJson.readTree(f.jsonHeader());
-      ObjectNode meta = (ObjectNode) h.get("meta");
-      if (meta != null) {
-        meta.set("source", TextNode.valueOf(source));
-      }
-      return Fact.of(h.toString(), f.jsonPayload());
-    } catch (JsonProcessingException e) {
-      // skip it - this will break later anyway....
-      return f;
-    }
+  void tagFactSource(@NonNull Fact f, @NonNull String source) {
+    f.header().meta().put("source", source);
   }
 
   private String clientIdPrefix() {
@@ -431,7 +416,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
     final var clientId = grpcRequestMetadata.clientId();
     if (clientId.isPresent()) {
       final var id = clientId.get();
-      facts = facts.stream().map(f -> tagFactSource(f, id)).collect(Collectors.toList());
+      facts.forEach(f -> tagFactSource(f, id));
     }
 
     boolean result = store.publishIfUnchanged(facts, req.token());
