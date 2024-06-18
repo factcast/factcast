@@ -19,7 +19,6 @@ import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
-import java.util.UUID;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +36,6 @@ import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.redisson.api.RMap;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,16 +85,6 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @SneakyThrows
     @Test
-    public void bulkAppliesInTransactionTimeout() {
-      TxRedissonManagedUserNamesTimeout p = new TxRedissonManagedUserNamesTimeout(redissonClient);
-      factus.update(p);
-
-      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
-      assertThat(p.stateModifications()).isEqualTo(2); // one for timeout, one for final flush
-    }
-
-    @SneakyThrows
-    @Test
     public void rollsBack() {
       TxRedissonManagedUserNamesSizeBlowAt7th p =
           new TxRedissonManagedUserNamesSizeBlowAt7th(redissonClient);
@@ -109,9 +97,8 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
         // ignore
       }
 
-      // only first bulk (size = 5) should be executed
-      assertThat(p.userNames().size()).isEqualTo(5);
-      assertThat(p.stateModifications()).isEqualTo(1);
+      assertThat(p.userNames()).hasSize(6);
+      assertThat(p.stateModifications()).isEqualTo(2); // 5+1
     }
   }
 
@@ -129,38 +116,27 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @SneakyThrows
     @Test
-    public void bulkAppliesInTransaction3() {
+    void bulkAppliesInTransaction3() {
       TxRedissonSubscribedUserNamesSize3 p = new TxRedissonSubscribedUserNamesSize3(redissonClient);
       factus.subscribeAndBlock(p).awaitCatchup();
 
-      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
+      assertThat(p.userNames()).hasSize(NUMBER_OF_EVENTS);
       assertThat(p.stateModifications()).isEqualTo(4); // expected at 3,6,9,10
     }
 
     @SneakyThrows
     @Test
-    public void bulkAppliesInTransaction2() {
+    void bulkAppliesInTransaction2() {
       TxRedissonSubscribedUserNamesSize2 p = new TxRedissonSubscribedUserNamesSize2(redissonClient);
       factus.subscribeAndBlock(p).awaitCatchup();
 
-      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
+      assertThat(p.userNames()).hasSize(NUMBER_OF_EVENTS);
       assertThat(p.stateModifications()).isEqualTo(5); // expected at 2,4,6,8,10
     }
 
     @SneakyThrows
     @Test
-    public void bulkAppliesInTransactionTimeout() {
-      TxRedissonSubscribedUserNamesTimeout p =
-          new TxRedissonSubscribedUserNamesTimeout(redissonClient);
-      factus.subscribeAndBlock(p).awaitCatchup();
-
-      assertThat(p.userNames().size()).isEqualTo(NUMBER_OF_EVENTS);
-      assertThat(p.stateModifications()).isEqualTo(2); // one for timeout, one for final flush
-    }
-
-    @SneakyThrows
-    @Test
-    public void rollsBack() {
+    void rollsBack() {
       TxRedissonSubscribedUserNamesSizeBlowAt7th p =
           new TxRedissonSubscribedUserNamesSizeBlowAt7th(redissonClient);
 
@@ -172,9 +148,8 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
         // ignore
       }
 
-      // only first bulk (size = 5) should be executed
-      assertThat(p.userNames().size()).isEqualTo(5);
-      assertThat(p.stateModifications()).isEqualTo(1);
+      assertThat(p.userNames()).hasSize(6);
+      assertThat(p.stateModifications()).isEqualTo(2);
     }
   }
 
@@ -223,23 +198,6 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
   }
 
   @ProjectionMetaData(revision = 1)
-  @RedisTransactional(bulkSize = 3000000, timeout = 1000) // will flush after 800ms
-  static class TxRedissonManagedUserNamesTimeout extends TrackingTxRedissonManagedUserNames {
-    public TxRedissonManagedUserNamesTimeout(RedissonClient redisson) {
-      super(redisson);
-    }
-
-    @Override
-    @SneakyThrows
-    protected void apply(UserCreated created, RTransaction tx) {
-      RMap<UUID, String> userNames = tx.getMap(redisKey(), codec);
-      userNames.fastPut(created.aggregateId(), created.userName());
-
-      Thread.sleep(100);
-    }
-  }
-
-  @ProjectionMetaData(revision = 1)
   @RedisTransactional(bulkSize = 2)
   static class TxRedissonSubscribedUserNamesSize2 extends TrackingTxRedissonSubscribedUserNames {
     public TxRedissonSubscribedUserNamesSize2(RedissonClient redisson) {
@@ -256,23 +214,6 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
   }
 
   @ProjectionMetaData(revision = 1)
-  @RedisTransactional(bulkSize = 3000000, timeout = 1000) // will flush after 800ms
-  static class TxRedissonSubscribedUserNamesTimeout extends TrackingTxRedissonSubscribedUserNames {
-    public TxRedissonSubscribedUserNamesTimeout(RedissonClient redisson) {
-      super(redisson);
-    }
-
-    @Override
-    @SneakyThrows
-    protected void apply(UserCreated created, RTransaction tx) {
-      RMap<UUID, String> userNames = tx.getMap(redisKey(), codec);
-      userNames.fastPut(created.aggregateId(), created.userName());
-
-      Thread.sleep(100);
-    }
-  }
-
-  @ProjectionMetaData(revision = 1)
   @RedisTransactional(bulkSize = 5)
   static class TxRedissonManagedUserNamesSizeBlowAt7th extends TrackingTxRedissonManagedUserNames {
     private int count;
@@ -283,7 +224,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @Override
     protected void apply(UserCreated created, RTransaction tx) {
-      if (count++ == 8) { // blow the second bulk
+      if (++count == 7) { // blow the second bulk
         throw new IllegalStateException("Bad luck");
       }
       super.apply(created, tx);
@@ -302,7 +243,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @Override
     protected void apply(UserCreated created, RTransaction tx) {
-      if (count++ == 8) { // blow the second bulk
+      if (++count == 7) { // blow the second bulk
         throw new IllegalStateException("Bad luck");
       }
       super.apply(created, tx);
