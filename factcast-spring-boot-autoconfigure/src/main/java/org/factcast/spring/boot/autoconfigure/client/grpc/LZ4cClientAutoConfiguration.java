@@ -15,8 +15,6 @@
  */
 package org.factcast.spring.boot.autoconfigure.client.grpc;
 
-import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
-import org.apache.commons.compress.compressors.lz4.FramedLZ4CompressorInputStream;
 import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.grpc.lz4.Lz4cGrpcClientCodec;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -31,11 +29,7 @@ import org.springframework.context.annotation.Bean;
  * @author uwe.schaefer@prisma-capacity.eu
  */
 @AutoConfiguration
-@ConditionalOnClass({
-  FramedLZ4CompressorInputStream.class,
-  GrpcFactStore.class,
-  GrpcChannelFactory.class
-})
+@ConditionalOnClass({GrpcFactStore.class, Lz4cGrpcClientCodec.class})
 @AutoConfigureBefore(GrpcFactStoreAutoConfiguration.class)
 public class LZ4cClientAutoConfiguration {
 
