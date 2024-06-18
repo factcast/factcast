@@ -33,26 +33,28 @@ import org.springframework.test.context.TestPropertySource;
 @TestPropertySource(locations = "/application-legacy-creds.properties")
 @Slf4j
 @FactcastTestConfig(securityEnabled = true)
-public class ClientWithLegacyCredentialsTest extends AbstractFactCastIntegrationTest {
+class ClientWithLegacyCredentialsTest extends AbstractFactCastIntegrationTest {
   @Autowired FactCast fc;
 
   @Test
-  public void allowedToPublish() {
+  void allowedToPublish() {
     fc.publish(
         Fact.of(
-            "{\"id\":\"" + UUID.randomUUID() + "\", \"ns\":\"users\",\"type\":\"UserCreated\"}",
+            "{\"id\":\""
+                + UUID.randomUUID()
+                + "\", \"ns\":\"users\",\"type\":\"UserCreated\",\"meta\":{}}",
             "{}"));
   }
 
   @Test
-  public void failToPublish() {
+  void failToPublish() {
     assertThatThrownBy(
             () ->
                 fc.publish(
                     Fact.of(
                         "{\"id\":\""
                             + UUID.randomUUID()
-                            + "\", \"ns\":\"no-permissions\",\"type\":\"UserCreated\"}",
+                            + "\", \"ns\":\"no-permissions\",\"type\":\"UserCreated\",\"meta\":{}}",
                         "{}")))
         .isInstanceOf(StatusRuntimeException.class)
         .hasMessageContaining("PERMISSION_DENIED");
