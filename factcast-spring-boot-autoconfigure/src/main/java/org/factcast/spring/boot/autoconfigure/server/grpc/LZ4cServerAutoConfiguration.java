@@ -19,6 +19,7 @@ import lombok.Generated;
 import org.factcast.grpc.lz4.Lz4cGrpcServerCodec;
 import org.factcast.server.grpc.FactStoreGrpcService;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -26,6 +27,7 @@ import org.springframework.context.annotation.Bean;
 @Generated
 @AutoConfiguration
 @ConditionalOnClass({FactStoreGrpcService.class, Lz4cGrpcServerCodec.class})
+@AutoConfigureBefore(FactCastGrpcServerAutoConfiguration.class)
 public class LZ4cServerAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean
