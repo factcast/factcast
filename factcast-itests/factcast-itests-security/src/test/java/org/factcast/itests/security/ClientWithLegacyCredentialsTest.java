@@ -33,11 +33,11 @@ import org.springframework.test.context.TestPropertySource;
 @TestPropertySource(locations = "/application-legacy-creds.properties")
 @Slf4j
 @FactcastTestConfig(securityEnabled = true)
-public class ClientWithLegacyCredentialsTest extends AbstractFactCastIntegrationTest {
+class ClientWithLegacyCredentialsTest extends AbstractFactCastIntegrationTest {
   @Autowired FactCast fc;
 
   @Test
-  public void allowedToPublish() {
+  void allowedToPublish() {
     fc.publish(
         Fact.of(
             "{\"id\":\"" + UUID.randomUUID() + "\", \"ns\":\"users\",\"type\":\"UserCreated\"}",
@@ -45,7 +45,7 @@ public class ClientWithLegacyCredentialsTest extends AbstractFactCastIntegration
   }
 
   @Test
-  public void failToPublish() {
+  void failToPublish() {
     assertThatThrownBy(
             () ->
                 fc.publish(
