@@ -103,13 +103,6 @@ public class GrpcFactStore implements FactStore {
         properties);
   }
 
-  //  @Generated
-  //  @VisibleForTesting
-  //  // TODO needed?
-  //  GrpcFactStore(@NonNull GrpcStubs stubs, @NonNull Optional<String> credentials) {
-  //    this(stubs, credentials, new FactCastGrpcClientProperties(), null);
-  //  }
-
   @VisibleForTesting
   GrpcFactStore(@NonNull GrpcStubs stubs, @NonNull FactCastGrpcClientProperties properties) {
     this.stubs = stubs;
@@ -271,8 +264,9 @@ public class GrpcFactStore implements FactStore {
     }
   }
 
+  @VisibleForTesting
   @Nullable
-  private static CallCredentials configureCredentials(
+  static CallCredentials configureCredentials(
       Optional<String> legacyCredentials, FactCastGrpcClientProperties p) {
     CallCredentials basic = null;
     if (areCredentialsSetViaProperties(p)) {
