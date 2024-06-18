@@ -30,8 +30,8 @@ import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.Codec;
 import org.redisson.codec.CompositeCodec;
+import org.redisson.codec.Kryo5Codec;
 import org.redisson.codec.LZ4Codec;
-import org.redisson.codec.MarshallingCodec;
 
 @Slf4j
 @ProjectionMetaData(revision = 1)
@@ -39,7 +39,7 @@ import org.redisson.codec.MarshallingCodec;
 public class TxRedissonManagedUserNames extends AbstractRedisTxManagedProjection {
 
   protected final Codec codec =
-      new CompositeCodec(UUIDCodec.INSTANCE, new LZ4Codec(new MarshallingCodec()));
+      new CompositeCodec(UUIDCodec.INSTANCE, new LZ4Codec(new Kryo5Codec()));
 
   public TxRedissonManagedUserNames(RedissonClient redisson) {
     super(redisson);
