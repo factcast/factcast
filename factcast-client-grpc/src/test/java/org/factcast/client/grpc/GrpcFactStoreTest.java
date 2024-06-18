@@ -547,18 +547,19 @@ class GrpcFactStoreTest {
     @Test
     void testLegacyCredentialsWrongFormat() {
       final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
+      Optional<String> creds1 = Optional.of("xyz");
       assertThrows(
-          IllegalArgumentException.class,
-          () -> GrpcFactStore.configureCredentials(Optional.of("xyz"), props));
+          IllegalArgumentException.class, () -> GrpcFactStore.configureCredentials(creds1, props));
+      Optional<String> creds2 = Optional.of("x:y:z");
       assertThrows(
-          IllegalArgumentException.class,
-          () -> GrpcFactStore.configureCredentials(Optional.of("x:y:z"), props));
+          IllegalArgumentException.class, () -> GrpcFactStore.configureCredentials(creds2, props));
     }
 
     @Test
     void testLegacyCredentialsRightFormat() {
       final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
-      assertThat(GrpcFactStore.configureCredentials(Optional.of("xyz:abc"), props)).isNotNull();
+      Optional<String> creds = Optional.of("xyz:abc");
+      assertThat(GrpcFactStore.configureCredentials(creds, props)).isNotNull();
     }
 
     @Test
@@ -583,18 +584,18 @@ class GrpcFactStoreTest {
       final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
       props.setUser("user");
       props.setPassword("");
+      Optional<String> empty = Optional.empty();
       assertThrows(
-          IllegalArgumentException.class,
-          () -> GrpcFactStore.configureCredentials(Optional.empty(), props));
+          IllegalArgumentException.class, () -> GrpcFactStore.configureCredentials(empty, props));
     }
 
     @Test
     void testNewCredentialsNoUsername() {
       final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
       props.setPassword("password");
+      Optional<String> empty = Optional.empty();
       assertThrows(
-          IllegalArgumentException.class,
-          () -> GrpcFactStore.configureCredentials(Optional.empty(), props));
+          IllegalArgumentException.class, () -> GrpcFactStore.configureCredentials(empty, props));
     }
 
     @Test
@@ -602,25 +603,25 @@ class GrpcFactStoreTest {
       final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
       props.setUser("");
       props.setPassword("password");
+      Optional<String> empty = Optional.empty();
       assertThrows(
-          IllegalArgumentException.class,
-          () -> GrpcFactStore.configureCredentials(Optional.empty(), props));
+          IllegalArgumentException.class, () -> GrpcFactStore.configureCredentials(empty, props));
     }
 
     @Test
     void testLegacyCredentialsEmptyUsername() {
       final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
+      Optional<String> creds = Optional.of(":abc");
       assertThrows(
-          IllegalArgumentException.class,
-          () -> GrpcFactStore.configureCredentials(Optional.of(":abc"), props));
+          IllegalArgumentException.class, () -> GrpcFactStore.configureCredentials(creds, props));
     }
 
     @Test
     void testLegacyCredentialsEmptyPassword() {
       final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
+      Optional<String> creds = Optional.of("xyz:");
       assertThrows(
-          IllegalArgumentException.class,
-          () -> GrpcFactStore.configureCredentials(Optional.of("xyz:"), props));
+          IllegalArgumentException.class, () -> GrpcFactStore.configureCredentials(creds, props));
     }
   }
 
