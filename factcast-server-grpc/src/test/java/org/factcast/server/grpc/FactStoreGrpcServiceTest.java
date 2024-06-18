@@ -1081,23 +1081,15 @@ public class FactStoreGrpcServiceTest {
   @Test
   void testHeaderSourceTagging() {
     Fact f = Fact.builder().ns("x").meta("foo", "bar").buildWithoutPayload();
-    f = uut.tagFactSource(f, "theSourceApplication");
+    uut.tagFactSource(f, "theSourceApplication");
     assertThat(f.meta("source")).isEqualTo("theSourceApplication");
   }
 
   @Test
   void testHeaderSourceTaggingOverwrites() {
     Fact f = Fact.builder().ns("x").meta("source", "before").buildWithoutPayload();
-    f = uut.tagFactSource(f, "after");
+    uut.tagFactSource(f, "after");
     assertThat(f.meta("source")).isEqualTo("after");
-  }
-
-  @Test
-  void testHeaderSourceTaggingWithBrokenHeader() {
-    Fact f = spy(Fact.builder().buildWithoutPayload());
-    when(f.jsonHeader()).thenReturn("{borken");
-    Fact f1 = uut.tagFactSource(f, "after");
-    assertSame(f, f1);
   }
 
   @SneakyThrows
