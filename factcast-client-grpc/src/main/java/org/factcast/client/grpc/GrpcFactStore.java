@@ -78,7 +78,6 @@ public class GrpcFactStore implements FactStore {
 
   private final GrpcStubs stubs;
 
-  // TODO
   private final FactCastGrpcClientProperties properties;
 
   private final ProtoConverter converter = new ProtoConverter();
