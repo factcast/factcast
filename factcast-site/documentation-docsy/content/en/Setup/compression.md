@@ -29,8 +29,37 @@ As the client should be low on dependencies and assumptions, Gzip (as supported 
 every client supports.
 
 In order to prefer snappy or LZ4, you'd need to add one or both of the following dependencies (or later versions)
-to your client. Once they are on the classpath, the client will pick them up automatically, and the server will
-prefer them over GZip.
+to your client and server. Once they are on the classpath on both sides, the client will pick them up automatically, 
+and the server will prefer them over GZip. It is advised, that you use as many codecs as you possibly want to support 
+in the server, and just the preferred one on the client side.
+Both LZ4 and snappy implementations are provided by apache's `commons-compress` which comes as a transitive dependency.
+
+{{< cardpane >}}
+{{< card header="Snappy" >}}
+
+```xml
+<dependency>
+	<groupId>org.factcast</groupId>
+	<artifactId>factcast-grpc-lz4</artifactId>
+	<version>${factcast.version}</version>
+</dependency>
+```
+
+{{< /card >}}
+{{< card header="LZ4" >}}
+
+```xml
+<dependency>
+	<groupId>org.factcast</groupId>
+	<artifactId>factcast-grpc-snappy</artifactId>
+	<version>${factcast.version}</version>
+</dependency>
+```
+
+{{< /card >}}
+{{< /cardpane >}}
+
+For versions before 0.7.9 the respective dependencies were
 
 {{< cardpane >}}
 {{< card header="Snappy" >}}
@@ -41,6 +70,7 @@ prefer them over GZip.
   <artifactId>snappy-java</artifactId>
   <version>1.1.8.4</version>
 </dependency>
+
 ```
 
 {{< /card >}}
@@ -56,6 +86,9 @@ prefer them over GZip.
 
 {{< /card >}}
 {{< /cardpane >}}
+
+`org.xerial.snappy` and `net.jpountz.lz4` are deprecated now and will be removed in 0.8. 
+
 
 ## Compressor efficiency
 
