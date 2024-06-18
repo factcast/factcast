@@ -623,6 +623,13 @@ class GrpcFactStoreTest {
       assertThrows(
           IllegalArgumentException.class, () -> GrpcFactStore.configureCredentials(creds, props));
     }
+
+    @Test
+    void testNoCredentials() {
+      final FactCastGrpcClientProperties props = new FactCastGrpcClientProperties();
+      Optional<String> creds = Optional.empty();
+      assertThat(GrpcFactStore.configureCredentials(creds, props)).isNull();
+    }
   }
 
   @Test
@@ -735,6 +742,12 @@ class GrpcFactStoreTest {
   void testAddClientIdToMeta() {
     Metadata meta = GrpcFactStore.prepareMetaData(new FactCastGrpcClientProperties(), "gurke");
     assertThat(meta.get(Headers.CLIENT_ID)).isEqualTo("gurke");
+  }
+
+  @Test
+  void testNullClientIdToMeta() {
+    Metadata meta = GrpcFactStore.prepareMetaData(new FactCastGrpcClientProperties(), null);
+    assertThat(meta.get(Headers.CLIENT_ID)).isNull();
   }
 
   @Test
