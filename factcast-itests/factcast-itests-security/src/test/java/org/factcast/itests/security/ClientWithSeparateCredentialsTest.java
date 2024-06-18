@@ -17,13 +17,15 @@ package org.factcast.itests.security;
 
 import static org.assertj.core.api.Assertions.*;
 
-import io.grpc.Channel;
+import io.grpc.Metadata;
 import io.grpc.StatusRuntimeException;
 import java.util.List;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
-import org.factcast.client.grpc.FactCastGrpcStubsFactory;
+import org.factcast.client.grpc.FactCastGrpcChannelFactory;
+import org.factcast.client.grpc.GrpcStubs;
+import org.factcast.client.grpc.GrpcStubsImpl;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
@@ -47,9 +49,7 @@ import org.springframework.test.context.TestPropertySource;
 class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrationTest {
   @Autowired FactCast fc;
 
-  @Autowired FactCastGrpcStubsFactory stubsFactory;
-
-  @Autowired GrpcChannelFactory channelFactory;
+  @Autowired GrpcChannelFactory grpcChannelFactory;
 
   @Autowired JdbcTemplate jdbcTemplate;
 
@@ -59,6 +59,8 @@ class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrationTest 
       f -> {
         // do nothing
       };
+
+  private GrpcStubs stubs;
 
   @BeforeEach
   void setup() {
@@ -82,6 +84,13 @@ class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrationTest 
           statement.setString(1, fact.jsonHeader());
           statement.setString(2, fact.jsonPayload());
         });
+
+    stubs =
+        new GrpcStubsImpl(
+            FactCastGrpcChannelFactory.createDefault(grpcChannelFactory),
+            "factstore",
+            new Metadata(),
+            null);
   }
 
   @Test
@@ -163,8 +172,7 @@ class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrationTest 
 
   @Test
   void failsUnauthenticatedHandshake() {
-    Channel channel = channelFactory.createChannel("factstore");
-    assertThatThrownBy(() -> stubsFactory.createBlockingStub(channel).handshake(converter.empty()))
+    assertThatThrownBy(() -> stubs.blocking().handshake(converter.empty()))
         .isInstanceOf(StatusRuntimeException.class)
         .hasMessageContaining("UNAUTHENTICATED");
   }

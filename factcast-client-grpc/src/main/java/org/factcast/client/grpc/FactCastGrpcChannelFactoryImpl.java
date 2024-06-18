@@ -16,21 +16,32 @@
 package org.factcast.client.grpc;
 
 import io.grpc.Channel;
+import io.grpc.ClientInterceptor;
+import java.util.List;
 import lombok.NonNull;
-import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
+import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
 
-public class FactCastGrpcStubsFactoryImpl implements FactCastGrpcStubsFactory {
+public class FactCastGrpcChannelFactoryImpl implements FactCastGrpcChannelFactory {
 
-  @NonNull
-  @Override
-  public RemoteFactStoreGrpc.RemoteFactStoreBlockingStub createBlockingStub(
-      @NonNull Channel channel) {
-    return RemoteFactStoreGrpc.newBlockingStub(channel);
+  private final GrpcChannelFactory cf;
+
+  public FactCastGrpcChannelFactoryImpl(@NonNull GrpcChannelFactory cf) {
+    this.cf = cf;
   }
 
-  @NonNull
   @Override
-  public RemoteFactStoreGrpc.RemoteFactStoreStub createStub(@NonNull Channel channel) {
-    return RemoteFactStoreGrpc.newStub(channel);
+  public Channel createChannel(
+      @NonNull String name, @NonNull List<ClientInterceptor> interceptors) {
+    return cf.createChannel(name, interceptors);
+  }
+
+  @Override
+  public Channel createChannel(@NonNull String name) {
+    return cf.createChannel(name);
+  }
+
+  @Override
+  public void close() {
+    cf.close();
   }
 }

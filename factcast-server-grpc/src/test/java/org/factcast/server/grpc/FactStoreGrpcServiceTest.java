@@ -35,6 +35,7 @@ import java.util.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
@@ -311,8 +312,10 @@ public class FactStoreGrpcServiceTest {
     List<Fact> facts = acFactList.getValue();
     assertFalse(facts.isEmpty());
     assertEquals(1, facts.size());
-    assertEquals(f1.id(), facts.get(0).id());
-    assertEquals(clientId, facts.get(0).meta("source"));
+    Fact f = facts.get(0);
+    assertEquals(f1.id(), f.id());
+    assertEquals(clientId, f.meta("source"));
+    Assertions.assertThat(f.jsonHeader()).contains(clientId);
   }
 
   @Test
@@ -709,6 +712,7 @@ public class FactStoreGrpcServiceTest {
 
     Fact fact = acFactList.getAllValues().get(0).get(0);
     assertThat(fact.meta("source")).isEqualTo(clientId);
+    Assertions.assertThat(fact.jsonHeader()).contains(clientId);
 
     verify(o).onNext(eq(conv.toProto(true)));
     verify(o).onCompleted();
@@ -1081,6 +1085,7 @@ public class FactStoreGrpcServiceTest {
     Fact f = Fact.builder().ns("x").meta("foo", "bar").buildWithoutPayload();
     f = uut.tagFactSource(f, "theSourceApplication");
     assertThat(f.meta("source")).isEqualTo("theSourceApplication");
+    Assertions.assertThat(f.jsonHeader()).contains("theSourceApplication");
   }
 
   @Test
@@ -1088,14 +1093,7 @@ public class FactStoreGrpcServiceTest {
     Fact f = Fact.builder().ns("x").meta("source", "before").buildWithoutPayload();
     f = uut.tagFactSource(f, "after");
     assertThat(f.meta("source")).isEqualTo("after");
-  }
-
-  @Test
-  void testHeaderSourceTaggingWithBrokenHeader() {
-    Fact f = spy(Fact.builder().buildWithoutPayload());
-    when(f.jsonHeader()).thenReturn("{borken");
-    Fact f1 = uut.tagFactSource(f, "after");
-    assertSame(f, f1);
+    Assertions.assertThat(f.jsonHeader()).contains("after");
   }
 
   @SneakyThrows
