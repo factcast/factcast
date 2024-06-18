@@ -53,6 +53,7 @@ import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.snapcache.SnapshotCache;
 import org.factcast.store.internal.snapcache.SnapshotCacheConfiguration;
 import org.factcast.store.internal.tail.PGTailIndexingConfiguration;
+import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.factcast.store.registry.PgSchemaStoreChangeListener;
 import org.factcast.store.registry.SchemaRegistry;
 import org.factcast.store.registry.SchemaRegistryConfiguration;
@@ -95,8 +96,10 @@ public class PgFactStoreInternalConfiguration {
 
   @Bean
   @ConditionalOnMissingBean(EventBus.class)
-  public EventBus eventBus() {
-    return new AsyncEventBus(getClass().getSimpleName(), Executors.newCachedThreadPool());
+  public EventBus eventBus(@NonNull PgMetrics metrics) {
+    return new AsyncEventBus(
+        getClass().getSimpleName(),
+        metrics.monitor(Executors.newCachedThreadPool(), "pg-listener"));
   }
 
   @Bean
@@ -108,6 +111,11 @@ public class PgFactStoreInternalConfiguration {
   @Bean
   public PgMetrics pgMetrics(@NonNull MeterRegistry registry) {
     return new PgMetrics(registry);
+  }
+
+  @Bean
+  public PgStoreTelemetry telemetry(@NonNull PgMetrics metrics) {
+    return new PgStoreTelemetry(metrics);
   }
 
   @Bean
@@ -147,6 +155,7 @@ public class PgFactStoreInternalConfiguration {
       PgCatchupFactory pgCatchupFactory,
       FastForwardTarget target,
       JSEngineFactory ef,
+      PgStoreTelemetry telemetry,
       ServerPipelineFactory pipelineFactory,
       PgMetrics metrics) {
     return new PgSubscriptionFactory(
@@ -159,7 +168,8 @@ public class PgFactStoreInternalConfiguration {
         target,
         pipelineFactory,
         ef,
-        metrics);
+        metrics,
+        telemetry);
   }
 
   @Bean

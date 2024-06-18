@@ -34,6 +34,7 @@ import org.factcast.store.internal.pipeline.ServerPipelineFactory;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.script.JSEngineFactory;
+import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 // TODO integrate with PGQuery
@@ -55,6 +56,7 @@ class PgSubscriptionFactory implements AutoCloseable {
   final ServerPipelineFactory pipelineFactory;
   final JSEngineFactory jsEngineFactory;
   final ExecutorService es;
+  final PgStoreTelemetry telemetry;
   private final int maxPipelineBufferSize;
 
   public PgSubscriptionFactory(
@@ -67,7 +69,8 @@ class PgSubscriptionFactory implements AutoCloseable {
       FastForwardTarget target,
       ServerPipelineFactory pipelineFactory,
       JSEngineFactory jsEngineFactory,
-      PgMetrics metrics) {
+      PgMetrics metrics,
+      PgStoreTelemetry telemetry) {
     this.jdbcTemplate = jdbcTemplate;
     this.eventBus = eventBus;
     this.idToSerialMapper = idToSerialMapper;
@@ -76,6 +79,7 @@ class PgSubscriptionFactory implements AutoCloseable {
     this.target = target;
     this.pipelineFactory = pipelineFactory;
     this.jsEngineFactory = jsEngineFactory;
+    this.telemetry = telemetry;
 
     this.maxPipelineBufferSize = props.getTransformationCachePageSize();
 
@@ -94,7 +98,14 @@ class PgSubscriptionFactory implements AutoCloseable {
 
     PgFactStream pgsub =
         new PgFactStream(
-            jdbcTemplate, eventBus, idToSerialMapper, fetcher, catchupFactory, target, pipe);
+            jdbcTemplate,
+            eventBus,
+            idToSerialMapper,
+            fetcher,
+            catchupFactory,
+            target,
+            pipe,
+            telemetry);
 
     // when closing the subscription, also close the PgFactStream
     subscription.onClose(pgsub::close);
