@@ -16,7 +16,6 @@
 package org.factcast.spring.boot.autoconfigure.server.grpc;
 
 import lombok.Generated;
-import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorOutputStream;
 import org.factcast.grpc.snappy.SnappycGrpcServerCodec;
 import org.factcast.server.grpc.FactStoreGrpcService;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -27,7 +26,7 @@ import org.springframework.context.annotation.Bean;
 
 @Generated
 @AutoConfiguration
-@ConditionalOnClass({FactStoreGrpcService.class, FramedSnappyCompressorOutputStream.class})
+@ConditionalOnClass({FactStoreGrpcService.class, SnappycGrpcServerCodec.class})
 @AutoConfigureBefore(FactCastGrpcServerAutoConfiguration.class)
 public class SnappycServerAutoConfiguration {
   @Bean
