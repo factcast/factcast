@@ -6,11 +6,15 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.5.9-SNAPSHOT</version>
+    <version>0.7.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-bom</artifactId>
   <packaging>pom</packaging>
+  <properties>
+    <sonar.skip>true</sonar.skip>
+  </properties>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -36,7 +40,27 @@
       </dependency>
       <dependency>
         <groupId>org.factcast</groupId>
+        <artifactId>factcast-grpc-lz4</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-grpc-snappy</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
         <artifactId>factcast-server-grpc</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-server-ui</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-server-security</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -94,6 +118,26 @@
         <artifactId>factcast-docker-dep</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-script-engine-graaljs</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-script-engine</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-server-security</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-server-ui</artifactId>
+        <version>${project.version}</version>
+      </dependency>
       <!-- for testing only! -->
       <dependency>
         <groupId>org.factcast</groupId>
@@ -110,13 +154,14 @@
       <dependency>
         <groupId>org.postgresql</groupId>
         <artifactId>postgresql</artifactId>
-        <version>42.4.0</version>
+        <version>42.7.3</version>
       </dependency>
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>31.1-jre</version>
+        <version>33.2.1-jre</version>
       </dependency>
+      <!-- will be deprecated -->
       <dependency>
         <groupId>net.jpountz.lz4</groupId>
         <artifactId>lz4</artifactId>
@@ -125,8 +170,15 @@
       <dependency>
         <groupId>org.xerial.snappy</groupId>
         <artifactId>snappy-java</artifactId>
-        <version>1.1.8.4</version>
+        <version>1.1.10.5</version>
       </dependency>
+      <!-- /will be deprecated -->
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-compress</artifactId>
+        <version>1.26.2</version>
+      </dependency>
+
       <dependency>
         <groupId>com.fasterxml.jackson</groupId>
         <artifactId>jackson-bom</artifactId>
@@ -137,7 +189,7 @@
       <dependency>
         <groupId>org.msgpack</groupId>
         <artifactId>jackson-dataformat-msgpack</artifactId>
-        <version>0.9.3</version>
+        <version>0.9.8</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

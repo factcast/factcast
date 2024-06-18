@@ -9,7 +9,7 @@ import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import java.nio.file.Paths
-import javax.validation.ConstraintValidatorContext
+import jakarta.validation.ConstraintValidatorContext
 
 class ValidVersionFolderValidatorTest : StringSpec() {
     val uut = ValidVersionFolderValidator()

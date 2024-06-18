@@ -1,6 +1,9 @@
 #!/bin/bash
 
 (
-docker run --rm -u `id -u`:`id -g` -p 1313:1313 -v $PWD/../..:/srv/hugo factcast/factcast-hugo hugo -s factcast-site/documentation-docsy --minify --debug --log
+docker run --rm -it \
+  -v $PWD/../..:/src \
+  -p 1313:1313 \
+  klakegg/hugo:0.101.0-ext-debian -s factcast-site/documentation-docsy --minify --debug --log
 )
 

@@ -28,7 +28,7 @@ public class ScheduledRegistryRefresher {
   private final SchemaRegistry registry;
 
   @Scheduled(cron = "${factcast.store.schemaStoreRefreshCron:*/60 * * * * *}")
-  @SchedulerLock(name = "registryRefresh", lockAtMostFor = "10m")
+  @SchedulerLock(name = SchemaRegistry.LOCK_NAME, lockAtMostFor = "10m")
   public void refresh() {
 
     // yes, i know the time is recorded via micrometer already, but

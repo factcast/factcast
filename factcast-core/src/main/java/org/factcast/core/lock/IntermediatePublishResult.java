@@ -15,21 +15,27 @@
  */
 package org.factcast.core.lock;
 
-import java.util.List;
-import java.util.Optional;
-import lombok.AccessLevel;
+import java.util.*;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.factcast.core.Fact;
 
-@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 public final class IntermediatePublishResult {
 
-  @Getter @NonNull final List<Fact> factsToPublish;
+  @Getter @NonNull private final List<Fact> factsToPublish;
+  @Getter private final boolean wasSkipped;
 
   @Setter @NonNull private Runnable andThen = null;
+
+  IntermediatePublishResult(@NonNull List<Fact> factsToPublish, boolean wasSkipped) {
+    this.factsToPublish = factsToPublish;
+    this.wasSkipped = wasSkipped;
+  }
+
+  IntermediatePublishResult(@NonNull List<Fact> factsToPublish) {
+    this(factsToPublish, false);
+  }
 
   public Optional<Runnable> andThen() {
     return Optional.ofNullable(andThen);

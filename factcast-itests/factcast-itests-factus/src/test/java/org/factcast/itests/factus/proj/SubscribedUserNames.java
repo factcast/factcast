@@ -15,14 +15,11 @@
  */
 package org.factcast.itests.factus.proj;
 
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
+import java.util.concurrent.*;
 import lombok.Getter;
 import org.factcast.factus.projection.LocalSubscribedProjection;
-import org.springframework.stereotype.Component;
 
-@Component
 public class SubscribedUserNames extends LocalSubscribedProjection implements UserNames {
   @Getter private final Map<UUID, String> userNames = new ConcurrentHashMap<UUID, String>();
 }

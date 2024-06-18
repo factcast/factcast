@@ -72,7 +72,9 @@ public class HttpIndexFetcher implements IndexFetcher {
 
   private String etag;
 
-  /** @return future for empty, if index is unchanged, otherwise the updated index. */
+  /**
+   * @return future for empty, if index is unchanged, otherwise the updated index.
+   */
   @Override
   public Optional<RegistryIndex> fetchIndex() {
     return retry.execute(

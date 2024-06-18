@@ -1,0 +1,25 @@
+{
+  "accounts": [
+    {
+      "id": "sample-client",
+      "roles": [
+        "sample-client"
+      ]
+    }
+  ],
+  "roles": [
+    {
+      "id": "sample-client",
+      "read": {
+        "include": [
+          "users"
+        ]
+      },
+      "write": {
+        "include": [
+          "users"
+        ]
+      }
+    }
+  ]
+}

@@ -22,15 +22,29 @@ import org.junit.jupiter.api.*;
 public class ProjectionMetaDataTest {
   @Test
   void testResolver() {
-    assertThat(ProjectionMetaData.Resolver.resolveFor(With.class).get())
-        .extracting(ProjectionMetaData::name, ProjectionMetaData::serial)
+    assertThat(ProjectionMetaData.Resolver.resolveFor(WithSerial.class).get())
+        .extracting(ProjectionMetaData::name, ProjectionMetaData.Revision::get)
         .containsExactly("foo", 1L);
+
+    assertThat(ProjectionMetaData.Resolver.resolveFor(WithRevision.class).get())
+        .extracting(ProjectionMetaData::name, ProjectionMetaData.Revision::get)
+        .containsExactly("foo", 32L);
+
+    assertThat(ProjectionMetaData.Resolver.resolveFor(WithBoth.class).get())
+        .extracting(ProjectionMetaData::name, ProjectionMetaData.Revision::get)
+        .containsExactly("foo", 33L);
 
     assertThat(ProjectionMetaData.Resolver.resolveFor(Without.class)).isEmpty();
   }
 
   @ProjectionMetaData(name = "foo", serial = 1)
-  static class With {}
+  static class WithSerial {}
+
+  @ProjectionMetaData(name = "foo", revision = 32)
+  static class WithRevision {}
+
+  @ProjectionMetaData(name = "foo", serial = 1, revision = 33)
+  static class WithBoth {}
 
   static class Without {}
 }

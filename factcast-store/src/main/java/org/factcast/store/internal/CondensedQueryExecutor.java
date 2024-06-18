@@ -30,7 +30,6 @@ import org.factcast.store.internal.listen.PgListener.FactInsertionSignal;
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
-@SuppressWarnings("UnstableApiUsage")
 @Slf4j
 class CondensedQueryExecutor {
 
@@ -84,7 +83,7 @@ class CondensedQueryExecutor {
   }
 
   public void trigger() {
-    if (connectionStateSupplier.get()) {
+    if (Boolean.TRUE.equals(connectionStateSupplier.get())) {
       if (maxDelayInMillis < 1) {
         runTarget();
       } else if (!currentlyScheduled.getAndSet(true)) {
@@ -96,7 +95,7 @@ class CondensedQueryExecutor {
                 currentlyScheduled.set(false);
                 try {
                   runTarget();
-                } catch (Throwable e) {
+                } catch (Exception e) {
                   log.error("Scheduled query failed, closing: {}", e.getMessage());
                 }
               }
@@ -137,7 +136,7 @@ class CondensedQueryExecutor {
   protected synchronized void runTarget() {
     try {
       target.run(false);
-    } catch (Throwable e) {
+    } catch (Exception e) {
       log.error("cannot run Target: ", e);
     }
   }

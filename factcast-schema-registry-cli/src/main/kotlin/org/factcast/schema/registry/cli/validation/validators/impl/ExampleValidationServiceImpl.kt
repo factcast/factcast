@@ -21,7 +21,7 @@ import org.factcast.schema.registry.cli.utils.SchemaService
 import org.factcast.schema.registry.cli.utils.mapEventVersions
 import org.factcast.schema.registry.cli.validation.ProjectError
 import org.factcast.schema.registry.cli.validation.validators.ExampleValidationService
-import javax.inject.Singleton
+import jakarta.inject.Singleton
 
 @Singleton
 class ExampleValidationServiceImpl(
@@ -44,6 +44,7 @@ class ExampleValidationServiceImpl(
                             example.exampleFilePath,
                             result
                         )
+
                         true -> null
                     }
                 }

@@ -160,7 +160,7 @@ Note that pre-checked buttons require you to manually add the `.active` class to
 
 ### Methods
 
-| Method | Description |
-| --- | --- |
-| `$().button('toggle')` | Toggles push state. Gives the button the appearance that it has been activated. |
-| `$().button('dispose')` | Destroys an element's button. |
+| Method                  | Description                                                                     |
+|-------------------------|---------------------------------------------------------------------------------|
+| `$().button('toggle')`  | Toggles push state. Gives the button the appearance that it has been activated. |
+| `$().button('dispose')` | Destroys an element's button.                                                   |

@@ -17,7 +17,7 @@ package org.factcast.schema.registry.cli.registry.impl
 
 import java.nio.file.Path
 import java.nio.file.Paths
-import javax.inject.Singleton
+import jakarta.inject.Singleton
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.registry.DistributionCreatorService
 import org.factcast.schema.registry.cli.registry.FactcastIndexCreator

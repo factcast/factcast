@@ -16,17 +16,18 @@
 package org.factcast.test;
 
 import java.lang.reflect.Field;
-import java.util.List;
+import java.util.*;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.SneakyThrows;
-import org.junit.jupiter.api.extension.*;
 import org.junit.platform.commons.util.ReflectionUtils;
 import org.junit.platform.commons.util.ReflectionUtils.HierarchyTraversalMode;
+import org.springframework.test.context.TestContext;
 
 public interface FactCastIntegrationTestExtension {
 
   // returns true if successful, false if needed dependency is not yet available
-  default boolean initialize(ExtensionContext context) {
+  default boolean initialize() {
     return true;
   }
 
@@ -35,21 +36,32 @@ public interface FactCastIntegrationTestExtension {
     return "reason unknown";
   }
 
-  default void beforeAll(ExtensionContext ctx) {}
+  default void prepareContainers(TestContext ctx) {}
 
-  default void beforeEach(ExtensionContext ctx) {}
+  default void wipeExternalDataStore(TestContext ctx) {}
 
-  default void afterEach(ExtensionContext ctx) {}
+  default void injectFields(TestContext ctx) {}
 
-  default void afterAll(ExtensionContext ctx) {}
+  default void beforeAll(TestContext ctx) {}
 
-  static void inject(@NonNull Object testInstance, @NonNull Object toInject) {
+  default void beforeEach(TestContext ctx) {}
+
+  default void afterEach(TestContext ctx) {}
+
+  default void afterAll(TestContext ctx) {}
+
+  static void inject(
+      @NonNull Object testInstance, @NonNull Class<?> targetType, @Nullable Object toInject) {
     List<Field> proxyFields =
         ReflectionUtils.findFields(
             testInstance.getClass(),
-            f -> toInject.getClass().equals(f.getType()),
+            f -> targetType.equals(f.getType()),
             HierarchyTraversalMode.BOTTOM_UP);
     proxyFields.forEach(f -> setFieldValue(f, testInstance, toInject));
+  }
+
+  static void inject(@NonNull Object testInstance, @NonNull Object toInject) {
+    inject(testInstance, toInject.getClass(), toInject);
   }
 
   @SneakyThrows

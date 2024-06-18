@@ -5,24 +5,28 @@ type="docs"
 +++
 
 ```javascript
-const grpc = require('grpc');
-const protoDescriptor = grpc.load('./FactStore.proto');
-const RemoteFactStore = protoDescriptor.org.factcast.grpc.api.gen.RemoteFactStore;
+const grpc = require("grpc");
+const protoDescriptor = grpc.load("./FactStore.proto");
+const RemoteFactStore =
+	protoDescriptor.org.factcast.grpc.api.gen.RemoteFactStore;
 
-const store = new RemoteFactStore('localhost:9090', grpc.credentials.createInsecure());
+const store = new RemoteFactStore(
+	"localhost:9090",
+	grpc.credentials.createInsecure()
+);
 
 const subscription = store.subscribe({
-  json: JSON.stringify({
-    continuous: true,
-    specs: [
-      {
-        ns: 'myapp'
-      }
-    ]
-  })
-})
+	json: JSON.stringify({
+		continuous: true,
+		specs: [
+			{
+				ns: "myapp",
+			},
+		],
+	}),
+});
 
-subscription.on('data', (fact) => {
-  console.log(fact);
-})
+subscription.on("data", (fact) => {
+	console.log(fact);
+});
 ```

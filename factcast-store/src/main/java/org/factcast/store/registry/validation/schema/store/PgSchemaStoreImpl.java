@@ -16,12 +16,12 @@
 package org.factcast.store.registry.validation.schema.store;
 
 import io.micrometer.core.instrument.Tags;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.collections4.map.LRUMap;
+import lombok.extern.slf4j.Slf4j;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.validation.schema.SchemaConflictException;
 import org.factcast.store.registry.validation.schema.SchemaKey;
@@ -30,20 +30,29 @@ import org.factcast.store.registry.validation.schema.SchemaStore;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-/** @author uwe */
+/**
+ * @author uwe
+ */
+@Slf4j
 @RequiredArgsConstructor
 public class PgSchemaStoreImpl implements SchemaStore {
 
-  private final Map<SchemaKey, String> nearCache = new LRUMap<>(500);
+  static final String SELECT_NS_TYPE_VERSION = "SELECT ns, type, version FROM schemastore";
 
   @NonNull private final JdbcTemplate jdbcTemplate;
 
   @NonNull private final RegistryMetrics registryMetrics;
 
+  @NonNull private final StoreConfigurationProperties storeConfigurationProperties;
+
   @Override
   public void register(@NonNull SchemaSource key, @NonNull String schema)
       throws SchemaConflictException {
-    nearCache.put(key.toKey(), schema);
+
+    if (storeConfigurationProperties.isReadOnlyModeEnabled()) {
+      log.info("Skipping schema registration in read-only mode");
+      return;
+    }
 
     try {
       jdbcTemplate.update(
@@ -69,7 +78,8 @@ public class PgSchemaStoreImpl implements SchemaStore {
       // https://stackoverflow.com/questions/35888012/use-multiple-conflict-target-in-on-conflict-clause
 
       // as we have seen conflicts on the triple ns.type,version as well (which is surprising,
-      // because pkey should complain first, we handle this situation by giving it another try here:
+      // because pkey should complain first), we handle this situation by giving it another try
+      // here:
       jdbcTemplate.update(
           "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES (?,?,?,?,?,? ::"
               + " JSONB) ON CONFLICT ON CONSTRAINT schemastore_ns_type_version_key DO UPDATE set"
@@ -115,24 +125,29 @@ public class PgSchemaStoreImpl implements SchemaStore {
   }
 
   @Override
-  public synchronized Optional<String> get(@NonNull SchemaKey key) {
-    return Optional.ofNullable(
-        nearCache.computeIfAbsent(
-            key,
-            k -> {
-              List<String> schema =
-                  jdbcTemplate.queryForList(
-                      "SELECT jsonschema FROM schemastore WHERE ns=? AND type=? AND version=? ",
-                      String.class,
-                      key.ns(),
-                      key.type(),
-                      key.version());
+  public Optional<String> get(@NonNull SchemaKey key) {
+    List<String> schema =
+        jdbcTemplate.queryForList(
+            "SELECT jsonschema FROM schemastore WHERE ns=? AND type=? AND version=? ",
+            String.class,
+            key.ns(),
+            key.type(),
+            key.version());
 
-              if (!schema.isEmpty()) {
-                return schema.get(0);
-              } else {
-                return (String) null;
-              }
-            }));
+    if (schema.isEmpty()) {
+      return Optional.empty();
+    } else {
+      return Optional.ofNullable(schema.get(0));
+    }
+  }
+
+  @Override
+  public Set<SchemaKey> getAllSchemaKeys() {
+    return jdbcTemplate.queryForList(SELECT_NS_TYPE_VERSION).stream()
+        .map(
+            key ->
+                SchemaKey.of(
+                    (String) key.get("ns"), (String) key.get("type"), (Integer) key.get("version")))
+        .collect(Collectors.toSet());
   }
 }

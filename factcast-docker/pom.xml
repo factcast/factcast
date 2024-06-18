@@ -6,12 +6,13 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.5.9-SNAPSHOT</version>
+    <version>0.7.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-docker</artifactId>
   <properties>
     <docker.image.prefix>factcast</docker.image.prefix>
+    <sonar.skip>true</sonar.skip>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -90,24 +91,32 @@
       <plugin>
         <groupId>io.fabric8</groupId>
         <artifactId>docker-maven-plugin</artifactId>
-        <version>0.40.1</version>
+        <version>0.44.0</version>
         <executions>
           <execution>
             <id>default</id>
             <goals>
               <goal>build</goal>
             </goals>
+            <phase>pre-integration-test</phase>
           </execution>
         </executions>
         <configuration>
           <images>
             <image>
+              <registry>docker.io</registry>
               <name>factcast/factcast</name>
               <build>
                 <dockerFileDir>${project.basedir}</dockerFileDir>
                 <tags>
                   <tag>latest</tag>
                 </tags>
+                <buildx>
+                  <platforms>
+                    <platform>linux/amd64</platform>
+                    <platform>linux/arm64</platform>
+                  </platforms>
+                </buildx>
               </build>
             </image>
           </images>
@@ -128,7 +137,7 @@
           <plugin>
             <groupId>io.fabric8</groupId>
             <artifactId>docker-maven-plugin</artifactId>
-            <version>0.40.1</version>
+            <version>0.44.0</version>
             <executions>
               <execution>
                 <id>default</id>
@@ -141,6 +150,7 @@
             <configuration>
               <images>
                 <image>
+                  <registry>docker.io</registry>
                   <name>factcast/factcast</name>
                   <build>
                     <dockerFileDir>${project.basedir}</dockerFileDir>
@@ -148,6 +158,12 @@
                       <tag>latest</tag>
                       <tag>${project.version}</tag>
                     </tags>
+                    <buildx>
+                      <platforms>
+                        <platform>linux/amd64</platform>
+                        <platform>linux/arm64</platform>
+                      </platforms>
+                    </buildx>
                   </build>
                 </image>
               </images>

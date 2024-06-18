@@ -29,7 +29,7 @@ import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.internal.PgTestConfiguration;
-import org.factcast.store.test.IntegrationTest;
+import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -58,14 +58,14 @@ class PgListenerIntegrationTest {
     @AfterEach
     @SneakyThrows
     void unregisterListener() {
-      registerTestAsListener(pgConnectionSupplier.get(), "UNLISTEN " + CHANNEL_FACT_INSERT);
+      registerTestAsListener(pgConnectionSupplier.get("test"), "UNLISTEN " + CHANNEL_FACT_INSERT);
     }
 
     @Test
     @SneakyThrows
     void containsTransactionId() {
       // INIT
-      var pc = pgConnectionSupplier.get();
+      var pc = pgConnectionSupplier.get("test");
 
       // let us also register as LISTENER
       registerTestAsListener(pc, LISTEN_SQL);

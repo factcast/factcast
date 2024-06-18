@@ -22,6 +22,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
@@ -61,6 +62,7 @@ public final class FactCastJson {
   }
 
   private static void initializeObjectMapper() {
+    // don't even think about changing the configuration, ever.
     objectMapper = new ObjectMapper();
     objectMapper
         .setVisibility(PropertyAccessor.FIELD, Visibility.ANY)
@@ -105,6 +107,10 @@ public final class FactCastJson {
 
   public static ObjectNode newObjectNode() {
     return objectMapper.getNodeFactory().objectNode();
+  }
+
+  public static ArrayNode newArrayNode() {
+    return objectMapper.getNodeFactory().arrayNode();
   }
 
   @SneakyThrows

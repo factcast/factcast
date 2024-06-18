@@ -16,9 +16,9 @@
 package org.factcast.core.subscription;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.util.UUID;
 import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.factcast.core.FactStreamPosition;
 
 @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
 public interface InternalSubscription extends Subscription {
@@ -26,7 +26,7 @@ public interface InternalSubscription extends Subscription {
 
   void notifyCatchup();
 
-  void notifyFastForward(@NonNull UUID factId);
+  void notifyFastForward(@NonNull FactStreamPosition pos);
 
   void notifyFactStreamInfo(@NonNull FactStreamInfo info);
 
@@ -37,8 +37,4 @@ public interface InternalSubscription extends Subscription {
   void notifyElement(@NonNull Fact e) throws TransformationException;
 
   SubscriptionImpl onClose(Runnable e);
-
-  java.util.concurrent.atomic.AtomicLong factsNotTransformed();
-
-  java.util.concurrent.atomic.AtomicLong factsTransformed();
 }

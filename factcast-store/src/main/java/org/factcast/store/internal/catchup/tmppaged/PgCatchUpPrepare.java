@@ -74,7 +74,7 @@ public class PgCatchUpPrepare {
           };
       return jdbc.execute(catchupSQL, callback);
     } finally {
-      statementHolder.statement(null);
+      statementHolder.clear();
     }
   }
 }

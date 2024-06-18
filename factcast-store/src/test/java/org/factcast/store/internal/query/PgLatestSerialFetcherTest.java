@@ -36,12 +36,6 @@ public class PgLatestSerialFetcherTest {
   @Mock SqlRowSet rs;
 
   @Test
-  public void testRetrieveLatestSerRetuns0WhenExceptionThrown() {
-    when(jdbc.queryForRowSet(anyString())).thenThrow(UnsupportedOperationException.class);
-    assertEquals(0, uut.retrieveLatestSer());
-  }
-
-  @Test
   public void shouldReturn0IfNotFound() {
     when(jdbc.queryForRowSet(anyString())).thenReturn(rs);
     when(rs.next()).thenReturn(false);

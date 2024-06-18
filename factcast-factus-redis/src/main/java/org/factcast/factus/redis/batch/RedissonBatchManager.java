@@ -70,7 +70,9 @@ public class RedissonBatchManager {
     return block.apply(currentBatch);
   }
 
-  /** @return true if tx was started, false if there was one running */
+  /**
+   * @return true if tx was started, false if there was one running
+   */
   public boolean startOrJoin() {
     if (currentBatch == null) {
       currentBatch = redisson.createBatch(options);

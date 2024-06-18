@@ -4,7 +4,7 @@ codecov:
 
 coverage:
   precision: 2
-  round: down
+  round: up
   range: "80...100"
 
   status:
@@ -12,8 +12,7 @@ coverage:
       default:
         # basic
         target: auto
-        threshold: 2%
-        base: auto
+        threshold: 5%
 
 parsers:
   gcov:
@@ -32,6 +31,7 @@ ignore:
   - "**/src/test/**/*.java"
   - "**/src/java/**/*Configuration.java"
   - "**/src/java/**/*Exception.java"
+  - "**/src/java/**/*Helper.java"
   - "**/src/java/**/*Properties.java"
   - "**/org/factcast/test/**/*.java"
   - "**/factcast-examples/**/*.java"

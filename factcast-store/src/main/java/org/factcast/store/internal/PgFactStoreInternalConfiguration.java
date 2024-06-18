@@ -19,25 +19,29 @@ import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.util.concurrent.*;
+import java.util.concurrent.Executors;
 import javax.sql.DataSource;
+import liquibase.integration.spring.SpringLiquibase;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.LockProvider;
+import net.javacrumbs.shedlock.provider.inmemory.InMemoryLockProvider;
 import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
 import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
 import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMode;
+import net.javacrumbs.shedlock.support.KeepAliveLockProvider;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.TokenStore;
-import org.factcast.core.subscription.FactTransformerService;
-import org.factcast.core.subscription.FactTransformersFactory;
 import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.subscription.transformation.FactTransformerService;
+import org.factcast.store.IsReadAndWriteEnv;
+import org.factcast.store.IsReadOnlyEnv;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.catchup.fetching.PgFetchingCatchUpFactory;
 import org.factcast.store.internal.catchup.tmppaged.PgTmpPagedCatchUpFactory;
 import org.factcast.store.internal.check.IndexCheck;
-import org.factcast.store.internal.filter.PgBlacklist;
+import org.factcast.store.internal.filter.blacklist.*;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.listen.PgConnectionTester;
 import org.factcast.store.internal.listen.PgListener;
@@ -45,14 +49,23 @@ import org.factcast.store.internal.lock.AdvisoryWriteLock;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
-import org.factcast.store.internal.snapcache.PgSnapshotCache;
-import org.factcast.store.internal.snapcache.PgSnapshotCacheConfiguration;
+import org.factcast.store.internal.script.JSEngineFactory;
+import org.factcast.store.internal.snapcache.SnapshotCache;
+import org.factcast.store.internal.snapcache.SnapshotCacheConfiguration;
 import org.factcast.store.internal.tail.PGTailIndexingConfiguration;
+import org.factcast.store.internal.telemetry.PgStoreTelemetry;
+import org.factcast.store.registry.PgSchemaStoreChangeListener;
+import org.factcast.store.registry.SchemaRegistry;
 import org.factcast.store.registry.SchemaRegistryConfiguration;
+import org.factcast.store.registry.transformation.cache.PgTransformationStoreChangeListener;
+import org.factcast.store.registry.transformation.cache.TransformationCache;
+import org.factcast.store.registry.transformation.chains.TransformationChains;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.retry.annotation.EnableRetry;
@@ -76,28 +89,30 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableSchedulerLock(defaultLockAtMostFor = "PT30m", interceptMode = InterceptMode.PROXY_METHOD)
 @Import({
   SchemaRegistryConfiguration.class,
-  PgSnapshotCacheConfiguration.class,
+  SnapshotCacheConfiguration.class,
   PGTailIndexingConfiguration.class
 })
 public class PgFactStoreInternalConfiguration {
 
   @Bean
   @ConditionalOnMissingBean(EventBus.class)
-  public EventBus eventBus() {
-    return new AsyncEventBus(getClass().getSimpleName(), Executors.newCachedThreadPool());
+  public EventBus eventBus(@NonNull PgMetrics metrics) {
+    return new AsyncEventBus(
+        getClass().getSimpleName(),
+        metrics.monitor(Executors.newCachedThreadPool(), "pg-listener"));
   }
 
   @Bean
   public PgCatchupFactory pgCatchupFactory(
       StoreConfigurationProperties props,
       PgConnectionSupplier supp,
-      PgFactIdToSerialMapper serMapper) {
-    // noinspection SwitchStatementWithTooFewBranches
+      PgMetrics metrics,
+      FactTransformerService transformerService) {
     switch (props.getCatchupStrategy()) {
       case PAGED:
-        return new PgTmpPagedCatchUpFactory(supp, props);
+        return new PgTmpPagedCatchUpFactory(supp, props, metrics, transformerService);
       case FETCHING:
-        return new PgFetchingCatchUpFactory(supp, props);
+        return new PgFetchingCatchUpFactory(supp, props, metrics, transformerService);
       default:
         throw new IllegalArgumentException("Unmapped Strategy: " + props.getCatchupStrategy());
     }
@@ -109,24 +124,35 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
+  public PgStoreTelemetry telemetry(@NonNull PgMetrics metrics) {
+    return new PgStoreTelemetry(metrics);
+  }
+
+  @Bean
   public FactStore factStore(
       JdbcTemplate jdbcTemplate,
       PgSubscriptionFactory subscriptionFactory,
       TokenStore tokenStore,
+      SchemaRegistry schemaRegistry,
       FactTableWriteLock lock,
       FactTransformerService factTransformerService,
       PgFactIdToSerialMapper pgFactIdToSerialMapper,
-      PgSnapshotCache snapCache,
-      PgMetrics pgMetrics) {
+      SnapshotCache snapCache,
+      PgMetrics pgMetrics,
+      StoreConfigurationProperties props,
+      PlatformTransactionManager platformTransactionManager) {
     return new PgFactStore(
         jdbcTemplate,
         subscriptionFactory,
         tokenStore,
+        schemaRegistry,
         lock,
         factTransformerService,
         pgFactIdToSerialMapper,
         snapCache,
-        pgMetrics);
+        pgMetrics,
+        props,
+        platformTransactionManager);
   }
 
   @Bean
@@ -135,21 +161,27 @@ public class PgFactStoreInternalConfiguration {
       EventBus eventBus,
       PgFactIdToSerialMapper pgFactIdToSerialMapper,
       PgLatestSerialFetcher pgLatestSerialFetcher,
+      StoreConfigurationProperties props,
       PgCatchupFactory pgCatchupFactory,
-      FactTransformersFactory transformerFactory,
       FastForwardTarget target,
       PgMetrics metrics,
-      PgBlacklist blacklist) {
+      Blacklist blacklist,
+      JSEngineFactory ef,
+      FactTransformerService transformerService,
+      PgStoreTelemetry telemetry) {
     return new PgSubscriptionFactory(
         jdbcTemplate,
         eventBus,
         pgFactIdToSerialMapper,
         pgLatestSerialFetcher,
+        props,
         pgCatchupFactory,
-        transformerFactory,
         target,
         metrics,
-        blacklist);
+        blacklist,
+        transformerService,
+        ef,
+        telemetry);
   }
 
   @Bean
@@ -183,8 +215,15 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
-  public PgTokenStore pgTokenStore(JdbcTemplate jdbcTemplate, PgMetrics metrics) {
+  @IsReadAndWriteEnv
+  public TokenStore pgTokenStore(JdbcTemplate jdbcTemplate, PgMetrics metrics) {
     return new PgTokenStore(jdbcTemplate, metrics);
+  }
+
+  @Bean
+  @IsReadOnlyEnv
+  public TokenStore roTokenStore() {
+    return new ReadOnlyTokenStore();
   }
 
   @Bean
@@ -197,7 +236,9 @@ public class PgFactStoreInternalConfiguration {
     return new DataSourceTransactionManager(ds);
   }
 
-  /** @return A fallback {@code MeterRegistry} in case none is configured. */
+  /**
+   * @return A fallback {@code MeterRegistry} in case none is configured.
+   */
   @Bean
   @ConditionalOnMissingBean
   public MeterRegistry meterRegistry() {
@@ -205,15 +246,27 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
+  @IsReadAndWriteEnv
   public LockProvider lockProvider(DataSource dataSource) {
-    log.debug("Configuring lock provider.");
+    log.debug("Configuring lock provider: JDBC.");
+
     var config =
         JdbcTemplateLockProvider.Configuration.builder()
             .withJdbcTemplate(new JdbcTemplate(dataSource))
             .usingDbTime()
             .build();
 
-    return new JdbcTemplateLockProvider(config);
+    return new KeepAliveLockProvider(
+        new JdbcTemplateLockProvider(config), Executors.newSingleThreadScheduledExecutor());
+  }
+
+  @Bean
+  @IsReadOnlyEnv
+  public LockProvider inMemoryLockProvider() {
+    log.debug("Configuring lock provider: IN MEMORY.");
+
+    return new KeepAliveLockProvider(
+        new InMemoryLockProvider(), Executors.newSingleThreadScheduledExecutor());
   }
 
   @Bean
@@ -222,12 +275,52 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
-  public PgBlacklist.Fetcher blacklistFetcher(JdbcTemplate jdbc) {
-    return new PgBlacklist.Fetcher(jdbc);
+  public Blacklist blacklist() {
+    return new Blacklist();
   }
 
   @Bean
-  public PgBlacklist blacklist(EventBus bus, PgBlacklist.Fetcher fetcher) {
-    return new PgBlacklist(bus, fetcher);
+  @ConditionalOnProperty(value = "factcast.type", matchIfMissing = true)
+  public BlacklistDataProvider blacklistProvider(
+      ResourceLoader resourceLoader,
+      Blacklist blacklist,
+      EventBus eventBus,
+      JdbcTemplate jdbc,
+      BlacklistConfigurationProperties blacklistConfiguration) {
+    switch (blacklistConfiguration.getType()) {
+      case POSTGRES:
+        return new PgBlacklistDataProvider(eventBus, jdbc, blacklist);
+      case RESOURCE:
+        return new ResourceBasedBlacklistDataProvider(
+            resourceLoader, blacklistConfiguration, blacklist);
+      default:
+        log.warn(
+            "No Provider found for blacklist type {}. Using default postgres provider.",
+            blacklistConfiguration.getType());
+        return new PgBlacklistDataProvider(eventBus, jdbc, blacklist);
+    }
+  }
+
+  @Bean
+  public PgSchemaStoreChangeListener pgSchemaStoreChangeListener(
+      EventBus bus, SchemaRegistry registry) {
+    return new PgSchemaStoreChangeListener(bus, registry);
+  }
+
+  @Bean
+  public PgTransformationStoreChangeListener pgTransformationStoreChangeListener(
+      EventBus bus,
+      TransformationCache transformationCache,
+      TransformationChains transformationChains) {
+    return new PgTransformationStoreChangeListener(bus, transformationCache, transformationChains);
+  }
+
+  // we create a custom SpringLiquibase bean to avoid autoconfiguration and configure it to not run
+  @Bean
+  @IsReadOnlyEnv
+  public SpringLiquibase springLiquibase() {
+    final var liquibase = new SpringLiquibase();
+    liquibase.setShouldRun(false);
+    return liquibase;
   }
 }

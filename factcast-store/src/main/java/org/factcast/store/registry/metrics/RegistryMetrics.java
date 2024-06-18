@@ -16,9 +16,12 @@
 package org.factcast.store.registry.metrics;
 
 import io.micrometer.core.instrument.Tags;
-import java.util.function.Supplier;
+import java.util.concurrent.ExecutorService;
+import java.util.function.*;
 import lombok.Getter;
 import lombok.NonNull;
+import org.factcast.core.util.RunnableWithException;
+import org.factcast.core.util.SupplierWithException;
 
 public interface RegistryMetrics {
   String TAG_STATUS_CODE_KEY = "code";
@@ -48,6 +51,10 @@ public interface RegistryMetrics {
   void count(EVENT event);
 
   void count(EVENT event, Tags tags);
+
+  void increase(EVENT transformationCacheHit, int hits);
+
+  ExecutorService monitor(ExecutorService executor, String name);
 
   enum OP {
     REFRESH_REGISTRY("refreshRegistry"),

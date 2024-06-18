@@ -19,6 +19,9 @@ import io.micrometer.core.instrument.MeterRegistry;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.PgFactStoreConfiguration;
+import org.factcast.store.internal.script.JSEngineFactory;
+import org.factcast.store.internal.script.graaljs.GraalJSEngineFactory;
+import org.factcast.test.PostgresVersion;
 import org.mockito.Mockito;
 import org.postgresql.Driver;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
@@ -48,13 +51,15 @@ public class PgTestConfiguration {
     String url = System.getenv("pg_url");
     if (url == null) {
       log.info("Trying to start postgres testcontainer");
-      PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:11.5");
+      PostgreSQLContainer<?> postgres =
+          new PostgreSQLContainer<>("postgres:" + PostgresVersion.get());
       postgres.start();
       url = postgres.getJdbcUrl();
       System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
       System.setProperty("spring.datasource.url", url);
       System.setProperty("spring.datasource.username", postgres.getUsername());
       System.setProperty("spring.datasource.password", postgres.getPassword());
+      System.setProperty("spring.datasource.tomcat.connectionProperties", "foo=bar;");
     } else {
       log.info("Using predefined external postgres URL: " + url);
       // use predefined url
@@ -67,5 +72,10 @@ public class PgTestConfiguration {
   @Primary
   public PgMetrics pgMetrics(@NonNull MeterRegistry registry) {
     return Mockito.spy(new PgMetrics(registry));
+  }
+
+  @Bean
+  JSEngineFactory engineFactory() {
+    return new GraalJSEngineFactory();
   }
 }

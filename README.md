@@ -1,4 +1,4 @@
-# FactCast 
+# FactCast
 
 #### is a 'good enough' event store using PostgreSQL for persistence, and offers remoting via GRPC.
 
@@ -10,12 +10,11 @@ It is not yet released, the API may change, the documentation is incomplete.
 Status](https://github.com/factcast/factcast/workflows/maven/badge.svg?branch=master)](https://github.com/factcast/factcast/actions)
 [![codecov](https://codecov.io/gh/factcast/factcast/branch/master/graph/badge.svg)](https://codecov.io/gh/factcast/factcast)
 [![CodeFactor](https://www.codefactor.io/repository/github/factcast/factcast/badge)](https://www.codefactor.io/repository/github/factcast/factcast)
-[![MavenCentral](https://img.shields.io/maven-central/v/org.factcast/factcast/0.5.svg)](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.factcast%22%20v:0.5)
+[![MavenCentral](https://img.shields.io/maven-central/v/org.factcast/factcast/0.7.svg)](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.factcast%22%20v:0.7)
 ![Docker Image Version (latest semver)](https://img.shields.io/docker/v/factcast/factcast?label=dockerhub)
 <a href="https://www.apache.org/licenses/LICENSE-2.0">
-    <img class="inline" src="https://img.shields.io/badge/license-ASL2-green.svg?style=flat">
+<img class="inline" src="https://img.shields.io/badge/license-ASL2-green.svg?style=flat">
 </a>
-
 
 ... under active development.
 
@@ -34,6 +33,4 @@ Gee, i wish there was a solution, that is flexible, platform neutral and could b
 
 [Read more on factcast.org](https://factcast.org)
 
-[Detailed changlelog](https://docs.factcast.org/changelog)
-
-
+[Guide to Contributing](CONTRIBUTING.md)

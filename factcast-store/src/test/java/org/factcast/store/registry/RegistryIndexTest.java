@@ -18,7 +18,12 @@ package org.factcast.store.registry;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.core.io.AbstractResource;
+import org.springframework.core.io.ByteArrayResource;
 
 public class RegistryIndexTest {
 
@@ -30,5 +35,20 @@ public class RegistryIndexTest {
     RegistryIndex index = new ObjectMapper().readValue(json, RegistryIndex.class);
 
     assertEquals("84e69a2d3e3d195abb986aad22b95ffd", index.schemes().get(0).hash());
+  }
+
+  @Test
+  void wrapsException() {
+    AbstractResource r = Mockito.spy(new ByteArrayResource("foo".getBytes()));
+    try {
+      Mockito.when(r.getInputStream()).thenThrow(new IOException("expected"));
+    } catch (IOException e) {
+    }
+
+    Assertions.assertThatThrownBy(
+            () -> {
+              RegistryIndex.fetch(r);
+            })
+        .isInstanceOf(SchemaRegistryUnavailableException.class);
   }
 }

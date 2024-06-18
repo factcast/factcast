@@ -15,11 +15,8 @@
  */
 package org.factcast.itests.factus.proj;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
+import java.util.concurrent.*;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.FilterByScript;
@@ -29,7 +26,7 @@ import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.factus.event.UserCreated;
 
 @Slf4j
-@ProjectionMetaData(serial = 1)
+@ProjectionMetaData(revision = 1)
 public class LocalUserNamesFilterByScript extends LocalManagedProjection {
   ConcurrentHashMap<UUID, String> map = new ConcurrentHashMap<>();
 

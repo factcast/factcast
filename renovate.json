@@ -7,9 +7,14 @@
   "js": {
     "enabled": false
   },
+  "baseBranches": [
+    "master"
+  ],
   "packageRules": [
     {
-      "matchManagers": ["npm"],
+      "matchManagers": [
+        "npm"
+      ],
       "enabled": false
     },
     {
@@ -39,7 +44,9 @@
   ],
   "labels": [
     "dependencies"
-  ]
+  ],
+   "prConcurrentLimit": 40,
+   "prHourlyLimit": 40
 }
 
 

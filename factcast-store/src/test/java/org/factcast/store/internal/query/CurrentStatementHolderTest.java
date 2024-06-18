@@ -17,6 +17,7 @@ package org.factcast.store.internal.query;
 
 import static org.mockito.Mockito.*;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import lombok.SneakyThrows;
@@ -24,14 +25,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class CurrentStatementHolderTest {
   @Mock private Statement statement;
-  @InjectMocks private CurrentStatementHolder underTest;
+
+  @Mock private Connection connection;
+
+  @Spy private CurrentStatementHolder underTest;
 
   @Nested
   class WhenClosing {
@@ -46,9 +50,13 @@ class CurrentStatementHolderTest {
     @SneakyThrows
     @Test
     void cancelsStatement() {
+      when(statement.getConnection()).thenReturn(connection);
+
       underTest.statement(statement);
+
       underTest.close();
       verify(statement).cancel();
+      verify(connection).rollback();
     }
 
     @SneakyThrows

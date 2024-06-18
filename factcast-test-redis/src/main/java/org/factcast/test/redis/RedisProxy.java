@@ -15,12 +15,14 @@
  */
 package org.factcast.test.redis;
 
+import eu.rekawek.toxiproxy.ToxiproxyClient;
 import lombok.NonNull;
 import org.factcast.test.toxi.AbstractToxiProxySupplier;
 import org.testcontainers.containers.ToxiproxyContainer;
 
 public class RedisProxy extends AbstractToxiProxySupplier {
-  public RedisProxy(@NonNull ToxiproxyContainer.ContainerProxy proxy) {
-    super(proxy);
+  public RedisProxy(
+      @NonNull ToxiproxyContainer.ContainerProxy proxy, @NonNull ToxiproxyClient client) {
+    super(proxy, proxy.getName(), client);
   }
 }

@@ -15,12 +15,11 @@
  */
 package org.factcast.store.registry.validation;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import com.google.common.annotations.VisibleForTesting;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.*;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -34,12 +33,8 @@ import org.factcast.core.FactValidationException;
 @RequiredArgsConstructor
 public class FactValidationAspect {
 
-  public static final int MINIMUM_FACT_LIST_SIZE_TO_GO_PARALLEL = 10;
+  public static final int MAX_ERROR_MESSAGES = 25;
   private final FactValidator validator;
-
-  // not hogging the common FJP. Also limiting parallelism to less of what the common pool has.
-  private static final ForkJoinPool validationPool =
-      new ForkJoinPool((int) Math.abs(Runtime.getRuntime().availableProcessors() / 1.5));
 
   @SuppressWarnings("unchecked")
   @Around("execution(public void org.factcast.core.store.FactStore.publish(*))")
@@ -53,18 +48,36 @@ public class FactValidationAspect {
     return joinPoint.proceed();
   }
 
-  private void validate(List<? extends Fact> facts)
-      throws ExecutionException, InterruptedException {
-    List<FactValidationError> errors;
-    if (facts.size() >= MINIMUM_FACT_LIST_SIZE_TO_GO_PARALLEL) {
-      errors = validationPool.submit(() -> validate(facts.parallelStream())).get();
-    } else {
-      errors = validate(facts.stream());
-    }
+  private void validate(List<? extends Fact> facts) {
+    Stream<? extends Fact> stream = facts.stream().parallel();
+    List<FactValidationError> errors = validate(stream);
 
-    if (!errors.isEmpty())
-      throw new FactValidationException(
-          errors.stream().map(FactValidationError::toString).collect(Collectors.toList()));
+    if (!errors.isEmpty()) {
+      throw new FactValidationException(extractMessages(errors));
+    }
+  }
+
+  @NonNull
+  @VisibleForTesting
+  static List<String> extractMessages(@NonNull List<FactValidationError> errors) {
+    // see #2105
+
+    // remove duplicates
+    LinkedHashSet<FactValidationError> orderedSet = new LinkedHashSet<>(errors);
+
+    List<String> errMsgs =
+        orderedSet.stream()
+            // limit the amount of messages
+            .limit(MAX_ERROR_MESSAGES)
+            .map(FactValidationError::toString)
+            .collect(Collectors.toList());
+    int numberOfErrors = orderedSet.size();
+    if (numberOfErrors > MAX_ERROR_MESSAGES)
+      errMsgs.add(
+          "... "
+              + (numberOfErrors - MAX_ERROR_MESSAGES)
+              + " more validation errors were suppressed");
+    return errMsgs;
   }
 
   private List<FactValidationError> validate(Stream<? extends Fact> stream) {

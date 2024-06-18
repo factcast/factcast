@@ -15,22 +15,27 @@
  */
 package org.factcast.core.snap.redisson;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
-import java.util.UUID;
-import lombok.NonNull;
+import java.util.*;
 import lombok.SneakyThrows;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
-import org.mockito.Mock;
-import org.redisson.api.RMap;
+import org.factcast.test.IntegrationTest;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.redisson.api.RedissonClient;
-import org.redisson.spring.starter.RedissonAutoConfiguration;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.redisson.client.codec.Codec;
+import org.redisson.codec.Kryo5Codec;
+import org.redisson.spring.starter.RedissonAutoConfigurationV2;
 import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.containers.GenericContainer;
@@ -38,9 +43,10 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest
-@ContextConfiguration(classes = {RedissonAutoConfiguration.class, RedisAutoConfiguration.class})
+@ContextConfiguration(classes = {RedissonAutoConfigurationV2.class, RedisAutoConfiguration.class})
 @ExtendWith(SpringExtension.class)
 @Testcontainers
+@IntegrationTest
 class RedissonSnapshotCacheTest {
 
   @SuppressWarnings("rawtypes")
@@ -48,26 +54,26 @@ class RedissonSnapshotCacheTest {
   static final GenericContainer redis =
       new GenericContainer<>("redis:5.0.3-alpine").withExposedPorts(6379);
 
-  @Mock private RMap<String, Long> index;
+  private final RedissonSnapshotProperties props =
+      new RedissonSnapshotProperties()
+          .setSnapshotCacheRedissonCodec(RedissonSnapshotProperties.RedissonCodec.RedissonDefault)
+          .setDeleteSnapshotStaleForDays(90);
 
   @BeforeAll
   public static void startContainers() throws InterruptedException {
-    System.setProperty("spring.redis.host", redis.getHost());
-    System.setProperty("spring.redis.port", String.valueOf(redis.getMappedPort(6379)));
+    System.setProperty("spring.data.redis.host", redis.getHost());
+    System.setProperty("spring.data.redis.port", String.valueOf(redis.getMappedPort(6379)));
   }
 
-  @Autowired private RedissonClient redisson;
+  @SpyBean private RedissonClient redisson;
 
   private RedissonSnapshotCache underTest;
 
   @Nested
   class WhenGettingSnapshot {
-
-    private @NonNull SnapshotId id;
-
     @BeforeEach
     void setup() {
-      underTest = new RedissonSnapshotCache(redisson, 90);
+      underTest = new RedissonSnapshotCache(redisson, props);
     }
 
     @Test
@@ -87,11 +93,9 @@ class RedissonSnapshotCacheTest {
 
   @Nested
   class WhenClearingSnapshot {
-    private @NonNull SnapshotId id;
-
     @BeforeEach
     void setup() {
-      underTest = new RedissonSnapshotCache(redisson, 90);
+      underTest = new RedissonSnapshotCache(redisson, props);
     }
 
     @Test
@@ -114,7 +118,7 @@ class RedissonSnapshotCacheTest {
 
     @BeforeEach
     void setup() {
-      underTest = new RedissonSnapshotCache(redisson, 90);
+      underTest = new RedissonSnapshotCache(redisson, props);
     }
 
     @Test
@@ -128,9 +132,9 @@ class RedissonSnapshotCacheTest {
       Snapshot snap2 = new Snapshot(s2, UUID.randomUUID(), "foo".getBytes(), false);
 
       underTest.setSnapshot(snap1);
-      sleep(10);
+      sleep(2000);
       underTest.setSnapshot(snap2);
-
+      sleep(500); // wait for async op
       {
         // assert all buckets have a ttl
         long ttl1 = redisson.getBucket(underTest.createKeyFor(s1)).remainTimeToLive();
@@ -141,15 +145,17 @@ class RedissonSnapshotCacheTest {
         assertThat(ttl1).isLessThanOrEqualTo(ttl2);
       }
 
-      sleep(500);
+      sleep(2000);
 
       underTest.getSnapshot(s1); // touches it
 
-      sleep(100); // wait fro async op
+      sleep(500); // wait for async op
       {
         long ttl1 = redisson.getBucket(underTest.createKeyFor(s1)).remainTimeToLive();
         long ttl2 = redisson.getBucket(underTest.createKeyFor(s2)).remainTimeToLive();
 
+        assertThat(ttl1).isGreaterThan(7775990000L);
+        assertThat(ttl2).isGreaterThan(7775990000L);
         assertThat(ttl1).isGreaterThan(ttl2);
       }
     }
@@ -157,6 +163,37 @@ class RedissonSnapshotCacheTest {
     @SneakyThrows
     private void sleep(long millis) {
       Thread.sleep(millis);
+    }
+  }
+
+  @Nested
+  class WhenCodecIsSet {
+
+    private final ArgumentCaptor<Codec> argument = ArgumentCaptor.forClass(Codec.class);
+
+    @BeforeEach
+    void setup() {
+      underTest =
+          new RedissonSnapshotCache(
+              redisson,
+              new RedissonSnapshotProperties()
+                  .setSnapshotCacheRedissonCodec(
+                      RedissonSnapshotProperties.RedissonCodec.Kryo5Codec)
+                  .setDeleteSnapshotStaleForDays(90));
+    }
+
+    @Test
+    void testUsageOfCodecFromProperties() {
+      SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
+      Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
+
+      underTest.setSnapshot(snap);
+      underTest.getSnapshot(id);
+
+      verify(redisson, times(1)).getMap(any(), argument.capture());
+      verify(redisson, times(2)).getBucket(any(), argument.capture());
+
+      argument.getAllValues().forEach(codec -> assertThat(codec).isInstanceOf(Kryo5Codec.class));
     }
   }
 }

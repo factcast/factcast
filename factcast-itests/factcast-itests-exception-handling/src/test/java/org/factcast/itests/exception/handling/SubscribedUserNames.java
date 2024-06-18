@@ -16,12 +16,12 @@
 package org.factcast.itests.exception.handling;
 
 import java.time.Duration;
-import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.factus.HandlerFor;
 import org.factcast.factus.projection.SubscribedProjection;
 import org.factcast.factus.projection.WriterToken;
@@ -33,7 +33,7 @@ public class SubscribedUserNames implements SubscribedProjection {
 
   @Getter private Throwable exception;
 
-  private UUID factStreamPosition = null;
+  private FactStreamPosition factStreamPosition = null;
 
   @HandlerFor(ns = "users", type = "UserCreated", version = 2)
   void apply(Fact f) {}
@@ -52,12 +52,12 @@ public class SubscribedUserNames implements SubscribedProjection {
   }
 
   @Override
-  public UUID factStreamPosition() {
+  public FactStreamPosition factStreamPosition() {
     return factStreamPosition;
   }
 
   @Override
-  public void factStreamPosition(@NonNull UUID factStreamPosition) {
+  public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {
     this.factStreamPosition = factStreamPosition;
   }
 

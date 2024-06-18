@@ -24,11 +24,13 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.FactHeader;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.spec.FactSpecCoordinates;
 import org.factcast.factus.*;
@@ -49,7 +51,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
   private final Projection projection;
   private final Map<FactSpecCoordinates, Dispatcher> dispatchInfo;
   private final List<ProjectorLens> lenses;
-  private UUID lastStateSet = null;
+  private FactStreamPosition lastStateSet = null;
 
   interface TargetObjectResolver extends Function<Projection, Object> {}
 
@@ -147,8 +149,9 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
                 .reduce(false, (r, lens) -> r || lens);
 
         if (!skip) {
-          ((FactStreamPositionAware) projection).factStreamPosition(factId);
-          lastStateSet = factId;
+          FactStreamPosition pos = FactStreamPosition.from(f);
+          ((FactStreamPositionAware) projection).factStreamPosition(pos);
+          lastStateSet = pos;
         }
       }
 
@@ -238,11 +241,11 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
   }
 
   @Override
-  public void onCatchup(UUID idOfLastFactApplied) {
+  public void onCatchup(@Nullable FactStreamPosition idOfLastFactApplied) {
     // needs to be taken care if BEFORE delegating to the lenses as they might commit/execute and we
     // want that state in there.
     if (projection instanceof FactStreamPositionAware) {
-      if (idOfLastFactApplied != null && (idOfLastFactApplied != lastStateSet)) {
+      if (idOfLastFactApplied != null && (!(idOfLastFactApplied.equals(lastStateSet)))) {
         ((FactStreamPositionAware) projection).factStreamPosition(idOfLastFactApplied);
       }
     }

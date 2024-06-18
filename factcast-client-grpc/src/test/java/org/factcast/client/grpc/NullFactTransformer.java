@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2022 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,11 @@
  */
 package org.factcast.client.grpc;
 
-import lombok.NonNull;
-import org.factcast.core.Fact;
-import org.factcast.core.subscription.FactTransformers;
+import org.factcast.core.subscription.transformation.FactTransformers;
+import org.factcast.core.subscription.transformation.RequestedVersions;
 
-public class NullFactTransformer implements FactTransformers {
-
-  @Override
-  public @NonNull Fact transformIfNecessary(@NonNull Fact e) {
-    return e;
+public class NullFactTransformer extends FactTransformers {
+  public NullFactTransformer() {
+    super(new RequestedVersions());
   }
 }

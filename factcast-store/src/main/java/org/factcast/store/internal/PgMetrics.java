@@ -15,8 +15,15 @@
  */
 package org.factcast.store.internal;
 
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.Timer.Sample;
+import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -40,9 +47,15 @@ public class PgMetrics implements InitializingBean {
 
   @NonNull
   public DistributionSummary distributionSummary(@NonNull StoreMetrics.VALUE operation) {
-    Tags tags = forOperation(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
+    return distributionSummary(operation, Tags.empty());
+  }
+
+  @NonNull
+  public DistributionSummary distributionSummary(
+      @NonNull StoreMetrics.VALUE operation, @NonNull Tags tags) {
+    Tags finalTags = forOperation(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE).and(tags);
     return DistributionSummary.builder(StoreMetrics.METER_METRIC_NAME)
-        .tags(tags)
+        .tags(finalTags)
         .register(registry);
   }
 
@@ -105,6 +118,10 @@ public class PgMetrics implements InitializingBean {
   @NonNull
   public Timer timer(@NonNull StoreMetrics.OP operation) {
     return timer(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
+  }
+
+  public ExecutorService monitor(@NonNull ExecutorService executor, @NonNull String name) {
+    return ExecutorServiceMetrics.monitor(registry, executor, name);
   }
 
   @Override

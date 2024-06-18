@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.5.9-SNAPSHOT</version>
+    <version>0.7.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-server-grpc</artifactId>
@@ -40,6 +40,10 @@
       <artifactId>factcast-core</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-server-security</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-autoconfigure</artifactId>
     </dependency>
@@ -51,24 +55,30 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-security</artifactId>
     </dependency>
+    <!-- will be deprecated -->
     <dependency>
       <groupId>net.jpountz.lz4</groupId>
       <artifactId>lz4</artifactId>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.xerial.snappy</groupId>
       <artifactId>snappy-java</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <!-- /will be deprecated -->
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-grpc-lz4</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-compress</artifactId>
-      <version>1.21</version>
-      <scope>test</scope>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-grpc-snappy</artifactId>
     </dependency>
     <dependency>
       <groupId>com.github.vladimir-bukhtoyarov</groupId>
       <artifactId>bucket4j-core</artifactId>
-      <version>7.5.0</version>
+      <version>8.0.1</version>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -77,6 +87,7 @@
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-test</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -84,9 +95,11 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-inline</artifactId>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-core</artifactId>
+      <version>${project.version}</version>
       <scope>test</scope>
+      <type>test-jar</type>
     </dependency>
   </dependencies>
 </project>

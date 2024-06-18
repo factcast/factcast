@@ -63,7 +63,7 @@ class PgCatchUpFetchTmpPageTest {
 
       verify(jdbc).query(Mockito.anyString(), captor.capture(), Mockito.any(PgFactExtractor.class));
       PreparedStatementSetter value = captor.getValue();
-      verify(statementHolder).statement(null);
+      verify(statementHolder).clear();
 
       PreparedStatement ps = mock(PreparedStatement.class);
       value.setValues(ps);

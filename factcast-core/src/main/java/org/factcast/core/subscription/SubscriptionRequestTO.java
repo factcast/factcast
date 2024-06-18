@@ -25,11 +25,8 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.util.FactCastJson;
 
 /**
- * Implementation of {@link SubscriptionRequest}, that is supposed to be used when transfered on the
- * wire to a remote store (for instance via GRPC or REST)
- *
- * <p>Note that FactSpec.forMark() is silently added to the list of specifications, if marks is
- * true.
+ * Implementation of {@link SubscriptionRequest}, that is supposed to be used when transferred over
+ * the wire to a remote store (for instance via GRPC or REST)
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */

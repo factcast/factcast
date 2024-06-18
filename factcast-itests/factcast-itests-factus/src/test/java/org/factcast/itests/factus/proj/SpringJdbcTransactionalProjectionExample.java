@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.factus.Handler;
 import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.serializer.ProjectionMetaData;
@@ -34,7 +35,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 public class SpringJdbcTransactionalProjectionExample {
 
   @Slf4j
-  @ProjectionMetaData(serial = 1)
+  @ProjectionMetaData(revision = 1)
   @SpringTransactional
   public static class UserNames extends AbstractSpringTxManagedProjection {
 
@@ -64,12 +65,13 @@ public class SpringJdbcTransactionalProjectionExample {
     }
 
     @Override
-    public UUID factStreamPosition() {
+    public FactStreamPosition factStreamPosition() {
       try {
-        return jdbcTemplate.queryForObject(
-            "SELECT fact_stream_position FROM fact_stream_positions WHERE projection_name = ?",
-            UUID.class,
-            getScopedName().asString());
+        return FactStreamPosition.withoutSerial(
+            jdbcTemplate.queryForObject(
+                "SELECT fact_stream_position FROM fact_stream_positions WHERE projection_name = ?",
+                UUID.class,
+                getScopedName().asString()));
       } catch (IncorrectResultSizeDataAccessException e) {
         // no state yet, just return null
         return null;
@@ -77,14 +79,14 @@ public class SpringJdbcTransactionalProjectionExample {
     }
 
     @Override
-    public void factStreamPosition(@NonNull UUID factStreamPosition) {
+    public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {
       jdbcTemplate.update(
           "INSERT INTO fact_stream_positions (projection_name, fact_stream_position) "
               + "VALUES (?, ?) "
               + "ON CONFLICT (projection_name) DO UPDATE SET fact_stream_position = ?",
           getScopedName().asString(),
-          factStreamPosition,
-          factStreamPosition);
+          factStreamPosition.factId(),
+          factStreamPosition.factId());
     }
 
     @Override

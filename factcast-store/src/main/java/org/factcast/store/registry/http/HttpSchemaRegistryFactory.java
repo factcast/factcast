@@ -18,15 +18,19 @@ package org.factcast.store.registry.http;
 import com.google.common.collect.Lists;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.List;
+import java.util.*;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import net.javacrumbs.shedlock.core.LockProvider;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.SchemaRegistryFactory;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.TransformationStore;
 import org.factcast.store.registry.validation.schema.SchemaStore;
 
+@RequiredArgsConstructor
 public class HttpSchemaRegistryFactory implements SchemaRegistryFactory<HttpSchemaRegistry> {
+  private final LockProvider lockProvider;
 
   @Override
   public List<String> getProtocols() {
@@ -43,6 +47,11 @@ public class HttpSchemaRegistryFactory implements SchemaRegistryFactory<HttpSche
       throws MalformedURLException {
 
     return new HttpSchemaRegistry(
-        new URL(fullUrl + "/"), schemaStore, transformationStore, registryMetrics, props);
+        new URL(fullUrl + "/"),
+        schemaStore,
+        transformationStore,
+        registryMetrics,
+        props,
+        lockProvider);
   }
 }

@@ -26,7 +26,7 @@ import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.event.Specification;
 import org.junit.jupiter.api.*;
 
-public class FactSpecTest {
+class FactSpecTest {
 
   @Test
   void testMetaBothNull() {
@@ -87,7 +87,7 @@ public class FactSpecTest {
   }
 
   @Test
-  public void testJsFilterScriptDeserDownwardCompatibility() {
+  void testJsFilterScriptDeserDownwardCompatibility() {
     String script = "foo";
     String json = "{\"ns\":\"x\",\"jsFilterScript\":\"" + script + "\"}";
 
@@ -97,7 +97,7 @@ public class FactSpecTest {
   }
 
   @Test
-  public void testJsFilterScriptDeserRemoved() {
+  void testJsFilterScriptDeserRemoved() {
     String script = "foo";
     String json = "{\"ns\":\"x\",\"jsFilterScript\":\"" + script + "\"}";
 
@@ -108,7 +108,7 @@ public class FactSpecTest {
   }
 
   @Test
-  public void testFilterScriptDeser() {
+  void testFilterScriptDeser() {
     String script = "foo";
     String json =
         "{\"ns\":\"x\",\"filterScript\":{\"languageIdentifier\":\"js\",\"source\":\""
@@ -125,7 +125,7 @@ public class FactSpecTest {
   }
 
   @Test
-  public void testJsFilterScriptSerDownwardCompatibility() {
+  void testJsFilterScriptSerDownwardCompatibility() {
     String expected = "foo";
     FactSpec fs = FactSpec.ns("x").filterScript(FilterScript.js("foo"));
     ObjectNode node = FactCastJson.toObjectNode(FactCastJson.writeValueAsString(fs));
@@ -137,7 +137,7 @@ public class FactSpecTest {
   static class TestFactPayload {}
 
   @Test
-  public void testFactSpecFromAnnotation1() {
+  void testFactSpecFromAnnotation1() {
     FactSpec factSpec = FactSpec.from(TestFactPayload.class);
 
     assertEquals("ns", factSpec.ns());
@@ -149,7 +149,7 @@ public class FactSpecTest {
   public static class TestFactWithType {}
 
   @Test
-  public void testFactSpecFromAnnotation2() {
+  void testFactSpecFromAnnotation2() {
     FactSpec factSpec = FactSpec.from(TestFactWithType.class);
 
     assertEquals("ns", factSpec.ns());
@@ -161,7 +161,7 @@ public class FactSpecTest {
   public static class TestFactWithTypeAndVersion {}
 
   @Test
-  public void testFactSpecFromAnnotation3() {
+  void testFactSpecFromAnnotation3() {
     FactSpec factSpec = FactSpec.from(TestFactWithTypeAndVersion.class);
 
     assertEquals("ns", factSpec.ns());
@@ -170,13 +170,13 @@ public class FactSpecTest {
   }
 
   @Test
-  public void testThrowIfNoAnnotationSpecPresent() {
+  void testThrowIfNoAnnotationSpecPresent() {
     Assertions.assertThrows(
         IllegalArgumentException.class, () -> FactSpec.from(Specification.class));
   }
 
   @Test
-  public void testFromVarArgs() {
+  void testFromVarArgs() {
     List<FactSpec> spec = FactSpec.from(TestFactWithType.class, TestFactWithTypeAndVersion.class);
     assertThat(spec)
         .hasSize(2)
@@ -185,7 +185,7 @@ public class FactSpecTest {
   }
 
   @Test
-  public void testFromList() {
+  void testFromList() {
     List<FactSpec> spec =
         FactSpec.from(Arrays.asList(TestFactWithType.class, TestFactWithTypeAndVersion.class));
     assertThat(spec)

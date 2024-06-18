@@ -21,7 +21,7 @@ import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.factus.event.TestAggregateIncremented;
 
-@ProjectionMetaData(serial = 1)
+@ProjectionMetaData(revision = 1)
 public class TestAggregate extends Aggregate {
 
   @Getter int magicNumber = 42;

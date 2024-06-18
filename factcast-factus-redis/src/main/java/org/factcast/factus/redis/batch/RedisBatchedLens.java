@@ -17,7 +17,7 @@ package org.factcast.factus.redis.batch;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
-import java.util.function.Function;
+import java.util.function.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
@@ -30,18 +30,31 @@ import org.redisson.api.RedissonClient;
 @Slf4j
 public class RedisBatchedLens extends AbstractTransactionalLens {
 
-  private final RedissonBatchManager batchMan;
+  /**
+   * We cannot store the manager itself here, as during creation of the lens, we are on a common
+   * thread that creates the lenses for all projections, and they would hence all share the same
+   * transaction manager, as the transaction manager is manged via ThreadLocal.
+   *
+   * <p>Hence, use a supplier here, so we get the right tx manager when we are on the subscription
+   * thread.
+   */
+  private final Supplier<RedissonBatchManager> batchManagerSupplier;
+
+  private final BatchOptions opts;
 
   public RedisBatchedLens(@NonNull RedisProjection p, RedissonClient redissonClient) {
 
-    this(p, RedissonBatchManager.get(redissonClient), createOpts(p));
+    this(p, () -> RedissonBatchManager.get(redissonClient), createOpts(p));
   }
 
-  RedisBatchedLens(@NonNull RedisProjection p, RedissonBatchManager man, BatchOptions opts) {
+  RedisBatchedLens(
+      @NonNull RedisProjection p,
+      Supplier<RedissonBatchManager> batchManagerSupplier,
+      BatchOptions opts) {
     super(p);
 
-    batchMan = man;
-    man.options(opts);
+    this.batchManagerSupplier = batchManagerSupplier;
+    this.opts = opts;
 
     bulkSize = Math.max(1, getSize(p));
     flushTimeout = Duration.ofSeconds(30).toMillis();
@@ -83,9 +96,11 @@ public class RedisBatchedLens extends AbstractTransactionalLens {
   public Function<Fact, ?> parameterTransformerFor(@NonNull Class<?> type) {
     if (RBatch.class.equals(type)) {
       return f -> {
-        batchMan.startOrJoin();
+        RedissonBatchManager redissonBatchManager = batchManagerSupplier.get();
+        redissonBatchManager.options(opts);
+        redissonBatchManager.startOrJoin();
 
-        return batchMan.getCurrentBatch();
+        return redissonBatchManager.getCurrentBatch();
       };
     }
     return null;
@@ -93,16 +108,18 @@ public class RedisBatchedLens extends AbstractTransactionalLens {
 
   @Override
   protected void doClear() {
-    if (batchMan.inBatch()) {
-      batchMan.discard();
+    RedissonBatchManager redissonBatchManager = batchManagerSupplier.get();
+    if (redissonBatchManager.inBatch()) {
+      redissonBatchManager.discard();
     }
   }
 
   @Override
   protected void doFlush() {
     // otherwise we can silently commit, not to flush the logs
-    if (batchMan.inBatch()) {
-      batchMan.execute();
+    RedissonBatchManager redissonBatchManager = batchManagerSupplier.get();
+    if (redissonBatchManager.inBatch()) {
+      redissonBatchManager.execute();
     }
   }
 }

@@ -15,11 +15,14 @@
  */
 package org.factcast.test.toxi;
 
+import eu.rekawek.toxiproxy.ToxiproxyClient;
 import lombok.NonNull;
 import org.testcontainers.containers.ToxiproxyContainer;
 
 public class FactCastProxy extends AbstractToxiProxySupplier {
-  public FactCastProxy(@NonNull ToxiproxyContainer.ContainerProxy proxy) {
-    super(proxy);
+
+  public FactCastProxy(
+      @NonNull ToxiproxyContainer.ContainerProxy proxy, @NonNull ToxiproxyClient client) {
+    super(proxy, proxy.getName(), client);
   }
 }
