@@ -15,12 +15,14 @@
  */
 package org.factcast.client.grpc;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.factcast.client.grpc.GrpcFactStore.PROTOCOL_VERSION;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.grpc.*;
 import java.io.IOException;
@@ -29,6 +31,7 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.*;
 import lombok.NonNull;
+import org.factcast.core.DuplicateFactException;
 import org.factcast.core.Fact;
 import org.factcast.core.FactValidationException;
 import org.factcast.core.snap.Snapshot;
@@ -88,11 +91,12 @@ class GrpcFactStoreTest {
 
     uut = new GrpcFactStore(grpcStubs, properties);
 
+    when(grpcStubs.uncompressedBlocking(any())).thenReturn(uncompressedBlockingStub);
     when(grpcStubs.uncompressedBlocking()).thenReturn(uncompressedBlockingStub);
     when(grpcStubs.blocking()).thenReturn(blockingStub);
     when(grpcStubs.nonBlocking()).thenReturn(nonBlockingStub);
     when(uncompressedBlockingStub.handshake(any()))
-        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
+        .thenReturn(conv.toProto(ServerConfig.of(PROTOCOL_VERSION, new HashMap<>())));
   }
 
   @Test
@@ -111,7 +115,7 @@ class GrpcFactStoreTest {
     Map<String, String> serverProps = new HashMap<>();
     serverProps.put(Capabilities.CODECS.toString(), " gzip,lz3,lz4, lz99");
     when(uncompressedBlockingStub.handshake(any()))
-        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, serverProps)));
+        .thenReturn(conv.toProto(ServerConfig.of(PROTOCOL_VERSION, serverProps)));
     uut.reset();
     uut.initializeIfNecessary();
     verify(grpcStubs).compression("gzip");
@@ -122,7 +126,7 @@ class GrpcFactStoreTest {
     Map<String, String> serverProps = new HashMap<>();
     serverProps.put(Capabilities.CODECS.toString(), "zip,lz3,lz4, lz99");
     when(uncompressedBlockingStub.handshake(any()))
-        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, serverProps)));
+        .thenReturn(conv.toProto(ServerConfig.of(PROTOCOL_VERSION, serverProps)));
     uut.reset();
     uut.initializeIfNecessary();
     verify(grpcStubs, never()).compression(anyString());
@@ -229,6 +233,45 @@ class GrpcFactStoreTest {
   }
 
   @Test
+  void testPublishPropagatesDuplicatedFactExceptionWhenNotIgnoring() {
+    when(properties.isIgnoreDuplicateFacts()).thenReturn(false);
+    when(blockingStub.publish(any())).thenThrow(new DuplicateFactException("test"));
+    assertThrows(
+        DuplicateFactException.class,
+        () -> uut.publish(Collections.singletonList(Fact.builder().build("{}"))));
+  }
+
+  @Test
+  void testPublishSkipsSingleDuplicatedFactWhenIgnoring() {
+    when(properties.isIgnoreDuplicateFacts()).thenReturn(true);
+    when(blockingStub.publish(any())).thenThrow(new DuplicateFactException("test"));
+    assertDoesNotThrow(() -> uut.publish(Collections.singletonList(Fact.builder().build("{}"))));
+    // does not publish again the duplicated fact
+    verify(blockingStub, times(1)).publish(any());
+  }
+
+  @Test
+  void testPublishRetriesDuplicatedFactsWhenIgnoring() {
+    UUID duplicatedFactId = UUID.randomUUID();
+    when(properties.isIgnoreDuplicateFacts()).thenReturn(true);
+    when(blockingStub.publish(
+            argThat(
+                facts ->
+                    conv.fromProto(facts).stream()
+                        .anyMatch(fact -> fact.id().equals(duplicatedFactId)))))
+        .thenThrow(new DuplicateFactException("test"));
+    assertDoesNotThrow(
+        () ->
+            uut.publish(
+                Lists.newArrayList(
+                    Fact.builder().id(UUID.randomUUID()).build("{}"),
+                    Fact.builder().id(duplicatedFactId).build("{}"),
+                    Fact.builder().id(UUID.randomUUID()).build("{}"))));
+    // does publish again every fact singularly
+    verify(blockingStub, times(4)).publish(any());
+  }
+
+  @Test
   void testCancelNotRetryableExceptionOnUnavailableStatus() {
     ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = mock(ClientCall.class);
     doThrow(new StatusRuntimeException(Status.UNAVAILABLE)).when(call).cancel(any(), any());
@@ -253,7 +296,7 @@ class GrpcFactStoreTest {
   }
 
   @Test
-  void testInitializePropagatesIncompatibleProtocolVersionsOnUnavailableStatus() {
+  void testInitializePropagatesRetryableExceptionOnUnavailableStatus() {
     when(uncompressedBlockingStub.handshake(any()))
         .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
     uut.reset();
@@ -296,7 +339,7 @@ class GrpcFactStoreTest {
   void testCompatibleProtocolVersion() {
     when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
     when(blockingStub.handshake(any()))
-        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
+        .thenReturn(conv.toProto(ServerConfig.of(PROTOCOL_VERSION, new HashMap<>())));
     uut.reset();
     uut.initializeIfNecessary();
   }
@@ -313,10 +356,12 @@ class GrpcFactStoreTest {
   void testInitializationExecutesHandshakeOnlyOnce() {
     when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
     when(blockingStub.handshake(any()))
-        .thenReturn(conv.toProto(ServerConfig.of(GrpcFactStore.PROTOCOL_VERSION, new HashMap<>())));
+        .thenReturn(conv.toProto(ServerConfig.of(PROTOCOL_VERSION, new HashMap<>())));
     uut.reset();
     uut.initializeIfNecessary();
     uut.initializeIfNecessary();
+    verify(grpcStubs)
+        .uncompressedBlocking(argThat(d -> d.isBefore(Deadline.after(10, TimeUnit.SECONDS))));
     verify(uncompressedBlockingStub, times(1)).handshake(any());
   }
 
@@ -421,6 +466,16 @@ class GrpcFactStoreTest {
       fail();
     } catch (RetryableException expected) {
     }
+  }
+
+  @Test
+  void testCurrentStateForWithFastStateTokenDisabled() {
+    uut.fastStateToken(false);
+    UUID id = new UUID(0, 1);
+    when(blockingStub.stateForSpecsJson(any())).thenReturn(conv.toProto(id));
+    List<FactSpec> list = Collections.singletonList(FactSpec.ns("foo").aggId(id));
+    uut.currentStateFor(list);
+    verify(blockingStub).stateForSpecsJson(conv.toProtoFactSpecs(list));
   }
 
   @Test
@@ -695,11 +750,7 @@ class GrpcFactStoreTest {
     void skipsNonSRE() {
       RuntimeException damn = new RuntimeException("damn");
       doThrow(damn).when(block).run();
-      assertThatThrownBy(
-              () -> {
-                uut.runAndHandle(block);
-              })
-          .isSameAs(damn);
+      assertThatThrownBy(() -> uut.runAndHandle(block)).isSameAs(damn);
     }
 
     @Test
@@ -722,10 +773,7 @@ class GrpcFactStoreTest {
       doThrow(new StatusRuntimeException(Status.UNKNOWN.withDescription("crap"), metadata))
           .when(block)
           .run();
-      assertThatThrownBy(
-              () -> {
-                uut.runAndHandle(block);
-              })
+      assertThatThrownBy(() -> uut.runAndHandle(block))
           .isNotSameAs(e)
           .isInstanceOf(FactValidationException.class)
           .extracting(Throwable::getMessage)
@@ -742,11 +790,7 @@ class GrpcFactStoreTest {
     void skipsNonSRE() throws Exception {
       RuntimeException damn = new RuntimeException("damn");
       when(block.call()).thenThrow(damn);
-      assertThatThrownBy(
-              () -> {
-                uut.callAndHandle(block);
-              })
-          .isSameAs(damn);
+      assertThatThrownBy(() -> uut.callAndHandle(block)).isSameAs(damn);
     }
 
     @Test
@@ -787,10 +831,7 @@ class GrpcFactStoreTest {
       when(block.call())
           .thenThrow(new StatusRuntimeException(Status.UNKNOWN.withDescription("crap"), metadata));
 
-      assertThatThrownBy(
-              () -> {
-                uut.callAndHandle(block);
-              })
+      assertThatThrownBy(() -> uut.callAndHandle(block))
           .isNotSameAs(e)
           .isInstanceOf(FactValidationException.class)
           .extracting(Throwable::getMessage)
@@ -833,7 +874,7 @@ class GrpcFactStoreTest {
       uut.reset();
       uut.initializeIfNecessary();
     }
-    verify(grpcStubs, times(nReInitializations)).uncompressedBlocking();
+    verify(grpcStubs, times(nReInitializations)).uncompressedBlocking(any());
     // should work after multiple re-initializations (issue #2868)
     uut.currentTime();
   }
@@ -845,5 +886,27 @@ class GrpcFactStoreTest {
     uut.reset();
     uut.initializeIfNecessary();
     verify(uncompressedBlockingStub, times(2)).handshake(any());
+  }
+
+  @Test
+  void throwsWhenProtocolVersionIsIncompatible() {
+    ProtocolVersion v = ProtocolVersion.of(99, 98, 97);
+    assertThatThrownBy(() -> GrpcFactStore.logProtocolVersion(v))
+        .isInstanceOf(IncompatibleProtocolVersions.class);
+  }
+
+  @Test
+  void doesNotThrowWhenProtocolVersionIsCompatible() {
+    ProtocolVersion v =
+        ProtocolVersion.of(PROTOCOL_VERSION.major(), PROTOCOL_VERSION.minor() + 1, 0);
+    assertDoesNotThrow(() -> GrpcFactStore.logProtocolVersion(v));
+  }
+
+  @Test
+  void doesNotThrowWhenProtocolVersionMatches() {
+    ProtocolVersion v =
+        ProtocolVersion.of(
+            PROTOCOL_VERSION.major(), PROTOCOL_VERSION.minor(), PROTOCOL_VERSION.patch());
+    assertDoesNotThrow(() -> GrpcFactStore.logProtocolVersion(v));
   }
 }
