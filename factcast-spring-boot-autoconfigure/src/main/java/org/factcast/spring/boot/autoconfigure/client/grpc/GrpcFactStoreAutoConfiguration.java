@@ -15,13 +15,12 @@
  */
 package org.factcast.spring.boot.autoconfigure.client.grpc;
 
-import io.grpc.Channel;
-import io.grpc.ClientInterceptor;
 import java.util.*;
 import javax.annotation.Nullable;
 import lombok.NonNull;
 import net.devh.boot.grpc.client.channelfactory.GrpcChannelConfigurer;
 import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
+import org.factcast.client.grpc.FactCastGrpcChannelFactory;
 import org.factcast.client.grpc.FactCastGrpcClientProperties;
 import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.core.store.FactStore;
@@ -56,25 +55,8 @@ public class GrpcFactStoreAutoConfiguration {
       @NonNull @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
       @NonNull FactCastGrpcClientProperties properties,
       @Nullable @Value("${spring.application.name:#{null}}") String applicationName) {
-    org.factcast.client.grpc.FactCastGrpcChannelFactory f =
-        new org.factcast.client.grpc.FactCastGrpcChannelFactory() {
 
-          @Override
-          public Channel createChannel(String name, List<ClientInterceptor> interceptors) {
-            return af.createChannel(name, interceptors);
-          }
-
-          @Override
-          public Channel createChannel(String name) {
-            return af.createChannel(name);
-          }
-
-          @Override
-          public void close() {
-            af.close();
-          }
-        };
-
+    FactCastGrpcChannelFactory f = FactCastGrpcChannelFactory.createDefault(af);
     String id =
         Optional.ofNullable(properties.getId())
             .orElseGet(

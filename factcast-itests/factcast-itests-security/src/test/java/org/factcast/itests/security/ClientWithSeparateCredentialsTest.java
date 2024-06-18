@@ -17,12 +17,15 @@ package org.factcast.itests.security;
 
 import static org.assertj.core.api.Assertions.*;
 
+import io.grpc.Metadata;
 import io.grpc.StatusRuntimeException;
 import java.util.List;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
+import org.factcast.client.grpc.FactCastGrpcChannelFactory;
 import org.factcast.client.grpc.GrpcStubs;
+import org.factcast.client.grpc.GrpcStubsImpl;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
@@ -43,12 +46,10 @@ import org.springframework.test.context.TestPropertySource;
 @TestPropertySource(locations = "/application-separate-creds.properties")
 @Slf4j
 @FactcastTestConfig(securityEnabled = true)
-public class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrationTest {
+class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrationTest {
   @Autowired FactCast fc;
 
-  @Autowired GrpcStubs stubsFactory;
-
-  @Autowired GrpcChannelFactory channelFactory;
+  @Autowired GrpcChannelFactory grpcChannelFactory;
 
   @Autowired JdbcTemplate jdbcTemplate;
 
@@ -58,6 +59,8 @@ public class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrati
       f -> {
         // do nothing
       };
+
+  private GrpcStubs stubs;
 
   @BeforeEach
   void setup() {
@@ -81,18 +84,27 @@ public class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrati
           statement.setString(1, fact.jsonHeader());
           statement.setString(2, fact.jsonPayload());
         });
+
+    stubs =
+        new GrpcStubsImpl(
+            FactCastGrpcChannelFactory.createDefault(grpcChannelFactory),
+            "factstore",
+            new Metadata(),
+            null);
   }
 
   @Test
-  public void allowedToPublish() {
+  void allowedToPublish() {
     fc.publish(
         Fact.of(
-            "{\"id\":\"" + UUID.randomUUID() + "\", \"ns\":\"users\",\"type\":\"UserCreated\"}",
+            "{\"id\":\""
+                + UUID.randomUUID()
+                + "\", \"ns\":\"users\",\"type\":\"UserCreated\", \"meta\":{}}",
             "{}"));
   }
 
   @Test
-  public void failsToPublish() {
+  void failsToPublish() {
     assertThatThrownBy(
             () ->
                 fc.publish(
@@ -106,7 +118,7 @@ public class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrati
   }
 
   @Test
-  public void allowedToCatchup() throws Exception {
+  void allowedToCatchup() throws Exception {
     SubscriptionRequest req =
         SubscriptionRequest.catchup(FactSpec.ns("users").type("UserCreated")).fromScratch();
     try (Subscription sub = fc.subscribe(req, nopFactObserver)) {
@@ -115,7 +127,7 @@ public class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrati
   }
 
   @Test
-  public void failsToCatchup() throws Exception {
+  void failsToCatchup() throws Exception {
     SubscriptionRequest req =
         SubscriptionRequest.catchup(FactSpec.ns("no-permissions").type("UserCreated"))
             .fromScratch();
@@ -127,7 +139,7 @@ public class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrati
   }
 
   @Test
-  public void allowedToFollow() throws Exception {
+  void allowedToFollow() throws Exception {
     SubscriptionRequest req =
         SubscriptionRequest.follow(FactSpec.ns("users").type("UserCreated")).fromScratch();
     try (Subscription sub = fc.subscribe(req, nopFactObserver)) {
@@ -136,7 +148,7 @@ public class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrati
   }
 
   @Test
-  public void failsToFollow() throws Exception {
+  void failsToFollow() throws Exception {
     SubscriptionRequest req =
         SubscriptionRequest.follow(FactSpec.ns("no-permissions").type("UserCreated")).fromScratch();
     try (Subscription sub = fc.subscribe(req, nopFactObserver)) {
@@ -147,26 +159,23 @@ public class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrati
   }
 
   @Test
-  public void allowedToEnumerate() {
+  void allowedToEnumerate() {
     assertThat(fc.enumerateNamespaces()).contains("users");
     assertThat(fc.enumerateTypes("users")).contains("UserCreated");
   }
 
   @Test
-  public void failsToEnumerate() {
+  void failsToEnumerate() {
     assertThat(fc.enumerateNamespaces()).doesNotContain("no-permissions");
     assertThatThrownBy(() -> fc.enumerateTypes("no-permissions"))
         .isInstanceOf(StatusRuntimeException.class)
         .hasMessageContaining("PERMISSION_DENIED");
   }
 
-  // TODO
-  //  @Test
-  //  public void failsUnauthenticatedHandshake() {
-  //    Channel channel = channelFactory.createChannel("factstore");
-  //    assertThatThrownBy(() ->
-  // stubsFactory.createBlockingStub(channel).handshake(converter.empty()))
-  //        .isInstanceOf(StatusRuntimeException.class)
-  //        .hasMessageContaining("UNAUTHENTICATED");
-  //  }
+  @Test
+  void failsUnauthenticatedHandshake() {
+    assertThatThrownBy(() -> stubs.blocking().handshake(converter.empty()))
+        .isInstanceOf(StatusRuntimeException.class)
+        .hasMessageContaining("UNAUTHENTICATED");
+  }
 }
