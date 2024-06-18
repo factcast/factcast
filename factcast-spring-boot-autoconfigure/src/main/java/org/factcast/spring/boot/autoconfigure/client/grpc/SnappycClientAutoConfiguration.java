@@ -15,7 +15,7 @@
  */
 package org.factcast.spring.boot.autoconfigure.client.grpc;
 
-import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorInputStream;
+import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.grpc.snappy.SnappycGrpcClientCodec;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
@@ -29,7 +29,7 @@ import org.springframework.context.annotation.Bean;
  * @author uwe.schaefer@prisma-capacity.eu
  */
 @AutoConfiguration
-@ConditionalOnClass({FramedSnappyCompressorInputStream.class})
+@ConditionalOnClass({GrpcFactStore.class, SnappycGrpcClientCodec.class})
 @AutoConfigureBefore(GrpcFactStoreAutoConfiguration.class)
 public class SnappycClientAutoConfiguration {
 
