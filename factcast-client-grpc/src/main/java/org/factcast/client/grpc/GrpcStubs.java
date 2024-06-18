@@ -20,8 +20,11 @@ import javax.annotation.Nullable;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 
 public interface GrpcStubs {
-  // deadline does not make sense here? (Only used for handshake from 0.8 on)
-  RemoteFactStoreGrpc.RemoteFactStoreBlockingStub uncompressedBlocking();
+  default RemoteFactStoreGrpc.RemoteFactStoreBlockingStub uncompressedBlocking() {
+    return uncompressedBlocking(null);
+  }
+
+  RemoteFactStoreGrpc.RemoteFactStoreBlockingStub uncompressedBlocking(@Nullable Deadline deadline);
 
   /**
    * @return RemoteFactStoreBlockingStub with compression if already configured
