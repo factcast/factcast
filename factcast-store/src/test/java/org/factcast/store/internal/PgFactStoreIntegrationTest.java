@@ -145,14 +145,14 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
     //
     // Not using "System.currentTimeMillis()" because a difference (by a few millis) to DB time has
     // been observed.
-    var before = getCurrentDbTimeInMillis();
+    var before = fs.currentTime();
 
     uut.publish(Fact.builder().ns("augmentation").type("test").id(id).buildWithoutPayload());
 
     // ASSERT
     var fact = uut.fetchById(id);
     // fetching after here, as the trigger seems to be delayed
-    var after = getCurrentDbTimeInMillis();
+    var after = fs.currentTime();
 
     assertThat(fact).isPresent();
 
@@ -161,11 +161,6 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
     assertThat(Long.parseLong(fact.get().meta("_ts")))
         .isGreaterThanOrEqualTo(before)
         .isLessThanOrEqualTo(after);
-  }
-
-  private long getCurrentDbTimeInMillis() {
-    Long time = jdbcTemplate.queryForObject(DB_TIME_QUERY, Long.class);
-    return time == null ? 0 : time;
   }
 
   @Nested
