@@ -25,6 +25,7 @@ import jakarta.annotation.PostConstruct;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import lombok.Generated;
@@ -240,7 +241,10 @@ public class GrpcFactStore implements FactStore {
       Map<String, String> serverProperties;
       ProtocolVersion serverProtocolVersion;
       try {
-        MSG_ServerConfig handshake = stubs.uncompressedBlocking().handshake(converter.empty());
+        MSG_ServerConfig handshake =
+            stubs
+                .uncompressedBlocking(Deadline.after(10, TimeUnit.SECONDS))
+                .handshake(converter.empty());
 
         ServerConfig cfg = converter.fromProto(handshake);
         serverProtocolVersion = cfg.version();
@@ -314,7 +318,8 @@ public class GrpcFactStore implements FactStore {
     log.info("Server reported implementation version {}", serverVersion);
   }
 
-  private static void logProtocolVersion(ProtocolVersion serverProtocolVersion) {
+  @VisibleForTesting
+  static void logProtocolVersion(ProtocolVersion serverProtocolVersion) {
     if (!PROTOCOL_VERSION.isCompatibleTo(serverProtocolVersion)) {
       throw new IncompatibleProtocolVersions(
           "Apparently, the local Protocol Version "

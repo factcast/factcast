@@ -52,8 +52,9 @@ class GrpcStubsImpl implements GrpcStubs {
 
   @Override
   @NonNull
-  public RemoteFactStoreGrpc.RemoteFactStoreBlockingStub uncompressedBlocking() {
-    return configure(RemoteFactStoreGrpc.newBlockingStub(channel), null);
+  public RemoteFactStoreGrpc.RemoteFactStoreBlockingStub uncompressedBlocking(
+      @NonNull Deadline deadline) {
+    return configure(RemoteFactStoreGrpc.newBlockingStub(channel), deadline);
   }
 
   @Override
@@ -74,7 +75,7 @@ class GrpcStubsImpl implements GrpcStubs {
     if (basic != null) stub = stub.withCallCredentials(basic);
     if (deadline != null) stub = stub.withDeadline(deadline);
     stub = stub.withInterceptors(MetadataUtils.newAttachHeadersInterceptor(meta));
-    return stub;
+    return stub.withWaitForReady();
   }
 
   @VisibleForTesting
