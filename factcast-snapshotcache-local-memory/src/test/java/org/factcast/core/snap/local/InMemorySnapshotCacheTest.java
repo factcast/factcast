@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.snap.redisson;
+package org.factcast.core.snap.local;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.UUID;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
-import org.factcast.core.snap.local.InMemorySnapshotCache;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
