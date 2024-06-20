@@ -49,6 +49,7 @@
     <module>factcast-schema-registry-cli</module>
     <module>factcast-schema-registry-maven-plugin</module>
     <module>factcast-snapshotcache-redisson</module>
+    <module>factcast-snapshotcache-local</module>
   </modules>
   <url>https://github.com/factcast/factcast/tree/master/</url>
   <licenses>
