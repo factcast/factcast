@@ -44,6 +44,7 @@ public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
     if (!snapshotOpt.isPresent()) {
       try {
         snapshotOpt = Optional.ofNullable(findValueOnDisk(id));
+        snapshotOpt.ifPresent(snapshot -> cache.put(id, snapshot));
       } catch (Exception e) {
         log.error(String.format("Error retrieving snapshot with id: %s", id), e);
       }
@@ -60,7 +61,7 @@ public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
   @Override
   public void clearSnapshot(@NonNull SnapshotId id) {
     cache.invalidate(id);
-    // TODO remove from disk if exists
+    deleteValue(id);
   }
 
   @Override
@@ -99,6 +100,14 @@ public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
       } finally {
         fileLock.release();
       }
+    }
+  }
+
+  private void deleteValue(SnapshotId key) {
+    File persistenceFile = new File(PERSISTENCE_DIRECTORY, key.key());
+
+    if (persistenceFile.exists()) {
+      persistenceFile.delete();
     }
   }
 
