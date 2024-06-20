@@ -17,9 +17,8 @@ package org.factcast.spring.boot.autoconfigure.core;
 
 import lombok.Generated;
 import org.factcast.core.FactCast;
-import org.factcast.core.snap.FactCastSnapshotCache;
 import org.factcast.core.snap.SnapshotCache;
-import org.factcast.core.store.FactStore;
+import org.factcast.core.snap.local.InMemorySnapshotCache;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -35,7 +34,7 @@ public class FactCastSnapshotCacheAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public SnapshotCache snapshotCache(FactStore store) {
-    return new FactCastSnapshotCache(store);
+  public SnapshotCache snapshotCache() {
+    return new InMemorySnapshotCache();
   }
 }
