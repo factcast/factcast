@@ -83,7 +83,7 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
-      <artifactId>factcast-snapshotcache-local</artifactId>
+      <artifactId>factcast-snapshotcache-local-memory</artifactId>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
