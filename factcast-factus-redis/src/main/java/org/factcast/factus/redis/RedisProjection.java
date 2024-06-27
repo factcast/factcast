@@ -16,10 +16,10 @@
 package org.factcast.factus.redis;
 
 import lombok.NonNull;
-import org.factcast.factus.projection.Projection;
+import org.factcast.factus.projection.ExternalizedProjection;
 import org.redisson.api.RedissonClient;
 
-public interface RedisProjection extends Projection {
+public interface RedisProjection extends ExternalizedProjection {
   @NonNull
   RedissonClient redisson();
 }

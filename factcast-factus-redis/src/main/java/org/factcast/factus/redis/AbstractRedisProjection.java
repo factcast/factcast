@@ -18,27 +18,21 @@ package org.factcast.factus.redis;
 import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.core.FactStreamPosition;
-import org.factcast.factus.projection.FactStreamPositionAware;
-import org.factcast.factus.projection.Named;
 import org.factcast.factus.projection.WriterToken;
-import org.factcast.factus.projection.WriterTokenAware;
-import org.factcast.factus.redis.batch.RedissonBatchManager;
-import org.factcast.factus.redis.tx.RedissonTxManager;
 import org.redisson.api.*;
 
-abstract class AbstractRedisProjection
-    implements RedisProjection, FactStreamPositionAware, WriterTokenAware, Named {
+@SuppressWarnings("java:S2142")
+public abstract class AbstractRedisProjection implements RedisProjection {
   @Getter protected final RedissonClient redisson;
 
-  private final RLock lock;
-  private final String stateBucketName;
+  protected final RLock lock;
+  protected final String stateBucketName;
 
-  @Getter private final String redisKey;
+  @Getter protected final String redisKey;
 
   protected AbstractRedisProjection(@NonNull RedissonClient redisson) {
     this.redisson = redisson;
@@ -51,54 +45,19 @@ abstract class AbstractRedisProjection
   }
 
   @VisibleForTesting
-  RBucket<FactStreamPosition> stateBucket(@NonNull RTransaction tx) {
-    return tx.getBucket(stateBucketName, FactStreamPositionCodec.INSTANCE);
-  }
-
-  @VisibleForTesting
-  RBucketAsync<FactStreamPosition> stateBucket(@NonNull RBatch b) {
-    return b.getBucket(stateBucketName, FactStreamPositionCodec.INSTANCE);
-  }
-
-  @VisibleForTesting
-  RBucket<FactStreamPosition> stateBucket() {
+  protected RBucket<FactStreamPosition> stateBucket() {
     return redisson.getBucket(stateBucketName, FactStreamPositionCodec.INSTANCE);
   }
 
   @Override
   public FactStreamPosition factStreamPosition() {
-    RedissonTxManager man = RedissonTxManager.get(redisson);
-    if (man.inTransaction()) {
-      return man.join((Function<RTransaction, FactStreamPosition>) tx -> stateBucket(tx).get());
-    } else {
-      return stateBucket().get();
-    }
-    // note: were not trying to use a bucket from a running batch as it would require to execute the
-    // batch to get a result back.
+    return stateBucket().get();
   }
 
   @SuppressWarnings("ConstantConditions")
   @Override
-  // TODO maybe we can get rid of this?
-  // additionally accepts a null parameter for testing purposes
   public void factStreamPosition(@Nullable FactStreamPosition position) {
-    RedissonTxManager txMan = RedissonTxManager.get(redisson);
-    if (txMan.inTransaction()) {
-      txMan.join(
-          tx -> {
-            stateBucket(txMan.getCurrentTransaction()).set(position);
-          });
-    } else {
-      RedissonBatchManager bman = RedissonBatchManager.get(redisson);
-      if (bman.inBatch()) {
-        bman.join(
-            tx -> {
-              stateBucket(bman.getCurrentBatch()).setAsync(position);
-            });
-      } else {
-        stateBucket().set(position);
-      }
-    }
+    stateBucket().set(position);
   }
 
   @Override

@@ -63,7 +63,7 @@ public class ConsoleFactObserver implements FactObserver {
   }
 
   @Override
-  public synchronized void onError(Throwable exception) {
+  public synchronized void onError(@NonNull Throwable exception) {
     System.out.println("-> Signal: Error");
     exception.printStackTrace();
     notifyAll();
