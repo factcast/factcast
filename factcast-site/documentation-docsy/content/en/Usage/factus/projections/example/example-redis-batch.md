@@ -11,12 +11,12 @@ _UserCreated_ and _UserDeleted_ events:
 
 The `@RedisBatched` annotation provides various configuration options:
 
-| Parameter Name    | Description                                          | Default Value |
-| ----------------- | ---------------------------------------------------- | ------------- |
-| `bulkSize`        | bulk size                                            | 50            |
-| `responseTimeout` | timeout in milliseconds for Redis response           | 5000          |
-| `retryAttempts`   | maximum attempts to transmit batch of Redis commands | 5             |
-| `retryInterval`   | time interval in milliseconds between retry attempts | 3000          |
+| Parameter Name    | Description                                                                                                        | Default Value |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------ | ------------- |
+| `bulkSize`        | bulk size (this is a max, remember that the real bulk size will be determined by the configured grpc-message size) | 1000          |
+| `responseTimeout` | timeout in milliseconds for Redis response                                                                         | 5000          |
+| `retryAttempts`   | maximum attempts to transmit batch of Redis commands                                                               | 5             |
+| `retryInterval`   | time interval in milliseconds between retry attempts                                                               | 3000          |
 
 ---
 
