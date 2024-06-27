@@ -53,6 +53,10 @@
       <artifactId>factcast-client-grpc</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-grpc-lz4</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter</artifactId>
     </dependency>
