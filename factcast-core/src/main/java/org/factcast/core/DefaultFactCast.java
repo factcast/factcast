@@ -42,7 +42,7 @@ class DefaultFactCast implements FactCast {
   @NonNull
   public Subscription subscribeEphemeral(
       @NonNull SubscriptionRequest req, @NonNull FactObserver observer) {
-    return store.subscribe(SubscriptionRequestTO.forFacts(req), observer);
+    return store.subscribe(SubscriptionRequestTO.from(req), observer);
   }
 
   @Override
@@ -52,6 +52,7 @@ class DefaultFactCast implements FactCast {
   }
 
   @Override
+  @NonNull
   public LockedOperationBuilder lock(@NonNull List<FactSpec> scope) {
     return new LockedOperationBuilder(store, scope);
   }
@@ -63,16 +64,19 @@ class DefaultFactCast implements FactCast {
   }
 
   @Override
+  @NonNull
   public Set<String> enumerateNamespaces() {
     return store.enumerateNamespaces();
   }
 
   @Override
+  @NonNull
   public Set<String> enumerateTypes(@NonNull String ns) {
     return store.enumerateTypes(ns);
   }
 
   @Override
+  @NonNull
   @SuppressWarnings("deprecated")
   public DeprecatedLockedOperationBuilder lock(@NonNull String ns) {
     if (ns.trim().isEmpty()) {
@@ -82,9 +86,10 @@ class DefaultFactCast implements FactCast {
   }
 
   @Override
+  @NonNull
   public Subscription subscribe(
       @NonNull SubscriptionRequest request, @NonNull FactObserver observer) {
-    return store.subscribe(SubscriptionRequestTO.forFacts(request), observer);
+    return store.subscribe(SubscriptionRequestTO.from(request), observer);
   }
 
   @Override
@@ -94,8 +99,8 @@ class DefaultFactCast implements FactCast {
   }
 
   @Override
+  @NonNull
   public Optional<Fact> fetchByIdAndVersion(@NonNull UUID id, int versionExpected)
-      // TODO is transport of this exception reasonable?
       throws TransformationException {
     return store.fetchByIdAndVersion(id, versionExpected);
   }
