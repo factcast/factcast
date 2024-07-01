@@ -21,8 +21,8 @@ import java.io.OutputStream;
 import lombok.SneakyThrows;
 import net.devh.boot.grpc.common.codec.CodecType;
 import net.devh.boot.grpc.common.codec.GrpcCodec;
-import org.apache.commons.compress.compressors.lz4.FramedLZ4CompressorInputStream;
-import org.apache.commons.compress.compressors.lz4.FramedLZ4CompressorOutputStream;
+import org.apache.commons.compress.compressors.lz4.BlockLZ4CompressorInputStream;
+import org.apache.commons.compress.compressors.lz4.BlockLZ4CompressorOutputStream;
 
 @GrpcCodec(advertised = true, codecType = CodecType.ALL)
 public class Lz4cGrpcClientCodec implements Codec {
@@ -35,12 +35,12 @@ public class Lz4cGrpcClientCodec implements Codec {
   @SneakyThrows
   @Override
   public InputStream decompress(InputStream inputStream) {
-    return new FramedLZ4CompressorInputStream(inputStream);
+    return new BlockLZ4CompressorInputStream(inputStream);
   }
 
   @SneakyThrows
   @Override
   public OutputStream compress(OutputStream outputStream) {
-    return new FramedLZ4CompressorOutputStream(outputStream);
+    return new BlockLZ4CompressorOutputStream(outputStream);
   }
 }

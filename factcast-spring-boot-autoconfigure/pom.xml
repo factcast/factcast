@@ -47,6 +47,10 @@
       <optional>true</optional>
     </dependency>
     <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-compress</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-store</artifactId>
       <optional>true</optional>
