@@ -17,7 +17,7 @@
     <dependencies>
       <dependency>
         <groupId>org.factcast</groupId>
-        <artifactId>factcast-internal-dep-boot</artifactId>
+        <artifactId>factcast-internal-dep</artifactId>
         <version>${project.version}</version>
         <type>pom</type>
         <scope>import</scope>
