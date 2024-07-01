@@ -17,8 +17,8 @@
     <dependencies>
       <dependency>
         <groupId>org.factcast</groupId>
-        <artifactId>factcast-internal-dep</artifactId>
-        <version>${project.version}</version>
+        <artifactId>factcast-internal-dep-boot</artifactId>
+        <version>0.7.10-SNAPSHOT</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -34,10 +34,6 @@
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.factcast</groupId>
-      <artifactId>factcast-client-grpc</artifactId>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
@@ -110,11 +106,19 @@
       <version>1.4.14</version>
       <scope>provided</scope>
     </dependency>
-
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-api</artifactId>
+      <version>1.63.0</version>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <version>${spring-boot.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>net.devh</groupId>
+      <artifactId>grpc-client-spring-boot-starter</artifactId>
     </dependency>
   </dependencies>
   <build>

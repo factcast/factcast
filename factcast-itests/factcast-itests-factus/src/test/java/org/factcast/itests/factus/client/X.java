@@ -15,7 +15,6 @@
  */
 package org.factcast.itests.factus.client;
 
-import java.awt.*;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -24,9 +23,9 @@ import java.util.zip.GZIPOutputStream;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream;
-import org.factcast.client.grpc.codec.Lz4GrpcClientCodec;
 import org.factcast.core.Fact;
 import org.factcast.core.util.FactCastJson;
+import org.factcast.grpc.lz4.Lz4GrpcClientCodec;
 import org.factcast.grpc.snappy.SnappycGrpcClientCodec;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
