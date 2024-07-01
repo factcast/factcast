@@ -18,16 +18,16 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-dependencies</artifactId>
-        <version>${spring-boot.version}</version>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-bom</artifactId>
+        <version>${project.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
       <dependency>
-        <groupId>org.factcast</groupId>
-        <artifactId>factcast-bom</artifactId>
-        <version>${project.version}</version>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-dependencies</artifactId>
+        <version>${spring-boot.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -49,6 +49,10 @@
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-store</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-grpc-lz4</artifactId>
     </dependency>
     <!-- you want to remove this -->
     <dependency>
