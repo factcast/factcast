@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.grpc.snappy;
+package org.factcast.grpc.lz4;
 
 import io.grpc.Codec;
 import org.factcast.test.AbstractCompressionPerformanceTest;
 import org.junit.jupiter.api.Disabled;
 
+@SuppressWarnings("deprecation")
 @Disabled("will only be run manually")
-class SnappycCodecPerformanceTest extends AbstractCompressionPerformanceTest {
+class Lz4CodecPerformanceTest extends AbstractCompressionPerformanceTest {
 
   @Override
   protected Codec getCodecToTest() {
-    return new SnappycGrpcClientCodec();
+    return new Lz4GrpcClientCodec();
   }
 }
