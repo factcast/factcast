@@ -18,36 +18,32 @@ package org.factcast.core.snap;
 import java.util.Optional;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.store.FactStore;
 
-@Deprecated
 @Slf4j
-public class FactCastSnapshotCache implements SnapshotCache {
+public class NoopSnapshotCache implements SnapshotCache {
 
-  @NonNull private final FactStore store;
-
-  public FactCastSnapshotCache(@NonNull FactStore store) {
-    this.store = store;
-    //noinspection deprecation
-    log.warn(
-        "You configured factus to use the default FactCastSnapshotCache instead of a client-local cache. This implemenation is deprecated and will be removed soon. Please consider alternative SnapshotCache implementations (like factcast-snapshotcache-redisson for instance).");
+  public NoopSnapshotCache() {
+    log.info(
+        "Using NoOp Snapshot Cache. Used for when you don't want to cache snapshots. If there is an attempt to store an snapshot this will throw a UnsupportedOperationException");
   }
 
   @Override
   public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
-    return store.getSnapshot(id);
+    throw new UnsupportedOperationException("NoOpSnapshotCache does not support getSnapshot");
   }
 
   @Override
   public void setSnapshot(@NonNull Snapshot snapshot) {
-    store.setSnapshot(snapshot);
+    throw new UnsupportedOperationException("NoOpSnapshotCache does not support setSnapshot");
   }
 
   @Override
   public void clearSnapshot(@NonNull SnapshotId id) {
-    store.clearSnapshot(id);
+    throw new UnsupportedOperationException("NoOpSnapshotCache does not support clearSnapshot");
   }
 
-  /** compacting will be controlled on server side, so this impl is empty. */
-  public void compact(int retentionTimeInDays) {}
+  @Override
+  public void compact(int retentionTimeInDays) {
+    throw new UnsupportedOperationException("NoOpSnapshotCache does not support compact");
+  }
 }

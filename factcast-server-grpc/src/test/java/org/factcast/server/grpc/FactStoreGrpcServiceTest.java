@@ -37,8 +37,6 @@ import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.StateToken;
@@ -961,123 +959,8 @@ public class FactStoreGrpcServiceTest {
     assertThrows(StatusRuntimeException.class, () -> uut.getFactcastUser());
   }
 
-  @Test
-  void clearSnapshot() {
-
-    var id = SnapshotId.of("foo", UUID.randomUUID());
-    var req = conv.toProto(id);
-    StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
-
-    // ACT
-    uut.clearSnapshot(req, obs);
-
-    verify(backend).clearSnapshot(eq(id));
-    verify(obs).onNext(any(MSG_Empty.class));
-    verify(obs).onCompleted();
-  }
-
   static class TestException extends RuntimeException {
     private static final long serialVersionUID = -3012325109668741715L;
-  }
-
-  @Test
-  void clearSnapshotWithException() {
-    assertThatThrownBy(
-            () -> {
-              var id = SnapshotId.of("foo", UUID.randomUUID());
-              var req = conv.toProto(id);
-              StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
-              doThrow(TestException.class).when(backend).clearSnapshot(eq(id));
-
-              // ACT
-              uut.clearSnapshot(req, obs);
-            })
-        .isInstanceOf(TestException.class);
-  }
-
-  @Test
-  void getSnapshot() {
-    var id = SnapshotId.of("foo", UUID.randomUUID());
-    var req = conv.toProto(id);
-    StreamObserver<MSG_OptionalSnapshot> obs = mock(StreamObserver.class);
-    Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
-    Optional<Snapshot> optSnap = Optional.of(snap);
-    when(backend.getSnapshot(id)).thenReturn(optSnap);
-
-    // ACT
-    uut.getSnapshot(req, obs);
-
-    verify(backend).getSnapshot(eq(id));
-    verify(obs).onNext(eq(conv.toProtoSnapshot(optSnap)));
-    verify(obs).onCompleted();
-  }
-
-  @Test
-  void getSnapshotEmpty() {
-    var id = SnapshotId.of("foo", UUID.randomUUID());
-    var req = conv.toProto(id);
-    StreamObserver<MSG_OptionalSnapshot> obs = mock(StreamObserver.class);
-    Optional<Snapshot> optSnap = Optional.empty();
-    when(backend.getSnapshot(id)).thenReturn(optSnap);
-
-    // ACT
-    uut.getSnapshot(req, obs);
-
-    verify(backend).getSnapshot(eq(id));
-    verify(obs).onNext(eq(conv.toProtoSnapshot(optSnap)));
-    verify(obs).onCompleted();
-  }
-
-  @Test
-  void getSnapshotException() {
-    assertThatThrownBy(
-            () -> {
-              var id = SnapshotId.of("foo", UUID.randomUUID());
-              var req = conv.toProto(id);
-              StreamObserver<MSG_OptionalSnapshot> obs = mock(StreamObserver.class);
-              Optional<Snapshot> optSnap = Optional.empty();
-              when(backend.getSnapshot(id)).thenThrow(TestException.class);
-
-              // ACT
-              uut.getSnapshot(req, obs);
-
-              verify(backend).getSnapshot(eq(id));
-            })
-        .isInstanceOf(TestException.class);
-  }
-
-  @Test
-  void setSnapshot() {
-    var id = SnapshotId.of("foo", UUID.randomUUID());
-    Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
-    var req = conv.toProto(snap);
-    StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
-
-    // ACT
-    uut.setSnapshot(req, obs);
-
-    verify(backend).setSnapshot(snap);
-    verify(obs).onNext(any(MSG_Empty.class));
-    verify(obs).onCompleted();
-  }
-
-  @Test
-  void setSnapshotWithException() {
-    assertThatThrownBy(
-            () -> {
-              var id = SnapshotId.of("foo", UUID.randomUUID());
-              Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
-              var req = conv.toProto(snap);
-              StreamObserver<MSG_Empty> obs = mock(StreamObserver.class);
-              doThrow(TestException.class).when(backend).setSnapshot(any());
-
-              // ACT
-              uut.setSnapshot(req, obs);
-
-              verify(backend).setSnapshot(snap);
-              verifyNoMoreInteractions(obs);
-            })
-        .isInstanceOf(TestException.class);
   }
 
   @Test

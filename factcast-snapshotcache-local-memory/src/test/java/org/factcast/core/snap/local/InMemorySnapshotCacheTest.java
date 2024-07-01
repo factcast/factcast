@@ -17,18 +17,26 @@ package org.factcast.core.snap.local;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Optional;
 import java.util.UUID;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class InMemorySnapshotCacheTest {
-  @InjectMocks private InMemorySnapshotCache underTest;
+  private InMemorySnapshotCache underTest;
+
+  @BeforeEach
+  void setUp() {
+    InMemorySnapshotProperties props = new InMemorySnapshotProperties();
+    underTest = new InMemorySnapshotCache(props);
+  }
+
   private final SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
 
   @Nested
@@ -40,7 +48,7 @@ public class InMemorySnapshotCacheTest {
 
       underTest.setSnapshot(snap);
 
-      assertThat(underTest.getSnapshot(id)).isPresent().get().isSameAs(snap);
+      assertThat(underTest.getSnapshot(id)).isPresent().get().isEqualTo(snap);
     }
   }
 
@@ -59,17 +67,19 @@ public class InMemorySnapshotCacheTest {
   }
 
   @Nested
-  class WhenCompacting {
+  class WhenExpiring {
 
     @Test
     void happyCase() {
+      InMemorySnapshotProperties inMemorySnapshotProperties = new InMemorySnapshotProperties();
+      underTest =
+          new InMemorySnapshotCache(inMemorySnapshotProperties.setDeleteSnapshotStaleForDays(0));
       final Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
 
       underTest.setSnapshot(snap);
+      underTest.clearSnapshot(id);
 
-      underTest.compact(0);
-
-      assertThat(underTest.getSnapshot(id)).isEmpty();
+      assertThat(underTest.getSnapshot(id)).isEqualTo(Optional.empty());
     }
   }
 }
