@@ -318,6 +318,7 @@ class ResilientGrpcSubscriptionTest {
       try {
         dfo.onError(exception);
       } catch (Exception ignore) {
+        // ignore
       }
 
       assertThat(uut.onErrorCause().get()).isSameAs(exception);
@@ -329,6 +330,7 @@ class ResilientGrpcSubscriptionTest {
       try {
         dfo.onError(new RetryableException(new IOException()));
       } catch (Exception ignore) {
+        // ignore
       }
 
       verify(uut).reConnect();
@@ -344,6 +346,7 @@ class ResilientGrpcSubscriptionTest {
       try {
         dfo.onError(t);
       } catch (Exception ignore) {
+        // ignore
       }
 
       assertThatThrownBy(() -> uut.delegate(consumer)).isSameAs(t);
