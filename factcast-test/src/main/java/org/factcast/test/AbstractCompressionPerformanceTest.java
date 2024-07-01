@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
 
 @Slf4j
 @SuppressWarnings("java:S112")
-@Disabled("will only be run manually")
+@Disabled("should only be run manually")
 public abstract class AbstractCompressionPerformanceTest {
   private static final int MAX_FACTS = 1000000;
 

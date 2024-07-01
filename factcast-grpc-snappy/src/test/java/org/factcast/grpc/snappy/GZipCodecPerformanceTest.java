@@ -17,7 +17,9 @@ package org.factcast.grpc.snappy;
 
 import io.grpc.Codec;
 import org.factcast.test.AbstractCompressionPerformanceTest;
+import org.junit.jupiter.api.Disabled;
 
+@Disabled("will only be run manually")
 class GZipCodecPerformanceTest extends AbstractCompressionPerformanceTest {
 
   @Override
