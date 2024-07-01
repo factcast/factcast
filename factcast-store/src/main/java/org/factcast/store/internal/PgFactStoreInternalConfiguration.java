@@ -50,8 +50,6 @@ import org.factcast.store.internal.pipeline.ServerPipelineFactory;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.script.JSEngineFactory;
-import org.factcast.store.internal.snapcache.SnapshotCache;
-import org.factcast.store.internal.snapcache.SnapshotCacheConfiguration;
 import org.factcast.store.internal.tail.PGTailIndexingConfiguration;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.factcast.store.registry.PgSchemaStoreChangeListener;
@@ -87,11 +85,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 // not that InterceptMode.PROXY_SCHEDULER does not work when wrapped at runtime (by opentelemetry
 // for instance)
 @EnableSchedulerLock(defaultLockAtMostFor = "PT30m", interceptMode = InterceptMode.PROXY_METHOD)
-@Import({
-  SchemaRegistryConfiguration.class,
-  SnapshotCacheConfiguration.class,
-  PGTailIndexingConfiguration.class
-})
+@Import({SchemaRegistryConfiguration.class, PGTailIndexingConfiguration.class})
 public class PgFactStoreInternalConfiguration {
 
   @Bean
@@ -127,7 +121,6 @@ public class PgFactStoreInternalConfiguration {
       FactTableWriteLock lock,
       FactTransformerService factTransformerService,
       PgFactIdToSerialMapper pgFactIdToSerialMapper,
-      SnapshotCache snapCache,
       PgMetrics pgMetrics,
       StoreConfigurationProperties props,
       PlatformTransactionManager platformTransactionManager) {
@@ -139,7 +132,6 @@ public class PgFactStoreInternalConfiguration {
         lock,
         factTransformerService,
         pgFactIdToSerialMapper,
-        snapCache,
         pgMetrics,
         props,
         platformTransactionManager);

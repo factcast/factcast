@@ -30,12 +30,16 @@ import org.factcast.core.snap.SnapshotId;
 public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
 
   private static final File PERSISTENCE_DIRECTORY = new File("/tmp/snapshots/");
-  private final Cache<SnapshotId, Snapshot> cache =
-      CacheBuilder.newBuilder()
-          .softValues()
-          .removalListener(new PersistingRemovalListener())
-          .expireAfterAccess(Duration.ofDays(10))
-          .build();
+  private final Cache<SnapshotId, Snapshot> cache;
+
+  public InMemoryAndDiskSnapshotCache(InMemoryAndDiskSnapshotProperties props) {
+    cache =
+        CacheBuilder.newBuilder()
+            .softValues()
+            .removalListener(new PersistingRemovalListener())
+            .expireAfterAccess(Duration.ofDays(props.getDeleteSnapshotStaleForDays()))
+            .build();
+  }
 
   @Override
   public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
@@ -90,7 +94,6 @@ public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
       return null;
     }
 
-    if (!persistenceFile.exists()) return null;
     try (FileInputStream fileInputStream = new FileInputStream(persistenceFile)) {
       FileLock fileLock = fileInputStream.getChannel().lock();
       try {

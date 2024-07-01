@@ -18,12 +18,7 @@ package org.factcast.core.snap.local;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.time.Duration;
-import java.time.Instant;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Optional;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.NonNull;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotCache;
@@ -31,17 +26,24 @@ import org.factcast.core.snap.SnapshotId;
 
 public class InMemorySnapshotCache implements SnapshotCache {
 
-  private final Cache<SnapshotId, SnapshotAndAccessTime> cache =
-      CacheBuilder.newBuilder().softValues().expireAfterAccess(Duration.ofDays(10)).build();
+  private final Cache<SnapshotId, Snapshot> cache;
+
+  public InMemorySnapshotCache(InMemorySnapshotProperties props) {
+    cache =
+        CacheBuilder.newBuilder()
+            .softValues()
+            .expireAfterAccess(Duration.ofDays(props.getDeleteSnapshotStaleForDays()))
+            .build();
+  }
 
   @Override
   public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
-    return Optional.ofNullable(cache.getIfPresent(id)).map(SnapshotAndAccessTime::snapshot);
+    return Optional.ofNullable(cache.getIfPresent(id));
   }
 
   @Override
   public void setSnapshot(@NonNull Snapshot snap) {
-    cache.put(snap.id(), new SnapshotAndAccessTime(snap, System.currentTimeMillis()));
+    cache.put(snap.id(), snap);
   }
 
   @Override
@@ -51,27 +53,6 @@ public class InMemorySnapshotCache implements SnapshotCache {
 
   @Override
   public void compact(int retentionTimeInDays) {
-    HashSet<Map.Entry<SnapshotId, SnapshotAndAccessTime>> copyOfEntries;
-
-    synchronized (cache) {
-      copyOfEntries = new HashSet<>(cache.asMap().entrySet());
-    }
-
-    final long thresholdMillis =
-        Instant.now().minus(Duration.ofDays(retentionTimeInDays)).toEpochMilli();
-    copyOfEntries.forEach(
-        e -> {
-          SnapshotAndAccessTime snapshotAndAccessTime = e.getValue();
-          if (thresholdMillis > snapshotAndAccessTime.accessTimeInMillis) {
-            cache.invalidate(e.getKey());
-          }
-        });
-  }
-
-  @Data
-  @AllArgsConstructor
-  static class SnapshotAndAccessTime {
-    Snapshot snapshot;
-    long accessTimeInMillis;
+    // Handled by Guava cache
   }
 }
