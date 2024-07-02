@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Factus;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
-import org.factcast.itests.factus.proj.RedisTransactionalProjectionExample;
+import org.factcast.itests.factus.proj.RedisTxProjectionExample;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.redisson.api.RedissonClient;
@@ -46,7 +46,7 @@ public class RedisTransactionalProjectionExampleITest extends AbstractFactCastIn
     log.info("Publishing test events");
     factus.publish(Arrays.asList(event1, event2, event3, event4));
 
-    var uut = new RedisTransactionalProjectionExample.UserNames(redissonClient);
+    var uut = new RedisTxProjectionExample.UserNames(redissonClient);
     factus.update(uut);
     var userNames = uut.getUserNames();
 

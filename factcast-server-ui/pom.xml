@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.7.10-SNAPSHOT</version>
+    <version>0.8.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-server-ui</artifactId>
@@ -39,7 +39,7 @@
   </repositories>
   <properties>
     <java.version>17</java.version>
-    <vaadin.version>24.3.13</vaadin.version>
+    <vaadin.version>24.4.4</vaadin.version>
   </properties>
   <dependencies>
     <dependency>
@@ -106,11 +106,6 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-security</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.vaadin.componentfactory</groupId>
-      <artifactId>lookup-field-flow</artifactId>
-      <version>24.0.3</version>
     </dependency>
     <dependency>
       <groupId>com.vaadin.componentfactory</groupId>

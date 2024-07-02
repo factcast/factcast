@@ -148,16 +148,9 @@ class GrpcFactStoreTest {
 
   @Test
   void configureWithBatchSize1() {
-    when(properties.getCatchupBatchsize()).thenReturn(1);
+    when(properties.getMaxInboundMessageSize()).thenReturn(1777);
     Metadata meta = GrpcFactStore.prepareMetaData(properties, "client-id");
-    assertThat(meta.containsKey(Headers.CATCHUP_BATCHSIZE)).isFalse();
-  }
-
-  @Test
-  void configureWithBatchSize10() {
-    when(properties.getCatchupBatchsize()).thenReturn(10);
-    Metadata meta = GrpcFactStore.prepareMetaData(properties, "client-id");
-    assertThat(meta.get(Headers.CATCHUP_BATCHSIZE)).isEqualTo(String.valueOf(10));
+    assertThat(meta.get(Headers.CLIENT_MAX_INBOUND_MESSAGE_SIZE)).isEqualTo("1777");
   }
 
   @Test
@@ -166,7 +159,7 @@ class GrpcFactStoreTest {
     UUID uuid = fact.id();
     conv = new ProtoConverter();
     @NonNull FactStoreProto.MSG_UUID id = conv.toProto(uuid);
-    when(blockingStub.fetchById(eq(id)))
+    when(blockingStub.fetchById(id))
         .thenReturn(
             MSG_OptionalFact.newBuilder().setFact(conv.toProto(fact)).setPresent(true).build());
 
@@ -213,7 +206,7 @@ class GrpcFactStoreTest {
   }
 
   static class SomeException extends RuntimeException {
-    static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
   }
 
   @Test
@@ -383,7 +376,7 @@ class GrpcFactStoreTest {
 
   @Test
   void testCancelIsPropagated() {
-    ClientCall call = mock(ClientCall.class);
+    ClientCall<MSG_SubscriptionRequest, MSG_Notification> call = mock(ClientCall.class);
     uut.cancel(call);
     verify(call).cancel(any(), any());
   }
@@ -450,6 +443,7 @@ class GrpcFactStoreTest {
   void testCurrentStateForPositive() {
     uut.fastStateToken(true);
     UUID id = new UUID(0, 1);
+
     when(blockingStub.currentStateForSpecsJson(any())).thenReturn(conv.toProto(id));
     List<FactSpec> list = Collections.singletonList(FactSpec.ns("foo").aggId(id));
     uut.currentStateFor(list);
@@ -516,14 +510,15 @@ class GrpcFactStoreTest {
 
   @Test
   void testSubscribeWithoutResilience() {
-    resilienceConfig.setEnabled(false);
-    SubscriptionRequestTO req =
-        new SubscriptionRequestTO(SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch());
     Channel channel = mock(Channel.class);
     when(nonBlockingStub.getCallOptions()).thenReturn(CallOptions.DEFAULT);
     when(nonBlockingStub.getChannel()).thenReturn(channel);
     when(channel.newCall(any(), any())).thenReturn(mock(ClientCall.class));
-    Subscription s = uut.subscribe(req, element -> {});
+
+    resilienceConfig.setEnabled(false);
+    SubscriptionRequestTO req =
+        new SubscriptionRequestTO(SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch());
+    Subscription s = uut.subscribe(req, elements -> {});
 
     assertThat(s).isInstanceOf(Subscription.class).isNotInstanceOf(ResilientGrpcSubscription.class);
   }
@@ -543,6 +538,7 @@ class GrpcFactStoreTest {
   }
 
   @Nested
+  @SuppressWarnings("java:S5778")
   class Credentials {
     @Test
     void testLegacyCredentialsWrongFormat() {
@@ -553,6 +549,8 @@ class GrpcFactStoreTest {
       Optional<String> creds2 = Optional.of("x:y:z");
       assertThrows(
           IllegalArgumentException.class, () -> GrpcFactStore.configureCredentials(creds2, props));
+      Optional<String> creds3 = Optional.of("ab:cd");
+      assertDoesNotThrow(() -> GrpcFactStore.configureCredentials(creds3, props));
     }
 
     @Test
@@ -633,7 +631,7 @@ class GrpcFactStoreTest {
   }
 
   @Test
-  public void testCurrentTime() {
+  void testCurrentTime() {
     long l = 123L;
     when(blockingStub.currentTime(conv.empty())).thenReturn(conv.toProtoTime(l));
     Long t = uut.currentTime();
@@ -823,7 +821,7 @@ class GrpcFactStoreTest {
     }
 
     @Test
-    void retriesRun() throws Exception {
+    void retriesRun() {
       resilienceConfig.setEnabled(true).setAttempts(100).setInterval(Duration.ofMillis(100));
       doThrow(new RetryableException(new IOException())).doNothing().when(runnable).run();
       uut.runAndHandle(runnable);

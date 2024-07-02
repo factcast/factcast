@@ -206,10 +206,10 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
     void testFfwdFromScratch() {
 
       SubscriptionRequest scratch = SubscriptionRequest.catchup(spec).fromScratch();
-      store.subscribe(SubscriptionRequestTO.forFacts(scratch), obs).awaitCatchup();
+      store.subscribe(SubscriptionRequestTO.from(scratch), obs).awaitCatchup();
 
       SubscriptionRequest tail = SubscriptionRequest.catchup(spec).from(id);
-      store.subscribe(SubscriptionRequestTO.forFacts(tail), obs).awaitCatchup();
+      store.subscribe(SubscriptionRequestTO.from(tail), obs).awaitCatchup();
 
       // now, we expect a ffwd here
       assertThat(fwd.get()).isNotNull();
@@ -223,14 +223,14 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
           Collections.singletonList(Fact.builder().id(id2).ns("ns1").buildWithoutPayload()));
 
       SubscriptionRequest newtail = SubscriptionRequest.catchup(spec).from(id);
-      store.subscribe(SubscriptionRequestTO.forFacts(newtail), obs).awaitCatchup();
+      store.subscribe(SubscriptionRequestTO.from(newtail), obs).awaitCatchup();
 
       fastForwardTargetRefresher.refresh();
       fwd.set(null);
 
       // check for empty catchup
       SubscriptionRequest emptyTail = SubscriptionRequest.catchup(spec).from(id2);
-      store.subscribe(SubscriptionRequestTO.forFacts(emptyTail), obs).awaitCatchup();
+      store.subscribe(SubscriptionRequestTO.from(emptyTail), obs).awaitCatchup();
 
       assertThat(fwd.get()).isNull();
 
@@ -239,7 +239,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
           Collections.singletonList(Fact.builder().id(id3).ns("ns1").buildWithoutPayload()));
 
       SubscriptionRequest nonEmptyTail = SubscriptionRequest.catchup(spec).from(id2);
-      store.subscribe(SubscriptionRequestTO.forFacts(nonEmptyTail), obs).awaitCatchup();
+      store.subscribe(SubscriptionRequestTO.from(nonEmptyTail), obs).awaitCatchup();
 
       // still no ffwd because the ffwd target is smaller than id2
       assertThat(fwd.get()).isNull();
@@ -250,7 +250,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       spec = Collections.singletonList(FactSpec.ns("noneOfThese"));
 
       SubscriptionRequest mt = SubscriptionRequest.catchup(spec).fromScratch();
-      store.subscribe(SubscriptionRequestTO.forFacts(mt), obs).awaitCatchup();
+      store.subscribe(SubscriptionRequestTO.from(mt), obs).awaitCatchup();
 
       // ffwd expected
       assertThat(fwd.get()).isNotNull();
@@ -262,7 +262,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       fastForwardTargetRefresher.refresh();
 
       SubscriptionRequest further = SubscriptionRequest.catchup(spec).from(id2);
-      store.subscribe(SubscriptionRequestTO.forFacts(further), obs).awaitCatchup();
+      store.subscribe(SubscriptionRequestTO.from(further), obs).awaitCatchup();
 
       // now it should ffwd again to the last unrelated one
       assertThat(fwd.get()).isNotNull().isNotEqualTo(first);

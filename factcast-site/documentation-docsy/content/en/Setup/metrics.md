@@ -132,7 +132,7 @@ Under the same namespace `executor.*`, we publish metrics for our own thread poo
 You can distinguish them by the `name` tag. Currently, these are:
 
 - `subscription-factory` - used for incoming new subscriptions
-- `fetching-catchup` - used for buffered transformation while using the fetching catchup strategy
+- `parallel-transformation` - used for batch transformation of buffered facts
 - `paged-catchup` - used for buffered transformation while using the paged catchup strategy
 - `transformation-cache` - used for inserting/updating entries in the transformation cache (only if you use persisted
   cache)

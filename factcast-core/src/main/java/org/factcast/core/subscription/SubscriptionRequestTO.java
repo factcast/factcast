@@ -81,8 +81,15 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
     pid = PID;
   }
 
-  // TODO now that forIDs is gone, maybe rename?
+  @Deprecated
+  /**
+   * @deprecated use from
+   */
   public static SubscriptionRequestTO forFacts(SubscriptionRequest request) {
+    return from(request);
+  }
+
+  public static SubscriptionRequestTO from(SubscriptionRequest request) {
     return new SubscriptionRequestTO(request);
   }
 

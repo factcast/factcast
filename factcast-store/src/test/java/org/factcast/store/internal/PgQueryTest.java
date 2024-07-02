@@ -79,7 +79,7 @@ public class PgQueryTest {
   @Test
   void testRoundtrip() {
     SubscriptionRequestTO req =
-        SubscriptionRequestTO.forFacts(SubscriptionRequest.catchup(DEFAULT_SPEC).fromScratch());
+        SubscriptionRequestTO.from(SubscriptionRequest.catchup(DEFAULT_SPEC).fromScratch());
     FactObserver c = mock(FactObserver.class);
     pq.subscribe(req, c).awaitComplete();
     verify(c, never()).onNext(any());
@@ -95,7 +95,7 @@ public class PgQueryTest {
     insertTestFact(TestHeader.create().type("type2"));
     insertTestFact(TestHeader.create().ns("other-ns").type("type2"));
     SubscriptionRequestTO req =
-        SubscriptionRequestTO.forFacts(SubscriptionRequest.catchup(DEFAULT_SPEC).fromScratch());
+        SubscriptionRequestTO.from(SubscriptionRequest.catchup(DEFAULT_SPEC).fromScratch());
     FactObserver c = mock(FactObserver.class);
     pq.subscribe(req, c).awaitComplete();
     verify(c).onCatchup();
@@ -110,7 +110,7 @@ public class PgQueryTest {
   @Test
   void testRoundtripInsertAfter() throws Exception {
     SubscriptionRequestTO req =
-        SubscriptionRequestTO.forFacts(SubscriptionRequest.follow(DEFAULT_SPEC).fromScratch());
+        SubscriptionRequestTO.from(SubscriptionRequest.follow(DEFAULT_SPEC).fromScratch());
     FactObserver c = mock(FactObserver.class);
     pq.subscribe(req, c).awaitCatchup();
     verify(c).onCatchup();
@@ -127,7 +127,7 @@ public class PgQueryTest {
   @Test
   void testRoundtripCatchupEventsInsertedAfterStart() throws Exception {
     SubscriptionRequestTO req =
-        SubscriptionRequestTO.forFacts(SubscriptionRequest.follow(DEFAULT_SPEC).fromScratch());
+        SubscriptionRequestTO.from(SubscriptionRequest.follow(DEFAULT_SPEC).fromScratch());
     FactObserver c = mock(FactObserver.class);
     doAnswer(i -> null).when(c).onNext(any());
     insertTestFact(TestHeader.create());
@@ -160,7 +160,7 @@ public class PgQueryTest {
   @Test
   void testRoundtripCompletion() throws Exception {
     SubscriptionRequestTO req =
-        SubscriptionRequestTO.forFacts(SubscriptionRequest.catchup(DEFAULT_SPEC).fromScratch());
+        SubscriptionRequestTO.from(SubscriptionRequest.catchup(DEFAULT_SPEC).fromScratch());
     FactObserver c = mock(FactObserver.class);
     insertTestFact(TestHeader.create());
     insertTestFact(TestHeader.create());
@@ -181,7 +181,7 @@ public class PgQueryTest {
   @Test
   void testCancel() throws Exception {
     SubscriptionRequestTO req =
-        SubscriptionRequestTO.forFacts(SubscriptionRequest.follow(DEFAULT_SPEC).fromScratch());
+        SubscriptionRequestTO.from(SubscriptionRequest.follow(DEFAULT_SPEC).fromScratch());
     FactObserver c = mock(FactObserver.class);
     insertTestFact(TestHeader.create());
     Subscription sub = pq.subscribe(req, c).awaitCatchup();

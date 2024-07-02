@@ -61,7 +61,6 @@ public abstract class AbstractFactStore implements FactStore {
     tokenStore.invalidate(token);
   }
 
-  // TODO needed?
   @Override
   @NonNull
   public StateToken stateFor(@NonNull List<FactSpec> specs) {
@@ -70,6 +69,7 @@ public abstract class AbstractFactStore implements FactStore {
   }
 
   @Override
+  @NonNull
   public StateToken currentStateFor(@NonNull List<FactSpec> specs) {
     State state = getCurrentStateFor(specs);
     return tokenStore.create(state);
@@ -87,6 +87,7 @@ public abstract class AbstractFactStore implements FactStore {
 
   @NonNull
   protected abstract State getCurrentStateFor(List<FactSpec> specs);
+
   /** This can be overridden for performance optimizations */
   @NonNull
   protected State getStateFor(@NonNull List<FactSpec> specs, long lastMatchingSerial) {

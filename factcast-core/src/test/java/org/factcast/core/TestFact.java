@@ -31,6 +31,8 @@ public class TestFact implements Fact {
 
   UUID id = UUID.randomUUID();
 
+  long serial = 42L;
+
   Set<UUID> aggIds = new LinkedHashSet<>();
 
   String type = "test";
