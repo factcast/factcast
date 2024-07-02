@@ -36,6 +36,7 @@ public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
 
   public InMemoryAndDiskSnapshotCache(InMemoryAndDiskSnapshotProperties props) {
     persistenceDirectory = new File(System.getProperty("java.io.tmpdir") + "factcast/snapshots/");
+    persistenceDirectory.mkdirs();
     cache =
         CacheBuilder.newBuilder()
             .softValues()
@@ -46,14 +47,14 @@ public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
 
   private RemovalListener<SnapshotId, Snapshot> onRemoval() {
     return notification -> {
-      if (notification.getCause() == RemovalCause.COLLECTED) {
+      if (notification.getCause() != RemovalCause.COLLECTED) {
         try {
           persistValue(notification.getKey(), notification.getValue());
         } catch (IOException e) {
           log.error(
-              String.format(
-                  "Could not persist to disk key-value: %s, %s",
-                  notification.getKey(), notification.getValue()),
+              "Could not persist to disk key-value: {}, {}",
+              notification.getKey(),
+              notification.getValue(),
               e);
         }
       }
@@ -69,7 +70,7 @@ public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
         snapshotOpt = Optional.ofNullable(findValueOnDisk(id));
         snapshotOpt.ifPresent(snapshot -> cache.put(id, snapshot));
       } catch (Exception e) {
-        log.error(String.format("Error retrieving snapshot with id: %s", id), e);
+        log.error("Error retrieving snapshot with id: {}", id, e);
       }
     }
 
@@ -114,16 +115,13 @@ public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
     try {
       Files.deleteIfExists(Paths.get(persistenceDirectory.getPath(), key.key()));
     } catch (IOException e) {
-      log.error(String.format("Error deleting snapshot with id: %s", key), e);
+      log.error("Error deleting snapshot with id: {}", key, e);
     }
   }
 
   private void persistValue(SnapshotId key, Snapshot value) throws IOException {
     File persistenceFile = new File(persistenceDirectory, key.key());
 
-    if (!persistenceFile.getParentFile().exists()) {
-      persistenceFile.getParentFile().mkdirs();
-    }
     try (FileOutputStream fileOutputStream = new FileOutputStream(persistenceFile);
         ObjectOutputStream oos = new ObjectOutputStream(fileOutputStream)) {
       oos.writeObject(value);
