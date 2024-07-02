@@ -57,16 +57,12 @@ public interface FactCast extends ReadFactCast {
   }
 
   default LockedOperationBuilder lock(@NonNull FactSpec scope, FactSpec... tail) {
-    LinkedList<FactSpec> list = new LinkedList<FactSpec>();
+    LinkedList<FactSpec> list = new LinkedList<>();
     list.add(scope);
     list.addAll(Arrays.asList(tail));
     return lock(list);
   }
 
-  /**
-   * @deprecated use lock(FactSpec) instead
-   */
-  // @Deprecated(forRemoval = true)
-  @Deprecated
+  /** use lock(FactSpec) if possible */
   MultiAggregateLockedOperationBuilder lock(@NonNull String ns);
 }
