@@ -19,31 +19,38 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.serializer.SnapshotSerializer;
-import org.factcast.factus.snapshot.SnapshotSerializerFactory;
+import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 
 @RequiredArgsConstructor
 @Slf4j
-public class SpringSnapshotSerializerFactory implements SnapshotSerializerFactory {
+public class SpringSnapshotSerializerSupplier implements SnapshotSerializerSupplier {
   @NonNull final ApplicationContext ctx;
-  @NonNull final SnapshotSerializerFactory wrappedFactory;
+  @NonNull final SnapshotSerializerSupplier wrappedSupplier;
 
+  /**
+   * @param type
+   * @return bean instance of given type, or (if not found in the spring context) delegates to the *
+   *     wrappedSupplier.
+   * @param <T>
+   */
   @Override
-  public <T extends SnapshotSerializer> T create(Class<T> type) {
+  public <T extends SnapshotSerializer> T get(@NonNull Class<T> type) {
     try {
       // prefer bean if it exists
       return ctx.getBean(type);
     } catch (NoSuchBeanDefinitionException ex) {
       // not worth a warning
       log.debug(
-          "While looking for bean type {}. Falling back to ",
-          wrappedFactory.getClass().getCanonicalName());
+          "No Bean found for type {} in the context. Falling back to ",
+          wrappedSupplier.getClass().getCanonicalName());
     } catch (Exception ex) {
       log.warn(
           "While looking for bean type {}. Falling back to ",
-          wrappedFactory.getClass().getCanonicalName());
+          wrappedSupplier.getClass().getCanonicalName(),
+          ex);
     }
-    return wrappedFactory.create(type);
+    return wrappedSupplier.get(type);
   }
 }
