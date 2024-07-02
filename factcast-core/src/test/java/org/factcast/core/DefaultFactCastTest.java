@@ -125,7 +125,7 @@ class DefaultFactCastTest {
 
   @Test
   void testLockNamespaceMustNotBeEmpty() {
-    assertThrows(IllegalArgumentException.class, () -> uut.lock(" "));
+    assertThrows(IllegalArgumentException.class, () -> uut.lock(FactSpec.ns(" ")));
   }
 
   @Test

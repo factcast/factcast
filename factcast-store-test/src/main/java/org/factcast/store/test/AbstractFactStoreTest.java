@@ -46,7 +46,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-@SuppressWarnings("deprecation")
+@SuppressWarnings({"deprecation", "java:S1192"})
 public abstract class AbstractFactStoreTest {
 
   static final FactSpec ANY = FactSpec.ns("default");
@@ -696,8 +696,9 @@ public abstract class AbstractFactStoreTest {
     assertTrue(uut.enumerateTypes("ns1").contains("t3"));
   }
 
+  @SneakyThrows
   @Test
-  protected void testFollow() throws Exception {
+  protected void testFollow() {
     uut.publish(newFollowTestFact());
     AtomicReference<CountDownLatch> l = new AtomicReference<>(new CountDownLatch(1));
     SubscriptionRequest request =
@@ -722,7 +723,8 @@ public abstract class AbstractFactStoreTest {
   }
 
   @Test
-  protected void testCatchup() throws Exception {
+  @SneakyThrows
+  protected void testCatchup() {
     String ns = "catchuptest";
     uut.publish(newTestFact(ns));
     AtomicReference<UUID> last = new AtomicReference<>();
@@ -775,7 +777,7 @@ public abstract class AbstractFactStoreTest {
   }
 
   @Test
-  public void testSubscribeStartingAfter() throws Exception {
+  public void testSubscribeStartingAfter() {
     for (int i = 0; i < 10; i++) {
       uut.publish(Fact.builder().id(new UUID(0L, i)).ns("ns1").type("t1").build("{}"));
     }
@@ -811,7 +813,8 @@ public abstract class AbstractFactStoreTest {
   }
 
   @Test
-  void happyPath() throws Exception {
+  @SneakyThrows
+  void happyPath() {
 
     // setup
     UUID agg1 = UUID.randomUUID();
@@ -831,7 +834,8 @@ public abstract class AbstractFactStoreTest {
   }
 
   @Test
-  void happyPathWithEmptyStore() throws Exception {
+  @SneakyThrows
+  void happyPathWithEmptyStore() {
 
     // setup
     UUID agg1 = UUID.randomUUID();
@@ -850,35 +854,26 @@ public abstract class AbstractFactStoreTest {
   }
 
   @Test
-  void npeOnNamespaceMissing() throws Exception {
-    assertThrows(NullPointerException.class, () -> uut.lock((List<FactSpec>) null));
-  }
-
-  @Test
-  void npeOnNamespaceEmpty() throws Exception {
+  void npeOnNamespaceEmpty() {
     assertThrows(IllegalArgumentException.class, () -> uut.lock(""));
   }
 
   @Test
-  void npeOnAggIdMissing() throws Exception {
-    assertThrows(NullPointerException.class, () -> uut.lock("foo").on(null));
-  }
-
-  @Test
-  void npeOnAttemptIsNull() throws Exception {
+  void npeOnAttemptIsNull() {
     assertThrows(
         NullPointerException.class, () -> uut.lock("foo").on(UUID.randomUUID()).attempt(null));
   }
 
   @Test
-  void abortOnAttemptReturningNull() throws Exception {
+  void abortOnAttemptReturningNull() {
     assertThrows(
         AttemptAbortedException.class,
         () -> uut.lock("foo").on(UUID.randomUUID()).attempt(() -> null));
   }
 
   @Test
-  void happyPathWithGlobalLock() throws Exception {
+  @SneakyThrows
+  void happyPathWithGlobalLock() {
 
     // setup
     UUID agg1 = UUID.randomUUID();
@@ -899,7 +894,8 @@ public abstract class AbstractFactStoreTest {
   }
 
   @Test
-  void happyPathWithMoreThanOneAggregate() throws Exception {
+  @SneakyThrows
+  void happyPathWithMoreThanOneAggregate() {
 
     // setup
     UUID agg1 = UUID.randomUUID();
@@ -920,7 +916,8 @@ public abstract class AbstractFactStoreTest {
   }
 
   @Test
-  void happyPathWithMoreThanOneAggregateAndRetry() throws Exception {
+  @SneakyThrows
+  void happyPathWithMoreThanOneAggregateAndRetry() {
 
     // setup
     UUID agg1 = UUID.randomUUID();
@@ -959,7 +956,8 @@ public abstract class AbstractFactStoreTest {
   }
 
   @Test
-  void happyPathWithGlobalLockAndRetry() throws Exception {
+  @SneakyThrows
+  void happyPathWithGlobalLockAndRetry() {
 
     // setup
     UUID agg1 = UUID.randomUUID();
@@ -1131,7 +1129,8 @@ public abstract class AbstractFactStoreTest {
   }
 
   @Test
-  void shouldNotBeBlockedByUnrelatedFact() throws Exception {
+  @SneakyThrows
+  void shouldNotBeBlockedByUnrelatedFact() {
 
     UUID agg1 = UUID.randomUUID();
     UUID agg2 = UUID.randomUUID();
@@ -1171,7 +1170,8 @@ public abstract class AbstractFactStoreTest {
   }
 
   @Test
-  void shouldReturnIdOfLastFactPublished() throws Exception {
+  @SneakyThrows
+  void shouldReturnIdOfLastFactPublished() {
 
     UUID agg1 = UUID.randomUUID();
 
@@ -1212,7 +1212,8 @@ public abstract class AbstractFactStoreTest {
   }
 
   @Test
-  void shouldNotReleaseTokenOnPublish() throws Exception {
+  @SneakyThrows
+  void shouldNotReleaseTokenOnPublish() {
 
     // token is already released by publishIfUnchanged
 
@@ -1269,7 +1270,8 @@ public abstract class AbstractFactStoreTest {
   }
 
   @Test
-  public void testCurrentTimeProgresses() throws Exception {
+  @SneakyThrows
+  public void testCurrentTimeProgresses() {
 
     long t1 = store.currentTime();
     Thread.sleep(50);

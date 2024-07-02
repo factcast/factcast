@@ -52,6 +52,7 @@ public class FactSpec {
   }
 
   public static FactSpec ns(@NonNull String ns) {
+    if (ns.trim().isEmpty()) throw new IllegalArgumentException("Namespace must not be empty");
     return new FactSpec(ns);
   }
 

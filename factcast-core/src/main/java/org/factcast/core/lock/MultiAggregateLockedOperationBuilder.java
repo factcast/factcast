@@ -23,7 +23,7 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 
 @RequiredArgsConstructor
-public final class DeprecatedLockedOperationBuilder {
+public final class MultiAggregateLockedOperationBuilder {
   @NonNull final FactStore store;
 
   final String ns;

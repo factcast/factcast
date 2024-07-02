@@ -20,8 +20,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import lombok.NonNull;
-import org.factcast.core.lock.DeprecatedLockedOperationBuilder;
 import org.factcast.core.lock.LockedOperationBuilder;
+import org.factcast.core.lock.MultiAggregateLockedOperationBuilder;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 
@@ -50,22 +50,6 @@ public interface FactCast extends ReadFactCast {
     return new DefaultFactCast(store);
   }
 
-  @Override
-  // @Deprecated(since = "0.5.5", forRemoval = true)
-  @Deprecated
-  @NonNull
-  default FactCast retry(int maxAttempts) {
-    return this;
-  }
-
-  @Override
-  // @Deprecated(since = "0.5.5", forRemoval = true)
-  @Deprecated
-  @NonNull
-  default FactCast retry(int maxAttempts, long minimumWaitIntervalMillis) {
-    return this;
-  }
-
   LockedOperationBuilder lock(@NonNull List<FactSpec> scope);
 
   default LockedOperationBuilder lock(@NonNull FactSpec scope) {
@@ -73,16 +57,12 @@ public interface FactCast extends ReadFactCast {
   }
 
   default LockedOperationBuilder lock(@NonNull FactSpec scope, FactSpec... tail) {
-    LinkedList<FactSpec> list = new LinkedList<FactSpec>();
+    LinkedList<FactSpec> list = new LinkedList<>();
     list.add(scope);
     list.addAll(Arrays.asList(tail));
     return lock(list);
   }
 
-  /**
-   * @deprecated use lock(FactSpec) instead
-   */
-  // @Deprecated(forRemoval = true)
-  @Deprecated
-  DeprecatedLockedOperationBuilder lock(@NonNull String ns);
+  /** use lock(FactSpec) if possible */
+  MultiAggregateLockedOperationBuilder lock(@NonNull String ns);
 }
