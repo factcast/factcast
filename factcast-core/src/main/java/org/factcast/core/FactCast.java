@@ -50,20 +50,6 @@ public interface FactCast extends ReadFactCast {
     return new DefaultFactCast(store);
   }
 
-  @Override
-  // @Deprecated(since = "0.5.5", forRemoval = true)
-  @Deprecated
-  default FactCast retry(int maxAttempts) {
-    return this;
-  }
-
-  @Override
-  // @Deprecated(since = "0.5.5", forRemoval = true)
-  @Deprecated
-  default FactCast retry(int maxAttempts, long minimumWaitIntervalMillis) {
-    return this;
-  }
-
   LockedOperationBuilder lock(@NonNull List<FactSpec> scope);
 
   default LockedOperationBuilder lock(@NonNull FactSpec scope) {
