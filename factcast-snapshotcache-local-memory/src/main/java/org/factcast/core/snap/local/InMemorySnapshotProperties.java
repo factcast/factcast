@@ -30,8 +30,4 @@ public class InMemorySnapshotProperties {
   public static final String PROPERTIES_PREFIX = "factcast.local";
 
   int deleteSnapshotStaleForDays = 10;
-
-  public int getRetentionTime() {
-    return this.getDeleteSnapshotStaleForDays();
-  }
 }
