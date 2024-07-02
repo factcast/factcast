@@ -31,6 +31,7 @@ import lombok.SneakyThrows;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.batch.PublishBatch;
 import org.factcast.factus.event.EventObject;
@@ -138,6 +139,11 @@ class FactusTest {
 
             @Override
             public void publish(@NonNull Fact f) {}
+
+            @Override
+            public FactStore getFactStore() {
+              return null;
+            }
           });
 
   @Test
