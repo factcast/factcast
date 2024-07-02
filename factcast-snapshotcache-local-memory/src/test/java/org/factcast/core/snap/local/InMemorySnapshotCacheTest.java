@@ -17,7 +17,6 @@ package org.factcast.core.snap.local;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Optional;
 import java.util.UUID;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
@@ -79,7 +78,7 @@ public class InMemorySnapshotCacheTest {
       underTest.setSnapshot(snap);
       underTest.clearSnapshot(id);
 
-      assertThat(underTest.getSnapshot(id)).isEqualTo(Optional.empty());
+      assertThat(underTest.getSnapshot(id)).isEmpty();
     }
   }
 }

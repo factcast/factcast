@@ -18,6 +18,8 @@ package org.factcast.core.snap.local;
 import com.google.common.cache.*;
 import java.io.*;
 import java.nio.channels.FileLock;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.Optional;
 import lombok.NonNull;
@@ -82,11 +84,13 @@ public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
   @Override
   public void clearSnapshot(@NonNull SnapshotId id) {
     cache.invalidate(id);
-    deleteValue(id);
+    deleteValueFromDiskIfPresent(id);
   }
 
   @Override
-  public void compact(int retentionTimeInDays) {}
+  public void compact(int retentionTimeInDays) {
+    // Handled by the expiredAfterAccess of the cache
+  }
 
   private Snapshot findValueOnDisk(SnapshotId key) throws IOException, ClassNotFoundException {
     File persistenceFile = new File(persistenceDirectory, key.key());
@@ -106,11 +110,11 @@ public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
     }
   }
 
-  private void deleteValue(SnapshotId key) {
-    File persistenceFile = new File(persistenceDirectory, key.key());
-
-    if (persistenceFile.exists()) {
-      persistenceFile.delete();
+  private void deleteValueFromDiskIfPresent(SnapshotId key) {
+    try {
+      Files.deleteIfExists(Paths.get(persistenceDirectory.getPath(), key.key()));
+    } catch (IOException e) {
+      log.error(String.format("Error deleting snapshot with id: %s", key), e);
     }
   }
 
