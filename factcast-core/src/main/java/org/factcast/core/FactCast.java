@@ -20,8 +20,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import lombok.NonNull;
-import org.factcast.core.lock.DeprecatedLockedOperationBuilder;
 import org.factcast.core.lock.LockedOperationBuilder;
+import org.factcast.core.lock.MultiAggregateLockedOperationBuilder;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 
@@ -68,5 +68,5 @@ public interface FactCast extends ReadFactCast {
    */
   // @Deprecated(forRemoval = true)
   @Deprecated
-  DeprecatedLockedOperationBuilder lock(@NonNull String ns);
+  MultiAggregateLockedOperationBuilder lock(@NonNull String ns);
 }
