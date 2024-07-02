@@ -14,7 +14,7 @@ three compressors out of the box:
 - Snappy
 - GZip
 
-Unfortunately, GRPC does not support stream-compression, but only message-compression., This means that the
+Unfortunately, GRPC does not support stream-compression, but only message-compression. This means that the
 efficiency of the compression is dependent on the message size. We'll get to that...
 
 ## Client chooses
