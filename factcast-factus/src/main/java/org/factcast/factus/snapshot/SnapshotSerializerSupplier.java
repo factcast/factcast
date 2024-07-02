@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2023 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,55 +16,24 @@
 package org.factcast.factus.snapshot;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
-import org.factcast.factus.projection.SnapshotProjection;
-import org.factcast.factus.serializer.JacksonSnapshotSerializer;
 import org.factcast.factus.serializer.SnapshotSerializer;
 
-@Slf4j
-public class SnapshotSerializerSupplier {
+public interface SnapshotSerializerSupplier {
+  <T extends SnapshotSerializer> T get(@NonNull Class<T> type);
 
-  @NonNull private final SnapshotSerializer defaultSerializer;
+  class Default implements SnapshotSerializerSupplier {
 
-  private final Map<Class<? extends SnapshotSerializer>, SnapshotSerializer> serializers =
-      new ConcurrentHashMap<>();
-  private final Map<Class<? extends SnapshotProjection>, SnapshotSerializer> cache =
-      new ConcurrentHashMap<>();
-
-  public SnapshotSerializerSupplier(@NonNull SnapshotSerializer defaultSerializer) {
-    this.defaultSerializer = defaultSerializer;
-    if (!(defaultSerializer instanceof JacksonSnapshotSerializer)) {
-      log.info(
-          "Using {} as a default SnapshotSerializer", defaultSerializer.getClass().getSimpleName());
-    }
-  }
-
-  public org.factcast.factus.serializer.SnapshotSerializer retrieveSerializer(
-      @NonNull Class<? extends SnapshotProjection> aClass) {
-    return cache.computeIfAbsent(
-        aClass,
-        clazz -> {
-          SerializeUsing classAnnotation = aClass.getAnnotation(SerializeUsing.class);
-          if (classAnnotation == null) {
-            return defaultSerializer;
-          } else {
-            Class<? extends SnapshotSerializer> ser = classAnnotation.value();
-            return serializers.computeIfAbsent(ser, SnapshotSerializerSupplier::instanciate);
-          }
-        });
-  }
-
-  private static <C> C instanciate(Class<C> clazz) {
-    try {
-      return clazz.getDeclaredConstructor().newInstance();
-    } catch (InstantiationException
-        | IllegalAccessException
-        | InvocationTargetException
-        | NoSuchMethodException e) {
-      throw new SerializerInstantiationException("Cannot create instance from " + clazz, e);
+    @Override
+    public <T extends SnapshotSerializer> T get(@NonNull Class<T> type) {
+      try {
+        return type.getDeclaredConstructor().newInstance();
+      } catch (InstantiationException
+          | IllegalAccessException
+          | InvocationTargetException
+          | NoSuchMethodException e) {
+        throw new SerializerInstantiationException("Cannot create instance from " + type, e);
+      }
     }
   }
 }

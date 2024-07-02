@@ -66,7 +66,7 @@ import org.factcast.factus.projector.ProjectorImpl;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepository;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
-import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
+import org.factcast.factus.snapshot.SnapshotSerializerSelector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -87,7 +87,7 @@ class FactusImplTest {
 
   @Mock private ProjectionSnapshotRepository projectionSnapshotRepository;
 
-  @Mock private SnapshotSerializerSupplier snapFactory;
+  @Mock private SnapshotSerializerSelector snapFactory;
 
   @Mock private AtomicBoolean closed;
 
@@ -778,7 +778,7 @@ class FactusImplTest {
   }
 
   void mockSnapFactory() {
-    when(snapFactory.retrieveSerializer(any())).thenReturn(snapshotSerializer);
+    when(snapFactory.selectSeralizerFor(any())).thenReturn(snapshotSerializer);
   }
 
   @Nested

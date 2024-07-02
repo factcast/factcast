@@ -61,7 +61,7 @@ import org.factcast.factus.projector.ProjectorFactory;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepository;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
-import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
+import org.factcast.factus.snapshot.SnapshotSerializerSelector;
 
 /** Single entry point to the factus API. */
 @RequiredArgsConstructor
@@ -81,7 +81,7 @@ public class FactusImpl implements Factus {
 
   private final ProjectionSnapshotRepository projectionSnapshotRepository;
 
-  private final SnapshotSerializerSupplier snapFactory;
+  private final SnapshotSerializerSelector snapFactory;
 
   private final FactusMetrics factusMetrics;
 
@@ -268,7 +268,7 @@ public class FactusImpl implements Factus {
           "Method confusion: UUID aggregateId is missing as a second parameter for aggregates");
     }
 
-    SnapshotSerializer ser = snapFactory.retrieveSerializer(projectionClass);
+    SnapshotSerializer ser = snapFactory.selectSeralizerFor(projectionClass);
 
     Optional<Snapshot> latest = projectionSnapshotRepository.findLatest(projectionClass);
 
@@ -314,7 +314,7 @@ public class FactusImpl implements Factus {
   private <A extends Aggregate> Optional<A> doFind(Class<A> aggregateClass, UUID aggregateId) {
     assertNotClosed();
 
-    SnapshotSerializer ser = snapFactory.retrieveSerializer(aggregateClass);
+    SnapshotSerializer ser = snapFactory.selectSeralizerFor(aggregateClass);
 
     Optional<Snapshot> latest = aggregateSnapshotRepository.findLatest(aggregateClass, aggregateId);
     Optional<A> optionalA =

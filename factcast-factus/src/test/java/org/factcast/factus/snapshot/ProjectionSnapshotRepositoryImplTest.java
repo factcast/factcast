@@ -43,7 +43,7 @@ class ProjectionSnapshotRepositoryImplTest {
 
   @Mock private SnapshotSerializer serializer;
 
-  @Mock private SnapshotSerializerSupplier serializerSupplier;
+  @Mock private SnapshotSerializerSelector serializerSupplier;
 
   @Mock private SnapshotCache snapshotCache;
 
@@ -60,7 +60,7 @@ class ProjectionSnapshotRepositoryImplTest {
 
     @BeforeEach
     void setup() {
-      when(serializerSupplier.retrieveSerializer(any())).thenReturn(serializer);
+      when(serializerSupplier.selectSeralizerFor(any())).thenReturn(serializer);
     }
 
     @SuppressWarnings("unchecked")
@@ -149,7 +149,7 @@ class ProjectionSnapshotRepositoryImplTest {
     void put() {
       // INIT
       when(serializer.getId()).thenReturn("oink");
-      when(serializerSupplier.retrieveSerializer(any())).thenReturn(serializer);
+      when(serializerSupplier.selectSeralizerFor(any())).thenReturn(serializer);
 
       when(serializer.serialize(projection)).thenReturn("foo".getBytes());
       when(serializer.includesCompression()).thenReturn(true);
@@ -160,7 +160,7 @@ class ProjectionSnapshotRepositoryImplTest {
       // ASSERT
       assertThat(result).succeedsWithin(Duration.ofSeconds(5));
 
-      verify(serializerSupplier).retrieveSerializer(any());
+      verify(serializerSupplier).selectSeralizerFor(any());
 
       verify(snapshotCache).setSnapshot(snapshotCaptor.capture());
 

@@ -18,7 +18,6 @@ package org.factcast.factus.snapshot;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-import lombok.NonNull;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.MyDefaultSnapshotSerializer;
 import org.factcast.factus.serializer.OtherSnapSer;
@@ -28,26 +27,23 @@ import org.junit.jupiter.api.*;
 
 class SnapshotSerializerSupplierTest {
 
-  private @NonNull final SnapshotSerializer defaultSerializer = new MyDefaultSnapshotSerializer();
+  private final SnapshotSerializer defaultSerializer = new MyDefaultSnapshotSerializer();
 
-  private final SnapshotSerializerSupplier underTest =
-      new SnapshotSerializerSupplier(defaultSerializer);
+  private final SnapshotSerializerSelector underTest =
+      new SnapshotSerializerSelector(defaultSerializer, new SnapshotSerializerSupplier.Default());
 
   @Nested
   class WhenRetrievingSerializer {
 
-    @BeforeEach
-    void setup() {}
-
     @Test
     void defaultSerializer() {
-      assertThat(underTest.retrieveSerializer(ProjectionWithDefaultSerializer.class))
+      assertThat(underTest.selectSeralizerFor(ProjectionWithDefaultSerializer.class))
           .isSameAs(defaultSerializer);
     }
 
     @Test
     void alternativeSerializer() {
-      assertThat(underTest.retrieveSerializer(ProjectionWithAlternateSerializer.class))
+      assertThat(underTest.selectSeralizerFor(ProjectionWithAlternateSerializer.class))
           .isInstanceOf(OtherSnapSer.class);
     }
 
@@ -55,7 +51,7 @@ class SnapshotSerializerSupplierTest {
     void failIfSerializerCannotBeCreated() {
       assertThrows(
           SerializerInstantiationException.class,
-          () -> underTest.retrieveSerializer(ProjectionWithBrokenSerializer.class));
+          () -> underTest.selectSeralizerFor(ProjectionWithBrokenSerializer.class));
     }
   }
 
