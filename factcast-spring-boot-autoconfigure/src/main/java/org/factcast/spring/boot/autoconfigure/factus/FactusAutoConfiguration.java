@@ -60,7 +60,7 @@ public class FactusAutoConfiguration {
       SnapshotCache sr,
       EventSerializer deserializer,
       EventConverter eventConverter,
-      SnapshotSerializerSelector snapshotSerializerSupplier,
+      SnapshotSerializerSelector snapshotSerializerSelector,
       FactusMetrics factusMetrics,
       ProjectorFactory projectorFactory,
       /** not used but part of parameters to ensure the dependency graph can be inspected */
@@ -70,9 +70,9 @@ public class FactusAutoConfiguration {
         fc,
         projectorFactory,
         eventConverter,
-        new AggregateSnapshotRepositoryImpl(sr, snapshotSerializerSupplier, factusMetrics),
-        new ProjectionSnapshotRepositoryImpl(sr, snapshotSerializerSupplier, factusMetrics),
-        snapshotSerializerSupplier,
+        new AggregateSnapshotRepositoryImpl(sr, snapshotSerializerSelector, factusMetrics),
+        new ProjectionSnapshotRepositoryImpl(sr, snapshotSerializerSelector, factusMetrics),
+        snapshotSerializerSelector,
         factusMetrics);
   }
 
@@ -84,7 +84,7 @@ public class FactusAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public SnapshotSerializerSelector snapshotSerializerSupplier(
+  public SnapshotSerializerSelector snapshotSerializerSelector(
       ApplicationContext ctx,
       @Qualifier("defaultSnapshotSerializer") SnapshotSerializer defaultSnapshotSerializer) {
     return new SnapshotSerializerSelector(
@@ -93,7 +93,7 @@ public class FactusAutoConfiguration {
   }
 
   @Bean(name = "defaultSnapshotSerializer")
-  @ConditionalOnMissingBean
+  @ConditionalOnMissingBean(name = "defaultSnapshotSerializer")
   public SnapshotSerializer defaultSnapshotSerializer() {
     return new DefaultSnapshotSerializer();
   }
