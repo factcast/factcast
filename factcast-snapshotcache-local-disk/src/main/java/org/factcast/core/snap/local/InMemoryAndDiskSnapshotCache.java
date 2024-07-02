@@ -124,9 +124,6 @@ public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
     if (!persistenceFile.getParentFile().exists()) {
       persistenceFile.getParentFile().mkdirs();
     }
-    if (!persistenceFile.exists()) {
-      persistenceFile.createNewFile();
-    }
     try (FileOutputStream fileOutputStream = new FileOutputStream(persistenceFile);
         ObjectOutputStream oos = new ObjectOutputStream(fileOutputStream)) {
       oos.writeObject(value);
