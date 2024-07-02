@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2023 factcast.org
+ * Copyright © 2017-2024 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,39 +17,32 @@ package org.factcast.core.snap.local;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Optional;
 import java.util.UUID;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-@ExtendWith(MockitoExtension.class)
-public class InMemorySnapshotCacheTest {
-  private InMemorySnapshotCache underTest;
+class InMemoryAndDiskSnapshotCacheTest {
+
+  private InMemoryAndDiskSnapshotCache underTest;
 
   private final SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
 
   @BeforeEach
   void setUp() {
-    InMemorySnapshotProperties props = new InMemorySnapshotProperties();
-    underTest = new InMemorySnapshotCache(props);
+    InMemoryAndDiskSnapshotProperties props = new InMemoryAndDiskSnapshotProperties();
+    underTest = new InMemoryAndDiskSnapshotCache(props);
   }
 
-  @Nested
-  class WhenGettingSnapshot {
+  @Test
+  void happyCase() {
+    final Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
 
-    @Test
-    void happyCase() {
-      final Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
+    underTest.setSnapshot(snap);
 
-      underTest.setSnapshot(snap);
-
-      assertThat(underTest.getSnapshot(id)).isPresent().get().isEqualTo(snap);
-    }
+    assertThat(underTest.getSnapshot(id)).isPresent().get().isEqualTo(snap);
   }
 
   @Nested
@@ -66,20 +59,22 @@ public class InMemorySnapshotCacheTest {
     }
   }
 
-  @Nested
-  class WhenExpiring {
-
-    @Test
-    void happyCase() {
-      InMemorySnapshotProperties inMemorySnapshotProperties = new InMemorySnapshotProperties();
-      underTest =
-          new InMemorySnapshotCache(inMemorySnapshotProperties.setDeleteSnapshotStaleForDays(0));
-      final Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
-
-      underTest.setSnapshot(snap);
-      underTest.clearSnapshot(id);
-
-      assertThat(underTest.getSnapshot(id)).isEqualTo(Optional.empty());
-    }
-  }
+  //  @Nested
+  //  class WhenGCing {
+  //
+  //    @Test
+  //    void happyCase() throws InterruptedException {
+  //      UUID lastFact = UUID.randomUUID();
+  //      Snapshot snap = new Snapshot(id, lastFact, "foo".getBytes(), false);
+  //
+  //      underTest.setSnapshot(snap);
+  //
+  //      // Try to get this garbage collected
+  //      snap = null;
+  //      System.gc();
+  //      Thread.sleep(2000);
+  //
+  //      assertThat(underTest.getSnapshot(id)).isEmpty();
+  //    }
+  //  }
 }

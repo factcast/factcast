@@ -29,16 +29,33 @@ import org.factcast.core.snap.SnapshotId;
 @Slf4j
 public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
 
-  private static final File PERSISTENCE_DIRECTORY = new File("/tmp/snapshots/");
+  private final File persistenceDirectory;
   private final Cache<SnapshotId, Snapshot> cache;
 
   public InMemoryAndDiskSnapshotCache(InMemoryAndDiskSnapshotProperties props) {
+    persistenceDirectory = new File(System.getProperty("java.io.tmpdir") + "factcast/snapshots/");
     cache =
         CacheBuilder.newBuilder()
             .softValues()
-            .removalListener(new PersistingRemovalListener())
+            .removalListener(onRemoval())
             .expireAfterAccess(Duration.ofDays(props.getDeleteSnapshotStaleForDays()))
             .build();
+  }
+
+  private RemovalListener<SnapshotId, Snapshot> onRemoval() {
+    return notification -> {
+      if (notification.getCause() == RemovalCause.COLLECTED) {
+        try {
+          persistValue(notification.getKey(), notification.getValue());
+        } catch (IOException e) {
+          log.error(
+              String.format(
+                  "Could not persist to disk key-value: %s, %s",
+                  notification.getKey(), notification.getValue()),
+              e);
+        }
+      }
+    };
   }
 
   @Override
@@ -71,25 +88,8 @@ public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
   @Override
   public void compact(int retentionTimeInDays) {}
 
-  private class PersistingRemovalListener implements RemovalListener<SnapshotId, Snapshot> {
-    @Override
-    public void onRemoval(RemovalNotification<SnapshotId, Snapshot> notification) {
-      if (notification.getCause() != RemovalCause.COLLECTED) {
-        try {
-          persistValue(notification.getKey(), notification.getValue());
-        } catch (IOException e) {
-          log.error(
-              String.format(
-                  "Could not persist key-value: %s, %s",
-                  notification.getKey(), notification.getValue()),
-              e);
-        }
-      }
-    }
-  }
-
   private Snapshot findValueOnDisk(SnapshotId key) throws IOException, ClassNotFoundException {
-    File persistenceFile = new File(PERSISTENCE_DIRECTORY, key.key());
+    File persistenceFile = new File(persistenceDirectory, key.key());
     if (!persistenceFile.exists()) {
       return null;
     }
@@ -107,7 +107,7 @@ public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
   }
 
   private void deleteValue(SnapshotId key) {
-    File persistenceFile = new File(PERSISTENCE_DIRECTORY, key.key());
+    File persistenceFile = new File(persistenceDirectory, key.key());
 
     if (persistenceFile.exists()) {
       persistenceFile.delete();
@@ -115,21 +115,18 @@ public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
   }
 
   private void persistValue(SnapshotId key, Snapshot value) throws IOException {
-    File persistenceFile = new File(PERSISTENCE_DIRECTORY, key.key());
+    File persistenceFile = new File(persistenceDirectory, key.key());
 
+    if (!persistenceFile.getParentFile().exists()) {
+      persistenceFile.getParentFile().mkdirs();
+    }
     if (!persistenceFile.exists()) {
       persistenceFile.createNewFile();
     }
-    try (FileOutputStream fileOutputStream = new FileOutputStream(persistenceFile)) {
-      FileLock fileLock = fileOutputStream.getChannel().lock();
-      try {
-        try (ObjectOutputStream oos = new ObjectOutputStream(fileOutputStream)) {
-          oos.writeObject(value);
-          oos.flush();
-        }
-      } finally {
-        fileLock.release();
-      }
+    try (FileOutputStream fileOutputStream = new FileOutputStream(persistenceFile);
+        ObjectOutputStream oos = new ObjectOutputStream(fileOutputStream)) {
+      oos.writeObject(value);
+      oos.flush();
     }
   }
 }
