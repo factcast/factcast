@@ -34,8 +34,6 @@ import lombok.NonNull;
 import org.factcast.core.DuplicateFactException;
 import org.factcast.core.Fact;
 import org.factcast.core.FactValidationException;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.RetryableException;
 import org.factcast.core.store.StateToken;
@@ -642,98 +640,6 @@ class GrpcFactStoreTest {
   void testCurrentTimePropagatesRetryableExceptionOnUnavailableStatus() {
     when(blockingStub.currentTime(any())).thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
     assertThrows(RetryableException.class, () -> uut.currentTime());
-  }
-
-  @Test
-  void getSnapshotEmpty() {
-    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-    when(blockingStub.getSnapshot(eq(conv.toProto(id))))
-        .thenReturn(conv.toProtoSnapshot(Optional.empty()));
-    assertThat(uut.getSnapshot(id)).isEmpty();
-  }
-
-  @Test
-  void getSnapshotException() {
-    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-    when(blockingStub.getSnapshot(eq(conv.toProto(id))))
-        .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
-
-    assertThatThrownBy(() -> uut.getSnapshot(id)).isInstanceOf(RetryableException.class);
-  }
-
-  @Test
-  void getSnapshot() {
-    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-    Snapshot snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
-    when(blockingStub.getSnapshot(eq(conv.toProto(id))))
-        .thenReturn(conv.toProtoSnapshot(Optional.of(snap)));
-
-    assertThat(uut.getSnapshot(id)).isPresent().contains(snap);
-  }
-
-  @Test
-  void setSnapshotException() {
-    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-    Snapshot snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
-    when(blockingStub.setSnapshot(eq(conv.toProto(snap))))
-        .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
-
-    assertThatThrownBy(() -> uut.setSnapshot(snap)).isInstanceOf(RetryableException.class);
-  }
-
-  @Test
-  void setSnapshot() {
-    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-    Snapshot snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
-
-    uut.setSnapshot(snap);
-
-    verify(blockingStub).setSnapshot(conv.toProto(snap));
-  }
-
-  @Test
-  void setSnapshotWithCompressionInTransit() {
-    // set compression and mock
-    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-    Snapshot snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), false);
-
-    uut.setSnapshot(snap);
-
-    // uses the stub w compression enabled
-    verify(blockingStub).setSnapshot(conv.toProto(snap));
-    verify(uncompressedBlockingStub, never()).setSnapshot(any());
-  }
-
-  @Test
-  void setSnapshotAlreadyCompressed() {
-    // set compression and mock
-    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-    Snapshot snap = new Snapshot(id, UUID.randomUUID(), "".getBytes(), true);
-
-    uut.setSnapshot(snap);
-
-    // uses the stub w/o compression
-    verify(uncompressedBlockingStub).setSnapshot(conv.toProto(snap));
-    verify(blockingStub, never()).setSnapshot(any());
-  }
-
-  @Test
-  void clearSnapshotException() {
-    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-    when(blockingStub.clearSnapshot(eq(conv.toProto(id))))
-        .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
-
-    assertThatThrownBy(() -> uut.clearSnapshot(id)).isInstanceOf(RetryableException.class);
-  }
-
-  @Test
-  void clearSnapshot() {
-    SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-    when(blockingStub.clearSnapshot(eq(conv.toProto(id)))).thenReturn(conv.empty());
-
-    uut.clearSnapshot(id);
-
-    verify(blockingStub).clearSnapshot(conv.toProto(id));
   }
 
   @Test

@@ -16,18 +16,12 @@
 package org.factcast.store.internal;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import java.util.*;
-import java.util.concurrent.atomic.*;
-import java.util.function.*;
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.StateToken;
-import org.factcast.store.internal.snapcache.InMemorySnapshotCache;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,8 +45,6 @@ class PgFactStoreReadOnlyIntegrationTest {
 
   @Autowired FactStore store;
 
-  @Autowired InMemorySnapshotCache inMemorySnapshotCache;
-
   @Test
   void doesThrowOnPublish() {
     assertThatThrownBy(() -> store.publish(List.of(EMPTY_FACT)))
@@ -63,25 +55,6 @@ class PgFactStoreReadOnlyIntegrationTest {
   void doesThrowOnPublishIfUnchanged() {
     assertThatThrownBy(() -> store.publishIfUnchanged(List.of(EMPTY_FACT), Optional.empty()))
         .isInstanceOf(UnsupportedOperationException.class);
-  }
-
-  @Test
-  void inMemSnapshotStoreWorks() {
-    final var id = SnapshotId.of("xxx", UUID.randomUUID());
-
-    assertThat(store.getSnapshot(id)).isEmpty();
-
-    var snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
-
-    store.setSnapshot(snap);
-
-    assertThat(store.getSnapshot(id)).isPresent().get().isSameAs(snap);
-    assertThat(inMemorySnapshotCache.getSnapshot(id)).isPresent().get().isSameAs(snap);
-
-    store.clearSnapshot(id);
-
-    assertThat(store.getSnapshot(id)).isEmpty();
-    assertThat(inMemorySnapshotCache.getSnapshot(id)).isEmpty();
   }
 
   @Test

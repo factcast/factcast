@@ -26,8 +26,6 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.DuplicateFactException;
 import org.factcast.core.Fact;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.AbstractFactStore;
 import org.factcast.core.store.State;
@@ -43,7 +41,6 @@ import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
-import org.factcast.store.internal.snapcache.SnapshotCache;
 import org.factcast.store.registry.SchemaRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.dao.DataAccessException;
@@ -78,8 +75,6 @@ public class PgFactStore extends AbstractFactStore {
 
   @NonNull private final PgMetrics metrics;
 
-  @NonNull private final SnapshotCache snapCache;
-
   @NonNull private final StoreConfigurationProperties props;
 
   @NonNull private final PlatformTransactionManager platformTransactionManager;
@@ -92,7 +87,6 @@ public class PgFactStore extends AbstractFactStore {
       @NonNull FactTableWriteLock lock,
       @NonNull FactTransformerService factTransformerService,
       @NonNull PgFactIdToSerialMapper pgFactIdToSerialMapper,
-      @NonNull SnapshotCache snapCache,
       @NonNull PgMetrics metrics,
       @NonNull StoreConfigurationProperties props,
       @NonNull PlatformTransactionManager platformTransactionManager) {
@@ -103,7 +97,6 @@ public class PgFactStore extends AbstractFactStore {
     this.schemaRegistry = schemaRegistry;
     this.lock = lock;
     this.pgFactIdToSerialMapper = pgFactIdToSerialMapper;
-    this.snapCache = snapCache;
     this.metrics = metrics;
     this.factTransformerService = factTransformerService;
     this.props = props;
@@ -315,21 +308,6 @@ public class PgFactStore extends AbstractFactStore {
   @Override
   public long currentTime() {
     return jdbcTemplate.queryForObject(PgConstants.CURRENT_TIME_MILLIS, Long.class);
-  }
-
-  @Override
-  public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
-    return metrics.time(StoreMetrics.OP.GET_SNAPSHOT, () -> snapCache.getSnapshot(id));
-  }
-
-  @Override
-  public void setSnapshot(@NonNull Snapshot snapshot) {
-    metrics.time(StoreMetrics.OP.SET_SNAPSHOT, () -> snapCache.setSnapshot(snapshot));
-  }
-
-  @Override
-  public void clearSnapshot(@NonNull SnapshotId id) {
-    metrics.time(StoreMetrics.OP.CLEAR_SNAPSHOT, () -> snapCache.clearSnapshot(id));
   }
 
   @Override

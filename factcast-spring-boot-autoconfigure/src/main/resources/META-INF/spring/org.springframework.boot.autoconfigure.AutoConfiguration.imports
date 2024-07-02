@@ -1,5 +1,7 @@
 org.factcast.spring.boot.autoconfigure.core.FactCastAutoConfiguration
 org.factcast.spring.boot.autoconfigure.core.FactCastSnapshotCacheAutoConfiguration
+org.factcast.spring.boot.autoconfigure.local.snap.InMemorySnapshotCacheAutoConfiguration
+org.factcast.spring.boot.autoconfigure.local.snap.InMemoryAndDiskSnapshotCacheAutoConfiguration
 org.factcast.spring.boot.autoconfigure.redis.RedissonSnapshotCacheAutoConfiguration
 org.factcast.spring.boot.autoconfigure.redis.RedissonAutoConfiguration
 org.factcast.spring.boot.autoconfigure.factus.FactusAutoConfiguration
