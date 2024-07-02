@@ -21,8 +21,7 @@ import static org.mockito.Mockito.when;
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
 import org.factcast.factus.serializer.SnapshotSerializer;
-import org.factcast.factus.snapshot.SnapshotSerializerFactory;
-import org.junit.jupiter.api.BeforeEach;
+import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,42 +32,39 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 
 @ExtendWith(MockitoExtension.class)
-class SpringSnapshotSerializerFactoryTest {
+class SpringSnapshotSerializerSupplierTest {
 
   @Mock private @NonNull ApplicationContext ctx;
-  @Mock private @NonNull SnapshotSerializerFactory wrappedFactory;
-  @InjectMocks private SpringSnapshotSerializerFactory underTest;
+  @Mock private @NonNull SnapshotSerializerSupplier parent;
+  @InjectMocks private SpringSnapshotSerializerSupplier underTest;
 
   @Nested
   class WhenCreating {
     private final Class<TestSerializer> type = TestSerializer.class;
     @Mock TestSerializer mock;
 
-    @BeforeEach
-    void setup() {}
-
     @Test
     void prefersBean() {
       when(ctx.getBean(type)).thenReturn(mock);
 
-      Assertions.assertThat(underTest.create(type)).isSameAs(mock);
-      verifyNoInteractions(wrappedFactory);
+      Assertions.assertThat(underTest.get(type)).isSameAs(mock);
+      verifyNoInteractions(parent);
     }
 
     @Test
     void fallsBackOnRandomException() {
       when(ctx.getBean(type)).thenThrow(new RuntimeException());
-      when(wrappedFactory.create(type)).thenReturn(mock);
+      when(parent.get(type)).thenReturn(mock);
 
-      Assertions.assertThat(underTest.create(type)).isSameAs(mock);
+      Assertions.assertThat(underTest.get(type)).isSameAs(mock);
     }
 
     @Test
     void fallsBackOnNoSuchBeanException() {
       when(ctx.getBean(type)).thenThrow(new NoSuchBeanDefinitionException(""));
-      when(wrappedFactory.create(type)).thenReturn(mock);
+      when(parent.get(type)).thenReturn(mock);
 
-      Assertions.assertThat(underTest.create(type)).isSameAs(mock);
+      Assertions.assertThat(underTest.get(type)).isSameAs(mock);
     }
   }
 

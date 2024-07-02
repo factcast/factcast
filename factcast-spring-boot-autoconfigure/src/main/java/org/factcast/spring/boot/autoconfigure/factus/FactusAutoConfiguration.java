@@ -30,11 +30,13 @@ import org.factcast.factus.metrics.FactusMetricsImpl;
 import org.factcast.factus.projector.DefaultProjectorFactory;
 import org.factcast.factus.projector.ProjectorFactory;
 import org.factcast.factus.serializer.DefaultSnapshotSerializer;
+import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepositoryImpl;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepositoryImpl;
-import org.factcast.factus.snapshot.SnapshotSerializerFactory;
+import org.factcast.factus.snapshot.SnapshotSerializerSelector;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
 import org.factcast.factus.utils.FactusDependency;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -58,7 +60,7 @@ public class FactusAutoConfiguration {
       SnapshotCache sr,
       EventSerializer deserializer,
       EventConverter eventConverter,
-      SnapshotSerializerSupplier snapshotSerializerSupplier,
+      SnapshotSerializerSelector snapshotSerializerSupplier,
       FactusMetrics factusMetrics,
       ProjectorFactory projectorFactory,
       /** not used but part of parameters to ensure the dependency graph can be inspected */
@@ -82,10 +84,18 @@ public class FactusAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public SnapshotSerializerSupplier snapshotSerializerSupplier(ApplicationContext ctx) {
-    return new SnapshotSerializerSupplier(
-        new DefaultSnapshotSerializer(),
-        new SpringSnapshotSerializerFactory(ctx, new SnapshotSerializerFactory.Default()));
+  public SnapshotSerializerSelector snapshotSerializerSupplier(
+      ApplicationContext ctx,
+      @Qualifier("defaultSnapshotSerializer") SnapshotSerializer defaultSnapshotSerializer) {
+    return new SnapshotSerializerSelector(
+        defaultSnapshotSerializer,
+        new SpringSnapshotSerializerSupplier(ctx, new SnapshotSerializerSupplier.Default()));
+  }
+
+  @Bean(name = "defaultSnapshotSerializer")
+  @ConditionalOnMissingBean
+  public SnapshotSerializer defaultSnapshotSerializer() {
+    return new DefaultSnapshotSerializer();
   }
 
   @Bean

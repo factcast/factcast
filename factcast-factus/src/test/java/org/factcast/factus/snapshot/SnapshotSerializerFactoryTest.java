@@ -30,14 +30,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class SnapshotSerializerFactoryTest {
 
   @InjectMocks
-  private SnapshotSerializerFactory underTest = new SnapshotSerializerFactory.Default();
+  private SnapshotSerializerSupplier underTest = new SnapshotSerializerSupplier.Default();
 
   @Nested
   class WhenCreating {
 
     @Test
     void happyPath() {
-      Assertions.assertThat(underTest.create(TestTypeInstanciable.class))
+      Assertions.assertThat(underTest.get(TestTypeInstanciable.class))
           .isNotNull()
           .isInstanceOf(TestTypeInstanciable.class);
     }
@@ -46,7 +46,7 @@ class SnapshotSerializerFactoryTest {
     void failOnAbstract() {
       assertThatThrownBy(
               () -> {
-                underTest.create(AbstractTestType.class);
+                underTest.get(AbstractTestType.class);
               })
           .isInstanceOf(SerializerInstantiationException.class);
     }
@@ -55,7 +55,7 @@ class SnapshotSerializerFactoryTest {
     void failOnNonDefaultConstructor() {
       assertThatThrownBy(
               () -> {
-                underTest.create(TestTypeNotInstanciable.class);
+                underTest.get(TestTypeNotInstanciable.class);
               })
           .isInstanceOf(SerializerInstantiationException.class);
     }
