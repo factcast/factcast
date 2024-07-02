@@ -130,7 +130,7 @@ class DefaultFactCastTest {
 
   @Test
   void testLockReturns() {
-    assertThat(uut.lock(FactSpec.ns("foo"))).isNotNull().hasFieldOrPropertyWithValue("ns", "foo");
+    assertThat(uut.lock("foo")).isNotNull().hasFieldOrPropertyWithValue("ns", "foo");
   }
 
   @Test
