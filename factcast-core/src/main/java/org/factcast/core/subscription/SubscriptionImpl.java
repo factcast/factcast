@@ -186,6 +186,11 @@ public class SubscriptionImpl implements InternalSubscription {
   }
 
   @Override
+  public void flush() {
+    observer.flush();
+  }
+
+  @Override
   public SubscriptionImpl onClose(Runnable e) {
     Runnable formerOnClose = onClose;
     onClose =

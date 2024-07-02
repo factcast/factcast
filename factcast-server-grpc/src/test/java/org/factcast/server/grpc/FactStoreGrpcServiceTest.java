@@ -323,7 +323,7 @@ public class FactStoreGrpcServiceTest {
     SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
     when(backend.subscribe(reqCaptor.capture(), any())).thenReturn(null);
     uut.subscribe(
-        new ProtoConverter().toProto(SubscriptionRequestTO.forFacts(req)),
+        new ProtoConverter().toProto(SubscriptionRequestTO.from(req)),
         mock(ServerCallStreamObserver.class));
     verify(backend).subscribe(any(), any());
   }
@@ -346,8 +346,7 @@ public class FactStoreGrpcServiceTest {
             () -> {
               for (int i = 0; i < 10; i++) {
                 uut.subscribe(
-                    new ProtoConverter()
-                        .toProto(SubscriptionRequestTO.forFacts(req).continuous(true)),
+                    new ProtoConverter().toProto(SubscriptionRequestTO.from(req).continuous(true)),
                     mock(ServerCallStreamObserver.class));
               }
             });
@@ -373,7 +372,7 @@ public class FactStoreGrpcServiceTest {
       SubscriptionRequest req =
           SubscriptionRequest.catchup(FactSpec.ns("foo").aggId(UUID.randomUUID())).fromNowOn();
       uut.subscribe(
-          new ProtoConverter().toProto(SubscriptionRequestTO.forFacts(req).continuous(true)),
+          new ProtoConverter().toProto(SubscriptionRequestTO.from(req).continuous(true)),
           mock(ServerCallStreamObserver.class));
     }
   }
@@ -396,7 +395,7 @@ public class FactStoreGrpcServiceTest {
     // must not throw exception
     for (int i = 0; i < 10; i++) {
       uut.subscribe(
-          new ProtoConverter().toProto(SubscriptionRequestTO.forFacts(req).continuous(true)),
+          new ProtoConverter().toProto(SubscriptionRequestTO.from(req).continuous(true)),
           mock(ServerCallStreamObserver.class));
     }
   }
@@ -421,8 +420,7 @@ public class FactStoreGrpcServiceTest {
             () -> {
               for (int i = 0; i < 10; i++) {
                 uut.subscribe(
-                    new ProtoConverter()
-                        .toProto(SubscriptionRequestTO.forFacts(req).continuous(true)),
+                    new ProtoConverter().toProto(SubscriptionRequestTO.from(req).continuous(true)),
                     mock(ServerCallStreamObserver.class));
               }
             });
