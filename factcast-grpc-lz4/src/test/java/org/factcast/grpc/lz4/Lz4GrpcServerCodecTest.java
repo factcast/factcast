@@ -15,19 +15,20 @@
  */
 package org.factcast.grpc.lz4;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
-class Lz4cGrpcClientCodecTest {
+@SuppressWarnings("deprecation")
+class Lz4GrpcServerCodecTest {
 
-  final Lz4cGrpcClientCodec uut = new Lz4cGrpcClientCodec();
+  final Lz4GrpcServerCodec uut = new Lz4GrpcServerCodec();
 
   @Test
   void getMessageEncoding() {
-    assertEquals("lz4c", uut.getMessageEncoding());
+    assertEquals("lz4", uut.getMessageEncoding());
   }
 
   @Test
