@@ -33,6 +33,7 @@ import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.batch.PublishBatch;
 import org.factcast.factus.event.EventObject;
@@ -51,6 +52,7 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
   IntToLongFunction DEFAULT_RETRY_BACKOFF = i -> 100;
   Logger LOGGER = LoggerFactory.getLogger(Factus.class);
   Cache<UUID, Long> serialCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+
   //// Publishing
 
   /** publishes a single event immediately */
@@ -216,4 +218,12 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
       throws TimeoutException, IllegalArgumentException {
     waitFor(subscribedProjection, factId, timeout, DEFAULT_RETRY_BACKOFF);
   }
+
+  /**
+   * Internal API: subject to change - use at your own risk
+   *
+   * @since 0.7.10
+   */
+  @NonNull
+  FactStore store();
 }
