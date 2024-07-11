@@ -12,22 +12,22 @@
   <artifactId>factcast-example-server-telemetry</artifactId>
   <properties>
     <!-- Pin your own Spring Boot version. -->
-    <spring-boot.version>3.3.0</spring-boot.version>
+    <spring-boot.version>3.3.1</spring-boot.version>
     <docker.image.prefix>factcast</docker.image.prefix>
   </properties>
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-dependencies</artifactId>
-        <version>${spring-boot.version}</version>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-bom</artifactId>
+        <version>${project.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
       <dependency>
-        <groupId>org.factcast</groupId>
-        <artifactId>factcast-bom</artifactId>
-        <version>${project.version}</version>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-dependencies</artifactId>
+        <version>${spring-boot.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
