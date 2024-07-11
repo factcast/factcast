@@ -20,6 +20,7 @@ import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
 import lombok.NonNull;
+import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.TransformationException;
@@ -56,4 +57,12 @@ public interface ReadFactCast {
 
   @NonNull
   Set<String> enumerateTypes(@NonNull String ns);
+
+  /**
+   * Internal API: subject to change - use at your own risk
+   *
+   * @since 0.7.10
+   */
+  @NonNull
+  FactStore store();
 }
