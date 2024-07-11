@@ -28,21 +28,20 @@ public final class MultiAggregateLockedOperationBuilder {
 
   final String ns;
 
+  /** convenience method calling on(Collection) */
   public LockedOperationBuilder on(@NonNull UUID aggId, UUID... otherAggIds) {
     LinkedList<UUID> ids = new LinkedList<>();
     ids.add(aggId);
     ids.addAll(Arrays.asList(otherAggIds));
-    return new LockedOperationBuilder(store, toFactSpecs(ids));
+    return on(ids);
   }
 
   @NonNull
-  private List<FactSpec> toFactSpecs(LinkedList<UUID> ids) {
+  private List<FactSpec> toFactSpecs(Collection<UUID> ids) {
     return ids.stream().map(i -> FactSpec.ns(ns).aggId(i)).collect(Collectors.toList());
   }
 
   public LockedOperationBuilder on(@NonNull Collection<UUID> aggIds) {
-    LinkedList<UUID> ids = new LinkedList<>();
-    ids.addAll(aggIds);
-    return new LockedOperationBuilder(store, toFactSpecs(ids));
+    return new LockedOperationBuilder(store, toFactSpecs(aggIds));
   }
 }
