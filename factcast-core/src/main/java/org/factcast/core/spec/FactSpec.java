@@ -29,6 +29,7 @@ import lombok.NonNull;
  */
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
+@SuppressWarnings({"java:S1874", "java:S1123"})
 public class FactSpec {
 
   @NonNull @JsonProperty final String ns;
@@ -52,11 +53,17 @@ public class FactSpec {
   }
 
   public static FactSpec ns(@NonNull String ns) {
+    assertNotEmpty(ns);
     return new FactSpec(ns);
+  }
+
+  private static void assertNotEmpty(String ns) {
+    if (ns.trim().isEmpty()) throw new IllegalArgumentException("Namespace must not be empty");
   }
 
   public FactSpec(@NonNull @JsonProperty("ns") String ns) {
     super();
+    assertNotEmpty(ns);
     this.ns = ns;
   }
 
