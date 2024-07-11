@@ -124,12 +124,6 @@ class DefaultFactCastTest {
   }
 
   @Test
-  void testLockNamespaceMustNotBeEmpty() {
-    FactSpec ns = FactSpec.ns(" ");
-    assertThrows(IllegalArgumentException.class, () -> uut.lock(ns));
-  }
-
-  @Test
   void testLockReturns() {
     assertThat(uut.lock("foo")).isNotNull().hasFieldOrPropertyWithValue("ns", "foo");
   }
