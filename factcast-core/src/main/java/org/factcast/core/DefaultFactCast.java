@@ -77,7 +77,6 @@ class DefaultFactCast implements FactCast {
 
   @Override
   @NonNull
-  @SuppressWarnings("deprecated")
   public MultiAggregateLockedOperationBuilder lock(@NonNull String ns) {
     if (ns.trim().isEmpty()) {
       throw new IllegalArgumentException("Namespace must not be empty");
