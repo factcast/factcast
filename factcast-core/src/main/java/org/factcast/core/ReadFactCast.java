@@ -20,6 +20,7 @@ import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
 import lombok.NonNull;
+import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.TransformationException;
@@ -66,4 +67,12 @@ public interface ReadFactCast {
   // @Deprecated(since = "0.5.6", forRemoval = true)
   @Deprecated
   ReadFactCast retry(int maxAttempts, long minimumWaitIntervalMillis);
+
+  /**
+   * Internal API: subject to change - use at your own risk
+   *
+   * @since 0.7.10
+   */
+  @NonNull
+  FactStore store();
 }
