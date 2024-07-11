@@ -153,4 +153,9 @@ class DefaultFactCastTest {
     uut.fetchByIdAndVersion(id, 7);
     verify(store).fetchByIdAndVersion(id, 7);
   }
+
+  @Test
+  void testGetFactStore() {
+    assertThat(uut.store()).isEqualTo(store);
+  }
 }

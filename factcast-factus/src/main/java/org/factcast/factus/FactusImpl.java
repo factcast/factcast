@@ -46,6 +46,7 @@ import org.factcast.core.FactStreamPosition;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
@@ -534,6 +535,12 @@ public class FactusImpl implements Factus {
   @Override
   public OptionalLong serialOf(@NonNull UUID factId) {
     return fc.serialOf(factId);
+  }
+
+  @Override
+  @NonNull
+  public FactStore store() {
+    return fc.store();
   }
 
   abstract static class IntervalSnapshotter<P extends SnapshotProjection>
