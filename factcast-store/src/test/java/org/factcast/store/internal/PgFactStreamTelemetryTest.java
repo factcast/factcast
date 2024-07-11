@@ -27,6 +27,7 @@ import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.filter.blacklist.Blacklist;
+import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.script.JSEngineFactory;
@@ -47,6 +48,7 @@ class PgFactStreamTelemetryTest {
   @Mock FactTransformerService transformationService;
   @Mock Blacklist blacklist;
   @Mock PgMetrics metrics;
+  @Mock ServerPipeline serverPipeline;
   @Mock JSEngineFactory ef;
   @Mock PgStoreTelemetry telemetry;
   @Mock DataSource dataSource;
@@ -62,7 +64,7 @@ class PgFactStreamTelemetryTest {
   void postsTelemetryOnCatchup() {
     var req = mock(SubscriptionRequestTO.class);
     when(jdbcTemplate.getDataSource()).thenReturn(dataSource);
-    when(pgCatchupFactory.create(eq(req), eq(subscription), any(), any(), any()))
+    when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any()))
         .thenReturn(mock(PgCatchup.class));
 
     uut.connect(req);
@@ -80,7 +82,7 @@ class PgFactStreamTelemetryTest {
     when(req.continuous()).thenReturn(true);
     when(jdbcTemplate.getDataSource()).thenReturn(dataSource);
     when(dataSource.getConnection()).thenReturn(mock(java.sql.Connection.class));
-    when(pgCatchupFactory.create(eq(req), eq(subscription), any(), any(), any()))
+    when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any()))
         .thenReturn(mock(PgCatchup.class));
 
     uut.connect(req);
@@ -98,7 +100,7 @@ class PgFactStreamTelemetryTest {
     when(req.continuous()).thenReturn(true);
     when(jdbcTemplate.getDataSource()).thenReturn(dataSource);
     when(dataSource.getConnection()).thenReturn(mock(java.sql.Connection.class));
-    when(pgCatchupFactory.create(eq(req), eq(subscription), any(), any(), any()))
+    when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any()))
         .thenReturn(mock(PgCatchup.class));
     uut.connect(req);
 

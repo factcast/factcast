@@ -16,7 +16,6 @@
 package org.factcast.client.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -29,10 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
-import org.factcast.core.subscription.FactStreamInfo;
-import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionClosedException;
-import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.util.ExceptionHelper;
 
@@ -44,7 +40,7 @@ public class ResilientGrpcSubscription implements Subscription {
   private final FactObserver originalObserver;
   private final FactObserver delegatingObserver;
 
-  private final AtomicReference<UUID> lastFactIdSeen = new AtomicReference<>();
+  private final AtomicReference<FactStreamPosition> lastPosition = new AtomicReference<>();
   private final SubscriptionHolder currentSubscription = new SubscriptionHolder();
   private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
@@ -173,10 +169,10 @@ public class ResilientGrpcSubscription implements Subscription {
   @VisibleForTesting
   protected void doConnect() {
     resilience.registerAttempt();
-    SubscriptionRequestTO to = SubscriptionRequestTO.forFacts(originalRequest);
-    UUID last = lastFactIdSeen.get();
+    SubscriptionRequestTO to = SubscriptionRequestTO.from(originalRequest);
+    FactStreamPosition last = lastPosition.get();
     if (last != null) {
-      to.startingAfter(last);
+      to.startingAfter(last.factId());
     }
 
     if (currentSubscription.get() == null) {
@@ -218,7 +214,7 @@ public class ResilientGrpcSubscription implements Subscription {
     public void onNext(@NonNull Fact element) {
       if (!isClosed.get()) {
         originalObserver.onNext(element);
-        lastFactIdSeen.set(element.id());
+        lastPosition.set(FactStreamPosition.from(element));
       } else {
         log.warn("Fact arrived after call to .close() [a few of them is ok...]");
       }
@@ -259,6 +255,11 @@ public class ResilientGrpcSubscription implements Subscription {
     @Override
     public void onFactStreamInfo(@NonNull FactStreamInfo info) {
       originalObserver.onFactStreamInfo(info);
+    }
+
+    @Override
+    public void flush() {
+      originalObserver.flush();
     }
   }
 
