@@ -19,6 +19,7 @@ import static org.factcast.factus.metrics.TagKeys.CLASS;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.lang.reflect.Constructor;
@@ -38,6 +39,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.A;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.FactStreamPosition;
@@ -203,25 +205,27 @@ public class FactusImpl implements Factus {
   private <P extends SubscribedProjection> Subscription doSubscribe(
       @NonNull P subscribedProjection, @NonNull WriterToken token) {
     Projector<P> handler = ehFactory.create(subscribedProjection);
+
     FactObserver fo =
         new AbstractFactObserver(subscribedProjection, PROGRESS_INTERVAL, factusMetrics) {
 
-          FactStreamPosition lastFactIdApplied = null;
+          FactStreamPosition lastPositionApplied = null;
 
           @Override
-          public void onNextFact(@NonNull Fact element) {
-            if (token.isValid()) {
-              lastFactIdApplied = FactStreamPosition.from(element);
-              handler.apply(element);
-            } else {
-              // token is no longer valid
+          public void onNextFacts(@NonNull List<Fact> elements) {
+            assertTokenIsValid();
+            handler.apply(elements);
+            lastPositionApplied = FactStreamPosition.from(Iterables.getLast(elements));
+          }
+
+          private void assertTokenIsValid() {
+            if (!token.isValid())
               throw new IllegalStateException("WriterToken is no longer valid.");
-            }
           }
 
           @Override
           public void onCatchupSignal() {
-            handler.onCatchup(lastFactIdApplied);
+            handler.onCatchup(lastPositionApplied);
             subscribedProjection.onCatchup();
           }
 
@@ -304,6 +308,7 @@ public class FactusImpl implements Factus {
 
   @Override
   @SneakyThrows
+  @NonNull
   public <A extends Aggregate> Optional<A> find(Class<A> aggregateClass, UUID aggregateId) {
     return factusMetrics.timed(
         TimedOperation.FIND_DURATION,
@@ -384,10 +389,11 @@ public class FactusImpl implements Factus {
         new AbstractFactObserver(projection, PROGRESS_INTERVAL, factusMetrics) {
 
           @Override
-          public void onNextFact(@NonNull Fact element) {
-            FactStreamPosition pos = FactStreamPosition.from(element);
+          public void onNextFacts(@NonNull List<Fact> elements) {
+            handler.apply(elements);
+            FactStreamPosition pos = FactStreamPosition.from(Iterables.getLast(elements));
             positionOfLastFactApplied.set(pos);
-            handler.apply(element);
+
             if (afterProcessing != null) {
               afterProcessing.accept(projection, pos.factId());
             }
@@ -396,22 +402,26 @@ public class FactusImpl implements Factus {
 
           @Override
           public void onComplete() {
+            flush();
             projection.onComplete();
           }
 
           @Override
           public void onCatchupSignal() {
+            flush();
             handler.onCatchup(positionOfLastFactApplied.get());
             projection.onCatchup();
           }
 
           @Override
           public void onError(@NonNull Throwable exception) {
+            flush();
             projection.onError(exception);
           }
 
           @Override
           public void onFastForward(@NonNull FactStreamPosition factIdToFfwdTo) {
+            flush();
             if (projection instanceof FactStreamPositionAware) {
               ((FactStreamPositionAware) projection).factStreamPosition(factIdToFfwdTo);
             }

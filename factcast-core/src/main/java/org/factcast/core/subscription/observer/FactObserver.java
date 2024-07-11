@@ -20,6 +20,7 @@ import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
+import org.factcast.core.subscription.Flushable;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -28,7 +29,7 @@ import org.slf4j.LoggerFactory;
  * @author uwe.schaefer@prisma-capacity.eu
  */
 @Generated // sneakily skip coverage generation
-public interface FactObserver {
+public interface FactObserver extends Flushable {
 
   void onNext(@NonNull Fact element);
 
@@ -47,4 +48,6 @@ public interface FactObserver {
   default void onError(@NonNull Throwable exception) {
     LoggerFactory.getLogger(FactObserver.class).warn("Unhandled onError:", exception);
   }
+
+  default void flush() {}
 }

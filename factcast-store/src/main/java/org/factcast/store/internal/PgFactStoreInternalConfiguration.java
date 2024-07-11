@@ -39,7 +39,6 @@ import org.factcast.store.IsReadOnlyEnv;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.catchup.fetching.PgFetchingCatchUpFactory;
-import org.factcast.store.internal.catchup.tmppaged.PgTmpPagedCatchUpFactory;
 import org.factcast.store.internal.check.IndexCheck;
 import org.factcast.store.internal.filter.blacklist.*;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
@@ -47,6 +46,7 @@ import org.factcast.store.internal.listen.PgConnectionTester;
 import org.factcast.store.internal.listen.PgListener;
 import org.factcast.store.internal.lock.AdvisoryWriteLock;
 import org.factcast.store.internal.lock.FactTableWriteLock;
+import org.factcast.store.internal.pipeline.ServerPipelineFactory;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.script.JSEngineFactory;
@@ -104,18 +104,8 @@ public class PgFactStoreInternalConfiguration {
 
   @Bean
   public PgCatchupFactory pgCatchupFactory(
-      StoreConfigurationProperties props,
-      PgConnectionSupplier supp,
-      PgMetrics metrics,
-      FactTransformerService transformerService) {
-    switch (props.getCatchupStrategy()) {
-      case PAGED:
-        return new PgTmpPagedCatchUpFactory(supp, props, metrics, transformerService);
-      case FETCHING:
-        return new PgFetchingCatchUpFactory(supp, props, metrics, transformerService);
-      default:
-        throw new IllegalArgumentException("Unmapped Strategy: " + props.getCatchupStrategy());
-    }
+      StoreConfigurationProperties props, PgConnectionSupplier supp) {
+    return new PgFetchingCatchUpFactory(supp, props);
   }
 
   @Bean
@@ -164,11 +154,10 @@ public class PgFactStoreInternalConfiguration {
       StoreConfigurationProperties props,
       PgCatchupFactory pgCatchupFactory,
       FastForwardTarget target,
-      PgMetrics metrics,
-      Blacklist blacklist,
       JSEngineFactory ef,
-      FactTransformerService transformerService,
-      PgStoreTelemetry telemetry) {
+      PgStoreTelemetry telemetry,
+      ServerPipelineFactory pipelineFactory,
+      PgMetrics metrics) {
     return new PgSubscriptionFactory(
         jdbcTemplate,
         eventBus,
@@ -177,10 +166,9 @@ public class PgFactStoreInternalConfiguration {
         props,
         pgCatchupFactory,
         target,
-        metrics,
-        blacklist,
-        transformerService,
+        pipelineFactory,
         ef,
+        metrics,
         telemetry);
   }
 
@@ -322,5 +310,19 @@ public class PgFactStoreInternalConfiguration {
     final var liquibase = new SpringLiquibase();
     liquibase.setShouldRun(false);
     return liquibase;
+  }
+
+  @Bean
+  public ServerPipelineFactory factPipelineFactory(
+      JSEngineFactory jsEngineFactory,
+      FactTransformerService transformerService,
+      Blacklist blacklist,
+      PgMetrics metrics) {
+    return ServerPipelineFactory.builder()
+        .jsEngineFactory(jsEngineFactory)
+        .factTransformerService(transformerService)
+        .blacklist(blacklist)
+        .metrics(metrics)
+        .build();
   }
 }
