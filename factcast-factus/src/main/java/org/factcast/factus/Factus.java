@@ -222,7 +222,7 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
   /**
    * Internal API: subject to change - use at your own risk
    *
-   * @since 0.7.8
+   * @since 0.7.10
    */
   @NonNull
   FactStore store();
