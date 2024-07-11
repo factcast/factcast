@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2024 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,29 +18,29 @@ package org.factcast.grpc.lz4;
 import io.grpc.Codec;
 import java.io.InputStream;
 import java.io.OutputStream;
-import lombok.SneakyThrows;
 import net.devh.boot.grpc.common.codec.CodecType;
 import net.devh.boot.grpc.common.codec.GrpcCodec;
-import org.apache.commons.compress.compressors.lz4.FramedLZ4CompressorInputStream;
-import org.apache.commons.compress.compressors.lz4.FramedLZ4CompressorOutputStream;
+import net.jpountz.lz4.*;
 
 @GrpcCodec(advertised = true, codecType = CodecType.ALL)
-public class Lz4cGrpcServerCodec implements Codec {
+@Deprecated
+public class Lz4GrpcClientCodec implements Codec {
+  private static final LZ4FastDecompressor decomp = LZ4Factory.fastestInstance().fastDecompressor();
+
+  private static final LZ4Compressor comp = LZ4Factory.fastestInstance().fastCompressor();
 
   @Override
   public String getMessageEncoding() {
-    return "lz4c";
+    return "lz4";
   }
 
-  @SneakyThrows
   @Override
   public InputStream decompress(InputStream inputStream) {
-    return new FramedLZ4CompressorInputStream(inputStream);
+    return new LZ4BlockInputStream(inputStream, decomp);
   }
 
-  @SneakyThrows
   @Override
   public OutputStream compress(OutputStream outputStream) {
-    return new FramedLZ4CompressorOutputStream(outputStream);
+    return new LZ4BlockOutputStream(outputStream, 65536, comp);
   }
 }

@@ -14,7 +14,7 @@ three compressors out of the box:
 - Snappy
 - GZip
 
-Unfortunately, GRPC does not support stream-compression, but only message-compression., This means that the
+Unfortunately, GRPC does not support stream-compression, but only message-compression. This means that the
 efficiency of the compression is dependent on the message size. We'll get to that...
 
 ## Client chooses
@@ -32,7 +32,9 @@ In order to prefer snappy or LZ4, you'd need to add one or both of the following
 to your client and server. Once they are on the classpath on both sides, the client will pick them up automatically,
 and the server will prefer them over GZip. It is advised, that you use as many codecs as you possibly want to support
 in the server, and just the preferred one on the client side.
-Both LZ4 and snappy implementations are provided by apache's `commons-compress` which comes as a transitive dependency.
+
+For obvious reasons, extra dependencies to `factcast-grpc-myCompressionAlgorithm` may bring new transitive dependencies
+(like `commons-compress` or `net.jpountz` for example). As always: please check for potential conflicts.
 
 {{< cardpane >}}
 {{< card header="Snappy" >}}

@@ -33,7 +33,7 @@ public class CompressionCodecs {
   private final String orderedListOfAvailableCodecsAsString;
 
   // lz4c/snappyc originate from commons.compress, see dedicated modules.
-  private static final String[] AVAIL_CODECS = {"lz4c", "snappyc", "lz4", "snappy", "gzip"};
+  private static final String[] AVAIL_CODECS = {"lz4", "snappyc", "snappy", "gzip"};
 
   public CompressionCodecs() {
     orderedListOfAvailableCodecs =
