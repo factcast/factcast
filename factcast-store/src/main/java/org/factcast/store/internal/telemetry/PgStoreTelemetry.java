@@ -31,8 +31,9 @@ public final class PgStoreTelemetry {
   private final EventBus eventBus;
 
   public PgStoreTelemetry(@NonNull PgMetrics metrics) {
-    // needs to be a singleThread executor to ensure that the order of events is respected
-    this(metrics.monitor(Executors.newSingleThreadExecutor(), "telemetry"));
+    // needs to be a singleThread executor to ensure that the order of events is respected,
+    // singleThreadExec however is not observable by micrometer
+    this(metrics.monitor(Executors.newFixedThreadPool(1), "telemetry"));
   }
 
   @VisibleForTesting
