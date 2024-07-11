@@ -101,7 +101,8 @@ class DefaultFactCast implements FactCast {
   }
 
   @Override
-  public FactStore getFactStore() {
+  @NonNull
+  public FactStore store() {
     return store;
   }
 }

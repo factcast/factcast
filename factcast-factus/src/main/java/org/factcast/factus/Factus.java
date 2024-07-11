@@ -52,6 +52,7 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
   IntToLongFunction DEFAULT_RETRY_BACKOFF = i -> 100;
   Logger LOGGER = LoggerFactory.getLogger(Factus.class);
   Cache<UUID, Long> serialCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+
   //// Publishing
 
   /** publishes a single event immediately */
@@ -223,5 +224,6 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
    *
    * @since 0.7.8
    */
-  FactStore getFactStore();
+  @NonNull
+  FactStore store();
 }

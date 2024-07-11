@@ -528,8 +528,9 @@ public class FactusImpl implements Factus {
   }
 
   @Override
-  public FactStore getFactStore() {
-    return fc.getFactStore();
+  @NonNull
+  public FactStore store() {
+    return fc.store();
   }
 
   abstract static class IntervalSnapshotter<P extends SnapshotProjection>

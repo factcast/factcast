@@ -1477,8 +1477,8 @@ class FactusImplTest {
 
   @Test
   void testGetFactStore() {
-    underTest.getFactStore();
-    verify(fc).getFactStore();
+    underTest.store();
+    verify(fc).store();
   }
 }
 

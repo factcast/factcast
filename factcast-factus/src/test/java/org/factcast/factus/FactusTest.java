@@ -141,7 +141,7 @@ class FactusTest {
             public void publish(@NonNull Fact f) {}
 
             @Override
-            public FactStore getFactStore() {
+            public FactStore store() {
               return null;
             }
           });

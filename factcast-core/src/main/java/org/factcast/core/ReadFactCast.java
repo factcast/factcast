@@ -73,5 +73,6 @@ public interface ReadFactCast {
    *
    * @since 0.7.8
    */
-  FactStore getFactStore();
+  @NonNull
+  FactStore store();
 }
