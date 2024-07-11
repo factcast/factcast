@@ -161,6 +161,6 @@ class DefaultFactCastTest {
 
   @Test
   void testGetFactStore() {
-    assertThat(uut.getFactStore()).isEqualTo(store);
+    assertThat(uut.store()).isEqualTo(store);
   }
 }
