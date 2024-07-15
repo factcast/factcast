@@ -30,7 +30,7 @@ import org.springframework.context.annotation.Import;
 @ConditionalOnClass({InMemorySnapshotCache.class, Factus.class})
 @ConditionalOnMissingBean(SnapshotCache.class)
 @Import({InMemorySnapshotProperties.class})
-@AutoConfigureBefore(FactCastSnapshotCacheAutoConfiguration.class)
+@AutoConfigureBefore(NoSnapshotCacheAutoConfiguration.class)
 public class InMemorySnapshotCacheAutoConfiguration {
 
   @Bean

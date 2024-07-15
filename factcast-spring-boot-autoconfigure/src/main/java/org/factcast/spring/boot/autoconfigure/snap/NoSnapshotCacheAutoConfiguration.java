@@ -25,7 +25,7 @@ import org.springframework.context.annotation.Bean;
 
 @AutoConfiguration
 @ConditionalOnClass(Factus.class)
-public class FactCastSnapshotCacheAutoConfiguration {
+public class NoSnapshotCacheAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
