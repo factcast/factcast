@@ -68,6 +68,10 @@ public class JsonView extends Component {
     // condition
   }
 
+  public void clear() {
+    getElement().callJsFunction("clear");
+  }
+
   @ClientCallable
   @SneakyThrows
   public void updateFilters(String filterOptions) {
