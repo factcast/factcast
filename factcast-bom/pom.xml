@@ -115,11 +115,6 @@
       </dependency>
       <dependency>
         <groupId>org.factcast</groupId>
-        <artifactId>factcast-snapshotcache-local-disk</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.factcast</groupId>
         <artifactId>factcast-snapshotcache-redisson</artifactId>
         <version>${project.version}</version>
       </dependency>
