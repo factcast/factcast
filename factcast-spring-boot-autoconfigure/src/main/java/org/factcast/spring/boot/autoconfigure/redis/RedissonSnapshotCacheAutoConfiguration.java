@@ -16,9 +16,9 @@
 package org.factcast.spring.boot.autoconfigure.redis;
 
 import lombok.NonNull;
-import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.redisson.RedissonSnapshotCache;
 import org.factcast.core.snap.redisson.RedissonSnapshotProperties;
+import org.factcast.factus.snapshot.SnapshotCache;
 import org.redisson.api.RedissonClient;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
