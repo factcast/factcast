@@ -15,8 +15,8 @@
  */
 package org.factcast.core.snap.local;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import java.time.Duration;
 import java.util.Optional;
 import lombok.NonNull;
@@ -30,7 +30,7 @@ public class InMemorySnapshotCache implements SnapshotCache {
 
   public InMemorySnapshotCache(InMemorySnapshotProperties props) {
     cache =
-        CacheBuilder.newBuilder()
+        Caffeine.newBuilder()
             .softValues()
             .expireAfterAccess(Duration.ofDays(props.getDeleteSnapshotStaleForDays()))
             .build();
