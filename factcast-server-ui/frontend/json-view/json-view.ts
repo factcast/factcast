@@ -165,6 +165,12 @@ class JsonView extends LitElement {
 		}
 	}
 
+	public clear() {
+		this.quickFilterEnabled = false;
+		this.conditionCount = 0;
+		this.editor?.setValue("");
+	}
+
 	private parseMetaData(content: string, metaData: string) {
 		const parsedMetaData = JSON.parse(metaData) as FactMetaData;
 
