@@ -20,7 +20,7 @@ import org.factcast.core.snap.local.InMemoryAndDiskSnapshotProperties;
 import org.factcast.factus.Factus;
 import org.factcast.factus.snapshot.SnapshotCache;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.AutoConfigureOrder;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -30,13 +30,12 @@ import org.springframework.context.annotation.Import;
 @ConditionalOnClass({InMemoryAndDiskSnapshotCache.class, Factus.class})
 @ConditionalOnMissingBean(SnapshotCache.class)
 @Import({InMemoryAndDiskSnapshotProperties.class})
-@AutoConfigureOrder(-101)
+@AutoConfigureBefore(FactCastSnapshotCacheAutoConfiguration.class)
 public class InMemoryAndDiskSnapshotCacheAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
   public SnapshotCache snapshotCache(InMemoryAndDiskSnapshotProperties props) {
-    //  return new InMemoryAndDiskSnapshotCache(props);
-    return null;
+    return new InMemoryAndDiskSnapshotCache(props);
   }
 }
