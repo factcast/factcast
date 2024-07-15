@@ -15,13 +15,16 @@
  */
 package org.factcast.core.snap.local;
 
+import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.hash.Hashing;
+import com.google.common.io.CountingOutputStream;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -31,41 +34,49 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.util.ExceptionHelper;
 import org.factcast.factus.snapshot.Snapshot;
 import org.factcast.factus.snapshot.SnapshotId;
 
 @Slf4j
 public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
   private final File persistenceDirectory;
-  private final long reservedSpace;
-  private final AtomicLong currentUsedSpace = new AtomicLong(0);
-  private final LoadingCache<SnapshotId, ReadWriteLock> fileSystemLevelLocks;
+  private final long threshold;
+  private final AtomicLong currentUsedSpace;
+  private final LoadingCache<Path, ReadWriteLock> fileSystemLevelLocks;
   private final Deque<Path> lastModifiedPaths = new LinkedList<>();
 
-  public SnapshotDiskRepositoryImpl(InMemoryAndDiskSnapshotProperties properties) {
+  public SnapshotDiskRepositoryImpl(@NonNull InMemoryAndDiskSnapshotProperties properties) {
+
     this.persistenceDirectory = new File(properties.getPathToSnapshots());
-    this.reservedSpace = properties.getMaxDiskSpace();
+    Preconditions.checkState(
+        persistenceDirectory.exists() && persistenceDirectory.isDirectory(),
+        persistenceDirectory.getAbsolutePath() + " must exist and be a directory");
+    this.threshold = (long) (properties.getMaxDiskSpace() * 0.9);
     this.fileSystemLevelLocks =
         CacheBuilder.newBuilder()
             .expireAfterAccess(Duration.ofMinutes(1))
             .build(
-                new CacheLoader<SnapshotId, ReadWriteLock>() {
+                new CacheLoader<Path, ReadWriteLock>() {
                   @Override
-                  public ReadWriteLock load(SnapshotId snapshotId) {
+                  public ReadWriteLock load(Path key) {
                     return new ReentrantReadWriteLock();
                   }
                 });
 
     // Set the current used space at startup
     try {
-      currentUsedSpace.set(getFolderSize(persistenceDirectory));
+      currentUsedSpace = new AtomicLong(getRepositoryTotalSize());
     } catch (IOException e) {
       log.error("Error getting the size of the snapshot directory", e);
-      throw new RuntimeException(e);
+      throw ExceptionHelper.toRuntime(e);
     }
+
     log.info(
-        "SnapshotDiskRepositoryImp initialized with path: {}, max available space: {}, requested max space: {}, currently used space {}",
+        "SnapshotDiskRepositoryImpl initialized with path: {}, max available space: {}, requested max space: {}, currently used space {}",
         properties.getPathToSnapshots(),
         persistenceDirectory.getUsableSpace(),
         properties.getMaxDiskSpace(),
@@ -73,62 +84,17 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
   }
 
   @Override
-  public Optional<Snapshot> findById(SnapshotId key) {
-    Lock readLock = fileSystemLevelLocks.getUnchecked(key).readLock();
-    try {
-      readLock.lock();
-
-      File persistenceFile = new File(persistenceDirectory, getPathFromSnapshotId(key).toString());
-      if (!persistenceFile.exists()) {
-        return Optional.empty();
-      }
-
-      try (FileInputStream fileInputStream = new FileInputStream(persistenceFile);
-          ObjectInputStream ois = new ObjectInputStream(fileInputStream)) {
-        Snapshot snapshot = (Snapshot) ois.readObject();
-
-        // TODO update the file access time or modified, or whatever :D
-        return Optional.ofNullable(snapshot);
-      }
-    } catch (IOException | ClassNotFoundException e) {
-      // TODO, cleanup if not readable?
-      log.error("Error reading snapshot with id: {}", key, e);
-      return Optional.empty();
-    } finally {
-      readLock.unlock();
-    }
-  }
-
-  @Override
   public void saveAsync(Snapshot value) {
-    Lock writeLock = fileSystemLevelLocks.getUnchecked(value.id()).writeLock();
+    File target = createFile(value.id().key());
+    Lock writeLock = fileSystemLevelLocks.getUnchecked(target.toPath()).writeLock();
     writeLock.lock();
     CompletableFuture.runAsync(
         () -> {
           try {
-            File persistenceFile = new File(persistenceDirectory, value.id().key());
-
-            ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-            try (ObjectOutputStream oos = new ObjectOutputStream(byteOut)) {
-              oos.writeObject(value);
-              oos.flush();
-            }
-
-            // Know the size of the new object
-            // Know the size of the folder
-            // If exceeds then ---- delete? not save?
-            // saving this file - starting async cleanup of old files
-            // if not save
-
-            checkSizeAndCleanupOldSnapshotsIfNeeded(byteOut.size());
-
-            try (FileOutputStream fileOutputStream = new FileOutputStream(persistenceFile);
-                ObjectOutputStream oos = new ObjectOutputStream(fileOutputStream)) {
-
-              byteOut.writeTo(fileOutputStream);
-              byteOut.flush();
-            }
-          } catch (IOException e) {
+            long bytes = serializeTo(value, Files.newOutputStream(target.toPath()));
+            this.currentUsedSpace.addAndGet(bytes);
+            triggerCleanup();
+          } catch (Exception e) {
             log.error("Error saving snapshot with id: {}", value.id(), e);
           } finally {
             writeLock.unlock();
@@ -137,35 +103,86 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
   }
 
   @Override
-  public void deleteAsync(SnapshotId key) {
-    Lock writeLock = fileSystemLevelLocks.getUnchecked(key).writeLock();
+  public void deleteAsync(SnapshotId id) {
+    File target = createFile(id.key());
+    Lock writeLock = fileSystemLevelLocks.getUnchecked(target.toPath()).writeLock();
     writeLock.lock();
     CompletableFuture.runAsync(
         () -> {
           try {
-            Files.deleteIfExists(
-                Paths.get(persistenceDirectory.getPath(), getPathFromSnapshotId(key).toString()));
+            if (target.exists()) {
+              Path path = target.toPath();
+              currentUsedSpace.addAndGet(-1 * Files.size(path));
+              Files.delete(path);
+            }
           } catch (IOException e) {
-            log.error("Error deleting snapshot with id: {}", key, e);
+            log.error("Error deleting snapshot with id: {}", id, e);
           } finally {
             writeLock.unlock();
           }
         });
   }
 
-  /**
-   * If the size of the new snapshot exceeds the 90% of available space (Specified or physically
-   * available), then we fetch the oldest files and delete them until we are under the limit.
-   *
-   * @param size the size of the new snapshot being saved to disk
-   */
-  private void checkSizeAndCleanupOldSnapshotsIfNeeded(int size) {
-    long workingSpace =
-        reservedSpace != 0
-            ? Math.min(reservedSpace, persistenceDirectory.getUsableSpace())
-            : persistenceDirectory.getUsableSpace();
+  @Override
+  public Optional<Snapshot> findById(SnapshotId id) {
+    File persistenceFile = createFile(id.key());
+    Lock readLock = fileSystemLevelLocks.getUnchecked(persistenceFile.toPath()).readLock();
+    try {
+      readLock.lock();
+      if (!persistenceFile.exists()) {
+        return Optional.empty();
+      } else {
+        updateLastModified(persistenceFile);
 
-    while (currentUsedSpace.get() >= 0.9 * workingSpace) {
+        try (InputStream fis = Files.newInputStream(persistenceFile.toPath());
+            InputStream bis = new BufferedInputStream(fis);
+            ObjectInputStream ois = new ObjectInputStream(bis)) {
+          Snapshot snapshot = (Snapshot) ois.readObject();
+          return Optional.of(snapshot);
+        } catch (IOException | ClassNotFoundException e) {
+          // TODO, cleanup if not readable?
+          log.error("Error reading snapshot with id: {}", id, e);
+          return Optional.empty();
+        }
+      }
+    } finally {
+      readLock.unlock();
+    }
+  }
+
+  private static void updateLastModified(File persistenceFile) {
+    if (persistenceFile.exists()) {
+      if (!persistenceFile.setLastModified(System.currentTimeMillis())) {
+        log.warn("Unable to set lastModified on {}", persistenceFile.getAbsolutePath());
+      }
+    }
+  }
+
+  private File createFile(@NonNull String key) {
+    String hash = Hashing.sha256().hashString(key, StandardCharsets.UTF_8).toString();
+    String withSlashes =
+        new StringBuilder(hash)
+            .insert(32, '/')
+            .insert(24, '/')
+            .insert(16, '/')
+            .insert(8, '/')
+            .toString();
+    File file = new File(persistenceDirectory, withSlashes);
+    file.getParentFile().mkdirs();
+    return file;
+  }
+
+  /**
+   * If the size of the new snapshot exceeds the 90% of configured max space, then we fetch the
+   * oldest files and delete them until we are under the limit.
+   */
+  private void triggerCleanup() {
+    if (threshold != 0 && currentUsedSpace.get() > threshold)
+      CompletableFuture.runAsync(this::cleanup);
+  }
+
+  private synchronized void cleanup() {
+    while (currentUsedSpace.get() >= threshold) {
       updateLastModifiedPathsIfNeeded();
       if (lastModifiedPaths.isEmpty()) {
         log.error("No more files to delete, but still over the limit");
@@ -173,20 +190,19 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
       }
 
       Path path = lastModifiedPaths.poll();
-      Lock writeLock = fileSystemLevelLocks.getUnchecked(getSnapshotIdFromPath(path)).writeLock();
-      writeLock.lock();
       try {
-        long sizeOfFile = Files.size(path);
-        Files.deleteIfExists(path);
-        currentUsedSpace.addAndGet(-sizeOfFile);
+        if (Files.exists(path)) {
+          long sizeOfFile = Files.size(path);
+          Files.deleteIfExists(path);
+          currentUsedSpace.addAndGet(-sizeOfFile);
+        }
       } catch (IOException e) {
         log.error("Error deleting snapshot with path: {}", path, e);
-      } finally {
-        writeLock.unlock();
       }
     }
   }
 
+  // quite procedural code, isn't it?
   private void updateLastModifiedPathsIfNeeded() {
     if (lastModifiedPaths.isEmpty()) {
       try (Stream<Path> walk = Files.walk(persistenceDirectory.toPath())) {
@@ -214,29 +230,20 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
     }
   }
 
-  // TODO
-  private Path getPathFromSnapshotId(SnapshotId key) {
-
-    return Paths.get(persistenceDirectory.getPath(), key.key());
-  }
-
-  // TODO
-  private SnapshotId getSnapshotIdFromPath(Path path) {
-
-    return SnapshotId.of(path.getFileName().toString(), UUID.randomUUID());
-  }
-
-  // SHA265 and separate into 5 folders
-  // Normalize string that can be reverse the same way
-  // pr/ex/i/id
-  class CacheKey {
-    private String prefix;
-    private SnapshotId id;
-  }
-
-  private long getFolderSize(File folder) throws IOException {
-    try (Stream<Path> walk = Files.walk(folder.toPath())) {
+  private long getRepositoryTotalSize() throws IOException {
+    try (Stream<Path> walk = Files.walk(persistenceDirectory.toPath())) {
       return walk.mapToLong(p -> p.toFile().length()).sum();
+    }
+  }
+
+  @SneakyThrows
+  private long serializeTo(@NonNull Snapshot s, @NonNull OutputStream os) {
+    try (BufferedOutputStream b = new BufferedOutputStream(os);
+        CountingOutputStream c = new CountingOutputStream(b);
+        ObjectOutputStream out = new ObjectOutputStream(c); ) {
+      out.writeObject(s);
+      out.flush();
+      return c.getCount();
     }
   }
 }

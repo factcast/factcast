@@ -17,7 +17,6 @@ package org.factcast.core.snap.local;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import java.time.Duration;
 import java.util.Optional;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +33,7 @@ public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
     cache =
         Caffeine.newBuilder()
             .softValues()
-            .expireAfterAccess(Duration.ofDays(props.getDeleteSnapshotStaleForDays()))
+            // .expireAfterAccess(Duration.ofDays(props.getDeleteSnapshotStaleForDays()))
             .build();
 
     snapshotDiskRepository = new SnapshotDiskRepositoryImpl(props);
@@ -58,13 +57,13 @@ public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
 
   @Override
   public void setSnapshot(@NonNull Snapshot snapshot) {
-    cache.put(snapshot.id(), snapshot);
     snapshotDiskRepository.saveAsync(snapshot);
+    cache.put(snapshot.id(), snapshot);
   }
 
   @Override
   public void clearSnapshot(@NonNull SnapshotId id) {
-    cache.invalidate(id);
     snapshotDiskRepository.deleteAsync(id);
+    cache.invalidate(id);
   }
 }

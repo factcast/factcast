@@ -29,11 +29,8 @@ import org.springframework.context.annotation.Configuration;
 public class InMemoryAndDiskSnapshotProperties {
   public static final String PROPERTIES_PREFIX = "factcast.local.disk";
 
-  private int deleteSnapshotStaleForDays = 90;
-  private String pathToSnapshots = System.getProperty("java.io.tmpdir") + "factcast/snapshots/";
+  private String pathToSnapshots =
+      System.getProperty("java.io.tmpdir") + "/factcast/factus/snapshots/";
   /** The maximum disk space that can be used by the snapshot cache. 0 means no limit. */
   private long maxDiskSpace = 0;
-
-  // Disk space property
-  // FIFO? LRU? LFU?
 }
