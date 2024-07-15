@@ -17,7 +17,6 @@ package org.factcast.factus.snapshot;
 
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,9 +34,6 @@ class NoSnapshotCacheTest {
   class WhenSettingSnapshot {
     @Mock private @NonNull SnapshotId id;
 
-    @BeforeEach
-    void setup() {}
-
     @Test
     void failsIfSetIsCalled() {
       Snapshot mock = Mockito.mock(Snapshot.class);
@@ -52,9 +48,6 @@ class NoSnapshotCacheTest {
   @Nested
   class WhenGettingSnapshot {
     @Mock private @NonNull SnapshotId id;
-
-    @BeforeEach
-    void setup() {}
 
     @Test
     void returnsEmptyOnGet() {
