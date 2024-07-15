@@ -15,11 +15,8 @@
  */
 package org.factcast.core.snap.local;
 
-import com.google.common.cache.*;
-import java.io.*;
-import java.nio.channels.FileLock;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import java.time.Duration;
 import java.util.Optional;
 import lombok.NonNull;
@@ -30,35 +27,17 @@ import org.factcast.factus.snapshot.SnapshotId;
 
 @Slf4j
 public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
-
-  private final File persistenceDirectory;
   private final Cache<SnapshotId, Snapshot> cache;
+  private final SnapshotDiskRepository snapshotDiskRepository;
 
   public InMemoryAndDiskSnapshotCache(InMemoryAndDiskSnapshotProperties props) {
-    persistenceDirectory = new File(System.getProperty("java.io.tmpdir") + "factcast/snapshots/");
-    persistenceDirectory.mkdirs();
     cache =
-        CacheBuilder.newBuilder()
+        Caffeine.newBuilder()
             .softValues()
-            .removalListener(onRemoval())
             .expireAfterAccess(Duration.ofDays(props.getDeleteSnapshotStaleForDays()))
             .build();
-  }
 
-  private RemovalListener<SnapshotId, Snapshot> onRemoval() {
-    return notification -> {
-      if (notification.getCause() != RemovalCause.COLLECTED) {
-        try {
-          persistValue(notification.getKey(), notification.getValue());
-        } catch (IOException e) {
-          log.error(
-              "Could not persist to disk key-value: {}, {}",
-              notification.getKey(),
-              notification.getValue(),
-              e);
-        }
-      }
-    };
+    snapshotDiskRepository = new SnapshotDiskRepositoryImp(props);
   }
 
   @Override
@@ -67,7 +46,7 @@ public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
 
     if (!snapshotOpt.isPresent()) {
       try {
-        snapshotOpt = Optional.ofNullable(findValueOnDisk(id));
+        snapshotOpt = snapshotDiskRepository.findById(id);
         snapshotOpt.ifPresent(snapshot -> cache.put(id, snapshot));
       } catch (Exception e) {
         log.error("Error retrieving snapshot with id: {}", id, e);
@@ -80,47 +59,12 @@ public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
   @Override
   public void setSnapshot(@NonNull Snapshot snapshot) {
     cache.put(snapshot.id(), snapshot);
+    snapshotDiskRepository.saveAsync(snapshot);
   }
 
   @Override
   public void clearSnapshot(@NonNull SnapshotId id) {
     cache.invalidate(id);
-    deleteValueFromDiskIfPresent(id);
-  }
-
-  private Snapshot findValueOnDisk(SnapshotId key) throws IOException, ClassNotFoundException {
-    File persistenceFile = new File(persistenceDirectory, key.key());
-    if (!persistenceFile.exists()) {
-      return null;
-    }
-
-    try (FileInputStream fileInputStream = new FileInputStream(persistenceFile)) {
-      FileLock fileLock = fileInputStream.getChannel().lock();
-      try {
-        try (ObjectInputStream ois = new ObjectInputStream(fileInputStream)) {
-          return (Snapshot) ois.readObject();
-        }
-      } finally {
-        fileLock.release();
-      }
-    }
-  }
-
-  private void deleteValueFromDiskIfPresent(SnapshotId key) {
-    try {
-      Files.deleteIfExists(Paths.get(persistenceDirectory.getPath(), key.key()));
-    } catch (IOException e) {
-      log.error("Error deleting snapshot with id: {}", key, e);
-    }
-  }
-
-  private void persistValue(SnapshotId key, Snapshot value) throws IOException {
-    File persistenceFile = new File(persistenceDirectory, key.key());
-
-    try (FileOutputStream fileOutputStream = new FileOutputStream(persistenceFile);
-        ObjectOutputStream oos = new ObjectOutputStream(fileOutputStream)) {
-      oos.writeObject(value);
-      oos.flush();
-    }
+    snapshotDiskRepository.deleteAsync(id);
   }
 }
