@@ -31,7 +31,7 @@ import org.springframework.context.annotation.Import;
 @ConditionalOnClass({RedissonSnapshotCache.class, RedissonClient.class})
 @ConditionalOnMissingBean(SnapshotCache.class)
 @Import({RedissonSnapshotProperties.class})
-@AutoConfigureBefore(FactCastSnapshotCacheAutoConfiguration.class)
+@AutoConfigureBefore(NoSnapshotCacheAutoConfiguration.class)
 public class RedissonSnapshotCacheAutoConfiguration {
 
   @Bean
