@@ -88,11 +88,6 @@ public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
     deleteValueFromDiskIfPresent(id);
   }
 
-  @Override
-  public void compact(int retentionTimeInDays) {
-    // Handled by the expiredAfterAccess of the cache
-  }
-
   private Snapshot findValueOnDisk(SnapshotId key) throws IOException, ClassNotFoundException {
     File persistenceFile = new File(persistenceDirectory, key.key());
     if (!persistenceFile.exists()) {

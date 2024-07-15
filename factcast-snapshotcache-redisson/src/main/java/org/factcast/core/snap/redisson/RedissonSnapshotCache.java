@@ -17,7 +17,6 @@ package org.factcast.core.snap.redisson;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
 import lombok.NonNull;
@@ -28,7 +27,6 @@ import org.factcast.core.snap.SnapshotId;
 import org.redisson.api.RBucket;
 import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
-import org.redisson.client.codec.Codec;
 
 @Slf4j
 public class RedissonSnapshotCache implements SnapshotCache {
@@ -64,10 +62,6 @@ public class RedissonSnapshotCache implements SnapshotCache {
     return snapshot;
   }
 
-  private RBucket<Snapshot> createFromCodec(String key, Codec codec) {
-    return redisson.getBucket(key, codec);
-  }
-
   @Override
   public void setSnapshot(@NonNull Snapshot snapshot) {
     String key = createKeyFor(snapshot.id());
@@ -78,29 +72,6 @@ public class RedissonSnapshotCache implements SnapshotCache {
   @Override
   public void clearSnapshot(@NonNull SnapshotId id) {
     redisson.getBucket(createKeyFor(id)).delete();
-  }
-
-  @Override
-  @Deprecated // using EXPIRE instead
-  public void compact(int retentionTimeInDays) {
-    Duration daysAgo = Duration.ofDays(retentionTimeInDays);
-    long threshold = Instant.now().minus(daysAgo).toEpochMilli();
-    removeEntriesUntouchedSince(threshold);
-  }
-
-  @VisibleForTesting
-  @Deprecated
-  public void removeEntriesUntouchedSince(long threshold) {
-    index
-        .readAllEntrySet()
-        .forEach(
-            e -> {
-              if (e.getValue() < threshold) {
-                String key = e.getKey();
-                redisson.getBucket(key).deleteAsync();
-                index.removeAsync(key);
-              }
-            });
   }
 
   @NonNull

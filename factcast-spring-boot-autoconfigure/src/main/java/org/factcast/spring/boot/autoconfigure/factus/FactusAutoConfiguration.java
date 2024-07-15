@@ -17,7 +17,6 @@ package org.factcast.spring.boot.autoconfigure.factus;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import java.util.*;
-import lombok.Generated;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
@@ -47,7 +46,6 @@ import org.springframework.core.annotation.Order;
 @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
 @AutoConfiguration
 @ConditionalOnClass(Factus.class)
-@Generated
 @Slf4j
 @AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
 public class FactusAutoConfiguration {

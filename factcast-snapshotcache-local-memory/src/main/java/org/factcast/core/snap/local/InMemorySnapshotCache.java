@@ -50,9 +50,4 @@ public class InMemorySnapshotCache implements SnapshotCache {
   public void clearSnapshot(@NonNull SnapshotId id) {
     cache.invalidate(id);
   }
-
-  @Override
-  public void compact(int retentionTimeInDays) {
-    // Handled by Guava cache
-  }
 }

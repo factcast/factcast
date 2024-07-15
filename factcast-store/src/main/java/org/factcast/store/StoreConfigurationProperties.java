@@ -33,7 +33,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
-@SuppressWarnings("DefaultAnnotationParam")
 @ConfigurationProperties(prefix = StoreConfigurationProperties.PROPERTIES_PREFIX)
 @Data
 @Slf4j
@@ -78,12 +77,6 @@ public class StoreConfigurationProperties implements InitializingBean {
    * in a regular cleanup job
    */
   @Positive int deleteTransformationsStaleForDays = 14;
-
-  /**
-   * this is the min number of days a snapshot is not read in order to be considered stale. This
-   * should free some space in a regular cleanup job
-   */
-  @Positive int deleteSnapshotStaleForDays = 90;
 
   /**
    * If validation is enabled, this controls if transformed facts are persistently cached in
@@ -243,7 +236,7 @@ public class StoreConfigurationProperties implements InitializingBean {
       while (iter.hasNext()) {
         Appender<ILoggingEvent> appender = iter.next();
         if (appender instanceof ConsoleAppender) {
-          log.debug("Setting " + appender.getClass() + " to immediate flush");
+          log.debug("Setting {} to immediate flush", appender.getClass());
           ((ConsoleAppender<?>) appender).setImmediateFlush(true);
         }
       }

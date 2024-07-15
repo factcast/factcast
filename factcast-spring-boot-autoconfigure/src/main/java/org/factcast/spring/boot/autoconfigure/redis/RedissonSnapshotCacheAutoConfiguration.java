@@ -15,7 +15,6 @@
  */
 package org.factcast.spring.boot.autoconfigure.redis;
 
-import lombok.Generated;
 import lombok.NonNull;
 import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.redisson.RedissonSnapshotCache;
@@ -32,7 +31,6 @@ import org.springframework.context.annotation.Import;
 @ConditionalOnClass({RedissonSnapshotCache.class, RedissonClient.class})
 @ConditionalOnMissingBean(SnapshotCache.class)
 @Import({RedissonSnapshotProperties.class})
-@Generated
 @AutoConfigureOrder(-100)
 public class RedissonSnapshotCacheAutoConfiguration {
 
