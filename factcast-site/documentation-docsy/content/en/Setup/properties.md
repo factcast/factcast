@@ -53,19 +53,16 @@ description: Properties you can use to configure FactCast
 
 ### Snapshots
 
-| Property | Description | Default |
-| -------- | :---------- | :------ |
-
-### RedisSnapshots
+#### RedisSnapshots
 
 | Property                                  | Description                                                                                                                                                                                              | Default          |
 | ----------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------- |
 | factcast.redis.deleteSnapshotStaleForDays | min number of days a snapshot is kept even though it is not read anymore. Must be a positive number.                                                                                                     | 90               |
 | factcast.redis.snapshotCacheRedissonCodec | optional configuration of the codec used for serializing objects from and into the snapshot. When set to <nobr>`RedissonDefault`</nobr> no codec is specified and Redisson will use its current default. | MarshallingCodec |
 
-### LocalSnapshots
+#### LocalSnapshots
 
-#### InMem-Snapshots
+##### InMem-Snapshots
 
 | Property                                      | Description                                                                                          | Default |
 | --------------------------------------------- | :--------------------------------------------------------------------------------------------------- | :------ |

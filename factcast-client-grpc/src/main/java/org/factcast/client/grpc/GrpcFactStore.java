@@ -65,7 +65,7 @@ import org.springframework.beans.factory.annotation.Value;
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Slf4j
 public class GrpcFactStore implements FactStore {
-  public static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 4, 0);
+  public static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 5, 0);
 
   private final CompressionCodecs codecs = new CompressionCodecs();
 
