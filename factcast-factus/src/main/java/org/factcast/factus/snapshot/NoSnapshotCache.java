@@ -13,41 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.snap;
+package org.factcast.factus.snapshot;
 
 import java.util.Optional;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.store.FactStore;
 
-@Deprecated
+/**
+ * only usable if you do not use snapshots at all. Most clients will need to configure a
+ * SnapshotCache.
+ */
 @Slf4j
-public class FactCastSnapshotCache implements SnapshotCache {
+public class NoSnapshotCache implements SnapshotCache {
 
-  @NonNull private final FactStore store;
-
-  public FactCastSnapshotCache(@NonNull FactStore store) {
-    this.store = store;
-    //noinspection deprecation
-    log.warn(
-        "You configured factus to use the default FactCastSnapshotCache instead of a client-local cache. This implemenation is deprecated and will be removed soon. Please consider alternative SnapshotCache implementations (like factcast-snapshotcache-redisson for instance).");
+  public NoSnapshotCache() {
+    log.info(
+        "No Snapshot Cache has been configured. If there is an attempt to store a snapshot this will throw a UnsupportedOperationException. If you use Snapshots, please choose one of the existing implementations or provide your own.");
   }
 
   @Override
   public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
-    return store.getSnapshot(id);
+    return Optional.empty();
   }
 
   @Override
   public void setSnapshot(@NonNull Snapshot snapshot) {
-    store.setSnapshot(snapshot);
+    fail();
   }
 
   @Override
   public void clearSnapshot(@NonNull SnapshotId id) {
-    store.clearSnapshot(id);
+    fail();
   }
 
-  /** compacting will be controlled on server side, so this impl is empty. */
-  public void compact(int retentionTimeInDays) {}
+  private static void fail() {
+    throw new UnsupportedOperationException(
+        "NoSnapshotCache has been configured. See https://docs.factcast.org/usage/factus/projections/snapshotting/");
+  }
 }

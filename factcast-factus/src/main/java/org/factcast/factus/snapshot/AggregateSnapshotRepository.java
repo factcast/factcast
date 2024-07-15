@@ -20,7 +20,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import lombok.NonNull;
 import lombok.SneakyThrows;
-import org.factcast.core.snap.Snapshot;
 import org.factcast.factus.projection.Aggregate;
 
 public interface AggregateSnapshotRepository {

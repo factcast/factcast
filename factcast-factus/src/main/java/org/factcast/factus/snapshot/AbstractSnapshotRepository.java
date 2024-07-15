@@ -24,8 +24,6 @@ import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotCache;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.metrics.GaugedEvent;
 import org.factcast.factus.metrics.TagKeys;

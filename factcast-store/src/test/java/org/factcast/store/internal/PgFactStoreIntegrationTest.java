@@ -16,9 +16,6 @@
 package org.factcast.store.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.same;
-import static org.mockito.Mockito.verify;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -28,7 +25,6 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -36,8 +32,6 @@ import lombok.experimental.Delegate;
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.State;
@@ -46,7 +40,6 @@ import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.store.internal.StoreMetrics.OP;
 import org.factcast.store.internal.tail.FastForwardTargetRefresher;
 import org.factcast.store.test.AbstractFactStoreTest;
 import org.factcast.test.IntegrationTest;
@@ -104,31 +97,6 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
   void setup() {
     // update the highwatermarks
     fastForwardTargetRefresher.refresh();
-  }
-
-  @Test
-  void testGetSnapshotMetered() {
-    Optional<Snapshot> snapshot = store.getSnapshot(SnapshotId.of("xxx", UUID.randomUUID()));
-    assertThat(snapshot).isEmpty();
-
-    // noinspection unchecked
-    verify(metrics).time(same(OP.GET_SNAPSHOT), any(Supplier.class));
-  }
-
-  @Test
-  void testClearSnapshotMetered() {
-    var id = SnapshotId.of("xxx", UUID.randomUUID());
-    store.clearSnapshot(id);
-    verify(metrics).time(same(OP.CLEAR_SNAPSHOT), any(Runnable.class));
-  }
-
-  @Test
-  void testSetSnapshotMetered() {
-    var id = SnapshotId.of("xxx", UUID.randomUUID());
-    var snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
-    store.setSnapshot(snap);
-
-    verify(metrics).time(same(OP.SET_SNAPSHOT), any(Runnable.class));
   }
 
   /** This happens in a trigger */

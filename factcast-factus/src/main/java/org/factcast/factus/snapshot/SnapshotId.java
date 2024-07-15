@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.snapcache;
+package org.factcast.factus.snapshot;
 
+import java.io.Serializable;
 import java.util.UUID;
+import lombok.NonNull;
 import lombok.Value;
 
-@Value
-public class PgSnapshotData {
-  UUID factId;
+@Value(staticConstructor = "of")
+public class SnapshotId implements Serializable {
+  private static final long serialVersionUID = -3207528229703207635L;
+  @NonNull String key;
 
-  byte[] bytes;
-
-  boolean compressed;
+  @NonNull UUID uuid; // semantically optional, might be constant if not needed
+  // (SnapshotProjections)
 }

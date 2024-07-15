@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.snap;
+package org.factcast.factus.snapshot;
 
-import java.io.Serializable;
-import java.util.UUID;
+import java.util.Optional;
 import lombok.NonNull;
-import lombok.Value;
 
-@Value
-public class Snapshot implements Serializable {
-  @NonNull SnapshotId id;
+/**
+ * Even though this functionality is available through factStore, we chose to extract it from the
+ * factcast facade. Using factcast itself for snapshots is a convenience feature - for heavy duty
+ * installations having a dedicated implementation using your favorite K/V Store is suggested in
+ * order to lift this load, as well as the data from factcast.
+ */
+public interface SnapshotCache {
 
-  @NonNull UUID lastFact;
+  @NonNull
+  Optional<Snapshot> getSnapshot(@NonNull SnapshotId id);
 
-  @NonNull byte[] bytes;
+  void setSnapshot(@NonNull Snapshot snapshot);
 
-  boolean compressed;
+  void clearSnapshot(@NonNull SnapshotId id);
 }

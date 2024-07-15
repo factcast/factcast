@@ -13,36 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.snapcache;
+package org.factcast.core.snap.local;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
 
-import java.time.ZonedDateTime;
 import java.util.UUID;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
+import org.factcast.factus.snapshot.Snapshot;
+import org.factcast.factus.snapshot.SnapshotId;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class InMemorySnapshotCacheTest {
-  @InjectMocks private InMemorySnapshotCache underTest;
+  private InMemorySnapshotCache underTest;
+
   private final SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
+
+  @BeforeEach
+  void setUp() {
+    InMemorySnapshotProperties props = new InMemorySnapshotProperties();
+    underTest = new InMemorySnapshotCache(props);
+  }
 
   @Nested
   class WhenGettingSnapshot {
 
     @Test
     void happyCase() {
-      final var snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
+      final Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
 
       underTest.setSnapshot(snap);
 
-      assertThat(underTest.getSnapshot(id)).isPresent().get().isSameAs(snap);
+      assertThat(underTest.getSnapshot(id)).isPresent().get().isEqualTo(snap);
     }
   }
 
@@ -51,7 +56,7 @@ public class InMemorySnapshotCacheTest {
 
     @Test
     void happyCase() {
-      final var snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
+      final Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
 
       underTest.setSnapshot(snap);
       underTest.clearSnapshot(id);
@@ -61,15 +66,17 @@ public class InMemorySnapshotCacheTest {
   }
 
   @Nested
-  class WhenCompacting {
+  class WhenExpiring {
 
     @Test
     void happyCase() {
-      final var snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
+      InMemorySnapshotProperties inMemorySnapshotProperties = new InMemorySnapshotProperties();
+      underTest =
+          new InMemorySnapshotCache(inMemorySnapshotProperties.setDeleteSnapshotStaleForDays(0));
+      final Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
 
       underTest.setSnapshot(snap);
-
-      underTest.compact(ZonedDateTime.now().plusMinutes(1));
+      underTest.clearSnapshot(id);
 
       assertThat(underTest.getSnapshot(id)).isEmpty();
     }
