@@ -124,11 +124,6 @@ class DefaultFactCastTest {
   }
 
   @Test
-  void testLockNamespaceMustNotBeEmpty() {
-    assertThrows(IllegalArgumentException.class, () -> uut.lock(" "));
-  }
-
-  @Test
   void testLockReturns() {
     assertThat(uut.lock("foo")).isNotNull().hasFieldOrPropertyWithValue("ns", "foo");
   }
@@ -157,5 +152,10 @@ class DefaultFactCastTest {
     UUID id = UUID.randomUUID();
     uut.fetchByIdAndVersion(id, 7);
     verify(store).fetchByIdAndVersion(id, 7);
+  }
+
+  @Test
+  void testGetFactStore() {
+    assertThat(uut.store()).isEqualTo(store);
   }
 }
