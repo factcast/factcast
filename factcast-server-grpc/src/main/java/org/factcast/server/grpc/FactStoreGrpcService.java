@@ -87,7 +87,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 @SuppressWarnings("all")
 public class FactStoreGrpcService extends RemoteFactStoreImplBase implements InitializingBean {
 
-  public static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 4, 0);
+  public static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 5, 0);
 
   static final AtomicLong subscriptionIdStore = new AtomicLong();
 

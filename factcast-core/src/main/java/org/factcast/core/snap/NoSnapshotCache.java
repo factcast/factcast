@@ -47,6 +47,7 @@ public class NoSnapshotCache implements SnapshotCache {
   }
 
   private static void fail() {
-    throw new UnsupportedOperationException("NoSnapshotCache has been configured");
+    throw new UnsupportedOperationException(
+        "NoSnapshotCache has been configured. See https://docs.factcast.org/usage/factus/projections/snapshotting/");
   }
 }
