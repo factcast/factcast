@@ -42,6 +42,4 @@ public class RedissonSnapshotCacheAutoConfiguration {
     props.getSnapshotCacheRedissonCodec().codec();
     return new RedissonSnapshotCache(redisson, props);
   }
-
-  // compacting no longer needed with redis as we use EXPIRE instead
 }
