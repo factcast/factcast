@@ -37,7 +37,7 @@ public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
             .expireAfterAccess(Duration.ofDays(props.getDeleteSnapshotStaleForDays()))
             .build();
 
-    snapshotDiskRepository = new SnapshotDiskRepositoryImp(props);
+    snapshotDiskRepository = new SnapshotDiskRepositoryImpl(props);
   }
 
   @Override

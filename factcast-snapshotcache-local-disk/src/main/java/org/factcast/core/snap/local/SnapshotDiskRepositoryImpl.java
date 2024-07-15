@@ -36,14 +36,14 @@ import org.factcast.factus.snapshot.Snapshot;
 import org.factcast.factus.snapshot.SnapshotId;
 
 @Slf4j
-public class SnapshotDiskRepositoryImp implements SnapshotDiskRepository {
+public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
   private final File persistenceDirectory;
   private final long reservedSpace;
   private final AtomicLong currentUsedSpace = new AtomicLong(0);
   private final LoadingCache<SnapshotId, ReadWriteLock> fileSystemLevelLocks;
   private final Deque<Path> lastModifiedPaths = new LinkedList<>();
 
-  public SnapshotDiskRepositoryImp(InMemoryAndDiskSnapshotProperties properties) {
+  public SnapshotDiskRepositoryImpl(InMemoryAndDiskSnapshotProperties properties) {
     this.persistenceDirectory = new File(properties.getPathToSnapshots());
     this.reservedSpace = properties.getMaxDiskSpace();
     this.fileSystemLevelLocks =
@@ -216,12 +216,22 @@ public class SnapshotDiskRepositoryImp implements SnapshotDiskRepository {
 
   // TODO
   private Path getPathFromSnapshotId(SnapshotId key) {
+
     return Paths.get(persistenceDirectory.getPath(), key.key());
   }
 
   // TODO
   private SnapshotId getSnapshotIdFromPath(Path path) {
+
     return SnapshotId.of(path.getFileName().toString(), UUID.randomUUID());
+  }
+
+  // SHA265 and separate into 5 folders
+  // Normalize string that can be reverse the same way
+  // pr/ex/i/id
+  class CacheKey {
+    private String prefix;
+    private SnapshotId id;
   }
 
   private long getFolderSize(File folder) throws IOException {
