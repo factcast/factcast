@@ -20,7 +20,7 @@ import org.factcast.core.snap.local.InMemorySnapshotProperties;
 import org.factcast.factus.Factus;
 import org.factcast.factus.snapshot.SnapshotCache;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.AutoConfigureOrder;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -30,7 +30,7 @@ import org.springframework.context.annotation.Import;
 @ConditionalOnClass({InMemorySnapshotCache.class, Factus.class})
 @ConditionalOnMissingBean(SnapshotCache.class)
 @Import({InMemorySnapshotProperties.class})
-@AutoConfigureOrder(-100)
+@AutoConfigureBefore(FactCastSnapshotCacheAutoConfiguration.class)
 public class InMemorySnapshotCacheAutoConfiguration {
 
   @Bean
