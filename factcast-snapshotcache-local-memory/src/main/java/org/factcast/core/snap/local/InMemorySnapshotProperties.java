@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.snapcache;
+package org.factcast.core.snap.local;
 
-import java.time.ZonedDateTime;
-import java.util.Optional;
-import lombok.NonNull;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
+import lombok.Data;
+import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
-public interface SnapshotCache {
-  @NonNull
-  Optional<Snapshot> getSnapshot(@NonNull SnapshotId id);
+@Configuration
+@Data
+@Slf4j
+@Accessors(fluent = false)
+@ConfigurationProperties(prefix = InMemorySnapshotProperties.PROPERTIES_PREFIX)
+public class InMemorySnapshotProperties {
+  public static final String PROPERTIES_PREFIX = "factcast.local.mem";
 
-  void setSnapshot(@NonNull Snapshot snap);
-
-  void clearSnapshot(@NonNull SnapshotId id);
-
-  default void compact(@NonNull ZonedDateTime thresholdDate) {}
+  int deleteSnapshotStaleForDays = 10;
 }

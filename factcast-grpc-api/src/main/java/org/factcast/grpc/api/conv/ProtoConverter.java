@@ -16,7 +16,6 @@
 package org.factcast.grpc.api.conv;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.protobuf.ByteString;
 import com.google.protobuf.ProtocolStringList;
 import java.time.LocalDate;
 import java.util.*;
@@ -25,8 +24,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.FactStreamInfo;
@@ -326,10 +323,6 @@ public class ProtoConverter {
     return MSG_CurrentDatabaseTime.newBuilder().setMillis(currentTime).build();
   }
 
-  public MSG_SnapshotId toProto(SnapshotId id) {
-    return MSG_SnapshotId.newBuilder().setKey(id.key()).setUuid(toProtoOptional(id.uuid())).build();
-  }
-
   public MSG_OptionalUuid toProtoOptional(UUID uuid) {
     MSG_OptionalUuid.Builder builder = MSG_OptionalUuid.newBuilder();
     if (uuid == null) {
@@ -339,63 +332,12 @@ public class ProtoConverter {
     }
   }
 
-  public Optional<Snapshot> fromProto(@NonNull MSG_OptionalSnapshot message) {
-    if (!message.getPresent()) {
-      return Optional.empty();
-    } else {
-      return Optional.of(fromProto(message.getSnapshot()));
-    }
-  }
-
-  public Snapshot fromProto(@NonNull MSG_Snapshot snapshot) {
-    return new Snapshot(
-        fromProto(snapshot.getId()),
-        fromProto(snapshot.getFactId()),
-        fromProto(snapshot.getData()),
-        snapshot.getCompressed());
-  }
-
-  public SnapshotId fromProto(@NonNull MSG_SnapshotId id) {
-    return SnapshotId.of(id.getKey(), fromProto(id.getUuid()));
-  }
-
   public UUID fromProto(@NonNull MSG_OptionalUuid uuid) {
     if (uuid.getPresent()) {
       return fromProto(uuid.getUuid());
     } else {
       return null;
     }
-  }
-
-  public byte[] fromProto(@NonNull ByteString data) {
-    return data.toByteArray();
-  }
-
-  public MSG_Snapshot toProto(
-      @NonNull SnapshotId id, @NonNull UUID state, @NonNull byte[] bytes, boolean compressed) {
-    MSG_Snapshot.Builder ret =
-        MSG_Snapshot.newBuilder()
-            .setId(toProto(id))
-            .setFactId(toProto(state))
-            .setData(ByteString.copyFrom(bytes))
-            .setCompressed(compressed);
-    return ret.build();
-  }
-
-  public MSG_Snapshot toProto(Snapshot snap) {
-    return toProto(snap.id(), snap.lastFact(), snap.bytes(), snap.compressed());
-  }
-
-  public MSG_OptionalSnapshot toProtoSnapshot(Optional<Snapshot> snapshot) {
-    MSG_OptionalSnapshot.Builder ret = MSG_OptionalSnapshot.newBuilder();
-    if (snapshot.isPresent()) {
-      ret.setPresent(true);
-      Snapshot snap = snapshot.get();
-      ret.setSnapshot(toProto(snap.id(), snap.lastFact(), snap.bytes(), snap.compressed()));
-    } else {
-      ret.setPresent(false);
-    }
-    return ret.build();
   }
 
   public List<FactSpec> fromProto(MSG_FactSpecsJson request) {

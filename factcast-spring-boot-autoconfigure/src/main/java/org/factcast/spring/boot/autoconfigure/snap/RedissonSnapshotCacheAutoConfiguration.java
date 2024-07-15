@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.spring.boot.autoconfigure.redis;
+package org.factcast.spring.boot.autoconfigure.snap;
 
-import lombok.Generated;
 import lombok.NonNull;
-import org.factcast.core.snap.SnapshotCache;
 import org.factcast.core.snap.redisson.RedissonSnapshotCache;
 import org.factcast.core.snap.redisson.RedissonSnapshotProperties;
+import org.factcast.factus.snapshot.SnapshotCache;
 import org.redisson.api.RedissonClient;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.AutoConfigureOrder;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -32,8 +31,7 @@ import org.springframework.context.annotation.Import;
 @ConditionalOnClass({RedissonSnapshotCache.class, RedissonClient.class})
 @ConditionalOnMissingBean(SnapshotCache.class)
 @Import({RedissonSnapshotProperties.class})
-@Generated
-@AutoConfigureOrder(-100)
+@AutoConfigureBefore(NoSnapshotCacheAutoConfiguration.class)
 public class RedissonSnapshotCacheAutoConfiguration {
 
   @Bean
@@ -44,6 +42,4 @@ public class RedissonSnapshotCacheAutoConfiguration {
     props.getSnapshotCacheRedissonCodec().codec();
     return new RedissonSnapshotCache(redisson, props);
   }
-
-  // compacting no longer needed with redis as we use EXPIRE instead
 }

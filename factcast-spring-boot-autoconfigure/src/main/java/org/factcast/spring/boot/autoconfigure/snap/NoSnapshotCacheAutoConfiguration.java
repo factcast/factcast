@@ -13,29 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.spring.boot.autoconfigure.core;
+package org.factcast.spring.boot.autoconfigure.snap;
 
-import lombok.Generated;
-import org.factcast.core.FactCast;
-import org.factcast.core.snap.FactCastSnapshotCache;
-import org.factcast.core.snap.SnapshotCache;
-import org.factcast.core.store.FactStore;
+import org.factcast.factus.Factus;
+import org.factcast.factus.snapshot.NoSnapshotCache;
+import org.factcast.factus.snapshot.SnapshotCache;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
-import org.springframework.core.Ordered;
 
 @AutoConfiguration
-@ConditionalOnClass(FactCast.class)
-@Generated
-@AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
-public class FactCastSnapshotCacheAutoConfiguration {
+@ConditionalOnClass(Factus.class)
+public class NoSnapshotCacheAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public SnapshotCache snapshotCache(FactStore store) {
-    return new FactCastSnapshotCache(store);
+  public SnapshotCache snapshotCache() {
+    return new NoSnapshotCache();
   }
 }

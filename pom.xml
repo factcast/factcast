@@ -49,6 +49,7 @@
     <module>factcast-schema-registry-cli</module>
     <module>factcast-schema-registry-maven-plugin</module>
     <module>factcast-snapshotcache-redisson</module>
+    <module>factcast-snapshotcache-local-memory</module>
   </modules>
   <url>https://github.com/factcast/factcast/tree/master/</url>
   <licenses>
@@ -288,7 +289,7 @@
         <configuration>
           <excludes>
             <exclude>**/*Configuration.*</exclude>
-            <exclude>**/*ConfigurationProperties.*</exclude>
+            <exclude>**/*Properties.*</exclude>
             <exclude>**/org/factcast/example/**/*</exclude>
             <exclude>**/org/factcast/example/*</exclude>
             <exclude>**/org/factcast/grpc/api/gen/**</exclude>
