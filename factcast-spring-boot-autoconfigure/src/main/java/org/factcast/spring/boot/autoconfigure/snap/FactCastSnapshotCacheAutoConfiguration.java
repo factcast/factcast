@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.spring.boot.autoconfigure.core;
+package org.factcast.spring.boot.autoconfigure.snap;
 
-import lombok.Generated;
-import org.factcast.core.FactCast;
-import org.factcast.core.snap.NoopSnapshotCache;
+import org.factcast.core.snap.NoSnapshotCache;
 import org.factcast.core.snap.SnapshotCache;
+import org.factcast.factus.Factus;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -27,14 +26,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
 
 @AutoConfiguration
-@ConditionalOnClass(FactCast.class)
-@Generated
+@ConditionalOnClass(Factus.class)
 @AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
 public class FactCastSnapshotCacheAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
   public SnapshotCache snapshotCache() {
-    return new NoopSnapshotCache();
+    return new NoSnapshotCache();
   }
 }

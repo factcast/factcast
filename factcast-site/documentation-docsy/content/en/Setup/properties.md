@@ -53,10 +53,8 @@ description: Properties you can use to configure FactCast
 
 ### Snapshots
 
-| Property                                  | Description                                                                                          | Default                                  |
-| ----------------------------------------- | :--------------------------------------------------------------------------------------------------- | :--------------------------------------- |
-| factcast.store.deleteSnapshotStaleForDays | min number of days a snapshot is kept even though it is not read anymore. Must be a positive number. | 90                                       |
-| factcast.store.snapshotCacheCompactCron   | defines the cron schedule for compacting the snapshot cache                                          | <nobr>`0 0 0 * * *`</nobr> (at midnight) |
+| Property | Description | Default |
+| -------- | :---------- | :------ |
 
 ### RedisSnapshots
 
@@ -67,10 +65,18 @@ description: Properties you can use to configure FactCast
 
 ### LocalSnapshots
 
-| Property                                  | Description                                                                                              | Default           |
-| ----------------------------------------- | :------------------------------------------------------------------------------------------------------- | :---------------- |
-| factcast.local.deleteSnapshotStaleForDays | min number of days a snapshot is kept even though it is not read anymore. Must be a positive number.     | 90                |
-| factcast.local.snapshotsPath              | path to where the snapshots are going to be persisted **if** you use `factcast-snapshotcache-local-disk` | ${java.io.tmpdir} |
+#### InMem-Snapshots
+
+| Property                                      | Description                                                                                          | Default |
+| --------------------------------------------- | :--------------------------------------------------------------------------------------------------- | :------ |
+| factcast.local.mem.deleteSnapshotStaleForDays | min number of days a snapshot is kept even though it is not read anymore. Must be a positive number. | 90      |
+
+#### InMem with disk overflow-Snapshots
+
+| Property                                       | Description                                                                                              | Default           |
+| ---------------------------------------------- | :------------------------------------------------------------------------------------------------------- | :---------------- |
+| factcast.local.disk.deleteSnapshotStaleForDays | min number of days a snapshot is kept even though it is not read anymore. Must be a positive number.     | 90                |
+| factcast.local.disk.snapshotsPath              | path to where the snapshots are going to be persisted **if** you use `factcast-snapshotcache-local-disk` | ${java.io.tmpdir} |
 
 ---
 

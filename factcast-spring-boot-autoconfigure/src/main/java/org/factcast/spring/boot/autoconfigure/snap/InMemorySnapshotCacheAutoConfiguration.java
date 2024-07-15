@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.spring.boot.autoconfigure.local.snap;
+package org.factcast.spring.boot.autoconfigure.snap;
 
-import lombok.Generated;
 import org.factcast.core.snap.SnapshotCache;
-import org.factcast.core.snap.local.InMemoryAndDiskSnapshotCache;
-import org.factcast.core.snap.local.InMemoryAndDiskSnapshotProperties;
+import org.factcast.core.snap.local.InMemorySnapshotCache;
+import org.factcast.core.snap.local.InMemorySnapshotProperties;
+import org.factcast.factus.Factus;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -27,16 +27,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 
 @AutoConfiguration
-@ConditionalOnClass(InMemoryAndDiskSnapshotCache.class)
+@ConditionalOnClass({InMemorySnapshotCache.class, Factus.class})
 @ConditionalOnMissingBean(SnapshotCache.class)
-@Import({InMemoryAndDiskSnapshotProperties.class})
-@Generated
+@Import({InMemorySnapshotProperties.class})
 @AutoConfigureOrder(-100)
-public class InMemoryAndDiskSnapshotCacheAutoConfiguration {
+public class InMemorySnapshotCacheAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public SnapshotCache snapshotCache(InMemoryAndDiskSnapshotProperties props) {
-    return new InMemoryAndDiskSnapshotCache(props);
+  public SnapshotCache snapshotCache(InMemorySnapshotProperties props) {
+    return new InMemorySnapshotCache(props);
   }
 }

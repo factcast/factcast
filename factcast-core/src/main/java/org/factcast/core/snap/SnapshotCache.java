@@ -32,6 +32,4 @@ public interface SnapshotCache {
   void setSnapshot(@NonNull Snapshot snapshot);
 
   void clearSnapshot(@NonNull SnapshotId id);
-
-  void compact(int retentionTimeInDays);
 }

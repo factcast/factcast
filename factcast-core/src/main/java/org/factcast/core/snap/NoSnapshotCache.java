@@ -19,31 +19,34 @@ import java.util.Optional;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * only usable if you do not use snapshots at all. Most clients will need to configure a
+ * SnapshotCache.
+ */
 @Slf4j
-public class NoopSnapshotCache implements SnapshotCache {
+public class NoSnapshotCache implements SnapshotCache {
 
-  public NoopSnapshotCache() {
+  public NoSnapshotCache() {
     log.info(
-        "Using NoOp Snapshot Cache. Used for when you don't want to cache snapshots. If there is an attempt to store an snapshot this will throw a UnsupportedOperationException");
+        "No Snapshot Cache has been configured. If there is an attempt to store a snapshot this will throw a UnsupportedOperationException. If you use Snapshots, please choose one of the existing implementations or provide your own.");
   }
 
   @Override
   public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
-    throw new UnsupportedOperationException("NoOpSnapshotCache does not support getSnapshot");
+    return Optional.empty();
   }
 
   @Override
   public void setSnapshot(@NonNull Snapshot snapshot) {
-    throw new UnsupportedOperationException("NoOpSnapshotCache does not support setSnapshot");
+    fail();
   }
 
   @Override
   public void clearSnapshot(@NonNull SnapshotId id) {
-    throw new UnsupportedOperationException("NoOpSnapshotCache does not support clearSnapshot");
+    fail();
   }
 
-  @Override
-  public void compact(int retentionTimeInDays) {
-    throw new UnsupportedOperationException("NoOpSnapshotCache does not support compact");
+  private static void fail() {
+    throw new UnsupportedOperationException("NoSnapshotCache has been configured");
   }
 }

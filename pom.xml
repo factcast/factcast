@@ -290,7 +290,7 @@
         <configuration>
           <excludes>
             <exclude>**/*Configuration.*</exclude>
-            <exclude>**/*ConfigurationProperties.*</exclude>
+            <exclude>**/*Properties.*</exclude>
             <exclude>**/org/factcast/example/**/*</exclude>
             <exclude>**/org/factcast/example/*</exclude>
             <exclude>**/org/factcast/grpc/api/gen/**</exclude>
