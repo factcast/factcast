@@ -89,10 +89,12 @@
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-snapshotcache-local-memory</artifactId>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-snapshotcache-local-disk</artifactId>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
