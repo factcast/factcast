@@ -159,7 +159,7 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
       PathWithLastModifiedDate oldestFile = oldestFileProvider.get();
 
       while (oldestFile != null
-          && Files.getLastModifiedTime(oldestFile.path()).equals(oldestFile.lastAccessTime())) {
+          && !Files.getLastModifiedTime(oldestFile.path()).equals(oldestFile.lastAccessTime())) {
         oldestFile = oldestFileProvider.get();
       }
 
