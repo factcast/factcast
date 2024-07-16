@@ -20,8 +20,10 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 import org.factcast.core.Fact;
@@ -41,6 +43,9 @@ public class ResilientGrpcSubscription implements Subscription {
   private final AtomicReference<FactStreamPosition> lastPosition = new AtomicReference<>();
   private final SubscriptionHolder currentSubscription = new SubscriptionHolder();
   private final AtomicBoolean isClosed = new AtomicBoolean(false);
+
+  @Getter(value = AccessLevel.PACKAGE, onMethod = @__(@VisibleForTesting))
+  private final AtomicReference<Throwable> onErrorCause = new AtomicReference<>();
 
   @Getter @VisibleForTesting final Resilience resilience;
 
@@ -132,10 +137,19 @@ public class ResilientGrpcSubscription implements Subscription {
     }
   }
 
+  @SneakyThrows
   private void assertSubscriptionStateNotClosed() {
     if (isClosed.get()) {
-      throw new SubscriptionClosedException(
-          "Subscription already closed  (" + originalRequest + ")");
+      Throwable cause = onErrorCause.get();
+      if (cause != null)
+        // Re-throwing exception if there is a known reason for the closed subscription to
+        // consistently reflect underlying problems like a StatusRuntimeException (e.g.
+        // "PERMISSION_DENIED"). Otherwise, sometimes underlying problems are hidden behind a
+        // generic SubscriptionClosedException, see https://github.com/factcast/factcast/issues/2949
+        throw cause;
+      else
+        throw new SubscriptionClosedException(
+            "Subscription already closed  (" + originalRequest + ")");
     }
   }
 
@@ -165,6 +179,7 @@ public class ResilientGrpcSubscription implements Subscription {
       try {
         Subscription plainSubscription = store.internalSubscribe(to, delegatingObserver);
         currentSubscription.set(plainSubscription);
+        onErrorCause.set(null);
       } catch (Exception e) {
         fail(e);
       }
@@ -223,6 +238,7 @@ public class ResilientGrpcSubscription implements Subscription {
     @Override
     public void onError(@NonNull Throwable exception) {
       log.info("Closing subscription due to onError triggered.  ({})", originalRequest, exception);
+      onErrorCause.set(exception);
       closeAndDetachSubscription();
       // reset the store state, as the connection *might* be broken.
       store.reset();

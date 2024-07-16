@@ -31,7 +31,7 @@ import org.springframework.context.annotation.Import;
 @ConditionalOnClass({RedissonSnapshotCache.class, RedissonClient.class})
 @ConditionalOnMissingBean(SnapshotCache.class)
 @Import({RedissonSnapshotProperties.class})
-@AutoConfigureBefore(FactCastSnapshotCacheAutoConfiguration.class)
+@AutoConfigureBefore(NoSnapshotCacheAutoConfiguration.class)
 public class RedissonSnapshotCacheAutoConfiguration {
 
   @Bean
@@ -42,6 +42,4 @@ public class RedissonSnapshotCacheAutoConfiguration {
     props.getSnapshotCacheRedissonCodec().codec();
     return new RedissonSnapshotCache(redisson, props);
   }
-
-  // compacting no longer needed with redis as we use EXPIRE instead
 }

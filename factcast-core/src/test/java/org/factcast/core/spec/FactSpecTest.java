@@ -55,6 +55,12 @@ class FactSpecTest {
   }
 
   @Test
+  void shouldThrowWhenNSisEmpty() {
+    assertThatThrownBy(() -> FactSpec.ns(" ")).isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> new FactSpec(" ")).isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
   void testFactSpecType() {
     assertEquals("y", FactSpec.ns("x").type("y").type());
   }
