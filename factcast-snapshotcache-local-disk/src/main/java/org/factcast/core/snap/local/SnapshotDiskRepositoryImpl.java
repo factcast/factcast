@@ -174,8 +174,12 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
    * oldest files and delete them until we are under the limit.
    */
   private void triggerCleanup() {
-    if (threshold != 0 && currentUsedSpace.get() >= threshold)
-      CompletableFuture.runAsync(this::cleanup);
+    if (needsCleanup()) CompletableFuture.runAsync(this::cleanup);
+  }
+
+  @VisibleForTesting
+  boolean needsCleanup() {
+    return threshold != 0 && currentUsedSpace.get() >= threshold;
   }
 
   @SneakyThrows
