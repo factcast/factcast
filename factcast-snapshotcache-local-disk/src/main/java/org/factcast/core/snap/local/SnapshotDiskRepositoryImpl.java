@@ -86,6 +86,7 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
   @Override
   public void saveAsync(Snapshot value) {
     File target = createFile(value.id().key());
+    target.getParentFile().mkdirs();
     Lock writeLock = fileSystemLevelLocks.getUnchecked(target.toPath()).writeLock();
     writeLock.lock();
     CompletableFuture.runAsync(
@@ -168,7 +169,6 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
             .insert(8, '/')
             .toString();
     File file = new File(persistenceDirectory, withSlashes);
-    file.getParentFile().mkdirs();
     return file;
   }
 
@@ -185,7 +185,7 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
     while (currentUsedSpace.get() >= threshold) {
       updateLastModifiedPathsIfNeeded();
       if (lastModifiedPaths.isEmpty()) {
-        log.error("No more files to delete, but still over the limit");
+        log.error("No more files to delete from Disk, but still over the limit");
         break;
       }
 
@@ -207,26 +207,19 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
     if (lastModifiedPaths.isEmpty()) {
       try (Stream<Path> walk = Files.walk(persistenceDirectory.toPath())) {
         lastModifiedPaths.addAll(
-            walk.sorted(
-                    (p1, p2) -> {
-                      try {
-                        return Files.getLastModifiedTime(p1)
-                            .compareTo(Files.getLastModifiedTime(p2));
-                      } catch (IOException e) {
-                        log.error(
-                            "Error getting the last modified time of the file: {} or {}",
-                            p1,
-                            p2,
-                            e);
-                        // TODO: delete?
-                        return 0;
-                      }
-                    })
-                .limit(1000)
-                .collect(Collectors.toList()));
+            walk.sorted(this::compareLastModifiedTimes).limit(1000).collect(Collectors.toList()));
       } catch (IOException e) {
         log.error("Error getting the list of files in the snapshot directory", e);
       }
+    }
+  }
+
+  private int compareLastModifiedTimes(Path p1, Path p2) {
+    try {
+      return Files.getLastModifiedTime(p1).compareTo(Files.getLastModifiedTime(p2));
+    } catch (IOException e) {
+      log.error("Error getting the last modified time of the file: {} or {}", p1, p2, e);
+      return 0;
     }
   }
 
