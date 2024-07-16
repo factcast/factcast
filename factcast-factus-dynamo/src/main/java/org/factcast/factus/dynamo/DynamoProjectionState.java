@@ -16,17 +16,22 @@
 package org.factcast.factus.dynamo;
 
 import java.util.UUID;
-import lombok.*;
+import lombok.Builder;
+import lombok.Value;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbImmutable;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 
 @DynamoDbImmutable(builder = DynamoProjectionState.DynamoProjectionStateBuilder.class)
 @Value
 @Builder
-public class DynamoProjectionState {
-  @Getter(onMethod_ = @DynamoDbPartitionKey)
-  String key;
+public final class DynamoProjectionState {
+  private final String key;
 
-  UUID factStreamPosition;
-  long serial;
+  private final UUID factStreamPosition;
+  private final long serial;
+
+  @DynamoDbPartitionKey
+  public String key() {
+    return this.key;
+  }
 }
