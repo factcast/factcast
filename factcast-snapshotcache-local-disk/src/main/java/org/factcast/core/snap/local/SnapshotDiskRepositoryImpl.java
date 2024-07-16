@@ -134,7 +134,7 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
       if (!persistenceFile.exists()) {
         return Optional.empty();
       } else {
-        updateLastModified(persistenceFile);
+        SnapshotFileHelper.updateLastModified(persistenceFile);
 
         try (InputStream fis = Files.newInputStream(persistenceFile.toPath());
             InputStream bis = new BufferedInputStream(fis);
@@ -149,14 +149,6 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
       }
     } finally {
       readLock.unlock();
-    }
-  }
-
-  private static void updateLastModified(@NonNull File persistenceFile) {
-    if (persistenceFile.exists()) {
-      if (!persistenceFile.setLastModified(System.currentTimeMillis())) {
-        log.warn("Unable to set lastModified on {}", persistenceFile.getAbsolutePath());
-      }
     }
   }
 
