@@ -22,7 +22,6 @@ import java.io.File;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
 import lombok.SneakyThrows;
 import org.factcast.factus.snapshot.Snapshot;
 import org.factcast.factus.snapshot.SnapshotId;
@@ -49,10 +48,10 @@ class SnapshotDiskRepositoryImplTest {
 
             @SneakyThrows
             @Override
-            protected void save(Snapshot value, File target, Lock writeLock) {
+            protected void doSave(Snapshot value, File target) {
               Thread.sleep(SLEEP_TIME);
               finishedSleeping.set(true);
-              super.save(value, target, writeLock);
+              super.doSave(value, target);
             }
           };
 
@@ -60,7 +59,7 @@ class SnapshotDiskRepositoryImplTest {
           new Snapshot(
               SnapshotId.of("key", UUID.randomUUID()), UUID.randomUUID(), "foo".getBytes(), false);
 
-      CompletableFuture.runAsync(() -> uut.saveAsync(snap)).get();
+      CompletableFuture.runAsync(() -> uut.save(snap)).get();
 
       // Test that read is unblocked (how)
       uut.findById(snap.id());
