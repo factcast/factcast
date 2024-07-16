@@ -25,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.NonNull;
+import org.factcast.core.snap.Snapshot;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.junit.jupiter.api.BeforeEach;

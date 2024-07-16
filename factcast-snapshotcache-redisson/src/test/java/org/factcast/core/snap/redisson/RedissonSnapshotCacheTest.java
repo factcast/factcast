@@ -20,8 +20,8 @@ import static org.mockito.Mockito.*;
 
 import java.util.*;
 import lombok.SneakyThrows;
-import org.factcast.factus.snapshot.Snapshot;
-import org.factcast.factus.snapshot.SnapshotId;
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotId;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
