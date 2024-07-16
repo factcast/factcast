@@ -18,8 +18,8 @@ package org.factcast.core;
 import java.util.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.factcast.core.lock.DeprecatedLockedOperationBuilder;
 import org.factcast.core.lock.LockedOperationBuilder;
+import org.factcast.core.lock.MultiAggregateLockedOperationBuilder;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
@@ -77,12 +77,11 @@ class DefaultFactCast implements FactCast {
 
   @Override
   @NonNull
-  @SuppressWarnings("deprecated")
-  public DeprecatedLockedOperationBuilder lock(@NonNull String ns) {
+  public MultiAggregateLockedOperationBuilder lock(@NonNull String ns) {
     if (ns.trim().isEmpty()) {
       throw new IllegalArgumentException("Namespace must not be empty");
     }
-    return new DeprecatedLockedOperationBuilder(store, ns);
+    return new MultiAggregateLockedOperationBuilder(store, ns);
   }
 
   @Override
@@ -103,5 +102,11 @@ class DefaultFactCast implements FactCast {
   public Optional<Fact> fetchByIdAndVersion(@NonNull UUID id, int versionExpected)
       throws TransformationException {
     return store.fetchByIdAndVersion(id, versionExpected);
+  }
+
+  @Override
+  @NonNull
+  public FactStore store() {
+    return store;
   }
 }

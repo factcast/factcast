@@ -138,7 +138,7 @@ class ResilientGrpcSubscriptionTest {
   }
 
   @Test
-  void testAssertSubscriptionStateNotClosed() throws Exception {
+  void testAssertSubscriptionStateNotClosed() {
     uut.close();
     assertThrows(SubscriptionClosedException.class, () -> uut.awaitCatchup());
     assertThrows(SubscriptionClosedException.class, () -> uut.awaitCatchup(1L));
@@ -191,11 +191,7 @@ class ResilientGrpcSubscriptionTest {
           sleep(300);
           throw new RetryableException(new Exception());
         };
-    assertThatThrownBy(
-            () -> {
-              uut.delegate(consumer, 1000);
-            })
-        .isInstanceOf(TimeoutException.class);
+    assertThatThrownBy(() -> uut.delegate(consumer, 1000)).isInstanceOf(TimeoutException.class);
   }
 
   @Test
@@ -210,11 +206,7 @@ class ResilientGrpcSubscriptionTest {
         .when(consumer)
         .accept(any());
 
-    assertThatThrownBy(
-            () -> {
-              uut.delegate(consumer);
-            })
-        .isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> uut.delegate(consumer)).isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
@@ -227,25 +219,23 @@ class ResilientGrpcSubscriptionTest {
         .when(consumer)
         .accept(any());
 
-    assertThatThrownBy(
-            () -> {
-              uut.delegate(consumer);
-            })
-        .isSameAs(initial);
+    assertThatThrownBy(() -> uut.delegate(consumer)).isSameAs(initial);
   }
 
   @Test
   void testFail() {
     IOException ex = new IOException();
-    assertThatThrownBy(
-            () -> {
-              uut.fail(ex);
-            })
+    assertThatThrownBy(() -> uut.fail(ex))
         .isInstanceOf(RuntimeException.class)
         .cause()
         .isInstanceOf(IOException.class);
 
     verify(obs).onError(ex);
+  }
+
+  @Test
+  void newResilientGrpcSubscriptionHasNoErrorCause() {
+    assertThat(uut.onErrorCause().get()).isNull();
   }
 
   @SneakyThrows
@@ -321,6 +311,47 @@ class ResilientGrpcSubscriptionTest {
       assertThat(uut.resilience().numberOfAttemptsInWindow()).isEqualTo(1);
     }
 
+    @Test
+    void remembersOnErrorCause() {
+      IOException exception = new IOException();
+
+      try {
+        dfo.onError(exception);
+      } catch (Exception ignore) {
+        // ignore
+      }
+
+      assertThat(uut.onErrorCause().get()).isSameAs(exception);
+    }
+
+    @SneakyThrows
+    @Test
+    void successfulReConnectWipesSavedOnErrorCause() {
+      try {
+        dfo.onError(new RetryableException(new IOException()));
+      } catch (Exception ignore) {
+        // ignore
+      }
+
+      verify(uut).reConnect();
+      verify(uut).doConnect();
+      assertThat(uut.onErrorCause().get()).isNull();
+    }
+
+    @Test
+    void delegatingToInnerSubscriptionAfterOnErrorRethrowsCausingThrowable() {
+      Consumer<Subscription> consumer = mock(Consumer.class);
+      Throwable t = new RuntimeException();
+
+      try {
+        dfo.onError(t);
+      } catch (Exception ignore) {
+        // ignore
+      }
+
+      assertThatThrownBy(() -> uut.delegate(consumer)).isSameAs(t);
+    }
+
     @SneakyThrows
     @Test
     void onErrorReconnecting() {
@@ -372,12 +403,8 @@ class ResilientGrpcSubscriptionTest {
     }
 
     @Test
-    void blocksUntilTimeroutReached() {
-      assertThatThrownBy(
-              () -> {
-                sh.getAndBlock(100);
-              })
-          .isInstanceOf(TimeoutException.class);
+    void blocksUntilTimeoutReached() {
+      assertThatThrownBy(() -> sh.getAndBlock(100)).isInstanceOf(TimeoutException.class);
     }
   }
 }
