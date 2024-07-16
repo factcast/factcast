@@ -15,6 +15,7 @@
  */
 package org.factcast.core.snap.local;
 
+import com.google.common.base.Preconditions;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -40,10 +41,14 @@ public class OldestModifiedFileProvider
 
   @Override
   public PathWithLastModifiedDate get() {
+    Preconditions.checkArgument(
+        persistenceDirectory.exists() && persistenceDirectory.isDirectory(),
+        "Persistence directory doesn't exist or is not a directory");
     if (lastModifiedPaths.isEmpty()) {
       try (Stream<Path> walk = Files.walk(persistenceDirectory.toPath())) {
         lastModifiedPaths.addAll(
-            walk.map(
+            walk.filter(p -> !persistenceDirectory.toPath().equals(p))
+                .map(
                     p -> {
                       try {
                         return PathWithLastModifiedDate.of(p, Files.getLastModifiedTime(p));
