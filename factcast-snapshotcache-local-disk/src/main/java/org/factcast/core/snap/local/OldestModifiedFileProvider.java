@@ -23,23 +23,23 @@ import java.nio.file.attribute.FileTime;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.LinkedList;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 @RequiredArgsConstructor
 @Slf4j
-public class OldestModifiedFileHelper {
+public class OldestModifiedFileProvider
+    implements Supplier<OldestModifiedFileProvider.PathWithLastModifiedDate> {
   private final File persistenceDirectory;
   private final Deque<PathWithLastModifiedDate> lastModifiedPaths = new LinkedList<>();
 
-  @SneakyThrows
-  public Optional<PathWithLastModifiedDate> getOldestModifiedFile() {
+  @Override
+  public PathWithLastModifiedDate get() {
     if (lastModifiedPaths.isEmpty()) {
       try (Stream<Path> walk = Files.walk(persistenceDirectory.toPath())) {
         lastModifiedPaths.addAll(
@@ -60,7 +60,7 @@ public class OldestModifiedFileHelper {
       }
     }
 
-    return Optional.ofNullable(lastModifiedPaths.poll());
+    return lastModifiedPaths.poll();
   }
 
   @Value(staticConstructor = "of")
