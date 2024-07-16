@@ -20,7 +20,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.hash.Hashing;
-import com.google.common.io.CountingOutputStream;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -35,7 +34,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.NonNull;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.util.ExceptionHelper;
 import org.factcast.factus.snapshot.Snapshot;
@@ -93,7 +91,9 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
     CompletableFuture.runAsync(
         () -> {
           try {
-            long bytes = serializeTo(value, Files.newOutputStream(target.toPath()));
+            long bytes =
+                SnapshotSerializationHelper.serializeTo(
+                    value, Files.newOutputStream(target.toPath()));
             this.currentUsedSpace.addAndGet(bytes);
             triggerCleanup();
           } catch (Exception e) {
@@ -226,17 +226,6 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
   private long getRepositoryTotalSize() throws IOException {
     try (Stream<Path> walk = Files.walk(persistenceDirectory.toPath())) {
       return walk.mapToLong(p -> p.toFile().length()).sum();
-    }
-  }
-
-  @SneakyThrows
-  private long serializeTo(@NonNull Snapshot s, @NonNull OutputStream os) {
-    try (BufferedOutputStream b = new BufferedOutputStream(os);
-        CountingOutputStream c = new CountingOutputStream(b);
-        ObjectOutputStream out = new ObjectOutputStream(c); ) {
-      out.writeObject(s);
-      out.flush();
-      return c.getCount();
     }
   }
 }
