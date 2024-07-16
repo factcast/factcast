@@ -32,7 +32,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.snap.local.OldestModifiedFileHelper.PathWithLastModifiedDate;
+import org.factcast.core.snap.local.OldestModifiedFileProvider.PathWithLastModifiedDate;
 import org.factcast.core.util.ExceptionHelper;
 import org.factcast.factus.snapshot.Snapshot;
 import org.factcast.factus.snapshot.SnapshotId;
@@ -43,7 +43,7 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
   private final long threshold;
   private final AtomicLong currentUsedSpace;
   private final LoadingCache<Path, ReadWriteLock> fileSystemLevelLocks;
-  private final OldestModifiedFileHelper lastModifiedFileHelper;
+  private final OldestModifiedFileProvider lastModifiedFileHelper;
 
   public SnapshotDiskRepositoryImpl(@NonNull InMemoryAndDiskSnapshotProperties properties) {
     File cacheRoot = new File(properties.getPathToSnapshots());
@@ -51,7 +51,7 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
         cacheRoot.exists() && cacheRoot.isDirectory(),
         cacheRoot.getAbsolutePath() + " must exist and be a directory");
     this.persistenceDirectory = new File(cacheRoot, "/factcast/snapshots/");
-    this.lastModifiedFileHelper = new OldestModifiedFileHelper(this.persistenceDirectory);
+    this.lastModifiedFileHelper = new OldestModifiedFileProvider(this.persistenceDirectory);
     this.threshold = (long) (properties.getMaxDiskSpace() * 0.9);
     this.fileSystemLevelLocks =
         CacheBuilder.newBuilder()
@@ -171,21 +171,19 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
   @SneakyThrows
   private synchronized void cleanup() {
     while (currentUsedSpace.get() >= threshold) {
-      Optional<PathWithLastModifiedDate> oldestFile =
-          lastModifiedFileHelper.getOldestModifiedFile();
+      PathWithLastModifiedDate oldestFile = lastModifiedFileHelper.get();
 
-      while (oldestFile.isPresent()
-          && Files.getLastModifiedTime(oldestFile.get().path())
-              .equals(oldestFile.get().lastAccessTime())) {
-        oldestFile = lastModifiedFileHelper.getOldestModifiedFile();
+      while (oldestFile != null
+          && Files.getLastModifiedTime(oldestFile.path()).equals(oldestFile.lastAccessTime())) {
+        oldestFile = lastModifiedFileHelper.get();
       }
 
-      if (!oldestFile.isPresent()) {
+      if (oldestFile == null) {
         log.error("No more Snapshots to delete from Disk, but still over the limit");
         return;
       }
 
-      Path path = oldestFile.get().path();
+      Path path = oldestFile.path();
       try {
         if (Files.exists(path)) {
           long sizeOfFile = Files.size(path);
