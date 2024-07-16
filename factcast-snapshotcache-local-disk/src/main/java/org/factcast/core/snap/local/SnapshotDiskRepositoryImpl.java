@@ -19,9 +19,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.hash.Hashing;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -84,7 +82,7 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
 
   @Override
   public void saveAsync(Snapshot value) {
-    File target = createFile(value.id().key());
+    File target = SnapshotFileHelper.createFile(persistenceDirectory, value.id().key());
     target.getParentFile().mkdirs();
     Lock writeLock = fileSystemLevelLocks.getUnchecked(target.toPath()).writeLock();
     writeLock.lock();
@@ -106,7 +104,7 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
 
   @Override
   public void deleteAsync(SnapshotId id) {
-    File target = createFile(id.key());
+    File target = SnapshotFileHelper.createFile(persistenceDirectory, id.key());
     Lock writeLock = fileSystemLevelLocks.getUnchecked(target.toPath()).writeLock();
     writeLock.lock();
     CompletableFuture.runAsync(
@@ -127,7 +125,7 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
 
   @Override
   public Optional<Snapshot> findById(SnapshotId id) {
-    File persistenceFile = createFile(id.key());
+    File persistenceFile = SnapshotFileHelper.createFile(persistenceDirectory, id.key());
     Lock readLock = fileSystemLevelLocks.getUnchecked(persistenceFile.toPath()).readLock();
     try {
       readLock.lock();
@@ -150,18 +148,6 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
     } finally {
       readLock.unlock();
     }
-  }
-
-  private File createFile(@NonNull String key) {
-    String hash = Hashing.sha256().hashString(key, StandardCharsets.UTF_8).toString();
-    String withSlashes =
-        new StringBuilder(hash)
-            .insert(16, '/')
-            .insert(12, '/')
-            .insert(8, '/')
-            .insert(4, '/')
-            .toString();
-    return new File(persistenceDirectory, withSlashes);
   }
 
   /**
