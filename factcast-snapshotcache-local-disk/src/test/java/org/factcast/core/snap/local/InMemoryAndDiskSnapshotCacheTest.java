@@ -16,7 +16,9 @@
 package org.factcast.core.snap.local;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
+import java.util.Optional;
 import java.util.UUID;
 import org.factcast.factus.snapshot.Snapshot;
 import org.factcast.factus.snapshot.SnapshotId;
@@ -27,22 +29,29 @@ import org.junit.jupiter.api.Test;
 class InMemoryAndDiskSnapshotCacheTest {
 
   private InMemoryAndDiskSnapshotCache underTest;
+  private final SnapshotDiskRepository diskRepository = mock(SnapshotDiskRepository.class);
 
   private final SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
 
   @BeforeEach
   void setUp() {
     InMemoryAndDiskSnapshotProperties props = new InMemoryAndDiskSnapshotProperties();
-    underTest = new InMemoryAndDiskSnapshotCache(props);
+    underTest = new InMemoryAndDiskSnapshotCache(props, diskRepository);
   }
 
-  @Test
-  void happyCase() {
-    final Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
+  @Nested
+  class WhenSettingSnapshot {
+    @Test
+    void happyCase() {
+      final Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
 
-    underTest.setSnapshot(snap);
+      underTest.setSnapshot(snap);
 
-    assertThat(underTest.getSnapshot(id)).isPresent().get().isEqualTo(snap);
+      Optional<Snapshot> snapshot = underTest.getSnapshot(id);
+      assertThat(snapshot).isPresent();
+      assertThat(snapshot.get()).isEqualTo(snap);
+      verify(diskRepository, times(1)).saveAsync(snap);
+    }
   }
 
   @Nested
@@ -53,28 +62,45 @@ class InMemoryAndDiskSnapshotCacheTest {
       final Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
 
       underTest.setSnapshot(snap);
-      underTest.clearSnapshot(id);
+      Optional<Snapshot> snapshot = underTest.getSnapshot(id);
+      assertThat(snapshot).isPresent();
+      assertThat(snapshot.get()).isEqualTo(snap);
 
-      assertThat(underTest.getSnapshot(id)).isEmpty();
+      underTest.clearSnapshot(id);
+      snapshot = underTest.getSnapshot(id);
+      assertThat(snapshot).isEmpty();
+
+      verify(diskRepository, times(1)).deleteAsync(id);
     }
   }
 
-  //  @Nested
-  //  class WhenGCing {
-  //
-  //    @Test
-  //    void happyCase() throws InterruptedException {
-  //      UUID lastFact = UUID.randomUUID();
-  //      Snapshot snap = new Snapshot(id, lastFact, "foo".getBytes(), false);
-  //
-  //      underTest.setSnapshot(snap);
-  //
-  //      // Try to get this garbage collected
-  //      snap = null;
-  //      System.gc();
-  //      Thread.sleep(2000);
-  //
-  //      assertThat(underTest.getSnapshot(id)).isEmpty();
-  //    }
-  //  }
+  @Nested
+  class WhenGettingSnapshot {
+
+    @Test
+    void happyCase() {
+      final Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
+
+      underTest.setSnapshot(snap);
+
+      Optional<Snapshot> snapshot = underTest.getSnapshot(id);
+      assertThat(snapshot).isPresent();
+      assertThat(snapshot.get()).isEqualTo(snap);
+      verify(diskRepository, times(1)).saveAsync(snap);
+      verify(diskRepository, never()).findById(id);
+    }
+
+    @Test
+    void happyCase_fetchingFromDisk() {
+      final Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
+
+      when(diskRepository.findById(id)).thenReturn(Optional.of(snap));
+
+      Optional<Snapshot> snapshot = underTest.getSnapshot(id);
+      assertThat(snapshot).isPresent();
+      assertThat(snapshot.get()).isEqualTo(snap);
+      verify(diskRepository, never()).saveAsync(snap);
+      verify(diskRepository, times(1)).findById(id);
+    }
+  }
 }
