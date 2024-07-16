@@ -28,6 +28,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+@SuppressWarnings("ALL")
 @ExtendWith(MockitoExtension.class)
 class SnapshotFileHelperTest {
 
@@ -37,7 +38,7 @@ class SnapshotFileHelperTest {
 
     @Test
     void ignoresNonExistant() {
-      File file = spy(new File("non-existant"));
+      File file = spy(new File("non-existent"));
       assertDoesNotThrow(
           () -> {
             SnapshotFileHelper.updateLastModified(file);
@@ -52,7 +53,7 @@ class SnapshotFileHelperTest {
     void setsTS() {
       File tempDir = Files.createTempDir();
       tempDir.deleteOnExit();
-      File file = spy(new File(tempDir, "existant"));
+      File file = spy(new File(tempDir, "existent"));
       file.deleteOnExit();
       Files.write("Foo".getBytes(), file);
 
