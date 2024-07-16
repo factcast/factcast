@@ -15,13 +15,15 @@
  */
 package org.factcast.core.snap.local;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.Mockito.*;
 
 import com.google.common.io.Files;
 import java.io.File;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -63,6 +65,51 @@ class SnapshotFileHelperTest {
           });
 
       verify(file).setLastModified(anyLong());
+    }
+  }
+
+  @Nested
+  class WhenAddingSlashes {
+
+    @Test
+    void slicesFourDirectoriesFromPrefix() {
+      String actual =
+          SnapshotFileHelper.addSlashes(
+              "00001111222233339999999999999999999999999999999999999999999999999999999999999");
+      Assertions.assertThat(actual)
+          .isEqualTo(
+              "0000/1111/2222/3333/9999999999999999999999999999999999999999999999999999999999999");
+    }
+  }
+
+  @Nested
+  class WhenCreatingFile {
+
+    @Test
+    void checksRoot() {
+      File missingRoot = new File("not-here");
+      assertThatThrownBy(
+              () -> {
+                SnapshotFileHelper.createFile(missingRoot, "myfilename");
+              })
+          .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void happyPath() {
+      File root = Files.createTempDir();
+      File f = SnapshotFileHelper.createFile(root, "foobarbaz");
+      File p = f.getParentFile();
+      p.mkdirs();
+      Assertions.assertThat(p).exists().isDirectory();
+      p = p.getParentFile();
+      Assertions.assertThat(p).exists().isDirectory();
+      p = p.getParentFile();
+      Assertions.assertThat(p).exists().isDirectory();
+      p = p.getParentFile();
+      Assertions.assertThat(p).exists().isDirectory();
+      p = p.getParentFile();
+      Assertions.assertThat(p).isEqualTo(root);
     }
   }
 }
