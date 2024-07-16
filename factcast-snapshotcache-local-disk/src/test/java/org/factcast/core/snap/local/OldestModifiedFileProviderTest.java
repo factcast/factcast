@@ -40,6 +40,9 @@ class OldestModifiedFileProviderTest {
   public void testOrderOfFiles() {
     File tempDir = Files.createTempDir();
     tempDir.deleteOnExit();
+    File innerDir = new File(tempDir, "inner/other");
+    innerDir.mkdirs();
+    innerDir.deleteOnExit();
 
     File a = new File(tempDir, "a");
     a.createNewFile();
@@ -47,7 +50,7 @@ class OldestModifiedFileProviderTest {
     File b = new File(tempDir, "b");
     b.createNewFile();
     b.setLastModified(500);
-    File c = new File(tempDir, "c");
+    File c = new File(innerDir, "c");
     c.createNewFile();
     c.setLastModified(0);
 
