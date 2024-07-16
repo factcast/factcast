@@ -169,7 +169,7 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
             .insert(8, '/')
             .insert(4, '/')
             .toString();
-    return new File(cacheRoot, withSlashes);
+    return new File(persistenceDirectory, withSlashes);
   }
 
   /**
@@ -205,7 +205,7 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
   // quite procedural code, isn't it?
   private void updateLastModifiedPathsIfNeeded() {
     if (lastModifiedPaths.isEmpty()) {
-      try (Stream<Path> walk = Files.walk(cacheRoot.toPath())) {
+      try (Stream<Path> walk = Files.walk(persistenceDirectory.toPath())) {
         lastModifiedPaths.addAll(
             walk.sorted(this::compareLastModifiedTimes).limit(1000).collect(Collectors.toList()));
       } catch (IOException e) {
@@ -224,7 +224,7 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
   }
 
   private long getRepositoryTotalSize() throws IOException {
-    try (Stream<Path> walk = Files.walk(cacheRoot.toPath())) {
+    try (Stream<Path> walk = Files.walk(persistenceDirectory.toPath())) {
       return walk.mapToLong(p -> p.toFile().length()).sum();
     }
   }
