@@ -16,13 +16,14 @@
 package org.factcast.core.snap.local;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import org.factcast.factus.snapshot.Snapshot;
 import org.factcast.factus.snapshot.SnapshotId;
 
 public interface SnapshotDiskRepository {
-  void saveAsync(Snapshot snapshot);
+  CompletableFuture<Void> save(Snapshot snapshot);
 
   Optional<Snapshot> findById(SnapshotId id);
 
-  void deleteAsync(SnapshotId id);
+  CompletableFuture<Void> delete(SnapshotId id);
 }

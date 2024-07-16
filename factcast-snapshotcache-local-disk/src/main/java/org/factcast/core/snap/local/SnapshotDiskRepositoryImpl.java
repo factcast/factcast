@@ -17,19 +17,12 @@ package org.factcast.core.snap.local;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
-import java.util.*;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -43,8 +36,8 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
   private final File persistenceDirectory;
   private final long threshold;
   private final AtomicLong currentUsedSpace;
-  private final LoadingCache<Path, ReadWriteLock> fileSystemLevelLocks;
   private final OldestModifiedFileProvider oldestFileProvider;
+  private final FileLevelLocking locking;
 
   public SnapshotDiskRepositoryImpl(@NonNull InMemoryAndDiskSnapshotProperties properties) {
     File cacheRoot = new File(properties.getPathToSnapshots());
@@ -52,18 +45,10 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
         cacheRoot.exists() && cacheRoot.isDirectory(),
         cacheRoot.getAbsolutePath() + " must exist and be a directory");
     this.persistenceDirectory = new File(cacheRoot, "/factcast/snapshots/");
+    persistenceDirectory.mkdirs();
     this.oldestFileProvider = new OldestModifiedFileProvider(this.persistenceDirectory);
     this.threshold = (long) (properties.getMaxDiskSpace() * 0.9);
-    this.fileSystemLevelLocks =
-        CacheBuilder.newBuilder()
-            .expireAfterAccess(Duration.ofMinutes(1))
-            .build(
-                new CacheLoader<Path, ReadWriteLock>() {
-                  @Override
-                  public ReadWriteLock load(Path key) {
-                    return new ReentrantReadWriteLock();
-                  }
-                });
+    this.locking = new FileLevelLocking();
 
     // Set the current used space at startup
     try {
@@ -81,45 +66,31 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
         currentUsedSpace.get());
   }
 
-  @Override
-  public void saveAsync(Snapshot value) {
+  public CompletableFuture<Void> save(Snapshot value) {
     File target = SnapshotFileHelper.createFile(persistenceDirectory, value.id().key());
-    target.getParentFile().mkdirs();
-    Lock writeLock = fileSystemLevelLocks.getUnchecked(target.toPath()).writeLock();
-    writeLock.lock();
-    CompletableFuture.runAsync(
-        () -> {
-          save(value, target, writeLock);
-        });
+    return locking.withWriteLockOn(target, () -> doSave(value, target));
   }
 
   @VisibleForTesting
-  protected void save(Snapshot value, File target, Lock writeLock) {
+  protected void doSave(Snapshot value, File target) {
     try {
+      target.getParentFile().mkdirs();
       long bytes =
           SnapshotSerializationHelper.serializeTo(value, Files.newOutputStream(target.toPath()));
       this.currentUsedSpace.addAndGet(bytes);
       triggerCleanup();
     } catch (Exception e) {
       log.error("Error saving snapshot with id: {}", value.id(), e);
-    } finally {
-      writeLock.unlock();
     }
   }
 
-  @Override
-  public void deleteAsync(SnapshotId id) {
+  public CompletableFuture<Void> delete(SnapshotId id) {
     File target = SnapshotFileHelper.createFile(persistenceDirectory, id.key());
-    Lock writeLock = fileSystemLevelLocks.getUnchecked(target.toPath()).writeLock();
-    writeLock.lock();
-    CompletableFuture.runAsync(
-        () -> {
-          delete(target, writeLock);
-        });
+    return locking.withWriteLockOn(target, () -> doDelete(target));
   }
 
   @VisibleForTesting
-  protected void delete(File target, Lock writeLock) {
+  protected void doDelete(File target) {
     try {
       if (target.exists()) {
         Path path = target.toPath();
@@ -128,45 +99,45 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
       }
     } catch (IOException e) {
       log.error("Error deleting snapshot: {}", target.getAbsolutePath(), e);
-    } finally {
-      writeLock.unlock();
     }
   }
 
+  @SneakyThrows
   @Override
   public Optional<Snapshot> findById(SnapshotId id) {
     File persistenceFile = SnapshotFileHelper.createFile(persistenceDirectory, id.key());
-    Lock readLock = fileSystemLevelLocks.getUnchecked(persistenceFile.toPath()).readLock();
-    try {
-      readLock.lock();
-      if (!persistenceFile.exists()) {
-        return Optional.empty();
-      } else {
-        SnapshotFileHelper.updateLastModified(persistenceFile);
 
-        try (InputStream fis = Files.newInputStream(persistenceFile.toPath());
-            InputStream bis = new BufferedInputStream(fis);
-            ObjectInputStream ois = new ObjectInputStream(bis)) {
-          Snapshot snapshot = (Snapshot) ois.readObject();
-          return Optional.of(snapshot);
-        } catch (IOException e) {
-          log.error(
-              "Error reading snapshot with id: {} and path: {}", id, persistenceFile.getPath(), e);
-          return Optional.empty();
-        } catch (ClassNotFoundException e) {
-          // Run async to avoid blocking the locks
-          CompletableFuture.runAsync(() -> deleteAsync(id));
-          log.error(
-              "Error deserializing snapshot with id: {} and path: {}",
-              id,
-              persistenceFile.getPath(),
-              e);
-          return Optional.empty();
-        }
-      }
-    } finally {
-      readLock.unlock();
-    }
+    return locking.withReadLockOn(
+        persistenceFile,
+        () -> {
+          if (!persistenceFile.exists()) {
+            return Optional.empty();
+          } else {
+            SnapshotFileHelper.updateLastModified(persistenceFile);
+
+            try (InputStream fis = Files.newInputStream(persistenceFile.toPath());
+                InputStream bis = new BufferedInputStream(fis);
+                ObjectInputStream ois = new ObjectInputStream(bis)) {
+              Snapshot snapshot = (Snapshot) ois.readObject();
+              return Optional.of(snapshot);
+            } catch (IOException e) {
+              log.error(
+                  "Error reading snapshot with id: {} and path: {}",
+                  id,
+                  persistenceFile.getPath(),
+                  e);
+              return Optional.empty();
+            } catch (ClassNotFoundException e) {
+              doDelete(persistenceFile);
+              log.error(
+                  "Error deserializing snapshot with id: {} and path: {}",
+                  id,
+                  persistenceFile.getPath(),
+                  e);
+              return Optional.empty();
+            }
+          }
+        });
   }
 
   /**

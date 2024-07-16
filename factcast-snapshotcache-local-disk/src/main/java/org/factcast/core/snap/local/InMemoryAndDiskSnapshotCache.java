@@ -58,13 +58,13 @@ public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
 
   @Override
   public void setSnapshot(@NonNull Snapshot snapshot) {
-    snapshotDiskRepository.saveAsync(snapshot);
+    snapshotDiskRepository.save(snapshot);
     cache.put(snapshot.id(), snapshot);
   }
 
   @Override
   public void clearSnapshot(@NonNull SnapshotId id) {
-    snapshotDiskRepository.deleteAsync(id);
+    snapshotDiskRepository.delete(id);
     cache.invalidate(id);
   }
 }
