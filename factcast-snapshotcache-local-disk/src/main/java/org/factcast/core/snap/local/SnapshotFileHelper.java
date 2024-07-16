@@ -18,7 +18,11 @@ package org.factcast.core.snap.local;
 import com.google.common.base.Preconditions;
 import com.google.common.hash.Hashing;
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.stream.Stream;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
@@ -48,5 +52,12 @@ class SnapshotFileHelper {
         .insert(8, '/')
         .insert(4, '/')
         .toString();
+  }
+
+  long getTotalSize(File root) throws IOException {
+    Preconditions.checkArgument(root.exists());
+    try (Stream<Path> walk = Files.walk(root.toPath())) {
+      return walk.mapToLong(p -> p.toFile().length()).sum();
+    }
   }
 }
