@@ -29,14 +29,15 @@ public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
   private final Cache<SnapshotId, Snapshot> cache;
   private final SnapshotDiskRepository snapshotDiskRepository;
 
-  public InMemoryAndDiskSnapshotCache(InMemoryAndDiskSnapshotProperties props) {
+  public InMemoryAndDiskSnapshotCache(
+      InMemoryAndDiskSnapshotProperties props, SnapshotDiskRepository snapshotDiskRepository) {
     cache =
         Caffeine.newBuilder()
             .softValues()
             // .expireAfterAccess(Duration.ofDays(props.getDeleteSnapshotStaleForDays()))
             .build();
 
-    snapshotDiskRepository = new SnapshotDiskRepositoryImpl(props);
+    this.snapshotDiskRepository = snapshotDiskRepository;
   }
 
   @Override
