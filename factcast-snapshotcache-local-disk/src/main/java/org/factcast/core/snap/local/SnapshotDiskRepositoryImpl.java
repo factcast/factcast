@@ -15,6 +15,7 @@
  */
 package org.factcast.core.snap.local;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -29,7 +30,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.stream.Stream;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +44,7 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
   private final long threshold;
   private final AtomicLong currentUsedSpace;
   private final LoadingCache<Path, ReadWriteLock> fileSystemLevelLocks;
-  private final OldestModifiedFileProvider lastModifiedFileHelper;
+  private final OldestModifiedFileProvider oldestFileProvider;
 
   public SnapshotDiskRepositoryImpl(@NonNull InMemoryAndDiskSnapshotProperties properties) {
     File cacheRoot = new File(properties.getPathToSnapshots());
@@ -52,7 +52,7 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
         cacheRoot.exists() && cacheRoot.isDirectory(),
         cacheRoot.getAbsolutePath() + " must exist and be a directory");
     this.persistenceDirectory = new File(cacheRoot, "/factcast/snapshots/");
-    this.lastModifiedFileHelper = new OldestModifiedFileProvider(this.persistenceDirectory);
+    this.oldestFileProvider = new OldestModifiedFileProvider(this.persistenceDirectory);
     this.threshold = (long) (properties.getMaxDiskSpace() * 0.9);
     this.fileSystemLevelLocks =
         CacheBuilder.newBuilder()
@@ -67,7 +67,7 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
 
     // Set the current used space at startup
     try {
-      currentUsedSpace = new AtomicLong(getRepositoryTotalSize());
+      currentUsedSpace = new AtomicLong(SnapshotFileHelper.getTotalSize(persistenceDirectory));
     } catch (IOException e) {
       log.error("Error getting the size of the snapshot directory", e);
       throw ExceptionHelper.toRuntime(e);
@@ -89,18 +89,22 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
     writeLock.lock();
     CompletableFuture.runAsync(
         () -> {
-          try {
-            long bytes =
-                SnapshotSerializationHelper.serializeTo(
-                    value, Files.newOutputStream(target.toPath()));
-            this.currentUsedSpace.addAndGet(bytes);
-            triggerCleanup();
-          } catch (Exception e) {
-            log.error("Error saving snapshot with id: {}", value.id(), e);
-          } finally {
-            writeLock.unlock();
-          }
+          save(value, target, writeLock);
         });
+  }
+
+  @VisibleForTesting
+  protected void save(Snapshot value, File target, Lock writeLock) {
+    try {
+      long bytes =
+          SnapshotSerializationHelper.serializeTo(value, Files.newOutputStream(target.toPath()));
+      this.currentUsedSpace.addAndGet(bytes);
+      triggerCleanup();
+    } catch (Exception e) {
+      log.error("Error saving snapshot with id: {}", value.id(), e);
+    } finally {
+      writeLock.unlock();
+    }
   }
 
   @Override
@@ -110,18 +114,23 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
     writeLock.lock();
     CompletableFuture.runAsync(
         () -> {
-          try {
-            if (target.exists()) {
-              Path path = target.toPath();
-              currentUsedSpace.addAndGet(-1 * Files.size(path));
-              Files.delete(path);
-            }
-          } catch (IOException e) {
-            log.error("Error deleting snapshot with id: {}", id, e);
-          } finally {
-            writeLock.unlock();
-          }
+          delete(target, writeLock);
         });
+  }
+
+  @VisibleForTesting
+  protected void delete(File target, Lock writeLock) {
+    try {
+      if (target.exists()) {
+        Path path = target.toPath();
+        currentUsedSpace.addAndGet(-1 * Files.size(path));
+        Files.delete(path);
+      }
+    } catch (IOException e) {
+      log.error("Error deleting snapshot: {}", target.getAbsolutePath(), e);
+    } finally {
+      writeLock.unlock();
+    }
   }
 
   @Override
@@ -172,11 +181,11 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
   @SneakyThrows
   private synchronized void cleanup() {
     while (currentUsedSpace.get() >= threshold) {
-      PathWithLastModifiedDate oldestFile = lastModifiedFileHelper.get();
+      PathWithLastModifiedDate oldestFile = oldestFileProvider.get();
 
       while (oldestFile != null
           && Files.getLastModifiedTime(oldestFile.path()).equals(oldestFile.lastAccessTime())) {
-        oldestFile = lastModifiedFileHelper.get();
+        oldestFile = oldestFileProvider.get();
       }
 
       if (oldestFile == null) {
@@ -194,12 +203,6 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
       } catch (IOException e) {
         log.error("Error deleting snapshot with path: {}", path, e);
       }
-    }
-  }
-
-  private long getRepositoryTotalSize() throws IOException {
-    try (Stream<Path> walk = Files.walk(persistenceDirectory.toPath())) {
-      return walk.mapToLong(p -> p.toFile().length()).sum();
     }
   }
 }
