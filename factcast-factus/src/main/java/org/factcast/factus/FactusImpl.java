@@ -43,6 +43,7 @@ import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.event.EventConverter;
+import org.factcast.core.snap.Snapshot;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
@@ -62,7 +63,6 @@ import org.factcast.factus.projector.ProjectorFactory;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepository;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
-import org.factcast.factus.snapshot.Snapshot;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
 
 /** Single entry point to the factus API. */
