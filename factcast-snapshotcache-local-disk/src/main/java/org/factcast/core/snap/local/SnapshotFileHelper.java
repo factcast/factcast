@@ -15,7 +15,10 @@
  */
 package org.factcast.core.snap.local;
 
+import com.google.common.base.Preconditions;
+import com.google.common.hash.Hashing;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
@@ -23,11 +26,27 @@ import lombok.extern.slf4j.Slf4j;
 @UtilityClass
 @Slf4j
 class SnapshotFileHelper {
-  static void updateLastModified(@NonNull File persistenceFile) {
+  void updateLastModified(@NonNull File persistenceFile) {
     if (persistenceFile.exists()) {
       if (!persistenceFile.setLastModified(System.currentTimeMillis())) {
         log.warn("Unable to set lastModified on {}", persistenceFile.getAbsolutePath());
       }
     }
+  }
+
+  File createFile(@NonNull File persistenceDirectory, @NonNull String key) {
+    Preconditions.checkArgument(persistenceDirectory.exists());
+    String hash = Hashing.sha256().hashString(key, StandardCharsets.UTF_8).toString();
+    String withSlashes = addSlashes(hash);
+    return new File(persistenceDirectory, withSlashes);
+  }
+
+  String addSlashes(String hash) {
+    return new StringBuilder(hash)
+        .insert(16, '/')
+        .insert(12, '/')
+        .insert(8, '/')
+        .insert(4, '/')
+        .toString();
   }
 }
