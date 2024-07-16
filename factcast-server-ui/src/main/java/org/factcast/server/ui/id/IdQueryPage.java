@@ -83,7 +83,11 @@ public class IdQueryPage extends VerticalLayout implements HasUrlParameter<Strin
     queryBtn.addClickListener(event -> executeQuery(fc, jsonViewPluginService, jsonView, queryBtn));
 
     final var resetBtn = new Button("Reset");
-    resetBtn.addClickListener(event -> b.readBean(null));
+    resetBtn.addClickListener(
+        event -> {
+          b.readBean(null);
+          jsonView.clear();
+        });
 
     final var hl = new HorizontalLayout(queryBtn, resetBtn);
     hl.setWidthFull();
