@@ -21,8 +21,8 @@ import lombok.NonNull;
 import lombok.Value;
 
 /**
- * This is a copy of org.factcast.factus.snapshot.Snapshot to mitigate client side deserialization
- * issues when updating to 0.8.0
+ * This belongs to factus however we have clients out there that already have serialized versions of
+ * it with this package.
  */
 @Value
 public class Snapshot implements Serializable {

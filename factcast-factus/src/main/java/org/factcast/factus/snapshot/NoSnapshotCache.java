@@ -18,6 +18,8 @@ package org.factcast.factus.snapshot;
 import java.util.Optional;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotId;
 
 /**
  * only usable if you do not use snapshots at all. Most clients will need to configure a
