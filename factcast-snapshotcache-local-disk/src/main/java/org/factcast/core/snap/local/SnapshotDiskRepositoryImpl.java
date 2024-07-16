@@ -51,10 +51,11 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
 
   public SnapshotDiskRepositoryImpl(@NonNull InMemoryAndDiskSnapshotProperties properties) {
 
-    this.persistenceDirectory = new File(properties.getPathToSnapshots());
+    File cacheRoot = new File(properties.getPathToSnapshots());
     Preconditions.checkState(
-        persistenceDirectory.exists() && persistenceDirectory.isDirectory(),
-        persistenceDirectory.getAbsolutePath() + " must exist and be a directory");
+        cacheRoot.exists() && cacheRoot.isDirectory(),
+        cacheRoot.getAbsolutePath() + " must exist and be a directory");
+    this.persistenceDirectory = new File(cacheRoot, "/factcast/snapshots/");
     this.threshold = (long) (properties.getMaxDiskSpace() * 0.9);
     this.fileSystemLevelLocks =
         CacheBuilder.newBuilder()
@@ -78,7 +79,7 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
     log.info(
         "SnapshotDiskRepositoryImpl initialized with path: {}, max available space: {}, requested max space: {}, currently used space {}",
         properties.getPathToSnapshots(),
-        persistenceDirectory.getUsableSpace(),
+        cacheRoot.getUsableSpace(),
         properties.getMaxDiskSpace(),
         currentUsedSpace.get());
   }
@@ -151,7 +152,7 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
     }
   }
 
-  private static void updateLastModified(File persistenceFile) {
+  private static void updateLastModified(@NonNull File persistenceFile) {
     if (persistenceFile.exists()) {
       if (!persistenceFile.setLastModified(System.currentTimeMillis())) {
         log.warn("Unable to set lastModified on {}", persistenceFile.getAbsolutePath());
@@ -163,13 +164,12 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
     String hash = Hashing.sha256().hashString(key, StandardCharsets.UTF_8).toString();
     String withSlashes =
         new StringBuilder(hash)
-            .insert(32, '/')
-            .insert(24, '/')
             .insert(16, '/')
+            .insert(12, '/')
             .insert(8, '/')
+            .insert(4, '/')
             .toString();
-    File file = new File(persistenceDirectory, withSlashes);
-    return file;
+    return new File(cacheRoot, withSlashes);
   }
 
   /**
@@ -177,7 +177,7 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
    * oldest files and delete them until we are under the limit.
    */
   private void triggerCleanup() {
-    if (threshold != 0 && currentUsedSpace.get() > threshold)
+    if (threshold != 0 && currentUsedSpace.get() >= threshold)
       CompletableFuture.runAsync(this::cleanup);
   }
 
@@ -205,7 +205,7 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
   // quite procedural code, isn't it?
   private void updateLastModifiedPathsIfNeeded() {
     if (lastModifiedPaths.isEmpty()) {
-      try (Stream<Path> walk = Files.walk(persistenceDirectory.toPath())) {
+      try (Stream<Path> walk = Files.walk(cacheRoot.toPath())) {
         lastModifiedPaths.addAll(
             walk.sorted(this::compareLastModifiedTimes).limit(1000).collect(Collectors.toList()));
       } catch (IOException e) {
@@ -224,7 +224,7 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
   }
 
   private long getRepositoryTotalSize() throws IOException {
-    try (Stream<Path> walk = Files.walk(persistenceDirectory.toPath())) {
+    try (Stream<Path> walk = Files.walk(cacheRoot.toPath())) {
       return walk.mapToLong(p -> p.toFile().length()).sum();
     }
   }
