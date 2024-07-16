@@ -29,7 +29,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.stream.Stream;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -67,7 +66,7 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
 
     // Set the current used space at startup
     try {
-      currentUsedSpace = new AtomicLong(getRepositoryTotalSize());
+      currentUsedSpace = new AtomicLong(SnapshotFileHelper.getTotalSize(persistenceDirectory));
     } catch (IOException e) {
       log.error("Error getting the size of the snapshot directory", e);
       throw ExceptionHelper.toRuntime(e);
@@ -196,12 +195,6 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
       } catch (IOException e) {
         log.error("Error deleting snapshot with path: {}", path, e);
       }
-    }
-  }
-
-  private long getRepositoryTotalSize() throws IOException {
-    try (Stream<Path> walk = Files.walk(persistenceDirectory.toPath())) {
-      return walk.mapToLong(p -> p.toFile().length()).sum();
     }
   }
 }
