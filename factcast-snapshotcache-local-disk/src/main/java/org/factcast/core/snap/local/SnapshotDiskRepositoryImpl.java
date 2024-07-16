@@ -29,10 +29,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.snap.local.OldestModifiedFileHelper.PathWithLastModifiedDate;
 import org.factcast.core.util.ExceptionHelper;
 import org.factcast.factus.snapshot.Snapshot;
 import org.factcast.factus.snapshot.SnapshotId;
@@ -43,15 +44,15 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
   private final long threshold;
   private final AtomicLong currentUsedSpace;
   private final LoadingCache<Path, ReadWriteLock> fileSystemLevelLocks;
-  private final Deque<Path> lastModifiedPaths = new LinkedList<>();
+  private final OldestModifiedFileHelper lastModifiedFileHelper;
 
   public SnapshotDiskRepositoryImpl(@NonNull InMemoryAndDiskSnapshotProperties properties) {
-
     File cacheRoot = new File(properties.getPathToSnapshots());
     Preconditions.checkState(
         cacheRoot.exists() && cacheRoot.isDirectory(),
         cacheRoot.getAbsolutePath() + " must exist and be a directory");
     this.persistenceDirectory = new File(cacheRoot, "/factcast/snapshots/");
+    this.lastModifiedFileHelper = new OldestModifiedFileHelper(this.persistenceDirectory);
     this.threshold = (long) (properties.getMaxDiskSpace() * 0.9);
     this.fileSystemLevelLocks =
         CacheBuilder.newBuilder()
@@ -139,9 +140,18 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
             ObjectInputStream ois = new ObjectInputStream(bis)) {
           Snapshot snapshot = (Snapshot) ois.readObject();
           return Optional.of(snapshot);
-        } catch (IOException | ClassNotFoundException e) {
-          // TODO, cleanup if not readable?
-          log.error("Error reading snapshot with id: {}", id, e);
+        } catch (IOException e) {
+          log.error(
+              "Error reading snapshot with id: {} and path: {}", id, persistenceFile.getPath(), e);
+          return Optional.empty();
+        } catch (ClassNotFoundException e) {
+          // Run async to avoid blocking the locks
+          CompletableFuture.runAsync(() -> deleteAsync(id));
+          log.error(
+              "Error deserializing snapshot with id: {} and path: {}",
+              id,
+              persistenceFile.getPath(),
+              e);
           return Optional.empty();
         }
       }
@@ -159,15 +169,24 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
       CompletableFuture.runAsync(this::cleanup);
   }
 
+  @SneakyThrows
   private synchronized void cleanup() {
     while (currentUsedSpace.get() >= threshold) {
-      updateLastModifiedPathsIfNeeded();
-      if (lastModifiedPaths.isEmpty()) {
-        log.error("No more files to delete from Disk, but still over the limit");
-        break;
+      Optional<PathWithLastModifiedDate> oldestFile =
+          lastModifiedFileHelper.getOldestModifiedFile();
+
+      while (oldestFile.isPresent()
+          && Files.getLastModifiedTime(oldestFile.get().path())
+              .equals(oldestFile.get().lastAccessTime())) {
+        oldestFile = lastModifiedFileHelper.getOldestModifiedFile();
       }
 
-      Path path = lastModifiedPaths.poll();
+      if (!oldestFile.isPresent()) {
+        log.error("No more Snapshots to delete from Disk, but still over the limit");
+        return;
+      }
+
+      Path path = oldestFile.get().path();
       try {
         if (Files.exists(path)) {
           long sizeOfFile = Files.size(path);
@@ -177,27 +196,6 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
       } catch (IOException e) {
         log.error("Error deleting snapshot with path: {}", path, e);
       }
-    }
-  }
-
-  // quite procedural code, isn't it?
-  private void updateLastModifiedPathsIfNeeded() {
-    if (lastModifiedPaths.isEmpty()) {
-      try (Stream<Path> walk = Files.walk(persistenceDirectory.toPath())) {
-        lastModifiedPaths.addAll(
-            walk.sorted(this::compareLastModifiedTimes).limit(1000).collect(Collectors.toList()));
-      } catch (IOException e) {
-        log.error("Error getting the list of files in the snapshot directory", e);
-      }
-    }
-  }
-
-  private int compareLastModifiedTimes(Path p1, Path p2) {
-    try {
-      return Files.getLastModifiedTime(p1).compareTo(Files.getLastModifiedTime(p2));
-    } catch (IOException e) {
-      log.error("Error getting the last modified time of the file: {} or {}", p1, p2, e);
-      return 0;
     }
   }
 
