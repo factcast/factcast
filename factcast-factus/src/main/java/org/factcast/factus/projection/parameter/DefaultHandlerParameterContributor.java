@@ -102,7 +102,7 @@ class FactHeaderProvider implements HandlerParameterProvider {
   }
 }
 
-@SuppressWarnings({"OptionalIsPresent", "java:S1872"})
+@SuppressWarnings({"java:S1872"})
 class MetaProvider implements HandlerParameterProvider {
   private final String key;
   private final Class<?> targetType;
@@ -132,13 +132,11 @@ class MetaProvider implements HandlerParameterProvider {
 
   private static void checkPreconditionsForString(
       Class<?> targetType, Set<Annotation> annotations) {
-    if (targetType == String.class) {
-      // needs to be marked nullable
-      if (annotations.stream()
-          .noneMatch(a -> a.annotationType().getSimpleName().equals("Nullable")))
-        throw new IllegalArgumentException(
-            "Parameters of type String declared with @Meta must also be annotated with @Nullable. You could also change it to Optional<String>.");
-    }
+    if (targetType == String.class
+        && annotations.stream()
+            .noneMatch(a -> a.annotationType().getSimpleName().equals("Nullable")))
+      throw new IllegalArgumentException(
+          "Parameters of type String declared with @Meta must also be annotated with @Nullable. You could also change it to Optional<String>.");
   }
 
   private static void checkPreconditionsForOptional(Class<?> targetType, Type genericType) {
