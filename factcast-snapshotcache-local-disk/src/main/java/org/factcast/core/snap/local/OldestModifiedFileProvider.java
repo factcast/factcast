@@ -47,7 +47,7 @@ public class OldestModifiedFileProvider
     if (lastModifiedPaths.isEmpty()) {
       try (Stream<Path> walk = Files.walk(persistenceDirectory.toPath())) {
         lastModifiedPaths.addAll(
-            walk.filter(p -> !persistenceDirectory.toPath().equals(p))
+            walk.filter(p -> !p.toFile().isDirectory())
                 .map(
                     p -> {
                       try {
