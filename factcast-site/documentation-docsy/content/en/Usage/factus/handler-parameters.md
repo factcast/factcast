@@ -9,23 +9,20 @@ to process events. These methods allow various parameters, also in combination, 
 
 ## Common Handler Parameters
 
-| Parameter Type          | Description                                                                                                                    | valid on @Handler | valid on @HandlerFor |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------- | -------------------- |
-| `Fact`                  | Provides access to all [Fact]({{< ref "fact.md">}}) details including header (JSON) and payload (JSON)                         | yes               | yes                  |
-| `FactHeader`            | the [Fact header]({{< ref "fact.md#the-header">}}). Provides access to event namespace, type, version, meta entries and others | yes               | yes                  |
-| `UUID`                  | the [Fact ID of the Fact header]({{< ref "fact.md#the-header">}})                                                              | yes               | yes                  |
-| `? extends EventObject` | an instance of a concrete class [implementing `EventObject`]({{< ref "introduction.md#eventobjects">}}).                       | yes               | no                   |
+| Parameter Type & Annotation          | Description                                                                                                                    | valid on @Handler | valid on @HandlerFor |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ | ----------------- | -------------------- |
+| `Fact`                               | Provides access to all [Fact]({{< ref "fact.md">}}) details including header (JSON) and payload (JSON)                         | yes               | yes                  |
+| `FactHeader`                         | the [Fact header]({{< ref "fact.md#the-header">}}). Provides access to event namespace, type, version, meta entries and others | yes               | yes                  |
+| `UUID`                               | the [Fact ID of the Fact header]({{< ref "fact.md#the-header">}})                                                              | yes               | yes                  |
+| `FactStreamPosition`                 | the FactStreamPosition that identifies the position of the given fact in the global fact stream                                | yes               | yes                  |
+| `@Nullable @Meta(key="foo") String`  | if present, the value of the fact-header's meta object attribute "foo", otherwise null                                         | yes               | yes                  |
+| `@Meta(key="foo") Optional<String> ` | if present, the value of the fact-header's meta object attribute "foo" wrapped in an Optional, otherwise Optional.empty        | yes               | yes                  |
+| `? extends EventObject`              | an instance of a concrete class [implementing `EventObject`]({{< ref "introduction.md#eventobjects">}}).                       | yes               | no                   |
 
 ## Extras on Redis atomic Projections
 
 Additional to these common parameters, ProjectionLenses can add parameters to be used by handler methods.
-For instance handler methods of a @RedisBatched projection should use:
-
-| Parameter Type | Description                                                                    | valid on @Handler | valid on @HandlerFor |
-| -------------- | ------------------------------------------------------------------------------ | ----------------- | -------------------- |
-| `RBatch`       | needed in a [Redis batched projection]({{< ref "redis-batch-projection.md">}}) | yes               | yes                  |
-
-similar to @RedisTransactional projections that should use:
+For instance handler methods @RedisTransactional projections that should use:
 
 | Parameter Type | Description                                                                                   | valid on @Handler | valid on @HandlerFor |
 | -------------- | --------------------------------------------------------------------------------------------- | ----------------- | -------------------- |
