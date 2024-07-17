@@ -57,7 +57,13 @@ class SnapshotFileHelper {
   long getTotalSize(File root) throws IOException {
     Preconditions.checkArgument(root.exists());
     try (Stream<Path> walk = Files.walk(root.toPath())) {
-      return walk.mapToLong(p -> p.toFile().length()).sum();
+      return walk.mapToLong(
+              p -> {
+                File file = p.toFile();
+                if (file.isDirectory()) return 0;
+                else return file.length();
+              })
+          .sum();
     }
   }
 }

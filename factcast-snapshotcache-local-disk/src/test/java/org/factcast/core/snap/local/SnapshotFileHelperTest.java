@@ -121,9 +121,7 @@ class SnapshotFileHelperTest {
       File root = Files.createTempDir();
 
       // some bytes for directory itself
-      int OVERHEAD_FOR_DIRECTORIES = 128;
-      Assertions.assertThat(SnapshotFileHelper.getTotalSize(root))
-          .isLessThan(OVERHEAD_FOR_DIRECTORIES);
+      Assertions.assertThat(SnapshotFileHelper.getTotalSize(root)).isZero();
 
       File f = SnapshotFileHelper.createFile(root, "foobarbaz");
       f.getParentFile().mkdirs();
@@ -132,9 +130,7 @@ class SnapshotFileHelperTest {
       f2.getParentFile().mkdirs();
       Files.write(new byte[2048], f2);
 
-      Assertions.assertThat(SnapshotFileHelper.getTotalSize(root))
-          .isLessThan(3072 + OVERHEAD_FOR_DIRECTORIES)
-          .isGreaterThanOrEqualTo(3072);
+      Assertions.assertThat(SnapshotFileHelper.getTotalSize(root)).isEqualTo(3072);
     }
   }
 }
