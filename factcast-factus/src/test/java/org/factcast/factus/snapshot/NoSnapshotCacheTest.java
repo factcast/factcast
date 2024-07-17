@@ -17,6 +17,8 @@ package org.factcast.factus.snapshot;
 
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotId;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
