@@ -68,7 +68,7 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
 
   public CompletableFuture<Void> save(Snapshot value) {
     File target = SnapshotFileHelper.createFile(persistenceDirectory, value.id().key());
-    return locking.withWriteLockOn(target, () -> doSave(value, target));
+    return locking.withWriteLockOnAsync(target, () -> doSave(value, target));
   }
 
   @VisibleForTesting
@@ -86,7 +86,7 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
 
   public CompletableFuture<Void> delete(SnapshotId id) {
     File target = SnapshotFileHelper.createFile(persistenceDirectory, id.key());
-    return locking.withWriteLockOn(target, () -> doDelete(target));
+    return locking.withWriteLockOnAsync(target, () -> doDelete(target));
   }
 
   @VisibleForTesting

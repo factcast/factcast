@@ -15,6 +15,7 @@
  */
 package org.factcast.core.snap.local;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -25,10 +26,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.StampedLock;
 import java.util.function.Supplier;
+import lombok.Getter;
 
+@SuppressWarnings("LombokGetterMayBeUsed")
 class FileLevelLocking {
 
-  private final LoadingCache<Path, StampedLock> fileSystemLevelLocks;
+  @VisibleForTesting @Getter final LoadingCache<Path, StampedLock> fileSystemLevelLocks;
 
   FileLevelLocking() {
     this.fileSystemLevelLocks =
@@ -43,7 +46,68 @@ class FileLevelLocking {
                 });
   }
 
-  private enum Mode {
+  // convenience methods
+  // READ
+
+  <T> T withReadLockOn(File toLockOn, java.util.function.Supplier<T> supplier) {
+    return withLockOn(Mode.READ, toLockOn, supplier);
+  }
+
+  void withReadLockOn(File toLockOn, Runnable r) {
+    withLockOn(Mode.READ, toLockOn, r);
+  }
+
+  CompletableFuture<Void> withReadLockOnAsync(File toLockOn, Runnable r) {
+    return withLockOnAsync(Mode.READ, toLockOn, r);
+  }
+
+  // WRITE
+
+  CompletableFuture<Void> withWriteLockOnAsync(File toLockOn, Runnable r) {
+    return withLockOnAsync(Mode.WRITE, toLockOn, r);
+  }
+
+  // helpers
+  private void withLockOn(Mode mode, File toLockOn, Runnable r) {
+    runAndUnlock(r, lockOn(mode, toLockOn));
+  }
+
+  @VisibleForTesting
+  Lock lockOn(Mode mode, File toLockOn) {
+    Lock l = mode.acquire(fileSystemLevelLocks.getUnchecked(toLockOn.toPath()));
+    l.lock();
+    return l;
+  }
+
+  private CompletableFuture<Void> withLockOnAsync(Mode mode, File toLockOn, Runnable r) {
+    // needs to be evaulated right now
+    Lock l = lockOn(mode, toLockOn);
+    return CompletableFuture.runAsync(() -> runAndUnlock(r, l));
+  }
+
+  private <T> T withLockOn(Mode mode, File toLockOn, Supplier<T> supplier) {
+    return supplyAndUnlock(supplier, lockOn(mode, toLockOn));
+  }
+
+  @VisibleForTesting
+  static <T> T supplyAndUnlock(Supplier<T> supplier, Lock l) {
+    try {
+      return supplier.get();
+    } finally {
+      l.unlock();
+    }
+  }
+
+  @VisibleForTesting
+  static void runAndUnlock(Runnable r, Lock l) {
+    try {
+      r.run();
+    } finally {
+      l.unlock();
+    }
+  }
+
+  enum Mode {
     READ {
       @Override
       Lock acquire(StampedLock lock) {
@@ -58,68 +122,5 @@ class FileLevelLocking {
     };
 
     abstract Lock acquire(StampedLock lock);
-  }
-
-  private <T> CompletableFuture<T> withLockOnAsync(Mode mode, File toLockOn, Supplier<T> supplier) {
-    Lock l = mode.acquire(fileSystemLevelLocks.getUnchecked(toLockOn.toPath()));
-    l.lock();
-    return CompletableFuture.supplyAsync(
-        () -> {
-          try {
-            return supplier.get();
-          } finally {
-            l.unlock();
-          }
-        });
-  }
-
-  private CompletableFuture<Void> withLockOnAsync(Mode mode, File toLockOn, Runnable r) {
-    Lock l = mode.acquire(fileSystemLevelLocks.getUnchecked(toLockOn.toPath()));
-    l.lock();
-    return CompletableFuture.runAsync(
-        () -> {
-          try {
-            r.run();
-          } finally {
-            l.unlock();
-          }
-        });
-  }
-
-  private <T> T withLockOn(Mode mode, File toLockOn, Supplier<T> supplier) {
-    Lock l = mode.acquire(fileSystemLevelLocks.getUnchecked(toLockOn.toPath()));
-    l.lock();
-
-    try {
-      return supplier.get();
-    } finally {
-      l.unlock();
-    }
-  }
-
-  private void withLockOn(Mode mode, File toLockOn, Runnable r) {
-    Lock l = mode.acquire(fileSystemLevelLocks.getUnchecked(toLockOn.toPath()));
-    l.lock();
-    try {
-      r.run();
-    } finally {
-      l.unlock();
-    }
-  }
-
-  <T> T withReadLockOn(File toLockOn, java.util.function.Supplier<T> supplier) {
-    return withLockOn(Mode.READ, toLockOn, supplier);
-  }
-
-  <T> CompletableFuture<T> withWriteLockOn(File toLockOn, java.util.function.Supplier<T> supplier) {
-    return withLockOnAsync(Mode.WRITE, toLockOn, supplier);
-  }
-
-  void withReadLockOn(File toLockOn, Runnable r) {
-    withLockOn(Mode.READ, toLockOn, r);
-  }
-
-  CompletableFuture<Void> withWriteLockOn(File toLockOn, Runnable r) {
-    return withLockOnAsync(Mode.WRITE, toLockOn, r);
   }
 }
