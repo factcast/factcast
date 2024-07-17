@@ -1474,6 +1474,12 @@ class FactusImplTest {
       Assertions.assertThat(ret).isNull();
     }
   }
+
+  @Test
+  void testGetFactStore() {
+    underTest.store();
+    verify(fc).store();
+  }
 }
 
 class SomeSnapshotProjection implements SnapshotProjection {
