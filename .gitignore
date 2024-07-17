@@ -9,7 +9,6 @@ target
 *.iml
 
 **/bin/*
-*.versionsBackup*
 test_local.sh
 /.metadata/
 .recommenders
@@ -19,3 +18,4 @@ release.properties
 .attach_pid*
 **/output/**/*
 **/*.plantuml
+**/pom.xml.versionsBackup
