@@ -15,7 +15,9 @@
  */
 package org.factcast.example.client.dynamo.hello;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.ToString;
+import lombok.Value;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbImmutable;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 
@@ -23,12 +25,16 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbParti
 @Value
 @Builder
 @DynamoDbImmutable(builder = UserSchema.UserSchemaBuilder.class)
-public class UserSchema {
+public final class UserSchema {
 
-  @Getter(onMethod_ = @DynamoDbPartitionKey)
-  String firstName;
+  private final String firstName;
 
-  String lastName;
+  private final String lastName;
 
-  String displayName;
+  private final String displayName;
+
+  @DynamoDbPartitionKey
+  public String firstName() {
+    return this.firstName;
+  }
 }

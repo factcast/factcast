@@ -17,6 +17,8 @@ package org.factcast.factus.snapshot;
 
 import java.util.Optional;
 import lombok.NonNull;
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotId;
 
 /**
  * Even though this functionality is available through factStore, we chose to extract it from the

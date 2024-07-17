@@ -20,9 +20,9 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import java.time.Duration;
 import java.util.Optional;
 import lombok.NonNull;
-import org.factcast.factus.snapshot.Snapshot;
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotId;
 import org.factcast.factus.snapshot.SnapshotCache;
-import org.factcast.factus.snapshot.SnapshotId;
 
 public class InMemorySnapshotCache implements SnapshotCache {
 
