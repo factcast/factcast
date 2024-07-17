@@ -36,7 +36,7 @@ class DefaultHandlerParameterContributorTest {
     DefaultHandlerParameterContributor undertest =
         new DefaultHandlerParameterContributor(mock(EventSerializer.class));
     HandlerParameterProvider provider =
-        undertest.providerFor(FactStreamPosition.class, new HashSet<>());
+        undertest.providerFor(FactStreamPosition.class, null, new HashSet<>());
 
     Fact fact = new TestFact();
     FactStreamPosition fsp = FactStreamPosition.from(fact);
