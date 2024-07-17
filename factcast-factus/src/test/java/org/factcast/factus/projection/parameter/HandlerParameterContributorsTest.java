@@ -18,6 +18,7 @@ package org.factcast.factus.projection.parameter;
 import static org.mockito.Mockito.mock;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 import java.util.Iterator;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -41,7 +42,9 @@ class HandlerParameterContributorsTest {
         @Nullable
         @Override
         public HandlerParameterProvider providerFor(
-            @NonNull Class<?> type, @NonNull Set<Annotation> annotations) {
+            @NonNull Class<?> type,
+            @Nullable Type genericType,
+            @NonNull Set<Annotation> annotations) {
           return (f, p) -> "Hi There";
         }
       };
