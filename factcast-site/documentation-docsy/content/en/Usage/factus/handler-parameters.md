@@ -19,13 +19,7 @@ to process events. These methods allow various parameters, also in combination, 
 ## Extras on Redis atomic Projections
 
 Additional to these common parameters, ProjectionLenses can add parameters to be used by handler methods.
-For instance handler methods of a @RedisBatched projection should use:
-
-| Parameter Type | Description                                                                    | valid on @Handler | valid on @HandlerFor |
-| -------------- | ------------------------------------------------------------------------------ | ----------------- | -------------------- |
-| `RBatch`       | needed in a [Redis batched projection]({{< ref "redis-batch-projection.md">}}) | yes               | yes                  |
-
-similar to @RedisTransactional projections that should use:
+For instance handler methods of a @RedisTransactional projections should use:
 
 | Parameter Type | Description                                                                                   | valid on @Handler | valid on @HandlerFor |
 | -------------- | --------------------------------------------------------------------------------------------- | ----------------- | -------------------- |
