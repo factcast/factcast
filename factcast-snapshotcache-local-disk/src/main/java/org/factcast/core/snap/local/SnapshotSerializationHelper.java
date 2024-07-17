@@ -22,7 +22,7 @@ import java.io.OutputStream;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
-import org.factcast.factus.snapshot.Snapshot;
+import org.factcast.core.snap.Snapshot;
 
 @UtilityClass
 class SnapshotSerializationHelper {
