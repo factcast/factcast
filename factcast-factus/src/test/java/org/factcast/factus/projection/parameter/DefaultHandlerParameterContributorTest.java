@@ -58,7 +58,7 @@ class DefaultHandlerParameterContributorTest {
   @Test
   void providesStringMeta() {
     class MetaString {
-      public void apply(@Nullable @Meta(key = "narf") String narf) {}
+      public void apply(@Nullable @Meta("narf") String narf) {}
     }
 
     Method m =
@@ -83,7 +83,7 @@ class DefaultHandlerParameterContributorTest {
   @Test
   void providesOptionalMeta() {
     class MetaString {
-      public void apply(@Meta(key = "narf") Optional<String> narf) {}
+      public void apply(@Meta("narf") Optional<String> narf) {}
     }
 
     Method m =
@@ -107,7 +107,7 @@ class DefaultHandlerParameterContributorTest {
   @Test
   void providesEmptyOptionalMeta() {
     class MetaString {
-      public void apply(@Meta(key = "narf") Optional<String> narf) {}
+      public void apply(@Meta("narf") Optional<String> narf) {}
     }
 
     Method m =
@@ -131,7 +131,7 @@ class DefaultHandlerParameterContributorTest {
   @Test
   void providesNullForStringMeta() {
     class MetaString {
-      public void apply(@Nullable @Meta(key = "narf") String narf) {}
+      public void apply(@Nullable @Meta("narf") String narf) {}
     }
 
     Method m =
@@ -157,7 +157,32 @@ class DefaultHandlerParameterContributorTest {
     //noinspection rawtypes
     class MetaString {
       @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-      public void apply(@Meta(key = "narf") Optional narf) {}
+      public void apply(@Meta("narf") Optional narf) {}
+    }
+
+    Method m =
+        Arrays.stream(MetaString.class.getMethods())
+            .filter(me -> me.getName().equals("apply"))
+            .findFirst()
+            .get();
+    DefaultHandlerParameterContributor undertest =
+        new DefaultHandlerParameterContributor(mock(EventSerializer.class));
+    Class<?> type = m.getParameterTypes()[0];
+    Type genericType = m.getGenericParameterTypes()[0];
+    HashSet<Annotation> annotations = Sets.newHashSet(m.getParameterAnnotations()[0]);
+    assertThatThrownBy(
+            () -> {
+              undertest.providerFor(type, genericType, annotations);
+            })
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void rejectsEmptyName() {
+    //noinspection rawtypes
+    class MetaString {
+      @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+      public void apply(@Meta("") @Nullable String narf) {}
     }
 
     Method m =
@@ -181,7 +206,7 @@ class DefaultHandlerParameterContributorTest {
   void rejectsNonStringOptional() {
     class MetaString {
       @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-      public void apply(@Meta(key = "narf") Optional<Integer> narf) {}
+      public void apply(@Meta("narf") Optional<Integer> narf) {}
     }
 
     Method m =
@@ -204,7 +229,7 @@ class DefaultHandlerParameterContributorTest {
   @Test
   void rejectsStringIfNotNullable() {
     class MetaString {
-      public void apply(@Meta(key = "narf") String narf) {}
+      public void apply(@Meta("narf") String narf) {}
     }
 
     Method m =
@@ -227,7 +252,7 @@ class DefaultHandlerParameterContributorTest {
   @Test
   void rejectsNonStringType() {
     class MetaString {
-      public void apply(@Meta(key = "narf") Integer narf) {}
+      public void apply(@Meta("narf") Integer narf) {}
     }
 
     Method m =
