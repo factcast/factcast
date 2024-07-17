@@ -134,7 +134,8 @@ class MetaProvider implements HandlerParameterProvider {
       Class<?> targetType, Set<Annotation> annotations) {
     if (targetType == String.class) {
       // needs to be marked nullable
-      if (annotations.stream().noneMatch(a -> a.getClass().getSimpleName().equals("Nullable")))
+      if (annotations.stream()
+          .noneMatch(a -> a.annotationType().getSimpleName().equals("Nullable")))
         throw new IllegalArgumentException(
             "Parameters of type String declared with @Meta must also be annotated with @Nullable. You could also change it to Optional<String>.");
     }
@@ -142,7 +143,7 @@ class MetaProvider implements HandlerParameterProvider {
 
   private static void checkPreconditionsForOptional(Class<?> targetType, Type genericType) {
     if (targetType == Optional.class) {
-      if (genericType == null)
+      if (!(genericType instanceof ParameterizedType))
         throw new IllegalArgumentException(
             "Unparametrized Optional detected. It should be Optional<String> instead.");
       else {
