@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +34,9 @@ import org.factcast.factus.snapshot.SnapshotId;
 
 @Slf4j
 public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
-  private final File persistenceDirectory;
+  @Getter(onMethod = @__(@VisibleForTesting))
+  final File persistenceDirectory;
+
   private final long threshold;
   private final AtomicLong currentUsedSpace;
   private final OldestModifiedFileProvider oldestFileProvider;

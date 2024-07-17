@@ -18,10 +18,11 @@ package org.factcast.core.snap.local;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.io.Files;
-import java.io.File;
+import java.io.*;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.SneakyThrows;
+import nl.altindag.log.LogCaptor;
 import org.awaitility.Awaitility;
 import org.factcast.factus.snapshot.Snapshot;
 import org.factcast.factus.snapshot.SnapshotId;
@@ -75,6 +76,35 @@ class SnapshotDiskRepositoryImplTest {
 
       response = uut.findById(snap.id());
       assertThat(response).isEmpty();
+    }
+
+    @Test
+    @SneakyThrows
+    void failureWhileGettingTriggersDelete() {
+      SnapshotId id = SnapshotId.of("key", UUID.randomUUID());
+      LogCaptor logCaptor = LogCaptor.forClass(SnapshotDiskRepositoryImpl.class);
+
+      byte[] nonExistingSerializedClass =
+          new byte[] {
+            -84, -19, 0, 5, 115, 114, 0, 45, 111, 114, 103, 46, 102, 97, 99, 116, 99, 97, 115, 116,
+            46, 99, 111, 114, 101, 46, 115, 110, 97, 112, 46, 108, 111, 99, 97, 108, 46, 99, 97, 83,
+            83, 119, 73, 102, 97, 83, 71, 108, 100, 111, 115, 97, 97, 57, -97, -72, -84, 39, -99,
+            -94, 94, 2, 0, 1, 76, 0, 2, 105, 100, 116, 0, 18, 76, 106, 97, 118, 97, 47, 108, 97,
+            110, 103, 47, 83, 116, 114, 105, 110, 103, 59, 120, 112, 112
+          };
+
+      File persistenceFile = SnapshotFileHelper.createFile(uut.persistenceDirectory(), id.key());
+
+      persistenceFile.getParentFile().mkdirs();
+      persistenceFile.createNewFile();
+      java.nio.file.Files.write(persistenceFile.toPath(), nonExistingSerializedClass);
+
+      assertThat(persistenceFile).exists();
+      assertThat(uut.findById(id)).isEmpty();
+      assertThat(persistenceFile).doesNotExist();
+      assertThat(logCaptor.getErrorLogs()).isNotEmpty();
+      assertThat(logCaptor.getErrorLogs().size()).isEqualTo(1);
+      assertThat(logCaptor.getErrorLogs().get(0)).contains("Error deserializing snapshot with id");
     }
 
     @Test
