@@ -83,7 +83,7 @@ class DefaultHandlerParameterContributorTest {
   @Test
   void providesOptionalMeta() {
     class MetaString {
-      public void apply(@Nullable @Meta(key = "narf") Optional<String> narf) {}
+      public void apply(@Meta(key = "narf") Optional<String> narf) {}
     }
 
     Method m =
@@ -104,11 +104,10 @@ class DefaultHandlerParameterContributorTest {
     Assertions.assertThat((Optional) provider.apply(fact, p)).hasValue("poit");
   }
 
-  @SuppressWarnings("rawtypes")
   @Test
   void providesEmptyOptionalMeta() {
     class MetaString {
-      public void apply(@Nullable @Meta(key = "narf") Optional<String> narf) {}
+      public void apply(@Meta(key = "narf") Optional<String> narf) {}
     }
 
     Method m =
@@ -127,6 +126,30 @@ class DefaultHandlerParameterContributorTest {
     Fact fact = Fact.builder().meta("no-exactly-narf", "poit").buildWithoutPayload();
     TestProjection p = mock(TestProjection.class);
     Assertions.assertThat(((Optional) provider.apply(fact, p))).isEmpty();
+  }
+
+  @Test
+  void providesNullForStringMeta() {
+    class MetaString {
+      public void apply(@Nullable @Meta(key = "narf") String narf) {}
+    }
+
+    Method m =
+        Arrays.stream(MetaString.class.getMethods())
+            .filter(me -> me.getName().equals("apply"))
+            .findFirst()
+            .get();
+    DefaultHandlerParameterContributor undertest =
+        new DefaultHandlerParameterContributor(mock(EventSerializer.class));
+    HandlerParameterProvider provider =
+        undertest.providerFor(
+            m.getParameterTypes()[0],
+            m.getGenericParameterTypes()[0],
+            Sets.newHashSet(m.getParameterAnnotations()[0]));
+    Assertions.assertThat(provider).isNotNull();
+    Fact fact = Fact.builder().meta("no-exactly-narf", "poit").buildWithoutPayload();
+    TestProjection p = mock(TestProjection.class);
+    Assertions.assertThat((provider.apply(fact, p))).isNull();
   }
 
   @Test
