@@ -20,9 +20,9 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import java.util.Optional;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.factus.snapshot.Snapshot;
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotId;
 import org.factcast.factus.snapshot.SnapshotCache;
-import org.factcast.factus.snapshot.SnapshotId;
 
 @Slf4j
 public class InMemoryAndDiskSnapshotCache implements SnapshotCache {

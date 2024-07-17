@@ -44,7 +44,7 @@ public class ResilientGrpcSubscription implements Subscription {
   private final SubscriptionHolder currentSubscription = new SubscriptionHolder();
   private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
-  @Getter(value = AccessLevel.PACKAGE, onMethod = @__(@VisibleForTesting))
+  @Getter(value = AccessLevel.PACKAGE)
   private final AtomicReference<Throwable> onErrorCause = new AtomicReference<>();
 
   @Getter @VisibleForTesting final Resilience resilience;

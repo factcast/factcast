@@ -27,10 +27,10 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.snap.local.OldestModifiedFileProvider.PathWithLastModifiedDate;
 import org.factcast.core.util.ExceptionHelper;
-import org.factcast.factus.snapshot.Snapshot;
-import org.factcast.factus.snapshot.SnapshotId;
 
 @Slf4j
 public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
