@@ -17,8 +17,8 @@ package org.factcast.core.snap.local;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import org.factcast.factus.snapshot.Snapshot;
-import org.factcast.factus.snapshot.SnapshotId;
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotId;
 
 public interface SnapshotDiskRepository {
   CompletableFuture<Void> save(Snapshot snapshot);

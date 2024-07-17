@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.snapshot;
+package org.factcast.core.snap;
 
 import java.io.Serializable;
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.Value;
 
-@Value(staticConstructor = "of")
-public class SnapshotId implements Serializable {
-  private static final long serialVersionUID = -3207528229703207635L;
-  @NonNull String key;
+/**
+ * This belongs to factus however we have clients out there that already have serialized versions of
+ * it with this package.
+ */
+@Value
+public class Snapshot implements Serializable {
+  @NonNull SnapshotId id;
 
-  @NonNull UUID uuid; // semantically optional, might be constant if not needed
-  // (SnapshotProjections)
+  @NonNull UUID lastFact;
+
+  @NonNull byte[] bytes;
+
+  boolean compressed;
 }
