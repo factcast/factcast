@@ -111,7 +111,7 @@ class MetaProvider implements HandlerParameterProvider {
       Meta meta, Class<?> targetType, Type genericType, Set<Annotation> annotations) {
     this.targetType = targetType;
 
-    key = meta.key();
+    key = meta.value();
 
     checkPreconditionsForAllowedTypes(targetType);
     checkPreconditionsForKey(key);
