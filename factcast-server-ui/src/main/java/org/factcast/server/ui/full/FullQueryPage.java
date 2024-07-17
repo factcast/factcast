@@ -251,7 +251,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
           formBean.reset();
           binder.readBean(formBean);
           factCriteriaViews.rebuild();
-          jsonView.renderFacts(queryResult, formBean.getCriteria().size());
+          jsonView.clear();
         });
 
     final var jsonDownload = configureDownloadWrapper(exportJsonBtn);

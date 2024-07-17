@@ -99,4 +99,10 @@ class DefaultFactCast implements FactCast {
       throws TransformationException {
     return store.fetchByIdAndVersion(id, versionExpected);
   }
+
+  @Override
+  @NonNull
+  public FactStore store() {
+    return store;
+  }
 }
