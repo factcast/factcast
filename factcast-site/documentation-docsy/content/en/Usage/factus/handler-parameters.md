@@ -21,8 +21,8 @@ to process events. These methods allow various parameters, also in combination, 
 
 ## Extras on Redis atomic Projections
 
-Additional to these common parameters, ProjectionLenses can add parameters to be used by handler methods.
-For instance handler methods @RedisTransactional projections that should use:
+Additional to these common parameters, Projections can add parameters to be used by handler methods.
+For instance handler methods on @RedisTransactional projections that should use:
 
 | Parameter Type | Description                                                                                   | valid on @Handler | valid on @HandlerFor |
 | -------------- | --------------------------------------------------------------------------------------------- | ----------------- | -------------------- |
