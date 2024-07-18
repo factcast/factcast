@@ -58,8 +58,9 @@ public class DefaultHandlerParameterContributor implements HandlerParameterContr
       return new FactIdProvider();
     }
 
-    // TODO is this documented already?
-    if (FactStreamPosition.class == type) return new FactStreamPositionProvider();
+    if (FactStreamPosition.class == type) {
+      return new FactStreamPositionProvider();
+    }
 
     Optional<Meta> metaAnnotation =
         annotations.stream()
