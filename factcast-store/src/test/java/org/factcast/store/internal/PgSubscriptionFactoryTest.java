@@ -30,7 +30,7 @@ import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
-import org.factcast.store.internal.filter.blacklist.Blacklist;
+import org.factcast.store.internal.pipeline.ServerPipelineFactory;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.script.JSEngineFactory;
@@ -56,13 +56,13 @@ class PgSubscriptionFactoryTest {
 
   @Mock private StoreConfigurationProperties props;
 
-  @Mock private Blacklist blacklist;
   @Mock private FastForwardTarget target;
   @Mock private FactTransformerService transformerService;
   @Mock private PgMetrics metrics;
   @Mock private PgStoreTelemetry telemetry;
 
   @Mock private JSEngineFactory engineFactory;
+  @Mock private ServerPipelineFactory pipelineFactory;
 
   @Spy private ExecutorService executorService = Executors.newSingleThreadExecutor();
   private PgSubscriptionFactory underTest;
@@ -80,10 +80,9 @@ class PgSubscriptionFactoryTest {
             props,
             catchupFactory,
             target,
-            metrics,
-            blacklist,
-            transformerService,
+            pipelineFactory,
             engineFactory,
+            metrics,
             telemetry);
   }
 
@@ -114,7 +113,6 @@ class PgSubscriptionFactoryTest {
     @Test
     void testConnect_happyCase() {
       underTest.connect(req, subscription, pgsub).run();
-
       verify(pgsub).connect(req);
     }
 

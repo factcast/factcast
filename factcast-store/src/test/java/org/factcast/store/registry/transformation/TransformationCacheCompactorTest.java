@@ -17,12 +17,37 @@ package org.factcast.store.registry.transformation;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import org.factcast.store.registry.transformation.cache.TransformationCache;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class TransformationCacheCompactorTest {
+  public static final int RETENTION_DAYS = 21;
+  @Mock TransformationCache cache;
+
+  TransformationCacheCompactor uut;
+
+  @BeforeEach
+  void setup() {
+    uut = new TransformationCacheCompactor(cache, RETENTION_DAYS);
+  }
 
   @Test
   void compact() {
-    // TODO
+    ArgumentCaptor<ZonedDateTime> cap = ArgumentCaptor.forClass(ZonedDateTime.class);
+    Mockito.doNothing().when(cache).compact(cap.capture());
+
+    uut.compact();
+
+    org.assertj.core.api.Assertions.assertThat(cap.getValue().truncatedTo(ChronoUnit.DAYS))
+        .isNotNull()
+        .isEqualTo(ZonedDateTime.now().minusDays(RETENTION_DAYS).truncatedTo(ChronoUnit.DAYS));
   }
 }

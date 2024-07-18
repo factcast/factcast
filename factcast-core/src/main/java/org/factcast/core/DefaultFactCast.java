@@ -18,8 +18,8 @@ package org.factcast.core;
 import java.util.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.factcast.core.lock.DeprecatedLockedOperationBuilder;
 import org.factcast.core.lock.LockedOperationBuilder;
+import org.factcast.core.lock.MultiAggregateLockedOperationBuilder;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
@@ -42,7 +42,7 @@ class DefaultFactCast implements FactCast {
   @NonNull
   public Subscription subscribeEphemeral(
       @NonNull SubscriptionRequest req, @NonNull FactObserver observer) {
-    return store.subscribe(SubscriptionRequestTO.forFacts(req), observer);
+    return store.subscribe(SubscriptionRequestTO.from(req), observer);
   }
 
   @Override
@@ -52,6 +52,7 @@ class DefaultFactCast implements FactCast {
   }
 
   @Override
+  @NonNull
   public LockedOperationBuilder lock(@NonNull List<FactSpec> scope) {
     return new LockedOperationBuilder(store, scope);
   }
@@ -63,28 +64,31 @@ class DefaultFactCast implements FactCast {
   }
 
   @Override
+  @NonNull
   public Set<String> enumerateNamespaces() {
     return store.enumerateNamespaces();
   }
 
   @Override
+  @NonNull
   public Set<String> enumerateTypes(@NonNull String ns) {
     return store.enumerateTypes(ns);
   }
 
   @Override
-  @SuppressWarnings("deprecated")
-  public DeprecatedLockedOperationBuilder lock(@NonNull String ns) {
+  @NonNull
+  public MultiAggregateLockedOperationBuilder lock(@NonNull String ns) {
     if (ns.trim().isEmpty()) {
       throw new IllegalArgumentException("Namespace must not be empty");
     }
-    return new DeprecatedLockedOperationBuilder(store, ns);
+    return new MultiAggregateLockedOperationBuilder(store, ns);
   }
 
   @Override
+  @NonNull
   public Subscription subscribe(
       @NonNull SubscriptionRequest request, @NonNull FactObserver observer) {
-    return store.subscribe(SubscriptionRequestTO.forFacts(request), observer);
+    return store.subscribe(SubscriptionRequestTO.from(request), observer);
   }
 
   @Override
@@ -94,8 +98,8 @@ class DefaultFactCast implements FactCast {
   }
 
   @Override
+  @NonNull
   public Optional<Fact> fetchByIdAndVersion(@NonNull UUID id, int versionExpected)
-      // TODO is transport of this exception reasonable?
       throws TransformationException {
     return store.fetchByIdAndVersion(id, versionExpected);
   }
