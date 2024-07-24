@@ -47,8 +47,8 @@
       <groupId>org.factcast</groupId>
       <artifactId>factcast-core</artifactId>
       <version>${project.version}</version>
-      <scope>test</scope>
       <type>test-jar</type>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.lz4</groupId>
@@ -61,13 +61,6 @@
     </dependency>
   </dependencies>
   <build>
-    <extensions>
-      <extension>
-        <groupId>kr.motd.maven</groupId>
-        <artifactId>os-maven-plugin</artifactId>
-        <version>1.7.1</version>
-      </extension>
-    </extensions>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -80,10 +73,10 @@
         <executions>
           <execution>
             <id>add-source</id>
-            <phase>generate-sources</phase>
             <goals>
               <goal>add-source</goal>
             </goals>
+            <phase>generate-sources</phase>
             <configuration>
               <sources>
                 <source>${project.build.directory}/generated-sources/java</source>
@@ -103,5 +96,12 @@
         </configuration>
       </plugin>
     </plugins>
+    <extensions>
+      <extension>
+        <groupId>kr.motd.maven</groupId>
+        <artifactId>os-maven-plugin</artifactId>
+        <version>1.7.1</version>
+      </extension>
+    </extensions>
   </build>
 </project>
