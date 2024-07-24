@@ -57,9 +57,9 @@
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-core</artifactId>
+      <version>${project.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>

@@ -36,6 +36,10 @@ workflow(
         )
         run(
             name = "Spotless",
+            command = "./mvnw -B sortpom:sort --file pom.xml",
+        )
+        run(
+            name = "Spotless",
             command = "./mvnw -B --non-recursive spotless:apply --file pom.xml",
         )
         uses(
