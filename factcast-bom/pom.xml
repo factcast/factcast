@@ -30,8 +30,8 @@
       <dependency>
         <groupId>org.factcast</groupId>
         <artifactId>factcast-core</artifactId>
-        <classifier>test</classifier>
         <version>${project.version}</version>
+        <classifier>test</classifier>
       </dependency>
       <dependency>
         <groupId>org.factcast</groupId>
@@ -182,8 +182,8 @@
         <groupId>com.fasterxml.jackson</groupId>
         <artifactId>jackson-bom</artifactId>
         <version>${jackson.version}</version>
-        <scope>import</scope>
         <type>pom</type>
+        <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>org.msgpack</groupId>
