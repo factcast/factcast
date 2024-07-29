@@ -42,14 +42,13 @@ public class InMemoryAndDiskSnapshotCacheAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public SnapshotCache snapshotCache(
-      InMemoryAndDiskSnapshotProperties props, SnapshotDiskRepository snapshotDiskRepository) {
-    return new InMemoryAndDiskSnapshotCache(props, snapshotDiskRepository);
+  public SnapshotCache snapshotCache(SnapshotDiskRepository snapshotDiskRepository) {
+    return new InMemoryAndDiskSnapshotCache(snapshotDiskRepository);
   }
 
   @Bean
   @ConditionalOnMissingBean
-  public SnapshotDiskRepository snapshotCache(InMemoryAndDiskSnapshotProperties props) {
+  public SnapshotDiskRepository snapshotDiskRepository(InMemoryAndDiskSnapshotProperties props) {
     return new SnapshotDiskRepositoryImpl(props);
   }
 }

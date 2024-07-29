@@ -35,8 +35,7 @@ class InMemoryAndDiskSnapshotCacheTest {
 
   @BeforeEach
   void setUp() {
-    InMemoryAndDiskSnapshotProperties props = new InMemoryAndDiskSnapshotProperties();
-    underTest = new InMemoryAndDiskSnapshotCache(props, diskRepository);
+    underTest = new InMemoryAndDiskSnapshotCache(diskRepository);
   }
 
   @Nested
