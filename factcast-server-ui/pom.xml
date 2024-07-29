@@ -141,7 +141,7 @@
     <dependency>
       <groupId>com.microsoft.playwright</groupId>
       <artifactId>playwright</artifactId>
-      <version>1.45.0</version>
+      <version>1.45.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -162,7 +162,6 @@
       <artifactId>spring-boot-starter-aop</artifactId>
     </dependency>
   </dependencies>
-
   <build>
     <plugins>
       <plugin>
