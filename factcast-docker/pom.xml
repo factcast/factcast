@@ -91,16 +91,7 @@
       <plugin>
         <groupId>io.fabric8</groupId>
         <artifactId>docker-maven-plugin</artifactId>
-        <version>0.44.0</version>
-        <executions>
-          <execution>
-            <id>default</id>
-            <goals>
-              <goal>build</goal>
-            </goals>
-            <phase>pre-integration-test</phase>
-          </execution>
-        </executions>
+        <version>0.45.0</version>
         <configuration>
           <images>
             <image>
@@ -121,6 +112,15 @@
             </image>
           </images>
         </configuration>
+        <executions>
+          <execution>
+            <id>default</id>
+            <goals>
+              <goal>build</goal>
+            </goals>
+            <phase>pre-integration-test</phase>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
@@ -137,16 +137,7 @@
           <plugin>
             <groupId>io.fabric8</groupId>
             <artifactId>docker-maven-plugin</artifactId>
-            <version>0.44.0</version>
-            <executions>
-              <execution>
-                <id>default</id>
-                <goals>
-                  <goal>build</goal>
-                  <goal>push</goal>
-                </goals>
-              </execution>
-            </executions>
+            <version>0.45.0</version>
             <configuration>
               <images>
                 <image>
@@ -168,6 +159,15 @@
                 </image>
               </images>
             </configuration>
+            <executions>
+              <execution>
+                <id>default</id>
+                <goals>
+                  <goal>build</goal>
+                  <goal>push</goal>
+                </goals>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>

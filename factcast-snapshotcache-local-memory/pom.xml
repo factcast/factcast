@@ -20,8 +20,8 @@
         <groupId>org.factcast</groupId>
         <artifactId>factcast-internal-dep</artifactId>
         <version>${project.version}</version>
-        <scope>import</scope>
         <type>pom</type>
+        <scope>import</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
