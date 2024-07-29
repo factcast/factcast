@@ -67,50 +67,7 @@ Note that those implementations need to have a default constructor and are expec
 
 ### Snapshot caching
 
-The Key/Value store that keeps and maintains the snapshots is called a `SnapshotCache`.
-
-Factus does not come with a default SnapshotCache in order to force the user to make a conscious decision.
-If you do not configure a SnapshotCache, any attempt to work with Snapshots will result in an UnsupportedOperationException.
-
-There are some choices of predefined snapshotCache implementations.
-If you happen to use redis in your application for instance, you could use
-
-```xml
-<dependency>
-    <groupId>org.factcast</groupId>
-    <artifactId>factcast-snapshotcache-redisson</artifactId>
-</dependency>
-```
-
-in order to override this default.
-This has the advantage of the same snapshotCache being ready to use in multiple instances of the same application.
-
-If you do not want to share, nor even persist snapshots and have enough RAM to spare on your clients, you could use
-
-```xml
-<dependency>
-    <groupId>org.factcast</groupId>
-    <artifactId>factcast-snapshotcache-local-memory</artifactId>
-</dependency>
-```
-
-If you want to persist snapshots on disk, you could use
-
-```xml
-<dependency>
-    <groupId>org.factcast</groupId>
-    <artifactId>factcast-snapshotcache-local-disk</artifactId>
-</dependency>
-```
-
-Bear in mind that this projection assumes that only one instance of your application is running, and synchronizes
-access to the disk files in the instance that is currently running.
-This is not a good choice for distributed applications.
-
-We plan to add other options soon.
-
-The SnapshotCache by default only keeps the last version of a particular snapshot, and deletes it after 90 days of being unused.
-See [Properties](/setup/properties)
+The Key/Value store that keeps and maintains the snapshots is called a [SnapshotCache]({{< ref "/usage/factus/projections/snapshots/snapshot-caching">}}).
 
 ### Serials
 
