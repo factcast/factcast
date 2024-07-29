@@ -1,2 +1,2 @@
 #!/bin/bash
-./mvnw spotless:apply --non-recursive
+./.githooks/pre-commit.d/spotless

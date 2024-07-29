@@ -15,12 +15,12 @@
  */
 package org.factcast.store.internal.query;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.sql.PreparedStatement;
-import java.util.*;
-import java.util.concurrent.atomic.*;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.assertj.core.util.Lists;
@@ -49,7 +49,8 @@ class PgQueryBuilderTest {
     void happyPath() {
       Mockito.when(serial.get()).thenReturn(120L);
       var spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
-      var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
+      var spec2 =
+          FactSpec.ns("ns2").type("t2").meta("foo", "bar").metaExists("e").metaDoesNotExist("!e");
       var spec3 = FactSpec.ns("ns3");
       var specs = Lists.newArrayList(spec1, spec2, spec3);
       var underTest = new PgQueryBuilder(specs);
@@ -69,6 +70,12 @@ class PgQueryBuilderTest {
       verify(ps).setString(++index, "{\"ns\": \"ns2\"}");
       verify(ps).setString(++index, "{\"type\": \"t2\"}");
       verify(ps).setString(++index, "{\"meta\":{\"foo\":\"bar\"}}");
+      verify(ps).setString(++index, "strict $.** ? (exists (@.\"meta\".\"e\"))");
+      verify(ps)
+          .setString(
+              ++index,
+              "strict $.** ? (exists (@.\"meta\".\"!e\"))"); // NOT is added in WHERE clause
+      // before
       // 3rd spec
       verify(ps).setString(++index, "{\"ns\": \"ns3\"}");
 
@@ -104,21 +111,28 @@ class PgQueryBuilderTest {
       var underTest = new PgQueryBuilder(specs);
       var sql = underTest.createSQL();
 
-      // projection
       assertThat(sql)
-          .startsWith(
-              "SELECT ser, header, payload, header->>'id' AS id, header->>'aggIds' AS aggIds,"
-                  + " header->>'ns' AS ns, header->>'type' AS type, header->>'version' AS version"
-                  + " FROM fact");
+          .isEqualTo(
+              "SELECT ser, header, payload, header->>'id' AS id, header->>'aggIds' AS aggIds, header->>'ns' AS ns, header->>'type' AS type, header->>'version' AS version FROM fact WHERE ( (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb) OR (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb) ) AND ser>? ORDER BY ser ASC");
+    }
 
-      // where clause for two specs
-      var expectedSpec1 =
-          "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND header @>"
-              + " ?::jsonb)";
-      var expectedSpec2 =
-          "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb)"; // no aggid
-      assertThat(sql).contains("( " + expectedSpec1 + " OR " + expectedSpec2 + " )");
-      assertThat(sql).endsWith("AND ser>? ORDER BY ser ASC");
+    @Test
+    void happyPathWithMetaExists() {
+      var spec1 =
+          FactSpec.ns("ns1")
+              .type("t1")
+              .meta("foo", "bar")
+              .aggId(new UUID(0, 1))
+              .metaExists("mustExist")
+              .metaDoesNotExist("mustNotExist");
+      var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
+      var specs = Lists.newArrayList(spec1, spec2);
+      var underTest = new PgQueryBuilder(specs);
+      var sql = underTest.createSQL();
+
+      assertThat(sql)
+          .isEqualTo(
+              "SELECT ser, header, payload, header->>'id' AS id, header->>'aggIds' AS aggIds, header->>'ns' AS ns, header->>'type' AS type, header->>'version' AS version FROM fact WHERE ( (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND header @?? ?::jsonpath AND NOT header @?? ?::jsonpath) OR (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb) ) AND ser>? ORDER BY ser ASC");
     }
   }
 

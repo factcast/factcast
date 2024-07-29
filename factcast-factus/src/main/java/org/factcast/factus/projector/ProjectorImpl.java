@@ -469,11 +469,11 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
     private static FactSpec addFilterByMetaDoesNotExist(
         FactSpec spec, FilterByMetaDoesNotExist notExists) {
-      return spec.metaDoesNotExist(notExists.key());
+      return spec.metaDoesNotExist(notExists.value());
     }
 
     private static FactSpec addFilterByMetaExists(FactSpec spec, FilterByMetaExists attribute) {
-      return spec.metaExists(attribute.key());
+      return spec.metaExists(attribute.value());
     }
 
     private static FactSpec addFilterByMeta(FactSpec spec, FilterByMeta attribute) {
