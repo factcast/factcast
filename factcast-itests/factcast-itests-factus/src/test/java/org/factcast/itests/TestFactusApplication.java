@@ -24,6 +24,9 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.serializer.JacksonSnapshotSerializer;
 import org.factcast.factus.serializer.SnapshotSerializer;
+import org.factcast.spring.boot.autoconfigure.snap.InMemoryAndDiskSnapshotCacheAutoConfiguration;
+import org.factcast.spring.boot.autoconfigure.snap.InMemorySnapshotCacheAutoConfiguration;
+import org.factcast.spring.boot.autoconfigure.snap.RedissonSnapshotCacheAutoConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.actuate.autoconfigure.metrics.CompositeMeterRegistryAutoConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -34,7 +37,13 @@ import org.springframework.context.annotation.Primary;
 @SuppressWarnings("ALL")
 @SpringBootApplication
 @Slf4j
-@EnableAutoConfiguration(exclude = CompositeMeterRegistryAutoConfiguration.class)
+@EnableAutoConfiguration(
+    exclude = {
+      CompositeMeterRegistryAutoConfiguration.class,
+      RedissonSnapshotCacheAutoConfiguration.class,
+      InMemorySnapshotCacheAutoConfiguration.class,
+      InMemoryAndDiskSnapshotCacheAutoConfiguration.class,
+    })
 public class TestFactusApplication {
 
   public static void main(String[] args) {
