@@ -28,14 +28,17 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.Factus;
 import org.factcast.factus.HandlerFor;
+import org.factcast.factus.Meta;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.lock.LockedOperationAbortedException;
 import org.factcast.factus.projection.Aggregate;
@@ -49,6 +52,7 @@ import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.*;
 import org.factcast.test.AbstractFactCastIntegrationTest;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
@@ -724,5 +728,30 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       assertThatThrownBy(() -> factus.waitFor(subscribedUserNames, factId1, timeout))
           .isInstanceOf(TimeoutException.class);
     }
+  }
+
+  @Test
+  void injectsMeta() throws Exception {
+    AtomicReference<String> signee = new AtomicReference<>();
+    SubscribedUserNames subscribedUserNames =
+        new SubscribedUserNames() {
+          @Override
+          public void apply(UserDeleted deleted, @Meta("signee") @Nullable String metaSignee) {
+            super.apply(deleted, metaSignee);
+            signee.set(metaSignee);
+          }
+        };
+    UserCreated kenny = new UserCreated("Kenny");
+    factus.publish(kenny);
+
+    UserDeleted deleted = new UserDeleted(kenny.aggregateId());
+    // the boss signed off kyles deletion, bastard!
+    Fact f = Fact.buildFrom(deleted).meta("signee", "theBoss").build();
+    factus.publish(f);
+    try (Subscription subscriptionWaiting = factus.subscribeAndBlock(subscribedUserNames)) {
+      subscriptionWaiting.awaitCatchup();
+    }
+
+    Assertions.assertThat(signee.get()).isEqualTo("theBoss");
   }
 }
