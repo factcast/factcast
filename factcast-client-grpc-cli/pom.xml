@@ -90,6 +90,9 @@
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <finalName>fc-cli</finalName>
+        </configuration>
         <executions>
           <execution>
             <goals>
@@ -100,9 +103,6 @@
             </configuration>
           </execution>
         </executions>
-        <configuration>
-          <finalName>fc-cli</finalName>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

@@ -19,3 +19,5 @@ release.properties
 **/output/**/*
 **/*.plantuml
 **/pom.xml.versionsBackup
+**/*.bak
+
