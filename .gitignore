@@ -19,3 +19,4 @@ release.properties
 .attach_pid*
 **/output/**/*
 **/*.plantuml
+**/*.bak
