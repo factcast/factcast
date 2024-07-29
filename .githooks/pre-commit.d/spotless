@@ -4,6 +4,11 @@ set -e
 
 PREFIX="> pre-commit [$(basename $0)]\t\t"
 MAVEN_OPTS="-XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Xms768M"
+
+echo -e  "$PREFIX sorting poms"
+./mvnw sortpom:sort
+
 echo -e  "$PREFIX auto-applying spotless changes"
-./mvnw  -T 1.5C --non-recursive -q spotless:apply 
+./mvnw  -T 1.5C --non-recursive -q spotless:apply
+
 git update-index --again
