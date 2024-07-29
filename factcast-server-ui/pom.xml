@@ -10,6 +10,10 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-server-ui</artifactId>
+  <properties>
+    <java.version>17</java.version>
+    <vaadin.version>24.4.6</vaadin.version>
+  </properties>
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -28,19 +32,6 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-  <repositories>
-    <repository>
-      <id>Vaadin Directory</id>
-      <url>https://maven.vaadin.com/vaadin-addons</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-  </repositories>
-  <properties>
-    <java.version>17</java.version>
-    <vaadin.version>24.4.6</vaadin.version>
-  </properties>
   <dependencies>
     <dependency>
       <groupId>org.projectlombok</groupId>
@@ -162,6 +153,15 @@
       <artifactId>spring-boot-starter-aop</artifactId>
     </dependency>
   </dependencies>
+  <repositories>
+    <repository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>Vaadin Directory</id>
+      <url>https://maven.vaadin.com/vaadin-addons</url>
+    </repository>
+  </repositories>
   <build>
     <plugins>
       <plugin>
