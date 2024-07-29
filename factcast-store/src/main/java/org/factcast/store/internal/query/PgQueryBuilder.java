@@ -17,9 +17,12 @@ package org.factcast.store.internal.query;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.*;
-import java.util.Map.*;
-import java.util.concurrent.atomic.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.FactSpec;
@@ -58,6 +61,7 @@ public class PgQueryBuilder {
         // version is intentionally not used here
         count = setAggId(p, count, spec);
         count = setMeta(p, count, spec);
+        count = setMetaKeyExists(p, count, spec);
       }
       p.setLong(++count, serial.get());
 
@@ -69,6 +73,15 @@ public class PgQueryBuilder {
     Map<String, String> meta = spec.meta();
     for (Entry<String, String> e : meta.entrySet()) {
       p.setString(++count, "{\"meta\":{\"" + e.getKey() + "\":\"" + e.getValue() + "\"}}");
+    }
+    return count;
+  }
+
+  private int setMetaKeyExists(PreparedStatement p, int count, FactSpec spec) throws SQLException {
+    Map<String, Boolean> meta = spec.metaKeyExists();
+    for (Entry<String, Boolean> e : meta.entrySet()) {
+      String s = "strict $.** ? (exists (@.\"meta\".\"" + e.getKey() + "\"))";
+      p.setString(++count, s);
     }
     return count;
   }
@@ -123,6 +136,12 @@ public class PgQueryBuilder {
               (key, value) ->
                   sb.append(" AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb"));
 
+          Map<String, Boolean> metaKeyExists = spec.metaKeyExists();
+          metaKeyExists.forEach(
+              (key, value) ->
+                  sb.append(" AND ")
+                      .append(Boolean.TRUE.equals(value) ? "" : "NOT ")
+                      .append("header @?? ?::jsonpath"));
           sb.append(")");
           predicates.add(sb.toString());
         });

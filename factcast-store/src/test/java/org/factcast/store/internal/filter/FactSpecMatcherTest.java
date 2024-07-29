@@ -74,6 +74,22 @@ class FactSpecMatcherTest {
   }
 
   @Test
+  void testMetaExistsMatch() {
+    assertFalse(metaKeyExistsMatch(FactSpec.ns("default").metaExists("foo"), new TestFact()));
+
+    assertTrue(metaMatch(FactSpec.ns("default"), new TestFact().meta("x", "y").meta("foo", "bar")));
+    assertTrue(
+        metaKeyExistsMatch(
+            FactSpec.ns("default").metaDoesNotExist("narf"),
+            new TestFact().meta("x", "y").meta("foo", "bar")));
+
+    assertTrue(
+        metaKeyExistsMatch(
+            FactSpec.ns("default").metaExists("narf"),
+            new TestFact().meta("x", "y").meta("narf", "bar")));
+  }
+
+  @Test
   void testNsMatch() {
     assertTrue(nsMatch(FactSpec.ns("default"), new TestFact().ns("default")));
     assertFalse(nsMatch(FactSpec.ns("default"), new TestFact().ns("xxx")));
@@ -123,6 +139,10 @@ class FactSpecMatcherTest {
 
   private boolean metaMatch(FactSpec s, TestFact f) {
     return new FactSpecMatcher(s, ef).metaMatch(f);
+  }
+
+  private boolean metaKeyExistsMatch(FactSpec s, TestFact f) {
+    return new FactSpecMatcher(s, ef).metaKeyExistsMatch(f);
   }
 
   @Test
