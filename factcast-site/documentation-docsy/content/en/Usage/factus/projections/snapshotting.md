@@ -94,6 +94,19 @@ If you do not want to share, nor even persist snapshots and have enough RAM to s
 </dependency>
 ```
 
+If you want to persist snapshots on disk, you could use
+
+```xml
+<dependency>
+    <groupId>org.factcast</groupId>
+    <artifactId>factcast-snapshotcache-local-disk</artifactId>
+</dependency>
+```
+
+Bear in mind that this projection assumes that only one instance of your application is running, and synchronizes
+access to the disk files in the instance that is currently running.
+This is not a good choice for distributed applications.
+
 We plan to add other options soon.
 
 The SnapshotCache by default only keeps the last version of a particular snapshot, and deletes it after 90 days of being unused.

@@ -68,6 +68,13 @@ description: Properties you can use to configure FactCast
 | --------------------------------------------- | :--------------------------------------------------------------------------------------------------- | :------ |
 | factcast.local.mem.deleteSnapshotStaleForDays | min number of days a snapshot is kept even though it is not read anymore. Must be a positive number. | 90      |
 
+##### InMemAndDisk-Snapshots
+
+| Property                            | Description                                                                                                                                                                                           | Default        |
+| ----------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------- |
+| factcast.local.disk.pathToSnapshots | path to store the snapshots in the file system.                                                                                                                                                       | java.io.tmpdir |
+| factcast.local.disk.maxDiskSpace    | max disk space to be used by the SnapshotDiskRepository. The oldest Snapshots will start to be removed after reaching 90% of the allocated space, never reaching 100%. Use 0 for unlimited disk space | 0              |
+
 ---
 
 ### gRPC
