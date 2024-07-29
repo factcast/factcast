@@ -520,7 +520,7 @@ class ProjectorImplTest {
     void applyFactWithoutSpecificVersion(Fact f) {}
   }
 
-  public static class HandlerMethdsWithAdditionalFilters {
+  public static class HandlerMethodsWithAdditionalFilters {
     @HandlerFor(ns = "ns", type = "type")
     @FilterByMeta(key = "foo", value = "bar")
     public void applyWithOneMeta(Fact f) {}
@@ -529,6 +529,24 @@ class ProjectorImplTest {
     @FilterByMeta(key = "foo", value = "bar")
     @FilterByMeta(key = "bar", value = "baz")
     public void applyWithMultiMeta(Fact f) {}
+
+    @HandlerFor(ns = "ns", type = "type")
+    @FilterByMetaExists("foo")
+    public void applyWithOneMetaExists(Fact f) {}
+
+    @HandlerFor(ns = "ns", type = "type")
+    @FilterByMetaExists("foo")
+    @FilterByMetaExists("bar")
+    public void applyWithMultiMetaExists(Fact f) {}
+
+    @HandlerFor(ns = "ns", type = "type")
+    @FilterByMetaDoesNotExist("foo")
+    public void applyWithOneMetaDoesNotExist(Fact f) {}
+
+    @HandlerFor(ns = "ns", type = "type")
+    @FilterByMetaDoesNotExist("foo")
+    @FilterByMetaDoesNotExist("bar")
+    public void applyWithMultiMetaDoesNotExist(Fact f) {}
 
     @HandlerFor(ns = "ns", type = "type")
     @FilterByAggId("1010a955-04a2-417b-9904-f92f88fdb67d")
@@ -543,7 +561,7 @@ class ProjectorImplTest {
   @Test
   public void detectsSingleMeta() {
     FactSpec spec = FactSpec.ns("ns");
-    Method m = HandlerMethdsWithAdditionalFilters.class.getMethod("applyWithOneMeta", Fact.class);
+    Method m = HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithOneMeta", Fact.class);
     ReflectionTools.addOptionalFilterInfo(m, spec);
 
     assertThat(spec.meta()).containsEntry("foo", "bar").hasSize(1);
@@ -553,7 +571,8 @@ class ProjectorImplTest {
   @Test
   void detectsMultiMeta() {
     FactSpec spec = FactSpec.ns("ns");
-    Method m = HandlerMethdsWithAdditionalFilters.class.getMethod("applyWithMultiMeta", Fact.class);
+    Method m =
+        HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithMultiMeta", Fact.class);
     ReflectionTools.addOptionalFilterInfo(m, spec);
 
     assertThat(spec.meta()).containsEntry("foo", "bar").containsEntry("bar", "baz").hasSize(2);
@@ -563,7 +582,7 @@ class ProjectorImplTest {
   @Test
   void detectsAggId() {
     FactSpec spec = FactSpec.ns("ns");
-    Method m = HandlerMethdsWithAdditionalFilters.class.getMethod("applyWithAggId", Fact.class);
+    Method m = HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithAggId", Fact.class);
     ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
 
     assertThat(spec.aggId()).isEqualTo(UUID.fromString("1010a955-04a2-417b-9904-f92f88fdb67d"));
@@ -574,7 +593,7 @@ class ProjectorImplTest {
   void detectsFilterScript() {
     FactSpec spec = FactSpec.ns("ns");
     Method m =
-        HandlerMethdsWithAdditionalFilters.class.getMethod("applyWithFilterScript", Fact.class);
+        HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithFilterScript", Fact.class);
     ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
 
     assertThat(spec.filterScript())

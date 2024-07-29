@@ -15,11 +15,11 @@
  */
 package org.factcast.store.internal.filter;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.*;
-import java.util.function.*;
+import java.util.Arrays;
+import java.util.UUID;
+import java.util.function.Predicate;
 import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.factcast.core.TestHelper;
@@ -61,88 +61,65 @@ class FactSpecMatcherTest {
 
   @Test
   void testMetaMatch() {
+    assertTrue(test(FactSpec.ns("default").meta("foo", "bar"), new TestFact().meta("foo", "bar")));
     assertTrue(
-        metaMatch(FactSpec.ns("default").meta("foo", "bar"), new TestFact().meta("foo", "bar")));
-    assertTrue(
-        metaMatch(
+        test(
             FactSpec.ns("default").meta("foo", "bar"),
             new TestFact().meta("x", "y").meta("foo", "bar")));
-    assertTrue(metaMatch(FactSpec.ns("default"), new TestFact().meta("x", "y").meta("foo", "bar")));
-    assertFalse(
-        metaMatch(FactSpec.ns("default").meta("foo", "bar"), new TestFact().meta("foo", "baz")));
-    assertFalse(metaMatch(FactSpec.ns("default").meta("foo", "bar"), new TestFact()));
+    assertTrue(test(FactSpec.ns("default"), new TestFact().meta("x", "y").meta("foo", "bar")));
+    assertFalse(test(FactSpec.ns("default").meta("foo", "bar"), new TestFact().meta("foo", "baz")));
+    assertFalse(test(FactSpec.ns("default").meta("foo", "bar"), new TestFact()));
   }
 
   @Test
   void testMetaExistsMatch() {
-    assertFalse(metaKeyExistsMatch(FactSpec.ns("default").metaExists("foo"), new TestFact()));
+    assertFalse(test(FactSpec.ns("default").metaExists("foo"), new TestFact()));
 
-    assertTrue(metaMatch(FactSpec.ns("default"), new TestFact().meta("x", "y").meta("foo", "bar")));
     assertTrue(
-        metaKeyExistsMatch(
+        test(
             FactSpec.ns("default").metaDoesNotExist("narf"),
             new TestFact().meta("x", "y").meta("foo", "bar")));
 
     assertTrue(
-        metaKeyExistsMatch(
+        test(
             FactSpec.ns("default").metaExists("narf"),
             new TestFact().meta("x", "y").meta("narf", "bar")));
   }
 
   @Test
   void testNsMatch() {
-    assertTrue(nsMatch(FactSpec.ns("default"), new TestFact().ns("default")));
-    assertFalse(nsMatch(FactSpec.ns("default"), new TestFact().ns("xxx")));
+    assertTrue(test(FactSpec.ns("default"), new TestFact().ns("default")));
+    assertFalse(test(FactSpec.ns("default"), new TestFact().ns("xxx")));
   }
 
   @Test
   void testTypeMatch() {
-    assertTrue(typeMatch(FactSpec.ns("default").type("a"), new TestFact().type("a")));
-    assertTrue(typeMatch(FactSpec.ns("default"), new TestFact().type("a")));
-    assertFalse(typeMatch(FactSpec.ns("default").type("a"), new TestFact().type("x")));
-    assertFalse(typeMatch(FactSpec.ns("default").type("a"), new TestFact()));
+    assertTrue(test(FactSpec.ns("default").type("a"), new TestFact().type("a")));
+    assertTrue(test(FactSpec.ns("default"), new TestFact().type("a")));
+    assertFalse(test(FactSpec.ns("default").type("a"), new TestFact().type("x")));
+    assertFalse(test(FactSpec.ns("default").type("a"), new TestFact()));
   }
 
   @Test
   void testVersionMatch() {
-    assertTrue(versionMatch(FactSpec.ns("default").version(1), new TestFact().version(1)));
-    assertTrue(versionMatch(FactSpec.ns("default"), new TestFact().version(3)));
-    assertFalse(versionMatch(FactSpec.ns("default").version(2), new TestFact()));
+    assertTrue(test(FactSpec.ns("default").version(1), new TestFact().version(1)));
+    assertTrue(test(FactSpec.ns("default"), new TestFact().version(3)));
+    assertFalse(test(FactSpec.ns("default").version(2), new TestFact()));
   }
 
   @Test
   void testAggIdMatch() {
     UUID u1 = UUID.randomUUID();
     UUID u2 = UUID.randomUUID();
-    assertTrue(aggIdMatch(FactSpec.ns("default").aggId(u1), new TestFact().aggId(u1)));
-    assertTrue(aggIdMatch(FactSpec.ns("default"), new TestFact().aggId(u1)));
-    assertFalse(aggIdMatch(FactSpec.ns("default").aggId(u1), new TestFact().aggId(u2)));
-    assertFalse(aggIdMatch(FactSpec.ns("default").aggId(u1), new TestFact()));
+    assertTrue(test(FactSpec.ns("default").aggId(u1), new TestFact().aggId(u1)));
+    assertTrue(test(FactSpec.ns("default"), new TestFact().aggId(u1)));
+    assertFalse(test(FactSpec.ns("default").aggId(u1), new TestFact().aggId(u2)));
+    assertFalse(test(FactSpec.ns("default").aggId(u1), new TestFact()));
   }
 
   // ---------------------------
-  private boolean nsMatch(FactSpec s, TestFact f) {
-    return new FactSpecMatcher(s, ef).nsMatch(f);
-  }
-
-  private boolean typeMatch(FactSpec s, TestFact f) {
-    return new FactSpecMatcher(s, ef).typeMatch(f);
-  }
-
-  private boolean versionMatch(FactSpec s, TestFact f) {
-    return new FactSpecMatcher(s, ef).versionMatch(f);
-  }
-
-  private boolean aggIdMatch(FactSpec s, TestFact f) {
-    return new FactSpecMatcher(s, ef).aggIdMatch(f);
-  }
-
-  private boolean metaMatch(FactSpec s, TestFact f) {
-    return new FactSpecMatcher(s, ef).metaMatch(f);
-  }
-
-  private boolean metaKeyExistsMatch(FactSpec s, TestFact f) {
-    return new FactSpecMatcher(s, ef).metaKeyExistsMatch(f);
+  private boolean test(FactSpec s, TestFact f) {
+    return new FactSpecMatcher(s, ef).test(f);
   }
 
   @Test

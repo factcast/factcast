@@ -21,5 +21,5 @@ import java.lang.annotation.*;
 @Target(value = ElementType.METHOD)
 @Repeatable(FilterByMetaDoesNotExistContainer.class)
 public @interface FilterByMetaDoesNotExist {
-  String key();
+  String value();
 }
