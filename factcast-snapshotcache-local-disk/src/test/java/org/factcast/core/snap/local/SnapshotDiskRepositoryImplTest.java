@@ -69,7 +69,7 @@ class SnapshotDiskRepositoryImplTest {
       // Get by the ID
       Optional<Snapshot> response = uut.findById(snap.id());
       assertThat(response).isPresent();
-      assertThat(response.get()).isEqualTo(snap);
+      assertThat(snap).isEqualTo(response.get());
 
       // Delete
       uut.delete(snap.id()).get();

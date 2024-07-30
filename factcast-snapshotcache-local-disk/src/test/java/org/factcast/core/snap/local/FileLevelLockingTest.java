@@ -180,7 +180,6 @@ class FileLevelLockingTest {
 
     @Test
     void exceptionalStillUnlocks() {
-      String narf = "narf";
       Mockito.when(s.get()).thenThrow(IllegalStateException.class);
       assertThatThrownBy(() -> FileLevelLocking.supplyAndUnlock(s, l))
           .isInstanceOf(IllegalStateException.class);
