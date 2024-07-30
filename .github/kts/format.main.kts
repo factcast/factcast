@@ -1,6 +1,6 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("io.github.typesafegithub:github-workflows-kt:2.2.0")
+@file:DependsOn("io.github.typesafegithub:github-workflows-kt:2.3.0")
 
 
 import io.github.typesafegithub.workflows.actions.actions.CheckoutV4
@@ -33,6 +33,10 @@ workflow(
                 distribution = SetupJavaV4.Distribution.Corretto,
                 javaVersion = "17",
             ),
+        )
+        run(
+            name = "Spotless",
+            command = "./mvnw -B sortpom:sort --file pom.xml",
         )
         run(
             name = "Spotless",

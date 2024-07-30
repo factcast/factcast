@@ -42,7 +42,6 @@ Factus currently supports atomicity for the following external data stores:
 - [data stores supported by Spring Transaction Management]({{< ref "spring-transactional-projections.md" >}}) (e.g. JDBC / MongoDB / Cassandra)
 - Redis
   - via [transactions]({{< ref "redis-transactional-projections.md" >}})
-  - via [batching]({{< ref "redis-batch-projection.md" >}})
 
 {{% alert title="Note" %}} There is an internal API available you can use to support your favorite data store. {{% / alert %}}
 
@@ -52,7 +51,6 @@ Atomic projections are declared via specific annotations. Currently, supported a
 
 - [`@SpringTransactional`]({{< ref "spring-transactional-projections.md" >}}),
 - [`@RedisTransactional`]({{< ref "redis-transactional-projections.md" >}}) and
-- [`@RedisBatched`]({{< ref "redis-batch-projection.md" >}})
 
 These annotations share a common configuration attribute:
 
@@ -73,7 +71,7 @@ With _bulk processing_
 - skipping unnecessary fact-stream-position updates is possible (see next section).
 
 The size of the bulk can be configured via a common `bulkSize` attribute of
-the `@SpringTransactional`, `@RedisTransactional` or `@RedisBatched` annotation.
+the `@SpringTransactional` or `@RedisTransactional` annotation.
 
 Once the bulkSize is reached, or a configured timeout is triggered, the recorded operations of this bulk will be flushed to the datastore.
 
