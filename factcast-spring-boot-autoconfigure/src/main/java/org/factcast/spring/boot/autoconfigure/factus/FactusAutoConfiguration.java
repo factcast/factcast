@@ -36,7 +36,6 @@ import org.factcast.factus.snapshot.ProjectionSnapshotRepositoryImpl;
 import org.factcast.factus.snapshot.SnapshotSerializerSelector;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
 import org.factcast.factus.utils.FactusDependency;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -85,15 +84,14 @@ public class FactusAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean
   public SnapshotSerializerSelector snapshotSerializerSelector(
-      ApplicationContext ctx,
-      @Qualifier("defaultSnapshotSerializer") SnapshotSerializer defaultSnapshotSerializer) {
+      ApplicationContext ctx, SnapshotSerializer defaultSnapshotSerializer) {
     return new SnapshotSerializerSelector(
         defaultSnapshotSerializer,
         new SpringSnapshotSerializerSupplier(ctx, new SnapshotSerializerSupplier.Default()));
   }
 
-  @Bean(name = "defaultSnapshotSerializer")
-  @ConditionalOnMissingBean(name = "defaultSnapshotSerializer")
+  @Bean
+  @ConditionalOnMissingBean
   public SnapshotSerializer defaultSnapshotSerializer() {
     return new DefaultSnapshotSerializer();
   }
