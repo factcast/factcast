@@ -27,7 +27,7 @@ import org.springframework.context.annotation.Configuration;
 @Accessors(fluent = false)
 @ConfigurationProperties(prefix = InMemorySnapshotProperties.PROPERTIES_PREFIX)
 public class InMemorySnapshotProperties {
-  public static final String PROPERTIES_PREFIX = "factcast.local.mem";
+  public static final String PROPERTIES_PREFIX = "factcast.snapshot.local.mem";
 
   int deleteSnapshotStaleForDays = 10;
 }

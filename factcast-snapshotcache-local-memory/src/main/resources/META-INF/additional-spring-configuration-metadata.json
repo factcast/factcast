@@ -1,0 +1,12 @@
+{
+  "groups": [],
+  "properties": [
+    {
+      "name": "factcast.local.mem.deleteSnapshotStaleForDays",
+      "deprecation": {
+        "replacement": "factcast.snapshot.local.mem.deleteSnapshotStaleForDays",
+        "level": "error"
+      }
+    }
+  ]
+}
