@@ -13,20 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.projection.parameter;
+package org.factcast.factus;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
-import java.util.Set;
-import javax.annotation.Nullable;
-import lombok.NonNull;
+import java.lang.annotation.*;
 
-public interface HandlerParameterContributor {
-  /**
-   * @return null if provider cannot be created
-   */
-  @Nullable
-  // ENHANCEMENT add parameterName?
-  HandlerParameterProvider providerFor(
-      @NonNull Class<?> type, @Nullable Type genericType, @NonNull Set<Annotation> annotations);
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.PARAMETER)
+@Inherited
+@Documented
+public @interface Meta {
+  String value();
 }
