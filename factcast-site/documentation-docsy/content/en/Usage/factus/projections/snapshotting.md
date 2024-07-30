@@ -69,9 +69,10 @@ Note that those implementations need to have a default constructor and are expec
 
 The Key/Value store that keeps and maintains the snapshots is called a `SnapshotCache`.
 
-Factus comes with a default SnapshotCache that uses FactCast to store/retrieve and maintain those cached snapshots. While this works reasonably well and is easy to use, as it does not involve any other piece of infrastructure, you _might want to keep an eye on the load- and storage-requirements imposed by this_.
-It is very easy to provide an implementation of SnapshotCache that uses for instance Redis or memcached instead, so that you keep this load away from FactCast for performance, scalability and in the end also cost efficiency reasons. Also, it has an effect on the availability and maybe responsiveness of your application, but this is obviously outside of the scope of this document.
+Factus does not come with a default SnapshotCache in order to force the user to make a conscious decision.
+If you do not configure a SnapshotCache, any attempt to work with Snapshots will result in an UnsupportedOperationException.
 
+There are some choices of predefined snapshotCache implementations.
 If you happen to use redis in your application for instance, you could use
 
 ```xml
@@ -82,6 +83,18 @@ If you happen to use redis in your application for instance, you could use
 ```
 
 in order to override this default.
+This has the advantage of the same snapshotCache being ready to use in multiple instances of the same application.
+
+If you do not want to share, nor even persist snapshots and have enough RAM to spare on your clients, you could use
+
+```xml
+<dependency>
+    <groupId>org.factcast</groupId>
+    <artifactId>factcast-snapshotcache-local-memory</artifactId>
+</dependency>
+```
+
+We plan to add other options soon.
 
 The SnapshotCache by default only keeps the last version of a particular snapshot, and deletes it after 90 days of being unused.
 See [Properties](/setup/properties)

@@ -23,8 +23,8 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.SubscriptionImpl;
-import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.store.internal.pipeline.ServerPipeline;
+import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.postgresql.util.PSQLException;
@@ -49,7 +49,6 @@ import org.springframework.transaction.support.TransactionTemplate;
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
-@RequiredArgsConstructor
 @Slf4j
 class PgSynchronizedQuery {
 
@@ -63,6 +62,7 @@ class PgSynchronizedQuery {
 
   @NonNull final TransactionTemplate transactionTemplate;
 
+  @NonNull final ServerPipeline pipe;
   @NonNull final AtomicLong serialToContinueFrom;
 
   @NonNull final PgLatestSerialFetcher latestFetcher;
@@ -70,20 +70,25 @@ class PgSynchronizedQuery {
   @NonNull final CurrentStatementHolder statementHolder;
 
   PgSynchronizedQuery(
+      @NonNull ServerPipeline pipe,
       @NonNull JdbcTemplate jdbcTemplate,
       @NonNull String sql,
       @NonNull PreparedStatementSetter setter,
-      @NonNull RowCallbackHandler rowHandler,
+      @NonNull Supplier<Boolean> isConnected,
       @NonNull AtomicLong serialToContinueFrom,
       @NonNull PgLatestSerialFetcher fetcher,
       @NonNull CurrentStatementHolder statementHolder) {
+    this.pipe = pipe;
     this.serialToContinueFrom = serialToContinueFrom;
     latestFetcher = fetcher;
     this.jdbcTemplate = jdbcTemplate;
     this.sql = sql;
     this.setter = setter;
-    this.rowHandler = rowHandler;
     this.statementHolder = statementHolder;
+
+    rowHandler =
+        new PgSynchronizedQuery.FactRowCallbackHandler(
+            pipe, isConnected, serialToContinueFrom, statementHolder);
 
     // noinspection ConstantConditions
     DataSourceTransactionManager transactionManager =
@@ -110,6 +115,9 @@ class PgSynchronizedQuery {
                   setter.setValues(ps);
                 },
                 rowHandler);
+
+            pipe.process(Signal.flush());
+
             return null;
           });
 
@@ -125,17 +133,12 @@ class PgSynchronizedQuery {
   }
 
   @RequiredArgsConstructor
-  public static class FactRowCallbackHandler implements RowCallbackHandler {
-
-    final SubscriptionImpl subscription;
-
-    final FactInterceptor interceptor;
+  static class FactRowCallbackHandler implements RowCallbackHandler {
+    final ServerPipeline pipe;
 
     final Supplier<Boolean> isConnectedSupplier;
 
     final AtomicLong serial;
-
-    final SubscriptionRequestTO request;
 
     final CurrentStatementHolder statementHolder;
 
@@ -152,28 +155,27 @@ class PgSynchronizedQuery {
         Fact f = null;
         try {
           f = PgFact.from(rs);
-          interceptor.accept(f);
-          log.trace("{} notifyElement called with id={}", request, f.id());
+          pipe.process(Signal.of(f));
           serial.set(rs.getLong(PgConstants.COLUMN_SER));
         } catch (PSQLException psql) {
           // see #2088
           if (statementHolder.wasCanceled()) {
             // then we just swallow the exception
             log.trace("Swallowing because statement was cancelled", psql);
-          } else escalateError(rs, f, psql);
-        } catch (Throwable e) {
-          escalateError(rs, f, e);
+          } else escalateError(rs, psql);
+        } catch (Exception e) {
+          escalateError(rs, e);
         }
       }
     }
 
-    private void escalateError(ResultSet rs, Fact f, Throwable e) throws SQLException {
-      log.warn("{} notifyError called with id={}", request, f != null ? f.id() : "unknown");
+    private void escalateError(ResultSet rs, Throwable e) throws SQLException {
       try {
         rs.close();
-      } catch (Throwable ignore) {
+      } catch (Exception ignore) {
+        // this one will be ignored
       }
-      subscription.notifyError(e);
+      pipe.process(Signal.of(e));
     }
   }
 }
