@@ -184,7 +184,7 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
                 Tags.of(
                     Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, String.valueOf(chain.key())),
                     Tag.of("version", String.valueOf(chain.toVersion()))));
-            throw new TransformationException(e1);
+            throw new TransformationException("Failed to transform " + chain, e1);
           }
         });
   }
