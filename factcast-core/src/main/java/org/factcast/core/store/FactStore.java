@@ -19,8 +19,6 @@ import java.time.LocalDate;
 import java.util.*;
 import lombok.NonNull;
 import org.factcast.core.Fact;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -72,13 +70,6 @@ public interface FactStore {
   @NonNull
   Optional<Fact> fetchByIdAndVersion(@NonNull UUID id, int versionExpected)
       throws TransformationException;
-
-  @NonNull
-  Optional<Snapshot> getSnapshot(@NonNull SnapshotId id);
-
-  void setSnapshot(@NonNull Snapshot snapshot);
-
-  void clearSnapshot(@NonNull SnapshotId id);
 
   @NonNull
   StateToken currentStateFor(List<FactSpec> factSpecs);

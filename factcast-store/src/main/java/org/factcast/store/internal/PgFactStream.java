@@ -28,25 +28,19 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
-import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FastForwardTarget;
-import org.factcast.core.subscription.transformation.FactTransformerService;
-import org.factcast.core.subscription.transformation.FactTransformers;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
-import org.factcast.store.internal.filter.FactFilter;
-import org.factcast.store.internal.filter.FactFilterImpl;
-import org.factcast.store.internal.filter.blacklist.Blacklist;
+import org.factcast.store.internal.pipeline.ServerPipeline;
+import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.query.PgQueryBuilder;
-import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
-import org.springframework.jdbc.core.RowCallbackHandler;
 
 /**
  * Creates and maintains a subscription.
@@ -61,14 +55,10 @@ public class PgFactStream {
   final JdbcTemplate jdbcTemplate;
   final EventBus eventBus;
   final PgFactIdToSerialMapper idToSerMapper;
-  final SubscriptionImpl subscription;
   final PgLatestSerialFetcher fetcher;
   final PgCatchupFactory pgCatchupFactory;
   final FastForwardTarget ffwdTarget;
-  final FactTransformerService transformationService;
-  final Blacklist blacklist;
-  final PgMetrics metrics;
-  final JSEngineFactory ef;
+  final ServerPipeline pipeline;
   final PgStoreTelemetry telemetry;
 
   CondensedQueryExecutor condensedExecutor;
@@ -82,38 +72,33 @@ public class PgFactStream {
   @VisibleForTesting protected SubscriptionRequestTO request;
 
   final CurrentStatementHolder statementHolder = new CurrentStatementHolder();
-  private FactFilterImpl filter;
 
   void connect(@NonNull SubscriptionRequestTO request) {
     log.debug("{} connect subscription {}", request, request.dump());
     // signal connect
     telemetry.onConnect(request);
     this.request = request;
-    this.filter = new FactFilterImpl(request, blacklist, ef);
-    SimpleFactInterceptor interceptor =
-        new SimpleFactInterceptor(
-            transformationService,
-            FactTransformers.createFor(request),
-            filter,
-            subscription,
-            metrics);
     PgQueryBuilder q = new PgQueryBuilder(request.specs(), statementHolder);
     initializeSerialToStartAfter();
 
     if (request.streamInfo()) {
       FactStreamInfo factStreamInfo = new FactStreamInfo(serial.get(), fetcher.retrieveLatestSer());
-      subscription.notifyFactStreamInfo(factStreamInfo);
+      pipeline.process(Signal.of(factStreamInfo));
     }
 
     String sql = q.createSQL();
     PreparedStatementSetter setter = q.createStatementSetter(serial);
-    RowCallbackHandler rsHandler =
-        new PgSynchronizedQuery.FactRowCallbackHandler(
-            subscription, interceptor, this::isConnected, serial, request, statementHolder);
     PgSynchronizedQuery query =
         new PgSynchronizedQuery(
-            jdbcTemplate, sql, setter, rsHandler, serial, fetcher, statementHolder);
-    catchupAndFollow(request, subscription, query);
+            pipeline,
+            jdbcTemplate,
+            sql,
+            setter,
+            this::isConnected,
+            serial,
+            fetcher,
+            statementHolder);
+    catchupAndFollow(request, query);
   }
 
   @VisibleForTesting
@@ -125,23 +110,22 @@ public class PgFactStream {
   }
 
   @VisibleForTesting
-  void catchupAndFollow(
-      SubscriptionRequest request, SubscriptionImpl subscription, PgSynchronizedQuery query) {
+  void catchupAndFollow(SubscriptionRequest request, PgSynchronizedQuery query) {
     if (request.ephemeral()) {
       // just fast forward to the latest event published by now
       serial.set(fetcher.retrieveLatestSer());
     } else {
-      catchup(filter);
+      catchup();
     }
 
-    fastForward(request, subscription);
+    fastForward(request);
 
     // propagate catchup
     if (isConnected()) {
       log.trace("{} signaling catchup", request);
       // signal catchup
       telemetry.onCatchup(this.request);
-      subscription.notifyCatchup();
+      pipeline.process(Signal.catchup());
     }
     if (isConnected()) {
       if (request.continuous()) {
@@ -175,7 +159,7 @@ public class PgFactStream {
         // slow registration
         condensedExecutor.trigger();
       } else {
-        subscription.notifyComplete();
+        pipeline.process(Signal.complete());
         log.debug("{} completed", request);
         // signal complete
         telemetry.onComplete(this.request);
@@ -184,7 +168,7 @@ public class PgFactStream {
   }
 
   @VisibleForTesting
-  void fastForward(SubscriptionRequest request, SubscriptionImpl subscription) {
+  void fastForward(SubscriptionRequest request) {
     if (isConnected()) {
 
       long startedSer = 0;
@@ -199,20 +183,20 @@ public class PgFactStream {
       long targetSer = ffwdTarget.targetSer();
 
       if (targetId != null && (targetSer > startedSer)) {
-        subscription.notifyFastForward(FactStreamPosition.of(targetId, targetSer));
+        pipeline.process(Signal.of(FactStreamPosition.of(targetId, targetSer)));
       }
     }
   }
 
   @VisibleForTesting
-  void catchup(@NonNull FactFilter filter) {
+  void catchup() {
     if (isConnected()) {
       log.trace("{} catchup phase1 - historic facts staring with SER={}", request, serial.get());
-      pgCatchupFactory.create(request, subscription, filter, serial, statementHolder).run();
+      pgCatchupFactory.create(request, pipeline, serial, statementHolder).run();
     }
     if (isConnected()) {
       log.trace("{} catchup phase2 - facts since connect (SER={})", request, serial.get());
-      pgCatchupFactory.create(request, subscription, filter, serial, statementHolder).run();
+      pgCatchupFactory.create(request, pipeline, serial, statementHolder).run();
     }
   }
 
