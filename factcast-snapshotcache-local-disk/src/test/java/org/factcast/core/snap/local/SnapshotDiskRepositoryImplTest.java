@@ -103,7 +103,7 @@ class SnapshotDiskRepositoryImplTest {
       assertThat(uut.findById(id)).isEmpty();
       assertThat(persistenceFile).doesNotExist();
       assertThat(logCaptor.getErrorLogs()).isNotEmpty();
-      assertThat(logCaptor.getErrorLogs().size()).isEqualTo(1);
+      assertThat(logCaptor.getErrorLogs()).hasSize(1);
       assertThat(logCaptor.getErrorLogs().get(0)).contains("Error deserializing snapshot with id");
     }
 
@@ -128,13 +128,13 @@ class SnapshotDiskRepositoryImplTest {
       // Get by the ID
       Optional<Snapshot> response = uut.findById(snap1.id());
       assertThat(response).isPresent();
-      assertThat(response.get()).isEqualTo(snap1);
+      assertThat(snap1).isEqualTo(response.get());
       response = uut.findById(snap2.id());
       assertThat(response).isPresent();
-      assertThat(response.get()).isEqualTo(snap2);
+      assertThat(snap2).isEqualTo(response.get());
       response = uut.findById(snap3.id());
       assertThat(response).isPresent();
-      assertThat(response.get()).isEqualTo(snap3);
+      assertThat(snap3).isEqualTo(response.get());
     }
   }
 
