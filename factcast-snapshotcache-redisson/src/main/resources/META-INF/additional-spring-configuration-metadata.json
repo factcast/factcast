@@ -1,17 +1,18 @@
 {
-  "groups": [],
   "properties": [
     {
-      "name": "factcast.redis.deleteSnapshotStaleForDays",
+      "name": "factcast.redis.delete-snapshot-stale-for-days",
+      "type": "java.lang.Integer",
       "deprecation": {
-        "replacement": "factcast.snapshot.redis.deleteSnapshotStaleForDays",
+        "replacement": "factcast.snapshot.redis.delete-snapshot-stale-for-days",
         "level": "error"
       }
     },
     {
-      "name": "factcast.redis.snapshotCacheRedissonCodec",
+      "name": "factcast.redis.snapshot-cache-redisson-codec",
+      "type": "org.factcast.core.snap.redisson.RedissonSnapshotProperties$RedissonCodec",
       "deprecation": {
-        "replacement": "factcast.snapshot.redis.snapshotCacheRedissonCodec",
+        "replacement": "factcast.snapshot.redis.snapshot-cache-redisson-codec",
         "level": "error"
       }
     }
