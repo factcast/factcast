@@ -454,8 +454,8 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
           spec = addFilterByMetaDoesNotExist(spec, notExists);
         }
       }
-      FilterByMetaExists attribute = m.getAnnotation(FilterByMetaExists.class);
-      if (attribute != null) spec = addFilterByMetaExists(spec, attribute);
+      FilterByMetaDoesNotExist attribute = m.getAnnotation(FilterByMetaDoesNotExist.class);
+      if (attribute != null) spec = addFilterByMetaDoesNotExist(spec, attribute);
 
       FilterByAggId aggregateId = m.getAnnotation(FilterByAggId.class);
       if (aggregateId != null) spec = spec.aggId(UUID.fromString(aggregateId.value()));

@@ -49,7 +49,7 @@ import org.factcast.factus.projector.ProjectorImpl.ReflectionTools;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings("deprecation")
+@SuppressWarnings({"deprecation", "java:S1186"})
 class ProjectorImplTest {
 
   private final DefaultEventSerializer eventSerializer =
@@ -559,7 +559,7 @@ class ProjectorImplTest {
 
   @SneakyThrows
   @Test
-  public void detectsSingleMeta() {
+  void detectsSingleMeta() {
     FactSpec spec = FactSpec.ns("ns");
     Method m = HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithOneMeta", Fact.class);
     ReflectionTools.addOptionalFilterInfo(m, spec);
@@ -586,6 +586,56 @@ class ProjectorImplTest {
     ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
 
     assertThat(spec.aggId()).isEqualTo(UUID.fromString("1010a955-04a2-417b-9904-f92f88fdb67d"));
+  }
+
+  @SneakyThrows
+  @Test
+  void detectsMetaExists() {
+    FactSpec spec = FactSpec.ns("ns");
+    Method m =
+        HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithOneMetaExists", Fact.class);
+    ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
+
+    Assertions.assertThat(spec.metaKeyExists()).hasSize(1).containsEntry("foo", Boolean.TRUE);
+  }
+
+  @SneakyThrows
+  @Test
+  void detectsMultipleMetaExists() {
+    FactSpec spec = FactSpec.ns("ns");
+    Method m =
+        HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithMultiMetaExists", Fact.class);
+    ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
+    Assertions.assertThat(spec.metaKeyExists())
+        .hasSize(2)
+        .containsEntry("foo", Boolean.TRUE)
+        .containsEntry("bar", Boolean.TRUE);
+  }
+
+  @SneakyThrows
+  @Test
+  void detectsMetaDoesNotExist() {
+    FactSpec spec = FactSpec.ns("ns");
+    Method m =
+        HandlerMethodsWithAdditionalFilters.class.getMethod(
+            "applyWithOneMetaDoesNotExist", Fact.class);
+    ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
+    Assertions.assertThat(spec.metaKeyExists()).hasSize(1).containsEntry("foo", Boolean.FALSE);
+  }
+
+  @SneakyThrows
+  @Test
+  void detectsMultipleMetaDoesNotExist() {
+    FactSpec spec = FactSpec.ns("ns");
+    Method m =
+        HandlerMethodsWithAdditionalFilters.class.getMethod(
+            "applyWithMultiMetaDoesNotExist", Fact.class);
+    ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
+
+    Assertions.assertThat(spec.metaKeyExists())
+        .hasSize(2)
+        .containsEntry("foo", Boolean.FALSE)
+        .containsEntry("bar", Boolean.FALSE);
   }
 
   @SneakyThrows
