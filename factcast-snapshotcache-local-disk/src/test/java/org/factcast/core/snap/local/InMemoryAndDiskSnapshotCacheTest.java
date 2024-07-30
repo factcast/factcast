@@ -48,7 +48,7 @@ class InMemoryAndDiskSnapshotCacheTest {
 
       Optional<Snapshot> snapshot = underTest.getSnapshot(id);
       assertThat(snapshot).isPresent();
-      assertThat(snapshot.get()).isEqualTo(snap);
+      assertThat(snap).isEqualTo(snapshot.get());
       verify(diskRepository, times(1)).save(snap);
     }
   }
@@ -63,7 +63,7 @@ class InMemoryAndDiskSnapshotCacheTest {
       underTest.setSnapshot(snap);
       Optional<Snapshot> snapshot = underTest.getSnapshot(id);
       assertThat(snapshot).isPresent();
-      assertThat(snapshot.get()).isEqualTo(snap);
+      assertThat(snap).isEqualTo(snapshot.get());
 
       underTest.clearSnapshot(id);
       snapshot = underTest.getSnapshot(id);
@@ -84,7 +84,7 @@ class InMemoryAndDiskSnapshotCacheTest {
 
       Optional<Snapshot> snapshot = underTest.getSnapshot(id);
       assertThat(snapshot).isPresent();
-      assertThat(snapshot.get()).isEqualTo(snap);
+      assertThat(snap).isEqualTo(snapshot.get());
       verify(diskRepository, times(1)).save(snap);
       verify(diskRepository, never()).findById(id);
     }
@@ -97,7 +97,7 @@ class InMemoryAndDiskSnapshotCacheTest {
 
       Optional<Snapshot> snapshot = underTest.getSnapshot(id);
       assertThat(snapshot).isPresent();
-      assertThat(snapshot.get()).isEqualTo(snap);
+      assertThat(snap).isEqualTo(snapshot.get());
       verify(diskRepository, never()).save(snap);
       verify(diskRepository, times(1)).findById(id);
     }

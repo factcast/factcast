@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Test;
 class OldestModifiedFileProviderTest {
 
   @Test
-  public void persistenceDirectoryDoesntExist() {
+  void persistenceDirectoryDoesntExist() {
     OldestModifiedFileProvider provider = new OldestModifiedFileProvider(new File("non-existent"));
 
     assertThatThrownBy(provider::get)
@@ -37,7 +37,7 @@ class OldestModifiedFileProviderTest {
 
   @Test
   @SneakyThrows
-  public void testOrderOfFiles() {
+  void testOrderOfFiles() {
     File tempDir = Files.createTempDir();
     tempDir.deleteOnExit();
     File innerDir = new File(tempDir, "inner/other");
@@ -74,7 +74,7 @@ class OldestModifiedFileProviderTest {
 
   @Test
   @SneakyThrows
-  public void testDateChangedInTheMiddle() {
+  void testDateChangedInTheMiddle() {
     File tempDir = Files.createTempDir();
     tempDir.deleteOnExit();
 

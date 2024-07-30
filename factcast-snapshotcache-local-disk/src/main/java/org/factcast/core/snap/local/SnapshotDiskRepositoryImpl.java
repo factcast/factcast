@@ -34,6 +34,8 @@ import org.factcast.core.util.ExceptionHelper;
 
 @Slf4j
 public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
+  public static final String INNER_PATH = "/factcast/snapshots/";
+
   @Getter(onMethod = @__(@VisibleForTesting))
   final File persistenceDirectory;
 
@@ -47,7 +49,7 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
     Preconditions.checkState(
         cacheRoot.exists() && cacheRoot.isDirectory(),
         cacheRoot.getAbsolutePath() + " must exist and be a directory");
-    this.persistenceDirectory = new File(cacheRoot, "/factcast/snapshots/");
+    this.persistenceDirectory = new File(cacheRoot, INNER_PATH);
     persistenceDirectory.mkdirs();
     this.oldestFileProvider = new OldestModifiedFileProvider(this.persistenceDirectory);
     this.threshold = (long) (properties.getMaxDiskSpace() * 0.9);

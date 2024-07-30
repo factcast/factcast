@@ -31,10 +31,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 class SnapshotFileHelper {
   void updateLastModified(@NonNull File persistenceFile) {
-    if (persistenceFile.exists()) {
-      if (!persistenceFile.setLastModified(System.currentTimeMillis())) {
-        log.warn("Unable to set lastModified on {}", persistenceFile.getAbsolutePath());
-      }
+    if (persistenceFile.exists() && !persistenceFile.setLastModified(System.currentTimeMillis())) {
+      log.warn("Unable to set lastModified on {}", persistenceFile.getAbsolutePath());
     }
   }
 
