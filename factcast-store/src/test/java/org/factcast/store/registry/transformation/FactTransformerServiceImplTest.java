@@ -189,6 +189,9 @@ class FactTransformerServiceImplTest {
 
       when(chain.id()).thenReturn("myChainId");
       when(chain.toVersion()).thenReturn(5);
+      when(chain.fromVersion()).thenReturn(4);
+      when(chain.key()).thenReturn(TransformationKey.from(fact));
+      when(chain.toString()).thenCallRealMethod();
       when(chains.get(eq(key), eq(4), eq(Collections.singleton(5)))).thenReturn(chain);
       TransformationCache.Key cacheKey = TransformationCache.Key.of(fact.id(), 5, "myChainId");
       when(cache.find(cacheKey)).thenReturn(Optional.empty());
@@ -200,7 +203,8 @@ class FactTransformerServiceImplTest {
               () -> {
                 underTest.transform(req);
               })
-          .isInstanceOf(TransformationException.class);
+          .isInstanceOf(TransformationException.class)
+          .hasMessage("Failed to transform " + chain);
     }
 
     @SneakyThrows
