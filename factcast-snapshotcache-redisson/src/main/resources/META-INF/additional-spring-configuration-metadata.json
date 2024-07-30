@@ -1,0 +1,19 @@
+{
+  "groups": [],
+  "properties": [
+    {
+      "name": "factcast.redis.deleteSnapshotStaleForDays",
+      "deprecation": {
+        "replacement": "factcast.snapshot.redis.deleteSnapshotStaleForDays",
+        "level": "error"
+      }
+    },
+    {
+      "name": "factcast.redis.snapshotCacheRedissonCodec",
+      "deprecation": {
+        "replacement": "factcast.snapshot.redis.snapshotCacheRedissonCodec",
+        "level": "error"
+      }
+    }
+  ]
+}
