@@ -1,10 +1,10 @@
 {
-  "groups": [],
   "properties": [
     {
-      "name": "factcast.local.mem.deleteSnapshotStaleForDays",
+      "name": "factcast.local.mem.delete-snapshot-stale-for-days",
+      "type": "java.lang.Integer",
       "deprecation": {
-        "replacement": "factcast.snapshot.local.mem.deleteSnapshotStaleForDays",
+        "replacement": "factcast.snapshot.local.mem.delete-snapshot-stale-for-days",
         "level": "error"
       }
     }
