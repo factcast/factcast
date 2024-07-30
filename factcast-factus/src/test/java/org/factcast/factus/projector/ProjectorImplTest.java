@@ -16,33 +16,40 @@
 package org.factcast.factus.projector;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
+import com.google.common.collect.Lists;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.Value;
+import lombok.experimental.Delegate;
+import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Maps;
-import org.factcast.core.Fact;
-import org.factcast.core.FactHeader;
-import org.factcast.core.FactStreamPosition;
-import org.factcast.core.TestFactStreamPosition;
+import org.factcast.core.*;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.*;
 import org.factcast.factus.event.DefaultEventSerializer;
 import org.factcast.factus.event.EventSerializer;
+import org.factcast.factus.projection.FactStreamPositionAware;
 import org.factcast.factus.projection.Projection;
+import org.factcast.factus.projection.parameter.HandlerParameterContributors;
+import org.factcast.factus.projection.tx.OpenTransactionAware;
+import org.factcast.factus.projection.tx.TransactionAdapter;
+import org.factcast.factus.projection.tx.TransactionBehavior;
 import org.factcast.factus.projector.ProjectorImpl.ReflectionTools;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-/** Blackbox test, we are wiring real objects into the test class, no mocks. */
+@SuppressWarnings("deprecation")
 class ProjectorImplTest {
 
   private final DefaultEventSerializer eventSerializer =
@@ -64,10 +71,10 @@ class ProjectorImplTest {
 
       SimpleProjection projection = new SimpleProjection();
 
-      ProjectorImpl<SimpleProjection> underTest = new ProjectorImpl<>(eventSerializer, projection);
+      ProjectorImpl<SimpleProjection> underTest = new ProjectorImpl<>(projection, eventSerializer);
 
       // RUN
-      underTest.apply(fact);
+      underTest.apply(Collections.singletonList(fact));
 
       // ASSERT
       assertThat(projection.recordedEvent()).isEqualTo(event);
@@ -84,11 +91,13 @@ class ProjectorImplTest {
 
       SimpleProjection projection = new SimpleProjection();
 
-      DefaultProjectorFactory factory = new DefaultProjectorFactory(eventSerializer);
+      DefaultProjectorFactory factory =
+          new DefaultProjectorFactory(
+              eventSerializer, new HandlerParameterContributors(eventSerializer));
       Projector<SimpleProjection> underTest = factory.create(projection);
 
       // RUN
-      underTest.apply(fact);
+      underTest.apply(Collections.singletonList(fact));
 
       // ASSERT
       assertThat(projection.recordedEvent()).isEqualTo(event);
@@ -110,11 +119,10 @@ class ProjectorImplTest {
 
       ComplexProjection projection = new ComplexProjection();
 
-      ProjectorImpl<ComplexProjection> underTest = new ProjectorImpl<>(eventSerializer, projection);
+      ProjectorImpl<ComplexProjection> underTest = new ProjectorImpl<>(projection, eventSerializer);
 
       // RUN
-      underTest.apply(fact);
-      underTest.apply(fact2);
+      underTest.apply(Lists.newArrayList(fact, fact2));
 
       // ASSERT
       assertThat(projection.recordedEvent()).isEqualTo(event);
@@ -126,7 +134,7 @@ class ProjectorImplTest {
     void applyWithStaticSubclass() {
       SimpleProjectionWithStaticSubclass projection = new SimpleProjectionWithStaticSubclass();
 
-      assertThatThrownBy(() -> new ProjectorImpl<>(eventSerializer, projection))
+      assertThatThrownBy(() -> new ProjectorImpl<>(projection, eventSerializer))
           .isInstanceOf(InvalidHandlerDefinition.class);
     }
 
@@ -143,10 +151,10 @@ class ProjectorImplTest {
       // SimpleEvent!
       ComplexProjection projection = new ComplexProjection();
 
-      ProjectorImpl<SimpleProjection> underTest = new ProjectorImpl<>(eventSerializer, projection);
+      ProjectorImpl<SimpleProjection> underTest = new ProjectorImpl<>(projection, eventSerializer);
 
       // RUN / ASSERT
-      assertThatThrownBy(() -> underTest.apply(fact))
+      assertThatThrownBy(() -> underTest.apply(Collections.singletonList(fact)))
           .isInstanceOf(InvalidHandlerDefinition.class)
           .hasMessageStartingWith("Unexpected Fact coordinates");
     }
@@ -161,14 +169,14 @@ class ProjectorImplTest {
 
       ProjectionWithHandlerFor projection = new ProjectionWithHandlerFor();
 
-      ProjectorImpl<SimpleProjection> underTest = new ProjectorImpl<>(eventSerializer, projection);
+      ProjectorImpl<SimpleProjection> underTest = new ProjectorImpl<>(projection, eventSerializer);
 
       assertThat(projection.factId()).isNull();
       assertThat(projection.fact()).isNull();
       assertThat(projection.factHeader()).isNull();
 
       // RUN
-      underTest.apply(fact);
+      underTest.apply(Collections.singletonList(fact));
 
       // ASSERT
       assertThat(projection.factId()).isEqualTo(factId);
@@ -191,7 +199,7 @@ class ProjectorImplTest {
       ComplexProjection projection = new ComplexProjection();
       projection.factStreamPosition(factStreamPosition);
 
-      ProjectorImpl<ComplexAggregate> underTest = new ProjectorImpl<>(eventSerializer, projection);
+      ProjectorImpl<ComplexAggregate> underTest = new ProjectorImpl<>(projection, eventSerializer);
 
       // RUN
       List<FactSpec> factSpecs = underTest.createFactSpecs();
@@ -211,7 +219,7 @@ class ProjectorImplTest {
       UUID aggregateId = UUID.randomUUID();
       ComplexAggregate aggregate = new ComplexAggregate(aggregateId);
 
-      ProjectorImpl<ComplexAggregate> underTest = new ProjectorImpl<>(eventSerializer, aggregate);
+      ProjectorImpl<ComplexAggregate> underTest = new ProjectorImpl<>(aggregate, eventSerializer);
 
       // RUN
       List<FactSpec> factSpecs = underTest.createFactSpecs();
@@ -231,7 +239,7 @@ class ProjectorImplTest {
       ProjectionWithHandlerFor projection = new ProjectionWithHandlerFor();
 
       ProjectorImpl<ProjectionWithHandlerFor> underTest =
-          new ProjectorImpl<>(eventSerializer, projection);
+          new ProjectorImpl<>(projection, eventSerializer);
 
       // RUN
       List<FactSpec> factSpecs = underTest.createFactSpecs();
@@ -247,10 +255,10 @@ class ProjectorImplTest {
     void invalidPostprocessReturnsNull() {
       // INIT
       ProjectorImpl<Projection> underTest =
-          new ProjectorImpl<>(eventSerializer, new PostProcessingProjection(null));
+          new ProjectorImpl<>(new PostProcessingProjection(null), eventSerializer);
 
       // RUN
-      assertThatThrownBy(() -> underTest.createFactSpecs())
+      assertThatThrownBy(underTest::createFactSpecs)
           // ASSERT
           .isInstanceOf(InvalidHandlerDefinition.class)
           .hasMessageStartingWith("No FactSpecs discovered from");
@@ -261,10 +269,10 @@ class ProjectorImplTest {
       // INIT
       ProjectorImpl<Projection> underTest =
           new ProjectorImpl<>(
-              eventSerializer, new PostProcessingProjection(Collections.emptyList()));
+              new PostProcessingProjection(Collections.emptyList()), eventSerializer);
 
       // RUN
-      assertThatThrownBy(() -> underTest.createFactSpecs())
+      assertThatThrownBy(underTest::createFactSpecs)
           // ASSERT
           .isInstanceOf(InvalidHandlerDefinition.class)
           .hasMessageStartingWith("No FactSpecs discovered from");
@@ -277,7 +285,7 @@ class ProjectorImplTest {
     void duplicateHandler() {
       // INIT / RUN
       assertThatThrownBy(
-              () -> new ProjectorImpl<>(eventSerializer, new DuplicateHandlerProjection()))
+              () -> new ProjectorImpl<>(new DuplicateHandlerProjection(), eventSerializer))
           // ASSERT
           .isInstanceOf(InvalidHandlerDefinition.class)
           .hasMessageStartingWith("Duplicate Handler method found for spec");
@@ -287,7 +295,7 @@ class ProjectorImplTest {
     void duplicateArgumentHandler() {
       // INIT / RUN
       assertThatThrownBy(
-              () -> new ProjectorImpl<>(eventSerializer, new DuplicateArgumentProjection()))
+              () -> new ProjectorImpl<>(new DuplicateArgumentProjection(), eventSerializer))
           // ASSERT
           .isInstanceOf(InvalidHandlerDefinition.class)
           .hasMessageStartingWith("Multiple EventPojo Parameters");
@@ -296,7 +304,7 @@ class ProjectorImplTest {
     @Test
     void handlerWithoutParamters() {
       // INIT / RUN
-      assertThatThrownBy(() -> new ProjectorImpl<>(eventSerializer, new HandlerWithoutParameters()))
+      assertThatThrownBy(() -> new ProjectorImpl<>(new HandlerWithoutParameters(), eventSerializer))
           // ASSERT
           .isInstanceOf(InvalidHandlerDefinition.class)
           .hasMessageStartingWith("Handler methods must have at least one parameter");
@@ -306,7 +314,7 @@ class ProjectorImplTest {
     void handlerWithoutEventObjectParameters() {
       // INIT / RUN
       assertThatThrownBy(
-              () -> new ProjectorImpl<>(eventSerializer, new HandlerWithoutEventProjection()))
+              () -> new ProjectorImpl<>(new HandlerWithoutEventProjection(), eventSerializer))
           // ASSERT
           .isInstanceOf(InvalidHandlerDefinition.class)
           .hasMessageStartingWith("Cannot introspect FactSpec from");
@@ -315,7 +323,7 @@ class ProjectorImplTest {
     @Test
     void nonVoidEventHandler() {
       // INIT / RUN
-      assertThatThrownBy(() -> new ProjectorImpl<>(eventSerializer, new NonVoidEventHandler()))
+      assertThatThrownBy(() -> new ProjectorImpl<>(new NonVoidEventHandler(), eventSerializer))
           // ASSERT
           .isInstanceOf(InvalidHandlerDefinition.class)
           .hasMessageStartingWith("Handler methods must return void");
@@ -325,16 +333,15 @@ class ProjectorImplTest {
     void unknownHandlerParamType() {
       // INIT / RUN
       assertThatThrownBy(
-              () -> new ProjectorImpl<>(eventSerializer, new HandlerWithUnknownParameterType()))
+              () -> new ProjectorImpl<>(new HandlerWithUnknownParameterType(), eventSerializer))
           // ASSERT
-          .isInstanceOf(InvalidHandlerDefinition.class)
-          .hasMessageStartingWith("Don't know how resolve");
+          .isInstanceOf(InvalidHandlerDefinition.class);
     }
 
     @Test
     void noHandler() {
       // INIT / RUN
-      assertThatThrownBy(() -> new ProjectorImpl<>(eventSerializer, new NoHandlerProjection()))
+      assertThatThrownBy(() -> new ProjectorImpl<>(new NoHandlerProjection(), eventSerializer))
           // ASSERT
           .isInstanceOf(InvalidHandlerDefinition.class)
           .hasMessageStartingWith("No handler methods discovered on");
@@ -343,7 +350,7 @@ class ProjectorImplTest {
     @Test
     void handlerWithUnspecificVersion() {
       ProjectorImpl<Projection> p =
-          new ProjectorImpl<>(eventSerializer, new HandlerWithoutVersionProjection());
+          new ProjectorImpl<>(new HandlerWithoutVersionProjection(), eventSerializer);
 
       assertThatNoException()
           .isThrownBy(
@@ -351,8 +358,7 @@ class ProjectorImplTest {
                 Fact f1 = Fact.builder().ns("ns").type("type").version(1).buildWithoutPayload();
                 Fact f2 = Fact.builder().ns("ns").type("type").version(2).buildWithoutPayload();
 
-                p.apply(f1);
-                p.apply(f2);
+                p.apply(Lists.newArrayList(f1, f2));
               });
     }
   }
@@ -363,14 +369,12 @@ class ProjectorImplTest {
     @Test
     void resolveTargetFromStaticClass() {
       assertThat(ReflectionTools.resolveTargetObject(this, StaticClass.class))
-          .isNotNull()
           .isInstanceOf(StaticClass.class);
     }
 
     @Test
     void resolveTargetFromNonStaticClass() {
       assertThat(ReflectionTools.resolveTargetObject(ProjectorImplTest.this, NonStaticClass.class))
-          .isNotNull()
           .isInstanceOf(NonStaticClass.class);
     }
   }
@@ -379,7 +383,7 @@ class ProjectorImplTest {
   class WhenTestingForHandlerMethods {
 
     final ProjectorImpl<NonStaticClass> underTest =
-        new ProjectorImpl<>(mock(EventSerializer.class), new NonStaticClass());
+        new ProjectorImpl<>(new NonStaticClass(), mock(EventSerializer.class));
 
     @Test
     void matchesHandlerMethods() throws NoSuchMethodException {
@@ -395,13 +399,14 @@ class ProjectorImplTest {
     }
   }
 
+  @SuppressWarnings("InnerClassMayBeStatic")
   class NonStaticClass implements Projection {
     @Handler
     void apply(SimpleEvent e) {}
   }
 
+  @SuppressWarnings("RedundantMethodOverride")
   class NonStaticClass$MockitoMock extends NonStaticClass {
-    @Override
     @Handler
     void apply(SimpleEvent e) {}
   }
@@ -413,7 +418,7 @@ class ProjectorImplTest {
   @Value
   static class PostProcessingProjection implements Projection {
 
-    private final List<FactSpec> factSpecs;
+    List<FactSpec> factSpecs;
 
     @Override
     public @NonNull List<FactSpec> postprocess(@NonNull List<FactSpec> specsAsDiscovered) {
@@ -539,27 +544,24 @@ class ProjectorImplTest {
   public void detectsSingleMeta() {
     FactSpec spec = FactSpec.ns("ns");
     Method m = HandlerMethdsWithAdditionalFilters.class.getMethod("applyWithOneMeta", Fact.class);
-    ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
+    ReflectionTools.addOptionalFilterInfo(m, spec);
 
-    assertThat(spec.meta()).containsEntry("foo", "bar");
-    assertThat(spec.meta()).hasSize(1);
+    assertThat(spec.meta()).containsEntry("foo", "bar").hasSize(1);
   }
 
   @SneakyThrows
   @Test
-  public void detectsMultiMeta() {
+  void detectsMultiMeta() {
     FactSpec spec = FactSpec.ns("ns");
     Method m = HandlerMethdsWithAdditionalFilters.class.getMethod("applyWithMultiMeta", Fact.class);
-    ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
+    ReflectionTools.addOptionalFilterInfo(m, spec);
 
-    assertThat(spec.meta()).containsEntry("foo", "bar");
-    assertThat(spec.meta()).containsEntry("bar", "baz");
-    assertThat(spec.meta()).hasSize(2);
+    assertThat(spec.meta()).containsEntry("foo", "bar").containsEntry("bar", "baz").hasSize(2);
   }
 
   @SneakyThrows
   @Test
-  public void detectsAggId() {
+  void detectsAggId() {
     FactSpec spec = FactSpec.ns("ns");
     Method m = HandlerMethdsWithAdditionalFilters.class.getMethod("applyWithAggId", Fact.class);
     ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
@@ -569,7 +571,7 @@ class ProjectorImplTest {
 
   @SneakyThrows
   @Test
-  public void detectsFilterScript() {
+  void detectsFilterScript() {
     FactSpec spec = FactSpec.ns("ns");
     Method m =
         HandlerMethdsWithAdditionalFilters.class.getMethod("applyWithFilterScript", Fact.class);
@@ -577,5 +579,188 @@ class ProjectorImplTest {
 
     assertThat(spec.filterScript())
         .isEqualTo(org.factcast.core.spec.FilterScript.js("function myfilter(e){}"));
+  }
+
+  @Test
+  void retryBatchUntilfailingFact() {
+    TransactionalProjection projection = new TransactionalProjection();
+    ProjectorImpl<SimpleProjection> underTest =
+        spy(new ProjectorImpl<>(projection, eventSerializer));
+
+    TestFact f1 = new TestFact();
+    TestFact f2 = new TestFact();
+    TestFact f3 = new TestFact();
+    TestFact f4 = new TestFact();
+    TestFact f5 = new TestFact();
+    TestFact f6 = new TestFact();
+    TestFact f8 = new TestFact();
+    TestFact failing = new TestFact();
+
+    List<Fact> batch = Lists.newArrayList(f1, f2, f3, f4, f5, f6, failing, f8);
+
+    underTest.retryApplicableIfTransactional(batch, failing);
+
+    verify(underTest).apply(Lists.newArrayList(f1, f2, f3, f4, f5, f6));
+  }
+
+  @Test
+  void retrySkippedIfFirstIsFailing() {
+    TransactionalProjection projection = new TransactionalProjection();
+    ProjectorImpl<SimpleProjection> underTest =
+        spy(new ProjectorImpl<>(projection, eventSerializer));
+
+    TestFact f1 = new TestFact();
+    TestFact f2 = new TestFact();
+
+    TestFact failing = new TestFact();
+
+    List<Fact> batch = Lists.newArrayList(failing, f1, f2);
+
+    underTest.retryApplicableIfTransactional(batch, failing);
+
+    verify(underTest, never()).apply(any());
+  }
+
+  interface SomeTransactionInterface {}
+
+  static class TransactionalProjection
+      implements OpenTransactionAware, TransactionAdapter<SomeTransactionInterface>, Projection {
+    @Delegate private final TransactionBehavior<SomeTransactionInterface> transactionalBehavior;
+
+    TransactionalProjection() {
+      transactionalBehavior = new TransactionBehavior<>(this);
+    }
+
+    @HandlerFor(ns = "default", type = "test")
+    void apply(Fact f) {}
+
+    @Nullable
+    @Override
+    public FactStreamPosition factStreamPosition() {
+      return TestFactStreamPosition.random();
+    }
+
+    @Override
+    public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {}
+
+    @Override
+    public @NonNull SomeTransactionInterface beginNewTransaction() {
+      return new SomeTransactionInterface() {
+        @Override
+        public int hashCode() {
+          return super.hashCode();
+        }
+      };
+    }
+
+    @Override
+    public void rollback(@NonNull SomeTransactionInterface runningTransaction) {}
+
+    @Override
+    public void commit(@NonNull SomeTransactionInterface runningTransaction) {}
+  }
+
+  @Test
+  void commitTx() {
+    TransactionalProjection projection = spy(new TransactionalProjection());
+    ProjectorImpl<SimpleProjection> underTest =
+        spy(new ProjectorImpl<>(projection, eventSerializer));
+    underTest.beginIfTransactional();
+    underTest.commitIfTransactional();
+
+    verify(projection).commit();
+  }
+
+  @Test
+  void rollbackTx() {
+    TransactionalProjection projection = spy(new TransactionalProjection());
+    ProjectorImpl<SimpleProjection> underTest =
+        spy(new ProjectorImpl<>(projection, eventSerializer));
+    underTest.beginIfTransactional();
+    underTest.rollbackIfTransactional();
+
+    verify(projection).rollback();
+  }
+
+  @Test
+  void beginTx() {
+    TransactionalProjection projection = spy(new TransactionalProjection());
+    ProjectorImpl<SimpleProjection> underTest =
+        spy(new ProjectorImpl<>(projection, eventSerializer));
+    underTest.beginIfTransactional();
+
+    verify(projection).begin();
+  }
+
+  @Nested
+  class WhenFindingTypeParameter {
+
+    @Test
+    void determinesTypeParameter() {
+      TransactionalProjection projection = spy(new TransactionalProjection());
+      Assertions.assertThat(ReflectionTools.getTypeParameter(projection))
+          .isSameAs(SomeTransactionInterface.class);
+    }
+  }
+
+  @Nested
+  class WhenApplyingToFSPAwareNonTx {
+
+    class FSAProjection implements FactStreamPositionAware, Projection {
+      private FactStreamPosition p;
+
+      @Nullable
+      @Override
+      public FactStreamPosition factStreamPosition() {
+        return p;
+      }
+
+      @Override
+      public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {
+        this.p = factStreamPosition;
+      }
+
+      @HandlerFor(ns = "test", type = "test")
+      void apply(Fact f) {
+        if (f.header().meta().containsKey("pleaseThrow"))
+          throw new RuntimeException("you asked me to");
+      }
+    }
+
+    @Test
+    void hasFSPosSetToFactBeforeErrorOccured() {
+      Fact f1 = Fact.builder().ns("test").type("test").build("");
+      Fact f2 = Fact.builder().ns("test").type("test").build("");
+      Fact f3 = Fact.builder().ns("test").type("test").meta("pleaseThrow", "").build("");
+      Fact f4 = Fact.builder().ns("test").type("test").build("");
+
+      ArrayList<Fact> facts = Lists.newArrayList(f1, f2, f3, f4);
+
+      FSAProjection projection = new FSAProjection();
+      ProjectorImpl<Projection> uut = new ProjectorImpl<>(projection, eventSerializer);
+      assertThatThrownBy(
+              () -> {
+                uut.apply(facts);
+              })
+          .isInstanceOf(Exception.class);
+
+      Assertions.assertThat(projection.factStreamPosition()).isEqualTo(FactStreamPosition.from(f2));
+    }
+
+    @Test
+    void hasFSPosSetOnEveryApply() {
+      Fact f1 = Fact.builder().ns("test").type("test").build("");
+      Fact f2 = Fact.builder().ns("test").type("test").build("");
+      Fact f3 = Fact.builder().ns("test").type("test").build("");
+      Fact f4 = Fact.builder().ns("test").type("test").build("");
+
+      ArrayList<Fact> facts = Lists.newArrayList(f1, f2, f3, f4);
+
+      FSAProjection projection = spy(new FSAProjection());
+      ProjectorImpl<Projection> uut = new ProjectorImpl<>(projection, eventSerializer);
+      uut.apply(facts);
+
+      verify(projection, times(4)).factStreamPosition(any());
+    }
   }
 }

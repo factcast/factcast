@@ -37,7 +37,6 @@ description: Properties you can use to configure FactCast
 | factcast.store.factNotificationMaxRoundTripLatencyInMillis   | When FactCast did not receive any notifications after factNotificationBlockingWaitTimeInMillis milliseconds it validates the health of the database connection. For this purpose it sends an internal notification to the database and waits for the given time to receive back an answer. If the time is exceeded the database connection is renewed. Minimum value is 50.                                                                         | 200                                      |
 | factcast.store.factNotificationNewConnectionWaitTimeInMillis | how much time to wait between invalidating and acquiring a new connection. note: This parameter is only applied in the part of FactCast which deals with receiving and forwarding database notifications. Minimum value is 10.                                                                                                                                                                                                                      | 100                                      |
 | factcast.store.page-size                                     | How many Facts to fetch from the database in one go. Higher values mean more memory usage. Must be positive.                                                                                                                                                                                                                                                                                                                                        | 50                                       |
-| factcast.store.catchup-strategy                              | FETCHING uses database cursors where PAGED uses separate queries on TEMPORARY tables. FETCHING tends to be faster.                                                                                                                                                                                                                                                                                                                                  | FETCHING                                 |
 | factcast.store.indexCheckCron                                | Cron expression defining a routine check for index validity                                                                                                                                                                                                                                                                                                                                                                                         | `0 0 3 * * *` (3 am)                     |
 | factcast.store.tailIndexingEnabled                           | enable/ disable [tail indexing]({{< ref "tail-index.md">}})                                                                                                                                                                                                                                                                                                                                                                                         | false                                    |
 | factcast.store.tailManagementCron                            | cron schedule when tail rotation should be carried out                                                                                                                                                                                                                                                                                                                                                                                              | <nobr>`0 0 0 * * *`</nobr> (at midnight) |
@@ -54,17 +53,20 @@ description: Properties you can use to configure FactCast
 
 ### Snapshots
 
-| Property                                  | Description                                                                                          | Default                                  |
-| ----------------------------------------- | :--------------------------------------------------------------------------------------------------- | :--------------------------------------- |
-| factcast.store.deleteSnapshotStaleForDays | min number of days a snapshot is kept even though it is not read anymore. Must be a positive number. | 90                                       |
-| factcast.store.snapshotCacheCompactCron   | defines the cron schedule for compacting the snapshot cache                                          | <nobr>`0 0 0 * * *`</nobr> (at midnight) |
-
-### RedisSnapshots
+#### RedisSnapshots
 
 | Property                                  | Description                                                                                                                                                                                              | Default          |
 | ----------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------- |
 | factcast.redis.deleteSnapshotStaleForDays | min number of days a snapshot is kept even though it is not read anymore. Must be a positive number.                                                                                                     | 90               |
 | factcast.redis.snapshotCacheRedissonCodec | optional configuration of the codec used for serializing objects from and into the snapshot. When set to <nobr>`RedissonDefault`</nobr> no codec is specified and Redisson will use its current default. | MarshallingCodec |
+
+#### LocalSnapshots
+
+##### InMem-Snapshots
+
+| Property                                      | Description                                                                                          | Default |
+| --------------------------------------------- | :--------------------------------------------------------------------------------------------------- | :------ |
+| factcast.local.mem.deleteSnapshotStaleForDays | min number of days a snapshot is kept even though it is not read anymore. Must be a positive number. | 90      |
 
 ---
 
