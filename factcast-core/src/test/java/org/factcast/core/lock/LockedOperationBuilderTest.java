@@ -27,8 +27,8 @@ import org.junit.jupiter.api.Test;
 
 class LockedOperationBuilderTest {
 
-  final DeprecatedLockedOperationBuilder uut =
-      new DeprecatedLockedOperationBuilder(mock(FactStore.class), "ns");
+  final MultiAggregateLockedOperationBuilder uut =
+      new MultiAggregateLockedOperationBuilder(mock(FactStore.class), "ns");
 
   @Test
   void testAttemptAbortsOnNull() {
