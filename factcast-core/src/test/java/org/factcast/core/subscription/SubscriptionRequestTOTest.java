@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Collections;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.spec.FilterScript;
 import org.junit.jupiter.api.*;
 
 @SuppressWarnings("deprecation")
@@ -70,7 +71,7 @@ public class SubscriptionRequestTOTest {
     assertFalse(uut.hasAnyScriptFilters());
     uut.addSpecs(
         Collections.singletonList(
-            FactSpec.ns("buh").jsFilterScript("function (h,e){ return true }")));
+            FactSpec.ns("buh").filterScript(FilterScript.js("function (h,e){ return true }"))));
     assertTrue(uut.hasAnyScriptFilters());
   }
 
@@ -115,8 +116,8 @@ public class SubscriptionRequestTOTest {
     SubscriptionRequestTO uut = SubscriptionRequestTO.from(r);
     assertEquals(1, uut.specs().size());
     final String js = "function (h,e){ return true }";
-    uut.addSpecs(Collections.singletonList(FactSpec.ns("buh").jsFilterScript(js)));
+    uut.addSpecs(Collections.singletonList(FactSpec.ns("buh").filterScript(FilterScript.js(js))));
     assertEquals(2, uut.specs().size());
-    assertEquals(js, uut.specs().get(1).jsFilterScript());
+    assertEquals(js, uut.specs().get(1).filterScript().source());
   }
 }

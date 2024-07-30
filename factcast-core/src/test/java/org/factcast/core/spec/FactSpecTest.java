@@ -18,7 +18,6 @@ package org.factcast.core.spec;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -79,8 +78,8 @@ class FactSpecTest {
   @Test
   void testFactSpecJsFilter() {
     FactSpec ns = FactSpec.ns("x");
-    ns = ns.jsFilterScript("foo");
-    String script = ns.jsFilterScript();
+    ns = ns.filterScript(FilterScript.js("foo"));
+    String script = ns.filterScript().source();
     assertEquals("foo", script);
   }
 
@@ -93,23 +92,12 @@ class FactSpecTest {
   }
 
   @Test
-  void testJsFilterScriptDeserDownwardCompatibility() {
-    String script = "foo";
-    String json = "{\"ns\":\"x\",\"jsFilterScript\":\"" + script + "\"}";
-
-    FactSpec spec = FactCastJson.readValue(FactSpec.class, json);
-
-    assertEquals(new FilterScript("js", script), spec.filterScript());
-  }
-
-  @Test
   void testJsFilterScriptDeserRemoved() {
     String script = "foo";
     String json = "{\"ns\":\"x\",\"jsFilterScript\":\"" + script + "\"}";
 
     FactSpec spec = FactCastJson.readValue(FactSpec.class, json);
     spec.filterScript(null);
-    assertNull(spec.jsFilterScript());
     assertNull(spec.filterScript());
   }
 
@@ -122,21 +110,10 @@ class FactSpecTest {
             + "\"}}";
 
     FactSpec spec = FactCastJson.readValue(FactSpec.class, json);
-    assertEquals(script, spec.jsFilterScript());
     assertEquals(FilterScript.js(script), spec.filterScript());
 
     spec.filterScript(null);
-    assertNull(spec.jsFilterScript());
     assertNull(spec.filterScript());
-  }
-
-  @Test
-  void testJsFilterScriptSerDownwardCompatibility() {
-    String expected = "foo";
-    FactSpec fs = FactSpec.ns("x").filterScript(FilterScript.js("foo"));
-    ObjectNode node = FactCastJson.toObjectNode(FactCastJson.writeValueAsString(fs));
-
-    assertEquals(expected, node.get("jsFilterScript").asText());
   }
 
   @Specification(ns = "ns")
