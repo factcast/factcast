@@ -30,11 +30,11 @@ import org.factcast.factus.serializer.SnapshotSerializer;
 public class AggregateSnapshotRepositoryImpl extends AbstractSnapshotRepository
     implements AggregateSnapshotRepository {
 
-  private final SnapshotSerializerSupplier serializerSupplier;
+  private final SnapshotSerializerSelector serializerSupplier;
 
   public AggregateSnapshotRepositoryImpl(
       SnapshotCache snapshotCache,
-      SnapshotSerializerSupplier serializerSupplier,
+      SnapshotSerializerSelector serializerSupplier,
       FactusMetrics factusMetrics) {
     super(snapshotCache, factusMetrics);
     this.serializerSupplier = serializerSupplier;
@@ -46,7 +46,7 @@ public class AggregateSnapshotRepositoryImpl extends AbstractSnapshotRepository
 
     SnapshotId snapshotId =
         SnapshotId.of(
-            createKeyForType(type, () -> serializerSupplier.retrieveSerializer(type)), aggregateId);
+            createKeyForType(type, () -> serializerSupplier.selectSeralizerFor(type)), aggregateId);
 
     Optional<Snapshot> snapshot = snapshotCache.getSnapshot(snapshotId);
     recordSnapshotSize(snapshot, type);
@@ -58,7 +58,7 @@ public class AggregateSnapshotRepositoryImpl extends AbstractSnapshotRepository
 
     // this is done before going async for exception escalation reasons:
     Class<? extends Aggregate> type = aggregate.getClass();
-    SnapshotSerializer ser = serializerSupplier.retrieveSerializer(type);
+    SnapshotSerializer ser = serializerSupplier.selectSeralizerFor(type);
 
     // serialization needs to be sync, otherwise the underlying object might change during ser
     byte[] bytes = ser.serialize(aggregate);
