@@ -16,6 +16,8 @@
 package org.factcast.core.snap.local;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
 
 import com.google.common.io.Files;
 import java.io.*;
@@ -54,6 +56,30 @@ class SnapshotDiskRepositoryImplTest {
       // Get by the ID
       Optional<Snapshot> response = uut.findById(SnapshotId.of("key", UUID.randomUUID()));
       assertThat(response).isEmpty();
+    }
+
+    @Test
+    @SneakyThrows
+    void getExceptionOnSave() {
+      final Snapshot snap =
+          new Snapshot(
+              SnapshotId.of("key", UUID.randomUUID()), UUID.randomUUID(), "foo".getBytes(), false);
+      SnapshotDiskRepositoryImpl suut = spy(uut);
+      doThrow(new RuntimeException("mocked")).when(suut).triggerCleanup();
+
+      File tmp = Files.createTempDir();
+      tmp.deleteOnExit();
+
+      suut.doSave(snap, new File(tmp, "test"));
+    }
+
+    @Test
+    @SneakyThrows
+    void getExceptionOnDelete() {
+      File tmp = Files.createTempDir();
+      tmp.deleteOnExit();
+      new File(tmp, "test").createNewFile();
+      uut.doDelete(tmp);
     }
 
     @Test

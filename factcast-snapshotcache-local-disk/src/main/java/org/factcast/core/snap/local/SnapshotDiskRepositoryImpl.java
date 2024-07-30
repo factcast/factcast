@@ -149,7 +149,8 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
    * If the size of the new snapshot exceeds the 90% of configured max space, then we fetch the
    * oldest files and delete them until we are under the limit.
    */
-  private void triggerCleanup() {
+  @VisibleForTesting
+  protected void triggerCleanup() {
     if (needsCleanup()) CompletableFuture.runAsync(this::cleanup);
   }
 

@@ -101,5 +101,13 @@ class InMemoryAndDiskSnapshotCacheTest {
       verify(diskRepository, never()).save(snap);
       verify(diskRepository, times(1)).findById(id);
     }
+
+    @Test
+    void happyCase_exceptionFromDisk() {
+      when(diskRepository.findById(id)).thenThrow(new RuntimeException());
+
+      Optional<Snapshot> snapshot = underTest.getSnapshot(id);
+      assertThat(snapshot).isEmpty();
+    }
   }
 }
