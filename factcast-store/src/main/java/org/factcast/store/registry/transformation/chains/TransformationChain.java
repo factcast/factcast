@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.NonNull;
+import lombok.ToString;
 import lombok.Value;
 import org.factcast.store.registry.transformation.Transformation;
 import org.factcast.store.registry.transformation.TransformationKey;
@@ -35,7 +36,7 @@ public class TransformationChain implements Transformation {
 
   int toVersion;
 
-  @NonNull Optional<String> transformationCode;
+  @ToString.Exclude @NonNull Optional<String> transformationCode;
 
   public static TransformationChain of(
       @NonNull TransformationKey key, @NonNull List<Transformation> orderedListOfSteps, String id) {

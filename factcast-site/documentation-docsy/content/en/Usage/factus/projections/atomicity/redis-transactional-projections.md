@@ -26,8 +26,6 @@ The `bulkSize` is configurable per projection via the `@RedisTransactional` anno
 Working with a _Redis transactional projection_ you can read your own uncommitted write. For this reason, a _Redis transactional projection_ is best used for projections which
 need to access the projection's data during the handling of an event.
 
-If this is not necessary, you could also use a better performing alternative: [Redis batch projection]({{<ref "redis-batch-projection.md">}})
-
 ## Configuration
 
 In order to make use of redisson RTransaction support, the necessary dependency has to be included in your project:

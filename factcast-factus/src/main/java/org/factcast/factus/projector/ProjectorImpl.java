@@ -213,7 +213,9 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
                 @Nullable
                 @Override
                 public HandlerParameterProvider providerFor(
-                    @NonNull Class<?> type, @NonNull Set<Annotation> annotations) {
+                    @NonNull Class<?> type,
+                    @Nullable Type genericType,
+                    @NonNull Set<Annotation> annotations) {
                   if (clazz == type)
                     return (f, p) -> ((OpenTransactionAware<?>) p).runningTransaction();
                   else return null;

@@ -17,6 +17,7 @@ package org.factcast.factus.projection.parameter;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -33,6 +34,7 @@ public interface HandlerParameterTransformer
   static HandlerParameterTransformer forCalling(
       @NonNull Method m, HandlerParameterContributors handlerParameterContributors) {
     Class<?>[] parameterTypes = m.getParameterTypes();
+    Type[] genericParameterTypes = m.getGenericParameterTypes();
     List<Set<Annotation>> annotations =
         Arrays.stream(m.getParameterAnnotations())
             .map(aa -> new HashSet<>(Arrays.asList(aa)))
@@ -42,9 +44,10 @@ public interface HandlerParameterTransformer
     // select providers according to type & annotations
     for (int i = 0; i < parameterTypes.length; i++) {
       Class<?> type = parameterTypes[i];
+      Type genericType = genericParameterTypes[i];
       final int index = i;
       providers[i] =
-          chooseProvider(handlerParameterContributors, type, annotations.get(i))
+          chooseProvider(handlerParameterContributors, type, genericType, annotations.get(i))
               .orElseThrow(
                   () ->
                       new IllegalArgumentException(
@@ -68,9 +71,12 @@ public interface HandlerParameterTransformer
 
   @NonNull
   static Optional<HandlerParameterProvider> chooseProvider(
-      HandlerParameterContributors contributors, Class<?> type, Set<Annotation> annotation) {
+      HandlerParameterContributors contributors,
+      Class<?> type,
+      Type genericType,
+      Set<Annotation> annotation) {
     return contributors.stream()
-        .map(c -> c.providerFor(type, annotation))
+        .map(c -> c.providerFor(type, genericType, annotation))
         .filter(Objects::nonNull)
         .findFirst();
   }
