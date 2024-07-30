@@ -27,8 +27,6 @@ import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.State;
 import org.factcast.core.store.StateToken;
@@ -42,7 +40,6 @@ import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
-import org.factcast.store.internal.snapcache.PgSnapshotCache;
 import org.factcast.store.registry.SchemaRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -68,7 +65,6 @@ class PgFactStoreTest {
   @Mock(strictness = Mock.Strictness.LENIENT)
   private @NonNull PgMetrics metrics;
 
-  @Mock private @NonNull PgSnapshotCache snapCache;
   @Mock private @NonNull TokenStore tokenStore;
   @Mock private StoreConfigurationProperties storeConfigurationProperties;
   @Mock SchemaRegistry schemaRegistry;
@@ -455,66 +451,6 @@ class PgFactStoreTest {
       when(jdbcTemplate.queryForObject(PgConstants.CURRENT_TIME_MILLIS, Long.class))
           .thenReturn(123L);
       assertThat(underTest.currentTime()).isEqualTo(123L);
-    }
-  }
-
-  @Nested
-  class WhenGettingSnapshot {
-    @Mock private @NonNull SnapshotId id;
-    @Mock private Snapshot snap;
-
-    @BeforeEach
-    void setup() {
-      configureMetricTimeSupplier();
-    }
-
-    @SneakyThrows
-    @Test
-    void unknown() {
-      when(snapCache.getSnapshot(id)).thenReturn(Optional.empty());
-      assertThat(underTest.getSnapshot(id)).isEmpty();
-    }
-
-    @SneakyThrows
-    @Test
-    void known() {
-      when(snapCache.getSnapshot(id)).thenReturn(Optional.of(snap));
-      assertThat(underTest.getSnapshot(id)).isNotEmpty().hasValue(snap);
-    }
-  }
-
-  @Nested
-  class WhenSettingSnapshot {
-    @Mock private Snapshot snap;
-
-    @BeforeEach
-    void setup() {
-      configureMetricTimeRunnable();
-    }
-
-    @SneakyThrows
-    @Test
-    void name() {
-      underTest.setSnapshot(snap);
-      verify(snapCache).setSnapshot(snap);
-    }
-  }
-
-  @Nested
-  class WhenClearingSnapshot {
-    @Mock private @NonNull SnapshotId id;
-
-    @BeforeEach
-    void setup() {
-      configureMetricTimeRunnable();
-    }
-
-    @SneakyThrows
-    @Test
-    void clear() {
-      underTest.clearSnapshot(id);
-      verify(snapCache).clearSnapshot(id);
-      ;
     }
   }
 }

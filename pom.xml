@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.7.10-SNAPSHOT</version>
+  <version>0.8.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>factcast</name>
   <description>factcast is a 'good enough' event store using PostgreSQL
@@ -34,6 +34,7 @@
     <module>factcast-bom</module>
     <module>factcast-test</module>
     <module>factcast-test-redis</module>
+    <module>factcast-test-dynamo</module>
     <module>factcast-internal-dep</module>
     <module>factcast-internal-dep-boot</module>
     <module>factcast-spring-boot-autoconfigure</module>
@@ -47,6 +48,7 @@
     <module>factcast-factus</module>
     <module>factcast-factus-redis</module>
     <module>factcast-factus-spring-tx</module>
+    <module>factcast-factus-dynamo</module>
     <module>factcast-server-grpc</module>
     <module>factcast-server-security</module>
     <module>factcast-server-ui</module>
@@ -56,6 +58,7 @@
     <module>factcast-schema-registry-cli</module>
     <module>factcast-schema-registry-maven-plugin</module>
     <module>factcast-snapshotcache-redisson</module>
+    <module>factcast-snapshotcache-local-memory</module>
   </modules>
   <scm>
     <connection>scm:git:git@github.com:factcast/factcast.git</connection>
@@ -109,7 +112,8 @@
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <kotest.version>5.8.0</kotest.version>
     <mockk.version>1.13.12</mockk.version>
-    <redisson.version>3.28.0</redisson.version>
+    <redisson.version>3.33.0</redisson.version>
+    <aws-sdk.version>2.24.10</aws-sdk.version>
     <graaljs.version>24.0.1</graaljs.version>
     <shedlock.version>5.14.0</shedlock.version>
     <byte-buddy.version>1.14.18</byte-buddy.version>
@@ -401,7 +405,7 @@
         <configuration>
           <excludes>
             <exclude>**/*Configuration.*</exclude>
-            <exclude>**/*ConfigurationProperties.*</exclude>
+            <exclude>**/*Properties.*</exclude>
             <exclude>**/org/factcast/example/**/*</exclude>
             <exclude>**/org/factcast/example/*</exclude>
             <exclude>**/org/factcast/grpc/api/gen/**</exclude>
