@@ -22,8 +22,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.snap.local.InMemorySnapshotCache;
+import org.factcast.core.snap.local.InMemorySnapshotProperties;
 import org.factcast.factus.serializer.JacksonSnapshotSerializer;
 import org.factcast.factus.serializer.SnapshotSerializer;
+import org.factcast.factus.snapshot.SnapshotCache;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.actuate.autoconfigure.metrics.CompositeMeterRegistryAutoConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -49,6 +52,11 @@ public class TestFactusApplication {
     mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     return new JacksonSnapshotSerializer(mapper);
+  }
+
+  @Bean
+  public SnapshotCache snapshotCache() {
+    return new InMemorySnapshotCache(new InMemorySnapshotProperties());
   }
 
   @Bean

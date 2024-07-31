@@ -49,7 +49,7 @@ import org.factcast.factus.projector.ProjectorImpl.ReflectionTools;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings("deprecation")
+@SuppressWarnings({"deprecation", "java:S1186"})
 class ProjectorImplTest {
 
   private final DefaultEventSerializer eventSerializer =
@@ -520,7 +520,7 @@ class ProjectorImplTest {
     void applyFactWithoutSpecificVersion(Fact f) {}
   }
 
-  public static class HandlerMethdsWithAdditionalFilters {
+  public static class HandlerMethodsWithAdditionalFilters {
     @HandlerFor(ns = "ns", type = "type")
     @FilterByMeta(key = "foo", value = "bar")
     public void applyWithOneMeta(Fact f) {}
@@ -529,6 +529,24 @@ class ProjectorImplTest {
     @FilterByMeta(key = "foo", value = "bar")
     @FilterByMeta(key = "bar", value = "baz")
     public void applyWithMultiMeta(Fact f) {}
+
+    @HandlerFor(ns = "ns", type = "type")
+    @FilterByMetaExists("foo")
+    public void applyWithOneMetaExists(Fact f) {}
+
+    @HandlerFor(ns = "ns", type = "type")
+    @FilterByMetaExists("foo")
+    @FilterByMetaExists("bar")
+    public void applyWithMultiMetaExists(Fact f) {}
+
+    @HandlerFor(ns = "ns", type = "type")
+    @FilterByMetaDoesNotExist("foo")
+    public void applyWithOneMetaDoesNotExist(Fact f) {}
+
+    @HandlerFor(ns = "ns", type = "type")
+    @FilterByMetaDoesNotExist("foo")
+    @FilterByMetaDoesNotExist("bar")
+    public void applyWithMultiMetaDoesNotExist(Fact f) {}
 
     @HandlerFor(ns = "ns", type = "type")
     @FilterByAggId("1010a955-04a2-417b-9904-f92f88fdb67d")
@@ -541,9 +559,9 @@ class ProjectorImplTest {
 
   @SneakyThrows
   @Test
-  public void detectsSingleMeta() {
+  void detectsSingleMeta() {
     FactSpec spec = FactSpec.ns("ns");
-    Method m = HandlerMethdsWithAdditionalFilters.class.getMethod("applyWithOneMeta", Fact.class);
+    Method m = HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithOneMeta", Fact.class);
     ReflectionTools.addOptionalFilterInfo(m, spec);
 
     assertThat(spec.meta()).containsEntry("foo", "bar").hasSize(1);
@@ -553,7 +571,8 @@ class ProjectorImplTest {
   @Test
   void detectsMultiMeta() {
     FactSpec spec = FactSpec.ns("ns");
-    Method m = HandlerMethdsWithAdditionalFilters.class.getMethod("applyWithMultiMeta", Fact.class);
+    Method m =
+        HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithMultiMeta", Fact.class);
     ReflectionTools.addOptionalFilterInfo(m, spec);
 
     assertThat(spec.meta()).containsEntry("foo", "bar").containsEntry("bar", "baz").hasSize(2);
@@ -563,7 +582,7 @@ class ProjectorImplTest {
   @Test
   void detectsAggId() {
     FactSpec spec = FactSpec.ns("ns");
-    Method m = HandlerMethdsWithAdditionalFilters.class.getMethod("applyWithAggId", Fact.class);
+    Method m = HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithAggId", Fact.class);
     ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
 
     assertThat(spec.aggId()).isEqualTo(UUID.fromString("1010a955-04a2-417b-9904-f92f88fdb67d"));
@@ -571,10 +590,60 @@ class ProjectorImplTest {
 
   @SneakyThrows
   @Test
+  void detectsMetaExists() {
+    FactSpec spec = FactSpec.ns("ns");
+    Method m =
+        HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithOneMetaExists", Fact.class);
+    ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
+
+    Assertions.assertThat(spec.metaKeyExists()).hasSize(1).containsEntry("foo", Boolean.TRUE);
+  }
+
+  @SneakyThrows
+  @Test
+  void detectsMultipleMetaExists() {
+    FactSpec spec = FactSpec.ns("ns");
+    Method m =
+        HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithMultiMetaExists", Fact.class);
+    ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
+    Assertions.assertThat(spec.metaKeyExists())
+        .hasSize(2)
+        .containsEntry("foo", Boolean.TRUE)
+        .containsEntry("bar", Boolean.TRUE);
+  }
+
+  @SneakyThrows
+  @Test
+  void detectsMetaDoesNotExist() {
+    FactSpec spec = FactSpec.ns("ns");
+    Method m =
+        HandlerMethodsWithAdditionalFilters.class.getMethod(
+            "applyWithOneMetaDoesNotExist", Fact.class);
+    ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
+    Assertions.assertThat(spec.metaKeyExists()).hasSize(1).containsEntry("foo", Boolean.FALSE);
+  }
+
+  @SneakyThrows
+  @Test
+  void detectsMultipleMetaDoesNotExist() {
+    FactSpec spec = FactSpec.ns("ns");
+    Method m =
+        HandlerMethodsWithAdditionalFilters.class.getMethod(
+            "applyWithMultiMetaDoesNotExist", Fact.class);
+    ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
+
+    Assertions.assertThat(spec.metaKeyExists())
+        .hasSize(2)
+        .containsEntry("foo", Boolean.FALSE)
+        .containsEntry("bar", Boolean.FALSE);
+  }
+
+  @SneakyThrows
+  @Test
   void detectsFilterScript() {
     FactSpec spec = FactSpec.ns("ns");
     Method m =
-        HandlerMethdsWithAdditionalFilters.class.getMethod("applyWithFilterScript", Fact.class);
+        HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithFilterScript", Fact.class);
     ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
 
     assertThat(spec.filterScript())

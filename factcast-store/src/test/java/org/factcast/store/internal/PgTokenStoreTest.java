@@ -52,14 +52,19 @@ public class PgTokenStoreTest extends AbstractTokenStoreTest {
     s.serialOfLastMatchingFact(99);
     List<FactSpec> specs =
         Arrays.asList(
-            FactSpec.ns("foo").aggId(new UUID(0, 1)), FactSpec.ns("bar").type("someType"));
+            FactSpec.ns("foo").aggId(new UUID(0, 1)),
+            FactSpec.ns("bar")
+                .type("someType")
+                .meta("foo", "bar")
+                .metaExists("mustExist")
+                .metaDoesNotExist("mustNotExist"));
     s.specs(specs);
 
     String json = FactCastJson.writeValueAsString(s);
 
     Assertions.assertThat(json)
         .isEqualTo(
-            "{\"specs\":[{\"ns\":\"foo\",\"type\":null,\"version\":0,\"aggId\":\"00000000-0000-0000-0000-000000000001\",\"meta\":{},\"filterScript\":null},{\"ns\":\"bar\",\"type\":\"someType\",\"version\":0,\"aggId\":null,\"meta\":{},\"filterScript\":null}],\"serialOfLastMatchingFact\":99}");
+            "{\"specs\":[{\"ns\":\"foo\",\"type\":null,\"version\":0,\"aggId\":\"00000000-0000-0000-0000-000000000001\",\"meta\":{},\"metaKeyExists\":{},\"filterScript\":null},{\"ns\":\"bar\",\"type\":\"someType\",\"version\":0,\"aggId\":null,\"meta\":{\"foo\":\"bar\"},\"metaKeyExists\":{\"mustExist\":true,\"mustNotExist\":false},\"filterScript\":null}],\"serialOfLastMatchingFact\":99}");
   }
 
   @Test
