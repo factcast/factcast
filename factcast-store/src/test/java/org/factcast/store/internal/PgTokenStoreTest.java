@@ -59,7 +59,7 @@ public class PgTokenStoreTest extends AbstractTokenStoreTest {
 
     Assertions.assertThat(json)
         .isEqualTo(
-            "{\"specs\":[{\"ns\":\"foo\",\"type\":null,\"version\":0,\"aggId\":\"00000000-0000-0000-0000-000000000001\",\"meta\":{},\"jsFilterScript\":null,\"filterScript\":null},{\"ns\":\"bar\",\"type\":\"someType\",\"version\":0,\"aggId\":null,\"meta\":{},\"jsFilterScript\":null,\"filterScript\":null}],\"serialOfLastMatchingFact\":99}");
+            "{\"specs\":[{\"ns\":\"foo\",\"type\":null,\"version\":0,\"aggId\":\"00000000-0000-0000-0000-000000000001\",\"meta\":{},\"filterScript\":null},{\"ns\":\"bar\",\"type\":\"someType\",\"version\":0,\"aggId\":null,\"meta\":{},\"filterScript\":null}],\"serialOfLastMatchingFact\":99}");
   }
 
   @Test

@@ -37,6 +37,7 @@ import org.factcast.core.lock.ExceptionAfterPublish;
 import org.factcast.core.lock.PublishingResult;
 import org.factcast.core.lock.WithOptimisticLock.OptimisticRetriesExceededException;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.spec.FilterScript;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
@@ -393,7 +394,8 @@ public abstract class AbstractFactStoreTest {
                       + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
                   "{}"));
           FactSpec SCRIPTED =
-              FactSpec.ns("default").jsFilterScript("function (h,e){ return (h.hit=='me')}");
+              FactSpec.ns("default")
+                  .filterScript(FilterScript.js("function (h,e){ return (h.hit=='me')}"));
           uut.subscribe(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
               .awaitComplete();
           verify(observer).onFactStreamInfo(any());
@@ -424,7 +426,8 @@ public abstract class AbstractFactStoreTest {
                       + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
                   "{}"));
           FactSpec SCRIPTED =
-              FactSpec.ns("default").jsFilterScript("function (h){ return (h.hit=='me')}");
+              FactSpec.ns("default")
+                  .filterScript(FilterScript.js("function (h){ return (h.hit=='me')}"));
           uut.subscribe(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
               .awaitComplete();
           verify(observer).onFactStreamInfo(any());
@@ -454,7 +457,8 @@ public abstract class AbstractFactStoreTest {
                       + UUID.randomUUID()
                       + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
                   "{}"));
-          FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript("function (h){ return true }");
+          FactSpec SCRIPTED =
+              FactSpec.ns("default").filterScript(FilterScript.js("function (h){ return true }"));
           uut.subscribe(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
               .awaitComplete();
           verify(observer).onFactStreamInfo(any());
@@ -484,7 +488,8 @@ public abstract class AbstractFactStoreTest {
                       + UUID.randomUUID()
                       + "\",\"ns\":\"default\",\"type\":\"noone_knows\",\"meta\":{\"foo\":\"bar\"}}",
                   "{}"));
-          FactSpec SCRIPTED = FactSpec.ns("default").jsFilterScript("function (h){ return false }");
+          FactSpec SCRIPTED =
+              FactSpec.ns("default").filterScript(FilterScript.js("function (h){ return false }"));
           uut.subscribe(SubscriptionRequest.catchup(SCRIPTED).fromScratch(), observer)
               .awaitComplete();
           verify(observer, atLeastOnce()).flush();
