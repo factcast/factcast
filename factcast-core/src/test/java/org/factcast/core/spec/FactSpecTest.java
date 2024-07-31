@@ -15,7 +15,9 @@
  */
 package org.factcast.core.spec;
 
-import static org.assertj.core.api.AssertionsForInterfaceTypes.*;
+import static org.assertj.core.api.AssertionsForClassTypes.*;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Arrays;
@@ -23,7 +25,8 @@ import java.util.List;
 import java.util.UUID;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.event.Specification;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 class FactSpecTest {
 
@@ -51,6 +54,22 @@ class FactSpecTest {
   @Test
   void testFactSpecNs() {
     assertEquals("y", FactSpec.ns("x").ns("y").ns());
+  }
+
+  @Test
+  void testMetaKeyValue() {
+    assertThat(FactSpec.ns("foo").meta("k", "v").meta()).containsEntry("k", "v");
+  }
+
+  @Test
+  void testMetaExists() {
+    assertThat(FactSpec.ns("foo").metaExists("k").metaKeyExists()).containsEntry("k", Boolean.TRUE);
+  }
+
+  @Test
+  void testMetaDoesNotExist() {
+    assertThat(FactSpec.ns("foo").metaDoesNotExist("k").metaKeyExists())
+        .containsEntry("k", Boolean.FALSE);
   }
 
   @Test
