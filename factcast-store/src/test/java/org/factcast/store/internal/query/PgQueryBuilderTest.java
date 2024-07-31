@@ -15,7 +15,7 @@
  */
 package org.factcast.store.internal.query;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.sql.PreparedStatement;
@@ -70,11 +70,8 @@ class PgQueryBuilderTest {
       verify(ps).setString(++index, "{\"ns\": \"ns2\"}");
       verify(ps).setString(++index, "{\"type\": \"t2\"}");
       verify(ps).setString(++index, "{\"meta\":{\"foo\":\"bar\"}}");
-      verify(ps).setString(++index, "strict $.** ? (exists (@.\"meta\".\"e\"))");
-      verify(ps)
-          .setString(
-              ++index,
-              "strict $.** ? (exists (@.\"meta\".\"!e\"))"); // NOT is added in WHERE clause
+      verify(ps).setString(++index, "$.meta.e");
+      verify(ps).setString(++index, "$.meta.!e"); // NOT is added in WHERE clause
       // before
       // 3rd spec
       verify(ps).setString(++index, "{\"ns\": \"ns3\"}");
@@ -132,7 +129,7 @@ class PgQueryBuilderTest {
 
       assertThat(sql)
           .isEqualTo(
-              "SELECT ser, header, payload, header->>'id' AS id, header->>'aggIds' AS aggIds, header->>'ns' AS ns, header->>'type' AS type, header->>'version' AS version FROM fact WHERE ( (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND header @?? ?::jsonpath AND NOT header @?? ?::jsonpath) OR (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb) ) AND ser>? ORDER BY ser ASC");
+              "SELECT ser, header, payload, header->>'id' AS id, header->>'aggIds' AS aggIds, header->>'ns' AS ns, header->>'type' AS type, header->>'version' AS version FROM fact WHERE ( (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND jsonb_path_exists(header, ?::jsonpath) AND NOT jsonb_path_exists(header, ?::jsonpath)) OR (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb) ) AND ser>? ORDER BY ser ASC");
     }
   }
 

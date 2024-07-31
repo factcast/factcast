@@ -80,7 +80,7 @@ public class PgQueryBuilder {
   private int setMetaKeyExists(PreparedStatement p, int count, FactSpec spec) throws SQLException {
     Map<String, Boolean> meta = spec.metaKeyExists();
     for (Entry<String, Boolean> e : meta.entrySet()) {
-      String s = "strict $.** ? (exists (@.\"meta\".\"" + e.getKey() + "\"))";
+      String s = "$.meta." + e.getKey();
       p.setString(++count, s);
     }
     return count;
@@ -141,7 +141,7 @@ public class PgQueryBuilder {
               (key, value) ->
                   sb.append(" AND ")
                       .append(Boolean.TRUE.equals(value) ? "" : "NOT ")
-                      .append("header @?? ?::jsonpath"));
+                      .append("jsonb_path_exists(" + PgConstants.COLUMN_HEADER + ", ?::jsonpath)"));
           sb.append(")");
           predicates.add(sb.toString());
         });
