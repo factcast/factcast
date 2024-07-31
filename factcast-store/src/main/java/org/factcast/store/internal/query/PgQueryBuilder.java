@@ -80,7 +80,7 @@ public class PgQueryBuilder {
   private int setMetaKeyExists(PreparedStatement p, int count, FactSpec spec) throws SQLException {
     Map<String, Boolean> meta = spec.metaKeyExists();
     for (Entry<String, Boolean> e : meta.entrySet()) {
-      String s = "$.meta." + e.getKey();
+      String s = "$.\"meta\".\"" + e.getKey() + "\"";
       p.setString(++count, s);
     }
     return count;

@@ -70,8 +70,8 @@ class PgQueryBuilderTest {
       verify(ps).setString(++index, "{\"ns\": \"ns2\"}");
       verify(ps).setString(++index, "{\"type\": \"t2\"}");
       verify(ps).setString(++index, "{\"meta\":{\"foo\":\"bar\"}}");
-      verify(ps).setString(++index, "$.meta.e");
-      verify(ps).setString(++index, "$.meta.!e"); // NOT is added in WHERE clause
+      verify(ps).setString(++index, "$.\"meta\".\"e\"");
+      verify(ps).setString(++index, "$.\"meta\".\"!e\""); // NOT is added in WHERE clause
       // before
       // 3rd spec
       verify(ps).setString(++index, "{\"ns\": \"ns3\"}");
