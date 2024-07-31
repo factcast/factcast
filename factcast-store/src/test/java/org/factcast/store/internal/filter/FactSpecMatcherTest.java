@@ -24,6 +24,7 @@ import org.factcast.core.Fact;
 import org.factcast.core.TestFact;
 import org.factcast.core.TestHelper;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.spec.FilterScript;
 import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.script.graaljs.GraalJSEngineFactory;
 import org.junit.jupiter.api.Test;
@@ -38,11 +39,12 @@ class FactSpecMatcherTest {
     assertTrue(scriptMatch(FactSpec.ns("default"), new TestFact()));
     assertFalse(
         scriptMatch(
-            FactSpec.ns("default").jsFilterScript("function (h,e){ return false }"),
+            FactSpec.ns("default").filterScript(FilterScript.js("function (h,e){ return false }")),
             new TestFact()));
     assertTrue(
         scriptMatch(
-            FactSpec.ns("default").jsFilterScript("function (h,e){ return h.meta.x=='y' }"),
+            FactSpec.ns("default")
+                .filterScript(FilterScript.js("function (h,e){ return h.meta.x=='y' }")),
             new TestFact().meta("x", "y")));
   }
 
@@ -53,7 +55,8 @@ class FactSpecMatcherTest {
   @Test
   void testMatchesByScript() {
     String script = "function (h,p) { return p.test == 1 }";
-    Predicate<Fact> p = FactSpecMatcher.matches(FactSpec.ns("1").jsFilterScript(script), ef);
+    Predicate<Fact> p =
+        FactSpecMatcher.matches(FactSpec.ns("1").filterScript(FilterScript.js(script)), ef);
     assertTrue(p.test(new TestFact().ns("1").jsonPayload("{\"test\":1}")));
     assertFalse(p.test(new TestFact().ns("1").jsonPayload("{\"test\":2}")));
     assertFalse(p.test(new TestFact().ns("1")));
