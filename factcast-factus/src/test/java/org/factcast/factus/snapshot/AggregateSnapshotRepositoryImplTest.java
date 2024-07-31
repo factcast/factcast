@@ -45,7 +45,7 @@ class AggregateSnapshotRepositoryImplTest {
 
   @Mock private SnapshotCache snap;
 
-  @Mock private SnapshotSerializerSupplier snapshotSerializerSupplier;
+  @Mock private SnapshotSerializerSelector snapshotSerializerSupplier;
 
   @Mock private SnapshotSerializer snapshotSerializer;
   @Mock private FactusMetrics factusMetrics;
@@ -61,7 +61,7 @@ class AggregateSnapshotRepositoryImplTest {
 
     @BeforeEach
     void setup() {
-      when(snapshotSerializerSupplier.retrieveSerializer(any())).thenReturn(snapshotSerializer);
+      when(snapshotSerializerSupplier.selectSeralizerFor(any())).thenReturn(snapshotSerializer);
     }
 
     @Test
@@ -153,12 +153,12 @@ class AggregateSnapshotRepositoryImplTest {
     @Test
     void createsKeyIncludingSerialVersionUid() {
       when(snapshotSerializer.getId()).thenReturn("narf");
-      when(snapshotSerializerSupplier.retrieveSerializer(any())).thenReturn(snapshotSerializer);
+      when(snapshotSerializerSupplier.selectSeralizerFor(any())).thenReturn(snapshotSerializer);
 
       String with =
           underTest.createKeyForType(
               WithAnnotation.class,
-              () -> snapshotSerializerSupplier.retrieveSerializer(WithAnnotation.class));
+              () -> snapshotSerializerSupplier.selectSeralizerFor(WithAnnotation.class));
 
       assertThat(with)
           .isEqualTo(
@@ -177,7 +177,7 @@ class AggregateSnapshotRepositoryImplTest {
     @Test
     void put() {
       // INIT
-      when(snapshotSerializerSupplier.retrieveSerializer(any())).thenReturn(snapshotSerializer);
+      when(snapshotSerializerSupplier.selectSeralizerFor(any())).thenReturn(snapshotSerializer);
 
       when(snapshotSerializer.serialize(aggregate)).thenReturn("foo".getBytes());
       when(snapshotSerializer.includesCompression()).thenReturn(true);
@@ -191,7 +191,7 @@ class AggregateSnapshotRepositoryImplTest {
       // ASSERT
       assertThat(result).succeedsWithin(Duration.ofSeconds(5));
 
-      verify(snapshotSerializerSupplier).retrieveSerializer(any());
+      verify(snapshotSerializerSupplier).selectSeralizerFor(any());
 
       verify(snap).setSnapshot(snapshotCaptor.capture());
 
