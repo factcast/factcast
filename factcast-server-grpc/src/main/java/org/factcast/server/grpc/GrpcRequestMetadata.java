@@ -23,8 +23,11 @@ import java.util.stream.*;
 import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+import org.factcast.grpc.api.GrpcConstants;
 import org.factcast.grpc.api.Headers;
 
+@Slf4j
 public class GrpcRequestMetadata {
 
   public static final String UNKNOWN = "unknown";
@@ -32,15 +35,33 @@ public class GrpcRequestMetadata {
   @Setter(AccessLevel.PROTECTED)
   Metadata headers;
 
-  OptionalInt catchupBatch() {
+  int clientMaxInboundMessageSize() {
 
     Preconditions.checkNotNull(
         headers, "GrpcRequestMetadata has not been provided with headers via Interceptor");
 
-    return Stream.of(headers.get(Headers.CATCHUP_BATCHSIZE))
-        .filter(Objects::nonNull)
-        .mapToInt(Integer::parseInt)
-        .findFirst();
+    int requested =
+        Stream.of(headers.get(Headers.CLIENT_MAX_INBOUND_MESSAGE_SIZE))
+            .filter(Objects::nonNull)
+            .mapToInt(Integer::parseInt)
+            .findFirst()
+            .orElse(GrpcConstants.DEFAULT_CLIENT_INBOUND_MESSAGE_SIZE);
+
+    if (requested > GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE) {
+      log.warn(
+          "maxMsgSize requested from client exceeds {}. Limiting it to upper bound.",
+          GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE);
+    }
+
+    if (requested < GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE) {
+      log.warn(
+          "maxMsgSize requested from client is smaller than {}, Limiting it to lower bound.",
+          GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE);
+    }
+
+    return Math.max(
+        GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE,
+        Math.min(requested, GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE));
   }
 
   boolean supportsFastForward() {
@@ -49,9 +70,16 @@ public class GrpcRequestMetadata {
 
   @VisibleForTesting
   public static GrpcRequestMetadata forTest() {
+    return forTest(1024 * 1024L);
+  }
+
+  @VisibleForTesting
+  public static GrpcRequestMetadata forTest(long maxInboundMessageSize) {
     GrpcRequestMetadata grpcRequestMetadata = new GrpcRequestMetadata();
     grpcRequestMetadata.headers = new Metadata();
     grpcRequestMetadata.headers.put(Headers.FAST_FORWARD, "true");
+    grpcRequestMetadata.headers.put(
+        Headers.CLIENT_MAX_INBOUND_MESSAGE_SIZE, String.valueOf(maxInboundMessageSize));
     return grpcRequestMetadata;
   }
 

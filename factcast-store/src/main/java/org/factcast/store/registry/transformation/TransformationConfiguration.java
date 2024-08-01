@@ -86,8 +86,9 @@ public class TransformationConfiguration {
       TransformationChains chains,
       Transformer trans,
       TransformationCache cache,
-      RegistryMetrics registryMetrics) {
-    return new FactTransformerServiceImpl(chains, trans, cache, registryMetrics);
+      RegistryMetrics registryMetrics,
+      StoreConfigurationProperties props) {
+    return new FactTransformerServiceImpl(chains, trans, cache, registryMetrics, props);
   }
 
   @Bean

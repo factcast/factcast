@@ -15,7 +15,6 @@
  */
 package org.factcast.spring.boot.autoconfigure.server.grpc;
 
-import lombok.Generated;
 import org.factcast.server.grpc.FactStoreGrpcService;
 import org.factcast.server.grpc.codec.SnappyGrpcServerCodec;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -31,7 +30,6 @@ import org.xerial.snappy.SnappyOutputStream;
  */
 @SuppressWarnings("DeprecatedIsStillUsed")
 @Deprecated
-@Generated
 @AutoConfiguration
 @ConditionalOnClass({
   FactStoreGrpcService.class,

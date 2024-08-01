@@ -22,13 +22,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.snap.local.InMemorySnapshotCache;
+import org.factcast.core.snap.local.InMemorySnapshotProperties;
 import org.factcast.factus.serializer.JacksonSnapshotSerializer;
 import org.factcast.factus.serializer.SnapshotSerializer;
+import org.factcast.factus.snapshot.SnapshotCache;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.actuate.autoconfigure.metrics.CompositeMeterRegistryAutoConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 
 @SuppressWarnings("ALL")
 @SpringBootApplication
@@ -51,6 +55,12 @@ public class TestFactusApplication {
   }
 
   @Bean
+  public SnapshotCache snapshotCache() {
+    return new InMemorySnapshotCache(new InMemorySnapshotProperties());
+  }
+
+  @Bean
+  @Primary
   public MeterRegistry meterRegistry() {
     return new SimpleMeterRegistry();
   }

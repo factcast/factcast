@@ -46,8 +46,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.factcast.core.Fact;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.StateToken;
@@ -89,7 +87,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 @SuppressWarnings("all")
 public class FactStoreGrpcService extends RemoteFactStoreImplBase implements InitializingBean {
 
-  public static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 4, 0);
+  public static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 5, 0);
 
   static final AtomicLong subscriptionIdStore = new AtomicLong();
 
@@ -181,10 +179,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
       resetDebugInfo(req, grpcRequestMetadata);
       BlockingStreamObserver<MSG_Notification> resp =
-          new BlockingStreamObserver<>(
-              req.toString(),
-              (ServerCallStreamObserver) responseObserver,
-              grpcRequestMetadata.catchupBatch().orElse(1));
+          new BlockingStreamObserver<>(req.toString(), (ServerCallStreamObserver) responseObserver);
 
       AtomicReference<Subscription> subRef = new AtomicReference();
 
@@ -432,7 +427,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
     initialize(responseObserver);
 
     StateForRequest req = converter.fromProto(request);
-    String ns = req.ns(); // TODO is this gets null, we're screwed
+    String ns = req.ns(); // TODO if this becomes null, we're screwed
     assertCanRead(ns);
     StateToken token =
         store.stateFor(
@@ -602,50 +597,6 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
       throw new StatusRuntimeException(Status.PERMISSION_DENIED, new Metadata());
     }
     return (FactCastUser) authentication;
-  }
-
-  @Override
-  @Secured(FactCastAuthority.AUTHENTICATED)
-  public void clearSnapshot(MSG_SnapshotId request, StreamObserver<MSG_Empty> responseObserver) {
-    initialize(responseObserver);
-
-    store.clearSnapshot(converter.fromProto(request));
-    responseObserver.onNext(MSG_Empty.getDefaultInstance());
-    responseObserver.onCompleted();
-  }
-
-  @Override
-  @Secured(FactCastAuthority.AUTHENTICATED)
-  public void getSnapshot(
-      MSG_SnapshotId request, StreamObserver<MSG_OptionalSnapshot> responseObserver) {
-    initialize(responseObserver);
-
-    SnapshotId id = converter.fromProto(request);
-
-    Optional<Snapshot> snapshot = store.getSnapshot(id);
-
-    if (snapshot.isPresent() && !snapshot.get().compressed()) {
-      enableResponseCompression(responseObserver);
-    }
-
-    responseObserver.onNext(converter.toProtoSnapshot(snapshot));
-    responseObserver.onCompleted();
-  }
-
-  @Override
-  @Secured(FactCastAuthority.AUTHENTICATED)
-  public void setSnapshot(MSG_Snapshot request, StreamObserver<MSG_Empty> responseObserver) {
-    initialize(responseObserver);
-
-    SnapshotId id = converter.fromProto(request.getId());
-    UUID state = converter.fromProto(request.getFactId());
-    byte[] bytes = converter.fromProto(request.getData());
-    boolean compressed = request.getCompressed();
-
-    store.setSnapshot(new Snapshot(id, state, bytes, compressed));
-
-    responseObserver.onNext(MSG_Empty.getDefaultInstance());
-    responseObserver.onCompleted();
   }
 
   @Override

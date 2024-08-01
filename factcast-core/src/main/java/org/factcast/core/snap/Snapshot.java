@@ -20,6 +20,10 @@ import java.util.UUID;
 import lombok.NonNull;
 import lombok.Value;
 
+/**
+ * This belongs to factus however we have clients out there that already have serialized versions of
+ * it with this package.
+ */
 @Value
 public class Snapshot implements Serializable {
   @NonNull SnapshotId id;

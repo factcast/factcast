@@ -29,7 +29,6 @@ import org.springframework.context.annotation.Bean;
  * Configures optional LZ4 Codec
  *
  * @author uwe.schaefer@prisma-capacity.eu
- * @deprecated in 0.8
  */
 @SuppressWarnings({"DeprecatedIsStillUsed"})
 @AutoConfiguration

@@ -16,7 +16,9 @@
 package org.factcast.itests.factus.proj;
 
 import java.util.*;
+import javax.annotation.Nullable;
 import org.factcast.factus.Handler;
+import org.factcast.factus.Meta;
 import org.factcast.factus.projection.Projection;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
@@ -31,7 +33,7 @@ public interface UserNames extends Projection {
   }
 
   @Handler
-  default void apply(UserDeleted deleted) {
+  default void apply(UserDeleted deleted, @Nullable @Meta("signee") String signee) {
     userNames().remove(deleted.aggregateId());
   }
 

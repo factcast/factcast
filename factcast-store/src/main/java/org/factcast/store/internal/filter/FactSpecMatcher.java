@@ -16,9 +16,12 @@
 package org.factcast.store.internal.filter;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import java.util.*;
-import java.util.function.*;
-import java.util.stream.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import lombok.Generated;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -51,6 +54,8 @@ public final class FactSpecMatcher implements Predicate<Fact> {
 
   final JSEngine scriptEngine;
 
+  final Map<String, Boolean> metaKeyExists;
+
   public FactSpecMatcher(@NonNull FactSpec spec, @NonNull JSEngineFactory ef) {
     // opt: prevent method calls by prefetching to final fields.
     // yes, they might be inlined at some point, but making decisions based
@@ -62,6 +67,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     version = spec.version();
     aggId = spec.aggId();
     meta = spec.meta();
+    metaKeyExists = spec.metaKeyExists();
     script = spec.filterScript();
     scriptEngine = getEngine(script, ef);
   }
@@ -73,7 +79,9 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     match = match && versionMatch(t);
     match = match && aggIdMatch(t);
     match = match && metaMatch(t);
+    match = match && metaKeyExistsMatch(t);
     match = match && scriptMatch(t);
+
     return match;
   }
 
@@ -82,6 +90,19 @@ public final class FactSpecMatcher implements Predicate<Fact> {
       return true;
     }
     return meta.entrySet().stream().allMatch(e -> e.getValue().equals(t.meta(e.getKey())));
+  }
+
+  boolean metaKeyExistsMatch(Fact t) {
+    if ((metaKeyExists.isEmpty())) {
+      return true;
+    }
+    return metaKeyExists.entrySet().stream()
+        .allMatch(
+            e -> {
+              boolean mustExist = Objects.requireNonNull(e.getValue());
+              String metaValue = t.header().meta(e.getKey());
+              return (mustExist && metaValue != null) || (!mustExist && metaValue == null);
+            });
   }
 
   boolean nsMatch(Fact t) {

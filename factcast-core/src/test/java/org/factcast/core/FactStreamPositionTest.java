@@ -29,8 +29,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class FactStreamPositionTest {
 
-  private static final UUID FACT_ID = UUID.randomUUID();
-  private static final long SERIAL = 40;
   private Fact f;
 
   @Nested
@@ -72,7 +70,7 @@ class FactStreamPositionTest {
     }
 
     @Test
-    void wihoutSerial() {
+    void withoutSerial() {
       UUID id = UUID.randomUUID();
       FactStreamPosition actual = FactStreamPosition.withoutSerial(id);
 

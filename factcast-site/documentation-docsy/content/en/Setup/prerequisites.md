@@ -6,7 +6,7 @@ weight: 100
 
 ## Postgres
 
-In order to run the FactCast server, you have to provide a Postgres database at least in version 9.4.
+In order to run the FactCast server, you have to provide a Postgres database at least in version 15.
 The following example shows the configuration with one user.
 
 ```

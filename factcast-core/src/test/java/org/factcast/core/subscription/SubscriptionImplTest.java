@@ -294,10 +294,25 @@ class SubscriptionImplTest {
 
   @Test
   void notifyInfoSkipsIfClosed() throws TransformationException {
-    SubscriptionImpl on = SubscriptionImpl.on(obs);
+    uut = SubscriptionImpl.on(obs);
     @NonNull UUID id = UUID.randomUUID();
     FactStreamInfo fsi = new FactStreamInfo(1, 10);
+    uut.close();
     uut.notifyFactStreamInfo(fsi);
     verify(obs, never()).onFactStreamInfo(any());
+  }
+
+  @Test
+  void flushes() {
+
+    class TestObserver implements FactObserver {
+      @Override
+      public void onNext(@NonNull Fact element) {}
+    }
+
+    TestObserver mock = mock(TestObserver.class);
+    uut = SubscriptionImpl.on(mock);
+    uut.flush();
+    verify(mock).flush();
   }
 }

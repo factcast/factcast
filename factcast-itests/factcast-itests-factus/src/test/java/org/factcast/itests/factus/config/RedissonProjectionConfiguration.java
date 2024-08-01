@@ -15,7 +15,7 @@
  */
 package org.factcast.itests.factus.config;
 
-import org.factcast.itests.factus.proj.RedissonManagedUserNames;
+import org.factcast.itests.factus.proj.RedissonTxManagedUserNames;
 import org.factcast.itests.factus.proj.TxRedissonManagedUserNames;
 import org.factcast.itests.factus.proj.TxRedissonSubscribedUserNames;
 import org.redisson.api.RedissonClient;
@@ -25,8 +25,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RedissonProjectionConfiguration {
   @Bean
-  RedissonManagedUserNames redissonManagedUserNames(RedissonClient client) {
-    return new RedissonManagedUserNames(client);
+  RedissonTxManagedUserNames redissonManagedUserNames(RedissonClient client) {
+    return new RedissonTxManagedUserNames(client);
   }
 
   @Bean

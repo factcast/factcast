@@ -15,7 +15,6 @@
  */
 package org.factcast.spring.boot.autoconfigure.server.grpc;
 
-import lombok.Generated;
 import org.factcast.grpc.snappy.SnappycGrpcServerCodec;
 import org.factcast.server.grpc.FactStoreGrpcService;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -24,7 +23,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 
-@Generated
 @AutoConfiguration
 @ConditionalOnClass({FactStoreGrpcService.class, SnappycGrpcServerCodec.class})
 @AutoConfigureBefore(FactCastGrpcServerAutoConfiguration.class)

@@ -41,7 +41,7 @@ public class BlockingStreamObserverTest {
 
   @BeforeEach
   void setUp() {
-    uut = new BlockingStreamObserver<>("foo", delegate, 1);
+    uut = new BlockingStreamObserver<>("foo", delegate);
   }
 
   @Test
@@ -100,7 +100,7 @@ public class BlockingStreamObserverTest {
     CountDownLatch waitForDelegate = new CountDownLatch(1);
     CountDownLatch waitForOnNextToExit = new CountDownLatch(1);
     uut =
-        new BlockingStreamObserver<>("foo", delegate, 1) {
+        new BlockingStreamObserver<>("foo", delegate) {
           @Override
           void waitForDelegate() {
             waitForDelegate.countDown();

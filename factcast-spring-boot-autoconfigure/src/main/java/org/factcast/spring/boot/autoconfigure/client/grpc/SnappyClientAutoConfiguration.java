@@ -28,7 +28,6 @@ import org.xerial.snappy.SnappyOutputStream;
  * Configures optional Snappy Codec
  *
  * @author uwe.schaefer@prisma-capacity.eu
- * @deprecated in 0.8
  */
 @SuppressWarnings("DeprecatedIsStillUsed")
 @AutoConfiguration
