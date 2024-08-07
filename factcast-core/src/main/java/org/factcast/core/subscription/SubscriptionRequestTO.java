@@ -60,7 +60,7 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
   @JsonProperty String pid;
 
   public boolean hasAnyScriptFilters() {
-    return specs.stream().anyMatch(s -> s.jsFilterScript() != null);
+    return specs.stream().anyMatch(s -> s.filterScript() != null);
   }
 
   @Override
