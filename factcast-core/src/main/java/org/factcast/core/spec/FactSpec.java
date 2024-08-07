@@ -41,11 +41,22 @@ public class FactSpec {
 
   @JsonProperty UUID aggId = null;
 
-  @NonNull @JsonProperty final Map<String, String> meta = new HashMap<>();
+  @JsonProperty final Map<String, String> meta = new LinkedHashMap<>();
 
-  @Deprecated @JsonProperty String jsFilterScript = null;
+  /** expresses the mandatory existence or absence of a key. Needs stable order. */
+  @JsonProperty final Map<String, Boolean> metaKeyExists = new LinkedHashMap<>();
 
   @JsonProperty FilterScript filterScript = null;
+
+  public FactSpec metaExists(@NonNull String k) {
+    metaKeyExists.put(k, Boolean.TRUE);
+    return this;
+  }
+
+  public FactSpec metaDoesNotExist(@NonNull String k) {
+    metaKeyExists.put(k, Boolean.FALSE);
+    return this;
+  }
 
   public FactSpec meta(@NonNull String k, @NonNull String v) {
     meta.put(k, v);
@@ -69,36 +80,13 @@ public class FactSpec {
 
   public FilterScript filterScript() {
     if (filterScript != null) return filterScript;
-    else if (jsFilterScript != null) return new FilterScript("js", jsFilterScript);
     else return null;
   }
 
   @NonNull
   public FactSpec filterScript(FilterScript script) {
-    if (script != null) {
-      this.filterScript = script;
-      if ("js".equals(script.languageIdentifier())) jsFilterScript = script.source();
-    } else {
-      filterScript = null;
-      jsFilterScript = null;
-    }
-
+    this.filterScript = script;
     return this;
-  }
-
-  @NonNull
-  public FactSpec jsFilterScript(String script) {
-    if (script != null) filterScript(new FilterScript("js", script));
-    else filterScript(null);
-
-    return this;
-  }
-
-  public String jsFilterScript() {
-    if (filterScript != null && "js".equals(filterScript.languageIdentifier()))
-      return filterScript.source();
-    else if (filterScript == null && jsFilterScript != null) return jsFilterScript;
-    else return null;
   }
 
   @NonNull

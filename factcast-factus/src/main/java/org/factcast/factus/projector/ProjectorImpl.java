@@ -35,7 +35,10 @@ import org.factcast.factus.*;
 import org.factcast.factus.SuppressFactusWarnings.Warning;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.EventSerializer;
-import org.factcast.factus.projection.*;
+import org.factcast.factus.projection.Aggregate;
+import org.factcast.factus.projection.AggregateUtil;
+import org.factcast.factus.projection.FactStreamPositionAware;
+import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projection.parameter.HandlerParameterContributor;
 import org.factcast.factus.projection.parameter.HandlerParameterContributors;
 import org.factcast.factus.projection.parameter.HandlerParameterProvider;
@@ -424,21 +427,56 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
     @VisibleForTesting
     static FactSpec addOptionalFilterInfo(Method m, FactSpec spec) {
-      FilterByMetas attributes = m.getAnnotation(FilterByMetas.class);
-      if (attributes != null)
-        Arrays.stream(attributes.value()).forEach(a -> spec.meta(a.key(), a.value()));
+      FilterByMetas metas = m.getAnnotation(FilterByMetas.class);
+      if (metas != null) {
+        for (FilterByMeta meta : metas.value()) {
+          spec = addFilterByMeta(spec, meta);
+        }
+      }
+      FilterByMeta meta = m.getAnnotation(FilterByMeta.class);
+      if (meta != null) spec = addFilterByMeta(spec, meta);
 
-      FilterByMeta attribute = m.getAnnotation(FilterByMeta.class);
-      if (attribute != null) spec.meta(attribute.key(), attribute.value());
+      FilterByMetaExistsContainer existsContainer =
+          m.getAnnotation(FilterByMetaExistsContainer.class);
+      if (existsContainer != null) {
+        for (FilterByMetaExists exists : existsContainer.value()) {
+          spec = addFilterByMetaExists(spec, exists);
+        }
+      }
+      FilterByMetaExists exists = m.getAnnotation(FilterByMetaExists.class);
+      if (exists != null) spec = addFilterByMetaExists(spec, exists);
+
+      FilterByMetaDoesNotExistContainer doesNotExistContainer =
+          m.getAnnotation(FilterByMetaDoesNotExistContainer.class);
+      if (doesNotExistContainer != null) {
+        for (FilterByMetaDoesNotExist notExists : doesNotExistContainer.value()) {
+          spec = addFilterByMetaDoesNotExist(spec, notExists);
+        }
+      }
+      FilterByMetaDoesNotExist attribute = m.getAnnotation(FilterByMetaDoesNotExist.class);
+      if (attribute != null) spec = addFilterByMetaDoesNotExist(spec, attribute);
 
       FilterByAggId aggregateId = m.getAnnotation(FilterByAggId.class);
-      if (aggregateId != null) spec.aggId(UUID.fromString(aggregateId.value()));
+      if (aggregateId != null) spec = spec.aggId(UUID.fromString(aggregateId.value()));
 
       FilterByScript filterByScript = m.getAnnotation(FilterByScript.class);
       if (filterByScript != null)
-        spec.filterScript(org.factcast.core.spec.FilterScript.js(filterByScript.value()));
+        spec = spec.filterScript(org.factcast.core.spec.FilterScript.js(filterByScript.value()));
 
       return spec;
+    }
+
+    private static FactSpec addFilterByMetaDoesNotExist(
+        FactSpec spec, FilterByMetaDoesNotExist notExists) {
+      return spec.metaDoesNotExist(notExists.value());
+    }
+
+    private static FactSpec addFilterByMetaExists(FactSpec spec, FilterByMetaExists attribute) {
+      return spec.metaExists(attribute.value());
+    }
+
+    private static FactSpec addFilterByMeta(FactSpec spec, FilterByMeta attribute) {
+      return spec.meta(attribute.key(), attribute.value());
     }
 
     private static Collection<CallTarget> getRelevantClasses(Projection p) {
