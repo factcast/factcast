@@ -15,8 +15,10 @@
  */
 package org.factcast.spring.boot.autoconfigure.snap;
 
-import org.factcast.core.snap.local.InMemorySnapshotCache;
-import org.factcast.core.snap.local.InMemorySnapshotProperties;
+import org.factcast.core.snap.local.InMemoryAndDiskSnapshotCache;
+import org.factcast.core.snap.local.InMemoryAndDiskSnapshotProperties;
+import org.factcast.core.snap.local.SnapshotDiskRepository;
+import org.factcast.core.snap.local.SnapshotDiskRepositoryImpl;
 import org.factcast.factus.Factus;
 import org.factcast.factus.snapshot.SnapshotCache;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -28,16 +30,25 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 
 @AutoConfiguration
-@ConditionalOnClass({InMemorySnapshotCache.class, Factus.class})
+@ConditionalOnClass({InMemoryAndDiskSnapshotCache.class, Factus.class})
 @ConditionalOnMissingBean(SnapshotCache.class)
-@Import({InMemorySnapshotProperties.class})
-@AutoConfigureBefore(NoSnapshotCacheAutoConfiguration.class)
+@Import({InMemoryAndDiskSnapshotProperties.class})
+@AutoConfigureBefore({
+  NoSnapshotCacheAutoConfiguration.class,
+  InMemorySnapshotCacheAutoConfiguration.class
+})
 @AutoConfigureAfter(RedissonSnapshotCacheAutoConfiguration.class)
-public class InMemorySnapshotCacheAutoConfiguration {
+public class InMemoryAndDiskSnapshotCacheAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public SnapshotCache snapshotCache(InMemorySnapshotProperties props) {
-    return new InMemorySnapshotCache(props);
+  public SnapshotCache snapshotCache(SnapshotDiskRepository snapshotDiskRepository) {
+    return new InMemoryAndDiskSnapshotCache(snapshotDiskRepository);
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  public SnapshotDiskRepository snapshotDiskRepository(InMemoryAndDiskSnapshotProperties props) {
+    return new SnapshotDiskRepositoryImpl(props);
   }
 }

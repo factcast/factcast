@@ -53,20 +53,25 @@ description: Properties you can use to configure FactCast
 
 ### Snapshots
 
+#### InMem-Snapshots
+
+| Property                                               | Description                                                                                          | Default |
+| ------------------------------------------------------ | :--------------------------------------------------------------------------------------------------- | :------ |
+| factcast.snapshot.local.mem.deleteSnapshotStaleForDays | min number of days a snapshot is kept even though it is not read anymore. Must be a positive number. | 90      |
+
+#### InMemAndDisk-Snapshots
+
+| Property                                     | Description                                                                                                                                                                                           | Default        |
+| -------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------- |
+| factcast.snapshot.local.disk.pathToSnapshots | path to store the snapshots in the file system.                                                                                                                                                       | java.io.tmpdir |
+| factcast.snapshot.local.disk.maxDiskSpace    | max disk space to be used by the SnapshotDiskRepository. The oldest Snapshots will start to be removed after reaching 90% of the allocated space, never reaching 100%. Use 0 for unlimited disk space | 0              |
+
 #### RedisSnapshots
 
 | Property                                           | Description                                                                                                                                                                                              | Default          |
 | -------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------- |
 | factcast.snapshot.redis.deleteSnapshotStaleForDays | min number of days a snapshot is kept even though it is not read anymore. Must be a positive number.                                                                                                     | 90               |
 | factcast.snapshot.redis.snapshotCacheRedissonCodec | optional configuration of the codec used for serializing objects from and into the snapshot. When set to <nobr>`RedissonDefault`</nobr> no codec is specified and Redisson will use its current default. | MarshallingCodec |
-
-#### LocalSnapshots
-
-##### InMem-Snapshots
-
-| Property                                               | Description                                                                                          | Default |
-| ------------------------------------------------------ | :--------------------------------------------------------------------------------------------------- | :------ |
-| factcast.snapshot.local.mem.deleteSnapshotStaleForDays | min number of days a snapshot is kept even though it is not read anymore. Must be a positive number. | 90      |
 
 ---
 

@@ -51,6 +51,7 @@ import org.factcast.itests.factus.event.UserBored;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.*;
+import org.factcast.spring.boot.autoconfigure.snap.RedissonSnapshotCacheAutoConfiguration;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
@@ -61,7 +62,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 
 @ContextConfiguration(
-    classes = {TestFactusApplication.class, RedissonProjectionConfiguration.class})
+    classes = {
+      TestFactusApplication.class,
+      RedissonProjectionConfiguration.class,
+      RedissonSnapshotCacheAutoConfiguration.class
+    })
 @Slf4j
 class FactusClientTest extends AbstractFactCastIntegrationTest {
   private static final long WAIT_TIME_FOR_ASYNC_FACT_DELIVERY = 1000;
