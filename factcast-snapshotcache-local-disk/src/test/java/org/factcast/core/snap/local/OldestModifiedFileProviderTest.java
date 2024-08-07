@@ -20,15 +20,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.google.common.io.Files;
 import java.io.File;
-import java.io.IOException;
-import java.net.URI;
 import java.nio.file.*;
-import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import org.factcast.core.snap.local.OldestModifiedFileProvider.PathWithLastModifiedDate;
-import org.jetbrains.annotations.NotNull;
+import org.factcast.core.snap.local.utils.PathWithException;
 import org.junit.jupiter.api.Test;
 
 class OldestModifiedFileProviderTest {
@@ -150,150 +147,6 @@ class OldestModifiedFileProviderTest {
 
     fileWithDate = provider.get();
     assertThat(fileWithDate).isNull();
-  }
-
-  public static class PathWithException implements Path {
-    private String path = "path";
-
-    public PathWithException(String path) {
-      this.path = path;
-    }
-
-    @Override
-    @SneakyThrows
-    public @NotNull FileSystem getFileSystem() {
-      throw new IOException();
-    }
-
-    @Override
-    public boolean isAbsolute() {
-      return false;
-    }
-
-    @Override
-    public Path getRoot() {
-      return null;
-    }
-
-    @Override
-    public Path getFileName() {
-      return null;
-    }
-
-    @Override
-    public Path getParent() {
-      return null;
-    }
-
-    @Override
-    public int getNameCount() {
-      return 0;
-    }
-
-    @Override
-    public @NotNull Path getName(int index) {
-      return null;
-    }
-
-    @Override
-    public @NotNull Path subpath(int beginIndex, int endIndex) {
-      return null;
-    }
-
-    @Override
-    public boolean startsWith(@NotNull Path other) {
-      return false;
-    }
-
-    @Override
-    public boolean startsWith(@NotNull String other) {
-      return false;
-    }
-
-    @Override
-    public boolean endsWith(@NotNull Path other) {
-      return false;
-    }
-
-    @Override
-    public boolean endsWith(@NotNull String other) {
-      return false;
-    }
-
-    @Override
-    public @NotNull Path normalize() {
-      return null;
-    }
-
-    @Override
-    public @NotNull Path resolve(@NotNull Path other) {
-      return null;
-    }
-
-    @Override
-    public @NotNull Path resolve(@NotNull String other) {
-      return this;
-    }
-
-    @Override
-    public @NotNull Path resolveSibling(@NotNull Path other) {
-      return this;
-    }
-
-    @Override
-    public @NotNull Path resolveSibling(@NotNull String other) {
-      return this;
-    }
-
-    @Override
-    public @NotNull Path relativize(@NotNull Path other) {
-      return null;
-    }
-
-    @Override
-    public @NotNull URI toUri() {
-      return null;
-    }
-
-    @Override
-    public @NotNull Path toAbsolutePath() {
-      return null;
-    }
-
-    @Override
-    public @NotNull Path toRealPath(@NotNull LinkOption... options) throws IOException {
-      return null;
-    }
-
-    @Override
-    public @NotNull File toFile() {
-      return new File(path);
-    }
-
-    @Override
-    public @NotNull WatchKey register(
-        @NotNull WatchService watcher,
-        @NotNull WatchEvent.Kind<?>[] events,
-        WatchEvent.Modifier... modifiers)
-        throws IOException {
-      return null;
-    }
-
-    @Override
-    public @NotNull WatchKey register(
-        @NotNull WatchService watcher, @NotNull WatchEvent.Kind<?>... events) throws IOException {
-      return null;
-    }
-
-    @Override
-    public @NotNull Iterator<Path> iterator() {
-      return null;
-    }
-
-    @Override
-    public int compareTo(@NotNull Path other) {
-      return 0;
-    }
   }
   ;
 }

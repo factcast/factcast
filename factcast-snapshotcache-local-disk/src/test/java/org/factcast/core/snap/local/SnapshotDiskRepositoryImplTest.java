@@ -21,6 +21,7 @@ import static org.mockito.Mockito.spy;
 
 import com.google.common.io.Files;
 import java.io.*;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.SneakyThrows;
@@ -31,6 +32,7 @@ import org.factcast.core.snap.SnapshotId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.Captor;
 
 class SnapshotDiskRepositoryImplTest {
 
@@ -49,6 +51,12 @@ class SnapshotDiskRepositoryImplTest {
 
   @Nested
   class WhenCrud {
+    @Captor private LogCaptor logCaptor = LogCaptor.forClass(SnapshotDiskRepositoryImpl.class);
+
+    @BeforeEach
+    void setup() {
+      logCaptor.clearLogs();
+    }
 
     @Test
     @SneakyThrows
@@ -79,7 +87,13 @@ class SnapshotDiskRepositoryImplTest {
       File tmp = Files.createTempDir();
       tmp.deleteOnExit();
       new File(tmp, "test").createNewFile();
-      uut.doDelete(tmp);
+
+      uut.doDelete(tmp.toPath());
+
+      List<String> errorLogs = logCaptor.getErrorLogs();
+      assertThat(errorLogs).isNotEmpty();
+      assertThat(errorLogs).hasSize(1);
+      assertThat(errorLogs.get(0)).contains("Error deleting snapshot: " + tmp.toPath());
     }
 
     @Test
@@ -108,7 +122,6 @@ class SnapshotDiskRepositoryImplTest {
     @SneakyThrows
     void failureWhileGettingTriggersDelete() {
       SnapshotId id = SnapshotId.of("key", UUID.randomUUID());
-      LogCaptor logCaptor = LogCaptor.forClass(SnapshotDiskRepositoryImpl.class);
 
       byte[] nonExistingSerializedClass =
           new byte[] {
