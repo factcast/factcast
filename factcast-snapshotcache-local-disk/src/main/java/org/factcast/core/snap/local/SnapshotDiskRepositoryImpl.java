@@ -91,19 +91,19 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
 
   public CompletableFuture<Void> delete(SnapshotId id) {
     File target = SnapshotFileHelper.createFile(persistenceDirectory, id.key());
-    return locking.withWriteLockOnAsync(target, () -> doDelete(target));
+    return locking.withWriteLockOnAsync(target, () -> doDelete(target.toPath()));
   }
 
   @VisibleForTesting
-  protected void doDelete(File target) {
+  protected void doDelete(Path path) {
     try {
-      if (target.exists()) {
-        Path path = target.toPath();
-        currentUsedSpace.addAndGet(-1 * Files.size(path));
-        Files.delete(path);
+      if (Files.exists(path)) {
+        long sizeOfFile = Files.size(path);
+        Files.deleteIfExists(path);
+        currentUsedSpace.addAndGet(-sizeOfFile);
       }
     } catch (IOException e) {
-      log.error("Error deleting snapshot: {}", target.getAbsolutePath(), e);
+      log.error("Error deleting snapshot: {}", path, e);
     }
   }
 
@@ -120,25 +120,18 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
           } else {
             SnapshotFileHelper.updateLastModified(persistenceFile);
 
-            try (InputStream fis = Files.newInputStream(persistenceFile.toPath());
+            Path path = persistenceFile.toPath();
+            try (InputStream fis = Files.newInputStream(path);
                 InputStream bis = new BufferedInputStream(fis);
                 ObjectInputStream ois = new ObjectInputStream(bis)) {
               Snapshot snapshot = (Snapshot) ois.readObject();
               return Optional.of(snapshot);
             } catch (IOException e) {
-              log.error(
-                  "Error reading snapshot with id: {} and path: {}",
-                  id,
-                  persistenceFile.getPath(),
-                  e);
+              log.error("Error reading snapshot with id: {} and path: {}", id, path, e);
               return Optional.empty();
             } catch (ClassNotFoundException e) {
-              doDelete(persistenceFile);
-              log.error(
-                  "Error deserializing snapshot with id: {} and path: {}",
-                  id,
-                  persistenceFile.getPath(),
-                  e);
+              doDelete(path);
+              log.error("Error deserializing snapshot with id: {} and path: {}", id, path, e);
               return Optional.empty();
             }
           }
@@ -175,15 +168,7 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
       }
 
       Path path = oldestFile.path();
-      try {
-        if (Files.exists(path)) {
-          long sizeOfFile = Files.size(path);
-          Files.deleteIfExists(path);
-          currentUsedSpace.addAndGet(-sizeOfFile);
-        }
-      } catch (IOException e) {
-        log.error("Error deleting snapshot with path: {}", path, e);
-      }
+      doDelete(path);
     }
   }
 }
