@@ -45,10 +45,10 @@ class SnapshotFileHelper {
 
   String addSlashes(String hash) {
     return new StringBuilder(hash)
-        .insert(16, '/')
-        .insert(12, '/')
-        .insert(8, '/')
-        .insert(4, '/')
+        .insert(16, File.separator)
+        .insert(12, File.separator)
+        .insert(8, File.separator)
+        .insert(4, File.separator)
         .toString();
   }
 

@@ -15,6 +15,8 @@
  */
 package org.factcast.core.snap.local;
 
+import static java.io.File.separator;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.*;
@@ -34,7 +36,8 @@ import org.factcast.core.util.ExceptionHelper;
 
 @Slf4j
 public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
-  public static final String INNER_PATH = "/factcast/snapshots/";
+  public static final String INNER_PATH =
+      separator + "factcast" + separator + "snapshots" + separator;
 
   @Getter(onMethod = @__(@VisibleForTesting))
   final File persistenceDirectory;
