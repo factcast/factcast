@@ -16,6 +16,7 @@
 package org.factcast.core.snap.local;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 
@@ -78,7 +79,7 @@ class SnapshotDiskRepositoryImplTest {
       File tmp = Files.createTempDir();
       tmp.deleteOnExit();
 
-      suut.doSave(snap, new File(tmp, "test"));
+      assertDoesNotThrow(() -> suut.doSave(snap, new File(tmp, "test")));
     }
 
     @Test
@@ -91,8 +92,7 @@ class SnapshotDiskRepositoryImplTest {
       uut.doDelete(tmp.toPath());
 
       List<String> errorLogs = logCaptor.getErrorLogs();
-      assertThat(errorLogs).isNotEmpty();
-      assertThat(errorLogs).hasSize(1);
+      assertThat(errorLogs).isNotEmpty().hasSize(1);
       assertThat(errorLogs.get(0)).contains("Error deleting snapshot: " + tmp.toPath());
     }
 

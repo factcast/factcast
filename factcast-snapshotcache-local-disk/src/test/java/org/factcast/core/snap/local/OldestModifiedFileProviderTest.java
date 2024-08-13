@@ -148,5 +148,4 @@ class OldestModifiedFileProviderTest {
     fileWithDate = provider.get();
     assertThat(fileWithDate).isNull();
   }
-  ;
 }
