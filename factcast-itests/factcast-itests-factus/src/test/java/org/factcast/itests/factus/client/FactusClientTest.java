@@ -23,9 +23,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.google.common.base.Stopwatch;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +44,7 @@ import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.config.RedissonProjectionConfiguration;
 import org.factcast.itests.factus.event.TestAggregateIncremented;
+import org.factcast.itests.factus.event.UserBored;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.*;
@@ -70,8 +73,6 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   @Autowired RedissonManagedUserNames externalizedUserNames;
   @Autowired TxRedissonManagedUserNames transactionalExternalizedUserNames;
   @Autowired TxRedissonSubscribedUserNames transactionalExternalizedSubscribedUserNames;
-
-  @Autowired SubscribedUserNames subscribedUserNames;
 
   @Autowired UserCount userCount;
   @Autowired RedissonClient redissonClient;
@@ -246,34 +247,32 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
   @Test
   void testSubscription() throws Exception {
-
+    SubscribedUserNames subscribedUserNames = new SubscribedUserNames();
     subscribedUserNames.clear();
 
     factus.publish(new UserCreated(randomUUID(), "preexisting"));
+    try (Subscription subscription = factus.subscribeAndBlock(subscribedUserNames)) {
+      // nothing in there yet, so catchup must be received
+      subscription.awaitCatchup();
+      assertThat(subscribedUserNames.names()).hasSize(1);
 
-    Subscription subscription = factus.subscribeAndBlock(subscribedUserNames);
-    // nothing in there yet, so catchup must be received
-    subscription.awaitCatchup();
-    assertThat(subscribedUserNames.names()).hasSize(1);
+      factus.publish(new UserCreated(randomUUID(), "Peter"));
 
-    factus.publish(new UserCreated(randomUUID(), "Peter"));
+      Thread.sleep(WAIT_TIME_FOR_ASYNC_FACT_DELIVERY);
 
-    Thread.sleep(WAIT_TIME_FOR_ASYNC_FACT_DELIVERY);
+      assertThat(subscribedUserNames.names()).hasSize(2).contains("preexisting", "Peter");
 
-    assertThat(subscribedUserNames.names()).hasSize(2).contains("preexisting", "Peter");
+      factus.publish(new UserCreated(randomUUID(), "John"));
+      Thread.sleep(WAIT_TIME_FOR_ASYNC_FACT_DELIVERY);
 
-    factus.publish(new UserCreated(randomUUID(), "John"));
-    Thread.sleep(WAIT_TIME_FOR_ASYNC_FACT_DELIVERY);
-
-    assertThat(subscribedUserNames.names())
-        .hasSize(3)
-        .containsExactlyInAnyOrder("John", "Peter", "preexisting");
-
-    subscription.close();
+      assertThat(subscribedUserNames.names())
+          .hasSize(3)
+          .containsExactlyInAnyOrder("John", "Peter", "preexisting");
+    }
   }
 
   @Test
-  void simpleAggregateRoundtrip() throws Exception {
+  void simpleAggregateRoundtrip() {
     UUID aggregateId = randomUUID();
     assertThat(factus.find(TestAggregate.class, aggregateId)).isEmpty();
 
@@ -306,7 +305,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  void simpleSnapshotProjectionRoundtrip() throws Exception {
+  void simpleSnapshotProjectionRoundtrip() {
     assertThat(factus.fetch(SnapshotUserNames.class)).isNotNull();
 
     UUID johnsId = randomUUID();
@@ -344,7 +343,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  void simpleProjectionLockingRoundtrip() throws Exception {
+  void simpleProjectionLockingRoundtrip() {
     SnapshotUserNames emptyUserNames = factus.fetch(SnapshotUserNames.class);
     assertThat(emptyUserNames).isNotNull();
     assertThat(emptyUserNames.count()).isEqualTo(0);
@@ -373,7 +372,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  void testPublishSafeguard() throws Exception {
+  void testPublishSafeguard() {
 
     assertThatThrownBy(
             () ->
@@ -391,7 +390,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  void simpleManagedProjectionRoundtrip() throws Exception {
+  void simpleManagedProjectionRoundtrip() {
     // lets consider userCount a springbean
 
     assertThat(userCount.factStreamPosition()).isNull();
@@ -418,7 +417,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  void simpleManagedProjectionRoundtrip_withLock() throws Exception {
+  void simpleManagedProjectionRoundtrip_withLock() {
     // lets consider userCount a springbean
     UserCount userCount = new UserCount();
 
@@ -517,7 +516,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  void simpleAggregateLockRoundtrip() throws Exception {
+  void simpleAggregateLockRoundtrip() {
     UUID aggregateId = randomUUID();
     assertThat(factus.find(TestAggregate.class, aggregateId)).isEmpty();
 
@@ -681,5 +680,67 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
     var a3 = factus.fetch(SimpleAggregate.class, aggId);
     assertThat(a3.factsConsumed).isOne();
+  }
+
+  @Test
+  void waitsForFacts() throws Exception {
+    SubscribedUserNames subscribedUserNames = new SubscribedUserNames();
+    subscribedUserNames.clear();
+    Duration timeout = Duration.ofSeconds(3);
+
+    factus.publish(new UserCreated("Mark"));
+    try (Subscription subscriptionWaiting = factus.subscribeAndBlock(subscribedUserNames)) {
+      // nothing in there yet, so catchup must be received
+      subscriptionWaiting.awaitCatchup();
+      assertThat(subscribedUserNames.names()).hasSize(1);
+
+      var factId1 = factus.publish(new UserCreated("Tom"), Fact::id);
+      factus.waitFor(subscribedUserNames, factId1, timeout);
+      assertThat(subscribedUserNames.names()).hasSize(2);
+
+      var factId2 = factus.publish(new UserCreated("Sasha"), Fact::id);
+      factus.waitFor(subscribedUserNames, factId2, timeout, i -> (long) Math.pow(10, i));
+      assertThat(subscribedUserNames.names())
+          .hasSize(3)
+          .containsExactlyInAnyOrder("Sasha", "Tom", "Mark");
+    }
+  }
+
+  @Test
+  void waitingForFactFailsOnUnknownId() throws Exception {
+    SubscribedUserNames subscribedUserNames = new SubscribedUserNames();
+    subscribedUserNames.clear();
+    Duration timeout = Duration.ofSeconds(3);
+
+    factus.publish(new UserCreated("Kyle"));
+    try (Subscription subscriptionWaiting = factus.subscribeAndBlock(subscribedUserNames)) {
+      // nothing in there yet, so catchup must be received
+      subscriptionWaiting.awaitCatchup();
+      assertThat(subscribedUserNames.names()).hasSize(1);
+
+      // wait for a fact id that does not exist
+      UUID unknownFactId = randomUUID();
+      assertThatThrownBy(() -> factus.waitFor(subscribedUserNames, unknownFactId, timeout))
+          .isInstanceOf(IllegalArgumentException.class);
+    }
+  }
+
+  @Test
+  void waitingForFactTimesOut() throws Exception {
+    SubscribedUserNames subscribedUserNames = new SubscribedUserNames();
+    subscribedUserNames.clear();
+    Duration timeout = Duration.ofSeconds(1);
+
+    factus.publish(new UserCreated("Kyle"));
+    try (Subscription subscriptionWaiting = factus.subscribeAndBlock(subscribedUserNames)) {
+      // nothing in there yet, so catchup must be received
+      subscriptionWaiting.awaitCatchup();
+      assertThat(subscribedUserNames.names()).hasSize(1);
+
+      // publish an event that is not consumed by the subscribed projection
+      var factId1 = factus.publish(new UserBored("Kenny"), Fact::id);
+      assertThatThrownBy(() -> factus.waitFor(subscribedUserNames, factId1, timeout))
+          .isInstanceOf(TimeoutException.class);
+    }
   }
 }

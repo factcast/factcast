@@ -41,6 +41,7 @@ import org.factcast.store.internal.filter.FactFilter;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
+import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -99,6 +100,7 @@ public class PgFactStreamTest {
     @Mock PgCatchupFactory pgCatchupFactory;
     @Mock FastForwardTarget ffwdTarget;
     @Mock SubscriptionRequest request;
+    @Mock PgStoreTelemetry telemetry;
     @InjectMocks PgFactStream underTest;
 
     @BeforeEach

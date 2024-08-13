@@ -75,7 +75,7 @@ class PgTmpPagedCatchupTest {
     @Test
     void connectionHandling() {
       PgConnection con = mock(PgConnection.class);
-      when(connectionSupplier.get()).thenReturn(con);
+      when(connectionSupplier.get(any())).thenReturn(con);
 
       var uut = spy(underTest);
       doNothing().when(uut).fetch(any());
@@ -89,7 +89,7 @@ class PgTmpPagedCatchupTest {
     @Test
     void removesStatement() {
       PgConnection con = mock(PgConnection.class);
-      when(connectionSupplier.get()).thenReturn(con);
+      when(connectionSupplier.get(any())).thenReturn(con);
 
       var uut = spy(underTest);
       doNothing().when(uut).fetch(any());

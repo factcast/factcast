@@ -22,6 +22,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.converter.StringToUuidConverter;
+import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -83,6 +84,7 @@ public class FilterCriteriaView extends VerticalLayout {
 
     setPadding(false);
     setSpacing(false);
+    addClassName(LumoUtility.Padding.Bottom.MEDIUM);
   }
 
   private void bind(BeanValidationUrlStateBinder<FullQueryBean> b) {

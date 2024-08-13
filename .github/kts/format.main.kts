@@ -1,22 +1,21 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("io.github.typesafegithub:github-workflows-kt:1.12.0")
+@file:DependsOn("io.github.typesafegithub:github-workflows-kt:2.3.0")
 
 
 import io.github.typesafegithub.workflows.actions.actions.CheckoutV4
 import io.github.typesafegithub.workflows.actions.actions.SetupJavaV4
 import io.github.typesafegithub.workflows.domain.RunnerType
-import io.github.typesafegithub.workflows.domain.Workflow
 import io.github.typesafegithub.workflows.domain.actions.CustomAction
 import io.github.typesafegithub.workflows.domain.triggers.Push
 import io.github.typesafegithub.workflows.dsl.workflow
-import io.github.typesafegithub.workflows.yaml.writeToFile
-import java.nio.file.Paths
+import io.github.typesafegithub.workflows.yaml.ConsistencyCheckJobConfig
 
-public val workflowFormat: Workflow = workflow(
+workflow(
     name = "Format",
     on = listOf(Push()),
-    sourceFile =  __FILE__.toPath(),
+    sourceFile =  __FILE__,
+    consistencyCheckJobConfig = ConsistencyCheckJobConfig.Disabled
 ) {
     job(
         id = "formatting",
@@ -37,6 +36,10 @@ public val workflowFormat: Workflow = workflow(
         )
         run(
             name = "Spotless",
+            command = "./mvnw -B sortpom:sort --file pom.xml",
+        )
+        run(
+            name = "Spotless",
             command = "./mvnw -B --non-recursive spotless:apply --file pom.xml",
         )
         uses(
@@ -51,7 +54,4 @@ public val workflowFormat: Workflow = workflow(
             ),
         )
     }
-
 }
-
-workflowFormat.writeToFile(addConsistencyCheck = false)

@@ -13,33 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.grpc.codec;
+package org.factcast.grpc.snappy;
 
 import io.grpc.Codec;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import lombok.SneakyThrows;
 import net.devh.boot.grpc.common.codec.CodecType;
 import net.devh.boot.grpc.common.codec.GrpcCodec;
-import net.jpountz.lz4.*;
+import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorInputStream;
+import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorOutputStream;
 
 @GrpcCodec(advertised = true, codecType = CodecType.ALL)
-public class Lz4GrpcServerCodec implements Codec {
-  private static final LZ4FastDecompressor decomp = LZ4Factory.fastestInstance().fastDecompressor();
-
-  private static final LZ4Compressor comp = LZ4Factory.fastestInstance().fastCompressor();
+public class SnappycGrpcClientCodec implements Codec {
 
   @Override
   public String getMessageEncoding() {
-    return "lz4";
+    return "snappyc";
+  }
+
+  @SneakyThrows
+  @Override
+  public OutputStream compress(OutputStream os) {
+    return new FramedSnappyCompressorOutputStream(os);
   }
 
   @Override
-  public InputStream decompress(InputStream inputStream) {
-    return new LZ4BlockInputStream(inputStream, decomp);
-  }
-
-  @Override
-  public OutputStream compress(OutputStream outputStream) {
-    return new LZ4BlockOutputStream(outputStream, 65536, comp);
+  public InputStream decompress(InputStream is) throws IOException {
+    return new FramedSnappyCompressorInputStream(is);
   }
 }

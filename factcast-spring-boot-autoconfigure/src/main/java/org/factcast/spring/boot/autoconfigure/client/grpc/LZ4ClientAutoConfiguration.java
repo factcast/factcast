@@ -18,7 +18,7 @@ package org.factcast.spring.boot.autoconfigure.client.grpc;
 import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
 import net.jpountz.lz4.LZ4Compressor;
 import org.factcast.client.grpc.GrpcFactStore;
-import org.factcast.client.grpc.codec.Lz4GrpcClientCodec;
+import org.factcast.grpc.lz4.Lz4GrpcClientCodec;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -29,7 +29,9 @@ import org.springframework.context.annotation.Bean;
  * Configures optional LZ4 Codec
  *
  * @author uwe.schaefer@prisma-capacity.eu
+ * @deprecated in 0.8
  */
+@SuppressWarnings({"DeprecatedIsStillUsed"})
 @AutoConfiguration
 @ConditionalOnClass({
   LZ4Compressor.class,
@@ -38,11 +40,12 @@ import org.springframework.context.annotation.Bean;
   GrpcChannelFactory.class
 })
 @AutoConfigureBefore(GrpcFactStoreAutoConfiguration.class)
+@Deprecated
 public class LZ4ClientAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public Lz4GrpcClientCodec snappyCodec() {
+  public Lz4GrpcClientCodec lz4Codec() {
     return new Lz4GrpcClientCodec();
   }
 }

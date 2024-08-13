@@ -6,10 +6,14 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.7.6-SNAPSHOT</version>
+    <version>0.7.10-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-server-ui</artifactId>
+  <properties>
+    <java.version>17</java.version>
+    <vaadin.version>24.3.13</vaadin.version>
+  </properties>
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -28,19 +32,6 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-  <repositories>
-    <repository>
-      <id>Vaadin Directory</id>
-      <url>https://maven.vaadin.com/vaadin-addons</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-  </repositories>
-  <properties>
-    <java.version>17</java.version>
-    <vaadin.version>24.3.6</vaadin.version>
-  </properties>
   <dependencies>
     <dependency>
       <groupId>org.projectlombok</groupId>
@@ -110,12 +101,12 @@
     <dependency>
       <groupId>com.vaadin.componentfactory</groupId>
       <artifactId>lookup-field-flow</artifactId>
-      <version>24.0.2</version>
+      <version>24.0.3</version>
     </dependency>
     <dependency>
       <groupId>com.vaadin.componentfactory</groupId>
       <artifactId>popup</artifactId>
-      <version>24.0.4</version>
+      <version>24.0.5</version>
     </dependency>
     <dependency>
       <groupId>org.vaadin.crudui</groupId>
@@ -146,7 +137,7 @@
     <dependency>
       <groupId>com.microsoft.playwright</groupId>
       <artifactId>playwright</artifactId>
-      <version>1.41.2</version>
+      <version>1.46.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -167,6 +158,15 @@
       <artifactId>spring-boot-starter-aop</artifactId>
     </dependency>
   </dependencies>
+  <repositories>
+    <repository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>Vaadin Directory</id>
+      <url>https://maven.vaadin.com/vaadin-addons</url>
+    </repository>
+  </repositories>
 
   <build>
     <plugins>

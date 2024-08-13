@@ -18,6 +18,7 @@ package org.factcast.store.internal.listen;
 import com.google.common.annotations.VisibleForTesting;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Optional;
 import java.util.Properties;
 import javax.sql.DataSource;
 import lombok.NonNull;
@@ -30,6 +31,8 @@ public class PgConnectionSupplier {
 
   @NonNull @VisibleForTesting protected final org.apache.tomcat.jdbc.pool.DataSource ds;
   @NonNull @VisibleForTesting protected final Properties props;
+
+  public static final String APPLICATION_NAME = "ApplicationName";
 
   public PgConnectionSupplier(DataSource dataSource) {
     if (org.apache.tomcat.jdbc.pool.DataSource.class.isAssignableFrom(dataSource.getClass())) {
@@ -44,8 +47,14 @@ public class PgConnectionSupplier {
     }
   }
 
-  @SuppressWarnings("resource")
-  public PgConnection get() throws SQLException {
+  public PgConnection get(@NonNull String clientId) throws SQLException {
+    Properties connectionProps = new Properties();
+    connectionProps.putAll(props);
+    setClientIdProperty(connectionProps, clientId);
+    return getConnection(connectionProps);
+  }
+
+  private PgConnection getConnection(Properties props) throws SQLException {
     try {
       return DriverManager.getDriver(ds.getUrl())
           .connect(ds.getUrl(), props)
@@ -61,6 +70,12 @@ public class PgConnectionSupplier {
     if (value != null) {
       dbp.setProperty(propertyName, value);
     }
+  }
+
+  private void setClientIdProperty(Properties properties, String clientId) {
+    final var applicationName =
+        Optional.ofNullable(properties.getProperty(APPLICATION_NAME)).orElse("factcast");
+    setProperty(properties, APPLICATION_NAME, applicationName + "|" + clientId);
   }
 
   @VisibleForTesting

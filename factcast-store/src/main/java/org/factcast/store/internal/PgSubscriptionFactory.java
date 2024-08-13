@@ -34,6 +34,7 @@ import org.factcast.store.internal.filter.blacklist.Blacklist;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.script.JSEngineFactory;
+import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 // TODO integrate with PGQuery
@@ -56,6 +57,7 @@ class PgSubscriptionFactory implements AutoCloseable {
   final Blacklist blacklist;
   final FactTransformerService transformerService;
   final JSEngineFactory ef;
+  final PgStoreTelemetry telemetry;
 
   private final ExecutorService es;
 
@@ -70,7 +72,8 @@ class PgSubscriptionFactory implements AutoCloseable {
       PgMetrics metrics,
       Blacklist blacklist,
       FactTransformerService transformerService,
-      JSEngineFactory ef) {
+      JSEngineFactory ef,
+      PgStoreTelemetry telemetry) {
     this.jdbcTemplate = jdbcTemplate;
     this.eventBus = eventBus;
     this.idToSerialMapper = idToSerialMapper;
@@ -81,6 +84,7 @@ class PgSubscriptionFactory implements AutoCloseable {
     this.blacklist = blacklist;
     this.transformerService = transformerService;
     this.ef = ef;
+    this.telemetry = telemetry;
     this.es =
         metrics.monitor(
             Executors.newFixedThreadPool(props.getSizeOfThreadPoolForSubscriptions()),
@@ -101,7 +105,8 @@ class PgSubscriptionFactory implements AutoCloseable {
             transformerService,
             blacklist,
             metrics,
-            ef);
+            ef,
+            telemetry);
 
     // when closing the subscription, also close the PgFactStream
     subscription.onClose(pgsub::close);
