@@ -126,7 +126,7 @@ break the purpose of the optimistic lock, and can lead to infinite loops.
 In certain cases you might want to access the facts that were published inside the attempt block. Similar to the
 `org.factcast.factus.Factus#publish` method that has overloads where you can specify a `Function<Fact, T> resultFn`,
 you can pass a similar `resultFn` or simply a `Runnable` to the `attempt` method. After successful publication this
-function will be called with a `List<Fact>` containing the published facts (in order they were published in). The return
+function will be called with a `List<Fact>` containing the published facts (in the order of publication). The return
 value of the function will be returned by the `attempt` method.
 
 ```java

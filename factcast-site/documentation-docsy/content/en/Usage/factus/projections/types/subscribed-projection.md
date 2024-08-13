@@ -36,18 +36,19 @@ Please keep that in mind when implementing the locking facility.
 
 ## Read-After-Write Consistency
 
-As a subscribed projection, factus will update the projections automatically in the background. A manual update with
+Factus updates subscribed projections automatically in the background. Therefore a manual update with
+``
 `factus.update(projection)` is not possible. In some cases however it might still be necessary to make sure a subscribed
 projection has processed a fact before continuing.
 
 One such use-case might be read-after-write consistency. Imagine a projection powering a table shown to a user. This 
 table shows information collected from facts `A` and `B`, where `B` gets published by the current application, but 
-`A` is published by another service. With the push of a button a user can publish a new `B` fact, creating another row 
+`A` is published by another service, which means we need to use a subscribed projection. With the push of a button a user can publish a new `B` fact, creating another row 
 in the table. If your frontend then immediately reloads the table, it might not yet show the new row, as the subscribed 
 projection has not yet processed the new fact.
 
 In this case you can use the `factus.waitFor` method to wait until the projection has consumed a certain fact. This 
-method will block until the fact is either procecced or the timeout is exceeded.
+method will block until the fact is either processed or the timeout is exceeded.
 
 ```java
 // publish a fact we need to wait on and extract its ID
@@ -56,6 +57,6 @@ final var factId = factus.publish(new BFact(), Fact::id);
 factus.waitFor(subscribedProjection, factId, Duration.ofSeconds(5));
 ```
 
-With this, the waiting thread will block for up to 5 seconds or until the projection has processed the fact stream until or beyond the specified fact.
+With this, the waiting thread will block for up to 5 seconds or until the projection has processed the fact stream up to or beyond the specified fact.
 If you use this, make sure that the projection you are waiting for will actually process the fact you are waiting on.
 Otherwise a timeout is basically guaranteed, as the fact will never be processed by this projection.
