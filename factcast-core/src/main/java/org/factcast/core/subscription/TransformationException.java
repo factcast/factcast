@@ -28,4 +28,8 @@ public class TransformationException extends RuntimeException {
   public TransformationException(String message) {
     super(message);
   }
+
+  public TransformationException(String message, @NonNull Throwable cause) {
+    super(message, cause);
+  }
 }

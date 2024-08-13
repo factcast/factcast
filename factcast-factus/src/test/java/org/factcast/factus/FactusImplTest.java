@@ -27,6 +27,7 @@ import com.google.common.collect.Sets;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -34,15 +35,18 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.FactStreamPosition;
+import org.factcast.core.TestFact;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.factus.FactusImpl.IntervalSnapshotter;
 import org.factcast.factus.batch.BatchAbortedException;
@@ -62,17 +66,15 @@ import org.factcast.factus.projector.ProjectorImpl;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepository;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
-import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
+import org.factcast.factus.snapshot.SnapshotSerializerSelector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-@Tag("integration") // technically unit, but it takes some time due to waiting
 class FactusImplTest {
 
   @Mock private FactCast fc;
@@ -85,7 +87,7 @@ class FactusImplTest {
 
   @Mock private ProjectionSnapshotRepository projectionSnapshotRepository;
 
-  @Mock private SnapshotSerializerSupplier snapFactory;
+  @Mock private SnapshotSerializerSelector snapFactory;
 
   @Mock private AtomicBoolean closed;
 
@@ -776,7 +778,7 @@ class FactusImplTest {
   }
 
   void mockSnapFactory() {
-    when(snapFactory.retrieveSerializer(any())).thenReturn(snapshotSerializer);
+    when(snapFactory.selectSeralizerFor(any())).thenReturn(snapshotSerializer);
   }
 
   @Nested
@@ -1385,6 +1387,98 @@ class FactusImplTest {
 
       assertThat(calls.get()).isEqualTo(2);
     }
+  }
+
+  @SuppressWarnings("resource")
+  @Nested
+  class WhenCatchingUp {
+    @Test
+    @SneakyThrows
+    void returnsFactIdOfFastForward() {
+      Projector pro = mock(Projector.class);
+      Subscription sub = mock(Subscription.class);
+      FactSpec spec1 = FactSpec.from(NameEvent.class);
+      CompletableFuture<Void> cf = new CompletableFuture<>();
+
+      Fact f = new TestFact();
+      UUID id = f.id();
+      FactStreamPosition pos = FactStreamPosition.of(id, 42L);
+
+      when(ehFactory.create(any())).thenReturn(pro);
+      when(fc.subscribe(any(SubscriptionRequest.class), any(FactObserver.class)))
+          .thenAnswer(
+              i -> {
+                FactObserver fo = i.getArgument(1);
+                fo.onFastForward(pos);
+                return sub;
+              });
+      when(pro.createFactSpecs()).thenReturn(Lists.newArrayList(spec1));
+
+      SomeSnapshotProjection p = new SomeSnapshotProjection();
+      UUID ret = underTest.catchupProjection(p, UUID.randomUUID(), null);
+
+      Assertions.assertThat(ret).isNotNull().isEqualTo(id);
+    }
+
+    @Test
+    @SneakyThrows
+    void returnsFactIdOfLastFactApplied() {
+      Projector pro = mock(Projector.class);
+      Subscription sub = mock(Subscription.class);
+      FactSpec spec1 = FactSpec.from(NameEvent.class);
+      CompletableFuture<Void> cf = new CompletableFuture<>();
+
+      Fact f = new TestFact();
+      UUID id = f.id();
+
+      when(ehFactory.create(any())).thenReturn(pro);
+      when(fc.subscribe(any(SubscriptionRequest.class), any(FactObserver.class)))
+          .thenAnswer(
+              i -> {
+                FactObserver fo = i.getArgument(1);
+                fo.onNext(f);
+                return sub;
+              });
+      when(pro.createFactSpecs()).thenReturn(Lists.newArrayList(spec1));
+
+      SomeSnapshotProjection p = new SomeSnapshotProjection();
+      UUID ret = underTest.catchupProjection(p, null, null);
+
+      Assertions.assertThat(ret).isNotNull().isEqualTo(id);
+    }
+
+    @Test
+    void returnsNoFactIdForwardTarget() {
+
+      Projector pro = mock(Projector.class);
+      Subscription sub = mock(Subscription.class);
+      FactSpec spec1 = FactSpec.from(NameEvent.class);
+      CompletableFuture<Void> cf = new CompletableFuture<>();
+
+      UUID id = randomUUID();
+      FactStreamPosition pos = FactStreamPosition.of(id, 42L);
+
+      when(ehFactory.create(any())).thenReturn(pro);
+      when(fc.subscribe(any(SubscriptionRequest.class), any(FactObserver.class)))
+          .thenAnswer(
+              i -> {
+                FactObserver fo = i.getArgument(1);
+                fo.onFastForward(pos);
+                return sub;
+              });
+      when(pro.createFactSpecs()).thenReturn(Lists.newArrayList(spec1));
+
+      SomeSnapshotProjection p = new SomeSnapshotProjection();
+      UUID ret = underTest.catchupProjection(p, null, null);
+
+      Assertions.assertThat(ret).isNull();
+    }
+  }
+
+  @Test
+  void testGetFactStore() {
+    underTest.store();
+    verify(fc).store();
   }
 }
 

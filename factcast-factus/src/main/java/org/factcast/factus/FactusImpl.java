@@ -44,6 +44,7 @@ import org.factcast.core.FactStreamPosition;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
@@ -61,7 +62,7 @@ import org.factcast.factus.projector.ProjectorFactory;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.AggregateSnapshotRepository;
 import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
-import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
+import org.factcast.factus.snapshot.SnapshotSerializerSelector;
 
 /** Single entry point to the factus API. */
 @RequiredArgsConstructor
@@ -81,7 +82,7 @@ public class FactusImpl implements Factus {
 
   private final ProjectionSnapshotRepository projectionSnapshotRepository;
 
-  private final SnapshotSerializerSupplier snapFactory;
+  private final SnapshotSerializerSelector snapFactory;
 
   private final FactusMetrics factusMetrics;
 
@@ -268,7 +269,7 @@ public class FactusImpl implements Factus {
           "Method confusion: UUID aggregateId is missing as a second parameter for aggregates");
     }
 
-    SnapshotSerializer ser = snapFactory.retrieveSerializer(projectionClass);
+    SnapshotSerializer ser = snapFactory.selectSeralizerFor(projectionClass);
 
     Optional<Snapshot> latest = projectionSnapshotRepository.findLatest(projectionClass);
 
@@ -314,7 +315,7 @@ public class FactusImpl implements Factus {
   private <A extends Aggregate> Optional<A> doFind(Class<A> aggregateClass, UUID aggregateId) {
     assertNotClosed();
 
-    SnapshotSerializer ser = snapFactory.retrieveSerializer(aggregateClass);
+    SnapshotSerializer ser = snapFactory.selectSeralizerFor(aggregateClass);
 
     Optional<Snapshot> latest = aggregateSnapshotRepository.findLatest(aggregateClass, aggregateId);
     Optional<A> optionalA =
@@ -356,11 +357,11 @@ public class FactusImpl implements Factus {
   /**
    * @return null if no fact was applied
    */
-  private <P extends Projection> UUID catchupProjection(
+  private <P extends Projection> void catchupProjection(
       @NonNull P projection,
       FactStreamPosition stateOrNull,
       @Nullable BiConsumer<P, UUID> afterProcessing) {
-    return catchupProjection(
+    catchupProjection(
         projection,
         Optional.ofNullable(stateOrNull).map(FactStreamPosition::factId).orElse(null),
         afterProcessing);
@@ -370,8 +371,11 @@ public class FactusImpl implements Factus {
    * @return null if no fact was applied
    */
   @SneakyThrows
-  private <P extends Projection> UUID catchupProjection(
-      @NonNull P projection, UUID stateOrNull, @Nullable BiConsumer<P, UUID> afterProcessing) {
+  @VisibleForTesting
+  protected <P extends Projection> UUID catchupProjection(
+      @NonNull P projection,
+      @Nullable UUID stateOrNull,
+      @Nullable BiConsumer<P, UUID> afterProcessing) {
     Projector<P> handler = ehFactory.create(projection);
     AtomicInteger factCount = new AtomicInteger(0);
     AtomicReference<FactStreamPosition> positionOfLastFactApplied = new AtomicReference<>();
@@ -410,6 +414,11 @@ public class FactusImpl implements Factus {
           public void onFastForward(@NonNull FactStreamPosition factIdToFfwdTo) {
             if (projection instanceof FactStreamPositionAware) {
               ((FactStreamPositionAware) projection).factStreamPosition(factIdToFfwdTo);
+            }
+
+            // only persist ffwd if we ever had a state or applied facts in this catchup
+            if (stateOrNull != null || positionOfLastFactApplied.get() != null) {
+              positionOfLastFactApplied.set(factIdToFfwdTo);
             }
           }
         };
@@ -516,6 +525,12 @@ public class FactusImpl implements Factus {
   @Override
   public OptionalLong serialOf(@NonNull UUID factId) {
     return fc.serialOf(factId);
+  }
+
+  @Override
+  @NonNull
+  public FactStore store() {
+    return fc.store();
   }
 
   abstract static class IntervalSnapshotter<P extends SnapshotProjection>

@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast-itests</artifactId>
-    <version>0.7.6-SNAPSHOT</version>
+    <version>0.7.10-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-itests-novalidation</artifactId>
@@ -57,7 +57,6 @@
       <artifactId>factcast-docker-dep</artifactId>
       <scope>test</scope>
     </dependency>
-
 
   </dependencies>
   <build>

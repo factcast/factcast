@@ -31,11 +31,11 @@ public class ProjectionSnapshotRepositoryImpl extends AbstractSnapshotRepository
 
   private static final UUID FAKE_UUID = new UUID(0, 0); // needed to maintain the PK.
 
-  private final SnapshotSerializerSupplier serializerSupplier;
+  private final SnapshotSerializerSelector serializerSupplier;
 
   public ProjectionSnapshotRepositoryImpl(
       @NonNull SnapshotCache snapshotCache,
-      @NonNull SnapshotSerializerSupplier serializerSupplier,
+      @NonNull SnapshotSerializerSelector serializerSupplier,
       FactusMetrics factusMetrics) {
     super(snapshotCache, factusMetrics);
     this.serializerSupplier = serializerSupplier;
@@ -45,7 +45,7 @@ public class ProjectionSnapshotRepositoryImpl extends AbstractSnapshotRepository
   public Optional<Snapshot> findLatest(@NonNull Class<? extends SnapshotProjection> type) {
     SnapshotId snapshotId =
         SnapshotId.of(
-            createKeyForType(type, () -> serializerSupplier.retrieveSerializer(type)), FAKE_UUID);
+            createKeyForType(type, () -> serializerSupplier.selectSeralizerFor(type)), FAKE_UUID);
     Optional<Snapshot> snapshot = snapshotCache.getSnapshot(snapshotId);
     recordSnapshotSize(snapshot, type);
     return snapshot.map(s -> new Snapshot(snapshotId, s.lastFact(), s.bytes(), s.compressed()));
@@ -54,11 +54,9 @@ public class ProjectionSnapshotRepositoryImpl extends AbstractSnapshotRepository
   @Override
   public CompletableFuture<Void> put(SnapshotProjection projection, UUID state) {
 
-    projection.onBeforeSnapshot();
-
     // this is done before going async for exception escalation reasons:
     Class<? extends SnapshotProjection> type = projection.getClass();
-    SnapshotSerializer ser = serializerSupplier.retrieveSerializer(type);
+    SnapshotSerializer ser = serializerSupplier.selectSeralizerFor(type);
     // serialization needs to be sync, otherwise the underlying object might change during ser
     byte[] bytes = ser.serialize(projection);
 

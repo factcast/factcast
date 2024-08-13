@@ -19,6 +19,7 @@ import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
 import java.util.List;
+import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
 
 public interface FactCastGrpcChannelFactory extends AutoCloseable {
 
@@ -51,4 +52,8 @@ public interface FactCastGrpcChannelFactory extends AutoCloseable {
    */
   @SuppressWarnings("unused")
   Channel createChannel(String name, List<ClientInterceptor> interceptors);
+
+  static FactCastGrpcChannelFactory createDefault(GrpcChannelFactory cf) {
+    return new FactCastGrpcChannelFactoryImpl(cf);
+  }
 }

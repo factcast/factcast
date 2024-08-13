@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2024 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,29 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.client.grpc.codec;
+package org.factcast.server.ui.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.io.IOException;
+import org.factcast.server.ui.AbstractBrowserTest;
+import org.factcast.server.ui.example.ExampleUiServer;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
 
-class Lz4GrpcClientCodecTest {
-
-  final Lz4GrpcClientCodec uut = new Lz4GrpcClientCodec();
-
-  @Test
-  void getMessageEncoding() {
-    assertEquals("lz4", uut.getMessageEncoding());
-  }
+@SpringBootTest(
+    classes = ExampleUiServer.class,
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class UIConfigurationIntTest extends AbstractBrowserTest {
 
   @Test
-  void compressionIsSymetric() throws IOException {
-    byte[] original = "Some uncompressed String".getBytes();
-    byte[] compressed = CodecTestHelper.toByteArray(uut, original);
-    byte[] uncompressed = CodecTestHelper.fromByteArray(uut, compressed);
-
-    assertThat(uncompressed).isEqualTo(original);
+  void vaadinReactEnabledIsExplicitlySetToFalseViaSystemProperty() {
+    assertThat(System.getProperty(UIConfiguration.SYSTEM_PROPERTY_VAADIN_REACT_ENABLE))
+        .isEqualTo("false");
   }
 }

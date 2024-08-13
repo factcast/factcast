@@ -17,41 +17,42 @@ package org.factcast.factus.projection;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import nl.altindag.log.LogCaptor;
+import nl.altindag.log.model.LogEvent;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.Logger;
-import slf4jtest.*;
 
 @ExtendWith(MockitoExtension.class)
 class ProgressAwareTest {
 
   private final ProgressAware underTest = new SomethingProgressAware();
 
-  private static final TestLoggerFactory lf = new TestLoggerFactory(new Settings().enableAll());
-
   @Nested
   class WhenCatchingUpPercentage {
 
     @Test
     void logs() {
-      TestLogger logger = lf.getLogger(SomethingProgressAware.class);
+      LogCaptor logCaptor = LogCaptor.forClass(SomethingProgressAware.class);
+      logCaptor.setLogLevelToDebug();
+
+      List<LogEvent> logEvents = logCaptor.getLogEvents();
+      assertThat(logEvents).isEmpty();
+
       underTest.catchupPercentage(81);
 
-      assertThat(logger.lines().size()).isEqualTo(1);
-      LogMessage logline = logger.lines().stream().findFirst().get();
-      assertThat(logline.logName).isEqualTo(logger.getName());
-      assertThat(logline.level).isEqualTo(LogLevel.DebugLevel);
-      assertThat(logline.text).isEqualTo("catchup progress 81%");
+      logEvents = logCaptor.getLogEvents();
+      assertThat(logEvents).hasSize(1);
+      LogEvent logline = logEvents.get(0);
+
+      assertThat(logline.getLoggerName()).contains(SomethingProgressAware.class.getSimpleName());
+      assertThat(logline.getLevel()).isEqualTo("DEBUG");
+      assertThat(logline.getFormattedMessage()).isEqualTo("catchup progress 81%");
     }
   }
 
   @Slf4j
-  static class SomethingProgressAware implements ProgressAware {
-    @Override
-    public Logger getLogger() {
-      return lf.getLogger(SomethingProgressAware.class);
-    }
-  }
+  static class SomethingProgressAware implements ProgressAware {}
 }
