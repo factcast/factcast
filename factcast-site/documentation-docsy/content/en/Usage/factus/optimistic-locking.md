@@ -123,5 +123,31 @@ Also note that you should not (and cannot) publish to Factus directly when execu
 potentially
 break the purpose of the optimistic lock, and can lead to infinite loops.
 
-For further details on how to add operations that are executed after successful publishing or on failure handling,
+In certain cases you might want to access the facts that were published inside the attempt block. Similar to the
+`org.factcast.factus.Factus#publish` method that has overloads where you can specify a `Function<Fact, T> resultFn`,
+you can pass a similar `resultFn` or simply a `Runnable` to the `attempt` method. After successful publication this
+function will be called with a `List<Fact>` containing the published facts (in order they were published in). The return
+value of the function will be returned by the `attempt` method.
+
+```java
+import java.time.Duration;
+
+var passwordFactId = factus.withLockOn(UserNames.class)
+        .attempt((names, tx) -> {
+            tx.publish(new UserCreated(cmd.userId, cmd.userName));
+            tx.publish(new UserPasswordChanged(cmd.userId, cmd.newPasswordHash));
+        }, facts -> {
+            // facts[0] -> UserCreated
+            // facts[1] -> UserPasswordChanged
+            // as published facts, both now have serial and fact id set.
+
+            // simple example only, do something more robust here
+            return facts.get(1).id();
+        });
+
+// and now use the fact id as needed, e.g. in a waitFor
+factus.waitFor(subscribedPasswordProjection, passwordFactId, Duration.ofSeconds(2));
+```
+
+For further details on failure handling,
 please consult the JavaDocs, or look at the provided examples.
