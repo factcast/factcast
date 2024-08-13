@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2023 factcast.org
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,37 +17,49 @@ package org.factcast.core.snap.local;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import java.time.Duration;
 import java.util.Optional;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.factus.snapshot.SnapshotCache;
 
-public class InMemorySnapshotCache implements SnapshotCache {
-
+@Slf4j
+public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
   private final Cache<SnapshotId, Snapshot> cache;
+  private final SnapshotDiskRepository snapshotDiskRepository;
 
-  public InMemorySnapshotCache(InMemorySnapshotProperties props) {
-    cache =
-        Caffeine.newBuilder()
-            .softValues()
-            .expireAfterAccess(Duration.ofDays(props.getDeleteSnapshotStaleForDays()))
-            .build();
+  public InMemoryAndDiskSnapshotCache(SnapshotDiskRepository snapshotDiskRepository) {
+    cache = Caffeine.newBuilder().softValues().build();
+
+    this.snapshotDiskRepository = snapshotDiskRepository;
   }
 
   @Override
   public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
-    return Optional.ofNullable(cache.getIfPresent(id));
+    Optional<Snapshot> snapshotOpt = Optional.ofNullable(cache.getIfPresent(id));
+
+    if (!snapshotOpt.isPresent()) {
+      try {
+        snapshotOpt = snapshotDiskRepository.findById(id);
+        snapshotOpt.ifPresent(snapshot -> cache.put(id, snapshot));
+      } catch (Exception e) {
+        log.error("Error retrieving snapshot with id: {}", id, e);
+      }
+    }
+
+    return snapshotOpt;
   }
 
   @Override
-  public void setSnapshot(@NonNull Snapshot snap) {
-    cache.put(snap.id(), snap);
+  public void setSnapshot(@NonNull Snapshot snapshot) {
+    snapshotDiskRepository.save(snapshot);
+    cache.put(snapshot.id(), snapshot);
   }
 
   @Override
   public void clearSnapshot(@NonNull SnapshotId id) {
+    snapshotDiskRepository.delete(id);
     cache.invalidate(id);
   }
 }
