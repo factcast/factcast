@@ -21,7 +21,9 @@ import com.vaadin.flow.spring.security.AuthenticationContext;
 import com.vaadin.flow.theme.Theme;
 import io.micrometer.core.aop.TimedAspect;
 import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.store.FactStore;
 import org.factcast.server.ui.adapter.FactRepositoryImpl;
 import org.factcast.server.ui.metrics.MeterRegistryMetrics;
@@ -41,7 +43,11 @@ import org.springframework.context.annotation.Import;
 @EnableVaadin("org.factcast.server.ui")
 @RequiredArgsConstructor
 @Import(JsonViewPluginConfiguration.class)
+@Slf4j
 public class UIConfiguration implements AppShellConfigurator {
+
+  static final String SYSTEM_PROPERTY_VAADIN_REACT_ENABLE = "vaadin.react.enable";
+
   @Bean
   public FactRepository factRepository(FactStore fs, SecurityService securityService) {
     return new FactRepositoryImpl(fs, securityService);
@@ -68,5 +74,13 @@ public class UIConfiguration implements AppShellConfigurator {
   @ConditionalOnMissingBean
   public TimedAspect timedAspect(MeterRegistry registry) {
     return new TimedAspect(registry);
+  }
+
+  @PostConstruct
+  public void disableVaadinReactSupport() {
+    log.info(
+        "Disabling Vaadin React support via system property {}",
+        SYSTEM_PROPERTY_VAADIN_REACT_ENABLE);
+    System.setProperty(SYSTEM_PROPERTY_VAADIN_REACT_ENABLE, "false");
   }
 }
