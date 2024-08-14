@@ -113,7 +113,7 @@ type concerning the identified requirements.
 - **Maintainability**: the projection allows to change the business logic of the event handlers, to create new data
   structures for the derived views, update existing ones, or to add new decisions. To do so, it is necessary to update
   the serial of the projection every time the projection class is changed - check out the
-  [documentation]({{< ref "/usage/factus/projections/snapshotting#serials">}}).
+  [documentation]({{< ref "/usage/factus/projections/snapshots#serials">}}).
   The full event-stream will then be re-consumed on the subsequent fetch, as the previously created snapshots will get
   invalidated. The snapshots retention might need to be fine-tuned on the long run, based on the amount of resources
   available, and the frequency of the queries.
@@ -172,7 +172,7 @@ Preface: considering a Managed Projection that has its state externalized in a s
   even when the Event Store is unavailable. The projection allows to change the business logic of the event handlers,
   and change the underlying structure the derived views. To do so, it is necessary to update the serial of the
   projection every time the projection class is changed - check out the
-  [documentation]({{< ref "/usage/factus/projections/snapshotting#serials">}}). The full event-stream will then be
+  [documentation]({{< ref "/usage/factus/projections/snapshots#serials">}}). The full event-stream will then be
   re-consumed on the subsequent updates, to rebuild the derived views.
 
 ### Local Managed Projection
@@ -237,7 +237,7 @@ Preface: considering a Subscribed Projection that has its state externalized in 
 - **Maintainability**: in terms of maintainability, a Subscribed Projection is similar to a Managed Projection, as it
   allows to change the business logic of the event handlers, and change the underlying structure the derived views. To
   do so, it is necessary to update the serial of the projection every time the projection class is changed - check out
-  the [documentation]({{< ref "/usage/factus/projections/snapshotting#serials">}}). The full event-stream will then be
+  the [documentation]({{< ref "/usage/factus/projections/snapshots#serials">}}). The full event-stream will then be
   re-consumed on the next catch-up phase (when the new projection starts), to rebuild the derived views.
 
 ### Local Subscribed Projection
