@@ -34,10 +34,11 @@ public class SnapshotData {
   @NonNull UUID lastFactId;
 
   @SuppressWarnings("deprecation")
-  // TODO needed for downward comp?
-  //    public static SnapshotData from(org.factcast.core.snap.Snapshot snapshot) {
-  //        return new SnapshotData(snapshot.bytes(), snapshot.lastFact());
-  //    }
+  @Deprecated
+  public static SnapshotData from(
+      org.factcast.core.snap.Snapshot snapshot, @NonNull SnapshotSerializerId serId) {
+    return new SnapshotData(snapshot.bytes(), serId, snapshot.lastFact());
+  }
 
   public static Optional<SnapshotData> from(byte[] source) {
     ByteArrayDataInput is = ByteStreams.newDataInput(source);

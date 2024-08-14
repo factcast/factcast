@@ -15,8 +15,8 @@
  */
 package org.factcast.core.snap.redisson;
 
-import java.util.*;
-import java.util.function.*;
+import java.util.Optional;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import lombok.Data;
 import lombok.NonNull;
@@ -44,7 +44,10 @@ public class RedissonSnapshotProperties {
 
   int deleteSnapshotStaleForDays = 90;
 
-  RedissonCodec snapshotCacheRedissonCodec = RedissonCodec.MarshallingCodec;
+  boolean keepLegacySnapshots = true;
+  boolean migrateLegacySnapshots = true;
+
+  @Deprecated RedissonCodec snapshotCacheRedissonCodec = RedissonCodec.MarshallingCodec;
 
   public int getRetentionTime() {
     return this.getDeleteSnapshotStaleForDays();
