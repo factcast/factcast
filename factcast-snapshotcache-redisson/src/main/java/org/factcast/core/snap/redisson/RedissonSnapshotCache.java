@@ -49,7 +49,7 @@ public class RedissonSnapshotCache implements SnapshotCache {
   @NonNull
   @VisibleForTesting
   String createKeyFor(@NonNull SnapshotIdentifier id) {
-    StringBuilder sb = new StringBuilder(PREFIX + id.projectionClass());
+    StringBuilder sb = new StringBuilder(PREFIX + id.projectionClass().getName());
     if (id.aggregateId() != null) {
       sb.append(SEPARATOR);
       sb.append(id.aggregateId());
@@ -61,11 +61,14 @@ public class RedissonSnapshotCache implements SnapshotCache {
   @VisibleForTesting
   String createLegacyKeyFor(@NonNull SnapshotIdentifier id) {
     UUID aggId = id.aggregateId();
+
     Class<? extends SnapshotProjection> type = id.projectionClass();
     SnapshotSerializerId serializerId = selector.selectSeralizerFor(type).id();
     if (aggId == null)
       return LegacySnapshotKeys.createKeyForType(
-          LegacySnapshotKeys.RepoType.SNAPSHOT, id.projectionClass(), serializerId);
+              // recreate stupid special value, even without delimiter
+              LegacySnapshotKeys.RepoType.SNAPSHOT, id.projectionClass(), serializerId)
+          + new UUID(0, 0).toString();
     else
       return LegacySnapshotKeys.createKeyForType(
           LegacySnapshotKeys.RepoType.AGGREGATE, id.projectionClass(), serializerId, aggId);
@@ -74,7 +77,8 @@ public class RedissonSnapshotCache implements SnapshotCache {
 
   @Override
   public @NonNull Optional<SnapshotData> find(@NonNull SnapshotIdentifier id) {
-    RBucket<byte[]> bucket = redisson.getBucket(createKeyFor(id), ByteArrayCodec.INSTANCE);
+    String key = createKeyFor(id);
+    RBucket<byte[]> bucket = redisson.getBucket(key, ByteArrayCodec.INSTANCE);
     byte[] bytes = bucket.get();
     if (bytes != null && bytes.length > 0) {
       // exists
