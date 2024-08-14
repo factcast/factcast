@@ -15,7 +15,7 @@
  */
 package org.factcast.factus.serializer;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.UUID;
@@ -44,11 +44,6 @@ class JacksonSnapshotSerializerTest {
 
     // ASSERT
     assertThat(projection.val()).isEqualTo("Hello");
-  }
-
-  @Test
-  void testCompressionProperty() {
-    assertThat(underTest.includesCompression()).isFalse();
   }
 
   @Data

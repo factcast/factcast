@@ -17,8 +17,6 @@ package org.factcast.factus.snapshot;
 
 import java.util.Optional;
 import lombok.NonNull;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
 
 /**
  * Even though this functionality is available through factStore, we chose to extract it from the
@@ -29,9 +27,9 @@ import org.factcast.core.snap.SnapshotId;
 public interface SnapshotCache {
 
   @NonNull
-  Optional<Snapshot> getSnapshot(@NonNull SnapshotId id);
+  Optional<SnapshotData> find(@NonNull SnapshotIdentifier id);
 
-  void setSnapshot(@NonNull Snapshot snapshot);
+  void store(@NonNull SnapshotIdentifier id, @NonNull SnapshotData snapshot);
 
-  void clearSnapshot(@NonNull SnapshotId id);
+  void remove(@NonNull SnapshotIdentifier id);
 }

@@ -20,13 +20,13 @@ import com.google.common.cache.CacheBuilder;
 import java.time.Duration;
 import java.util.Optional;
 import lombok.NonNull;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
 import org.factcast.factus.snapshot.SnapshotCache;
+import org.factcast.factus.snapshot.SnapshotData;
+import org.factcast.factus.snapshot.SnapshotIdentifier;
 
 public class InMemorySnapshotCache implements SnapshotCache {
 
-  private final Cache<SnapshotId, Snapshot> cache;
+  private final Cache<SnapshotIdentifier, SnapshotData> cache;
 
   public InMemorySnapshotCache(InMemorySnapshotProperties props) {
     cache =
@@ -37,17 +37,17 @@ public class InMemorySnapshotCache implements SnapshotCache {
   }
 
   @Override
-  public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
+  public @NonNull Optional<SnapshotData> find(@NonNull SnapshotIdentifier id) {
     return Optional.ofNullable(cache.getIfPresent(id));
   }
 
   @Override
-  public void setSnapshot(@NonNull Snapshot snap) {
-    cache.put(snap.id(), snap);
+  public void store(@NonNull SnapshotIdentifier id, @NonNull SnapshotData snapshot) {
+    cache.put(id, snapshot);
   }
 
   @Override
-  public void clearSnapshot(@NonNull SnapshotId id) {
+  public void remove(@NonNull SnapshotIdentifier id) {
     cache.invalidate(id);
   }
 }
