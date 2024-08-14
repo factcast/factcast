@@ -50,7 +50,6 @@ class SnapshotRepositoryTest {
   void store() {
     // INIT
     UUID state = UUID.randomUUID();
-    UUID aggId = UUID.randomUUID();
     SomeSnapshotProjection projection = new SomeSnapshotProjection();
 
     when(snapshotSerializerSelector.selectSeralizerFor(any())).thenReturn(ser);
