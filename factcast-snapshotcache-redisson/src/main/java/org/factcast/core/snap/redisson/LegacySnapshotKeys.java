@@ -16,14 +16,13 @@
 package org.factcast.core.snap.redisson;
 
 import java.util.UUID;
-import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.factus.projection.ScopedName;
 import org.factcast.factus.projection.SnapshotProjection;
-import org.factcast.factus.serializer.SnapshotSerializer;
+import org.factcast.factus.serializer.SnapshotSerializerId;
 
 /**
  * used for downward compatibility within redis impl of snapshotcache. Will be removed eventually.
@@ -43,31 +42,24 @@ public class LegacySnapshotKeys {
   public static String createKeyForType(
       @NonNull RepoType repoType,
       @NonNull Class<? extends SnapshotProjection> type,
-      @NonNull Supplier<SnapshotSerializer> serializerSupplier) {
-    return createKeyForType(repoType, type, serializerSupplier, null);
+      @NonNull SnapshotSerializerId serId) {
+    return createKeyForType(repoType, type, serId, null);
   }
 
   @NonNull
   public static String createKeyForType(
       @NonNull RepoType repoType,
       @NonNull Class<? extends SnapshotProjection> type,
-      @NonNull Supplier<SnapshotSerializer> serializerSupplier,
+      @NonNull SnapshotSerializerId serId,
       @Nullable UUID optionalUUID) {
 
     ScopedName classLevelKey =
-        ScopedName.fromProjectionMetaData(type)
-            .with(repoType.id())
-            .with(serializerId(serializerSupplier));
+        ScopedName.fromProjectionMetaData(type).with(repoType.id()).with(serId.name());
 
     if (optionalUUID != null) {
       classLevelKey = classLevelKey.with(optionalUUID.toString());
     }
 
     return classLevelKey.asString();
-  }
-
-  @NonNull
-  private static String serializerId(@NonNull Supplier<SnapshotSerializer> serializerSupplier) {
-    return serializerSupplier.get().id().name();
   }
 }

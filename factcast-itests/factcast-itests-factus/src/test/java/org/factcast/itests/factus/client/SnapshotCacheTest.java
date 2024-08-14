@@ -21,8 +21,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.snap.Snapshot;
 import org.factcast.factus.projection.Aggregate;
+import org.factcast.factus.serializer.SnapshotSerializerId;
 import org.factcast.factus.snapshot.SnapshotCache;
 import org.factcast.factus.snapshot.SnapshotData;
 import org.factcast.factus.snapshot.SnapshotIdentifier;
@@ -36,19 +36,21 @@ public abstract class SnapshotCacheTest extends AbstractFactCastIntegrationTest 
   final SnapshotCache repository;
 
   @Test
-  public void simpleSnapshotRoundtrip() throws Exception {
-    SnapshotIdentifier id = SnapshotIdentifier.of("test", Aggregate.class, randomUUID());
+  public void simpleSnapshotRoundtrip() {
+    SnapshotIdentifier id = SnapshotIdentifier.of(Aggregate.class, randomUUID());
     // initially empty
     assertThat(repository.find(id)).isEmpty();
 
     // set and retrieve
-    repository.store(id, new SnapshotData("foo".getBytes(), randomUUID()));
+    repository.store(
+        id, new SnapshotData("foo".getBytes(), SnapshotSerializerId.of("narf"), randomUUID()));
     Optional<SnapshotData> snapshot = repository.find(id);
     assertThat(snapshot).isNotEmpty();
     assertThat(snapshot.get().serializedProjection()).isEqualTo("foo".getBytes());
 
     // overwrite and retrieve
-    repository.store(new Snapshot(id, randomUUID(), "bar".getBytes(), false));
+    repository.store(
+        id, new SnapshotData("bar".getBytes(), SnapshotSerializerId.of("narf"), randomUUID()));
     snapshot = repository.find(id);
     assertThat(snapshot).isNotEmpty();
     assertThat(snapshot.get().serializedProjection()).isEqualTo("bar".getBytes());

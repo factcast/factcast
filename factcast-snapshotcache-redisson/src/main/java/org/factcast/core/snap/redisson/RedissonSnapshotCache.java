@@ -15,73 +15,108 @@
  */
 package org.factcast.core.snap.redisson;
 
-import java.util.*;
-import java.util.concurrent.*;
+import com.google.common.annotations.VisibleForTesting;
+import java.time.Duration;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.snap.Snapshot;
+import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.serializer.SnapshotSerializerId;
+import org.factcast.factus.snapshot.SnapshotCache;
+import org.factcast.factus.snapshot.SnapshotData;
+import org.factcast.factus.snapshot.SnapshotIdentifier;
+import org.factcast.factus.snapshot.SnapshotSerializerSelector;
+import org.redisson.api.RBucket;
+import org.redisson.api.RedissonClient;
+import org.redisson.client.codec.ByteArrayCodec;
 
+@SuppressWarnings("deprecation")
 @Slf4j
-// TODO reimplement
-public class RedissonSnapshotCache
-// implements SnapshotCache
-{
-  //
-  //  private static final String SNAPSHOT_CACHE_PREFIX = "SNAPC";
-  //  final RedissonClient redisson;
-  //  final ByteArrayCodec codec = new ByteArrayCodec();
-  //
-  //  private final RedissonSnapshotProperties properties;
-  //
-  //  public RedissonSnapshotCache(
-  //      @NonNull RedissonClient redisson, @NonNull RedissonSnapshotProperties props) {
-  //    this.redisson = redisson;
-  //    this.properties = props;
-  //  }
-  //
-  //  @Override
-  //  public @NonNull Optional<SnapshotData> find(@NonNull SnapshotIdentifier id) {
-  //    String key = createKeyFor(id);
-  //
-  //    // regular snapshot cache
-  //    RBucket<byte[]> bucket = redisson.getBucket(key, codec);
-  //    byte[] bytes = bucket.get();
-  //    if (bytes!=null){ bucket.expireAsync(Duration.ofDays(properties.getRetentionTime()));
-  //      return SnapshotData.from(bytes);
-  //    }
-  //
-  //    // legacy
-  //    RBucket<org.factcast.core.snap.Snapshot> legacyBucket =
-  // properties.getSnapshotCacheRedissonCodec().getBucket(redisson, key);
-  //    Optional<SnapshotData> snapshot =
-  // Optional.ofNullable(legacyBucket.get()).map(SnapshotData::from);
-  //    if (snapshot.isPresent()) {
-  //      // renew TTL
-  //      bucket.expireAsync(Duration.ofDays(properties.getRetentionTime()));
-  //    }
-  //    return snapshot;
-  //  }
-  //
-  //  @Override
-  //  public void store(@NonNull SnapshotData snapshot) {
-  //    String key = createKeyFor(snapshot.id());
-  //    RBucket<SnapshotData> bucket =
-  // properties.getSnapshotCacheRedissonCodec().getBucket(redisson, key);
-  //    bucket.set(snapshot, properties.getRetentionTime(), TimeUnit.DAYS);
-  //  }
-  //
-  //  @Override
-  //  public void remove(@NonNull SnapshotIdentifier id) {
-  //    redisson.getBucket(createKeyFor(id)).delete();
-  //  }
-  //
-  //  @NonNull
-  //  @VisibleForTesting
-  //  String createLegacyKeyFor(@NonNull SnapshotIdentifier id) {
-  //    return id.key() + id.uuid();
-  //  }
-  //
-  //  @NonNull
-  //  @VisibleForTesting
-  //  String createKeyFor(@NonNull SnapshotIdentifier id) {
-  //    return SNAPSHOT_CACHE_PREFIX+ id.key() + id.uuid();
-  //  }
+@RequiredArgsConstructor
+public class RedissonSnapshotCache implements SnapshotCache {
+
+  private static final String PREFIX = "sc_";
+  private static final String SEPARATOR = ";";
+
+  final RedissonClient redisson;
+  final SnapshotSerializerSelector selector;
+  private final RedissonSnapshotProperties properties;
+
+  @NonNull
+  @VisibleForTesting
+  String createKeyFor(@NonNull SnapshotIdentifier id) {
+    StringBuilder sb = new StringBuilder(PREFIX + id.projectionClass());
+    if (id.aggregateId() != null) {
+      sb.append(SEPARATOR);
+      sb.append(id.aggregateId());
+    }
+    return sb.toString();
+  }
+
+  @NonNull
+  @VisibleForTesting
+  String createLegacyKeyFor(@NonNull SnapshotIdentifier id) {
+    UUID aggId = id.aggregateId();
+    Class<? extends SnapshotProjection> type = id.projectionClass();
+    SnapshotSerializerId serializerId = selector.selectSeralizerFor(type).id();
+    if (aggId == null)
+      return LegacySnapshotKeys.createKeyForType(
+          LegacySnapshotKeys.RepoType.SNAPSHOT, id.projectionClass(), serializerId);
+    else
+      return LegacySnapshotKeys.createKeyForType(
+          LegacySnapshotKeys.RepoType.AGGREGATE, id.projectionClass(), serializerId, aggId);
+  }
+  //////
+
+  @Override
+  public @NonNull Optional<SnapshotData> find(@NonNull SnapshotIdentifier id) {
+    RBucket<byte[]> bucket = redisson.getBucket(createKeyFor(id), ByteArrayCodec.INSTANCE);
+    byte[] bytes = bucket.get();
+    if (bytes != null && bytes.length > 0) {
+      // exists
+      if (!properties.isKeepLegacySnapshots()) {
+        redisson.getBucket(createLegacyKeyFor(id)).deleteAsync();
+      }
+      bucket.expireAsync(Duration.ofDays(properties.getRetentionTime()));
+      return SnapshotData.from(bytes);
+    } else {
+      // find legacy snapshot
+      String legacyKey = createLegacyKeyFor(id);
+      RBucket<Snapshot> legacyBucket =
+          properties.getSnapshotCacheRedissonCodec().getBucket(redisson, legacyKey);
+      Optional<Snapshot> snapshot = Optional.ofNullable(legacyBucket.get());
+      if (snapshot.isPresent()) {
+        legacyBucket.expireAsync(Duration.ofDays(properties.getRetentionTime()));
+      }
+      Optional<SnapshotData> snapshotData =
+          snapshot.map(
+              s -> SnapshotData.from(s, selector.selectSeralizerFor(id.projectionClass()).id()));
+
+      if (snapshotData.isPresent() && properties.isMigrateLegacySnapshots())
+        store(id, snapshotData.get());
+
+      return snapshotData;
+    }
+  }
+
+  @Override
+  public void store(@NonNull SnapshotIdentifier id, @NonNull SnapshotData snapshot) {
+    redisson
+        .getBucket(createKeyFor(id), ByteArrayCodec.INSTANCE)
+        .set(snapshot.toBytes(), properties.getRetentionTime(), TimeUnit.DAYS);
+    if (!properties.isKeepLegacySnapshots()) {
+      redisson.getBucket(createLegacyKeyFor(id)).deleteAsync();
+    }
+  }
+
+  @Override
+  public void remove(@NonNull SnapshotIdentifier id) {
+    if (!properties.isKeepLegacySnapshots()) {
+      redisson.getBucket(createLegacyKeyFor(id)).delete();
+    }
+  }
 }
