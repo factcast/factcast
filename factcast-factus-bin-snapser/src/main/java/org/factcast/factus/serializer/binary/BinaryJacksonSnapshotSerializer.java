@@ -24,6 +24,7 @@ import net.jpountz.lz4.LZ4BlockInputStream;
 import net.jpountz.lz4.LZ4BlockOutputStream;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.SnapshotSerializer;
+import org.factcast.factus.serializer.SnapshotSerializerId;
 import org.msgpack.jackson.dataformat.MessagePackFactory;
 
 public class BinaryJacksonSnapshotSerializer implements SnapshotSerializer {
@@ -59,12 +60,7 @@ public class BinaryJacksonSnapshotSerializer implements SnapshotSerializer {
   }
 
   @Override
-  public boolean includesCompression() {
-    return true;
-  }
-
-  @Override
-  public String getId() {
-    return "BinaryJacksonSnapshotSerializer";
+  public SnapshotSerializerId id() {
+    return SnapshotSerializerId.of("BinaryJacksonSnapshotSerializer");
   }
 }

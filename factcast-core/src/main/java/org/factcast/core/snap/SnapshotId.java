@@ -25,10 +25,9 @@ import lombok.Value;
  * it with this package.
  */
 @Value(staticConstructor = "of")
+@Deprecated
 public class SnapshotId implements Serializable {
   private static final long serialVersionUID = -3207528229703207635L;
   @NonNull String key;
-
-  @NonNull UUID uuid; // semantically optional, might be constant if not needed
-  // (SnapshotProjections)
+  @NonNull UUID uuid;
 }

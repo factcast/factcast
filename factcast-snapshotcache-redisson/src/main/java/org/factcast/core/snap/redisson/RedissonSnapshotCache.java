@@ -15,68 +15,73 @@
  */
 package org.factcast.core.snap.redisson;
 
-import com.google.common.annotations.VisibleForTesting;
-import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
-import org.factcast.factus.snapshot.SnapshotCache;
-import org.redisson.api.RBucket;
-import org.redisson.api.RMap;
-import org.redisson.api.RedissonClient;
 
 @Slf4j
-public class RedissonSnapshotCache implements SnapshotCache {
-
-  final RedissonClient redisson;
-
-  private final RedissonSnapshotProperties properties;
-
-  // still needed to remove stale snapshots, can be removed at some point
-  private static final String TS_INDEX = "SNAPCACHE_IDX";
-  private final RMap<String, Long> index;
-
-  public RedissonSnapshotCache(
-      @NonNull RedissonClient redisson, @NonNull RedissonSnapshotProperties props) {
-    this.redisson = redisson;
-    this.properties = props;
-
-    index = properties.getSnapshotCacheRedissonCodec().getMap(redisson, TS_INDEX);
-  }
-
-  @Override
-  public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
-    String key = createKeyFor(id);
-
-    RBucket<Snapshot> bucket = properties.getSnapshotCacheRedissonCodec().getBucket(redisson, key);
-    Optional<Snapshot> snapshot = Optional.ofNullable(bucket.get());
-    if (snapshot.isPresent()) {
-      // renew TTL
-      bucket.expireAsync(Duration.ofDays(properties.getRetentionTime()));
-      // can be removed at some point
-      index.removeAsync(key, System.currentTimeMillis());
-    }
-    return snapshot;
-  }
-
-  @Override
-  public void setSnapshot(@NonNull Snapshot snapshot) {
-    String key = createKeyFor(snapshot.id());
-    RBucket<Snapshot> bucket = properties.getSnapshotCacheRedissonCodec().getBucket(redisson, key);
-    bucket.set(snapshot, properties.getRetentionTime(), TimeUnit.DAYS);
-  }
-
-  @Override
-  public void clearSnapshot(@NonNull SnapshotId id) {
-    redisson.getBucket(createKeyFor(id)).delete();
-  }
-
-  @NonNull
-  @VisibleForTesting
-  String createKeyFor(@NonNull SnapshotId id) {
-    return id.key() + id.uuid();
-  }
+// TODO reimplement
+public class RedissonSnapshotCache
+// implements SnapshotCache
+{
+  //
+  //  private static final String SNAPSHOT_CACHE_PREFIX = "SNAPC";
+  //  final RedissonClient redisson;
+  //  final ByteArrayCodec codec = new ByteArrayCodec();
+  //
+  //  private final RedissonSnapshotProperties properties;
+  //
+  //  public RedissonSnapshotCache(
+  //      @NonNull RedissonClient redisson, @NonNull RedissonSnapshotProperties props) {
+  //    this.redisson = redisson;
+  //    this.properties = props;
+  //  }
+  //
+  //  @Override
+  //  public @NonNull Optional<SnapshotData> find(@NonNull SnapshotIdentifier id) {
+  //    String key = createKeyFor(id);
+  //
+  //    // regular snapshot cache
+  //    RBucket<byte[]> bucket = redisson.getBucket(key, codec);
+  //    byte[] bytes = bucket.get();
+  //    if (bytes!=null){ bucket.expireAsync(Duration.ofDays(properties.getRetentionTime()));
+  //      return SnapshotData.from(bytes);
+  //    }
+  //
+  //    // legacy
+  //    RBucket<org.factcast.core.snap.Snapshot> legacyBucket =
+  // properties.getSnapshotCacheRedissonCodec().getBucket(redisson, key);
+  //    Optional<SnapshotData> snapshot =
+  // Optional.ofNullable(legacyBucket.get()).map(SnapshotData::from);
+  //    if (snapshot.isPresent()) {
+  //      // renew TTL
+  //      bucket.expireAsync(Duration.ofDays(properties.getRetentionTime()));
+  //    }
+  //    return snapshot;
+  //  }
+  //
+  //  @Override
+  //  public void store(@NonNull SnapshotData snapshot) {
+  //    String key = createKeyFor(snapshot.id());
+  //    RBucket<SnapshotData> bucket =
+  // properties.getSnapshotCacheRedissonCodec().getBucket(redisson, key);
+  //    bucket.set(snapshot, properties.getRetentionTime(), TimeUnit.DAYS);
+  //  }
+  //
+  //  @Override
+  //  public void remove(@NonNull SnapshotIdentifier id) {
+  //    redisson.getBucket(createKeyFor(id)).delete();
+  //  }
+  //
+  //  @NonNull
+  //  @VisibleForTesting
+  //  String createLegacyKeyFor(@NonNull SnapshotIdentifier id) {
+  //    return id.key() + id.uuid();
+  //  }
+  //
+  //  @NonNull
+  //  @VisibleForTesting
+  //  String createKeyFor(@NonNull SnapshotIdentifier id) {
+  //    return SNAPSHOT_CACHE_PREFIX+ id.key() + id.uuid();
+  //  }
 }
