@@ -81,10 +81,6 @@ public class RedissonSnapshotCache implements SnapshotCache {
     RBucket<byte[]> bucket = redisson.getBucket(key, ByteArrayCodec.INSTANCE);
     byte[] bytes = bucket.get();
     if (bytes != null && bytes.length > 0) {
-      // exists
-      if (!properties.isKeepLegacySnapshots()) {
-        redisson.getBucket(createLegacyKeyFor(id)).deleteAsync();
-      }
       bucket.expireAsync(Duration.ofDays(properties.getRetentionTime()));
       return SnapshotData.from(bytes);
     } else {
@@ -100,8 +96,8 @@ public class RedissonSnapshotCache implements SnapshotCache {
           snapshot.map(
               s -> SnapshotData.from(s, selector.selectSeralizerFor(id.projectionClass()).id()));
 
-      if (snapshotData.isPresent() && properties.isMigrateLegacySnapshots())
-        store(id, snapshotData.get());
+      // migrate
+      snapshotData.ifPresent(data -> store(id, data));
 
       return snapshotData;
     }
@@ -112,15 +108,11 @@ public class RedissonSnapshotCache implements SnapshotCache {
     redisson
         .getBucket(createKeyFor(id), ByteArrayCodec.INSTANCE)
         .set(snapshot.toBytes(), properties.getRetentionTime(), TimeUnit.DAYS);
-    if (!properties.isKeepLegacySnapshots()) {
-      redisson.getBucket(createLegacyKeyFor(id)).deleteAsync();
-    }
   }
 
   @Override
   public void remove(@NonNull SnapshotIdentifier id) {
-    if (!properties.isKeepLegacySnapshots()) {
-      redisson.getBucket(createLegacyKeyFor(id)).delete();
-    }
+    redisson.getBucket(createKeyFor(id)).delete();
+    redisson.getBucket(createLegacyKeyFor(id)).delete();
   }
 }
