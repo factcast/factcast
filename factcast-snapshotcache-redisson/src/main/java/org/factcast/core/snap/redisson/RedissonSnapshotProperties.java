@@ -44,9 +44,6 @@ public class RedissonSnapshotProperties {
 
   int deleteSnapshotStaleForDays = 90;
 
-  boolean keepLegacySnapshots = true;
-  boolean migrateLegacySnapshots = true;
-
   @Deprecated RedissonCodec snapshotCacheRedissonCodec = RedissonCodec.MarshallingCodec;
 
   public int getRetentionTime() {

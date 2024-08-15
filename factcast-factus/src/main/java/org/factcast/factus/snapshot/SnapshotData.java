@@ -18,6 +18,7 @@ package org.factcast.factus.snapshot;
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.NonNull;
@@ -42,24 +43,52 @@ public class SnapshotData {
 
   public static Optional<SnapshotData> from(byte[] source) {
     ByteArrayDataInput is = ByteStreams.newDataInput(source);
-    if (is.readShort() == MAGIC_BYTES) {
-      UUID lastFact = new UUID(is.readLong(), is.readLong());
-      SnapshotSerializerId serId = SnapshotSerializerId.of(is.readUTF());
-      byte[] bytes = new byte[is.readInt()];
-      is.readFully(bytes);
-      return Optional.of(new SnapshotData(bytes, serId, lastFact));
-    }
-    return Optional.empty();
+    short magic = is.readShort();
+
+    return Arrays.stream(Protocol.values())
+        .filter(p -> magic == p.magic())
+        .findFirst()
+        .flatMap(p -> p.from(is));
   }
 
   public byte[] toBytes() {
-    ByteArrayDataOutput os = ByteStreams.newDataOutput();
-    os.writeShort(MAGIC_BYTES);
-    os.writeLong(lastFactId.getMostSignificantBits());
-    os.writeLong(lastFactId.getLeastSignificantBits());
-    os.writeUTF(snapshotSerializerId.name());
-    os.writeInt(serializedProjection.length);
-    os.write(serializedProjection);
-    return os.toByteArray();
+    return Protocol.V1.toBytes(this);
+  }
+
+  @SuppressWarnings("java:S6548")
+  enum Protocol {
+    V1 {
+      @Override
+      short magic() {
+        return 0x09af;
+      }
+
+      @Override
+      Optional<SnapshotData> from(ByteArrayDataInput is) {
+        UUID lastFact = new UUID(is.readLong(), is.readLong());
+        SnapshotSerializerId serId = SnapshotSerializerId.of(is.readUTF());
+        byte[] bytes = new byte[is.readInt()];
+        is.readFully(bytes);
+        return Optional.of(new SnapshotData(bytes, serId, lastFact));
+      }
+
+      @Override
+      byte[] toBytes(SnapshotData sd) {
+        ByteArrayDataOutput os = ByteStreams.newDataOutput();
+        os.writeShort(MAGIC_BYTES);
+        os.writeLong(sd.lastFactId.getMostSignificantBits());
+        os.writeLong(sd.lastFactId.getLeastSignificantBits());
+        os.writeUTF(sd.snapshotSerializerId.name());
+        os.writeInt(sd.serializedProjection.length);
+        os.write(sd.serializedProjection);
+        return os.toByteArray();
+      }
+    };
+
+    abstract short magic();
+
+    abstract Optional<SnapshotData> from(ByteArrayDataInput source);
+
+    abstract byte[] toBytes(SnapshotData sd);
   }
 }
