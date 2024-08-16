@@ -111,7 +111,7 @@
     <mockk.version>1.13.12</mockk.version>
     <redisson.version>3.28.0</redisson.version>
     <graaljs.version>24.0.1</graaljs.version>
-    <shedlock.version>5.14.0</shedlock.version>
+    <shedlock.version>5.15.0</shedlock.version>
     <byte-buddy.version>1.14.19</byte-buddy.version>
     <skipUnitTests>false</skipUnitTests>
     <!-- as long as we promise pg11 compatibility, it might make sense to also
