@@ -74,7 +74,7 @@
     <dependency>
       <groupId>org.vaadin.olli</groupId>
       <artifactId>file-download-wrapper</artifactId>
-      <version>7.0.0</version>
+      <version>7.1.0</version>
     </dependency>
 
     <dependency>
