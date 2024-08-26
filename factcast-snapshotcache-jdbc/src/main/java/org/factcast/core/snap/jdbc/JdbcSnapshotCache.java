@@ -18,7 +18,6 @@ package org.factcast.core.snap.jdbc;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.*;
 import javax.sql.DataSource;
 import lombok.NonNull;
@@ -33,7 +32,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class JdbcSnapshotCache implements SnapshotCache {
 
-  public final String createTableStatement;
   public final String queryStatement;
   public final String insertStatement;
   public final String deleteStatement;
@@ -43,16 +41,6 @@ public class JdbcSnapshotCache implements SnapshotCache {
   public JdbcSnapshotCache(JdbcSnapshotProperties properties, DataSource dataSource) {
     this.dataSource = dataSource;
 
-    createTableStatement =
-        "CREATE TABLE "
-            + properties.getSnapshotsTableName()
-            + "("
-            + "key VARCHAR(512), "
-            + "uuid VARCHAR(36), "
-            + "last_fact_id VARCHAR(36), "
-            + "bytes BLOB, "
-            + "compressed boolean, "
-            + "PRIMARY KEY (key, uuid))";
     queryStatement =
         "SELECT * FROM " + properties.getSnapshotsTableName() + " WHERE key = ? AND uuid = ?";
     insertStatement =
@@ -64,13 +52,9 @@ public class JdbcSnapshotCache implements SnapshotCache {
 
     boolean snapTableExists = doesTableExist(properties.getSnapshotsTableName());
 
-    if (properties.isCreateTablesIfMissing() && !snapTableExists) {
-      createSnapshotTable();
-    } else if (!snapTableExists) {
+    if (!snapTableExists) {
       throw new IllegalStateException(
-          "Snapshots table does not exist: "
-              + properties.getSnapshotsTableName()
-              + ", and auto creation is disabled");
+          "Snapshots table does not exist: " + properties.getSnapshotsTableName());
     }
   }
 
@@ -84,17 +68,6 @@ public class JdbcSnapshotCache implements SnapshotCache {
 
       return Boolean.TRUE.equals(rs.next());
     }
-  }
-
-  @SneakyThrows
-  private void createSnapshotTable() {
-    log.debug("Creating factus snapshot table");
-    try (Connection connection = dataSource.getConnection();
-        Statement statement = connection.createStatement()) {
-      statement.execute(createTableStatement);
-    }
-
-    log.debug("Factus snapshot table created");
   }
 
   @Override
