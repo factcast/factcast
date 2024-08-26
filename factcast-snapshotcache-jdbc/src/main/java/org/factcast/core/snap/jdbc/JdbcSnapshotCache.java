@@ -34,6 +34,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
 
   public final String queryStatement;
   public final String insertStatement;
+  public final String updateStatement;
   public final String deleteStatement;
 
   private final DataSource dataSource;
@@ -43,31 +44,26 @@ public class JdbcSnapshotCache implements SnapshotCache {
 
     queryStatement =
         "SELECT * FROM " + properties.getSnapshotsTableName() + " WHERE key = ? AND uuid = ?";
+
+    updateStatement =
+        "UPDATE "
+            + properties.getSnapshotsTableName()
+            + " SET last_fact_id=?, bytes=?, compressed=? where key=? AND uuid=?";
+
     insertStatement =
         "INSERT INTO "
             + properties.getSnapshotsTableName()
             + " (key, uuid, last_fact_id, bytes, compressed) VALUES (?, ?, ?, ?, ?)";
+
     deleteStatement =
         "DELETE FROM " + properties.getSnapshotsTableName() + " WHERE key = ? AND uuid = ?";
 
-    boolean snapTableExists = doesTableExist(properties.getSnapshotsTableName());
-
-    if (!snapTableExists) {
-      throw new IllegalStateException(
-          "Snapshots table does not exist: " + properties.getSnapshotsTableName());
-    }
-  }
-
-  @SneakyThrows
-  public boolean doesTableExist(String tableName) {
-    try (Connection connection = dataSource.getConnection();
-        ResultSet rs =
-            connection
-                .getMetaData()
-                .getTables(null, null, tableName.toUpperCase(), new String[] {"TABLE"})) {
-
-      return Boolean.TRUE.equals(rs.next());
-    }
+    //    boolean snapTableExists = doesTableExist(properties.getSnapshotsTableName());
+    //
+    //    if (!snapTableExists) {
+    //      throw new IllegalStateException(
+    //          "Snapshots table does not exist: " + properties.getSnapshotsTableName());
+    //    }
   }
 
   @Override
@@ -80,13 +76,13 @@ public class JdbcSnapshotCache implements SnapshotCache {
       try (ResultSet resultSet = statement.executeQuery()) {
         if (resultSet.next()) {
           SnapshotId snapshotId =
-              SnapshotId.of(resultSet.getString(0), UUID.fromString(resultSet.getString(1)));
+              SnapshotId.of(resultSet.getString(1), UUID.fromString(resultSet.getString(2)));
           return Optional.of(
               new Snapshot(
                   snapshotId,
-                  UUID.fromString(resultSet.getString(2)),
-                  resultSet.getBytes(3),
-                  resultSet.getBoolean(4)));
+                  UUID.fromString(resultSet.getString(3)),
+                  resultSet.getBytes(4),
+                  resultSet.getBoolean(5)));
         }
       }
     }
@@ -97,8 +93,30 @@ public class JdbcSnapshotCache implements SnapshotCache {
   @Override
   @SneakyThrows
   public void setSnapshot(@NonNull Snapshot snapshot) {
-    try (Connection connection = dataSource.getConnection();
-        PreparedStatement statement = connection.prepareStatement(insertStatement)) {
+    try (Connection connection = dataSource.getConnection()) {
+      int affectedRows = updateSnapshot(connection, snapshot);
+      if (affectedRows == 0) {
+        insertSnapshot(connection, snapshot);
+      }
+    }
+  }
+
+  @SneakyThrows
+  private int updateSnapshot(Connection connection, @NonNull Snapshot snapshot) {
+    try (PreparedStatement statement = connection.prepareStatement(updateStatement)) {
+      statement.setString(1, snapshot.lastFact().toString());
+      statement.setBytes(2, snapshot.bytes());
+      statement.setBoolean(3, snapshot.compressed());
+      statement.setString(4, snapshot.id().key());
+      statement.setString(5, snapshot.id().uuid().toString());
+
+      return statement.executeUpdate();
+    }
+  }
+
+  @SneakyThrows
+  private void insertSnapshot(Connection connection, @NonNull Snapshot snapshot) {
+    try (PreparedStatement statement = connection.prepareStatement(insertStatement)) {
       statement.setString(1, snapshot.id().key());
       statement.setString(2, snapshot.id().uuid().toString());
       statement.setString(3, snapshot.lastFact().toString());

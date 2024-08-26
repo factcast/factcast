@@ -110,6 +110,10 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
+      <artifactId>factcast-snapshotcache-jdbc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
       <artifactId>factcast-snapshotcache-redisson</artifactId>
     </dependency>
     <dependency>
