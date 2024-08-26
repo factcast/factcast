@@ -17,16 +17,13 @@ package org.factcast.itests.factus.client;
 
 import org.factcast.factus.snapshot.SnapshotCache;
 import org.factcast.itests.TestFactusApplication;
-import org.factcast.spring.boot.autoconfigure.snap.JdbcSnapshotCacheAutoConfiguration;
+import org.factcast.itests.factus.config.JdbcSnapshotCacheConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.jdbc.Sql;
 
 @SpringBootTest
-@ContextConfiguration(
-    classes = {TestFactusApplication.class, JdbcSnapshotCacheAutoConfiguration.class})
-@Sql(scripts = "/create_snapshot_table.sql")
+@ContextConfiguration(classes = {TestFactusApplication.class, JdbcSnapshotCacheConfiguration.class})
 public class JdbcSnapshotCacheTest extends SnapshotCacheTest {
 
   @Autowired
