@@ -20,11 +20,16 @@ import lombok.NonNull;
 import org.factcast.core.snap.jdbc.JdbcSnapshotCache;
 import org.factcast.core.snap.jdbc.JdbcSnapshotProperties;
 import org.factcast.factus.snapshot.SnapshotCache;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 
-@Import(JdbcSnapshotProperties.class)
 public class JdbcSnapshotCacheConfiguration {
+
+  @Bean
+  @ConfigurationProperties(prefix = JdbcSnapshotProperties.PROPERTIES_PREFIX)
+  public JdbcSnapshotProperties jdbcSnapshotProperties() {
+    return new JdbcSnapshotProperties();
+  }
 
   @Bean
   public SnapshotCache snapshotCache(@NonNull JdbcSnapshotProperties props, DataSource dataSource) {

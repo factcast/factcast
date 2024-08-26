@@ -25,18 +25,24 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 
 @AutoConfiguration
 @ConditionalOnClass({JdbcSnapshotCache.class, Factus.class})
 @ConditionalOnMissingBean(SnapshotCache.class)
-@Import(JdbcSnapshotProperties.class)
 @AutoConfigureBefore({
   NoSnapshotCacheAutoConfiguration.class,
   RedissonSnapshotCacheAutoConfiguration.class
 })
 public class JdbcSnapshotCacheAutoConfiguration {
+
+  @Bean
+  @ConditionalOnMissingBean
+  @ConfigurationProperties(prefix = JdbcSnapshotProperties.PROPERTIES_PREFIX)
+  public JdbcSnapshotProperties jdbcSnapshotProperties() {
+    return new JdbcSnapshotProperties();
+  }
 
   @Bean
   @ConditionalOnMissingBean

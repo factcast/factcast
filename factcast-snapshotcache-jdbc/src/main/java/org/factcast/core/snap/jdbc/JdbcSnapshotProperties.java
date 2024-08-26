@@ -18,14 +18,10 @@ package org.factcast.core.snap.jdbc;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
 
-@Configuration
 @Data
 @Slf4j
 @Accessors(fluent = false)
-@ConfigurationProperties(prefix = JdbcSnapshotProperties.PROPERTIES_PREFIX)
 public class JdbcSnapshotProperties {
 
   public static final String PROPERTIES_PREFIX = "factcast.snapshot.jdbc";
