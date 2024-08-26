@@ -34,8 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class JdbcSnapshotCache implements SnapshotCache {
 
   public final String queryStatement;
-  public final String insertStatement;
-  public final String updateStatement;
+  public final String mergeStatement;
   public final String deleteStatement;
 
   private final DataSource dataSource;
@@ -46,15 +45,15 @@ public class JdbcSnapshotCache implements SnapshotCache {
     queryStatement =
         "SELECT * FROM " + properties.getSnapshotsTableName() + " WHERE key = ? AND uuid = ?";
 
-    updateStatement =
-        "UPDATE "
+    mergeStatement =
+        "MERGE INTO "
             + properties.getSnapshotsTableName()
-            + " SET last_fact_id=?, bytes=?, compressed=? where key=? AND uuid=?";
-
-    insertStatement =
-        "INSERT INTO "
-            + properties.getSnapshotsTableName()
-            + " (key, uuid, last_fact_id, bytes, compressed) VALUES (?, ?, ?, ?, ?)";
+            + " USING (VALUES (?, ?, ?, ?, ?)) as new (_key, _uuid, _last_fact_id, _bytes, _compressed)"
+            + " ON key=_key AND uuid=_uuid"
+            + " WHEN MATCHED THEN"
+            + " UPDATE SET last_fact_id=_last_fact_id, bytes=_bytes, compressed=_compressed"
+            + " WHEN NOT MATCHED THEN"
+            + " INSERT VALUES (_key, _uuid, _last_fact_id, _bytes, _compressed)";
 
     deleteStatement =
         "DELETE FROM " + properties.getSnapshotsTableName() + " WHERE key = ? AND uuid = ?";
@@ -125,36 +124,13 @@ public class JdbcSnapshotCache implements SnapshotCache {
   @Override
   @SneakyThrows
   public void setSnapshot(@NonNull Snapshot snapshot) {
-    try (Connection connection = dataSource.getConnection()) {
-      int affectedRows = updateSnapshot(connection, snapshot);
-      if (affectedRows == 0) {
-        insertSnapshot(connection, snapshot);
-      }
-    }
-  }
-
-  @SneakyThrows
-  private int updateSnapshot(Connection connection, @NonNull Snapshot snapshot) {
-    try (PreparedStatement statement = connection.prepareStatement(updateStatement)) {
-      statement.setString(1, snapshot.lastFact().toString());
-      statement.setBytes(2, snapshot.bytes());
-      statement.setBoolean(3, snapshot.compressed());
-      statement.setString(4, snapshot.id().key());
-      statement.setString(5, snapshot.id().uuid().toString());
-
-      return statement.executeUpdate();
-    }
-  }
-
-  @SneakyThrows
-  private void insertSnapshot(Connection connection, @NonNull Snapshot snapshot) {
-    try (PreparedStatement statement = connection.prepareStatement(insertStatement)) {
+    try (Connection connection = dataSource.getConnection();
+        PreparedStatement statement = connection.prepareStatement(mergeStatement)) {
       statement.setString(1, snapshot.id().key());
       statement.setString(2, snapshot.id().uuid().toString());
       statement.setString(3, snapshot.lastFact().toString());
       statement.setBytes(4, snapshot.bytes());
       statement.setBoolean(5, snapshot.compressed());
-
       if (statement.executeUpdate() == 0) {
         throw new IllegalStateException(
             "Failed to insert snapshot into database. SnapshotId: " + snapshot.id());
