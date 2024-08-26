@@ -57,7 +57,8 @@ class JdbcSnapshotCacheTest {
       when(connection.getMetaData().getTables(any(), any(), any(), any())).thenReturn(resultSet);
       when(resultSet.next()).thenReturn(false);
 
-      assertThatThrownBy(() -> new JdbcSnapshotCache(new JdbcSnapshotProperties(), dataSource))
+      JdbcSnapshotProperties properties = new JdbcSnapshotProperties();
+      assertThatThrownBy(() -> new JdbcSnapshotCache(properties, dataSource))
           .isInstanceOf(IllegalStateException.class)
           .hasMessageContaining("Snapshots table does not exist: ");
     }
@@ -73,7 +74,8 @@ class JdbcSnapshotCacheTest {
       when(columns.next()).thenReturn(true, false);
       when(columns.getString("COLUMN_NAME")).thenReturn("another");
 
-      assertThatThrownBy(() -> new JdbcSnapshotCache(new JdbcSnapshotProperties(), dataSource))
+      JdbcSnapshotProperties properties = new JdbcSnapshotProperties();
+      assertThatThrownBy(() -> new JdbcSnapshotCache(properties, dataSource))
           .isInstanceOf(IllegalStateException.class)
           .hasMessageContaining(
               "Snapshot table schema is not compatible with Factus. Missing columns: ")
@@ -95,7 +97,8 @@ class JdbcSnapshotCacheTest {
       when(columns.next()).thenReturn(true, true, true, true, false);
       when(columns.getString("COLUMN_NAME")).thenReturn("key", "uuid", "last_fact_id", "bytes");
 
-      assertThatThrownBy(() -> new JdbcSnapshotCache(new JdbcSnapshotProperties(), dataSource))
+      JdbcSnapshotProperties properties = new JdbcSnapshotProperties();
+      assertThatThrownBy(() -> new JdbcSnapshotCache(properties, dataSource))
           .isInstanceOf(IllegalStateException.class)
           .hasMessageContaining(
               "Snapshot table schema is not compatible with Factus. Missing columns: ")
