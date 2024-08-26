@@ -15,6 +15,7 @@
  */
 package org.factcast.core.snap.jdbc;
 
+import com.google.common.collect.Sets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -58,12 +59,43 @@ public class JdbcSnapshotCache implements SnapshotCache {
     deleteStatement =
         "DELETE FROM " + properties.getSnapshotsTableName() + " WHERE key = ? AND uuid = ?";
 
-    //    boolean snapTableExists = doesTableExist(properties.getSnapshotsTableName());
-    //
-    //    if (!snapTableExists) {
-    //      throw new IllegalStateException(
-    //          "Snapshots table does not exist: " + properties.getSnapshotsTableName());
-    //    }
+    boolean snapTableExists = doesTableExist(properties.getSnapshotsTableName());
+
+    if (!snapTableExists) {
+      throw new IllegalStateException(
+          "Snapshots table does not exist: " + properties.getSnapshotsTableName());
+    } else {
+      validateColumns(properties.getSnapshotsTableName());
+    }
+  }
+
+  @SneakyThrows
+  public boolean doesTableExist(String tableName) {
+    try (Connection connection = dataSource.getConnection();
+        ResultSet rs =
+            connection.getMetaData().getTables(null, null, tableName, new String[] {"TABLE"})) {
+
+      return Boolean.TRUE.equals(rs.next());
+    }
+  }
+
+  @SneakyThrows
+  public void validateColumns(String tableName) {
+    try (Connection connection = dataSource.getConnection();
+        ResultSet columns = connection.getMetaData().getColumns(null, null, tableName, null)) {
+
+      Set<String> columnsSet =
+          Sets.newHashSet("key", "uuid", "last_fact_id", "bytes", "compressed");
+      while (columns.next()) {
+        String columnName = columns.getString("COLUMN_NAME");
+
+        columnsSet.remove(columnName);
+      }
+      if (!columnsSet.isEmpty()) {
+        throw new IllegalStateException(
+            "Snapshot table schema is not compatible with Factus. Missing columns: " + columnsSet);
+      }
+    }
   }
 
   @Override
