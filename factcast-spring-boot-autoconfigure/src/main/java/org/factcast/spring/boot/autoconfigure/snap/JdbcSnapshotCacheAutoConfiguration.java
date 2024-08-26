@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2024 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,13 @@
  */
 package org.factcast.spring.boot.autoconfigure.snap;
 
-import org.factcast.core.snap.local.InMemorySnapshotCache;
-import org.factcast.core.snap.local.InMemorySnapshotProperties;
+import javax.sql.DataSource;
+import lombok.NonNull;
+import org.factcast.core.snap.jdbc.JdbcSnapshotCache;
+import org.factcast.core.snap.jdbc.JdbcSnapshotProperties;
 import org.factcast.factus.Factus;
 import org.factcast.factus.snapshot.SnapshotCache;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -28,19 +29,18 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 
 @AutoConfiguration
-@ConditionalOnClass({InMemorySnapshotCache.class, Factus.class})
+@ConditionalOnClass({JdbcSnapshotCache.class, Factus.class})
 @ConditionalOnMissingBean(SnapshotCache.class)
-@Import({InMemorySnapshotProperties.class})
-@AutoConfigureBefore(NoSnapshotCacheAutoConfiguration.class)
-@AutoConfigureAfter({
-  JdbcSnapshotCacheAutoConfiguration.class,
+@Import(JdbcSnapshotProperties.class)
+@AutoConfigureBefore({
+  NoSnapshotCacheAutoConfiguration.class,
   RedissonSnapshotCacheAutoConfiguration.class
 })
-public class InMemorySnapshotCacheAutoConfiguration {
+public class JdbcSnapshotCacheAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public SnapshotCache snapshotCache(InMemorySnapshotProperties props) {
-    return new InMemorySnapshotCache(props);
+  public SnapshotCache snapshotCache(@NonNull JdbcSnapshotProperties props, DataSource dataSource) {
+    return new JdbcSnapshotCache(props, dataSource);
   }
 }

@@ -21,6 +21,7 @@ import org.factcast.core.snap.redisson.RedissonSnapshotProperties;
 import org.factcast.factus.snapshot.SnapshotCache;
 import org.redisson.api.RedissonClient;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -32,6 +33,7 @@ import org.springframework.context.annotation.Import;
 @ConditionalOnMissingBean(SnapshotCache.class)
 @Import({RedissonSnapshotProperties.class})
 @AutoConfigureBefore(NoSnapshotCacheAutoConfiguration.class)
+@AutoConfigureAfter(JdbcSnapshotCacheAutoConfiguration.class)
 public class RedissonSnapshotCacheAutoConfiguration {
 
   @Bean
