@@ -216,11 +216,11 @@ class JdbcSnapshotCacheTest {
       UUID lastFactId = UUID.randomUUID();
       byte[] bytes = {1, 2, 3};
 
-      when(resultSet.getString(0)).thenReturn("key");
-      when(resultSet.getString(1)).thenReturn(aggregateId.toString());
-      when(resultSet.getString(2)).thenReturn(lastFactId.toString());
-      when(resultSet.getBytes(3)).thenReturn(bytes);
-      when(resultSet.getBoolean(4)).thenReturn(false);
+      when(resultSet.getString(1)).thenReturn("key");
+      when(resultSet.getString(2)).thenReturn(aggregateId.toString());
+      when(resultSet.getString(3)).thenReturn(lastFactId.toString());
+      when(resultSet.getBytes(4)).thenReturn(bytes);
+      when(resultSet.getBoolean(5)).thenReturn(false);
 
       SnapshotId id = SnapshotId.of("key", aggregateId);
       Snapshot snapshot = jdbcSnapshotCache.getSnapshot(id).get();
