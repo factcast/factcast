@@ -154,7 +154,7 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
     @Test
     void happyPath() {
       SubscribedUserNames p = new SubscribedUserNames(dynamoDbClient);
-      factus.subscribeAndBlock(p).awaitCatchup();
+      factus.subscribeAndBlock(p).awaitCatchup().close();
 
       assertThat(p.count()).isEqualTo(NUMBER_OF_EVENTS);
       assertThat(p.stateModifications()).isEqualTo(10);
@@ -170,7 +170,7 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
       assertThat(p.count()).isZero();
 
       try {
-        factus.subscribeAndBlock(p).awaitCatchup();
+        factus.subscribeAndBlock(p).awaitCatchup().close();
       } catch (Throwable expected) {
         // ignore
       }
