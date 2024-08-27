@@ -59,3 +59,48 @@ This option supports multiple instances of the same application, making it suita
 default, this cache automatically deletes stale snapshots after 90 days.
 
 For further details, see the [Redis Properties]({{< ref "/setup/properties#redissnapshots">}}).
+
+### JDBC SnapshotCache
+
+For applications with a JDBC-compatible database, the JDBC-based SnapshotCache is a viable option:
+
+```xml
+<dependency>
+    <groupId>org.factcast</groupId>
+    <artifactId>factcast-snapshotcache-jdbc</artifactId>
+</dependency>
+```
+
+To use this snapshot cache, you must create a table for storing snapshots. The table schema is as follows:
+
+```sql
+# Postgres
+CREATE TABLE factcast_snapshots(key VARCHAR(512), uuid VARCHAR(36), last_fact_id VARCHAR(36),
+    bytes BYTEA, compressed boolean, last_accessed TIMESTAMP, PRIMARY KEY (key, uuid));
+CREATE INDEX factcast_snapshots_idx_last_accessed ON factcast_snapshots(last_accessed);
+
+# MySQL, MariaDB
+CREATE TABLE factcast_snapshots(key VARCHAR(512), uuid VARCHAR(36), last_fact_id VARCHAR(36),
+    bytes BLOB, compressed BOOLEAN, last_accessed TIMESTAMP, PRIMARY KEY (key, uuid));
+CREATE INDEX factcast_snapshots_idx_last_accessed ON factcast_snapshots(last_accessed);
+
+# Oracle
+CREATE TABLE factcast_snapshots(key VARCHAR2(512), uuid VARCHAR2(36), last_fact_id VARCHAR2(36),
+    bytes BLOB, compressed NUMBER(1), last_accessed TIMESTAMP, PRIMARY KEY (key, uuid));
+CREATE INDEX factcast_snapshots_idx_last_accessed ON factcast_snapshots(last_accessed);
+
+# MS SQL
+CREATE TABLE factcast_snapshots(key NVARCHAR(512), uuid NVARCHAR(36), last_fact_id NVARCHAR(36),
+    bytes VARBINARY(MAX), compressed BIT, last_accessed DATETIME, PRIMARY KEY (key, uuid));
+CREATE INDEX factcast_snapshots_idx_last_accessed ON factcast_snapshots(last_accessed);
+
+# DB2
+CREATE TABLE factcast_snapshots (key VARCHAR(512), uuid VARCHAR(36), last_fact_id VARCHAR(36),
+    bytes BLOB, compressed SMALLINT, last_accessed TIMESTAMP, PRIMARY KEY (key, uuid));
+CREATE INDEX factcast_snapshots_idx_last_accessed ON factcast_snapshots(last_accessed);
+```
+
+This option supports multiple instances of the same application, making it suitable for distributed environments. By
+default, this cache automatically deletes stale snapshots after 90 days.
+
+For further details, see the [JDBC Properties]({{< ref "/setup/properties#jdbc">}}).
