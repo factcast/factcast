@@ -16,9 +16,6 @@
 package org.factcast.store.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.same;
-import static org.mockito.Mockito.verify;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -28,7 +25,6 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -36,8 +32,6 @@ import lombok.experimental.Delegate;
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.State;
@@ -46,7 +40,6 @@ import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.store.internal.StoreMetrics.OP;
 import org.factcast.store.internal.tail.FastForwardTargetRefresher;
 import org.factcast.store.test.AbstractFactStoreTest;
 import org.factcast.test.IntegrationTest;
@@ -104,31 +97,6 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
   void setup() {
     // update the highwatermarks
     fastForwardTargetRefresher.refresh();
-  }
-
-  @Test
-  void testGetSnapshotMetered() {
-    Optional<Snapshot> snapshot = store.getSnapshot(SnapshotId.of("xxx", UUID.randomUUID()));
-    assertThat(snapshot).isEmpty();
-
-    // noinspection unchecked
-    verify(metrics).time(same(OP.GET_SNAPSHOT), any(Supplier.class));
-  }
-
-  @Test
-  void testClearSnapshotMetered() {
-    var id = SnapshotId.of("xxx", UUID.randomUUID());
-    store.clearSnapshot(id);
-    verify(metrics).time(same(OP.CLEAR_SNAPSHOT), any(Runnable.class));
-  }
-
-  @Test
-  void testSetSnapshotMetered() {
-    var id = SnapshotId.of("xxx", UUID.randomUUID());
-    var snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
-    store.setSnapshot(snap);
-
-    verify(metrics).time(same(OP.SET_SNAPSHOT), any(Runnable.class));
   }
 
   /** This happens in a trigger */
@@ -206,10 +174,10 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
     void testFfwdFromScratch() {
 
       SubscriptionRequest scratch = SubscriptionRequest.catchup(spec).fromScratch();
-      store.subscribe(SubscriptionRequestTO.forFacts(scratch), obs).awaitCatchup();
+      store.subscribe(SubscriptionRequestTO.from(scratch), obs).awaitCatchup();
 
       SubscriptionRequest tail = SubscriptionRequest.catchup(spec).from(id);
-      store.subscribe(SubscriptionRequestTO.forFacts(tail), obs).awaitCatchup();
+      store.subscribe(SubscriptionRequestTO.from(tail), obs).awaitCatchup();
 
       // now, we expect a ffwd here
       assertThat(fwd.get()).isNotNull();
@@ -223,14 +191,14 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
           Collections.singletonList(Fact.builder().id(id2).ns("ns1").buildWithoutPayload()));
 
       SubscriptionRequest newtail = SubscriptionRequest.catchup(spec).from(id);
-      store.subscribe(SubscriptionRequestTO.forFacts(newtail), obs).awaitCatchup();
+      store.subscribe(SubscriptionRequestTO.from(newtail), obs).awaitCatchup();
 
       fastForwardTargetRefresher.refresh();
       fwd.set(null);
 
       // check for empty catchup
       SubscriptionRequest emptyTail = SubscriptionRequest.catchup(spec).from(id2);
-      store.subscribe(SubscriptionRequestTO.forFacts(emptyTail), obs).awaitCatchup();
+      store.subscribe(SubscriptionRequestTO.from(emptyTail), obs).awaitCatchup();
 
       assertThat(fwd.get()).isNull();
 
@@ -239,7 +207,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
           Collections.singletonList(Fact.builder().id(id3).ns("ns1").buildWithoutPayload()));
 
       SubscriptionRequest nonEmptyTail = SubscriptionRequest.catchup(spec).from(id2);
-      store.subscribe(SubscriptionRequestTO.forFacts(nonEmptyTail), obs).awaitCatchup();
+      store.subscribe(SubscriptionRequestTO.from(nonEmptyTail), obs).awaitCatchup();
 
       // still no ffwd because the ffwd target is smaller than id2
       assertThat(fwd.get()).isNull();
@@ -250,7 +218,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       spec = Collections.singletonList(FactSpec.ns("noneOfThese"));
 
       SubscriptionRequest mt = SubscriptionRequest.catchup(spec).fromScratch();
-      store.subscribe(SubscriptionRequestTO.forFacts(mt), obs).awaitCatchup();
+      store.subscribe(SubscriptionRequestTO.from(mt), obs).awaitCatchup();
 
       // ffwd expected
       assertThat(fwd.get()).isNotNull();
@@ -262,7 +230,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       fastForwardTargetRefresher.refresh();
 
       SubscriptionRequest further = SubscriptionRequest.catchup(spec).from(id2);
-      store.subscribe(SubscriptionRequestTO.forFacts(further), obs).awaitCatchup();
+      store.subscribe(SubscriptionRequestTO.from(further), obs).awaitCatchup();
 
       // now it should ffwd again to the last unrelated one
       assertThat(fwd.get()).isNotNull().isNotEqualTo(first);

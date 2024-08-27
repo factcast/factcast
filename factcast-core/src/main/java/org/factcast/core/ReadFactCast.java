@@ -58,16 +58,6 @@ public interface ReadFactCast {
   @NonNull
   Set<String> enumerateTypes(@NonNull String ns);
 
-  @NonNull
-  // @Deprecated(since = "0.5.6", forRemoval = true)
-  @Deprecated
-  ReadFactCast retry(int maxAttempts);
-
-  @NonNull
-  // @Deprecated(since = "0.5.6", forRemoval = true)
-  @Deprecated
-  ReadFactCast retry(int maxAttempts, long minimumWaitIntervalMillis);
-
   /**
    * Internal API: subject to change - use at your own risk
    *

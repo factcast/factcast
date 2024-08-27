@@ -16,7 +16,6 @@
 package org.factcast.spring.boot.autoconfigure.core;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.Generated;
 import lombok.NonNull;
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
@@ -34,7 +33,6 @@ import org.springframework.core.annotation.Order;
 
 @AutoConfiguration
 @ConditionalOnClass(FactCast.class)
-@Generated
 @SuppressWarnings("unused")
 public class FactCastAutoConfiguration {
 
