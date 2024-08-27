@@ -128,7 +128,7 @@ class JdbcSnapshotCacheTest {
 
       assertThat(logCaptor.getErrorLogs()).hasSize(0);
       assertThat(string.getValue()).startsWith("DELETE FROM ");
-      assertThat(string.getValue()).contains("WHERE last_accessed >");
+      assertThat(string.getValue()).contains("WHERE last_accessed <");
     }
 
     @Test
@@ -156,7 +156,7 @@ class JdbcSnapshotCacheTest {
       assertThat(logCaptor.getErrorLogs()).hasSize(1);
       assertThat(logCaptor.getErrorLogs().get(0)).contains("Failed to delete old snapshots");
       assertThat(string.getValue()).startsWith("DELETE FROM ");
-      assertThat(string.getValue()).contains("WHERE last_accessed >");
+      assertThat(string.getValue()).contains("WHERE last_accessed <");
     }
   }
 
@@ -264,7 +264,9 @@ class JdbcSnapshotCacheTest {
       when(resultSet.getBoolean(5)).thenReturn(false);
 
       SnapshotId id = SnapshotId.of("key", aggregateId);
-      Snapshot snapshot = jdbcSnapshotCache.getSnapshot(id).get();
+      JdbcSnapshotCache uut = spy(jdbcSnapshotCache);
+      doNothing().when(uut).setSnapshot(any());
+      Snapshot snapshot = uut.getSnapshot(id).get();
 
       assertThat(snapshot.id().key()).isEqualTo("key");
       assertThat(snapshot.id().uuid()).isEqualTo(aggregateId);
@@ -276,6 +278,7 @@ class JdbcSnapshotCacheTest {
 
       verify(preparedStatement, times(2)).setString(any(Integer.class), string.capture());
       verify(preparedStatement, times(1)).executeQuery();
+      verify(uut, times(1)).setSnapshot(any());
 
       assertThat(string.getAllValues()).containsExactly(id.key(), id.uuid().toString());
     }
