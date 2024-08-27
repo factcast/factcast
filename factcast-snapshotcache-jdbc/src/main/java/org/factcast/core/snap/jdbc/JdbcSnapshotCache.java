@@ -19,9 +19,7 @@ import com.google.common.collect.Sets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
@@ -87,7 +85,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
       public void run() {
         try (Connection connection = dataSource.getConnection();
             PreparedStatement statement = connection.prepareStatement(cleanupStatement)) {
-          statement.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now().minusDays(staleForDays)));
+          statement.setString(1, LocalDate.now().minusDays(staleForDays).toString());
           statement.executeUpdate();
         } catch (Exception e) {
           log.error("Failed to delete old snapshots", e);
@@ -112,7 +110,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
         ResultSet columns = connection.getMetaData().getColumns(null, null, tableName, null)) {
 
       Set<String> columnsSet =
-          Sets.newHashSet("key", "uuid", "last_fact_id", "bytes", "compressed");
+          Sets.newHashSet("key", "uuid", "last_fact_id", "bytes", "compressed", "last_accessed");
       while (columns.next()) {
         String columnName = columns.getString("COLUMN_NAME");
 
@@ -163,7 +161,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
       statement.setString(3, snapshot.lastFact().toString());
       statement.setBytes(4, snapshot.bytes());
       statement.setBoolean(5, snapshot.compressed());
-      statement.setTimestamp(6, Timestamp.from(Instant.now()));
+      statement.setString(6, LocalDate.now().toString());
       if (statement.executeUpdate() == 0) {
         throw new IllegalStateException(
             "Failed to insert snapshot into database. SnapshotId: " + snapshot.id());

@@ -17,9 +17,7 @@ package org.factcast.itests.factus.client;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -51,10 +49,10 @@ public class JdbcSnapshotCacheCleanupITest extends AbstractFactCastIntegrationTe
     JdbcSnapshotProperties properties = new JdbcSnapshotProperties();
 
     jdbcTemplate.execute(
-        "CREATE TABLE factcast_snapshots(key VARCHAR(512), uuid VARCHAR(36), last_fact_id VARCHAR(36), "
-            + "bytes BYTEA, compressed boolean, last_accessed TIMESTAMP, PRIMARY KEY (key, uuid))");
+        "CREATE TABLE IF NOT EXISTS factcast_snapshots(key VARCHAR(512), uuid VARCHAR(36), last_fact_id VARCHAR(36), "
+            + "bytes BYTEA, compressed boolean, last_accessed VARCHAR(10), PRIMARY KEY (key, uuid))");
     jdbcTemplate.execute(
-        "CREATE INDEX factcast_snapshots_idx_last_accessed ON factcast_snapshots(last_accessed);");
+        "CREATE INDEX IF NOT EXISTS factcast_snapshots_idx_last_accessed ON factcast_snapshots(last_accessed);");
 
     Snapshot snap1 =
         new Snapshot(
@@ -77,21 +75,15 @@ public class JdbcSnapshotCacheCleanupITest extends AbstractFactCastIntegrationTe
 
     // Stale
     insertSnapshot(
-        snap1,
-        Timestamp.from(
-            Instant.now().minus(properties.getDeleteSnapshotStaleForDays() + 5, ChronoUnit.DAYS)));
+        snap1, LocalDate.now().minusDays(properties.getDeleteSnapshotStaleForDays() + 5));
 
     // Non Stale
     insertSnapshot(
-        snap2,
-        Timestamp.from(
-            Instant.now().minus(properties.getDeleteSnapshotStaleForDays() - 1, ChronoUnit.DAYS)));
+        snap2, LocalDate.now().minusDays(properties.getDeleteSnapshotStaleForDays() - 1));
 
     // Stale
     insertSnapshot(
-        snap3,
-        Timestamp.from(
-            Instant.now().minus(properties.getDeleteSnapshotStaleForDays() + 1, ChronoUnit.DAYS)));
+        snap3, LocalDate.now().minusDays(properties.getDeleteSnapshotStaleForDays() + 1));
 
     List<Map<String, Object>> snapshots = getSnapshots();
     assertThat(snapshots).hasSize(3);
@@ -110,7 +102,7 @@ public class JdbcSnapshotCacheCleanupITest extends AbstractFactCastIntegrationTe
     return jdbcTemplate.queryForList("SELECT * FROM factcast_snapshots");
   }
 
-  private void insertSnapshot(Snapshot snapshot, Timestamp lastAccessed) {
+  private void insertSnapshot(Snapshot snapshot, LocalDate lastAccessed) {
     jdbcTemplate.update(
         "INSERT INTO factcast_snapshots VALUES (?, ?, ?, ?, ?, ?)",
         snapshot.id().key(),
@@ -118,6 +110,6 @@ public class JdbcSnapshotCacheCleanupITest extends AbstractFactCastIntegrationTe
         snapshot.lastFact().toString(),
         snapshot.bytes(),
         snapshot.compressed(),
-        lastAccessed);
+        lastAccessed.toString());
   }
 }

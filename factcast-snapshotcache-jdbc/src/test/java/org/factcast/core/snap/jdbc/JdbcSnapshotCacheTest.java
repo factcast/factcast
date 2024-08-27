@@ -25,6 +25,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 import javax.sql.DataSource;
@@ -114,9 +115,9 @@ class JdbcSnapshotCacheTest {
 
       ResultSet columns = mock(ResultSet.class);
       when(connection.getMetaData().getColumns(any(), any(), any(), any())).thenReturn(columns);
-      when(columns.next()).thenReturn(true, true, true, true, true, false);
+      when(columns.next()).thenReturn(true, true, true, true, true, true, false);
       when(columns.getString("COLUMN_NAME"))
-          .thenReturn("key", "uuid", "last_fact_id", "bytes", "compressed");
+          .thenReturn("key", "uuid", "last_fact_id", "bytes", "compressed", "last_accessed");
 
       LogCaptor logCaptor = LogCaptor.forClass(JdbcSnapshotCache.class);
       assertDoesNotThrow(() -> new JdbcSnapshotCache(new JdbcSnapshotProperties(), dataSource));
@@ -139,9 +140,9 @@ class JdbcSnapshotCacheTest {
 
       ResultSet columns = mock(ResultSet.class);
       when(connection.getMetaData().getColumns(any(), any(), any(), any())).thenReturn(columns);
-      when(columns.next()).thenReturn(true, true, true, true, true, false);
+      when(columns.next()).thenReturn(true, true, true, true, true, true, false);
       when(columns.getString("COLUMN_NAME"))
-          .thenReturn("key", "uuid", "last_fact_id", "bytes", "compressed");
+          .thenReturn("key", "uuid", "last_fact_id", "bytes", "compressed", "last_accessed");
 
       LogCaptor logCaptor = LogCaptor.forClass(JdbcSnapshotCache.class);
       doThrow(new SQLException("")).when(connection).prepareStatement(any());
@@ -174,9 +175,9 @@ class JdbcSnapshotCacheTest {
 
       ResultSet columns = mock(ResultSet.class);
       when(connection.getMetaData().getColumns(any(), any(), any(), any())).thenReturn(columns);
-      when(columns.next()).thenReturn(true, true, true, true, true, false);
+      when(columns.next()).thenReturn(true, true, true, true, true, true, false);
       when(columns.getString("COLUMN_NAME"))
-          .thenReturn("key", "uuid", "last_fact_id", "bytes", "compressed");
+          .thenReturn("key", "uuid", "last_fact_id", "bytes", "compressed", "last_accessed");
       jdbcSnapshotCache =
           new JdbcSnapshotCache(
               new JdbcSnapshotProperties().setDeleteSnapshotStaleForDays(0), dataSource);
@@ -199,10 +200,13 @@ class JdbcSnapshotCacheTest {
       ArgumentCaptor<byte[]> bytes = ArgumentCaptor.forClass(byte[].class);
       ArgumentCaptor<Boolean> bool = ArgumentCaptor.forClass(Boolean.class);
 
-      verify(preparedStatement, times(3)).setString(any(Integer.class), string.capture());
+      verify(preparedStatement, times(4)).setString(any(Integer.class), string.capture());
       assertThat(string.getAllValues())
           .containsExactly(
-              snap.id().key(), snap.id().uuid().toString(), snap.lastFact().toString());
+              snap.id().key(),
+              snap.id().uuid().toString(),
+              snap.lastFact().toString(),
+              LocalDate.now().toString());
 
       verify(preparedStatement, times(1)).setBoolean(any(Integer.class), bool.capture());
       assertThat(bool.getValue()).isEqualTo(snap.compressed());
