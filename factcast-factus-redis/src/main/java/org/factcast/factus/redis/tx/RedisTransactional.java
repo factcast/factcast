@@ -18,34 +18,39 @@ package org.factcast.factus.redis.tx;
 import java.lang.annotation.*;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import lombok.experimental.UtilityClass;
 import org.redisson.api.TransactionOptions;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Inherited
 public @interface RedisTransactional {
-  int bulkSize() default 50;
 
-  long timeout() default Defaults.timeout;
+  int DEFAULT_BULK_SIZE = 1000;
 
-  long responseTimeout() default Defaults.responseTimeout;
+  int bulkSize() default DEFAULT_BULK_SIZE;
 
-  int retryAttempts() default Defaults.retryAttempts;
+  long timeout() default Defaults.TIMEOUT;
 
-  long retryInterval() default Defaults.retryInterval;
+  long responseTimeout() default Defaults.RESPONSE_TIMEOUT;
 
+  int retryAttempts() default Defaults.RETRY_ATTEMPTS;
+
+  long retryInterval() default Defaults.RETRY_INTERVAL;
+
+  @UtilityClass
   class Defaults {
-    static final long timeout = 30000;
-    static final long responseTimeout = 5000;
-    static final int retryAttempts = 5;
-    static final long retryInterval = 3000;
+    static final long TIMEOUT = 30000;
+    static final long RESPONSE_TIMEOUT = 5001;
+    static final int RETRY_ATTEMPTS = 5;
+    static final long RETRY_INTERVAL = 3000;
 
     public static TransactionOptions create() {
       return TransactionOptions.defaults()
-          .timeout(timeout, TimeUnit.MILLISECONDS)
-          .responseTimeout(responseTimeout, TimeUnit.MILLISECONDS)
-          .retryAttempts(retryAttempts)
-          .retryInterval(retryInterval, TimeUnit.MILLISECONDS);
+          .timeout(TIMEOUT, TimeUnit.MILLISECONDS)
+          .responseTimeout(RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS)
+          .retryAttempts(RETRY_ATTEMPTS)
+          .retryInterval(RETRY_INTERVAL, TimeUnit.MILLISECONDS);
     }
 
     public static TransactionOptions with(@Nullable RedisTransactional transactional) {

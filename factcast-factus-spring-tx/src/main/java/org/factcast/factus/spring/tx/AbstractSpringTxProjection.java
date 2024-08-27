@@ -16,22 +16,20 @@
 package org.factcast.factus.spring.tx;
 
 import lombok.NonNull;
-import org.factcast.factus.projection.FactStreamPositionAware;
-import org.factcast.factus.projection.Named;
-import org.factcast.factus.projection.WriterTokenAware;
+import lombok.experimental.Delegate;
+import org.factcast.factus.projection.tx.TransactionBehavior;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
 
-abstract class AbstractSpringTxProjection
-    implements SpringTxProjection, FactStreamPositionAware, WriterTokenAware, Named {
-  private final PlatformTransactionManager platformTransactionManager;
+abstract class AbstractSpringTxProjection implements SpringTxProjection {
 
-  public AbstractSpringTxProjection(
+  @Delegate private final TransactionBehavior<TransactionStatus> tx;
+
+  protected AbstractSpringTxProjection(
       @NonNull PlatformTransactionManager platformTransactionManager) {
-    this.platformTransactionManager = platformTransactionManager;
-  }
-
-  @Override
-  public PlatformTransactionManager platformTransactionManager() {
-    return platformTransactionManager;
+    this.tx =
+        new TransactionBehavior<>(
+            new SpringTxAdapter(
+                platformTransactionManager, getClass().getAnnotation(SpringTransactional.class)));
   }
 }

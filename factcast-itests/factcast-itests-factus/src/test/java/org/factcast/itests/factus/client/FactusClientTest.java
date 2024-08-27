@@ -28,14 +28,17 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.Factus;
 import org.factcast.factus.HandlerFor;
+import org.factcast.factus.Meta;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.lock.LockedOperationAbortedException;
 import org.factcast.factus.projection.Aggregate;
@@ -48,7 +51,9 @@ import org.factcast.itests.factus.event.UserBored;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.*;
+import org.factcast.spring.boot.autoconfigure.snap.RedissonSnapshotCacheAutoConfiguration;
 import org.factcast.test.AbstractFactCastIntegrationTest;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
@@ -57,7 +62,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 
 @ContextConfiguration(
-    classes = {TestFactusApplication.class, RedissonProjectionConfiguration.class})
+    classes = {
+      TestFactusApplication.class,
+      RedissonProjectionConfiguration.class,
+      RedissonSnapshotCacheAutoConfiguration.class
+    })
 @Slf4j
 class FactusClientTest extends AbstractFactCastIntegrationTest {
   private static final long WAIT_TIME_FOR_ASYNC_FACT_DELIVERY = 1000;
@@ -70,7 +79,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
   @Autowired EventConverter eventConverter;
 
-  @Autowired RedissonManagedUserNames externalizedUserNames;
+  @Autowired RedissonTxManagedUserNames externalizedUserNames;
   @Autowired TxRedissonManagedUserNames transactionalExternalizedUserNames;
   @Autowired TxRedissonSubscribedUserNames transactionalExternalizedSubscribedUserNames;
 
@@ -138,7 +147,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
     {
       var sw = Stopwatch.createStarted();
-      RedissonManagedUserNames p = new RedissonManagedUserNames(redissonClient);
+      RedissonTxManagedUserNames p = new RedissonTxManagedUserNames(redissonClient);
       factus.update(p);
       log.info(
           "RedissonManagedUserNames {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
@@ -147,7 +156,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
     }
     {
       var sw = Stopwatch.createStarted();
-      RedissonManagedUserNames p = new RedissonManagedUserNames(redissonClient);
+      RedissonTxManagedUserNames p = new RedissonTxManagedUserNames(redissonClient);
       factus.update(p);
       log.info(
           "RedissonManagedUserNames {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
@@ -200,24 +209,6 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
           "TxRedissonSubscribedUserNames {} {}",
           sw.stop().elapsed().toMillis(),
           p.userNames().size());
-      p.clear();
-      p.factStreamPosition(null);
-    }
-
-    // ------------ batch
-    {
-      var sw = Stopwatch.createStarted();
-      BatchRedissonManagedUserNames p = new BatchRedissonManagedUserNames(redissonClient);
-      factus.update(p);
-      log.info("batch {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
-      p.clear();
-      p.factStreamPosition(null);
-    }
-    {
-      var sw = Stopwatch.createStarted();
-      BatchRedissonManagedUserNames p = new BatchRedissonManagedUserNames(redissonClient);
-      factus.update(p);
-      log.info("batch {} {}", sw.stop().elapsed().toMillis(), p.userNames().size());
       p.clear();
       p.factStreamPosition(null);
     }
@@ -605,7 +596,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
     factus.update(externalizedUserNames);
 
-    assertThat(externalizedUserNames.count()).isEqualTo(1);
+    assertThat(externalizedUserNames.count()).isOne();
     assertThat(externalizedUserNames.contains("One")).isTrue();
   }
 
@@ -742,5 +733,30 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       assertThatThrownBy(() -> factus.waitFor(subscribedUserNames, factId1, timeout))
           .isInstanceOf(TimeoutException.class);
     }
+  }
+
+  @Test
+  void injectsMeta() throws Exception {
+    AtomicReference<String> signee = new AtomicReference<>();
+    SubscribedUserNames subscribedUserNames =
+        new SubscribedUserNames() {
+          @Override
+          public void apply(UserDeleted deleted, @Meta("signee") @Nullable String metaSignee) {
+            super.apply(deleted, metaSignee);
+            signee.set(metaSignee);
+          }
+        };
+    UserCreated kenny = new UserCreated("Kenny");
+    factus.publish(kenny);
+
+    UserDeleted deleted = new UserDeleted(kenny.aggregateId());
+    // the boss signed off kyles deletion, bastard!
+    Fact f = Fact.buildFrom(deleted).meta("signee", "theBoss").build();
+    factus.publish(f);
+    try (Subscription subscriptionWaiting = factus.subscribeAndBlock(subscribedUserNames)) {
+      subscriptionWaiting.awaitCatchup();
+    }
+
+    Assertions.assertThat(signee.get()).isEqualTo("theBoss");
   }
 }
