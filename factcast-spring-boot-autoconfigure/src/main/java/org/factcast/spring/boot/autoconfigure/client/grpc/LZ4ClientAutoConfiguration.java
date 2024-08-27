@@ -30,7 +30,6 @@ import org.springframework.context.annotation.Bean;
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
-@SuppressWarnings({"DeprecatedIsStillUsed"})
 @AutoConfiguration
 @ConditionalOnClass({
   LZ4Compressor.class,
@@ -39,7 +38,6 @@ import org.springframework.context.annotation.Bean;
   GrpcChannelFactory.class
 })
 @AutoConfigureBefore(GrpcFactStoreAutoConfiguration.class)
-@Deprecated
 public class LZ4ClientAutoConfiguration {
 
   @Bean
