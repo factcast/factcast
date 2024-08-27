@@ -19,7 +19,11 @@ import com.google.common.collect.Sets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -30,11 +34,10 @@ import org.factcast.factus.snapshot.SnapshotCache;
 
 @Slf4j
 public class JdbcSnapshotCache implements SnapshotCache {
-
   public final String queryStatement;
   public final String mergeStatement;
   public final String deleteStatement;
-
+  public final String cleanupStatement;
   private final DataSource dataSource;
 
   public JdbcSnapshotCache(JdbcSnapshotProperties properties, DataSource dataSource) {
@@ -46,15 +49,17 @@ public class JdbcSnapshotCache implements SnapshotCache {
     mergeStatement =
         "MERGE INTO "
             + properties.getSnapshotsTableName()
-            + " USING (VALUES (?, ?, ?, ?, ?)) as new (_key, _uuid, _last_fact_id, _bytes, _compressed)"
+            + " USING (VALUES (?, ?, ?, ?, ?, ?)) as new (_key, _uuid, _last_fact_id, _bytes, _compressed, _last_accessed)"
             + " ON key=_key AND uuid=_uuid"
             + " WHEN MATCHED THEN"
-            + " UPDATE SET last_fact_id=_last_fact_id, bytes=_bytes, compressed=_compressed"
+            + " UPDATE SET last_fact_id=_last_fact_id, bytes=_bytes, compressed=_compressed, last_accessed=_last_accessed"
             + " WHEN NOT MATCHED THEN"
-            + " INSERT VALUES (_key, _uuid, _last_fact_id, _bytes, _compressed)";
+            + " INSERT VALUES (_key, _uuid, _last_fact_id, _bytes, _compressed, _last_accessed)";
 
     deleteStatement =
         "DELETE FROM " + properties.getSnapshotsTableName() + " WHERE key = ? AND uuid = ?";
+    cleanupStatement =
+        "DELETE FROM " + properties.getSnapshotsTableName() + " WHERE last_accessed < ?";
 
     boolean snapTableExists = doesTableExist(properties.getSnapshotsTableName());
 
@@ -64,6 +69,31 @@ public class JdbcSnapshotCache implements SnapshotCache {
     } else {
       validateColumns(properties.getSnapshotsTableName());
     }
+
+    if (properties.getDeleteSnapshotStaleForDays() > 0) {
+      Timer timer = new Timer();
+      timer.scheduleAtFixedRate(
+          deleteStaleSnapshotsTimerTask(dataSource, properties.getDeleteSnapshotStaleForDays()),
+          0,
+          TimeUnit.DAYS.toMillis(1));
+    } else {
+      log.info("Snapshot cleanup is disabled");
+    }
+  }
+
+  private TimerTask deleteStaleSnapshotsTimerTask(DataSource dataSource, int staleForDays) {
+    return new TimerTask() {
+      @Override
+      public void run() {
+        try (Connection connection = dataSource.getConnection();
+            PreparedStatement statement = connection.prepareStatement(cleanupStatement)) {
+          statement.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now().minusDays(staleForDays)));
+          statement.executeUpdate();
+        } catch (Exception e) {
+          log.error("Failed to delete old snapshots", e);
+        }
+      }
+    };
   }
 
   @SneakyThrows
@@ -106,12 +136,16 @@ public class JdbcSnapshotCache implements SnapshotCache {
         if (resultSet.next()) {
           SnapshotId snapshotId =
               SnapshotId.of(resultSet.getString(1), UUID.fromString(resultSet.getString(2)));
-          return Optional.of(
+          Snapshot snapshot =
               new Snapshot(
                   snapshotId,
                   UUID.fromString(resultSet.getString(3)),
                   resultSet.getBytes(4),
-                  resultSet.getBoolean(5)));
+                  resultSet.getBoolean(5));
+
+          // update last accessed
+          setSnapshot(snapshot);
+          return Optional.of(snapshot);
         }
       }
     }
@@ -129,6 +163,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
       statement.setString(3, snapshot.lastFact().toString());
       statement.setBytes(4, snapshot.bytes());
       statement.setBoolean(5, snapshot.compressed());
+      statement.setTimestamp(6, Timestamp.from(Instant.now()));
       if (statement.executeUpdate() == 0) {
         throw new IllegalStateException(
             "Failed to insert snapshot into database. SnapshotId: " + snapshot.id());

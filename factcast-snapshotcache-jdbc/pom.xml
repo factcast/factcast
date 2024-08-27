@@ -35,6 +35,12 @@
       <groupId>org.factcast</groupId>
       <artifactId>factcast-factus</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-test</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   <build>
     <plugins>

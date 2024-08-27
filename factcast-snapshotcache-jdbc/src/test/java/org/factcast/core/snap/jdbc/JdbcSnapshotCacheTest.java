@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.UUID;
 import javax.sql.DataSource;
 import lombok.SneakyThrows;
+import nl.altindag.log.LogCaptor;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.junit.jupiter.api.BeforeEach;
@@ -106,7 +107,7 @@ class JdbcSnapshotCacheTest {
     }
 
     @Test
-    void test_tableIsValid() throws SQLException {
+    void test_tableIsValid() throws Exception {
       when(dataSource.getConnection()).thenReturn(connection);
       when(connection.getMetaData().getTables(any(), any(), any(), any())).thenReturn(resultSet);
       when(resultSet.next()).thenReturn(true);
@@ -117,7 +118,45 @@ class JdbcSnapshotCacheTest {
       when(columns.getString("COLUMN_NAME"))
           .thenReturn("key", "uuid", "last_fact_id", "bytes", "compressed");
 
+      LogCaptor logCaptor = LogCaptor.forClass(JdbcSnapshotCache.class);
       assertDoesNotThrow(() -> new JdbcSnapshotCache(new JdbcSnapshotProperties(), dataSource));
+      // Give time for the thread executor to run
+      Thread.sleep(100);
+
+      ArgumentCaptor<String> string = ArgumentCaptor.forClass(String.class);
+      verify(connection).prepareStatement(string.capture());
+
+      assertThat(logCaptor.getErrorLogs()).hasSize(0);
+      assertThat(string.getValue()).startsWith("DELETE FROM ");
+      assertThat(string.getValue()).contains("WHERE last_accessed >");
+    }
+
+    @Test
+    void test_cleanupFails() throws Exception {
+      when(dataSource.getConnection()).thenReturn(connection);
+      when(connection.getMetaData().getTables(any(), any(), any(), any())).thenReturn(resultSet);
+      when(resultSet.next()).thenReturn(true);
+
+      ResultSet columns = mock(ResultSet.class);
+      when(connection.getMetaData().getColumns(any(), any(), any(), any())).thenReturn(columns);
+      when(columns.next()).thenReturn(true, true, true, true, true, false);
+      when(columns.getString("COLUMN_NAME"))
+          .thenReturn("key", "uuid", "last_fact_id", "bytes", "compressed");
+
+      LogCaptor logCaptor = LogCaptor.forClass(JdbcSnapshotCache.class);
+      doThrow(new SQLException("")).when(connection).prepareStatement(any());
+
+      assertDoesNotThrow(() -> new JdbcSnapshotCache(new JdbcSnapshotProperties(), dataSource));
+      // Give time for the thread executor to run
+      Thread.sleep(100);
+
+      ArgumentCaptor<String> string = ArgumentCaptor.forClass(String.class);
+      verify(connection).prepareStatement(string.capture());
+
+      assertThat(logCaptor.getErrorLogs()).hasSize(1);
+      assertThat(logCaptor.getErrorLogs().get(0)).contains("Failed to delete old snapshots");
+      assertThat(string.getValue()).startsWith("DELETE FROM ");
+      assertThat(string.getValue()).contains("WHERE last_accessed >");
     }
   }
 
@@ -138,7 +177,9 @@ class JdbcSnapshotCacheTest {
       when(columns.next()).thenReturn(true, true, true, true, true, false);
       when(columns.getString("COLUMN_NAME"))
           .thenReturn("key", "uuid", "last_fact_id", "bytes", "compressed");
-      jdbcSnapshotCache = new JdbcSnapshotCache(new JdbcSnapshotProperties(), dataSource);
+      jdbcSnapshotCache =
+          new JdbcSnapshotCache(
+              new JdbcSnapshotProperties().setDeleteSnapshotStaleForDays(0), dataSource);
     }
 
     @Test
