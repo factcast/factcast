@@ -27,15 +27,15 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import lombok.Data;
-import lombok.NonNull;
 import lombok.experimental.Accessors;
-import org.factcast.core.spec.FactSpec;
+import org.factcast.server.ui.views.filter.FactCriteria;
+import org.factcast.server.ui.views.filter.FilterBean;
 
 @Data
 @SuppressWarnings("java:S1948")
 @Accessors(fluent = false, chain = false)
 @JsonIgnoreProperties("since")
-public class FullQueryBean implements Serializable {
+public class FullFilterBean implements FilterBean, Serializable {
   public static final int DEFAULT_LIMIT = 50;
   private final long defaultFrom;
 
@@ -47,27 +47,23 @@ public class FullQueryBean implements Serializable {
   @Min(0)
   private Integer offset = null;
 
-  @Valid private List<FactCriteria> criteria = Lists.newArrayList(new FactCriteria());
-
   // currently not possible to filter on more than one aggId via api
   private BigDecimal from = null;
 
-  FullQueryBean(long startingSerial) {
+  @Valid private List<FactCriteria> criteria = Lists.newArrayList(new FactCriteria());
+
+  FullFilterBean(long startingSerial) {
     defaultFrom = startingSerial;
     from = BigDecimal.valueOf(startingSerial);
   }
 
-  @NonNull
-  public List<FactSpec> createFactSpecs() {
-    return criteria.stream().flatMap(FactCriteria::createFactSpecs).toList();
-  }
-
+  @Override
   @SuppressWarnings("java:S2637") // settings ns to null is intended
   public void reset() {
     since = LocalDate.now();
     limit = null;
     offset = null;
-    criteria = Lists.newArrayList(new FactCriteria());
+    criteria.clear();
     from = BigDecimal.valueOf(defaultFrom);
   }
 
@@ -78,6 +74,6 @@ public class FullQueryBean implements Serializable {
 
   @JsonIgnore
   public int getLimitOrDefault() {
-    return Optional.ofNullable(limit).orElse(FullQueryBean.DEFAULT_LIMIT);
+    return Optional.ofNullable(limit).orElse(FullFilterBean.DEFAULT_LIMIT);
   }
 }

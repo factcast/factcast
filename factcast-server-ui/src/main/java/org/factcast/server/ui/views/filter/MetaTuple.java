@@ -13,20 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.full;
+package org.factcast.server.ui.views.filter;
 
-import com.vaadin.flow.component.combobox.ComboBox;
-import com.vaadin.flow.data.provider.DataProvider;
-import java.util.Collection;
-import org.factcast.core.util.NoCoverageReportToBeGenerated;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import lombok.experimental.Accessors;
 
-@NoCoverageReportToBeGenerated
-class NameSpacesComboBox extends ComboBox<String> {
-  public NameSpacesComboBox(Collection<String> items) {
-    super("Namespace");
-    setItems(DataProvider.ofCollection(items));
-    setAutoOpen(true);
-    setAutofocus(true);
-    getStyle().set("--vaadin-combo-box-overlay-width", "16em");
+@Data
+@Accessors(fluent = false, chain = false)
+public class MetaTuple {
+  @NotNull String key;
+  @NotNull String value;
+
+  /** must match for referential equality only */
+  @Override
+  public boolean equals(Object o) {
+    return this == o;
+  }
+
+  /** see equals(Object) */
+  @Override
+  public int hashCode() {
+    return 1;
   }
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.full;
+package org.factcast.server.ui.views.filter;
 
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -40,13 +40,13 @@ public class FilterCriteriaView extends VerticalLayout {
   private final MultiSelectComboBox<String> type;
   private final TextField aggId = new AggregateIdField();
 
-  private final BeanValidationUrlStateBinder<FullQueryBean> binder;
+  private final BeanValidationUrlStateBinder<FilterBean> binder;
   @Getter private final FactCriteria factCriteria;
-  private final List<Binder.Binding<FullQueryBean, ?>> bindings = new ArrayList<>();
+  private final List<Binder.Binding<FilterBean, ?>> bindings = new ArrayList<>();
 
   FilterCriteriaView(
       @NonNull FactRepository repo,
-      @NonNull BeanValidationUrlStateBinder<FullQueryBean> binder,
+      @NonNull BeanValidationUrlStateBinder<FilterBean> binder,
       @NonNull FactCriteria factCriteria) {
     ns = new NameSpacesComboBox(repo.namespaces(null));
     ns.setId("namespace-selector");
@@ -87,7 +87,7 @@ public class FilterCriteriaView extends VerticalLayout {
     addClassName(LumoUtility.Padding.Bottom.MEDIUM);
   }
 
-  private void bind(BeanValidationUrlStateBinder<FullQueryBean> b) {
+  private void bind(BeanValidationUrlStateBinder<FilterBean> b) {
     bindings.add(
         b.forField(ns)
             .withNullRepresentation("")

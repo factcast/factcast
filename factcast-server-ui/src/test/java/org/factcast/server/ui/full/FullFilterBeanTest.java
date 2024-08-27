@@ -20,15 +20,17 @@ import java.util.Set;
 import java.util.UUID;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.server.ui.views.filter.FactCriteria;
+import org.factcast.server.ui.views.filter.MetaTuple;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class FullQueryBeanTest {
+class FullFilterBeanTest {
 
-  final FullQueryBean underTest = new FullQueryBean(12);
+  final FullFilterBean underTest = new FullFilterBean(12);
 
   @Nested
   class WhenCreatingFactSpecs {
@@ -152,7 +154,7 @@ class FullQueryBeanTest {
 
     @Test
     void returnsDefault() {
-      Assertions.assertThat(underTest.getLimitOrDefault()).isEqualTo(FullQueryBean.DEFAULT_LIMIT);
+      Assertions.assertThat(underTest.getLimitOrDefault()).isEqualTo(FullFilterBean.DEFAULT_LIMIT);
     }
   }
 }

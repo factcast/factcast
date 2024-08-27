@@ -33,7 +33,7 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.util.ExceptionHelper;
-import org.factcast.server.ui.full.FullQueryBean;
+import org.factcast.server.ui.full.FullFilterBean;
 import org.factcast.server.ui.id.IdQueryBean;
 import org.factcast.server.ui.metrics.UiMetrics;
 import org.factcast.server.ui.port.FactRepository;
@@ -97,7 +97,7 @@ public class FactRepositoryImpl implements FactRepository {
 
   @SneakyThrows
   @Override
-  public List<Fact> fetchChunk(FullQueryBean bean) {
+  public List<Fact> fetchChunk(FullFilterBean bean) {
 
     Set<FactSpec> specs = securityService.filterReadable(bean.createFactSpecs());
 
