@@ -126,7 +126,7 @@
     <dependency>
       <groupId>io.micronaut.picocli</groupId>
       <artifactId>micronaut-picocli</artifactId>
-      <version>5.3.0</version>
+      <version>5.5.0</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.module</groupId>
@@ -413,12 +413,12 @@
                 <annotationProcessorPath>
                   <groupId>io.micronaut</groupId>
                   <artifactId>micronaut-inject-java</artifactId>
-                  <version>4.3.12</version>
+                  <version>4.6.3</version>
                 </annotationProcessorPath>
                 <annotationProcessorPath>
                   <groupId>io.micronaut.validation</groupId>
                   <artifactId>micronaut-validation-processor</artifactId>
-                  <version>4.5.0</version>
+                  <version>4.7.0</version>
                 </annotationProcessorPath>
               </annotationProcessorPaths>
             </configuration>
@@ -431,6 +431,7 @@
             <configuration>
               <sourceDirs>
                 <sourceDir>${project.basedir}/src/main/kotlin</sourceDir>
+                <sourceDir>${project.basedir}/src/main/java</sourceDir>
               </sourceDirs>
             </configuration>
           </execution>
@@ -452,12 +453,12 @@
                 <annotationProcessorPath>
                   <groupId>io.micronaut</groupId>
                   <artifactId>micronaut-inject-java</artifactId>
-                  <version>4.3.12</version>
+                  <version>4.6.3</version>
                 </annotationProcessorPath>
                 <annotationProcessorPath>
                   <groupId>io.micronaut.validation</groupId>
                   <artifactId>micronaut-validation-processor</artifactId>
-                  <version>4.5.0</version>
+                  <version>4.7.0</version>
                 </annotationProcessorPath>
               </annotationProcessorPaths>
             </configuration>
@@ -485,6 +486,7 @@
             <include>*</include>
           </includes>
           <excludedGroups>integration</excludedGroups>
+
           <!--suppress UnresolvedMavenProperty -->
           <argLine>${surefire.jacoco.args}</argLine>
           <skip>${skipSurefire}</skip>
