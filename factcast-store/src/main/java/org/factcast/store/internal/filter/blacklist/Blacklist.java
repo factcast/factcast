@@ -16,9 +16,10 @@
 package org.factcast.store.internal.filter.blacklist;
 
 import com.google.common.collect.Sets;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Consumer;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public final class Blacklist implements Consumer<Set<UUID>> {
 
-  private final Set<UUID> blocked = new CopyOnWriteArraySet<>();
+  private final Set<UUID> blocked = Collections.synchronizedSet(new HashSet<>());
 
   public boolean isBlocked(@NonNull UUID factId) {
     return blocked.contains(factId);
