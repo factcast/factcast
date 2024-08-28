@@ -109,7 +109,7 @@
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <kotest.version>5.8.0</kotest.version>
     <mockk.version>1.13.12</mockk.version>
-    <redisson.version>3.28.0</redisson.version>
+    <redisson.version>3.35.0</redisson.version>
     <graaljs.version>24.0.1</graaljs.version>
     <shedlock.version>5.15.0</shedlock.version>
     <byte-buddy.version>1.14.19</byte-buddy.version>
