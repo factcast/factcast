@@ -127,7 +127,7 @@ class JdbcSnapshotCacheTest {
       ArgumentCaptor<String> string = ArgumentCaptor.forClass(String.class);
       verify(connection).prepareStatement(string.capture());
 
-      assertThat(logCaptor.getErrorLogs()).hasSize(0);
+      assertThat(logCaptor.getErrorLogs()).isEmpty();
       assertThat(string.getValue()).startsWith("DELETE FROM ");
       assertThat(string.getValue()).contains("WHERE last_accessed <");
     }
