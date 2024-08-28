@@ -418,7 +418,7 @@
                 <annotationProcessorPath>
                   <groupId>io.micronaut.validation</groupId>
                   <artifactId>micronaut-validation-processor</artifactId>
-                  <version>4.5.0</version>
+                  <version>4.7.0</version>
                 </annotationProcessorPath>
               </annotationProcessorPaths>
             </configuration>
@@ -457,7 +457,7 @@
                 <annotationProcessorPath>
                   <groupId>io.micronaut.validation</groupId>
                   <artifactId>micronaut-validation-processor</artifactId>
-                  <version>4.5.0</version>
+                  <version>4.7.0</version>
                 </annotationProcessorPath>
               </annotationProcessorPaths>
             </configuration>
