@@ -24,35 +24,37 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 @Target(ElementType.TYPE)
 @Inherited
 public @interface SpringTransactional {
-  int bulkSize() default 50;
 
-  /**
-   * Due to the nature of the Spring Transaction handling this timeout is in seconds.
-   *
-   * @return
-   */
-  int timeoutInSeconds() default Defaults.timeoutInSeconds;
+  int DEFAULT_BULK_SIZE = 1000;
+
+  int bulkSize() default DEFAULT_BULK_SIZE;
+
+  int propagationBehavior() default TransactionDefinition.PROPAGATION_REQUIRED;
+
+  int isolationLevel() default TransactionDefinition.ISOLATION_DEFAULT;
+
+  int timeoutInSeconds() default Defaults.TIMEOUT_IN_SECONDS;
+
+  boolean readOnly() default false;
 
   class Defaults {
-    static final int timeoutInSeconds = 30;
+    static final int TIMEOUT_IN_SECONDS = 30;
 
     public static DefaultTransactionDefinition create() {
-      DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+      DefaultTransactionDefinition opts = new DefaultTransactionDefinition();
 
-      definition.setTimeout(timeoutInSeconds);
-      definition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
+      opts.setTimeout(TIMEOUT_IN_SECONDS);
 
-      return definition;
+      return opts;
     }
 
     public static TransactionDefinition with(@NonNull SpringTransactional transactional) {
       DefaultTransactionDefinition opts = create();
 
-      int timeout = transactional.timeoutInSeconds();
-
-      if (timeout > 0) {
-        opts.setTimeout(timeout);
-      }
+      opts.setTimeout(transactional.timeoutInSeconds());
+      opts.setIsolationLevel(transactional.isolationLevel());
+      opts.setReadOnly(transactional.readOnly());
+      opts.setPropagationBehavior(transactional.propagationBehavior());
 
       return opts;
     }

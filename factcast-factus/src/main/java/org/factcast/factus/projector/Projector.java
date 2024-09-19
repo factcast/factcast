@@ -24,11 +24,7 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.factus.projection.Projection;
 
 public interface Projector<A extends Projection> {
-  void apply(@NonNull Fact element);
-
-  default void apply(@NonNull Iterable<Fact> facts) {
-    facts.forEach(this::apply);
-  }
+  void apply(@NonNull List<Fact> facts);
 
   List<FactSpec> createFactSpecs();
 

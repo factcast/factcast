@@ -29,8 +29,7 @@ public class ServerExceptionHelper {
     if (e instanceof StatusRuntimeException sre) // prevent double wrap
     {
       return sre;
-    } else if (e instanceof RuntimeException
-        && e.getClass().getName().startsWith("org.factcast.core")) {
+    } else if (e instanceof RuntimeException && e.getClass().getName().startsWith("org.factcast")) {
       return new StatusRuntimeException(Status.UNKNOWN, addMetaData(meta, e));
     } else if (e instanceof UnsupportedOperationException) {
       // UNIMPLEMENTED is technically not fully correct but best we can do here
