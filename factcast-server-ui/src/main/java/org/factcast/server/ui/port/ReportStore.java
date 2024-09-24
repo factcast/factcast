@@ -13,42 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.views.filter;
+package org.factcast.server.ui.port;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.io.InputStream;
 import java.util.List;
 import lombok.NonNull;
-import org.factcast.core.spec.FactSpec;
+import org.factcast.server.ui.report.Report;
+import org.factcast.server.ui.report.ReportEntry;
 
-public interface FilterBean {
+public interface ReportStore {
 
-  LocalDate getSince();
+  /** Saves a report for a given user if it does not exist yet. */
+  void save(@NonNull String userName, @NonNull Report report);
 
-  void setSince(LocalDate since);
+  InputStream get(@NonNull String userName, @NonNull String reportName);
 
-  Integer getLimit();
+  List<ReportEntry> listAllForUser(@NonNull String userName);
 
-  void setLimit(Integer limit);
-
-  Integer getOffset();
-
-  void setOffset(Integer offset);
-
-  BigDecimal getFrom();
-
-  void setFrom(BigDecimal from);
-
-  List<FactCriteria> getCriteria();
-
-  @NonNull
-  default List<FactSpec> createFactSpecs() {
-    return getCriteria().stream().flatMap(FactCriteria::createFactSpecs).toList();
-  }
-
-  void reset();
-
-  int getOffsetOrDefault();
-
-  int getLimitOrDefault();
+  void delete(@NonNull String userName, @NonNull String reportName);
 }
