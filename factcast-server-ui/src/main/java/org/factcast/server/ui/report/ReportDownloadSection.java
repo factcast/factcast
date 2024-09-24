@@ -26,7 +26,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.vaadin.olli.FileDownloadWrapper;
 
 @Slf4j
-public class ReportDownloadArea extends HorizontalLayout {
+public class ReportDownloadSection extends HorizontalLayout {
 
   private final ReportStore reportStore;
   private final DataProvider<ReportEntry, Void> dataProvider;
@@ -35,7 +35,8 @@ public class ReportDownloadArea extends HorizontalLayout {
   private Button deleteBtn = new Button("Delete");
   private final String userName = SecurityContextHolder.getContext().getAuthentication().getName();
 
-  public ReportDownloadArea(ReportStore reportStore, DataProvider<ReportEntry, Void> dataProvider) {
+  public ReportDownloadSection(
+      ReportStore reportStore, DataProvider<ReportEntry, Void> dataProvider) {
     this.reportStore = reportStore;
     this.dataProvider = dataProvider;
     this.downloadBtn.setEnabled(false);

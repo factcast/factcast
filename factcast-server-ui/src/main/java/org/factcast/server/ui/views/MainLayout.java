@@ -34,7 +34,6 @@ import org.factcast.core.util.NoCoverageReportToBeGenerated;
 import org.factcast.server.ui.full.FullQueryPage;
 import org.factcast.server.ui.id.IdQueryPage;
 import org.factcast.server.ui.plugins.JsonViewPluginService;
-import org.factcast.server.ui.report.ReportDownloadPage;
 import org.factcast.server.ui.report.ReportQueryPage;
 import org.factcast.server.ui.utils.Notifications;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -93,9 +92,6 @@ public class MainLayout extends AppLayout {
     nav.addItem(
         new SideNavItem(
             "Report Generation", ReportQueryPage.class, VaadinIcon.FILE_SEARCH.create()));
-    nav.addItem(
-        new SideNavItem(
-            "Report Download", ReportDownloadPage.class, VaadinIcon.FILE_SEARCH.create()));
     nav.addItem(new SideNavItem("Logout", LogoutView.class, VaadinIcon.EXIT.create()));
 
     return nav;

@@ -21,6 +21,8 @@ import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datepicker.DatePicker;
+import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
@@ -31,6 +33,7 @@ import com.vaadin.flow.component.textfield.Autocomplete;
 import com.vaadin.flow.component.textfield.BigDecimalField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.ValidationException;
+import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.*;
 import jakarta.annotation.security.PermitAll;
@@ -51,7 +54,6 @@ import org.factcast.server.ui.views.FormContent;
 import org.factcast.server.ui.views.MainLayout;
 import org.factcast.server.ui.views.filter.FilterBean;
 import org.factcast.server.ui.views.filter.FilterCriteriaViews;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @Route(value = "ui/report", layout = MainLayout.class)
@@ -67,19 +69,23 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
 
   private final ReportStore reportStore;
   private final JsonViewPluginService jsonViewPluginService;
+  private final BeanValidationUrlStateBinder<FilterBean> binder;
+  private final FactRepository repo;
+  private final DataProvider<ReportEntry, Void> reportProvider;
 
   // fields
   private final DatePicker since = new DatePicker("First Serial of Day");
   private final BigDecimalField from = new BigDecimalField("Starting Serial");
   private final TextField fileNameField = new TextField("File Name");
   private final Popup serialHelperOverlay = new Popup();
-
-  private final BeanValidationUrlStateBinder<FilterBean> binder;
-  private final FactRepository repo;
-
-  private final FilterCriteriaViews factCriteriaViews;
   private final Button queryBtn = new Button("Generate");
   private String fileName = "events.json";
+  private String reportDownloadName;
+
+  private final FilterCriteriaViews factCriteriaViews;
+  private final ReportDownloadSection downloadSection;
+
+  private final String userName = SecurityContextHolder.getContext().getAuthentication().getName();
 
   public ReportQueryPage(
       @NonNull FactRepository repo,
@@ -93,29 +99,57 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
     this.jsonViewPluginService = jsonViewPluginService;
 
     formBean = new ReportFilterBean(repo.latestSerial());
-
-    serialHelperOverlay.setTarget(from.getElement());
-    from.setId("starting-serial");
-    from.setAutocomplete(Autocomplete.OFF);
-    since.addValueChangeListener(e -> updateFrom());
-
-    binder = createBinding();
-
+    binder = createUrlStateBinding();
     factCriteriaViews = new FilterCriteriaViews(repo, binder, formBean);
+    reportProvider = getReportProvider();
 
     final var accordion = new Accordion();
     accordion.setWidthFull();
     accordion.add("Conditions", factCriteriaViews);
 
-    final var form = new FormContent(accordion, new FromPanel(), queryButtons());
+    final var queryFormSection = new FormContent(accordion, new InputFields(), queryButtons());
+    add(queryFormSection, serialHelperOverlay);
 
-    add(form);
-    add(serialHelperOverlay);
+    final var reportViewHeader = getReportHeaderSection(reportProvider);
+    downloadSection = new ReportDownloadSection(reportStore, reportProvider);
+    final var reportGrid = getReportGrid();
+    add(reportViewHeader, reportGrid, downloadSection);
 
     updateFrom();
   }
 
-  private BeanValidationUrlStateBinder<FilterBean> createBinding() {
+  private Grid<ReportEntry> getReportGrid() {
+    final var grid = new Grid<>(ReportEntry.class, false);
+    grid.setSelectionMode(Grid.SelectionMode.SINGLE);
+    grid.addColumn(ReportEntry::name).setHeader("Filename");
+    grid.addColumn(ReportEntry::lastChanged).setHeader("Last Modified");
+    grid.addSelectionListener(
+        selection -> {
+          if (!selection.getAllSelectedItems().isEmpty()) {
+            log.info("Selected {}", selection.getFirstSelectedItem().get().name());
+            this.reportDownloadName = selection.getFirstSelectedItem().get().name();
+            downloadSection.refreshForFile(reportDownloadName);
+          }
+        });
+    grid.setDataProvider(reportProvider);
+    grid.setMinHeight("300px");
+
+    return grid;
+  }
+
+  private static HorizontalLayout getReportHeaderSection(
+      DataProvider<ReportEntry, Void> reportProvider) {
+    H3 heading = new H3("Your Reports");
+    heading.getStyle().set("margin", "0 auto 0 0");
+
+    Button refresh = new Button("Refresh");
+    refresh.addClickListener(e -> reportProvider.refreshAll());
+    final var header = new HorizontalLayout(heading, refresh);
+    header.setAlignItems(Alignment.CENTER);
+    return header;
+  }
+
+  private BeanValidationUrlStateBinder<FilterBean> createUrlStateBinding() {
     var b = new BeanValidationUrlStateBinder<>(FilterBean.class);
     b.forField(from).withNullRepresentation(BigDecimal.ZERO).bind("from");
     b.forField(since).bind("since");
@@ -143,10 +177,15 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
   }
 
   @NoCoverageReportToBeGenerated
-  class FromPanel extends HorizontalLayout {
-    public FromPanel() {
+  class InputFields extends HorizontalLayout {
+    public InputFields() {
       setClassName("flex-wrap");
       setJustifyContentMode(JustifyContentMode.BETWEEN);
+
+      serialHelperOverlay.setTarget(from.getElement());
+      from.setId("starting-serial");
+      from.setAutocomplete(Autocomplete.OFF);
+      since.addValueChangeListener(e -> updateFrom());
 
       Button latestSerial = new Button("Latest serial");
       latestSerial.addClickListener(
@@ -192,48 +231,6 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
     }
   }
 
-  private String sanitizeFileName(String fileName) {
-    return fileName.replaceAll("[^a-zA-Z0-9-_]", "");
-  }
-
-  private void runQuery() {
-    try {
-      queryBtn.setEnabled(false);
-      binder.writeBean(formBean);
-      final var loggedInUserName = getLoggedInUserName();
-      log.info("{} runs query for {}", loggedInUserName, formBean);
-
-      // TODO: ensure this won't fail if the query takes a long time.
-      List<Fact> dataFromStore = repo.fetchChunk(formBean);
-      log.info("Found {} entries", dataFromStore.size());
-      if (!dataFromStore.isEmpty()) {
-
-        final var processedFacts = jsonViewPluginService.process(dataFromStore);
-
-        try {
-          reportStore.save(
-              loggedInUserName, new Report(fileName, processedFacts, formBean.toString()));
-        } catch (IllegalArgumentException e) {
-          displayWarning(e.getMessage());
-        }
-      } else {
-        displayWarning(
-            "No data was found for this query and therefore report creation is skipped.");
-      }
-    } catch (ValidationException e) {
-      Notifications.warn(e.getMessage());
-    } catch (Exception e) {
-      Notifications.error(e.getMessage());
-    }
-    // Not re-enabling the queryReportBtn to not incentivise users to generate it
-    // multiple times.
-  }
-
-  private static void displayWarning(String message) {
-    Notification notification = Notification.show(message);
-    notification.addThemeVariants(NotificationVariant.LUMO_WARNING);
-  }
-
   @NonNull
   private HorizontalLayout queryButtons() {
     queryBtn.addClickShortcut(Key.ENTER);
@@ -257,13 +254,58 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
     return hl;
   }
 
-  private String getLoggedInUserName() {
+  private void runQuery() {
     try {
-      Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-      return authentication.getName();
+      queryBtn.setEnabled(false);
+      binder.writeBean(formBean);
+      log.info("{} runs query for {}", userName, formBean);
+
+      // TODO: ensure this won't fail if the query takes a long time.
+      List<Fact> dataFromStore = repo.fetchChunk(formBean);
+      log.info("Found {} entries", dataFromStore.size());
+      if (!dataFromStore.isEmpty()) {
+
+        final var processedFacts = jsonViewPluginService.process(dataFromStore);
+
+        try {
+          reportStore.save(userName, new Report(fileName, processedFacts, formBean.toString()));
+          reportProvider.refreshAll();
+        } catch (IllegalArgumentException e) {
+          displayWarning(e.getMessage());
+        }
+      } else {
+        displayWarning(
+            "No data was found for this query and therefore report creation is skipped.");
+      }
+    } catch (ValidationException e) {
+      Notifications.warn(e.getMessage());
     } catch (Exception e) {
-      log.warn("Cannot retrieve logged in user");
-      return "UNKNOWN";
+      Notifications.error(e.getMessage());
     }
+    // Not re-enabling the queryReportBtn to not incentivise users to generate it
+    // multiple times.
+  }
+
+  private DataProvider<ReportEntry, Void> getReportProvider() {
+    return DataProvider.fromCallbacks(
+        // First callback fetches items based on a query
+        query -> {
+          final var userReports = reportStore.listAllForUser(this.userName);
+          return userReports.stream().skip(query.getOffset()).limit(query.getLimit());
+        },
+        // Second callback fetches the number of items for a query
+        query -> {
+          final var userReports = reportStore.listAllForUser(this.userName);
+          return userReports.size();
+        });
+  }
+
+  private static void displayWarning(String message) {
+    Notification notification = Notification.show(message);
+    notification.addThemeVariants(NotificationVariant.LUMO_WARNING);
+  }
+
+  private String sanitizeFileName(String fileName) {
+    return fileName.replaceAll("[^a-zA-Z0-9-_]", "");
   }
 }
