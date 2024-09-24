@@ -64,6 +64,7 @@ public class FullFilterBean implements FilterBean, Serializable {
     limit = null;
     offset = null;
     criteria.clear();
+    criteria.add(new FactCriteria());
     from = BigDecimal.valueOf(defaultFrom);
   }
 
