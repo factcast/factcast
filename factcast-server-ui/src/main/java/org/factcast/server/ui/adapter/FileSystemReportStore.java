@@ -58,17 +58,18 @@ public class FileSystemReportStore implements ReportStore {
       }
     } else {
       // TODO: clean this up
-      log.error("Report with this name already exists");
+      throw new IllegalArgumentException(
+          "Report was not generated as another report with this name already exists.");
     }
   }
 
   @Override
-  public InputStream get(@NonNull String userName, @NonNull String reportName) {
+  public byte[] getReportAsBytes(@NonNull String userName, @NonNull String reportName) {
     final var reportFilePath = Paths.get(PERSISTENCE_DIR, userName, reportName);
-
-    if (!Files.exists(reportFilePath)) {
+    log.info("Getting report from {}", reportFilePath);
+    if (Files.exists(reportFilePath)) {
       try (var stream = Files.newInputStream(reportFilePath)) {
-        return stream;
+        return stream.readAllBytes();
       } catch (IOException e) {
         log.error("Failed to get report", e);
         throw new RuntimeException(e);
@@ -107,7 +108,21 @@ public class FileSystemReportStore implements ReportStore {
   }
 
   @Override
-  public void delete(@NonNull String userName, @NonNull String reportName) {}
+  public void delete(@NonNull String userName, @NonNull String reportName) {
+    final var reportFilePath = Paths.get(PERSISTENCE_DIR, userName, reportName);
+    log.info("Deleting report: {}", reportFilePath);
+    if (Files.exists(reportFilePath)) {
+      try {
+        Files.delete(reportFilePath);
+      } catch (IOException e) {
+        log.error("Failed to delete report", e);
+        throw new RuntimeException(e);
+      }
+    } else {
+      throw new IllegalArgumentException(
+          String.format("No report exists with name %s for user %s", reportName, userName));
+    }
+  }
 
   // TODO: maxDiskSpace
 }

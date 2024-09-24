@@ -23,11 +23,9 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
-import java.util.List;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.Fact;
 import org.factcast.server.ui.report.Report;
 import org.factcast.server.ui.report.ReportEntry;
 import org.junit.jupiter.api.AfterEach;
@@ -53,7 +51,7 @@ class FileSystemReportStoreTest {
 
   @Test
   void save() {
-    uut.save("user", new Report("name.json", "content", "query", 3));
+    uut.save("user", new Report("name.json", "events", "query"));
     assertTrue(
         Files.exists(new File(FileSystemReportStore.PERSISTENCE_DIR + "/user/name.json").toPath()));
   }
@@ -67,16 +65,16 @@ class FileSystemReportStoreTest {
 
     @Test
     void returnsEmptyListIfNoReportsExistForUser() {
-      uut.save("user2", new Report("report3.json", "content", "query", 1));
+      uut.save("user2", new Report("report3.json", "events", "query"));
 
       assertTrue(uut.listAllForUser("user").isEmpty());
     }
 
     @Test
     void listsAllReports() {
-      uut.save("user", new Report("report1.json", "content", "query", 1));
-      uut.save("user", new Report("report2.json", "content", "query", 1));
-      uut.save("user2", new Report("report3.json", "content", "query", 1));
+      uut.save("user", new Report("report1.json", "events", "query"));
+      uut.save("user", new Report("report2.json", "events", "query"));
+      uut.save("user2", new Report("report3.json", "events", "query"));
 
       final var actual = uut.listAllForUser("user");
 
@@ -95,10 +93,9 @@ class FileSystemReportStoreTest {
     void happyPath() {
       String reportName = "report1.json";
       final var objectMapper = new ObjectMapper();
-      uut.save(
-          "user", new Report(reportName, List.of(Fact.builder().buildWithoutPayload()), "query"));
+      uut.save("user", new Report(reportName, "events", "query"));
 
-      final var actual = uut.get("user", reportName);
+      final var actual = uut.getReportAsBytes("user", reportName);
 
       final var mappedReport = objectMapper.readValue(actual, Report.class);
       assertThat(mappedReport.name()).isEqualTo(reportName);

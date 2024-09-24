@@ -15,27 +15,14 @@
  */
 package org.factcast.server.ui.report;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.Serializable;
-import java.util.List;
 import lombok.NonNull;
-import org.factcast.core.Fact;
+import org.factcast.server.ui.plugins.JsonViewEntries;
 
-public record Report(
-    @NonNull String name, @NonNull String json, @NonNull String query, int resultCount)
+public record Report(@NonNull String name, @NonNull String json, @NonNull String query)
     implements Serializable {
 
-  public Report(@NonNull String name, @NonNull List<Fact> facts, @NonNull String query) {
-    this(name, getJsonFromFacts(facts), query, facts.size());
-  }
-
-  static String getJsonFromFacts(List<Fact> facts) {
-    final var objectMapper = new ObjectMapper();
-    try {
-      return objectMapper.writeValueAsString(facts);
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException(e);
-    }
+  public Report(@NonNull String name, @NonNull JsonViewEntries entries, @NonNull String query) {
+    this(name, entries.json(), query);
   }
 }
