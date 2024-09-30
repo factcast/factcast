@@ -46,7 +46,7 @@ public class PostQueryMatcher implements Predicate<Fact> {
   final List<FactSpecMatcher> matchers = new LinkedList<>();
 
   public PostQueryMatcher(@NonNull SubscriptionRequest req, @NonNull JSEngineFactory ef) {
-    canBeSkipped = req.specs().stream().noneMatch(s -> s.jsFilterScript() != null);
+    canBeSkipped = req.specs().stream().noneMatch(s -> s.filterScript() != null);
     if (canBeSkipped) {
       log.trace("{} post query filtering has been disabled", req);
     } else {

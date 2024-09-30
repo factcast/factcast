@@ -34,13 +34,14 @@ In order to do that, a list of FactSpec-Objects is transferred on subscription. 
 
 FactSpec-Objects must define a **ns** attribute. The rest is actually optional:
 
-| Attribute      | Type                               | Semantics                                        |
-| :------------- | :--------------------------------- | :----------------------------------------------- |
-| ns             | String                             | Namespace                                        |
-| type           | String                             | Type of Fact                                     |
-| aggId          | UUID                               | Aggregate-ID                                     |
-| meta           | JSON Object with String Properties | A list of String key-value pairs (Tags) to match |
-| jsFilterScript | String (JavaScript)                | Scripted Predicate, see below                    |
+| Attribute      | Type                                | Semantics                                                                                    |
+| :------------- | :---------------------------------- | :------------------------------------------------------------------------------------------- |
+| ns             | String                              | Namespace                                                                                    |
+| type           | String                              | Type of Fact                                                                                 |
+| aggId          | UUID                                | Aggregate-ID                                                                                 |
+| meta           | JSON Object with String Properties  | A list of String key-value pairs (Tags) to match                                             |
+| metaKeyExists  | JSON Object with Boolean Properties | A list of keys that _MUST_ exist if the value is true, or _MUST NOT_ exist if value is false |
+| jsFilterScript | String (JavaScript)                 | Scripted Predicate, see below                                                                |
 
 Of course, **all** the requirements defined in a FactSpec have to be met for a Fact to be matched.
 
