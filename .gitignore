@@ -20,4 +20,6 @@ release.properties
 **/*.plantuml
 **/pom.xml.versionsBackup
 **/*.bak
+**/node/**
+package-lock.json
 
