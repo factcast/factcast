@@ -60,7 +60,7 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
   @JsonProperty String pid;
 
   public boolean hasAnyScriptFilters() {
-    return specs.stream().anyMatch(s -> s.jsFilterScript() != null);
+    return specs.stream().anyMatch(s -> s.filterScript() != null);
   }
 
   @Override
@@ -81,8 +81,15 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
     pid = PID;
   }
 
-  // TODO now that forIDs is gone, maybe rename?
+  @Deprecated
+  /**
+   * @deprecated use from
+   */
   public static SubscriptionRequestTO forFacts(SubscriptionRequest request) {
+    return from(request);
+  }
+
+  public static SubscriptionRequestTO from(SubscriptionRequest request) {
     return new SubscriptionRequestTO(request);
   }
 

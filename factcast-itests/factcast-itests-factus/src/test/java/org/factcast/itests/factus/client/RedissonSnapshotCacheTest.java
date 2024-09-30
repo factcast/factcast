@@ -15,14 +15,16 @@
  */
 package org.factcast.itests.factus.client;
 
-import org.factcast.core.snap.SnapshotCache;
+import org.factcast.factus.snapshot.SnapshotCache;
 import org.factcast.itests.TestFactusApplication;
+import org.factcast.spring.boot.autoconfigure.snap.RedissonSnapshotCacheAutoConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
-@ContextConfiguration(classes = TestFactusApplication.class)
+@ContextConfiguration(
+    classes = {TestFactusApplication.class, RedissonSnapshotCacheAutoConfiguration.class})
 public class RedissonSnapshotCacheTest extends SnapshotCacheTest {
 
   @Autowired
