@@ -64,6 +64,7 @@ static class MySnapshotProjection implements SnapshotProjection {
 ```
 
 Note that those implementations need to have a default constructor and are expected to be stateless.
+However, if you use Spring boot those implementations can be Spring beans as well which are then retrieved from the Application Context via the type provided in the annotation.
 
 ### Snapshot caching
 
