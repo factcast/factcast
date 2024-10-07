@@ -41,13 +41,13 @@ Factus updates subscribed projections automatically in the background. Therefore
 `factus.update(projection)` is not possible. In some cases however it might still be necessary to make sure a subscribed
 projection has processed a fact before continuing.
 
-One such use-case might be read-after-write consistency. Imagine a projection powering a table shown to a user. This 
-table shows information collected from facts `A` and `B`, where `B` gets published by the current application, but 
-`A` is published by another service, which means we need to use a subscribed projection. With the push of a button a user can publish a new `B` fact, creating another row 
-in the table. If your frontend then immediately reloads the table, it might not yet show the new row, as the subscribed 
+One such use-case might be read-after-write consistency. Imagine a projection powering a table shown to a user. This
+table shows information collected from facts `A` and `B`, where `B` gets published by the current application, but
+`A` is published by another service, which means we need to use a subscribed projection. With the push of a button a user can publish a new `B` fact, creating another row
+in the table. If your frontend then immediately reloads the table, it might not yet show the new row, as the subscribed
 projection has not yet processed the new fact.
 
-In this case you can use the `factus.waitFor` method to wait until the projection has consumed a certain fact. This 
+In this case you can use the `factus.waitFor` method to wait until the projection has consumed a certain fact. This
 method will block until the fact is either processed or the timeout is exceeded.
 
 ```java
