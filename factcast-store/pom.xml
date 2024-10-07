@@ -11,7 +11,7 @@
   </parent>
   <artifactId>factcast-store</artifactId>
   <properties>
-    <jetty-javalin.version>11.0.22</jetty-javalin.version>
+    <jetty-javalin.version>11.0.24</jetty-javalin.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -160,7 +160,7 @@
     <dependency>
       <groupId>io.javalin</groupId>
       <artifactId>javalin</artifactId>
-      <version>6.2.0</version>
+      <version>6.3.0</version>
       <scope>test</scope>
     </dependency>
     <!-- explicit jetty dependencies to workaround missing jetty12 compat ->
