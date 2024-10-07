@@ -39,8 +39,7 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
   public static final String INNER_PATH =
       separator + "factcast" + separator + "snapshots" + separator;
 
-  @Getter(onMethod = @__(@VisibleForTesting))
-  final File persistenceDirectory;
+  @Getter final File persistenceDirectory;
 
   private final long threshold;
   private final AtomicLong currentUsedSpace;
