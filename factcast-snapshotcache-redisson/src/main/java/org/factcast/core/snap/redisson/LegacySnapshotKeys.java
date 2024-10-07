@@ -26,6 +26,8 @@ import org.factcast.factus.serializer.SnapshotSerializerId;
 
 /**
  * used for downward compatibility within redis impl of snapshotcache. Will be removed eventually.
+ *
+ * @deprecated
  */
 @Deprecated
 public class LegacySnapshotKeys {

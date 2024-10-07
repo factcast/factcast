@@ -20,11 +20,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import org.assertj.core.api.Assertions;
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotId;
 import org.factcast.factus.serializer.SnapshotSerializerId;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+@SuppressWarnings("deprecation")
 @ExtendWith(MockitoExtension.class)
 class SnapshotDataTest {
 
@@ -57,5 +60,18 @@ class SnapshotDataTest {
     ba[0] = 0;
 
     assertThat(SnapshotData.from(ba)).isEmpty();
+  }
+
+  @Test
+  void fromLegacy() {
+    UUID state = new UUID(1, 2);
+    SnapshotSerializerId serId = SnapshotSerializerId.of("test");
+    byte[] bytes = "foo".getBytes(StandardCharsets.UTF_8);
+    SnapshotId id = SnapshotId.of("id", new UUID(0, 0));
+
+    SnapshotData data = SnapshotData.from(new Snapshot(id, state, bytes, false), serId);
+    Assertions.assertThat(data.serializedProjection()).isEqualTo(bytes);
+    Assertions.assertThat(data.snapshotSerializerId()).isEqualTo(serId);
+    Assertions.assertThat(data.lastFactId()).isEqualTo(state);
   }
 }

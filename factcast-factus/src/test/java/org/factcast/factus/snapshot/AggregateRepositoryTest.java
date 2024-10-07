@@ -31,7 +31,6 @@ import org.factcast.factus.projection.AggregateUtil;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.serializer.SnapshotSerializerId;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -77,9 +76,6 @@ class AggregateRepositoryTest {
 
     private final UUID aggregateId = UUID.randomUUID();
 
-    @BeforeEach
-    void setup() {}
-
     @Test
     void findNone() {
       Assertions.assertThat(underTest.findLatest(WithAnnotation.class, aggregateId)).isEmpty();
@@ -115,7 +111,7 @@ class AggregateRepositoryTest {
 
   @Nested
   class WhenStoring {
-    private final UUID STATE = UUID.randomUUID();
+    private final UUID state = UUID.randomUUID();
 
     private final WithAnnotation aggregate = new WithAnnotation();
 
@@ -135,7 +131,7 @@ class AggregateRepositoryTest {
       SnapshotIdentifier id = SnapshotIdentifier.of(WithAnnotation.class, aggId);
 
       // RUN
-      underTest.store(aggregate, STATE);
+      underTest.store(aggregate, state);
 
       verify(snapshotCache).store(eq(id), snapshotCaptor.capture());
 
@@ -144,7 +140,7 @@ class AggregateRepositoryTest {
               SnapshotData::snapshotSerializerId,
               SnapshotData::serializedProjection,
               SnapshotData::lastFactId)
-          .containsExactly(serId, "foo".getBytes(), STATE);
+          .containsExactly(serId, "foo".getBytes(), state);
     }
   }
 
