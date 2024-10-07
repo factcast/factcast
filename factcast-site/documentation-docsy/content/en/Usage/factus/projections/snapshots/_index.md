@@ -69,10 +69,10 @@ Note that those implementations need to have a default constructor and are expec
 
 The Key/Value store that keeps and maintains the snapshots is called a [SnapshotCache]({{< ref "/usage/factus/projections/snapshots/snapshot-caching">}}).
 
-### Serials
+### Revisions
 
 When a projection class is changed (e.g. a field is renamed or its type is changed), depending on the Serializer, there will be a problem with deserialization.
-In order to rebuild a snapshot in this case a "serial" is to be provided for the Projection.
-Only snapshots that have the same "serial" than the class in its current state will be used.
+In order to rebuild a snapshot in this case a "revision" is to be provided for the Projection.
+Only snapshots that have the same "revision" than the class in its current state will be used.
 
-Serials are declared to projections by adding a `@ProjectionMetaData(serial = 1L)` to the type.
+Revisions are declared to projections by adding a `@ProjectionMetaData(revision = 1L)` to the type.
