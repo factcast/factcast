@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.serializer.SnapshotSerializerId;
 import org.factcast.factus.snapshot.SnapshotCache;
 import org.factcast.factus.snapshot.SnapshotData;
@@ -37,7 +36,8 @@ public abstract class SnapshotCacheTest extends AbstractFactCastIntegrationTest 
 
   @Test
   public void simpleSnapshotRoundtrip() {
-    SnapshotIdentifier id = SnapshotIdentifier.of(Aggregate.class, randomUUID());
+    SnapshotIdentifier id =
+        SnapshotIdentifier.of(org.factcast.itests.factus.proj.UserV1.class, randomUUID());
     // initially empty
     assertThat(repository.find(id)).isEmpty();
 
