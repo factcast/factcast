@@ -52,7 +52,7 @@ Factus ships with a default SnapshotSerializer, that - you can guess by now - us
 
 ### Choosing serializers
 
-If your `SnapshotProjection` does not declare anything different, it will be serialized using the _default SnapshotSerializer_ known to your `SnapshotSerializerSupplier` (when using Spring boot, normally automatically bound as a spring bean).
+If your `SnapshotProjection` does not declare anything different, it will be serialized using the _default SnapshotSerializer_ known to your `SnapshotSerializerSupplier` (when using Spring boot, normally automatically bound as a Spring bean).
 
 In case you want to use a different implementation for a particular 'SnapshotProjection', you can annotate it with '@SerializeUsing'
 
