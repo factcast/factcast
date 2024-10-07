@@ -34,6 +34,12 @@ public class SnapshotData {
   @NonNull SnapshotSerializerId snapshotSerializerId;
   @NonNull UUID lastFactId;
 
+  /**
+   * @param snapshot
+   * @param serId
+   * @return
+   * @deprecated
+   */
   @SuppressWarnings("deprecation")
   @Deprecated
   public static SnapshotData from(
