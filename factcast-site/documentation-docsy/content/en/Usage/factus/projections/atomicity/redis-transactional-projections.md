@@ -43,17 +43,17 @@ In order to make use of redisson RTransaction support, the necessary dependency 
 A _Redis transactional projection_ can be a [managed-]({{< ref "managed-projection.md" >}}) or
 a [subscribed]({{< ref "subscribed-projection.md" >}}) projection and is defined as follows:
 
-- it is annotated with `@RedisTransactional`
+- it is annotated with `@RedisTransactional` (optional when using the default values and extending one of Factus' abstract classes mentioned below)
 - it implements `RedisProjection` revealing the `RedisClient` used
-- it provides the serial number of the projection via the `@ProjectionMetaData` annotation
+- it provides the revision number of the projection via the `@ProjectionMetaData` annotation
 - the handler methods receive an additional `RTransaction` parameter
 
 {{% alert  title="Note" %}}
 
 Factus provides convenient abstract classes for managed and subscribed projections:
 
-- `AbstractRedisManagedProjection`
-- `AbstractRedisSubscribedProjection`
+- `AbstractRedisTxManagedProjection`
+- `AbstractRedisTxSubscribedProjection`
 
 {{% / alert %}}
 
