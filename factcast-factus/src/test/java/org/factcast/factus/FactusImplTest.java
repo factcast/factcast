@@ -56,6 +56,7 @@ import org.factcast.factus.lock.LockedOnSpecs;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.metrics.FactusMetricsImpl;
 import org.factcast.factus.projection.*;
+import org.factcast.factus.projection.parameter.HandlerParameterContributors;
 import org.factcast.factus.projector.Projector;
 import org.factcast.factus.projector.ProjectorFactory;
 import org.factcast.factus.projector.ProjectorImpl;
@@ -70,7 +71,6 @@ import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-@SuppressWarnings("deprecation")
 class FactusImplTest {
 
   @Mock private FactCast fc;
@@ -360,8 +360,10 @@ class FactusImplTest {
     void updateIsExecutedViaProjection() {
 
       ManagedProjection m = Mockito.spy(new SimpleProjection());
+      EventSerializer serializer = mock(EventSerializer.class);
       Projector<ManagedProjection> ea =
-          Mockito.spy(new ProjectorImpl<>(m, mock(EventSerializer.class)));
+          Mockito.spy(
+              new ProjectorImpl<>(m, serializer, new HandlerParameterContributors(serializer)));
       when(ehFactory.create(m)).thenReturn(ea);
 
       Fact f1 = Fact.builder().ns("test").type(SimpleEvent.class.getSimpleName()).build("{}");
@@ -682,69 +684,59 @@ class FactusImplTest {
     }
 
     @Captor ArgumentCaptor<Runnable> runnableCaptor;
-    // TODO reimplement
-    //    @Test
-    //    void eventHandlerCalled() {
-    //      // INIT
-    //      mockSnapFactory();
-    //
-    //      SnapshotId id = SnapshotId.of("key", randomUUID());
-    //      Snapshot snapshot = new Snapshot(id, randomUUID(), "foo".getBytes(), false);
-    //      when(projectionSnapshotRepository.findLatest(ConcatCodesProjection.class))
-    //          .thenReturn(Optional.of(snapshot));
-    //
-    //      // capture projection for later...
-    //      when(ehFactory.create(projectionCaptor.capture())).thenReturn(projector);
-    //
-    //      when(projector.createFactSpecs()).thenReturn(specs);
-    //
-    //      when(fc.subscribe(any(),
-    // factObserverCaptor.capture())).thenReturn(mock(Subscription.class));
-    //
-    //      // prepare deserialiser for existing snapshot
-    //      ConcatCodesProjection concatCodesProjection = mock(ConcatCodesProjection.class);
-    //
-    //      when(snapshotSerializer.deserialize(ConcatCodesProjection.class, "foo".getBytes()))
-    //          .thenReturn(concatCodesProjection);
-    //
-    //      // RUN
-    //      ConcatCodesProjection concatCodes = underTest.fetch(ConcatCodesProjection.class);
-    //
-    //      // ASSERT
-    //      FactObserver factObserver = factObserverCaptor.getValue();
-    //
-    //      Fact mockedFact = Fact.builder().id(randomUUID()).buildWithoutPayload();
-    //
-    //      // onNext(...)
-    //      // now assume a new fact has been observed...
-    //      factObserver.onNext(mockedFact);
-    //      factObserver.flush();
-    //
-    //      // ... and then it should be applied to event projector
-    //      verify(projector).apply(Collections.singletonList(mockedFact));
-    //
-    //      // onCatchup()
-    //      // assume onCatchup got called on the fact observer...
-    //      factObserver.onCatchup();
-    //
-    //      // ... then make sure it got called on the subscribed projection
-    //      verify(concatCodesProjection).onCatchup();
-    //
-    //      // onComplete()
-    //      // assume onComplete got called on the fact observer...
-    //      factObserver.onComplete();
-    //
-    //      // ... then make sure it got called on the subscribed projection
-    //      verify(concatCodesProjection).onComplete();
-    //
-    //      // onError(...)
-    //      // assume onError got called on the fact observer...
-    //      Exception exc = new Exception();
-    //      factObserver.onError(exc);
-    //
-    //      // ... then make sure it got called on the subscribed projection
-    //      verify(concatCodesProjection).onError(exc);
-    //    }
+
+    @Test
+    void eventHandlerCalled() {
+      // INIT
+      ConcatCodesProjection concatCodesProjection = spy(new ConcatCodesProjection());
+      when(projectionSnapshotRepository.findLatest(ConcatCodesProjection.class))
+          .thenReturn(Optional.of(ProjectionAndState.of(concatCodesProjection, randomUUID())));
+
+      // capture projection for later...
+      when(ehFactory.create(projectionCaptor.capture())).thenReturn(projector);
+
+      when(projector.createFactSpecs()).thenReturn(specs);
+
+      when(fc.subscribe(any(), factObserverCaptor.capture())).thenReturn(mock(Subscription.class));
+
+      // RUN
+      ConcatCodesProjection concatCodes = underTest.fetch(ConcatCodesProjection.class);
+
+      // ASSERT
+      FactObserver factObserver = factObserverCaptor.getValue();
+
+      Fact mockedFact = Fact.builder().id(randomUUID()).buildWithoutPayload();
+
+      // onNext(...)
+      // now assume a new fact has been observed...
+      factObserver.onNext(mockedFact);
+      factObserver.flush();
+
+      // ... and then it should be applied to event projector
+      verify(projector).apply(Collections.singletonList(mockedFact));
+
+      // onCatchup()
+      // assume onCatchup got called on the fact observer...
+      factObserver.onCatchup();
+
+      // ... then make sure it got called on the subscribed projection
+      verify(concatCodesProjection).onCatchup();
+
+      // onComplete()
+      // assume onComplete got called on the fact observer...
+      factObserver.onComplete();
+
+      // ... then make sure it got called on the subscribed projection
+      verify(concatCodesProjection).onComplete();
+
+      // onError(...)
+      // assume onError got called on the fact observer...
+      Exception exc = new Exception();
+      factObserver.onError(exc);
+
+      // ... then make sure it got called on the subscribed projection
+      verify(concatCodesProjection).onError(exc);
+    }
   }
 
   void mockSnapFactory() {
@@ -1010,287 +1002,92 @@ class FactusImplTest {
 
       verify(projector, never()).apply(any(List.class));
     }
-    // TODO reimplement
-    //    @Test
-    //    void findWithNoEventsButSnapshot() {
-    //      // INIT
-    //      mockSnapFactory();
-    //
-    //      SnapshotId id = SnapshotId.of("key", randomUUID());
-    //      Snapshot snapshot = new Snapshot(id, randomUUID(), "Fred".getBytes(), false);
-    //      when(aggregateSnapshotRepository.findLatest(PersonAggregate.class, AGGREGATE_ID))
-    //          .thenReturn(Optional.of(snapshot));
-    //
-    //      when(ehFactory.create(any(PersonAggregate.class))).thenReturn(projector);
-    //
-    //      when(projector.createFactSpecs()).thenReturn(specs);
-    //
-    //      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
-    //
-    //      PersonAggregate personAggregate = new PersonAggregate();
-    //      personAggregate.name("Fred");
-    //      personAggregate.processed(1);
-    //
-    //      when(snapshotSerializer.deserialize(PersonAggregate.class, "Fred".getBytes()))
-    //          .thenReturn(personAggregate);
-    //
-    //      // RUN
-    //      Optional<PersonAggregate> personAggregateResult =
-    //          underTest.find(PersonAggregate.class, AGGREGATE_ID);
-    //
-    //      // ASSERT
-    //      assertThat(personAggregateResult)
-    //          .isPresent()
-    //          .get()
-    //          .extracting("name", "processed")
-    //          .containsExactly("Fred", 1);
-    //    }
-    // TODO reimplement
-    //    @Test
-    //    void callsAfterRestoreOnAggregateWhenUsingSnapshot() {
-    //      // INIT
-    //      mockSnapFactory();
-    //
-    //      SnapshotId id = SnapshotId.of("key", randomUUID());
-    //      Snapshot snapshot = new Snapshot(id, randomUUID(), "Fred".getBytes(), false);
-    //      when(aggregateSnapshotRepository.findLatest(PersonAggregate.class, AGGREGATE_ID))
-    //          .thenReturn(Optional.of(snapshot));
-    //
-    //      when(ehFactory.create(any(PersonAggregate.class))).thenReturn(projector);
-    //
-    //      when(projector.createFactSpecs()).thenReturn(specs);
-    //
-    //      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
-    //
-    //      PersonAggregate personAggregate = spy(new PersonAggregate());
-    //      personAggregate.name("Fred");
-    //      personAggregate.processed(1);
-    //
-    //      when(snapshotSerializer.deserialize(PersonAggregate.class, "Fred".getBytes()))
-    //          .thenReturn(personAggregate);
-    //
-    //      // RUN
-    //      Optional<PersonAggregate> personAggregateResult =
-    //          underTest.find(PersonAggregate.class, AGGREGATE_ID);
-    //
-    //      // ASSERT
-    //      assertThat(personAggregateResult)
-    //          .isPresent()
-    //          .get()
-    //          .extracting("name", "processed")
-    //          .containsExactly("Fred", 1);
-    //
-    //      verify(personAggregateResult.get()).onAfterRestore();
-    //    }
-    // TODO reimplement
-    //    @Test
-    //    void callsAfterRestoreOnProjectionWhenUsingSnapshot() {
-    //      // INIT
-    //      mockSnapFactory();
-    //
-    //      SnapshotId id = SnapshotId.of("key", randomUUID());
-    //      Snapshot snapshot = new Snapshot(id, randomUUID(), "{}".getBytes(), false);
-    //      when(projectionSnapshotRepository.findLatest(SomeSnapshotProjection.class))
-    //          .thenReturn(Optional.of(snapshot));
-    //
-    //      when(ehFactory.create(any(SomeSnapshotProjection.class))).thenReturn(projector);
-    //      when(projector.createFactSpecs()).thenReturn(specs);
-    //      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
-    //
-    //      when(snapshotSerializer.deserialize(SomeSnapshotProjection.class, "{}".getBytes()))
-    //          .thenReturn(spy(new SomeSnapshotProjection()));
-    //
-    //      // RUN
-    //      SomeSnapshotProjection p = underTest.fetch(SomeSnapshotProjection.class);
-    //
-    //      // ASSERT
-    //      verify(p).onAfterRestore();
-    //    }
-    // TODO reimplement
-    //    @Test
-    //    void callsBeforeSnapshotOnAggregate() {
-    //      // INIT
-    //      mockSnapFactory();
-    //
-    //      SnapshotId id = SnapshotId.of("key", randomUUID());
-    //      Snapshot snapshot = new Snapshot(id, randomUUID(), "Fred".getBytes(), false);
-    //      when(aggregateSnapshotRepository.findLatest(PersonAggregate.class, AGGREGATE_ID))
-    //          .thenReturn(Optional.of(snapshot));
-    //
-    //      when(ehFactory.create(any(PersonAggregate.class))).thenReturn(projector);
-    //
-    //      when(projector.createFactSpecs()).thenReturn(specs);
-    //
-    //      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
-    //
-    //      PersonAggregate personAggregate = spy(new PersonAggregate());
-    //      personAggregate.name("Fred");
-    //      personAggregate.processed(1);
-    //
-    //      when(snapshotSerializer.deserialize(PersonAggregate.class, "Fred".getBytes()))
-    //          .thenReturn(personAggregate);
-    //
-    //      // make sure when event projector is asked to apply events, to wire
-    //      // them through
-    //      doAnswer(
-    //              inv -> {
-    //                List<Fact> facts = factCaptor.getValue();
-    //                facts.forEach(
-    //                    f -> {
-    //                      if (f.jsonPayload().contains("Barney")) {
-    //                        personAggregate.process(new NameEvent("Barney"));
-    //                      }
-    //                    });
-    //                return Void.TYPE;
-    //              })
-    //          .when(projector)
-    //          .apply(factCaptor.capture());
-    //
-    //      when(projector.createFactSpecs()).thenReturn(specs);
-    //
-    //      when(fc.subscribe(any(), factObserverCaptor.capture()))
-    //          .thenAnswer(
-    //              inv -> {
-    //                FactObserver factObserver = factObserverCaptor.getValue();
-    //
-    //                // apply some new facts
-    //                factObserver.onNext(toFact(new NameEvent("Barney")));
-    //                factObserver.flush();
-    //                return mock(Subscription.class);
-    //              });
-    //
-    //      // RUN
-    //      Optional<PersonAggregate> personAggregateResult =
-    //          underTest.find(PersonAggregate.class, AGGREGATE_ID);
-    //
-    //      // ASSERT
-    //      assertThat(personAggregateResult)
-    //          .isPresent()
-    //          .get()
-    //          .extracting("name", "processed")
-    //          .containsExactly("Barney", 2);
-    //
-    //      verify(personAggregate).onBeforeSnapshot();
-    //    }
-    // TODO reimplement
-    //    @Test
-    //    void callsBeforeSnapshotOnProjection() {
-    //      // INIT
-    //      mockSnapFactory();
-    //
-    //      SnapshotId id = SnapshotId.of("key", randomUUID());
-    //      Snapshot snapshot = new Snapshot(id, randomUUID(), "Fred".getBytes(), false);
-    //      when(projectionSnapshotRepository.findLatest(SomeSnapshotProjection.class))
-    //          .thenReturn(Optional.of(snapshot));
-    //
-    //      when(ehFactory.create(any(SomeSnapshotProjection.class))).thenReturn(projector);
-    //      when(projector.createFactSpecs()).thenReturn(specs);
-    //      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
-    //      SomeSnapshotProjection p = spy(new SomeSnapshotProjection());
-    //      when(snapshotSerializer.deserialize(SomeSnapshotProjection.class, "Fred".getBytes()))
-    //          .thenReturn(p);
-    //
-    //      // make sure when event projector is asked to apply events, to wire
-    //      // them through
-    //      doAnswer(
-    //              inv -> {
-    //                List<Fact> facts = factCaptor.getValue();
-    //                facts.forEach(
-    //                    f -> {
-    //                      if (f.jsonPayload().contains("Barney")) {
-    //                        p.apply(new NameEvent("Barney"));
-    //                      }
-    //                    });
-    //                return Void.TYPE;
-    //              })
-    //          .when(projector)
-    //          .apply(factCaptor.capture());
-    //
-    //      when(projector.createFactSpecs()).thenReturn(specs);
-    //
-    //      when(fc.subscribe(any(), factObserverCaptor.capture()))
-    //          .thenAnswer(
-    //              inv -> {
-    //                FactObserver factObserver = factObserverCaptor.getValue();
-    //
-    //                // apply some new facts
-    //                factObserver.onNext(toFact(new NameEvent("Barney")));
-    //                factObserver.flush();
-    //                return mock(Subscription.class);
-    //              });
-    //
-    //      // RUN
-    //      SomeSnapshotProjection personAggregateResult =
-    // underTest.fetch(SomeSnapshotProjection.class);
-    //
-    //      verify(p).onBeforeSnapshot();
-    //    }
 
-    // TODO reimplement
-    //
-    //    @Test
-    //    void findWithEventsAndSnapshot() {
-    //      // INIT
-    //      mockSnapFactory();
-    //
-    //      SnapshotId id = SnapshotId.of("key", randomUUID());
-    //      Snapshot snapshot = new Snapshot(id, randomUUID(), "Fred".getBytes(), false);
-    //      when(aggregateSnapshotRepository.findLatest(PersonAggregate.class, AGGREGATE_ID))
-    //          .thenReturn(Optional.of(snapshot));
-    //
-    //      when(ehFactory.create(any(PersonAggregate.class))).thenReturn(projector);
-    //
-    //      when(projector.createFactSpecs()).thenReturn(specs);
-    //
-    //      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
-    //
-    //      PersonAggregate personAggregate = new PersonAggregate();
-    //      personAggregate.name("Fred");
-    //      personAggregate.processed(1);
-    //
-    //      when(snapshotSerializer.deserialize(PersonAggregate.class, "Fred".getBytes()))
-    //          .thenReturn(personAggregate);
-    //
-    //      // make sure when event projector is asked to apply events, to wire
-    //      // them through
-    //      doAnswer(
-    //              inv -> {
-    //                List<Fact> facts = factCaptor.getValue();
-    //                facts.forEach(
-    //                    f -> {
-    //                      if (f.jsonPayload().contains("Barney")) {
-    //                        personAggregate.process(new NameEvent("Barney"));
-    //                      }
-    //                    });
-    //                return Void.TYPE;
-    //              })
-    //          .when(projector)
-    //          .apply(factCaptor.capture());
-    //
-    //      when(projector.createFactSpecs()).thenReturn(specs);
-    //
-    //      when(fc.subscribe(any(), factObserverCaptor.capture()))
-    //          .thenAnswer(
-    //              inv -> {
-    //                FactObserver factObserver = factObserverCaptor.getValue();
-    //
-    //                // apply some new facts
-    //                factObserver.onNext(toFact(new NameEvent("Barney")));
-    //                factObserver.flush();
-    //                return mock(Subscription.class);
-    //              });
-    //
-    //      // RUN
-    //      Optional<PersonAggregate> personAggregateResult =
-    //          underTest.find(PersonAggregate.class, AGGREGATE_ID);
-    //
-    //      // ASSERT
-    //      assertThat(personAggregateResult)
-    //          .isPresent()
-    //          .get()
-    //          .extracting("name", "processed")
-    //          .containsExactly("Barney", 2);
-    //    }
+    @Test
+    void findWithNoEventsButSnapshot() {
+      // INIT
+      PersonAggregate personAggregate = new PersonAggregate();
+      when(aggregateSnapshotRepository.findLatest(PersonAggregate.class, AGGREGATE_ID))
+          .thenReturn(Optional.of(ProjectionAndState.of(personAggregate, randomUUID())));
+
+      when(ehFactory.create(any(PersonAggregate.class))).thenReturn(projector);
+
+      when(projector.createFactSpecs()).thenReturn(specs);
+
+      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
+
+      personAggregate.name("Fred");
+      personAggregate.processed(1);
+
+      // RUN
+      Optional<PersonAggregate> personAggregateResult =
+          underTest.find(PersonAggregate.class, AGGREGATE_ID);
+
+      // ASSERT
+      assertThat(personAggregateResult)
+          .isPresent()
+          .get()
+          .extracting("name", "processed")
+          .containsExactly("Fred", 1);
+    }
+
+    @Test
+    void findWithEventsAndSnapshot() {
+      // INIT
+      PersonAggregate personAggregate = new PersonAggregate();
+
+      when(aggregateSnapshotRepository.findLatest(PersonAggregate.class, AGGREGATE_ID))
+          .thenReturn(Optional.of(ProjectionAndState.of(personAggregate, randomUUID())));
+
+      when(ehFactory.create(any(PersonAggregate.class))).thenReturn(projector);
+
+      when(projector.createFactSpecs()).thenReturn(specs);
+
+      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
+
+      personAggregate.name("Fred");
+      personAggregate.processed(1);
+
+      // make sure when event projector is asked to apply events, to wire
+      // them through
+      doAnswer(
+              inv -> {
+                List<Fact> facts = factCaptor.getValue();
+                facts.forEach(
+                    f -> {
+                      if (f.jsonPayload().contains("Barney")) {
+                        personAggregate.process(new NameEvent("Barney"));
+                      }
+                    });
+                return Void.TYPE;
+              })
+          .when(projector)
+          .apply(factCaptor.capture());
+
+      when(projector.createFactSpecs()).thenReturn(specs);
+
+      when(fc.subscribe(any(), factObserverCaptor.capture()))
+          .thenAnswer(
+              inv -> {
+                FactObserver factObserver = factObserverCaptor.getValue();
+
+                // apply some new facts
+                factObserver.onNext(toFact(new NameEvent("Barney")));
+                factObserver.flush();
+                return mock(Subscription.class);
+              });
+
+      // RUN
+      Optional<PersonAggregate> personAggregateResult =
+          underTest.find(PersonAggregate.class, AGGREGATE_ID);
+
+      // ASSERT
+      assertThat(personAggregateResult)
+          .isPresent()
+          .get()
+          .extracting("name", "processed")
+          .containsExactly("Barney", 2);
+    }
 
     @Captor ArgumentCaptor<PersonAggregate> personAggregateCaptor;
 
