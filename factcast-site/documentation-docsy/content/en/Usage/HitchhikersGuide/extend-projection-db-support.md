@@ -85,4 +85,4 @@ with the data store in a transactional manner.
 You can have a look at `AbstractSpringTxProjection` or `AbstractRedisTxProjection` as a template.
 
 Please consider giving back to the community by either re-integrating into the factcast project or by publishing your extension
-as a separate project. Please lets know at `info@factcast.org`.
+as a separate project. Please let us know at `info@factcast.org`.
