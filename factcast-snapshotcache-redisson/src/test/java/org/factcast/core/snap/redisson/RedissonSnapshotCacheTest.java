@@ -250,7 +250,7 @@ class RedissonSnapshotCacheTest {
     }
 
     @Test
-    void usesCodecFromPropertiesOnAggregate() {
+    void usesByteArrayCodecOnAggregate() {
       SnapshotIdentifier id = SnapshotIdentifier.of(TestAggregate.class, randomUUID());
       SnapshotData data = new SnapshotData(new byte[] {1, 2, 3}, serializer.id(), randomUUID());
 
@@ -262,11 +262,10 @@ class RedissonSnapshotCacheTest {
       argument
           .getAllValues()
           .forEach(codec -> assertThat(codec).isInstanceOf(ByteArrayCodec.class));
-      // TODO we always use the ByteArrayCodec here, TBD if it's intended for all snapshots
     }
 
     @Test
-    void usesCodecFromPropertiesOnSnapshot() {
+    void usesByteArrayCodecOnSnapshot() {
       SnapshotIdentifier id = SnapshotIdentifier.of(TestSnapshotProjection.class);
       SnapshotData data = new SnapshotData(new byte[] {1, 2, 3}, serializer.id(), randomUUID());
 
@@ -278,7 +277,6 @@ class RedissonSnapshotCacheTest {
       argument
           .getAllValues()
           .forEach(codec -> assertThat(codec).isInstanceOf(ByteArrayCodec.class));
-      // TODO we always use the ByteArrayCodec here, TBD if it's intended for all snapshots
     }
   }
 
