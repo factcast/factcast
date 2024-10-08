@@ -98,7 +98,6 @@
         </exclusion>
       </exclusions>
     </dependency>
-
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-jdbc</artifactId>
@@ -154,6 +153,12 @@
       <artifactId>json-unit-assertj</artifactId>
       <version>3.4.1</version>
       <scope>test</scope>
+    </dependency>
+    <!-- for testing legacy redisson bucket behaviour -->
+    <dependency>
+      <groupId>org.jboss.marshalling</groupId>
+      <artifactId>jboss-marshalling-river</artifactId>
+      <version>2.1.4.SP1</version>
     </dependency>
   </dependencies>
   <build>

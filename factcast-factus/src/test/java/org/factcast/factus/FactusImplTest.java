@@ -60,9 +60,8 @@ import org.factcast.factus.projector.Projector;
 import org.factcast.factus.projector.ProjectorFactory;
 import org.factcast.factus.projector.ProjectorImpl;
 import org.factcast.factus.serializer.SnapshotSerializer;
-import org.factcast.factus.snapshot.AggregateRepository;
-import org.factcast.factus.snapshot.SnapshotRepository;
-import org.factcast.factus.snapshot.SnapshotSerializerSelector;
+import org.factcast.factus.serializer.SnapshotSerializerId;
+import org.factcast.factus.snapshot.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -84,6 +83,8 @@ class FactusImplTest {
 
   @Mock private SnapshotRepository projectionSnapshotRepository;
 
+  @Mock SnapshotCache snapshotCache;
+
   @Mock private SnapshotSerializerSelector snapFactory;
 
   @Mock private AtomicBoolean closed;
@@ -97,7 +98,7 @@ class FactusImplTest {
 
   @Captor ArgumentCaptor<FactObserver> factObserverCaptor;
 
-  @Mock List<Specification> specs;
+  @Spy List<FactSpec> specs = Lists.newArrayList(FactSpec.ns("ns").type("type"));
 
   @BeforeEach
   void setup() {
@@ -539,7 +540,7 @@ class FactusImplTest {
 
   @Captor ArgumentCaptor<List> factCaptor;
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "resource"})
   @Nested
   class WhenFetching {
 
@@ -631,67 +632,54 @@ class FactusImplTest {
       // ASSERT
       assertThat(concatCodes.codes()).isEqualTo("abcdef");
     }
-    // TODO reimplement
-    //    @Test
-    //    void fetchWithEventsAndSnapshot() {
-    //      // INIT
-    //      mockSnapFactory();
-    //
-    //      SnapshotId id = SnapshotId.of("key", randomUUID());
-    //      Snapshot snapshot = new Snapshot(id, randomUUID(), "foo".getBytes(), false);
-    //      when(projectionSnapshotRepository.findLatest(ConcatCodesProjection.class))
-    //          .thenReturn(Optional.of(snapshot));
-    //
-    //      // capture projection for later...
-    //      when(ehFactory.create(projectionCaptor.capture())).thenReturn(projector);
-    //
-    //      // make sure when event projector is asked to apply events, to wire
-    //      // them through
-    //      doAnswer(
-    //              inv -> {
-    //                List<Fact> facts = factCaptor.getValue();
-    //                facts.forEach(
-    //                    f -> {
-    //                      if (f.jsonPayload().contains("abc")) {
-    //                        projectionCaptor.getValue().apply(new SimpleEventObject("abc"));
-    //                      } else {
-    //                        projectionCaptor.getValue().apply(new SimpleEventObject("def"));
-    //                      }
-    //                    });
-    //                return Void.TYPE;
-    //              })
-    //          .when(projector)
-    //          .apply(factCaptor.capture());
-    //
-    //      when(projector.createFactSpecs()).thenReturn(specs);
-    //
-    //      when(fc.subscribe(any(), factObserverCaptor.capture()))
-    //          .thenAnswer(
-    //              inv -> {
-    //                FactObserver factObserver = factObserverCaptor.getValue();
-    //
-    //                // apply some new facts
-    //                factObserver.onNext(toFact(new SimpleEventObject("abc")));
-    //                factObserver.onNext(toFact(new SimpleEventObject("def")));
-    //                factObserver.flush();
-    //                return mock(Subscription.class);
-    //              });
-    //
-    //      // prepare deserialiser for existing snapshot
-    //      ConcatCodesProjection concatCodesProjection = new ConcatCodesProjection();
-    //      concatCodesProjection.codes = "foo";
-    //
-    //      when(snapshotSerializer.deserialize(ConcatCodesProjection.class, "foo".getBytes()))
-    //          .thenReturn(concatCodesProjection);
-    //
-    //      // RUN
-    //      ConcatCodesProjection concatCodes = underTest.fetch(ConcatCodesProjection.class);
-    //
-    //      // ASSERT
-    //      assertThat(concatCodes.codes()).isEqualTo("fooabcdef");
-    //
-    //      verify(projectionSnapshotRepository).save(eq(concatCodes), any());
-    //    }
+
+    @Test
+    void fetchRestoresAndCallsOnRestoreSnapshot() {
+      // INIT
+      mockSnapFactory();
+
+      projectionSnapshotRepository =
+          new SnapshotRepository(snapshotCache, snapFactory, factusMetrics);
+      underTest =
+          new FactusImpl(
+              fc,
+              ehFactory,
+              eventConverter,
+              aggregateSnapshotRepository,
+              projectionSnapshotRepository,
+              snapFactory,
+              factusMetrics);
+
+      ConcatCodesProjection dummyProjection = spy(new ConcatCodesProjection());
+      dummyProjection.codes("abc");
+      Assertions.assertThat(dummyProjection.codes).isEqualTo("abc");
+
+      SnapshotSerializerId id = SnapshotSerializerId.of("willBeOverridden");
+      byte[] serializedForm = new byte[] {1, 2, 3};
+      UUID uuid = UUID.randomUUID();
+      SnapshotData snapshotData = new SnapshotData(serializedForm, id, uuid);
+      when(snapshotCache.find(any())).thenReturn(Optional.of(snapshotData));
+      when(snapshotSerializer.deserialize(ConcatCodesProjection.class, serializedForm))
+          .thenReturn(dummyProjection);
+      when(ehFactory.create(projectionCaptor.capture())).thenReturn(projector);
+      when(projector.createFactSpecs()).thenReturn(specs);
+      when(fc.subscribe(any(), factObserverCaptor.capture())).thenReturn(mock(Subscription.class));
+
+      // RUN
+      ConcatCodesProjection concatCodes = underTest.fetch(ConcatCodesProjection.class);
+
+      // ASSERT
+      assertThat(concatCodes.codes()).isEqualTo("abc");
+      verify(dummyProjection).onAfterRestore();
+    }
+
+    @Test
+    void fetchRestoresAndAppliesEvents() {
+      fetchRestoresAndCallsOnRestoreSnapshot();
+      verify(fc)
+          .subscribe(
+              argThat(a -> a.specs().contains(specs.get(0)) && a.specs().size() == 1), any());
+    }
 
     @Captor ArgumentCaptor<Runnable> runnableCaptor;
     // TODO reimplement
@@ -989,6 +977,11 @@ class FactusImplTest {
     @Handler
     void apply(SimpleEventObject eventObject) {
       codes += eventObject.code;
+    }
+
+    public ConcatCodesProjection codes(String codes) {
+      this.codes = codes;
+      return this;
     }
   }
 
