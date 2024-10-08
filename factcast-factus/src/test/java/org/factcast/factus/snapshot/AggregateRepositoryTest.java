@@ -18,8 +18,7 @@ package org.factcast.factus.snapshot;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -61,7 +60,7 @@ class AggregateRepositoryTest {
     underTest.store(a, state);
 
     // ASSERT
-    Mockito.verify(snapshotCache)
+    verify(snapshotCache)
         .store(
             Mockito.argThat(
                 i -> aggId.equals(i.aggregateId()) && i.projectionClass() == a.getClass()),
@@ -71,8 +70,7 @@ class AggregateRepositoryTest {
 
   @Nested
   class WhenFindingLatest {
-
-    @Captor ArgumentCaptor<SnapshotIdentifier> idCaptor;
+    private final WithAnnotation aggregate = spy(new WithAnnotation());
 
     private final UUID aggregateId = UUID.randomUUID();
 
@@ -92,8 +90,7 @@ class AggregateRepositoryTest {
       SnapshotIdentifier snapIdent = SnapshotIdentifier.of(WithAnnotation.class, aggregateId);
       when(snapshotSerializerSelector.selectSeralizerFor(any())).thenReturn(ser);
       when(snapshotCache.find(snapIdent)).thenReturn(Optional.of(withSVUID));
-      when(ser.deserialize(eq(WithAnnotation.class), any(byte[].class)))
-          .thenReturn(new WithAnnotation());
+      when(ser.deserialize(eq(WithAnnotation.class), any(byte[].class))).thenReturn(aggregate);
 
       // RUN
       @NonNull
@@ -101,9 +98,10 @@ class AggregateRepositoryTest {
           underTest.findLatest(WithAnnotation.class, aggregateId);
 
       // ASSERT
+      verify(aggregate).onAfterRestore();
       assertThat(result).isPresent();
-      Assertions.assertThat(result.map(ProjectionAndState::lastFactIdApplied)).hasValue(last);
-      Assertions.assertThat(result.map(ProjectionAndState::projectionInstance))
+      assertThat(result.map(ProjectionAndState::lastFactIdApplied)).hasValue(last);
+      assertThat(result.map(ProjectionAndState::projectionInstance))
           .get()
           .isInstanceOf(WithAnnotation.class);
     }
@@ -113,7 +111,7 @@ class AggregateRepositoryTest {
   class WhenStoring {
     private final UUID state = UUID.randomUUID();
 
-    private final WithAnnotation aggregate = new WithAnnotation();
+    private final WithAnnotation aggregate = spy(new WithAnnotation());
 
     @Captor private ArgumentCaptor<SnapshotData> snapshotCaptor;
 
@@ -134,7 +132,7 @@ class AggregateRepositoryTest {
       underTest.store(aggregate, state);
 
       verify(snapshotCache).store(eq(id), snapshotCaptor.capture());
-
+      verify(aggregate).onBeforeSnapshot();
       assertThat(snapshotCaptor.getValue())
           .extracting(
               SnapshotData::snapshotSerializerId,

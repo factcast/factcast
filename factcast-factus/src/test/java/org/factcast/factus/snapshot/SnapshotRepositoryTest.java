@@ -18,8 +18,7 @@ package org.factcast.factus.snapshot;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -73,7 +72,7 @@ class SnapshotRepositoryTest {
 
     @Captor ArgumentCaptor<SnapshotIdentifier> idCaptor;
 
-    private final UUID aggregateId = UUID.randomUUID();
+    private final SomeSnapshotProjection snapshotProjection = spy(new SomeSnapshotProjection());
 
     @BeforeEach
     void setup() {}
@@ -94,7 +93,7 @@ class SnapshotRepositoryTest {
       when(snapshotSerializerSelector.selectSeralizerFor(any())).thenReturn(ser);
       when(snapshotCache.find(snapIdent)).thenReturn(Optional.of(withSVUID));
       when(ser.deserialize(eq(SomeSnapshotProjection.class), any(byte[].class)))
-          .thenReturn(new SomeSnapshotProjection());
+          .thenReturn(snapshotProjection);
 
       // RUN
       @NonNull
@@ -102,6 +101,7 @@ class SnapshotRepositoryTest {
           underTest.findLatest(SomeSnapshotProjection.class);
 
       // ASSERT
+      verify(snapshotProjection).onAfterRestore();
       assertThat(result).isPresent();
       Assertions.assertThat(result.map(ProjectionAndState::lastFactIdApplied)).hasValue(last);
       Assertions.assertThat(result.map(ProjectionAndState::projectionInstance))
@@ -114,7 +114,7 @@ class SnapshotRepositoryTest {
   class WhenStoring {
     private final UUID STATE = UUID.randomUUID();
 
-    private final SomeSnapshotProjection aggregate = new SomeSnapshotProjection();
+    private final SomeSnapshotProjection snapshotProjection = spy(new SomeSnapshotProjection());
 
     @Captor private ArgumentCaptor<SnapshotData> snapshotCaptor;
 
@@ -123,18 +123,17 @@ class SnapshotRepositoryTest {
       // INIT
       when(snapshotSerializerSelector.selectSeralizerFor(any())).thenReturn(ser);
 
-      when(ser.serialize(aggregate)).thenReturn("foo".getBytes());
+      when(ser.serialize(snapshotProjection)).thenReturn("foo".getBytes());
       SnapshotSerializerId serId = SnapshotSerializerId.of("narf");
       when(ser.id()).thenReturn(serId);
 
-      UUID aggId = UUID.randomUUID();
       SnapshotIdentifier id = SnapshotIdentifier.of(SomeSnapshotProjection.class);
 
       // RUN
-      underTest.store(aggregate, STATE);
+      underTest.store(snapshotProjection, STATE);
 
       verify(snapshotCache).store(eq(id), snapshotCaptor.capture());
-
+      verify(snapshotProjection).onBeforeSnapshot();
       assertThat(snapshotCaptor.getValue())
           .extracting(
               SnapshotData::snapshotSerializerId,
