@@ -33,6 +33,12 @@ class JacksonSnapshotSerializerTest {
   private final JacksonSnapshotSerializer underTest = new JacksonSnapshotSerializer();
 
   @Test
+  void hasId() {
+    org.assertj.core.api.Assertions.assertThat(underTest.id().name())
+        .isEqualTo("JacksonSnapshotSerializer");
+  }
+
+  @Test
   void testRoundtrip() {
     // RUN
     SimpleSnapshotProjection initialProjection = new SimpleSnapshotProjection();
