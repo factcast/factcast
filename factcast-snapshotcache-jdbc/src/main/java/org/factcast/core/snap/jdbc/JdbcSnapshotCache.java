@@ -20,11 +20,13 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.Optional;
+import java.util.Set;
+import java.util.Timer;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.snap.Snapshot;
@@ -36,7 +38,6 @@ public class JdbcSnapshotCache implements SnapshotCache {
   public final String queryStatement;
   public final String mergeStatement;
   public final String deleteStatement;
-  public final String cleanupStatement;
   private final DataSource dataSource;
 
   public JdbcSnapshotCache(JdbcSnapshotProperties properties, DataSource dataSource) {
@@ -57,7 +58,6 @@ public class JdbcSnapshotCache implements SnapshotCache {
             + " INSERT VALUES (_key, _uuid, _last_fact_id, _bytes, _compressed, _last_accessed)";
 
     deleteStatement = "DELETE FROM " + tableName + " WHERE key = ? AND uuid = ?";
-    cleanupStatement = "DELETE FROM " + tableName + " WHERE last_accessed < ?";
 
     boolean snapTableExists = doesTableExist(tableName);
 
@@ -68,34 +68,21 @@ public class JdbcSnapshotCache implements SnapshotCache {
     }
 
     if (properties.getDeleteSnapshotStaleForDays() > 0) {
-      Timer timer = new Timer();
-      timer.scheduleAtFixedRate(
-          new StaleSnapshotsTimerTask(
-              dataSource, cleanupStatement, properties.getDeleteSnapshotStaleForDays()),
-          0,
-          TimeUnit.DAYS.toMillis(1));
+      createTimer()
+          .scheduleAtFixedRate(
+              new StaleSnapshotsTimerTask(
+                  dataSource, tableName, properties.getDeleteSnapshotStaleForDays()),
+              0,
+              TimeUnit.DAYS.toMillis(1));
     } else {
       log.info("Scheduled Snapshot cleanup is disabled");
     }
   }
 
-  @RequiredArgsConstructor
-  static class StaleSnapshotsTimerTask extends TimerTask {
-
-    final DataSource dataSource;
-    final String cleanupStatement;
-    final int staleForDays;
-
-    @Override
-    public void run() {
-      try (Connection connection = dataSource.getConnection();
-          PreparedStatement statement = connection.prepareStatement(cleanupStatement)) {
-        statement.setString(1, LocalDate.now().minusDays(staleForDays).toString());
-        statement.executeUpdate();
-      } catch (Exception e) {
-        log.error("Failed to delete old snapshots", e);
-      }
-    }
+  // exists in order to be able to hook into during unit tests
+  protected Timer createTimer() {
+    // we want to be able to identify it and do not want a dangling service on shutdown
+    return new Timer("JdbcSnapshotCache", true);
   }
 
   @SneakyThrows

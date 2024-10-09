@@ -17,7 +17,7 @@ package org.factcast.core.snap.jdbc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -27,7 +27,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.Timer;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
 import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
@@ -50,6 +52,8 @@ class JdbcSnapshotCacheTest {
   Connection connection;
 
   @Mock ResultSet resultSet;
+
+  @Mock Timer timer;
 
   @Nested
   class WhenInstantiating {
@@ -120,20 +124,26 @@ class JdbcSnapshotCacheTest {
           .thenReturn("key", "uuid", "last_fact_id", "bytes", "compressed", "last_accessed");
 
       LogCaptor logCaptor = LogCaptor.forClass(JdbcSnapshotCache.class);
-      assertDoesNotThrow(() -> new JdbcSnapshotCache(new JdbcSnapshotProperties(), dataSource));
-      // Give time for the thread executor to run
-      Thread.sleep(100);
 
-      ArgumentCaptor<String> string = ArgumentCaptor.forClass(String.class);
-      verify(connection).prepareStatement(string.capture());
-
+      assertDoesNotThrow(
+          () ->
+              new JdbcSnapshotCache(new JdbcSnapshotProperties(), dataSource) {
+                @Override
+                protected Timer createTimer() {
+                  return timer;
+                }
+              });
       assertThat(logCaptor.getErrorLogs()).isEmpty();
-      assertThat(string.getValue()).startsWith("DELETE FROM ");
-      assertThat(string.getValue()).contains("WHERE last_accessed <");
+      // make sure cleanup was scheduled
+      verify(timer)
+          .scheduleAtFixedRate(
+              argThat(a -> StaleSnapshotsTimerTask.class.isInstance(a)),
+              eq(0L),
+              eq(TimeUnit.DAYS.toMillis(1)));
     }
 
     @Test
-    void test_cleanupFails() throws Exception {
+    void test_noCleanup() throws Exception {
       when(dataSource.getConnection()).thenReturn(connection);
       when(connection.getMetaData().getTables(any(), any(), any(), any())).thenReturn(resultSet);
       when(resultSet.next()).thenReturn(true);
@@ -145,19 +155,20 @@ class JdbcSnapshotCacheTest {
           .thenReturn("key", "uuid", "last_fact_id", "bytes", "compressed", "last_accessed");
 
       LogCaptor logCaptor = LogCaptor.forClass(JdbcSnapshotCache.class);
-      doThrow(new SQLException("")).when(connection).prepareStatement(any());
 
-      assertDoesNotThrow(() -> new JdbcSnapshotCache(new JdbcSnapshotProperties(), dataSource));
-      // Give time for the thread executor to run
-      Thread.sleep(100);
-
-      ArgumentCaptor<String> string = ArgumentCaptor.forClass(String.class);
-      verify(connection).prepareStatement(string.capture());
-
-      assertThat(logCaptor.getErrorLogs()).hasSize(1);
-      assertThat(logCaptor.getErrorLogs().get(0)).contains("Failed to delete old snapshots");
-      assertThat(string.getValue()).startsWith("DELETE FROM ");
-      assertThat(string.getValue()).contains("WHERE last_accessed <");
+      JdbcSnapshotProperties properties = new JdbcSnapshotProperties();
+      properties.setDeleteSnapshotStaleForDays(0);
+      assertDoesNotThrow(
+          () ->
+              new JdbcSnapshotCache(properties, dataSource) {
+                @Override
+                protected Timer createTimer() {
+                  return timer;
+                }
+              });
+      assertThat(logCaptor.getErrorLogs()).isEmpty();
+      // make sure cleanup was scheduled
+      verifyNoInteractions(timer);
     }
   }
 

@@ -37,9 +37,10 @@ public class JdbcSnapshotCacheConfiguration {
         var statement = connection.createStatement()) {
       statement.execute(
           """
-                            CREATE TABLE IF NOT EXISTS factcast_snapshot(key VARCHAR(512), uuid VARCHAR(36), last_fact_id VARCHAR(36),
+                            CREATE TABLE IF NOT EXISTS my_snapshot_table(key VARCHAR(512), uuid VARCHAR(36), last_fact_id VARCHAR(36),
                                 bytes BYTEA, compressed boolean, last_accessed VARCHAR(10), PRIMARY KEY (key, uuid));
-                            CREATE INDEX IF NOT EXISTS factcast_snapshot_idx_last_accessed ON factcast_snapshot(last_accessed);""");
+                            CREATE INDEX IF NOT EXISTS my_snapshot_table_index ON my_snapshot_table(last_accessed);
+                            """);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
