@@ -503,6 +503,17 @@
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>properties</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>${maven-surefire-plugin.version}</version>
         <configuration>
@@ -511,7 +522,8 @@
           </includes>
           <excludedGroups>integration,uitest</excludedGroups>
           <!--suppress UnresolvedMavenProperty -->
-          <argLine>${surefire.jacoco.args}</argLine>
+          <argLine>${surefire.jacoco.args}
+            -javaagent:${org.mockito:mockito-core:jar}</argLine>
           <skip>${skipUnitTests}</skip>
           <parallel>classes</parallel>
           <threadCountClasses>8</threadCountClasses>
@@ -544,7 +556,8 @@
             <include>*</include>
           </includes>
           <!--suppress UnresolvedMavenProperty -->
-          <argLine>${failsafe.jacoco.args}</argLine>
+          <argLine>${failsafe.jacoco.args}
+            -javaagent:${org.mockito:mockito-core:jar}</argLine>
           <systemPropertyVariables>
             <postgres.version>${postgres.version}</postgres.version>
             <factcast.version>${factcast.version}</factcast.version>
