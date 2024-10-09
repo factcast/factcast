@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
-import java.util.*;
 import lombok.SneakyThrows;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.factus.projection.Aggregate;
@@ -177,9 +176,7 @@ class RedissonSnapshotCacheTest {
       SnapshotData data2 = new SnapshotData(new byte[] {3, 4, 5}, serializer.id(), randomUUID());
 
       underTest.store(id1, data1);
-      sleep(2000);
       underTest.store(id2, data2);
-      sleep(500); // wait for async op
       {
         // assert all buckets have a ttl
         long ttl1 = redisson.getBucket(underTest.createKeyFor(id1)).remainTimeToLive();
@@ -190,11 +187,7 @@ class RedissonSnapshotCacheTest {
         assertThat(ttl1).isLessThanOrEqualTo(ttl2);
       }
 
-      sleep(2000);
-
       underTest.find(id1); // touches it
-
-      sleep(500); // wait for async op
       {
         long ttl1 = redisson.getBucket(underTest.createKeyFor(id1)).remainTimeToLive();
         long ttl2 = redisson.getBucket(underTest.createKeyFor(id2)).remainTimeToLive();
