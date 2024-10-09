@@ -40,7 +40,7 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = RedissonSnapshotProperties.PROPERTIES_PREFIX)
 public class RedissonSnapshotProperties {
 
-  public static final String PROPERTIES_PREFIX = "factcast.redis";
+  public static final String PROPERTIES_PREFIX = "factcast.snapshot.redis";
 
   int deleteSnapshotStaleForDays = 90;
 

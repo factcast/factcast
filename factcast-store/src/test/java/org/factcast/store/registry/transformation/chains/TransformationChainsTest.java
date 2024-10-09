@@ -47,7 +47,6 @@ class TransformationChainsTest {
   final TransformationChains uut = new TransformationChains(r, registryMetrics);
 
   final TransformationKey key = TransformationKey.of("ns", "UserCreated");
-  // TODO
   final JSEngineFactory engineFactory = new GraalJSEngineFactory();
   final JsTransformer transformer = new JsTransformer(engineFactory);
 

@@ -26,6 +26,8 @@ If for a projection these filters are known in advance, you can use additional a
 - `@FilterByAggId`
 - `@FilterByScript`
 - `@FilterByMeta` (can be used repeatedly)
+- `@FilterByMetaExists` (can be used repeatedly)
+- `@FilterByMetaDoesNotExist` (can be used repeatedly)
 
 {{% alert title="Note" %}}
 If your filter is dynamic and hence can not be declared statically via these annotations,
@@ -48,3 +50,15 @@ Here, you would use code like:
 This will add the additional filter defined by the `@FilterByMeta` annotation to `FactSpec`.
 As a result, the filtering now takes place at the server side instead of
 wasteful client side filtering (like in the body of the `apply` method).
+Only those Facts will be returned, that have a meta key-value-pair with a key of `priority` and a value of `urgent`.
+
+```java
+  @Handler
+  @FilterByMetaExists("priority")
+  protected void apply(UserCreated created) {
+    // ...
+  }
+```
+
+This will add the additional filter defined by the `@FilterByMetaExists` annotation to `FactSpec`.
+Only those Facts will be returned, that have a meta key-value-pair with a key of `priority` no matter what the value is.

@@ -77,7 +77,7 @@ class PgBlacklistIntegrationTest {
     Thread.sleep(1000);
 
     SubscriptionRequest req = SubscriptionRequest.catchup(spec).fromScratch();
-    fs.subscribe(SubscriptionRequestTO.forFacts(req), obs).awaitCatchup();
+    fs.subscribe(SubscriptionRequestTO.from(req), obs).awaitCatchup();
     assertThat(receivedFactIds).hasSize(1).containsExactly(factId);
   }
 }

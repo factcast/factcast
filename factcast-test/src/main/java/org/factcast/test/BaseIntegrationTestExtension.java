@@ -147,7 +147,7 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
               + "    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = current_schema()"
               + " AND (NOT ((tablename like 'databasechangelog%') OR (tablename like 'qrtz%') OR"
               + " (tablename = 'schedlock')))) LOOP\n"
-              + "        EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' RESTART IDENTITY ';\n"
+              + "        EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename);\n"
               + "    END LOOP;\n"
               + "END $$;");
     }

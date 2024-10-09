@@ -18,7 +18,6 @@ package org.factcast.grpc.api.conv;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.util.*;
@@ -28,8 +27,6 @@ import org.assertj.core.util.Maps;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.TestFactStreamPosition;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -576,16 +573,6 @@ public class ProtoConverterTest {
   }
 
   @Test
-  void toProtoSnapshotId() {
-    SnapshotId snapId = SnapshotId.of("test234", UUID.randomUUID());
-    MSG_SnapshotId msg_snapshotId = uut.toProto(snapId);
-
-    assertThat(msg_snapshotId).isNotNull();
-    assertThat(uut.fromProto(msg_snapshotId.getUuid())).isNotNull().isEqualTo(snapId.uuid());
-    assertThat(msg_snapshotId.getKey()).isNotNull().isEqualTo(snapId.key());
-  }
-
-  @Test
   void toProtoOptionalLong() {
     OptionalLong l = OptionalLong.of(123);
     MSG_OptionalSerial msg_optionalSerial = uut.toProto(l);
@@ -612,60 +599,6 @@ public class ProtoConverterTest {
     assertThat(msg_optionalUuid).isNotNull();
     assertThat(msg_optionalUuid.getPresent()).isTrue();
     assertThat(uut.fromProto(msg_optionalUuid.getUuid())).isEqualTo(id);
-  }
-
-  @Test
-  void fromProtoMSG_OptionalSnapshotEmpty() {
-    MSG_OptionalSnapshot os = MSG_OptionalSnapshot.newBuilder().setPresent(false).build();
-
-    Optional<Snapshot> snapshot = uut.fromProto(os);
-    assertThat(snapshot).isEmpty();
-  }
-
-  @Test
-  void fromProtoMSG_OptionalSnapshot() {
-    UUID factId = UUID.randomUUID();
-    SnapshotId snapId = SnapshotId.of("test123", UUID.randomUUID());
-
-    MSG_Snapshot snap = uut.toProto(snapId, factId, "huhu".getBytes(Charsets.UTF_8), false);
-
-    MSG_OptionalSnapshot os =
-        MSG_OptionalSnapshot.newBuilder().setPresent(true).setSnapshot(snap).build();
-
-    Optional<Snapshot> snapshot = uut.fromProto(os);
-    assertThat(snapshot).isPresent();
-    assertThat(snapshot.get()).isNotNull();
-    assertThat(snapshot.get().id()).isEqualTo(snapId);
-    assertThat(snapshot.get().compressed()).isFalse();
-    assertThat(snapshot.get().lastFact()).isEqualTo(factId);
-    assertThat(new String(snapshot.get().bytes())).isEqualTo("huhu");
-  }
-
-  @Test
-  void toProtoSnapshotOptionalEmpty() {
-    Optional<Snapshot> snapshot = uut.fromProto(uut.toProtoSnapshot(Optional.empty()));
-    assertThat(snapshot).isEmpty();
-  }
-
-  @Test
-  void toProtoSnapshotOptional() {
-    UUID factId = UUID.randomUUID();
-    SnapshotId snapId = SnapshotId.of("test123", UUID.randomUUID());
-    MSG_Snapshot snap = uut.toProto(snapId, factId, "huhu".getBytes(Charsets.UTF_8), false);
-    MSG_OptionalSnapshot osnap =
-        MSG_OptionalSnapshot.newBuilder().setPresent(true).setSnapshot(snap).build();
-
-    Optional<Snapshot> snapshot = uut.fromProto(osnap);
-    assertThat(snapshot).isPresent();
-    assertThat(snapshot.get().lastFact()).isEqualTo(factId);
-    assertThat(new String(snapshot.get().bytes())).isEqualTo("huhu");
-    assertThat(snapshot.get().id()).isEqualTo(snapId);
-
-    MSG_OptionalSnapshot msg_optionalSnapshot = uut.toProtoSnapshot(snapshot);
-    assertThat(msg_optionalSnapshot.getPresent()).isTrue();
-    assertThat(msg_optionalSnapshot.getSnapshot().getFactId()).isEqualTo(uut.toProto(factId));
-    assertThat(msg_optionalSnapshot.getSnapshot().getData().toStringUtf8()).isEqualTo("huhu");
-    assertThat(msg_optionalSnapshot.getSnapshot().getId()).isEqualTo(uut.toProto(snapId));
   }
 
   @Test
@@ -719,12 +652,6 @@ public class ProtoConverterTest {
   void toProtoDate() {
     LocalDate ld = LocalDate.of(2023, 12, 7);
     assertThat(uut.fromProto(uut.toProto(ld))).isEqualTo(ld);
-  }
-
-  @Test
-  void toProtoSnap() {
-    SnapshotId id = SnapshotId.of("narf", UUID.randomUUID());
-    assertThat(uut.fromProto(uut.toProto(id))).isEqualTo(id);
   }
 
   @Test

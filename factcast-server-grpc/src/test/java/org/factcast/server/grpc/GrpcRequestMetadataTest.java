@@ -18,6 +18,7 @@ package org.factcast.server.grpc;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.grpc.Metadata;
+import org.factcast.grpc.api.GrpcConstants;
 import org.factcast.grpc.api.Headers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -37,13 +38,27 @@ class GrpcRequestMetadataTest {
     void setup() {}
 
     @Test
-    void extracts() {
+    void respectsMinimum() {
       Metadata headers = new Metadata();
-      headers.put(Headers.CATCHUP_BATCHSIZE, "127");
+      headers.put(Headers.CLIENT_MAX_INBOUND_MESSAGE_SIZE, "127");
 
       underTest.headers(headers);
 
-      assertThat(underTest.catchupBatch()).isPresent().hasValue(127);
+      assertThat(underTest.clientMaxInboundMessageSize())
+          .isEqualTo(GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE);
+    }
+
+    @Test
+    void respectsMaximum() {
+      Metadata headers = new Metadata();
+      headers.put(
+          Headers.CLIENT_MAX_INBOUND_MESSAGE_SIZE,
+          String.valueOf(GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE + 100000));
+
+      underTest.headers(headers);
+
+      assertThat(underTest.clientMaxInboundMessageSize())
+          .isEqualTo(GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE);
     }
 
     @Test
@@ -51,7 +66,8 @@ class GrpcRequestMetadataTest {
       Metadata headers = new Metadata();
       underTest.headers(headers);
 
-      assertThat(underTest.catchupBatch()).isEmpty();
+      assertThat(underTest.clientMaxInboundMessageSize())
+          .isEqualTo(GrpcConstants.DEFAULT_CLIENT_INBOUND_MESSAGE_SIZE);
     }
   }
 
@@ -87,7 +103,6 @@ class GrpcRequestMetadataTest {
     @Test
     void createForTest() {
       GrpcRequestMetadata t = GrpcRequestMetadata.forTest();
-      assertThat(t.catchupBatch()).isEmpty();
       assertThat(t.clientId()).isEmpty();
       assertThat(t.supportsFastForward()).isTrue();
     }

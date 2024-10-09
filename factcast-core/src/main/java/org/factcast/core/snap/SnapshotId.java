@@ -20,6 +20,10 @@ import java.util.UUID;
 import lombok.NonNull;
 import lombok.Value;
 
+/**
+ * This belongs to factus however we have clients out there that already have serialized versions of
+ * it with this package.
+ */
 @Value(staticConstructor = "of")
 public class SnapshotId implements Serializable {
   private static final long serialVersionUID = -3207528229703207635L;

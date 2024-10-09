@@ -28,6 +28,7 @@ import org.factcast.core.Fact;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.transformation.TransformationRequest;
 import org.factcast.core.util.FactCastJson;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.cache.TransformationCache;
@@ -38,7 +39,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -48,8 +48,9 @@ class FactTransformerServiceImplTest {
   @Mock private @NonNull TransformationChains chains;
   @Mock private @NonNull Transformer trans;
   @Mock private @NonNull TransformationCache cache;
+  @Mock private @NonNull StoreConfigurationProperties props;
   @Spy private @NonNull RegistryMetrics registryMetrics = new NOPRegistryMetrics();
-  @InjectMocks private FactTransformerServiceImpl underTest;
+  private FactTransformerServiceImpl underTest;
 
   @Nested
   class WhenTransforming {
@@ -59,7 +60,10 @@ class FactTransformerServiceImplTest {
     @Mock private @NonNull TransformationChain chain;
 
     @BeforeEach
-    void setup() {}
+    void setup() {
+      when(props.getSizeOfThreadPoolForBufferedTransformations()).thenReturn(5);
+      underTest = new FactTransformerServiceImpl(chains, trans, cache, registryMetrics, props);
+    }
 
     @Test
     void noChangeWhenNoTargetVersion() {
@@ -166,7 +170,10 @@ class FactTransformerServiceImplTest {
     @Mock private @NonNull TransformationRequest req;
 
     @BeforeEach
-    void setup() {}
+    void setup() {
+      when(props.getSizeOfThreadPoolForBufferedTransformations()).thenReturn(5);
+      underTest = new FactTransformerServiceImpl(chains, trans, cache, registryMetrics, props);
+    }
 
     @SneakyThrows
     @Test

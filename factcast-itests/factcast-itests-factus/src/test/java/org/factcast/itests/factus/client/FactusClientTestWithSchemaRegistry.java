@@ -24,6 +24,7 @@ import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.config.RedissonProjectionConfiguration;
 import org.factcast.itests.factus.proj.UserV1;
 import org.factcast.itests.factus.proj.UserV2;
+import org.factcast.spring.boot.autoconfigure.snap.RedissonSnapshotCacheAutoConfiguration;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +33,11 @@ import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
 @ContextConfiguration(
-    classes = {TestFactusApplication.class, RedissonProjectionConfiguration.class})
+    classes = {
+      TestFactusApplication.class,
+      RedissonProjectionConfiguration.class,
+      RedissonSnapshotCacheAutoConfiguration.class
+    })
 @Slf4j
 class FactusClientTestWithSchemaRegistry extends AbstractFactCastIntegrationTest {
 

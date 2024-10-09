@@ -33,7 +33,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
-@SuppressWarnings("DefaultAnnotationParam")
 @ConfigurationProperties(prefix = StoreConfigurationProperties.PROPERTIES_PREFIX)
 @Data
 @Slf4j
@@ -43,19 +42,13 @@ public class StoreConfigurationProperties implements InitializingBean {
 
   public static final String PROPERTIES_PREFIX = "factcast.store";
 
-  /**
-   * defines the number of Facts being retrieved with one Page Query for PageStrategy.PAGED, or
-   * respectively the fetchSize when using PageStrategy.FETCHING
-   */
+  /** defines the fetchSize of a database query */
   @Positive int pageSize = 50;
 
   /** defines the max number of Facts being scheduled for transformation */
   @Positive
   @Max(32000)
   int transformationCachePageSize = 100;
-
-  /** Defines the Strategy used for Paging in the Catchup Phase. */
-  CatchupStrategy catchupStrategy = CatchupStrategy.getDefault();
 
   /**
    * Optional URL to a Schema Registry. If this is null, validation will be disabled and a warning
@@ -84,12 +77,6 @@ public class StoreConfigurationProperties implements InitializingBean {
    * in a regular cleanup job
    */
   @Positive int deleteTransformationsStaleForDays = 14;
-
-  /**
-   * this is the min number of days a snapshot is not read in order to be considered stale. This
-   * should free some space in a regular cleanup job
-   */
-  @Positive int deleteSnapshotStaleForDays = 90;
 
   /**
    * If validation is enabled, this controls if transformed facts are persistently cached in
@@ -249,7 +236,7 @@ public class StoreConfigurationProperties implements InitializingBean {
       while (iter.hasNext()) {
         Appender<ILoggingEvent> appender = iter.next();
         if (appender instanceof ConsoleAppender) {
-          log.debug("Setting " + appender.getClass() + " to immediate flush");
+          log.debug("Setting {} to immediate flush", appender.getClass());
           ((ConsoleAppender<?>) appender).setImmediateFlush(true);
         }
       }

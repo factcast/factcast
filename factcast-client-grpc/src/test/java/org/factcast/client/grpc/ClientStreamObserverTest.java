@@ -143,6 +143,7 @@ class ClientStreamObserverTest {
     MSG_Notification n = converter.createNotificationFor(stagedFacts);
     uut.onNext(n);
     verify(factObserver, times(2)).onNext(any(Fact.class));
+    verify(factObserver).flush();
   }
 
   @Test

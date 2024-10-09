@@ -57,7 +57,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class ResilientGrpcSubscriptionTest {
-  @Mock(lenient = true)
+  @Mock(strictness = Mock.Strictness.LENIENT)
   private GrpcFactStore store;
 
   @Mock private SubscriptionRequestTO req;
@@ -174,7 +174,7 @@ class ResilientGrpcSubscriptionTest {
     assertThat(ClientExceptionHelper.isRetryable(new StatusRuntimeException(Status.ABORTED)))
         .isTrue();
 
-    // assertThat(uut.isNotRetryable(new TransformationExceptione());
+    // assertThat(uut.isNotRetryable(new TransformationException());
     // assertThat(uut.isNotRetryable(new MissingTransformationInformationException());
     // important because it needs to reconnect, which only happens if it is NOT categorized as
     // serverException
@@ -182,7 +182,7 @@ class ResilientGrpcSubscriptionTest {
   }
 
   @Test
-  void deletegateWithTimeout() {
+  void delegateWithTimeout() {
 
     config.setEnabled(true).setAttempts(100);
 
@@ -195,7 +195,7 @@ class ResilientGrpcSubscriptionTest {
   }
 
   @Test
-  void deletegateThrowing() {
+  void delegateThrowing() {
     config.setEnabled(true).setAttempts(100);
 
     Consumer<Subscription> consumer = mock(Consumer.class);
@@ -210,7 +210,7 @@ class ResilientGrpcSubscriptionTest {
   }
 
   @Test
-  void deletegateThrowingWithRetryDisabled() {
+  void delegateThrowingWithRetryDisabled() {
     config.setEnabled(false);
 
     Consumer<Subscription> consumer = mock(Consumer.class);
@@ -364,6 +364,12 @@ class ResilientGrpcSubscriptionTest {
       verify(store).reset();
       verify(uut).doConnect();
       assertThat(uut.resilience().numberOfAttemptsInWindow()).isOne();
+    }
+
+    @Test
+    void delegatesFlush() {
+      dfo.flush();
+      verify(obs).flush();
     }
   }
 
