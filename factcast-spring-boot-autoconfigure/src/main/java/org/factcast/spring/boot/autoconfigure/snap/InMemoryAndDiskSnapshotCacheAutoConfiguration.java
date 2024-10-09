@@ -37,7 +37,10 @@ import org.springframework.context.annotation.Import;
   NoSnapshotCacheAutoConfiguration.class,
   InMemorySnapshotCacheAutoConfiguration.class
 })
-@AutoConfigureAfter(RedissonSnapshotCacheAutoConfiguration.class)
+@AutoConfigureAfter({
+  JdbcSnapshotCacheAutoConfiguration.class,
+  RedissonSnapshotCacheAutoConfiguration.class
+})
 public class InMemoryAndDiskSnapshotCacheAutoConfiguration {
 
   @Bean

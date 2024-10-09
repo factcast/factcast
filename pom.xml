@@ -60,6 +60,7 @@
     <module>factcast-snapshotcache-redisson</module>
     <module>factcast-snapshotcache-local-memory</module>
     <module>factcast-snapshotcache-local-disk</module>
+    <module>factcast-snapshotcache-jdbc</module>
   </modules>
   <scm>
     <connection>scm:git:git@github.com:factcast/factcast.git</connection>
