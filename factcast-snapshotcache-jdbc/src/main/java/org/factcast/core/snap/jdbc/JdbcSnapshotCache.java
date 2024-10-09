@@ -75,7 +75,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
           0,
           TimeUnit.DAYS.toMillis(1));
     } else {
-      log.info("Snapshot cleanup is disabled");
+      log.info("Scheduled Snapshot cleanup is disabled");
     }
   }
 
