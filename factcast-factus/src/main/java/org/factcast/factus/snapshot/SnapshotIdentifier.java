@@ -30,15 +30,16 @@ public class SnapshotIdentifier {
   @NonNull Class<? extends SnapshotProjection> projectionClass;
   @Nullable UUID aggregateId; // only used if created for an Aggregate
 
-  public static SnapshotIdentifier of(Class<? extends SnapshotProjection> snapshotProjectionType) {
+  public static SnapshotIdentifier of(
+      @NonNull Class<? extends SnapshotProjection> snapshotProjectionType) {
     Preconditions.checkArgument(
         !Aggregate.class.isAssignableFrom(snapshotProjectionType),
         "SnapshotIdentifiers for Aggregates must contain a UUID");
     return new SnapshotIdentifier(snapshotProjectionType, null);
   }
 
-  public static SnapshotIdentifier of(Class<? extends Aggregate> aggregateType, UUID aggregateId) {
-    Preconditions.checkArgument(aggregateId != null, "Aggregate must have a nonnull id");
+  public static SnapshotIdentifier of(
+      @NonNull Class<? extends Aggregate> aggregateType, @NonNull UUID aggregateId) {
     return new SnapshotIdentifier(aggregateType, aggregateId);
   }
 

@@ -15,11 +15,13 @@
  */
 package org.factcast.core.snap.redisson;
 
+import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
+import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.ScopedName;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.SnapshotSerializerId;
@@ -31,6 +33,8 @@ import org.factcast.factus.serializer.SnapshotSerializerId;
  */
 @Deprecated
 public class LegacySnapshotKeys {
+  private static final UUID DEFAULT_UUID = new UUID(0, 0);
+
   @Getter
   @AllArgsConstructor
   public enum RepoType {
@@ -42,26 +46,35 @@ public class LegacySnapshotKeys {
 
   @NonNull
   public static String createKeyForType(
-      @NonNull RepoType repoType,
-      @NonNull Class<? extends SnapshotProjection> type,
-      @NonNull SnapshotSerializerId serId) {
-    return createKeyForType(repoType, type, serId, null);
+      @NonNull Class<? extends SnapshotProjection> type, @NonNull SnapshotSerializerId serId) {
+    return createKeyForType(type, serId, null);
   }
 
   @NonNull
   public static String createKeyForType(
+      @NonNull Class<? extends SnapshotProjection> type,
+      @NonNull SnapshotSerializerId serId,
+      @Nullable UUID aggregateId) {
+
+    // better safe than sorry
+    if (Aggregate.class.isAssignableFrom(type))
+      return createKeyForType(RepoType.AGGREGATE, type, serId, aggregateId);
+    else return createKeyForType(RepoType.SNAPSHOT, type, serId, null);
+  }
+
+  private static @NonNull String createKeyForType(
       @NonNull RepoType repoType,
       @NonNull Class<? extends SnapshotProjection> type,
       @NonNull SnapshotSerializerId serId,
-      @Nullable UUID optionalUUID) {
+      @Nullable UUID aggregateUUID) {
 
     ScopedName classLevelKey =
         ScopedName.fromProjectionMetaData(type).with(repoType.id()).with(serId.name());
 
-    if (optionalUUID != null) {
-      classLevelKey = classLevelKey.with(optionalUUID.toString());
-    }
-
-    return classLevelKey.asString();
+    // looks weird, but that was an err in the <0.8 version: the aggid (or UUID(0,0) was appended
+    // without delimiter
+    return ScopedName.of(
+            classLevelKey.asString() + Optional.ofNullable(aggregateUUID).orElse(DEFAULT_UUID))
+        .asString();
   }
 }

@@ -40,6 +40,7 @@ public class BinaryJacksonSnapshotSerializer implements SnapshotSerializer {
     omMessagePack = om;
   }
 
+  // acceptable coverage miss:
   @SneakyThrows
   @Override
   public byte[] serialize(@NonNull SnapshotProjection a) {
@@ -51,6 +52,7 @@ public class BinaryJacksonSnapshotSerializer implements SnapshotSerializer {
     return baos.toByteArray();
   }
 
+  // acceptable coverage miss:
   @SneakyThrows
   @Override
   public <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes) {

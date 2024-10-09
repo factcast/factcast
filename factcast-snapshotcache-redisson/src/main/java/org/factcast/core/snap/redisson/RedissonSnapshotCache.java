@@ -64,14 +64,8 @@ public class RedissonSnapshotCache implements SnapshotCache {
 
     Class<? extends SnapshotProjection> type = id.projectionClass();
     SnapshotSerializerId serializerId = selector.selectSeralizerFor(type).id();
-    if (aggId == null)
-      return LegacySnapshotKeys.createKeyForType(
-              // recreate stupid special value, even without delimiter
-              LegacySnapshotKeys.RepoType.SNAPSHOT, id.projectionClass(), serializerId)
-          + new UUID(0, 0).toString();
-    else
-      return LegacySnapshotKeys.createKeyForType(
-          LegacySnapshotKeys.RepoType.AGGREGATE, id.projectionClass(), serializerId, aggId);
+
+    return LegacySnapshotKeys.createKeyForType(id.projectionClass(), serializerId, aggId);
   }
   //////
 
