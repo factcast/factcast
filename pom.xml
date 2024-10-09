@@ -107,7 +107,7 @@
     <micronaut.version>4.6.3</micronaut.version>
     <kotlin.version>2.0.20</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
-    <mockk.version>1.13.12</mockk.version>
+    <mockk.version>1.13.13</mockk.version>
     <redisson.version>3.28.0</redisson.version>
     <graaljs.version>24.0.1</graaljs.version>
     <shedlock.version>5.16.0</shedlock.version>
