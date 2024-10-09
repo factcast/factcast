@@ -24,6 +24,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.snap.Snapshot;
@@ -41,12 +42,13 @@ public class JdbcSnapshotCache implements SnapshotCache {
   public JdbcSnapshotCache(JdbcSnapshotProperties properties, DataSource dataSource) {
     this.dataSource = dataSource;
 
-    queryStatement =
-        "SELECT * FROM " + properties.getSnapshotsTableName() + " WHERE key = ? AND uuid = ?";
+    String tableName = properties.getSnapshotTableName();
+
+    queryStatement = "SELECT * FROM " + tableName + " WHERE key = ? AND uuid = ?";
 
     mergeStatement =
         "MERGE INTO "
-            + properties.getSnapshotsTableName()
+            + tableName
             + " USING (VALUES (?, ?, ?, ?, ?, ?)) as new (_key, _uuid, _last_fact_id, _bytes, _compressed, _last_accessed)"
             + " ON key=_key AND uuid=_uuid"
             + " WHEN MATCHED THEN"
@@ -54,24 +56,22 @@ public class JdbcSnapshotCache implements SnapshotCache {
             + " WHEN NOT MATCHED THEN"
             + " INSERT VALUES (_key, _uuid, _last_fact_id, _bytes, _compressed, _last_accessed)";
 
-    deleteStatement =
-        "DELETE FROM " + properties.getSnapshotsTableName() + " WHERE key = ? AND uuid = ?";
-    cleanupStatement =
-        "DELETE FROM " + properties.getSnapshotsTableName() + " WHERE last_accessed < ?";
+    deleteStatement = "DELETE FROM " + tableName + " WHERE key = ? AND uuid = ?";
+    cleanupStatement = "DELETE FROM " + tableName + " WHERE last_accessed < ?";
 
-    boolean snapTableExists = doesTableExist(properties.getSnapshotsTableName());
+    boolean snapTableExists = doesTableExist(tableName);
 
     if (!snapTableExists) {
-      throw new IllegalStateException(
-          "Snapshots table does not exist: " + properties.getSnapshotsTableName());
+      throw new IllegalStateException("Snapshots table does not exist: " + tableName);
     } else {
-      validateColumns(properties.getSnapshotsTableName());
+      validateColumns(tableName);
     }
 
     if (properties.getDeleteSnapshotStaleForDays() > 0) {
       Timer timer = new Timer();
       timer.scheduleAtFixedRate(
-          deleteStaleSnapshotsTimerTask(dataSource, properties.getDeleteSnapshotStaleForDays()),
+          new StaleSnapshotsTimerTask(
+              dataSource, cleanupStatement, properties.getDeleteSnapshotStaleForDays()),
           0,
           TimeUnit.DAYS.toMillis(1));
     } else {
@@ -79,19 +79,23 @@ public class JdbcSnapshotCache implements SnapshotCache {
     }
   }
 
-  private TimerTask deleteStaleSnapshotsTimerTask(DataSource dataSource, int staleForDays) {
-    return new TimerTask() {
-      @Override
-      public void run() {
-        try (Connection connection = dataSource.getConnection();
-            PreparedStatement statement = connection.prepareStatement(cleanupStatement)) {
-          statement.setString(1, LocalDate.now().minusDays(staleForDays).toString());
-          statement.executeUpdate();
-        } catch (Exception e) {
-          log.error("Failed to delete old snapshots", e);
-        }
+  @RequiredArgsConstructor
+  static class StaleSnapshotsTimerTask extends TimerTask {
+
+    final DataSource dataSource;
+    final String cleanupStatement;
+    final int staleForDays;
+
+    @Override
+    public void run() {
+      try (Connection connection = dataSource.getConnection();
+          PreparedStatement statement = connection.prepareStatement(cleanupStatement)) {
+        statement.setString(1, LocalDate.now().minusDays(staleForDays).toString());
+        statement.executeUpdate();
+      } catch (Exception e) {
+        log.error("Failed to delete old snapshots", e);
       }
-    };
+    }
   }
 
   @SneakyThrows

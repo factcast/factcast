@@ -20,6 +20,7 @@ For scenarios where persistence and sharing of snapshots are not necessary, and 
 in-memory solution can be used:
 
 ```xml
+
 <dependency>
     <groupId>org.factcast</groupId>
     <artifactId>factcast-snapshotcache-local-memory</artifactId>
@@ -33,6 +34,7 @@ Refer to the [In-Memory Properties]({{< ref "/setup/properties#inmem-snapshots">
 To persist snapshots on disk, consider using the following configuration:
 
 ```xml
+
 <dependency>
     <groupId>org.factcast</groupId>
     <artifactId>factcast-snapshotcache-local-disk</artifactId>
@@ -42,13 +44,15 @@ To persist snapshots on disk, consider using the following configuration:
 Note that this setup is designed for single-instance applications and handles file access synchronization within the
 active instance. It is not recommended for distributed application architectures.
 
-Refer to the [In-Memory and Disk Properties]({{< ref "/setup/properties#inmemanddisk-snapshots">}}) for more information.
+Refer to the [In-Memory and Disk Properties]({{< ref "/setup/properties#inmemanddisk-snapshots">}}) for more
+information.
 
 ### Redis SnapshotCache
 
 For applications utilizing Redis, the Redis-based SnapshotCache offers an optimal solution:
 
 ```xml
+
 <dependency>
     <groupId>org.factcast</groupId>
     <artifactId>factcast-snapshotcache-redisson</artifactId>
@@ -65,6 +69,7 @@ For further details, see the [Redis Properties]({{< ref "/setup/properties#redis
 For applications with a JDBC-compatible database, the JDBC-based SnapshotCache is a viable option:
 
 ```xml
+
 <dependency>
     <groupId>org.factcast</groupId>
     <artifactId>factcast-snapshotcache-jdbc</artifactId>
@@ -75,29 +80,69 @@ To use this snapshot cache, you must create a table for storing snapshots. The t
 
 ```sql
 # Postgres
-CREATE TABLE factcast_snapshots(key VARCHAR(512), uuid VARCHAR(36), last_fact_id VARCHAR(36),
-    bytes BYTEA, compressed boolean, last_accessed VARCHAR(10), PRIMARY KEY (key, uuid));
-CREATE INDEX factcast_snapshots_idx_last_accessed ON factcast_snapshots(last_accessed);
+CREATE TABLE factcast_snapshot
+(
+    key           VARCHAR(512),
+    uuid          VARCHAR(36),
+    last_fact_id  VARCHAR(36),
+    bytes         BYTEA,
+    compressed    boolean,
+    last_accessed VARCHAR(10),
+    PRIMARY KEY (key, uuid)
+);
+CREATE INDEX factcast_snapshot_idx_last_accessed ON factcast_snapshot (last_accessed);
 
 # MySQL, MariaDB
-CREATE TABLE factcast_snapshots(key VARCHAR(512), uuid VARCHAR(36), last_fact_id VARCHAR(36),
-    bytes BLOB, compressed BOOLEAN, last_accessed VARCHAR(10), PRIMARY KEY (key, uuid));
-CREATE INDEX factcast_snapshots_idx_last_accessed ON factcast_snapshots(last_accessed);
+CREATE TABLE factcast_snapshot
+(
+    key           VARCHAR(512),
+    uuid          VARCHAR(36),
+    last_fact_id  VARCHAR(36),
+    bytes         BLOB,
+    compressed    BOOLEAN,
+    last_accessed VARCHAR(10),
+    PRIMARY KEY (key, uuid)
+);
+CREATE INDEX factcast_snapshot_idx_last_accessed ON factcast_snapshot (last_accessed);
 
 # Oracle
-CREATE TABLE factcast_snapshots(key VARCHAR2(512), uuid VARCHAR2(36), last_fact_id VARCHAR2(36),
-    bytes BLOB, compressed NUMBER(1), last_accessed VARCHAR(10), PRIMARY KEY (key, uuid));
-CREATE INDEX factcast_snapshots_idx_last_accessed ON factcast_snapshots(last_accessed);
+CREATE TABLE factcast_snapshot
+(
+    key           VARCHAR2(512),
+    uuid          VARCHAR2(36),
+    last_fact_id  VARCHAR2(36),
+    bytes         BLOB,
+    compressed    NUMBER(1),
+    last_accessed VARCHAR(10),
+    PRIMARY KEY (key, uuid)
+);
+CREATE INDEX factcast_snapshot_idx_last_accessed ON factcast_snapshot (last_accessed);
 
 # MS SQL
-CREATE TABLE factcast_snapshots(key NVARCHAR(512), uuid NVARCHAR(36), last_fact_id NVARCHAR(36),
-    bytes VARBINARY(MAX), compressed BIT, last_accessed VARCHAR(10), PRIMARY KEY (key, uuid));
-CREATE INDEX factcast_snapshots_idx_last_accessed ON factcast_snapshots(last_accessed);
+CREATE TABLE factcast_snapshot
+(
+    key           NVARCHAR(512),
+    uuid          NVARCHAR(36),
+    last_fact_id  NVARCHAR(36),
+    bytes         VARBINARY(MAX),
+    compressed    BIT,
+    last_accessed VARCHAR(10),
+    PRIMARY KEY (key, uuid)
+);
+CREATE INDEX factcast_snapshot_idx_last_accessed ON factcast_snapshot (last_accessed);
 
 # DB2
-CREATE TABLE factcast_snapshots (key VARCHAR(512), uuid VARCHAR(36), last_fact_id VARCHAR(36),
-    bytes BLOB, compressed SMALLINT, last_accessed VARCHAR(10), PRIMARY KEY (key, uuid));
-CREATE INDEX factcast_snapshots_idx_last_accessed ON factcast_snapshots(last_accessed);
+CREATE TABLE factcast_snapshot
+(
+    key           VARCHAR(512),
+    uuid          VARCHAR(36),
+    last_fact_id  VARCHAR(36),
+    bytes         BLOB,
+    compressed    SMALLINT,
+    last_accessed VARCHAR(10),
+    PRIMARY KEY (key, uuid)
+);
+CREATE INDEX factcast_snapshot_idx_last_accessed ON factcast_snapshot (last_accessed);
 ```
 
 This option supports multiple instances of the same application, making it suitable for distributed environments. By
