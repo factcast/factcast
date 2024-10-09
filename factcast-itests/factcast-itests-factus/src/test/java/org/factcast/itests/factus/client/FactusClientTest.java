@@ -191,7 +191,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       var sw = Stopwatch.createStarted();
       TxRedissonSubscribedUserNames p = new TxRedissonSubscribedUserNames(redissonClient);
       var sub = factus.subscribeAndBlock(p);
-      sub.awaitCatchup();
+      sub.awaitCatchup().close();
       log.info(
           "TxRedissonSubscribedUserNames {} {}",
           sw.stop().elapsed().toMillis(),
@@ -204,7 +204,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       var sw = Stopwatch.createStarted();
       TxRedissonSubscribedUserNames p = new TxRedissonSubscribedUserNames(redissonClient);
       var sub = factus.subscribeAndBlock(p);
-      sub.awaitCatchup();
+      sub.awaitCatchup().close();
       log.info(
           "TxRedissonSubscribedUserNames {} {}",
           sw.stop().elapsed().toMillis(),
