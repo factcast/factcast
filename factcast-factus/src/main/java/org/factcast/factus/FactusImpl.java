@@ -269,7 +269,7 @@ public class FactusImpl implements Factus {
     ProjectionAndState<P> projectionAndState =
         projectionSnapshotRepository
             .findLatest(projectionClass)
-            .orElseGet(() -> ProjectionAndState.of(instantiate(projectionClass), null));
+            .orElse(ProjectionAndState.of(instantiate(projectionClass), null));
 
     // catchup
     P projection = projectionAndState.projectionInstance();
@@ -309,7 +309,7 @@ public class FactusImpl implements Factus {
     ProjectionAndState<A> projectionAndState =
         aggregateSnapshotRepository
             .findLatest(aggregateClass, aggregateId)
-            .orElseGet(() -> ProjectionAndState.of(initial(aggregateClass, aggregateId), null));
+            .orElse(ProjectionAndState.of(initial(aggregateClass, aggregateId), null));
 
     A aggregate = projectionAndState.projectionInstance();
     UUID state =
