@@ -60,7 +60,6 @@ import org.factcast.factus.projector.ProjectorFactory;
 import org.factcast.factus.snapshot.AggregateRepository;
 import org.factcast.factus.snapshot.ProjectionAndState;
 import org.factcast.factus.snapshot.SnapshotRepository;
-import org.factcast.factus.snapshot.SnapshotSerializerSelector;
 
 /** Single entry point to the factus API. */
 @RequiredArgsConstructor
