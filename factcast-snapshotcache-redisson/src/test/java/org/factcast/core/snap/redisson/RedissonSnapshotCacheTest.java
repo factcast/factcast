@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 import lombok.SneakyThrows;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.factus.projection.Aggregate;
@@ -159,43 +160,35 @@ class RedissonSnapshotCacheTest {
 
   @Nested
   class WhenCompacting {
-    private final int RETENTION_TIME_IN_DAYS = 95;
+    private final int RETENTION_TIME_IN_DAYS = 42;
 
     @BeforeEach
     void setup() {
       when(selector.selectSeralizerFor(any())).thenReturn(serializer);
+      RedissonSnapshotProperties props =
+          new RedissonSnapshotProperties()
+              .setSnapshotCacheRedissonCodec(
+                  RedissonSnapshotProperties.RedissonCodec.RedissonDefault)
+              .setDeleteSnapshotStaleForDays(RETENTION_TIME_IN_DAYS);
       underTest = new RedissonSnapshotCache(redisson, selector, props);
     }
 
     @Test
     void testTTL() {
+      SnapshotIdentifier id = SnapshotIdentifier.of(TestAggregate.class, randomUUID());
+      SnapshotData data = new SnapshotData(new byte[] {1, 2, 3}, serializer.id(), randomUUID());
+      RBucket mockBucket = mock(RBucket.class);
+      when(redisson.getBucket(underTest.createKeyFor(id), ByteArrayCodec.INSTANCE))
+          .thenReturn(mockBucket);
+      when(mockBucket.get()).thenReturn(new byte[] {4, 5, 6});
 
-      SnapshotIdentifier id1 = SnapshotIdentifier.of(TestAggregate.class, randomUUID());
-      SnapshotData data1 = new SnapshotData(new byte[] {1, 2, 3}, serializer.id(), randomUUID());
-      SnapshotIdentifier id2 = SnapshotIdentifier.of(TestAggregate.class, randomUUID());
-      SnapshotData data2 = new SnapshotData(new byte[] {3, 4, 5}, serializer.id(), randomUUID());
+      underTest.store(id, data);
 
-      underTest.store(id1, data1);
-      underTest.store(id2, data2);
-      {
-        // assert all buckets have a ttl
-        long ttl1 = redisson.getBucket(underTest.createKeyFor(id1)).remainTimeToLive();
-        long ttl2 = redisson.getBucket(underTest.createKeyFor(id2)).remainTimeToLive();
+      verify(mockBucket).set(data.toBytes(), RETENTION_TIME_IN_DAYS, TimeUnit.DAYS);
 
-        assertThat(ttl1).isGreaterThan(7775990000L);
-        assertThat(ttl2).isGreaterThan(7775990000L);
-        assertThat(ttl1).isLessThanOrEqualTo(ttl2);
-      }
+      underTest.find(id); // touches it
 
-      underTest.find(id1); // touches it
-      {
-        long ttl1 = redisson.getBucket(underTest.createKeyFor(id1)).remainTimeToLive();
-        long ttl2 = redisson.getBucket(underTest.createKeyFor(id2)).remainTimeToLive();
-
-        assertThat(ttl1).isGreaterThan(7775990000L);
-        assertThat(ttl2).isGreaterThan(7775990000L);
-        assertThat(ttl1).isGreaterThan(ttl2);
-      }
+      verify(mockBucket).expireAsync(Duration.ofDays(RETENTION_TIME_IN_DAYS));
     }
 
     @Test
@@ -215,7 +208,7 @@ class RedissonSnapshotCacheTest {
 
       underTest.find(id); // touches it
 
-      verify(mockLegacyBucket).expireAsync(Duration.ofDays(90));
+      verify(mockLegacyBucket).expireAsync(Duration.ofDays(RETENTION_TIME_IN_DAYS));
     }
 
     @SneakyThrows
