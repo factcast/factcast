@@ -649,7 +649,6 @@ class FactusImplTest {
               eventConverter,
               aggregateSnapshotRepository,
               projectionSnapshotRepository,
-              snapFactory,
               factusMetrics);
 
       ConcatCodesProjection dummyProjection = spy(new ConcatCodesProjection());
