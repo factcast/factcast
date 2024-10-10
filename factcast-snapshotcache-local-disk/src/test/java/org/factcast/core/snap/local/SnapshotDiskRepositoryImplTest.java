@@ -28,8 +28,10 @@ import java.util.UUID;
 import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
 import org.awaitility.Awaitility;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
+import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.serializer.SnapshotSerializerId;
+import org.factcast.factus.snapshot.SnapshotData;
+import org.factcast.factus.snapshot.SnapshotIdentifier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -62,24 +64,29 @@ class SnapshotDiskRepositoryImplTest {
     @Test
     @SneakyThrows
     void getNotFound() {
+      class key implements SnapshotProjection {}
+
       // Get by the ID
-      Optional<Snapshot> response = uut.findById(SnapshotId.of("key", UUID.randomUUID()));
+      Optional<SnapshotData> response =
+          uut.findById(new SnapshotIdentifier(key.class, UUID.randomUUID()));
       assertThat(response).isEmpty();
     }
 
     @Test
     @SneakyThrows
     void getExceptionOnSave() {
-      final Snapshot snap =
-          new Snapshot(
-              SnapshotId.of("key", UUID.randomUUID()), UUID.randomUUID(), "foo".getBytes(), false);
+      class key implements SnapshotProjection {}
+      SnapshotIdentifier identifier = new SnapshotIdentifier(key.class, UUID.randomUUID());
+
+      final SnapshotData snap =
+          new SnapshotData("foo".getBytes(), SnapshotSerializerId.of("name"), UUID.randomUUID());
       SnapshotDiskRepositoryImpl suut = spy(uut);
       doThrow(new RuntimeException("mocked")).when(suut).triggerCleanup();
 
       File tmp = Files.createTempDir();
       tmp.deleteOnExit();
 
-      assertDoesNotThrow(() -> suut.doSave(snap, new File(tmp, "test")));
+      assertDoesNotThrow(() -> suut.doSave(identifier, snap, new File(tmp, "test")));
     }
 
     @Test
@@ -99,79 +106,57 @@ class SnapshotDiskRepositoryImplTest {
     @Test
     @SneakyThrows
     void saveGetAndDelete() {
-      final Snapshot snap =
-          new Snapshot(
-              SnapshotId.of("key", UUID.randomUUID()), UUID.randomUUID(), "foo".getBytes(), false);
+      class key implements SnapshotProjection {}
+      SnapshotIdentifier id = new SnapshotIdentifier(key.class, UUID.randomUUID());
+
+      final SnapshotData snap =
+          new SnapshotData("foo".getBytes(), SnapshotSerializerId.of("name"), UUID.randomUUID());
 
       // Save and wait
-      uut.save(snap).get();
+      uut.save(id, snap).get();
 
       // Get by the ID
-      Optional<Snapshot> response = uut.findById(snap.id());
+      Optional<SnapshotData> response = uut.findById(id);
       assertThat(response).isPresent();
       assertThat(snap).isEqualTo(response.get());
 
       // Delete
-      uut.delete(snap.id()).get();
+      uut.delete(id).get();
 
-      response = uut.findById(snap.id());
+      response = uut.findById(id);
       assertThat(response).isEmpty();
     }
 
     @Test
     @SneakyThrows
-    void failureWhileGettingTriggersDelete() {
-      SnapshotId id = SnapshotId.of("key", UUID.randomUUID());
-
-      byte[] nonExistingSerializedClass =
-          new byte[] {
-            -84, -19, 0, 5, 115, 114, 0, 45, 111, 114, 103, 46, 102, 97, 99, 116, 99, 97, 115, 116,
-            46, 99, 111, 114, 101, 46, 115, 110, 97, 112, 46, 108, 111, 99, 97, 108, 46, 99, 97, 83,
-            83, 119, 73, 102, 97, 83, 71, 108, 100, 111, 115, 97, 97, 57, -97, -72, -84, 39, -99,
-            -94, 94, 2, 0, 1, 76, 0, 2, 105, 100, 116, 0, 18, 76, 106, 97, 118, 97, 47, 108, 97,
-            110, 103, 47, 83, 116, 114, 105, 110, 103, 59, 120, 112, 112
-          };
-
-      File persistenceFile = SnapshotFileHelper.createFile(uut.persistenceDirectory(), id.key());
-
-      persistenceFile.getParentFile().mkdirs();
-      persistenceFile.createNewFile();
-      java.nio.file.Files.write(persistenceFile.toPath(), nonExistingSerializedClass);
-
-      assertThat(persistenceFile).exists();
-      assertThat(uut.findById(id)).isEmpty();
-      assertThat(persistenceFile).doesNotExist();
-      assertThat(logCaptor.getErrorLogs()).isNotEmpty();
-      assertThat(logCaptor.getErrorLogs()).hasSize(1);
-      assertThat(logCaptor.getErrorLogs().get(0)).contains("Error deserializing snapshot with id");
-    }
-
-    @Test
-    @SneakyThrows
     void testMultipleFiles() {
-      final Snapshot snap1 =
-          new Snapshot(
-              SnapshotId.of("key1", UUID.randomUUID()), UUID.randomUUID(), "foo".getBytes(), false);
-      final Snapshot snap2 =
-          new Snapshot(
-              SnapshotId.of("key2", UUID.randomUUID()), UUID.randomUUID(), "foo".getBytes(), false);
-      final Snapshot snap3 =
-          new Snapshot(
-              SnapshotId.of("key3", UUID.randomUUID()), UUID.randomUUID(), "foo".getBytes(), false);
+      class key1 implements SnapshotProjection {}
+      class key2 implements SnapshotProjection {}
+      class key3 implements SnapshotProjection {}
+      SnapshotIdentifier id1 = new SnapshotIdentifier(key1.class, UUID.randomUUID());
+      SnapshotIdentifier id2 = new SnapshotIdentifier(key2.class, UUID.randomUUID());
+      SnapshotIdentifier id3 = new SnapshotIdentifier(key3.class, UUID.randomUUID());
+
+      final SnapshotData snap1 =
+          new SnapshotData("foo".getBytes(), SnapshotSerializerId.of("name"), UUID.randomUUID());
+      final SnapshotData snap2 =
+          new SnapshotData("foo".getBytes(), SnapshotSerializerId.of("name"), UUID.randomUUID());
+      final SnapshotData snap3 =
+          new SnapshotData("foo".getBytes(), SnapshotSerializerId.of("name"), UUID.randomUUID());
 
       // Save and wait
-      uut.save(snap1).get();
-      uut.save(snap2).get();
-      uut.save(snap3).get();
+      uut.save(id1, snap1).get();
+      uut.save(id2, snap2).get();
+      uut.save(id3, snap3).get();
 
       // Get by the ID
-      Optional<Snapshot> response = uut.findById(snap1.id());
+      Optional<SnapshotData> response = uut.findById(id1);
       assertThat(response).isPresent();
       assertThat(snap1).isEqualTo(response.get());
-      response = uut.findById(snap2.id());
+      response = uut.findById(id2);
       assertThat(response).isPresent();
       assertThat(snap2).isEqualTo(response.get());
-      response = uut.findById(snap3.id());
+      response = uut.findById(id3);
       assertThat(response).isPresent();
       assertThat(snap3).isEqualTo(response.get());
     }
@@ -182,38 +167,37 @@ class SnapshotDiskRepositoryImplTest {
     @Test
     @SneakyThrows
     void testCleanup() {
-
       File tmpFolder = Files.createTempDir();
       tmpFolder.deleteOnExit();
 
       InMemoryAndDiskSnapshotProperties properties = new InMemoryAndDiskSnapshotProperties();
       properties.setPathToSnapshots(tmpFolder.getAbsolutePath());
-      // The size of the 3 snapshots plus the tmp folder is more than 1000 bytes
-      properties.setMaxDiskSpace(1000);
+      // The size of 1 snapshot is 31 bytes
+      properties.setMaxDiskSpace(90);
 
       uut = new SnapshotDiskRepositoryImpl(properties);
 
-      final Snapshot snap1 =
-          new Snapshot(
-              SnapshotId.of("key1", UUID.randomUUID()), UUID.randomUUID(), "foo".getBytes(), false);
-      final Snapshot snap2 =
-          new Snapshot(
-              SnapshotId.of("key2", UUID.randomUUID()), UUID.randomUUID(), "foo".getBytes(), false);
-      final Snapshot snap3 =
-          new Snapshot(
-              SnapshotId.of("key3", UUID.randomUUID()), UUID.randomUUID(), "foo".getBytes(), false);
+      class key1 implements SnapshotProjection {}
+      class key2 implements SnapshotProjection {}
+      class key3 implements SnapshotProjection {}
+      SnapshotIdentifier id1 = new SnapshotIdentifier(key1.class, UUID.randomUUID());
+      SnapshotIdentifier id2 = new SnapshotIdentifier(key2.class, UUID.randomUUID());
+      SnapshotIdentifier id3 = new SnapshotIdentifier(key3.class, UUID.randomUUID());
+
+      final SnapshotData snap =
+          new SnapshotData("foo".getBytes(), SnapshotSerializerId.of("name"), UUID.randomUUID());
 
       // Save and wait
-      uut.save(snap1).get();
+      uut.save(id1, snap).get();
       // Create small difference on the modified timestamp
       Thread.sleep(50);
-      uut.save(snap2).get();
+      uut.save(id2, snap).get();
       // Create small difference on the modified timestamp
       Thread.sleep(50);
-      uut.save(snap3).get();
+      uut.save(id3, snap).get();
 
       // After saving snap3 the cleanup should be triggered and snap1 (the oldest) should be deleted
-      Awaitility.await().until(() -> !uut.findById(snap1.id()).isPresent());
+      Awaitility.await().until(() -> !uut.findById(id1).isPresent());
     }
 
     @Test
@@ -225,45 +209,44 @@ class SnapshotDiskRepositoryImplTest {
 
       InMemoryAndDiskSnapshotProperties properties = new InMemoryAndDiskSnapshotProperties();
       properties.setPathToSnapshots(tmpFolder.getAbsolutePath());
-      // The size of the 3 snapshots plus the tmp folder is more than 1000 bytes
-      properties.setMaxDiskSpace(1000);
+      // The size of 1 snapshot is 31 bytes
+      properties.setMaxDiskSpace(90);
 
       uut = new SnapshotDiskRepositoryImpl(properties);
 
-      final Snapshot snap1 =
-          new Snapshot(
-              SnapshotId.of("key1", UUID.randomUUID()), UUID.randomUUID(), "foo".getBytes(), false);
-      final Snapshot snap2 =
-          new Snapshot(
-              SnapshotId.of("key2", UUID.randomUUID()), UUID.randomUUID(), "foo".getBytes(), false);
-      final Snapshot snap3 =
-          new Snapshot(
-              SnapshotId.of("key3", UUID.randomUUID()), UUID.randomUUID(), "foo".getBytes(), false);
+      class key1 implements SnapshotProjection {}
+      class key2 implements SnapshotProjection {}
+      class key3 implements SnapshotProjection {}
+      SnapshotIdentifier id1 = new SnapshotIdentifier(key1.class, UUID.randomUUID());
+      SnapshotIdentifier id2 = new SnapshotIdentifier(key2.class, UUID.randomUUID());
+      SnapshotIdentifier id3 = new SnapshotIdentifier(key3.class, UUID.randomUUID());
+
+      final SnapshotData snap =
+          new SnapshotData("foo".getBytes(), SnapshotSerializerId.of("name"), UUID.randomUUID());
 
       // Save and wait
-      uut.save(snap1).get();
+      uut.save(id1, snap).get();
       // Create small difference on the modified timestamp
       Thread.sleep(50);
-      uut.save(snap2).get();
+      uut.save(id2, snap).get();
       // Create small difference on the modified timestamp
       Thread.sleep(50);
-      uut.save(snap3).get();
+      uut.save(id3, snap).get();
 
       // After saving snap3 the cleanup should be triggered and snap1 (the oldest) should be deleted
-      Awaitility.await().until(() -> !uut.findById(snap1.id()).isPresent());
+      Awaitility.await().until(() -> !uut.findById(id1).isPresent());
 
       // update the modified date of snap2
-      uut.findById(snap2.id());
+      uut.findById(id2);
 
-      final Snapshot snap4 =
-          new Snapshot(
-              SnapshotId.of("key4", UUID.randomUUID()), UUID.randomUUID(), "foo".getBytes(), false);
+      class key4 implements SnapshotProjection {}
+      SnapshotIdentifier id4 = new SnapshotIdentifier(key4.class, UUID.randomUUID());
 
       // Should Trigger cleanup again and delete snap3 because 2 is now not the oldest
-      uut.save(snap4).get();
-      Awaitility.await().until(() -> !uut.findById(snap3.id()).isPresent());
-      assertThat(uut.findById(snap2.id())).isPresent();
-      assertThat(uut.findById(snap4.id())).isPresent();
+      uut.save(id4, snap).get();
+      Awaitility.await().until(() -> !uut.findById(id3).isPresent());
+      assertThat(uut.findById(id2)).isPresent();
+      assertThat(uut.findById(id4)).isPresent();
     }
   }
 }

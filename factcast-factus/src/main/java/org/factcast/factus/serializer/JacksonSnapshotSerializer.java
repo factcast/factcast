@@ -46,12 +46,8 @@ public class JacksonSnapshotSerializer implements SnapshotSerializer {
   }
 
   @Override
-  public boolean includesCompression() {
-    return false;
-  }
-
-  @Override
-  public String getId() {
-    return "JacksonSnapshotSerializer"; // do NOT change this to class.getSimpleName()
+  public SnapshotSerializerId id() {
+    return SnapshotSerializerId.of(
+        "JacksonSnapshotSerializer"); // do NOT change this to class.getSimpleName()
   }
 }

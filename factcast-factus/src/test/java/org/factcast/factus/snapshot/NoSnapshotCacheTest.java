@@ -17,8 +17,6 @@ package org.factcast.factus.snapshot;
 
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,39 +32,33 @@ class NoSnapshotCacheTest {
 
   @Nested
   class WhenSettingSnapshot {
-    @Mock private @NonNull SnapshotId id;
+    @Mock private @NonNull SnapshotIdentifier id;
 
     @Test
     void failsIfSetIsCalled() {
-      Snapshot mock = Mockito.mock(Snapshot.class);
-      Assertions.assertThatThrownBy(
-              () -> {
-                underTest.setSnapshot(mock);
-              })
+      SnapshotData mock = Mockito.mock(SnapshotData.class);
+      Assertions.assertThatThrownBy(() -> underTest.store(id, mock))
           .isInstanceOf(UnsupportedOperationException.class);
     }
   }
 
   @Nested
   class WhenGettingSnapshot {
-    @Mock private @NonNull SnapshotId id;
+    @Mock private @NonNull SnapshotIdentifier id;
 
     @Test
     void returnsEmptyOnGet() {
-      Assertions.assertThat(underTest.getSnapshot(id)).isEmpty();
+      Assertions.assertThat(underTest.find(id)).isEmpty();
     }
   }
 
   @Nested
   class WhenClearingSnapshot {
-    @Mock private @NonNull SnapshotId id;
+    @Mock private @NonNull SnapshotIdentifier id;
 
     @Test
     void failsIfClearIsCalled() {
-      Assertions.assertThatThrownBy(
-              () -> {
-                underTest.clearSnapshot(id);
-              })
+      Assertions.assertThatThrownBy(() -> underTest.remove(id))
           .isInstanceOf(UnsupportedOperationException.class);
     }
   }

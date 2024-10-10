@@ -19,72 +19,62 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Supplier;
-import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.snap.Snapshot;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.metrics.GaugedEvent;
 import org.factcast.factus.metrics.TagKeys;
-import org.factcast.factus.projection.ScopedName;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.SnapshotSerializer;
 
 @RequiredArgsConstructor
 @Slf4j
 abstract class AbstractSnapshotRepository {
-  protected final SnapshotCache snapshotCache;
-  private final FactusMetrics factusMetrics;
-
-  protected void putBlocking(@NonNull Snapshot snapshot) {
-    snapshotCache.setSnapshot(snapshot);
-  }
+  @NonNull private final SnapshotCache snapshotCache;
+  @NonNull private final FactusMetrics factusMetrics;
+  @NonNull private final SnapshotSerializerSelector selector;
 
   @NonNull
-  protected String createKeyForType(
-      @NonNull Class<? extends SnapshotProjection> type,
-      @NonNull Supplier<SnapshotSerializer> serializerSupplier) {
-    return createKeyForType(type, serializerSupplier, null);
+  protected Optional<SnapshotData> find(@NonNull SnapshotIdentifier id) {
+    @NonNull Optional<SnapshotData> ret = snapshotCache.find(id);
+    ret.ifPresent(s -> recordSnapshotSize(s, id.projectionClass()));
+    return ret;
   }
 
-  @SuppressWarnings("SameParameterValue")
-  @NonNull
-  protected String createKeyForType(
-      @NonNull Class<? extends SnapshotProjection> type,
-      @NonNull Supplier<SnapshotSerializer> serializerSupplier,
-      @Nullable UUID optionalUUID) {
-
-    ScopedName classLevelKey =
-        ScopedName.fromProjectionMetaData(type)
-            .with(getId())
-            .with(serializerId(serializerSupplier));
-
-    if (optionalUUID != null) {
-      classLevelKey = classLevelKey.with(optionalUUID.toString());
-    }
-
-    return classLevelKey.asString();
+  protected void store(@NonNull SnapshotIdentifier id, @NonNull SnapshotData snapshot) {
+    snapshotCache.store(id, snapshot);
   }
 
-  @NonNull
-  private String serializerId(@NonNull Supplier<SnapshotSerializer> serializerSupplier) {
-    return serializerSupplier.get().getId();
+  protected void remove(@NonNull SnapshotIdentifier id) {
+    snapshotCache.remove(id);
   }
 
+  // encapsulated for a reason
   @NonNull
-  protected abstract String getId();
+  private SnapshotSerializer seralizerFor(@NonNull Class<? extends SnapshotProjection> type) {
+    return selector.selectSeralizerFor(type);
+  }
 
-  @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-  protected void recordSnapshotSize(
-      @NonNull Optional<Snapshot> ret,
-      @NonNull Class<? extends SnapshotProjection> projectionClass) {
-    ret.ifPresent(
-        s ->
-            factusMetrics.record(
-                GaugedEvent.FETCH_SIZE,
-                Tags.of(Tag.of(TagKeys.CLASS, projectionClass.getName())),
-                s.bytes().length));
+  protected final <T extends SnapshotProjection> T deserialize(
+      @NonNull byte[] bytes, @NonNull Class<T> type) {
+    T instance = seralizerFor(type).deserialize(type, bytes);
+    instance.onAfterRestore();
+    return instance;
+  }
+
+  protected final <T extends SnapshotProjection> SnapshotData serialize(
+      @NonNull T instance, @NonNull UUID state) {
+    instance.onBeforeSnapshot();
+    SnapshotSerializer ser = seralizerFor(instance.getClass());
+    return new SnapshotData(ser.serialize(instance), ser.id(), state);
+  }
+
+  private void recordSnapshotSize(
+      @NonNull SnapshotData ret, @NonNull Class<? extends SnapshotProjection> projectionClass) {
+    factusMetrics.record(
+        GaugedEvent.FETCH_SIZE,
+        Tags.of(Tag.of(TagKeys.CLASS, projectionClass.getName())),
+        ret.serializedProjection().length);
   }
 }

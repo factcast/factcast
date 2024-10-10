@@ -26,6 +26,7 @@ import java.util.stream.Stream;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.factus.snapshot.SnapshotIdentifier;
 
 @UtilityClass
 @Slf4j
@@ -36,9 +37,9 @@ class SnapshotFileHelper {
     }
   }
 
-  File createFile(@NonNull File persistenceDirectory, @NonNull String key) {
+  File createFile(@NonNull File persistenceDirectory, @NonNull SnapshotIdentifier id) {
     Preconditions.checkArgument(persistenceDirectory.exists());
-    String hash = Hashing.sha256().hashString(key, StandardCharsets.UTF_8).toString();
+    String hash = Hashing.sha256().hashString(id.toString(), StandardCharsets.UTF_8).toString();
     String withSlashes = addSlashes(hash);
     return new File(persistenceDirectory, withSlashes);
   }

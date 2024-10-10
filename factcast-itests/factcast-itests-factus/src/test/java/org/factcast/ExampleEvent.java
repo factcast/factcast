@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2024 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.serializer;
+package org.factcast;
 
-import org.factcast.factus.projection.SnapshotProjection;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+import org.factcast.factus.event.EventObject;
+import org.factcast.factus.event.Specification;
 
-public interface SnapshotSerializer {
-  byte[] serialize(SnapshotProjection a);
-
-  <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes);
-
-  /**
-   * @return displayable name of the serializer. Make sure it is unique, as it is used as part of
-   *     the snapshot key
-   */
-  SnapshotSerializerId id();
+@Specification(ns = "example")
+public class ExampleEvent implements EventObject {
+  @Override
+  public Set<UUID> aggregateIds() {
+    return new HashSet<>();
+  }
 }

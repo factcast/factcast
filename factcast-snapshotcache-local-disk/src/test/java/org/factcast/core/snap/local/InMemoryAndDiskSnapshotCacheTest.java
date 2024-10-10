@@ -20,8 +20,10 @@ import static org.mockito.Mockito.*;
 
 import java.util.Optional;
 import java.util.UUID;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
+import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.serializer.SnapshotSerializerId;
+import org.factcast.factus.snapshot.SnapshotData;
+import org.factcast.factus.snapshot.SnapshotIdentifier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -31,7 +33,12 @@ class InMemoryAndDiskSnapshotCacheTest {
   private InMemoryAndDiskSnapshotCache underTest;
   private final SnapshotDiskRepository diskRepository = mock(SnapshotDiskRepository.class);
 
-  private final SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
+  class foo implements SnapshotProjection {}
+
+  SnapshotIdentifier id = new SnapshotIdentifier(foo.class, UUID.randomUUID());
+
+  final SnapshotData snap =
+      new SnapshotData("foo".getBytes(), SnapshotSerializerId.of("name"), UUID.randomUUID());
 
   @BeforeEach
   void setUp() {
@@ -42,14 +49,12 @@ class InMemoryAndDiskSnapshotCacheTest {
   class WhenSettingSnapshot {
     @Test
     void happyCase() {
-      final Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
+      underTest.store(id, snap);
 
-      underTest.setSnapshot(snap);
-
-      Optional<Snapshot> snapshot = underTest.getSnapshot(id);
+      Optional<SnapshotData> snapshot = underTest.find(id);
       assertThat(snapshot).isPresent();
       assertThat(snap).isEqualTo(snapshot.get());
-      verify(diskRepository, times(1)).save(snap);
+      verify(diskRepository, times(1)).save(id, snap);
     }
   }
 
@@ -58,15 +63,13 @@ class InMemoryAndDiskSnapshotCacheTest {
 
     @Test
     void happyCase() {
-      final Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
-
-      underTest.setSnapshot(snap);
-      Optional<Snapshot> snapshot = underTest.getSnapshot(id);
+      underTest.store(id, snap);
+      Optional<SnapshotData> snapshot = underTest.find(id);
       assertThat(snapshot).isPresent();
       assertThat(snap).isEqualTo(snapshot.get());
 
-      underTest.clearSnapshot(id);
-      snapshot = underTest.getSnapshot(id);
+      underTest.remove(id);
+      snapshot = underTest.find(id);
       assertThat(snapshot).isEmpty();
 
       verify(diskRepository, times(1)).delete(id);
@@ -78,27 +81,23 @@ class InMemoryAndDiskSnapshotCacheTest {
 
     @Test
     void happyCase() {
-      final Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
+      underTest.store(id, snap);
 
-      underTest.setSnapshot(snap);
-
-      Optional<Snapshot> snapshot = underTest.getSnapshot(id);
+      Optional<SnapshotData> snapshot = underTest.find(id);
       assertThat(snapshot).isPresent();
       assertThat(snap).isEqualTo(snapshot.get());
-      verify(diskRepository, times(1)).save(snap);
+      verify(diskRepository, times(1)).save(id, snap);
       verify(diskRepository, never()).findById(id);
     }
 
     @Test
     void happyCase_fetchingFromDisk() {
-      final Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
-
       when(diskRepository.findById(id)).thenReturn(Optional.of(snap));
 
-      Optional<Snapshot> snapshot = underTest.getSnapshot(id);
+      Optional<SnapshotData> snapshot = underTest.find(id);
       assertThat(snapshot).isPresent();
       assertThat(snap).isEqualTo(snapshot.get());
-      verify(diskRepository, never()).save(snap);
+      verify(diskRepository, never()).save(id, snap);
       verify(diskRepository, times(1)).findById(id);
     }
 
@@ -106,7 +105,7 @@ class InMemoryAndDiskSnapshotCacheTest {
     void happyCase_exceptionFromDisk() {
       when(diskRepository.findById(id)).thenThrow(new RuntimeException());
 
-      Optional<Snapshot> snapshot = underTest.getSnapshot(id);
+      Optional<SnapshotData> snapshot = underTest.find(id);
       assertThat(snapshot).isEmpty();
     }
   }

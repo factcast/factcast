@@ -17,66 +17,96 @@ package org.factcast.core.snap.redisson;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
+import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.serializer.SnapshotSerializerId;
 import org.factcast.factus.snapshot.SnapshotCache;
+import org.factcast.factus.snapshot.SnapshotData;
+import org.factcast.factus.snapshot.SnapshotIdentifier;
+import org.factcast.factus.snapshot.SnapshotSerializerSelector;
 import org.redisson.api.RBucket;
-import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
+import org.redisson.client.codec.ByteArrayCodec;
 
+@SuppressWarnings("deprecation")
 @Slf4j
+@RequiredArgsConstructor
 public class RedissonSnapshotCache implements SnapshotCache {
 
-  final RedissonClient redisson;
+  private static final String PREFIX = "sc_";
+  private static final String SEPARATOR = ";";
 
+  final RedissonClient redisson;
+  final SnapshotSerializerSelector selector;
   private final RedissonSnapshotProperties properties;
 
-  // still needed to remove stale snapshots, can be removed at some point
-  private static final String TS_INDEX = "SNAPCACHE_IDX";
-  private final RMap<String, Long> index;
-
-  public RedissonSnapshotCache(
-      @NonNull RedissonClient redisson, @NonNull RedissonSnapshotProperties props) {
-    this.redisson = redisson;
-    this.properties = props;
-
-    index = properties.getSnapshotCacheRedissonCodec().getMap(redisson, TS_INDEX);
-  }
-
-  @Override
-  public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
-    String key = createKeyFor(id);
-
-    RBucket<Snapshot> bucket = properties.getSnapshotCacheRedissonCodec().getBucket(redisson, key);
-    Optional<Snapshot> snapshot = Optional.ofNullable(bucket.get());
-    if (snapshot.isPresent()) {
-      // renew TTL
-      bucket.expireAsync(Duration.ofDays(properties.getRetentionTime()));
-      // can be removed at some point
-      index.removeAsync(key, System.currentTimeMillis());
+  @NonNull
+  @VisibleForTesting
+  String createKeyFor(@NonNull SnapshotIdentifier id) {
+    StringBuilder sb = new StringBuilder(PREFIX + id.projectionClass().getName());
+    if (id.aggregateId() != null) {
+      sb.append(SEPARATOR);
+      sb.append(id.aggregateId());
     }
-    return snapshot;
-  }
-
-  @Override
-  public void setSnapshot(@NonNull Snapshot snapshot) {
-    String key = createKeyFor(snapshot.id());
-    RBucket<Snapshot> bucket = properties.getSnapshotCacheRedissonCodec().getBucket(redisson, key);
-    bucket.set(snapshot, properties.getRetentionTime(), TimeUnit.DAYS);
-  }
-
-  @Override
-  public void clearSnapshot(@NonNull SnapshotId id) {
-    redisson.getBucket(createKeyFor(id)).delete();
+    return sb.toString();
   }
 
   @NonNull
   @VisibleForTesting
-  String createKeyFor(@NonNull SnapshotId id) {
-    return id.key() + id.uuid();
+  String createLegacyKeyFor(@NonNull SnapshotIdentifier id) {
+    UUID aggId = id.aggregateId();
+
+    Class<? extends SnapshotProjection> type = id.projectionClass();
+    SnapshotSerializerId serializerId = selector.selectSeralizerFor(type).id();
+
+    return LegacySnapshotKeys.createKeyForType(id.projectionClass(), serializerId, aggId);
+  }
+  //////
+
+  @Override
+  public @NonNull Optional<SnapshotData> find(@NonNull SnapshotIdentifier id) {
+    String key = createKeyFor(id);
+    RBucket<byte[]> bucket = redisson.getBucket(key, ByteArrayCodec.INSTANCE);
+    byte[] bytes = bucket.get();
+    if (bytes != null && bytes.length > 0) {
+      bucket.expireAsync(Duration.ofDays(properties.getRetentionTime()));
+      return SnapshotData.from(bytes);
+    } else {
+      // find legacy snapshot
+      String legacyKey = createLegacyKeyFor(id);
+      RBucket<Snapshot> legacyBucket =
+          properties.getSnapshotCacheRedissonCodec().getBucket(redisson, legacyKey);
+      Optional<Snapshot> snapshot = Optional.ofNullable(legacyBucket.get());
+      if (snapshot.isPresent()) {
+        legacyBucket.expireAsync(Duration.ofDays(properties.getRetentionTime()));
+      }
+      Optional<SnapshotData> snapshotData =
+          snapshot.map(
+              s -> SnapshotData.from(s, selector.selectSeralizerFor(id.projectionClass()).id()));
+
+      // migrate
+      snapshotData.ifPresent(data -> store(id, data));
+
+      return snapshotData;
+    }
+  }
+
+  @Override
+  public void store(@NonNull SnapshotIdentifier id, @NonNull SnapshotData snapshot) {
+    redisson
+        .getBucket(createKeyFor(id), ByteArrayCodec.INSTANCE)
+        .set(snapshot.toBytes(), properties.getRetentionTime(), TimeUnit.DAYS);
+  }
+
+  @Override
+  public void remove(@NonNull SnapshotIdentifier id) {
+    redisson.getBucket(createKeyFor(id)).delete();
+    redisson.getBucket(createLegacyKeyFor(id)).delete();
   }
 }

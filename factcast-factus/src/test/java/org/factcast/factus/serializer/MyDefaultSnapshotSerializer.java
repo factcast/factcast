@@ -29,12 +29,7 @@ public class MyDefaultSnapshotSerializer implements SnapshotSerializer {
   }
 
   @Override
-  public boolean includesCompression() {
-    return false;
-  }
-
-  @Override
-  public String getId() {
-    return "MyDefault";
+  public SnapshotSerializerId id() {
+    return SnapshotSerializerId.of("MyDefault");
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2024 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.snapshot;
+package org.factcast;
 
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import lombok.NonNull;
-import lombok.SneakyThrows;
-import org.factcast.core.snap.Snapshot;
+import lombok.Getter;
+import org.factcast.factus.Handler;
 import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.serializer.ProjectionMetaData;
 
-public interface ProjectionSnapshotRepository {
-  Optional<Snapshot> findLatest(@NonNull Class<? extends SnapshotProjection> type);
+@ProjectionMetaData(revision = 1)
+public class ExampleSnapshotProjection implements SnapshotProjection {
+  @Getter String state = "new";
 
-  CompletableFuture<Void> put(SnapshotProjection projection, UUID state);
-
-  @SneakyThrows
-  default void putBlocking(SnapshotProjection projection, UUID state) {
-    put(projection, state).get();
+  @Handler
+  void accept(ExampleEvent e) {
+    state = "processed";
   }
 }

@@ -15,11 +15,12 @@
  */
 package org.factcast.core.snap.local;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.util.UUID;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
+import org.assertj.core.api.Assertions;
+import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.serializer.SnapshotSerializerId;
+import org.factcast.factus.snapshot.SnapshotData;
+import org.factcast.factus.snapshot.SnapshotIdentifier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -30,7 +31,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class InMemorySnapshotCacheTest {
   private InMemorySnapshotCache underTest;
 
-  private final SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
+  private final SnapshotIdentifier id = SnapshotIdentifier.of(SnapshotProjection.class);
+  private final SnapshotSerializerId serId = SnapshotSerializerId.of("buh");
 
   @BeforeEach
   void setUp() {
@@ -43,11 +45,10 @@ public class InMemorySnapshotCacheTest {
 
     @Test
     void happyCase() {
-      final Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
+      final SnapshotData snap = new SnapshotData("foo".getBytes(), serId, UUID.randomUUID());
+      underTest.store(id, snap);
 
-      underTest.setSnapshot(snap);
-
-      assertThat(underTest.getSnapshot(id)).isPresent().get().isEqualTo(snap);
+      Assertions.assertThat(underTest.find(id)).isPresent().get().isEqualTo(snap);
     }
   }
 
@@ -56,29 +57,13 @@ public class InMemorySnapshotCacheTest {
 
     @Test
     void happyCase() {
-      final Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
+      final SnapshotData snap = new SnapshotData("foo".getBytes(), serId, UUID.randomUUID());
 
-      underTest.setSnapshot(snap);
-      underTest.clearSnapshot(id);
+      underTest.store(id, snap);
+      Assertions.assertThat(underTest.find(id)).isNotEmpty();
 
-      assertThat(underTest.getSnapshot(id)).isEmpty();
-    }
-  }
-
-  @Nested
-  class WhenExpiring {
-
-    @Test
-    void happyCase() {
-      InMemorySnapshotProperties inMemorySnapshotProperties = new InMemorySnapshotProperties();
-      underTest =
-          new InMemorySnapshotCache(inMemorySnapshotProperties.setDeleteSnapshotStaleForDays(0));
-      final Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
-
-      underTest.setSnapshot(snap);
-      underTest.clearSnapshot(id);
-
-      assertThat(underTest.getSnapshot(id)).isEmpty();
+      underTest.remove(id);
+      Assertions.assertThat(underTest.find(id)).isEmpty();
     }
   }
 }
