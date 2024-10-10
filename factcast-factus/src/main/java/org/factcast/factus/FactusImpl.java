@@ -80,8 +80,6 @@ public class FactusImpl implements Factus {
 
   private final SnapshotRepository projectionSnapshotRepository;
 
-  private final SnapshotSerializerSelector snapFactory;
-
   private final FactusMetrics factusMetrics;
 
   private final AtomicBoolean closed = new AtomicBoolean();

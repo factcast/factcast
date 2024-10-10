@@ -65,7 +65,6 @@ public class FactusAutoConfiguration {
         eventConverter,
         new AggregateRepository(sr, snapshotSerializerSelector, factusMetrics),
         new SnapshotRepository(sr, snapshotSerializerSelector, factusMetrics),
-        snapshotSerializerSelector,
         factusMetrics);
   }
 
