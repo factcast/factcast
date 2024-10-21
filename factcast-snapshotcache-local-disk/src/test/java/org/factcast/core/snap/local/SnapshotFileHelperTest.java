@@ -24,6 +24,8 @@ import java.io.File;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
+import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.snapshot.SnapshotIdentifier;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -88,9 +90,13 @@ class SnapshotFileHelperTest {
     @Test
     void checksRoot() {
       File missingRoot = new File("not-here");
+
+      class myfilename implements SnapshotProjection {}
+
       assertThatThrownBy(
               () -> {
-                SnapshotFileHelper.createFile(missingRoot, "myfilename");
+                SnapshotFileHelper.createFile(
+                    missingRoot, new SnapshotIdentifier(myfilename.class, null));
               })
           .isInstanceOf(IllegalArgumentException.class);
     }
@@ -98,7 +104,9 @@ class SnapshotFileHelperTest {
     @Test
     void happyPath() {
       File root = Files.createTempDir();
-      File f = SnapshotFileHelper.createFile(root, "foobarbaz");
+
+      class foobarbaz implements SnapshotProjection {}
+      File f = SnapshotFileHelper.createFile(root, new SnapshotIdentifier(foobarbaz.class, null));
       File p = f.getParentFile();
       p.mkdirs();
       Assertions.assertThat(p).exists().isDirectory();
@@ -123,10 +131,15 @@ class SnapshotFileHelperTest {
       // some bytes for directory itself
       Assertions.assertThat(SnapshotFileHelper.getTotalSize(root)).isZero();
 
-      File f = SnapshotFileHelper.createFile(root, "foobarbaz");
+      class foobarbaz implements SnapshotProjection {}
+
+      File f = SnapshotFileHelper.createFile(root, new SnapshotIdentifier(foobarbaz.class, null));
       f.getParentFile().mkdirs();
       Files.write(new byte[1024], f);
-      File f2 = SnapshotFileHelper.createFile(root, "foobarbaz2");
+
+      class foobarbaz2 implements SnapshotProjection {}
+
+      File f2 = SnapshotFileHelper.createFile(root, new SnapshotIdentifier(foobarbaz2.class, null));
       f2.getParentFile().mkdirs();
       Files.write(new byte[2048], f2);
 
