@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2024 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,14 @@
  */
 package org.factcast.factus.snapshot;
 
-import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
+import javax.annotation.Nullable;
 import lombok.NonNull;
-import lombok.SneakyThrows;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.factus.projection.Aggregate;
+import lombok.Value;
+import org.factcast.factus.projection.SnapshotProjection;
 
-public interface AggregateSnapshotRepository {
-  Optional<Snapshot> findLatest(
-      @NonNull Class<? extends Aggregate> type, @NonNull UUID aggregateId);
-
-  CompletableFuture<Void> put(Aggregate aggregate, UUID state);
-
-  @SneakyThrows
-  default void putBlocking(Aggregate aggregate, UUID state) {
-    put(aggregate, state).get();
-  }
+@Value(staticConstructor = "of")
+public class ProjectionAndState<T extends SnapshotProjection> {
+  @NonNull T projectionInstance;
+  @Nullable UUID lastFactIdApplied;
 }

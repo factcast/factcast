@@ -18,8 +18,6 @@ package org.factcast.factus.snapshot;
 import java.util.Optional;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
 
 /**
  * only usable if you do not use snapshots at all. Most clients will need to configure a
@@ -34,17 +32,17 @@ public class NoSnapshotCache implements SnapshotCache {
   }
 
   @Override
-  public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
+  public @NonNull Optional<SnapshotData> find(@NonNull SnapshotIdentifier id) {
     return Optional.empty();
   }
 
   @Override
-  public void setSnapshot(@NonNull Snapshot snapshot) {
+  public void store(@NonNull SnapshotIdentifier id, @NonNull SnapshotData snapshot) {
     fail();
   }
 
   @Override
-  public void clearSnapshot(@NonNull SnapshotId id) {
+  public void remove(@NonNull SnapshotIdentifier id) {
     fail();
   }
 

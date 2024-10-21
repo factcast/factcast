@@ -16,7 +16,7 @@
 package org.factcast.spring.boot.autoconfigure.factus;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import java.util.*;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
@@ -63,9 +63,8 @@ public class FactusAutoConfiguration {
         fc,
         projectorFactory,
         eventConverter,
-        new AggregateSnapshotRepositoryImpl(sr, snapshotSerializerSelector, factusMetrics),
-        new ProjectionSnapshotRepositoryImpl(sr, snapshotSerializerSelector, factusMetrics),
-        snapshotSerializerSelector,
+        new AggregateRepository(sr, snapshotSerializerSelector, factusMetrics),
+        new SnapshotRepository(sr, snapshotSerializerSelector, factusMetrics),
         factusMetrics);
   }
 

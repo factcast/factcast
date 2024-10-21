@@ -25,6 +25,7 @@ import lombok.Value;
  * it with this package.
  */
 @Value
+@Deprecated
 public class Snapshot implements Serializable {
   @NonNull SnapshotId id;
 

@@ -15,14 +15,16 @@
  */
 package org.factcast.factus.serializer.binary;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.UUID;
 import org.factcast.factus.projection.SnapshotProjection;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -31,6 +33,12 @@ class BinaryJacksonSnapshotSerializerTest {
   private final BinaryJacksonSnapshotSerializer underTest =
       new BinaryJacksonSnapshotSerializer(
           BinaryJacksonSnapshotSerializerCustomizer.defaultCustomizer());
+
+  @Test
+  void hasId() {
+    org.assertj.core.api.Assertions.assertThat(underTest.id().name())
+        .isEqualTo("BinaryJacksonSnapshotSerializer");
+  }
 
   @Nested
   class WhenSerializing {
