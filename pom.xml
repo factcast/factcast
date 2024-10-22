@@ -116,7 +116,7 @@
     <aws-sdk.version>2.28.27</aws-sdk.version>
     <graaljs.version>24.0.1</graaljs.version>
     <shedlock.version>5.16.0</shedlock.version>
-    <byte-buddy.version>1.15.3</byte-buddy.version>
+    <byte-buddy.version>1.15.5</byte-buddy.version>
     <skipUnitTests>false</skipUnitTests>
     <postgres.version>15</postgres.version>
   </properties>
