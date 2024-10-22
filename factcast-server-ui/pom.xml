@@ -6,13 +6,13 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.7.10-SNAPSHOT</version>
+    <version>0.8.1-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-server-ui</artifactId>
   <properties>
     <java.version>17</java.version>
-    <vaadin.version>24.3.13</vaadin.version>
+    <vaadin.version>24.4.12</vaadin.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -74,7 +74,7 @@
     <dependency>
       <groupId>org.vaadin.olli</groupId>
       <artifactId>file-download-wrapper</artifactId>
-      <version>7.0.0</version>
+      <version>7.1.0</version>
     </dependency>
 
     <dependency>
@@ -97,11 +97,6 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-security</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.vaadin.componentfactory</groupId>
-      <artifactId>lookup-field-flow</artifactId>
-      <version>24.0.3</version>
     </dependency>
     <dependency>
       <groupId>com.vaadin.componentfactory</groupId>
@@ -137,7 +132,7 @@
     <dependency>
       <groupId>com.microsoft.playwright</groupId>
       <artifactId>playwright</artifactId>
-      <version>1.47.0</version>
+      <version>1.48.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -167,7 +162,6 @@
       <url>https://maven.vaadin.com/vaadin-addons</url>
     </repository>
   </repositories>
-
   <build>
     <plugins>
       <plugin>
