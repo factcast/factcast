@@ -100,7 +100,22 @@
       </dependency>
       <dependency>
         <groupId>org.factcast</groupId>
+        <artifactId>factcast-factus-dynamo</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
         <artifactId>factcast-factus-bin-snapser</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-snapshotcache-local-memory</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-snapshotcache-local-disk</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -178,6 +193,7 @@
         <artifactId>commons-compress</artifactId>
         <version>1.27.1</version>
       </dependency>
+
       <dependency>
         <groupId>com.fasterxml.jackson</groupId>
         <artifactId>jackson-bom</artifactId>

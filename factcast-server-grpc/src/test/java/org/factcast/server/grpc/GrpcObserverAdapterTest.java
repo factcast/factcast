@@ -22,13 +22,13 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import io.grpc.stub.StreamObserver;
-import java.util.Arrays;
-import java.util.OptionalInt;
 import java.util.UUID;
 import java.util.function.Function;
 import lombok.NonNull;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
+import org.factcast.core.TestFact;
 import org.factcast.core.TestFactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.observer.FastForwardTarget;
@@ -44,7 +44,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @SuppressWarnings({"rawtypes", "unchecked", "deprecation"})
 @ExtendWith(MockitoExtension.class)
-public class GrpcObserverAdapterTest {
+class GrpcObserverAdapterTest {
 
   @Mock private StreamObserver<MSG_Notification> observer;
 
@@ -92,7 +92,6 @@ public class GrpcObserverAdapterTest {
 
     GrpcRequestMetadata mockGrpcRequestMetaData = mock(GrpcRequestMetadata.class);
     when(mockGrpcRequestMetaData.supportsFastForward()).thenReturn(true);
-    when(mockGrpcRequestMetaData.catchupBatch()).thenReturn(OptionalInt.of(1));
 
     FastForwardTarget ffwd = FastForwardTarget.of(null, 112);
 
@@ -111,7 +110,6 @@ public class GrpcObserverAdapterTest {
 
     GrpcRequestMetadata mockGrpcRequestMetaData = mock(GrpcRequestMetadata.class);
     when(mockGrpcRequestMetaData.supportsFastForward()).thenReturn(true);
-    when(mockGrpcRequestMetaData.catchupBatch()).thenReturn(OptionalInt.of(1));
 
     FastForwardTarget ffwd = FastForwardTarget.of(new UUID(1, 1), 0);
 
@@ -130,7 +128,6 @@ public class GrpcObserverAdapterTest {
 
     GrpcRequestMetadata mockGrpcRequestMetaData = mock(GrpcRequestMetadata.class);
     when(mockGrpcRequestMetaData.supportsFastForward()).thenReturn(false);
-    when(mockGrpcRequestMetaData.catchupBatch()).thenReturn(OptionalInt.of(1));
 
     FastForwardTarget ffwd = FastForwardTarget.of(new UUID(10, 10), 112);
 
@@ -162,9 +159,11 @@ public class GrpcObserverAdapterTest {
     verify(observer, never()).onNext(any());
     Fact f = Fact.builder().ns("test").build("{}");
     uut.onNext(f);
+    uut.flush();
     verify(observer).onNext(any());
-    assertEquals(MSG_Notification.Type.Fact, msg.getValue().getType());
-    assertEquals(f.id(), conv.fromProto(msg.getValue().getFact()).id());
+    MSG_Notification notification = msg.getValue();
+    assertEquals(MSG_Notification.Type.Facts, notification.getType());
+    assertEquals(f, conv.fromProto(notification.getFacts()).get(0));
   }
 
   @Test
@@ -223,20 +222,48 @@ public class GrpcObserverAdapterTest {
     // should no
   }
 
-  public static void expectNPE(Runnable r) {
-    expect(r, NullPointerException.class, IllegalArgumentException.class);
+  @Test
+  void testFlushOnComplete() {
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, serverExceptionLogger);
+    Fact f1 = new TestFact();
+    Fact f2 = new TestFact();
+    Fact f3 = new TestFact();
+    uut.onNext(f1);
+    uut.onNext(f2);
+    uut.onNext(f3);
+    uut.onComplete();
+
+    ArgumentCaptor<MSG_Notification> cap = ArgumentCaptor.forClass(MSG_Notification.class);
+    verify(observer, times(2)).onNext(cap.capture());
+
+    MSG_Notification msg1 = cap.getAllValues().get(0);
+    MSG_Notification msg2 = cap.getAllValues().get(1);
+    Assertions.assertThat(msg1.getFacts().getFactCount()).isEqualTo(3);
+    Assertions.assertThat(msg2.getType()).isEqualTo(Type.Complete);
+
+    verify(observer).onCompleted();
   }
 
-  public static void expect(Runnable r, Class<? extends Throwable>... ex) {
-    try {
-      r.run();
-      fail("expected " + Arrays.toString(ex));
-    } catch (Throwable actual) {
+  @Test
+  void testFlushDelegation() {
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, serverExceptionLogger);
+    Fact f1 = new TestFact();
+    Fact f2 = new TestFact();
+    Fact f3 = new TestFact();
+    uut.onNext(f1);
+    uut.onNext(f2);
+    uut.flush();
+    uut.onNext(f3);
+    uut.flush();
 
-      var matches = Arrays.stream(ex).anyMatch(e -> e.isInstance(actual));
-      if (!matches) {
-        fail("Wrong exception, expected " + Arrays.toString(ex) + " but got " + actual);
-      }
-    }
+    ArgumentCaptor<MSG_Notification> cap = ArgumentCaptor.forClass(MSG_Notification.class);
+    verify(observer, times(2)).onNext(cap.capture());
+
+    MSG_Notification msg1 = cap.getAllValues().get(0);
+    MSG_Notification msg2 = cap.getAllValues().get(1);
+    Assertions.assertThat(msg1.getFacts().getFactCount()).isEqualTo(2);
+    Assertions.assertThat(msg2.getFacts().getFactCount()).isOne();
+
+    verifyNoMoreInteractions(observer);
   }
 }

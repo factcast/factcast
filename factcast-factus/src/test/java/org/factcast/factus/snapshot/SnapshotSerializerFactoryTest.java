@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.assertj.core.api.Assertions;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.SnapshotSerializer;
+import org.factcast.factus.serializer.SnapshotSerializerId;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -77,13 +78,8 @@ class SnapshotSerializerFactoryTest {
     }
 
     @Override
-    public boolean includesCompression() {
-      return false;
-    }
-
-    @Override
-    public String getId() {
-      return null;
+    public SnapshotSerializerId id() {
+      return SnapshotSerializerId.of("test");
     }
   }
 
@@ -99,13 +95,8 @@ class SnapshotSerializerFactoryTest {
     }
 
     @Override
-    public boolean includesCompression() {
-      return false;
-    }
-
-    @Override
-    public String getId() {
-      return null;
+    public SnapshotSerializerId id() {
+      return SnapshotSerializerId.of("test");
     }
   }
 

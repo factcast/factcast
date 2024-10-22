@@ -4,6 +4,21 @@ type = "docs"
 weight = 100015
 +++
 
+## Upgrading to 0.8.0
+
+Version 0.8.0 introduces changes to snapshot serialization, impacting the management of Redisson snapshots.
+
+### Redisson Snapshots
+
+If you are using Redisson snapshots, please note that these snapshots are now stored under different keys in Redis using
+a simpler
+[ByteArrayCodec](https://github.com/redisson/redisson/blob/master/redisson/src/main/java/org/redisson/client/codec/ByteArrayCodec.java) codec.
+
+The migration to new snapshots happens automatically. Old snapshots will remain in Redis for the duration specified by the `factcast.redis.deleteSnapshotStaleForDays` property (default: 90 days), even though they are no longer read. This has two implications:
+
+1. You can roll back to the previous version of FactCast without losing any snapshots for a certain number of days.
+2. During this period, Redis will store both old and new snapshots, consuming more memory. You can manually delete the old snapshots if you are certain they are no longer needed.
+
 ## Upgrading to 0.4.1
 
 _This only applies if you used 0.4.0 on you data before._

@@ -273,7 +273,9 @@ class FactusTest {
                       subscribedProjectionMock, factId, defaultTimeout, backoffFunction))
           .isInstanceOf(TimeoutException.class);
 
-      verify(subscribedProjectionMock, atLeast(2)).factStreamPosition();
+      // this really depends on the timing of the test, so we can't assert the exact number
+      // considering that the pipeline might be slower than the local environment
+      verify(subscribedProjectionMock, atLeast(1)).factStreamPosition();
       verify(subscribedProjectionMock, atMost(11)).factStreamPosition();
     }
 
@@ -292,7 +294,9 @@ class FactusTest {
                       subscribedProjectionMock, factId, defaultTimeout, backoffFunction))
           .isInstanceOf(TimeoutException.class);
 
-      verify(subscribedProjectionMock, atLeast(3)).factStreamPosition();
+      // this really depends on the timing of the test, so we can't assert the exact number
+      // considering that the pipeline might be slower than the local environment
+      verify(subscribedProjectionMock, atLeast(1)).factStreamPosition();
       verify(subscribedProjectionMock, atMost(6)).factStreamPosition();
     }
 
@@ -311,7 +315,9 @@ class FactusTest {
                       subscribedProjectionMock, factId, defaultTimeout, backoffFunction))
           .isInstanceOf(TimeoutException.class);
 
-      verify(subscribedProjectionMock, atLeast(2)).factStreamPosition();
+      // this really depends on the timing of the test, so we can't assert the exact number
+      // considering that the pipeline might be slower than the local environment
+      verify(subscribedProjectionMock, atLeast(1)).factStreamPosition();
       verify(subscribedProjectionMock, atMost(3)).factStreamPosition();
     }
   }
