@@ -17,8 +17,6 @@ package org.factcast.store.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.*;
 
 import ch.qos.logback.classic.Level;
@@ -28,9 +26,11 @@ import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.store.internal.filter.FactFilter;
+import org.factcast.store.internal.pipeline.ServerPipeline;
+import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.junit.jupiter.api.Nested;
@@ -68,12 +68,20 @@ class PgSynchronizedQueryTest {
 
   @Mock PgLatestSerialFetcher fetcher;
   @Mock CurrentStatementHolder statementHolder;
+  @Mock ServerPipeline pipeline;
 
   @Test
   void testRunWithIndex() {
     uut =
         new PgSynchronizedQuery(
-            jdbcTemplate, sql, setter, rowHandler, serialToContinueFrom, fetcher, statementHolder);
+            pipeline,
+            jdbcTemplate,
+            sql,
+            setter,
+            () -> true,
+            serialToContinueFrom,
+            fetcher,
+            statementHolder);
     uut.run(true);
     verify(jdbcTemplate, never()).execute(startsWith("SET LOCAL enable_bitmapscan"));
   }
@@ -82,7 +90,14 @@ class PgSynchronizedQueryTest {
   void testRunWithoutIndex() {
     uut =
         new PgSynchronizedQuery(
-            jdbcTemplate, sql, setter, rowHandler, serialToContinueFrom, fetcher, statementHolder);
+            pipeline,
+            jdbcTemplate,
+            sql,
+            setter,
+            () -> true,
+            serialToContinueFrom,
+            fetcher,
+            statementHolder);
     uut.run(false);
     verify(jdbcTemplate).execute(startsWith("SET LOCAL enable_bitmapscan"));
   }
@@ -92,14 +107,21 @@ class PgSynchronizedQueryTest {
   void test_exception_during_query() {
     uut =
         new PgSynchronizedQuery(
-            jdbcTemplate, sql, setter, rowHandler, serialToContinueFrom, fetcher, statementHolder);
+            pipeline,
+            jdbcTemplate,
+            sql,
+            setter,
+            () -> true,
+            serialToContinueFrom,
+            fetcher,
+            statementHolder);
     when(statementHolder.wasCanceled()).thenReturn(false);
     DataAccessResourceFailureException exc = new DataAccessResourceFailureException("oh my");
     doThrow(exc)
         .when(jdbcTemplate)
         .query(anyString(), any(PreparedStatementSetter.class), any(RowCallbackHandler.class));
 
-    assertThatThrownBy(
+    Assertions.assertThatThrownBy(
             () -> {
               uut.run(false);
             })
@@ -116,7 +138,14 @@ class PgSynchronizedQueryTest {
 
     uut =
         new PgSynchronizedQuery(
-            jdbcTemplate, sql, setter, rowHandler, serialToContinueFrom, fetcher, statementHolder);
+            pipeline,
+            jdbcTemplate,
+            sql,
+            setter,
+            () -> true,
+            serialToContinueFrom,
+            fetcher,
+            statementHolder);
     when(statementHolder.wasCanceled()).thenReturn(true);
     doThrow(DataAccessResourceFailureException.class)
         .when(jdbcTemplate)
@@ -143,8 +172,7 @@ class PgSynchronizedQueryTest {
     @Mock AtomicLong serial;
 
     @Mock SubscriptionRequestTO request;
-    @Mock FactFilter filter;
-    @Mock FactInterceptor interceptor;
+    @Mock ServerPipeline pipe;
 
     @Mock CurrentStatementHolder statementHolder;
     @InjectMocks private PgSynchronizedQuery.FactRowCallbackHandler uut;
@@ -156,7 +184,7 @@ class PgSynchronizedQueryTest {
 
       uut.processRow(rs);
 
-      verifyNoInteractions(rs, filter, serial, request);
+      verifyNoInteractions(rs, serial, request);
     }
 
     @Test
@@ -167,7 +195,7 @@ class PgSynchronizedQueryTest {
 
       assertThatThrownBy(() -> uut.processRow(rs)).isInstanceOf(IllegalStateException.class);
 
-      verifyNoInteractions(filter, serial, request);
+      verifyNoInteractions(serial, request);
     }
 
     @Test
@@ -208,7 +236,7 @@ class PgSynchronizedQueryTest {
       when(rs.getString(anyString())).thenThrow(mockException);
 
       uut.processRow(rs);
-      verify(subscription).notifyError(mockException);
+      verify(pipe).process(Signal.of(mockException));
     }
 
     @Test
@@ -221,7 +249,7 @@ class PgSynchronizedQueryTest {
       when(rs.getString(anyString())).thenThrow(RuntimeException.class);
 
       uut.processRow(rs);
-      verify(subscription).notifyError(any(RuntimeException.class));
+      verify(pipe).process(any(Signal.ErrorSignal.class));
     }
 
     @Test
@@ -230,6 +258,7 @@ class PgSynchronizedQueryTest {
       when(isConnectedSupplier.get()).thenReturn(true);
 
       when(rs.isClosed()).thenReturn(false);
+
       when(rs.getString(PgConstants.ALIAS_ID)).thenReturn("550e8400-e29b-11d4-a716-446655440000");
       when(rs.getString(PgConstants.ALIAS_NS)).thenReturn("foo");
       when(rs.getString(PgConstants.COLUMN_HEADER)).thenReturn("{}");
@@ -238,7 +267,7 @@ class PgSynchronizedQueryTest {
 
       uut.processRow(rs);
 
-      verify(interceptor, times(1)).accept(any());
+      verify(pipe, times(1)).process(any(Signal.FactSignal.class));
       verify(serial).set(10L);
     }
 
@@ -248,6 +277,7 @@ class PgSynchronizedQueryTest {
       when(isConnectedSupplier.get()).thenReturn(true);
 
       when(rs.isClosed()).thenReturn(false);
+
       when(rs.getString(PgConstants.ALIAS_ID)).thenReturn("550e8400-e29b-11d4-a716-446655440000");
       when(rs.getString(PgConstants.ALIAS_NS)).thenReturn("foo");
       when(rs.getString(PgConstants.COLUMN_HEADER)).thenReturn("{}");
@@ -255,12 +285,12 @@ class PgSynchronizedQueryTest {
       when(rs.getLong(PgConstants.COLUMN_SER)).thenReturn(10L);
 
       var exception = new IllegalArgumentException();
-      doThrow(exception).when(interceptor).accept(any());
+      doThrow(exception).when(pipe).process(any(Signal.FactSignal.class));
 
       uut.processRow(rs);
 
-      verify(interceptor).accept(any());
-      verify(subscription).notifyError(exception);
+      verify(pipe).process(any(Signal.FactSignal.class));
+      verify(pipe).process(Signal.of(exception));
       verify(rs).close();
       verify(serial, never()).set(10L);
     }
