@@ -2,4 +2,6 @@
 
 example of how to use factcast-client-grpc with a dynamoDb projection
 
-run local dynamo with `docker run --rm -p 8000:8000 amazon/dynamodb-local`
+1. run local dynamo with `docker run --rm -p 8000:8000 amazon/dynamodb-local`
+2. runt example server from `factcast-example-server`
+3. start `ExampleDynamoClient`
