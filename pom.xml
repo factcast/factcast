@@ -95,8 +95,8 @@
     <nexus-staging-maven-plugin.version>1.7.0</nexus-staging-maven-plugin.version>
     <assertj.version>3.26.3</assertj.version>
     <jackson.version>2.17.1</jackson.version>
-    <mockito.version>5.14.1</mockito.version>
-    <junit-jupiter.version>5.11.2</junit-jupiter.version>
+    <mockito.version>5.14.2</mockito.version>
+    <junit-jupiter.version>5.11.3</junit-jupiter.version>
     <lombok.version>1.18.34</lombok.version>
     <slf4j-api.version>2.0.16</slf4j-api.version>
     <!--suppress UnresolvedMavenProperty -->
@@ -111,7 +111,7 @@
     <micronaut.version>4.6.3</micronaut.version>
     <kotlin.version>2.0.20</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
-    <mockk.version>1.13.12</mockk.version>
+    <mockk.version>1.13.13</mockk.version>
     <redisson.version>3.35.0</redisson.version>
     <aws-sdk.version>2.24.10</aws-sdk.version>
     <graaljs.version>24.0.1</graaljs.version>
@@ -131,7 +131,7 @@
       <dependency>
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
-        <version>5.11.2</version>
+        <version>5.11.3</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
