@@ -1,7 +1,7 @@
 ---
 title: "Operations Tips"
 type: docs
-weight: 155
+weight: 157
 description: Tips to improve performances or to cover some corner use cases.
 ---
 
@@ -14,7 +14,8 @@ A Liquibase changeset takes care of creating and populating the `date2serial` ta
 store contains more than **10 million events**. This is to prevent the migration from taking too long on larger setups.
 
 As mentioned in the changeset comments, it is suggested to run the changeset manually in such cases. The changeset can
-be found in the `factcast-store` module under `src/main/resources/db/changelog/factcast/issue2479/date2serial_for_existing_events.sql`.
+be found in the `factcast-store` module under
+`src/main/resources/db/changelog/factcast/issue2479/date2serial_for_existing_events.sql`.
 
 ## Optimize GIN indexes updates
 
@@ -45,11 +46,11 @@ a more efficient execution of the process:
 
 ```properties
 # disable autovacuum schedule based on scale factor
-autovacuum_vacuum_scale_factor: 0
-autovacuum_analyze_scale_factor: 0
+autovacuum_vacuum_scale_factor:0
+autovacuum_analyze_scale_factor:0
 # set thresholds based on approximate number of facts inserted
-autovacuum_vacuum_threshold: <number of new facts each month>
-autovacuum_analyze_threshold: <number of new facts each week>
+autovacuum_vacuum_threshold:<number of new facts each month>
+autovacuum_analyze_threshold:<number of new facts each week>
 ```
 
 ## AWS RDS Configuration
@@ -60,11 +61,11 @@ The following settings are recommended for FactCast instances running on product
 
 ```properties
 # hands over concurrency considerations to kernel
-effective_io_concurrency: 0
+effective_io_concurrency:0
 # tune accordingly, consider roughly 100mb running on a db.r5.2xlarge RDS instance
-work_mem: 100000
+work_mem:100000
 # the followings might vary, depending on your non-functional requirements
-log_statement: 'none'
-log_min_duration_statement: 500
-default_statistics_target: 100
+log_statement:'none'
+log_min_duration_statement:500
+default_statistics_target:100
 ```
