@@ -15,15 +15,16 @@
  */
 package org.factcast.itests.factus.client;
 
-import static java.util.UUID.*;
+import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.*;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotCache;
-import org.factcast.core.snap.SnapshotId;
+import org.factcast.factus.serializer.SnapshotSerializerId;
+import org.factcast.factus.snapshot.SnapshotCache;
+import org.factcast.factus.snapshot.SnapshotData;
+import org.factcast.factus.snapshot.SnapshotIdentifier;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
 
@@ -34,25 +35,28 @@ public abstract class SnapshotCacheTest extends AbstractFactCastIntegrationTest 
   final SnapshotCache repository;
 
   @Test
-  public void simpleSnapshotRoundtrip() throws Exception {
-    SnapshotId id = SnapshotId.of("test", randomUUID());
+  public void simpleSnapshotRoundtrip() {
+    SnapshotIdentifier id =
+        SnapshotIdentifier.of(org.factcast.itests.factus.proj.UserV1.class, randomUUID());
     // initially empty
-    assertThat(repository.getSnapshot(id)).isEmpty();
+    assertThat(repository.find(id)).isEmpty();
 
     // set and retrieve
-    repository.setSnapshot(new Snapshot(id, randomUUID(), "foo".getBytes(), false));
-    Optional<Snapshot> snapshot = repository.getSnapshot(id);
+    repository.store(
+        id, new SnapshotData("foo".getBytes(), SnapshotSerializerId.of("narf"), randomUUID()));
+    Optional<SnapshotData> snapshot = repository.find(id);
     assertThat(snapshot).isNotEmpty();
-    assertThat(snapshot.get().bytes()).isEqualTo("foo".getBytes());
+    assertThat(snapshot.get().serializedProjection()).isEqualTo("foo".getBytes());
 
     // overwrite and retrieve
-    repository.setSnapshot(new Snapshot(id, randomUUID(), "bar".getBytes(), false));
-    snapshot = repository.getSnapshot(id);
+    repository.store(
+        id, new SnapshotData("bar".getBytes(), SnapshotSerializerId.of("narf"), randomUUID()));
+    snapshot = repository.find(id);
     assertThat(snapshot).isNotEmpty();
-    assertThat(snapshot.get().bytes()).isEqualTo("bar".getBytes());
+    assertThat(snapshot.get().serializedProjection()).isEqualTo("bar".getBytes());
 
     // clear and make sure, it is cleared
-    repository.clearSnapshot(id);
-    assertThat(repository.getSnapshot(id)).isEmpty();
+    repository.remove(id);
+    assertThat(repository.find(id)).isEmpty();
   }
 }

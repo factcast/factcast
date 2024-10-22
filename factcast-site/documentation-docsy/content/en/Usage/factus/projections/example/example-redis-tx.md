@@ -22,13 +22,13 @@ The `@RedisTransactional` annotation provides various configuration options:
 
 ## Constructing
 
-Since we decided to use a managed projection, we extended the `AbstractRedisManagedProjection` class.
+Since we decided to use a managed projection, we extended the `AbstractRedisTxManagedProjection` class.
 To configure the connection to Redis via Redisson, we injected `RedissonClient` in the constructor, calling the parent constructor.
 
 ```java
-@ProjectionMetaData(serial = 1)
+@ProjectionMetaData(revision = 1)
 @RedisTransactional
-public class UserNames extends AbstractRedisManagedProjection {
+public class UserNames extends AbstractRedisTxManagedProjection {
 
   public UserNames(RedissonClient redisson) {
     super(redisson);
@@ -53,7 +53,7 @@ Let's have a closer look at the handler for the `UserCreated` event:
 
 ```java
 @Handler
-void apply(UserCreated e,RTransaction tx){
+void apply(UserCreated e, RTransaction tx){
         Map<UUID, String> userNames=tx.getMap(getRedisKey());
         userNames.put(e.getAggregateId(),e.getUserName());
 }
@@ -73,8 +73,8 @@ The data structures provided by Redisson all require a unique identifier which i
 automatically generated name, assembled from the class name of the projection and the serial number configured with
 the `@ProjectionMetaData`.
 
-Additionally, an `AbstractRedisManagedProjection` or a `AbstractRedisSubscribedProjection` maintain the following keys
-in Redis:
+Additionally, an `AbstractRedisManagedProjection` or a `AbstractRedisSubscribedProjection`, as well as their transactional
+(`Tx`) counterparts, maintain the following keys in Redis:
 
 - `getRedisKey() + "_state_tracking"` - contains the UUID of the last position of the Fact stream
 - `getRedisKey() + "_lock"` - shared lock that needs to be acquired to update the projection.
@@ -88,10 +88,10 @@ also to a standard Java `Map`:
 
 ```java
 // 1) use specific Redisson type
-RMap<UUID, String> =tx.getMap(getRedisKey());
+RMap<UUID, String> = tx.getMap(getRedisKey());
 
 // 2) use Java Collections type
-        Map<UUID, String> =tx.getMap(getRedisKey());
+        Map<UUID, String> = tx.getMap(getRedisKey());
 ```
 
 There are good reasons for either variant, `1)` and `2)`:
@@ -105,9 +105,9 @@ There are good reasons for either variant, `1)` and `2)`:
 
 ```java
 
-@ProjectionMetaData(serial = 1)
+@ProjectionMetaData(revision = 1)
 @RedisTransactional
-public class UserNames extends AbstractRedisManagedProjection {
+public class UserNames extends AbstractRedisTxManagedProjection {
 
   private final Map<UUID, String> userNames;
 

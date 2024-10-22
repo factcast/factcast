@@ -17,24 +17,20 @@ package org.factcast.spring.boot.autoconfigure.factus;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import java.util.Set;
-import lombok.Generated;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.FactCast;
 import org.factcast.core.event.EventConverter;
-import org.factcast.core.snap.SnapshotCache;
 import org.factcast.factus.Factus;
 import org.factcast.factus.FactusImpl;
 import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.metrics.FactusMetricsImpl;
+import org.factcast.factus.projection.parameter.HandlerParameterContributors;
 import org.factcast.factus.projector.DefaultProjectorFactory;
 import org.factcast.factus.projector.ProjectorFactory;
 import org.factcast.factus.serializer.DefaultSnapshotSerializer;
 import org.factcast.factus.serializer.SnapshotSerializer;
-import org.factcast.factus.snapshot.AggregateSnapshotRepositoryImpl;
-import org.factcast.factus.snapshot.ProjectionSnapshotRepositoryImpl;
-import org.factcast.factus.snapshot.SnapshotSerializerSelector;
-import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
+import org.factcast.factus.snapshot.*;
 import org.factcast.factus.utils.FactusDependency;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
@@ -47,7 +43,6 @@ import org.springframework.core.Ordered;
 @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
 @AutoConfiguration
 @ConditionalOnClass(Factus.class)
-@Generated
 @Slf4j
 @AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
 public class FactusAutoConfiguration {
@@ -57,7 +52,6 @@ public class FactusAutoConfiguration {
   public Factus factus(
       FactCast fc,
       SnapshotCache sr,
-      EventSerializer deserializer,
       EventConverter eventConverter,
       SnapshotSerializerSelector snapshotSerializerSelector,
       FactusMetrics factusMetrics,
@@ -69,16 +63,15 @@ public class FactusAutoConfiguration {
         fc,
         projectorFactory,
         eventConverter,
-        new AggregateSnapshotRepositoryImpl(sr, snapshotSerializerSelector, factusMetrics),
-        new ProjectionSnapshotRepositoryImpl(sr, snapshotSerializerSelector, factusMetrics),
-        snapshotSerializerSelector,
+        new AggregateRepository(sr, snapshotSerializerSelector, factusMetrics),
+        new SnapshotRepository(sr, snapshotSerializerSelector, factusMetrics),
         factusMetrics);
   }
 
   @Bean
   @ConditionalOnMissingBean
   public ProjectorFactory projectorFactory(EventSerializer ser) {
-    return new DefaultProjectorFactory(ser);
+    return new DefaultProjectorFactory(ser, new HandlerParameterContributors(ser));
   }
 
   @Bean

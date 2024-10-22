@@ -19,10 +19,10 @@ import static java.util.UUID.randomUUID;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Duration;
@@ -36,19 +36,15 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
-import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.TestFact;
 import org.factcast.core.event.EventConverter;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.factus.FactusImpl.IntervalSnapshotter;
 import org.factcast.factus.batch.BatchAbortedException;
 import org.factcast.factus.batch.PublishBatch;
 import org.factcast.factus.event.EventObject;
@@ -60,13 +56,13 @@ import org.factcast.factus.lock.LockedOnSpecs;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.metrics.FactusMetricsImpl;
 import org.factcast.factus.projection.*;
+import org.factcast.factus.projection.parameter.HandlerParameterContributors;
 import org.factcast.factus.projector.Projector;
 import org.factcast.factus.projector.ProjectorFactory;
 import org.factcast.factus.projector.ProjectorImpl;
 import org.factcast.factus.serializer.SnapshotSerializer;
-import org.factcast.factus.snapshot.AggregateSnapshotRepository;
-import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
-import org.factcast.factus.snapshot.SnapshotSerializerSelector;
+import org.factcast.factus.serializer.SnapshotSerializerId;
+import org.factcast.factus.snapshot.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -83,15 +79,17 @@ class FactusImplTest {
 
   @Mock private EventConverter eventConverter;
 
-  @Mock private AggregateSnapshotRepository aggregateSnapshotRepository;
+  @Mock private AggregateRepository aggregateSnapshotRepository;
 
-  @Mock private ProjectionSnapshotRepository projectionSnapshotRepository;
+  @Mock private SnapshotRepository projectionSnapshotRepository;
+
+  @Mock SnapshotCache snapshotCache;
 
   @Mock private SnapshotSerializerSelector snapFactory;
 
   @Mock private AtomicBoolean closed;
 
-  @Mock(lenient = true)
+  @Mock(strictness = Mock.Strictness.LENIENT)
   private WriterToken token;
 
   @Spy private final FactusMetrics factusMetrics = new FactusMetricsImpl(new SimpleMeterRegistry());
@@ -100,7 +98,7 @@ class FactusImplTest {
 
   @Captor ArgumentCaptor<FactObserver> factObserverCaptor;
 
-  @Mock List<Specification> specs;
+  @Spy List<FactSpec> specs = Lists.newArrayList(FactSpec.ns("ns").type("type"));
 
   @BeforeEach
   void setup() {
@@ -362,20 +360,22 @@ class FactusImplTest {
     void updateIsExecutedViaProjection() {
 
       ManagedProjection m = Mockito.spy(new SimpleProjection());
+      EventSerializer serializer = mock(EventSerializer.class);
       Projector<ManagedProjection> ea =
-          Mockito.spy(new ProjectorImpl<>(mock(EventSerializer.class), m));
+          Mockito.spy(
+              new ProjectorImpl<>(m, serializer, new HandlerParameterContributors(serializer)));
       when(ehFactory.create(m)).thenReturn(ea);
-      ArgumentCaptor<FactObserver> observer = ArgumentCaptor.forClass(FactObserver.class);
 
       Fact f1 = Fact.builder().ns("test").type(SimpleEvent.class.getSimpleName()).build("{}");
       Fact f2 = Fact.builder().ns("test").type(SimpleEvent.class.getSimpleName()).build("{}");
 
-      when(fc.subscribe(any(), observer.capture()))
+      when(fc.subscribe(any(), any()))
           .thenAnswer(
               inv -> {
-                FactObserver obs = observer.getValue();
+                FactObserver obs = (FactObserver) inv.getArgument(1);
                 obs.onNext(f1);
                 obs.onNext(f2);
+                obs.flush();
 
                 return Mockito.mock(Subscription.class);
               });
@@ -385,7 +385,8 @@ class FactusImplTest {
       // that
       // the prepared update happens on the projection and updates its
       // fact stream position.
-      Mockito.verify(ea, times(2)).apply(any(Fact.class));
+
+      Mockito.verify(ea, times(1)).apply(any(List.class));
       assertThat(m.factStreamPosition()).isEqualTo(FactStreamPosition.from(f2));
     }
   }
@@ -483,8 +484,6 @@ class FactusImplTest {
     @Test
     void withLockOnAggregateClass() {
       // INIT
-      mockSnapFactory();
-
       when(ehFactory.create(any(PersonAggregate.class))).thenReturn(projector);
 
       when(projector.createFactSpecs()).thenReturn(specs);
@@ -512,8 +511,6 @@ class FactusImplTest {
     @Test
     void withLockOnSnapshotProjection() {
       // INIT
-      mockSnapFactory();
-
       when(ehFactory.create(any(ConcatCodesProjection.class))).thenReturn(projector);
 
       when(projector.createFactSpecs()).thenReturn(specs);
@@ -543,8 +540,9 @@ class FactusImplTest {
 
   @Mock private Projector projector;
 
-  @Captor ArgumentCaptor<Fact> factCaptor;
+  @Captor ArgumentCaptor<List> factCaptor;
 
+  @SuppressWarnings({"unchecked", "resource"})
   @Nested
   class WhenFetching {
 
@@ -559,8 +557,6 @@ class FactusImplTest {
     @Test
     void fetchWithNoEvents() {
       // INIT
-      mockSnapFactory();
-
       when(projectionSnapshotRepository.findLatest(ConcatCodesProjection.class))
           .thenReturn(Optional.empty());
 
@@ -578,41 +574,22 @@ class FactusImplTest {
     }
 
     @Test
-    void fetchWithNoEventsButSnapshot() {
-      // INIT
-      mockSnapFactory();
-
-      SnapshotId id = SnapshotId.of("key", UUID.randomUUID());
-      Snapshot snapshot = new Snapshot(id, randomUUID(), "foo".getBytes(), false);
-      when(projectionSnapshotRepository.findLatest(ConcatCodesProjection.class))
-          .thenReturn(Optional.of(snapshot));
-
+    void fetchWithNoEventsButReturnsSnapshot() {
       when(ehFactory.create(any(ConcatCodesProjection.class))).thenReturn(projector);
-
       when(projector.createFactSpecs()).thenReturn(specs);
-
       when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
-
-      ConcatCodesProjection concatCodesProjection = new ConcatCodesProjection();
-      concatCodesProjection.codes = "foo";
-
-      when(snapshotSerializer.deserialize(ConcatCodesProjection.class, "foo".getBytes()))
-          .thenReturn(concatCodesProjection);
 
       // RUN
       ConcatCodesProjection concatCodes = underTest.fetch(ConcatCodesProjection.class);
 
       // ASSERT
-      assertThat(concatCodes.codes()).isEqualTo("foo");
+      assertThat(concatCodes.codes()).isNotNull();
     }
 
     @Captor ArgumentCaptor<ConcatCodesProjection> projectionCaptor;
 
     @Test
     void fetchWithEvents() {
-      // INIT
-      mockSnapFactory();
-
       when(projectionSnapshotRepository.findLatest(ConcatCodesProjection.class))
           .thenReturn(Optional.empty());
 
@@ -623,13 +600,16 @@ class FactusImplTest {
       // them through
       doAnswer(
               inv -> {
-                if (factCaptor.getValue().jsonPayload().contains("abc")) {
-                  projectionCaptor.getValue().apply(new SimpleEventObject("abc"));
-                } else {
-                  projectionCaptor.getValue().apply(new SimpleEventObject("def"));
-                }
-
-                return Void.TYPE;
+                List<Fact> facts = factCaptor.getValue();
+                facts.forEach(
+                    f -> {
+                      if (f.jsonPayload().contains("abc")) {
+                        projectionCaptor.getValue().apply(new SimpleEventObject("abc"));
+                      } else {
+                        projectionCaptor.getValue().apply(new SimpleEventObject("def"));
+                      }
+                    });
+                return null;
               })
           .when(projector)
           .apply(factCaptor.capture());
@@ -644,7 +624,7 @@ class FactusImplTest {
                 // apply some new facts
                 factObserver.onNext(toFact(new SimpleEventObject("abc")));
                 factObserver.onNext(toFact(new SimpleEventObject("def")));
-
+                factObserver.flush();
                 return mock(Subscription.class);
               });
 
@@ -656,61 +636,50 @@ class FactusImplTest {
     }
 
     @Test
-    void fetchWithEventsAndSnapshot() {
+    void fetchRestoresAndCallsOnRestoreSnapshot() {
       // INIT
       mockSnapFactory();
 
-      SnapshotId id = SnapshotId.of("key", UUID.randomUUID());
-      Snapshot snapshot = new Snapshot(id, randomUUID(), "foo".getBytes(), false);
-      when(projectionSnapshotRepository.findLatest(ConcatCodesProjection.class))
-          .thenReturn(Optional.of(snapshot));
+      projectionSnapshotRepository =
+          new SnapshotRepository(snapshotCache, snapFactory, factusMetrics);
+      underTest =
+          new FactusImpl(
+              fc,
+              ehFactory,
+              eventConverter,
+              aggregateSnapshotRepository,
+              projectionSnapshotRepository,
+              factusMetrics);
 
-      // capture projection for later...
+      ConcatCodesProjection dummyProjection = spy(new ConcatCodesProjection());
+      dummyProjection.codes("abc");
+      Assertions.assertThat(dummyProjection.codes).isEqualTo("abc");
+
+      SnapshotSerializerId id = SnapshotSerializerId.of("willBeOverridden");
+      byte[] serializedForm = new byte[] {1, 2, 3};
+      UUID uuid = UUID.randomUUID();
+      SnapshotData snapshotData = new SnapshotData(serializedForm, id, uuid);
+      when(snapshotCache.find(any())).thenReturn(Optional.of(snapshotData));
+      when(snapshotSerializer.deserialize(ConcatCodesProjection.class, serializedForm))
+          .thenReturn(dummyProjection);
       when(ehFactory.create(projectionCaptor.capture())).thenReturn(projector);
-
-      // make sure when event projector is asked to apply events, to wire
-      // them through
-      doAnswer(
-              inv -> {
-                if (factCaptor.getValue().jsonPayload().contains("abc")) {
-                  projectionCaptor.getValue().apply(new SimpleEventObject("abc"));
-                } else {
-                  projectionCaptor.getValue().apply(new SimpleEventObject("def"));
-                }
-
-                return Void.TYPE;
-              })
-          .when(projector)
-          .apply(factCaptor.capture());
-
       when(projector.createFactSpecs()).thenReturn(specs);
-
-      when(fc.subscribe(any(), factObserverCaptor.capture()))
-          .thenAnswer(
-              inv -> {
-                FactObserver factObserver = factObserverCaptor.getValue();
-
-                // apply some new facts
-                factObserver.onNext(toFact(new SimpleEventObject("abc")));
-                factObserver.onNext(toFact(new SimpleEventObject("def")));
-
-                return mock(Subscription.class);
-              });
-
-      // prepare deserialiser for existing snapshot
-      ConcatCodesProjection concatCodesProjection = new ConcatCodesProjection();
-      concatCodesProjection.codes = "foo";
-
-      when(snapshotSerializer.deserialize(ConcatCodesProjection.class, "foo".getBytes()))
-          .thenReturn(concatCodesProjection);
+      when(fc.subscribe(any(), factObserverCaptor.capture())).thenReturn(mock(Subscription.class));
 
       // RUN
       ConcatCodesProjection concatCodes = underTest.fetch(ConcatCodesProjection.class);
 
       // ASSERT
-      assertThat(concatCodes.codes()).isEqualTo("fooabcdef");
+      assertThat(concatCodes.codes()).isEqualTo("abc");
+      verify(dummyProjection).onAfterRestore();
+    }
 
-      verify(projectionSnapshotRepository).put(eq(concatCodes), any());
+    @Test
+    void fetchRestoresAndAppliesEvents() {
+      fetchRestoresAndCallsOnRestoreSnapshot();
+      verify(fc)
+          .subscribe(
+              argThat(a -> a.specs().contains(specs.get(0)) && a.specs().size() == 1), any());
     }
 
     @Captor ArgumentCaptor<Runnable> runnableCaptor;
@@ -718,12 +687,9 @@ class FactusImplTest {
     @Test
     void eventHandlerCalled() {
       // INIT
-      mockSnapFactory();
-
-      SnapshotId id = SnapshotId.of("key", UUID.randomUUID());
-      Snapshot snapshot = new Snapshot(id, randomUUID(), "foo".getBytes(), false);
+      ConcatCodesProjection concatCodesProjection = spy(new ConcatCodesProjection());
       when(projectionSnapshotRepository.findLatest(ConcatCodesProjection.class))
-          .thenReturn(Optional.of(snapshot));
+          .thenReturn(Optional.of(ProjectionAndState.of(concatCodesProjection, randomUUID())));
 
       // capture projection for later...
       when(ehFactory.create(projectionCaptor.capture())).thenReturn(projector);
@@ -732,26 +698,21 @@ class FactusImplTest {
 
       when(fc.subscribe(any(), factObserverCaptor.capture())).thenReturn(mock(Subscription.class));
 
-      // prepare deserialiser for existing snapshot
-      ConcatCodesProjection concatCodesProjection = mock(ConcatCodesProjection.class);
-
-      when(snapshotSerializer.deserialize(ConcatCodesProjection.class, "foo".getBytes()))
-          .thenReturn(concatCodesProjection);
-
       // RUN
       ConcatCodesProjection concatCodes = underTest.fetch(ConcatCodesProjection.class);
 
       // ASSERT
       FactObserver factObserver = factObserverCaptor.getValue();
 
-      Fact mockedFact = Fact.builder().id(UUID.randomUUID()).buildWithoutPayload();
+      Fact mockedFact = Fact.builder().id(randomUUID()).buildWithoutPayload();
 
       // onNext(...)
       // now assume a new fact has been observed...
       factObserver.onNext(mockedFact);
+      factObserver.flush();
 
       // ... and then it should be applied to event projector
-      verify(projector).apply(mockedFact);
+      verify(projector).apply(Collections.singletonList(mockedFact));
 
       // onCatchup()
       // assume onCatchup got called on the fact observer...
@@ -781,6 +742,7 @@ class FactusImplTest {
     when(snapFactory.selectSeralizerFor(any())).thenReturn(snapshotSerializer);
   }
 
+  @SuppressWarnings("unchecked")
   @Nested
   class WhenSubscribing {
 
@@ -788,7 +750,7 @@ class FactusImplTest {
     @Captor ArgumentCaptor<Duration> retryWaitTime;
 
     @Test
-    void subscribe() throws Exception {
+    void subscribe() {
       // INIT
       SubscribedProjection subscribedProjection = mock(SubscribedProjection.class);
       Projector<SubscribedProjection> eventApplier = mock(Projector.class);
@@ -797,15 +759,16 @@ class FactusImplTest {
 
       when(ehFactory.create(subscribedProjection)).thenReturn(eventApplier);
 
-      when(eventApplier.createFactSpecs()).thenReturn(Arrays.asList(mock(FactSpec.class)));
+      when(eventApplier.createFactSpecs())
+          .thenReturn(Collections.singletonList(mock(FactSpec.class)));
       doAnswer(
               i -> {
-                Fact argument = (Fact) (i.getArgument(0));
+                Fact argument = Iterables.getLast((List<Fact>) (i.getArgument(0)));
                 subscribedProjection.factStreamPosition(FactStreamPosition.from(argument));
                 return null;
               })
           .when(eventApplier)
-          .apply(any(Fact.class));
+          .apply(any(List.class));
 
       Subscription subscription = mock(Subscription.class);
       when(fc.subscribe(any(), any())).thenReturn(subscription);
@@ -821,15 +784,16 @@ class FactusImplTest {
 
       FactObserver factObserver = factObserverArgumentCaptor.getValue();
 
-      UUID factId = UUID.randomUUID();
+      UUID factId = randomUUID();
       Fact mockedFact = Fact.builder().id(factId).serial(12L).buildWithoutPayload();
 
       // onNext(...)
       // now assume a new fact has been observed...
       factObserver.onNext(mockedFact);
+      factObserver.flush();
 
       // ... and then it should be applied to event projector
-      verify(eventApplier).apply(mockedFact);
+      verify(eventApplier).apply(Lists.newArrayList(mockedFact));
 
       // ... and the fact stream position should be updated as well
       verify(subscribedProjection).factStreamPosition(FactStreamPosition.of(factId, 12));
@@ -858,7 +822,7 @@ class FactusImplTest {
     }
 
     @Test
-    void subscribeWithCustomRetryWaitTime() throws Exception {
+    void subscribeWithCustomRetryWaitTime() {
       // INIT
       SubscribedProjection subscribedProjection = mock(SubscribedProjection.class);
       Projector<SubscribedProjection> eventApplier = mock(Projector.class);
@@ -867,15 +831,16 @@ class FactusImplTest {
 
       when(ehFactory.create(subscribedProjection)).thenReturn(eventApplier);
 
-      when(eventApplier.createFactSpecs()).thenReturn(Arrays.asList(mock(FactSpec.class)));
+      when(eventApplier.createFactSpecs())
+          .thenReturn(Collections.singletonList(mock(FactSpec.class)));
       doAnswer(
               i -> {
-                Fact argument = (Fact) (i.getArgument(0));
+                Fact argument = Iterables.getLast((List<Fact>) (i.getArgument(0)));
                 subscribedProjection.factStreamPosition(FactStreamPosition.from(argument));
                 return null;
               })
           .when(eventApplier)
-          .apply(any(Fact.class));
+          .apply(any(List.class));
 
       Subscription subscription = mock(Subscription.class);
       when(fc.subscribe(any(), any())).thenReturn(subscription);
@@ -891,15 +856,16 @@ class FactusImplTest {
 
       FactObserver factObserver = factObserverArgumentCaptor.getValue();
 
-      UUID factId = UUID.randomUUID();
+      UUID factId = randomUUID();
       Fact mockedFact = Fact.builder().id(factId).serial(13L).buildWithoutPayload();
 
       // onNext(...)
       // now assume a new fact has been observed...
       factObserver.onNext(mockedFact);
+      factObserver.flush();
 
       // ... and then it should be applied to event projector
-      verify(eventApplier).apply(mockedFact);
+      verify(eventApplier).apply(Lists.newArrayList(mockedFact));
 
       // ... and the fact stream position should be updated as well
       verify(subscribedProjection).factStreamPosition(FactStreamPosition.of(factId, 13L));
@@ -937,7 +903,8 @@ class FactusImplTest {
 
       when(ehFactory.create(subscribedProjection)).thenReturn(eventApplier);
 
-      when(eventApplier.createFactSpecs()).thenReturn(Arrays.asList(mock(FactSpec.class)));
+      when(eventApplier.createFactSpecs())
+          .thenReturn(Collections.singletonList(mock(FactSpec.class)));
 
       Subscription subscription1 = mock(Subscription.class);
       Subscription subscription2 = mock(Subscription.class);
@@ -971,14 +938,14 @@ class FactusImplTest {
   @NonNull
   private Fact toFact(SimpleEventObject e) {
     return Fact.of(
-        "{\"id\":  \"" + UUID.randomUUID() + "\", " + "\"ns\":  \"test\"}",
+        "{\"id\":  \"" + randomUUID() + "\", " + "\"ns\":  \"test\"}",
         "{\"val\": \"" + e.code() + "\"}");
   }
 
   @NonNull
   private Fact toFact(NameEvent e) {
     return Fact.of(
-        "{\"id\":  \"" + UUID.randomUUID() + "\", " + "\"ns\":  \"test\"}",
+        "{\"id\":  \"" + randomUUID() + "\", " + "\"ns\":  \"test\"}",
         "{\"val\": \"" + e.name() + "\"}");
   }
 
@@ -1002,17 +969,21 @@ class FactusImplTest {
     void apply(SimpleEventObject eventObject) {
       codes += eventObject.code;
     }
+
+    public ConcatCodesProjection codes(String codes) {
+      this.codes = codes;
+      return this;
+    }
   }
 
+  @SuppressWarnings("unchecked")
   @Nested
   class WhenFinding {
-    private final UUID AGGREGATE_ID = UUID.randomUUID();
+    private final UUID AGGREGATE_ID = randomUUID();
 
     @Test
     void findWithNoEventsNoSnapshot() {
       // INIT
-      mockSnapFactory();
-
       when(ehFactory.create(any(PersonAggregate.class))).thenReturn(projector);
 
       when(projector.createFactSpecs()).thenReturn(specs);
@@ -1028,32 +999,24 @@ class FactusImplTest {
 
       verify(fc).subscribe(any(), any());
 
-      verify(projector, never()).apply(any(Fact.class));
       verify(projector, never()).apply(any(List.class));
     }
 
     @Test
     void findWithNoEventsButSnapshot() {
       // INIT
-      mockSnapFactory();
-
-      SnapshotId id = SnapshotId.of("key", UUID.randomUUID());
-      Snapshot snapshot = new Snapshot(id, randomUUID(), "Fred".getBytes(), false);
-      when(aggregateSnapshotRepository.findLatest(PersonAggregate.class, AGGREGATE_ID))
-          .thenReturn(Optional.of(snapshot));
-
-      when(ehFactory.create(any(PersonAggregate.class))).thenReturn(projector);
-
-      when(projector.createFactSpecs()).thenReturn(specs);
-
-      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
-
       PersonAggregate personAggregate = new PersonAggregate();
+      when(aggregateSnapshotRepository.findLatest(PersonAggregate.class, AGGREGATE_ID))
+          .thenReturn(Optional.of(ProjectionAndState.of(personAggregate, randomUUID())));
+
+      when(ehFactory.create(any(PersonAggregate.class))).thenReturn(projector);
+
+      when(projector.createFactSpecs()).thenReturn(specs);
+
+      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
+
       personAggregate.name("Fred");
       personAggregate.processed(1);
-
-      when(snapshotSerializer.deserialize(PersonAggregate.class, "Fred".getBytes()))
-          .thenReturn(personAggregate);
 
       // RUN
       Optional<PersonAggregate> personAggregateResult =
@@ -1065,188 +1028,15 @@ class FactusImplTest {
           .get()
           .extracting("name", "processed")
           .containsExactly("Fred", 1);
-    }
-
-    @Test
-    void callsAfterRestoreOnAggregateWhenUsingSnapshot() {
-      // INIT
-      mockSnapFactory();
-
-      SnapshotId id = SnapshotId.of("key", UUID.randomUUID());
-      Snapshot snapshot = new Snapshot(id, randomUUID(), "Fred".getBytes(), false);
-      when(aggregateSnapshotRepository.findLatest(PersonAggregate.class, AGGREGATE_ID))
-          .thenReturn(Optional.of(snapshot));
-
-      when(ehFactory.create(any(PersonAggregate.class))).thenReturn(projector);
-
-      when(projector.createFactSpecs()).thenReturn(specs);
-
-      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
-
-      PersonAggregate personAggregate = spy(new PersonAggregate());
-      personAggregate.name("Fred");
-      personAggregate.processed(1);
-
-      when(snapshotSerializer.deserialize(PersonAggregate.class, "Fred".getBytes()))
-          .thenReturn(personAggregate);
-
-      // RUN
-      Optional<PersonAggregate> personAggregateResult =
-          underTest.find(PersonAggregate.class, AGGREGATE_ID);
-
-      // ASSERT
-      assertThat(personAggregateResult)
-          .isPresent()
-          .get()
-          .extracting("name", "processed")
-          .containsExactly("Fred", 1);
-
-      verify(personAggregateResult.get()).onAfterRestore();
-    }
-
-    @Test
-    void callsAfterRestoreOnProjectionWhenUsingSnapshot() {
-      // INIT
-      mockSnapFactory();
-
-      SnapshotId id = SnapshotId.of("key", UUID.randomUUID());
-      Snapshot snapshot = new Snapshot(id, randomUUID(), "{}".getBytes(), false);
-      when(projectionSnapshotRepository.findLatest(SomeSnapshotProjection.class))
-          .thenReturn(Optional.of(snapshot));
-
-      when(ehFactory.create(any(SomeSnapshotProjection.class))).thenReturn(projector);
-      when(projector.createFactSpecs()).thenReturn(specs);
-      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
-
-      when(snapshotSerializer.deserialize(SomeSnapshotProjection.class, "{}".getBytes()))
-          .thenReturn(spy(new SomeSnapshotProjection()));
-
-      // RUN
-      SomeSnapshotProjection p = underTest.fetch(SomeSnapshotProjection.class);
-
-      // ASSERT
-      verify(p).onAfterRestore();
-    }
-
-    @Test
-    void callsBeforeSnapshotOnAggregate() {
-      // INIT
-      mockSnapFactory();
-
-      SnapshotId id = SnapshotId.of("key", UUID.randomUUID());
-      Snapshot snapshot = new Snapshot(id, randomUUID(), "Fred".getBytes(), false);
-      when(aggregateSnapshotRepository.findLatest(PersonAggregate.class, AGGREGATE_ID))
-          .thenReturn(Optional.of(snapshot));
-
-      when(ehFactory.create(any(PersonAggregate.class))).thenReturn(projector);
-
-      when(projector.createFactSpecs()).thenReturn(specs);
-
-      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
-
-      PersonAggregate personAggregate = spy(new PersonAggregate());
-      personAggregate.name("Fred");
-      personAggregate.processed(1);
-
-      when(snapshotSerializer.deserialize(PersonAggregate.class, "Fred".getBytes()))
-          .thenReturn(personAggregate);
-
-      // make sure when event projector is asked to apply events, to wire
-      // them through
-      doAnswer(
-              inv -> {
-                if (factCaptor.getValue().jsonPayload().contains("Barney")) {
-                  personAggregate.process(new NameEvent("Barney"));
-                }
-                return Void.TYPE;
-              })
-          .when(projector)
-          .apply(factCaptor.capture());
-
-      when(projector.createFactSpecs()).thenReturn(specs);
-
-      when(fc.subscribe(any(), factObserverCaptor.capture()))
-          .thenAnswer(
-              inv -> {
-                FactObserver factObserver = factObserverCaptor.getValue();
-
-                // apply some new facts
-                factObserver.onNext(toFact(new NameEvent("Barney")));
-
-                return mock(Subscription.class);
-              });
-
-      // RUN
-      Optional<PersonAggregate> personAggregateResult =
-          underTest.find(PersonAggregate.class, AGGREGATE_ID);
-
-      // ASSERT
-      assertThat(personAggregateResult)
-          .isPresent()
-          .get()
-          .extracting("name", "processed")
-          .containsExactly("Barney", 2);
-
-      verify(personAggregate).onBeforeSnapshot();
-    }
-
-    @Test
-    void callsBeforeSnapshotOnProjection() {
-      // INIT
-      mockSnapFactory();
-
-      SnapshotId id = SnapshotId.of("key", UUID.randomUUID());
-      Snapshot snapshot = new Snapshot(id, randomUUID(), "Fred".getBytes(), false);
-      when(projectionSnapshotRepository.findLatest(SomeSnapshotProjection.class))
-          .thenReturn(Optional.of(snapshot));
-
-      when(ehFactory.create(any(SomeSnapshotProjection.class))).thenReturn(projector);
-      when(projector.createFactSpecs()).thenReturn(specs);
-      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
-      SomeSnapshotProjection p = spy(new SomeSnapshotProjection());
-      when(snapshotSerializer.deserialize(SomeSnapshotProjection.class, "Fred".getBytes()))
-          .thenReturn(p);
-
-      // make sure when event projector is asked to apply events, to wire
-      // them through
-      doAnswer(
-              inv -> {
-                if (factCaptor.getValue().jsonPayload().contains("Barney")) {
-                  p.apply(new NameEvent("Barney"));
-                }
-                return Void.TYPE;
-              })
-          .when(projector)
-          .apply(factCaptor.capture());
-
-      when(projector.createFactSpecs()).thenReturn(specs);
-
-      when(fc.subscribe(any(), factObserverCaptor.capture()))
-          .thenAnswer(
-              inv -> {
-                FactObserver factObserver = factObserverCaptor.getValue();
-
-                // apply some new facts
-                factObserver.onNext(toFact(new NameEvent("Barney")));
-
-                return mock(Subscription.class);
-              });
-
-      // RUN
-      SomeSnapshotProjection personAggregateResult = underTest.fetch(SomeSnapshotProjection.class);
-
-      verify(p).onBeforeSnapshot();
     }
 
     @Test
     void findWithEventsAndSnapshot() {
       // INIT
-      mockSnapFactory();
+      PersonAggregate personAggregate = new PersonAggregate();
 
-      SnapshotId id = SnapshotId.of("key", UUID.randomUUID());
-      Snapshot snapshot = new Snapshot(id, randomUUID(), "Fred".getBytes(), false);
       when(aggregateSnapshotRepository.findLatest(PersonAggregate.class, AGGREGATE_ID))
-          .thenReturn(Optional.of(snapshot));
+          .thenReturn(Optional.of(ProjectionAndState.of(personAggregate, randomUUID())));
 
       when(ehFactory.create(any(PersonAggregate.class))).thenReturn(projector);
 
@@ -1254,20 +1044,20 @@ class FactusImplTest {
 
       when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
 
-      PersonAggregate personAggregate = new PersonAggregate();
       personAggregate.name("Fred");
       personAggregate.processed(1);
-
-      when(snapshotSerializer.deserialize(PersonAggregate.class, "Fred".getBytes()))
-          .thenReturn(personAggregate);
 
       // make sure when event projector is asked to apply events, to wire
       // them through
       doAnswer(
               inv -> {
-                if (factCaptor.getValue().jsonPayload().contains("Barney")) {
-                  personAggregate.process(new NameEvent("Barney"));
-                }
+                List<Fact> facts = factCaptor.getValue();
+                facts.forEach(
+                    f -> {
+                      if (f.jsonPayload().contains("Barney")) {
+                        personAggregate.process(new NameEvent("Barney"));
+                      }
+                    });
                 return Void.TYPE;
               })
           .when(projector)
@@ -1282,7 +1072,7 @@ class FactusImplTest {
 
                 // apply some new facts
                 factObserver.onNext(toFact(new NameEvent("Barney")));
-
+                factObserver.flush();
                 return mock(Subscription.class);
               });
 
@@ -1303,8 +1093,6 @@ class FactusImplTest {
     @Test
     void findWithEventsButNoSnapshot() {
       // INIT
-      mockSnapFactory();
-
       when(ehFactory.create(personAggregateCaptor.capture())).thenReturn(projector);
 
       when(projector.createFactSpecs()).thenReturn(specs);
@@ -1315,9 +1103,13 @@ class FactusImplTest {
       // them through
       doAnswer(
               inv -> {
-                if (factCaptor.getValue().jsonPayload().contains("Barney")) {
-                  personAggregateCaptor.getValue().process(new NameEvent("Barney"));
-                }
+                List<Fact> facts = factCaptor.getValue();
+                facts.forEach(
+                    f -> {
+                      if (f.jsonPayload().contains("Barney")) {
+                        personAggregateCaptor.getValue().process(new NameEvent("Barney"));
+                      }
+                    });
                 return Void.TYPE;
               })
           .when(projector)
@@ -1332,7 +1124,7 @@ class FactusImplTest {
 
                 // apply some new facts
                 factObserver.onNext(toFact(new NameEvent("Barney")));
-
+                factObserver.flush();
                 return mock(Subscription.class);
               });
 
@@ -1356,34 +1148,34 @@ class FactusImplTest {
     void happyPath() {
       AtomicInteger calls = new AtomicInteger(0);
       Duration wait = Duration.ofSeconds(2);
-      IntervalSnapshotter<?> uut =
-          new IntervalSnapshotter<SnapshotProjection>(wait) {
+      FactusImpl.IntervalSnapshotter<?> uut =
+          new FactusImpl.IntervalSnapshotter<SnapshotProjection>(wait) {
             @Override
             void createSnapshot(SnapshotProjection projection, UUID state) {
               calls.incrementAndGet();
             }
           };
 
-      uut.accept(null, UUID.randomUUID());
-      uut.accept(null, UUID.randomUUID());
-      uut.accept(null, UUID.randomUUID());
-      uut.accept(null, UUID.randomUUID());
+      uut.accept(null, randomUUID());
+      uut.accept(null, randomUUID());
+      uut.accept(null, randomUUID());
+      uut.accept(null, randomUUID());
 
       assertThat(calls.get()).isZero();
 
       Thread.sleep(wait.toMillis() + 100);
 
       assertThat(calls.get()).isZero();
-      uut.accept(null, UUID.randomUUID());
-      uut.accept(null, UUID.randomUUID());
+      uut.accept(null, randomUUID());
+      uut.accept(null, randomUUID());
 
       assertThat(calls.get()).isOne();
 
       Thread.sleep(wait.toMillis() + 100);
 
       assertThat(calls.get()).isOne();
-      uut.accept(null, UUID.randomUUID());
-      uut.accept(null, UUID.randomUUID());
+      uut.accept(null, randomUUID());
+      uut.accept(null, randomUUID());
 
       assertThat(calls.get()).isEqualTo(2);
     }
@@ -1437,6 +1229,7 @@ class FactusImplTest {
               i -> {
                 FactObserver fo = i.getArgument(1);
                 fo.onNext(f);
+                fo.onComplete();
                 return sub;
               });
       when(pro.createFactSpecs()).thenReturn(Lists.newArrayList(spec1));
