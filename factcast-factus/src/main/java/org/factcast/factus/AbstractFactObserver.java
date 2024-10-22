@@ -43,7 +43,7 @@ abstract class AbstractFactObserver extends BatchingFactObserver {
 
   @VisibleForTesting private FactStreamInfo info;
 
-  private long lastProgress = System.currentTimeMillis();
+  private long lastProgress = System.currentTsimeMillis();
   private boolean caughtUp = false;
 
   protected AbstractFactObserver(ProgressAware target, long interval, FactusMetrics metrics) {

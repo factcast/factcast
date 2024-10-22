@@ -15,6 +15,11 @@ database before migrating to FactCast 0.8.0.
 
 ## Changes to Projections
 
+### Transactional
+
+Please note that the maximum size of a transaction batch is limited by the value of
+`factcast.grpc.client.maxInboundMessageSize`, which defaults to 8MB.
+
 ### @RedisTransactional
 
 For transactional Redis projections Factus now provides abstract classes. Projections that are annotated with
