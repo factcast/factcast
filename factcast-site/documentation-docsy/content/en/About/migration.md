@@ -26,6 +26,8 @@ For transactional Redis projections Factus now provides abstract classes. Projec
 `@RedisTransactional` now must extend `AbstractRedisTxManagedProjection` or `AbstractRedisTxSubscribedProjection`
 respectively. The annotation itself is optional, if no default settings are overwritten.
 
+Please note that the default bulk size has changed from 50 to 1000.
+
 ### @RedisBatched
 
 The `@RedisBatched` annotation has been removed. Refactor your affected projections to extend the
@@ -45,6 +47,8 @@ have to decide if you can continue without transactionality, or adapt your proje
 For transactional Spring projections Factus now provides abstract classes. Projections that are annotated with
 `@SpringTransactional` now must extend `AbstractSpringTxManagedProjection` or `AbstractSpringTxSubscribedProjection`
 respectively. The annotation itself is optional, if no default settings are overwritten.
+
+Please note that the default bulk size has changed from 50 to 1000.
 
 ## Removal of deprecated field in ProjectionMetaData
 
