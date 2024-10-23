@@ -15,8 +15,8 @@
  */
 package org.factcast.core.snap.redisson;
 
-import java.util.*;
-import java.util.function.*;
+import java.util.Optional;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import lombok.Data;
 import lombok.NonNull;
@@ -40,11 +40,11 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = RedissonSnapshotProperties.PROPERTIES_PREFIX)
 public class RedissonSnapshotProperties {
 
-  public static final String PROPERTIES_PREFIX = "factcast.redis";
+  public static final String PROPERTIES_PREFIX = "factcast.snapshot.redis";
 
   int deleteSnapshotStaleForDays = 90;
 
-  RedissonCodec snapshotCacheRedissonCodec = RedissonCodec.MarshallingCodec;
+  @Deprecated RedissonCodec snapshotCacheRedissonCodec = RedissonCodec.MarshallingCodec;
 
   public int getRetentionTime() {
     return this.getDeleteSnapshotStaleForDays();

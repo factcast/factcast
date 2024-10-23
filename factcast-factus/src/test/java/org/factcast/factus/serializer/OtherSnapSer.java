@@ -29,12 +29,7 @@ public class OtherSnapSer implements SnapshotSerializer {
   }
 
   @Override
-  public boolean includesCompression() {
-    return false;
-  }
-
-  @Override
-  public String getId() {
-    return "OtherSnapSer";
+  public SnapshotSerializerId id() {
+    return SnapshotSerializerId.of("OtherSnapSer");
   }
 }

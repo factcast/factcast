@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast-itests</artifactId>
-    <version>0.7.10-SNAPSHOT</version>
+    <version>0.8.1-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-itests-factus</artifactId>
@@ -38,6 +38,11 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
+      <artifactId>factcast-test-dynamo</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
       <artifactId>factcast-grpc-lz4</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -60,15 +65,11 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
-      <artifactId>factcast-snapshotcache-redisson</artifactId>
+      <artifactId>factcast-factus-dynamo</artifactId>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-factus-spring-tx</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.factcast</groupId>
-      <artifactId>factcast-client-grpc</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -93,7 +94,6 @@
         </exclusion>
       </exclusions>
     </dependency>
-
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-jdbc</artifactId>
@@ -104,6 +104,18 @@
       <artifactId>factcast-factus-bin-snapser</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-snapshotcache-redisson</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-snapshotcache-local-memory</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-snapshotcache-local-disk</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
     </dependency>
@@ -111,6 +123,12 @@
       <!-- only for dependency and build order analysis -->
       <groupId>org.factcast</groupId>
       <artifactId>factcast-docker-dep</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers</artifactId>
+      <version>1.20.3</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -131,6 +149,12 @@
       <artifactId>json-unit-assertj</artifactId>
       <version>3.4.1</version>
       <scope>test</scope>
+    </dependency>
+    <!-- for testing legacy redisson bucket behaviour -->
+    <dependency>
+      <groupId>org.jboss.marshalling</groupId>
+      <artifactId>jboss-marshalling-river</artifactId>
+      <version>2.1.4.SP1</version>
     </dependency>
   </dependencies>
   <build>

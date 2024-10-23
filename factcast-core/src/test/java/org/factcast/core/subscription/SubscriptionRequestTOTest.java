@@ -19,12 +19,21 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Collections;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.spec.FilterScript;
 import org.junit.jupiter.api.*;
 
+@SuppressWarnings("deprecation")
 public class SubscriptionRequestTOTest {
 
   @Test
   void testDebugInfo() {
+    SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch();
+    SubscriptionRequestTO uut = SubscriptionRequestTO.from(r);
+    assertEquals(r.debugInfo(), uut.debugInfo());
+  }
+
+  @Test
+  void testForFacts() {
     SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch();
     SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
     assertEquals(r.debugInfo(), uut.debugInfo());
@@ -33,7 +42,7 @@ public class SubscriptionRequestTOTest {
   @Test
   void testDumpContainsDebugInfo() {
     SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch();
-    SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
+    SubscriptionRequestTO uut = SubscriptionRequestTO.from(r);
     assertTrue(uut.dump().contains(r.debugInfo()));
   }
 
@@ -41,7 +50,7 @@ public class SubscriptionRequestTOTest {
   void testToString() {
     SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch();
     String debugInfo = r.debugInfo();
-    SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
+    SubscriptionRequestTO uut = SubscriptionRequestTO.from(r);
     assertEquals(debugInfo, uut.toString());
   }
 
@@ -49,7 +58,7 @@ public class SubscriptionRequestTOTest {
   void testSpecsContainMarkSpec() {
     FactSpec s = FactSpec.ns("foo");
     SubscriptionRequest r = SubscriptionRequest.catchup(s).fromScratch();
-    SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
+    SubscriptionRequestTO uut = SubscriptionRequestTO.from(r);
     assertEquals(1, uut.specs().size());
     assertEquals(s, uut.specs().get(0));
   }
@@ -58,11 +67,11 @@ public class SubscriptionRequestTOTest {
   void testHasAnyScriptFilters() {
     FactSpec s = FactSpec.ns("foo");
     SubscriptionRequest r = SubscriptionRequest.catchup(s).fromScratch();
-    SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
+    SubscriptionRequestTO uut = SubscriptionRequestTO.from(r);
     assertFalse(uut.hasAnyScriptFilters());
     uut.addSpecs(
         Collections.singletonList(
-            FactSpec.ns("buh").jsFilterScript("function (h,e){ return true }")));
+            FactSpec.ns("buh").filterScript(FilterScript.js("function (h,e){ return true }"))));
     assertTrue(uut.hasAnyScriptFilters());
   }
 
@@ -73,7 +82,7 @@ public class SubscriptionRequestTOTest {
         () -> {
           FactSpec s = FactSpec.ns("foo");
           SubscriptionRequest r = SubscriptionRequest.catchup(s).fromScratch();
-          SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
+          SubscriptionRequestTO uut = SubscriptionRequestTO.from(r);
           uut.addSpecs(null);
         });
   }
@@ -85,7 +94,7 @@ public class SubscriptionRequestTOTest {
         () -> {
           FactSpec s = FactSpec.ns("foo");
           SubscriptionRequest r = SubscriptionRequest.catchup(s).fromScratch();
-          SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
+          SubscriptionRequestTO uut = SubscriptionRequestTO.from(r);
           uut.addSpecs(Collections.emptyList());
         });
   }
@@ -94,7 +103,7 @@ public class SubscriptionRequestTOTest {
   void testMaxDelay() {
     FactSpec s = FactSpec.ns("foo");
     SubscriptionRequest r = SubscriptionRequest.catchup(s).fromScratch();
-    SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
+    SubscriptionRequestTO uut = SubscriptionRequestTO.from(r);
     assertEquals(SubscriptionRequestTO.DEFAULT_MAX_BATCH_DELAY_IN_MS, uut.maxBatchDelayInMs());
     uut.maxBatchDelayInMs(7);
     assertEquals(7, uut.maxBatchDelayInMs());
@@ -104,11 +113,11 @@ public class SubscriptionRequestTOTest {
   void testAddSpecs() {
     FactSpec s = FactSpec.ns("foo");
     SubscriptionRequest r = SubscriptionRequest.catchup(s).fromScratch();
-    SubscriptionRequestTO uut = SubscriptionRequestTO.forFacts(r);
+    SubscriptionRequestTO uut = SubscriptionRequestTO.from(r);
     assertEquals(1, uut.specs().size());
     final String js = "function (h,e){ return true }";
-    uut.addSpecs(Collections.singletonList(FactSpec.ns("buh").jsFilterScript(js)));
+    uut.addSpecs(Collections.singletonList(FactSpec.ns("buh").filterScript(FilterScript.js(js))));
     assertEquals(2, uut.specs().size());
-    assertEquals(js, uut.specs().get(1).jsFilterScript());
+    assertEquals(js, uut.specs().get(1).filterScript().source());
   }
 }
