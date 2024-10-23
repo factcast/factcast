@@ -16,9 +16,7 @@
 package org.factcast.itests.factus.client;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNoException;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.awaitility.Awaitility.await;
 
 import eu.rekawek.toxiproxy.model.ToxicDirection;
@@ -57,8 +55,6 @@ import org.springframework.test.context.TestPropertySource;
     properties = {
       "factcast.grpc.client.resilience.attempts="
           + SubscriptionReconnectionITest.NUMBER_OF_ATTEMPTS,
-      // some tests here assume event handling happens sequential even on networking level
-      "factcast.grpc.client.catchup-batchsize=1"
     })
 @Slf4j
 class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
