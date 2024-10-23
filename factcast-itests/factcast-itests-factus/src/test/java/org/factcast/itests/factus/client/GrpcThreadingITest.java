@@ -151,18 +151,20 @@ public class GrpcThreadingITest extends AbstractFactCastIntegrationTest {
 
     @Override
     public void factStreamPosition(@NonNull FactStreamPosition state) {
-      log.debug("set state");
-      assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isTrue();
-      factStreamPositionModifications++;
-
-      txSeen.add(jdbcTemplate.queryForObject("select txid_current()", String.class));
-
       jdbcTemplate.update(
           "INSERT INTO managed_projection (name, fact_stream_position) VALUES (?, ?) "
               + "ON CONFLICT (name) DO UPDATE SET fact_stream_position = ?",
           getScopedName().with(String.valueOf(id)).asString(),
           state.factId(),
           state.factId());
+    }
+
+    @Override
+    public void factStreamPositionInTransaction(@NonNull FactStreamPosition factStreamPosition) {
+      factStreamPositionModifications++;
+      txSeen.add(jdbcTemplate.queryForObject("select txid_current()", String.class));
+
+      super.factStreamPositionInTransaction(factStreamPosition);
     }
 
     @Override

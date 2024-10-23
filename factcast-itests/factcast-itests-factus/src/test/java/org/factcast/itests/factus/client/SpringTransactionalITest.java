@@ -480,16 +480,18 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @Override
     public void factStreamPosition(@NonNull FactStreamPosition state) {
-      log.debug("set state");
-      assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isTrue();
-      factStreamPositionModifications++;
-
       jdbcTemplate.update(
           "INSERT INTO managed_projection (name, fact_stream_position) VALUES (?, ?) "
               + "ON CONFLICT (name) DO UPDATE SET fact_stream_position = ?",
           getScopedName().asString(),
           state.factId(),
           state.factId());
+    }
+
+    @Override
+    public void factStreamPositionInTransaction(@NonNull FactStreamPosition factStreamPosition) {
+      factStreamPositionModifications++;
+      super.factStreamPositionInTransaction(factStreamPosition);
     }
 
     @Override
