@@ -167,7 +167,6 @@ class AbstractRedisTxManagedProjectionTest {
       underTest.factStreamPositionInTransaction(FACT_STREAM_POSITION);
 
       verify(tx).getBucket(any(), any());
-
       verify(bucket, times(2)).set(FACT_STREAM_POSITION);
     }
   }
