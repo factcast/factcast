@@ -113,19 +113,21 @@ class AbstractRedisTxManagedProjectionTest {
     }
 
     @Test
-    void runningTransaction() {
+    void runningTransaction_readFromOutsideOfTx() {
       when(redisson.createTransaction(any())).thenReturn(tx);
 
       underTest.begin();
 
       FactStreamPosition pos = org.factcast.core.TestFactStreamPosition.random();
       RBucket<Object> bucket = mock(RBucket.class);
-      when(tx.getBucket(any(), any())).thenReturn(bucket);
+      when(redisson.getBucket(any(), any())).thenReturn(bucket);
       when(bucket.get()).thenReturn(pos);
 
       FactStreamPosition result = underTest.factStreamPosition();
 
       assertThat(result).isEqualTo(pos);
+
+      verifyNoInteractions(tx);
     }
   }
 
