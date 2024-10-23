@@ -33,7 +33,7 @@ jobs:
         restore-keys: '${{ runner.os }}-sonar-'
     - id: 'step-3'
       name: 'JDK 17'
-      uses: 'actions/setup-java@v4'
+      uses: 'actions/setup-java@v3'
       with:
         java-version: '17'
         distribution: 'corretto'
@@ -59,7 +59,7 @@ jobs:
     strategy:
       matrix:
         postgresVersion:
-        - '16'
+        - '15'
     steps:
     - id: 'step-0'
       name: 'Checkout'
@@ -75,7 +75,7 @@ jobs:
         restore-keys: '${{ runner.os }}-maven-'
     - id: 'step-2'
       name: 'JDK 17'
-      uses: 'actions/setup-java@v4'
+      uses: 'actions/setup-java@v3'
       with:
         java-version: '17'
         distribution: 'corretto'

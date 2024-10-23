@@ -1,18 +1,29 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("io.github.typesafegithub:github-workflows-kt:2.3.0")
+@file:DependsOn("io.github.typesafegithub:github-workflows-kt:3.0.0")
 
 
-import io.github.typesafegithub.workflows.actions.actions.CacheV4
-import io.github.typesafegithub.workflows.actions.actions.CheckoutV4
-import io.github.typesafegithub.workflows.actions.actions.SetupJavaV4
-import io.github.typesafegithub.workflows.actions.codecov.CodecovActionV4
+@file:Repository("https://repo.maven.apache.org/maven2/")
+@file:Repository("https://bindings.krzeminski.it")
+
+@file:DependsOn("actions:checkout:v4")
+@file:DependsOn("actions:cache:v4")
+@file:DependsOn("actions:setup-java:v3")
+@file:DependsOn("codecov:codecov-action:v4")
+
+
+import io.github.typesafegithub.workflows.actions.actions.Cache
+import io.github.typesafegithub.workflows.actions.actions.Checkout
+import io.github.typesafegithub.workflows.actions.actions.SetupJava
+import io.github.typesafegithub.workflows.actions.codecov.CodecovAction
 import io.github.typesafegithub.workflows.domain.RunnerType
 import io.github.typesafegithub.workflows.domain.triggers.PullRequest
 import io.github.typesafegithub.workflows.domain.triggers.Push
 import io.github.typesafegithub.workflows.dsl.expressions.expr
 import io.github.typesafegithub.workflows.dsl.workflow
 import io.github.typesafegithub.workflows.yaml.ConsistencyCheckJobConfig
+
+
 
 workflow(
     name = "Maven all in one",
@@ -31,11 +42,11 @@ workflow(
     ) {
         uses(
             name = "Checkout",
-            action = CheckoutV4(fetchDepth = CheckoutV4.FetchDepth.Infinite)
+            action = Checkout(fetchDepth = Checkout.FetchDepth.Infinite)
         )
         uses(
             name = "Cache - Maven Repository",
-            action = CacheV4(
+            action = Cache(
                 path = listOf(
                     "~/.m2/repository",
                 ),
@@ -47,7 +58,7 @@ workflow(
         )
         uses(
             name = "Cache - Sonar cache",
-            action = CacheV4(
+            action = Cache(
                 path = listOf(
                     "~/.sonar/cache",
                 ),
@@ -59,8 +70,8 @@ workflow(
         )
         uses(
             name = "JDK 17",
-            action = SetupJavaV4(
-                distribution = SetupJavaV4.Distribution.Corretto,
+            action = SetupJava(
+                distribution = SetupJava.Distribution.Corretto,
                 javaVersion = "17",
             ),
         )
@@ -86,7 +97,7 @@ workflow(
         )
         uses(
             name = "Codecov upload",
-            action = CodecovActionV4(
+            action = CodecovAction(
                 token = "${'$'}{{ secrets.CODECOV_TOKEN }}"
             ),
         )
@@ -103,11 +114,11 @@ workflow(
     ) {
         uses(
             name = "Checkout",
-            action = CheckoutV4(fetchDepth = CheckoutV4.FetchDepth.Infinite)
+            action = Checkout(fetchDepth = Checkout.FetchDepth.Infinite)
         )
         uses(
             name = "Cache - Maven Repository",
-            action = CacheV4(
+            action = Cache(
                 path = listOf(
                     "~/.m2/repository",
                 ),
@@ -120,8 +131,8 @@ workflow(
 
         uses(
             name = "JDK 17",
-            action = SetupJavaV4(
-                distribution = SetupJavaV4.Distribution.Corretto,
+            action = SetupJava(
+                distribution = SetupJava.Distribution.Corretto,
                 javaVersion = "17",
             ),
         )
