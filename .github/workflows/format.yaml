@@ -22,8 +22,11 @@ jobs:
         distribution: 'corretto'
     - id: 'step-2'
       name: 'Spotless'
-      run: './mvnw -B --non-recursive spotless:apply --file pom.xml'
+      run: './mvnw -B sortpom:sort --file pom.xml'
     - id: 'step-3'
+      name: 'Spotless'
+      run: './mvnw -B --non-recursive spotless:apply --file pom.xml'
+    - id: 'step-4'
       name: 'Commit formatting changes'
       uses: 'stefanzweifel/git-auto-commit-action@v5'
       with:
