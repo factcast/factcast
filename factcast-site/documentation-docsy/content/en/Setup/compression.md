@@ -1,7 +1,7 @@
 ---
 title: "Compression"
 type: docs
-weight: 155
+weight: 171
 description: Selecting a compressor
 ---
 

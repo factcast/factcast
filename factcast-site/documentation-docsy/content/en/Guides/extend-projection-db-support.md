@@ -17,8 +17,10 @@ before delving into this guide.
 ## Introduction
 
 When projections consume a lot of events or are complex to calculate it usually makes sense to persist their state into
-an external data store instead of using local projections. This way the state is not lost when the service is restarted, can be shared between service instances,
-and the load on the server is reduced. Factus currently supports Redis, all Datastores that support Spring Transactions and AWS DynamoDb out of the box.
+an external data store instead of using local projections. This way the state is not lost when the service is restarted,
+can be shared between service instances,
+and the load on the server is reduced. Factus currently supports Redis, all Datastores that support Spring Transactions
+and AWS DynamoDb out of the box.
 If you want to use a different data store you can implement your own support for projecting into the desired data store.
 
 ---
@@ -43,7 +45,8 @@ When designing a projection implementation you'll need to consider the following
 
 ### General Structure
 
-Projection implementations are usually provided via an abstract class that is extended by the actual projections within your
+Projection implementations are usually provided via an abstract class that is extended by the actual projections within
+your
 services. Apart from your desired class hierarchy, projections need to implement `ExternalizedProjection`
 (which includes `Projection`,`FactStreamPositionAware`,`WriterTokenAware` and `Named`).
 
@@ -69,14 +72,17 @@ the same.
 In order to implement the `TransactionAware` interface, the data store needs to support atomicity for multiple writes
 within a transaction that can be collectively rolled back in case of failure.
 
-- Create a class `XYZTransactionAdapter` that implements the `TransactionAdapter` interface repective to your data store.
+- Create a class `XYZTransactionAdapter` that implements the `TransactionAdapter` interface repective to your data
+  store.
 - Extend your `AbstractXYZProjection` to `AbstractXYZTxProjection` implementing `TransactionAware`
 - Now in order to implement the `TransactionAware` interface, you can use
-  - `@Delegate TransactionalBehavior<YourTransactionType> txBehavior = new TransactionalBehavior<>( myXYZTransactionAdapter )` to put your XYZTranactionAdapter to good use.
+  - `@Delegate TransactionalBehavior<YourTransactionType> txBehavior = new TransactionalBehavior<>( myXYZTransactionAdapter )`
+    to put your XYZTranactionAdapter to good use.
 
 #### Open Transaction Aware Projection
 
-TransactionAware projections that are "Open" share all the characteristic of the Transaction Aware Projection, but they also provide the
+TransactionAware projections that are "Open" share all the characteristic of the Transaction Aware Projection, but they
+also provide the
 projection access to the transaction representation that is currently in progress, in case it is necessary to interact
 with the data store in a transactional manner.
 
@@ -84,5 +90,6 @@ with the data store in a transactional manner.
 
 You can have a look at `AbstractSpringTxProjection` or `AbstractRedisTxProjection` as a template.
 
-Please consider giving back to the community by either re-integrating into the factcast project or by publishing your extension
+Please consider giving back to the community by either re-integrating into the factcast project or by publishing your
+extension
 as a separate project. Please let us know at `info@factcast.org`.
