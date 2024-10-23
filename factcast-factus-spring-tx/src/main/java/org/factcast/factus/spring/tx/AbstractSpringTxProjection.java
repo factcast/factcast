@@ -15,11 +15,14 @@
  */
 package org.factcast.factus.spring.tx;
 
+import javax.annotation.*;
 import lombok.NonNull;
 import lombok.experimental.Delegate;
-import org.factcast.factus.projection.tx.TransactionBehavior;
+import org.factcast.core.*;
+import org.factcast.factus.projection.tx.*;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.*;
 
 abstract class AbstractSpringTxProjection implements SpringTxProjection {
 
@@ -31,5 +34,35 @@ abstract class AbstractSpringTxProjection implements SpringTxProjection {
         new TransactionBehavior<>(
             new SpringTxAdapter(
                 platformTransactionManager, getClass().getAnnotation(SpringTransactional.class)));
+  }
+
+  /**
+   * For SpringTx it purely depends on which thread calls this method as transactions are thread
+   * bound in SpringTX.
+   *
+   * @return
+   */
+  @Nullable
+  @Override
+  public FactStreamPosition factStreamPositionInTransaction() {
+    assertInTransaction();
+    return factStreamPosition();
+  }
+
+  /**
+   * For SpringTx it purely depends on which thread calls this method as transactions are thread
+   * bound in SpringTX.
+   *
+   * @return
+   */
+  @Override
+  public void factStreamPositionInTransaction(@NonNull FactStreamPosition factStreamPosition) {
+    assertInTransaction();
+    factStreamPosition(factStreamPosition);
+  }
+
+  public void assertInTransaction() throws TransactionException {
+    if (!TransactionSynchronizationManager.isActualTransactionActive())
+      throw new TransactionNotRunningException("Transaction is not running");
   }
 }

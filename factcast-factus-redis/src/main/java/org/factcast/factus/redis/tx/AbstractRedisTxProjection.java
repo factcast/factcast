@@ -45,23 +45,17 @@ abstract class AbstractRedisTxProjection extends AbstractRedisProjection
     return tx.getBucket(stateBucketName, FactStreamPositionCodec.INSTANCE);
   }
 
+  @Nullable
   @Override
-  public FactStreamPosition factStreamPosition() {
-    if (inTransaction()) {
-      return stateBucket(runningTransaction()).get();
-    } else {
-      return super.factStreamPosition();
-    }
+  public FactStreamPosition factStreamPositionInTransaction() {
+    assertInTransaction();
+    return stateBucket(runningTransaction()).get();
   }
 
-  @SuppressWarnings("ConstantConditions")
   @Override
-  public void factStreamPosition(@Nullable FactStreamPosition position) {
-    if (inTransaction()) {
-      stateBucket(runningTransaction()).set(position);
-    } else {
-      super.factStreamPosition(position);
-    }
+  public void factStreamPositionInTransaction(@NonNull FactStreamPosition position) {
+    assertInTransaction();
+    stateBucket(runningTransaction()).set(position);
   }
 
   @Override
