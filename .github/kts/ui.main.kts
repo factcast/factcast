@@ -7,7 +7,7 @@
 
 @file:DependsOn("actions:checkout:v4")
 @file:DependsOn("actions:cache:v4")
-@file:DependsOn("actions:setup-java:v3")
+@file:DependsOn("actions:setup-java:v4")
 
 
 
