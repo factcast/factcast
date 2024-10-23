@@ -22,11 +22,9 @@ public interface SnapshotSerializer {
 
   <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes);
 
-  boolean includesCompression();
-
   /**
    * @return displayable name of the serializer. Make sure it is unique, as it is used as part of
    *     the snapshot key
    */
-  String getId();
+  SnapshotSerializerId id();
 }

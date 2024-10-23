@@ -69,7 +69,7 @@ class ResourceBlacklistIntegrationTest {
   @Test
   void blacklistIsApplied() {
     SubscriptionRequest req = SubscriptionRequest.catchup(spec).fromScratch();
-    fs.subscribe(SubscriptionRequestTO.forFacts(req), obs).awaitCatchup();
+    fs.subscribe(SubscriptionRequestTO.from(req), obs).awaitCatchup();
     assertThat(receivedFactIds).hasSize(1).containsExactly(factId);
   }
 }

@@ -15,13 +15,22 @@
  */
 package org.factcast.core.snap.redisson;
 
+import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-import java.util.*;
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 import lombok.SneakyThrows;
 import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
+import org.factcast.factus.projection.Aggregate;
+import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.serializer.DefaultSnapshotSerializer;
+import org.factcast.factus.serializer.ProjectionMetaData;
+import org.factcast.factus.serializer.SnapshotSerializer;
+import org.factcast.factus.snapshot.SnapshotData;
+import org.factcast.factus.snapshot.SnapshotIdentifier;
+import org.factcast.factus.snapshot.SnapshotSerializerSelector;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,9 +38,11 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
+import org.redisson.client.codec.ByteArrayCodec;
 import org.redisson.client.codec.Codec;
-import org.redisson.codec.Kryo5Codec;
 import org.redisson.spring.starter.RedissonAutoConfigurationV2;
 import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -67,27 +78,48 @@ class RedissonSnapshotCacheTest {
 
   @SpyBean private RedissonClient redisson;
 
+  @Mock SnapshotSerializerSelector selector;
+
+  final SnapshotSerializer serializer = new DefaultSnapshotSerializer();
+
   private RedissonSnapshotCache underTest;
 
   @Nested
   class WhenGettingSnapshot {
     @BeforeEach
     void setup() {
-      underTest = new RedissonSnapshotCache(redisson, props);
+      when(selector.selectSeralizerFor(any())).thenReturn(serializer);
+      underTest = new RedissonSnapshotCache(redisson, selector, props);
+      redisson.getKeys().flushdb();
     }
 
     @Test
-    void testGetNull() {
-      assertThat(underTest.getSnapshot(SnapshotId.of("foo", UUID.randomUUID()))).isEmpty();
+    void returnsEmptyForAggregate() {
+      assertThat(underTest.find(SnapshotIdentifier.of(TestAggregate.class, randomUUID())))
+          .isEmpty();
     }
 
     @Test
-    void testGetPojo() {
-      SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-      Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
-      underTest.setSnapshot(snap);
+    void returnsEmptyForSnapshot() {
+      assertThat(underTest.find(SnapshotIdentifier.of(TestSnapshotProjection.class))).isEmpty();
+    }
 
-      assertThat(underTest.getSnapshot(id)).isNotEmpty().hasValue(snap);
+    @Test
+    void returnsDataForAggregate() {
+      SnapshotIdentifier id = SnapshotIdentifier.of(TestAggregate.class, randomUUID());
+      SnapshotData data = new SnapshotData(new byte[] {1, 2, 3}, serializer.id(), randomUUID());
+      underTest.store(id, data);
+
+      assertThat(underTest.find(id)).isNotEmpty().hasValue(data);
+    }
+
+    @Test
+    void returnsDataForSnapshot() {
+      SnapshotIdentifier id = SnapshotIdentifier.of(TestSnapshotProjection.class);
+      SnapshotData data = new SnapshotData(new byte[] {1, 2, 3}, serializer.id(), randomUUID());
+      underTest.store(id, data);
+
+      assertThat(underTest.find(id)).isNotEmpty().hasValue(data);
     }
   }
 
@@ -95,69 +127,88 @@ class RedissonSnapshotCacheTest {
   class WhenClearingSnapshot {
     @BeforeEach
     void setup() {
-      underTest = new RedissonSnapshotCache(redisson, props);
+      when(selector.selectSeralizerFor(any())).thenReturn(serializer);
+      underTest = new RedissonSnapshotCache(redisson, selector, props);
     }
 
     @Test
-    void testClearPojo() {
-      SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-      Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
-      underTest.setSnapshot(snap);
+    void removesAggregate() {
+      SnapshotIdentifier id = SnapshotIdentifier.of(TestAggregate.class, randomUUID());
+      SnapshotData data = new SnapshotData(new byte[] {1, 2, 3}, serializer.id(), randomUUID());
+      underTest.store(id, data);
 
-      assertThat(underTest.getSnapshot(id)).isNotEmpty().hasValue(snap);
+      assertThat(underTest.find(id)).isNotEmpty().hasValue(data);
 
-      underTest.clearSnapshot(id);
+      underTest.remove(id);
 
-      assertThat(underTest.getSnapshot(id)).isEmpty();
+      assertThat(underTest.find(id)).isEmpty();
+    }
+
+    @Test
+    void removesSnapshot() {
+      SnapshotIdentifier id = SnapshotIdentifier.of(TestSnapshotProjection.class);
+      SnapshotData data = new SnapshotData(new byte[] {1, 2, 3}, serializer.id(), randomUUID());
+      underTest.store(id, data);
+
+      assertThat(underTest.find(id)).isNotEmpty().hasValue(data);
+
+      underTest.remove(id);
+
+      assertThat(underTest.find(id)).isEmpty();
     }
   }
 
   @Nested
   class WhenCompacting {
-    private final int RETENTION_TIME_IN_DAYS = 95;
+    private final int RETENTION_TIME_IN_DAYS = 42;
 
     @BeforeEach
     void setup() {
-      underTest = new RedissonSnapshotCache(redisson, props);
+      when(selector.selectSeralizerFor(any())).thenReturn(serializer);
+      RedissonSnapshotProperties props =
+          new RedissonSnapshotProperties()
+              .setSnapshotCacheRedissonCodec(
+                  RedissonSnapshotProperties.RedissonCodec.RedissonDefault)
+              .setDeleteSnapshotStaleForDays(RETENTION_TIME_IN_DAYS);
+      underTest = new RedissonSnapshotCache(redisson, selector, props);
     }
 
     @Test
     void testTTL() {
+      SnapshotIdentifier id = SnapshotIdentifier.of(TestAggregate.class, randomUUID());
+      SnapshotData data = new SnapshotData(new byte[] {1, 2, 3}, serializer.id(), randomUUID());
+      RBucket mockBucket = mock(RBucket.class);
+      when(redisson.getBucket(underTest.createKeyFor(id), ByteArrayCodec.INSTANCE))
+          .thenReturn(mockBucket);
+      when(mockBucket.get()).thenReturn(new byte[] {4, 5, 6});
 
-      int i = 1;
-      SnapshotId s1 = SnapshotId.of("foo" + (i++), UUID.randomUUID());
-      Snapshot snap1 = new Snapshot(s1, UUID.randomUUID(), "foo".getBytes(), false);
+      underTest.store(id, data);
 
-      SnapshotId s2 = SnapshotId.of("foo" + (i++), UUID.randomUUID());
-      Snapshot snap2 = new Snapshot(s2, UUID.randomUUID(), "foo".getBytes(), false);
+      verify(mockBucket).set(data.toBytes(), RETENTION_TIME_IN_DAYS, TimeUnit.DAYS);
 
-      underTest.setSnapshot(snap1);
-      sleep(2000);
-      underTest.setSnapshot(snap2);
-      sleep(500); // wait for async op
-      {
-        // assert all buckets have a ttl
-        long ttl1 = redisson.getBucket(underTest.createKeyFor(s1)).remainTimeToLive();
-        long ttl2 = redisson.getBucket(underTest.createKeyFor(s2)).remainTimeToLive();
+      underTest.find(id); // touches it
 
-        assertThat(ttl1).isGreaterThan(7775990000L);
-        assertThat(ttl2).isGreaterThan(7775990000L);
-        assertThat(ttl1).isLessThanOrEqualTo(ttl2);
-      }
+      verify(mockBucket).expireAsync(Duration.ofDays(RETENTION_TIME_IN_DAYS));
+    }
 
-      sleep(2000);
+    @Test
+    @SuppressWarnings("deprecation")
+    void testTTLOnLegacy() {
+      SnapshotIdentifier id = SnapshotIdentifier.of(TestAggregate.class, randomUUID());
+      RBucket mockEmptyBucket = mock(RBucket.class);
+      when(redisson.getBucket(underTest.createKeyFor(id), ByteArrayCodec.INSTANCE))
+          .thenReturn(mockEmptyBucket);
+      when(mockEmptyBucket.get()).thenReturn(null);
+      RBucket mockLegacyBucket = mock(RBucket.class);
+      when(redisson.getBucket(underTest.createLegacyKeyFor(id))).thenReturn(mockLegacyBucket);
+      Snapshot snapshot = mock(Snapshot.class);
+      when(mockLegacyBucket.get()).thenReturn(snapshot);
+      when(snapshot.bytes()).thenReturn(new byte[] {1, 2, 3});
+      when(snapshot.lastFact()).thenReturn(randomUUID());
 
-      underTest.getSnapshot(s1); // touches it
+      underTest.find(id); // touches it
 
-      sleep(500); // wait for async op
-      {
-        long ttl1 = redisson.getBucket(underTest.createKeyFor(s1)).remainTimeToLive();
-        long ttl2 = redisson.getBucket(underTest.createKeyFor(s2)).remainTimeToLive();
-
-        assertThat(ttl1).isGreaterThan(7775990000L);
-        assertThat(ttl2).isGreaterThan(7775990000L);
-        assertThat(ttl1).isGreaterThan(ttl2);
-      }
+      verify(mockLegacyBucket).expireAsync(Duration.ofDays(RETENTION_TIME_IN_DAYS));
     }
 
     @SneakyThrows
@@ -173,9 +224,11 @@ class RedissonSnapshotCacheTest {
 
     @BeforeEach
     void setup() {
+      when(selector.selectSeralizerFor(any())).thenReturn(serializer);
       underTest =
           new RedissonSnapshotCache(
               redisson,
+              selector,
               new RedissonSnapshotProperties()
                   .setSnapshotCacheRedissonCodec(
                       RedissonSnapshotProperties.RedissonCodec.Kryo5Codec)
@@ -183,17 +236,39 @@ class RedissonSnapshotCacheTest {
     }
 
     @Test
-    void testUsageOfCodecFromProperties() {
-      SnapshotId id = SnapshotId.of("foo", UUID.randomUUID());
-      Snapshot snap = new Snapshot(id, UUID.randomUUID(), "foo".getBytes(), false);
+    void usesByteArrayCodecOnAggregate() {
+      SnapshotIdentifier id = SnapshotIdentifier.of(TestAggregate.class, randomUUID());
+      SnapshotData data = new SnapshotData(new byte[] {1, 2, 3}, serializer.id(), randomUUID());
 
-      underTest.setSnapshot(snap);
-      underTest.getSnapshot(id);
+      underTest.store(id, data);
+      underTest.find(id);
 
-      verify(redisson, times(1)).getMap(any(), argument.capture());
       verify(redisson, times(2)).getBucket(any(), argument.capture());
 
-      argument.getAllValues().forEach(codec -> assertThat(codec).isInstanceOf(Kryo5Codec.class));
+      argument
+          .getAllValues()
+          .forEach(codec -> assertThat(codec).isInstanceOf(ByteArrayCodec.class));
+    }
+
+    @Test
+    void usesByteArrayCodecOnSnapshot() {
+      SnapshotIdentifier id = SnapshotIdentifier.of(TestSnapshotProjection.class);
+      SnapshotData data = new SnapshotData(new byte[] {1, 2, 3}, serializer.id(), randomUUID());
+
+      underTest.store(id, data);
+      underTest.find(id);
+
+      verify(redisson, times(2)).getBucket(any(), argument.capture());
+
+      argument
+          .getAllValues()
+          .forEach(codec -> assertThat(codec).isInstanceOf(ByteArrayCodec.class));
     }
   }
+
+  @ProjectionMetaData(revision = 1)
+  public class TestAggregate extends Aggregate {}
+
+  @ProjectionMetaData(revision = 1)
+  public class TestSnapshotProjection implements SnapshotProjection {}
 }

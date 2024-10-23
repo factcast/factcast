@@ -35,8 +35,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.client.security.CallCredentialsHelper;
 import org.factcast.core.DuplicateFactException;
 import org.factcast.core.Fact;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.StateToken;
@@ -56,7 +54,6 @@ import org.factcast.grpc.api.conv.ServerConfig;
 import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
-import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreBlockingStub;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -68,7 +65,7 @@ import org.springframework.beans.factory.annotation.Value;
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Slf4j
 public class GrpcFactStore implements FactStore {
-  public static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 4, 0);
+  public static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 5, 0);
 
   private final CompressionCodecs codecs = new CompressionCodecs();
 
@@ -363,11 +360,7 @@ public class GrpcFactStore implements FactStore {
       meta.put(Headers.FAST_FORWARD, "true");
     }
 
-    // existence of this header will enable the on-the-wire-batching feature
-    int catchupBatchSize = p.getCatchupBatchsize();
-    if (catchupBatchSize > 1) {
-      meta.put(Headers.CATCHUP_BATCHSIZE, String.valueOf(catchupBatchSize));
-    }
+    meta.put(Headers.CLIENT_MAX_INBOUND_MESSAGE_SIZE, String.valueOf(p.getMaxInboundMessageSize()));
 
     if (clientId != null) meta.put(Headers.CLIENT_ID, clientId);
     meta.put(
@@ -476,44 +469,6 @@ public class GrpcFactStore implements FactStore {
           fetchById = stubs.blocking().fetchByIdAndVersion(converter.toProto(id, versionExpected));
           return converter.fromProto(fetchById);
         });
-  }
-
-  @Override
-  @NonNull
-  public Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
-    log.trace("fetching snapshot {} from remote store", id);
-    return callAndHandle(
-        () -> {
-          MSG_OptionalSnapshot snap;
-          snap = stubs.blocking().getSnapshot(converter.toProto(id));
-          return converter.fromProto(snap);
-        });
-  }
-
-  @Override
-  public void setSnapshot(@NonNull Snapshot snapshot) {
-    runAndHandle(
-        () -> {
-          @NonNull SnapshotId id = snapshot.id();
-          byte[] bytes = snapshot.bytes();
-          boolean alreadyCompressed = snapshot.compressed();
-          @NonNull UUID state = snapshot.lastFact();
-
-          log.trace("sending snapshot {} to remote store ({}kb)", id, bytes.length / 1024);
-
-          RemoteFactStoreBlockingStub stubToUse =
-              alreadyCompressed ? stubs.uncompressedBlocking() : stubs.blocking();
-
-          //noinspection ResultOfMethodCallIgnored
-          stubToUse.setSnapshot(converter.toProto(id, state, bytes, alreadyCompressed));
-        });
-  }
-
-  @Override
-  public void clearSnapshot(@NonNull SnapshotId id) {
-    log.trace("clearing snapshot {} in remote store", id);
-    //noinspection ResultOfMethodCallIgnored
-    runAndHandle(() -> stubs.blocking().clearSnapshot(converter.toProto(id)));
   }
 
   @Override

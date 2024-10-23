@@ -17,7 +17,6 @@ package org.factcast.factus.lock;
 
 import lombok.NonNull;
 
-// TODO checked?
 public class LockedOperationAbortedException extends RuntimeException {
   public LockedOperationAbortedException(@NonNull String msg) {
     super(msg);
