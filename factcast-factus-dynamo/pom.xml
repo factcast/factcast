@@ -37,7 +37,7 @@
       <artifactId>dynamodb-enhanced</artifactId>
       <version>${aws-sdk.version}</version>
     </dependency>
-    <!-- uses AWS SDK v2 from version 1.2.0 -->
+    <!-- uses AWS SDK v2 -->
     <dependency>
       <groupId>com.amazonaws</groupId>
       <artifactId>dynamodb-lock-client</artifactId>
