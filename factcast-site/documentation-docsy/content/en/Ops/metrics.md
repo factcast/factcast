@@ -137,7 +137,8 @@ You can distinguish them by the `name` tag. Currently, these are:
 - `transformation-cache` - used for inserting/updating entries in the transformation cache (only if you use persisted
   cache)
 - `pg-listener` - used by the Guava EventBus that receives signals from the PostgreSQL
-- `telemetry` - used by the Guava EventBus that receives signals from the FactCast Server (see [telemetry](./telemetry.md))
+- `telemetry` - used by the Guava EventBus that receives signals from the FactCast Server (
+  see [telemetry](telemetry.md))
 
 See https://micrometer.io/docs/ref/jvm for more information.
 
