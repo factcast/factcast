@@ -1,7 +1,7 @@
 ---
 title: "Compression"
 type: docs
-weight: 155
+weight: 171
 description: Selecting a compressor
 ---
 
@@ -40,10 +40,11 @@ For obvious reasons, extra dependencies to `factcast-grpc-myCompressionAlgorithm
 {{< card header="Snappy" >}}
 
 ```xml
+
 <dependency>
-	<groupId>org.factcast</groupId>
-	<artifactId>factcast-grpc-lz4</artifactId>
-	<version>${factcast.version}</version>
+    <groupId>org.factcast</groupId>
+    <artifactId>factcast-grpc-lz4</artifactId>
+    <version>${factcast.version}</version>
 </dependency>
 ```
 
@@ -51,10 +52,11 @@ For obvious reasons, extra dependencies to `factcast-grpc-myCompressionAlgorithm
 {{< card header="LZ4" >}}
 
 ```xml
+
 <dependency>
-	<groupId>org.factcast</groupId>
-	<artifactId>factcast-grpc-snappy</artifactId>
-	<version>${factcast.version}</version>
+    <groupId>org.factcast</groupId>
+    <artifactId>factcast-grpc-snappy</artifactId>
+    <version>${factcast.version}</version>
 </dependency>
 ```
 
@@ -67,10 +69,11 @@ For versions before 0.7.9 the respective dependencies were
 {{< card header="Snappy" >}}
 
 ```xml
+
 <dependency>
-  <groupId>org.xerial.snappy</groupId>
-  <artifactId>snappy-java</artifactId>
-  <version>1.1.8.4</version>
+    <groupId>org.xerial.snappy</groupId>
+    <artifactId>snappy-java</artifactId>
+    <version>1.1.8.4</version>
 </dependency>
 
 ```
@@ -79,10 +82,11 @@ For versions before 0.7.9 the respective dependencies were
 {{< card header="LZ4" >}}
 
 ```xml
+
 <dependency>
-  <groupId>net.jpountz.lz4</groupId>
-  <artifactId>lz4</artifactId>
-  <version>1.3.0</version>
+    <groupId>net.jpountz.lz4</groupId>
+    <artifactId>lz4</artifactId>
+    <version>1.3.0</version>
 </dependency>
 ```
 
@@ -93,7 +97,8 @@ For versions before 0.7.9 the respective dependencies were
 
 ## Compressor efficiency
 
-As there currently is no stream-compression in GRPC, the server compresses each message transferred to the client separately.
+As there currently is no stream-compression in GRPC, the server compresses each message transferred to the client
+separately.
 The smaller this message is, the less efficient the compression can be. For this reason it is important (during the
 catchup phase, where you expect a lot of messages) to allow the server to bundle messages into a batch that it will
 compress and send as one message.
