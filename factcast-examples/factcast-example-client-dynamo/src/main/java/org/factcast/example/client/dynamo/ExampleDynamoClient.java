@@ -18,6 +18,7 @@ package org.factcast.example.client.dynamo;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+/** Requires local dynamoDb to run. See README.md */
 @SpringBootApplication
 public class ExampleDynamoClient {
   public static void main(String[] args) {
