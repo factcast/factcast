@@ -412,12 +412,12 @@
                 <annotationProcessorPath>
                   <groupId>io.micronaut</groupId>
                   <artifactId>micronaut-inject-java</artifactId>
-                  <version>4.6.6</version>
+                  <version>4.7.0</version>
                 </annotationProcessorPath>
                 <annotationProcessorPath>
                   <groupId>io.micronaut.validation</groupId>
                   <artifactId>micronaut-validation-processor</artifactId>
-                  <version>4.7.0</version>
+                  <version>4.8.0</version>
                 </annotationProcessorPath>
               </annotationProcessorPaths>
             </configuration>
@@ -452,12 +452,12 @@
                 <annotationProcessorPath>
                   <groupId>io.micronaut</groupId>
                   <artifactId>micronaut-inject-java</artifactId>
-                  <version>4.6.6</version>
+                  <version>4.7.0</version>
                 </annotationProcessorPath>
                 <annotationProcessorPath>
                   <groupId>io.micronaut.validation</groupId>
                   <artifactId>micronaut-validation-processor</artifactId>
-                  <version>4.7.0</version>
+                  <version>4.8.0</version>
                 </annotationProcessorPath>
               </annotationProcessorPaths>
             </configuration>
