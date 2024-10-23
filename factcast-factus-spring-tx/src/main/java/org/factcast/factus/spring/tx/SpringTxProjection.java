@@ -15,9 +15,6 @@
  */
 package org.factcast.factus.spring.tx;
 
-import javax.annotation.*;
-import lombok.*;
-import org.factcast.core.*;
 import org.factcast.factus.projection.ExternalizedProjection;
 import org.factcast.factus.projection.tx.TransactionAware;
 
