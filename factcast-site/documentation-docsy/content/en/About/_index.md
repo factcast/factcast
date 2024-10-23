@@ -35,13 +35,32 @@ software systems that communicate over events.
 
 It provides two APIs for the JVM:
 
-1. FactCast client: low-level, un-opinionated GRPC library to publish / subscribe to facts
-2. Factus: high-level, opinionated library working with facts as Objects, as well as abstractions like Aggregates &
+1. **FactCast client**: low-level, un-opinionated GRPC library to publish / subscribe to facts
+2. **Factus**: high-level, opinionated library working with facts as Objects, as well as abstractions like Aggregates &
    Projections
 
 and also a Schema-Registry that enables FactCast to <b>validate & transform</b> events on the fly.
 
 If you are new here, you might want to read up on the [motivation]({{< ref "motivation.md" >}}) and [design]({{< ref "design.md" >}}) for the project.
+
+<hr />
+
+**Factus** also integrates with external Datastores like
+
+<center>
+<img src="/logos/postgres-logo.svg" width="100px" height="100px"/>
+<img src="/logos/maria-logo.png" width="100px" height="100px"/>
+<img src="/logos/mysql-logo.svg" width="100px" height="100px"/>
+<img src="/logos/rds-logo.png" width="100px" height="100px"/> 
+<img src="/logos/jdbc-logo.png" width="100px" height="100px"/>
+<img src="/logos/redis-logo.png" width="100px" height="100px"/>
+<img src="/logos/valkey-logo.png" width="100px" height="100px"/> 
+<img src="/logos/dynamo-logo.svg" width="100px" height="100px"/> 
+</center>
+
+but adding support for any other datastore (be it transactional or not) is very easy to implement.
+
+<hr />
 
 The project is [hosted on GitHub](https://github.com/factcast/factcast) and any kind of contribution is very welcome.
 
