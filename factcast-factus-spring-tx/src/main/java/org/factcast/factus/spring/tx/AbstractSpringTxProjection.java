@@ -36,12 +36,6 @@ abstract class AbstractSpringTxProjection implements SpringTxProjection {
                 platformTransactionManager, getClass().getAnnotation(SpringTransactional.class)));
   }
 
-  /**
-   * For SpringTx it purely depends on which thread calls this method as transactions are thread
-   * bound in SpringTX.
-   *
-   * @return
-   */
   @Nullable
   @Override
   public FactStreamPosition factStreamPositionInTransaction() {
@@ -49,20 +43,9 @@ abstract class AbstractSpringTxProjection implements SpringTxProjection {
     return factStreamPosition();
   }
 
-  /**
-   * For SpringTx it purely depends on which thread calls this method as transactions are thread
-   * bound in SpringTX.
-   *
-   * @return
-   */
   @Override
   public void factStreamPositionInTransaction(@NonNull FactStreamPosition factStreamPosition) {
     assertInTransaction();
     factStreamPosition(factStreamPosition);
-  }
-
-  public void assertInTransaction() throws TransactionException {
-    if (!TransactionSynchronizationManager.isActualTransactionActive())
-      throw new TransactionNotRunningException("Transaction is not running");
   }
 }
