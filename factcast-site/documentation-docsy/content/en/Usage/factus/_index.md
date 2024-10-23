@@ -8,6 +8,9 @@ This section will walk you through using FactCast from an application programmer
 Factus. Factus is an optional high-level API provided in order to make it easier to work with FactCast from Java (or
 Kotlin or any other JVM language of your choice).
 
+It has dedicated modules to integrate with several datastores for storage of snapshots and other projections. For
+details have a look at [Projections](projections).
+
 **Please be aware that the Factus API is in experimental stage and is expected to change while getting more mature.**
 If you find sharp edges or feel like things are missing,
 please [open an issue on GitHub](https://github.com/factcast/factcast/issues/new/choose).
