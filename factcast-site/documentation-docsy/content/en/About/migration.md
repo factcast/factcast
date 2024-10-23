@@ -15,11 +15,20 @@ database before migrating to FactCast 0.8.0.
 
 ## Changes to Projections
 
+### Transactional
+
+Please note that, even though the max bulk size of a transaction in Factus can be configured per projection (by
+implementing maxBatchSizePerTransaction or by annotation), the maximum size of a transaction bulk is ultimately limited
+by the value of
+`factcast.grpc.client.maxInboundMessageSize`, which defaults to 8MB and can be configured up to 32MB max.
+
 ### @RedisTransactional
 
 For transactional Redis projections Factus now provides abstract classes. Projections that are annotated with
 `@RedisTransactional` now must extend `AbstractRedisTxManagedProjection` or `AbstractRedisTxSubscribedProjection`
 respectively. The annotation itself is optional, if no default settings are overwritten.
+
+Please note that the default bulk size has changed from 50 to 1000.
 
 ### @RedisBatched
 
@@ -40,6 +49,8 @@ have to decide if you can continue without transactionality, or adapt your proje
 For transactional Spring projections Factus now provides abstract classes. Projections that are annotated with
 `@SpringTransactional` now must extend `AbstractSpringTxManagedProjection` or `AbstractSpringTxSubscribedProjection`
 respectively. The annotation itself is optional, if no default settings are overwritten.
+
+Please note that the default bulk size has changed from 50 to 1000.
 
 ## Removal of deprecated field in ProjectionMetaData
 

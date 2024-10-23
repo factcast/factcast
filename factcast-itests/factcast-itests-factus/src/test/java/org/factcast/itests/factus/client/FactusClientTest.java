@@ -71,10 +71,6 @@ import org.springframework.test.context.ContextConfiguration;
 class FactusClientTest extends AbstractFactCastIntegrationTest {
   private static final long WAIT_TIME_FOR_ASYNC_FACT_DELIVERY = 1000;
 
-  static {
-    System.setProperty("factcast.grpc.client.catchup-batchsize", "100");
-  }
-
   @Autowired Factus factus;
 
   @Autowired EventConverter eventConverter;

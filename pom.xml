@@ -106,14 +106,14 @@
     <spring-grpc.version>3.1.0.RELEASE</spring-grpc.version>
     <grpc.version>1.63.0</grpc.version>
     <!-- lter versions seem to break toxi -->
-    <testcontainers.version>1.20.2</testcontainers.version>
+    <testcontainers.version>1.20.3</testcontainers.version>
     <arrow.version>1.2.4</arrow.version>
     <micronaut.version>4.6.3</micronaut.version>
     <kotlin.version>2.0.21</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <mockk.version>1.13.13</mockk.version>
     <redisson.version>3.35.0</redisson.version>
-    <aws-sdk.version>2.28.27</aws-sdk.version>
+    <aws-sdk.version>2.28.28</aws-sdk.version>
     <graaljs.version>24.0.1</graaljs.version>
     <shedlock.version>5.16.0</shedlock.version>
     <byte-buddy.version>1.15.5</byte-buddy.version>
