@@ -15,13 +15,10 @@
  */
 package org.factcast.client.grpc;
 
-import com.google.common.base.*;
 import java.time.Duration;
-import java.util.stream.*;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.common.returnsreceiver.qual.*;
 import org.factcast.grpc.api.*;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
