@@ -21,7 +21,9 @@ import lombok.extern.slf4j.*;
 @Slf4j
 @UtilityClass
 public class GrpcConstants {
-  public static final int DEFAULT_CLIENT_INBOUND_MESSAGE_SIZE = 8 * 1024 * 1024;
+  private static final int MARGIN_FOR_SAFETY = 1024 * 500; // 500kb
+  // 3,5MB - must be below the 4MB default of GRPC
+  public static final int DEFAULT_CLIENT_INBOUND_MESSAGE_SIZE = 4 * 1024 * 1024 - MARGIN_FOR_SAFETY;
 
   // supposed to prevent a client from shooting himself in the foot. We have seen Events in the wild
   // that are >600kb already.
