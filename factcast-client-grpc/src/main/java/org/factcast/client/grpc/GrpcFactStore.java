@@ -96,7 +96,8 @@ public class GrpcFactStore implements FactStore {
             channelFactory,
             CHANNEL_NAME,
             prepareMetaData(properties, clientId),
-            configureCredentials(credentials, properties)),
+            configureCredentials(credentials, properties),
+            properties),
         properties);
   }
 

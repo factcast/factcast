@@ -38,6 +38,7 @@ class GrpcStubsImplTest {
   @Mock private FactCastGrpcChannelFactory factory;
   @Mock private Metadata meta;
   @Mock private CallCredentials creds;
+  private FactCastGrpcClientProperties properties = new FactCastGrpcClientProperties();
   private GrpcStubsImpl underTest;
 
   private static final String COMP = "COMP";
@@ -51,81 +52,91 @@ class GrpcStubsImplTest {
 
   @Test
   void uncompressedBlockingHasMeta() {
-    underTest = new GrpcStubsImpl(factory, CHANNEL_NAME, meta, null);
+    underTest = new GrpcStubsImpl(factory, CHANNEL_NAME, meta, null, properties);
     RemoteFactStoreGrpc.RemoteFactStoreBlockingStub stub =
         mock(RemoteFactStoreGrpc.RemoteFactStoreBlockingStub.class);
     when(stub.withInterceptors(any())).thenReturn(stub);
+    when(stub.withMaxInboundMessageSize(anyInt())).thenReturn(stub);
     underTest.configure(stub);
     ArgumentCaptor<ClientInterceptor> captor = ArgumentCaptor.forClass(ClientInterceptor.class);
     verify(stub).withInterceptors(captor.capture());
     verify(stub, never()).withDeadline(any());
+    verify(stub).withMaxInboundMessageSize(properties.getMaxInboundMessageSize());
 
     Assertions.assertThat(captor.getValue()).hasFieldOrPropertyWithValue("extraHeaders", meta);
   }
 
   @Test
   void compressedBlockingHasMeta() {
-    underTest = new GrpcStubsImpl(factory, CHANNEL_NAME, meta, null);
+    underTest = new GrpcStubsImpl(factory, CHANNEL_NAME, meta, null, properties);
     RemoteFactStoreGrpc.RemoteFactStoreBlockingStub stub =
         mock(RemoteFactStoreGrpc.RemoteFactStoreBlockingStub.class);
     when(stub.withInterceptors(any())).thenReturn(stub);
+    when(stub.withMaxInboundMessageSize(anyInt())).thenReturn(stub);
     underTest.compression(COMP);
     underTest.configure(stub);
     ArgumentCaptor<ClientInterceptor> captor = ArgumentCaptor.forClass(ClientInterceptor.class);
     verify(stub).withInterceptors(captor.capture());
     verify(stub, never()).withDeadline(any());
+    verify(stub).withMaxInboundMessageSize(properties.getMaxInboundMessageSize());
 
     Assertions.assertThat(captor.getValue()).hasFieldOrPropertyWithValue("extraHeaders", meta);
   }
 
   @Test
   void stubWithDeadline() {
-    underTest = new GrpcStubsImpl(factory, CHANNEL_NAME, meta, null);
+    underTest = new GrpcStubsImpl(factory, CHANNEL_NAME, meta, null, properties);
     RemoteFactStoreGrpc.RemoteFactStoreBlockingStub stub =
         mock(RemoteFactStoreGrpc.RemoteFactStoreBlockingStub.class);
     when(stub.withDeadline(any())).thenReturn(stub);
     when(stub.withInterceptors(any())).thenReturn(stub);
+    when(stub.withMaxInboundMessageSize(anyInt())).thenReturn(stub);
     underTest.compression(COMP);
     underTest.configure(stub, deadline);
     ArgumentCaptor<ClientInterceptor> captor = ArgumentCaptor.forClass(ClientInterceptor.class);
     verify(stub).withInterceptors(captor.capture());
     verify(stub, atLeastOnce()).withDeadline(any());
+    verify(stub).withMaxInboundMessageSize(properties.getMaxInboundMessageSize());
 
     Assertions.assertThat(captor.getValue()).hasFieldOrPropertyWithValue("extraHeaders", meta);
   }
 
   @Test
   void stubWithoutDeadline() {
-    underTest = new GrpcStubsImpl(factory, CHANNEL_NAME, meta, null);
+    underTest = new GrpcStubsImpl(factory, CHANNEL_NAME, meta, null, properties);
     RemoteFactStoreGrpc.RemoteFactStoreBlockingStub stub =
         mock(RemoteFactStoreGrpc.RemoteFactStoreBlockingStub.class);
     when(stub.withInterceptors(any())).thenReturn(stub);
+    when(stub.withMaxInboundMessageSize(anyInt())).thenReturn(stub);
     underTest.compression(COMP);
     underTest.configure(stub, null);
     ArgumentCaptor<ClientInterceptor> captor = ArgumentCaptor.forClass(ClientInterceptor.class);
     verify(stub).withInterceptors(captor.capture());
     verify(stub, never()).withDeadline(any());
+    verify(stub).withMaxInboundMessageSize(properties.getMaxInboundMessageSize());
 
     Assertions.assertThat(captor.getValue()).hasFieldOrPropertyWithValue("extraHeaders", meta);
   }
 
   @Test
   void nonBlockingHasMeta() {
-    underTest = new GrpcStubsImpl(factory, CHANNEL_NAME, meta, null);
+    underTest = new GrpcStubsImpl(factory, CHANNEL_NAME, meta, null, properties);
     RemoteFactStoreGrpc.RemoteFactStoreStub stub =
         mock(RemoteFactStoreGrpc.RemoteFactStoreStub.class);
     when(stub.withInterceptors(any())).thenReturn(stub);
+    when(stub.withMaxInboundMessageSize(anyInt())).thenReturn(stub);
     underTest.configure(stub);
     ArgumentCaptor<ClientInterceptor> captor = ArgumentCaptor.forClass(ClientInterceptor.class);
     verify(stub).withInterceptors(captor.capture());
     verify(stub, never()).withDeadline(any());
+    verify(stub).withMaxInboundMessageSize(properties.getMaxInboundMessageSize());
 
     Assertions.assertThat(captor.getValue()).hasFieldOrPropertyWithValue("extraHeaders", meta);
   }
 
   @Test
   void withCredentials() {
-    underTest = new GrpcStubsImpl(factory, CHANNEL_NAME, meta, creds);
+    underTest = new GrpcStubsImpl(factory, CHANNEL_NAME, meta, creds, properties);
     {
       RemoteFactStoreGrpc.RemoteFactStoreBlockingStub stub = underTest.uncompressedBlocking();
       Assertions.assertThat(stub.getCallOptions().getCredentials()).isSameAs(creds);
@@ -142,7 +153,7 @@ class GrpcStubsImplTest {
 
   @Test
   void withNullCompression() {
-    underTest = new GrpcStubsImpl(factory, CHANNEL_NAME, meta, null);
+    underTest = new GrpcStubsImpl(factory, CHANNEL_NAME, meta, null, properties);
     underTest.compression(null);
 
     {
@@ -161,7 +172,7 @@ class GrpcStubsImplTest {
 
   @Test
   void withCompression() {
-    underTest = new GrpcStubsImpl(factory, CHANNEL_NAME, meta, creds);
+    underTest = new GrpcStubsImpl(factory, CHANNEL_NAME, meta, creds, properties);
     underTest.compression(COMP);
 
     {

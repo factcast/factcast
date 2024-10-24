@@ -16,7 +16,9 @@
 package org.factcast.grpc.api;
 
 import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.*;
 
+@Slf4j
 @UtilityClass
 public class GrpcConstants {
   private static final int MARGIN_FOR_SAFETY = 1024 * 500; // 500kb
@@ -29,4 +31,24 @@ public class GrpcConstants {
 
   // supposed to prevent a client from driving the server to OOM
   public static final int MAX_CLIENT_INBOUND_MESSAGE_SIZE = 32 * 1024 * 1024;
+
+  public static int calculateMaxInboundMessageSize(int requested) {
+    if (requested > GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE) {
+      log.warn(
+          "A maxInboundMessageSize of {} exceeds the upper limit of {}. Limiting it to upper bound.",
+          requested,
+          GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE);
+    }
+
+    if (requested < GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE) {
+      log.warn(
+          "A maxInboundMessageSize of {} is smaller than the lower limit of {}. Limiting it to lower bound.",
+          requested,
+          GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE);
+    }
+
+    return Math.max(
+        GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE,
+        Math.min(requested, GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE));
+  }
 }
