@@ -73,21 +73,7 @@ public class FactCastGrpcClientProperties implements InitializingBean {
 
   @Override
   public void afterPropertiesSet() throws Exception {
-    if (maxInboundMessageSize < GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE)
-      log.warn(
-          "Minimum value for 'maxInboundMessageSize' is {}",
-          GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE);
-    if (maxInboundMessageSize > GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE)
-      log.warn(
-          "Maximum value for 'maxInboundMessageSize' is {}",
-          GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE);
-
-    // we limit the value to the allowed ranges to properly configure the grpc channel/stubs
-    // properly
-    maxInboundMessageSize =
-        Math.max(
-            GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE,
-            Math.min(maxInboundMessageSize, GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE));
+    maxInboundMessageSize = GrpcConstants.calculateMaxInboundMessageSize(maxInboundMessageSize);
   }
 
   @Data
