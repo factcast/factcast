@@ -68,7 +68,9 @@ class AbstractSpringTxProjectionTest {
     }
 
     @Override
-    public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {}
+    public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {
+      // intentionally empty
+    }
 
     @Override
     public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
