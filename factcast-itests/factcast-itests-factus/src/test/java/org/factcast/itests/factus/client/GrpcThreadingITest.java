@@ -160,11 +160,11 @@ public class GrpcThreadingITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    public void factStreamPositionInTransaction(@NonNull FactStreamPosition factStreamPosition) {
+    public void transactionalFactStreamPosition(@NonNull FactStreamPosition factStreamPosition) {
       factStreamPositionModifications++;
       txSeen.add(jdbcTemplate.queryForObject("select txid_current()", String.class));
 
-      super.factStreamPositionInTransaction(factStreamPosition);
+      super.transactionalFactStreamPosition(factStreamPosition);
     }
 
     @Override

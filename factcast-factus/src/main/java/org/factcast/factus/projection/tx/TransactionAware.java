@@ -15,7 +15,6 @@
  */
 package org.factcast.factus.projection.tx;
 
-import javax.annotation.*;
 import lombok.*;
 import org.factcast.core.*;
 import org.factcast.factus.projection.FactStreamPositionAware;
@@ -37,10 +36,7 @@ public interface TransactionAware extends FactStreamPositionAware {
    */
   void rollback() throws TransactionException;
 
-  @Nullable
-  FactStreamPosition factStreamPositionInTransaction();
-
-  void factStreamPositionInTransaction(@NonNull FactStreamPosition factStreamPosition);
+  void transactionalFactStreamPosition(@NonNull FactStreamPosition factStreamPosition);
 
   int maxBatchSizePerTransaction();
 }

@@ -36,15 +36,8 @@ abstract class AbstractSpringTxProjection implements SpringTxProjection {
                 platformTransactionManager, getClass().getAnnotation(SpringTransactional.class)));
   }
 
-  @Nullable
   @Override
-  public FactStreamPosition factStreamPositionInTransaction() {
-    assertInTransaction();
-    return factStreamPosition();
-  }
-
-  @Override
-  public void factStreamPositionInTransaction(@NonNull FactStreamPosition factStreamPosition) {
+  public void transactionalFactStreamPosition(@NonNull FactStreamPosition factStreamPosition) {
     assertInTransaction();
     factStreamPosition(factStreamPosition);
   }

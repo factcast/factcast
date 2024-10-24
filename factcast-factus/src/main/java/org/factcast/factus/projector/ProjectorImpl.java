@@ -174,7 +174,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
   private void setFactStreamPositionIfAware(@NonNull FactStreamPosition latestAttempted) {
     if (projection instanceof TransactionAware) {
-      ((TransactionAware) projection).factStreamPositionInTransaction(latestAttempted);
+      ((TransactionAware) projection).transactionalFactStreamPosition(latestAttempted);
     } else if (projection instanceof FactStreamPositionAware) {
       ((FactStreamPositionAware) projection).factStreamPosition(latestAttempted);
     }
