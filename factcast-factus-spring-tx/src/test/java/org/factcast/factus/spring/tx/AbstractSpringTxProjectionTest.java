@@ -43,27 +43,15 @@ class AbstractSpringTxProjectionTest {
   @Spy @InjectMocks MySpringTxProjection underTest;
 
   @Test
-  void readFSPInTx() {
-    when(platformTransactionManager.getTransaction(any())).thenReturn(transactionStatus);
-
-    assertThatThrownBy(() -> underTest.factStreamPositionInTransaction())
-        .isInstanceOf(TransactionNotRunningException.class);
-
-    underTest.begin();
-
-    assertThat(underTest.factStreamPositionInTransaction()).isEqualTo(FSP);
-  }
-
-  @Test
   void writeSPInTx() {
     when(platformTransactionManager.getTransaction(any())).thenReturn(transactionStatus);
 
-    assertThatThrownBy(() -> underTest.factStreamPositionInTransaction(FSP))
+    assertThatThrownBy(() -> underTest.transactionalFactStreamPosition(FSP))
         .isInstanceOf(TransactionNotRunningException.class);
 
     underTest.begin();
 
-    underTest.factStreamPositionInTransaction(FSP);
+    underTest.transactionalFactStreamPosition(FSP);
 
     verify(underTest).factStreamPosition(FSP);
   }

@@ -489,9 +489,9 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    public void factStreamPositionInTransaction(@NonNull FactStreamPosition factStreamPosition) {
+    public void transactionalFactStreamPosition(@NonNull FactStreamPosition factStreamPosition) {
       factStreamPositionModifications++;
-      super.factStreamPositionInTransaction(factStreamPosition);
+      super.transactionalFactStreamPosition(factStreamPosition);
     }
 
     @Override

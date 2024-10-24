@@ -17,7 +17,6 @@ package org.factcast.factus.redis.tx;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
-import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.experimental.Delegate;
 import org.factcast.core.FactStreamPosition;
@@ -45,15 +44,8 @@ abstract class AbstractRedisTxProjection extends AbstractRedisProjection
     return tx.getBucket(stateBucketName, FactStreamPositionCodec.INSTANCE);
   }
 
-  @Nullable
   @Override
-  public FactStreamPosition factStreamPositionInTransaction() {
-    assertInTransaction();
-    return stateBucket(runningTransaction()).get();
-  }
-
-  @Override
-  public void factStreamPositionInTransaction(@NonNull FactStreamPosition position) {
+  public void transactionalFactStreamPosition(@NonNull FactStreamPosition position) {
     assertInTransaction();
     stateBucket(runningTransaction()).set(position);
   }

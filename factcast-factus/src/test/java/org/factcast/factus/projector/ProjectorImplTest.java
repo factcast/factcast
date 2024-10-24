@@ -712,14 +712,8 @@ class ProjectorImplTest {
     @Override
     public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {}
 
-    @Nullable
     @Override
-    public FactStreamPosition factStreamPositionInTransaction() {
-      return TestFactStreamPosition.random();
-    }
-
-    @Override
-    public void factStreamPositionInTransaction(@NonNull FactStreamPosition factStreamPosition) {}
+    public void transactionalFactStreamPosition(@NonNull FactStreamPosition factStreamPosition) {}
 
     @Override
     public @NonNull SomeTransactionInterface beginNewTransaction() {
