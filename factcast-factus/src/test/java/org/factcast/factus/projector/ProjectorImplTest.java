@@ -713,6 +713,9 @@ class ProjectorImplTest {
     public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {}
 
     @Override
+    public void transactionalFactStreamPosition(@NonNull FactStreamPosition factStreamPosition) {}
+
+    @Override
     public @NonNull SomeTransactionInterface beginNewTransaction() {
       return new SomeTransactionInterface() {
         @Override

@@ -173,8 +173,11 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
   }
 
   private void setFactStreamPositionIfAware(@NonNull FactStreamPosition latestAttempted) {
-    if (projection instanceof FactStreamPositionAware)
+    if (projection instanceof TransactionAware) {
+      ((TransactionAware) projection).transactionalFactStreamPosition(latestAttempted);
+    } else if (projection instanceof FactStreamPositionAware) {
       ((FactStreamPositionAware) projection).factStreamPosition(latestAttempted);
+    }
   }
 
   private UUID callHandlerFor(@NonNull Fact f)

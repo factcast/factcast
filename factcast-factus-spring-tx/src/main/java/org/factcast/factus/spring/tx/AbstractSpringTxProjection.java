@@ -15,11 +15,14 @@
  */
 package org.factcast.factus.spring.tx;
 
+import javax.annotation.*;
 import lombok.NonNull;
 import lombok.experimental.Delegate;
-import org.factcast.factus.projection.tx.TransactionBehavior;
+import org.factcast.core.*;
+import org.factcast.factus.projection.tx.*;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.*;
 
 abstract class AbstractSpringTxProjection implements SpringTxProjection {
 
@@ -31,5 +34,11 @@ abstract class AbstractSpringTxProjection implements SpringTxProjection {
         new TransactionBehavior<>(
             new SpringTxAdapter(
                 platformTransactionManager, getClass().getAnnotation(SpringTransactional.class)));
+  }
+
+  @Override
+  public void transactionalFactStreamPosition(@NonNull FactStreamPosition factStreamPosition) {
+    assertInTransaction();
+    factStreamPosition(factStreamPosition);
   }
 }
