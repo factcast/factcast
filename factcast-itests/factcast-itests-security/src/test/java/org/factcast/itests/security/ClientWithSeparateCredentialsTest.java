@@ -23,9 +23,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
-import org.factcast.client.grpc.FactCastGrpcChannelFactory;
-import org.factcast.client.grpc.GrpcStubs;
-import org.factcast.client.grpc.GrpcStubsImpl;
+import org.factcast.client.grpc.*;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
@@ -52,6 +50,8 @@ class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrationTest 
   @Autowired GrpcChannelFactory grpcChannelFactory;
 
   @Autowired JdbcTemplate jdbcTemplate;
+
+  @Autowired FactCastGrpcClientProperties factCastGrpcClientProperties;
 
   private final ProtoConverter converter = new ProtoConverter();
 
@@ -90,7 +90,8 @@ class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrationTest 
             FactCastGrpcChannelFactory.createDefault(grpcChannelFactory),
             "factstore",
             new Metadata(),
-            null);
+            null,
+            factCastGrpcClientProperties);
   }
 
   @Test
