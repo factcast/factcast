@@ -101,7 +101,7 @@ As there currently is no stream-compression in GRPC, the server compresses each 
 separately.
 The smaller this message is, the less efficient the compression can be. For this reason it is important (during the
 catchup phase, where you expect a lot of messages) to allow the server to bundle facts into a batch that it will
-compress and send as one message. The default maximum message size is 2MB, but it can be configured up to 32MB.
+compress and send as one message. The default maximum message size is 3.5MB, but it can be configured up to 32MB.
 
 See [`factcast.grpc.client.max-inbound-message-size`](/setup/properties/#factcast-client-specific)
 
