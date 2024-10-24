@@ -33,13 +33,15 @@ public class GrpcConstants {
   public static int calculateMaxInboundMessageSize(int requested) {
     if (requested > GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE) {
       log.warn(
-          "maxMsgSize requested from client exceeds {}. Limiting it to upper bound.",
+          "A maxInboundMessageSize of {} exceeds the upper limit of {}. Limiting it to upper bound.",
+          requested,
           GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE);
     }
 
     if (requested < GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE) {
       log.warn(
-          "maxMsgSize requested from client is smaller than {}, Limiting it to lower bound.",
+          "A maxInboundMessageSize of {} is smaller than the lower limit of {}. Limiting it to lower bound.",
+          requested,
           GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE);
     }
 
