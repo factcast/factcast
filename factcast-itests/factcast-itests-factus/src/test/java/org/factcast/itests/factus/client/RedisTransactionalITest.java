@@ -38,6 +38,7 @@ import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.TxRedissonManagedUserNames;
 import org.factcast.itests.factus.proj.TxRedissonSubscribedUserNames;
 import org.factcast.test.AbstractFactCastIntegrationTest;
+import org.jetbrains.annotations.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -176,9 +177,9 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     @Getter int stateModifications = 0;
 
     @Override
-    public void factStreamPosition(FactStreamPosition factStreamPosition) {
+    public void transactionalFactStreamPosition(@NotNull FactStreamPosition factStreamPosition) {
       stateModifications++;
-      super.factStreamPosition(factStreamPosition);
+      super.transactionalFactStreamPosition(factStreamPosition);
     }
   }
 
@@ -190,9 +191,9 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     @Getter int stateModifications = 0;
 
     @Override
-    public void factStreamPosition(FactStreamPosition factStreamPosition) {
+    public void transactionalFactStreamPosition(@NotNull FactStreamPosition factStreamPosition) {
       stateModifications++;
-      super.factStreamPosition(factStreamPosition);
+      super.transactionalFactStreamPosition(factStreamPosition);
     }
   }
 
