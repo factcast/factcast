@@ -20,7 +20,7 @@ database before migrating to FactCast 0.8.0.
 Please note that, even though the max bulk size of a transaction in Factus can be configured per projection (by
 implementing maxBatchSizePerTransaction or by annotation), the maximum size of a transaction bulk is ultimately limited
 by the value of
-`factcast.grpc.client.maxInboundMessageSize`, which defaults to 8MB and can be configured up to 32MB max.
+`factcast.grpc.client.maxInboundMessageSize`, which defaults to 3.5MB and can be configured up to 32MB max.
 
 ### @RedisTransactional
 
