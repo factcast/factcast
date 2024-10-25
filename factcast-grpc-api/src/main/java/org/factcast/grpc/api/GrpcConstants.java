@@ -16,10 +16,14 @@
 package org.factcast.grpc.api;
 
 import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.*;
 
+@Slf4j
 @UtilityClass
 public class GrpcConstants {
-  public static final int DEFAULT_CLIENT_INBOUND_MESSAGE_SIZE = 8 * 1024 * 1024;
+  private static final int MARGIN_FOR_SAFETY = 1024 * 500; // 500kb
+  // 3,5MB - must be below the 4MB default of GRPC
+  public static final int DEFAULT_CLIENT_INBOUND_MESSAGE_SIZE = 4 * 1024 * 1024 - MARGIN_FOR_SAFETY;
 
   // supposed to prevent a client from shooting himself in the foot. We have seen Events in the wild
   // that are >600kb already.
@@ -27,4 +31,24 @@ public class GrpcConstants {
 
   // supposed to prevent a client from driving the server to OOM
   public static final int MAX_CLIENT_INBOUND_MESSAGE_SIZE = 32 * 1024 * 1024;
+
+  public static int calculateMaxInboundMessageSize(int requested) {
+    if (requested > GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE) {
+      log.warn(
+          "A maxInboundMessageSize of {} exceeds the upper limit of {}. Limiting it to upper bound.",
+          requested,
+          GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE);
+    }
+
+    if (requested < GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE) {
+      log.warn(
+          "A maxInboundMessageSize of {} is smaller than the lower limit of {}. Limiting it to lower bound.",
+          requested,
+          GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE);
+    }
+
+    return Math.max(
+        GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE,
+        Math.min(requested, GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE));
+  }
 }

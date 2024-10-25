@@ -36,7 +36,6 @@ public class GrpcRequestMetadata {
   Metadata headers;
 
   int clientMaxInboundMessageSize() {
-
     Preconditions.checkNotNull(
         headers, "GrpcRequestMetadata has not been provided with headers via Interceptor");
 
@@ -47,21 +46,7 @@ public class GrpcRequestMetadata {
             .findFirst()
             .orElse(GrpcConstants.DEFAULT_CLIENT_INBOUND_MESSAGE_SIZE);
 
-    if (requested > GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE) {
-      log.warn(
-          "maxMsgSize requested from client exceeds {}. Limiting it to upper bound.",
-          GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE);
-    }
-
-    if (requested < GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE) {
-      log.warn(
-          "maxMsgSize requested from client is smaller than {}, Limiting it to lower bound.",
-          GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE);
-    }
-
-    return Math.max(
-        GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE,
-        Math.min(requested, GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE));
+    return GrpcConstants.calculateMaxInboundMessageSize(requested);
   }
 
   boolean supportsFastForward() {
