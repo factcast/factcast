@@ -15,6 +15,7 @@
  */
 package org.factcast.spring.boot.autoconfigure.snap;
 
+import javax.sql.DataSource;
 import lombok.NonNull;
 import org.factcast.factus.Factus;
 import org.factcast.factus.snapshot.SnapshotCache;
@@ -24,8 +25,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-
-import javax.sql.DataSource;
 
 @AutoConfiguration
 @ConditionalOnClass({JdbcSnapshotCache.class, Factus.class})
