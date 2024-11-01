@@ -18,47 +18,59 @@ package org.factcast.store.registry;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.store.registry.transformation.TransformationSource;
 import org.factcast.store.registry.validation.schema.SchemaSource;
 import org.springframework.core.io.AbstractResource;
 
-/** Abstract super class for RegistryFileFetcher that operate on local files. */
+/**
+ * Abstract superclass for RegistryFileFetcher that operates on local files.
+ */
 @RequiredArgsConstructor
 public abstract class AbstractFileBasedRegistryFileFetcher implements RegistryFileFetcher {
 
-  @Override
-  public String fetchTransformation(@NonNull TransformationSource key) {
-    String subPath =
-        key.ns() + "/" + key.type() + "/" + key.from() + "-" + key.to() + "/transform.js";
-    return fetch(subPath);
-  }
-
-  @Override
-  public String fetchSchema(@NonNull SchemaSource key) {
-    String subPath = key.ns() + "/" + key.type() + "/" + key.version() + "/schema.json";
-    return fetch(subPath);
-  }
-
-  private @NonNull String fetch(String subPath) {
-    try {
-      AbstractResource file = getFile(subPath);
-      if (file.exists()) {
-        return file.getContentAsString(StandardCharsets.UTF_8);
-      } else {
-        throw new SchemaRegistryUnavailableException(
-            new FileNotFoundException("Resource " + subPath + " does not exist."));
-      }
-    } catch (IOException e) {
-      throw new SchemaRegistryUnavailableException(e);
+    @Override
+    public String fetchTransformation(@NonNull TransformationSource key) {
+        String subPath = buildTransformationPath(key);
+        return fetch(subPath);
     }
-  }
 
-  /**
-   * @param subPath the sub path of a file, relative to some context
-   * @return a File object pointing to the requested file
-   * @throws IOException in case of problems resolving the File object
-   */
-  protected abstract AbstractResource getFile(String subPath) throws IOException;
+    @Override
+    public String fetchSchema(@NonNull SchemaSource key) {
+        String subPath = buildSchemaPath(key);
+        return fetch(subPath);
+    }
+
+    private @NonNull String fetch(String subPath) {
+        try {
+            AbstractResource file = getFile(subPath);
+            if (file.exists()) {
+                return file.getContentAsString(StandardCharsets.UTF_8);
+            } else {
+                throw new SchemaRegistryUnavailableException(
+                    new FileNotFoundException("Resource " + subPath + " does not exist."));
+            }
+        } catch (IOException e) {
+            throw new SchemaRegistryUnavailableException("Error fetching resource: " + subPath, e);
+        }
+    }
+
+    private String buildTransformationPath(TransformationSource key) {
+        return key.ns() + "/" + key.type() + "/" + key.from() + "-" + key.to() + "/transform.js";
+    }
+
+    private String buildSchemaPath(SchemaSource key) {
+        return key.ns() + "/" + key.type() + "/" + key.version() + "/schema.json";
+    }
+
+    /**
+     * Gets the file resource for the specified subPath.
+     *
+     * @param subPath the sub path of a file, relative to some context
+     * @return an AbstractResource pointing to the requested file
+     * @throws IOException in case of problems resolving the AbstractResource
+     */
+    protected abstract AbstractResource getFile(String subPath) throws IOException;
 }
