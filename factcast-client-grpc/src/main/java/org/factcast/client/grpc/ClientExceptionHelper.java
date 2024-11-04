@@ -69,7 +69,8 @@ public class ClientExceptionHelper {
           Status.UNKNOWN.getCode(),
           Status.UNAVAILABLE.getCode(),
           Status.ABORTED.getCode(),
-          Status.DEADLINE_EXCEEDED.getCode());
+          Status.DEADLINE_EXCEEDED.getCode(),
+          Status.CANCELLED.getCode());
 
   public static boolean isRetryable(@NonNull Throwable exception) {
     if (exception instanceof RetryableException) return true;

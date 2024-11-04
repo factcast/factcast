@@ -25,6 +25,10 @@ import org.factcast.core.FactValidationException;
 import org.factcast.core.store.RetryableException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.runners.Parameterized;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -80,9 +84,12 @@ class ClientExceptionHelperTest {
       assertThat(ClientExceptionHelper.from(ex)).isInstanceOf(StatusRuntimeException.class);
     }
 
-    @Test
-    void wrapsRetryable() {
-      StatusRuntimeException ex = new StatusRuntimeException(Status.UNKNOWN);
+    @ParameterizedTest
+    @EnumSource(
+        value = Status.Code.class,
+        names = {"UNKNOWN", "UNAVAILABLE", "ABORTED", "DEADLINE_EXCEEDED", "CANCELLED"})
+    void wrapsRetryable(Status.Code code) {
+      StatusRuntimeException ex = new StatusRuntimeException(code.toStatus());
       assertThat(ClientExceptionHelper.from(ex))
           .isInstanceOf(RetryableException.class)
           .extracting(Throwable::getCause)
