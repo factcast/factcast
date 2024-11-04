@@ -85,13 +85,34 @@ class ClientExceptionHelperTest {
     @ParameterizedTest
     @EnumSource(
         value = Status.Code.class,
-        names = {"UNKNOWN", "UNAVAILABLE", "ABORTED", "DEADLINE_EXCEEDED", "CANCELLED"})
+        names = {"UNKNOWN", "UNAVAILABLE", "ABORTED", "DEADLINE_EXCEEDED"})
     void wrapsRetryable(Status.Code code) {
       StatusRuntimeException ex = new StatusRuntimeException(code.toStatus());
       assertThat(ClientExceptionHelper.from(ex))
           .isInstanceOf(RetryableException.class)
           .extracting(Throwable::getCause)
           .isSameAs(ex);
+    }
+
+    @Test
+    void wrapsRetryableCancelledWithMessage() {
+      StatusRuntimeException ex =
+          new StatusRuntimeException(
+              Status.Code.CANCELLED
+                  .toStatus()
+                  .withDescription(
+                      "CANCELLED: RST_STREAM closed stream. HTTP/2 error code: CANCEL"));
+      assertThat(ClientExceptionHelper.from(ex))
+          .isInstanceOf(RetryableException.class)
+          .extracting(Throwable::getCause)
+          .isSameAs(ex);
+    }
+
+    @Test
+    void ignoresCancelledWithNonMatchingMessage() {
+      StatusRuntimeException ex =
+          new StatusRuntimeException(Status.Code.CANCELLED.toStatus().withDescription("any"));
+      assertThat(ClientExceptionHelper.from(ex)).isInstanceOf(StatusRuntimeException.class);
     }
 
     @Test

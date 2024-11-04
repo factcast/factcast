@@ -22,6 +22,7 @@ import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import java.lang.reflect.Constructor;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
@@ -69,16 +70,26 @@ public class ClientExceptionHelper {
           Status.UNKNOWN.getCode(),
           Status.UNAVAILABLE.getCode(),
           Status.ABORTED.getCode(),
-          Status.DEADLINE_EXCEEDED.getCode(),
-          Status.CANCELLED.getCode());
+          Status.DEADLINE_EXCEEDED.getCode());
 
   public static boolean isRetryable(@NonNull Throwable exception) {
     if (exception instanceof RetryableException) return true;
 
     if (exception instanceof StatusRuntimeException) {
-      Code s = ((StatusRuntimeException) exception).getStatus().getCode();
-      return RETRYABLE_STATUS.contains(s);
+      StatusRuntimeException runtimeException = (StatusRuntimeException) exception;
+      Code s = runtimeException.getStatus().getCode();
+      return RETRYABLE_STATUS.contains(s) || isNotCausedByClient(runtimeException);
     }
     return false;
+  }
+
+  /**
+   * Check for message that indicates an issue caused by a proxy (e.g. LoadBalancer) and therefore
+   * warrants a retry.
+   */
+  private boolean isNotCausedByClient(StatusRuntimeException e) {
+    return Optional.ofNullable(e.getMessage())
+        .map(m -> m.contains("CANCELLED: RST_STREAM closed stream. HTTP/2 error code: CANCEL"))
+        .orElse(false);
   }
 }
