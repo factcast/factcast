@@ -10,7 +10,7 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
   <!-- deprecated, kept for compatibility -->
-  <artifactId>factcast-factus-bin-snapser</artifactId>
+  <artifactId>factcast-factus-serializer-fury</artifactId>
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
@@ -19,8 +19,8 @@
     <dependencies>
       <dependency>
         <groupId>org.factcast</groupId>
-        <artifactId>factcast-internal-dep</artifactId>
-        <version>${project.version}</version>
+        <artifactId>factcast-bom</artifactId>
+        <version>0.8.2-SNAPSHOT</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -29,11 +29,32 @@
   <dependencies>
     <dependency>
       <groupId>org.factcast</groupId>
-      <artifactId>factcast-factus-serializer-binary</artifactId>
+      <artifactId>factcast-factus</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.fury</groupId>
+      <artifactId>fury-core</artifactId>
+      <version>0.8.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.dom4j</groupId>
+      <artifactId>dom4j</artifactId>
+      <version>2.1.4</version>
+    </dependency>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.lz4</groupId>
       <artifactId>lz4-java</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-compress</artifactId>
+      <optional>true</optional>
     </dependency>
   </dependencies>
   <build>

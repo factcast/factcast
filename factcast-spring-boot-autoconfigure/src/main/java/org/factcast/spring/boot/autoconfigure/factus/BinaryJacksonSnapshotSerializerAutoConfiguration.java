@@ -16,25 +16,52 @@
 package org.factcast.spring.boot.autoconfigure.factus;
 
 import lombok.extern.slf4j.Slf4j;
+import net.jpountz.lz4.LZ4BlockOutputStream;
 import org.factcast.factus.serializer.SnapshotSerializer;
-import org.factcast.factus.serializer.binary.BinaryJacksonSnapshotSerializer;
-import org.factcast.factus.serializer.binary.BinaryJacksonSnapshotSerializerCustomizer;
+import org.factcast.factus.serializer.binary.*;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.context.annotation.Bean;
 
 @AutoConfiguration
-@ConditionalOnClass(BinaryJacksonSnapshotSerializer.class)
+@ConditionalOnClass(CompressedBinaryJacksonSnapshotSerializer.class)
 @Slf4j
 @AutoConfigureOrder(-100)
 public class BinaryJacksonSnapshotSerializerAutoConfiguration {
   @Bean
+  @ConditionalOnClass(LZ4BlockOutputStream.class)
   @ConditionalOnMissingBean(SnapshotSerializer.class)
-  public SnapshotSerializer snapshotSerializer(
+  @ConditionalOnProperty(
+      prefix = "factcast.factus.snapshot",
+      value = "compress",
+      matchIfMissing = true)
+  public SnapshotSerializer lz4SnapshotSerializer(
       BinaryJacksonSnapshotSerializerCustomizer customizer) {
-    return new BinaryJacksonSnapshotSerializer(customizer);
+    return new CompressedBinaryJacksonSnapshotSerializer(customizer);
+  }
+
+  @Bean
+  @ConditionalOnMissingClass(LZ4BlockOutputStream.class)
+  @ConditionalOnMissingBean(SnapshotSerializer.class)
+  @ConditionalOnProperty(
+      prefix = "factcast.factus.snapshot",
+      value = "compress",
+      matchIfMissing = true)
+  public SnapshotSerializer lz4SnapshotSerializer(
+      BinaryJacksonSnapshotSerializerCustomizer customizer) {
+    return new CompressedBinaryJacksonSnapshotSerializer(customizer);
+  }
+
+  @Bean
+  @ConditionalOnMissingBean(SnapshotSerializer.class)
+  @ConditionalOnProperty(
+      prefix = "factcast.factus.snapshot",
+      value = "compress",
+      havingValue = "false")
+  public SnapshotSerializer uncompressedSnapshotSerializer(
+      BinaryJacksonSnapshotSerializerCustomizer customizer) {
+    return new UncompressedBinaryJacksonSnapshotSerializer(customizer);
   }
 
   @Bean

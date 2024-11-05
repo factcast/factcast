@@ -110,6 +110,16 @@
       </dependency>
       <dependency>
         <groupId>org.factcast</groupId>
+        <artifactId>factcast-factus-serializer-binary</artifactId>
+        <version>0.8.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-factus-serializer-fury</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
         <artifactId>factcast-snapshotcache-local-memory</artifactId>
         <version>${project.version}</version>
       </dependency>

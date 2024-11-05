@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="aea9adda-5051-414d-b43e-111e1de66f6c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/factcast-bom/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/factcast-bom/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/factcast-factus-bin-snapser/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/factcast-factus-bin-snapser/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/factcast-factus-bin-snapser/src/main/java/org/factcast/factus/serializer/binary/BinaryJacksonSnapshotSerializer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/factcast-factus-bin-snapser/src/main/java/org/factcast/factus/serializer/binary/BinaryJacksonSnapshotSerializerCustomizer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/factcast-factus-bin-snapser/src/test/java/org/factcast/factus/serializer/binary/BinaryJacksonSnapshotSerializerTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/factcast-factus-bin-snapser/src/test/java/org/factcast/factus/serializer/binary/CompressableTestProjection.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/factcast-factus-bin-snapser/src/test/java/org/factcast/factus/serializer/binary/TestProjection.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="mavenHomeTypeForPersistence" value="WRAPPER" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 5
+}</component>
+  <component name="ProjectId" id="2oCPhrgimjLNjSwaiIfj79si6ou" />
+  <component name="ProjectViewState">
+    <option name="autoscrollFromSource" value="true" />
+    <option name="flattenPackages" value="true" />
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+    <option name="sortByType" value="true" />
+    <option name="sortKey" value="BY_TYPE" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;JUnit.BinaryJacksonSnapshotSerializerTest$Bench.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.BinaryJacksonSnapshotSerializerTest$WhenSerializing.canDeserialize.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.BinaryJacksonSnapshotSerializerTest$WhenSerializing.compresses.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.BinaryJacksonSnapshotSerializerTest.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.FurySnapshotSerializerTest2$Bench.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.FurySnapshotSerializerTest2$WhenSerializing.canDeserialize (1).executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.FurySnapshotSerializerTest2$WhenSerializing.canDeserialize.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.FurySnapshotSerializerTest2$WhenSerializing.compresses.executor&quot;: &quot;Debug&quot;,
+    &quot;JUnit.FurySnapshotSerializerTest2.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;Spring Boot.ExampleServerWithPostgresContainer.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.ExampleUiServer.executor&quot;: &quot;Run&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;experiment__fury&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/uwe/idea/authorization-library&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;run.configurations.included.in.services&quot;: &quot;true&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CreateClassDialog.RecentsKey">
+      <recent name="org.factcast.factus.serializer.binary" />
+    </key>
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="org.factcast.factus.serializer.binary" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="configurationTypes">
+      <set>
+        <option value="KtorApplicationConfigurationType" />
+        <option value="MicronautRunConfigurationType" />
+        <option value="QuarkusRunConfigurationType" />
+        <option value="SpringBootApplicationConfigurationType" />
+      </set>
+    </option>
+  </component>
+  <component name="RunManager" selected="JUnit.BinaryJacksonSnapshotSerializerTest$Bench">
+    <configuration name="BinaryJacksonSnapshotSerializerTest$Bench" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="factcast-factus-bin-snapser" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="org.factcast.factus.serializer.binary.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="org.factcast.factus.serializer.binary.BinaryJacksonSnapshotSerializerTest" />
+      <option name="MAIN_CLASS_NAME" value="org.factcast.factus.serializer.binary.BinaryJacksonSnapshotSerializerTest$Bench" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="BinaryJacksonSnapshotSerializerTest$WhenSerializing.canDeserialize" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="factcast-factus-bin-snapser" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="org.factcast.factus.serializer.binary.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="org.factcast.factus.serializer.binary.BinaryJacksonSnapshotSerializerTest" />
+      <option name="MAIN_CLASS_NAME" value="org.factcast.factus.serializer.binary.BinaryJacksonSnapshotSerializerTest$WhenSerializing" />
+      <option name="METHOD_NAME" value="canDeserialize" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="FurySnapshotSerializerTest2$Bench" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="factcast-factus-bin-snapser" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="org.factcast.factus.serializer.binary.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="org.factcast.factus.serializer.binary.FurySnapshotSerializerTest2" />
+      <option name="MAIN_CLASS_NAME" value="org.factcast.factus.serializer.binary.FurySnapshotSerializerTest2$Bench" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="FurySnapshotSerializerTest2$WhenSerializing.canDeserialize (1)" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="factcast-factus-bin-snapser" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="org.factcast.factus.serializer.binary.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="org.factcast.factus.serializer.binary.FurySnapshotSerializerTest2" />
+      <option name="MAIN_CLASS_NAME" value="org.factcast.factus.serializer.binary.FurySnapshotSerializerTest2$WhenSerializing" />
+      <option name="METHOD_NAME" value="canDeserialize(org.junit.jupiter.api.TestInfo)" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="FurySnapshotSerializerTest2$WhenSerializing.canDeserialize" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="factcast-factus-bin-snapser" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="org.factcast.factus.serializer.binary.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="org.factcast.factus.serializer.binary.FurySnapshotSerializerTest2" />
+      <option name="MAIN_CLASS_NAME" value="org.factcast.factus.serializer.binary.FurySnapshotSerializerTest2$WhenSerializing" />
+      <option name="METHOD_NAME" value="canDeserialize" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="JetRunConfigurationType">
+      <module name="factcast-examples" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="CLI" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="factcast-client-grpc-cli" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="org.factcast.client.grpc.cli.CLI" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ExampleBoot2Client" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="factcast-example-client-spring-boot2" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="org.factcast.example.client.spring.boot2.ExampleBoot2Client" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ExampleClient" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="factcast-example-client-basicauth" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="org.factcast.example.client.basicauth.ExampleClient" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ExampleDynamoClient" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="factcast-example-client-dynamo" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="org.factcast.example.client.dynamo.ExampleDynamoClient" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ExampleServerWithPostgresContainer (1)" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="factcast-example-server-basicauth" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="org.factcast.example.server.ExampleServerWithPostgresContainer" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ExampleServerWithPostgresContainer" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="factcast-example-server" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="org.factcast.example.server.ExampleServerWithPostgresContainer" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ExampleServerWithTelemetry" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="factcast-example-server-telemetry" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="org.factcast.example.server.ExampleServerWithTelemetry" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="FactCastServer" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="factcast-docker" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="org.factcast.docker.FactCastServer" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="TLSClient" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="factcast-example-tls-client" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="org.factcast.example.tls.client.TLSClient" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="TLSServerWithPostgresContainer" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="factcast-example-tls-server" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="org.factcast.example.tls.server.TLSServerWithPostgresContainer" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="JUnit.BinaryJacksonSnapshotSerializerTest$Bench" />
+        <item itemvalue="JUnit.FurySnapshotSerializerTest2$Bench" />
+        <item itemvalue="JUnit.BinaryJacksonSnapshotSerializerTest$WhenSerializing.canDeserialize" />
+        <item itemvalue="JUnit.FurySnapshotSerializerTest2$WhenSerializing.canDeserialize (1)" />
+        <item itemvalue="JUnit.FurySnapshotSerializerTest2$WhenSerializing.canDeserialize" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9823dce3aa75-28b599e66164-intellij.indexing.shared.core-IU-242.23726.103" />
+        <option value="bundled-js-predefined-d6986cc7102b-5c90d61e3bab-JavaScript-IU-242.23726.103" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="aea9adda-5051-414d-b43e-111e1de66f6c" name="Changes" comment="" />
+      <created>1730370706826</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1730370706826</updated>
+      <workItem from="1730370708413" duration="4905000" />
+      <workItem from="1730708902927" duration="1942000" />
+      <workItem from="1730715490222" duration="197000" />
+      <workItem from="1730715690470" duration="158000" />
+      <workItem from="1730715852978" duration="1007000" />
+      <workItem from="1730716945648" duration="1402000" />
+      <workItem from="1730718461067" duration="40000" />
+      <workItem from="1730718513509" duration="381000" />
+      <workItem from="1730718952850" duration="945000" />
+      <workItem from="1730719904752" duration="50000" />
+      <workItem from="1730728644015" duration="300000" />
+      <workItem from="1730731348847" duration="3238000" />
+      <workItem from="1730793109491" duration="67000" />
+      <workItem from="1730793250526" duration="1147000" />
+      <workItem from="1730796109164" duration="65000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="UnknownFeatures">
+    <option featureType="dependencySupport" implementationName="java:org.springframework.security:spring-security-core" />
+    <option featureType="dependencySupport" implementationName="javascript:npm:react" />
+    <option featureType="dependencySupport" implementationName="java:org.springframework:spring-core" />
+    <option featureType="dependencySupport" implementationName="java:jakarta.validation:jakarta.validation-api" />
+    <option featureType="dependencySupport" implementationName="javascript:npm:vite" />
+    <option featureType="dependencySupport" implementationName="java:org.seleniumhq.selenium:selenium-java" />
+    <option featureType="dependencySupport" implementationName="java:io.projectreactor:reactor-core" />
+    <option featureType="dependencySupport" implementationName="java:org.springframework.data:spring-data-commons" />
+    <option featureType="dependencySupport" implementationName="javascript:npm:karma" />
+    <option featureType="dependencySupport" implementationName="java:io.micronaut:micronaut-core" />
+    <option featureType="dependencySupport" implementationName="java:org.hibernate.validator:hibernate-validator" />
+    <option featureType="dependencySupport" implementationName="java:javax.validation:validation-api" />
+    <option featureType="dependencySupport" implementationName="java:org.springframework:spring-webmvc" />
+    <option featureType="dependencySupport" implementationName="java:org.projectlombok:lombok" />
+    <option featureType="dependencySupport" implementationName="java:org.springframework:spring-websocket" />
+    <option featureType="dependencySupport" implementationName="executable:docker" />
+    <option featureType="dependencySupport" implementationName="java:io.grpc:grpc-api" />
+    <option featureType="dependencySupport" implementationName="java:io.reactivex.rxjava3:rxjava" />
+    <option featureType="dependencySupport" implementationName="java:com.vaadin:flow-server" />
+    <option featureType="dependencySupport" implementationName="java:org.springframework.boot:spring-boot" />
+    <option featureType="dependencySupport" implementationName="javascript:npm:postcss" />
+  </component>
+</project>

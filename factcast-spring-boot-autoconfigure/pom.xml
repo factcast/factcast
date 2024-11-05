@@ -67,6 +67,11 @@
       <optional>true</optional>
     </dependency>
     <dependency>
+      <groupId>org.lz4</groupId>
+      <artifactId>lz4-java</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-grpc-snappy</artifactId>
       <optional>true</optional>
@@ -83,7 +88,12 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
-      <artifactId>factcast-factus-bin-snapser</artifactId>
+      <artifactId>factcast-factus-serializer-binary</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-factus-serializer-fury</artifactId>
       <optional>true</optional>
     </dependency>
     <dependency>
