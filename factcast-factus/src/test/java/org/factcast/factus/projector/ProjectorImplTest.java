@@ -567,6 +567,10 @@ class ProjectorImplTest {
     public void applyWithAggId(Fact f) {}
 
     @HandlerFor(ns = "ns", type = "type")
+    @FilterByAggId({"1010a955-04a2-417b-9904-f92f88fdb67d", "1010a955-04a2-417b-9904-f92f88fdb67e"})
+    public void applyWithMultipleAggIds(Fact f) {}
+
+    @HandlerFor(ns = "ns", type = "type")
     @FilterByScript("function myfilter(e){}")
     public void applyWithFilterScript(Fact f) {}
   }
@@ -600,6 +604,20 @@ class ProjectorImplTest {
     ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
 
     assertThat(spec.aggIds()).containsOnly(UUID.fromString("1010a955-04a2-417b-9904-f92f88fdb67d"));
+  }
+
+  @SneakyThrows
+  @Test
+  void detectsMultipleAggIds() {
+    FactSpec spec = FactSpec.ns("ns");
+    Method m =
+        HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithMultipleAggIds", Fact.class);
+    ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
+
+    assertThat(spec.aggIds())
+        .containsOnly(
+            UUID.fromString("1010a955-04a2-417b-9904-f92f88fdb67d"),
+            UUID.fromString("1010a955-04a2-417b-9904-f92f88fdb67e"));
   }
 
   @SneakyThrows

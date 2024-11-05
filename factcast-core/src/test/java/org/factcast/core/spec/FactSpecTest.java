@@ -101,7 +101,7 @@ class FactSpecTest {
     ids.add(id1);
     ids.add(id2);
     ids.add(id3);
-    assertEquals(ids, FactSpec.ns("x").aggId(id1).aggId(id2).aggId(id3).aggIds());
+    assertEquals(ids, FactSpec.ns("x").aggId(id1, id2, id3).aggIds());
   }
 
   @Test
@@ -119,8 +119,8 @@ class FactSpecTest {
 
   @Test
   void testFactSpecEquality() {
-    FactSpec f1 = FactSpec.ns("x").aggId(new UUID(0, 2)).aggId(new UUID(0, 1));
-    FactSpec f2 = FactSpec.ns("x").aggId(new UUID(0, 1)).aggId(new UUID(0, 2));
+    FactSpec f1 = FactSpec.ns("x").aggId(new UUID(0, 2), new UUID(0, 1));
+    FactSpec f2 = FactSpec.ns("x").aggId(new UUID(0, 1), new UUID(0, 2));
     assertEquals(f1, f2);
     assertNotSame(f1, f2);
   }
@@ -214,7 +214,7 @@ class FactSpecTest {
   @Test
   void testCopy() {
     FactSpec org =
-        FactSpec.from(TestFactWithType.class).aggId(UUID.randomUUID()).aggId(UUID.randomUUID());
+        FactSpec.from(TestFactWithType.class).aggId(UUID.randomUUID(), UUID.randomUUID());
     FactSpec copy = org.copy();
     assertThat(copy).isEqualTo(org);
     assertThat(copy).isNotSameAs(org);

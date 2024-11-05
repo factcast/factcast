@@ -19,8 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.*;
 import java.util.stream.Collectors;
-import lombok.Data;
-import lombok.NonNull;
+import lombok.*;
 
 /**
  * Defines a Specification of facts to match for a subscription.
@@ -39,6 +38,11 @@ public class FactSpec {
 
   @JsonProperty int version = 0; // 0 means I don't care
 
+  @Getter(AccessLevel.NONE)
+  @Setter(AccessLevel.NONE)
+  @JsonProperty
+  UUID aggId = null;
+
   @JsonProperty final Set<UUID> aggIds = new HashSet<>();
 
   @JsonProperty final Map<String, String> meta = new LinkedHashMap<>();
@@ -48,8 +52,19 @@ public class FactSpec {
 
   @JsonProperty FilterScript filterScript = null;
 
-  public FactSpec aggId(@NonNull UUID id) {
-    aggIds.add(id);
+  public Set<UUID> aggIds() {
+    Set<UUID> copy = new HashSet<>(aggIds);
+    // merge the single aggId for compatibility with clients < 0.9
+    if (aggId != null) copy.add(aggId);
+    return copy;
+  }
+
+  public FactSpec aggId(@NonNull UUID aggId, UUID... otherAggIds) {
+    if (otherAggIds != null) {
+      aggIds.addAll(
+          Arrays.stream(otherAggIds).filter(Objects::nonNull).collect(Collectors.toSet()));
+    }
+    aggIds.add(aggId);
     return this;
   }
 
@@ -115,6 +130,7 @@ public class FactSpec {
 
   public FactSpec copy() {
     FactSpec fs = FactSpec.ns(ns).type(type).version(version).filterScript(filterScript);
+    fs.aggId = aggId;
     fs.aggIds.addAll(aggIds);
     fs.meta.putAll(meta);
     return fs;

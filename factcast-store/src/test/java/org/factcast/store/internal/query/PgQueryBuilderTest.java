@@ -52,7 +52,7 @@ class PgQueryBuilderTest {
       var spec2 =
           FactSpec.ns("ns2").type("t2").meta("foo", "bar").metaExists("e").metaDoesNotExist("!e");
       var spec3 = FactSpec.ns("ns3");
-      var spec4 = FactSpec.ns("ns4").aggId(new UUID(0, 1)).aggId(new UUID(0, 2));
+      var spec4 = FactSpec.ns("ns4").aggId(new UUID(0, 1), new UUID(0, 2));
       var specs = Lists.newArrayList(spec1, spec2, spec3, spec4);
       var underTest = new PgQueryBuilder(specs);
       var setter = underTest.createStatementSetter(serial);
@@ -150,7 +150,7 @@ class PgQueryBuilderTest {
     void happyPath() {
       var spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
       var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
-      var spec3 = FactSpec.ns("ns3").type("t3").aggId(new UUID(0, 1)).aggId(new UUID(0, 2));
+      var spec3 = FactSpec.ns("ns3").type("t3").aggId(new UUID(0, 1), new UUID(0, 2));
       var specs = Lists.newArrayList(spec1, spec2, spec3);
       var underTest = new PgQueryBuilder(specs);
       var sql = underTest.createStateSQL();
@@ -183,7 +183,7 @@ class PgQueryBuilderTest {
     void happyPath() {
       var spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
       var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
-      var spec3 = FactSpec.ns("ns3").type("t3").aggId(new UUID(0, 1)).aggId(new UUID(0, 2));
+      var spec3 = FactSpec.ns("ns3").type("t3").aggId(new UUID(0, 1), new UUID(0, 2));
       var specs = Lists.newArrayList(spec1, spec2, spec3);
       var underTest = new PgQueryBuilder(specs);
       var sql = underTest.catchupSQL();

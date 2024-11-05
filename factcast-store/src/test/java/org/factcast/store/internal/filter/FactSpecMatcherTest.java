@@ -117,10 +117,10 @@ class FactSpecMatcherTest {
     assertTrue(test(FactSpec.ns("default").aggId(u1), new TestFact().aggId(u1)));
     assertTrue(test(FactSpec.ns("default"), new TestFact().aggId(u1)));
     assertTrue(test(FactSpec.ns("default").aggId(u1), new TestFact().aggId(u1, u2)));
-    assertTrue(test(FactSpec.ns("default").aggId(u1).aggId(u2), new TestFact().aggId(u2, u1)));
+    assertTrue(test(FactSpec.ns("default").aggId(u1, u2), new TestFact().aggId(u2, u1)));
     assertFalse(test(FactSpec.ns("default").aggId(u1), new TestFact().aggId(u2)));
     assertFalse(test(FactSpec.ns("default").aggId(u1), new TestFact()));
-    assertFalse(test(FactSpec.ns("default").aggId(u1).aggId(u2), new TestFact().aggId(u1)));
+    assertFalse(test(FactSpec.ns("default").aggId(u1, u2), new TestFact().aggId(u1)));
   }
 
   // ---------------------------

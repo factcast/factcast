@@ -90,5 +90,34 @@ public class HelloWorldRunner implements CommandLineRunner {
     System.out.println("published " + anotherFact);
 
     followSub.awaitCatchup(5000).close();
+
+    UUID predefinedId = UUID.randomUUID();
+    Subscription followSubAggId =
+        fc.subscribe(
+            SubscriptionRequest.follow(
+                    FactSpec.ns("users").type("UserCreated").aggId(predefinedId).version(3))
+                .fromScratch(),
+            System.out::println);
+
+    Fact predefinedIdFact =
+        Fact.builder()
+            .ns("users")
+            .type("UserCreated")
+            .version(3)
+            .id(UUID.randomUUID())
+            .aggId(predefinedId)
+            .build(
+                "{\"firstName\":\"Dale\",\"lastName\":\"Cooper\",\"salutation\":\"Mr\",\"displayName\":\"Coop\"}");
+    fc.publish(predefinedIdFact);
+    System.out.println("published " + predefinedIdFact);
+
+    fc.subscribe(
+            SubscriptionRequest.catchup(
+                    FactSpec.ns("users").type("UserCreated").aggId(predefinedId).version(3))
+                .fromScratch(),
+            System.out::println)
+        .awaitCatchup();
+
+    followSubAggId.awaitCatchup(5000).close();
   }
 }
