@@ -17,7 +17,8 @@ package org.factcast.factus.serializer.binary;
 
 import java.io.*;
 import java.util.Set;
-
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.jpountz.lz4.*;
 import org.apache.fury.Fury;
@@ -28,64 +29,60 @@ import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.serializer.SnapshotSerializerId;
 import org.reflections8.Reflections;
 
-import lombok.NonNull;
-import lombok.SneakyThrows;
-
 @Slf4j
 public class FurySnapshotSerializer implements SnapshotSerializer {
 
-	private static final int BLOCKSIZE = 65536;
-	public static final Fury fury;
+  private static final int BLOCKSIZE = 65536;
+  public static final Fury fury;
 
-	static{
-		fury = Fury.builder().withLanguage(Language.JAVA)
-				// Allow to deserialize objects unknown types,
-				// more flexible but less secure.
-				.withStringCompressed(
-				true
-				).requireClassRegistration(false)
-				.build();
-		Reflections reflections = new Reflections();
-		Set<Class<? extends SnapshotProjection>> classes = reflections.getSubTypesOf(SnapshotProjection.class);
-		for (Class<? extends SnapshotProjection> c : classes) {
-			// Registering types can reduce class name serialization overhead, but not
-			// mandatory.
-			// If secure mode enabled, all custom types must be registered.
-			System.err.println("Registering "+c.getCanonicalName());
-			fury.register(c);
-		}
+  static {
+    fury =
+        Fury.builder()
+            .withLanguage(Language.JAVA)
+            // Allow to deserialize objects unknown types,
+            // more flexible but less secure.
+            .withStringCompressed(true)
+            .requireClassRegistration(false)
+            .build();
+    Reflections reflections = new Reflections();
+    Set<Class<? extends SnapshotProjection>> classes =
+        reflections.getSubTypesOf(SnapshotProjection.class);
+    for (Class<? extends SnapshotProjection> c : classes) {
+      // Registering types can reduce class name serialization overhead, but not
+      // mandatory.
+      // If secure mode enabled, all custom types must be registered.
+      System.err.println("Registering " + c.getCanonicalName());
+      fury.register(c);
+    }
+  }
 
-	}
+  public FurySnapshotSerializer() {}
 
-	public FurySnapshotSerializer() {
-	}
+  // acceptable coverage miss:
+  @SneakyThrows
+  @Override
+  public byte[] serialize(@NonNull SnapshotProjection a) {
 
-	// acceptable coverage miss:
-	@SneakyThrows
-	@Override
-	public byte[] serialize(@NonNull SnapshotProjection a) {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream(BLOCKSIZE + 16);
 
-		ByteArrayOutputStream baos = new ByteArrayOutputStream(BLOCKSIZE + 16);
+    LZ4BlockOutputStream os = new LZ4BlockOutputStream(baos, BLOCKSIZE);
+    os.write(fury.serialize(a));
+    os.close();
+    return baos.toByteArray();
+  }
 
-		LZ4BlockOutputStream os = new LZ4BlockOutputStream(baos, BLOCKSIZE);
-		os.write(fury.serialize(a));
-		os.close();
-		return baos.toByteArray();
-	}
+  // acceptable coverage miss:
+  @SneakyThrows
+  @Override
+  public <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes) {
 
-	// acceptable coverage miss:
-	@SneakyThrows
-	@Override
-	public <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes) {
+    try (LZ4BlockInputStream is = new LZ4BlockInputStream(new ByteArrayInputStream(bytes))) {
+      return (A) fury.deserialize(new FuryInputStream(is));
+    }
+  }
 
-		try (LZ4BlockInputStream is = new LZ4BlockInputStream(new ByteArrayInputStream(bytes))) {
-			return (A) fury.deserialize(new FuryInputStream(is));
-		}
-
-	}
-
-	@Override
-	public SnapshotSerializerId id() {
-		return SnapshotSerializerId.of("FurySnapshotSerializer");
-	}
+  @Override
+  public SnapshotSerializerId id() {
+    return SnapshotSerializerId.of("FurySnapshotSerializer");
+  }
 }

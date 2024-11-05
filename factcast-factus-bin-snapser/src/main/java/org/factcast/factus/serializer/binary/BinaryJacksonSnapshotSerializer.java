@@ -16,17 +16,12 @@
 package org.factcast.factus.serializer.binary;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.io.*;
-
 import lombok.NonNull;
 import lombok.SneakyThrows;
-import net.jpountz.lz4.LZ4BlockInputStream;
-import net.jpountz.lz4.LZ4BlockOutputStream;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.serializer.SnapshotSerializerId;
-import org.msgpack.jackson.dataformat.MessagePackFactory;
 
 public class BinaryJacksonSnapshotSerializer implements SnapshotSerializer {
 
