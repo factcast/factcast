@@ -20,9 +20,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.event.Specification;
 import org.junit.jupiter.api.Assertions;
@@ -91,7 +89,24 @@ class FactSpecTest {
   @Test
   void testFactSpecAggId() {
     UUID id = UUID.randomUUID();
-    assertEquals(id, FactSpec.ns("x").aggId(id).aggId());
+    assertThat(FactSpec.ns("x").aggId(id).aggIds()).containsOnly(id);
+  }
+
+  @Test
+  void testFactSpecMultipleAggIds() {
+    Set<UUID> ids = new HashSet<>();
+    UUID id1 = UUID.randomUUID();
+    UUID id2 = UUID.randomUUID();
+    UUID id3 = UUID.randomUUID();
+    ids.add(id1);
+    ids.add(id2);
+    ids.add(id3);
+    assertEquals(ids, FactSpec.ns("x").aggId(id1).aggId(id2).aggId(id3).aggIds());
+  }
+
+  @Test
+  void testFactSpecEmptyAggIds() {
+    assertEquals(Collections.emptySet(), FactSpec.ns("x").aggIds());
   }
 
   @Test
@@ -104,8 +119,8 @@ class FactSpecTest {
 
   @Test
   void testFactSpecEquality() {
-    FactSpec f1 = FactSpec.ns("x");
-    FactSpec f2 = FactSpec.ns("x");
+    FactSpec f1 = FactSpec.ns("x").aggId(new UUID(0, 2)).aggId(new UUID(0, 1));
+    FactSpec f2 = FactSpec.ns("x").aggId(new UUID(0, 1)).aggId(new UUID(0, 2));
     assertEquals(f1, f2);
     assertNotSame(f1, f2);
   }
@@ -198,7 +213,8 @@ class FactSpecTest {
 
   @Test
   void testCopy() {
-    FactSpec org = FactSpec.from(TestFactWithType.class);
+    FactSpec org =
+        FactSpec.from(TestFactWithType.class).aggId(UUID.randomUUID()).aggId(UUID.randomUUID());
     FactSpec copy = org.copy();
     assertThat(copy).isEqualTo(org);
     assertThat(copy).isNotSameAs(org);

@@ -17,12 +17,10 @@ package org.factcast.store.internal.query;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.FactSpec;
@@ -59,7 +57,7 @@ public class PgQueryBuilder {
         count = setNs(p, count, spec);
         count = setType(p, count, spec);
         // version is intentionally not used here
-        count = setAggId(p, count, spec);
+        count = setAggIds(p, count, spec);
         count = setMeta(p, count, spec);
         count = setMetaKeyExists(p, count, spec);
       }
@@ -86,10 +84,12 @@ public class PgQueryBuilder {
     return count;
   }
 
-  private int setAggId(PreparedStatement p, int count, FactSpec spec) throws SQLException {
-    UUID agg = spec.aggId();
-    if (agg != null) {
-      p.setString(++count, "{\"aggIds\": [\"" + agg + "\"]}");
+  private int setAggIds(PreparedStatement p, int count, FactSpec spec) throws SQLException {
+    Set<UUID> aggIds = spec.aggIds();
+    if (aggIds != null && !aggIds.isEmpty()) {
+      String a =
+          aggIds.stream().map(UUID::toString).collect(Collectors.joining("\",\"", "\"", "\""));
+      p.setString(++count, "{\"aggIds\": [" + a + "]}");
     }
     return count;
   }
@@ -127,10 +127,11 @@ public class PgQueryBuilder {
             sb.append(" AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb");
           }
 
-          UUID agg = spec.aggId();
-          if (agg != null) {
+          Set<UUID> aggIds = spec.aggIds();
+          if (aggIds != null && !aggIds.isEmpty()) {
             sb.append(" AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb");
           }
+
           Map<String, String> meta = spec.meta();
           meta.forEach(
               (key, value) ->

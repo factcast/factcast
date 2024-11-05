@@ -16,12 +16,8 @@
 package org.factcast.store.internal.filter;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import lombok.Generated;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -46,7 +42,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
 
   final String type;
 
-  final UUID aggId;
+  final Set<UUID> aggIds;
 
   final Map<String, String> meta;
 
@@ -65,7 +61,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     ns = spec.ns();
     type = spec.type();
     version = spec.version();
-    aggId = spec.aggId();
+    aggIds = spec.aggIds();
     meta = spec.meta();
     metaKeyExists = spec.metaKeyExists();
     script = spec.filterScript();
@@ -89,7 +85,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     if ((meta.isEmpty())) {
       return true;
     }
-    return meta.entrySet().stream().allMatch(e -> e.getValue().equals(t.meta(e.getKey())));
+    return meta.entrySet().stream().allMatch(e -> e.getValue().equals(t.header().meta(e.getKey())));
   }
 
   boolean metaKeyExistsMatch(Fact t) {
@@ -126,10 +122,10 @@ public final class FactSpecMatcher implements Predicate<Fact> {
   }
 
   boolean aggIdMatch(Fact t) {
-    if (aggId == null) {
+    if (aggIds == null) {
       return true;
     }
-    return t.aggIds().contains(aggId);
+    return t.aggIds().containsAll(aggIds);
   }
 
   @SneakyThrows
@@ -165,8 +161,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
 
   public static Predicate<Fact> matchesAnyOf(
       @NonNull List<FactSpec> spec, @NonNull JSEngineFactory ef) {
-    List<FactSpecMatcher> matchers =
-        spec.stream().map(s -> new FactSpecMatcher(s, ef)).collect(Collectors.toList());
+    List<FactSpecMatcher> matchers = spec.stream().map(s -> new FactSpecMatcher(s, ef)).toList();
     return f -> matchers.stream().anyMatch(p -> p.test(f));
   }
 

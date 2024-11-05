@@ -39,7 +39,7 @@ public class FactSpec {
 
   @JsonProperty int version = 0; // 0 means I don't care
 
-  @JsonProperty UUID aggId = null;
+  @JsonProperty final Set<UUID> aggIds = new HashSet<>();
 
   @JsonProperty final Map<String, String> meta = new LinkedHashMap<>();
 
@@ -47,6 +47,11 @@ public class FactSpec {
   @JsonProperty final Map<String, Boolean> metaKeyExists = new LinkedHashMap<>();
 
   @JsonProperty FilterScript filterScript = null;
+
+  public FactSpec aggId(@NonNull UUID id) {
+    aggIds.add(id);
+    return this;
+  }
 
   public FactSpec metaExists(@NonNull String k) {
     metaKeyExists.put(k, Boolean.TRUE);
@@ -109,8 +114,8 @@ public class FactSpec {
   }
 
   public FactSpec copy() {
-    FactSpec fs =
-        FactSpec.ns(ns).type(type).version(version).aggId(aggId).filterScript(filterScript);
+    FactSpec fs = FactSpec.ns(ns).type(type).version(version).filterScript(filterScript);
+    fs.aggIds.addAll(aggIds);
     fs.meta.putAll(meta);
     return fs;
   }
