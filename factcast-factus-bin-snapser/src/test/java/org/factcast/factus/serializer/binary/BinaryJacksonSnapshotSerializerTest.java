@@ -20,10 +20,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import java.io.IOException;
 import java.util.UUID;
+
+import com.fasterxml.jackson.core.StreamReadFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.factcast.factus.projection.SnapshotProjection;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -34,6 +38,18 @@ class BinaryJacksonSnapshotSerializerTest {
       new BinaryJacksonSnapshotSerializer(
           BinaryJacksonSnapshotSerializerCustomizer.defaultCustomizer());
 
+  static Root root;
+
+  static{
+
+
+    ObjectMapper om = new ObjectMapper().enable(StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION.mappedFeature());
+    try {
+      root = om.readValue(TestData.HUGE_JSON, Root.class);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
   @Test
   void hasId() {
     org.assertj.core.api.Assertions.assertThat(underTest.id().name())
@@ -41,13 +57,30 @@ class BinaryJacksonSnapshotSerializerTest {
   }
 
   @Nested
+  class Bench {
+
+    @RepeatedTest(10000)
+    void canDeserialize() {
+      TestProjection source = new TestProjection().root(root);
+      TestProjection target = underTest.deserialize(TestProjection.class, underTest.serialize(source));
+      assertEquals("bar", target.foo());
+      assertEquals(source.hashCode(), target.hashCode());
+    }
+    @Test
+    void size(){
+      TestProjection source = new TestProjection().root(root);
+      System.out.println(underTest.serialize(source).length);
+    }
+  }
+
+    @Nested
   class WhenSerializing {
 
-    @Test
-    void canDeserialize() {
-      TestProjection b =
-          underTest.deserialize(TestProjection.class, underTest.serialize(new TestProjection()));
-      assertEquals("bar", b.foo());
+    @RepeatedTest(10000)    void canDeserialize() {
+      TestProjection source = new TestProjection().root(root);
+      TestProjection target = underTest.deserialize(TestProjection.class, underTest.serialize(source));
+      assertEquals("bar", target.foo());
+      assertEquals(source.hashCode(),target.hashCode());
     }
 
     @Test

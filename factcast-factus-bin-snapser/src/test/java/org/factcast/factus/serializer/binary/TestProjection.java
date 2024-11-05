@@ -22,4 +22,5 @@ import org.factcast.factus.projection.SnapshotProjection;
 @Data
 public class TestProjection implements SnapshotProjection {
   @JsonProperty String foo = "bar";
+  Root root;
 }

@@ -16,8 +16,9 @@
 package org.factcast.factus.serializer.binary;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+
+import java.io.*;
+
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import net.jpountz.lz4.LZ4BlockInputStream;
@@ -35,7 +36,7 @@ public class BinaryJacksonSnapshotSerializer implements SnapshotSerializer {
 
   public BinaryJacksonSnapshotSerializer(
       @NonNull BinaryJacksonSnapshotSerializerCustomizer customizer) {
-    ObjectMapper om = new ObjectMapper(new MessagePackFactory());
+    ObjectMapper om = new ObjectMapper();
     customizer.accept(om);
     omMessagePack = om;
   }
@@ -46,9 +47,7 @@ public class BinaryJacksonSnapshotSerializer implements SnapshotSerializer {
   public byte[] serialize(@NonNull SnapshotProjection a) {
     ByteArrayOutputStream baos = new ByteArrayOutputStream(BLOCKSIZE + 16);
 
-    LZ4BlockOutputStream os = new LZ4BlockOutputStream(baos, BLOCKSIZE);
-    omMessagePack.writeValue(os, a);
-    os.close();
+    omMessagePack.writeValue(baos, a);
     return baos.toByteArray();
   }
 
@@ -56,7 +55,7 @@ public class BinaryJacksonSnapshotSerializer implements SnapshotSerializer {
   @SneakyThrows
   @Override
   public <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes) {
-    try (LZ4BlockInputStream is = new LZ4BlockInputStream(new ByteArrayInputStream(bytes))) {
+    try (InputStream is = new ByteArrayInputStream(bytes)) {
       return omMessagePack.readerFor(type).readValue(is);
     }
   }
