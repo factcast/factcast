@@ -60,7 +60,6 @@ public class FurySnapshotSerializer implements SnapshotSerializer {
   @SneakyThrows
   @Override
   public byte[] serialize(@NonNull SnapshotProjection a) {
-
     ByteArrayOutputStream baos = new ByteArrayOutputStream(BLOCKSIZE + 16);
     OutputStream os = wrap(baos);
     os.write(fury.serialize(a));
@@ -77,6 +76,7 @@ public class FurySnapshotSerializer implements SnapshotSerializer {
   }
 
   // acceptable coverage miss:
+  @SuppressWarnings("unchecked")
   @SneakyThrows
   @Override
   public <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes) {
