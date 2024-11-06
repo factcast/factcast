@@ -22,5 +22,5 @@ release.properties
 **/*.bak
 **/node/**
 package-lock.json
-
+.idea
 
