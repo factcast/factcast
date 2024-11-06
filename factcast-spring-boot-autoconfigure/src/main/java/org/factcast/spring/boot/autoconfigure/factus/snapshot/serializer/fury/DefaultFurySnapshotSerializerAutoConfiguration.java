@@ -21,7 +21,7 @@ import org.springframework.boot.autoconfigure.*;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.context.annotation.Bean;
 
-@ConditionalOnClass(SnapshotSerializer.class)
+@ConditionalOnClass({SnapshotSerializer.class,FurySnapshotSerializer.class})
 @ConditionalOnMissingBean(SnapshotSerializer.class)
 @AutoConfigureAfter({
   UncompressedFurySnapshotSerializerAutoConfiguration.class,
