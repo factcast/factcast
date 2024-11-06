@@ -51,6 +51,7 @@ public abstract class BinaryJacksonSnapshotSerializer implements SnapshotSeriali
   protected abstract OutputStream wrap(OutputStream baos);
 
   protected abstract InputStream wrap(InputStream is);
+
   // acceptable coverage miss:
   @SneakyThrows
   @Override

@@ -592,7 +592,7 @@
             </excludes>
             <trimTrailingWhitespace></trimTrailingWhitespace>
             <googleJavaFormat>
-              <version>1.15.0</version>
+              <version>1.19.2</version>
               <style>GOOGLE</style>
             </googleJavaFormat>
           </java>

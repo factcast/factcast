@@ -17,9 +17,8 @@ package org.factcast.spring.boot.autoconfigure.factus;
 
 import lombok.extern.slf4j.Slf4j;
 import net.jpountz.lz4.LZ4BlockInputStream;
-import org.apache.commons.compress.compressors.snappy.*;
+import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorInputStream;
 import org.factcast.factus.serializer.SnapshotSerializer;
-import org.factcast.factus.serializer.binary.*;
 import org.factcast.factus.serializer.fury.*;
 import org.springframework.boot.autoconfigure.*;
 import org.springframework.boot.autoconfigure.condition.*;
@@ -31,6 +30,14 @@ import org.springframework.context.annotation.Bean;
 @Slf4j
 @AutoConfigureOrder(-100)
 public class FurySnapshotSerializerAutoConfiguration {
+
+  @Bean
+  @ConditionalOnMissingBean(SnapshotSerializer.class)
+  public SnapshotSerializer defaultUncompressedSnapshotSerializer() {
+    return new FurySnapshotSerializer();
+  }
+
+  @ConditionalOnMissingBean(SnapshotSerializer.class)
   @AutoConfigureOrder(-100)
   @Bean
   @ConditionalOnProperty(
@@ -41,13 +48,9 @@ public class FurySnapshotSerializerAutoConfiguration {
     return new FurySnapshotSerializer();
   }
 
-  @Bean
-  public SnapshotSerializer defaultUncompressedSnapshotSerializer() {
-    return new FurySnapshotSerializer();
-  }
-
   @AutoConfigureOrder(-110) // prefer over snappy
   @Bean
+  @ConditionalOnMissingBean(SnapshotSerializer.class)
   @ConditionalOnClass(LZ4BlockInputStream.class)
   @ConditionalOnProperty(
       prefix = "factcast.factus.snapshot",
@@ -59,6 +62,7 @@ public class FurySnapshotSerializerAutoConfiguration {
 
   @AutoConfigureOrder(-105)
   @Bean
+  @ConditionalOnMissingBean(SnapshotSerializer.class)
   @ConditionalOnClass(FramedSnappyCompressorInputStream.class)
   @ConditionalOnProperty(
       prefix = "factcast.factus.snapshot",
