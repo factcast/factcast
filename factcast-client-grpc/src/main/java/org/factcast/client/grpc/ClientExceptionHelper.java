@@ -78,7 +78,7 @@ public class ClientExceptionHelper {
     if (exception instanceof StatusRuntimeException) {
       StatusRuntimeException runtimeException = (StatusRuntimeException) exception;
       Code s = runtimeException.getStatus().getCode();
-      return RETRYABLE_STATUS.contains(s) || isNotCausedByClient(runtimeException);
+      return RETRYABLE_STATUS.contains(s) || isCausedByNetwork(runtimeException);
     }
     return false;
   }
@@ -87,7 +87,7 @@ public class ClientExceptionHelper {
    * Check for message that indicates an issue caused by a proxy (e.g. LoadBalancer) and therefore
    * warrants a retry.
    */
-  private boolean isNotCausedByClient(StatusRuntimeException e) {
+  private boolean isCausedByNetwork(StatusRuntimeException e) {
     return Optional.ofNullable(e.getMessage())
         .map(m -> m.contains("CANCELLED: RST_STREAM closed stream. HTTP/2 error code: CANCEL"))
         .orElse(false);
