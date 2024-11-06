@@ -23,7 +23,11 @@ import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.context.annotation.Bean;
 
 @ConditionalOnMissingBean(SnapshotSerializer.class)
-@ConditionalOnClass({FramedSnappyCompressorInputStream.class, SnapshotSerializer.class,SnappyFurySnapshotSerializer.class})
+@ConditionalOnClass({
+  FramedSnappyCompressorInputStream.class,
+  SnapshotSerializer.class,
+  SnappyFurySnapshotSerializer.class
+})
 @ConditionalOnProperty(
     prefix = "factcast.factus.snapshot",
     value = "compress",

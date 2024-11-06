@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package org.factcast.factus.serializer.fury;
+
 import java.io.*;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
