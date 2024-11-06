@@ -73,6 +73,12 @@ description: Properties you can use to configure FactCast
 | factcast.snapshot.redis.deleteSnapshotStaleForDays | min number of days a snapshot is kept even though it is not read anymore. Must be a positive number.                                                                                                     | 90               |
 | factcast.snapshot.redis.snapshotCacheRedissonCodec | optional configuration of the codec used for serializing objects from and into the snapshot. When set to <nobr>`RedissonDefault`</nobr> no codec is specified and Redisson will use its current default. | MarshallingCodec |
 
+### Snapshot Serializers
+
+| Property                          | Description                                                             | Default |
+| --------------------------------- | :---------------------------------------------------------------------- | :------ |
+| factcast.factus.snapshot.compress | Compress serialized snapshots before sending them to the snapshot-cache | true    |
+
 ---
 
 ### gRPC
