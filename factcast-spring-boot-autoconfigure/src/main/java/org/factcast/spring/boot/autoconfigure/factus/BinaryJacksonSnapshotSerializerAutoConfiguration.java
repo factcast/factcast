@@ -41,9 +41,5 @@ public class BinaryJacksonSnapshotSerializerAutoConfiguration {
   public BinaryJacksonSnapshotSerializerCustomizer binarySnapshotSerializerCustomizer() {
     return BinaryJacksonSnapshotSerializerCustomizer.defaultCustomizer();
   }
-  /**
-   * skdjhfasjd
-   * f s
-   */
-  
+  /** skdjhfasjd f s */
 }
