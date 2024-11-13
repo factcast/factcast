@@ -19,7 +19,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import lombok.NonNull;
@@ -87,15 +86,17 @@ public class PgQueryBuilder {
 
   private int setAggIds(PreparedStatement p, int count, FactSpec spec) throws SQLException {
     if (filterByAggregateIds(spec)) {
-        String a =
-          spec.aggIds().stream().map(UUID::toString).collect(Collectors.joining("\",\"", "\"", "\""));
+      String a =
+          spec.aggIds().stream()
+              .map(UUID::toString)
+              .collect(Collectors.joining("\",\"", "\"", "\""));
       p.setString(++count, "{\"aggIds\": [" + a + "]}");
     }
     return count;
   }
 
   private static boolean filterByAggregateIds(FactSpec specs) {
-    Set<UUID> aggIds=specs.aggIds();
+    Set<UUID> aggIds = specs.aggIds();
     return aggIds != null && !aggIds.isEmpty();
   }
 
