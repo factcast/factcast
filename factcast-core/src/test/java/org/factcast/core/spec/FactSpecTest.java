@@ -22,7 +22,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.reflect.Field;
 import java.util.*;
-
 import lombok.SneakyThrows;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.event.Specification;
