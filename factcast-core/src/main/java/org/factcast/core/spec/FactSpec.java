@@ -38,12 +38,13 @@ public class FactSpec {
 
   @JsonProperty int version = 0; // 0 means I don't care
 
+  // hide aggId getter / setter as it's deprecated to use and replaced by aggId_s_
   @Getter(AccessLevel.NONE)
   @Setter(AccessLevel.NONE)
   @JsonProperty
   UUID aggId = null;
 
-  @JsonProperty final Set<UUID> aggIds = new HashSet<>();
+  @JsonProperty final Set<UUID> aggIds = new LinkedHashSet<>();
 
   @JsonProperty final Map<String, String> meta = new LinkedHashMap<>();
 
@@ -56,7 +57,7 @@ public class FactSpec {
     Set<UUID> copy = new HashSet<>(aggIds);
     // merge the single aggId for compatibility with clients < 0.9
     if (aggId != null) copy.add(aggId);
-    return copy;
+    return Collections.unmodifiableSet(copy);
   }
 
   public FactSpec aggId(@NonNull UUID aggId, UUID... otherAggIds) {

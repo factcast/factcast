@@ -20,7 +20,10 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.reflect.Field;
 import java.util.*;
+
+import lombok.SneakyThrows;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.event.Specification;
 import org.junit.jupiter.api.Assertions;
@@ -101,6 +104,24 @@ class FactSpecTest {
     ids.add(id1);
     ids.add(id2);
     ids.add(id3);
+    assertEquals(ids, FactSpec.ns("x").aggId(id1, id2, id3).aggIds());
+  }
+
+  @SneakyThrows
+  @Test
+  void testFactSpecMultipleAggIdsCompatibility() {
+    Set<UUID> ids = new HashSet<>();
+    UUID id1 = UUID.randomUUID();
+    UUID id2 = UUID.randomUUID();
+    UUID id3 = UUID.randomUUID();
+    ids.add(id1);
+    ids.add(id2);
+    ids.add(id3);
+
+    FactSpec fs = FactSpec.ns("x").aggId(id2, id3);
+    Field aggIdField = FactSpec.class.getDeclaredField("aggId");
+    aggIdField.setAccessible(true);
+    aggIdField.set(fs, id1);
     assertEquals(ids, FactSpec.ns("x").aggId(id1, id2, id3).aggIds());
   }
 
