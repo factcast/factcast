@@ -138,6 +138,23 @@ class FactSpecTest {
     assertEquals("foo", script);
   }
 
+  @SneakyThrows
+  @Test
+  void testFactSpecEqualityCompatibility() {
+    UUID id2 = new UUID(0, 2);
+    UUID id1 = new UUID(0, 1);
+
+    FactSpec f1 = FactSpec.ns("x").aggId(id2);
+
+    Field aggIdField = FactSpec.class.getDeclaredField("aggId");
+    aggIdField.setAccessible(true);
+    aggIdField.set(f1, id1);
+
+    FactSpec f2 = FactSpec.ns("x").aggId(id1, id2);
+    assertEquals(f1, f2);
+    assertNotSame(f1, f2);
+  }
+
   @Test
   void testFactSpecEquality() {
     FactSpec f1 = FactSpec.ns("x").aggId(new UUID(0, 2), new UUID(0, 1));

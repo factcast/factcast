@@ -28,6 +28,7 @@ import lombok.*;
  */
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
+@EqualsAndHashCode(of="ns,type,aggIds,meta,metaKeyExists,filterScript") // in order to skip aggId field
 @SuppressWarnings({"java:S1874", "java:S1123"})
 public class FactSpec {
 
