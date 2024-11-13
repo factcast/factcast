@@ -28,7 +28,7 @@ import lombok.*;
  */
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-@EqualsAndHashCode(of="ns,type,aggIds,meta,metaKeyExists,filterScript") // in order to skip aggId field
+@EqualsAndHashCode(of={"ns","type","aggIds","meta","metaKeyExists","filterScript"}) // in order to skip aggId field
 @SuppressWarnings({"java:S1874", "java:S1123"})
 public class FactSpec {
 
@@ -62,11 +62,13 @@ public class FactSpec {
   }
 
   public FactSpec aggId(@NonNull UUID aggId, UUID... otherAggIds) {
+    aggIds.add(aggId);
     if (otherAggIds != null) {
       aggIds.addAll(
-          Arrays.stream(otherAggIds).filter(Objects::nonNull).collect(Collectors.toSet()));
+          Arrays.stream(otherAggIds)
+                  .filter(Objects::nonNull)
+                  .collect(Collectors.toList())); // toSet would potentially flip the order
     }
-    aggIds.add(aggId);
     return this;
   }
 
