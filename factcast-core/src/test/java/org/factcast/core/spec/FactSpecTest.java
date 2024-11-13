@@ -22,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.reflect.Field;
 import java.util.*;
+
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.event.Specification;
@@ -128,6 +130,13 @@ class FactSpecTest {
   void testFactSpecEmptyAggIds() {
     assertEquals(Collections.emptySet(), FactSpec.ns("x").aggIds());
   }
+
+  @Test
+  void testFactSpecSingleAggIds() {
+    @NonNull UUID id=UUID.randomUUID();
+    assertThat(FactSpec.ns("x").aggId(id).aggIds()).hasSize(1).containsOnly(id);
+  }
+
 
   @Test
   void testFactSpecJsFilter() {

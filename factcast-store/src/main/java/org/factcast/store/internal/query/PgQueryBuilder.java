@@ -19,6 +19,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import lombok.NonNull;
@@ -85,13 +86,17 @@ public class PgQueryBuilder {
   }
 
   private int setAggIds(PreparedStatement p, int count, FactSpec spec) throws SQLException {
-    Set<UUID> aggIds = spec.aggIds();
-    if (aggIds != null && !aggIds.isEmpty()) {
-      String a =
-          aggIds.stream().map(UUID::toString).collect(Collectors.joining("\",\"", "\"", "\""));
+    if (filterByAggregateIds(spec)) {
+        String a =
+          spec.aggIds().stream().map(UUID::toString).collect(Collectors.joining("\",\"", "\"", "\""));
       p.setString(++count, "{\"aggIds\": [" + a + "]}");
     }
     return count;
+  }
+
+  private static boolean filterByAggregateIds(FactSpec specs) {
+    Set<UUID> aggIds=specs.aggIds();
+    return aggIds != null && !aggIds.isEmpty();
   }
 
   private int setType(PreparedStatement p, int count, FactSpec spec) throws SQLException {
@@ -127,8 +132,7 @@ public class PgQueryBuilder {
             sb.append(" AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb");
           }
 
-          Set<UUID> aggIds = spec.aggIds();
-          if (aggIds != null && !aggIds.isEmpty()) {
+          if (filterByAggregateIds(spec)) {
             sb.append(" AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb");
           }
 

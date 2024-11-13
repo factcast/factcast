@@ -122,7 +122,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
   }
 
   boolean aggIdMatch(Fact t) {
-    if (aggIds == null) {
+    if (aggIds == null || aggIds.isEmpty()) {
       return true;
     }
     return t.aggIds().containsAll(aggIds);
