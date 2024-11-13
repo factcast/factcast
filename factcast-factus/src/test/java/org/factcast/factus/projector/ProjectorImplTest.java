@@ -49,8 +49,6 @@ import org.junit.jupiter.api.Test;
 @SuppressWarnings({"deprecation", "java:S1186"})
 class ProjectorImplTest {
 
-  // TODO test for multiple aggIds within FactSpecs
-
   private final DefaultEventSerializer eventSerializer =
       new DefaultEventSerializer(FactCastJson.mapper());
 

@@ -169,8 +169,8 @@ class PgQueryBuilderTest {
       // multi
       // aggid
       assertThat(sql)
-          .contains("( " + expectedSpec1 + " OR " + expectedSpec2 + " OR " + expectedSpec3 + " )");
-      assertThat(sql).endsWith(" ORDER BY ser DESC LIMIT 1");
+          .contains("( " + expectedSpec1 + " OR " + expectedSpec2 + " OR " + expectedSpec3 + " )")
+          .endsWith(" ORDER BY ser DESC LIMIT 1");
     }
   }
 
