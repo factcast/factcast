@@ -17,6 +17,8 @@ package org.factcast.spring.boot.autoconfigure.snap;
 
 import javax.sql.DataSource;
 import lombok.NonNull;
+import org.factcast.core.snap.jdbc.JdbcSnapshotCache;
+import org.factcast.core.snap.jdbc.JdbcSnapshotProperties;
 import org.factcast.factus.Factus;
 import org.factcast.factus.snapshot.SnapshotCache;
 import org.springframework.boot.autoconfigure.AutoConfiguration;

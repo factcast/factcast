@@ -28,14 +28,14 @@ import lombok.extern.slf4j.Slf4j;
 class StaleSnapshotsTimerTask extends TimerTask {
 
   @NonNull private final DataSource dataSource;
-  @NonNull private final int staleForDays;
+  private final int staleForDays;
   @NonNull private final String statement;
 
   public StaleSnapshotsTimerTask(
       @NonNull DataSource dataSource,
       // sanitized by the properties class
       @NonNull String tableName,
-      @NonNull int staleForDays) {
+      int staleForDays) {
     this.dataSource = dataSource;
     this.statement = "DELETE FROM " + tableName + " WHERE last_accessed < ?";
     this.staleForDays = staleForDays;

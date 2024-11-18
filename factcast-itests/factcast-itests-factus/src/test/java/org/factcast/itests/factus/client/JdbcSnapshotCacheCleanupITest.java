@@ -17,6 +17,7 @@ package org.factcast.itests.factus.client;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,11 @@ import org.factcast.core.snap.Snapshot;
 import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.snap.jdbc.JdbcSnapshotCache;
 import org.factcast.core.snap.jdbc.JdbcSnapshotProperties;
+import org.factcast.factus.projection.Aggregate;
+import org.factcast.factus.serializer.SnapshotSerializerId;
 import org.factcast.factus.snapshot.SnapshotCache;
+import org.factcast.factus.snapshot.SnapshotData;
+import org.factcast.factus.snapshot.SnapshotIdentifier;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
@@ -49,41 +54,44 @@ public class JdbcSnapshotCacheCleanupITest extends AbstractFactCastIntegrationTe
     JdbcSnapshotProperties properties = new JdbcSnapshotProperties();
 
     jdbcTemplate.execute(
-        "CREATE TABLE IF NOT EXISTS factcast_snapshots(key VARCHAR(512), uuid VARCHAR(36), last_fact_id VARCHAR(36), "
-            + "bytes BYTEA, compressed boolean, last_accessed VARCHAR(10), PRIMARY KEY (key, uuid))");
-    jdbcTemplate.execute(
-        "CREATE INDEX IF NOT EXISTS factcast_snapshots_idx_last_accessed ON factcast_snapshots(last_accessed);");
+            """
+                    CREATE TABLE IF NOT EXISTS factcast_snapshot(projection_class VARCHAR(512), aggregate_id VARCHAR(36) NULL, last_fact_id VARCHAR(36),
+                                      bytes BYTEA, snapshot_serializer_id VARCHAR(128), last_accessed VARCHAR, PRIMARY KEY (projection_class, aggregate_id));
+                                  CREATE INDEX IF NOT EXISTS my_snapshot_table_index ON factcast_snapshot(last_accessed);
+                    """);
 
-    Snapshot snap1 =
-        new Snapshot(
-            SnapshotId.of("key1", UUID.randomUUID()),
-            UUID.randomUUID(),
-            new byte[] {1, 2, 3},
-            false);
-    Snapshot snap2 =
-        new Snapshot(
-            SnapshotId.of("key2", UUID.randomUUID()),
-            UUID.randomUUID(),
-            new byte[] {1, 2, 3},
-            false);
-    Snapshot snap3 =
-        new Snapshot(
-            SnapshotId.of("key3", UUID.randomUUID()),
-            UUID.randomUUID(),
-            new byte[] {1, 2, 3},
-            false);
+    SnapshotSerializerId serializerId = SnapshotSerializerId.of("serializer");
+
+    SnapshotIdentifier id1 = SnapshotIdentifier.of(TestAggregateProjection.class, UUID.randomUUID());
+    SnapshotData snap1 =
+        new SnapshotData(
+                new byte[] {1, 2, 3},
+                serializerId,
+                UUID.randomUUID());
+    SnapshotIdentifier id2 = SnapshotIdentifier.of(TestAggregateProjection.class, UUID.randomUUID());
+    SnapshotData snap2 =
+        new SnapshotData(
+                new byte[] {1, 2, 3},
+                serializerId,
+                UUID.randomUUID());
+    SnapshotIdentifier id3 = SnapshotIdentifier.of(TestAggregateProjection.class, UUID.randomUUID());
+    SnapshotData snap3 =
+        new SnapshotData(
+                new byte[] {1, 2, 3},
+                serializerId,
+                UUID.randomUUID());
 
     // Stale
     insertSnapshot(
-        snap1, LocalDate.now().minusDays(properties.getDeleteSnapshotStaleForDays() + 5));
+        id1, snap1, Timestamp.valueOf(LocalDate.now().minusDays(properties.getDeleteSnapshotStaleForDays() + 5).atStartOfDay()));
 
     // Non Stale
     insertSnapshot(
-        snap2, LocalDate.now().minusDays(properties.getDeleteSnapshotStaleForDays() - 1));
+        id2, snap2, Timestamp.valueOf(LocalDate.now().minusDays(properties.getDeleteSnapshotStaleForDays() - 1).atStartOfDay()));
 
     // Stale
     insertSnapshot(
-        snap3, LocalDate.now().minusDays(properties.getDeleteSnapshotStaleForDays() + 1));
+        id3, snap3, Timestamp.valueOf(LocalDate.now().minusDays(properties.getDeleteSnapshotStaleForDays() + 1).atStartOfDay()));
 
     List<Map<String, Object>> snapshots = getSnapshots();
     assertThat(snapshots).hasSize(3);
@@ -94,22 +102,24 @@ public class JdbcSnapshotCacheCleanupITest extends AbstractFactCastIntegrationTe
     Awaitility.await().until(() -> getSnapshots().size() == 1);
 
     snapshots = getSnapshots();
-    assertThat(snapshots.get(0).get("key")).isEqualTo(snap2.id().key());
-    assertThat(snapshots.get(0).get("uuid")).isEqualTo(snap2.id().uuid().toString());
+    assertThat(snapshots.get(0).get("projection_class")).isEqualTo(id2.projectionClass().getName());
+    assertThat(snapshots.get(0).get("aggregate_id")).isEqualTo(id2.aggregateId().toString());
   }
 
   private List<Map<String, Object>> getSnapshots() {
-    return jdbcTemplate.queryForList("SELECT * FROM factcast_snapshots");
+    return jdbcTemplate.queryForList("SELECT * FROM factcast_snapshot");
   }
 
-  private void insertSnapshot(Snapshot snapshot, LocalDate lastAccessed) {
+  private void insertSnapshot(SnapshotIdentifier id, SnapshotData snapshot, Timestamp lastAccessed) {
     jdbcTemplate.update(
-        "INSERT INTO factcast_snapshots VALUES (?, ?, ?, ?, ?, ?)",
-        snapshot.id().key(),
-        snapshot.id().uuid().toString(),
-        snapshot.lastFact().toString(),
-        snapshot.bytes(),
-        snapshot.compressed(),
-        lastAccessed.toString());
+        "INSERT INTO factcast_snapshot VALUES (?, ?, ?, ?, ?, ?)",
+        id.projectionClass().getName(),
+        id.aggregateId().toString(),
+        snapshot.lastFactId().toString(),
+        snapshot.serializedProjection(),
+        snapshot.snapshotSerializerId().name(),
+        lastAccessed);
   }
+
+  static class TestAggregateProjection extends Aggregate { }
 }

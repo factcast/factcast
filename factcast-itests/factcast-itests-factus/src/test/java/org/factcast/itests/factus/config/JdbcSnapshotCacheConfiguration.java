@@ -32,18 +32,20 @@ public class JdbcSnapshotCacheConfiguration {
   }
 
   @Bean
-  public SnapshotCache snapshotCache(@NonNull JdbcSnapshotProperties props, DataSource dataSource) {
+  public SnapshotCache snapshotCache(DataSource dataSource) {
     try (var connection = dataSource.getConnection();
         var statement = connection.createStatement()) {
       statement.execute(
           """
-                            CREATE TABLE IF NOT EXISTS my_snapshot_table(key VARCHAR(512), uuid VARCHAR(36), last_fact_id VARCHAR(36),
-                                bytes BYTEA, compressed boolean, last_accessed VARCHAR(10), PRIMARY KEY (key, uuid));
-                            CREATE INDEX IF NOT EXISTS my_snapshot_table_index ON my_snapshot_table(last_accessed);
-                            """);
+              CREATE TABLE IF NOT EXISTS my_snapshot_table(projection_class VARCHAR(512), aggregate_id VARCHAR(36) NULL, last_fact_id VARCHAR(36),
+                  bytes BYTEA, snapshot_serializer_id VARCHAR(128), last_accessed VARCHAR, PRIMARY KEY (projection_class, aggregate_id));
+              CREATE INDEX IF NOT EXISTS my_snapshot_table_index ON my_snapshot_table(last_accessed);
+              """);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+
+    JdbcSnapshotProperties props = new JdbcSnapshotProperties().setSnapshotTableName("my_snapshot_table");
     return new JdbcSnapshotCache(props, dataSource);
   }
 }

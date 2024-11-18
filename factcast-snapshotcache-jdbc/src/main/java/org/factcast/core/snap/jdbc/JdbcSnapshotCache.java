@@ -15,28 +15,35 @@
  */
 package org.factcast.core.snap.jdbc;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
+import lombok.NonNull;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.snap.Snapshot;
+import org.factcast.core.snap.SnapshotId;
+import org.factcast.factus.serializer.SnapshotSerializerId;
+import org.factcast.factus.snapshot.SnapshotCache;
+import org.factcast.factus.snapshot.SnapshotData;
+import org.factcast.factus.snapshot.SnapshotIdentifier;
+
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Timer;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import javax.sql.DataSource;
-import lombok.NonNull;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
-import org.factcast.factus.snapshot.SnapshotCache;
 
 @Slf4j
 public class JdbcSnapshotCache implements SnapshotCache {
   public final String queryStatement;
   public final String mergeStatement;
+  public final String updateLastAccessedStatement;
   public final String deleteStatement;
   private final DataSource dataSource;
 
@@ -45,19 +52,29 @@ public class JdbcSnapshotCache implements SnapshotCache {
 
     String tableName = properties.getSnapshotTableName();
 
-    queryStatement = "SELECT * FROM " + tableName + " WHERE key = ? AND uuid = ?";
+    if (!tableName.matches("^[a-zA-Z0-9_]+$")) {
+      throw new IllegalArgumentException("Invalid table name.");
+    }
 
-    mergeStatement =
-        "MERGE INTO "
+    queryStatement = "SELECT bytes, snapshot_serializer_id, last_fact_id FROM "
             + tableName
-            + " USING (VALUES (?, ?, ?, ?, ?, ?)) as new (_key, _uuid, _last_fact_id, _bytes, _compressed, _last_accessed)"
-            + " ON key=_key AND uuid=_uuid"
+            + " WHERE projection_class = ? AND aggregate_id = ?";
+    mergeStatement = "MERGE INTO "
+            + tableName
+            + " USING (VALUES (?, ?, ?, ?, ?, ?)) as new (_projection_class, _aggregate_id, _last_fact_id, _bytes, _snapshot_serializer_id, _last_accessed)"
+            + " ON projection_class=_projection_class AND aggregate_id=_aggregate_id"
             + " WHEN MATCHED THEN"
-            + " UPDATE SET last_fact_id=_last_fact_id, bytes=_bytes, compressed=_compressed, last_accessed=_last_accessed"
-            + " WHEN NOT MATCHED THEN"
-            + " INSERT VALUES (_key, _uuid, _last_fact_id, _bytes, _compressed, _last_accessed)";
+            + " UPDATE SET last_fact_id=_last_fact_id, bytes=_bytes, snapshot_serializer_id=_snapshot_serializer_id, last_accessed=_last_accessed"
+            + " WHEN NOT MATCHED THEN" + " INSERT VALUES (_projection_class, _aggregate_id, _last_fact_id, _bytes, _snapshot_serializer_id, _last_accessed)";
 
-    deleteStatement = "DELETE FROM " + tableName + " WHERE key = ? AND uuid = ?";
+    deleteStatement = "DELETE FROM "
+            + tableName
+            + " WHERE projection_class = ? AND aggregate_id = ?";
+
+    updateLastAccessedStatement = "UPDATE "
+            + tableName +
+            " SET last_accessed = ? WHERE projection_class = ? AND aggregate_id = ?";
+
 
     boolean snapTableExists = doesTableExist(tableName);
 
@@ -100,8 +117,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
     try (Connection connection = dataSource.getConnection();
         ResultSet columns = connection.getMetaData().getColumns(null, null, tableName, null)) {
 
-      Set<String> columnsSet =
-          Sets.newHashSet("key", "uuid", "last_fact_id", "bytes", "compressed", "last_accessed");
+      Set<String> columnsSet = Sets.newHashSet("projection_class", "aggregate_id", "last_fact_id", "bytes", "snapshot_serializer_id", "last_accessed");
       while (columns.next()) {
         String columnName = columns.getString("COLUMN_NAME");
 
@@ -116,24 +132,19 @@ public class JdbcSnapshotCache implements SnapshotCache {
 
   @Override
   @SneakyThrows
-  public @NonNull Optional<Snapshot> getSnapshot(@NonNull SnapshotId id) {
-    try (Connection connection = dataSource.getConnection();
-        PreparedStatement statement = connection.prepareStatement(queryStatement)) {
-      statement.setString(1, id.key());
-      statement.setString(2, id.uuid().toString());
+  public @NonNull Optional<SnapshotData> find(@NonNull SnapshotIdentifier id) {
+    try (Connection connection = dataSource.getConnection(); PreparedStatement statement = connection.prepareStatement(queryStatement)) {
+      statement.setString(1, id.projectionClass().getName());
+      statement.setString(2, id.aggregateId() != null ? id.aggregateId().toString() : null);
       try (ResultSet resultSet = statement.executeQuery()) {
         if (resultSet.next()) {
-          SnapshotId snapshotId =
-              SnapshotId.of(resultSet.getString(1), UUID.fromString(resultSet.getString(2)));
-          Snapshot snapshot =
-              new Snapshot(
-                  snapshotId,
-                  UUID.fromString(resultSet.getString(3)),
-                  resultSet.getBytes(4),
-                  resultSet.getBoolean(5));
+          SnapshotData snapshot =
+                  new SnapshotData(resultSet.getBytes(1),
+                          SnapshotSerializerId.of(resultSet.getString(2)),
+                          UUID.fromString(resultSet.getString(3)));
 
           // update last accessed
-          setSnapshot(snapshot);
+          updateLastAccessedTime(id);
           return Optional.of(snapshot);
         }
       }
@@ -142,31 +153,45 @@ public class JdbcSnapshotCache implements SnapshotCache {
     return Optional.empty();
   }
 
+  @VisibleForTesting
+  protected void updateLastAccessedTime(@NonNull SnapshotIdentifier id) {
+    try (Connection connection = dataSource.getConnection();
+         PreparedStatement statement = connection.prepareStatement(updateLastAccessedStatement)) {
+      statement.setTimestamp(1, Timestamp.valueOf(LocalDate.now().atStartOfDay()));
+      statement.setString(2, id.projectionClass().getName());
+      statement.setString(3, id.aggregateId() != null ? id.aggregateId().toString() : null);
+      statement.executeUpdate();
+    } catch (Exception e) {
+      log.error("Failed to update last accessed time for snapshot {}", id, e);
+    }
+  }
+
+
   @Override
   @SneakyThrows
-  public void setSnapshot(@NonNull Snapshot snapshot) {
+  public void store(@NonNull SnapshotIdentifier id, @NonNull SnapshotData snapshot) {
     try (Connection connection = dataSource.getConnection();
-        PreparedStatement statement = connection.prepareStatement(mergeStatement)) {
-      statement.setString(1, snapshot.id().key());
-      statement.setString(2, snapshot.id().uuid().toString());
-      statement.setString(3, snapshot.lastFact().toString());
-      statement.setBytes(4, snapshot.bytes());
-      statement.setBoolean(5, snapshot.compressed());
-      statement.setString(6, LocalDate.now().toString());
+         PreparedStatement statement = connection.prepareStatement(mergeStatement)) {
+      statement.setString(1, id.projectionClass().getName());
+      statement.setString(2, id.aggregateId() != null ? id.aggregateId().toString() : null);
+      statement.setString(3, snapshot.lastFactId().toString());
+      statement.setBytes(4, snapshot.serializedProjection());
+      statement.setString(5, snapshot.snapshotSerializerId().name());
+      statement.setTimestamp(6, Timestamp.valueOf(LocalDate.now().atStartOfDay()));
       if (statement.executeUpdate() == 0) {
         throw new IllegalStateException(
-            "Failed to insert snapshot into database. SnapshotId: " + snapshot.id());
+                "Failed to insert snapshot into database. SnapshotId: " + id);
       }
     }
   }
 
   @Override
   @SneakyThrows
-  public void clearSnapshot(@NonNull SnapshotId id) {
+  public void remove(@NonNull SnapshotIdentifier id) {
     try (Connection connection = dataSource.getConnection();
-        PreparedStatement statement = connection.prepareStatement(deleteStatement)) {
-      statement.setString(1, id.key());
-      statement.setString(2, id.uuid().toString());
+         PreparedStatement statement = connection.prepareStatement(deleteStatement)) {
+      statement.setString(1, id.projectionClass().getName());
+      statement.setString(2, id.aggregateId() != null ? id.aggregateId().toString() : null);
       statement.executeUpdate();
     }
   }
