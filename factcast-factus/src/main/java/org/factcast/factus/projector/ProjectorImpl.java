@@ -16,7 +16,6 @@
 package org.factcast.factus.projector;
 
 import com.google.common.annotations.VisibleForTesting;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
@@ -25,7 +24,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
-
 import lombok.*;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
@@ -50,564 +48,565 @@ import org.factcast.factus.projection.tx.TransactionException;
 @Slf4j
 public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
-    private static final Map<Class<? extends Projection>, Map<FactSpecCoordinates, Dispatcher>>
-            dispatcherCache = new ConcurrentHashMap<>();
-    private final Projection projection;
+  private static final Map<Class<? extends Projection>, Map<FactSpecCoordinates, Dispatcher>>
+      dispatcherCache = new ConcurrentHashMap<>();
+  private final Projection projection;
 
-    @Getter(value = AccessLevel.PROTECTED)
-    private final Map<FactSpecCoordinates, Dispatcher> dispatchInfo;
+  @Getter(value = AccessLevel.PROTECTED)
+  private final Map<FactSpecCoordinates, Dispatcher> dispatchInfo;
 
-    private final HandlerParameterContributors generalContributors;
+  private final HandlerParameterContributors generalContributors;
 
-    interface TargetObjectResolver extends Function<Projection, Object> {
+  interface TargetObjectResolver extends Function<Projection, Object> {}
+
+  public ProjectorImpl(
+      @NonNull Projection p,
+      @NonNull EventSerializer serializer,
+      @NonNull HandlerParameterContributors parameterContributors) {
+    generalContributors = parameterContributors;
+    projection = p;
+    dispatchInfo =
+        dispatcherCache.computeIfAbsent(
+            ReflectionTools.getRelevantClass(p), c -> discoverDispatchInfo(serializer, p));
+  }
+
+  /**
+   * for compatibility
+   *
+   * @param p
+   * @param es
+   * @deprecated
+   */
+  @Deprecated
+  public ProjectorImpl(@NonNull Projection p, @NonNull EventSerializer es) {
+    this(p, es, new HandlerParameterContributors(es));
+  }
+
+  @Override
+  public void apply(@NonNull List<Fact> facts) {
+    doApply(facts);
+  }
+
+  public void doApply(@NonNull List<Fact> facts) {
+
+    beginIfTransactional();
+
+    // remember that IF this fails, we throw an exception anyway, so that we won't reuse this info
+    FactStreamPosition latestSuccessful = null;
+
+    for (Fact f : facts) {
+
+      try {
+        callHandlerFor(f);
+        latestSuccessful = FactStreamPosition.from(f);
+        setFactStreamPositionIfAwareButNotTransactional(latestSuccessful);
+      } catch (Exception e) {
+        log.trace(
+            "returned with Exception {}:",
+            latestSuccessful == null ? null : latestSuccessful.factId(),
+            e);
+        rollbackIfTransactional();
+        retryApplicableIfTransactional(facts, f);
+
+        // pass along and potentially rethrow
+        projection.onError(e);
+        throw ExceptionHelper.toRuntime(e);
+      }
+    } // end loop
+
+    try {
+      // this is something we only do, if the whole batch was successfully applied
+      if (projection instanceof TransactionAware && latestSuccessful != null) {
+        setFactStreamPositionIfAware(latestSuccessful);
+      }
+    } catch (Exception e) {
+
+      rollbackIfTransactional();
+
+      // pass along and potentially rethrow
+      projection.onError(e);
+      throw e;
     }
 
-    public ProjectorImpl(
-            @NonNull Projection p,
-            @NonNull EventSerializer serializer,
-            @NonNull HandlerParameterContributors parameterContributors) {
-        generalContributors = parameterContributors;
-        projection = p;
-        dispatchInfo =
-                dispatcherCache.computeIfAbsent(
-                        ReflectionTools.getRelevantClass(p), c -> discoverDispatchInfo(serializer, p));
+    try {
+      commitIfTransactional();
+    } catch (TransactionException e) {
+      // pass along and potentially rethrow
+      projection.onError(e);
+      throw e;
+    }
+  }
+
+  private void setFactStreamPositionIfAwareButNotTransactional(
+      @NonNull FactStreamPosition latestSuccessful) {
+    if (!(projection instanceof TransactionAware)) setFactStreamPositionIfAware(latestSuccessful);
+  }
+
+  @VisibleForTesting
+  void retryApplicableIfTransactional(List<Fact> facts, Fact f) {
+    if (projection instanceof TransactionAware) {
+      // retry [0,n-1]
+      List<Fact> applicableFacts = facts.subList(0, facts.indexOf(f));
+      int applicableSize = applicableFacts.size();
+      if (applicableSize > 0) {
+        log.warn("Exception during batch application, reapplying {} facts.", applicableSize);
+        apply(applicableFacts);
+      }
+    }
+  }
+
+  @VisibleForTesting
+  void beginIfTransactional() {
+    if (projection instanceof TransactionAware) ((TransactionAware) projection).begin();
+  }
+
+  @VisibleForTesting
+  void rollbackIfTransactional() {
+    if (projection instanceof TransactionAware) ((TransactionAware) projection).rollback();
+  }
+
+  @VisibleForTesting
+  void commitIfTransactional() {
+    if (projection instanceof TransactionAware) ((TransactionAware) projection).commit();
+  }
+
+  private void setFactStreamPositionIfAware(@NonNull FactStreamPosition latestAttempted) {
+    if (projection instanceof TransactionAware) {
+      ((TransactionAware) projection).transactionalFactStreamPosition(latestAttempted);
+    } else if (projection instanceof FactStreamPositionAware) {
+      ((FactStreamPositionAware) projection).factStreamPosition(latestAttempted);
+    }
+  }
+
+  private UUID callHandlerFor(@NonNull Fact f)
+      throws InvocationTargetException, IllegalAccessException {
+    UUID factId = f.id();
+    log.trace("Dispatching fact {}", factId);
+    FactSpecCoordinates coords = FactSpecCoordinates.from(f);
+    Dispatcher dispatch = dispatchInfo.get(coords);
+    if (dispatch == null) {
+      // try to find one with no version as a fallback
+      dispatch = dispatchInfo.get(coords.withVersion(0));
     }
 
-    /**
-     * for compatibility
-     *
-     * @param p
-     * @param es
-     * @deprecated
-     */
-    @Deprecated
-    public ProjectorImpl(@NonNull Projection p, @NonNull EventSerializer es) {
-        this(p, es, new HandlerParameterContributors(es));
+    if (dispatch == null) {
+      InvalidHandlerDefinition ihd =
+          new InvalidHandlerDefinition("Unexpected Fact coordinates: '" + coords + "'");
+      projection.onError(ihd);
+      throw ihd;
     }
+    dispatch.invoke(projection, f);
 
-    @Override
-    public void apply(@NonNull List<Fact> facts) {
-        doApply(facts);
-    }
+    return factId;
+  }
 
-    public void doApply(@NonNull List<Fact> facts) {
+  private Map<FactSpecCoordinates, Dispatcher> discoverDispatchInfo(
+      EventSerializer deserializer, Projection p) {
+    Map<FactSpecCoordinates, Dispatcher> map = new HashMap<>();
 
-        beginIfTransactional();
+    final HandlerParameterContributors c;
 
-        // remember that IF this fails, we throw an exception anyway, so that we won't reuse this info
-        FactStreamPosition latestSuccessful = null;
+    if (p instanceof OpenTransactionAware<?>) {
 
-        for (Fact f : facts) {
+      Class<?> clazz = ReflectionTools.getTypeParameter((OpenTransactionAware<?>) p);
 
-            try {
-                callHandlerFor(f);
-                latestSuccessful = FactStreamPosition.from(f);
-                setFactStreamPositionIfAwareButNotTransactional(latestSuccessful);
-            } catch (Exception e) {
-                log.trace(
-                        "returned with Exception {}:",
-                        latestSuccessful == null ? null : latestSuccessful.factId(),
-                        e);
-                rollbackIfTransactional();
-                retryApplicableIfTransactional(facts, f);
-
-                // pass along and potentially rethrow
-                projection.onError(e);
-                throw ExceptionHelper.toRuntime(e);
-            }
-        } // end loop
-
-        try {
-            // this is something we only do, if the whole batch was successfully applied
-            if (projection instanceof TransactionAware && latestSuccessful != null) {
-                setFactStreamPositionIfAware(latestSuccessful);
-            }
-        } catch (Exception e) {
-
-            rollbackIfTransactional();
-
-            // pass along and potentially rethrow
-            projection.onError(e);
-            throw e;
-        }
-
-        try {
-            commitIfTransactional();
-        } catch (TransactionException e) {
-            // pass along and potentially rethrow
-            projection.onError(e);
-            throw e;
-        }
-    }
-
-    private void setFactStreamPositionIfAwareButNotTransactional(
-            @NonNull FactStreamPosition latestSuccessful) {
-        if (!(projection instanceof TransactionAware)) setFactStreamPositionIfAware(latestSuccessful);
-    }
-
-    @VisibleForTesting
-    void retryApplicableIfTransactional(List<Fact> facts, Fact f) {
-        if (projection instanceof TransactionAware) {
-            // retry [0,n-1]
-            List<Fact> applicableFacts = facts.subList(0, facts.indexOf(f));
-            int applicableSize = applicableFacts.size();
-            if (applicableSize > 0) {
-                log.warn("Exception during batch application, reapplying {} facts.", applicableSize);
-                apply(applicableFacts);
-            }
-        }
-    }
-
-    @VisibleForTesting
-    void beginIfTransactional() {
-        if (projection instanceof TransactionAware) ((TransactionAware) projection).begin();
-    }
-
-    @VisibleForTesting
-    void rollbackIfTransactional() {
-        if (projection instanceof TransactionAware) ((TransactionAware) projection).rollback();
-    }
-
-    @VisibleForTesting
-    void commitIfTransactional() {
-        if (projection instanceof TransactionAware) ((TransactionAware) projection).commit();
-    }
-
-    private void setFactStreamPositionIfAware(@NonNull FactStreamPosition latestAttempted) {
-        if (projection instanceof TransactionAware) {
-            ((TransactionAware) projection).transactionalFactStreamPosition(latestAttempted);
-        } else if (projection instanceof FactStreamPositionAware) {
-            ((FactStreamPositionAware) projection).factStreamPosition(latestAttempted);
-        }
-    }
-
-    private UUID callHandlerFor(@NonNull Fact f)
-            throws InvocationTargetException, IllegalAccessException {
-        UUID factId = f.id();
-        log.trace("Dispatching fact {}", factId);
-        FactSpecCoordinates coords = FactSpecCoordinates.from(f);
-        Dispatcher dispatch = dispatchInfo.get(coords);
-        if (dispatch == null) {
-            // try to find one with no version as a fallback
-            dispatch = dispatchInfo.get(coords.withVersion(0));
-        }
-
-        if (dispatch == null) {
-            InvalidHandlerDefinition ihd =
-                    new InvalidHandlerDefinition("Unexpected Fact coordinates: '" + coords + "'");
-            projection.onError(ihd);
-            throw ihd;
-        }
-        dispatch.invoke(projection, f);
-
-        return factId;
-    }
-
-    private Map<FactSpecCoordinates, Dispatcher> discoverDispatchInfo(
-            EventSerializer deserializer, Projection p) {
-        Map<FactSpecCoordinates, Dispatcher> map = new HashMap<>();
-
-        final HandlerParameterContributors c;
-
-        if (p instanceof OpenTransactionAware<?>) {
-
-            Class<?> clazz = ReflectionTools.getTypeParameter((OpenTransactionAware<?>) p);
-
-            // we have a parameter contributor to add, then
-            c =
-                    generalContributors.withHighestPrio(
-                            new HandlerParameterContributor() {
-                                @Nullable
-                                @Override
-                                public HandlerParameterProvider providerFor(
-                                        @NonNull Class<?> type,
-                                        @Nullable Type genericType,
-                                        @NonNull Set<Annotation> annotations) {
-                                    if (clazz == type)
-                                        return (f, p) -> ((OpenTransactionAware<?>) p).runningTransaction();
-                                    else return null;
-                                }
-                            });
-        } else c = this.generalContributors;
-
-        Collection<CallTarget> relevantClasses = ReflectionTools.getRelevantClasses(p);
-        relevantClasses.forEach(
-                callTarget -> {
-                    Set<Method> methods = ReflectionTools.collectMethods(callTarget.clazz);
-                    methods.stream()
-                            .filter(this::isEventHandlerMethod)
-                            .forEach(
-                                    m -> {
-                                        FactSpec fs = ReflectionTools.discoverFactSpec(p, m);
-                                        FactSpecCoordinates key = FactSpecCoordinates.from(fs);
-
-                                        Dispatcher dispatcher =
-                                                new Dispatcher(
-                                                        m,
-                                                        HandlerParameterTransformer.forCalling(m, c),
-                                                        callTarget.resolver,
-                                                        fs,
-                                                        deserializer);
-                                        Dispatcher before = map.put(key, dispatcher);
-                                        if (before != null) {
-                                            throw new InvalidHandlerDefinition(
-                                                    "Duplicate Handler method found for spec '"
-                                                            + key
-                                                            + "':\n "
-                                                            + m
-                                                            + "\n clashes with\n "
-                                                            + before.dispatchMethod());
-                                        }
-
-                                        log.debug("Discovered Event handling method {}", m.toString());
-                                        m.setAccessible(true);
-                                    });
-                });
-
-        if (map.isEmpty()) {
-            throw new InvalidHandlerDefinition("No handler methods discovered on " + p.getClass());
-        }
-
-        return map;
-    }
-
-    @Override
-    public List<FactSpec> createFactSpecs() {
-        List<FactSpec> discovered =
-                dispatchInfo.values().stream().map(d -> d.spec.copy()).collect(Collectors.toList());
-
-        if (projection instanceof Aggregate) {
-            UUID aggId = AggregateUtil.aggregateId((Aggregate) projection);
-            for (FactSpec factSpec : discovered) {
-                factSpec.aggId(aggId);
-            }
-        }
-
-        @NonNull List<FactSpec> ret = projection.postprocess(discovered);
-        //noinspection ConstantConditions
-        if (ret == null || ret.isEmpty()) {
-            throw new InvalidHandlerDefinition(
-                    "No FactSpecs discovered from "
-                            + projection.getClass()
-                            + ". Either add handler methods or implement postprocess(List<FactSpec)");
-        }
-        return Collections.unmodifiableList(ret);
-    }
-
-    @Override
-    public void onCatchup(@Nullable FactStreamPosition idOfLastFactApplied) {
-        // no longer used, might still be interesting as a hook
-    }
-
-    /**
-     * expensive method that should be used on initialization only
-     *
-     * @param m
-     * @return boolean
-     */
-    @VisibleForTesting
-    boolean isEventHandlerMethod(Method m) {
-        if (m.getAnnotation(Handler.class) != null || m.getAnnotation(HandlerFor.class) != null) {
-
-            if (!m.getReturnType().equals(void.class)) {
-                throw new InvalidHandlerDefinition(
-                        "Handler methods must return void, but \n "
-                                + m
-                                + "\n returns '"
-                                + m.getReturnType()
-                                + "'");
-            }
-
-            if (m.getParameterCount() == 0) {
-                throw new InvalidHandlerDefinition(
-                        "Handler methods must have at least one parameter: " + m);
-            }
-
-            if (Modifier.isPublic(m.getModifiers())) {
-                if (!Warning.PUBLIC_HANDLER_METHOD.isSuppressedOn(m)) {
-                    log.warn("Handler methods should not be public: " + m);
+      // we have a parameter contributor to add, then
+      c =
+          generalContributors.withHighestPrio(
+              new HandlerParameterContributor() {
+                @Nullable
+                @Override
+                public HandlerParameterProvider providerFor(
+                    @NonNull Class<?> type,
+                    @Nullable Type genericType,
+                    @NonNull Set<Annotation> annotations) {
+                  if (clazz == type)
+                    return (f, p) -> ((OpenTransactionAware<?>) p).runningTransaction();
+                  else return null;
                 }
-            }
+              });
+    } else c = this.generalContributors;
 
-            // exclude MockitoMocks
-            return !m.getDeclaringClass().getName().contains("$MockitoMock");
-        }
-        return false;
-    }
+    Collection<CallTarget> relevantClasses = ReflectionTools.getRelevantClasses(p);
+    relevantClasses.forEach(
+        callTarget -> {
+          Set<Method> methods = ReflectionTools.collectMethods(callTarget.clazz);
+          methods.stream()
+              .filter(this::isEventHandlerMethod)
+              .forEach(
+                  m -> {
+                    FactSpec fs = ReflectionTools.discoverFactSpec(p, m);
+                    FactSpecCoordinates key = FactSpecCoordinates.from(fs);
 
-    @Value
-    @VisibleForTesting
-    static class Dispatcher {
-
-        @NonNull
-        Method dispatchMethod;
-        @NonNull
-        HandlerParameterTransformer transformer;
-
-        @NonNull
-        TargetObjectResolver objectResolver;
-
-        @NonNull
-        FactSpec spec;
-
-        @NonNull
-        EventSerializer deserializer;
-
-        void invoke(Projection projection, Fact f) {
-            // choose the target object (nested)
-            Object targetObject = objectResolver.apply(projection);
-            // create actual parameters
-            Object[] parameters = transformer.apply(f, projection);
-            // fire
-            try {
-                dispatchMethod.invoke(targetObject, parameters);
-            } catch (IllegalAccessException e) {
-                throw ExceptionHelper.toRuntime(e);
-            } catch (InvocationTargetException e) {
-                // unwrap
-                throw ExceptionHelper.toRuntime(e.getCause());
-            }
-        }
-    }
-
-    @Value
-    static class CallTarget {
-        Class<?> clazz;
-
-        TargetObjectResolver resolver;
-    }
-
-    @UtilityClass
-    static class ReflectionTools {
-        private static Class<? extends Projection> getRelevantClass(@NonNull Projection p) {
-            Class<? extends Projection> c = p.getClass();
-            return getRelevantClass(c);
-        }
-
-        @SuppressWarnings("unchecked")
-        private static Class<? extends Projection> getRelevantClass(
-                @NonNull Class<? extends Projection> c) {
-            while (c.getName().contains("$$EnhancerBySpring") || c.getName().contains("CGLIB")) {
-                c = (Class<? extends Projection>) c.getSuperclass();
-            }
-            return c;
-        }
-
-        private static Set<Method> collectMethods(Class<?> clazz) {
-            if (clazz == null) {
-                return Collections.emptySet();
-            }
-
-            HashSet<Method> m = new HashSet<>();
-            m.addAll(Arrays.asList(clazz.getMethods()));
-            m.addAll(Arrays.asList(clazz.getDeclaredMethods()));
-            m.addAll(collectMethods(clazz.getSuperclass()));
-            return m;
-        }
-
-        private static FactSpec discoverFactSpec(Projection p, Method m) {
-
-            HandlerFor handlerFor = m.getAnnotation(HandlerFor.class);
-            if (handlerFor != null) {
-                return addOptionalFilterInfo(
-                        m, FactSpec.ns(handlerFor.ns()).type(handlerFor.type()).version(handlerFor.version()));
-            }
-
-            List<Class<?>> eventPojoTypes =
-                    Arrays.stream(m.getParameterTypes())
-                            .filter(EventObject.class::isAssignableFrom)
-                            .collect(Collectors.toList());
-
-            if (eventPojoTypes.isEmpty()) {
-                throw new InvalidHandlerDefinition(
-                        "Cannot introspect FactSpec from "
-                                + m
-                                + ". Either use @HandlerFor or pass an EventPojo as a parameter.");
-            } else {
-                if (eventPojoTypes.size() > 1) {
-                    throw new InvalidHandlerDefinition(
-                            "Multiple EventPojo Parameters. Cannot introspect FactSpec from " + m);
-                } else {
-                    Class<?> eventPojoType = eventPojoTypes.get(0);
-                    FactSpec fromTargetType = FactSpec.from(eventPojoType);
-
-                    // yes, order is important :D
-                    OverrideNamespaces overridesOnMethod = m.getAnnotation(OverrideNamespaces.class);
-                    if (overridesOnMethod != null) {
-                        throw new IllegalArgumentException("Only one single @OverrideNamespace is allowed on method level");
+                    Dispatcher dispatcher =
+                        new Dispatcher(
+                            m,
+                            HandlerParameterTransformer.forCalling(m, c),
+                            callTarget.resolver,
+                            fs,
+                            deserializer);
+                    Dispatcher before = map.put(key, dispatcher);
+                    if (before != null) {
+                      throw new InvalidHandlerDefinition(
+                          "Duplicate Handler method found for spec '"
+                              + key
+                              + "':\n "
+                              + m
+                              + "\n clashes with\n "
+                              + before.dispatchMethod());
                     }
 
-                    OverrideNamespace overrideOnMethod = m.getAnnotation(OverrideNamespace.class);
-                    if (overrideOnMethod != null) {
-                        return overrideNamespaceFromMethodAnnotation(m, overrideOnMethod, eventPojoType, fromTargetType);
-                    }
+                    log.debug("Discovered Event handling method {}", m.toString());
+                    m.setAccessible(true);
+                  });
+        });
 
-
-                    return addOptionalFilterInfo(m, overrideNamespaceFromTypeAnnotation(p, eventPojoType, fromTargetType));
-                }
-            }
-        }
-
-        @VisibleForTesting
-        static FactSpec overrideNamespaceFromTypeAnnotation(Projection p, Class<?> eventPojoType, FactSpec fromTargetType) {
-
-            Arrays.stream(p.getClass().getInterfaces())
-                    .filter(i -> i.getAnnotation(OverrideNamespace.class) != null || i.getAnnotation(OverrideNamespaces.class) != null)
-                    .findFirst()
-                    .ifPresent(i -> {
-                                throw new InvalidHandlerDefinition("@OverrideNamespace(s) is only allowed on non-interface types " + p.getClass() + " implementing " + i.toString()
-                                );
-                            }
-                    );
-
-            return findNearestOverrideNamespacesAnnotation(p.getClass()).map(
-                    t ->
-                            overrideNamespaceFromTypeAnnotation(t, fromTargetType)
-            ).orElse(fromTargetType);
-
-        }
-
-        private FactSpec overrideNamespaceFromTypeAnnotation(@NotNull OverrideNamespaces t, @NonNull FactSpec fromTargetType) {
-            return Arrays.stream(t.value())
-                    .filter(o -> FactSpecCoordinates.from(o.type()).type().equals(fromTargetType.type()))
-                    .findFirst()
-                    .map(o -> fromTargetType.withNs(o.value()))
-                    .orElse(fromTargetType);
-        }
-
-        @VisibleForTesting
-        static Optional<OverrideNamespaces> findNearestOverrideNamespacesAnnotation(Class<?> p) {
-            if (p == null || !Projection.class.isAssignableFrom(p))
-                return Optional.empty();
-
-
-            OverrideNamespaces o = p.getAnnotation(OverrideNamespaces.class);
-
-            if (o != null) {
-                return Optional.of(o);
-            } else {
-                Class<?> superclass = p.getSuperclass();
-                return findNearestOverrideNamespacesAnnotation(superclass);
-            }
-        }
-
-        @VisibleForTesting
-        static FactSpec overrideNamespaceFromMethodAnnotation(Method m, OverrideNamespace annotation, Class<?> eventPojoType, FactSpec fromTargetType) {
-            String newNs = annotation.value();
-            Class<? extends EventObject> forType = annotation.type();
-
-            if (newNs.isEmpty())
-                throw new InvalidHandlerDefinition("A valid namespace must be provided for a @OverrideNs annotation on " + m);
-
-            if (!forType.equals(OverrideNamespace.DISCOVER)) {
-                if (forType != eventPojoType)
-                    throw new InvalidHandlerDefinition("@OverrideNs defined for a different type than what the parameter suggests " + m);
-
-
-            }
-            return addOptionalFilterInfo(m, fromTargetType.withNs(newNs));
-        }
-
-        @VisibleForTesting
-        static FactSpec addOptionalFilterInfo(Method m, FactSpec spec) {
-            FilterByMetas metas = m.getAnnotation(FilterByMetas.class);
-            if (metas != null) {
-                for (FilterByMeta meta : metas.value()) {
-                    spec = addFilterByMeta(spec, meta);
-                }
-            }
-            FilterByMeta meta = m.getAnnotation(FilterByMeta.class);
-            if (meta != null) spec = addFilterByMeta(spec, meta);
-
-            FilterByMetaExistsContainer existsContainer =
-                    m.getAnnotation(FilterByMetaExistsContainer.class);
-            if (existsContainer != null) {
-                for (FilterByMetaExists exists : existsContainer.value()) {
-                    spec = addFilterByMetaExists(spec, exists);
-                }
-            }
-            FilterByMetaExists exists = m.getAnnotation(FilterByMetaExists.class);
-            if (exists != null) spec = addFilterByMetaExists(spec, exists);
-
-            FilterByMetaDoesNotExistContainer doesNotExistContainer =
-                    m.getAnnotation(FilterByMetaDoesNotExistContainer.class);
-            if (doesNotExistContainer != null) {
-                for (FilterByMetaDoesNotExist notExists : doesNotExistContainer.value()) {
-                    spec = addFilterByMetaDoesNotExist(spec, notExists);
-                }
-            }
-            FilterByMetaDoesNotExist attribute = m.getAnnotation(FilterByMetaDoesNotExist.class);
-            if (attribute != null) spec = addFilterByMetaDoesNotExist(spec, attribute);
-
-            FilterByAggId aggregateId = m.getAnnotation(FilterByAggId.class);
-            if (aggregateId != null) spec = spec.aggId(UUID.fromString(aggregateId.value()));
-
-            FilterByScript filterByScript = m.getAnnotation(FilterByScript.class);
-            if (filterByScript != null)
-                spec = spec.filterScript(org.factcast.core.spec.FilterScript.js(filterByScript.value()));
-
-            return spec;
-        }
-
-        private static FactSpec addFilterByMetaDoesNotExist(
-                FactSpec spec, FilterByMetaDoesNotExist notExists) {
-            return spec.metaDoesNotExist(notExists.value());
-        }
-
-        private static FactSpec addFilterByMetaExists(FactSpec spec, FilterByMetaExists attribute) {
-            return spec.metaExists(attribute.value());
-        }
-
-        private static FactSpec addFilterByMeta(FactSpec spec, FilterByMeta attribute) {
-            return spec.meta(attribute.key(), attribute.value());
-        }
-
-        private static Collection<CallTarget> getRelevantClasses(Projection p) {
-            return getRelevantClasses(new CallTarget(getRelevantClass(p.getClass()), o -> o));
-        }
-
-        private static Collection<CallTarget> getRelevantClasses(CallTarget root) {
-            List<CallTarget> classes = new LinkedList<>();
-            classes.add(root);
-            Arrays.stream(root.clazz().getDeclaredClasses())
-                    .filter(c -> !Modifier.isStatic(c.getModifiers()))
-                    .forEach(
-                            c ->
-                                    classes.addAll(
-                                            getRelevantClasses(
-                                                    new CallTarget(c, p -> resolveTargetObject(root.resolver.apply(p), c)))));
-            return classes;
-        }
-
-        @VisibleForTesting
-        static Object resolveTargetObject(Object parent, Class<?> c) {
-            try {
-                Constructor<?> ctor;
-                try {
-                    ctor = c.getDeclaredConstructor(parent.getClass());
-                    ctor.setAccessible(true);
-                    return ctor.newInstance(parent);
-
-                } catch (NoSuchMethodException e) {
-                    // static class
-                    ctor = c.getDeclaredConstructor();
-                    ctor.setAccessible(true);
-                    return ctor.newInstance();
-                }
-
-            } catch (InstantiationException
-                     | IllegalAccessException
-                     | NoSuchMethodException
-                     | InvocationTargetException e) {
-                throw new IllegalStateException("Cannot instantiate " + c, e);
-            }
-        }
-
-        @SneakyThrows
-        @NonNull
-        @VisibleForTesting
-        static Class<?> getTypeParameter(@NonNull OpenTransactionAware<?> p) {
-            return p.getClass().getMethod("runningTransaction").getReturnType();
-        }
+    if (map.isEmpty()) {
+      throw new InvalidHandlerDefinition("No handler methods discovered on " + p.getClass());
     }
+
+    return map;
+  }
+
+  @Override
+  public List<FactSpec> createFactSpecs() {
+    List<FactSpec> discovered =
+        dispatchInfo.values().stream().map(d -> d.spec.copy()).collect(Collectors.toList());
+
+    if (projection instanceof Aggregate) {
+      UUID aggId = AggregateUtil.aggregateId((Aggregate) projection);
+      for (FactSpec factSpec : discovered) {
+        factSpec.aggId(aggId);
+      }
+    }
+
+    @NonNull List<FactSpec> ret = projection.postprocess(discovered);
+    //noinspection ConstantConditions
+    if (ret == null || ret.isEmpty()) {
+      throw new InvalidHandlerDefinition(
+          "No FactSpecs discovered from "
+              + projection.getClass()
+              + ". Either add handler methods or implement postprocess(List<FactSpec)");
+    }
+    return Collections.unmodifiableList(ret);
+  }
+
+  @Override
+  public void onCatchup(@Nullable FactStreamPosition idOfLastFactApplied) {
+    // no longer used, might still be interesting as a hook
+  }
+
+  /**
+   * expensive method that should be used on initialization only
+   *
+   * @param m
+   * @return boolean
+   */
+  @VisibleForTesting
+  boolean isEventHandlerMethod(Method m) {
+    if (m.getAnnotation(Handler.class) != null || m.getAnnotation(HandlerFor.class) != null) {
+
+      if (!m.getReturnType().equals(void.class)) {
+        throw new InvalidHandlerDefinition(
+            "Handler methods must return void, but \n "
+                + m
+                + "\n returns '"
+                + m.getReturnType()
+                + "'");
+      }
+
+      if (m.getParameterCount() == 0) {
+        throw new InvalidHandlerDefinition(
+            "Handler methods must have at least one parameter: " + m);
+      }
+
+      if (Modifier.isPublic(m.getModifiers())) {
+        if (!Warning.PUBLIC_HANDLER_METHOD.isSuppressedOn(m)) {
+          log.warn("Handler methods should not be public: " + m);
+        }
+      }
+
+      // exclude MockitoMocks
+      return !m.getDeclaringClass().getName().contains("$MockitoMock");
+    }
+    return false;
+  }
+
+  @Value
+  @VisibleForTesting
+  static class Dispatcher {
+
+    @NonNull Method dispatchMethod;
+    @NonNull HandlerParameterTransformer transformer;
+
+    @NonNull TargetObjectResolver objectResolver;
+
+    @NonNull FactSpec spec;
+
+    @NonNull EventSerializer deserializer;
+
+    void invoke(Projection projection, Fact f) {
+      // choose the target object (nested)
+      Object targetObject = objectResolver.apply(projection);
+      // create actual parameters
+      Object[] parameters = transformer.apply(f, projection);
+      // fire
+      try {
+        dispatchMethod.invoke(targetObject, parameters);
+      } catch (IllegalAccessException e) {
+        throw ExceptionHelper.toRuntime(e);
+      } catch (InvocationTargetException e) {
+        // unwrap
+        throw ExceptionHelper.toRuntime(e.getCause());
+      }
+    }
+  }
+
+  @Value
+  static class CallTarget {
+    Class<?> clazz;
+
+    TargetObjectResolver resolver;
+  }
+
+  @UtilityClass
+  static class ReflectionTools {
+    private static Class<? extends Projection> getRelevantClass(@NonNull Projection p) {
+      Class<? extends Projection> c = p.getClass();
+      return getRelevantClass(c);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Class<? extends Projection> getRelevantClass(
+        @NonNull Class<? extends Projection> c) {
+      while (c.getName().contains("$$EnhancerBySpring") || c.getName().contains("CGLIB")) {
+        c = (Class<? extends Projection>) c.getSuperclass();
+      }
+      return c;
+    }
+
+    private static Set<Method> collectMethods(Class<?> clazz) {
+      if (clazz == null) {
+        return Collections.emptySet();
+      }
+
+      HashSet<Method> m = new HashSet<>();
+      m.addAll(Arrays.asList(clazz.getMethods()));
+      m.addAll(Arrays.asList(clazz.getDeclaredMethods()));
+      m.addAll(collectMethods(clazz.getSuperclass()));
+      return m;
+    }
+
+    private static FactSpec discoverFactSpec(Projection p, Method m) {
+
+      HandlerFor handlerFor = m.getAnnotation(HandlerFor.class);
+      if (handlerFor != null) {
+        return addOptionalFilterInfo(
+            m, FactSpec.ns(handlerFor.ns()).type(handlerFor.type()).version(handlerFor.version()));
+      }
+
+      List<Class<?>> eventPojoTypes =
+          Arrays.stream(m.getParameterTypes())
+              .filter(EventObject.class::isAssignableFrom)
+              .collect(Collectors.toList());
+
+      if (eventPojoTypes.isEmpty()) {
+        throw new InvalidHandlerDefinition(
+            "Cannot introspect FactSpec from "
+                + m
+                + ". Either use @HandlerFor or pass an EventPojo as a parameter.");
+      } else {
+        if (eventPojoTypes.size() > 1) {
+          throw new InvalidHandlerDefinition(
+              "Multiple EventPojo Parameters. Cannot introspect FactSpec from " + m);
+        } else {
+          Class<?> eventPojoType = eventPojoTypes.get(0);
+          FactSpec fromTargetType = FactSpec.from(eventPojoType);
+
+          // yes, order is important :D
+          OverrideNamespaces overridesOnMethod = m.getAnnotation(OverrideNamespaces.class);
+          if (overridesOnMethod != null) {
+            throw new IllegalArgumentException(
+                "Only one single @OverrideNamespace is allowed on method level");
+          }
+
+          OverrideNamespace overrideOnMethod = m.getAnnotation(OverrideNamespace.class);
+          if (overrideOnMethod != null) {
+            return overrideNamespaceFromMethodAnnotation(
+                m, overrideOnMethod, eventPojoType, fromTargetType);
+          }
+
+          return addOptionalFilterInfo(
+              m, overrideNamespaceFromTypeAnnotation(p, eventPojoType, fromTargetType));
+        }
+      }
+    }
+
+    @VisibleForTesting
+    static FactSpec overrideNamespaceFromTypeAnnotation(
+        Projection p, Class<?> eventPojoType, FactSpec fromTargetType) {
+
+      Arrays.stream(p.getClass().getInterfaces())
+          .filter(
+              i ->
+                  i.getAnnotation(OverrideNamespace.class) != null
+                      || i.getAnnotation(OverrideNamespaces.class) != null)
+          .findFirst()
+          .ifPresent(
+              i -> {
+                throw new InvalidHandlerDefinition(
+                    "@OverrideNamespace(s) is only allowed on non-interface types "
+                        + p.getClass()
+                        + " implementing "
+                        + i.toString());
+              });
+
+      return findNearestOverrideNamespacesAnnotation(p.getClass())
+          .map(t -> overrideNamespaceFromTypeAnnotation(t, fromTargetType))
+          .orElse(fromTargetType);
+    }
+
+    private FactSpec overrideNamespaceFromTypeAnnotation(
+        @NotNull OverrideNamespaces t, @NonNull FactSpec fromTargetType) {
+      return Arrays.stream(t.value())
+          .filter(o -> FactSpecCoordinates.from(o.type()).type().equals(fromTargetType.type()))
+          .findFirst()
+          .map(o -> fromTargetType.withNs(o.value()))
+          .orElse(fromTargetType);
+    }
+
+    @VisibleForTesting
+    static Optional<OverrideNamespaces> findNearestOverrideNamespacesAnnotation(Class<?> p) {
+      if (p == null || !Projection.class.isAssignableFrom(p)) return Optional.empty();
+
+      OverrideNamespaces o = p.getAnnotation(OverrideNamespaces.class);
+
+      if (o != null) {
+        return Optional.of(o);
+      } else {
+        Class<?> superclass = p.getSuperclass();
+        return findNearestOverrideNamespacesAnnotation(superclass);
+      }
+    }
+
+    @VisibleForTesting
+    static FactSpec overrideNamespaceFromMethodAnnotation(
+        Method m, OverrideNamespace annotation, Class<?> eventPojoType, FactSpec fromTargetType) {
+      String newNs = annotation.value();
+      Class<? extends EventObject> forType = annotation.type();
+
+      if (newNs.isEmpty())
+        throw new InvalidHandlerDefinition(
+            "A valid namespace must be provided for a @OverrideNs annotation on " + m);
+
+      if (!forType.equals(OverrideNamespace.DISCOVER)) {
+        if (forType != eventPojoType)
+          throw new InvalidHandlerDefinition(
+              "@OverrideNs defined for a different type than what the parameter suggests " + m);
+      }
+      return addOptionalFilterInfo(m, fromTargetType.withNs(newNs));
+    }
+
+    @VisibleForTesting
+    static FactSpec addOptionalFilterInfo(Method m, FactSpec spec) {
+      FilterByMetas metas = m.getAnnotation(FilterByMetas.class);
+      if (metas != null) {
+        for (FilterByMeta meta : metas.value()) {
+          spec = addFilterByMeta(spec, meta);
+        }
+      }
+      FilterByMeta meta = m.getAnnotation(FilterByMeta.class);
+      if (meta != null) spec = addFilterByMeta(spec, meta);
+
+      FilterByMetaExistsContainer existsContainer =
+          m.getAnnotation(FilterByMetaExistsContainer.class);
+      if (existsContainer != null) {
+        for (FilterByMetaExists exists : existsContainer.value()) {
+          spec = addFilterByMetaExists(spec, exists);
+        }
+      }
+      FilterByMetaExists exists = m.getAnnotation(FilterByMetaExists.class);
+      if (exists != null) spec = addFilterByMetaExists(spec, exists);
+
+      FilterByMetaDoesNotExistContainer doesNotExistContainer =
+          m.getAnnotation(FilterByMetaDoesNotExistContainer.class);
+      if (doesNotExistContainer != null) {
+        for (FilterByMetaDoesNotExist notExists : doesNotExistContainer.value()) {
+          spec = addFilterByMetaDoesNotExist(spec, notExists);
+        }
+      }
+      FilterByMetaDoesNotExist attribute = m.getAnnotation(FilterByMetaDoesNotExist.class);
+      if (attribute != null) spec = addFilterByMetaDoesNotExist(spec, attribute);
+
+      FilterByAggId aggregateId = m.getAnnotation(FilterByAggId.class);
+      if (aggregateId != null) spec = spec.aggId(UUID.fromString(aggregateId.value()));
+
+      FilterByScript filterByScript = m.getAnnotation(FilterByScript.class);
+      if (filterByScript != null)
+        spec = spec.filterScript(org.factcast.core.spec.FilterScript.js(filterByScript.value()));
+
+      return spec;
+    }
+
+    private static FactSpec addFilterByMetaDoesNotExist(
+        FactSpec spec, FilterByMetaDoesNotExist notExists) {
+      return spec.metaDoesNotExist(notExists.value());
+    }
+
+    private static FactSpec addFilterByMetaExists(FactSpec spec, FilterByMetaExists attribute) {
+      return spec.metaExists(attribute.value());
+    }
+
+    private static FactSpec addFilterByMeta(FactSpec spec, FilterByMeta attribute) {
+      return spec.meta(attribute.key(), attribute.value());
+    }
+
+    private static Collection<CallTarget> getRelevantClasses(Projection p) {
+      return getRelevantClasses(new CallTarget(getRelevantClass(p.getClass()), o -> o));
+    }
+
+    private static Collection<CallTarget> getRelevantClasses(CallTarget root) {
+      List<CallTarget> classes = new LinkedList<>();
+      classes.add(root);
+      Arrays.stream(root.clazz().getDeclaredClasses())
+          .filter(c -> !Modifier.isStatic(c.getModifiers()))
+          .forEach(
+              c ->
+                  classes.addAll(
+                      getRelevantClasses(
+                          new CallTarget(c, p -> resolveTargetObject(root.resolver.apply(p), c)))));
+      return classes;
+    }
+
+    @VisibleForTesting
+    static Object resolveTargetObject(Object parent, Class<?> c) {
+      try {
+        Constructor<?> ctor;
+        try {
+          ctor = c.getDeclaredConstructor(parent.getClass());
+          ctor.setAccessible(true);
+          return ctor.newInstance(parent);
+
+        } catch (NoSuchMethodException e) {
+          // static class
+          ctor = c.getDeclaredConstructor();
+          ctor.setAccessible(true);
+          return ctor.newInstance();
+        }
+
+      } catch (InstantiationException
+          | IllegalAccessException
+          | NoSuchMethodException
+          | InvocationTargetException e) {
+        throw new IllegalStateException("Cannot instantiate " + c, e);
+      }
+    }
+
+    @SneakyThrows
+    @NonNull
+    @VisibleForTesting
+    static Class<?> getTypeParameter(@NonNull OpenTransactionAware<?> p) {
+      return p.getClass().getMethod("runningTransaction").getReturnType();
+    }
+  }
 }
