@@ -67,13 +67,13 @@ class JdbcSnapshotCacheTest {
       when(connection.getMetaData().getColumns(any(), any(), any(), any())).thenReturn(columns);
       when(columns.next()).thenReturn(true, true, true, true, true, true, false);
       when(columns.getString("COLUMN_NAME"))
-              .thenReturn(
-                      "projection_class",
-                      "aggregate_id",
-                      "last_fact_id",
-                      "bytes",
-                      "snapshot_serializer_id",
-                      "last_accessed");
+          .thenReturn(
+              "projection_class",
+              "aggregate_id",
+              "last_fact_id",
+              "bytes",
+              "snapshot_serializer_id",
+              "last_accessed");
 
       JdbcSnapshotCache uut = new JdbcSnapshotCache(new JdbcSnapshotProperties(), dataSource);
       Timer timer = uut.createTimer();
@@ -85,10 +85,11 @@ class JdbcSnapshotCacheTest {
   class WhenInstantiating {
     @Test
     void test_invalidNameForTable() {
-      JdbcSnapshotProperties properties = new JdbcSnapshotProperties().setSnapshotTableName("name; drop table");
+      JdbcSnapshotProperties properties =
+          new JdbcSnapshotProperties().setSnapshotTableName("name; drop table");
       assertThatThrownBy(() -> new JdbcSnapshotCache(properties, dataSource))
-              .isInstanceOf(IllegalArgumentException.class)
-              .hasMessageContaining("Invalid table name");
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("Invalid table name");
     }
 
     @Test
