@@ -16,7 +16,6 @@
 package org.factcast.itests.factus.config;
 
 import javax.sql.DataSource;
-import lombok.NonNull;
 import org.factcast.core.snap.jdbc.JdbcSnapshotCache;
 import org.factcast.core.snap.jdbc.JdbcSnapshotProperties;
 import org.factcast.factus.snapshot.SnapshotCache;
@@ -45,7 +44,8 @@ public class JdbcSnapshotCacheConfiguration {
       throw new RuntimeException(e);
     }
 
-    JdbcSnapshotProperties props = new JdbcSnapshotProperties().setSnapshotTableName("my_snapshot_table");
+    JdbcSnapshotProperties props =
+        new JdbcSnapshotProperties().setSnapshotTableName("my_snapshot_table");
     return new JdbcSnapshotCache(props, dataSource);
   }
 }
