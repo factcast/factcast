@@ -841,7 +841,7 @@ class ProjectorImplTest {
   }
 
   @Specification(ns = "ns2")
-  static class E2 implements EventObject{
+  static class E2 implements EventObject {
     @Override
     public Set<UUID> aggregateIds() {
       return new HashSet<>();
@@ -913,7 +913,8 @@ class ProjectorImplTest {
   class WhenOverriding {
     @Test
     void overridesNsFromMethodLevelAnnotationDiscover() {
-      ProjectorImpl<Projection> uut = new ProjectorImpl<>(new SomeProjectionWithMethodLevelOverride(), eventSerializer);
+      ProjectorImpl<Projection> uut =
+          new ProjectorImpl<>(new SomeProjectionWithMethodLevelOverride(), eventSerializer);
       List<FactSpec> factSpecs = uut.createFactSpecs();
       Assertions.assertThat(factSpecs).hasSize(1);
       Assertions.assertThat(factSpecs.get(0).ns()).isEqualTo("m-targetForE2");
@@ -921,7 +922,8 @@ class ProjectorImplTest {
 
     @Test
     void overridesNsFromMethodLevelAnnotationLegal() {
-      ProjectorImpl<Projection> uut = new ProjectorImpl<>(new SomeProjectionWithMethodLevelLegalTargetType(), eventSerializer);
+      ProjectorImpl<Projection> uut =
+          new ProjectorImpl<>(new SomeProjectionWithMethodLevelLegalTargetType(), eventSerializer);
       List<FactSpec> factSpecs = uut.createFactSpecs();
       Assertions.assertThat(factSpecs).hasSize(1);
       Assertions.assertThat(factSpecs.get(0).ns()).isEqualTo("m-targetForE2");
@@ -929,14 +931,18 @@ class ProjectorImplTest {
 
     @Test
     void overridesNsFromMethodLevelAnnotationIllegal() {
-      assertThatThrownBy(()->{
-        new ProjectorImpl<>(new SomeProjectionWithMethodLevelIllegalTargetType(), eventSerializer);
-      }).isInstanceOf(InvalidHandlerDefinition.class);
+      assertThatThrownBy(
+              () -> {
+                new ProjectorImpl<>(
+                    new SomeProjectionWithMethodLevelIllegalTargetType(), eventSerializer);
+              })
+          .isInstanceOf(InvalidHandlerDefinition.class);
     }
 
     @Test
     void overridesNsFromTypeLevelAnnotation() {
-      ProjectorImpl<Projection> uut = new ProjectorImpl<>(new SomeProjectionWithTypeAnnotation(), eventSerializer);
+      ProjectorImpl<Projection> uut =
+          new ProjectorImpl<>(new SomeProjectionWithTypeAnnotation(), eventSerializer);
       List<FactSpec> factSpecs = uut.createFactSpecs();
       Assertions.assertThat(factSpecs).hasSize(1);
       Assertions.assertThat(factSpecs.get(0).ns()).isEqualTo("s-targetForE1");
@@ -945,7 +951,8 @@ class ProjectorImplTest {
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     @Test
     void overridesNsFromTypeLevelAnnotationOnSuper() {
-      ProjectorImpl<Projection> uut = new ProjectorImpl<>(new SomeProjectionWithTypeAnnotationOnParent(),eventSerializer);
+      ProjectorImpl<Projection> uut =
+          new ProjectorImpl<>(new SomeProjectionWithTypeAnnotationOnParent(), eventSerializer);
       List<FactSpec> factSpecs = uut.createFactSpecs();
       Optional<FactSpec> e1 = factSpecs.stream().filter(fs -> fs.type().equals("E1")).findFirst();
       Optional<FactSpec> e2 = factSpecs.stream().filter(fs -> fs.type().equals("E2")).findFirst();
@@ -955,11 +962,14 @@ class ProjectorImplTest {
 
     @Test
     void overridesNsFromTypeLevelAnnotationOnInterface() {
-      assertThatThrownBy(()-> new ProjectorImpl<>(new SomeProjectionWithOverrideOnInterface(), eventSerializer)).isInstanceOf(InvalidHandlerDefinition.class);
+      assertThatThrownBy(
+              () ->
+                  new ProjectorImpl<>(new SomeProjectionWithOverrideOnInterface(), eventSerializer))
+          .isInstanceOf(InvalidHandlerDefinition.class);
     }
 
     @Test
-    void deserializesFromOverriddenNs(){
+    void deserializesFromOverriddenNs() {
       Fact factWithChangedNs = Fact.buildFrom(new E2()).ns("m-targetForE2").build();
 
       SomeProjectionWithMethodLevelOverride p = spy(new SomeProjectionWithMethodLevelOverride());
@@ -967,7 +977,6 @@ class ProjectorImplTest {
       uut.apply(Lists.newArrayList(factWithChangedNs));
 
       verify(p).apply(any(E2.class));
-
     }
   }
 }
