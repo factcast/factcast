@@ -61,7 +61,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     ns = spec.ns();
     type = spec.type();
     version = spec.version();
-    aggIds = spec.aggIds();
+    aggIds = spec.mergedAggIds();
     meta = spec.meta();
     metaKeyExists = spec.metaKeyExists();
     script = spec.filterScript();

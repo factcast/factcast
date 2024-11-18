@@ -87,7 +87,7 @@ public class PgQueryBuilder {
   private int setAggIds(PreparedStatement p, int count, FactSpec spec) throws SQLException {
     if (filterByAggregateIds(spec)) {
       String a =
-          spec.aggIds().stream()
+          spec.mergedAggIds().stream()
               .map(UUID::toString)
               .collect(Collectors.joining("\",\"", "\"", "\""));
       p.setString(++count, "{\"aggIds\": [" + a + "]}");
@@ -96,7 +96,7 @@ public class PgQueryBuilder {
   }
 
   private static boolean filterByAggregateIds(FactSpec specs) {
-    Set<UUID> aggIds = specs.aggIds();
+    Set<UUID> aggIds = specs.mergedAggIds();
     return aggIds != null && !aggIds.isEmpty();
   }
 

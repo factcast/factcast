@@ -92,7 +92,7 @@ class FactSpecTest {
   @Test
   void testFactSpecAggId() {
     UUID id = UUID.randomUUID();
-    assertThat(FactSpec.ns("x").aggId(id).aggIds()).containsOnly(id);
+    assertThat(FactSpec.ns("x").aggId(id).mergedAggIds()).containsOnly(id);
   }
 
   @Test
@@ -104,7 +104,7 @@ class FactSpecTest {
     ids.add(id1);
     ids.add(id2);
     ids.add(id3);
-    assertEquals(ids, FactSpec.ns("x").aggId(id1, id2, id3).aggIds());
+    assertEquals(ids, FactSpec.ns("x").aggId(id1, id2, id3).mergedAggIds());
   }
 
   @SneakyThrows
@@ -122,18 +122,18 @@ class FactSpecTest {
     Field aggIdField = FactSpec.class.getDeclaredField("aggId");
     aggIdField.setAccessible(true);
     aggIdField.set(fs, id1);
-    assertEquals(ids, FactSpec.ns("x").aggId(id1, id2, id3).aggIds());
+    assertEquals(ids, FactSpec.ns("x").aggId(id1, id2, id3).mergedAggIds());
   }
 
   @Test
   void testFactSpecEmptyAggIds() {
-    assertEquals(Collections.emptySet(), FactSpec.ns("x").aggIds());
+    assertEquals(Collections.emptySet(), FactSpec.ns("x").mergedAggIds());
   }
 
   @Test
   void testFactSpecSingleAggIds() {
     @NonNull UUID id = UUID.randomUUID();
-    assertThat(FactSpec.ns("x").aggId(id).aggIds()).hasSize(1).containsOnly(id);
+    assertThat(FactSpec.ns("x").aggId(id).mergedAggIds()).hasSize(1).containsOnly(id);
   }
 
   @Test
