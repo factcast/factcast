@@ -458,12 +458,13 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
                     "@OverrideNamespace(s) is only allowed on non-interface types "
                         + p.getClass()
                         + " implementing "
-                        + i.toString());
+                        + i);
               });
 
-      return findNearestOverrideNamespacesAnnotation(p.getClass())
-          .map(t -> overrideNamespaceFromTypeAnnotation(t, fromTargetType))
-          .orElse(fromTargetType);
+      Map<Class<?>, String> overrides = buildNamespaceOverrides(p.getClass());
+      String override = overrides.get(eventPojoType);
+      if (override != null) return fromTargetType.withNs(override);
+      else return fromTargetType;
     }
 
     private FactSpec overrideNamespaceFromTypeAnnotation(
@@ -476,17 +477,21 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     }
 
     @VisibleForTesting
-    static Optional<OverrideNamespaces> findNearestOverrideNamespacesAnnotation(Class<?> p) {
-      if (p == null || !Projection.class.isAssignableFrom(p)) return Optional.empty();
+    static Map<Class<?>, String> buildNamespaceOverrides(Class<?> p) {
+      if (p == null || !Projection.class.isAssignableFrom(p)) return new HashMap<>();
 
-      OverrideNamespaces o = p.getAnnotation(OverrideNamespaces.class);
+      Map<Class<?>, String> ret = buildNamespaceOverrides(p.getSuperclass());
 
-      if (o != null) {
-        return Optional.of(o);
-      } else {
-        Class<?> superclass = p.getSuperclass();
-        return findNearestOverrideNamespacesAnnotation(superclass);
+      OverrideNamespace single = p.getAnnotation(OverrideNamespace.class);
+      if (single != null) ret.put(single.type(), single.value());
+
+      OverrideNamespaces container = p.getAnnotation(OverrideNamespaces.class);
+      if (container != null) {
+        OverrideNamespace[] overrides = container.value();
+        if (overrides != null) Arrays.stream(overrides).forEach(s -> ret.put(s.type(), s.value()));
       }
+
+      return ret;
     }
 
     @VisibleForTesting

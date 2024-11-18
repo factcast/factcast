@@ -869,45 +869,50 @@ class ProjectorImplTest {
   class SomeProjectionWithTypeAnnotation implements Projection {
     @Handler
     void apply(E1 e) {}
-    ;
   }
 
   class SomeProjectionWithTypeAnnotationOnParent extends SomeProjectionWithTypeAnnotation {
     @Handler
     void apply(E2 e) {}
-    ;
   }
 
   class SomeProjectionWithMethodLevelOverride implements Projection {
     @OverrideNamespace("m-targetForE2")
     @Handler
     void apply(E2 e) {}
-    ;
   }
 
   class SomeProjectionWithMethodLevelLegalTargetType implements Projection {
     @OverrideNamespace(value = "m-targetForE2", type = E2.class)
     @Handler
     void apply(E2 e) {}
-    ;
   }
 
   class SomeProjectionWithMethodLevelIllegalTargetType implements Projection {
     @OverrideNamespace(value = "blowup", type = E1.class)
     @Handler
     void apply(E2 e) {}
-    ;
   }
 
   class SomeProjectionWithOverrideOnInterface implements SomeProjectionInterface {
     @Handler
     void apply(E1 e) {}
-    ;
 
     @Handler
     void apply(E2 e) {}
-    ;
   }
+
+  @OverrideNamespace(value = "l3", type = E1.class)
+  class L3 implements Projection {
+    @Handler
+    void apply(E1 e) {}
+  }
+
+  @OverrideNamespace(value = "l2", type = E2.class)
+  class L2 extends L3 {}
+
+  @OverrideNamespace(value = "l1", type = E1.class)
+  class L1 extends L2 {}
 
   @Nested
   class WhenOverriding {
@@ -977,6 +982,24 @@ class ProjectorImplTest {
       uut.apply(Lists.newArrayList(factWithChangedNs));
 
       verify(p).apply(any(E2.class));
+    }
+
+    @Test
+    void deepInspection() {
+      ProjectorImpl<Projection> uut = new ProjectorImpl<>(new L1(), eventSerializer);
+      assertThat(uut.createFactSpecs().get(0).ns()).isEqualTo("l1");
+    }
+
+    @Test
+    void deepInspection2() {
+      ProjectorImpl<Projection> uut = new ProjectorImpl<>(new L2(), eventSerializer);
+      assertThat(uut.createFactSpecs().get(0).ns()).isEqualTo("l3");
+    }
+
+    @Test
+    void deepInspection3() {
+      ProjectorImpl<Projection> uut = new ProjectorImpl<>(new L3(), eventSerializer);
+      assertThat(uut.createFactSpecs().get(0).ns()).isEqualTo("l3");
     }
   }
 }
