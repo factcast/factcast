@@ -23,7 +23,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
@@ -498,7 +497,8 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       if (!forType.equals(OverrideNamespace.DISCOVER)) {
         if (forType != eventPojoType)
           throw new InvalidHandlerDefinition(
-              "@OverrideNamespace defined for a different type than what the parameter suggests " + m);
+              "@OverrideNamespace defined for a different type than what the parameter suggests "
+                  + m);
       }
       return addOptionalFilterInfo(m, fromTargetType.withNs(newNs));
     }

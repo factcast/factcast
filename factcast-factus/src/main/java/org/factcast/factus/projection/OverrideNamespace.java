@@ -30,7 +30,6 @@ public @interface OverrideNamespace {
 
   Class<? extends EventObject> type() default DiscoverFromMethodParameter.class;
 
-  abstract class DiscoverFromMethodParameter implements EventObject {
-  }
+  abstract class DiscoverFromMethodParameter implements EventObject {}
   ;
 }
