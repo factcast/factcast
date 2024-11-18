@@ -15,10 +15,12 @@
  */
 package org.factcast.core.snap.jdbc;
 
+import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Data
 @Accessors(fluent = false)
 public class JdbcSnapshotProperties {
 
@@ -26,63 +28,4 @@ public class JdbcSnapshotProperties {
 
   private String snapshotTableName = "factcast_snapshot";
   private int deleteSnapshotStaleForDays = 90;
-
-  public JdbcSnapshotProperties() {}
-
-  public String getSnapshotTableName() {
-    return this.snapshotTableName;
-  }
-
-  public int getDeleteSnapshotStaleForDays() {
-    return this.deleteSnapshotStaleForDays;
-  }
-
-  public JdbcSnapshotProperties setSnapshotTableName(String snapshotTableName) {
-    // prevent sql injection
-    if (!snapshotTableName.matches("[_a-zA-Z0-9\\.]+"))
-      throw new IllegalArgumentException("Suspicious table name defined: " + snapshotTableName);
-
-    this.snapshotTableName = snapshotTableName;
-    return this;
-  }
-
-  public JdbcSnapshotProperties setDeleteSnapshotStaleForDays(int deleteSnapshotStaleForDays) {
-    this.deleteSnapshotStaleForDays = deleteSnapshotStaleForDays;
-    return this;
-  }
-
-  public boolean equals(final Object o) {
-    if (o == this) return true;
-    if (!(o instanceof JdbcSnapshotProperties)) return false;
-    final JdbcSnapshotProperties other = (JdbcSnapshotProperties) o;
-    if (!other.canEqual((Object) this)) return false;
-    final Object this$snapshotTableName = this.getSnapshotTableName();
-    final Object other$snapshotTableName = other.getSnapshotTableName();
-    if (this$snapshotTableName == null
-        ? other$snapshotTableName != null
-        : !this$snapshotTableName.equals(other$snapshotTableName)) return false;
-    if (this.getDeleteSnapshotStaleForDays() != other.getDeleteSnapshotStaleForDays()) return false;
-    return true;
-  }
-
-  protected boolean canEqual(final Object other) {
-    return other instanceof JdbcSnapshotProperties;
-  }
-
-  public int hashCode() {
-    final int PRIME = 59;
-    int result = 1;
-    final Object $snapshotTableName = this.getSnapshotTableName();
-    result = result * PRIME + ($snapshotTableName == null ? 43 : $snapshotTableName.hashCode());
-    result = result * PRIME + this.getDeleteSnapshotStaleForDays();
-    return result;
-  }
-
-  public String toString() {
-    return "JdbcSnapshotProperties(snapshotTableName="
-        + this.getSnapshotTableName()
-        + ", deleteSnapshotStaleForDays="
-        + this.getDeleteSnapshotStaleForDays()
-        + ")";
-  }
 }

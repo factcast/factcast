@@ -38,6 +38,7 @@ import org.factcast.factus.snapshot.SnapshotIdentifier;
 
 @Slf4j
 public class JdbcSnapshotCache implements SnapshotCache {
+  public static final String VALIDATION_REGEX = "^\\w+$";
   public final String queryStatement;
   public final String mergeStatement;
   public final String updateLastAccessedStatement;
@@ -49,7 +50,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
 
     String tableName = properties.getSnapshotTableName();
 
-    if (!tableName.matches("^[a-zA-Z0-9_]+$")) {
+    if (!tableName.matches(VALIDATION_REGEX)) {
       throw new IllegalArgumentException("Invalid table name.");
     }
 

@@ -298,10 +298,12 @@ class JdbcSnapshotCacheTest {
               new byte[] {1, 2, 3}, SnapshotSerializerId.of("random"), UUID.randomUUID());
 
       when(preparedStatement.executeUpdate()).thenReturn(0);
+
+      SnapshotIdentifier id = SnapshotIdentifier.of(TestSnapshotProjection.class);
       assertThatThrownBy(
               () ->
                   jdbcSnapshotCache.store(
-                      SnapshotIdentifier.of(TestSnapshotProjection.class), snap))
+                          id, snap))
           .isInstanceOf(IllegalStateException.class)
           .hasMessageContaining("Failed to insert snapshot into database. SnapshotId: ");
     }
@@ -331,7 +333,6 @@ class JdbcSnapshotCacheTest {
       when(preparedStatement.executeQuery()).thenReturn(resultSet);
       when(resultSet.next()).thenReturn(true);
 
-      UUID aggregateId = UUID.randomUUID();
       UUID lastFactId = UUID.randomUUID();
       byte[] bytes = {1, 2, 3};
 
