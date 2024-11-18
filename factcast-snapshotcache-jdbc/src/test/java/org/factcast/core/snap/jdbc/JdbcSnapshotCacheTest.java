@@ -56,7 +56,41 @@ class JdbcSnapshotCacheTest {
   @Mock Timer timer;
 
   @Nested
+  class WhenCreatingTimer {
+    @Test
+    void createTimer() throws SQLException {
+      when(dataSource.getConnection()).thenReturn(connection);
+      when(connection.getMetaData().getTables(any(), any(), any(), any())).thenReturn(resultSet);
+      when(resultSet.next()).thenReturn(true);
+
+      ResultSet columns = mock(ResultSet.class);
+      when(connection.getMetaData().getColumns(any(), any(), any(), any())).thenReturn(columns);
+      when(columns.next()).thenReturn(true, true, true, true, true, true, false);
+      when(columns.getString("COLUMN_NAME"))
+              .thenReturn(
+                      "projection_class",
+                      "aggregate_id",
+                      "last_fact_id",
+                      "bytes",
+                      "snapshot_serializer_id",
+                      "last_accessed");
+
+      JdbcSnapshotCache uut = new JdbcSnapshotCache(new JdbcSnapshotProperties(), dataSource);
+      Timer timer = uut.createTimer();
+      assertThat(timer).isNotNull();
+    }
+  }
+
+  @Nested
   class WhenInstantiating {
+    @Test
+    void test_invalidNameForTable() {
+      JdbcSnapshotProperties properties = new JdbcSnapshotProperties().setSnapshotTableName("name; drop table");
+      assertThatThrownBy(() -> new JdbcSnapshotCache(properties, dataSource))
+              .isInstanceOf(IllegalArgumentException.class)
+              .hasMessageContaining("Invalid table name");
+    }
+
     @Test
     void test_doNotCreateAndTableDoesntExist() throws SQLException {
       when(dataSource.getConnection()).thenReturn(connection);
