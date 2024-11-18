@@ -15,10 +15,21 @@
  */
 package org.factcast.core.snap.jdbc;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import java.sql.*;
+import java.time.LocalDate;
+import java.util.Optional;
+import java.util.Timer;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import javax.sql.DataSource;
 import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.SnapshotSerializerId;
@@ -32,20 +43,6 @@ import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import javax.sql.DataSource;
-import java.sql.*;
-import java.time.LocalDate;
-import java.util.Optional;
-import java.util.Timer;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class JdbcSnapshotCacheTest {
@@ -88,12 +85,12 @@ class JdbcSnapshotCacheTest {
           .isInstanceOf(IllegalStateException.class)
           .hasMessageContaining(
               "Snapshot table schema is not compatible with Factus. Missing columns: ")
-              .hasMessageContaining("projection_class")
-              .hasMessageContaining("aggregate_id")
+          .hasMessageContaining("projection_class")
+          .hasMessageContaining("aggregate_id")
           .hasMessageContaining("last_fact_id")
           .hasMessageContaining("bytes")
-              .hasMessageContaining("snapshot_serializer_id")
-              .hasMessageContaining("last_accessed");
+          .hasMessageContaining("snapshot_serializer_id")
+          .hasMessageContaining("last_accessed");
     }
 
     @Test
@@ -105,15 +102,20 @@ class JdbcSnapshotCacheTest {
       ResultSet columns = mock(ResultSet.class);
       when(connection.getMetaData().getColumns(any(), any(), any(), any())).thenReturn(columns);
       when(columns.next()).thenReturn(true, true, true, true, true, false);
-      when(columns.getString("COLUMN_NAME")).thenReturn(
-              "projection_class", "aggregate_id", "last_fact_id", "bytes", "snapshot_serializer_id");
+      when(columns.getString("COLUMN_NAME"))
+          .thenReturn(
+              "projection_class",
+              "aggregate_id",
+              "last_fact_id",
+              "bytes",
+              "snapshot_serializer_id");
 
       JdbcSnapshotProperties properties = new JdbcSnapshotProperties();
       assertThatThrownBy(() -> new JdbcSnapshotCache(properties, dataSource))
           .isInstanceOf(IllegalStateException.class)
           .hasMessageContaining(
               "Snapshot table schema is not compatible with Factus. Missing columns: ")
-              .hasMessageContaining("last_accessed");
+          .hasMessageContaining("last_accessed");
     }
 
     @Test
@@ -126,7 +128,13 @@ class JdbcSnapshotCacheTest {
       when(connection.getMetaData().getColumns(any(), any(), any(), any())).thenReturn(columns);
       when(columns.next()).thenReturn(true, true, true, true, true, true, false);
       when(columns.getString("COLUMN_NAME"))
-              .thenReturn("projection_class", "aggregate_id", "last_fact_id", "bytes", "snapshot_serializer_id", "last_accessed");
+          .thenReturn(
+              "projection_class",
+              "aggregate_id",
+              "last_fact_id",
+              "bytes",
+              "snapshot_serializer_id",
+              "last_accessed");
 
       LogCaptor logCaptor = LogCaptor.forClass(JdbcSnapshotCache.class);
 
@@ -157,7 +165,13 @@ class JdbcSnapshotCacheTest {
       when(connection.getMetaData().getColumns(any(), any(), any(), any())).thenReturn(columns);
       when(columns.next()).thenReturn(true, true, true, true, true, true, false);
       when(columns.getString("COLUMN_NAME"))
-              .thenReturn("projection_class", "aggregate_id", "last_fact_id", "bytes", "snapshot_serializer_id", "last_accessed");
+          .thenReturn(
+              "projection_class",
+              "aggregate_id",
+              "last_fact_id",
+              "bytes",
+              "snapshot_serializer_id",
+              "last_accessed");
 
       LogCaptor logCaptor = LogCaptor.forClass(JdbcSnapshotCache.class);
 
@@ -186,20 +200,26 @@ class JdbcSnapshotCacheTest {
       when(connection.getMetaData().getColumns(any(), any(), any(), any())).thenReturn(columns);
       when(columns.next()).thenReturn(true, true, true, true, true, true, false);
       when(columns.getString("COLUMN_NAME"))
-              .thenReturn("projection_class", "aggregate_id", "last_fact_id", "bytes", "snapshot_serializer_id", "last_accessed");
+          .thenReturn(
+              "projection_class",
+              "aggregate_id",
+              "last_fact_id",
+              "bytes",
+              "snapshot_serializer_id",
+              "last_accessed");
 
       LogCaptor logCaptor = LogCaptor.forClass(JdbcSnapshotCache.class);
 
       JdbcSnapshotProperties properties = new JdbcSnapshotProperties();
       properties.setDeleteSnapshotStaleForDays(2);
       assertDoesNotThrow(
-              () ->
-                      new JdbcSnapshotCache(properties, dataSource) {
-                        @Override
-                        protected Timer createTimer() {
-                          return timer;
-                        }
-                      });
+          () ->
+              new JdbcSnapshotCache(properties, dataSource) {
+                @Override
+                protected Timer createTimer() {
+                  return timer;
+                }
+              });
       assertThat(logCaptor.getErrorLogs()).isEmpty();
       // make sure cleanup was scheduled
       verify(timer).scheduleAtFixedRate(any(), eq(0L), eq(TimeUnit.DAYS.toMillis(1)));
@@ -211,8 +231,9 @@ class JdbcSnapshotCacheTest {
     @Mock PreparedStatement preparedStatement;
     private JdbcSnapshotCache jdbcSnapshotCache;
 
-    class TestSnapshotProjection implements SnapshotProjection { }
-    class TestAggregateProjection extends Aggregate { }
+    class TestSnapshotProjection implements SnapshotProjection {}
+
+    class TestAggregateProjection extends Aggregate {}
 
     @BeforeEach
     @SneakyThrows
@@ -225,7 +246,13 @@ class JdbcSnapshotCacheTest {
       when(connection.getMetaData().getColumns(any(), any(), any(), any())).thenReturn(columns);
       when(columns.next()).thenReturn(true, true, true, true, true, true, false);
       when(columns.getString("COLUMN_NAME"))
-              .thenReturn("projection_class", "aggregate_id", "last_fact_id", "bytes", "snapshot_serializer_id", "last_accessed");
+          .thenReturn(
+              "projection_class",
+              "aggregate_id",
+              "last_fact_id",
+              "bytes",
+              "snapshot_serializer_id",
+              "last_accessed");
       jdbcSnapshotCache =
           new JdbcSnapshotCache(
               new JdbcSnapshotProperties().setDeleteSnapshotStaleForDays(0), dataSource);
@@ -238,8 +265,8 @@ class JdbcSnapshotCacheTest {
       when(connection.prepareStatement(any())).thenReturn(preparedStatement);
 
       SnapshotData snap =
-              new SnapshotData(
-                      new byte[]{1, 2, 3}, SnapshotSerializerId.of("random"), UUID.randomUUID());
+          new SnapshotData(
+              new byte[] {1, 2, 3}, SnapshotSerializerId.of("random"), UUID.randomUUID());
 
       when(preparedStatement.executeUpdate()).thenReturn(1);
       jdbcSnapshotCache.store(SnapshotIdentifier.of(TestSnapshotProjection.class), snap);
@@ -251,14 +278,10 @@ class JdbcSnapshotCacheTest {
       verify(preparedStatement, times(4)).setString(any(Integer.class), string.capture());
       assertThat(string.getAllValues())
           .containsExactly(
-                  TestSnapshotProjection.class.getName(),
-                  null,
-                  snap.lastFactId().toString(),
-                  "random");
+              TestSnapshotProjection.class.getName(), null, snap.lastFactId().toString(), "random");
 
       verify(preparedStatement, times(1)).setTimestamp(any(Integer.class), timestamp.capture());
-      assertThat(timestamp.getValue()).isEqualTo(
-              Timestamp.valueOf(LocalDate.now().atStartOfDay()));
+      assertThat(timestamp.getValue()).isEqualTo(Timestamp.valueOf(LocalDate.now().atStartOfDay()));
 
       verify(preparedStatement, times(1)).setBytes(any(Integer.class), bytes.capture());
       assertThat(bytes.getValue()).isEqualTo(snap.serializedProjection());
@@ -271,11 +294,14 @@ class JdbcSnapshotCacheTest {
       when(connection.prepareStatement(any())).thenReturn(preparedStatement);
 
       SnapshotData snap =
-              new SnapshotData(
-                      new byte[]{1, 2, 3}, SnapshotSerializerId.of("random"), UUID.randomUUID());
+          new SnapshotData(
+              new byte[] {1, 2, 3}, SnapshotSerializerId.of("random"), UUID.randomUUID());
 
       when(preparedStatement.executeUpdate()).thenReturn(0);
-      assertThatThrownBy(() -> jdbcSnapshotCache.store(SnapshotIdentifier.of(TestSnapshotProjection.class), snap))
+      assertThatThrownBy(
+              () ->
+                  jdbcSnapshotCache.store(
+                      SnapshotIdentifier.of(TestSnapshotProjection.class), snap))
           .isInstanceOf(IllegalStateException.class)
           .hasMessageContaining("Failed to insert snapshot into database. SnapshotId: ");
     }
@@ -293,7 +319,8 @@ class JdbcSnapshotCacheTest {
       verify(preparedStatement, times(2)).setString(any(Integer.class), string.capture());
       verify(preparedStatement, times(1)).executeUpdate();
 
-      assertThat(string.getAllValues()).containsExactly(TestSnapshotProjection.class.getName(), null);
+      assertThat(string.getAllValues())
+          .containsExactly(TestSnapshotProjection.class.getName(), null);
     }
 
     @Test
@@ -327,7 +354,8 @@ class JdbcSnapshotCacheTest {
       verify(preparedStatement, times(1)).executeQuery();
       verify(uut, times(1)).updateLastAccessedTime(id);
 
-      assertThat(string.getAllValues()).containsExactly(TestSnapshotProjection.class.getName(), null);
+      assertThat(string.getAllValues())
+          .containsExactly(TestSnapshotProjection.class.getName(), null);
     }
 
     @Test
@@ -339,7 +367,8 @@ class JdbcSnapshotCacheTest {
       when(resultSet.next()).thenReturn(false);
 
       UUID uuid = UUID.randomUUID();
-      Optional<SnapshotData> snapshot = jdbcSnapshotCache.find(SnapshotIdentifier.of(TestAggregateProjection.class, uuid));
+      Optional<SnapshotData> snapshot =
+          jdbcSnapshotCache.find(SnapshotIdentifier.of(TestAggregateProjection.class, uuid));
 
       assertThat(snapshot).isEmpty();
 
@@ -348,7 +377,8 @@ class JdbcSnapshotCacheTest {
       verify(preparedStatement, times(2)).setString(any(Integer.class), string.capture());
       verify(preparedStatement, times(1)).executeQuery();
 
-      assertThat(string.getAllValues()).containsExactly(TestAggregateProjection.class.getName(), uuid.toString());
+      assertThat(string.getAllValues())
+          .containsExactly(TestAggregateProjection.class.getName(), uuid.toString());
     }
   }
 }

@@ -24,8 +24,6 @@ import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.snap.jdbc.JdbcSnapshotCache;
 import org.factcast.core.snap.jdbc.JdbcSnapshotProperties;
 import org.factcast.factus.projection.Aggregate;
@@ -54,7 +52,7 @@ public class JdbcSnapshotCacheCleanupITest extends AbstractFactCastIntegrationTe
     JdbcSnapshotProperties properties = new JdbcSnapshotProperties();
 
     jdbcTemplate.execute(
-            """
+        """
                     CREATE TABLE IF NOT EXISTS factcast_snapshot(projection_class VARCHAR(512), aggregate_id VARCHAR(36) NULL, last_fact_id VARCHAR(36),
                                       bytes BYTEA, snapshot_serializer_id VARCHAR(128), last_accessed VARCHAR, PRIMARY KEY (projection_class, aggregate_id));
                                   CREATE INDEX IF NOT EXISTS my_snapshot_table_index ON factcast_snapshot(last_accessed);
@@ -62,36 +60,42 @@ public class JdbcSnapshotCacheCleanupITest extends AbstractFactCastIntegrationTe
 
     SnapshotSerializerId serializerId = SnapshotSerializerId.of("serializer");
 
-    SnapshotIdentifier id1 = SnapshotIdentifier.of(TestAggregateProjection.class, UUID.randomUUID());
-    SnapshotData snap1 =
-        new SnapshotData(
-                new byte[] {1, 2, 3},
-                serializerId,
-                UUID.randomUUID());
-    SnapshotIdentifier id2 = SnapshotIdentifier.of(TestAggregateProjection.class, UUID.randomUUID());
-    SnapshotData snap2 =
-        new SnapshotData(
-                new byte[] {1, 2, 3},
-                serializerId,
-                UUID.randomUUID());
-    SnapshotIdentifier id3 = SnapshotIdentifier.of(TestAggregateProjection.class, UUID.randomUUID());
-    SnapshotData snap3 =
-        new SnapshotData(
-                new byte[] {1, 2, 3},
-                serializerId,
-                UUID.randomUUID());
+    SnapshotIdentifier id1 =
+        SnapshotIdentifier.of(TestAggregateProjection.class, UUID.randomUUID());
+    SnapshotData snap1 = new SnapshotData(new byte[] {1, 2, 3}, serializerId, UUID.randomUUID());
+    SnapshotIdentifier id2 =
+        SnapshotIdentifier.of(TestAggregateProjection.class, UUID.randomUUID());
+    SnapshotData snap2 = new SnapshotData(new byte[] {1, 2, 3}, serializerId, UUID.randomUUID());
+    SnapshotIdentifier id3 =
+        SnapshotIdentifier.of(TestAggregateProjection.class, UUID.randomUUID());
+    SnapshotData snap3 = new SnapshotData(new byte[] {1, 2, 3}, serializerId, UUID.randomUUID());
 
     // Stale
     insertSnapshot(
-        id1, snap1, Timestamp.valueOf(LocalDate.now().minusDays(properties.getDeleteSnapshotStaleForDays() + 5).atStartOfDay()));
+        id1,
+        snap1,
+        Timestamp.valueOf(
+            LocalDate.now()
+                .minusDays(properties.getDeleteSnapshotStaleForDays() + 5)
+                .atStartOfDay()));
 
     // Non Stale
     insertSnapshot(
-        id2, snap2, Timestamp.valueOf(LocalDate.now().minusDays(properties.getDeleteSnapshotStaleForDays() - 1).atStartOfDay()));
+        id2,
+        snap2,
+        Timestamp.valueOf(
+            LocalDate.now()
+                .minusDays(properties.getDeleteSnapshotStaleForDays() - 1)
+                .atStartOfDay()));
 
     // Stale
     insertSnapshot(
-        id3, snap3, Timestamp.valueOf(LocalDate.now().minusDays(properties.getDeleteSnapshotStaleForDays() + 1).atStartOfDay()));
+        id3,
+        snap3,
+        Timestamp.valueOf(
+            LocalDate.now()
+                .minusDays(properties.getDeleteSnapshotStaleForDays() + 1)
+                .atStartOfDay()));
 
     List<Map<String, Object>> snapshots = getSnapshots();
     assertThat(snapshots).hasSize(3);
@@ -110,7 +114,8 @@ public class JdbcSnapshotCacheCleanupITest extends AbstractFactCastIntegrationTe
     return jdbcTemplate.queryForList("SELECT * FROM factcast_snapshot");
   }
 
-  private void insertSnapshot(SnapshotIdentifier id, SnapshotData snapshot, Timestamp lastAccessed) {
+  private void insertSnapshot(
+      SnapshotIdentifier id, SnapshotData snapshot, Timestamp lastAccessed) {
     jdbcTemplate.update(
         "INSERT INTO factcast_snapshot VALUES (?, ?, ?, ?, ?, ?)",
         id.projectionClass().getName(),
@@ -121,5 +126,5 @@ public class JdbcSnapshotCacheCleanupITest extends AbstractFactCastIntegrationTe
         lastAccessed);
   }
 
-  static class TestAggregateProjection extends Aggregate { }
+  static class TestAggregateProjection extends Aggregate {}
 }
