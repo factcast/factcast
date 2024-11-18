@@ -20,10 +20,8 @@ import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Lists;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import lombok.Data;
 import lombok.NonNull;
@@ -37,10 +35,9 @@ import org.factcast.core.event.EventConverter;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.*;
-import org.factcast.factus.event.DefaultEventSerializer;
-import org.factcast.factus.event.EventSerializer;
-import org.factcast.factus.projection.FactStreamPositionAware;
-import org.factcast.factus.projection.Projection;
+import org.factcast.factus.event.*;
+import org.factcast.factus.event.EventObject;
+import org.factcast.factus.projection.*;
 import org.factcast.factus.projection.parameter.HandlerParameterContributors;
 import org.factcast.factus.projection.tx.OpenTransactionAware;
 import org.factcast.factus.projection.tx.TransactionAdapter;
@@ -835,4 +832,118 @@ class ProjectorImplTest {
       verify(projection, times(4)).factStreamPosition(any());
     }
   }
+
+
+  @Specification(ns="ns1")
+  static class E1 implements EventObject{
+    @Override
+    public Set<UUID> aggregateIds() {
+      return new HashSet<>();
+    }
+  }
+
+  @Specification(ns="ns2")
+  class E2 implements EventObject{
+    @Override
+    public Set<UUID> aggregateIds() {
+      return new HashSet<>();
+    }
+  }
+
+
+  @Specification(ns="ns2")
+  class Unrelated implements EventObject{
+    @Override
+    public Set<UUID> aggregateIds() {
+      return new HashSet<>();
+    }
+  }
+
+  @OverrideNamespace(value="i-xyz", type = Unrelated.class)
+  interface SomeProjectionInterface extends Projection{}
+
+  @OverrideNamespace(value="d-xyz", type = Unrelated.class)
+  @OverrideNamespace(value="d-ns2", type = E1.class)
+  class SomeProjectionSuperClass implements Projection{}
+
+  @OverrideNamespace(value="s-xyz", type = Unrelated.class)
+  @OverrideNamespace(value="s-targetForE1", type = E1.class)
+  @OverrideNamespace(value="s-targetForE2", type = E2.class)
+  class SomeProjectionWithTypeAnnotation implements Projection{
+    @Handler void apply(E1 e){};
+  }
+
+  class SomeProjectionWithTypeAnnotationOnParent extends SomeProjectionWithTypeAnnotation{
+    @Handler void apply(E2 e){};
+  }
+  class SomeProjectionWithMethodLevelOverride implements Projection{
+    @OverrideNamespace("m-targetForE2")
+    @Handler void apply(E2 e){};
+  }
+
+  class SomeProjectionWithMethodLevelLegalTargetType implements Projection{
+    @OverrideNamespace(value="m-targetForE2",type=E2.class)
+    @Handler void apply(E2 e){};
+  }
+
+  class SomeProjectionWithMethodLevelIllegalTargetType implements Projection{
+    @OverrideNamespace(value="blowup",type=E1.class)
+    @Handler void apply(E2 e){};
+  }
+  class SomeProjectionWithOverrideOnInterface implements SomeProjectionInterface{
+    @Handler void apply(E1 e){};
+    @Handler void apply(E2 e){};
+  }
+
+  @Nested
+  class WhenOverriding{
+    @Test
+    void overridesNsFromMethodLevelAnnotationDiscover(){
+      ProjectorImpl<Projection> uut = new ProjectorImpl<>(new SomeProjectionWithMethodLevelOverride(), mock(EventSerializer.class));
+      List<FactSpec> factSpecs = uut.createFactSpecs();
+      Assertions.assertThat(factSpecs).hasSize(1);
+      Assertions.assertThat(factSpecs.get(0).ns()
+      ).isEqualTo("m-targetForE2");
+    }
+    @Test
+    void overridesNsFromMethodLevelAnnotationLegal(){
+      ProjectorImpl<Projection> uut = new ProjectorImpl<>(new SomeProjectionWithMethodLevelLegalTargetType(), mock(EventSerializer.class));
+      List<FactSpec> factSpecs = uut.createFactSpecs();
+      Assertions.assertThat(factSpecs).hasSize(1);
+      Assertions.assertThat(factSpecs.get(0).ns()
+      ).isEqualTo("m-targetForE2");
+    }
+    @Test
+    void overridesNsFromMethodLevelAnnotationIllegal(){
+      assertThatThrownBy(()->{
+        new ProjectorImpl<>(new SomeProjectionWithMethodLevelIllegalTargetType(), mock(EventSerializer.class));
+      }).isInstanceOf(InvalidHandlerDefinition.class);
+    }
+    @Test
+    void overridesNsFromTypeLevelAnnotation(){
+      ProjectorImpl<Projection> uut = new ProjectorImpl<>(new SomeProjectionWithTypeAnnotation(), mock(EventSerializer.class));
+      List<FactSpec> factSpecs = uut.createFactSpecs();
+      Assertions.assertThat(factSpecs).hasSize(1);
+      Assertions.assertThat(factSpecs.get(0).ns()
+      ).isEqualTo("s-targetForE1");
+    }
+
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
+    @Test
+    void overridesNsFromTypeLevelAnnotationOnSuper(){
+      ProjectorImpl<Projection> uut = new ProjectorImpl<>(new SomeProjectionWithTypeAnnotationOnParent(), mock(EventSerializer.class));
+      List<FactSpec> factSpecs = uut.createFactSpecs();
+      Optional<FactSpec> e1 = factSpecs.stream().filter(fs -> fs.type().equals("E1")).findFirst();
+      Optional<FactSpec> e2 = factSpecs.stream().filter(fs -> fs.type().equals("E2")).findFirst();
+      Assertions.assertThat(e1.get().ns()).isEqualTo("s-targetForE1");
+      Assertions.assertThat(e2.get().ns()).isEqualTo("s-targetForE2");
+    }
+
+    @Test
+    void overridesNsFromTypeLevelAnnotationOnInterface(){
+      assertThatThrownBy(()-> new ProjectorImpl<>(new SomeProjectionWithOverrideOnInterface(), mock(EventSerializer.class))).isInstanceOf(InvalidHandlerDefinition.class);
+    }
+
+  }
+
 }

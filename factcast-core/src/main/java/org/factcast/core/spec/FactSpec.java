@@ -114,4 +114,11 @@ public class FactSpec {
     fs.meta.putAll(meta);
     return fs;
   }
+
+  public FactSpec withNs(String newNs) {
+    FactSpec fs =
+        FactSpec.ns(newNs).type(type).version(version).aggId(aggId).filterScript(filterScript);
+    fs.meta.putAll(meta);
+    return fs;
+  }
 }
