@@ -38,7 +38,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class StaleSnapshotsTimerTaskTest {
 
-  private final static String CLEANUP_STATEMENT = "CLEANUP_STATEMENT";
+  private static final String CLEANUP_STATEMENT = "CLEANUP_STATEMENT";
   @Mock private @NonNull DataSource dataSource;
   @Mock private @NonNull Connection conn;
   @Mock private @NonNull PreparedStatement statement;

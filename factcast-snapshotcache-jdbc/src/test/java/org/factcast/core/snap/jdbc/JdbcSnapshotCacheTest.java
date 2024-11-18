@@ -300,10 +300,7 @@ class JdbcSnapshotCacheTest {
       when(preparedStatement.executeUpdate()).thenReturn(0);
 
       SnapshotIdentifier id = SnapshotIdentifier.of(TestSnapshotProjection.class);
-      assertThatThrownBy(
-              () ->
-                  jdbcSnapshotCache.store(
-                          id, snap))
+      assertThatThrownBy(() -> jdbcSnapshotCache.store(id, snap))
           .isInstanceOf(IllegalStateException.class)
           .hasMessageContaining("Failed to insert snapshot into database. SnapshotId: ");
     }
