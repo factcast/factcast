@@ -28,7 +28,7 @@ public class HandlerParameterContributors implements Iterable<HandlerParameterCo
 
   public HandlerParameterContributors(@NonNull EventSerializer ser) {
     this.contributors = new CopyOnWriteArrayList<>();
-    contributors.add(new DefaultHandlerParameterContributor(ser));
+    contributors.add(new DefaultHandlerParameterContributor());
   }
 
   private HandlerParameterContributors(

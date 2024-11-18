@@ -57,7 +57,8 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
   @Getter(value = AccessLevel.PROTECTED)
   private final Map<FactSpecCoordinates, Dispatcher> dispatchInfo;
 
-  private final HandlerParameterContributors generalContributors;
+    private final EventSerializer serializer;
+    private final HandlerParameterContributors generalContributors;
 
   interface TargetObjectResolver extends Function<Projection, Object> {}
 
@@ -65,8 +66,10 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       @NonNull Projection p,
       @NonNull EventSerializer serializer,
       @NonNull HandlerParameterContributors parameterContributors) {
-    generalContributors = parameterContributors;
+      this.serializer = serializer;
+      generalContributors = parameterContributors;
     projection = p;
+
     dispatchInfo =
         dispatcherCache.computeIfAbsent(
             ReflectionTools.getRelevantClass(p), c -> discoverDispatchInfo(serializer, p));
@@ -197,7 +200,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       projection.onError(ihd);
       throw ihd;
     }
-    dispatch.invoke(projection, f);
+    dispatch.invoke(serializer,projection, f);
 
     return factId;
   }
@@ -223,7 +226,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
                     @Nullable Type genericType,
                     @NonNull Set<Annotation> annotations) {
                   if (clazz == type)
-                    return (f, p) -> ((OpenTransactionAware<?>) p).runningTransaction();
+                    return (serializer,f, p) -> ((OpenTransactionAware<?>) p).runningTransaction();
                   else return null;
                 }
               });
@@ -245,8 +248,8 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
                             m,
                             HandlerParameterTransformer.forCalling(m, c),
                             callTarget.resolver,
-                            fs,
-                            deserializer);
+                            fs
+                            );
                     Dispatcher before = map.put(key, dispatcher);
                     if (before != null) {
                       throw new InvalidHandlerDefinition(
@@ -345,13 +348,11 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
     @NonNull FactSpec spec;
 
-    @NonNull EventSerializer deserializer;
-
-    void invoke(Projection projection, Fact f) {
+        void invoke(@NonNull EventSerializer deserializer,@NonNull Projection projection, @NonNull Fact f) {
       // choose the target object (nested)
       Object targetObject = objectResolver.apply(projection);
       // create actual parameters
-      Object[] parameters = transformer.apply(f, projection);
+      Object[] parameters = transformer.apply(deserializer,f, projection);
       // fire
       try {
         dispatchMethod.invoke(targetObject, parameters);

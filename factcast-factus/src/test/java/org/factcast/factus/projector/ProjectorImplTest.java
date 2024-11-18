@@ -20,10 +20,7 @@ import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Lists;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import javax.annotation.Nullable;
 import lombok.Data;
 import lombok.NonNull;
@@ -38,7 +35,9 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.*;
 import org.factcast.factus.event.DefaultEventSerializer;
+import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.EventSerializer;
+import org.factcast.factus.event.Specification;
 import org.factcast.factus.projection.FactStreamPositionAware;
 import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projection.parameter.HandlerParameterContributors;
@@ -833,6 +832,33 @@ class ProjectorImplTest {
       uut.apply(facts);
 
       verify(projection, times(4)).factStreamPosition(any());
+    }
+  }
+
+  @Nested class WhenDiscoveringHandlers{
+    @Specification(ns="x")
+    class E implements EventObject{
+      @Override
+      public Set<UUID> aggregateIds() {
+        return new HashSet<>();
+      }
+    }
+    class P implements Projection{
+      @Handler
+      void apply(E e){}
+    }
+
+    @Test
+    void doesNotCacheEventSerializer(){
+      EventSerializer e1 = mock(EventSerializer.class);
+      EventSerializer e2 = mock(EventSerializer.class);
+
+      new ProjectorImpl<>(new P(),e1); //discover & cache
+      new ProjectorImpl<>(new P(),e2).apply(Lists.newArrayList(Fact.buildFrom(new E()).build()));
+
+      verify(e1,never()).deserialize(same(E.class),anyString());
+      verify(e2).deserialize(same(E.class),anyString());
+
     }
   }
 }

@@ -45,7 +45,7 @@ class HandlerParameterContributorsTest {
             @NonNull Class<?> type,
             @Nullable Type genericType,
             @NonNull Set<Annotation> annotations) {
-          return (f, p) -> "Hi There";
+          return (ser,f, p) -> "Hi There";
         }
       };
   private HandlerParameterContributors underTest;
