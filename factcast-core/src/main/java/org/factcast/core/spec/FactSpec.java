@@ -16,10 +16,9 @@
 package org.factcast.core.spec;
 
 import com.fasterxml.jackson.annotation.*;
-import lombok.*;
-
 import java.util.*;
 import java.util.stream.Collectors;
+import lombok.*;
 
 /**
  * Defines a Specification of facts to match for a subscription.
@@ -28,196 +27,191 @@ import java.util.stream.Collectors;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @EqualsAndHashCode(
-        of = {
-                "ns",
-                "type",
-                "mergedAggIds", // don't forget to change this one when removing the deprecated aggId
-                "meta",
-                "metaKeyExists",
-                "filterScript"
-        }) // in order to skip aggId field
+    of = {
+      "ns",
+      "type",
+      "mergedAggIds", // don't forget to change this one when removing the deprecated aggId
+      "meta",
+      "metaKeyExists",
+      "filterScript"
+    }) // in order to skip aggId field
 @SuppressWarnings({"java:S1874", "java:S1123"})
 public class FactSpec {
 
-    @NonNull
-    @JsonProperty
-    private String ns;
+  @NonNull @JsonProperty private String ns;
 
-    // instead of a setter
-    public @NonNull FactSpec withNs(@NonNull String ns) {
-        this.ns = ns;
-        return this;
+  // instead of a setter
+  public @NonNull FactSpec withNs(@NonNull String ns) {
+    this.ns = ns;
+    return this;
+  }
+
+  @JsonProperty private String type = null;
+
+  @JsonProperty private int version = 0; // 0 means I don't care
+
+  // hide aggId getter / setter as it's deprecated to use and replaced by aggId_s_
+  @Getter(AccessLevel.NONE)
+  @Setter(AccessLevel.NONE)
+  @JsonProperty
+  private UUID aggId = null;
+
+  @JsonProperty private final Set<UUID> aggIds = new LinkedHashSet<>();
+
+  @JsonProperty private final Map<String, String> meta = new LinkedHashMap<>();
+
+  /** expresses the mandatory existence or absence of a key. Needs stable order. */
+  @JsonProperty private final Map<String, Boolean> metaKeyExists = new LinkedHashMap<>();
+
+  @JsonProperty private FilterScript filterScript = null;
+
+  /**
+   * only to be used internally, will be removed again once aggId field is removed.
+   *
+   * @return
+   */
+  @Deprecated
+  public Set<UUID> mergedAggIds() {
+    Set<UUID> copy = new HashSet<>(aggIds);
+    // merge the single aggId for compatibility with clients < 0.9
+    if (aggId != null) copy.add(aggId);
+    return Collections.unmodifiableSet(copy);
+  }
+
+  public FactSpec aggId(@NonNull UUID aggId, UUID... otherAggIds) {
+    aggIds.add(aggId);
+    if (otherAggIds != null) {
+      aggIds.addAll(
+          Arrays.stream(otherAggIds)
+              .filter(Objects::nonNull)
+              .collect(Collectors.toList())); // toSet would potentially flip the order
     }
+    return this;
+  }
 
+  public FactSpec metaExists(@NonNull String k) {
+    metaKeyExists.put(k, Boolean.TRUE);
+    return this;
+  }
 
-    @JsonProperty
-    private String type = null;
+  public FactSpec metaDoesNotExist(@NonNull String k) {
+    metaKeyExists.put(k, Boolean.FALSE);
+    return this;
+  }
 
-    @JsonProperty
-    private int version = 0; // 0 means I don't care
+  public FactSpec meta(@NonNull String k, @NonNull String v) {
+    meta.put(k, v);
+    return this;
+  }
 
-    // hide aggId getter / setter as it's deprecated to use and replaced by aggId_s_
-    @Getter(AccessLevel.NONE)
-    @Setter(AccessLevel.NONE)
-    @JsonProperty
-    private
-    UUID aggId = null;
+  public static FactSpec ns(@NonNull String ns) {
+    assertNotEmpty(ns);
+    return new FactSpec(ns);
+  }
 
-    @JsonProperty
-    private final Set<UUID> aggIds = new LinkedHashSet<>();
+  private static void assertNotEmpty(String ns) {
+    if (ns.trim().isEmpty()) throw new IllegalArgumentException("Namespace must not be empty");
+  }
 
-    @JsonProperty
-    private final Map<String, String> meta = new LinkedHashMap<>();
+  public FactSpec(@NonNull @JsonProperty("ns") String ns) {
+    super();
+    assertNotEmpty(ns);
+    this.ns = ns;
+  }
 
-    /**
-     * expresses the mandatory existence or absence of a key. Needs stable order.
-     */
-    @JsonProperty
-    private final Map<String, Boolean> metaKeyExists = new LinkedHashMap<>();
+  public FilterScript filterScript() {
+    if (filterScript != null) return filterScript;
+    else return null;
+  }
 
-    @JsonProperty
-    private FilterScript filterScript = null;
+  @NonNull
+  public FactSpec filterScript(FilterScript script) {
+    this.filterScript = script;
+    return this;
+  }
 
-    /**
-     * only to be used internally, will be removed again once aggId field is removed.
-     *
-     * @return
-     */
-    @Deprecated
-    public Set<UUID> mergedAggIds() {
-        Set<UUID> copy = new HashSet<>(aggIds);
-        // merge the single aggId for compatibility with clients < 0.9
-        if (aggId != null) copy.add(aggId);
-        return Collections.unmodifiableSet(copy);
-    }
+  @NonNull
+  public static <T> FactSpec from(@NonNull Class<T> clazz) {
+    return from(FactSpecCoordinates.from(clazz));
+  }
 
-    public FactSpec aggId(@NonNull UUID aggId, UUID... otherAggIds) {
-        aggIds.add(aggId);
-        if (otherAggIds != null) {
-            aggIds.addAll(
-                    Arrays.stream(otherAggIds)
-                            .filter(Objects::nonNull)
-                            .collect(Collectors.toList())); // toSet would potentially flip the order
-        }
-        return this;
-    }
+  private static FactSpec from(FactSpecCoordinates from) {
+    return FactSpec.ns(from.ns()).type(from.type()).version(from.version());
+  }
 
-    public FactSpec metaExists(@NonNull String k) {
-        metaKeyExists.put(k, Boolean.TRUE);
-        return this;
-    }
+  /** convenience method */
+  public static List<FactSpec> from(@NonNull List<Class<?>> clazz) {
+    return clazz.stream().filter(Objects::nonNull).map(FactSpec::from).collect(Collectors.toList());
+  }
 
-    public FactSpec metaDoesNotExist(@NonNull String k) {
-        metaKeyExists.put(k, Boolean.FALSE);
-        return this;
-    }
+  /** convenience method */
+  public static List<FactSpec> from(Class<?>... clazz) {
+    return from(Arrays.asList(clazz));
+  }
 
-    public FactSpec meta(@NonNull String k, @NonNull String v) {
-        meta.put(k, v);
-        return this;
-    }
+  public FactSpec copy() {
+    FactSpec fs = FactSpec.ns(ns).type(type).version(version).filterScript(filterScript);
+    fs.aggId = aggId;
+    fs.aggIds.addAll(aggIds);
+    fs.meta.putAll(meta);
+    return fs;
+  }
 
-    public static FactSpec ns(@NonNull String ns) {
-        assertNotEmpty(ns);
-        return new FactSpec(ns);
-    }
+  public @NonNull String ns() {
+    return this.ns;
+  }
 
-    private static void assertNotEmpty(String ns) {
-        if (ns.trim().isEmpty()) throw new IllegalArgumentException("Namespace must not be empty");
-    }
+  public String type() {
+    return this.type;
+  }
 
-    public FactSpec(@NonNull @JsonProperty("ns") String ns) {
-        super();
-        assertNotEmpty(ns);
-        this.ns = ns;
-    }
+  public int version() {
+    return this.version;
+  }
 
-    public FilterScript filterScript() {
-        if (filterScript != null) return filterScript;
-        else return null;
-    }
+  public Set<UUID> aggIds() {
+    return this.aggIds;
+  }
 
-    @NonNull
-    public FactSpec filterScript(FilterScript script) {
-        this.filterScript = script;
-        return this;
-    }
+  public Map<String, String> meta() {
+    return this.meta;
+  }
 
-    @NonNull
-    public static <T> FactSpec from(@NonNull Class<T> clazz) {
-        return from(FactSpecCoordinates.from(clazz));
-    }
+  public Map<String, Boolean> metaKeyExists() {
+    return this.metaKeyExists;
+  }
 
-    private static FactSpec from(FactSpecCoordinates from) {
-        return FactSpec.ns(from.ns()).type(from.type()).version(from.version());
-    }
+  /** overwrites type as there can be only one */
+  @JsonProperty
+  public FactSpec type(String type) {
+    this.type = type;
+    return this;
+  }
 
-    /**
-     * convenience method
-     */
-    public static List<FactSpec> from(@NonNull List<Class<?>> clazz) {
-        return clazz.stream().filter(Objects::nonNull).map(FactSpec::from).collect(Collectors.toList());
-    }
+  /** overwrites version as there can be only one */
+  @JsonProperty
+  public FactSpec version(int version) {
+    this.version = version;
+    return this;
+  }
 
-    /**
-     * convenience method
-     */
-    public static List<FactSpec> from(Class<?>... clazz) {
-        return from(Arrays.asList(clazz));
-    }
-
-    public FactSpec copy() {
-        FactSpec fs = FactSpec.ns(ns).type(type).version(version).filterScript(filterScript);
-        fs.aggId = aggId;
-        fs.aggIds.addAll(aggIds);
-        fs.meta.putAll(meta);
-        return fs;
-    }
-
-    public @NonNull String ns() {
-        return this.ns;
-    }
-
-    public String type() {
-        return this.type;
-    }
-
-    public int version() {
-        return this.version;
-    }
-
-    public Set<UUID> aggIds() {
-        return this.aggIds;
-    }
-
-    public Map<String, String> meta() {
-        return this.meta;
-    }
-
-    public Map<String, Boolean> metaKeyExists() {
-        return this.metaKeyExists;
-    }
-
-    /**
-     * overwrites type as there can be only one
-     */
-    @JsonProperty
-    public FactSpec type(String type) {
-        this.type = type;
-        return this;
-    }
-
-    /**
-     * overwrites version as there can be only one
-     */
-
-    @JsonProperty
-    public FactSpec version(int version) {
-        this.version = version;
-        return this;
-    }
-
-    public String toString() {
-        return "FactSpec(ns=" + this.ns() + ", type=" + this.type() + ", version=" + this.version() + ", aggId=" + this.aggId + ", aggIds=" + this.aggIds() + ", meta=" + this.meta() + ", metaKeyExists=" + this.metaKeyExists() + ", filterScript=" + this.filterScript() + ")";
-    }
+  public String toString() {
+    return "FactSpec(ns="
+        + this.ns()
+        + ", type="
+        + this.type()
+        + ", version="
+        + this.version()
+        + ", aggId="
+        + this.aggId
+        + ", aggIds="
+        + this.aggIds()
+        + ", meta="
+        + this.meta()
+        + ", metaKeyExists="
+        + this.metaKeyExists()
+        + ", filterScript="
+        + this.filterScript()
+        + ")";
+  }
 }
