@@ -30,11 +30,7 @@ public @interface OverrideNamespace {
 
   Class<? extends EventObject> type() default DiscoverFromMethodParameter.class;
 
-  class DiscoverFromMethodParameter implements EventObject {
-    @Override
-    public Set<UUID> aggregateIds() {
-      return Collections.emptySet();
-    }
+  abstract class DiscoverFromMethodParameter implements EventObject {
   }
   ;
 }

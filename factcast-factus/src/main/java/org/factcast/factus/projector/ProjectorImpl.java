@@ -467,15 +467,6 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       else return fromTargetType;
     }
 
-    private FactSpec overrideNamespaceFromTypeAnnotation(
-        @NotNull OverrideNamespaces t, @NonNull FactSpec fromTargetType) {
-      return Arrays.stream(t.value())
-          .filter(o -> FactSpecCoordinates.from(o.type()).type().equals(fromTargetType.type()))
-          .findFirst()
-          .map(o -> fromTargetType.withNs(o.value()))
-          .orElse(fromTargetType);
-    }
-
     @VisibleForTesting
     static Map<Class<?>, String> buildNamespaceOverrides(Class<?> p) {
       if (p == null || !Projection.class.isAssignableFrom(p)) return new HashMap<>();
@@ -502,12 +493,12 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
       if (newNs.isEmpty())
         throw new InvalidHandlerDefinition(
-            "A valid namespace must be provided for a @OverrideNs annotation on " + m);
+            "A valid namespace must be provided for a @OverrideNamespace annotation on " + m);
 
       if (!forType.equals(OverrideNamespace.DISCOVER)) {
         if (forType != eventPojoType)
           throw new InvalidHandlerDefinition(
-              "@OverrideNs defined for a different type than what the parameter suggests " + m);
+              "@OverrideNamespace defined for a different type than what the parameter suggests " + m);
       }
       return addOptionalFilterInfo(m, fromTargetType.withNs(newNs));
     }
