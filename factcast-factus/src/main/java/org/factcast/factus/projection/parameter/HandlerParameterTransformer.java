@@ -19,7 +19,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import lombok.NonNull;
 import org.factcast.core.Fact;
@@ -30,7 +29,7 @@ import org.factcast.factus.projection.Projection;
  * facilitates {@link HandlerParameterContributor}s to create parameter array for a handler method
  */
 public interface HandlerParameterTransformer
-    extends TriFunction<@NonNull EventSerializer,@NonNull Fact, @NonNull Projection, Object[]> {
+    extends TriFunction<@NonNull EventSerializer, @NonNull Fact, @NonNull Projection, Object[]> {
   @NonNull
   static HandlerParameterTransformer forCalling(
       @NonNull Method m, HandlerParameterContributors handlerParameterContributors) {
@@ -59,12 +58,12 @@ public interface HandlerParameterTransformer
     }
 
     // executed per call:
-    return (serializer,fact, p) -> {
+    return (serializer, fact, p) -> {
       Object[] parameters = new Object[providers.length];
 
       for (int i = 0; i < providers.length; i++) {
         // create parameter for this call
-        parameters[i] = providers[i].apply(serializer,fact, p);
+        parameters[i] = providers[i].apply(serializer, fact, p);
       }
       return parameters;
     };

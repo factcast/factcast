@@ -24,7 +24,6 @@ import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
 import org.factcast.core.FactHeader;
 import org.factcast.core.FactStreamPosition;
@@ -41,7 +40,7 @@ public class DefaultHandlerParameterContributor implements HandlerParameterContr
   public HandlerParameterProvider providerFor(
       @NonNull Class<?> type, @Nullable Type genericType, @NonNull Set<Annotation> annotations) {
     if (EventObject.class.isAssignableFrom(type)) {
-      return (s,f, p) -> s.deserialize((Class<? extends EventObject>) type, f.jsonPayload());
+      return (s, f, p) -> s.deserialize((Class<? extends EventObject>) type, f.jsonPayload());
     }
 
     if (Fact.class == type) {
@@ -75,28 +74,32 @@ public class DefaultHandlerParameterContributor implements HandlerParameterContr
 
 class FactProvider implements HandlerParameterProvider {
   @Override
-  public Object apply(@NonNull EventSerializer s,@NonNull Fact fact, @NonNull Projection projection) {
+  public Object apply(
+      @NonNull EventSerializer s, @NonNull Fact fact, @NonNull Projection projection) {
     return fact;
   }
 }
 
 class FactIdProvider implements HandlerParameterProvider {
   @Override
-  public Object apply(@NonNull EventSerializer s,@NonNull Fact fact, @NonNull Projection projection) {
+  public Object apply(
+      @NonNull EventSerializer s, @NonNull Fact fact, @NonNull Projection projection) {
     return fact.id();
   }
 }
 
 class FactStreamPositionProvider implements HandlerParameterProvider {
   @Override
-  public Object apply(@NonNull EventSerializer s,@NonNull Fact fact, @NonNull Projection projection) {
+  public Object apply(
+      @NonNull EventSerializer s, @NonNull Fact fact, @NonNull Projection projection) {
     return FactStreamPosition.from(fact);
   }
 }
 
 class FactHeaderProvider implements HandlerParameterProvider {
   @Override
-  public Object apply(@NonNull EventSerializer s,@NonNull Fact fact, @NonNull Projection projection) {
+  public Object apply(
+      @NonNull EventSerializer s, @NonNull Fact fact, @NonNull Projection projection) {
     return fact.header();
   }
 }
@@ -152,7 +155,8 @@ class MetaProvider implements HandlerParameterProvider {
   }
 
   @Override
-  public Object apply(@NonNull EventSerializer s,@NonNull Fact fact, @NonNull Projection projection) {
+  public Object apply(
+      @NonNull EventSerializer s, @NonNull Fact fact, @NonNull Projection projection) {
     String value = fact.header().meta(key);
     if (targetType == Optional.class) return Optional.ofNullable(value);
     else return value;
