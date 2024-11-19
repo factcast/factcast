@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2023 factcast.org
+ * Copyright © 2017-2024 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,16 @@
  */
 package org.factcast.factus.projection.parameter;
 
-import lombok.NonNull;
-import org.factcast.core.Fact;
-import org.factcast.factus.event.EventSerializer;
-import org.factcast.factus.projection.Projection;
+import java.util.Objects;
+import java.util.function.Function;
 
-public interface HandlerParameterProvider
-    extends TriFunction<@NonNull EventSerializer, @NonNull Fact, @NonNull Projection, Object> {}
+@FunctionalInterface
+public interface TriFunction<A, B, C, R> {
+
+  R apply(A a, B b, C c);
+
+  default <V> TriFunction<A, B, C, V> andThen(Function<? super R, ? extends V> after) {
+    Objects.requireNonNull(after);
+    return (A a, B b, C c) -> after.apply(apply(a, b, c));
+  }
+}

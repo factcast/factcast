@@ -15,8 +15,6 @@
  */
 package org.factcast.factus.projection.parameter;
 
-import static org.mockito.Mockito.mock;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Iterator;
@@ -24,7 +22,6 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
-import org.factcast.factus.event.EventSerializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -45,7 +42,7 @@ class HandlerParameterContributorsTest {
             @NonNull Class<?> type,
             @Nullable Type genericType,
             @NonNull Set<Annotation> annotations) {
-          return (f, p) -> "Hi There";
+          return (ser, f, p) -> "Hi There";
         }
       };
   private HandlerParameterContributors underTest;
@@ -54,7 +51,7 @@ class HandlerParameterContributorsTest {
   class WhenIterating {
     @BeforeEach
     void setup() {
-      underTest = new HandlerParameterContributors(mock(EventSerializer.class));
+      underTest = new HandlerParameterContributors();
     }
 
     @Test
@@ -72,7 +69,7 @@ class HandlerParameterContributorsTest {
 
     @BeforeEach
     void setup() {
-      underTest = new HandlerParameterContributors(mock(EventSerializer.class));
+      underTest = new HandlerParameterContributors();
       underTest = underTest.withHighestPrio(topPrioContributor);
     }
 
