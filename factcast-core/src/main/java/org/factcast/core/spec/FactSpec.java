@@ -50,9 +50,6 @@ public class FactSpec {
 
   @JsonProperty private int version = 0; // 0 means I don't care
 
-  // hide aggId getter / setter as it's deprecated to use and replaced by aggId_s_
-  @Getter(AccessLevel.NONE)
-  @Setter(AccessLevel.NONE)
   @JsonProperty
   private UUID aggId = null;
 
