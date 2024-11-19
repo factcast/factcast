@@ -71,7 +71,7 @@ public class FactusAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean
   public ProjectorFactory projectorFactory(EventSerializer ser) {
-    return new DefaultProjectorFactory(ser, new HandlerParameterContributors(ser));
+    return new DefaultProjectorFactory(ser, new HandlerParameterContributors());
   }
 
   @Bean
