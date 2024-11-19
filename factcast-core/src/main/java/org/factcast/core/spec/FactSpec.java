@@ -50,8 +50,7 @@ public class FactSpec {
 
   @JsonProperty private int version = 0; // 0 means I don't care
 
-  @JsonProperty
-  private UUID aggId = null;
+  @JsonProperty private UUID aggId = null;
 
   @JsonProperty private final Set<UUID> aggIds = new LinkedHashSet<>();
 
