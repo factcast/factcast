@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.8.2-SNAPSHOT</version>
+  <version>0.8.3-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>factcast</name>
   <description>factcast is a 'good enough' event store using PostgreSQL
@@ -60,6 +60,7 @@
     <module>factcast-snapshotcache-redisson</module>
     <module>factcast-snapshotcache-local-memory</module>
     <module>factcast-snapshotcache-local-disk</module>
+    <module>factcast-snapshotcache-jdbc</module>
     <module>factcast-factus-serializer-binary</module>
     <module>factcast-factus-serializer-fury</module>
   </modules>
@@ -99,7 +100,7 @@
     <jackson.version>2.18.1</jackson.version>
     <mockito.version>5.14.2</mockito.version>
     <junit-jupiter.version>5.11.3</junit-jupiter.version>
-    <lombok.version>1.18.34</lombok.version>
+    <lombok.version>1.18.36</lombok.version>
     <slf4j-api.version>2.0.16</slf4j-api.version>
     <!--suppress UnresolvedMavenProperty -->
     <etc>${session.executionRootDirectory}/src/etc</etc>
@@ -115,7 +116,7 @@
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <mockk.version>1.13.13</mockk.version>
     <redisson.version>3.38.1</redisson.version>
-    <aws-sdk.version>2.29.11</aws-sdk.version>
+    <aws-sdk.version>2.29.16</aws-sdk.version>
     <graaljs.version>24.1.1</graaljs.version>
     <shedlock.version>5.16.0</shedlock.version>
     <byte-buddy.version>1.15.10</byte-buddy.version>
