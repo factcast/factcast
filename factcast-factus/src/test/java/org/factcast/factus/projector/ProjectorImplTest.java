@@ -20,10 +20,7 @@ import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Lists;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import javax.annotation.Nullable;
 import lombok.Data;
 import lombok.NonNull;
@@ -38,7 +35,9 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.*;
 import org.factcast.factus.event.DefaultEventSerializer;
+import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.EventSerializer;
+import org.factcast.factus.event.Specification;
 import org.factcast.factus.projection.FactStreamPositionAware;
 import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projection.parameter.HandlerParameterContributors;
@@ -92,8 +91,7 @@ class ProjectorImplTest {
       SimpleProjection projection = new SimpleProjection();
 
       DefaultProjectorFactory factory =
-          new DefaultProjectorFactory(
-              eventSerializer, new HandlerParameterContributors(eventSerializer));
+          new DefaultProjectorFactory(eventSerializer, new HandlerParameterContributors());
       Projector<SimpleProjection> underTest = factory.create(projection);
 
       // RUN
@@ -207,10 +205,17 @@ class ProjectorImplTest {
       // ASSERT
       assertThat(factSpecs)
           .hasSize(2)
-          .flatExtracting(FactSpec::aggId, FactSpec::ns, FactSpec::version, FactSpec::type)
+          .flatExtracting(FactSpec::aggIds, FactSpec::ns, FactSpec::version, FactSpec::type)
           .contains(
               // ComplexProjection has two handlers
-              null, "test", 0, "ComplexEvent", null, "test", 0, "ComplexEvent2");
+              Collections.emptySet(),
+              "test",
+              0,
+              "ComplexEvent",
+              Collections.emptySet(),
+              "test",
+              0,
+              "ComplexEvent2");
     }
 
     @Test
@@ -225,12 +230,20 @@ class ProjectorImplTest {
       List<FactSpec> factSpecs = underTest.createFactSpecs();
 
       // ASSERT
+      Set<UUID> expectedAggIds = Collections.singleton(aggregateId);
       assertThat(factSpecs)
           .hasSize(2)
-          .flatExtracting(FactSpec::aggId, FactSpec::ns, FactSpec::version, FactSpec::type)
+          .flatExtracting(FactSpec::aggIds, FactSpec::ns, FactSpec::version, FactSpec::type)
           .contains(
               // ComplexAggregate has two handlers
-              aggregateId, "test", 0, "ComplexEvent", aggregateId, "test", 0, "ComplexEvent2");
+              expectedAggIds,
+              "test",
+              0,
+              "ComplexEvent",
+              expectedAggIds,
+              "test",
+              0,
+              "ComplexEvent2");
     }
 
     @Test
@@ -247,8 +260,8 @@ class ProjectorImplTest {
       // ASSERT
       assertThat(factSpecs)
           .hasSize(1)
-          .flatExtracting(FactSpec::aggId, FactSpec::ns, FactSpec::version, FactSpec::type)
-          .contains(null, "test", 0, "someType");
+          .flatExtracting(FactSpec::aggIds, FactSpec::ns, FactSpec::version, FactSpec::type)
+          .contains(Collections.emptySet(), "test", 0, "someType");
     }
 
     @Test
@@ -553,6 +566,10 @@ class ProjectorImplTest {
     public void applyWithAggId(Fact f) {}
 
     @HandlerFor(ns = "ns", type = "type")
+    @FilterByAggId({"1010a955-04a2-417b-9904-f92f88fdb67d", "1010a955-04a2-417b-9904-f92f88fdb67e"})
+    public void applyWithMultipleAggIds(Fact f) {}
+
+    @HandlerFor(ns = "ns", type = "type")
     @FilterByScript("function myfilter(e){}")
     public void applyWithFilterScript(Fact f) {}
   }
@@ -585,7 +602,21 @@ class ProjectorImplTest {
     Method m = HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithAggId", Fact.class);
     ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
 
-    assertThat(spec.aggId()).isEqualTo(UUID.fromString("1010a955-04a2-417b-9904-f92f88fdb67d"));
+    assertThat(spec.aggIds()).containsOnly(UUID.fromString("1010a955-04a2-417b-9904-f92f88fdb67d"));
+  }
+
+  @SneakyThrows
+  @Test
+  void detectsMultipleAggIds() {
+    FactSpec spec = FactSpec.ns("ns");
+    Method m =
+        HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithMultipleAggIds", Fact.class);
+    ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
+
+    assertThat(spec.aggIds())
+        .containsOnly(
+            UUID.fromString("1010a955-04a2-417b-9904-f92f88fdb67d"),
+            UUID.fromString("1010a955-04a2-417b-9904-f92f88fdb67e"));
   }
 
   @SneakyThrows
@@ -833,6 +864,34 @@ class ProjectorImplTest {
       uut.apply(facts);
 
       verify(projection, times(4)).factStreamPosition(any());
+    }
+  }
+
+  @Nested
+  class WhenDiscoveringHandlers {
+    @Specification(ns = "x")
+    class E implements EventObject {
+      @Override
+      public Set<UUID> aggregateIds() {
+        return new HashSet<>();
+      }
+    }
+
+    class P implements Projection {
+      @Handler
+      void apply(E e) {}
+    }
+
+    @Test
+    void doesNotCacheEventSerializer() {
+      EventSerializer e1 = mock(EventSerializer.class);
+      EventSerializer e2 = mock(EventSerializer.class);
+
+      new ProjectorImpl<>(new P(), e1); // discover & cache
+      new ProjectorImpl<>(new P(), e2).apply(Lists.newArrayList(Fact.buildFrom(new E()).build()));
+
+      verify(e1, never()).deserialize(same(E.class), anyString());
+      verify(e2).deserialize(same(E.class), anyString());
     }
   }
 }

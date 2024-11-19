@@ -25,8 +25,10 @@ import org.factcast.core.event.EventConverter;
 import org.factcast.factus.Factus;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.event.UserCreated;
+import org.factcast.itests.factus.event.UserFired;
 import org.factcast.itests.factus.proj.LocalUserNamesFilterByAggregateId;
 import org.factcast.itests.factus.proj.LocalUserNamesFilterByMeta;
+import org.factcast.itests.factus.proj.LocalUserNamesFilterByMultipleAggregateIds;
 import org.factcast.itests.factus.proj.LocalUserNamesFilterByScript;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
@@ -49,6 +51,9 @@ public class FilteringTest extends AbstractFactCastIntegrationTest {
 
   final LocalUserNamesFilterByScript localUserNamesFilterByScript =
       new LocalUserNamesFilterByScript();
+
+  final LocalUserNamesFilterByMultipleAggregateIds localUserNamesFilterByMultipleAggregateIds =
+      new LocalUserNamesFilterByMultipleAggregateIds();
 
   @Test
   public void filtersByScript() {
@@ -151,5 +156,28 @@ public class FilteringTest extends AbstractFactCastIntegrationTest {
 
     assertThat(localUserNamesFilterByAggregateId.count()).isEqualTo(1);
     assertThat(localUserNamesFilterByAggregateId.contains("John")).isTrue();
+  }
+
+  @Test
+  public void filtersByMultipleAggregateIds() {
+
+    UUID peteId = new UUID(0, 10);
+    UserCreated pete = new UserCreated(peteId, "Pete");
+    UUID johnId = new UUID(0, 11);
+    UserCreated john = new UserCreated(johnId, "John");
+    UUID paulId = new UUID(0, 12);
+    UserCreated paul = new UserCreated(paulId, "Paul");
+    UserFired peteFired = new UserFired(peteId, johnId);
+    // not included
+    UserFired johnFired = new UserFired(johnId, paulId);
+
+    factus.publish(List.of(pete, john, paul, peteFired, johnFired));
+
+    factus.update(localUserNamesFilterByMultipleAggregateIds);
+
+    assertThat(localUserNamesFilterByMultipleAggregateIds.count()).isEqualTo(2);
+    assertThat(localUserNamesFilterByMultipleAggregateIds.contains("Pete")).isFalse();
+    assertThat(localUserNamesFilterByMultipleAggregateIds.contains("John")).isTrue();
+    assertThat(localUserNamesFilterByMultipleAggregateIds.contains("Paul")).isTrue();
   }
 }

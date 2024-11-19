@@ -52,7 +52,7 @@ public class PgTokenStoreTest extends AbstractTokenStoreTest {
     s.serialOfLastMatchingFact(99);
     List<FactSpec> specs =
         Arrays.asList(
-            FactSpec.ns("foo").aggId(new UUID(0, 1)),
+            FactSpec.ns("foo").aggId(new UUID(0, 1), new UUID(0, 2)),
             FactSpec.ns("bar")
                 .type("someType")
                 .meta("foo", "bar")
@@ -64,7 +64,7 @@ public class PgTokenStoreTest extends AbstractTokenStoreTest {
 
     Assertions.assertThat(json)
         .isEqualTo(
-            "{\"specs\":[{\"ns\":\"foo\",\"type\":null,\"version\":0,\"aggId\":\"00000000-0000-0000-0000-000000000001\",\"meta\":{},\"metaKeyExists\":{},\"filterScript\":null},{\"ns\":\"bar\",\"type\":\"someType\",\"version\":0,\"aggId\":null,\"meta\":{\"foo\":\"bar\"},\"metaKeyExists\":{\"mustExist\":true,\"mustNotExist\":false},\"filterScript\":null}],\"serialOfLastMatchingFact\":99}");
+            "{\"specs\":[{\"ns\":\"foo\",\"type\":null,\"version\":0,\"aggId\":null,\"aggIds\":[\"00000000-0000-0000-0000-000000000001\",\"00000000-0000-0000-0000-000000000002\"],\"meta\":{},\"metaKeyExists\":{},\"filterScript\":null},{\"ns\":\"bar\",\"type\":\"someType\",\"version\":0,\"aggId\":null,\"aggIds\":[],\"meta\":{\"foo\":\"bar\"},\"metaKeyExists\":{\"mustExist\":true,\"mustNotExist\":false},\"filterScript\":null}],\"serialOfLastMatchingFact\":99}");
   }
 
   @Test

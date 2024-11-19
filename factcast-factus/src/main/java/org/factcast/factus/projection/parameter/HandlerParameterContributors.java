@@ -20,15 +20,14 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 import lombok.NonNull;
-import org.factcast.factus.event.EventSerializer;
 
 public class HandlerParameterContributors implements Iterable<HandlerParameterContributor> {
 
   private final List<HandlerParameterContributor> contributors;
 
-  public HandlerParameterContributors(@NonNull EventSerializer ser) {
+  public HandlerParameterContributors() {
     this.contributors = new CopyOnWriteArrayList<>();
-    contributors.add(new DefaultHandlerParameterContributor(ser));
+    contributors.add(new DefaultHandlerParameterContributor());
   }
 
   private HandlerParameterContributors(

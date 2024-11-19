@@ -13,12 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus;
+package org.factcast.itests.factus.event;
 
-import java.lang.annotation.*;
+import com.google.common.collect.Sets;
+import java.util.Set;
+import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.factcast.factus.event.EventObject;
+import org.factcast.factus.event.Specification;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(value = ElementType.METHOD)
-public @interface FilterByAggId {
-  String[] value();
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Specification(ns = "test", type = "UserFired")
+public class UserFired implements EventObject {
+  UUID sackedId;
+
+  UUID sackerId;
+
+  @Override
+  public Set<UUID> aggregateIds() {
+    return Sets.newHashSet(sackedId, sackerId);
+  }
 }
