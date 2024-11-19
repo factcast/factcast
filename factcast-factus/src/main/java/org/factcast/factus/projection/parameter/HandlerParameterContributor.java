@@ -15,11 +15,12 @@
  */
 package org.factcast.factus.projection.parameter;
 
+import lombok.NonNull;
+
+import javax.annotation.Nullable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Set;
-import javax.annotation.Nullable;
-import lombok.NonNull;
 
 public interface HandlerParameterContributor {
   /**

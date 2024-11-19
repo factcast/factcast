@@ -54,7 +54,7 @@ class HandlerParameterContributorsTest {
   class WhenIterating {
     @BeforeEach
     void setup() {
-      underTest = new HandlerParameterContributors(mock(EventSerializer.class));
+      underTest = new HandlerParameterContributors();
     }
 
     @Test
@@ -72,7 +72,7 @@ class HandlerParameterContributorsTest {
 
     @BeforeEach
     void setup() {
-      underTest = new HandlerParameterContributors(mock(EventSerializer.class));
+      underTest = new HandlerParameterContributors();
       underTest = underTest.withHighestPrio(topPrioContributor);
     }
 

@@ -72,7 +72,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
     dispatchInfo =
         dispatcherCache.computeIfAbsent(
-            ReflectionTools.getRelevantClass(p), c -> discoverDispatchInfo(serializer, p));
+            ReflectionTools.getRelevantClass(p), c -> discoverDispatchInfo(p));
   }
 
   /**
@@ -84,7 +84,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
    */
   @Deprecated
   public ProjectorImpl(@NonNull Projection p, @NonNull EventSerializer es) {
-    this(p, es, new HandlerParameterContributors(es));
+    this(p, es, new HandlerParameterContributors());
   }
 
   @Override
@@ -206,7 +206,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
   }
 
   private Map<FactSpecCoordinates, Dispatcher> discoverDispatchInfo(
-      EventSerializer deserializer, Projection p) {
+      Projection p) {
     Map<FactSpecCoordinates, Dispatcher> map = new HashMap<>();
 
     final HandlerParameterContributors c;

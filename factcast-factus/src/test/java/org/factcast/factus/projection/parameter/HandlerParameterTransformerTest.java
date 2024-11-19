@@ -40,7 +40,7 @@ class HandlerParameterTransformerTest {
     void failsWithProperMessage() {
       Method method = SomeProjection.class.getMethod("apply", new Class[] {Fact.class, Foo.class});
       HandlerParameterContributors contribs =
-          new HandlerParameterContributors(mock(EventSerializer.class));
+          new HandlerParameterContributors();
       Assertions.assertThatThrownBy(() -> HandlerParameterTransformer.forCalling(method, contribs))
           .isInstanceOf(IllegalArgumentException.class)
           .hasMessageMatching(
