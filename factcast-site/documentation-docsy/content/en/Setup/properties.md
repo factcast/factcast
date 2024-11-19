@@ -73,6 +73,13 @@ description: Properties you can use to configure FactCast
 | factcast.snapshot.redis.deleteSnapshotStaleForDays | min number of days a snapshot is kept even though it is not read anymore. Must be a positive number.                                                                                                     | 90               |
 | factcast.snapshot.redis.snapshotCacheRedissonCodec | optional configuration of the codec used for serializing objects from and into the snapshot. When set to <nobr>`RedissonDefault`</nobr> no codec is specified and Redisson will use its current default. | MarshallingCodec |
 
+#### JDBC-Snapshots
+
+| Property                                          | Description                                                                                          | Default           |
+| ------------------------------------------------- | :--------------------------------------------------------------------------------------------------- | :---------------- |
+| factcast.snapshot.jdbc.deleteSnapshotStaleForDays | min number of days a snapshot is kept even though it is not read anymore. Must be a positive number. | 90                |
+| factcast.snapshot.jdbc.snapshotTableName          | optional name of the table for the snapshots. When not provided the default will be used             | factcast_snapshot |
+
 ---
 
 ### gRPC
