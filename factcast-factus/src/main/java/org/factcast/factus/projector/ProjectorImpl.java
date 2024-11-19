@@ -473,12 +473,12 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       Map<Class<?>, String> ret = buildNamespaceOverrides(p.getSuperclass());
 
       OverrideNamespace single = p.getAnnotation(OverrideNamespace.class);
-      if (single != null) ret.put(single.type(), single.value());
+      if (single != null) ret.put(single.type(), single.ns());
 
       OverrideNamespaces container = p.getAnnotation(OverrideNamespaces.class);
       if (container != null) {
         OverrideNamespace[] overrides = container.value();
-        if (overrides != null) Arrays.stream(overrides).forEach(s -> ret.put(s.type(), s.value()));
+        if (overrides != null) Arrays.stream(overrides).forEach(s -> ret.put(s.type(), s.ns()));
       }
 
       return ret;
@@ -487,7 +487,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     @VisibleForTesting
     static FactSpec overrideNamespaceFromMethodAnnotation(
         Method m, OverrideNamespace annotation, Class<?> eventPojoType, FactSpec fromTargetType) {
-      String newNs = annotation.value();
+      String newNs = annotation.ns();
       Class<? extends EventObject> forType = annotation.type();
 
       if (newNs.isEmpty())

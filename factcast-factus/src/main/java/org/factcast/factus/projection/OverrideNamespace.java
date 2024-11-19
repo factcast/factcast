@@ -25,8 +25,10 @@ import org.factcast.factus.event.EventObject;
 public @interface OverrideNamespace {
   Class<? extends EventObject> DISCOVER = DiscoverFromMethodParameter.class;
 
-  String value();
+  /** the namespace to overrule the @specification ns from the type. */
+  String ns();
 
+  /** The type on which to overrule the ns */
   Class<? extends EventObject> type() default DiscoverFromMethodParameter.class;
 
   abstract class DiscoverFromMethodParameter implements EventObject {}
