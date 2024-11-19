@@ -936,11 +936,11 @@ class ProjectorImplTest {
 
     @Test
     void overridesNsFromMethodLevelAnnotationIllegal() {
-      SomeProjectionWithMethodLevelIllegalTargetType p = new SomeProjectionWithMethodLevelIllegalTargetType();
+      SomeProjectionWithMethodLevelIllegalTargetType p =
+          new SomeProjectionWithMethodLevelIllegalTargetType();
       assertThatThrownBy(
               () -> {
-                new ProjectorImpl<>(
-                        p, eventSerializer);
+                new ProjectorImpl<>(p, eventSerializer);
               })
           .isInstanceOf(InvalidHandlerDefinition.class);
     }
