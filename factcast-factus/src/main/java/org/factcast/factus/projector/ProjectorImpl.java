@@ -35,10 +35,7 @@ import org.factcast.factus.*;
 import org.factcast.factus.SuppressFactusWarnings.Warning;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.EventSerializer;
-import org.factcast.factus.projection.Aggregate;
-import org.factcast.factus.projection.AggregateUtil;
-import org.factcast.factus.projection.FactStreamPositionAware;
-import org.factcast.factus.projection.Projection;
+import org.factcast.factus.projection.*;
 import org.factcast.factus.projection.parameter.HandlerParameterContributor;
 import org.factcast.factus.projection.parameter.HandlerParameterContributors;
 import org.factcast.factus.projection.parameter.HandlerParameterProvider;
@@ -239,7 +236,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
               .filter(this::isEventHandlerMethod)
               .forEach(
                   m -> {
-                    FactSpec fs = ReflectionTools.discoverFactSpec(m);
+                    FactSpec fs = ReflectionTools.discoverFactSpec(p, m);
                     FactSpecCoordinates key = FactSpecCoordinates.from(fs);
 
                     Dispatcher dispatcher =
@@ -259,7 +256,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
                               + before.dispatchMethod());
                     }
 
-                    log.debug("Discovered Event handling method " + m.toString());
+                    log.debug("Discovered Event handling method {}", m.toString());
                     m.setAccessible(true);
                   });
         });
@@ -303,7 +300,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
    * expensive method that should be used on initialization only
    *
    * @param m
-   * @return
+   * @return boolean
    */
   @VisibleForTesting
   boolean isEventHandlerMethod(Method m) {
@@ -399,7 +396,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       return m;
     }
 
-    private static FactSpec discoverFactSpec(Method m) {
+    private static FactSpec discoverFactSpec(Projection p, Method m) {
 
       HandlerFor handlerFor = m.getAnnotation(HandlerFor.class);
       if (handlerFor != null) {
@@ -423,9 +420,86 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
               "Multiple EventPojo Parameters. Cannot introspect FactSpec from " + m);
         } else {
           Class<?> eventPojoType = eventPojoTypes.get(0);
-          return addOptionalFilterInfo(m, FactSpec.from(eventPojoType));
+          FactSpec fromTargetType = FactSpec.from(eventPojoType);
+
+          // yes, order is important :D
+          OverrideNamespaces overridesOnMethod = m.getAnnotation(OverrideNamespaces.class);
+          if (overridesOnMethod != null) {
+            throw new IllegalArgumentException(
+                "Only one single @OverrideNamespace is allowed on method level");
+          }
+
+          OverrideNamespace overrideOnMethod = m.getAnnotation(OverrideNamespace.class);
+          if (overrideOnMethod != null) {
+            return overrideNamespaceFromMethodAnnotation(
+                m, overrideOnMethod, eventPojoType, fromTargetType);
+          }
+
+          return addOptionalFilterInfo(
+              m, overrideNamespaceFromTypeAnnotation(p, eventPojoType, fromTargetType));
         }
       }
+    }
+
+    @VisibleForTesting
+    static FactSpec overrideNamespaceFromTypeAnnotation(
+        Projection p, Class<?> eventPojoType, FactSpec fromTargetType) {
+
+      Arrays.stream(p.getClass().getInterfaces())
+          .filter(
+              i ->
+                  i.getAnnotation(OverrideNamespace.class) != null
+                      || i.getAnnotation(OverrideNamespaces.class) != null)
+          .findFirst()
+          .ifPresent(
+              i -> {
+                throw new InvalidHandlerDefinition(
+                    "@OverrideNamespace(s) is only allowed on non-interface types "
+                        + p.getClass()
+                        + " implementing "
+                        + i);
+              });
+
+      Map<Class<?>, String> overrides = buildNamespaceOverrides(p.getClass());
+      String override = overrides.get(eventPojoType);
+      if (override != null) return fromTargetType.withNs(override);
+      else return fromTargetType;
+    }
+
+    @VisibleForTesting
+    static Map<Class<?>, String> buildNamespaceOverrides(Class<?> p) {
+      if (p == null || !Projection.class.isAssignableFrom(p)) return new HashMap<>();
+
+      Map<Class<?>, String> ret = buildNamespaceOverrides(p.getSuperclass());
+
+      OverrideNamespace single = p.getAnnotation(OverrideNamespace.class);
+      if (single != null) ret.put(single.type(), single.ns());
+
+      OverrideNamespaces container = p.getAnnotation(OverrideNamespaces.class);
+      if (container != null) {
+        OverrideNamespace[] overrides = container.value();
+        if (overrides != null) Arrays.stream(overrides).forEach(s -> ret.put(s.type(), s.ns()));
+      }
+
+      return ret;
+    }
+
+    @VisibleForTesting
+    static FactSpec overrideNamespaceFromMethodAnnotation(
+        Method m, OverrideNamespace annotation, Class<?> eventPojoType, FactSpec fromTargetType) {
+      String newNs = annotation.ns();
+      Class<? extends EventObject> forType = annotation.type();
+
+      if (newNs.isEmpty())
+        throw new InvalidHandlerDefinition(
+            "A valid namespace must be provided for a @OverrideNamespace annotation on " + m);
+
+      if (!forType.equals(OverrideNamespace.DISCOVER) && forType != eventPojoType)
+        throw new InvalidHandlerDefinition(
+            "@OverrideNamespace defined for a different type than what the parameter suggests "
+                + m);
+
+      return addOptionalFilterInfo(m, fromTargetType.withNs(newNs));
     }
 
     @VisibleForTesting

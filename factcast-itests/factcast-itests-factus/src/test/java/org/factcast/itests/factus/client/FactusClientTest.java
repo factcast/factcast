@@ -46,10 +46,7 @@ import org.factcast.factus.projection.LocalManagedProjection;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.config.RedissonProjectionConfiguration;
-import org.factcast.itests.factus.event.TestAggregateIncremented;
-import org.factcast.itests.factus.event.UserBored;
-import org.factcast.itests.factus.event.UserCreated;
-import org.factcast.itests.factus.event.UserDeleted;
+import org.factcast.itests.factus.event.*;
 import org.factcast.itests.factus.proj.*;
 import org.factcast.spring.boot.autoconfigure.snap.RedissonSnapshotCacheAutoConfiguration;
 import org.factcast.test.AbstractFactCastIntegrationTest;
@@ -754,5 +751,21 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
     }
 
     Assertions.assertThat(signee.get()).isEqualTo("theBoss");
+  }
+
+  @Test
+  void testOverriddenNsSubscription() throws Exception {
+    SubscribedUserNames subscribedUserNames = new OverrideNsSubscribedUserNames();
+    subscribedUserNames.clear();
+
+    factus.publish(new ShadowUserCreated("John"));
+    factus.publish(new ShadowUserCreated("Paul"));
+    factus.publish(new UserCreated("Pete"));
+    try (Subscription subscription = factus.subscribeAndBlock(subscribedUserNames)) {
+      // nothing in there yet, so catchup must be received
+      subscription.awaitCatchup();
+
+      assertThat(subscribedUserNames.names()).hasSize(2).containsExactlyInAnyOrder("Paul", "John");
+    }
   }
 }
