@@ -16,9 +16,8 @@
 package org.factcast.factus.serializer.binary;
 
 import java.io.*;
-import lombok.*;
-import net.jpountz.lz4.*;
-import org.factcast.factus.serializer.*;
+import lombok.NonNull;
+import org.factcast.factus.serializer.SnapshotSerializerId;
 
 public class UncompressedBinaryJacksonSnapshotSerializer extends BinaryJacksonSnapshotSerializer {
 
