@@ -15,9 +15,8 @@
  */
 package org.factcast.factus.projection;
 
-import org.factcast.factus.event.EventObject;
-
 import java.lang.annotation.*;
+import org.factcast.factus.event.EventObject;
 
 /** using default type is only allowed on Method */
 @Retention(RetentionPolicy.RUNTIME)
