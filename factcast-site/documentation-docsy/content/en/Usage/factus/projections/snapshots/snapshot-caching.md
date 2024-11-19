@@ -46,7 +46,8 @@ Refer to the [In-Memory and Disk Properties]({{< ref "/setup/properties#inmemand
 
 ### Redis SnapshotCache
 
-For applications utilizing Redis, the Redis-based SnapshotCache offers an optimal solution:
+For applications utilizing Redis, the Redis-based SnapshotCache offers an optimal solution to implement a
+snapshotcache that can be shared between / used by many instances:
 
 ```xml
 <dependency>
@@ -80,7 +81,7 @@ purge stale snapshots after 90 days.
 
 You can run one of the following SQL scripts to create the necessary table:
 
-**Postgres**
+**PostgreSQL**
 
 ```sql
 CREATE TABLE IF NOT EXISTS factcast_snapshot(

@@ -19,9 +19,11 @@ import javax.sql.DataSource;
 import org.factcast.core.snap.jdbc.JdbcSnapshotCache;
 import org.factcast.core.snap.jdbc.JdbcSnapshotProperties;
 import org.factcast.factus.snapshot.SnapshotCache;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.*;
 import org.springframework.context.annotation.Bean;
 
+@ConfigurationProperties
+@EnableConfigurationProperties
 public class JdbcSnapshotCacheConfiguration {
 
   @Bean
@@ -36,10 +38,10 @@ public class JdbcSnapshotCacheConfiguration {
         var statement = connection.createStatement()) {
       statement.execute(
           """
-              CREATE TABLE IF NOT EXISTS my_snapshot_table(projection_class VARCHAR(512), aggregate_id VARCHAR(36) NULL, last_fact_id VARCHAR(36),
-                  bytes BYTEA, snapshot_serializer_id VARCHAR(128), last_accessed VARCHAR, PRIMARY KEY (projection_class, aggregate_id));
-              CREATE INDEX IF NOT EXISTS my_snapshot_table_index ON my_snapshot_table(last_accessed);
-              """);
+                            CREATE TABLE IF NOT EXISTS my_snapshot_table(projection_class VARCHAR(512), aggregate_id VARCHAR(36) NULL, last_fact_id VARCHAR(36),
+                                bytes BYTEA, snapshot_serializer_id VARCHAR(128), last_accessed VARCHAR, PRIMARY KEY (projection_class, aggregate_id));
+                            CREATE INDEX IF NOT EXISTS my_snapshot_table_index ON my_snapshot_table(last_accessed);
+                            """);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
