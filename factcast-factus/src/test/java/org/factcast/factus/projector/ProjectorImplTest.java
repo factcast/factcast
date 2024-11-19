@@ -968,9 +968,12 @@ class ProjectorImplTest {
 
     @Test
     void overridesNsFromTypeLevelAnnotationOnInterface() {
+                SomeProjectionWithOverrideOnInterface p = new SomeProjectionWithOverrideOnInterface();
       assertThatThrownBy(
               () ->
-                  new ProjectorImpl<>(new SomeProjectionWithOverrideOnInterface(), eventSerializer))
+              {
+                new ProjectorImpl<>(p, eventSerializer);
+              })
           .isInstanceOf(InvalidHandlerDefinition.class);
     }
 
