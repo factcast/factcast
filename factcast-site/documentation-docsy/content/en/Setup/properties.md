@@ -76,7 +76,7 @@ description: Properties you can use to configure FactCast
 #### JDBC-Snapshots
 
 | Property                                          | Description                                                                                          | Default           |
-|---------------------------------------------------| :--------------------------------------------------------------------------------------------------- | :---------------- |
+| ------------------------------------------------- | :--------------------------------------------------------------------------------------------------- | :---------------- |
 | factcast.snapshot.jdbc.deleteSnapshotStaleForDays | min number of days a snapshot is kept even though it is not read anymore. Must be a positive number. | 90                |
 | factcast.snapshot.jdbc.snapshotTableName          | optional name of the table for the snapshots. When not provided the default will be used             | factcast_snapshot |
 
