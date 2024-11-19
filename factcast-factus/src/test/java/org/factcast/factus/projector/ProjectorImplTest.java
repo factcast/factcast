@@ -205,10 +205,17 @@ class ProjectorImplTest {
       // ASSERT
       assertThat(factSpecs)
           .hasSize(2)
-          .flatExtracting(FactSpec::aggId, FactSpec::ns, FactSpec::version, FactSpec::type)
+          .flatExtracting(FactSpec::aggIds, FactSpec::ns, FactSpec::version, FactSpec::type)
           .contains(
               // ComplexProjection has two handlers
-              null, "test", 0, "ComplexEvent", null, "test", 0, "ComplexEvent2");
+              Collections.emptySet(),
+              "test",
+              0,
+              "ComplexEvent",
+              Collections.emptySet(),
+              "test",
+              0,
+              "ComplexEvent2");
     }
 
     @Test
@@ -223,12 +230,20 @@ class ProjectorImplTest {
       List<FactSpec> factSpecs = underTest.createFactSpecs();
 
       // ASSERT
+      Set<UUID> expectedAggIds = Collections.singleton(aggregateId);
       assertThat(factSpecs)
           .hasSize(2)
-          .flatExtracting(FactSpec::aggId, FactSpec::ns, FactSpec::version, FactSpec::type)
+          .flatExtracting(FactSpec::aggIds, FactSpec::ns, FactSpec::version, FactSpec::type)
           .contains(
               // ComplexAggregate has two handlers
-              aggregateId, "test", 0, "ComplexEvent", aggregateId, "test", 0, "ComplexEvent2");
+              expectedAggIds,
+              "test",
+              0,
+              "ComplexEvent",
+              expectedAggIds,
+              "test",
+              0,
+              "ComplexEvent2");
     }
 
     @Test
@@ -245,8 +260,8 @@ class ProjectorImplTest {
       // ASSERT
       assertThat(factSpecs)
           .hasSize(1)
-          .flatExtracting(FactSpec::aggId, FactSpec::ns, FactSpec::version, FactSpec::type)
-          .contains(null, "test", 0, "someType");
+          .flatExtracting(FactSpec::aggIds, FactSpec::ns, FactSpec::version, FactSpec::type)
+          .contains(Collections.emptySet(), "test", 0, "someType");
     }
 
     @Test
@@ -551,6 +566,10 @@ class ProjectorImplTest {
     public void applyWithAggId(Fact f) {}
 
     @HandlerFor(ns = "ns", type = "type")
+    @FilterByAggId({"1010a955-04a2-417b-9904-f92f88fdb67d", "1010a955-04a2-417b-9904-f92f88fdb67e"})
+    public void applyWithMultipleAggIds(Fact f) {}
+
+    @HandlerFor(ns = "ns", type = "type")
     @FilterByScript("function myfilter(e){}")
     public void applyWithFilterScript(Fact f) {}
   }
@@ -583,7 +602,21 @@ class ProjectorImplTest {
     Method m = HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithAggId", Fact.class);
     ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
 
-    assertThat(spec.aggId()).isEqualTo(UUID.fromString("1010a955-04a2-417b-9904-f92f88fdb67d"));
+    assertThat(spec.aggIds()).containsOnly(UUID.fromString("1010a955-04a2-417b-9904-f92f88fdb67d"));
+  }
+
+  @SneakyThrows
+  @Test
+  void detectsMultipleAggIds() {
+    FactSpec spec = FactSpec.ns("ns");
+    Method m =
+        HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithMultipleAggIds", Fact.class);
+    ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
+
+    assertThat(spec.aggIds())
+        .containsOnly(
+            UUID.fromString("1010a955-04a2-417b-9904-f92f88fdb67d"),
+            UUID.fromString("1010a955-04a2-417b-9904-f92f88fdb67e"));
   }
 
   @SneakyThrows

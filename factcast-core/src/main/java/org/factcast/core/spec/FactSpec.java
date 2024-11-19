@@ -15,38 +15,75 @@
  */
 package org.factcast.core.spec;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import java.util.*;
 import java.util.stream.Collectors;
-import lombok.Data;
-import lombok.NonNull;
+import lombok.*;
 
 /**
  * Defines a Specification of facts to match for a subscription.
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
-@Data
 @JsonIgnoreProperties(ignoreUnknown = true)
+@EqualsAndHashCode(
+    of = {
+      "ns",
+      "type",
+      "mergedAggIds", // don't forget to change this one when removing the deprecated aggId
+      "meta",
+      "metaKeyExists",
+      "filterScript"
+    }) // in order to skip aggId field
 @SuppressWarnings({"java:S1874", "java:S1123"})
 public class FactSpec {
 
-  @NonNull @JsonProperty final String ns;
+  @NonNull @JsonProperty private String ns;
 
-  // type & aggId should probably be sets?
-  @JsonProperty String type = null;
+  // instead of a setter
+  public @NonNull FactSpec withNs(@NonNull String ns) {
+    this.ns = ns;
+    return this;
+  }
 
-  @JsonProperty int version = 0; // 0 means I don't care
+  @JsonProperty private String type = null;
 
-  @JsonProperty UUID aggId = null;
+  @JsonProperty private int version = 0; // 0 means I don't care
 
-  @JsonProperty final Map<String, String> meta = new LinkedHashMap<>();
+  @JsonProperty private UUID aggId = null;
+
+  @JsonProperty private final Set<UUID> aggIds = new LinkedHashSet<>();
+
+  @JsonProperty private final Map<String, String> meta = new LinkedHashMap<>();
 
   /** expresses the mandatory existence or absence of a key. Needs stable order. */
-  @JsonProperty final Map<String, Boolean> metaKeyExists = new LinkedHashMap<>();
+  @JsonProperty private final Map<String, Boolean> metaKeyExists = new LinkedHashMap<>();
 
-  @JsonProperty FilterScript filterScript = null;
+  @JsonProperty private FilterScript filterScript = null;
+
+  /**
+   * only to be used internally, will be removed again once aggId field is removed.
+   *
+   * @return
+   */
+  @Deprecated
+  public Set<UUID> mergedAggIds() {
+    Set<UUID> copy = new HashSet<>(aggIds);
+    // merge the single aggId for compatibility with clients < 0.9
+    if (aggId != null) copy.add(aggId);
+    return Collections.unmodifiableSet(copy);
+  }
+
+  public FactSpec aggId(@NonNull UUID aggId, UUID... otherAggIds) {
+    aggIds.add(aggId);
+    if (otherAggIds != null) {
+      aggIds.addAll(
+          Arrays.stream(otherAggIds)
+              .filter(Objects::nonNull)
+              .collect(Collectors.toList())); // toSet would potentially flip the order
+    }
+    return this;
+  }
 
   public FactSpec metaExists(@NonNull String k) {
     metaKeyExists.put(k, Boolean.TRUE);
@@ -109,9 +146,68 @@ public class FactSpec {
   }
 
   public FactSpec copy() {
-    FactSpec fs =
-        FactSpec.ns(ns).type(type).version(version).aggId(aggId).filterScript(filterScript);
+    FactSpec fs = FactSpec.ns(ns).type(type).version(version).filterScript(filterScript);
+    fs.aggId = aggId;
+    fs.aggIds.addAll(aggIds);
     fs.meta.putAll(meta);
     return fs;
+  }
+
+  public @NonNull String ns() {
+    return this.ns;
+  }
+
+  public String type() {
+    return this.type;
+  }
+
+  public int version() {
+    return this.version;
+  }
+
+  public Set<UUID> aggIds() {
+    return this.aggIds;
+  }
+
+  public Map<String, String> meta() {
+    return this.meta;
+  }
+
+  public Map<String, Boolean> metaKeyExists() {
+    return this.metaKeyExists;
+  }
+
+  /** overwrites type as there can be only one */
+  @JsonProperty
+  public FactSpec type(String type) {
+    this.type = type;
+    return this;
+  }
+
+  /** overwrites version as there can be only one */
+  @JsonProperty
+  public FactSpec version(int version) {
+    this.version = version;
+    return this;
+  }
+
+  public String toString() {
+    return "FactSpec(ns="
+        + this.ns()
+        + ", type="
+        + this.type()
+        + ", version="
+        + this.version()
+        + ", aggId="
+        + this.aggId
+        + ", aggIds="
+        + this.aggIds()
+        + ", meta="
+        + this.meta()
+        + ", metaKeyExists="
+        + this.metaKeyExists()
+        + ", filterScript="
+        + this.filterScript()
+        + ")";
   }
 }

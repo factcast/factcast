@@ -429,26 +429,33 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     }
 
     @VisibleForTesting
-    static FactSpec addOptionalFilterInfo(Method m, FactSpec spec) {
-      FilterByMetas metas = m.getAnnotation(FilterByMetas.class);
-      if (metas != null) {
-        for (FilterByMeta meta : metas.value()) {
-          spec = addFilterByMeta(spec, meta);
+    static FactSpec addOptionalFilterInfo(@NonNull Method m, @NonNull FactSpec spec) {
+      spec = filterByMeta(m, spec);
+      spec = filterByMetaExists(m, spec);
+      spec = filterByMetaDoesNotExist(m, spec);
+      spec = filterByAggIds(m, spec);
+      spec = filterByScript(m, spec);
+      return spec;
+    }
+
+    private static FactSpec filterByScript(@NonNull Method m, @NonNull FactSpec spec) {
+      FilterByScript filterByScript = m.getAnnotation(FilterByScript.class);
+      if (filterByScript != null)
+        spec = spec.filterScript(org.factcast.core.spec.FilterScript.js(filterByScript.value()));
+      return spec;
+    }
+
+    private static FactSpec filterByAggIds(@NonNull Method m, @NonNull FactSpec spec) {
+      FilterByAggId aggregateIds = m.getAnnotation(FilterByAggId.class);
+      if (aggregateIds != null) {
+        for (String aggId : aggregateIds.value()) {
+          spec = spec.aggId(UUID.fromString(aggId));
         }
       }
-      FilterByMeta meta = m.getAnnotation(FilterByMeta.class);
-      if (meta != null) spec = addFilterByMeta(spec, meta);
+      return spec;
+    }
 
-      FilterByMetaExistsContainer existsContainer =
-          m.getAnnotation(FilterByMetaExistsContainer.class);
-      if (existsContainer != null) {
-        for (FilterByMetaExists exists : existsContainer.value()) {
-          spec = addFilterByMetaExists(spec, exists);
-        }
-      }
-      FilterByMetaExists exists = m.getAnnotation(FilterByMetaExists.class);
-      if (exists != null) spec = addFilterByMetaExists(spec, exists);
-
+    private static FactSpec filterByMetaDoesNotExist(@NonNull Method m, @NonNull FactSpec spec) {
       FilterByMetaDoesNotExistContainer doesNotExistContainer =
           m.getAnnotation(FilterByMetaDoesNotExistContainer.class);
       if (doesNotExistContainer != null) {
@@ -458,35 +465,54 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       }
       FilterByMetaDoesNotExist attribute = m.getAnnotation(FilterByMetaDoesNotExist.class);
       if (attribute != null) spec = addFilterByMetaDoesNotExist(spec, attribute);
+      return spec;
+    }
 
-      FilterByAggId aggregateId = m.getAnnotation(FilterByAggId.class);
-      if (aggregateId != null) spec = spec.aggId(UUID.fromString(aggregateId.value()));
+    private static FactSpec filterByMetaExists(@NonNull Method m, @NonNull FactSpec spec) {
+      FilterByMetaExistsContainer existsContainer =
+          m.getAnnotation(FilterByMetaExistsContainer.class);
+      if (existsContainer != null) {
+        for (FilterByMetaExists exists : existsContainer.value()) {
+          spec = addFilterByMetaExists(spec, exists);
+        }
+      }
+      FilterByMetaExists exists = m.getAnnotation(FilterByMetaExists.class);
+      if (exists != null) spec = addFilterByMetaExists(spec, exists);
+      return spec;
+    }
 
-      FilterByScript filterByScript = m.getAnnotation(FilterByScript.class);
-      if (filterByScript != null)
-        spec = spec.filterScript(org.factcast.core.spec.FilterScript.js(filterByScript.value()));
-
+    private static FactSpec filterByMeta(@NonNull Method m, @NonNull FactSpec spec) {
+      FilterByMetas metas = m.getAnnotation(FilterByMetas.class);
+      if (metas != null) {
+        for (FilterByMeta meta : metas.value()) {
+          spec = addFilterByMeta(spec, meta);
+        }
+      }
+      FilterByMeta meta = m.getAnnotation(FilterByMeta.class);
+      if (meta != null) spec = addFilterByMeta(spec, meta);
       return spec;
     }
 
     private static FactSpec addFilterByMetaDoesNotExist(
-        FactSpec spec, FilterByMetaDoesNotExist notExists) {
+        @NonNull FactSpec spec, @NonNull FilterByMetaDoesNotExist notExists) {
       return spec.metaDoesNotExist(notExists.value());
     }
 
-    private static FactSpec addFilterByMetaExists(FactSpec spec, FilterByMetaExists attribute) {
+    private static FactSpec addFilterByMetaExists(
+        @NonNull FactSpec spec, @NonNull FilterByMetaExists attribute) {
       return spec.metaExists(attribute.value());
     }
 
-    private static FactSpec addFilterByMeta(FactSpec spec, FilterByMeta attribute) {
+    private static FactSpec addFilterByMeta(
+        @NonNull FactSpec spec, @NonNull FilterByMeta attribute) {
       return spec.meta(attribute.key(), attribute.value());
     }
 
-    private static Collection<CallTarget> getRelevantClasses(Projection p) {
+    private static Collection<CallTarget> getRelevantClasses(@NonNull Projection p) {
       return getRelevantClasses(new CallTarget(getRelevantClass(p.getClass()), o -> o));
     }
 
-    private static Collection<CallTarget> getRelevantClasses(CallTarget root) {
+    private static Collection<CallTarget> getRelevantClasses(@NonNull CallTarget root) {
       List<CallTarget> classes = new LinkedList<>();
       classes.add(root);
       Arrays.stream(root.clazz().getDeclaredClasses())

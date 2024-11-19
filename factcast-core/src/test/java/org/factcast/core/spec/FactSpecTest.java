@@ -20,9 +20,10 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.lang.reflect.Field;
+import java.util.*;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.event.Specification;
 import org.junit.jupiter.api.Assertions;
@@ -91,7 +92,48 @@ class FactSpecTest {
   @Test
   void testFactSpecAggId() {
     UUID id = UUID.randomUUID();
-    assertEquals(id, FactSpec.ns("x").aggId(id).aggId());
+    assertThat(FactSpec.ns("x").aggId(id).mergedAggIds()).containsOnly(id);
+  }
+
+  @Test
+  void testFactSpecMultipleAggIds() {
+    Set<UUID> ids = new HashSet<>();
+    UUID id1 = UUID.randomUUID();
+    UUID id2 = UUID.randomUUID();
+    UUID id3 = UUID.randomUUID();
+    ids.add(id1);
+    ids.add(id2);
+    ids.add(id3);
+    assertEquals(ids, FactSpec.ns("x").aggId(id1, id2, id3).mergedAggIds());
+  }
+
+  @SneakyThrows
+  @Test
+  void testFactSpecMultipleAggIdsCompatibility() {
+    Set<UUID> ids = new HashSet<>();
+    UUID id1 = UUID.randomUUID();
+    UUID id2 = UUID.randomUUID();
+    UUID id3 = UUID.randomUUID();
+    ids.add(id1);
+    ids.add(id2);
+    ids.add(id3);
+
+    FactSpec fs = FactSpec.ns("x").aggId(id2, id3);
+    Field aggIdField = FactSpec.class.getDeclaredField("aggId");
+    aggIdField.setAccessible(true);
+    aggIdField.set(fs, id1);
+    assertEquals(ids, FactSpec.ns("x").aggId(id1, id2, id3).mergedAggIds());
+  }
+
+  @Test
+  void testFactSpecEmptyAggIds() {
+    assertEquals(Collections.emptySet(), FactSpec.ns("x").mergedAggIds());
+  }
+
+  @Test
+  void testFactSpecSingleAggIds() {
+    @NonNull UUID id = UUID.randomUUID();
+    assertThat(FactSpec.ns("x").aggId(id).mergedAggIds()).hasSize(1).containsOnly(id);
   }
 
   @Test
@@ -102,10 +144,27 @@ class FactSpecTest {
     assertEquals("foo", script);
   }
 
+  @SneakyThrows
+  @Test
+  void testFactSpecEqualityCompatibility() {
+    UUID id2 = new UUID(0, 2);
+    UUID id1 = new UUID(0, 1);
+
+    FactSpec f1 = FactSpec.ns("x").aggId(id2);
+
+    Field aggIdField = FactSpec.class.getDeclaredField("aggId");
+    aggIdField.setAccessible(true);
+    aggIdField.set(f1, id1);
+
+    FactSpec f2 = FactSpec.ns("x").aggId(id1, id2);
+    assertEquals(f1, f2);
+    assertNotSame(f1, f2);
+  }
+
   @Test
   void testFactSpecEquality() {
-    FactSpec f1 = FactSpec.ns("x");
-    FactSpec f2 = FactSpec.ns("x");
+    FactSpec f1 = FactSpec.ns("x").aggId(new UUID(0, 2), new UUID(0, 1));
+    FactSpec f2 = FactSpec.ns("x").aggId(new UUID(0, 1), new UUID(0, 2));
     assertEquals(f1, f2);
     assertNotSame(f1, f2);
   }
@@ -198,7 +257,8 @@ class FactSpecTest {
 
   @Test
   void testCopy() {
-    FactSpec org = FactSpec.from(TestFactWithType.class);
+    FactSpec org =
+        FactSpec.from(TestFactWithType.class).aggId(UUID.randomUUID(), UUID.randomUUID());
     FactSpec copy = org.copy();
     assertThat(copy).isEqualTo(org);
     assertThat(copy).isNotSameAs(org);

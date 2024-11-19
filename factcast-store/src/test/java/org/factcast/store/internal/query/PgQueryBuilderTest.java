@@ -52,7 +52,8 @@ class PgQueryBuilderTest {
       var spec2 =
           FactSpec.ns("ns2").type("t2").meta("foo", "bar").metaExists("e").metaDoesNotExist("!e");
       var spec3 = FactSpec.ns("ns3");
-      var specs = Lists.newArrayList(spec1, spec2, spec3);
+      var spec4 = FactSpec.ns("ns4").aggId(new UUID(0, 1), new UUID(0, 2));
+      var specs = Lists.newArrayList(spec1, spec2, spec3, spec4);
       var underTest = new PgQueryBuilder(specs);
       var setter = underTest.createStatementSetter(serial);
       var ps = mock(PreparedStatement.class);
@@ -76,8 +77,15 @@ class PgQueryBuilderTest {
       // 3rd spec
       verify(ps).setString(++index, "{\"ns\": \"ns3\"}");
 
+      // 4th spec
+      verify(ps).setString(++index, "{\"ns\": \"ns4\"}");
+      verify(ps)
+          .setString(
+              ++index,
+              "{\"aggIds\": [\"00000000-0000-0000-0000-000000000001\",\"00000000-0000-0000-0000-000000000002\"]}");
+
       // ser>?
-      verify(ps).setLong(++index, 120);
+      verify(ps).setLong(++index, serial.get());
       verifyNoMoreInteractions(ps);
     }
 
@@ -142,7 +150,8 @@ class PgQueryBuilderTest {
     void happyPath() {
       var spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
       var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
-      var specs = Lists.newArrayList(spec1, spec2);
+      var spec3 = FactSpec.ns("ns3").type("t3").aggId(new UUID(0, 1), new UUID(0, 2));
+      var specs = Lists.newArrayList(spec1, spec2, spec3);
       var underTest = new PgQueryBuilder(specs);
       var sql = underTest.createStateSQL();
 
@@ -155,8 +164,13 @@ class PgQueryBuilderTest {
               + " ?::jsonb)";
       var expectedSpec2 =
           "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb)"; // no aggid
-      assertThat(sql).contains("( " + expectedSpec1 + " OR " + expectedSpec2 + " )");
-      assertThat(sql).endsWith(" ORDER BY ser DESC LIMIT 1");
+      var expectedSpec3 =
+          "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb)"; // no meta,
+      // multi
+      // aggid
+      assertThat(sql)
+          .contains("( " + expectedSpec1 + " OR " + expectedSpec2 + " OR " + expectedSpec3 + " )")
+          .endsWith(" ORDER BY ser DESC LIMIT 1");
     }
   }
 
@@ -169,7 +183,8 @@ class PgQueryBuilderTest {
     void happyPath() {
       var spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
       var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
-      var specs = Lists.newArrayList(spec1, spec2);
+      var spec3 = FactSpec.ns("ns3").type("t3").aggId(new UUID(0, 1), new UUID(0, 2));
+      var specs = Lists.newArrayList(spec1, spec2, spec3);
       var underTest = new PgQueryBuilder(specs);
       var sql = underTest.catchupSQL();
 
@@ -182,7 +197,12 @@ class PgQueryBuilderTest {
               + " ?::jsonb)";
       var expectedSpec2 =
           "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb)"; // no aggid
-      assertThat(sql).contains("( " + expectedSpec1 + " OR " + expectedSpec2 + " )");
+      var expectedSpec3 =
+          "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb)"; // no meta,
+      // multi
+      // aggid
+      assertThat(sql)
+          .contains("( " + expectedSpec1 + " OR " + expectedSpec2 + " OR " + expectedSpec3 + " )");
     }
   }
 }
