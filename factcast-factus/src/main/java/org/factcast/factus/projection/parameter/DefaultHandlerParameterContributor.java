@@ -16,17 +16,16 @@
 package org.factcast.factus.projection.parameter;
 
 import com.google.common.base.Predicates;
-import lombok.NonNull;
-import org.factcast.core.*;
-import org.factcast.factus.Meta;
-import org.factcast.factus.event.EventObject;
-import org.factcast.factus.event.*;
-import org.factcast.factus.projection.Projection;
-
-import javax.annotation.Nullable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
+import javax.annotation.Nullable;
+import lombok.NonNull;
+import org.factcast.core.*;
+import org.factcast.factus.Meta;
+import org.factcast.factus.event.*;
+import org.factcast.factus.event.EventObject;
+import org.factcast.factus.projection.Projection;
 
 @SuppressWarnings({"OptionalIsPresent", "java:S1872"})
 public class DefaultHandlerParameterContributor implements HandlerParameterContributor {

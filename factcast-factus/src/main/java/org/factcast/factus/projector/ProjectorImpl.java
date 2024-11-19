@@ -205,8 +205,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     return factId;
   }
 
-  private Map<FactSpecCoordinates, Dispatcher> discoverDispatchInfo(
-      Projection p) {
+  private Map<FactSpecCoordinates, Dispatcher> discoverDispatchInfo(Projection p) {
     Map<FactSpecCoordinates, Dispatcher> map = new HashMap<>();
 
     final HandlerParameterContributors c;

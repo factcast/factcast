@@ -91,8 +91,7 @@ class ProjectorImplTest {
       SimpleProjection projection = new SimpleProjection();
 
       DefaultProjectorFactory factory =
-          new DefaultProjectorFactory(
-              eventSerializer, new HandlerParameterContributors());
+          new DefaultProjectorFactory(eventSerializer, new HandlerParameterContributors());
       Projector<SimpleProjection> underTest = factory.create(projection);
 
       // RUN

@@ -362,8 +362,7 @@ class FactusImplTest {
       ManagedProjection m = Mockito.spy(new SimpleProjection());
       EventSerializer serializer = mock(EventSerializer.class);
       Projector<ManagedProjection> ea =
-          Mockito.spy(
-              new ProjectorImpl<>(m, serializer, new HandlerParameterContributors()));
+          Mockito.spy(new ProjectorImpl<>(m, serializer, new HandlerParameterContributors()));
       when(ehFactory.create(m)).thenReturn(ea);
 
       Fact f1 = Fact.builder().ns("test").type(SimpleEvent.class.getSimpleName()).build("{}");

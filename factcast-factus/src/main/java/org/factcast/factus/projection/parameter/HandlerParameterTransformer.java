@@ -15,15 +15,14 @@
  */
 package org.factcast.factus.projection.parameter;
 
-import lombok.NonNull;
-import org.factcast.core.Fact;
-import org.factcast.factus.event.EventSerializer;
-import org.factcast.factus.projection.Projection;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.stream.Collectors;
+import lombok.NonNull;
+import org.factcast.core.Fact;
+import org.factcast.factus.event.EventSerializer;
+import org.factcast.factus.projection.Projection;
 
 /**
  * facilitates {@link HandlerParameterContributor}s to create parameter array for a handler method

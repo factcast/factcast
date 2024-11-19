@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 import lombok.NonNull;
-import org.factcast.factus.event.EventSerializer;
 
 public class HandlerParameterContributors implements Iterable<HandlerParameterContributor> {
 
