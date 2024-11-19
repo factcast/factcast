@@ -494,12 +494,11 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
         throw new InvalidHandlerDefinition(
             "A valid namespace must be provided for a @OverrideNamespace annotation on " + m);
 
-      if (!forType.equals(OverrideNamespace.DISCOVER)) {
-        if (forType != eventPojoType)
+      if (forType != eventPojoType)
           throw new InvalidHandlerDefinition(
               "@OverrideNamespace defined for a different type than what the parameter suggests "
                   + m);
-      }
+
       return addOptionalFilterInfo(m, fromTargetType.withNs(newNs));
     }
 

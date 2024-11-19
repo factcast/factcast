@@ -15,9 +15,9 @@
  */
 package org.factcast.factus.projection;
 
-import java.lang.annotation.*;
-import java.util.*;
 import org.factcast.factus.event.EventObject;
+
+import java.lang.annotation.*;
 
 /** using default type is only allowed on Method */
 @Retention(RetentionPolicy.RUNTIME)
@@ -31,5 +31,4 @@ public @interface OverrideNamespace {
   Class<? extends EventObject> type() default DiscoverFromMethodParameter.class;
 
   abstract class DiscoverFromMethodParameter implements EventObject {}
-  ;
 }
