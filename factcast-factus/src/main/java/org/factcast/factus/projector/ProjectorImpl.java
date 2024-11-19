@@ -225,7 +225,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
                     @Nullable Type genericType,
                     @NonNull Set<Annotation> annotations) {
                   if (clazz == type)
-                    return (serializer, f, p) -> ((OpenTransactionAware<?>) p).runningTransaction();
+                    return (s, f, p) -> ((OpenTransactionAware<?>) p).runningTransaction();
                   else return null;
                 }
               });
