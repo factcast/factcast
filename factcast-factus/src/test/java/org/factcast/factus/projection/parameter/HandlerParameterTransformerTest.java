@@ -15,14 +15,11 @@
  */
 package org.factcast.factus.projection.parameter;
 
-import static org.mockito.Mockito.mock;
-
 import java.lang.reflect.Method;
 import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.factcast.factus.Handler;
-import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.projection.LocalManagedProjection;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -39,8 +36,7 @@ class HandlerParameterTransformerTest {
     @Test
     void failsWithProperMessage() {
       Method method = SomeProjection.class.getMethod("apply", new Class[] {Fact.class, Foo.class});
-      HandlerParameterContributors contribs =
-          new HandlerParameterContributors(mock(EventSerializer.class));
+      HandlerParameterContributors contribs = new HandlerParameterContributors();
       Assertions.assertThatThrownBy(() -> HandlerParameterTransformer.forCalling(method, contribs))
           .isInstanceOf(IllegalArgumentException.class)
           .hasMessageMatching(
