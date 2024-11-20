@@ -19,6 +19,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.*;
 import javax.annotation.Nullable;
+import javax.swing.*;
+
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import lombok.*;
 
 @Getter
@@ -37,7 +41,7 @@ public class FactHeader {
 
   @JsonProperty Set<UUID> aggIds = new HashSet<>();
 
-  @JsonProperty final Map<String, String> meta = new HashMap<>();
+  @JsonProperty final MetaMap meta = new MetaMap();
 
   @Nullable
   // could be null if not yet published to the factcast server. This should only happen in unit
