@@ -21,6 +21,7 @@ import static org.mockito.Mockito.*;
 import java.util.Map;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
+import org.factcast.core.FactMeta;
 import org.factcast.server.ui.plugins.JsonEntryMetaData;
 import org.factcast.server.ui.plugins.JsonPayload;
 import org.junit.jupiter.api.Nested;
@@ -46,7 +47,7 @@ class HeaderMetaFilterOptionsPluginTest {
 
     @Test
     void addsMetaFilterOption() {
-      when(fact.header().meta()).thenReturn(Map.of("foo", "bar", "_ts", "123"));
+      when(fact.header().meta()).thenReturn(FactMeta.of("foo", "bar", "_ts", "123"));
 
       underTest.doHandle(fact, payload, jsonEntryMetaData);
 

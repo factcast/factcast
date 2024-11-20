@@ -45,13 +45,26 @@ public class FactMeta implements Map<String, String> {
   @Delegate(excludes = ExcludeDelegationFromMultiMap.class)
   private final Multimap<String, String> backing = ArrayListMultimap.create();
 
+
+  public static FactMeta of(String k1, String v1) {
+    FactMeta ret = new FactMeta();
+    ret.put(k1,v1);
+    return ret;
+  }
+  public static FactMeta of(String k1, String v1, String k2, String v2) {
+    FactMeta ret = of(k1,v1);
+    ret.put(k2,v2);
+    return ret;
+  }
+
   @Override
   public String get(Object key) {
     return firstElement(backing.get((String) key));
   }
 
   @Override
-  public String put(String key, String value) {
+  public String put(String key, String value) { if(key.startsWith("_"))
+    backing.removeAll(key);
     backing.put(key, value);
     return null;
   }
@@ -78,6 +91,10 @@ public class FactMeta implements Map<String, String> {
   @NonNull
   public Set<Entry<String, String>> entrySet() {
     return new HashSet<>(backing.entries());
+  }
+
+  public void set(String k, @NonNull String v) {
+    backing.removeAll(k);backing.put(k,v);
   }
 
   private interface ExcludeDelegationFromMultiMap {
@@ -127,6 +144,8 @@ public class FactMeta implements Map<String, String> {
             JsonNode n = e.getValue();
             if (n.isNull()) ret.put(k, null);
             else if (n.isTextual()) ret.put(k, n.textValue());
+            else if (n.isNumber()) ret.put(k, n.numberValue().toString());
+            else if (n.isBoolean()) ret.put(k, Boolean.valueOf(n.booleanValue()).toString());
             else {
               if (!n.isArray()) throw new IllegalStateException("expected array but got " + n);
 
