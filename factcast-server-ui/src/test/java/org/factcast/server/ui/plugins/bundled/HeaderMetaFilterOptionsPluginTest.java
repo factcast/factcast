@@ -18,7 +18,6 @@ package org.factcast.server.ui.plugins.bundled;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.util.Map;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.factcast.core.FactMeta;

@@ -45,15 +45,15 @@ public class FactMeta implements Map<String, String> {
   @Delegate(excludes = ExcludeDelegationFromMultiMap.class)
   private final Multimap<String, String> backing = ArrayListMultimap.create();
 
-
   public static FactMeta of(String k1, String v1) {
     FactMeta ret = new FactMeta();
-    ret.put(k1,v1);
+    ret.put(k1, v1);
     return ret;
   }
+
   public static FactMeta of(String k1, String v1, String k2, String v2) {
-    FactMeta ret = of(k1,v1);
-    ret.put(k2,v2);
+    FactMeta ret = of(k1, v1);
+    ret.put(k2, v2);
     return ret;
   }
 
@@ -63,8 +63,8 @@ public class FactMeta implements Map<String, String> {
   }
 
   @Override
-  public String put(String key, String value) { if(key.startsWith("_"))
-    backing.removeAll(key);
+  public String put(String key, String value) {
+    if (key.startsWith("_")) backing.removeAll(key);
     backing.put(key, value);
     return null;
   }
@@ -94,7 +94,8 @@ public class FactMeta implements Map<String, String> {
   }
 
   public void set(String k, @NonNull String v) {
-    backing.removeAll(k);backing.put(k,v);
+    backing.removeAll(k);
+    backing.put(k, v);
   }
 
   private interface ExcludeDelegationFromMultiMap {
