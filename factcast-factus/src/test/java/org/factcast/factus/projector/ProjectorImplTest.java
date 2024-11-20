@@ -835,30 +835,31 @@ class ProjectorImplTest {
     }
   }
 
-  @Nested class WhenDiscoveringHandlers{
-    @Specification(ns="x")
-    class E implements EventObject{
+  @Nested
+  class WhenDiscoveringHandlers {
+    @Specification(ns = "x")
+    class E implements EventObject {
       @Override
       public Set<UUID> aggregateIds() {
         return new HashSet<>();
       }
     }
-    class P implements Projection{
+
+    class P implements Projection {
       @Handler
-      void apply(E e){}
+      void apply(E e) {}
     }
 
     @Test
-    void doesNotCacheEventSerializer(){
+    void doesNotCacheEventSerializer() {
       EventSerializer e1 = mock(EventSerializer.class);
       EventSerializer e2 = mock(EventSerializer.class);
 
-      new ProjectorImpl<>(new P(),e1); //discover & cache
-      new ProjectorImpl<>(new P(),e2).apply(Lists.newArrayList(Fact.buildFrom(new E()).build()));
+      new ProjectorImpl<>(new P(), e1); // discover & cache
+      new ProjectorImpl<>(new P(), e2).apply(Lists.newArrayList(Fact.buildFrom(new E()).build()));
 
-      verify(e1,never()).deserialize(same(E.class),anyString());
-      verify(e2).deserialize(same(E.class),anyString());
-
+      verify(e1, never()).deserialize(same(E.class), anyString());
+      verify(e2).deserialize(same(E.class), anyString());
     }
   }
 }

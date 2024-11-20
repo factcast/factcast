@@ -42,8 +42,7 @@ import org.junit.jupiter.api.Test;
 class DefaultHandlerParameterContributorTest {
   @Test
   void providesFSP() {
-    DefaultHandlerParameterContributor undertest =
-        new DefaultHandlerParameterContributor();
+    DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
     HandlerParameterProvider provider =
         undertest.providerFor(FactStreamPosition.class, null, new HashSet<>());
 
@@ -52,7 +51,7 @@ class DefaultHandlerParameterContributorTest {
     TestProjection p = mock(TestProjection.class);
     when(p.factStreamPosition()).thenReturn(fsp);
 
-    Assertions.assertThat(provider.apply(mock(EventSerializer.class),fact, p)).isEqualTo(fsp);
+    Assertions.assertThat(provider.apply(mock(EventSerializer.class), fact, p)).isEqualTo(fsp);
   }
 
   @Test
@@ -66,8 +65,7 @@ class DefaultHandlerParameterContributorTest {
             .filter(me -> me.getName().equals("apply"))
             .findFirst()
             .get();
-    DefaultHandlerParameterContributor undertest =
-        new DefaultHandlerParameterContributor();
+    DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
     HandlerParameterProvider provider =
         undertest.providerFor(
             m.getParameterTypes()[0],
@@ -76,7 +74,7 @@ class DefaultHandlerParameterContributorTest {
     Assertions.assertThat(provider).isNotNull();
     Fact fact = Fact.builder().meta("narf", "poit").buildWithoutPayload();
     TestProjection p = mock(TestProjection.class);
-    Assertions.assertThat(provider.apply(mock(EventSerializer.class),fact, p)).isEqualTo("poit");
+    Assertions.assertThat(provider.apply(mock(EventSerializer.class), fact, p)).isEqualTo("poit");
   }
 
   @SuppressWarnings("unchecked")
@@ -91,8 +89,7 @@ class DefaultHandlerParameterContributorTest {
             .filter(me -> me.getName().equals("apply"))
             .findFirst()
             .get();
-    DefaultHandlerParameterContributor undertest =
-        new DefaultHandlerParameterContributor();
+    DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
     HandlerParameterProvider provider =
         undertest.providerFor(
             m.getParameterTypes()[0],
@@ -101,7 +98,8 @@ class DefaultHandlerParameterContributorTest {
     Assertions.assertThat(provider).isNotNull();
     Fact fact = Fact.builder().meta("narf", "poit").buildWithoutPayload();
     TestProjection p = mock(TestProjection.class);
-    Assertions.assertThat((Optional) provider.apply(mock(EventSerializer.class),fact, p)).hasValue("poit");
+    Assertions.assertThat((Optional) provider.apply(mock(EventSerializer.class), fact, p))
+        .hasValue("poit");
   }
 
   @Test
@@ -115,8 +113,7 @@ class DefaultHandlerParameterContributorTest {
             .filter(me -> me.getName().equals("apply"))
             .findFirst()
             .get();
-    DefaultHandlerParameterContributor undertest =
-        new DefaultHandlerParameterContributor();
+    DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
     HandlerParameterProvider provider =
         undertest.providerFor(
             m.getParameterTypes()[0],
@@ -125,7 +122,8 @@ class DefaultHandlerParameterContributorTest {
     Assertions.assertThat(provider).isNotNull();
     Fact fact = Fact.builder().meta("no-exactly-narf", "poit").buildWithoutPayload();
     TestProjection p = mock(TestProjection.class);
-    Assertions.assertThat(((Optional) provider.apply(mock(EventSerializer.class),fact, p))).isEmpty();
+    Assertions.assertThat(((Optional) provider.apply(mock(EventSerializer.class), fact, p)))
+        .isEmpty();
   }
 
   @Test
@@ -139,8 +137,7 @@ class DefaultHandlerParameterContributorTest {
             .filter(me -> me.getName().equals("apply"))
             .findFirst()
             .get();
-    DefaultHandlerParameterContributor undertest =
-        new DefaultHandlerParameterContributor();
+    DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
     HandlerParameterProvider provider =
         undertest.providerFor(
             m.getParameterTypes()[0],
@@ -149,7 +146,7 @@ class DefaultHandlerParameterContributorTest {
     Assertions.assertThat(provider).isNotNull();
     Fact fact = Fact.builder().meta("no-exactly-narf", "poit").buildWithoutPayload();
     TestProjection p = mock(TestProjection.class);
-    Assertions.assertThat((provider.apply(mock(EventSerializer.class),fact, p))).isNull();
+    Assertions.assertThat((provider.apply(mock(EventSerializer.class), fact, p))).isNull();
   }
 
   @Test
@@ -165,8 +162,7 @@ class DefaultHandlerParameterContributorTest {
             .filter(me -> me.getName().equals("apply"))
             .findFirst()
             .get();
-    DefaultHandlerParameterContributor undertest =
-        new DefaultHandlerParameterContributor();
+    DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
     Class<?> type = m.getParameterTypes()[0];
     Type genericType = m.getGenericParameterTypes()[0];
     HashSet<Annotation> annotations = Sets.newHashSet(m.getParameterAnnotations()[0]);
@@ -190,8 +186,7 @@ class DefaultHandlerParameterContributorTest {
             .filter(me -> me.getName().equals("apply"))
             .findFirst()
             .get();
-    DefaultHandlerParameterContributor undertest =
-        new DefaultHandlerParameterContributor();
+    DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
     Class<?> type = m.getParameterTypes()[0];
     Type genericType = m.getGenericParameterTypes()[0];
     HashSet<Annotation> annotations = Sets.newHashSet(m.getParameterAnnotations()[0]);
@@ -214,8 +209,7 @@ class DefaultHandlerParameterContributorTest {
             .filter(me -> me.getName().equals("apply"))
             .findFirst()
             .get();
-    DefaultHandlerParameterContributor undertest =
-        new DefaultHandlerParameterContributor();
+    DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
     Class<?> type = m.getParameterTypes()[0];
     Type genericType = m.getGenericParameterTypes()[0];
     HashSet<Annotation> annotations = Sets.newHashSet(m.getParameterAnnotations()[0]);
@@ -237,8 +231,7 @@ class DefaultHandlerParameterContributorTest {
             .filter(me -> me.getName().equals("apply"))
             .findFirst()
             .get();
-    DefaultHandlerParameterContributor undertest =
-        new DefaultHandlerParameterContributor();
+    DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
     Class<?> type = m.getParameterTypes()[0];
     Type genericType = m.getGenericParameterTypes()[0];
     HashSet<Annotation> annotations = Sets.newHashSet(m.getParameterAnnotations()[0]);
@@ -260,8 +253,7 @@ class DefaultHandlerParameterContributorTest {
             .filter(me -> me.getName().equals("apply"))
             .findFirst()
             .get();
-    DefaultHandlerParameterContributor undertest =
-        new DefaultHandlerParameterContributor();
+    DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
     Class<?> type = m.getParameterTypes()[0];
     Type genericType = m.getGenericParameterTypes()[0];
     HashSet<Annotation> annotations = Sets.newHashSet(m.getParameterAnnotations()[0]);

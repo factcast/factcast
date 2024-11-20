@@ -15,7 +15,6 @@
  */
 package org.factcast.factus.projection.parameter;
 
-import java.util.function.BiFunction;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.factus.event.EventSerializer;
