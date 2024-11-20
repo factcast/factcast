@@ -34,7 +34,7 @@ class FactMetaTest {
 
     @SneakyThrows
     @Test
-    void matchesExcpectation() {
+    void matchesExpectation() {
       String json =
           "{\"someString\":\"oink\",\"meta\":{\"single\":\"value\",\"someNull\":null,\"otherNull\":[null,null],\"foo\":[\"bar\",\"baz\"]}}";
       TestMeta deser = new ObjectMapper().readerFor(TestMeta.class).readValue(json);
@@ -54,7 +54,7 @@ class FactMetaTest {
 
     @SneakyThrows
     @Test
-    void matchesExcpectation() {
+    void matchesExpectation() {
       String json =
           "{\"someString\":\"oink\",\"meta\":{\"single\":\"value\",\"someNull\":null,\"otherNull\":[null,null],\"foo\":[\"bar\",\"baz\"]}}";
       String ser = new ObjectMapper().writeValueAsString(new ExampleMeta());
