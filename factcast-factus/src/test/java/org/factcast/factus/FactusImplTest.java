@@ -865,7 +865,6 @@ class FactusImplTest {
       factObserver.flush();
       // ... and the fact stream position should be updated as well
       verify(subscribedProjection).factStreamPosition(FactStreamPosition.of(factId, 12));
-      ;
 
       factObserver.onFastForward(ffwdPosition);
 
