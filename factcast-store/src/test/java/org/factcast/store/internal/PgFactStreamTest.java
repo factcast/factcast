@@ -116,7 +116,7 @@ public class PgFactStreamTest {
       underTest.close();
       underTest.fastForward(request);
 
-      verifyNoInteractions(subscription);
+      verifyNoInteractions(pipeline);
     }
 
     @Test
@@ -125,7 +125,7 @@ public class PgFactStreamTest {
 
       underTest.fastForward(request);
 
-      verifyNoInteractions(subscription);
+      verifyNoInteractions(pipeline);
     }
 
     @Test
@@ -137,7 +137,7 @@ public class PgFactStreamTest {
 
       underTest.fastForward(request);
 
-      verifyNoInteractions(subscription);
+      verifyNoInteractions(pipeline);
     }
 
     @Test
@@ -164,7 +164,20 @@ public class PgFactStreamTest {
 
       underTest.fastForward(request);
 
-      verifyNoInteractions(subscription);
+      verifyNoInteractions(pipeline);
+    }
+
+    @Test
+    void noFfwdIfTargetBehindConsumed() {
+      UUID uuid = UUID.randomUUID();
+      when(request.startingAfter()).thenReturn(Optional.empty());
+      when(ffwdTarget.targetId()).thenReturn(UUID.randomUUID());
+      when(ffwdTarget.targetSer()).thenReturn(5L);
+      underTest.serial().set(6);
+
+      underTest.fastForward(request);
+
+      verifyNoInteractions(pipeline);
     }
 
     @Test

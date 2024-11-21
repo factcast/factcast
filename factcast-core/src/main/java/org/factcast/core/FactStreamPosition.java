@@ -43,4 +43,15 @@ public class FactStreamPosition {
     if (uuid == null) return null;
     else return FactStreamPosition.of(uuid, -1L);
   }
+
+  /**
+   * Checks if fsp is after the current one. Its considered being after if the `factStreamPosition`
+   * is null (no FSP yet) or when the serial of the current FSP is greater than the one given.
+   *
+   * @param factStreamPosition
+   * @return
+   */
+  public boolean isAfter(@Nullable FactStreamPosition factStreamPosition) {
+    return factStreamPosition == null || serial > factStreamPosition.serial();
+  }
 }
