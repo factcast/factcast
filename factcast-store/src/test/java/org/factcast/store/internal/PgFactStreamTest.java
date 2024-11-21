@@ -114,18 +114,18 @@ public class PgFactStreamTest {
     void noFfwdNotConnected() {
 
       underTest.close();
-      underTest.fastForward(request);
+      underTest.fastForward(request, serial);
 
-      verifyNoInteractions(subscription);
+      verifyNoInteractions(pipeline);
     }
 
     @Test
     void noFfwdFromScratch() {
       when(request.startingAfter()).thenReturn(Optional.empty());
 
-      underTest.fastForward(request);
+      underTest.fastForward(request, serial);
 
-      verifyNoInteractions(subscription);
+      verifyNoInteractions(pipeline);
     }
 
     @Test
@@ -135,9 +135,9 @@ public class PgFactStreamTest {
       when(idToSerMapper.retrieve(uuid)).thenReturn(10L);
       when(ffwdTarget.targetId()).thenReturn(null);
 
-      underTest.fastForward(request);
+      underTest.fastForward(request, serial);
 
-      verifyNoInteractions(subscription);
+      verifyNoInteractions(pipeline);
     }
 
     @Test
@@ -149,7 +149,7 @@ public class PgFactStreamTest {
       when(ffwdTarget.targetId()).thenReturn(target.factId());
       when(ffwdTarget.targetSer()).thenReturn(target.serial());
 
-      underTest.fastForward(request);
+      underTest.fastForward(request, serial);
 
       verify(pipeline).process(Signal.of(target));
     }
@@ -162,9 +162,22 @@ public class PgFactStreamTest {
       when(ffwdTarget.targetId()).thenReturn(UUID.randomUUID());
       when(ffwdTarget.targetSer()).thenReturn(9L);
 
-      underTest.fastForward(request);
+      underTest.fastForward(request, serial);
 
-      verifyNoInteractions(subscription);
+      verifyNoInteractions(pipeline);
+    }
+
+    @Test
+    void noFfwdIfTargetBehindConsumed() {
+      UUID uuid = UUID.randomUUID();
+      when(request.startingAfter()).thenReturn(Optional.empty());
+      when(ffwdTarget.targetId()).thenReturn(UUID.randomUUID());
+      when(ffwdTarget.targetSer()).thenReturn(5L);
+      when(serial.get()).thenReturn(6L);
+
+      underTest.fastForward(request, serial);
+
+      verifyNoInteractions(pipeline);
     }
 
     @Test
@@ -176,7 +189,7 @@ public class PgFactStreamTest {
       when(ffwdTarget.targetId()).thenReturn(target.factId());
       when(ffwdTarget.targetSer()).thenReturn(target.serial());
 
-      underTest.fastForward(request);
+      underTest.fastForward(request, serial);
 
       verify(pipeline).process(Signal.of(target));
     }

@@ -118,7 +118,7 @@ public class PgFactStream {
       catchup();
     }
 
-    fastForward(request);
+    fastForward(request, serial);
 
     // propagate catchup
     if (isConnected()) {
@@ -168,7 +168,7 @@ public class PgFactStream {
   }
 
   @VisibleForTesting
-  void fastForward(SubscriptionRequest request) {
+  void fastForward(SubscriptionRequest request, AtomicLong serial) {
     if (isConnected()) {
 
       long startedSer = 0;
@@ -182,7 +182,7 @@ public class PgFactStream {
       UUID targetId = ffwdTarget.targetId();
       long targetSer = ffwdTarget.targetSer();
 
-      if (targetId != null && (targetSer > startedSer)) {
+      if (targetId != null && (targetSer > startedSer) && serial.get() < targetSer) {
         pipeline.process(Signal.of(FactStreamPosition.of(targetId, targetSer)));
       }
     }
