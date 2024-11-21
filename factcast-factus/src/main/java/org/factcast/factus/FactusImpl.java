@@ -398,13 +398,14 @@ public class FactusImpl implements Factus {
           public void onFastForward(@NonNull FactStreamPosition factIdToFfwdTo) {
             flush();
 
-            if (factIdToFfwdTo.isAfter(positionOfLastFactApplied.get())) {
+            FactStreamPosition factStreamPosition = positionOfLastFactApplied.get();
+            if (factIdToFfwdTo.isAfter(factStreamPosition)) {
               if (projection instanceof FactStreamPositionAware) {
                 ((FactStreamPositionAware) projection).factStreamPosition(factIdToFfwdTo);
               }
 
               // only persist ffwd if we ever had a state or applied facts in this catchup
-              if (stateOrNull != null) {
+              if (stateOrNull != null || factStreamPosition != null) {
                 positionOfLastFactApplied.set(factIdToFfwdTo);
               }
             }
