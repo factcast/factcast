@@ -234,7 +234,9 @@ public class FactusImpl implements Factus {
 
           @Override
           public void onFastForward(@NonNull FactStreamPosition factIdToFfwdTo) {
-            subscribedProjection.factStreamPosition(factIdToFfwdTo);
+            if (factIdToFfwdTo.isAfter(lastPositionApplied)) {
+              subscribedProjection.factStreamPosition(factIdToFfwdTo);
+            }
           }
         };
 
@@ -395,13 +397,17 @@ public class FactusImpl implements Factus {
           @Override
           public void onFastForward(@NonNull FactStreamPosition factIdToFfwdTo) {
             flush();
-            if (projection instanceof FactStreamPositionAware) {
-              ((FactStreamPositionAware) projection).factStreamPosition(factIdToFfwdTo);
-            }
 
-            // only persist ffwd if we ever had a state or applied facts in this catchup
-            if (stateOrNull != null || positionOfLastFactApplied.get() != null) {
-              positionOfLastFactApplied.set(factIdToFfwdTo);
+            FactStreamPosition factStreamPosition = positionOfLastFactApplied.get();
+            if (factIdToFfwdTo.isAfter(factStreamPosition)) {
+              if (projection instanceof FactStreamPositionAware) {
+                ((FactStreamPositionAware) projection).factStreamPosition(factIdToFfwdTo);
+              }
+
+              // only persist ffwd if we ever had a state or applied facts in this catchup
+              if (stateOrNull != null || factStreamPosition != null) {
+                positionOfLastFactApplied.set(factIdToFfwdTo);
+              }
             }
           }
         };

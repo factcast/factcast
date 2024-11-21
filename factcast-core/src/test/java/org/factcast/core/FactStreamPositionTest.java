@@ -78,4 +78,31 @@ class FactStreamPositionTest {
       Assertions.assertThat(actual.serial()).isSameAs(-1L);
     }
   }
+
+  @Nested
+  class WhenIsAfter {
+
+    @Test
+    void isAfter() {
+      FactStreamPosition fsp = FactStreamPosition.of(UUID.randomUUID(), 42);
+      assertTrue(FactStreamPosition.of(UUID.randomUUID(), 43).isAfter(fsp));
+    }
+
+    @Test
+    void isAfterNull() {
+      assertTrue(FactStreamPosition.of(UUID.randomUUID(), 43).isAfter(null));
+    }
+
+    @Test
+    void isNotAfter() {
+      FactStreamPosition fsp = FactStreamPosition.of(UUID.randomUUID(), 42);
+      assertFalse(FactStreamPosition.of(UUID.randomUUID(), 41).isAfter(fsp));
+    }
+
+    @Test
+    void isEqual() {
+      FactStreamPosition fsp = FactStreamPosition.of(UUID.randomUUID(), 42);
+      assertFalse(fsp.isAfter(fsp));
+    }
+  }
 }
