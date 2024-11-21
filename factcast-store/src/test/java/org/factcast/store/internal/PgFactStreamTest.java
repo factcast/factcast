@@ -114,7 +114,7 @@ public class PgFactStreamTest {
     void noFfwdNotConnected() {
 
       underTest.close();
-      underTest.fastForward(request, serial);
+      underTest.fastForward(request);
 
       verifyNoInteractions(pipeline);
     }
@@ -123,7 +123,7 @@ public class PgFactStreamTest {
     void noFfwdFromScratch() {
       when(request.startingAfter()).thenReturn(Optional.empty());
 
-      underTest.fastForward(request, serial);
+      underTest.fastForward(request);
 
       verifyNoInteractions(pipeline);
     }
@@ -135,7 +135,7 @@ public class PgFactStreamTest {
       when(idToSerMapper.retrieve(uuid)).thenReturn(10L);
       when(ffwdTarget.targetId()).thenReturn(null);
 
-      underTest.fastForward(request, serial);
+      underTest.fastForward(request);
 
       verifyNoInteractions(pipeline);
     }
@@ -149,7 +149,7 @@ public class PgFactStreamTest {
       when(ffwdTarget.targetId()).thenReturn(target.factId());
       when(ffwdTarget.targetSer()).thenReturn(target.serial());
 
-      underTest.fastForward(request, serial);
+      underTest.fastForward(request);
 
       verify(pipeline).process(Signal.of(target));
     }
@@ -162,7 +162,7 @@ public class PgFactStreamTest {
       when(ffwdTarget.targetId()).thenReturn(UUID.randomUUID());
       when(ffwdTarget.targetSer()).thenReturn(9L);
 
-      underTest.fastForward(request, serial);
+      underTest.fastForward(request);
 
       verifyNoInteractions(pipeline);
     }
@@ -173,9 +173,9 @@ public class PgFactStreamTest {
       when(request.startingAfter()).thenReturn(Optional.empty());
       when(ffwdTarget.targetId()).thenReturn(UUID.randomUUID());
       when(ffwdTarget.targetSer()).thenReturn(5L);
-      when(serial.get()).thenReturn(6L);
+      underTest.serial().set(6);
 
-      underTest.fastForward(request, serial);
+      underTest.fastForward(request);
 
       verifyNoInteractions(pipeline);
     }
@@ -189,7 +189,7 @@ public class PgFactStreamTest {
       when(ffwdTarget.targetId()).thenReturn(target.factId());
       when(ffwdTarget.targetSer()).thenReturn(target.serial());
 
-      underTest.fastForward(request, serial);
+      underTest.fastForward(request);
 
       verify(pipeline).process(Signal.of(target));
     }

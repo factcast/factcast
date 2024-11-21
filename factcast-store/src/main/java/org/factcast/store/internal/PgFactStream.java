@@ -118,7 +118,7 @@ public class PgFactStream {
       catchup();
     }
 
-    fastForward(request, serial);
+    fastForward(request);
 
     // propagate catchup
     if (isConnected()) {
@@ -168,7 +168,7 @@ public class PgFactStream {
   }
 
   @VisibleForTesting
-  void fastForward(SubscriptionRequest request, AtomicLong serial) {
+  void fastForward(SubscriptionRequest request) {
     if (isConnected()) {
 
       long startedSer = 0;
