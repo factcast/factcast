@@ -34,6 +34,7 @@
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-test</artifactId>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
