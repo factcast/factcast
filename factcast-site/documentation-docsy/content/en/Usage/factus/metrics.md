@@ -4,7 +4,7 @@ type: docs
 weight: 1020
 ---
 
-Like [the FactCast server]({{< ref "/Setup/metrics.md" >}} "factcast server metrics"), also Factus makes use
+Like [the FactCast server]({{< ref "/Ops/metrics.md" >}} "factcast server metrics"), also Factus makes use
 of [micrometer.io](https://micrometer.io/) metrics.
 
 ### Metric namespaces and their organization

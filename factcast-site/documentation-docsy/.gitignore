@@ -5,3 +5,6 @@ tmp/
 tech-doc-hugo
 .hugo_build.lock
 
+#for now
+static/example-registry
+
