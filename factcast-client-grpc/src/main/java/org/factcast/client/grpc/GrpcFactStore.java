@@ -488,10 +488,10 @@ public class GrpcFactStore implements FactStore {
 
   @Override
   public Long firstSerialAfter(@NonNull LocalDate date) {
-    //TODO Implement this correctly
+    // TODO Implement this correctly
     log.trace("fetching first serial after {}", date);
     return callAndHandle(
-            () -> converter.fromProto(stubs.blocking().lastSerialBefore(converter.toProto(date))));
+        () -> converter.fromProto(stubs.blocking().lastSerialBefore(converter.toProto(date))));
   }
 
   @Override

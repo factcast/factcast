@@ -16,6 +16,12 @@
 package org.factcast.server.ui.adapter;
 
 import io.micrometer.core.annotation.Timed;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -33,13 +39,6 @@ import org.factcast.server.ui.id.IdQueryBean;
 import org.factcast.server.ui.metrics.UiMetrics;
 import org.factcast.server.ui.port.FactRepository;
 import org.factcast.server.ui.security.SecurityService;
-
-import javax.annotation.Nullable;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.*;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 @Slf4j
 @Timed(value = UiMetrics.TIMER_METRIC_NAME)
@@ -105,7 +104,8 @@ public class FactRepositoryImpl implements FactRepository {
     Set<FactSpec> specs = securityService.filterReadable(bean.createFactSpecs());
 
     Long untilSerial = Optional.ofNullable(bean.getTo()).map(BigDecimal::longValue).orElse(null);
-    ListObserver obs = new ListObserver(untilSerial, bean.getLimitOrDefault(), bean.getOffsetOrDefault());
+    ListObserver obs =
+        new ListObserver(untilSerial, bean.getLimitOrDefault(), bean.getOffsetOrDefault());
     SpecBuilder sr = SubscriptionRequest.catchup(specs);
     long ser = Optional.ofNullable(bean.getFrom()).orElse(BigDecimal.ZERO).longValue();
     SubscriptionRequest request = null;
