@@ -5,6 +5,7 @@
     "@vaadin-component-factory/vcf-popup": "24.0.3",
     "@vaadin/bundles": "24.5.4",
     "@vaadin/common-frontend": "0.0.19",
+    "@vaadin/cookie-consent": "24.5.4",
     "@vaadin/polymer-legacy-adapter": "24.5.4",
     "@vaadin/react-components": "24.5.4",
     "@vaadin/vaadin-development-mode-detector": "2.0.7",
@@ -63,7 +64,8 @@
     "@vaadin/react-components": "$@vaadin/react-components",
     "react-dom": "$react-dom",
     "react-router-dom": "$react-router-dom",
-    "react": "$react"
+    "react": "$react",
+    "@vaadin/cookie-consent": "$@vaadin/cookie-consent"
   },
   "vaadin": {
     "dependencies": {
@@ -71,6 +73,7 @@
       "@vaadin-component-factory/vcf-popup": "24.0.3",
       "@vaadin/bundles": "24.5.4",
       "@vaadin/common-frontend": "0.0.19",
+      "@vaadin/cookie-consent": "24.5.4",
       "@vaadin/polymer-legacy-adapter": "24.5.4",
       "@vaadin/react-components": "24.5.4",
       "@vaadin/vaadin-development-mode-detector": "2.0.7",
@@ -109,7 +112,7 @@
       "workbox-core": "7.3.0",
       "workbox-precaching": "7.3.0"
     },
-    "hash": "123b50b0f8a3b5d2d21c7c3a784a36ce0f64efc0737a72d740cbd2924b4a6df2"
+    "hash": "43f9a6ea22543a4e8fdca09b1cbae233adcc90a0291b5d9414818239dbacdc44"
   },
   "type": "module"
 }
