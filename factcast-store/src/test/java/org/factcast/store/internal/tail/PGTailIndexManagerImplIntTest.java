@@ -20,25 +20,24 @@ import static org.factcast.store.internal.PgConstants.*;
 
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.stream.*;
+import java.util.stream.Collectors;
 import javax.sql.DataSource;
 import lombok.SneakyThrows;
-import net.javacrumbs.shedlock.core.AbstractSimpleLock;
-import net.javacrumbs.shedlock.core.LockProvider;
+import net.javacrumbs.shedlock.core.*;
+import net.javacrumbs.shedlock.spring.annotation.LockProviderToUse;
 import nl.altindag.log.LogCaptor;
 import org.factcast.core.store.FactStore;
-import org.factcast.store.internal.PgTestConfiguration;
+import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.*;
+import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlConfig;
+import org.springframework.test.context.jdbc.*;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ContextConfiguration(
@@ -167,6 +166,7 @@ class PGTailIndexManagerImplIntTest {
   }
 
   @Configuration
+  @LockProviderToUse("noLockProvider")
   static class TestConfig {
     @Bean
     @Primary
@@ -177,6 +177,29 @@ class PGTailIndexManagerImplIntTest {
                 @Override
                 public void doUnlock() {}
               });
+    }
+
+    @Bean
+    @Primary
+    // ShedLock needs a method annotated with @Schedule... to be also annotated with
+    // LockProviderToUse.
+    // As we cannot change the production code, we're subclassing the PGTailIndexManagerImpl and
+    // replace the usage withing integration tests with @Primary
+    public PGTailIndexManager managerWIthLockingDisabled(
+        PgConnectionSupplier pgConnectionSupplier,
+        StoreConfigurationProperties props,
+        PgMetrics pgMetrics) {
+      return new NoLockPGTailIndexManager(pgConnectionSupplier, props, pgMetrics);
+    }
+
+    @LockProviderToUse("noLockProvider")
+    static class NoLockPGTailIndexManager extends PGTailIndexManagerImpl {
+      public NoLockPGTailIndexManager(
+          PgConnectionSupplier pgConnectionSupplier,
+          StoreConfigurationProperties props,
+          PgMetrics pgMetrics) {
+        super(pgConnectionSupplier, props, pgMetrics);
+      }
     }
   }
 }
