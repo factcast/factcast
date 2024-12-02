@@ -32,6 +32,10 @@ import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.server.StreamResource;
 import jakarta.annotation.security.PermitAll;
+import java.io.ByteArrayInputStream;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
@@ -47,11 +51,6 @@ import org.factcast.server.ui.views.MainLayout;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.vaadin.olli.FileDownloadWrapper;
-
-import java.io.ByteArrayInputStream;
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
 
 @Route(value = "ui/full", layout = MainLayout.class)
 @RouteAlias(value = "", layout = MainLayout.class)
@@ -187,16 +186,16 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
 
   private void updateFrom() {
     Optional.ofNullable(since.getValue())
-            .ifPresentOrElse(
-                    value -> from.setValue(BigDecimal.valueOf(repo.lastSerialBefore(value).orElse(0))),
-                    () -> from.setValue(null));
+        .ifPresentOrElse(
+            value -> from.setValue(BigDecimal.valueOf(repo.lastSerialBefore(value).orElse(0))),
+            () -> from.setValue(null));
   }
 
   private void updateTo() {
     Optional.ofNullable(until.getValue())
-            .flatMap(repo::firstSerialAfter)
-            .map(BigDecimal::valueOf)
-            .ifPresentOrElse(to::setValue, () -> to.setValue(null));
+        .flatMap(repo::firstSerialAfter)
+        .map(BigDecimal::valueOf)
+        .ifPresentOrElse(to::setValue, () -> to.setValue(null));
   }
 
   @NoCoverageReportToBeGenerated
@@ -227,17 +226,17 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     private VerticalLayout getFromVerticalLayout() {
       Button latestSerial = new Button("Latest serial");
       latestSerial.addClickListener(
-              event -> {
-                from.setValue(BigDecimal.valueOf(repo.latestSerial()));
-                fromSerialHelperOverlay.hide();
-              });
+          event -> {
+            from.setValue(BigDecimal.valueOf(repo.latestSerial()));
+            fromSerialHelperOverlay.hide();
+          });
 
       Button fromScratch = new Button("From scratch");
       fromScratch.addClickListener(
-              event -> {
-                from.setValue(BigDecimal.ZERO);
-                fromSerialHelperOverlay.hide();
-              });
+          event -> {
+            from.setValue(BigDecimal.ZERO);
+            fromSerialHelperOverlay.hide();
+          });
 
       final var heading = new H4("Select Starting Serial");
       return new VerticalLayout(heading, since, latestSerial, fromScratch);
@@ -246,10 +245,10 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     private VerticalLayout getToVerticalLayout() {
       Button latestSerial = new Button("Remove last serial");
       latestSerial.addClickListener(
-              event -> {
-                to.setValue(null);
-                toSerialHelperOverlay.hide();
-              });
+          event -> {
+            to.setValue(null);
+            toSerialHelperOverlay.hide();
+          });
       final var heading = new H4("Select Last Serial");
       return new VerticalLayout(heading, until, latestSerial);
     }

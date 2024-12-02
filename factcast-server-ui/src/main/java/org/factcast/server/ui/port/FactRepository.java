@@ -35,6 +35,7 @@ public interface FactRepository {
   List<String> types(@NonNull String namespace, @Nullable String optionalInput);
 
   OptionalLong lastSerialBefore(@NonNull LocalDate date);
+
   Optional<Long> firstSerialAfter(@NonNull LocalDate date);
 
   long latestSerial();

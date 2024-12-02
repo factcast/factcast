@@ -354,10 +354,11 @@ public class PgFactStore extends AbstractFactStore {
   @Override
   public Long firstSerialAfter(@NonNull LocalDate date) {
     try {
-        return jdbcTemplate.queryForObject(
-                PgConstants.FIRST_SERIAL_AFTER_DATE,
-                new SingleColumnRowMapper<>(Long.class),
-                Date.valueOf(date), Date.valueOf(date));
+      return jdbcTemplate.queryForObject(
+          PgConstants.FIRST_SERIAL_AFTER_DATE,
+          new SingleColumnRowMapper<>(Long.class),
+          Date.valueOf(date),
+          Date.valueOf(date));
     } catch (EmptyResultDataAccessException noFactsAtAll) {
       return null;
     }

@@ -17,14 +17,12 @@ package org.factcast.server.ui.adapter;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nullable;
 
 @Getter
 public class ListObserver implements FactObserver {
