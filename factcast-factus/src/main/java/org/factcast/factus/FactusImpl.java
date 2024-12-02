@@ -477,8 +477,8 @@ public class FactusImpl implements Factus {
   }
 
   @Override
-  public <A extends Aggregate> Locked<A> withLockOn(Class<A> aggregateClass, UUID id) {
-    A fresh = find(aggregateClass, id).orElse(instantiate(aggregateClass));
+  public <A extends Aggregate> Locked<A> withLockOn(@NonNull Class<A> aggregateClass, UUID id) {
+    A fresh = find(aggregateClass, id).orElseGet(() -> instantiate(aggregateClass));
     Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
     List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
     return new Locked<>(fc, this, fresh, specs, factusMetrics);
