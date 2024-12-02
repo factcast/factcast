@@ -35,10 +35,7 @@ import org.factcast.factus.*;
 import org.factcast.factus.SuppressFactusWarnings.Warning;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.EventSerializer;
-import org.factcast.factus.projection.Aggregate;
-import org.factcast.factus.projection.AggregateUtil;
-import org.factcast.factus.projection.FactStreamPositionAware;
-import org.factcast.factus.projection.Projection;
+import org.factcast.factus.projection.*;
 import org.factcast.factus.projection.parameter.HandlerParameterContributor;
 import org.factcast.factus.projection.parameter.HandlerParameterContributors;
 import org.factcast.factus.projection.parameter.HandlerParameterProvider;
@@ -57,6 +54,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
   @Getter(value = AccessLevel.PROTECTED)
   private final Map<FactSpecCoordinates, Dispatcher> dispatchInfo;
 
+  private final EventSerializer serializer;
   private final HandlerParameterContributors generalContributors;
 
   interface TargetObjectResolver extends Function<Projection, Object> {}
@@ -65,11 +63,13 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       @NonNull Projection p,
       @NonNull EventSerializer serializer,
       @NonNull HandlerParameterContributors parameterContributors) {
+    this.serializer = serializer;
     generalContributors = parameterContributors;
     projection = p;
+
     dispatchInfo =
         dispatcherCache.computeIfAbsent(
-            ReflectionTools.getRelevantClass(p), c -> discoverDispatchInfo(serializer, p));
+            ReflectionTools.getRelevantClass(p), c -> discoverDispatchInfo(p));
   }
 
   /**
@@ -81,7 +81,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
    */
   @Deprecated
   public ProjectorImpl(@NonNull Projection p, @NonNull EventSerializer es) {
-    this(p, es, new HandlerParameterContributors(es));
+    this(p, es, new HandlerParameterContributors());
   }
 
   @Override
@@ -197,13 +197,12 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       projection.onError(ihd);
       throw ihd;
     }
-    dispatch.invoke(projection, f);
+    dispatch.invoke(serializer, projection, f);
 
     return factId;
   }
 
-  private Map<FactSpecCoordinates, Dispatcher> discoverDispatchInfo(
-      EventSerializer deserializer, Projection p) {
+  private Map<FactSpecCoordinates, Dispatcher> discoverDispatchInfo(Projection p) {
     Map<FactSpecCoordinates, Dispatcher> map = new HashMap<>();
 
     final HandlerParameterContributors c;
@@ -223,7 +222,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
                     @Nullable Type genericType,
                     @NonNull Set<Annotation> annotations) {
                   if (clazz == type)
-                    return (f, p) -> ((OpenTransactionAware<?>) p).runningTransaction();
+                    return (s, f, p) -> ((OpenTransactionAware<?>) p).runningTransaction();
                   else return null;
                 }
               });
@@ -237,7 +236,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
               .filter(this::isEventHandlerMethod)
               .forEach(
                   m -> {
-                    FactSpec fs = ReflectionTools.discoverFactSpec(m);
+                    FactSpec fs = ReflectionTools.discoverFactSpec(p, m);
                     FactSpecCoordinates key = FactSpecCoordinates.from(fs);
 
                     Dispatcher dispatcher =
@@ -245,8 +244,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
                             m,
                             HandlerParameterTransformer.forCalling(m, c),
                             callTarget.resolver,
-                            fs,
-                            deserializer);
+                            fs);
                     Dispatcher before = map.put(key, dispatcher);
                     if (before != null) {
                       throw new InvalidHandlerDefinition(
@@ -258,7 +256,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
                               + before.dispatchMethod());
                     }
 
-                    log.debug("Discovered Event handling method " + m.toString());
+                    log.debug("Discovered Event handling method {}", m.toString());
                     m.setAccessible(true);
                   });
         });
@@ -302,7 +300,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
    * expensive method that should be used on initialization only
    *
    * @param m
-   * @return
+   * @return boolean
    */
   @VisibleForTesting
   boolean isEventHandlerMethod(Method m) {
@@ -345,13 +343,12 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
     @NonNull FactSpec spec;
 
-    @NonNull EventSerializer deserializer;
-
-    void invoke(Projection projection, Fact f) {
+    void invoke(
+        @NonNull EventSerializer deserializer, @NonNull Projection projection, @NonNull Fact f) {
       // choose the target object (nested)
       Object targetObject = objectResolver.apply(projection);
       // create actual parameters
-      Object[] parameters = transformer.apply(f, projection);
+      Object[] parameters = transformer.apply(deserializer, f, projection);
       // fire
       try {
         dispatchMethod.invoke(targetObject, parameters);
@@ -399,7 +396,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       return m;
     }
 
-    private static FactSpec discoverFactSpec(Method m) {
+    private static FactSpec discoverFactSpec(Projection p, Method m) {
 
       HandlerFor handlerFor = m.getAnnotation(HandlerFor.class);
       if (handlerFor != null) {
@@ -423,32 +420,116 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
               "Multiple EventPojo Parameters. Cannot introspect FactSpec from " + m);
         } else {
           Class<?> eventPojoType = eventPojoTypes.get(0);
-          return addOptionalFilterInfo(m, FactSpec.from(eventPojoType));
+          FactSpec fromTargetType = FactSpec.from(eventPojoType);
+
+          // yes, order is important :D
+          OverrideNamespaces overridesOnMethod = m.getAnnotation(OverrideNamespaces.class);
+          if (overridesOnMethod != null) {
+            throw new IllegalArgumentException(
+                "Only one single @OverrideNamespace is allowed on method level");
+          }
+
+          OverrideNamespace overrideOnMethod = m.getAnnotation(OverrideNamespace.class);
+          if (overrideOnMethod != null) {
+            return overrideNamespaceFromMethodAnnotation(
+                m, overrideOnMethod, eventPojoType, fromTargetType);
+          }
+
+          return addOptionalFilterInfo(
+              m, overrideNamespaceFromTypeAnnotation(p, eventPojoType, fromTargetType));
         }
       }
     }
 
     @VisibleForTesting
-    static FactSpec addOptionalFilterInfo(Method m, FactSpec spec) {
-      FilterByMetas metas = m.getAnnotation(FilterByMetas.class);
-      if (metas != null) {
-        for (FilterByMeta meta : metas.value()) {
-          spec = addFilterByMeta(spec, meta);
+    static FactSpec overrideNamespaceFromTypeAnnotation(
+        Projection p, Class<?> eventPojoType, FactSpec fromTargetType) {
+
+      Arrays.stream(p.getClass().getInterfaces())
+          .filter(
+              i ->
+                  i.getAnnotation(OverrideNamespace.class) != null
+                      || i.getAnnotation(OverrideNamespaces.class) != null)
+          .findFirst()
+          .ifPresent(
+              i -> {
+                throw new InvalidHandlerDefinition(
+                    "@OverrideNamespace(s) is only allowed on non-interface types "
+                        + p.getClass()
+                        + " implementing "
+                        + i);
+              });
+
+      Map<Class<?>, String> overrides = buildNamespaceOverrides(p.getClass());
+      String override = overrides.get(eventPojoType);
+      if (override != null) return fromTargetType.withNs(override);
+      else return fromTargetType;
+    }
+
+    @VisibleForTesting
+    static Map<Class<?>, String> buildNamespaceOverrides(Class<?> p) {
+      if (p == null || !Projection.class.isAssignableFrom(p)) return new HashMap<>();
+
+      Map<Class<?>, String> ret = buildNamespaceOverrides(p.getSuperclass());
+
+      OverrideNamespace single = p.getAnnotation(OverrideNamespace.class);
+      if (single != null) ret.put(single.type(), single.ns());
+
+      OverrideNamespaces container = p.getAnnotation(OverrideNamespaces.class);
+      if (container != null) {
+        OverrideNamespace[] overrides = container.value();
+        if (overrides != null) Arrays.stream(overrides).forEach(s -> ret.put(s.type(), s.ns()));
+      }
+
+      return ret;
+    }
+
+    @VisibleForTesting
+    static FactSpec overrideNamespaceFromMethodAnnotation(
+        Method m, OverrideNamespace annotation, Class<?> eventPojoType, FactSpec fromTargetType) {
+      String newNs = annotation.ns();
+      Class<? extends EventObject> forType = annotation.type();
+
+      if (newNs.isEmpty())
+        throw new InvalidHandlerDefinition(
+            "A valid namespace must be provided for a @OverrideNamespace annotation on " + m);
+
+      if (!forType.equals(OverrideNamespace.DISCOVER) && forType != eventPojoType)
+        throw new InvalidHandlerDefinition(
+            "@OverrideNamespace defined for a different type than what the parameter suggests "
+                + m);
+
+      return addOptionalFilterInfo(m, fromTargetType.withNs(newNs));
+    }
+
+    @VisibleForTesting
+    static FactSpec addOptionalFilterInfo(@NonNull Method m, @NonNull FactSpec spec) {
+      spec = filterByMeta(m, spec);
+      spec = filterByMetaExists(m, spec);
+      spec = filterByMetaDoesNotExist(m, spec);
+      spec = filterByAggIds(m, spec);
+      spec = filterByScript(m, spec);
+      return spec;
+    }
+
+    private static FactSpec filterByScript(@NonNull Method m, @NonNull FactSpec spec) {
+      FilterByScript filterByScript = m.getAnnotation(FilterByScript.class);
+      if (filterByScript != null)
+        spec = spec.filterScript(org.factcast.core.spec.FilterScript.js(filterByScript.value()));
+      return spec;
+    }
+
+    private static FactSpec filterByAggIds(@NonNull Method m, @NonNull FactSpec spec) {
+      FilterByAggId aggregateIds = m.getAnnotation(FilterByAggId.class);
+      if (aggregateIds != null) {
+        for (String aggId : aggregateIds.value()) {
+          spec = spec.aggId(UUID.fromString(aggId));
         }
       }
-      FilterByMeta meta = m.getAnnotation(FilterByMeta.class);
-      if (meta != null) spec = addFilterByMeta(spec, meta);
+      return spec;
+    }
 
-      FilterByMetaExistsContainer existsContainer =
-          m.getAnnotation(FilterByMetaExistsContainer.class);
-      if (existsContainer != null) {
-        for (FilterByMetaExists exists : existsContainer.value()) {
-          spec = addFilterByMetaExists(spec, exists);
-        }
-      }
-      FilterByMetaExists exists = m.getAnnotation(FilterByMetaExists.class);
-      if (exists != null) spec = addFilterByMetaExists(spec, exists);
-
+    private static FactSpec filterByMetaDoesNotExist(@NonNull Method m, @NonNull FactSpec spec) {
       FilterByMetaDoesNotExistContainer doesNotExistContainer =
           m.getAnnotation(FilterByMetaDoesNotExistContainer.class);
       if (doesNotExistContainer != null) {
@@ -458,35 +539,54 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       }
       FilterByMetaDoesNotExist attribute = m.getAnnotation(FilterByMetaDoesNotExist.class);
       if (attribute != null) spec = addFilterByMetaDoesNotExist(spec, attribute);
+      return spec;
+    }
 
-      FilterByAggId aggregateId = m.getAnnotation(FilterByAggId.class);
-      if (aggregateId != null) spec = spec.aggId(UUID.fromString(aggregateId.value()));
+    private static FactSpec filterByMetaExists(@NonNull Method m, @NonNull FactSpec spec) {
+      FilterByMetaExistsContainer existsContainer =
+          m.getAnnotation(FilterByMetaExistsContainer.class);
+      if (existsContainer != null) {
+        for (FilterByMetaExists exists : existsContainer.value()) {
+          spec = addFilterByMetaExists(spec, exists);
+        }
+      }
+      FilterByMetaExists exists = m.getAnnotation(FilterByMetaExists.class);
+      if (exists != null) spec = addFilterByMetaExists(spec, exists);
+      return spec;
+    }
 
-      FilterByScript filterByScript = m.getAnnotation(FilterByScript.class);
-      if (filterByScript != null)
-        spec = spec.filterScript(org.factcast.core.spec.FilterScript.js(filterByScript.value()));
-
+    private static FactSpec filterByMeta(@NonNull Method m, @NonNull FactSpec spec) {
+      FilterByMetas metas = m.getAnnotation(FilterByMetas.class);
+      if (metas != null) {
+        for (FilterByMeta meta : metas.value()) {
+          spec = addFilterByMeta(spec, meta);
+        }
+      }
+      FilterByMeta meta = m.getAnnotation(FilterByMeta.class);
+      if (meta != null) spec = addFilterByMeta(spec, meta);
       return spec;
     }
 
     private static FactSpec addFilterByMetaDoesNotExist(
-        FactSpec spec, FilterByMetaDoesNotExist notExists) {
+        @NonNull FactSpec spec, @NonNull FilterByMetaDoesNotExist notExists) {
       return spec.metaDoesNotExist(notExists.value());
     }
 
-    private static FactSpec addFilterByMetaExists(FactSpec spec, FilterByMetaExists attribute) {
+    private static FactSpec addFilterByMetaExists(
+        @NonNull FactSpec spec, @NonNull FilterByMetaExists attribute) {
       return spec.metaExists(attribute.value());
     }
 
-    private static FactSpec addFilterByMeta(FactSpec spec, FilterByMeta attribute) {
+    private static FactSpec addFilterByMeta(
+        @NonNull FactSpec spec, @NonNull FilterByMeta attribute) {
       return spec.meta(attribute.key(), attribute.value());
     }
 
-    private static Collection<CallTarget> getRelevantClasses(Projection p) {
+    private static Collection<CallTarget> getRelevantClasses(@NonNull Projection p) {
       return getRelevantClasses(new CallTarget(getRelevantClass(p.getClass()), o -> o));
     }
 
-    private static Collection<CallTarget> getRelevantClasses(CallTarget root) {
+    private static Collection<CallTarget> getRelevantClasses(@NonNull CallTarget root) {
       List<CallTarget> classes = new LinkedList<>();
       classes.add(root);
       Arrays.stream(root.clazz().getDeclaredClasses())

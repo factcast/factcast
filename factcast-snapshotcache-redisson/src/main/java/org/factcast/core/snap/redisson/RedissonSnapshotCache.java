@@ -67,6 +67,7 @@ public class RedissonSnapshotCache implements SnapshotCache {
 
     return LegacySnapshotKeys.createKeyForType(id.projectionClass(), serializerId, aggId);
   }
+
   //////
 
   @Override

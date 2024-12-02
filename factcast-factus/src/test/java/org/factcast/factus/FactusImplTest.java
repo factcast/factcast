@@ -362,8 +362,7 @@ class FactusImplTest {
       ManagedProjection m = Mockito.spy(new SimpleProjection());
       EventSerializer serializer = mock(EventSerializer.class);
       Projector<ManagedProjection> ea =
-          Mockito.spy(
-              new ProjectorImpl<>(m, serializer, new HandlerParameterContributors(serializer)));
+          Mockito.spy(new ProjectorImpl<>(m, serializer, new HandlerParameterContributors()));
       when(ehFactory.create(m)).thenReturn(ea);
 
       Fact f1 = Fact.builder().ns("test").type(SimpleEvent.class.getSimpleName()).build("{}");
@@ -822,6 +821,57 @@ class FactusImplTest {
     }
 
     @Test
+    void ignoresFastForwardIfBehindConsumedFact() {
+      // INIT
+      SubscribedProjection subscribedProjection = mock(SubscribedProjection.class);
+      Projector<SubscribedProjection> eventApplier = mock(Projector.class);
+
+      when(subscribedProjection.acquireWriteToken(any())).thenReturn(() -> {});
+
+      when(ehFactory.create(subscribedProjection)).thenReturn(eventApplier);
+
+      when(eventApplier.createFactSpecs())
+          .thenReturn(Collections.singletonList(mock(FactSpec.class)));
+      doAnswer(
+              i -> {
+                Fact argument = Iterables.getLast((List<Fact>) (i.getArgument(0)));
+                subscribedProjection.factStreamPosition(FactStreamPosition.from(argument));
+                return null;
+              })
+          .when(eventApplier)
+          .apply(any(List.class));
+
+      Subscription subscription = mock(Subscription.class);
+      when(fc.subscribe(any(), any())).thenReturn(subscription);
+
+      // RUN
+      underTest.subscribeAndBlock(subscribedProjection);
+
+      // ASSERT
+      verify(subscribedProjection).acquireWriteToken(retryWaitTime.capture());
+      assertThat(retryWaitTime.getValue()).isEqualTo(Duration.ofMinutes(5));
+
+      verify(fc).subscribe(any(), factObserverArgumentCaptor.capture());
+
+      FactObserver factObserver = factObserverArgumentCaptor.getValue();
+
+      UUID factId = randomUUID();
+      Fact mockedFact = Fact.builder().id(factId).serial(12L).buildWithoutPayload();
+      FactStreamPosition ffwdPosition = FactStreamPosition.of(UUID.randomUUID(), 10L);
+
+      // onNext(...)
+      // now assume a new fact has been observed...
+      factObserver.onNext(mockedFact);
+      factObserver.flush();
+      // ... and the fact stream position should be updated as well
+      verify(subscribedProjection).factStreamPosition(FactStreamPosition.of(factId, 12));
+
+      factObserver.onFastForward(ffwdPosition);
+
+      verify(subscribedProjection, never()).factStreamPosition(ffwdPosition);
+    }
+
+    @Test
     void subscribeWithCustomRetryWaitTime() {
       // INIT
       SubscribedProjection subscribedProjection = mock(SubscribedProjection.class);
@@ -1201,6 +1251,34 @@ class FactusImplTest {
           .thenAnswer(
               i -> {
                 FactObserver fo = i.getArgument(1);
+                fo.onFastForward(pos);
+                return sub;
+              });
+      when(pro.createFactSpecs()).thenReturn(Lists.newArrayList(spec1));
+
+      SomeSnapshotProjection p = new SomeSnapshotProjection();
+      UUID ret = underTest.catchupProjection(p, UUID.randomUUID(), null);
+
+      Assertions.assertThat(ret).isNotNull().isEqualTo(id);
+    }
+
+    @Test
+    @SneakyThrows
+    void ignoresFastForwardIfBeforeConsumedFact() {
+      Projector pro = mock(Projector.class);
+      Subscription sub = mock(Subscription.class);
+      FactSpec spec1 = FactSpec.from(NameEvent.class);
+
+      Fact f = new TestFact();
+      UUID id = f.id();
+      FactStreamPosition pos = FactStreamPosition.of(UUID.randomUUID(), 41L);
+
+      when(ehFactory.create(any())).thenReturn(pro);
+      when(fc.subscribe(any(SubscriptionRequest.class), any(FactObserver.class)))
+          .thenAnswer(
+              i -> {
+                FactObserver fo = i.getArgument(1);
+                fo.onNext(f);
                 fo.onFastForward(pos);
                 return sub;
               });

@@ -30,6 +30,7 @@ public class InMemoryAndDiskSnapshotProperties {
   public static final String PROPERTIES_PREFIX = "factcast.snapshot.local.disk";
 
   private String pathToSnapshots = System.getProperty("java.io.tmpdir");
+
   /** The maximum disk space that can be used by the snapshot cache. 0 means no limit. */
   private long maxDiskSpace = 0;
 }

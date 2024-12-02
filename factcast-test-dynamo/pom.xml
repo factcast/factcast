@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.8.2-SNAPSHOT</version>
+    <version>0.9.1-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-test-dynamo</artifactId>
@@ -34,6 +34,7 @@
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-test</artifactId>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
