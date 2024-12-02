@@ -478,11 +478,7 @@ public class FactusImpl implements Factus {
 
   @Override
   public <A extends Aggregate> Locked<A> withLockOn(Class<A> aggregateClass, UUID id) {
-    A fresh =
-        factusMetrics.timed(
-            TimedOperation.FIND_DURATION,
-            Tags.of(Tag.of(CLASS, aggregateClass.getName())),
-            () -> find(aggregateClass, id).orElse(instantiate(aggregateClass)));
+    A fresh = find(aggregateClass, id).orElse(instantiate(aggregateClass));
     Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
     List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
     return new Locked<>(fc, this, fresh, specs, factusMetrics);
