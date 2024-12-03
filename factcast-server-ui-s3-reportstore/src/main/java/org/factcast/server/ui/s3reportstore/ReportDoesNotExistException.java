@@ -13,19 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.report;
+package org.factcast.server.ui.s3reportstore;
 
-import java.io.Serial;
-import java.io.Serializable;
-import lombok.NonNull;
-import org.factcast.server.ui.plugins.JsonViewEntries;
+import lombok.Getter;
 
-public record Report(@NonNull String name, @NonNull String json, @NonNull String query)
-    implements Serializable {
+public class ReportDoesNotExistException extends RuntimeException {
 
-  @Serial private static final long serialVersionUID = 1L;
+  @Getter private final String reportName;
 
-  public Report(@NonNull String name, @NonNull JsonViewEntries entries, @NonNull String query) {
-    this(name, entries.json(), query);
+  public ReportDoesNotExistException(String reportKey) {
+    super("Report with id " + reportKey + " doesn't exist");
+    this.reportName = reportKey;
+  }
+
+  public ReportDoesNotExistException() {
+    super("Report doesn't exist");
+    this.reportName = null;
   }
 }

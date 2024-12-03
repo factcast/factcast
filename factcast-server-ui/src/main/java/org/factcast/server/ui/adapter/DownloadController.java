@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.config;
+package org.factcast.server.ui.adapter;
 
-import org.factcast.server.ui.adapter.FileSystemReportStore;
-import org.factcast.server.ui.port.ReportStore;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-@Configuration
-public class ReportStoreConfiguration {
+@RestController
+@RequestMapping("/api/v1")
+public class DownloadController {
 
-  @Bean
-  ReportStore reportStore() {
-    return new FileSystemReportStore();
-  }
+  // tODO get the username/ id
+
+  @GetMapping("/download")
+  public void download(@RequestParam String id) {}
 }

@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.report;
+package org.factcast.server.ui.config;
 
-import java.io.Serial;
-import java.io.Serializable;
-import lombok.NonNull;
-import org.factcast.server.ui.plugins.JsonViewEntries;
+import org.factcast.server.ui.adapter.FileSystemReportStore;
+import org.factcast.server.ui.port.ReportStore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-public record Report(@NonNull String name, @NonNull String json, @NonNull String query)
-    implements Serializable {
+@Configuration
+public class FileSystemReportStoreConfiguration {
 
-  @Serial private static final long serialVersionUID = 1L;
-
-  public Report(@NonNull String name, @NonNull JsonViewEntries entries, @NonNull String query) {
-    this(name, entries.json(), query);
+  @Bean
+  @ConditionalOnMissingBean
+  ReportStore reportStore() {
+    return new FileSystemReportStore();
   }
 }

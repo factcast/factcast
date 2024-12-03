@@ -87,6 +87,10 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
 
   private final String userName = SecurityContextHolder.getContext().getAuthentication().getName();
 
+  // TODO: while generating show result in table as being requested
+
+  // TODO: load query when selecting report
+
   public ReportQueryPage(
       @NonNull FactRepository repo,
       @NonNull ReportStore reportStore,

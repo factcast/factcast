@@ -13,6 +13,7 @@
   <properties>
     <java.version>17</java.version>
     <vaadin.version>24.4.10</vaadin.version>
+    <aws-sdk.version>2.29.6</aws-sdk.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -76,6 +77,11 @@
       <artifactId>file-download-wrapper</artifactId>
       <version>7.1.0</version>
     </dependency>
+    <dependency>
+      <groupId>org.vaadin.stefan</groupId>
+      <artifactId>lazy-download-button</artifactId>
+      <version>1.0.0</version>
+    </dependency>
 
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -109,6 +115,7 @@
       <version>7.1.0</version>
     </dependency>
 
+    <!-- Test dependencies -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-devtools</artifactId>
@@ -146,6 +153,11 @@
       <groupId>org.junit-pioneer</groupId>
       <artifactId>junit-pioneer</artifactId>
       <version>2.2.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>localstack</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

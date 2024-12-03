@@ -15,15 +15,14 @@
  */
 package org.factcast.server.ui.report;
 
+import com.vaadin.flow.component.ClickEvent;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.provider.DataProvider;
-import com.vaadin.flow.server.StreamResource;
-import java.io.ByteArrayInputStream;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.server.ui.port.ReportStore;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.vaadin.olli.FileDownloadWrapper;
 
 @Slf4j
 public class ReportDownloadSection extends HorizontalLayout {
@@ -31,60 +30,62 @@ public class ReportDownloadSection extends HorizontalLayout {
   private final ReportStore reportStore;
   private final DataProvider<ReportEntry, Void> dataProvider;
 
-  private final Button downloadBtn = new Button("Download");
-  private Button deleteBtn = new Button("Delete");
+  private final Button downloadBtn =
+      new Button("Download"); // new LazyDownloadButton("Download", this::getFileName,
+  // this::requestCurrentFile);
+  private final Button deleteBtn = new Button("Delete");
   private final String userName = SecurityContextHolder.getContext().getAuthentication().getName();
+  private String fileName;
 
   public ReportDownloadSection(
       ReportStore reportStore, DataProvider<ReportEntry, Void> dataProvider) {
     this.reportStore = reportStore;
     this.dataProvider = dataProvider;
+
     this.downloadBtn.setEnabled(false);
+    this.downloadBtn.setDisableOnClick(true);
+    this.downloadBtn.addClickListener(this::downloadClickListener);
+    //    this.downloadBtn.addDownloadStartsListener(this::onDownloadStarted);
+
     this.deleteBtn.setEnabled(false);
+    this.deleteBtn.addClickListener(this::deletionClickListener);
+
     add(downloadBtn, deleteBtn);
     this.getStyle().set("flex-wrap", "wrap");
   }
 
+  private String getFileName() {
+    return fileName;
+  }
+
   public void refreshForFile(String fileName) {
     log.debug("Refreshing Download Area");
-    removeAll();
-
-    final var downloadWrapper = createDownloadWrapper(fileName, downloadBtn);
+    this.fileName = fileName;
     downloadBtn.setEnabled(true);
-
-    // Required to remove previous click listener
-    deleteBtn = new Button("Delete");
-    configureDeletionListener(fileName);
     deleteBtn.setEnabled(true);
-
-    add(downloadWrapper, deleteBtn);
   }
 
-  public void configureDeletionListener(String fileName) {
-    deleteBtn.addClickListener(
-        e -> {
-          log.info("Deleting file {}", fileName);
-          reportStore.delete(this.userName, fileName);
-          deleteBtn.setEnabled(false);
-          downloadBtn.setEnabled(false);
-
-          // in order to remove the entry from the grid
-          dataProvider.refreshAll();
-        });
+  private ReportDownload requestCurrentFile() {
+    return reportStore.getReport(this.userName, this.fileName);
   }
 
-  private FileDownloadWrapper createDownloadWrapper(String fileName, Button downloadButton) {
-    removeAll();
-    StreamResource streamResource =
-        new StreamResource(
-            fileName,
-            () -> {
-              var r = reportStore.getReportAsBytes(this.userName, fileName);
-              return new ByteArrayInputStream(r);
-            });
-    final var wrapper = new FileDownloadWrapper(streamResource);
-    wrapper.wrapComponent(downloadButton);
+  /** Opens the download link in a new tab */
+  private void downloadClickListener(ClickEvent<Button> buttonClickEvent) {
+    Button button = buttonClickEvent.getSource();
+    button.setText("Preparing download...");
+    getUI().orElseGet(UI::new).getPage().open(requestCurrentFile().url().toString());
+    button.setEnabled(false);
+    button.setText("Download");
+  }
 
-    return wrapper;
+  private void deletionClickListener(ClickEvent<Button> buttonClickEvent) {
+    Button button = buttonClickEvent.getSource();
+    log.info("Deleting file {}", this.fileName);
+    button.setEnabled(false);
+    reportStore.delete(this.userName, this.fileName);
+    downloadBtn.setEnabled(false);
+
+    // in order to remove the entry from the grid
+    dataProvider.refreshAll();
   }
 }

@@ -20,6 +20,7 @@ import static java.io.File.separator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.*;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -27,9 +28,11 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.server.ui.port.ReportStore;
 import org.factcast.server.ui.report.Report;
+import org.factcast.server.ui.report.ReportDownload;
 import org.factcast.server.ui.report.ReportEntry;
 
 @Slf4j
@@ -63,21 +66,33 @@ public class FileSystemReportStore implements ReportStore {
     }
   }
 
+  //  private InputStream getReport(@NonNull String userName, @NonNull String reportName) {
+  //    final var reportFilePath = Paths.get(PERSISTENCE_DIR, userName, reportName);
+  //    log.info("Getting report from {}", reportFilePath);
+  //    if (Files.exists(reportFilePath)) {
+  //      try {
+  //        return Files.newInputStream(reportFilePath);
+  //      } catch (IOException e) {
+  //        log.error("Failed to get report", e);
+  //        throw new RuntimeException(e);
+  //      }
+  //    } else {
+  //      throw new IllegalArgumentException(
+  //          String.format("No report exists with name %s for user %s", reportName, userName));
+  //    }
+  //  }
+  //
+  //  @Override
+  //  public InputStreamResource getReportAsStream(@NonNull String userName, @NonNull String
+  // reportName) {
+  //    return new InputStreamResource(getReport(userName, reportName));
+  //  }
+
+  // TODO: implement with seperate endpoint that streams resource from filesystem
+  @SneakyThrows
   @Override
-  public byte[] getReportAsBytes(@NonNull String userName, @NonNull String reportName) {
-    final var reportFilePath = Paths.get(PERSISTENCE_DIR, userName, reportName);
-    log.info("Getting report from {}", reportFilePath);
-    if (Files.exists(reportFilePath)) {
-      try (var stream = Files.newInputStream(reportFilePath)) {
-        return stream.readAllBytes();
-      } catch (IOException e) {
-        log.error("Failed to get report", e);
-        throw new RuntimeException(e);
-      }
-    } else {
-      throw new IllegalArgumentException(
-          String.format("No report exists with name %s for user %s", reportName, userName));
-    }
+  public ReportDownload getReport(@NonNull String userName, @NonNull String reportName) {
+    return new ReportDownload(new URL(""), "getReport(userName, reportName)");
   }
 
   @Override

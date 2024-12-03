@@ -18,6 +18,7 @@ package org.factcast.server.ui.port;
 import java.util.List;
 import lombok.NonNull;
 import org.factcast.server.ui.report.Report;
+import org.factcast.server.ui.report.ReportDownload;
 import org.factcast.server.ui.report.ReportEntry;
 
 public interface ReportStore {
@@ -25,9 +26,9 @@ public interface ReportStore {
   /** Saves a report for a given user if it does not exist yet. */
   void save(@NonNull String userName, @NonNull Report report);
 
-  //  InputStream getReportByteStream(@NonNull String userName, @NonNull String reportName);
+  //  InputStreamResource getReportAsStream(@NonNull String userName, @NonNull String reportName);
 
-  byte[] getReportAsBytes(@NonNull String userName, @NonNull String reportName);
+  ReportDownload getReport(@NonNull String userName, @NonNull String reportName);
 
   List<ReportEntry> listAllForUser(@NonNull String userName);
 

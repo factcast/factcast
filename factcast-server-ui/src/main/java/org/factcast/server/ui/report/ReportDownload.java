@@ -15,17 +15,6 @@
  */
 package org.factcast.server.ui.report;
 
-import java.io.Serial;
-import java.io.Serializable;
-import lombok.NonNull;
-import org.factcast.server.ui.plugins.JsonViewEntries;
+import java.net.URL;
 
-public record Report(@NonNull String name, @NonNull String json, @NonNull String query)
-    implements Serializable {
-
-  @Serial private static final long serialVersionUID = 1L;
-
-  public Report(@NonNull String name, @NonNull JsonViewEntries entries, @NonNull String query) {
-    this(name, entries.json(), query);
-  }
-}
+public record ReportDownload(URL url, String reportName) {}
