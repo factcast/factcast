@@ -50,7 +50,6 @@
     "@vaadin/vaadin-development-mode-detector": "$@vaadin/vaadin-development-mode-detector",
     "@vaadin/vaadin-lumo-styles": "$@vaadin/vaadin-lumo-styles",
     "@vaadin/vaadin-material-styles": "$@vaadin/vaadin-material-styles",
-    "@vaadin/router": "$@vaadin/router",
     "@vaadin/vaadin-usage-statistics": "$@vaadin/vaadin-usage-statistics",
     "@vaadin/common-frontend": "$@vaadin/common-frontend",
     "construct-style-sheets-polyfill": "$construct-style-sheets-polyfill",
@@ -65,7 +64,8 @@
     "react-dom": "$react-dom",
     "react-router-dom": "$react-router-dom",
     "react": "$react",
-    "@vaadin-component-factory/vcf-popup": "$@vaadin-component-factory/vcf-popup"
+    "@vaadin-component-factory/vcf-popup": "$@vaadin-component-factory/vcf-popup",
+    "@vaadin/router": "$@vaadin/router"
   },
   "vaadin": {
     "dependencies": {

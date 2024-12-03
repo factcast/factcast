@@ -234,7 +234,9 @@ public class FactusImpl implements Factus {
 
           @Override
           public void onFastForward(@NonNull FactStreamPosition factIdToFfwdTo) {
-            subscribedProjection.factStreamPosition(factIdToFfwdTo);
+            if (factIdToFfwdTo.isAfter(lastPositionApplied)) {
+              subscribedProjection.factStreamPosition(factIdToFfwdTo);
+            }
           }
         };
 
@@ -395,13 +397,17 @@ public class FactusImpl implements Factus {
           @Override
           public void onFastForward(@NonNull FactStreamPosition factIdToFfwdTo) {
             flush();
-            if (projection instanceof FactStreamPositionAware) {
-              ((FactStreamPositionAware) projection).factStreamPosition(factIdToFfwdTo);
-            }
 
-            // only persist ffwd if we ever had a state or applied facts in this catchup
-            if (stateOrNull != null || positionOfLastFactApplied.get() != null) {
-              positionOfLastFactApplied.set(factIdToFfwdTo);
+            FactStreamPosition factStreamPosition = positionOfLastFactApplied.get();
+            if (factIdToFfwdTo.isAfter(factStreamPosition)) {
+              if (projection instanceof FactStreamPositionAware) {
+                ((FactStreamPositionAware) projection).factStreamPosition(factIdToFfwdTo);
+              }
+
+              // only persist ffwd if we ever had a state or applied facts in this catchup
+              if (stateOrNull != null || factStreamPosition != null) {
+                positionOfLastFactApplied.set(factIdToFfwdTo);
+              }
             }
           }
         };
@@ -471,12 +477,8 @@ public class FactusImpl implements Factus {
   }
 
   @Override
-  public <A extends Aggregate> Locked<A> withLockOn(Class<A> aggregateClass, UUID id) {
-    A fresh =
-        factusMetrics.timed(
-            TimedOperation.FIND_DURATION,
-            Tags.of(Tag.of(CLASS, aggregateClass.getName())),
-            () -> find(aggregateClass, id).orElse(instantiate(aggregateClass)));
+  public <A extends Aggregate> Locked<A> withLockOn(@NonNull Class<A> aggregateClass, UUID id) {
+    A fresh = find(aggregateClass, id).orElseGet(() -> instantiate(aggregateClass));
     Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
     List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
     return new Locked<>(fc, this, fresh, specs, factusMetrics);

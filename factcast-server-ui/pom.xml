@@ -6,13 +6,13 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.8.3-SNAPSHOT</version>
+    <version>0.9.1-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-server-ui</artifactId>
   <properties>
     <java.version>17</java.version>
-    <vaadin.version>24.5.1</vaadin.version>
+    <vaadin.version>24.5.2</vaadin.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -132,7 +132,7 @@
     <dependency>
       <groupId>com.microsoft.playwright</groupId>
       <artifactId>playwright</artifactId>
-      <version>1.48.0</version>
+      <version>1.49.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
