@@ -15,19 +15,12 @@
  */
 package org.factcast.spring.boot.autoconfigure.snap;
 
-import org.factcast.core.snap.local.InMemoryAndDiskSnapshotCache;
-import org.factcast.core.snap.local.InMemoryAndDiskSnapshotProperties;
-import org.factcast.core.snap.local.SnapshotDiskRepository;
-import org.factcast.core.snap.local.SnapshotDiskRepositoryImpl;
+import org.factcast.core.snap.local.*;
 import org.factcast.factus.Factus;
 import org.factcast.factus.snapshot.SnapshotCache;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.boot.autoconfigure.AutoConfigureBefore;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.autoconfigure.*;
+import org.springframework.boot.autoconfigure.condition.*;
+import org.springframework.context.annotation.*;
 
 @AutoConfiguration
 @ConditionalOnClass({InMemoryAndDiskSnapshotCache.class, Factus.class})

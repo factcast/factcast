@@ -15,10 +15,8 @@
  */
 package org.factcast.factus.serializer.binary;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.databind.*;
 import java.util.function.Consumer;
 
 public interface BinaryJacksonSnapshotSerializerCustomizer extends Consumer<ObjectMapper> {

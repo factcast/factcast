@@ -18,9 +18,8 @@ package org.factcast.factus.serializer.binary;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.*;
 import lombok.*;
-import net.jpountz.lz4.*;
 import org.factcast.factus.projection.SnapshotProjection;
-import org.factcast.factus.serializer.*;
+import org.factcast.factus.serializer.SnapshotSerializer;
 import org.msgpack.jackson.dataformat.MessagePackFactory;
 
 @RequiredArgsConstructor
