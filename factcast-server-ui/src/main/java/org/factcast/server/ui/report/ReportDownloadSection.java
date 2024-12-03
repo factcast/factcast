@@ -16,7 +16,6 @@
 package org.factcast.server.ui.report;
 
 import com.vaadin.flow.component.ClickEvent;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.provider.DataProvider;
@@ -73,7 +72,7 @@ public class ReportDownloadSection extends HorizontalLayout {
   private void downloadClickListener(ClickEvent<Button> buttonClickEvent) {
     Button button = buttonClickEvent.getSource();
     button.setText("Preparing download...");
-    getUI().orElseGet(UI::new).getPage().open(requestCurrentFile().url().toString());
+    getUI().orElseThrow().getPage().open(requestCurrentFile().url().toString());
     button.setEnabled(false);
     button.setText("Download");
   }
