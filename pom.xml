@@ -122,7 +122,8 @@
     <byte-buddy.version>1.15.10</byte-buddy.version>
     <skipUnitTests>false</skipUnitTests>
     <postgres.version>15</postgres.version>
-    <sonar.exclusions>**/src/test/java/**</sonar.exclusions>
+    <sonar.exclusions>**/src/test/java/**/*.java</sonar.exclusions>
+    <sonar.test.exclusions>**/src/test/java/**/*.java</sonar.test.exclusions>
   </properties>
   <dependencyManagement>
     <dependencies>
