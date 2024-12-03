@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.spring.boot.autoconfigure.factus;
+package org.factcast.spring.boot.autoconfigure.factus.snapshot.serializer.binary;
 
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.serializer.binary.*;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.AutoConfigureOrder;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.*;
+import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.context.annotation.Bean;
 
 @AutoConfiguration
 @ConditionalOnClass(BinaryJacksonSnapshotSerializer.class)
+@ConditionalOnProperty(prefix = "factcast.factus.snapshot", value = "compress")
 @Slf4j
 @AutoConfigureOrder(-100)
 public class BinaryJacksonSnapshotSerializerAutoConfiguration {

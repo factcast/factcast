@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2024 factcast.org
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.spring.boot.autoconfigure.factus.snapshot.serializer.fury;
+package org.factcast.spring.boot.autoconfigure.factus.snapshot.serializer.binary;
 
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.serializer.SnapshotSerializer;
-import org.factcast.factus.serializer.fury.FurySnapshotSerializer;
+import org.factcast.factus.serializer.binary.*;
 import org.springframework.boot.autoconfigure.*;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.context.annotation.Bean;
 
-@ConditionalOnMissingBean(SnapshotSerializer.class)
-@ConditionalOnClass({SnapshotSerializer.class, FurySnapshotSerializer.class})
+@AutoConfiguration
+@ConditionalOnClass(BinaryJacksonSnapshotSerializer.class)
 @ConditionalOnProperty(
     prefix = "factcast.factus.snapshot",
     value = "compress",
+    // PLEASE BE AWARE THAT THIS CONFIG WOULD KILL BACKWARDS COMPATIBILITY
     havingValue = "false")
-@AutoConfigureAfter({
-  LZ4FurySnapshotSerializerAutoConfiguration.class,
-  SnappyFurySnapshotSerializerAutoConfiguration.class
-})
-@AutoConfiguration
-public class UncompressedFurySnapshotSerializerAutoConfiguration {
+@Slf4j
+@AutoConfigureOrder(-100)
+public class UncompressedBinaryJacksonSnapshotSerializerAutoConfiguration {
   @Bean
-  public SnapshotSerializer uncompressedSnapshotSerializer() {
-    return new FurySnapshotSerializer();
+  @ConditionalOnMissingBean(SnapshotSerializer.class)
+  public SnapshotSerializer snapshotSerializer(
+      BinaryJacksonSnapshotSerializerCustomizer customizer) {
+    return new UncompressedBinaryJacksonSnapshotSerializer(customizer);
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  public BinaryJacksonSnapshotSerializerCustomizer binarySnapshotSerializerCustomizer() {
+    return BinaryJacksonSnapshotSerializerCustomizer.defaultCustomizer();
   }
 }
