@@ -17,10 +17,8 @@ package org.factcast.spring.boot.autoconfigure.client.grpc;
 
 import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.grpc.snappy.SnappycGrpcClientCodec;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.AutoConfigureBefore;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.*;
+import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.context.annotation.Bean;
 
 /**

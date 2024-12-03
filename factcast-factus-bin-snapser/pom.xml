@@ -9,6 +9,7 @@
     <version>0.9.1-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
+  <!-- deprecated, kept for compatibility -->
   <artifactId>factcast-factus-bin-snapser</artifactId>
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
@@ -27,21 +28,8 @@
   </dependencyManagement>
   <dependencies>
     <dependency>
-      <groupId>org.projectlombok</groupId>
-      <artifactId>lombok</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.msgpack</groupId>
-      <artifactId>jackson-dataformat-msgpack</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.factcast</groupId>
-      <artifactId>factcast-factus</artifactId>
+      <artifactId>factcast-factus-serializer-binary</artifactId>
     </dependency>
     <dependency>
       <groupId>org.lz4</groupId>

@@ -20,6 +20,7 @@ For scenarios where persistence and sharing of snapshots are not necessary, and 
 in-memory solution can be used:
 
 ```xml
+
 <dependency>
     <groupId>org.factcast</groupId>
     <artifactId>factcast-snapshotcache-local-memory</artifactId>
@@ -33,6 +34,7 @@ Refer to the [In-Memory Properties]({{< ref "/setup/properties#inmem-snapshots">
 To persist snapshots on disk, consider using the following configuration:
 
 ```xml
+
 <dependency>
     <groupId>org.factcast</groupId>
     <artifactId>factcast-snapshotcache-local-disk</artifactId>
@@ -42,7 +44,8 @@ To persist snapshots on disk, consider using the following configuration:
 Note that this setup is designed for single-instance applications and handles file access synchronization within the
 active instance. It is not recommended for distributed application architectures.
 
-Refer to the [In-Memory and Disk Properties]({{< ref "/setup/properties#inmemanddisk-snapshots">}}) for more information.
+Refer to the [In-Memory and Disk Properties]({{< ref "/setup/properties#inmemanddisk-snapshots">}}) for more
+information.
 
 ### Redis SnapshotCache
 
@@ -50,6 +53,7 @@ For applications utilizing Redis, the Redis-based SnapshotCache offers an optima
 snapshotcache that can be shared between / used by many instances:
 
 ```xml
+
 <dependency>
     <groupId>org.factcast</groupId>
     <artifactId>factcast-snapshotcache-redisson</artifactId>

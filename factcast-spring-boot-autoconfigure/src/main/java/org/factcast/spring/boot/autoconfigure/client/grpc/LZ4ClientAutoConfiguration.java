@@ -19,10 +19,8 @@ import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
 import net.jpountz.lz4.LZ4Compressor;
 import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.grpc.lz4.Lz4GrpcClientCodec;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.AutoConfigureBefore;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.*;
+import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.context.annotation.Bean;
 
 /**

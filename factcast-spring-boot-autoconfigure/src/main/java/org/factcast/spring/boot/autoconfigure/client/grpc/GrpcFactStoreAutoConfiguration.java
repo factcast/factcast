@@ -15,23 +15,17 @@
  */
 package org.factcast.spring.boot.autoconfigure.client.grpc;
 
-import java.util.*;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import lombok.NonNull;
-import net.devh.boot.grpc.client.channelfactory.GrpcChannelConfigurer;
-import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
-import org.factcast.client.grpc.FactCastGrpcChannelFactory;
-import org.factcast.client.grpc.FactCastGrpcClientProperties;
-import org.factcast.client.grpc.GrpcFactStore;
+import net.devh.boot.grpc.client.channelfactory.*;
+import org.factcast.client.grpc.*;
 import org.factcast.core.store.FactStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.*;
 import org.springframework.util.StringUtils;
 
 /**
