@@ -34,7 +34,7 @@ public class FurySnapshotSerializer implements SnapshotSerializer {
     fury =
         Fury.builder()
             .withLanguage(Language.JAVA)
-            .withStringCompressed(true)
+            //                        .withStringCompressed(true)
             .requireClassRegistration(false)
             .build();
   }
