@@ -31,12 +31,7 @@ public class FurySnapshotSerializer implements SnapshotSerializer {
   public static final Fury fury;
 
   static {
-    fury =
-        Fury.builder()
-            .withLanguage(Language.JAVA)
-            .withStringCompressed(true)
-            .requireClassRegistration(false)
-            .build();
+    fury = Fury.builder().withLanguage(Language.JAVA).requireClassRegistration(false).build();
   }
 
   // acceptable coverage miss:
