@@ -30,9 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import lombok.NonNull;
@@ -43,7 +41,6 @@ import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.event.EventConverter;
-import org.factcast.core.snap.Snapshot;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
@@ -60,10 +57,9 @@ import org.factcast.factus.metrics.TimedOperation;
 import org.factcast.factus.projection.*;
 import org.factcast.factus.projector.Projector;
 import org.factcast.factus.projector.ProjectorFactory;
-import org.factcast.factus.serializer.SnapshotSerializer;
-import org.factcast.factus.snapshot.AggregateSnapshotRepository;
-import org.factcast.factus.snapshot.ProjectionSnapshotRepository;
-import org.factcast.factus.snapshot.SnapshotSerializerSelector;
+import org.factcast.factus.snapshot.AggregateRepository;
+import org.factcast.factus.snapshot.ProjectionAndState;
+import org.factcast.factus.snapshot.SnapshotRepository;
 
 /** Single entry point to the factus API. */
 @RequiredArgsConstructor
@@ -79,11 +75,9 @@ public class FactusImpl implements Factus {
 
   private final EventConverter eventConverter;
 
-  private final AggregateSnapshotRepository aggregateSnapshotRepository;
+  private final AggregateRepository aggregateSnapshotRepository;
 
-  private final ProjectionSnapshotRepository projectionSnapshotRepository;
-
-  private final SnapshotSerializerSelector snapFactory;
+  private final SnapshotRepository projectionSnapshotRepository;
 
   private final FactusMetrics factusMetrics;
 
@@ -240,7 +234,9 @@ public class FactusImpl implements Factus {
 
           @Override
           public void onFastForward(@NonNull FactStreamPosition factIdToFfwdTo) {
-            subscribedProjection.factStreamPosition(factIdToFfwdTo);
+            if (factIdToFfwdTo.isAfter(lastPositionApplied)) {
+              subscribedProjection.factStreamPosition(factIdToFfwdTo);
+            }
           }
         };
 
@@ -272,35 +268,27 @@ public class FactusImpl implements Factus {
           "Method confusion: UUID aggregateId is missing as a second parameter for aggregates");
     }
 
-    SnapshotSerializer ser = snapFactory.selectSeralizerFor(projectionClass);
-
-    Optional<Snapshot> latest = projectionSnapshotRepository.findLatest(projectionClass);
-
-    P projection;
-    if (latest.isPresent()) {
-      Snapshot snap = latest.get();
-      projection = ser.deserialize(projectionClass, snap.bytes());
-      projection.onAfterRestore();
-    } else {
-      log.trace("Creating initial projection version for {}", projectionClass);
-      projection = instantiate(projectionClass);
-    }
+    ProjectionAndState<P> projectionAndState =
+        projectionSnapshotRepository
+            .findLatest(projectionClass)
+            .orElse(ProjectionAndState.of(instantiate(projectionClass), null));
 
     // catchup
+    P projection = projectionAndState.projectionInstance();
     UUID state =
         catchupProjection(
             projection,
-            latest.map(Snapshot::lastFact).orElse(null),
+            projectionAndState.lastFactIdApplied(),
             new IntervalSnapshotter<SnapshotProjection>(Duration.ofSeconds(30)) {
               @Override
               void createSnapshot(SnapshotProjection projection, UUID state) {
-                projection.onBeforeSnapshot();
-                projectionSnapshotRepository.put(projection, state);
+                projectionSnapshotRepository.store(projection, state);
               }
             });
+
     if (state != null) {
-      projection.onBeforeSnapshot();
-      projectionSnapshotRepository.put(projection, state);
+      // was updated during catchup
+      projectionSnapshotRepository.store(projection, state);
     }
     return projection;
   }
@@ -308,7 +296,8 @@ public class FactusImpl implements Factus {
   @Override
   @SneakyThrows
   @NonNull
-  public <A extends Aggregate> Optional<A> find(Class<A> aggregateClass, UUID aggregateId) {
+  public <A extends Aggregate> Optional<A> find(
+      @NonNull Class<A> aggregateClass, @NonNull UUID aggregateId) {
     return factusMetrics.timed(
         TimedOperation.FIND_DURATION,
         Tags.of(Tag.of(CLASS, aggregateClass.getName())),
@@ -319,43 +308,30 @@ public class FactusImpl implements Factus {
   private <A extends Aggregate> Optional<A> doFind(Class<A> aggregateClass, UUID aggregateId) {
     assertNotClosed();
 
-    SnapshotSerializer ser = snapFactory.selectSeralizerFor(aggregateClass);
+    ProjectionAndState<A> projectionAndState =
+        aggregateSnapshotRepository
+            .findLatest(aggregateClass, aggregateId)
+            .orElse(ProjectionAndState.of(initial(aggregateClass, aggregateId), null));
 
-    Optional<Snapshot> latest = aggregateSnapshotRepository.findLatest(aggregateClass, aggregateId);
-    Optional<A> optionalA =
-        latest
-            .map(as -> ser.deserialize(aggregateClass, as.bytes()))
-            .map(peek(Aggregate::onAfterRestore));
-
-    A aggregate = optionalA.orElseGet(() -> initial(aggregateClass, aggregateId));
-
+    A aggregate = projectionAndState.projectionInstance();
     UUID state =
         catchupProjection(
             aggregate,
-            latest.map(Snapshot::lastFact).orElse(null),
+            projectionAndState.lastFactIdApplied(),
             new IntervalSnapshotter<Aggregate>(Duration.ofSeconds(30)) {
               @Override
               void createSnapshot(Aggregate projection, UUID state) {
-                projection.onBeforeSnapshot();
-                aggregateSnapshotRepository.put(projection, state);
+                aggregateSnapshotRepository.store(aggregate, state);
               }
             });
-    if (state == null) {
-      // nothing new
-
-      if (!latest.isPresent()) {
-        // nothing before
-        return Optional.empty();
-      } else {
-        // just return what we got
-        return Optional.of(aggregate);
-      }
+    if (state != null) {
+      aggregateSnapshotRepository.store(aggregate, state);
     } else {
-      // concurrency control decided to be irrelevant here
-      aggregate.onBeforeSnapshot();
-      aggregateSnapshotRepository.putBlocking(aggregate, state);
-      return Optional.of(aggregate);
+      // special behavior for aggregates, if no event has ever been applied, we return empty
+      if (projectionAndState.lastFactIdApplied() == null) return Optional.empty();
     }
+
+    return Optional.of(aggregate);
   }
 
   /**
@@ -421,13 +397,17 @@ public class FactusImpl implements Factus {
           @Override
           public void onFastForward(@NonNull FactStreamPosition factIdToFfwdTo) {
             flush();
-            if (projection instanceof FactStreamPositionAware) {
-              ((FactStreamPositionAware) projection).factStreamPosition(factIdToFfwdTo);
-            }
 
-            // only persist ffwd if we ever had a state or applied facts in this catchup
-            if (stateOrNull != null || positionOfLastFactApplied.get() != null) {
-              positionOfLastFactApplied.set(factIdToFfwdTo);
+            FactStreamPosition factStreamPosition = positionOfLastFactApplied.get();
+            if (factIdToFfwdTo.isAfter(factStreamPosition)) {
+              if (projection instanceof FactStreamPositionAware) {
+                ((FactStreamPositionAware) projection).factStreamPosition(factIdToFfwdTo);
+              }
+
+              // only persist ffwd if we ever had a state or applied facts in this catchup
+              if (stateOrNull != null || factStreamPosition != null) {
+                positionOfLastFactApplied.set(factIdToFfwdTo);
+              }
             }
           }
         };
@@ -461,6 +441,7 @@ public class FactusImpl implements Factus {
   @NonNull
   @SneakyThrows
   private <P extends SnapshotProjection> P instantiate(Class<P> projectionClass) {
+    log.trace("Creating initial projection version for {}", projectionClass);
     Constructor<P> con = projectionClass.getDeclaredConstructor();
     con.setAccessible(true);
     return con.newInstance();
@@ -496,12 +477,8 @@ public class FactusImpl implements Factus {
   }
 
   @Override
-  public <A extends Aggregate> Locked<A> withLockOn(Class<A> aggregateClass, UUID id) {
-    A fresh =
-        factusMetrics.timed(
-            TimedOperation.FIND_DURATION,
-            Tags.of(Tag.of(CLASS, aggregateClass.getName())),
-            () -> find(aggregateClass, id).orElse(instantiate(aggregateClass)));
+  public <A extends Aggregate> Locked<A> withLockOn(@NonNull Class<A> aggregateClass, UUID id) {
+    A fresh = find(aggregateClass, id).orElseGet(() -> instantiate(aggregateClass));
     Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
     List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
     return new Locked<>(fc, this, fresh, specs, factusMetrics);
@@ -563,12 +540,5 @@ public class FactusImpl implements Factus {
     }
 
     abstract void createSnapshot(P projection, UUID state);
-  }
-
-  private <T> UnaryOperator<T> peek(Consumer<T> c) {
-    return x -> {
-      c.accept(x);
-      return x;
-    };
   }
 }

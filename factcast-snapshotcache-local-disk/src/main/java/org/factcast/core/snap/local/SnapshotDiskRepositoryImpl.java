@@ -29,18 +29,17 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
 import org.factcast.core.snap.local.OldestModifiedFileProvider.PathWithLastModifiedDate;
 import org.factcast.core.util.ExceptionHelper;
+import org.factcast.factus.snapshot.SnapshotData;
+import org.factcast.factus.snapshot.SnapshotIdentifier;
 
 @Slf4j
 public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
   public static final String INNER_PATH =
       separator + "factcast" + separator + "snapshots" + separator;
 
-  @Getter(onMethod = @__(@VisibleForTesting))
-  final File persistenceDirectory;
+  @Getter final File persistenceDirectory;
 
   private final long threshold;
   private final AtomicLong currentUsedSpace;
@@ -74,26 +73,30 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
         currentUsedSpace.get());
   }
 
-  public CompletableFuture<Void> save(Snapshot value) {
-    File target = SnapshotFileHelper.createFile(persistenceDirectory, value.id().key());
-    return locking.withWriteLockOnAsync(target, () -> doSave(value, target));
+  @Override
+  public CompletableFuture<Void> save(SnapshotIdentifier id, SnapshotData snapshot) {
+    //  public CompletableFuture<Void> save(Snapshot value) {
+    File target = SnapshotFileHelper.createFile(persistenceDirectory, id);
+    return locking.withWriteLockOnAsync(target, () -> doSave(id, snapshot, target));
   }
 
   @VisibleForTesting
-  protected void doSave(Snapshot value, File target) {
+  protected void doSave(SnapshotIdentifier id, SnapshotData snapshot, File target) {
     try {
       target.getParentFile().mkdirs();
-      long bytes =
-          SnapshotSerializationHelper.serializeTo(value, Files.newOutputStream(target.toPath()));
-      this.currentUsedSpace.addAndGet(bytes);
+      byte[] bytes = snapshot.toBytes();
+
+      Files.write(target.toPath(), bytes);
+      this.currentUsedSpace.addAndGet(bytes.length);
       triggerCleanup();
     } catch (Exception e) {
-      log.error("Error saving snapshot with id: {}", value.id(), e);
+      log.error("Error saving snapshot with id: {}", id, e);
     }
   }
 
-  public CompletableFuture<Void> delete(SnapshotId id) {
-    File target = SnapshotFileHelper.createFile(persistenceDirectory, id.key());
+  @Override
+  public CompletableFuture<Void> delete(SnapshotIdentifier id) {
+    File target = SnapshotFileHelper.createFile(persistenceDirectory, id);
     return locking.withWriteLockOnAsync(target, () -> doDelete(target.toPath()));
   }
 
@@ -112,8 +115,8 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
 
   @SneakyThrows
   @Override
-  public Optional<Snapshot> findById(SnapshotId id) {
-    File persistenceFile = SnapshotFileHelper.createFile(persistenceDirectory, id.key());
+  public Optional<SnapshotData> findById(SnapshotIdentifier id) {
+    File persistenceFile = SnapshotFileHelper.createFile(persistenceDirectory, id);
 
     return locking.withReadLockOn(
         persistenceFile,
@@ -124,17 +127,10 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
             SnapshotFileHelper.updateLastModified(persistenceFile);
 
             Path path = persistenceFile.toPath();
-            try (InputStream fis = Files.newInputStream(path);
-                InputStream bis = new BufferedInputStream(fis);
-                ObjectInputStream ois = new ObjectInputStream(bis)) {
-              Snapshot snapshot = (Snapshot) ois.readObject();
-              return Optional.of(snapshot);
+            try {
+              return SnapshotData.from(Files.readAllBytes(path));
             } catch (IOException e) {
               log.error("Error reading snapshot with id: {} and path: {}", id, path, e);
-              return Optional.empty();
-            } catch (ClassNotFoundException e) {
-              doDelete(path);
-              log.error("Error deserializing snapshot with id: {} and path: {}", id, path, e);
               return Optional.empty();
             }
           }

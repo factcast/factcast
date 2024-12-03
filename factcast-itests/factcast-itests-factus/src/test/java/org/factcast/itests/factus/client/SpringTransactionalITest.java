@@ -226,7 +226,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     @Test
     void testBulkSize3() throws Exception {
       var s = new BulkSize3Projection(platformTransactionManager, jdbcTemplate);
-      try (var sub = factus.subscribeAndBlock(s).awaitCatchup()) {
+      try (var ignored = factus.subscribeAndBlock(s).awaitCatchup()) {
 
         assertThat(s.factStreamPositionModifications()).isEqualTo(4);
         assertThat(s.txSeen()).hasSize(4);
@@ -237,7 +237,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
     @Test
     void testBulkSize5() throws Exception {
       var s = new BulkSize5Projection(platformTransactionManager, jdbcTemplate);
-      try (var sub = factus.subscribeAndBlock(s).awaitCatchup()) {
+      try (var ignored = factus.subscribeAndBlock(s).awaitCatchup()) {
 
         assertThat(s.factStreamPositionModifications()).isEqualTo(2);
         assertThat(s.txSeen()).hasSize(2);
@@ -245,24 +245,28 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
+    @SneakyThrows
     @Test
     void testBulkSize10() {
       var s = new BulkSize10Projection(platformTransactionManager, jdbcTemplate);
-      factus.subscribeAndBlock(s).awaitCatchup();
+      try (var ignored = factus.subscribeAndBlock(s).awaitCatchup()) {
 
-      assertThat(s.factStreamPositionModifications()).isOne();
-      assertThat(s.txSeen()).hasSize(1);
-      assertThat(getUsers()).isEqualTo(NUMBER_OF_EVENTS);
+        assertThat(s.factStreamPositionModifications()).isOne();
+        assertThat(s.txSeen()).hasSize(1);
+        assertThat(getUsers()).isEqualTo(NUMBER_OF_EVENTS);
+      }
     }
 
+    @SneakyThrows
     @Test
     void testBulkSize20() {
       var s = new BulkSize20Projection(platformTransactionManager, jdbcTemplate);
-      factus.subscribeAndBlock(s).awaitCatchup();
+      try (var ignored = factus.subscribeAndBlock(s).awaitCatchup()) {
 
-      assertThat(s.factStreamPositionModifications()).isOne();
-      assertThat(s.txSeen()).hasSize(1);
-      assertThat(getUsers()).isEqualTo(NUMBER_OF_EVENTS);
+        assertThat(s.factStreamPositionModifications()).isOne();
+        assertThat(s.txSeen()).hasSize(1);
+        assertThat(getUsers()).isEqualTo(NUMBER_OF_EVENTS);
+      }
     }
 
     @SneakyThrows
@@ -274,7 +278,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       assertThat(getUsers()).isZero();
 
       try {
-        factus.subscribeAndBlock(p).awaitCatchup();
+        factus.subscribeAndBlock(p).awaitCatchup().close();
       } catch (Throwable expected) {
         // ignore
       }
@@ -476,16 +480,18 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @Override
     public void factStreamPosition(@NonNull FactStreamPosition state) {
-      log.debug("set state");
-      assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isTrue();
-      factStreamPositionModifications++;
-
       jdbcTemplate.update(
           "INSERT INTO managed_projection (name, fact_stream_position) VALUES (?, ?) "
               + "ON CONFLICT (name) DO UPDATE SET fact_stream_position = ?",
           getScopedName().asString(),
           state.factId(),
           state.factId());
+    }
+
+    @Override
+    public void transactionalFactStreamPosition(@NonNull FactStreamPosition factStreamPosition) {
+      factStreamPositionModifications++;
+      super.transactionalFactStreamPosition(factStreamPosition);
     }
 
     @Override

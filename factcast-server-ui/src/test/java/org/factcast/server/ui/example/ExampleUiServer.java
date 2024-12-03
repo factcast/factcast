@@ -15,15 +15,22 @@
  */
 package org.factcast.server.ui.example;
 
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.Fact;
 import org.factcast.server.security.CommonSecurityConfiguration;
 import org.factcast.server.ui.DbTestConfiguration;
-import org.factcast.server.ui.config.ExampleUiServerConfig;
 import org.factcast.server.ui.config.SecurityConfiguration;
 import org.factcast.server.ui.config.UIConfiguration;
+import org.factcast.server.ui.plugins.JsonEntryMetaData;
+import org.factcast.server.ui.plugins.JsonPayload;
+import org.factcast.server.ui.plugins.JsonViewPlugin;
 import org.factcast.store.PgFactStoreConfiguration;
+import org.factcast.store.internal.script.JSEngineFactory;
+import org.factcast.store.internal.script.graaljs.GraalJSEngineFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 
 @Slf4j
@@ -33,10 +40,93 @@ import org.springframework.context.annotation.Import;
   SecurityConfiguration.class,
   PgFactStoreConfiguration.class,
   CommonSecurityConfiguration.class,
-  DbTestConfiguration.class,
-  ExampleUiServerConfig.class
+  DbTestConfiguration.class
 })
 public class ExampleUiServer {
+  @Bean
+  public JSEngineFactory jsEngineFactory() {
+    return new GraalJSEngineFactory();
+  }
+
+  @Bean
+  public JsonViewPlugin testPlugin() {
+    return new JsonViewPlugin() {
+      @Override
+      public void doHandle(Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData) {
+        final var paths = payload.findPaths("$..firstName");
+
+        paths.forEach(
+            p -> {
+              final var name = payload.read(p, String.class);
+
+              jsonEntryMetaData.annotatePayload(p, "Name: " + name);
+              jsonEntryMetaData.addPayloadHoverContent(p, "J. Edgar Hoover: " + name);
+            });
+      }
+
+      @Override
+      public boolean isReady() {
+        return true;
+      }
+
+      @Override
+      public @NonNull String getDisplayName() {
+        return "TestPlugin";
+      }
+    };
+  }
+
+  @Bean
+  public JsonViewPlugin hoverOnlyPlugin() {
+    return new JsonViewPlugin() {
+      @Override
+      public void doHandle(Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData) {
+        final var paths = payload.findPaths("$..lastName");
+
+        paths.forEach(
+            p -> {
+              final var name = payload.read(p, String.class);
+              jsonEntryMetaData.addPayloadHoverContent(p, "J. Edgar Hoover: " + name);
+            });
+      }
+
+      @Override
+      public boolean isReady() {
+        return true;
+      }
+
+      @Override
+      public @NonNull String getDisplayName() {
+        return "HoverOnlyPlugin";
+      }
+    };
+  }
+
+  @Bean
+  public JsonViewPlugin hoverIdsPlugin() {
+    return new JsonViewPlugin() {
+      @Override
+      public void doHandle(Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData) {
+        final var idPaths =
+            payload.findPaths("$..*").stream()
+                .filter(p -> p.toLowerCase().endsWith("id']"))
+                .toList();
+
+        idPaths.forEach(
+            p -> jsonEntryMetaData.addPayloadHoverContent(p, "This is most likely an ID."));
+      }
+
+      @Override
+      public boolean isReady() {
+        return true;
+      }
+
+      @Override
+      public @NonNull String getDisplayName() {
+        return "HoverIdsPlugin";
+      }
+    };
+  }
 
   public static void main(String[] args) {
     SpringApplication.run(ExampleUiServer.class, args);

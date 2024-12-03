@@ -16,16 +16,12 @@
 package org.factcast.spring.boot.autoconfigure.snap;
 
 import lombok.NonNull;
-import org.factcast.core.snap.redisson.RedissonSnapshotCache;
-import org.factcast.core.snap.redisson.RedissonSnapshotProperties;
-import org.factcast.factus.snapshot.SnapshotCache;
+import org.factcast.core.snap.redisson.*;
+import org.factcast.factus.snapshot.*;
 import org.redisson.api.RedissonClient;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.AutoConfigureBefore;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.autoconfigure.*;
+import org.springframework.boot.autoconfigure.condition.*;
+import org.springframework.context.annotation.*;
 
 @AutoConfiguration
 @ConditionalOnClass({RedissonSnapshotCache.class, RedissonClient.class})
@@ -37,9 +33,12 @@ public class RedissonSnapshotCacheAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean
   public SnapshotCache snapshotCache(
-      RedissonClient redisson, @NonNull RedissonSnapshotProperties props) {
+      @NonNull RedissonClient redisson,
+      @NonNull RedissonSnapshotProperties props,
+      @NonNull SnapshotSerializerSelector selector) {
     // Initialize codec at container startup to verify existence of required dependencies.
+    // can be removed when legacy bucket processing is removed
     props.getSnapshotCacheRedissonCodec().codec();
-    return new RedissonSnapshotCache(redisson, props);
+    return new RedissonSnapshotCache(redisson, selector, props);
   }
 }

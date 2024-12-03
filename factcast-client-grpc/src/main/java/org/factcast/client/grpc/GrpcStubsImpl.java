@@ -36,6 +36,7 @@ public class GrpcStubsImpl implements GrpcStubs {
   private final @NonNull Channel channel;
   private final @NonNull Metadata meta;
   private final @Nullable CallCredentials basic;
+  private final @NonNull FactCastGrpcClientProperties properties;
 
   // can change at runtime (failover)
   @Setter @Nullable private String compression = null;
@@ -44,9 +45,11 @@ public class GrpcStubsImpl implements GrpcStubs {
       @NonNull FactCastGrpcChannelFactory channelFactory,
       @NonNull String channelName,
       @NonNull Metadata meta,
-      @Nullable CallCredentials basic) {
+      @Nullable CallCredentials basic,
+      @NonNull FactCastGrpcClientProperties properties) {
     this.meta = meta;
     this.basic = basic;
+    this.properties = properties;
     this.channel = channelFactory.createChannel(channelName);
   }
 
@@ -75,6 +78,7 @@ public class GrpcStubsImpl implements GrpcStubs {
     if (basic != null) stub = stub.withCallCredentials(basic);
     if (deadline != null) stub = stub.withDeadline(deadline);
     stub = stub.withInterceptors(MetadataUtils.newAttachHeadersInterceptor(meta));
+    stub = stub.withMaxInboundMessageSize(properties.getMaxInboundMessageSize());
     return stub.withWaitForReady();
   }
 

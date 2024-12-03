@@ -17,13 +17,13 @@ package org.factcast.core.snap.local;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import org.factcast.core.snap.Snapshot;
-import org.factcast.core.snap.SnapshotId;
+import org.factcast.factus.snapshot.SnapshotData;
+import org.factcast.factus.snapshot.SnapshotIdentifier;
 
 public interface SnapshotDiskRepository {
-  CompletableFuture<Void> save(Snapshot snapshot);
+  CompletableFuture<Void> save(SnapshotIdentifier id, SnapshotData snapshot);
 
-  Optional<Snapshot> findById(SnapshotId id);
+  Optional<SnapshotData> findById(SnapshotIdentifier id);
 
-  CompletableFuture<Void> delete(SnapshotId id);
+  CompletableFuture<Void> delete(SnapshotIdentifier id);
 }

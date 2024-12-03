@@ -19,7 +19,7 @@ import java.time.Duration;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.grpc.api.GrpcConstants;
+import org.factcast.grpc.api.*;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
@@ -70,17 +70,7 @@ public class FactCastGrpcClientProperties implements InitializingBean {
 
   @Override
   public void afterPropertiesSet() throws Exception {
-    // we just warn here. If the value is out of range, it will nevertheless be sent to the server,
-    // so that the serverlogs contain the client's misconfiguration. However, a default will be used
-    // instead.
-    if (maxInboundMessageSize < GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE)
-      log.warn(
-          "Minimum value for 'maxInboundMessageSize' is {}",
-          GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE);
-    if (maxInboundMessageSize > GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE)
-      log.warn(
-          "Maximum value for 'maxInboundMessageSize' is {}",
-          GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE);
+    maxInboundMessageSize = GrpcConstants.calculateMaxInboundMessageSize(maxInboundMessageSize);
   }
 
   @Data

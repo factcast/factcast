@@ -34,12 +34,7 @@ public class SnapSerWithoutNoArgsConstructor implements SnapshotSerializer {
   }
 
   @Override
-  public boolean includesCompression() {
-    return false;
-  }
-
-  @Override
-  public String getId() {
-    return "notimportant";
+  public SnapshotSerializerId id() {
+    return SnapshotSerializerId.of("notimportant");
   }
 }

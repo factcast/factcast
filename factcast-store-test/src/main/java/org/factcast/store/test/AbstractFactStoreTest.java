@@ -585,6 +585,32 @@ public abstract class AbstractFactStoreTest {
   }
 
   @Test
+  protected void testMatchByMultipleAggIds() {
+    Assertions.assertTimeout(
+        Duration.ofMillis(30000),
+        () -> {
+          String ns = "default";
+          UUID aggId1 = UUID.randomUUID();
+          UUID aggId2 = UUID.randomUUID();
+          UUID aggId3 = UUID.randomUUID();
+          uut.publish(
+              List.of(
+                  // this should be consumed
+                  newTestFact(ns, new UUID[] {aggId1, aggId2}),
+                  // also this
+                  newTestFact(ns, new UUID[] {aggId1, aggId2, aggId3}),
+                  // this not
+                  newTestFact(ns, new UUID[] {aggId1})));
+          FactObserver observer = mock(FactObserver.class);
+          uut.subscribe(
+                  SubscriptionRequest.catchup(FactSpec.ns(ns).aggId(aggId1, aggId2)).fromScratch(),
+                  observer)
+              .awaitComplete();
+          verify(observer, times(2)).onNext(any());
+        });
+  }
+
+  @Test
   protected void testDelayed() {
     Assertions.assertTimeout(
         Duration.ofMillis(30000),
@@ -775,6 +801,14 @@ public abstract class AbstractFactStoreTest {
 
   private Fact newTestFact(String ns) {
     return Fact.builder().ns(ns).id(UUID.randomUUID()).type("type").build("{}");
+  }
+
+  private Fact newTestFact(String ns, UUID[] aggIds) {
+    Fact.Builder b = Fact.builder().ns(ns).id(UUID.randomUUID()).type("type");
+    for (UUID aggId : aggIds) {
+      b.aggId(aggId);
+    }
+    return b.build("{}");
   }
 
   private Fact newFollowTestFact() {

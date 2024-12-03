@@ -22,7 +22,6 @@ import lombok.*;
 import org.factcast.core.util.FactCastJson;
 
 @AllArgsConstructor
-@NoArgsConstructor
 @Getter
 @Setter
 @EqualsAndHashCode(of = "id")
@@ -44,6 +43,10 @@ public class TestFact implements Fact {
   String jsonPayload = "{}";
 
   Map<String, String> meta = new HashMap<>();
+
+  public TestFact() {
+    meta("_ser", String.valueOf(this.serial));
+  }
 
   @Override
   public String meta(String key) {

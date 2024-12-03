@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.8.0-SNAPSHOT</version>
+    <version>0.9.1-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-bom</artifactId>
@@ -51,6 +51,16 @@
       <dependency>
         <groupId>org.factcast</groupId>
         <artifactId>factcast-server-grpc</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-server-ui</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-server-ui-s3-reportstore</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -105,12 +115,27 @@
       </dependency>
       <dependency>
         <groupId>org.factcast</groupId>
+        <artifactId>factcast-factus-serializer-binary</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-factus-serializer-fury</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
         <artifactId>factcast-snapshotcache-local-memory</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.factcast</groupId>
         <artifactId>factcast-snapshotcache-local-disk</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-snapshotcache-jdbc</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -138,49 +163,36 @@
         <artifactId>factcast-script-engine</artifactId>
         <version>${project.version}</version>
       </dependency>
-      <dependency>
-        <groupId>org.factcast</groupId>
-        <artifactId>factcast-server-security</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.factcast</groupId>
-        <artifactId>factcast-server-ui</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.factcast</groupId>
-        <artifactId>factcast-server-ui-s3-reportstore</artifactId>
-        <version>${project.version}</version>
-      </dependency>
       <!-- for testing only! -->
       <dependency>
         <groupId>org.factcast</groupId>
         <artifactId>factcast-store-test</artifactId>
         <version>${project.version}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.factcast</groupId>
         <artifactId>factcast-test</artifactId>
         <version>${project.version}</version>
+        <scope>test</scope>
       </dependency>
 
       <!-- needed dependencies -->
       <dependency>
         <groupId>org.postgresql</groupId>
         <artifactId>postgresql</artifactId>
-        <version>42.7.3</version>
+        <version>42.7.4</version>
       </dependency>
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>33.3.0-jre</version>
+        <version>33.3.1-jre</version>
       </dependency>
       <!-- will be deprecated -->
       <dependency>
         <groupId>org.xerial.snappy</groupId>
         <artifactId>snappy-java</artifactId>
-        <version>1.1.10.6</version>
+        <version>1.1.10.7</version>
       </dependency>
       <!-- /will be deprecated -->
       <dependency>
@@ -191,7 +203,7 @@
       <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-compress</artifactId>
-        <version>1.27.0</version>
+        <version>1.27.1</version>
       </dependency>
 
       <dependency>

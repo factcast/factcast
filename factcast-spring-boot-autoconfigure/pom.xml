@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.8.0-SNAPSHOT</version>
+    <version>0.9.1-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-spring-boot-autoconfigure</artifactId>
@@ -67,6 +67,11 @@
       <optional>true</optional>
     </dependency>
     <dependency>
+      <groupId>org.lz4</groupId>
+      <artifactId>lz4-java</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-grpc-snappy</artifactId>
       <optional>true</optional>
@@ -83,12 +88,12 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
-      <artifactId>factcast-server-ui-s3-reportstore</artifactId>
+      <artifactId>factcast-factus-serializer-binary</artifactId>
       <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
-      <artifactId>factcast-factus-bin-snapser</artifactId>
+      <artifactId>factcast-factus-serializer-fury</artifactId>
       <optional>true</optional>
     </dependency>
     <dependency>
@@ -104,6 +109,11 @@
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-snapshotcache-redisson</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-snapshotcache-jdbc</artifactId>
       <optional>true</optional>
     </dependency>
     <dependency>

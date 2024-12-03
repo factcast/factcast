@@ -15,18 +15,15 @@
  */
 package org.factcast.spring.boot.autoconfigure.factus;
 
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;

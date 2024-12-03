@@ -120,10 +120,11 @@ class AbstractRedisTxManagedProjectionTest {
 
       FactStreamPosition pos = org.factcast.core.TestFactStreamPosition.random();
       RBucket<Object> bucket = mock(RBucket.class);
-      when(tx.getBucket(any(), any())).thenReturn(bucket);
+      when(redisson.getBucket(any(), any())).thenReturn(bucket);
       when(bucket.get()).thenReturn(pos);
 
       FactStreamPosition result = underTest.factStreamPosition();
+      verifyNoInteractions(tx);
 
       assertThat(result).isEqualTo(pos);
     }
@@ -153,10 +154,15 @@ class AbstractRedisTxManagedProjectionTest {
 
       RBucket<Object> bucket = mock(RBucket.class);
       when(tx.getBucket(any(), any())).thenReturn(bucket);
+      when(redisson.getBucket(any(), any())).thenReturn(bucket);
 
       underTest.factStreamPosition(FACT_STREAM_POSITION);
+      verifyNoInteractions(tx);
 
-      verify(bucket).set(FACT_STREAM_POSITION);
+      underTest.transactionalFactStreamPosition(FACT_STREAM_POSITION);
+
+      verify(tx).getBucket(any(), any());
+      verify(bucket, times(2)).set(FACT_STREAM_POSITION);
     }
   }
 

@@ -15,8 +15,8 @@
  */
 package org.factcast.core.snap.redisson;
 
-import java.util.*;
-import java.util.function.*;
+import java.util.Optional;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import lombok.Data;
 import lombok.NonNull;

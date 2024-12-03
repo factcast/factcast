@@ -6,14 +6,13 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.8.0-SNAPSHOT</version>
+    <version>0.9.1-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-server-ui</artifactId>
   <properties>
     <java.version>17</java.version>
-    <vaadin.version>24.4.10</vaadin.version>
-    <aws-sdk.version>2.29.6</aws-sdk.version>
+    <vaadin.version>24.5.2</vaadin.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -77,11 +76,6 @@
       <artifactId>file-download-wrapper</artifactId>
       <version>7.1.0</version>
     </dependency>
-    <dependency>
-      <groupId>org.vaadin.stefan</groupId>
-      <artifactId>lazy-download-button</artifactId>
-      <version>1.0.0</version>
-    </dependency>
 
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -115,7 +109,6 @@
       <version>7.1.0</version>
     </dependency>
 
-    <!-- Test dependencies -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-devtools</artifactId>
@@ -139,7 +132,7 @@
     <dependency>
       <groupId>com.microsoft.playwright</groupId>
       <artifactId>playwright</artifactId>
-      <version>1.46.0</version>
+      <version>1.49.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -152,12 +145,7 @@
     <dependency>
       <groupId>org.junit-pioneer</groupId>
       <artifactId>junit-pioneer</artifactId>
-      <version>2.2.0</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>localstack</artifactId>
+      <version>2.3.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>

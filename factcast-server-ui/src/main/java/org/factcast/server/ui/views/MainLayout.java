@@ -88,7 +88,7 @@ public class MainLayout extends AppLayout {
     SideNav nav = new SideNav();
 
     nav.addItem(new SideNavItem("Query", FullQueryPage.class, VaadinIcon.GLOBE.create()));
-    nav.addItem(new SideNavItem("Query by Fact-ID", IdQueryPage.class, VaadinIcon.SEARCH.create()));
+    nav.addItem(new SideNavItem("Query by Fact-ID", IdQueryPage.class, VaadinIcon.FILE_O.create()));
     nav.addItem(
         new SideNavItem(
             "Report Generation", ReportQueryPage.class, VaadinIcon.FILE_SEARCH.create()));
