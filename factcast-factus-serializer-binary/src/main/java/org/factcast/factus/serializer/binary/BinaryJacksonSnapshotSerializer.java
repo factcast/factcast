@@ -28,7 +28,7 @@ public abstract class BinaryJacksonSnapshotSerializer implements SnapshotSeriali
 
   private final ObjectMapper omMessagePack;
 
-  public BinaryJacksonSnapshotSerializer(
+  protected BinaryJacksonSnapshotSerializer(
       @NonNull BinaryJacksonSnapshotSerializerCustomizer customizer) {
     ObjectMapper om = new ObjectMapper(new MessagePackFactory());
     customizer.accept(om);

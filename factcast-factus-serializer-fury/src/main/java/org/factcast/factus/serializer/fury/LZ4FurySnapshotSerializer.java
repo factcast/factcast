@@ -23,10 +23,12 @@ import org.factcast.factus.serializer.SnapshotSerializerId;
 @Slf4j
 public class LZ4FurySnapshotSerializer extends FurySnapshotSerializer {
 
+  @Override
   protected OutputStream wrap(OutputStream os) {
     return new LZ4BlockOutputStream(os);
   }
 
+  @Override
   protected InputStream wrap(InputStream is) {
     return new LZ4BlockInputStream(is);
   }

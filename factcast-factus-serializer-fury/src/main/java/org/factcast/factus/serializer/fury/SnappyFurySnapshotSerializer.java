@@ -24,11 +24,13 @@ import org.factcast.factus.serializer.SnapshotSerializerId;
 @Slf4j
 public class SnappyFurySnapshotSerializer extends FurySnapshotSerializer {
 
+  @Override
   @SneakyThrows
   protected OutputStream wrap(OutputStream os) {
     return new FramedSnappyCompressorOutputStream(os);
   }
 
+  @Override
   @SneakyThrows
   protected InputStream wrap(InputStream is) {
     return new FramedSnappyCompressorInputStream(is);

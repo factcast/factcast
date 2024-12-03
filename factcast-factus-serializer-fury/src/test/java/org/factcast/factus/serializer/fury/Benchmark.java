@@ -21,13 +21,12 @@ import com.google.common.base.Stopwatch;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
-import org.factcast.factus.serializer.fury.testjson.*;
-import org.junit.jupiter.api.*;
+import org.factcast.factus.serializer.fury.testjson.Root;
 import org.springframework.core.io.ClassPathResource;
 
 public class Benchmark {
   static Root root;
-  static byte[] HUGE_JSON;
+  static final byte[] HUGE_JSON;
 
   static {
     try {
@@ -48,7 +47,7 @@ public class Benchmark {
     }
   }
 
-  static int ITERATIONS = 10000;
+  static final int ITERATIONS = 10000;
 
   public static void main(String[] args) {
     benchmark("uncompressed", new FurySnapshotSerializer());

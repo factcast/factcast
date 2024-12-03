@@ -15,9 +15,6 @@
  */
 package org.factcast.factus.serializer.fury;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 import java.io.*;
 import lombok.SneakyThrows;
 import org.apache.commons.compress.compressors.snappy.*;
@@ -25,7 +22,7 @@ import org.assertj.core.api.Assertions;
 import org.factcast.factus.serializer.SnapshotSerializerId;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
