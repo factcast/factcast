@@ -40,7 +40,6 @@ import org.factcast.server.ui.metrics.UiMetrics;
 import org.factcast.server.ui.port.FactRepository;
 import org.factcast.server.ui.security.SecurityService;
 
-@Slf4j
 @Timed(value = UiMetrics.TIMER_METRIC_NAME)
 @RequiredArgsConstructor
 public class FactRepositoryImpl implements FactRepository {

@@ -55,6 +55,8 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
 
       assertThat(jsonView()).containsText(USER1_EVENT_ID.toString());
       assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER3_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER4_EVENT_ID.toString());
     }
 
     @RetryingTest(maxAttempts = 5, minSuccess = 1)
@@ -68,6 +70,8 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
 
       assertThat(jsonView()).not().containsText(USER1_EVENT_ID.toString());
       assertThat(jsonView()).not().containsText(USER2_EVENT_ID.toString());
+      assertThat(jsonView()).not().containsText(USER3_EVENT_ID.toString());
+      assertThat(jsonView()).not().containsText(USER4_EVENT_ID.toString());
     }
 
     @RetryingTest(maxAttempts = 5, minSuccess = 1)
@@ -111,12 +115,13 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
     void queryByOffset() {
       loginFor("/ui/full");
       selectNamespace("users");
-      page.getByLabel("Offset").fill("1");
+      page.getByLabel("Offset").fill("2");
       fromScratch();
 
       query();
 
-      assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER3_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER4_EVENT_ID.toString());
     }
 
     @RetryingTest(maxAttempts = 5, minSuccess = 1)
@@ -130,6 +135,8 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
 
       assertThat(jsonView()).not().containsText(USER1_EVENT_ID.toString());
       assertThat(jsonView()).not().containsText(USER2_EVENT_ID.toString());
+      assertThat(jsonView()).not().containsText(USER3_EVENT_ID.toString());
+      assertThat(jsonView()).not().containsText(USER4_EVENT_ID.toString());
     }
 
     private void assertMetaCount(int count) {
@@ -234,7 +241,7 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
       jsonView().getByText("\"lastName\"").first().hover();
 
       // expect that the hover contents are shown
-      assertThat(jsonView().locator(".hover-contents")).containsText("J. Edgar Hoover: Ernst");
+      assertThat(jsonView().locator(".hover-contents")).containsText("J. Edgar Hoover: Jäger");
     }
 
     @RetryingTest(maxAttempts = 5, minSuccess = 1)
@@ -293,7 +300,7 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
       final var mapper = new ObjectMapper();
       final var downloadedJson = mapper.readTree(download.createReadStream());
 
-      Assertions.assertThat(downloadedJson.size()).isEqualTo(2);
+      Assertions.assertThat(downloadedJson.size()).isEqualTo(4);
     }
   }
 
