@@ -15,8 +15,7 @@
  */
 package org.factcast.spring.boot.autoconfigure.factus;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;
@@ -31,9 +30,9 @@ public class SpringSnapshotSerializerSupplier implements SnapshotSerializerSuppl
 
   /**
    * @param type
+   * @param <T>
    * @return bean instance of given type, or (if not found in the spring context) delegates to the *
    *     wrappedSupplier.
-   * @param <T>
    */
   @Override
   public <T extends SnapshotSerializer> T get(@NonNull Class<T> type) {

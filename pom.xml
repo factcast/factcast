@@ -61,6 +61,8 @@
     <module>factcast-snapshotcache-local-memory</module>
     <module>factcast-snapshotcache-local-disk</module>
     <module>factcast-snapshotcache-jdbc</module>
+    <module>factcast-factus-serializer-binary</module>
+    <module>factcast-factus-serializer-fury</module>
   </modules>
   <scm>
     <connection>scm:git:git@github.com:factcast/factcast.git</connection>
@@ -120,6 +122,8 @@
     <byte-buddy.version>1.15.10</byte-buddy.version>
     <skipUnitTests>false</skipUnitTests>
     <postgres.version>15</postgres.version>
+    <sonar.exclusions>**/src/test/java/**/*.java</sonar.exclusions>
+    <sonar.test.exclusions>**/src/test/java/**/*.java</sonar.test.exclusions>
   </properties>
   <dependencyManagement>
     <dependencies>
