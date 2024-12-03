@@ -40,12 +40,6 @@ public class FactSpec {
 
   @NonNull @JsonProperty private String ns;
 
-  // instead of a setter
-  public @NonNull FactSpec withNs(@NonNull String ns) {
-    this.ns = ns;
-    return this;
-  }
-
   @JsonProperty private String type = null;
 
   @JsonProperty private int version = 0; // 0 means I don't care
@@ -147,6 +141,14 @@ public class FactSpec {
 
   public FactSpec copy() {
     FactSpec fs = FactSpec.ns(ns).type(type).version(version).filterScript(filterScript);
+    fs.aggId = aggId;
+    fs.aggIds.addAll(aggIds);
+    fs.meta.putAll(meta);
+    return fs;
+  }
+
+  public FactSpec withNs(String newNs) {
+    FactSpec fs = FactSpec.ns(newNs).type(type).version(version).filterScript(filterScript);
     fs.aggId = aggId;
     fs.aggIds.addAll(aggIds);
     fs.meta.putAll(meta);

@@ -182,7 +182,7 @@ public class PgFactStream {
       UUID targetId = ffwdTarget.targetId();
       long targetSer = ffwdTarget.targetSer();
 
-      if (targetId != null && (targetSer > startedSer)) {
+      if (targetId != null && (targetSer > startedSer) && serial.get() < targetSer) {
         pipeline.process(Signal.of(FactStreamPosition.of(targetId, targetSer)));
       }
     }
