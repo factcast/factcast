@@ -25,7 +25,6 @@ import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
