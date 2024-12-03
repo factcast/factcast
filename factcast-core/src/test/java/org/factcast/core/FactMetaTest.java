@@ -18,9 +18,7 @@ package org.factcast.core;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
-import java.util.concurrent.atomic.AtomicInteger;
 import lombok.SneakyThrows;
-import org.assertj.core.api.*;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,10 +37,9 @@ class FactMetaTest {
           "{\"someString\":\"oink\",\"meta\":{\"single\":\"value\",\"someNull\":null,\"otherNull\":[null,null],\"foo\":[\"bar\",\"baz\"]}}";
       TestMeta deser = new ObjectMapper().readerFor(TestMeta.class).readValue(json);
       Assertions.assertThat(deser.someString).isEqualTo("oink");
-      Assertions.assertThat(deser.meta).hasSize(6);
       Assertions.assertThat(deser.meta.keySet()).hasSize(4); // unique keys
-      Assertions.assertThat(deser.meta.get("foo")).isEqualTo("bar");
-      Assertions.assertThat(deser.meta.get("single")).isEqualTo("value");
+      Assertions.assertThat(deser.meta.getFirst("foo")).isEqualTo("bar");
+      Assertions.assertThat(deser.meta.getFirst("single")).isEqualTo("value");
       Assertions.assertThat(deser.meta.getAll("foo"))
           .hasSize(2)
           .containsAll(Lists.newArrayList("bar", "baz"));
@@ -62,20 +59,6 @@ class FactMetaTest {
     }
   }
 
-  @Nested
-  class WhenIterating {
-    @Test
-    void forEachProcessesAllTuples() {
-      AtomicInteger count = new AtomicInteger();
-      new ExampleMeta()
-          .meta.forEach(
-              (k, v) -> {
-                count.incrementAndGet();
-              });
-      Assertions.assertThat(count).hasValue(6);
-    }
-  }
-
   static class TestMeta {
     @JsonProperty protected String someString;
     @JsonProperty protected FactMeta meta;
@@ -85,12 +68,96 @@ class FactMetaTest {
     ExampleMeta() {
       someString = "oink";
       meta = new FactMeta();
-      meta.put("foo", "bar");
-      meta.put("foo", "baz");
-      meta.put("single", "value");
-      meta.put("someNull", null);
-      meta.put("otherNull", null);
-      meta.put("otherNull", null);
+      meta.add("foo", "bar");
+      meta.add("foo", "baz");
+      meta.add("single", "value");
+      meta.add("someNull", null);
+      meta.add("otherNull", null);
+      meta.add("otherNull", null);
+    }
+  }
+
+  @Nested
+  class WhenOfing {
+
+    @Test
+    void pairExists() {
+      Assertions.assertThat(FactMeta.of("A", "B").getFirst("A")).isEqualTo("B");
+    }
+
+    @Test
+    void pairsExists() {
+      FactMeta uut = FactMeta.of("A", "B", "C", "D");
+      Assertions.assertThat(uut.getFirst("A")).isEqualTo("B");
+      Assertions.assertThat(uut.getFirst("C")).isEqualTo("D");
+    }
+  }
+
+  @Nested
+  class WhenGettingFirst {
+
+    @Test
+    void picksFirst() {
+      FactMeta uut = FactMeta.of("A", "B", "A", "C");
+      Assertions.assertThat(uut.getFirst("A")).isEqualTo("B");
+      Assertions.assertThat(uut.getAll("A")).containsExactly("B", "C");
+    }
+  }
+
+  @Nested
+  class WhenGettingAll {
+
+    @Test
+    void containsAll() {
+      FactMeta uut = FactMeta.of("A", "B", "A", "C");
+      Assertions.assertThat(uut.getAll("A")).containsExactly("B", "C");
+    }
+  }
+
+  @Nested
+  class WhenRemoving {
+
+    @Test
+    void noneLeft() {
+      FactMeta uut = FactMeta.of("A", "1", "B", "2");
+      uut.remove("A");
+      Assertions.assertThat(uut.getAll("A")).isEmpty();
+      Assertions.assertThat(uut.getAll("B")).isNotEmpty();
+    }
+  }
+
+  @Nested
+  class WhenKeyingSet {
+    @Test
+    void allKeysMetOnce() {
+      FactMeta uut = FactMeta.of("A", "1", "B", "2");
+      uut.add("C", "x");
+      uut.add("C", "y");
+      uut.add("D", "z");
+
+      Assertions.assertThat(uut.keySet()).containsExactlyInAnyOrder("A", "B", "C", "D").hasSize(4);
+    }
+  }
+
+  @Nested
+  class WhenAdding {
+
+    @Test
+    void createsInitial() {
+      FactMeta uut = FactMeta.of("A", "1");
+      uut.add("C", "x");
+
+      Assertions.assertThat(uut.getFirst("C")).isEqualTo("x");
+    }
+
+    @Test
+    void appends() {
+      FactMeta uut = FactMeta.of("A", "1");
+      uut.add("C", "x");
+      uut.add("C", "y");
+      uut.add("C", "z");
+
+      Assertions.assertThat(uut.getAll("C")).containsExactly("x", "y", "z");
     }
   }
 }

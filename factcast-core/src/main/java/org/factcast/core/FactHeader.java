@@ -15,8 +15,7 @@
  */
 package org.factcast.core;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import java.util.*;
 import javax.annotation.Nullable;
 import lombok.*;
@@ -61,6 +60,6 @@ public class FactHeader {
 
   @Nullable
   public String meta(@NonNull String key) {
-    return meta.get(key);
+    return meta.getFirst(key);
   }
 }

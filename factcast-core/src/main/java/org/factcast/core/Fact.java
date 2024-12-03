@@ -16,17 +16,13 @@
 package org.factcast.core;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import javax.annotation.Nullable;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import org.factcast.core.spec.FactSpecCoordinates;
 import org.factcast.core.util.FactCastJson;
-import org.factcast.factus.event.DefaultEventSerializer;
+import org.factcast.factus.event.*;
 import org.factcast.factus.event.EventObject;
-import org.factcast.factus.event.EventSerializer;
 
 /**
  * Defines a fact to be either published or consumed. Consists of two JSON Strings: jsonHeader and
@@ -232,7 +228,7 @@ public interface Fact {
     }
 
     public Builder meta(@NonNull String key, String value) {
-      header.meta().put(key, value);
+      header.meta().add(key, value);
       return this;
     }
 

@@ -15,8 +15,7 @@
  */
 package org.factcast.core;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
@@ -34,7 +33,7 @@ class FactHeaderTest {
     assertEquals(UUID.fromString("5d0e3ae9-6684-42bc-87a7-854f76506f7e"), h.id());
     assertEquals("ns", h.ns());
     assertEquals("t", h.type());
-    assertEquals("bar", h.meta().get("foo"));
+    assertEquals("bar", h.meta().getFirst("foo"));
   }
 
   @Test

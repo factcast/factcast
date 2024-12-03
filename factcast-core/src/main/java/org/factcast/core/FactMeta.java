@@ -15,18 +15,15 @@
  */
 package org.factcast.core;
 
-import com.fasterxml.jackson.core.JacksonException;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
+import com.fasterxml.jackson.databind.annotation.*;
+import com.google.common.collect.*;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import lombok.*;
-import lombok.experimental.Delegate;
 
 /**
  * Compromise, that breaks a bit of the Map contract. We basically want a Map<String,String> that is
@@ -41,69 +38,55 @@ import lombok.experimental.Delegate;
  */
 @JsonSerialize(using = FactMeta.Serializer.class)
 @JsonDeserialize(using = FactMeta.Deserializer.class)
-public class FactMeta implements Map<String, String> {
-  @Delegate(excludes = ExcludeDelegationFromMultiMap.class)
+public class FactMeta {
   private final Multimap<String, String> backing = ArrayListMultimap.create();
 
   public static FactMeta of(String k1, String v1) {
     FactMeta ret = new FactMeta();
-    ret.put(k1, v1);
+    ret.add(k1, v1);
     return ret;
   }
 
   public static FactMeta of(String k1, String v1, String k2, String v2) {
     FactMeta ret = of(k1, v1);
-    ret.put(k2, v2);
+    ret.add(k2, v2);
     return ret;
   }
 
-  @Override
-  public String get(Object key) {
-    return firstElement(backing.get((String) key));
+  // not symmetric with setSingle, but we settled for this naming to be crystal clear
+  public @Nullable String getFirst(@NonNull String key) {
+    return firstElement(backing.get(key));
   }
 
-  @Override
-  public String put(String key, String value) {
-    if (key.startsWith("_")) backing.removeAll(key);
-    backing.put(key, value);
-    return null;
+  /**
+   * @param key
+   * @return empty collection if key not found
+   */
+  @NonNull
+  public Collection<String> getAll(String key) {
+    return backing.get(key);
   }
 
-  @Override
-  public String remove(Object key) {
+  public void setSingle(String k, String v) {
+    backing.removeAll(k);
+    add(k, v);
+  }
+
+  public String remove(@NonNull String key) {
     return firstElement(backing.removeAll(key));
   }
 
-  private static String firstElement(Collection<String> col) {
+  private static String firstElement(@NonNull Collection<String> col) {
     return col.stream().findFirst().orElse(null);
   }
 
-  @Override
-  public void putAll(Map<? extends String, ? extends String> m) {
-    if (m != null) m.forEach(backing::put);
-  }
-
-  public Collection<String> getAll(String k) {
-    return backing.get(k);
-  }
-
-  @Override
   @NonNull
-  public Set<Entry<String, String>> entrySet() {
-    return new HashSet<>(backing.entries());
+  public Set<String> keySet() {
+    return backing.entries().stream().map(Map.Entry::getKey).collect(Collectors.toSet());
   }
 
-  public void set(String k, @NonNull String v) {
-    backing.removeAll(k);
+  public void add(@NonNull String k, @Nullable String v) {
     backing.put(k, v);
-  }
-
-  private interface ExcludeDelegationFromMultiMap {
-    String get(String key);
-
-    String put(String k, String v);
-
-    boolean putAll(Multimap<String, String> multimap);
   }
 
   static class Serializer extends JsonSerializer<FactMeta> {
@@ -134,23 +117,23 @@ public class FactMeta implements Map<String, String> {
   static class Deserializer extends JsonDeserializer<FactMeta> {
     @Override
     public FactMeta deserialize(JsonParser jp, DeserializationContext deserializationContext)
-        throws IOException, JacksonException {
+        throws IOException {
       FactMeta ret = new FactMeta();
 
       JsonNode node = jp.getCodec().readTree(jp);
-      Iterator<Entry<String, JsonNode>> fields = node.fields();
+      Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
       fields.forEachRemaining(
           e -> {
             String k = e.getKey();
             JsonNode n = e.getValue();
-            if (n.isNull()) ret.put(k, null);
-            else if (n.isTextual()) ret.put(k, n.textValue());
-            else if (n.isNumber()) ret.put(k, n.numberValue().toString());
-            else if (n.isBoolean()) ret.put(k, Boolean.valueOf(n.booleanValue()).toString());
+            if (n.isNull()) ret.setSingle(k, null);
+            else if (n.isTextual()) ret.add(k, n.textValue());
+            else if (n.isNumber()) ret.add(k, n.numberValue().toString());
+            else if (n.isBoolean()) ret.add(k, Boolean.toString(n.booleanValue()));
             else {
               if (!n.isArray()) throw new IllegalStateException("expected array but got " + n);
 
-              n.iterator().forEachRemaining(v -> ret.put(k, v.textValue()));
+              n.iterator().forEachRemaining(v -> ret.add(k, v.textValue()));
             }
           });
       return ret;
