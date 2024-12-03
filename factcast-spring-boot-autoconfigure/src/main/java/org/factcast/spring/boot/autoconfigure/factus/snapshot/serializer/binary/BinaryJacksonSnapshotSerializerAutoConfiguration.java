@@ -24,7 +24,10 @@ import org.springframework.context.annotation.Bean;
 
 @AutoConfiguration
 @ConditionalOnClass(BinaryJacksonSnapshotSerializer.class)
-@ConditionalOnProperty(prefix = "factcast.factus.snapshot", value = "compress")
+@ConditionalOnProperty(
+    prefix = "factcast.factus.snapshot",
+    value = "compress",
+    matchIfMissing = true)
 @Slf4j
 @AutoConfigureOrder(-100)
 public class BinaryJacksonSnapshotSerializerAutoConfiguration {
