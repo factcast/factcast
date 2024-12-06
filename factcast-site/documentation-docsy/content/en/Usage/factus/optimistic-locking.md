@@ -70,13 +70,14 @@ public class UserNames implements SnapshotProjection {
 In order to implement the use case above (enforcing unique usernames), what we can do is basically:
 
 ```java
-  UserNames names=factus.fetch(UserNames.class);
-        if(names.contains(cmd.userName)){
-        // reject the change
-        }else{
-        UserCreated prepared=new UserCreated(cmd.userId,cmd.userName));
-        // publish the prepared UserCreated Event
-        }
+UserNames names=factus.fetch(UserNames.class);
+
+if(names.contains(cmd.userName)){
+    // reject the change
+} else {
+    UserCreated prepared=new UserCreated(cmd.userId,cmd.userName));
+    // publish the prepared UserCreated Event
+}
 ```
 
 Now in order to make sure that the code above is re-attempted until there was no interference relevant to the UserNames
@@ -93,20 +94,19 @@ Factus offers a simple syntax:
 Applied to our example that would be
 
 ```java
-
 UserRegistrationCommand cmd=...    // details not important here
 
-        factus.withLockOn(UserNames.class)
-        .retries(10)                     // optional call to limit the number of retries
-        .intervalMillis(50)              // optional call to insert pause with the given number of milliseconds in between attempts
-        .attempt((names,tx)->{
+factus
+    .withLockOn(UserNames.class)
+    .retries(10)                     // optional call to limit the number of retries
+    .intervalMillis(50)              // optional call to insert pause with the given number of milliseconds in between attempts
+    .attempt((names,tx)->{
         if(names.contains(cmd.userName)){
-        tx.abort("The Username is already taken - please choose another one.");
-        }else{
-        tx.publish(new UserCreated(cmd.userId,cmd.userName));
+           tx.abort("The Username is already taken - please choose another one.");
+        } else {
+           tx.publish(new UserCreated(cmd.userId,cmd.userName));
         }
-
-        });
+    });
 ```
 
 As you can see here, the attempt call receives a BiConsumer that consumes
@@ -132,18 +132,19 @@ value of the function will be returned by the `attempt` method.
 ```java
 import java.time.Duration;
 
-var passwordFactId = factus.withLockOn(UserNames.class)
-        .attempt((names, tx) -> {
-            tx.publish(new UserCreated(cmd.userId, cmd.userName));
-            tx.publish(new UserPasswordChanged(cmd.userId, cmd.newPasswordHash));
-        }, facts -> {
-            // facts[0] -> UserCreated
-            // facts[1] -> UserPasswordChanged
-            // as published facts, both now have serial and fact id set.
+var passwordFactId = factus
+    .withLockOn(UserNames.class)
+    .attempt((names, tx) -> {
+        tx.publish(new UserCreated(cmd.userId, cmd.userName));
+        tx.publish(new UserPasswordChanged(cmd.userId, cmd.newPasswordHash));
+     }, facts -> {
+        // facts[0] -> UserCreated
+        // facts[1] -> UserPasswordChanged
+        // as published facts, both now have serial and fact id set.
 
-            // simple example only, do something more robust here
-            return facts.get(1).id();
-        });
+        // simple example only, do something more robust here
+        return facts.get(1).id();
+     });
 
 // and now use the fact id as needed, e.g. in a waitFor
 factus.waitFor(subscribedPasswordProjection, passwordFactId, Duration.ofSeconds(2));
