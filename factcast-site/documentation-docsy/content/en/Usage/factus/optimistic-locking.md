@@ -71,7 +71,7 @@ In order to implement the use case above (enforcing unique usernames), what we c
 
 ```java
 UserNames names=factus.fetch(UserNames.class);
-        
+
 if(names.contains(cmd.userName)){
     // reject the change
 } else {
@@ -95,7 +95,7 @@ Applied to our example that would be
 
 ```java
 UserRegistrationCommand cmd=...    // details not important here
-        
+
 factus
     .withLockOn(UserNames.class)
     .retries(10)                     // optional call to limit the number of retries
