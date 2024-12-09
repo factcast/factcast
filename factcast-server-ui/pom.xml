@@ -101,7 +101,7 @@
     <dependency>
       <groupId>com.vaadin.componentfactory</groupId>
       <artifactId>popup</artifactId>
-      <version>24.0.5</version>
+      <version>24.1.1</version>
     </dependency>
     <dependency>
       <groupId>org.vaadin.crudui</groupId>
