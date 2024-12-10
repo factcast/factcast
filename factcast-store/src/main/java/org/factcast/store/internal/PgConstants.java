@@ -314,6 +314,16 @@ public class PgConstants {
           + TABLE_DATE2SERIAL
           + " where factDate < ?";
 
+  public static final String FIRST_SERIAL_AFTER_DATE =
+      "SELECT COALESCE("
+          + "(SELECT MIN(lastSer) FROM "
+          + TABLE_DATE2SERIAL
+          + " WHERE factDate > ?), "
+          + "(SELECT MAX(lastSer) FROM "
+          + TABLE_DATE2SERIAL
+          + " WHERE factDate <= ?)) "
+          + "AS firstSer";
+
   private static String fromHeader(String attributeName) {
     return PgConstants.COLUMN_HEADER + "->>'" + attributeName + "' AS " + attributeName;
   }

@@ -40,6 +40,7 @@ public class FullQueryBean implements Serializable {
   private final long defaultFrom;
 
   private LocalDate since = LocalDate.now();
+  private LocalDate until = null;
 
   @Max(1000)
   private Integer limit = null;
@@ -50,7 +51,8 @@ public class FullQueryBean implements Serializable {
   @Valid private List<FactCriteria> criteria = Lists.newArrayList(new FactCriteria());
 
   // currently not possible to filter on more than one aggId via api
-  private BigDecimal from = null;
+  private BigDecimal from;
+  private BigDecimal to = null;
 
   FullQueryBean(long startingSerial) {
     defaultFrom = startingSerial;

@@ -24,6 +24,7 @@ import java.util.List;
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
+import org.factcast.core.FactHeader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -42,7 +43,9 @@ public class ListObserverTest {
     @BeforeEach
     void setup() {
       for (int i = 0; i < 30; i++) {
-        mockFacts.add(mock(Fact.class));
+        Fact mock = mock(Fact.class);
+        lenient().when(mock.header()).thenReturn(mock(FactHeader.class));
+        mockFacts.add(mock);
       }
     }
 
@@ -89,22 +92,24 @@ public class ListObserverTest {
     void switchesToComplete() {
       underTest = new ListObserver(2, 2);
       // first skipped for offset
-      underTest.onNext(mock(Fact.class));
+      Fact mock = mock(Fact.class);
+      when(mock.header()).thenReturn(mock(FactHeader.class));
+      underTest.onNext(mock);
       assertThat(underTest.isComplete()).isFalse();
       // second skipped for offset
-      underTest.onNext(mock(Fact.class));
+      underTest.onNext(mock);
       assertThat(underTest.isComplete()).isFalse();
       // third is taken, reduce limit to 1
-      underTest.onNext(mock(Fact.class));
+      underTest.onNext(mock);
       assertThat(underTest.isComplete()).isFalse();
       // fourth is taken, reduce limit to 0
-      underTest.onNext(mock(Fact.class));
+      underTest.onNext(mock);
       assertThat(underTest.isComplete()).isTrue();
 
       // more should trigger an exception
       assertThatThrownBy(
               () -> {
-                underTest.onNext(mock(Fact.class));
+                underTest.onNext(mock);
               })
           .isInstanceOf(LimitReachedException.class);
     }

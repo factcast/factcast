@@ -101,7 +101,9 @@ public class FactRepositoryImpl implements FactRepository {
 
     Set<FactSpec> specs = securityService.filterReadable(bean.createFactSpecs());
 
-    ListObserver obs = new ListObserver(bean.getLimitOrDefault(), bean.getOffsetOrDefault());
+    Long untilSerial = Optional.ofNullable(bean.getTo()).map(BigDecimal::longValue).orElse(null);
+    ListObserver obs =
+        new ListObserver(untilSerial, bean.getLimitOrDefault(), bean.getOffsetOrDefault());
     SpecBuilder sr = SubscriptionRequest.catchup(specs);
     long ser = Optional.ofNullable(bean.getFrom()).orElse(BigDecimal.ZERO).longValue();
     SubscriptionRequest request = null;
@@ -137,5 +139,10 @@ public class FactRepositoryImpl implements FactRepository {
   @Override
   public OptionalLong lastSerialBefore(@NonNull LocalDate date) {
     return OptionalLong.of(fs.lastSerialBefore(date));
+  }
+
+  @Override
+  public Optional<Long> firstSerialAfter(@NonNull LocalDate date) {
+    return Optional.ofNullable(fs.firstSerialAfter(date));
   }
 }
