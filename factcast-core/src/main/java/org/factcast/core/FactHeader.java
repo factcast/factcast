@@ -15,8 +15,7 @@
  */
 package org.factcast.core;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import java.util.*;
 import javax.annotation.Nullable;
 import lombok.*;
@@ -37,7 +36,7 @@ public class FactHeader {
 
   @JsonProperty Set<UUID> aggIds = new HashSet<>();
 
-  @JsonProperty final Map<String, String> meta = new HashMap<>();
+  @JsonProperty final FactMeta meta = new FactMeta();
 
   @Nullable
   // could be null if not yet published to the factcast server. This should only happen in unit
@@ -61,6 +60,6 @@ public class FactHeader {
 
   @Nullable
   public String meta(@NonNull String key) {
-    return meta.get(key);
+    return meta.getFirst(key);
   }
 }

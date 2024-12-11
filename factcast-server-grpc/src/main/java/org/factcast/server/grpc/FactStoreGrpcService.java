@@ -155,7 +155,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
   @VisibleForTesting
   Fact tagFactSource(@NonNull Fact f, @NonNull String source) {
-    f.header().meta().put("source", source);
+    f.header().meta().set("source", source);
     return Fact.of(FactCastJson.writeValueAsString(f.header()), f.jsonPayload());
   }
 
