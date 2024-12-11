@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.full;
+package org.factcast.server.ui.views.filter;
 
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import lombok.experimental.Accessors;
+import org.factcast.core.spec.FactSpec;
+
 import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
-import lombok.Data;
-import lombok.experimental.Accessors;
-import org.factcast.core.spec.FactSpec;
 
 @Data
 @Accessors(fluent = false, chain = false)

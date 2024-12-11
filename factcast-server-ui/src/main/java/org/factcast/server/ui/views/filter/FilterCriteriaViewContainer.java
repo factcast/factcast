@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.full;
+package org.factcast.server.ui.views.filter;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -23,11 +23,12 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.core.util.NoCoverageReportToBeGenerated;
+
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 @SuppressWarnings("java:S1948")
 @Getter

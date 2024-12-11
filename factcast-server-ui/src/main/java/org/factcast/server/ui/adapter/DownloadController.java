@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2023 factcast.org
+ * Copyright © 2017-2024 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.full;
+package org.factcast.server.ui.adapter;
 
-import com.vaadin.flow.component.textfield.TextField;
-import org.factcast.core.util.NoCoverageReportToBeGenerated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-@NoCoverageReportToBeGenerated
-class AggregateIdField extends TextField {
-  public AggregateIdField() {
-    super("aggregate-id");
-    setLabel("Aggregate-ID");
-    setWidth("100%");
-  }
+@RestController
+@RequestMapping("/api/v1")
+public class DownloadController {
+
+  // tODO get the username/ id
+
+  @GetMapping("/download")
+  public void download(@RequestParam String id) {}
 }

@@ -15,19 +15,6 @@
  */
 package org.factcast.server.ui.adapter;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
@@ -38,7 +25,7 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.server.security.auth.FactCastUser;
-import org.factcast.server.ui.full.FullQueryBean;
+import org.factcast.server.ui.full.FullFilterBean;
 import org.factcast.server.ui.id.IdQueryBean;
 import org.factcast.server.ui.security.SecurityService;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +36,20 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class FactRepositoryImplTest {
@@ -213,7 +214,7 @@ public class FactRepositoryImplTest {
 
   @Nested
   class WhenFetchingChunk {
-    @Mock private FullQueryBean bean;
+    @Mock private FullFilterBean bean;
     @Mock private FactCastUser userMock;
 
     private final String USER_NAME = "user@auth.eu";
@@ -357,7 +358,7 @@ public class FactRepositoryImplTest {
 
   @Nested
   class WhenFilteringFactSpecs {
-    @Mock private FullQueryBean bean;
+    @Mock private FullFilterBean bean;
 
     @Test
     void filtersViaSecurityService() {

@@ -13,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.full;
+package org.factcast.server.ui.views.filter;
 
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.converter.StringToUuidConverter;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.core.util.NoCoverageReportToBeGenerated;
 import org.factcast.server.ui.port.FactRepository;
 import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 
 @NoCoverageReportToBeGenerated
 public class FilterCriteriaView extends VerticalLayout {
@@ -40,13 +40,13 @@ public class FilterCriteriaView extends VerticalLayout {
   private final MultiSelectComboBox<String> type;
   private final TextField aggId = new AggregateIdField();
 
-  private final BeanValidationUrlStateBinder<FullQueryBean> binder;
+  private final BeanValidationUrlStateBinder<FilterBean> binder;
   @Getter private final FactCriteria factCriteria;
-  private final List<Binder.Binding<FullQueryBean, ?>> bindings = new ArrayList<>();
+  private final List<Binder.Binding<FilterBean, ?>> bindings = new ArrayList<>();
 
   FilterCriteriaView(
       @NonNull FactRepository repo,
-      @NonNull BeanValidationUrlStateBinder<FullQueryBean> binder,
+      @NonNull BeanValidationUrlStateBinder<FilterBean> binder,
       @NonNull FactCriteria factCriteria) {
     ns = new NameSpacesComboBox(repo.namespaces(null));
     ns.setId("namespace-selector");
@@ -74,7 +74,7 @@ public class FilterCriteriaView extends VerticalLayout {
     MetaButton metaButton = new MetaButton(factCriteria);
     final var aggIdAndMeta = new HorizontalLayout(aggId, metaButton);
     aggIdAndMeta.setWidthFull();
-    aggIdAndMeta.setAlignItems(FlexComponent.Alignment.BASELINE);
+    aggIdAndMeta.setAlignItems(Alignment.BASELINE);
 
     add(nsAndTypeFilter, aggIdAndMeta);
 
@@ -87,7 +87,7 @@ public class FilterCriteriaView extends VerticalLayout {
     addClassName(LumoUtility.Padding.Bottom.MEDIUM);
   }
 
-  private void bind(BeanValidationUrlStateBinder<FullQueryBean> b) {
+  private void bind(BeanValidationUrlStateBinder<FilterBean> b) {
     bindings.add(
         b.forField(ns)
             .withNullRepresentation("")

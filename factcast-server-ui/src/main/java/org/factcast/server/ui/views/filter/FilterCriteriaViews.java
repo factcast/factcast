@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.full;
+package org.factcast.server.ui.views.filter;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
@@ -23,28 +23,29 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
 import lombok.NonNull;
 import org.factcast.core.util.NoCoverageReportToBeGenerated;
 import org.factcast.server.ui.port.FactRepository;
 import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
+
 @NoCoverageReportToBeGenerated
 public class FilterCriteriaViews extends VerticalLayout {
-  private final BeanValidationUrlStateBinder<FullQueryBean> binder;
-  private final FullQueryBean bean;
+  private final BeanValidationUrlStateBinder<FilterBean> binder;
+  private final FilterBean bean;
   private final FactRepository repo;
 
   private final List<FilterCriteriaCountUpdateListener> updateListeners = new ArrayList<>();
 
-  FilterCriteriaViews(
+  public FilterCriteriaViews(
       @NonNull FactRepository repo,
-      @NonNull BeanValidationUrlStateBinder<FullQueryBean> binder,
-      @NonNull FullQueryBean bean) {
+      @NonNull BeanValidationUrlStateBinder<FilterBean> binder,
+      @NonNull FilterBean bean) {
     this.repo = repo;
     this.binder = binder;
     this.bean = bean;
@@ -59,7 +60,7 @@ public class FilterCriteriaViews extends VerticalLayout {
     addViewsAccordingTo(bean);
   }
 
-  private void addViewsAccordingTo(@NonNull FullQueryBean bean) {
+  private void addViewsAccordingTo(@NonNull FilterBean bean) {
     AtomicBoolean first = new AtomicBoolean(true);
     bean.getCriteria().forEach(c -> addFilterCriteriaView(!first.getAndSet(false), c));
     binder.readBean(bean);
