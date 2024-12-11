@@ -47,7 +47,7 @@ class FurySnapshotSerializerTest {
   }
 
   @Nested
-  class WhenSerializing {
+  class WhenSerializingPlain {
 
     @Test
     void canDeserialize(TestInfo i) {
@@ -60,6 +60,26 @@ class FurySnapshotSerializerTest {
 
       TestProjection target =
           underTest.deserialize(TestProjection.class, underTest.serialize(source));
+      assertEquals("bar", target.foo());
+
+      assertEquals(source.hashCode(), target.hashCode());
+    }
+  }
+
+  @Nested
+  class WhenSerializingLZ4 {
+
+    @Test
+    void canDeserialize(TestInfo i) {
+
+      root.kind = i.getDisplayName();
+      System.out.println(i.getDisplayName());
+      TestProjection source = new TestProjection().root(root);
+      TestProjection source2 = new TestProjection().root(root);
+      assertEquals(source.hashCode(), source2.hashCode());
+
+      TestProjection target =
+          lz4UnderTest.deserialize(TestProjection.class, lz4UnderTest.serialize(source));
       assertEquals("bar", target.foo());
 
       assertEquals(source.hashCode(), target.hashCode());
