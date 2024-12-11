@@ -16,9 +16,7 @@
 package org.factcast.example.server.ui.events;
 
 import com.google.common.collect.Lists;
-
 import java.util.UUID;
-
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,8 +31,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class EventCreator implements CommandLineRunner {
 
-  @NonNull
-  private final FactCast fc;
+  @NonNull private final FactCast fc;
 
   @Override
   public void run(String... args) throws Exception {

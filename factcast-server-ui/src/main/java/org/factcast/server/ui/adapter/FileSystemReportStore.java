@@ -15,18 +15,11 @@
  */
 package org.factcast.server.ui.adapter;
 
+import static java.io.File.separator;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.vaadin.flow.component.UI;
-import lombok.NonNull;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.factcast.server.ui.port.ReportStore;
-import org.factcast.server.ui.report.Report;
-import org.factcast.server.ui.report.ReportDownload;
-import org.factcast.server.ui.report.ReportEntry;
-import org.springframework.core.io.InputStreamResource;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -37,8 +30,14 @@ import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
-
-import static java.io.File.separator;
+import lombok.NonNull;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.factcast.server.ui.port.ReportStore;
+import org.factcast.server.ui.report.Report;
+import org.factcast.server.ui.report.ReportDownload;
+import org.factcast.server.ui.report.ReportEntry;
+import org.springframework.core.io.InputStreamResource;
 
 @Slf4j
 public class FileSystemReportStore implements ReportStore {

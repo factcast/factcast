@@ -37,6 +37,10 @@ import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.*;
 import jakarta.annotation.security.PermitAll;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.OptionalLong;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
@@ -51,11 +55,6 @@ import org.factcast.server.ui.views.MainLayout;
 import org.factcast.server.ui.views.filter.FilterBean;
 import org.factcast.server.ui.views.filter.FilterCriteriaViews;
 import org.springframework.security.core.context.SecurityContextHolder;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.OptionalLong;
 
 @Route(value = "ui/report", layout = MainLayout.class)
 @PageTitle("Report")

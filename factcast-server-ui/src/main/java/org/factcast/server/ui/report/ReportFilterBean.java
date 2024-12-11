@@ -19,15 +19,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.collect.Lists;
 import jakarta.validation.Valid;
-import lombok.Data;
-import lombok.experimental.Accessors;
-import org.factcast.server.ui.views.filter.FactCriteria;
-import org.factcast.server.ui.views.filter.FilterBean;
-
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import lombok.Data;
+import lombok.experimental.Accessors;
+import org.factcast.server.ui.views.filter.FactCriteria;
+import org.factcast.server.ui.views.filter.FilterBean;
 
 @Data
 @SuppressWarnings("java:S1948")

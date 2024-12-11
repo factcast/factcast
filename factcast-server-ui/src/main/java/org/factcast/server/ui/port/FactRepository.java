@@ -23,7 +23,6 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 import lombok.NonNull;
 import org.factcast.core.Fact;
-import org.factcast.server.ui.full.FullQueryBean;
 import org.factcast.server.ui.id.IdQueryBean;
 import org.factcast.server.ui.views.filter.FilterBean;
 

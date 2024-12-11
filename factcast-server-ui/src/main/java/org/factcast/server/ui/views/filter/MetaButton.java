@@ -20,11 +20,10 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import java.util.Collection;
 import org.factcast.core.util.NoCoverageReportToBeGenerated;
 import org.vaadin.crudui.crud.CrudListener;
 import org.vaadin.crudui.crud.impl.GridCrud;
-
-import java.util.Collection;
 
 @NoCoverageReportToBeGenerated
 class MetaButton extends Button {

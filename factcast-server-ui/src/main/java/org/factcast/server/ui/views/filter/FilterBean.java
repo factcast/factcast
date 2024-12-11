@@ -15,12 +15,11 @@
  */
 package org.factcast.server.ui.views.filter;
 
-import lombok.NonNull;
-import org.factcast.core.spec.FactSpec;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import lombok.NonNull;
+import org.factcast.core.spec.FactSpec;
 
 public interface FilterBean {
 

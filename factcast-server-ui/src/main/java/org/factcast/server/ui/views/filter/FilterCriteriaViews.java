@@ -23,16 +23,15 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import lombok.NonNull;
-import org.factcast.core.util.NoCoverageReportToBeGenerated;
-import org.factcast.server.ui.port.FactRepository;
-import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+import lombok.NonNull;
+import org.factcast.core.util.NoCoverageReportToBeGenerated;
+import org.factcast.server.ui.port.FactRepository;
+import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
 
 @NoCoverageReportToBeGenerated
 public class FilterCriteriaViews extends VerticalLayout {

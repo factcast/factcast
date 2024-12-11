@@ -15,12 +15,11 @@
  */
 package org.factcast.server.ui.port;
 
+import java.util.List;
 import lombok.NonNull;
 import org.factcast.server.ui.report.Report;
 import org.factcast.server.ui.report.ReportDownload;
 import org.factcast.server.ui.report.ReportEntry;
-
-import java.util.List;
 
 public interface ReportStore {
 
