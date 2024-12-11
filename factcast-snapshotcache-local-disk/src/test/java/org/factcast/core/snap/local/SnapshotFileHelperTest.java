@@ -25,6 +25,7 @@ import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
 import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.factus.snapshot.SnapshotIdentifier;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -105,6 +106,7 @@ class SnapshotFileHelperTest {
     void happyPath() {
       File root = Files.createTempDir();
 
+      @ProjectionMetaData(name = "foobarbaz", revision = 1)
       class foobarbaz implements SnapshotProjection {}
       File f = SnapshotFileHelper.createFile(root, new SnapshotIdentifier(foobarbaz.class, null));
       File p = f.getParentFile();
@@ -131,12 +133,14 @@ class SnapshotFileHelperTest {
       // some bytes for directory itself
       Assertions.assertThat(SnapshotFileHelper.getTotalSize(root)).isZero();
 
+      @ProjectionMetaData(name = "foobarbaz", revision = 1)
       class foobarbaz implements SnapshotProjection {}
 
       File f = SnapshotFileHelper.createFile(root, new SnapshotIdentifier(foobarbaz.class, null));
       f.getParentFile().mkdirs();
       Files.write(new byte[1024], f);
 
+      @ProjectionMetaData(name = "foobarbaz2", revision = 1)
       class foobarbaz2 implements SnapshotProjection {}
 
       File f2 = SnapshotFileHelper.createFile(root, new SnapshotIdentifier(foobarbaz2.class, null));

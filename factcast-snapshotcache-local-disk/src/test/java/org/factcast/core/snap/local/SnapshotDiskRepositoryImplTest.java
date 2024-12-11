@@ -29,6 +29,7 @@ import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
 import org.awaitility.Awaitility;
 import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.factus.serializer.SnapshotSerializerId;
 import org.factcast.factus.snapshot.SnapshotData;
 import org.factcast.factus.snapshot.SnapshotIdentifier;
@@ -64,6 +65,7 @@ class SnapshotDiskRepositoryImplTest {
     @Test
     @SneakyThrows
     void getNotFound() {
+      @ProjectionMetaData(name = "key", revision = 1)
       class key implements SnapshotProjection {}
 
       // Get by the ID
@@ -106,6 +108,7 @@ class SnapshotDiskRepositoryImplTest {
     @Test
     @SneakyThrows
     void saveGetAndDelete() {
+      @ProjectionMetaData(name = "key", revision = 1)
       class key implements SnapshotProjection {}
       SnapshotIdentifier id = new SnapshotIdentifier(key.class, UUID.randomUUID());
 
@@ -130,8 +133,11 @@ class SnapshotDiskRepositoryImplTest {
     @Test
     @SneakyThrows
     void testMultipleFiles() {
+      @ProjectionMetaData(name = "key1", revision = 1)
       class key1 implements SnapshotProjection {}
+      @ProjectionMetaData(name = "key2", revision = 1)
       class key2 implements SnapshotProjection {}
+      @ProjectionMetaData(name = "key3", revision = 1)
       class key3 implements SnapshotProjection {}
       SnapshotIdentifier id1 = new SnapshotIdentifier(key1.class, UUID.randomUUID());
       SnapshotIdentifier id2 = new SnapshotIdentifier(key2.class, UUID.randomUUID());
@@ -177,8 +183,11 @@ class SnapshotDiskRepositoryImplTest {
 
       uut = new SnapshotDiskRepositoryImpl(properties);
 
+      @ProjectionMetaData(name = "key1", revision = 1)
       class key1 implements SnapshotProjection {}
+      @ProjectionMetaData(name = "key2", revision = 1)
       class key2 implements SnapshotProjection {}
+      @ProjectionMetaData(name = "key3", revision = 1)
       class key3 implements SnapshotProjection {}
       SnapshotIdentifier id1 = new SnapshotIdentifier(key1.class, UUID.randomUUID());
       SnapshotIdentifier id2 = new SnapshotIdentifier(key2.class, UUID.randomUUID());
@@ -214,8 +223,11 @@ class SnapshotDiskRepositoryImplTest {
 
       uut = new SnapshotDiskRepositoryImpl(properties);
 
+      @ProjectionMetaData(name = "key1", revision = 1)
       class key1 implements SnapshotProjection {}
+      @ProjectionMetaData(name = "key2", revision = 1)
       class key2 implements SnapshotProjection {}
+      @ProjectionMetaData(name = "key3", revision = 1)
       class key3 implements SnapshotProjection {}
       SnapshotIdentifier id1 = new SnapshotIdentifier(key1.class, UUID.randomUUID());
       SnapshotIdentifier id2 = new SnapshotIdentifier(key2.class, UUID.randomUUID());
@@ -239,6 +251,7 @@ class SnapshotDiskRepositoryImplTest {
       // update the modified date of snap2
       uut.findById(id2);
 
+      @ProjectionMetaData(name = "key4", revision = 1)
       class key4 implements SnapshotProjection {}
       SnapshotIdentifier id4 = new SnapshotIdentifier(key4.class, UUID.randomUUID());
 
