@@ -38,7 +38,7 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.server.security.auth.FactCastUser;
-import org.factcast.server.ui.full.FullQueryBean;
+import org.factcast.server.ui.full.FullFilterBean;
 import org.factcast.server.ui.id.IdQueryBean;
 import org.factcast.server.ui.security.SecurityService;
 import org.junit.jupiter.api.BeforeEach;
@@ -213,7 +213,7 @@ public class FactRepositoryImplTest {
 
   @Nested
   class WhenFetchingChunk {
-    @Mock private FullQueryBean bean;
+    @Mock private FullFilterBean bean;
     @Mock private FactCastUser userMock;
 
     private final String USER_NAME = "user@auth.eu";
@@ -357,7 +357,7 @@ public class FactRepositoryImplTest {
 
   @Nested
   class WhenFilteringFactSpecs {
-    @Mock private FullQueryBean bean;
+    @Mock private FullFilterBean bean;
 
     @Test
     void filtersViaSecurityService() {

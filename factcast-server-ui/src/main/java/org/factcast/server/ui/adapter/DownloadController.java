@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2023 factcast.org
+ * Copyright © 2017-2024 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.full;
+package org.factcast.server.ui.adapter;
 
-import jakarta.validation.constraints.NotNull;
-import lombok.Data;
-import lombok.experimental.Accessors;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-@Data
-@Accessors(fluent = false, chain = false)
-public class MetaTuple {
-  @NotNull String key;
-  @NotNull String value;
+@RestController
+@RequestMapping("/api/v1")
+public class DownloadController {
 
-  /** must match for referential equality only */
-  @Override
-  public boolean equals(Object o) {
-    return this == o;
-  }
+  // tODO get the username/ id
 
-  /** see equals(Object) */
-  @Override
-  public int hashCode() {
-    return 1;
-  }
+  @GetMapping("/download")
+  public void download(@RequestParam String id) {}
 }

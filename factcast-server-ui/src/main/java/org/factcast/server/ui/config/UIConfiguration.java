@@ -16,6 +16,7 @@
 package org.factcast.server.ui.config;
 
 import com.vaadin.flow.component.page.AppShellConfigurator;
+import com.vaadin.flow.component.page.Push;
 import com.vaadin.flow.spring.annotation.EnableVaadin;
 import com.vaadin.flow.spring.security.AuthenticationContext;
 import com.vaadin.flow.theme.Theme;
@@ -38,11 +39,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
+@Push
 @Configuration
 @Theme(value = "fcui")
 @EnableVaadin("org.factcast.server.ui")
 @RequiredArgsConstructor
-@Import(JsonViewPluginConfiguration.class)
+@Import({JsonViewPluginConfiguration.class, FileSystemReportStoreConfiguration.class})
 @Slf4j
 public class UIConfiguration implements AppShellConfigurator {
 
