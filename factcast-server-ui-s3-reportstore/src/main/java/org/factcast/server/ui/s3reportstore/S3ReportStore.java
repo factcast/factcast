@@ -22,6 +22,8 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.CompletionException;
+
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,14 +32,12 @@ import org.factcast.server.ui.report.Report;
 import org.factcast.server.ui.report.ReportDownload;
 import org.factcast.server.ui.report.ReportEntry;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.InputStreamResource;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
-import software.amazon.awssdk.transfer.s3.model.CompletedUpload;
 import software.amazon.awssdk.transfer.s3.model.Upload;
 import software.amazon.awssdk.transfer.s3.model.UploadRequest;
 
@@ -56,7 +56,12 @@ public class S3ReportStore implements ReportStore {
   public void save(@NonNull String userName, @NonNull Report report) {
     final var reportKey = getReportKey(userName, report.name());
     final var objectMapper = new ObjectMapper();
+    if (doesObjectExist(reportKey)) {
+      throw new IllegalArgumentException(
+          "Report was not generated as another report with this name already exists.");
+    }
     try {
+
       UploadRequest uploadRequest =
           UploadRequest.builder()
               .putObjectRequest(
@@ -65,9 +70,7 @@ public class S3ReportStore implements ReportStore {
               .build();
 
       Upload fileUpload = s3TransferManager.upload(uploadRequest);
-
-      CompletedUpload uploadResult = fileUpload.completionFuture().join();
-      //      uploadResult.response().eTag();
+      fileUpload.completionFuture().join();
     } catch (IOException e) {
       log.error("Failed to save report", e);
       throw new RuntimeException(e);
@@ -79,7 +82,7 @@ public class S3ReportStore implements ReportStore {
   }
 
   @Override
-  public ReportDownload getReport(@NonNull String userName, @NonNull String reportName) {
+  public URL getReportDownload(@NonNull String userName, @NonNull String reportName) {
     String key = getReportKey(userName, reportName);
     checkObjectExists(key);
 
@@ -93,10 +96,8 @@ public class S3ReportStore implements ReportStore {
             .build();
 
     URL url = s3Presigner.presignGetObject(presignRequest).url();
-
     log.info("Generated pre-signed URL: " + url.toExternalForm());
-
-    return new ReportDownload(url, reportName);
+    return url;
   }
 
   @Override
@@ -123,20 +124,26 @@ public class S3ReportStore implements ReportStore {
     String reportKey = getReportKey(userName, reportName);
     checkObjectExists(reportKey);
 
-    s3Client.deleteObject(DeleteObjectRequest.builder().bucket(bucketName).key(reportKey).build());
-  }
-
-  // TODO: remove
-  @Override
-  public InputStreamResource getReportAsStream(@NonNull String userName, @NonNull String reportName) {
-    return null;
+    s3Client.deleteObject(DeleteObjectRequest.builder().bucket(bucketName).key(reportKey).build()).join();
   }
 
   private void checkObjectExists(String key) {
+      try {
+        s3Client.headObject(HeadObjectRequest.builder().bucket(bucketName).key(key).build()).join();
+      } catch (CompletionException e) {
+        if (e.getCause() instanceof NoSuchKeyException) {
+          throw new ReportDoesNotExistException(key);
+        }
+        throw e;
+      }
+  }
+
+  private boolean doesObjectExist(String key) {
     try {
-      s3Client.headObject(HeadObjectRequest.builder().bucket(bucketName).key(key).build());
-    } catch (NoSuchKeyException e) {
-      throw new ReportDoesNotExistException(key);
+      checkObjectExists(key);
+      return true;
+    } catch (ReportDoesNotExistException e) {
+      return false;
     }
   }
 

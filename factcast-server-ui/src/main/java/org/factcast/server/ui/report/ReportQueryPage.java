@@ -37,6 +37,10 @@ import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.*;
 import jakarta.annotation.security.PermitAll;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.OptionalLong;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
@@ -51,11 +55,6 @@ import org.factcast.server.ui.views.MainLayout;
 import org.factcast.server.ui.views.filter.FilterBean;
 import org.factcast.server.ui.views.filter.FilterCriteriaViews;
 import org.springframework.security.core.context.SecurityContextHolder;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.OptionalLong;
 
 @Route(value = "ui/report", layout = MainLayout.class)
 @PageTitle("Report")
@@ -88,10 +87,7 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
 
   private final String userName = SecurityContextHolder.getContext().getAuthentication().getName();
 
-  // TODO: while generating show result in table as being requested
-
   // TODO: load query when selecting report
-
   public ReportQueryPage(
       @NonNull FactRepository repo,
       @NonNull ReportStore reportStore,
@@ -131,7 +127,6 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
     grid.addSelectionListener(
         selection -> {
           if (!selection.getAllSelectedItems().isEmpty()) {
-            log.info("Selected {}", selection.getFirstSelectedItem().get().name());
             this.reportDownloadName = selection.getFirstSelectedItem().get().name();
             downloadSection.refreshForFile(reportDownloadName);
           }
@@ -264,8 +259,8 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
       queryBtn.setEnabled(false);
       binder.writeBean(formBean);
       log.info("{} runs query for {}", userName, formBean);
-
-      // TODO: ensure this won't fail if the query takes a long time.
+      // For now this will block the UI in case of long-running queries. Will be refactored in the future
+      // once the FactRepository is adapted.
       List<Fact> dataFromStore = repo.fetchChunk(formBean);
       log.info("Found {} entries", dataFromStore.size());
       if (!dataFromStore.isEmpty()) {

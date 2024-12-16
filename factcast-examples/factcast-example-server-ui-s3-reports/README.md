@@ -1,3 +1,3 @@
 ### factcast-example-server-ui-s3-reports
 
-WIP
+This example starts up the FactCast UI server with an S3 backend for report generation.

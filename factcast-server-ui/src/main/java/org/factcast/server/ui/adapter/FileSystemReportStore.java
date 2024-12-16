@@ -15,21 +15,16 @@
  */
 package org.factcast.server.ui.adapter;
 
+import static java.io.File.separator;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
-import com.vaadin.flow.component.UI;
-import lombok.NonNull;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.factcast.server.ui.port.ReportStore;
-import org.factcast.server.ui.report.Report;
-import org.factcast.server.ui.report.ReportDownload;
-import org.factcast.server.ui.report.ReportEntry;
-import org.springframework.core.io.InputStreamResource;
-
+import com.vaadin.flow.server.VaadinRequest;
+import com.vaadin.flow.server.VaadinService;
+import com.vaadin.flow.server.VaadinServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,20 +32,21 @@ import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
-
-import static java.io.File.separator;
+import lombok.NonNull;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.factcast.server.ui.port.ReportStore;
+import org.factcast.server.ui.report.Report;
+import org.factcast.server.ui.report.ReportEntry;
 
 @Slf4j
 public class FileSystemReportStore implements ReportStore {
 
-  @VisibleForTesting static final String PERSISTENCE_DIR = "factcast-ui" + separator + "reports";
-
-  private URL downloadLink;
+  public static final String PERSISTENCE_DIR = "factcast-ui" + separator + "reports";
 
   @Override
   public void save(@NonNull String userName, @NonNull Report report) {
     final var reportFilePath = Paths.get(PERSISTENCE_DIR, userName, report.name());
-    // create resource
     log.info("Saving report to {}", reportFilePath);
 
     if (!Files.exists(reportFilePath)) {
@@ -67,7 +63,6 @@ public class FileSystemReportStore implements ReportStore {
         throw new RuntimeException(e);
       }
     } else {
-      // TODO: clean this up
       throw new IllegalArgumentException(
           "Report was not generated as another report with this name already exists.");
     }
@@ -75,43 +70,10 @@ public class FileSystemReportStore implements ReportStore {
 
   @SneakyThrows
   @Override
-  public ReportDownload getReport(@NonNull String userName, @NonNull String reportName) {
+  public @NonNull URL getReportDownload(@NonNull String userName, @NonNull String reportName) {
     log.info("Constructing download link to redirect to download of {}", reportName);
-    UI.getCurrent()
-        .getPage()
-        .fetchCurrentURL(
-            url -> {
-              final var path = url.getPath();
-              log.info("Path: {}", path);
-              try {
-                this.downloadLink = new URL(url, "/downloads/" + reportName);
-              } catch (MalformedURLException e) {
-                log.error("Failed to construct download link", e);
-              }
-            });
-    return new ReportDownload(downloadLink, reportName);
-  }
-
-  @Override
-  public InputStreamResource getReportAsStream(
-      @NonNull String userName, @NonNull String reportName) {
-    return new InputStreamResource(loadReport(userName, reportName));
-  }
-
-  private InputStream loadReport(@NonNull String userName, @NonNull String reportName) {
-    final var reportFilePath = Paths.get(PERSISTENCE_DIR, userName, reportName);
-    log.info("Getting report from {}", reportFilePath);
-    if (Files.exists(reportFilePath)) {
-      try {
-        return Files.newInputStream(reportFilePath);
-      } catch (IOException e) {
-        log.error("Failed to get report", e);
-        throw new RuntimeException(e);
-      }
-    } else {
-      throw new IllegalArgumentException(
-          String.format("No report exists with name %s for user %s", reportName, userName));
-    }
+    String downloadLink = "files/" + reportName;
+    return URI.create(getApplicationBaseUrl() + downloadLink).toURL();
   }
 
   @Override
@@ -156,6 +118,16 @@ public class FileSystemReportStore implements ReportStore {
       throw new IllegalArgumentException(
           String.format("No report exists with name %s for user %s", reportName, userName));
     }
+  }
+
+  public static @NonNull String getApplicationBaseUrl() {
+    VaadinRequest vaadinRequest = VaadinService.getCurrentRequest();
+    HttpServletRequest httpServletRequest =
+        ((VaadinServletRequest) vaadinRequest).getHttpServletRequest();
+    final var baseUrl = httpServletRequest.getRequestURL().toString();
+    log.info("Application base url is: {} ", baseUrl);
+
+    return baseUrl;
   }
 
   // TODO: maxDiskSpace

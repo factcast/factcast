@@ -15,26 +15,23 @@
  */
 package org.factcast.server.ui.port;
 
+import java.net.URL;
+import java.util.List;
 import lombok.NonNull;
 import org.factcast.server.ui.report.Report;
-import org.factcast.server.ui.report.ReportDownload;
 import org.factcast.server.ui.report.ReportEntry;
-import org.springframework.core.io.InputStreamResource;
-
-import java.util.List;
 
 public interface ReportStore {
 
-  /** Saves a report for a given user if it does not exist yet. */
+  /**
+   * Creates & Saves a report for a given user. Does throw IllegalArgumentException in case a report
+   * with the provided name does already exist for this user.
+   */
   void save(@NonNull String userName, @NonNull Report report);
 
-  //  InputStreamResource getReportAsStream(@NonNull String userName, @NonNull String reportName);
-
-  ReportDownload getReport(@NonNull String userName, @NonNull String reportName);
+  URL getReportDownload(@NonNull String userName, @NonNull String reportName);
 
   List<ReportEntry> listAllForUser(@NonNull String userName);
 
   void delete(@NonNull String userName, @NonNull String reportName);
-
-  InputStreamResource getReportAsStream(@NonNull String userName, @NonNull String reportName);
 }

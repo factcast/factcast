@@ -113,7 +113,7 @@ class S3ReportStoreTest {
       when(presignResponse.url()).thenReturn(new URL("http://example.com"));
 
       // when
-      uut.getReport("user", "report");
+      uut.getReportDownload("user", "report");
 
       // then
       verify(s3Client).headObject(headCaptor.capture());
@@ -137,7 +137,7 @@ class S3ReportStoreTest {
           .thenThrow(NoSuchKeyException.builder().build());
 
       // expect
-      assertThatThrownBy(() -> uut.getReport("user", "report"))
+      assertThatThrownBy(() -> uut.getReportDownload("user", "report"))
           .isInstanceOf(ReportDoesNotExistException.class)
           .hasMessage("Report with id user/report doesn't exist");
 

@@ -22,7 +22,6 @@
     <module>factcast-example-schema-registry</module>
     <module>factcast-example-server-telemetry</module>
     <module>factcast-example-server-ui-s3-reports</module>
-    <module>factcast-example-server-ui-filesystem-reports</module>
   </modules>
   <properties>
     <sonar.skip>true</sonar.skip>

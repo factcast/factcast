@@ -16,17 +16,26 @@
 package org.factcast.server.ui.config;
 
 import org.factcast.server.ui.adapter.FileSystemReportStore;
+import org.factcast.server.ui.adapter.FilesystemServiceInitListener;
 import org.factcast.server.ui.port.ReportStore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 
 @Configuration
 public class FileSystemReportStoreConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  ReportStore reportStore() {
+  ReportStore fileSystemReportStore() {
     return new FileSystemReportStore();
+  }
+
+  @Bean
+  @ConditionalOnBean(value= ReportStore.class, name = "fileSystemReportStore")
+  public FilesystemServiceInitListener filesystemServiceInitListener() {
+    return new FilesystemServiceInitListener(FileSystemReportStore.PERSISTENCE_DIR);
   }
 }
