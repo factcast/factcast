@@ -15,11 +15,10 @@
  */
 package org.factcast.server.ui.report;
 
-import lombok.NonNull;
-import org.factcast.server.ui.plugins.JsonViewEntries;
-
 import java.io.Serial;
 import java.io.Serializable;
+import lombok.NonNull;
+import org.factcast.server.ui.plugins.JsonViewEntries;
 
 public record Report(@NonNull String name, @NonNull String json, @NonNull String query)
     implements Serializable {

@@ -17,9 +17,8 @@ package org.factcast.server.ui.views.filter;
 
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.data.provider.DataProvider;
-import org.factcast.core.util.NoCoverageReportToBeGenerated;
-
 import java.util.Collection;
+import org.factcast.core.util.NoCoverageReportToBeGenerated;
 
 @NoCoverageReportToBeGenerated
 class NameSpacesComboBox extends ComboBox<String> {

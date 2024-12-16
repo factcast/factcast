@@ -21,16 +21,15 @@ import com.google.common.collect.Lists;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import lombok.Data;
-import lombok.experimental.Accessors;
-import org.factcast.server.ui.views.filter.FactCriteria;
-import org.factcast.server.ui.views.filter.FilterBean;
-
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import lombok.Data;
+import lombok.experimental.Accessors;
+import org.factcast.server.ui.views.filter.FactCriteria;
+import org.factcast.server.ui.views.filter.FilterBean;
 
 /** Currently it is not possible to filter on more than one aggId via api */
 @Data

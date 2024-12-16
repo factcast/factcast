@@ -22,16 +22,15 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.converter.StringToUuidConverter;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.core.util.NoCoverageReportToBeGenerated;
 import org.factcast.server.ui.port.FactRepository;
 import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
 
 @NoCoverageReportToBeGenerated
 public class FilterCriteriaView extends VerticalLayout {

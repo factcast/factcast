@@ -59,7 +59,7 @@ public class ExampleUiServerWithS3Reports {
     log.info("Trying to start s3 localstack container");
     localStackContainer =
         new LocalStackContainer(
-            DockerImageName.parse("localstack/localstack:" + S3_LOCALSTACK_VERSION))
+                DockerImageName.parse("localstack/localstack:" + S3_LOCALSTACK_VERSION))
             .withServices(LocalStackContainer.Service.S3);
 
     localStackContainer.start();

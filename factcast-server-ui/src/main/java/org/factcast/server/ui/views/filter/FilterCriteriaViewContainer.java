@@ -23,12 +23,11 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.core.util.NoCoverageReportToBeGenerated;
-
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 @SuppressWarnings("java:S1948")
 @Getter

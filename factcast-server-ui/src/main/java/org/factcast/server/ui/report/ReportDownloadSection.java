@@ -23,14 +23,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.server.ui.port.ReportStore;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.net.URL;
+
 @Slf4j
 public class ReportDownloadSection extends HorizontalLayout {
 
   private final ReportStore reportStore;
   private final DataProvider<ReportEntry, Void> dataProvider;
 
-  private final Button downloadBtn =
-      new Button("Download");
+  private final Button downloadBtn = new Button("Download");
   private final Button deleteBtn = new Button("Delete");
   private final String userName = SecurityContextHolder.getContext().getAuthentication().getName();
   private String fileName;
@@ -63,15 +64,12 @@ public class ReportDownloadSection extends HorizontalLayout {
     deleteBtn.setEnabled(true);
   }
 
-  private ReportDownload requestCurrentFile() {
-    return reportStore.getReport(this.userName, this.fileName);
-  }
-
   /** Opens the download link in a new tab */
   private void downloadClickListener(ClickEvent<Button> buttonClickEvent) {
     Button button = buttonClickEvent.getSource();
     button.setText("Preparing download...");
-    getUI().orElseThrow().getPage().open(requestCurrentFile().url().toString());
+    final var reportDownloadUrl = reportStore.getReportDownload(this.userName, this.fileName);
+    getUI().orElseThrow().getPage().open(reportDownloadUrl.toString());
     button.setEnabled(false);
     button.setText("Download");
   }
