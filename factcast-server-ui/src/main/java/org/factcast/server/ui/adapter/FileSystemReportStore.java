@@ -92,6 +92,7 @@ public class FileSystemReportStore implements ReportStore {
     return new ReportDownload(downloadLink, reportName);
   }
 
+  @Override
   public InputStreamResource getReportAsStream(
       @NonNull String userName, @NonNull String reportName) {
     return new InputStreamResource(loadReport(userName, reportName));

@@ -30,8 +30,7 @@ public class ReportDownloadSection extends HorizontalLayout {
   private final DataProvider<ReportEntry, Void> dataProvider;
 
   private final Button downloadBtn =
-      new Button("Download"); // new LazyDownloadButton("Download", this::getFileName,
-  // this::requestCurrentFile);
+      new Button("Download");
   private final Button deleteBtn = new Button("Delete");
   private final String userName = SecurityContextHolder.getContext().getAuthentication().getName();
   private String fileName;

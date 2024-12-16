@@ -30,6 +30,7 @@ import org.factcast.server.ui.report.Report;
 import org.factcast.server.ui.report.ReportDownload;
 import org.factcast.server.ui.report.ReportEntry;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.model.*;
@@ -77,12 +78,6 @@ public class S3ReportStore implements ReportStore {
     return Paths.get(userName, reportName).toString();
   }
 
-  //  @Override
-  //  public InputStreamResource getReportAsStream(@NonNull String userName, @NonNull String
-  // reportName) {
-  //    return new InputStreamResource(getReport(userName, reportName));
-  //  }
-
   @Override
   public ReportDownload getReport(@NonNull String userName, @NonNull String reportName) {
     String key = getReportKey(userName, reportName);
@@ -129,6 +124,12 @@ public class S3ReportStore implements ReportStore {
     checkObjectExists(reportKey);
 
     s3Client.deleteObject(DeleteObjectRequest.builder().bucket(bucketName).key(reportKey).build());
+  }
+
+  // TODO: remove
+  @Override
+  public InputStreamResource getReportAsStream(@NonNull String userName, @NonNull String reportName) {
+    return null;
   }
 
   private void checkObjectExists(String key) {

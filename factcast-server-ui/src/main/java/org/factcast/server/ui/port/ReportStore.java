@@ -19,6 +19,7 @@ import lombok.NonNull;
 import org.factcast.server.ui.report.Report;
 import org.factcast.server.ui.report.ReportDownload;
 import org.factcast.server.ui.report.ReportEntry;
+import org.springframework.core.io.InputStreamResource;
 
 import java.util.List;
 
@@ -34,4 +35,6 @@ public interface ReportStore {
   List<ReportEntry> listAllForUser(@NonNull String userName);
 
   void delete(@NonNull String userName, @NonNull String reportName);
+
+  InputStreamResource getReportAsStream(@NonNull String userName, @NonNull String reportName);
 }

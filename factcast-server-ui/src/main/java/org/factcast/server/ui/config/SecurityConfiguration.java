@@ -18,9 +18,13 @@ package org.factcast.server.ui.config;
 import com.vaadin.flow.spring.security.VaadinWebSecurity;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.server.ui.views.LoginView;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Slf4j
 @Configuration
@@ -30,5 +34,14 @@ public class SecurityConfiguration extends VaadinWebSecurity {
   protected void configure(HttpSecurity http) throws Exception {
     super.configure(http);
     setLoginView(http, LoginView.class);
+  }
+
+  // Then open anything for the public API for the application
+  @Order(20)
+  @Bean
+  SecurityFilterChain configurePublicApi(HttpSecurity http) throws Exception {
+    http.securityMatcher(AntPathRequestMatcher.antMatcher("/api/v1/**"))
+        .authorizeHttpRequests(authz -> authz.anyRequest().permitAll());
+    return http.build();
   }
 }

@@ -26,7 +26,7 @@ import org.testcontainers.utility.DockerImageName;
 
 @Slf4j
 @SpringBootApplication
-public class ExampleUiServer {
+public class ExampleUiServerWithS3Reports {
   private static final String S3_LOCALSTACK_VERSION = "3.8.1";
   private static LocalStackContainer localStackContainer;
 
@@ -41,7 +41,7 @@ public class ExampleUiServer {
     localStackContainer.execInContainer("awslocal", "s3", "mb", "s3://" + bucketName);
 
     log.info("Starting server");
-    SpringApplication.run(ExampleUiServer.class, args);
+    SpringApplication.run(ExampleUiServerWithS3Reports.class, args);
   }
 
   private static void startPostgresContainer() {
