@@ -15,6 +15,13 @@
  */
 package org.factcast.server.ui.adapter;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
+
+import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
@@ -25,14 +32,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class ListObserverTest {
@@ -114,7 +113,7 @@ public class ListObserverTest {
               () -> {
                 underTest.onNext(mock);
               })
-              .isInstanceOf(LimitReachedException.class);
+          .isInstanceOf(LimitReachedException.class);
     }
 
     @Nested
