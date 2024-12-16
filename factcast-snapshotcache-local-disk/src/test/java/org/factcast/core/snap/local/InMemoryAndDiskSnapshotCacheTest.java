@@ -21,6 +21,7 @@ import static org.mockito.Mockito.*;
 import java.util.Optional;
 import java.util.UUID;
 import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.factus.serializer.SnapshotSerializerId;
 import org.factcast.factus.snapshot.SnapshotData;
 import org.factcast.factus.snapshot.SnapshotIdentifier;
@@ -33,6 +34,7 @@ class InMemoryAndDiskSnapshotCacheTest {
   private InMemoryAndDiskSnapshotCache underTest;
   private final SnapshotDiskRepository diskRepository = mock(SnapshotDiskRepository.class);
 
+  @ProjectionMetaData(name = "foo", revision = 1)
   class foo implements SnapshotProjection {}
 
   SnapshotIdentifier id = new SnapshotIdentifier(foo.class, UUID.randomUUID());

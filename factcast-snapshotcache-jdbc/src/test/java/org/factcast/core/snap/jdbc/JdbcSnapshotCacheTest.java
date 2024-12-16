@@ -30,9 +30,8 @@ import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
 import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
-import org.factcast.factus.projection.Aggregate;
-import org.factcast.factus.projection.SnapshotProjection;
-import org.factcast.factus.serializer.SnapshotSerializerId;
+import org.factcast.factus.projection.*;
+import org.factcast.factus.serializer.*;
 import org.factcast.factus.snapshot.SnapshotData;
 import org.factcast.factus.snapshot.SnapshotIdentifier;
 import org.junit.jupiter.api.BeforeEach;
@@ -266,8 +265,10 @@ class JdbcSnapshotCacheTest {
     @Mock PreparedStatement preparedStatement;
     private JdbcSnapshotCache jdbcSnapshotCache;
 
+    @ProjectionMetaData(revision = 1L)
     class TestSnapshotProjection implements SnapshotProjection {}
 
+    @ProjectionMetaData(revision = 1L)
     class TestAggregateProjection extends Aggregate {}
 
     @BeforeEach
@@ -313,7 +314,10 @@ class JdbcSnapshotCacheTest {
       verify(preparedStatement, times(4)).setString(any(Integer.class), string.capture());
       assertThat(string.getAllValues())
           .containsExactly(
-              TestSnapshotProjection.class.getName(), null, snap.lastFactId().toString(), "random");
+              ScopedName.fromProjectionMetaData(TestSnapshotProjection.class).asString(),
+              null,
+              snap.lastFactId().toString(),
+              "random");
 
       verify(preparedStatement, times(1)).setTimestamp(any(Integer.class), timestamp.capture());
       assertThat(timestamp.getValue()).isEqualTo(Timestamp.valueOf(LocalDate.now().atStartOfDay()));
@@ -354,7 +358,8 @@ class JdbcSnapshotCacheTest {
       verify(preparedStatement, times(1)).executeUpdate();
 
       assertThat(string.getAllValues())
-          .containsExactly(TestSnapshotProjection.class.getName(), null);
+          .containsExactly(
+              ScopedName.fromProjectionMetaData(TestSnapshotProjection.class).asString(), null);
     }
 
     @Test
@@ -388,7 +393,8 @@ class JdbcSnapshotCacheTest {
       verify(uut, times(1)).updateLastAccessedTime(id);
 
       assertThat(string.getAllValues())
-          .containsExactly(TestSnapshotProjection.class.getName(), null);
+          .containsExactly(
+              ScopedName.fromProjectionMetaData(TestSnapshotProjection.class).asString(), null);
     }
 
     @Test
@@ -411,7 +417,30 @@ class JdbcSnapshotCacheTest {
       verify(preparedStatement, times(1)).executeQuery();
 
       assertThat(string.getAllValues())
-          .containsExactly(TestAggregateProjection.class.getName(), uuid.toString());
+          .containsExactly(
+              ScopedName.fromProjectionMetaData(TestAggregateProjection.class).asString(),
+              uuid.toString());
+    }
+
+    @Test
+    void testCreateKeyFor() {
+      UUID uuid = UUID.fromString("a1d642dd-3ecd-4b58-ba24-deb8436cc329");
+      assertThat(jdbcSnapshotCache.createKeyFor(SnapshotIdentifier.of(MyAgg.class, uuid)))
+          .isEqualTo("hugo_1");
+
+      assertThat(
+              jdbcSnapshotCache.createKeyFor(
+                  SnapshotIdentifier.of(TestAggregateProjection.class, uuid)))
+          .isEqualTo(
+              "org.factcast.core.snap.jdbc.JdbcSnapshotCacheTest$WhenCrud$TestAggregateProjection_1");
+
+      assertThat(
+              jdbcSnapshotCache.createKeyFor(SnapshotIdentifier.of(TestSnapshotProjection.class)))
+          .isEqualTo(
+              "org.factcast.core.snap.jdbc.JdbcSnapshotCacheTest$WhenCrud$TestSnapshotProjection_1");
     }
   }
+
+  @ProjectionMetaData(name = "hugo", revision = 1)
+  static class MyAgg extends Aggregate {}
 }

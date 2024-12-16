@@ -17,16 +17,21 @@ package org.factcast.core.snap.local;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.factus.projection.ScopedName;
 import org.factcast.factus.snapshot.SnapshotCache;
 import org.factcast.factus.snapshot.SnapshotData;
 import org.factcast.factus.snapshot.SnapshotIdentifier;
 
 @Slf4j
 public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
-  private final Cache<SnapshotIdentifier, SnapshotData> cache;
+  private static final String PREFIX = "sc_";
+
+  private final Cache<String, SnapshotData> cache;
   private final SnapshotDiskRepository snapshotDiskRepository;
 
   public InMemoryAndDiskSnapshotCache(SnapshotDiskRepository snapshotDiskRepository) {
@@ -35,14 +40,24 @@ public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
     this.snapshotDiskRepository = snapshotDiskRepository;
   }
 
+  @NonNull
+  @VisibleForTesting
+  String createKeyFor(@NonNull SnapshotIdentifier id) {
+    return PREFIX
+        + ScopedName.fromProjectionMetaData(id.projectionClass())
+            .with(Optional.ofNullable(id.aggregateId()).map(UUID::toString).orElse("snapshot"))
+            .asString();
+  }
+
   @Override
   public @NonNull Optional<SnapshotData> find(@NonNull SnapshotIdentifier id) {
-    Optional<SnapshotData> snapshotOpt = Optional.ofNullable(cache.getIfPresent(id));
+    String snapshotKey = createKeyFor(id);
+    Optional<SnapshotData> snapshotOpt = Optional.ofNullable(cache.getIfPresent(snapshotKey));
 
     if (!snapshotOpt.isPresent()) {
       try {
         snapshotOpt = snapshotDiskRepository.findById(id);
-        snapshotOpt.ifPresent(snapshot -> cache.put(id, snapshot));
+        snapshotOpt.ifPresent(snapshot -> cache.put(snapshotKey, snapshot));
       } catch (Exception e) {
         log.error("Error retrieving snapshot with id: {}", id, e);
       }
@@ -54,12 +69,12 @@ public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
   @Override
   public void store(@NonNull SnapshotIdentifier id, @NonNull SnapshotData snapshot) {
     snapshotDiskRepository.save(id, snapshot);
-    cache.put(id, snapshot);
+    cache.put(createKeyFor(id), snapshot);
   }
 
   @Override
   public void remove(@NonNull SnapshotIdentifier id) {
     snapshotDiskRepository.delete(id);
-    cache.invalidate(id);
+    cache.invalidate(createKeyFor(id));
   }
 }

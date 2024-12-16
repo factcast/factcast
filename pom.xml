@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.9.1-SNAPSHOT</version>
+  <version>0.9.4-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>factcast</name>
   <description>factcast is a 'good enough' event store using PostgreSQL
@@ -61,6 +61,8 @@
     <module>factcast-snapshotcache-local-memory</module>
     <module>factcast-snapshotcache-local-disk</module>
     <module>factcast-snapshotcache-jdbc</module>
+    <module>factcast-factus-serializer-binary</module>
+    <module>factcast-factus-serializer-fury</module>
   </modules>
   <scm>
     <connection>scm:git:git@github.com:factcast/factcast.git</connection>
@@ -76,7 +78,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven-clean-plugin.version>3.4.0</maven-clean-plugin.version>
-    <maven-javadoc-plugin.version>3.11.1</maven-javadoc-plugin.version>
+    <maven-javadoc-plugin.version>3.11.2</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
     <maven-gpg-plugin.version>3.2.7</maven-gpg-plugin.version>
     <maven-jar-plugin.version>3.4.2</maven-jar-plugin.version>
@@ -113,13 +115,15 @@
     <kotlin.version>2.1.0</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <mockk.version>1.13.13</mockk.version>
-    <redisson.version>3.40.0</redisson.version>
-    <aws-sdk.version>2.29.24</aws-sdk.version>
+    <redisson.version>3.40.1</redisson.version>
+    <aws-sdk.version>2.29.33</aws-sdk.version>
     <graaljs.version>24.1.1</graaljs.version>
     <shedlock.version>6.0.2</shedlock.version>
     <byte-buddy.version>1.15.10</byte-buddy.version>
     <skipUnitTests>false</skipUnitTests>
     <postgres.version>15</postgres.version>
+    <sonar.exclusions>**/src/test/java/**/*.java</sonar.exclusions>
+    <sonar.test.exclusions>**/src/test/java/**/*.java</sonar.test.exclusions>
   </properties>
   <dependencyManagement>
     <dependencies>

@@ -20,8 +20,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import lombok.SneakyThrows;
+import lombok.*;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.SnapshotProjection;
@@ -192,6 +193,22 @@ class RedissonSnapshotCacheTest {
     }
 
     @Test
+    void testCreateKeyFor() {
+      UUID uuid = UUID.fromString("a1d642dd-3ecd-4b58-ba24-deb8436cc329");
+      assertThat(underTest.createKeyFor(SnapshotIdentifier.of(MyAgg.class, uuid)))
+          .isEqualTo("sc_hugo_1_" + uuid);
+
+      assertThat(underTest.createKeyFor(SnapshotIdentifier.of(TestAggregate.class, uuid)))
+          .isEqualTo(
+              "sc_org.factcast.core.snap.redisson.RedissonSnapshotCacheTest$TestAggregate_1_"
+                  + uuid);
+
+      assertThat(underTest.createKeyFor(SnapshotIdentifier.of(TestSnapshotProjection.class)))
+          .isEqualTo(
+              "sc_org.factcast.core.snap.redisson.RedissonSnapshotCacheTest$TestSnapshotProjection_1_snapshot");
+    }
+
+    @Test
     @SuppressWarnings("deprecation")
     void testTTLOnLegacy() {
       SnapshotIdentifier id = SnapshotIdentifier.of(TestAggregate.class, randomUUID());
@@ -271,4 +288,7 @@ class RedissonSnapshotCacheTest {
 
   @ProjectionMetaData(revision = 1)
   public class TestSnapshotProjection implements SnapshotProjection {}
+
+  @ProjectionMetaData(name = "hugo", revision = 1)
+  static class MyAgg extends Aggregate {}
 }
