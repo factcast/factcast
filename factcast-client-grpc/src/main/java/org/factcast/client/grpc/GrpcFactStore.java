@@ -65,7 +65,7 @@ import org.springframework.beans.factory.annotation.Value;
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Slf4j
 public class GrpcFactStore implements FactStore {
-  public static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 6, 0);
+  public static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 7, 0);
 
   private final CompressionCodecs codecs = new CompressionCodecs();
 
@@ -488,10 +488,9 @@ public class GrpcFactStore implements FactStore {
 
   @Override
   public Long firstSerialAfter(@NonNull LocalDate date) {
-    // TODO Implement this correctly
     log.trace("fetching first serial after {}", date);
     return callAndHandle(
-        () -> converter.fromProto(stubs.blocking().lastSerialBefore(converter.toProto(date))));
+        () -> converter.fromProto(stubs.blocking().firstSerialAfter(converter.toProto(date))));
   }
 
   @Override

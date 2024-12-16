@@ -15,12 +15,6 @@
  */
 package org.factcast.server.ui.adapter;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
-import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
@@ -29,7 +23,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class ListObserverTest {
@@ -111,7 +114,7 @@ public class ListObserverTest {
               () -> {
                 underTest.onNext(mock);
               })
-          .isInstanceOf(LimitReachedException.class);
+              .isInstanceOf(LimitReachedException.class);
     }
 
     @Nested
@@ -143,6 +146,34 @@ public class ListObserverTest {
         underTest.onError(exc);
         verify(underTest, never()).handleError(exc);
       }
+    }
+  }
+
+  @Nested
+  class WhenCheckingIfHasReachedTheLimitSerial {
+    @Test
+    void switchesToComplete() {
+      underTest = new ListObserver(3L, 4, 1);
+      // first skipped for offset
+      Fact mock1 = mock(Fact.class, Answers.RETURNS_DEEP_STUBS);
+      when(mock1.header().serial()).thenReturn(1L);
+      Fact mock2 = mock(Fact.class, Answers.RETURNS_DEEP_STUBS);
+      when(mock2.header().serial()).thenReturn(2L);
+      Fact mock3 = mock(Fact.class, Answers.RETURNS_DEEP_STUBS);
+      when(mock3.header().serial()).thenReturn(3L);
+      Fact mock4 = mock(Fact.class, Answers.RETURNS_DEEP_STUBS);
+      when(mock4.header().serial()).thenReturn(4L);
+
+      // First one skipped for offset
+      underTest.onNext(mock1);
+      // second is taken, still under end serial
+      underTest.onNext(mock2);
+      // third is taken, still under end serial
+      underTest.onNext(mock3);
+
+      // fourth is ignored, over the end serial
+      // more should trigger an exception
+      assertThatThrownBy(() -> underTest.onNext(mock4)).isInstanceOf(LimitReachedException.class);
     }
   }
 }
