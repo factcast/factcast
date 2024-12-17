@@ -10,7 +10,6 @@
 @file:DependsOn("actions:setup-java:v4")
 
 
-
 import io.github.typesafegithub.workflows.actions.actions.Cache
 import io.github.typesafegithub.workflows.actions.actions.Checkout
 import io.github.typesafegithub.workflows.actions.actions.SetupJava
@@ -67,7 +66,7 @@ workflow(
 
         run(
             name = "Test - UI",
-            command = "cd factcast-server-ui ; ../mvnw -B -Dui failsafe:integration-test ",
+            command = "cd factcast-server-ui ; ../mvnw -B -Dui failsafe:integration-test failsafe:verify",
         )
     }
 }
