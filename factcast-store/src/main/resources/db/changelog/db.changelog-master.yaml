@@ -387,3 +387,16 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
+
+  - changeSet:
+      id: issue3033_drop_snapshot_cache
+      runInTransaction: false
+      author: bresciamattia
+      comment: drop snapshot cache table
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue3033/drop_snapshot_cache.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: true

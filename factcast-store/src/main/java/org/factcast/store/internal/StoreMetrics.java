@@ -53,14 +53,6 @@ public class StoreMetrics {
 
     PUBLISH_IF_UNCHANGED("publishIfUnchanged"),
 
-    GET_SNAPSHOT("getSnapshot"),
-
-    SET_SNAPSHOT("setSnapshot"),
-
-    CLEAR_SNAPSHOT("clearSnapshot"),
-
-    COMPACT_SNAPSHOT_CACHE("compactSnapshotCache"),
-
     INVALIDATE_STATE_TOKEN("invalidateStateToken"),
 
     NOTIFY_ROUNDTRIP("notifyRoundTripLatency");
@@ -95,7 +87,6 @@ public class StoreMetrics {
 
   public enum VALUE implements MetricName {
     CATCHUP_TRANSFORMATION_RATIO("catchupTransformationRatio"),
-    SNAPSHOTS_COMPACTED("snapshotsCompacted"),
     TAIL_INDICES("tailIndices");
 
     @NonNull final String name;
