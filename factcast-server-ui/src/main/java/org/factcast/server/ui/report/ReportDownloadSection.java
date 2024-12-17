@@ -23,8 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.server.ui.port.ReportStore;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.net.URL;
-
 @Slf4j
 public class ReportDownloadSection extends HorizontalLayout {
 

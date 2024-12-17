@@ -259,7 +259,8 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
       queryBtn.setEnabled(false);
       binder.writeBean(formBean);
       log.info("{} runs query for {}", userName, formBean);
-      // For now this will block the UI in case of long-running queries. Will be refactored in the future
+      // For now this will block the UI in case of long-running queries. Will be refactored in the
+      // future
       // once the FactRepository is adapted.
       List<Fact> dataFromStore = repo.fetchChunk(formBean);
       log.info("Found {} entries", dataFromStore.size());

@@ -20,14 +20,14 @@ import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
- * Provides an endpoint for downloading local files. Files must be stored in a directory named after the user within the provided persistence directory path. *
- * */
+ * Provides an endpoint for downloading local files. Files must be stored in a directory named after
+ * the user within the provided persistence directory path. *
+ */
 @RequiredArgsConstructor
 @Slf4j
 public class FilesystemServiceInitListener implements VaadinServiceInitListener {

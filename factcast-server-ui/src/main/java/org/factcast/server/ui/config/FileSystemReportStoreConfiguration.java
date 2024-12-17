@@ -22,7 +22,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.DependsOn;
 
 @Configuration
 public class FileSystemReportStoreConfiguration {
@@ -34,7 +33,7 @@ public class FileSystemReportStoreConfiguration {
   }
 
   @Bean
-  @ConditionalOnBean(value= ReportStore.class, name = "fileSystemReportStore")
+  @ConditionalOnBean(value = ReportStore.class, name = "fileSystemReportStore")
   public FilesystemServiceInitListener filesystemServiceInitListener() {
     return new FilesystemServiceInitListener(FileSystemReportStore.PERSISTENCE_DIR);
   }
