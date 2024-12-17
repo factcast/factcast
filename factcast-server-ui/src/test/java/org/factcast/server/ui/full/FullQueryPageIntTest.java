@@ -53,8 +53,6 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
 
       query();
 
-      assertThat(jsonView()).containsText(USER1_EVENT_ID.toString());
-      assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
       assertThat(jsonView()).containsText(USER3_EVENT_ID.toString());
       assertThat(jsonView()).containsText(USER4_EVENT_ID.toString());
     }
@@ -109,6 +107,21 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
       query();
 
       assertThat(jsonView()).containsText(USER1_EVENT_ID.toString());
+    }
+
+    @RetryingTest(maxAttempts = 5, minSuccess = 1)
+    void queryByEndingSerial() {
+      loginFor("/ui/full");
+      selectNamespace("users");
+      page.getByLabel("Ending Serial").fill("1");
+      fromScratch();
+
+      query();
+
+      assertThat(jsonView()).containsText(USER1_EVENT_ID.toString());
+      assertThat(jsonView()).not().containsText(USER2_EVENT_ID.toString());
+      assertThat(jsonView()).not().containsText(USER3_EVENT_ID.toString());
+      assertThat(jsonView()).not().containsText(USER4_EVENT_ID.toString());
     }
 
     @RetryingTest(maxAttempts = 5, minSuccess = 1)
@@ -249,6 +262,7 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
       loginFor("/ui/full");
       // setup result
       selectNamespace("users");
+      page.getByLabel("Limit").fill("2");
       fromScratch();
       query();
 
@@ -270,14 +284,14 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
       fromScratch();
       query();
 
-      assertThat(jsonView()).containsText(USER1_EVENT_ID.toString());
-      assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER4_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER3_EVENT_ID.toString());
 
       jsonView().getByText("\"userId\"").first().hover();
       jsonView().getByText("Filter for Aggregate-ID").first().click();
 
-      assertThat(jsonView()).not().containsText(USER1_EVENT_ID.toString());
-      assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
+      assertThat(jsonView()).not().containsText(USER3_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER4_EVENT_ID.toString());
     }
   }
 
