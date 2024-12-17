@@ -99,7 +99,7 @@
     <assertj.version>3.26.3</assertj.version>
     <jackson.version>2.18.2</jackson.version>
     <mockito.version>5.14.2</mockito.version>
-    <junit-jupiter.version>5.11.3</junit-jupiter.version>
+    <junit-jupiter.version>5.11.4</junit-jupiter.version>
     <lombok.version>1.18.36</lombok.version>
     <slf4j-api.version>2.0.16</slf4j-api.version>
     <!--suppress UnresolvedMavenProperty -->
@@ -111,12 +111,12 @@
     <!-- lter versions seem to break toxi -->
     <testcontainers.version>1.20.4</testcontainers.version>
     <arrow.version>1.2.4</arrow.version>
-    <micronaut.version>4.7.1</micronaut.version>
+    <micronaut.version>4.7.2</micronaut.version>
     <kotlin.version>2.1.0</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <mockk.version>1.13.13</mockk.version>
-    <redisson.version>3.40.1</redisson.version>
-    <aws-sdk.version>2.29.33</aws-sdk.version>
+    <redisson.version>3.40.2</redisson.version>
+    <aws-sdk.version>2.29.35</aws-sdk.version>
     <graaljs.version>24.1.1</graaljs.version>
     <shedlock.version>6.0.2</shedlock.version>
     <byte-buddy.version>1.15.10</byte-buddy.version>
@@ -136,7 +136,7 @@
       <dependency>
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
-        <version>5.11.3</version>
+        <version>5.11.4</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
