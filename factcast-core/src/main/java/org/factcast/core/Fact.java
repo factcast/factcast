@@ -215,7 +215,7 @@ public interface Fact {
     }
 
     public Builder serial(long id) {
-      meta("_ser", String.valueOf(id));
+      header.meta().setSingle("_ser", String.valueOf(id));
       return this;
     }
 

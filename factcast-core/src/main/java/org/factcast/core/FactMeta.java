@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.annotation.*;
 import com.google.common.collect.*;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import lombok.*;
@@ -87,6 +88,18 @@ public class FactMeta {
 
   public void add(@NonNull String k, @Nullable String v) {
     backing.put(k, v);
+  }
+
+  public void forEachEntry(BiConsumer<String, String> consumer) {
+    backing.entries().forEach(e -> consumer.accept(e.getKey(), e.getValue()));
+  }
+
+  public void forEachDistinctKey(BiConsumer<String, Collection<String>> consumer) {
+    backing.keySet().forEach(k -> consumer.accept(k, backing.get(k)));
+  }
+
+  public boolean containsKey(String k) {
+    return backing.keySet().contains(k);
   }
 
   static class Serializer extends JsonSerializer<FactMeta> {

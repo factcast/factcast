@@ -22,16 +22,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Sets;
 import java.util.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.factcast.core.util.FactCastJson;
+import org.factcast.factus.event.*;
 import org.factcast.factus.event.EventObject;
-import org.factcast.factus.event.Specification;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-public class FactTest {
+class FactTest {
 
   @Test
   void testOfNull1() {
