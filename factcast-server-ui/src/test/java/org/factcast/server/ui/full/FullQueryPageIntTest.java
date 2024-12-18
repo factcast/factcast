@@ -370,7 +370,7 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
     types.forEach(
         t -> options.getByRole(AriaRole.OPTION, new Locator.GetByRoleOptions().setName(t)).click());
 
-    input.blur();
+    input.press("Escape");
   }
 
   protected Locator openSerialSelector() {
