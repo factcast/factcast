@@ -59,7 +59,7 @@ public class ListObserverTest {
 
       var result = underTest.list();
       Assertions.assertThat(result).isNotNull().hasSize(3);
-      Assertions.assertThat(underTest.isComplete()).isTrue();
+      Assertions.assertThat(underTest.isComplete(mockFacts.get(0))).isTrue();
     }
 
     @Test
@@ -69,7 +69,7 @@ public class ListObserverTest {
 
       var result = underTest.list();
       Assertions.assertThat(result).isNotNull().hasSize(28);
-      Assertions.assertThat(underTest.isComplete()).isFalse();
+      Assertions.assertThat(underTest.isComplete(mockFacts.get(0))).isFalse();
     }
 
     @Test
@@ -84,7 +84,7 @@ public class ListObserverTest {
           .hasSize(3)
           .containsExactly(mockFacts.get(4), mockFacts.get(3), mockFacts.get(2));
 
-      Assertions.assertThat(underTest.isComplete()).isTrue();
+      Assertions.assertThat(underTest.isComplete(mockFacts.get(0))).isTrue();
     }
   }
 
@@ -97,16 +97,16 @@ public class ListObserverTest {
       Fact mock = mock(Fact.class);
       when(mock.header()).thenReturn(mock(FactHeader.class));
       underTest.onNext(mock);
-      assertThat(underTest.isComplete()).isFalse();
+      assertThat(underTest.isComplete(mock)).isFalse();
       // second skipped for offset
       underTest.onNext(mock);
-      assertThat(underTest.isComplete()).isFalse();
+      assertThat(underTest.isComplete(mock)).isFalse();
       // third is taken, reduce limit to 1
       underTest.onNext(mock);
-      assertThat(underTest.isComplete()).isFalse();
+      assertThat(underTest.isComplete(mock)).isFalse();
       // fourth is taken, reduce limit to 0
       underTest.onNext(mock);
-      assertThat(underTest.isComplete()).isTrue();
+      assertThat(underTest.isComplete(mock)).isTrue();
 
       // more should trigger an exception
       assertThatThrownBy(

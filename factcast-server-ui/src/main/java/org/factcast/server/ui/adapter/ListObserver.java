@@ -44,7 +44,7 @@ public class ListObserver implements FactObserver {
 
   @Override
   public void onNext(@NonNull Fact element) {
-    if (isComplete() || hasReachedTheLimitSerial(element)) {
+    if (isComplete(element)) {
       throw new LimitReachedException();
     }
 
@@ -67,11 +67,11 @@ public class ListObserver implements FactObserver {
     LoggerFactory.getLogger(FactObserver.class).warn("Unhandled onError:", exception);
   }
 
-  boolean isComplete() {
-    return limit <= 0;
+  boolean isComplete(Fact fact) {
+    return limit <= 0 || hasReachedTheLimitSerial(fact);
   }
 
-  boolean hasReachedTheLimitSerial(Fact fact) {
+  private boolean hasReachedTheLimitSerial(Fact fact) {
     Long serial = fact.header().serial();
     return untilSerial != null && serial != null && untilSerial < serial;
   }
