@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.full;
+package org.factcast.server.ui.views.filter;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
@@ -35,16 +35,16 @@ import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
 
 @NoCoverageReportToBeGenerated
 public class FilterCriteriaViews extends VerticalLayout {
-  private final BeanValidationUrlStateBinder<FullQueryBean> binder;
-  private final FullQueryBean bean;
+  private final BeanValidationUrlStateBinder<FilterBean> binder;
+  private final FilterBean bean;
   private final FactRepository repo;
 
   private final List<FilterCriteriaCountUpdateListener> updateListeners = new ArrayList<>();
 
-  FilterCriteriaViews(
+  public FilterCriteriaViews(
       @NonNull FactRepository repo,
-      @NonNull BeanValidationUrlStateBinder<FullQueryBean> binder,
-      @NonNull FullQueryBean bean) {
+      @NonNull BeanValidationUrlStateBinder<FilterBean> binder,
+      @NonNull FilterBean bean) {
     this.repo = repo;
     this.binder = binder;
     this.bean = bean;
@@ -59,7 +59,7 @@ public class FilterCriteriaViews extends VerticalLayout {
     addViewsAccordingTo(bean);
   }
 
-  private void addViewsAccordingTo(@NonNull FullQueryBean bean) {
+  private void addViewsAccordingTo(@NonNull FilterBean bean) {
     AtomicBoolean first = new AtomicBoolean(true);
     bean.getCriteria().forEach(c -> addFilterCriteriaView(!first.getAndSet(false), c));
     binder.readBean(bean);

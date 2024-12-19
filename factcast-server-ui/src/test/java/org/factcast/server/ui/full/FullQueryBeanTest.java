@@ -20,6 +20,8 @@ import java.util.Set;
 import java.util.UUID;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.server.ui.views.filter.FactCriteria;
+import org.factcast.server.ui.views.filter.MetaTuple;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
