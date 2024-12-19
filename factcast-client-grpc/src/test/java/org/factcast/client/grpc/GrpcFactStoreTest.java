@@ -773,6 +773,14 @@ class GrpcFactStoreTest {
   }
 
   @Test
+  void firstSerialAfter() {
+    LocalDate date = LocalDate.of(2003, 12, 24);
+    MSG_Date msgDate = conv.toProto(date);
+    when(blockingStub.firstSerialAfter(msgDate)).thenReturn(conv.toProto(2L));
+    org.assertj.core.api.Assertions.assertThat(uut.firstSerialAfter(date)).isEqualTo(2);
+  }
+
+  @Test
   void fetchBySerial() {
     TestFact fact = new TestFact();
     long serial = 2L;

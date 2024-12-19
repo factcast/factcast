@@ -87,6 +87,13 @@ public interface FactStore {
   long lastSerialBefore(@NonNull LocalDate date);
 
   /**
+   * @return the last available serial if the day is today or in the future or null if there is no
+   *     facts
+   * @since 0.9.0
+   */
+  Long firstSerialAfter(@NonNull LocalDate date);
+
+  /**
    * @param serial to look for
    * @return the Fact stored with that serial or empty if it does not exist
    * @since 0.7.3

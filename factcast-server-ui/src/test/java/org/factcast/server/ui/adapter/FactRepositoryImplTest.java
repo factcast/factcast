@@ -381,6 +381,16 @@ public class FactRepositoryImplTest {
       Assertions.assertThat(underTest.lastSerialBefore(d)).isNotEmpty().hasValue(72L);
     }
   }
+
+  @Nested
+  class WhenFirstSerialAfter {
+    @Test
+    void passesParamAndResponse() {
+      LocalDate d = LocalDate.now();
+      when(fs.firstSerialAfter(d)).thenReturn(72L);
+      Assertions.assertThat(underTest.firstSerialAfter(d)).isNotEmpty().hasValue(72L);
+    }
+  }
 }
 
 class ExampleException extends RuntimeException {}
