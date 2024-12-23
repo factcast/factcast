@@ -57,7 +57,7 @@ public interface Fact {
   /**
    * @param key
    * @return value as String or null
-   * @deprecated use header.meta(String) instead
+   * @deprecated use header.meta() instead
    */
   @Deprecated
   @Nullable
@@ -101,7 +101,7 @@ public interface Fact {
 
   // create a fact from the event, especially useful for testing purposes
 
-  static FactFromEventBuilder buildFrom(@NonNull EventObject event) {
+  static FactFromEventBuilder buildFrom(@NonNull org.factcast.factus.event.EventObject event) {
     FactFromEventBuilder b = new FactFromEventBuilder(event);
     // from event
     FactSpecCoordinates coords = FactSpecCoordinates.from(event.getClass());
@@ -170,7 +170,7 @@ public interface Fact {
     }
 
     public FactFromEventBuilder meta(@NonNull String key, String value) {
-      builder.meta(key, value);
+      builder.addMeta(key, value);
       return this;
     }
 
@@ -215,7 +215,7 @@ public interface Fact {
     }
 
     public Builder serial(long id) {
-      header.meta().setSingle("_ser", String.valueOf(id));
+      header.meta().set("_ser", String.valueOf(id));
       return this;
     }
 
@@ -227,8 +227,22 @@ public interface Fact {
       return this;
     }
 
+    @Deprecated
+    /**
+     * @deprecated use addMeta/setMeta instead
+     */
     public Builder meta(@NonNull String key, String value) {
+      header.meta().set(key, value);
+      return this;
+    }
+
+    public Builder addMeta(@NonNull String key, String value) {
       header.meta().add(key, value);
+      return this;
+    }
+
+    public Builder setMeta(@NonNull String key, String value) {
+      header.meta().set(key, value);
       return this;
     }
 

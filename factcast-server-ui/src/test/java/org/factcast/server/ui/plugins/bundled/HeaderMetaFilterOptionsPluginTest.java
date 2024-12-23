@@ -15,20 +15,15 @@
  */
 package org.factcast.server.ui.plugins.bundled;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
-import org.factcast.core.FactMeta;
-import org.factcast.server.ui.plugins.JsonEntryMetaData;
-import org.factcast.server.ui.plugins.JsonPayload;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.factcast.factus.event.MetaMap;
+import org.factcast.server.ui.plugins.*;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Answers;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,7 +41,7 @@ class HeaderMetaFilterOptionsPluginTest {
 
     @Test
     void addsMetaFilterOption() {
-      when(fact.header().meta()).thenReturn(FactMeta.of("foo", "bar", "_ts", "123"));
+      when(fact.header().meta()).thenReturn(MetaMap.of("foo", "bar", "_ts", "123"));
 
       underTest.doHandle(fact, payload, jsonEntryMetaData);
 

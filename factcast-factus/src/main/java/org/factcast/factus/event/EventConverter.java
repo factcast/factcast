@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.event;
+package org.factcast.factus.event;
 
 import java.util.*;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import org.factcast.core.Fact;
-import org.factcast.factus.event.EventObject;
-import org.factcast.factus.event.EventSerializer;
 
 @RequiredArgsConstructor
 public class EventConverter {

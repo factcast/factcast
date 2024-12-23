@@ -23,6 +23,7 @@ import javax.annotation.Nullable;
 import lombok.*;
 import org.factcast.core.*;
 import org.factcast.core.util.FactCastJson;
+import org.factcast.factus.event.MetaMap;
 
 /**
  * PG Specific implementation of a Fact.
@@ -50,7 +51,7 @@ public class PgFact implements Fact {
 
   @Getter @NonNull final String jsonPayload;
 
-  @JsonProperty FactMeta meta = null;
+  @JsonProperty MetaMap meta = null;
 
   /**
    * @param key
@@ -76,7 +77,7 @@ public class PgFact implements Fact {
     return header;
   }
 
-  private FactMeta deserializeMeta() {
+  private MetaMap deserializeMeta() {
     return header().meta();
   }
 

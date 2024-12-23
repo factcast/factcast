@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core;
+package org.factcast.factus.event;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Lists;
 import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
+import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class FactMetaTest {
+class MetaMapTest {
 
   @Nested
   class WhenDeserializing {
@@ -53,7 +53,7 @@ class FactMetaTest {
     @Test
     void matchesExpectation() {
       String json =
-          "{\"someString\":\"oink\",\"meta\":{\"single\":\"value\",\"someNull\":null,\"otherNull\":[null,null],\"foo\":[\"bar\",\"baz\"]}}";
+          "{\"someString\":\"oink\",\"meta\":{\"single\":\"value\",\"foo\":[\"bar\",\"baz\"]}}";
       String ser = new ObjectMapper().writeValueAsString(new ExampleMeta());
       Assertions.assertThat(ser).isEqualTo(json);
     }
@@ -61,19 +61,16 @@ class FactMetaTest {
 
   static class TestMeta {
     @JsonProperty protected String someString;
-    @JsonProperty protected FactMeta meta;
+    @JsonProperty protected MetaMap meta;
   }
 
   static class ExampleMeta extends TestMeta {
     ExampleMeta() {
       someString = "oink";
-      meta = new FactMeta();
+      meta = new MetaMap();
       meta.add("foo", "bar");
       meta.add("foo", "baz");
       meta.add("single", "value");
-      meta.add("someNull", null);
-      meta.add("otherNull", null);
-      meta.add("otherNull", null);
     }
   }
 
@@ -82,12 +79,12 @@ class FactMetaTest {
 
     @Test
     void pairExists() {
-      Assertions.assertThat(FactMeta.of("A", "B").getFirst("A")).isEqualTo("B");
+      Assertions.assertThat(MetaMap.of("A", "B").getFirst("A")).isEqualTo("B");
     }
 
     @Test
     void pairsExists() {
-      FactMeta uut = FactMeta.of("A", "B", "C", "D");
+      MetaMap uut = MetaMap.of("A", "B", "C", "D");
       Assertions.assertThat(uut.getFirst("A")).isEqualTo("B");
       Assertions.assertThat(uut.getFirst("C")).isEqualTo("D");
     }
@@ -98,7 +95,7 @@ class FactMetaTest {
 
     @Test
     void picksFirst() {
-      FactMeta uut = FactMeta.of("A", "B", "A", "C");
+      MetaMap uut = MetaMap.of("A", "B", "A", "C");
       Assertions.assertThat(uut.getFirst("A")).isEqualTo("B");
       Assertions.assertThat(uut.getAll("A")).containsExactly("B", "C");
     }
@@ -109,7 +106,7 @@ class FactMetaTest {
 
     @Test
     void containsAll() {
-      FactMeta uut = FactMeta.of("A", "B", "A", "C");
+      MetaMap uut = MetaMap.of("A", "B", "A", "C");
       Assertions.assertThat(uut.getAll("A")).containsExactly("B", "C");
     }
   }
@@ -119,7 +116,7 @@ class FactMetaTest {
 
     @Test
     void noneLeft() {
-      FactMeta uut = FactMeta.of("A", "1", "B", "2");
+      MetaMap uut = MetaMap.of("A", "1", "B", "2");
       uut.remove("A");
       Assertions.assertThat(uut.getAll("A")).isEmpty();
       Assertions.assertThat(uut.getAll("B")).isNotEmpty();
@@ -130,7 +127,7 @@ class FactMetaTest {
   class WhenKeyingSet {
     @Test
     void allKeysMetOnce() {
-      FactMeta uut = FactMeta.of("A", "1", "B", "2");
+      MetaMap uut = MetaMap.of("A", "1", "B", "2");
       uut.add("C", "x");
       uut.add("C", "y");
       uut.add("D", "z");
@@ -144,7 +141,7 @@ class FactMetaTest {
 
     @Test
     void createsInitial() {
-      FactMeta uut = FactMeta.of("A", "1");
+      MetaMap uut = MetaMap.of("A", "1");
       uut.add("C", "x");
 
       Assertions.assertThat(uut.getFirst("C")).isEqualTo("x");
@@ -152,7 +149,7 @@ class FactMetaTest {
 
     @Test
     void appends() {
-      FactMeta uut = FactMeta.of("A", "1");
+      MetaMap uut = MetaMap.of("A", "1");
       uut.add("C", "x");
       uut.add("C", "y");
       uut.add("C", "z");
