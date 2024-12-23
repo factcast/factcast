@@ -18,7 +18,7 @@ package org.factcast.store.registry.transformation.cache;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CountDownLatch;
 import lombok.SneakyThrows;
 import org.factcast.core.Fact;
 import org.factcast.store.StoreConfigurationProperties;
@@ -32,9 +32,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlConfig;
+import org.springframework.test.context.jdbc.*;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.transaction.PlatformTransactionManager;
 
 @ContextConfiguration(classes = {PgTestConfiguration.class})
 @ExtendWith(SpringExtension.class)
@@ -42,6 +42,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 @IntegrationTest
 class PgTransformationCacheITest extends AbstractTransformationCacheTest {
+  @Autowired private PlatformTransactionManager platformTransactionManager;
   @Autowired private JdbcTemplate tpl;
   @Autowired private NamedParameterJdbcTemplate namedTpl;
   @Autowired private StoreConfigurationProperties storeConfigurationProperties;
@@ -55,7 +56,12 @@ class PgTransformationCacheITest extends AbstractTransformationCacheTest {
     this.underTest =
         Mockito.spy(
             new PgTransformationCache(
-                tpl, namedTpl, registryMetrics, storeConfigurationProperties, maxBufferSize));
+                platformTransactionManager,
+                tpl,
+                namedTpl,
+                registryMetrics,
+                storeConfigurationProperties,
+                maxBufferSize));
     return underTest;
   }
 

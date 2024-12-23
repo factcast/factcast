@@ -16,35 +16,22 @@
 package org.factcast.store.registry.transformation.cache;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.SneakyThrows;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.metrics.RegistryMetrics;
-import org.factcast.store.registry.metrics.RegistryMetrics.EVENT;
-import org.factcast.store.registry.metrics.RegistryMetrics.OP;
+import org.factcast.store.registry.metrics.RegistryMetrics.*;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.jdbc.core.namedparam.*;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Slf4j
 public class PgTransformationCache implements TransformationCache, AutoCloseable {
@@ -65,15 +52,19 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   /* entry of null means read, entry of non-null means write */
   private final CacheBuffer buffer = new CacheBuffer();
 
+  private final PlatformTransactionManager platformTransactionManager;
+
   private int bufferThreshold = 1000;
 
   public final int maxBufferSize;
 
   public PgTransformationCache(
+      PlatformTransactionManager platformTransactionManager,
       JdbcTemplate jdbcTemplate,
       NamedParameterJdbcTemplate namedJdbcTemplate,
       RegistryMetrics registryMetrics,
       StoreConfigurationProperties storeConfigurationProperties) {
+    this.platformTransactionManager = platformTransactionManager;
     this.jdbcTemplate = jdbcTemplate;
     this.namedJdbcTemplate = namedJdbcTemplate;
     this.registryMetrics = registryMetrics;
@@ -86,11 +77,13 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
   @VisibleForTesting
   PgTransformationCache(
+      PlatformTransactionManager platformTransactionManager,
       JdbcTemplate jdbcTemplate,
       NamedParameterJdbcTemplate namedJdbcTemplate,
       RegistryMetrics registryMetrics,
       StoreConfigurationProperties storeConfigurationProperties,
       int bufferThreshold) {
+    this.platformTransactionManager = platformTransactionManager;
     this.jdbcTemplate = jdbcTemplate;
     this.namedJdbcTemplate = namedJdbcTemplate;
     this.registryMetrics = registryMetrics;
@@ -217,10 +210,11 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   }
 
   @Override
-  public void invalidateTransformationFor(String ns, String type) {
+  // try to prevent #3279
+  public synchronized void invalidateTransformationFor(String ns, String type) {
     flush();
-
     if (!storeConfigurationProperties.isReadOnlyModeEnabled()) {
+
       jdbcTemplate.update(
           "DELETE FROM transformationcache WHERE header ->> 'ns' = ? AND header ->> 'type' = ?",
           ns,
@@ -229,12 +223,24 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   }
 
   @Scheduled(fixedRate = 10, timeUnit = TimeUnit.MINUTES)
-  public void flush() {
+  public synchronized void flush() {
+    // after this call, the buffer is wiped and open for business
     Map<Key, Fact> copy = buffer.clear();
+
+    // we want to serialize flushing beyond instances in order to avoid parallel
+    // updates/insertions/deletions causing deadlocks
+
     if (!copy.isEmpty() && !storeConfigurationProperties.isReadOnlyModeEnabled()) {
       try {
-        insertBufferedTransformations(copy);
-        insertBufferedAccesses(copy);
+        new TransactionTemplate(platformTransactionManager)
+            .execute(
+                status -> {
+                  jdbcTemplate.execute("LOCK TABLE transformationcache");
+                  insertBufferedTransformations(copy);
+                  insertBufferedAccesses(copy);
+
+                  return null;
+                });
       } catch (Exception e) {
         log.error("Could not complete batch update of transformations on transformation cache.", e);
       }

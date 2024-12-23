@@ -22,31 +22,26 @@ import static org.mockito.Mockito.*;
 import com.google.common.collect.Lists;
 import java.time.ZonedDateTime;
 import java.util.*;
-import lombok.NonNull;
-import lombok.SneakyThrows;
+import lombok.*;
 import nl.altindag.log.LogCaptor;
 import org.factcast.core.Fact;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.jdbc.core.*;
+import org.springframework.jdbc.core.namedparam.*;
+import org.springframework.transaction.PlatformTransactionManager;
 
 @SuppressWarnings("ALL")
 @ExtendWith(MockitoExtension.class)
 class PgTransformationCacheTest {
 
   private static final int MAX_BUFFER_SIZE = 24;
+  @Mock private PlatformTransactionManager platformTransactionManager;
   @Mock private JdbcTemplate jdbcTemplate;
   @Mock private NamedParameterJdbcTemplate namedJdbcTemplate;
   RegistryMetrics registryMetrics = spy(new NOPRegistryMetrics());
@@ -64,6 +59,7 @@ class PgTransformationCacheTest {
       underTest =
           spy(
               new PgTransformationCache(
+                  platformTransactionManager,
                   jdbcTemplate,
                   namedJdbcTemplate,
                   registryMetrics,
@@ -102,6 +98,7 @@ class PgTransformationCacheTest {
       underTest =
           spy(
               new PgTransformationCache(
+                  platformTransactionManager,
                   jdbcTemplate,
                   namedJdbcTemplate,
                   registryMetrics,
@@ -154,6 +151,7 @@ class PgTransformationCacheTest {
       underTest =
           spy(
               new PgTransformationCache(
+                  platformTransactionManager,
                   jdbcTemplate,
                   namedJdbcTemplate,
                   registryMetrics,
@@ -205,6 +203,7 @@ class PgTransformationCacheTest {
       underTest =
           spy(
               new PgTransformationCache(
+                  platformTransactionManager,
                   jdbcTemplate,
                   namedJdbcTemplate,
                   registryMetrics,
@@ -240,7 +239,12 @@ class PgTransformationCacheTest {
     void setup() {
       underTest =
           new PgTransformationCache(
-              jdbcTemplate, namedJdbcTemplate, registryMetrics, storeConfigurationProperties, 10);
+              platformTransactionManager,
+              jdbcTemplate,
+              namedJdbcTemplate,
+              registryMetrics,
+              storeConfigurationProperties,
+              10);
     }
 
     @Test
@@ -263,6 +267,7 @@ class PgTransformationCacheTest {
       underTest =
           spy(
               new PgTransformationCache(
+                  platformTransactionManager,
                   jdbcTemplate,
                   namedJdbcTemplate,
                   registryMetrics,
@@ -292,6 +297,7 @@ class PgTransformationCacheTest {
       underTest =
           spy(
               new PgTransformationCache(
+                  platformTransactionManager,
                   jdbcTemplate,
                   namedJdbcTemplate,
                   registryMetrics,
@@ -334,6 +340,7 @@ class PgTransformationCacheTest {
       underTest =
           spy(
               new PgTransformationCache(
+                  platformTransactionManager,
                   jdbcTemplate,
                   namedJdbcTemplate,
                   registryMetrics,
@@ -415,6 +422,7 @@ class PgTransformationCacheTest {
       underTest =
           spy(
               new PgTransformationCache(
+                  platformTransactionManager,
                   jdbcTemplate,
                   namedJdbcTemplate,
                   registryMetrics,
@@ -456,6 +464,7 @@ class PgTransformationCacheTest {
       underTest =
           spy(
               new PgTransformationCache(
+                  platformTransactionManager,
                   jdbcTemplate,
                   namedJdbcTemplate,
                   registryMetrics,
@@ -492,6 +501,7 @@ class PgTransformationCacheTest {
       underTest =
           spy(
               new PgTransformationCache(
+                  platformTransactionManager,
                   jdbcTemplate,
                   namedJdbcTemplate,
                   registryMetrics,
