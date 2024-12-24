@@ -36,6 +36,7 @@ import org.springframework.test.context.jdbc.*;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.PlatformTransactionManager;
 
+@SuppressWarnings("FieldMayBeFinal")
 @ContextConfiguration(classes = {PgTestConfiguration.class})
 @ExtendWith(SpringExtension.class)
 @ExtendWith(MockitoExtension.class)
@@ -47,9 +48,9 @@ class PgTransformationCacheITest extends AbstractTransformationCacheTest {
   @Autowired private NamedParameterJdbcTemplate namedTpl;
   @Autowired private StoreConfigurationProperties storeConfigurationProperties;
 
-  private final int maxBufferSize = 10;
-  private final CountDownLatch wasflushed = new CountDownLatch(1);
-  private PgTransformationCache underTest;
+  int maxBufferSize = 10;
+  CountDownLatch wasFlushed = new CountDownLatch(1);
+  PgTransformationCache underTest;
 
   @Override
   protected TransformationCache createUUT() {
@@ -85,7 +86,7 @@ class PgTransformationCacheITest extends AbstractTransformationCacheTest {
     Mockito.doAnswer(
             i -> {
               i.callRealMethod();
-              wasflushed.countDown();
+              wasFlushed.countDown();
               return null;
             })
         .when(underTest)
@@ -99,7 +100,7 @@ class PgTransformationCacheITest extends AbstractTransformationCacheTest {
       uut.find(TransformationCache.Key.of(fact.id(), fact.version(), chainId));
     }
     // flush is async
-    wasflushed.await();
+    wasFlushed.await();
 
     // either empty, or just registered accesses
     assertThat(underTest.buffer().clear().values()).noneMatch(Objects::nonNull);

@@ -31,7 +31,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.transaction.support.*;
 
 @Slf4j
 public class PgTransformationCache implements TransformationCache, AutoCloseable {
@@ -49,8 +49,8 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
   @Getter(AccessLevel.PROTECTED)
   @VisibleForTesting
-  /* entry of null means read, entry of non-null means write */
-  private final CacheBuffer buffer = new CacheBuffer();
+  /* entry of null means read, entry of non-null means write */ private final CacheBuffer buffer =
+      new CacheBuffer();
 
   private final PlatformTransactionManager platformTransactionManager;
 
@@ -197,54 +197,76 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
   @Override
   public void compact(@NonNull ZonedDateTime thresholdDate) {
+    // we need to flush even if we're in read only mode in order to prevent a buffer overflow
     flush();
 
     if (!storeConfigurationProperties.isReadOnlyModeEnabled()) {
+      // it is fine if flush worked in another transaction, it just has to be serialized
       registryMetrics.timed(
           OP.COMPACT_TRANSFORMATION_CACHE,
           () ->
-              jdbcTemplate.update(
-                  "DELETE FROM transformationcache WHERE last_access < ?",
-                  new Date(thresholdDate.toInstant().toEpochMilli())));
+              inTransactionWithLock(
+                  () ->
+                      jdbcTemplate.update(
+                          "DELETE FROM transformationcache WHERE last_access < ?",
+                          new Date(thresholdDate.toInstant().toEpochMilli()))));
     }
   }
 
   @Override
-  // try to prevent #3279
-  public synchronized void invalidateTransformationFor(String ns, String type) {
+  public void invalidateTransformationFor(String ns, String type) {
+    // we need to flush even if we're in read only mode in order to prevent a buffer overflow
     flush();
-    if (!storeConfigurationProperties.isReadOnlyModeEnabled()) {
 
-      jdbcTemplate.update(
-          "DELETE FROM transformationcache WHERE header ->> 'ns' = ? AND header ->> 'type' = ?",
-          ns,
-          type);
+    if (!storeConfigurationProperties.isReadOnlyModeEnabled()) {
+      // it is fine if flush worked in another transaction, it just has to be serialized
+      inTransactionWithLock(
+          () ->
+              jdbcTemplate.update(
+                  "DELETE FROM transformationcache WHERE header ->> 'ns' = ? AND header ->> 'type' = ?",
+                  ns,
+                  type));
     }
   }
 
   @Scheduled(fixedRate = 10, timeUnit = TimeUnit.MINUTES)
-  public synchronized void flush() {
-    // after this call, the buffer is wiped and open for business
+  public void flush() {
+    // after this call, the buffer is wiped and again open for business
+    // note that this is important even in readonly mode, as otherwise we'd run short on memory
     Map<Key, Fact> copy = buffer.clear();
 
-    // we want to serialize flushing beyond instances in order to avoid parallel
-    // updates/insertions/deletions causing deadlocks
-
     if (!copy.isEmpty() && !storeConfigurationProperties.isReadOnlyModeEnabled()) {
+      // we want to serialize flushing beyond instances in order to avoid parallel
+      // updates/insertions/deletions causing deadlocks
       try {
-        new TransactionTemplate(platformTransactionManager)
-            .execute(
-                status -> {
-                  jdbcTemplate.execute("LOCK TABLE transformationcache");
-                  insertBufferedTransformations(copy);
-                  insertBufferedAccesses(copy);
-
-                  return null;
-                });
+        inTransactionWithLock(
+            () -> {
+              insertBufferedTransformations(copy);
+              insertBufferedAccesses(copy);
+            });
       } catch (Exception e) {
         log.error("Could not complete batch update of transformations on transformation cache.", e);
       }
     }
+  }
+
+  /**
+   * this is used to serialize writes to the table in order to prevent circular row lock situations
+   * leading to #3279
+   */
+  @VisibleForTesting
+  void inTransactionWithLock(@NonNull Runnable o) {
+    if (TransactionSynchronizationManager.isActualTransactionActive()) {
+      o.run();
+    } else
+      new TransactionTemplate(platformTransactionManager)
+          .execute(
+              status -> {
+                // we're using share mode here in order not to block reads from happening
+                jdbcTemplate.execute("LOCK TABLE transformationcache IN SHARE MODE");
+                o.run();
+                return null;
+              });
   }
 
   @VisibleForTesting
