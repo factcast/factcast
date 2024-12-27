@@ -31,7 +31,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.*;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Slf4j
 public class PgTransformationCache implements TransformationCache, AutoCloseable {
@@ -256,17 +256,15 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
    */
   @VisibleForTesting
   void inTransactionWithLock(@NonNull Runnable o) {
-    if (TransactionSynchronizationManager.isActualTransactionActive()) {
-      o.run();
-    } else
-      new TransactionTemplate(platformTransactionManager)
-          .execute(
-              status -> {
-                // we're using share mode here in order not to block reads from happening
-                jdbcTemplate.execute("LOCK TABLE transformationcache IN SHARE MODE");
-                o.run();
-                return null;
-              });
+    new TransactionTemplate(platformTransactionManager)
+        // will join an existing tx, or create and commit a new one
+        .execute(
+            status -> {
+              // we're using share mode here in order not to block reads from happening
+              jdbcTemplate.execute("LOCK TABLE transformationcache IN SHARE MODE");
+              o.run();
+              return null;
+            });
   }
 
   @VisibleForTesting

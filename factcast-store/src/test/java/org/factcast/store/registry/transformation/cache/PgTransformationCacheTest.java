@@ -267,6 +267,36 @@ class PgTransformationCacheTest {
   }
 
   @Nested
+  class WhenRunningInTransactionWithLock {
+    private PgTransformationCache underTest;
+
+    @Mock Runnable r;
+
+    @BeforeEach
+    void setup() {
+      underTest =
+          spy(
+              new PgTransformationCache(
+                  platformTransactionManager,
+                  jdbcTemplate,
+                  namedJdbcTemplate,
+                  registryMetrics,
+                  storeConfigurationProperties,
+                  2));
+    }
+
+    @SneakyThrows
+    @Test
+    void locks() {
+      underTest.inTransactionWithLock(r);
+
+      InOrder inOrder = inOrder(jdbcTemplate, r);
+      inOrder.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN SHARE MODE");
+      inOrder.verify(r).run();
+    }
+  }
+
+  @Nested
   class WhenFlushingIfNecessary {
     private PgTransformationCache underTest;
     @Mock private TransformationCache.Key cacheKey;
