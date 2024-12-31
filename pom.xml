@@ -116,7 +116,7 @@
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <mockk.version>1.13.14</mockk.version>
     <redisson.version>3.41.0</redisson.version>
-    <aws-sdk.version>2.29.39</aws-sdk.version>
+    <aws-sdk.version>2.29.43</aws-sdk.version>
     <graaljs.version>24.1.1</graaljs.version>
     <shedlock.version>6.0.2</shedlock.version>
     <byte-buddy.version>1.15.11</byte-buddy.version>
