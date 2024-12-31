@@ -15,7 +15,7 @@
  */
 package org.factcast.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Sets;
 import java.util.*;
 import lombok.*;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.event.*;
 import org.factcast.factus.event.EventObject;
@@ -154,13 +155,13 @@ class FactTest {
                 + "}",
             "{}");
 
-    org.assertj.core.api.Assertions.assertThatThrownBy(
+    assertThatThrownBy(
             () -> {
               one.before(two);
             })
         .isInstanceOf(IllegalStateException.class);
 
-    org.assertj.core.api.Assertions.assertThatThrownBy(
+    assertThatThrownBy(
             () -> {
               two.before(one);
             })
@@ -303,6 +304,14 @@ class FactTest {
     assertThat(f.version()).isZero();
   }
 
+  @Specification(ns = "test")
+  private static class MyEventObject implements EventObject {
+    @Override
+    public Set<UUID> aggregateIds() {
+      return Sets.newHashSet(UUID.randomUUID());
+    }
+  }
+
   @Data
   @NoArgsConstructor
   @AllArgsConstructor
@@ -316,5 +325,78 @@ class FactTest {
     public Set<UUID> aggregateIds() {
       return Sets.newHashSet(aggregateId);
     }
+  }
+
+  @SuppressWarnings("deprecation")
+  @Test
+  void testMultiMapCompatibility() {
+    Fact fact = Fact.builder().meta("foo", "bar").meta("foo", "baz").buildWithoutPayload();
+    MetaMap meta = fact.header().meta();
+    Assertions.assertThat(meta).isNotNull();
+    // check that set is being used rather than add
+    Assertions.assertThat(meta.getAll("foo")).hasSize(1);
+    Assertions.assertThat(meta.getFirst("foo")).isEqualTo("baz");
+  }
+
+  void testMultiMapSet() {
+    Fact fact = Fact.builder().setMeta("foo", "bar").setMeta("foo", "baz").buildWithoutPayload();
+    MetaMap meta = fact.header().meta();
+    Assertions.assertThat(meta).isNotNull();
+    // check that set is being used rather than add
+    Assertions.assertThat(meta.getAll("foo")).hasSize(1);
+    Assertions.assertThat(meta.getFirst("foo")).isEqualTo("baz");
+  }
+
+  void testMultiMapAdd() {
+    Fact fact = Fact.builder().addMeta("foo", "bar").addMeta("foo", "baz").buildWithoutPayload();
+    MetaMap meta = fact.header().meta();
+    Assertions.assertThat(meta).isNotNull();
+    // check that set is being used rather than add
+    Assertions.assertThat(meta.getAll("foo")).hasSize(2);
+    Assertions.assertThat(meta.getAll("foo")).containsExactly("bar", "baz");
+  }
+
+  @Test
+  void testVersion() {
+    Fact fact = Fact.builder().version(12).buildWithoutPayload();
+    Assertions.assertThat(fact.version()).isEqualTo(12);
+  }
+
+  @Test
+  void rejectsVersionOutOfBounds() {
+    Fact.Builder builder = Fact.builder();
+    assertThatThrownBy(
+            () -> {
+              builder.version(0);
+            })
+        .isInstanceOf(IllegalArgumentException.class);
+
+    assertThatThrownBy(
+            () -> {
+              builder.version(-1);
+            })
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void usesSerializer() {
+    @NonNull EventObject event = new MyEventObject();
+    String expectedJson = "{\"x\":¸\"y\"}";
+
+    @NonNull
+    EventSerializer mySerializer =
+        new EventSerializer() {
+          @Override
+          public <T extends EventObject> T deserialize(Class<T> targetClass, String json) {
+            return null;
+          }
+
+          @Override
+          public <T extends EventObject> String serialize(T pojo) {
+            return expectedJson;
+          }
+        };
+    Fact.FactFromEventBuilder builder = Fact.buildFrom(event).using(mySerializer);
+    Assertions.assertThat(builder.build().jsonPayload()).isEqualTo(expectedJson);
   }
 }
