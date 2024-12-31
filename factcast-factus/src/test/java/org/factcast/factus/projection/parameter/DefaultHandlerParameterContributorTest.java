@@ -262,6 +262,60 @@ class DefaultHandlerParameterContributorTest {
   }
 
   @Test
+  void providesList() {
+    //noinspection rawtypes
+    class MetaList extends TestProjection {
+      @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+      public void apply(@Meta("narf") List<String> narf) {}
+    }
+
+    Method m =
+        Arrays.stream(MetaList.class.getMethods())
+            .filter(me -> me.getName().equals("apply"))
+            .findFirst()
+            .get();
+
+    DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
+    HandlerParameterProvider provider =
+        undertest.providerFor(
+            m.getParameterTypes()[0],
+            m.getGenericParameterTypes()[0],
+            Sets.newHashSet(m.getParameterAnnotations()[0]));
+    Assertions.assertThat(provider).isNotNull();
+    Fact fact =
+        Fact.builder().addMeta("narf", "poit").addMeta("narf", "zort").buildWithoutPayload();
+    MetaList p = mock(MetaList.class);
+    Assertions.assertThat((List) (provider.apply(mock(EventSerializer.class), fact, p)))
+        .containsExactly("poit", "zort");
+  }
+
+  @Test
+  void providesEmptyList() {
+    //noinspection rawtypes
+    class MetaList extends TestProjection {
+      @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+      public void apply(@Meta("narf") List<String> narf) {}
+    }
+
+    Method m =
+        Arrays.stream(MetaList.class.getMethods())
+            .filter(me -> me.getName().equals("apply"))
+            .findFirst()
+            .get();
+
+    DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
+    HandlerParameterProvider provider =
+        undertest.providerFor(
+            m.getParameterTypes()[0],
+            m.getGenericParameterTypes()[0],
+            Sets.newHashSet(m.getParameterAnnotations()[0]));
+    Assertions.assertThat(provider).isNotNull();
+    Fact fact = Fact.builder().buildWithoutPayload();
+    MetaList p = mock(MetaList.class);
+    Assertions.assertThat((List) (provider.apply(mock(EventSerializer.class), fact, p))).isEmpty();
+  }
+
+  @Test
   void rejectsEmptyName() {
     //noinspection rawtypes
     class MetaString {
