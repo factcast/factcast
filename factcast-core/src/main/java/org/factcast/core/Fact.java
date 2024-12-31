@@ -229,11 +229,12 @@ public interface Fact {
 
     @Deprecated
     /**
+     * uses setMeta for compatibility
+     *
      * @deprecated use addMeta/setMeta instead
      */
     public Builder meta(@NonNull String key, String value) {
-      header.meta().set(key, value);
-      return this;
+      return setMeta(key, value);
     }
 
     public Builder addMeta(@NonNull String key, String value) {

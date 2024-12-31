@@ -58,7 +58,7 @@ public class PgFact implements Fact {
    * @return value as String or null
    * @deprecated use header.meta(String) instead
    */
-  @Deprecated
+  @Deprecated(since = "0.10", forRemoval = true)
   @Nullable
   public String meta(String key) {
     if (meta == null) {
