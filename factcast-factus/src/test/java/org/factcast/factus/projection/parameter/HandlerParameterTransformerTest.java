@@ -21,13 +21,12 @@ import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.factcast.factus.Handler;
 import org.factcast.factus.projection.LocalManagedProjection;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class HandlerParameterTransformerTest {
+public class HandlerParameterTransformerTest {
 
   @Nested
   class WhenChoosingProvider {

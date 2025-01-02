@@ -16,8 +16,7 @@
 package org.factcast.factus.lock;
 
 import lombok.NonNull;
-import org.factcast.factus.ProjectionAccessor;
-import org.factcast.factus.SimplePublisher;
+import org.factcast.factus.*;
 
 /** Contains all operations that are available during locked execution */
 public interface RetryableTransaction extends SimplePublisher, ProjectionAccessor {

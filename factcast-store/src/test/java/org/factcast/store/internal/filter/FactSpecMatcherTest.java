@@ -17,14 +17,11 @@ package org.factcast.store.internal.filter;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.Arrays;
-import java.util.UUID;
+import com.google.common.collect.Lists;
+import java.util.*;
 import java.util.function.Predicate;
-import org.factcast.core.Fact;
-import org.factcast.core.TestFact;
-import org.factcast.core.TestHelper;
-import org.factcast.core.spec.FactSpec;
-import org.factcast.core.spec.FilterScript;
+import org.factcast.core.*;
+import org.factcast.core.spec.*;
 import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.script.graaljs.GraalJSEngineFactory;
 import org.junit.jupiter.api.Test;
@@ -72,6 +69,15 @@ class FactSpecMatcherTest {
     assertTrue(test(FactSpec.ns("default"), new TestFact().meta("x", "y").meta("foo", "bar")));
     assertFalse(test(FactSpec.ns("default").meta("foo", "bar"), new TestFact().meta("foo", "baz")));
     assertFalse(test(FactSpec.ns("default").meta("foo", "bar"), new TestFact()));
+  }
+
+  @Test
+  void testMetaMatchForMultipleValues() {
+    TestFact f = new TestFact().meta("foo", "bar").meta("baz", Lists.newArrayList("1", "2", "3"));
+    assertTrue(test(FactSpec.ns("default").meta("foo", "bar"), f));
+    assertTrue(test(FactSpec.ns("default").meta("baz", "1"), f));
+    assertTrue(test(FactSpec.ns("default").meta("baz", "2"), f));
+    assertTrue(test(FactSpec.ns("default").meta("baz", "3"), f));
   }
 
   @Test

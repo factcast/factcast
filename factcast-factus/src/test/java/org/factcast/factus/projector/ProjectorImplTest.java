@@ -22,15 +22,11 @@ import com.google.common.collect.Lists;
 import java.lang.reflect.Method;
 import java.util.*;
 import javax.annotation.Nullable;
-import lombok.Data;
-import lombok.NonNull;
-import lombok.SneakyThrows;
-import lombok.Value;
+import lombok.*;
 import lombok.experimental.Delegate;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Maps;
 import org.factcast.core.*;
-import org.factcast.core.event.EventConverter;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.*;
@@ -38,12 +34,9 @@ import org.factcast.factus.event.*;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.projection.*;
 import org.factcast.factus.projection.parameter.HandlerParameterContributors;
-import org.factcast.factus.projection.tx.OpenTransactionAware;
-import org.factcast.factus.projection.tx.TransactionAdapter;
-import org.factcast.factus.projection.tx.TransactionBehavior;
+import org.factcast.factus.projection.tx.*;
 import org.factcast.factus.projector.ProjectorImpl.ReflectionTools;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 @SuppressWarnings({"deprecation", "java:S1186"})
 class ProjectorImplTest {

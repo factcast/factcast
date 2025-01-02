@@ -66,11 +66,13 @@ class PgQueryBuilderTest {
       verify(ps).setString(++index, "{\"type\": \"t1\"}");
       verify(ps).setString(++index, "{\"aggIds\": [\"00000000-0000-0000-0000-000000000001\"]}");
       verify(ps).setString(++index, "{\"meta\":{\"foo\":\"bar\"}}");
+      verify(ps).setString(++index, "{\"meta\":{\"foo\":[\"bar\"]}}");
 
       // 2nd spec
       verify(ps).setString(++index, "{\"ns\": \"ns2\"}");
       verify(ps).setString(++index, "{\"type\": \"t2\"}");
       verify(ps).setString(++index, "{\"meta\":{\"foo\":\"bar\"}}");
+      verify(ps).setString(++index, "{\"meta\":{\"foo\":[\"bar\"]}}");
       verify(ps).setString(++index, "$.\"meta\".\"e\"");
       verify(ps).setString(++index, "$.\"meta\".\"!e\""); // NOT is added in WHERE clause
       // before
@@ -118,7 +120,7 @@ class PgQueryBuilderTest {
 
       assertThat(sql)
           .isEqualTo(
-              "SELECT ser, header, payload, header->>'id' AS id, header->>'aggIds' AS aggIds, header->>'ns' AS ns, header->>'type' AS type, header->>'version' AS version FROM fact WHERE ( (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb) OR (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb) ) AND ser>? ORDER BY ser ASC");
+              "SELECT ser, header, payload, header->>'id' AS id, header->>'aggIds' AS aggIds, header->>'ns' AS ns, header->>'type' AS type, header->>'version' AS version FROM fact WHERE ( (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) ) AND ser>? ORDER BY ser ASC");
     }
 
     @Test
@@ -137,7 +139,7 @@ class PgQueryBuilderTest {
 
       assertThat(sql)
           .isEqualTo(
-              "SELECT ser, header, payload, header->>'id' AS id, header->>'aggIds' AS aggIds, header->>'ns' AS ns, header->>'type' AS type, header->>'version' AS version FROM fact WHERE ( (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND jsonb_path_exists(header, ?::jsonpath) AND NOT jsonb_path_exists(header, ?::jsonpath)) OR (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb) ) AND ser>? ORDER BY ser ASC");
+              "SELECT ser, header, payload, header->>'id' AS id, header->>'aggIds' AS aggIds, header->>'ns' AS ns, header->>'type' AS type, header->>'version' AS version FROM fact WHERE ( (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb) AND jsonb_path_exists(header, ?::jsonpath) AND NOT jsonb_path_exists(header, ?::jsonpath)) OR (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) ) AND ser>? ORDER BY ser ASC");
     }
   }
 
@@ -160,10 +162,9 @@ class PgQueryBuilderTest {
 
       // where clause for two specs
       var expectedSpec1 =
-          "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND header @>"
-              + " ?::jsonb)";
+          "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb))";
       var expectedSpec2 =
-          "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb)"; // no aggid
+          "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb))"; // no aggid
       var expectedSpec3 =
           "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb)"; // no meta,
       // multi
@@ -193,10 +194,10 @@ class PgQueryBuilderTest {
 
       // where clause for two specs
       var expectedSpec1 =
-          "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND header @>"
-              + " ?::jsonb)";
+          "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @>"
+              + " ?::jsonb OR header @> ?::jsonb))";
       var expectedSpec2 =
-          "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb)"; // no aggid
+          "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb))"; // no aggid
       var expectedSpec3 =
           "(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb)"; // no meta,
       // multi

@@ -15,21 +15,17 @@
  */
 package org.factcast.itests.factus.filtering;
 
-import static java.util.UUID.*;
+import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.util.Maps;
-import org.factcast.core.event.EventConverter;
 import org.factcast.factus.Factus;
+import org.factcast.factus.event.EventConverter;
 import org.factcast.itests.TestFactusApplication;
-import org.factcast.itests.factus.event.UserCreated;
-import org.factcast.itests.factus.event.UserFired;
-import org.factcast.itests.factus.proj.LocalUserNamesFilterByAggregateId;
-import org.factcast.itests.factus.proj.LocalUserNamesFilterByMeta;
-import org.factcast.itests.factus.proj.LocalUserNamesFilterByMultipleAggregateIds;
-import org.factcast.itests.factus.proj.LocalUserNamesFilterByScript;
+import org.factcast.itests.factus.event.*;
+import org.factcast.itests.factus.proj.*;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

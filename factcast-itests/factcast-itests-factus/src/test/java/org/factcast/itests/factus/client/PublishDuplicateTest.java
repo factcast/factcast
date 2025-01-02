@@ -15,18 +15,15 @@
  */
 package org.factcast.itests.factus.client;
 
-import static java.util.UUID.*;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.awaitility.Awaitility.await;
 
-import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import nl.altindag.console.ConsoleCaptor;
 import org.factcast.core.DuplicateFactException;
-import org.factcast.core.event.EventConverter;
 import org.factcast.factus.Factus;
+import org.factcast.factus.event.EventConverter;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.config.RedissonProjectionConfiguration;
 import org.factcast.itests.factus.event.UserCreated;

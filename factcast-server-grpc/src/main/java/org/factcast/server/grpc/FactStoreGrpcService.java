@@ -16,63 +16,38 @@
 package org.factcast.server.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
+import com.google.common.cache.*;
 import com.google.common.hash.Hashing;
-import io.github.bucket4j.Bandwidth;
-import io.github.bucket4j.Bucket;
-import io.github.bucket4j.Bucket4j;
-import io.github.bucket4j.Refill;
-import io.grpc.Metadata;
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
-import io.grpc.stub.ServerCallStreamObserver;
-import io.grpc.stub.StreamObserver;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
+import io.github.bucket4j.*;
+import io.grpc.*;
+import io.grpc.stub.*;
+import io.micrometer.core.instrument.*;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
+import java.util.function.*;
 import java.util.stream.Collectors;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.store.FactStore;
-import org.factcast.core.store.StateToken;
-import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.store.*;
+import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FastForwardTarget;
-import org.factcast.core.util.FactCastJson;
-import org.factcast.core.util.MavenHelper;
-import org.factcast.grpc.api.Capabilities;
-import org.factcast.grpc.api.CompressionCodecs;
-import org.factcast.grpc.api.ConditionalPublishRequest;
-import org.factcast.grpc.api.StateForRequest;
-import org.factcast.grpc.api.conv.IdAndVersion;
-import org.factcast.grpc.api.conv.ProtoConverter;
-import org.factcast.grpc.api.conv.ProtocolVersion;
-import org.factcast.grpc.api.conv.ServerConfig;
+import org.factcast.core.util.*;
+import org.factcast.grpc.api.*;
+import org.factcast.grpc.api.conv.*;
 import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc.RemoteFactStoreImplBase;
-import org.factcast.server.grpc.metrics.NOPServerMetrics;
-import org.factcast.server.grpc.metrics.ServerMetrics;
+import org.factcast.server.grpc.metrics.*;
 import org.factcast.server.grpc.metrics.ServerMetrics.OP;
-import org.factcast.server.security.auth.FactCastAuthority;
-import org.factcast.server.security.auth.FactCastUser;
+import org.factcast.server.security.auth.*;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.*;
 
 /**
  * Service that provides access to an injected FactStore via GRPC.
@@ -155,7 +130,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
   @VisibleForTesting
   Fact tagFactSource(@NonNull Fact f, @NonNull String source) {
-    f.header().meta().put("source", source);
+    f.header().meta().set("source", source);
     return Fact.of(FactCastJson.writeValueAsString(f.header()), f.jsonPayload());
   }
 

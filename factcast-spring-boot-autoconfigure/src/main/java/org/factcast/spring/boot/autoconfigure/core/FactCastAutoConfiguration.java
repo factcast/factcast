@@ -18,7 +18,6 @@ package org.factcast.spring.boot.autoconfigure.core;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.NonNull;
 import org.factcast.core.FactCast;
-import org.factcast.core.event.EventConverter;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.event.*;
@@ -37,12 +36,6 @@ public class FactCastAutoConfiguration {
   @ConditionalOnMissingBean
   public FactCast factCast(@NonNull FactStore store) {
     return FactCast.from(store);
-  }
-
-  @Bean
-  @ConditionalOnMissingBean
-  public EventConverter eventConverter(@NonNull EventSerializer ser) {
-    return new EventConverter(ser);
   }
 
   @Bean

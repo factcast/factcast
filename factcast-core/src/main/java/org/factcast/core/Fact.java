@@ -16,17 +16,13 @@
 package org.factcast.core;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import javax.annotation.Nullable;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import org.factcast.core.spec.FactSpecCoordinates;
 import org.factcast.core.util.FactCastJson;
-import org.factcast.factus.event.DefaultEventSerializer;
+import org.factcast.factus.event.*;
 import org.factcast.factus.event.EventObject;
-import org.factcast.factus.event.EventSerializer;
 
 /**
  * Defines a fact to be either published or consumed. Consists of two JSON Strings: jsonHeader and
@@ -61,7 +57,7 @@ public interface Fact {
   /**
    * @param key
    * @return value as String or null
-   * @deprecated use header.meta(String) instead
+   * @deprecated use header.meta() instead
    */
   @Deprecated
   @Nullable
@@ -105,7 +101,7 @@ public interface Fact {
 
   // create a fact from the event, especially useful for testing purposes
 
-  static FactFromEventBuilder buildFrom(@NonNull EventObject event) {
+  static FactFromEventBuilder buildFrom(@NonNull org.factcast.factus.event.EventObject event) {
     FactFromEventBuilder b = new FactFromEventBuilder(event);
     // from event
     FactSpecCoordinates coords = FactSpecCoordinates.from(event.getClass());
@@ -174,7 +170,7 @@ public interface Fact {
     }
 
     public FactFromEventBuilder meta(@NonNull String key, String value) {
-      builder.meta(key, value);
+      builder.addMeta(key, value);
       return this;
     }
 
@@ -219,7 +215,7 @@ public interface Fact {
     }
 
     public Builder serial(long id) {
-      meta("_ser", String.valueOf(id));
+      header.meta().set("_ser", String.valueOf(id));
       return this;
     }
 
@@ -231,8 +227,23 @@ public interface Fact {
       return this;
     }
 
+    @Deprecated
+    /**
+     * uses setMeta for compatibility
+     *
+     * @deprecated use addMeta/setMeta instead
+     */
     public Builder meta(@NonNull String key, String value) {
-      header.meta().put(key, value);
+      return setMeta(key, value);
+    }
+
+    public Builder addMeta(@NonNull String key, String value) {
+      header.meta().add(key, value);
+      return this;
+    }
+
+    public Builder setMeta(@NonNull String key, String value) {
+      header.meta().set(key, value);
       return this;
     }
 
