@@ -18,7 +18,7 @@ package org.factcast.store.registry.transformation.cache;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CountDownLatch;
 import lombok.SneakyThrows;
 import org.factcast.core.Fact;
 import org.factcast.store.StoreConfigurationProperties;
@@ -32,30 +32,37 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlConfig;
+import org.springframework.test.context.jdbc.*;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.transaction.PlatformTransactionManager;
 
+@SuppressWarnings("FieldMayBeFinal")
 @ContextConfiguration(classes = {PgTestConfiguration.class})
 @ExtendWith(SpringExtension.class)
 @ExtendWith(MockitoExtension.class)
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 @IntegrationTest
 class PgTransformationCacheITest extends AbstractTransformationCacheTest {
+  @Autowired private PlatformTransactionManager platformTransactionManager;
   @Autowired private JdbcTemplate tpl;
   @Autowired private NamedParameterJdbcTemplate namedTpl;
   @Autowired private StoreConfigurationProperties storeConfigurationProperties;
 
-  private final int maxBufferSize = 10;
-  private final CountDownLatch wasflushed = new CountDownLatch(1);
-  private PgTransformationCache underTest;
+  int maxBufferSize = 10;
+  CountDownLatch wasFlushed = new CountDownLatch(1);
+  PgTransformationCache underTest;
 
   @Override
   protected TransformationCache createUUT() {
     this.underTest =
         Mockito.spy(
             new PgTransformationCache(
-                tpl, namedTpl, registryMetrics, storeConfigurationProperties, maxBufferSize));
+                platformTransactionManager,
+                tpl,
+                namedTpl,
+                registryMetrics,
+                storeConfigurationProperties,
+                maxBufferSize));
     return underTest;
   }
 
@@ -79,7 +86,7 @@ class PgTransformationCacheITest extends AbstractTransformationCacheTest {
     Mockito.doAnswer(
             i -> {
               i.callRealMethod();
-              wasflushed.countDown();
+              wasFlushed.countDown();
               return null;
             })
         .when(underTest)
@@ -93,7 +100,7 @@ class PgTransformationCacheITest extends AbstractTransformationCacheTest {
       uut.find(TransformationCache.Key.of(fact.id(), fact.version(), chainId));
     }
     // flush is async
-    wasflushed.await();
+    wasFlushed.await();
 
     // either empty, or just registered accesses
     assertThat(underTest.buffer().clear().values()).noneMatch(Objects::nonNull);
