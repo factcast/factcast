@@ -20,9 +20,12 @@ import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertTha
 import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
+
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Collection;
+
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -34,11 +37,12 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 @SpringBootTest(
     classes = ExampleUiServer.class,
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Tag("uitest")
+@Tag("uitest" )
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 @Slf4j
 public abstract class AbstractBrowserTest {
-  @LocalServerPort protected int port;
+  @LocalServerPort
+  protected int port;
 
   private static BrowserType.LaunchOptions options;
   private static Playwright playwright = null;
@@ -55,7 +59,7 @@ public abstract class AbstractBrowserTest {
 
     if (isRecordPropertySet() || isWatchPropertySet()) {
       long millis = getSlowMotionSpeed().toMillis();
-      log.debug("Using " + millis + "ms delay between UI interactions");
+      log.debug("Using " + millis + "ms delay between UI interactions" );
       options.setSlowMo(millis);
     }
 
@@ -63,18 +67,18 @@ public abstract class AbstractBrowserTest {
   }
 
   private static Duration getSlowMotionSpeed() {
-    var watch = System.getProperty("ui.watch");
+    var watch = System.getProperty("ui.watch" );
     if (watch == null || watch.isBlank() || !StringUtils.isNumeric(watch))
       return Duration.ofMillis(500);
     else return Duration.ofMillis(Long.parseLong(watch));
   }
 
   private static boolean isRecordPropertySet() {
-    return System.getProperty("ui.record") != null;
+    return System.getProperty("ui.record" ) != null;
   }
 
   private static boolean isWatchPropertySet() {
-    return System.getProperty("ui.watch") != null;
+    return System.getProperty("ui.watch" ) != null;
   }
 
   @AfterAll
@@ -89,9 +93,9 @@ public abstract class AbstractBrowserTest {
     if (isRecordPropertySet()) {
       String testPath =
           "target/ui-recording/"
-              + info.getTestClass().map(this::retrieveClassName).orElse("Unknown")
+              + info.getTestClass().map(this::retrieveClassName).orElse("Unknown" )
               + "_"
-              + info.getTestMethod().map(Method::getName).orElse("unknown");
+              + info.getTestMethod().map(Method::getName).orElse("unknown" );
       log.debug("Recording into " + testPath);
       contextOptions.setRecordVideoDir(Path.of(testPath));
     }
@@ -102,7 +106,7 @@ public abstract class AbstractBrowserTest {
 
   private String retrieveClassName(Class<?> aClass) {
     // we cannot use simpleName here due to nesting
-    return aClass.getCanonicalName().replace(aClass.getPackageName() + ".", "");
+    return aClass.getCanonicalName().replace(aClass.getPackageName() + ".", "" );
   }
 
   @AfterEach
@@ -117,14 +121,14 @@ public abstract class AbstractBrowserTest {
     page.navigate(url);
     waitForLoadState();
 
-    assertThat(page.locator("h2")).hasText("Log in");
+    assertThat(page.locator("h2" )).hasText("Log in" );
 
-    page.getByLabel("Username").fill("admin");
-    page.getByLabel("Password").first().fill("security_disabled");
+    page.getByLabel("Username" ).fill("admin" );
+    page.getByLabel("Password" ).first().fill("security_disabled" );
 
-    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Log in")).click();
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Log in" )).click();
 
-    page.waitForURL(url + "?continue");
+    page.waitForURL(url + "?continue" );
     waitForLoadState();
   }
 
@@ -133,12 +137,11 @@ public abstract class AbstractBrowserTest {
   }
 
   protected void query() {
-    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Query")).click();
-    waitForLoadState();
+    clickButton("Query" );
   }
 
-  protected void download() {
-    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Export JSON")).click();
+  protected void clickButton(String buttonName) {
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(buttonName)).click();
     waitForLoadState();
   }
 
@@ -146,5 +149,60 @@ public abstract class AbstractBrowserTest {
     page.waitForLoadState(LoadState.LOAD);
     page.waitForLoadState(LoadState.DOMCONTENTLOADED);
     page.waitForLoadState(LoadState.NETWORKIDLE);
+  }
+
+  protected void selectNamespace(@NonNull String ns) {
+    selectNamespace(ns, 0);
+  }
+
+  protected void selectNamespace(@NonNull String ns, int index) {
+    page.getByLabel("Namespace" ).nth(index).click();
+
+    final var attr =
+        page.locator("#namespace-selector" )
+            .nth(index)
+            .locator("input" )
+            .getAttribute("aria-controls" );
+
+    final var options = page.locator("#" + attr);
+    options.waitFor();
+    options.getByRole(AriaRole.OPTION, new Locator.GetByRoleOptions().setName(ns)).click();
+  }
+
+  protected void fromScratch() {
+    openSerialSelector()
+        .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("From scratch" ))
+        .click();
+  }
+
+  protected void fromLatest() {
+    openSerialSelector()
+        .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Latest serial" ))
+        .click();
+  }
+
+  protected Locator openSerialSelector() {
+    page.locator("#starting-serial > input" ).click();
+    final var dialog = page.getByRole(AriaRole.DIALOG);
+    dialog.waitFor();
+    return dialog;
+  }
+
+  protected void selectTypes(@NonNull Collection<String> types) {
+    selectTypes(types, 0);
+  }
+
+  protected void selectTypes(@NonNull Collection<String> types, int index) {
+    page.getByLabel("Types" ).nth(index).click();
+
+    final var input = page.locator("#types-selector" ).nth(index).locator("input" );
+    final var attr = input.getAttribute("aria-controls" );
+    final var options = page.locator("#" + attr);
+    options.waitFor();
+
+    types.forEach(
+        t -> options.getByRole(AriaRole.OPTION, new Locator.GetByRoleOptions().setName(t)).click());
+
+    input.press("Escape" );
   }
 }

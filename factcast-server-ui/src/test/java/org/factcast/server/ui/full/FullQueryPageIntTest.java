@@ -23,7 +23,6 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import lombok.NonNull;
@@ -288,7 +287,7 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
 
       query();
 
-      Download download = page.waitForDownload(FullQueryPageIntTest.this::download);
+      Download download = page.waitForDownload(FullQueryPageIntTest.this::downloadExport);
 
       final var mapper = new ObjectMapper();
       final var downloadedJson = mapper.readTree(download.createReadStream());
@@ -317,18 +316,6 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
     dialog.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Close")).click();
   }
 
-  private void fromScratch() {
-    openSerialSelector()
-        .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("From scratch"))
-        .click();
-  }
-
-  private void fromLatest() {
-    openSerialSelector()
-        .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Latest serial"))
-        .click();
-  }
-
   private void setAggId(@NonNull UUID aggId) {
     setAggId(aggId, 0);
   }
@@ -337,46 +324,7 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
     page.getByLabel("Aggregate-ID").nth(index).fill(aggId.toString());
   }
 
-  protected void selectNamespace(@NonNull String ns) {
-    selectNamespace(ns, 0);
-  }
-
-  protected void selectNamespace(@NonNull String ns, int index) {
-    page.getByLabel("Namespace").nth(index).click();
-
-    final var attr =
-        page.locator("#namespace-selector")
-            .nth(index)
-            .locator("input")
-            .getAttribute("aria-controls");
-
-    final var options = page.locator("#" + attr);
-    options.waitFor();
-    options.getByRole(AriaRole.OPTION, new Locator.GetByRoleOptions().setName(ns)).click();
-  }
-
-  protected void selectTypes(@NonNull Collection<String> types) {
-    selectTypes(types, 0);
-  }
-
-  protected void selectTypes(@NonNull Collection<String> types, int index) {
-    page.getByLabel("Types").nth(index).click();
-
-    final var input = page.locator("#types-selector").nth(index).locator("input");
-    final var attr = input.getAttribute("aria-controls");
-    final var options = page.locator("#" + attr);
-    options.waitFor();
-
-    types.forEach(
-        t -> options.getByRole(AriaRole.OPTION, new Locator.GetByRoleOptions().setName(t)).click());
-
-    input.blur();
-  }
-
-  protected Locator openSerialSelector() {
-    page.locator("#starting-serial > input").click();
-    final var dialog = page.getByRole(AriaRole.DIALOG);
-    dialog.waitFor();
-    return dialog;
+  protected void downloadExport() {
+    clickButton("Export JSON");
   }
 }

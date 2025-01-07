@@ -16,6 +16,7 @@
 package org.factcast.server.ui.adapter;
 
 import com.vaadin.flow.server.*;
+
 import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -26,8 +27,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
- * Provides an endpoint for downloading local files. Files must be stored in a directory named after the user within the provided persistence directory path. *
- * */
+ * Provides an endpoint for downloading local files. Files must be stored in a directory named after
+ * the user within the provided persistence directory path.
+ */
 @RequiredArgsConstructor
 @Slf4j
 public class FilesystemServiceInitListener implements VaadinServiceInitListener {
@@ -38,22 +40,24 @@ public class FilesystemServiceInitListener implements VaadinServiceInitListener 
     log.info("Registering file download handler for {}", persistenceDir);
     event.addRequestHandler(
         (VaadinSession session, VaadinRequest request, VaadinResponse response) -> {
-          if (request.getPathInfo().startsWith("/files/")) {
+          if (request.getPathInfo().startsWith("/files/" )) {
             final String requestedFile = request.getPathInfo().substring("/files/".length());
             final String userName =
                 SecurityContextHolder.getContext().getAuthentication().getName();
             final var filePath = Paths.get(persistenceDir, userName, requestedFile);
 
             if (Files.exists(filePath)) {
-              response.setContentType("application/octet-stream");
+              response.setContentType("application/json" );
               response.setHeader(
-                  "Content-Disposition", "attachment; filename=\"" + filePath.getFileName() + "\"");
+                  "Content-Disposition", "attachment; filename=\"" + filePath.getFileName() + "\"" );
 
               try (FileInputStream fileInputStream = new FileInputStream(filePath.toFile());
-                  OutputStream outputStream = response.getOutputStream()) {
+                   OutputStream outputStream = response.getOutputStream()) {
                 fileInputStream.transferTo(outputStream);
               }
               return true; // Indicate that the request has been handled
+            } else {
+              response.sendError(404, "Report not found" );
             }
           }
           return false; // Pass to the next handler

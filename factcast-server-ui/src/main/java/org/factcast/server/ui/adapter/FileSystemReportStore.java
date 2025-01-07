@@ -15,13 +15,12 @@
  */
 package org.factcast.server.ui.adapter;
 
-import static java.io.File.separator;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.server.VaadinRequest;
 import com.vaadin.flow.server.VaadinService;
 import com.vaadin.flow.server.VaadinServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
@@ -31,7 +30,9 @@ import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.server.ui.port.ReportStore;
@@ -39,13 +40,14 @@ import org.factcast.server.ui.report.Report;
 import org.factcast.server.ui.report.ReportEntry;
 
 @Slf4j
+@RequiredArgsConstructor
 public class FileSystemReportStore implements ReportStore {
 
-  public static final String PERSISTENCE_DIR = "factcast-ui" + separator + "reports";
+  public final String persistenceDir;
 
   @Override
   public void save(@NonNull String userName, @NonNull Report report) {
-    final var reportFilePath = Paths.get(PERSISTENCE_DIR, userName, report.name());
+    final var reportFilePath = Paths.get(persistenceDir, userName, report.name());
     log.info("Saving report to {}", reportFilePath);
 
     if (!Files.exists(reportFilePath)) {
@@ -77,7 +79,7 @@ public class FileSystemReportStore implements ReportStore {
 
   @Override
   public List<ReportEntry> listAllForUser(@NonNull String userName) {
-    final var reportDir = Paths.get(PERSISTENCE_DIR, userName);
+    final var reportDir = Paths.get(persistenceDir, userName);
     if (!Files.exists(reportDir)) {
       return List.of();
     }
@@ -93,7 +95,7 @@ public class FileSystemReportStore implements ReportStore {
     }
   }
 
-  static Date getLastModified(Path path) {
+  private static @NonNull Date getLastModified(@NonNull Path path) {
     try {
       return Date.from(Files.getLastModifiedTime(path).toInstant());
     } catch (IOException e) {
@@ -104,7 +106,7 @@ public class FileSystemReportStore implements ReportStore {
 
   @Override
   public void delete(@NonNull String userName, @NonNull String reportName) {
-    final var reportFilePath = Paths.get(PERSISTENCE_DIR, userName, reportName);
+    final var reportFilePath = Paths.get(persistenceDir, userName, reportName);
     log.info("Deleting report: {}", reportFilePath);
     if (Files.exists(reportFilePath)) {
       try {
@@ -119,7 +121,7 @@ public class FileSystemReportStore implements ReportStore {
     }
   }
 
-  public static @NonNull String getApplicationBaseUrl() {
+  private static @NonNull String getApplicationBaseUrl() {
     VaadinRequest vaadinRequest = VaadinService.getCurrentRequest();
     HttpServletRequest httpServletRequest =
         ((VaadinServletRequest) vaadinRequest).getHttpServletRequest();

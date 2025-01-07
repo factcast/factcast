@@ -15,6 +15,7 @@
  */
 package org.factcast.server.ui.report;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.vaadin.componentfactory.Popup;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.accordion.Accordion;
@@ -76,8 +77,8 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
   // fields
   private final DatePicker since = new DatePicker("First Serial of Day");
   private final BigDecimalField from = new BigDecimalField("Starting Serial");
-  private final TextField fileNameField = new TextField("File Name");
   private final Popup serialHelperOverlay = new Popup();
+  private final TextField fileNameField = new TextField("File Name");
   private final Button queryBtn = new Button("Generate");
   private String fileName = "events.json";
   private String reportDownloadName;
@@ -121,6 +122,7 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
 
   private Grid<ReportEntry> getReportGrid() {
     final var grid = new Grid<>(ReportEntry.class, false);
+    grid.setId("report-table");
     grid.setSelectionMode(Grid.SelectionMode.SINGLE);
     grid.addColumn(ReportEntry::name).setHeader("Filename");
     grid.addColumn(ReportEntry::lastChanged).setHeader("Last Modified");
@@ -259,16 +261,18 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
       queryBtn.setEnabled(false);
       binder.writeBean(formBean);
       log.info("{} runs query for {}", userName, formBean);
-      // For now this will block the UI in case of long-running queries. Will be refactored in the future
+      // For now this will block the UI in case of long-running queries. Will be refactored in the
+      // future
       // once the FactRepository is adapted.
       List<Fact> dataFromStore = repo.fetchChunk(formBean);
       log.info("Found {} entries", dataFromStore.size());
       if (!dataFromStore.isEmpty()) {
 
-        final var processedFacts = jsonViewPluginService.process(dataFromStore);
+        List<ObjectNode> processedFacts =
+            dataFromStore.stream().map(e -> jsonViewPluginService.process(e).fact()).toList();
 
         try {
-          reportStore.save(userName, new Report(fileName, processedFacts, formBean.toString()));
+          reportStore.save(userName, new Report(fileName, processedFacts, formBean));
           reportProvider.refreshAll();
         } catch (IllegalArgumentException e) {
           displayWarning(e.getMessage());

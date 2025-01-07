@@ -15,17 +15,13 @@
  */
 package org.factcast.server.ui.report;
 
-import java.io.Serial;
-import java.io.Serializable;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.List;
 import lombok.NonNull;
-import org.factcast.server.ui.plugins.JsonViewEntries;
 
-public record Report(@NonNull String name, @NonNull String json, @NonNull String query)
-    implements Serializable {
-
-  @Serial private static final long serialVersionUID = 1L;
-
-  public Report(@NonNull String name, @NonNull JsonViewEntries entries, @NonNull String query) {
-    this(name, entries.json(), query);
-  }
-}
+public record Report(
+    @NonNull String name,
+    // Not the nicest approach but changing this to "Fact" will require more effort in terms of
+    // de/serialization and hence is postponed to refactoring the JsonViewPluginService
+    @NonNull List<ObjectNode> events,
+    @NonNull ReportFilterBean query) {}

@@ -23,13 +23,11 @@ import java.time.Duration;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CompletionException;
-
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.server.ui.port.ReportStore;
 import org.factcast.server.ui.report.Report;
-import org.factcast.server.ui.report.ReportDownload;
 import org.factcast.server.ui.report.ReportEntry;
 import org.springframework.beans.factory.annotation.Value;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
@@ -61,7 +59,6 @@ public class S3ReportStore implements ReportStore {
           "Report was not generated as another report with this name already exists.");
     }
     try {
-
       UploadRequest uploadRequest =
           UploadRequest.builder()
               .putObjectRequest(
@@ -124,18 +121,20 @@ public class S3ReportStore implements ReportStore {
     String reportKey = getReportKey(userName, reportName);
     checkObjectExists(reportKey);
 
-    s3Client.deleteObject(DeleteObjectRequest.builder().bucket(bucketName).key(reportKey).build()).join();
+    s3Client
+        .deleteObject(DeleteObjectRequest.builder().bucket(bucketName).key(reportKey).build())
+        .join();
   }
 
   private void checkObjectExists(String key) {
-      try {
-        s3Client.headObject(HeadObjectRequest.builder().bucket(bucketName).key(key).build()).join();
-      } catch (CompletionException e) {
-        if (e.getCause() instanceof NoSuchKeyException) {
-          throw new ReportDoesNotExistException(key);
-        }
-        throw e;
+    try {
+      s3Client.headObject(HeadObjectRequest.builder().bucket(bucketName).key(key).build()).join();
+    } catch (CompletionException e) {
+      if (e.getCause() instanceof NoSuchKeyException) {
+        throw new ReportDoesNotExistException(key);
       }
+      throw e;
+    }
   }
 
   private boolean doesObjectExist(String key) {

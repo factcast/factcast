@@ -15,8 +15,10 @@
  */
 package org.factcast.server.ui.report;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Lists;
 import jakarta.validation.Valid;
 import java.io.Serializable;
@@ -24,6 +26,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.Data;
+import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.factcast.server.ui.views.filter.FactCriteria;
 import org.factcast.server.ui.views.filter.FilterBean;
@@ -40,11 +43,21 @@ public class ReportFilterBean implements FilterBean, Serializable {
   // currently not possible to filter on more than one aggId via api
   private BigDecimal from = null;
 
-  @Valid private List<FactCriteria> criteria = Lists.newArrayList(new FactCriteria());
+  @Valid @Getter private List<FactCriteria> criteria = Lists.newArrayList(new FactCriteria());
 
-  ReportFilterBean(long startingSerial) {
+  public ReportFilterBean(long startingSerial) {
     defaultFrom = startingSerial;
     from = BigDecimal.valueOf(startingSerial);
+  }
+
+  @JsonCreator
+  public ReportFilterBean(
+      @JsonProperty("defaultFrom") long defaultFrom,
+      @JsonProperty("from") BigDecimal from,
+      @JsonProperty("criteria") List<FactCriteria> criteria) {
+    this.defaultFrom = defaultFrom;
+    this.from = from;
+    this.criteria = criteria;
   }
 
   @Override

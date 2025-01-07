@@ -23,16 +23,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.server.ui.port.ReportStore;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.net.URL;
-
 @Slf4j
 public class ReportDownloadSection extends HorizontalLayout {
 
   private final ReportStore reportStore;
   private final DataProvider<ReportEntry, Void> dataProvider;
 
-  private final Button downloadBtn = new Button("Download");
-  private final Button deleteBtn = new Button("Delete");
+  private final Button downloadBtn = new Button("Download" );
+  private final Button deleteBtn = new Button("Delete" );
   private final String userName = SecurityContextHolder.getContext().getAuthentication().getName();
   private String fileName;
 
@@ -44,34 +42,31 @@ public class ReportDownloadSection extends HorizontalLayout {
     this.downloadBtn.setEnabled(false);
     this.downloadBtn.setDisableOnClick(true);
     this.downloadBtn.addClickListener(this::downloadClickListener);
-    //    this.downloadBtn.addDownloadStartsListener(this::onDownloadStarted);
 
     this.deleteBtn.setEnabled(false);
     this.deleteBtn.addClickListener(this::deletionClickListener);
 
     add(downloadBtn, deleteBtn);
-    this.getStyle().set("flex-wrap", "wrap");
-  }
-
-  private String getFileName() {
-    return fileName;
+    this.getStyle().set("flex-wrap", "wrap" );
   }
 
   public void refreshForFile(String fileName) {
-    log.debug("Refreshing Download Area");
+    log.debug("Refreshing Download Area" );
     this.fileName = fileName;
     downloadBtn.setEnabled(true);
     deleteBtn.setEnabled(true);
   }
 
-  /** Opens the download link in a new tab */
+  /**
+   * Opens the download link in a new tab
+   */
   private void downloadClickListener(ClickEvent<Button> buttonClickEvent) {
     Button button = buttonClickEvent.getSource();
-    button.setText("Preparing download...");
+    button.setText("Preparing download..." );
     final var reportDownloadUrl = reportStore.getReportDownload(this.userName, this.fileName);
     getUI().orElseThrow().getPage().open(reportDownloadUrl.toString());
     button.setEnabled(false);
-    button.setText("Download");
+    button.setText("Download" );
   }
 
   private void deletionClickListener(ClickEvent<Button> buttonClickEvent) {

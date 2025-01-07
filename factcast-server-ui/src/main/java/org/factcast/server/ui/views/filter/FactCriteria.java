@@ -22,12 +22,16 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import org.factcast.core.spec.FactSpec;
 
 @Data
 @Accessors(fluent = false, chain = false)
+@AllArgsConstructor
+@NoArgsConstructor
 public class FactCriteria implements Serializable {
 
   @NotNull private String ns;

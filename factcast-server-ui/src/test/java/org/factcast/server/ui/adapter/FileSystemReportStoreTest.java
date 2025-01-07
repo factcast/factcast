@@ -15,31 +15,42 @@
  */
 package org.factcast.server.ui.adapter;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Stream;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.server.ui.report.Report;
 import org.factcast.server.ui.report.ReportEntry;
+import org.factcast.server.ui.report.ReportFilterBean;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 @Slf4j
 class FileSystemReportStoreTest {
-  private FileSystemReportStore uut = new FileSystemReportStore();
+  private final FileSystemReportStore uut = new FileSystemReportStore(PERSISTENCE_DIR);
+
+  private static final String PERSISTENCE_DIR = "factcast-ui/reports";
+  private static final String USER_NAME = "user";
 
   @AfterEach
   @SneakyThrows
   void setup() {
     log.info("Cleaning up.");
-    Path reportPath = Path.of(FileSystemReportStore.PERSISTENCE_DIR);
+    Path reportPath = Path.of(PERSISTENCE_DIR);
     if (Files.exists(reportPath)) {
       try (Stream<Path> paths = Files.walk(reportPath)) {
         paths.sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
@@ -49,32 +60,31 @@ class FileSystemReportStoreTest {
 
   @Test
   void save() {
-    uut.save("user", new Report("name.json", "events", "query"));
-    assertTrue(
-        Files.exists(new File(FileSystemReportStore.PERSISTENCE_DIR + "/user/name.json").toPath()));
+    uut.save(USER_NAME, getReport("name.json"));
+    assertTrue(Files.exists(new File(PERSISTENCE_DIR + "/user/name.json").toPath()));
   }
 
   @Nested
   class WhenListingReports {
     @Test
     void returnsEmptyListIfNoReportsExist() {
-      assertTrue(uut.listAllForUser("user").isEmpty());
+      assertTrue(uut.listAllForUser(USER_NAME).isEmpty());
     }
 
     @Test
     void returnsEmptyListIfNoReportsExistForUser() {
-      uut.save("user2", new Report("report3.json", "events", "query"));
+      uut.save("user2", getReport("name.json"));
 
-      assertTrue(uut.listAllForUser("user").isEmpty());
+      assertTrue(uut.listAllForUser(USER_NAME).isEmpty());
     }
 
     @Test
     void listsAllReports() {
-      uut.save("user", new Report("report1.json", "events", "query"));
-      uut.save("user", new Report("report2.json", "events", "query"));
-      uut.save("user2", new Report("report3.json", "events", "query"));
+      uut.save(USER_NAME, getReport("report1.json"));
+      uut.save(USER_NAME, getReport("report2.json"));
+      uut.save("user2", getReport("report3.json"));
 
-      final var actual = uut.listAllForUser("user");
+      final var actual = uut.listAllForUser(USER_NAME);
 
       assertThat(actual.size()).isEqualTo(2);
       assertThat(actual)
@@ -83,21 +93,39 @@ class FileSystemReportStoreTest {
     }
   }
 
-  //  @Nested
-  //  class WhenGettingReports {
-  //
-  //    @Test
-  //    @SneakyThrows
-  //    void happyPath() {
-  //      String reportName = "report1.json";
-  //      final var objectMapper = new ObjectMapper();
-  //      uut.save("user", new Report(reportName, "events", "query"));
-  //
-  //      final var reportStream = uut.getReportAsStream("user", reportName);
-  //      final var actual = reportStream.getInputStream().readAllBytes();
-  //
-  //      final var mappedReport = objectMapper.readValue(actual, Report.class);
-  //      assertThat(mappedReport.name()).isEqualTo(reportName);
-  //    }
-  //  }
+  @Nested
+  class WhenDeletingReports {
+
+    @Test
+    @SneakyThrows
+    void happyPath() {
+      final var reportName = "report.json";
+      final var filePath = Paths.get(PERSISTENCE_DIR, USER_NAME, reportName);
+      createFile(filePath);
+
+      assertThatCode(() -> uut.delete(USER_NAME, "report.json")).doesNotThrowAnyException();
+      assertThat(Files.exists(filePath)).isFalse();
+    }
+
+    @Test
+    @SneakyThrows
+    void throwsIfFileDoesNotExist() {
+      assertThatThrownBy(() -> uut.delete(USER_NAME, "report.json"))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("No report exists with name report.json for user user");
+    }
+
+    @SneakyThrows
+    private void createFile(Path path) {
+      Files.createDirectories(path.getParent());
+      Files.createFile(path);
+    }
+  }
+
+  private static @NotNull Report getReport(String fileName) {
+    final var om = new ObjectMapper();
+    ObjectNode event = om.getNodeFactory().objectNode();
+    event.put("foo", "bar");
+    return new Report(fileName, List.of(event), new ReportFilterBean(1));
+  }
 }

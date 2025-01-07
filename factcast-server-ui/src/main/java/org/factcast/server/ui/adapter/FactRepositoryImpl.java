@@ -16,12 +16,14 @@
 package org.factcast.server.ui.adapter;
 
 import io.micrometer.core.annotation.Timed;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -64,7 +66,7 @@ public class FactRepositoryImpl implements FactRepository {
   public List<String> namespaces(@Nullable String optionalInput) {
     Stream<String> ns = fs.enumerateNamespaces().stream();
     if (optionalInput != null) {
-      Pattern ptn = Pattern.compile(".*" + optionalInput + ".*");
+      Pattern ptn = Pattern.compile(".*" + optionalInput + ".*" );
       ns = ns.filter(s -> ptn.matcher(s).matches());
     }
     return ns.filter(securityService::canRead).sorted().toList();
@@ -78,7 +80,7 @@ public class FactRepositoryImpl implements FactRepository {
 
     Stream<String> type = fs.enumerateTypes(namespace).stream();
     if (optionalInput != null) {
-      Pattern ptn = Pattern.compile(".*" + optionalInput + ".*");
+      Pattern ptn = Pattern.compile(".*" + optionalInput + ".*" );
       type = type.filter(s -> ptn.matcher(s).matches());
     }
 
@@ -94,6 +96,8 @@ public class FactRepositoryImpl implements FactRepository {
   public Optional<UUID> findIdOfSerial(long longValue) {
     return fs.fetchBySerial(longValue).map(Fact::id);
   }
+
+  // TODO: add fetch chunk
 
   @SneakyThrows
   @Override
