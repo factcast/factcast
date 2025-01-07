@@ -38,24 +38,24 @@ public class FilesystemServiceInitListener implements VaadinServiceInitListener 
     log.info("Registering file download handler for {}", persistenceDir);
     event.addRequestHandler(
         (VaadinSession session, VaadinRequest request, VaadinResponse response) -> {
-          if (request.getPathInfo().startsWith("/files/" )) {
+          if (request.getPathInfo().startsWith("/files/")) {
             final String requestedFile = request.getPathInfo().substring("/files/".length());
             final String userName =
                 SecurityContextHolder.getContext().getAuthentication().getName();
             final var filePath = Paths.get(persistenceDir, userName, requestedFile);
 
             if (Files.exists(filePath)) {
-              response.setContentType("application/json" );
+              response.setContentType("application/json");
               response.setHeader(
-                  "Content-Disposition", "attachment; filename=\"" + filePath.getFileName() + "\"" );
+                  "Content-Disposition", "attachment; filename=\"" + filePath.getFileName() + "\"");
 
               try (FileInputStream fileInputStream = new FileInputStream(filePath.toFile());
-                   OutputStream outputStream = response.getOutputStream()) {
+                  OutputStream outputStream = response.getOutputStream()) {
                 fileInputStream.transferTo(outputStream);
               }
               return true; // Indicate that the request has been handled
             } else {
-              response.sendError(404, "Report not found" );
+              response.sendError(404, "Report not found");
             }
           }
           return false; // Pass to the next handler
