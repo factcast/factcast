@@ -16,12 +16,10 @@
 package org.factcast.server.ui.adapter;
 
 import com.vaadin.flow.server.*;
-
 import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
