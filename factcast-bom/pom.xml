@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.9.3-SNAPSHOT</version>
+    <version>0.9.4-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-bom</artifactId>
@@ -186,7 +186,7 @@
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>33.3.1-jre</version>
+        <version>33.4.0-jre</version>
       </dependency>
       <!-- will be deprecated -->
       <dependency>

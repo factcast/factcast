@@ -31,6 +31,7 @@ import javax.sql.DataSource;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.factus.projection.ScopedName;
 import org.factcast.factus.serializer.SnapshotSerializerId;
 import org.factcast.factus.snapshot.SnapshotCache;
 import org.factcast.factus.snapshot.SnapshotData;
@@ -142,7 +143,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
   public @NonNull Optional<SnapshotData> find(@NonNull SnapshotIdentifier id) {
     try (Connection connection = dataSource.getConnection();
         PreparedStatement statement = connection.prepareStatement(queryStatement)) {
-      statement.setString(1, id.projectionClass().getName());
+      statement.setString(1, createKeyFor(id));
       statement.setString(2, id.aggregateId() != null ? id.aggregateId().toString() : null);
       try (ResultSet resultSet = statement.executeQuery()) {
         if (resultSet.next()) {
@@ -163,11 +164,16 @@ public class JdbcSnapshotCache implements SnapshotCache {
   }
 
   @VisibleForTesting
+  String createKeyFor(SnapshotIdentifier id) {
+    return ScopedName.fromProjectionMetaData(id.projectionClass()).asString();
+  }
+
+  @VisibleForTesting
   protected void updateLastAccessedTime(@NonNull SnapshotIdentifier id) {
     try (Connection connection = dataSource.getConnection();
         PreparedStatement statement = connection.prepareStatement(updateLastAccessedStatement)) {
       statement.setTimestamp(1, Timestamp.valueOf(LocalDate.now().atStartOfDay()));
-      statement.setString(2, id.projectionClass().getName());
+      statement.setString(2, createKeyFor(id));
       statement.setString(3, id.aggregateId() != null ? id.aggregateId().toString() : null);
       statement.executeUpdate();
     } catch (Exception e) {
@@ -180,7 +186,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
   public void store(@NonNull SnapshotIdentifier id, @NonNull SnapshotData snapshot) {
     try (Connection connection = dataSource.getConnection();
         PreparedStatement statement = connection.prepareStatement(mergeStatement)) {
-      statement.setString(1, id.projectionClass().getName());
+      statement.setString(1, createKeyFor(id));
       statement.setString(2, id.aggregateId() != null ? id.aggregateId().toString() : null);
       statement.setString(3, snapshot.lastFactId().toString());
       statement.setBytes(4, snapshot.serializedProjection());
@@ -198,7 +204,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
   public void remove(@NonNull SnapshotIdentifier id) {
     try (Connection connection = dataSource.getConnection();
         PreparedStatement statement = connection.prepareStatement(deleteStatement)) {
-      statement.setString(1, id.projectionClass().getName());
+      statement.setString(1, createKeyFor(id));
       statement.setString(2, id.aggregateId() != null ? id.aggregateId().toString() : null);
       statement.executeUpdate();
     }

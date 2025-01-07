@@ -1,6 +1,6 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("io.github.typesafegithub:github-workflows-kt:3.0.1")
+@file:DependsOn("io.github.typesafegithub:github-workflows-kt:3.0.2")
 
 @file:Repository("https://repo.maven.apache.org/maven2/")
 @file:Repository("https://bindings.krzeminski.it")
@@ -8,7 +8,6 @@
 @file:DependsOn("actions:checkout:v4")
 @file:DependsOn("actions:cache:v4")
 @file:DependsOn("actions:setup-java:v4")
-
 
 
 import io.github.typesafegithub.workflows.actions.actions.Cache
@@ -67,7 +66,7 @@ workflow(
 
         run(
             name = "Test - UI",
-            command = "cd factcast-server-ui ; ../mvnw -B -Dui failsafe:integration-test ",
+            command = "cd factcast-server-ui ; ../mvnw -B -Dui failsafe:integration-test failsafe:verify",
         )
     }
 }

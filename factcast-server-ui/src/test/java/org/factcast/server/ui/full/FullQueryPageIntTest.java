@@ -324,6 +324,31 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
     page.getByLabel("Aggregate-ID").nth(index).fill(aggId.toString());
   }
 
+  protected void selectNamespace(@NonNull String ns) {
+    selectNamespace(ns, 0);
+  }
+
+  protected void selectNamespace(@NonNull String ns, int index) {
+    page.getByLabel("Namespace").nth(index).click();
+
+    final var attr =
+        page.locator("#namespace-selector")
+            .nth(index)
+            .locator("input")
+            .getAttribute("aria-controls");
+
+    final var options = page.locator("#" + attr);
+    options.waitFor();
+    options.getByRole(AriaRole.OPTION, new Locator.GetByRoleOptions().setName(ns)).click();
+  }
+
+  protected Locator openSerialSelector() {
+    page.locator("#starting-serial > input").click();
+    final var dialog = page.getByRole(AriaRole.DIALOG);
+    dialog.waitFor();
+    return dialog;
+  }
+
   protected void downloadExport() {
     clickButton("Export JSON");
   }
