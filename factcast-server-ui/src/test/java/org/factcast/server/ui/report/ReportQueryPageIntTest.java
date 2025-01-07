@@ -20,10 +20,8 @@ import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertTha
 import com.microsoft.playwright.Download;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
-
 import java.util.List;
 import java.util.UUID;
-
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
@@ -38,20 +36,20 @@ class ReportQueryPageIntTest extends AbstractBrowserTest {
   @RetryingTest(maxAttempts = 3, minSuccess = 1)
   @SneakyThrows
   void happyPath() {
-    loginFor("/ui/report" );
-    assertThat(page.getByLabel("Types" )).isDisabled();
-    selectNamespace("users" );
+    loginFor("/ui/report");
+    assertThat(page.getByLabel("Types")).isDisabled();
+    selectNamespace("users");
 
     // types input now enabled
-    assertThat(page.getByLabel("Types" )).isEnabled();
-    selectTypes(List.of("UserCreated" ));
+    assertThat(page.getByLabel("Types")).isEnabled();
+    selectTypes(List.of("UserCreated"));
     fromScratch();
 
     final var id = UUID.randomUUID();
     setReportName(id.toString());
     generate();
 
-    page.getByText(id + ".json" ).click();
+    page.getByText(id + ".json").click();
 
     Download download =
         page.waitForDownload(
@@ -59,23 +57,22 @@ class ReportQueryPageIntTest extends AbstractBrowserTest {
                 page.waitForPopup(
                     () -> {
                       page.getByRole(
-                              AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Download" ))
+                              AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Download"))
                           .click();
-                    })
-        );
+                    }));
 
     var om = new ObjectMapper();
     try (final var input = download.createReadStream()) {
       final JsonNode report = om.readTree(input.readAllBytes());
-      Assertions.assertThat(report.get("name" ).asText()).isEqualTo(id + ".json" );
-      Assertions.assertThat(report.get("events" ).get(0).get("header" ).get("type" ).asText())
-          .isEqualTo("UserCreated" );
-      Assertions.assertThat(report.get("events" ).get(0).get("payload" ).get("firstName" ).asText())
-          .isEqualTo("Werner" );
-      final var query = om.readValue(report.get("query" ).toString(), ReportFilterBean.class);
+      Assertions.assertThat(report.get("name").asText()).isEqualTo(id + ".json");
+      Assertions.assertThat(report.get("events").get(0).get("header").get("type").asText())
+          .isEqualTo("UserCreated");
+      Assertions.assertThat(report.get("events").get(0).get("payload").get("firstName").asText())
+          .isEqualTo("Werner");
+      final var query = om.readValue(report.get("query").toString(), ReportFilterBean.class);
       Assertions.assertThat(query.getDefaultFrom()).isEqualTo(2);
-      Assertions.assertThat(query.getCriteria().get(0).getNs()).isEqualTo("users" );
-      log.info(report.get("query" ).toString());
+      Assertions.assertThat(query.getCriteria().get(0).getNs()).isEqualTo("users");
+      log.info(report.get("query").toString());
       // TODO: assert query
     } catch (Exception e) {
       throw e;
@@ -83,10 +80,10 @@ class ReportQueryPageIntTest extends AbstractBrowserTest {
   }
 
   private void setReportName(String name) {
-    page.getByLabel("Report File Name" ).fill(name);
+    page.getByLabel("Report File Name").fill(name);
   }
 
   private void generate() {
-    clickButton("Generate" );
+    clickButton("Generate");
   }
 }
