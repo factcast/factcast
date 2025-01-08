@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2024 factcast.org
+ * Copyright © 2017-2025 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,36 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.views.filter;
+package org.factcast.server.ui.adapter;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import lombok.Getter;
 import lombok.NonNull;
-import org.factcast.core.spec.FactSpec;
+import org.factcast.core.Fact;
+import org.factcast.core.subscription.observer.FactObserver;
+import org.slf4j.LoggerFactory;
 
-public interface FilterBean {
+@Getter
+public abstract class AbstractListObserver implements FactObserver {
 
-  LocalDate getSince();
+  private final List<Fact> facts = new ArrayList<>();
 
-  void setSince(LocalDate since);
-
-  Integer getOffset();
-
-  void setOffset(Integer offset);
-
-  BigDecimal getFrom();
-
-  void setFrom(BigDecimal from);
-
-  List<FactCriteria> getCriteria();
-
-  @NonNull
-  default List<FactSpec> createFactSpecs() {
-    return getCriteria().stream().flatMap(FactCriteria::createFactSpecs).toList();
+  protected void handleError(@NonNull Throwable exception) {
+    LoggerFactory.getLogger(FactObserver.class).warn("Unhandled onError:", exception);
   }
-
-  void reset();
-
-  int getOffsetOrDefault();
 }

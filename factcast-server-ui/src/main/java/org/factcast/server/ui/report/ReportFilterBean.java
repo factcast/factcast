@@ -41,7 +41,7 @@ public class ReportFilterBean implements FilterBean, Serializable {
   private LocalDate since = LocalDate.now();
 
   // currently not possible to filter on more than one aggId via api
-  private BigDecimal from = null;
+  private BigDecimal from;
 
   @Valid @Getter private List<FactCriteria> criteria = Lists.newArrayList(new FactCriteria());
 
@@ -69,15 +69,6 @@ public class ReportFilterBean implements FilterBean, Serializable {
     from = BigDecimal.valueOf(defaultFrom);
   }
 
-  // TODO find out how to disable limit
-  @Override
-  public Integer getLimit() {
-    return 10;
-  }
-
-  @Override
-  public void setLimit(Integer limit) {}
-
   @Override
   public Integer getOffset() {
     return 0;
@@ -90,12 +81,5 @@ public class ReportFilterBean implements FilterBean, Serializable {
   @JsonIgnore
   public int getOffsetOrDefault() {
     return 0;
-  }
-
-  // TODO find out how to disable limit
-  @Override
-  @JsonIgnore
-  public int getLimitOrDefault() {
-    return 10;
   }
 }

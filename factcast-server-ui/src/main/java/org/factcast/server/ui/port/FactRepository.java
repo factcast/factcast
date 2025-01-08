@@ -23,8 +23,9 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.factcast.server.ui.full.FullFilterBean;
 import org.factcast.server.ui.id.IdQueryBean;
-import org.factcast.server.ui.views.filter.FilterBean;
+import org.factcast.server.ui.report.ReportFilterBean;
 
 public interface FactRepository {
 
@@ -40,5 +41,7 @@ public interface FactRepository {
 
   Optional<UUID> findIdOfSerial(long longValue);
 
-  List<Fact> fetchChunk(FilterBean bean);
+  List<Fact> fetchChunk(FullFilterBean bean);
+
+  List<Fact> fetchChunk(ReportFilterBean bean);
 }

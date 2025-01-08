@@ -20,18 +20,16 @@ import java.util.List;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.observer.FactObserver;
-import org.slf4j.LoggerFactory;
 
 @Getter
-public class ListObserver implements FactObserver {
-  private int limit;
+public class ListObserver extends AbstractListObserver {
   private int offset;
+  private int limit;
   private final List<Fact> list = new ArrayList<>();
 
   public ListObserver(int limit, int offset) {
-    this.limit = limit;
     this.offset = offset;
+    this.limit = limit;
   }
 
   @Override
@@ -53,10 +51,6 @@ public class ListObserver implements FactObserver {
     if (!LimitReachedException.matches(exception)) {
       handleError(exception);
     }
-  }
-
-  protected void handleError(@NonNull Throwable exception) {
-    LoggerFactory.getLogger(FactObserver.class).warn("Unhandled onError:", exception);
   }
 
   boolean isComplete() {

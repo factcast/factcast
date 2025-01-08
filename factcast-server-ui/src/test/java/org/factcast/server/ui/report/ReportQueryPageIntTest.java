@@ -33,7 +33,7 @@ import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 @Slf4j
 class ReportQueryPageIntTest extends AbstractBrowserTest {
 
-  @RetryingTest(maxAttempts = 3, minSuccess = 1)
+  @RetryingTest(maxAttempts = 3)
   @SneakyThrows
   void happyPath() {
     loginFor("/ui/report");
@@ -55,11 +55,10 @@ class ReportQueryPageIntTest extends AbstractBrowserTest {
         page.waitForDownload(
             () ->
                 page.waitForPopup(
-                    () -> {
-                      page.getByRole(
-                              AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Download"))
-                          .click();
-                    }));
+                    () ->
+                        page.getByRole(
+                                AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Download"))
+                            .click()));
 
     var om = new ObjectMapper();
     try (final var input = download.createReadStream()) {
@@ -78,6 +77,8 @@ class ReportQueryPageIntTest extends AbstractBrowserTest {
       throw e;
     }
   }
+
+  // TODO Add test for deletion
 
   private void setReportName(String name) {
     page.getByLabel("Report File Name").fill(name);

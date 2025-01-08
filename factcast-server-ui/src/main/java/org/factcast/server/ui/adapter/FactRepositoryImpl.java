@@ -33,9 +33,11 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.util.ExceptionHelper;
+import org.factcast.server.ui.full.FullFilterBean;
 import org.factcast.server.ui.id.IdQueryBean;
 import org.factcast.server.ui.metrics.UiMetrics;
 import org.factcast.server.ui.port.FactRepository;
+import org.factcast.server.ui.report.ReportFilterBean;
 import org.factcast.server.ui.security.SecurityService;
 import org.factcast.server.ui.views.filter.FilterBean;
 
@@ -46,8 +48,6 @@ public class FactRepositoryImpl implements FactRepository {
   private final FactStore fs;
 
   private final SecurityService securityService;
-
-  public static final int WAIT_TIME = 20000;
 
   @Override
   public Optional<Fact> findBy(@NonNull IdQueryBean bean) {
@@ -95,18 +95,27 @@ public class FactRepositoryImpl implements FactRepository {
     return fs.fetchBySerial(longValue).map(Fact::id);
   }
 
-  // TODO: add fetch chunk
+  @SneakyThrows
+  @Override
+  public List<Fact> fetchChunk(FullFilterBean bean) {
+    final var observer = new ListObserver(bean.getLimitOrDefault(), bean.getOffsetOrDefault());
+    return fetchChunk(bean, observer);
+  }
 
   @SneakyThrows
   @Override
-  public List<Fact> fetchChunk(FilterBean bean) {
+  public List<Fact> fetchChunk(ReportFilterBean bean) {
+    final var observer = new UnlimitedListObserver(bean.getOffsetOrDefault());
+    return fetchChunk(bean, observer);
+  }
 
+  @SneakyThrows
+  private List<Fact> fetchChunk(FilterBean bean, AbstractListObserver obs) {
     Set<FactSpec> specs = securityService.filterReadable(bean.createFactSpecs());
 
-    ListObserver obs = new ListObserver(bean.getLimitOrDefault(), bean.getOffsetOrDefault());
     SpecBuilder sr = SubscriptionRequest.catchup(specs);
     long ser = Optional.ofNullable(bean.getFrom()).orElse(BigDecimal.ZERO).longValue();
-    SubscriptionRequest request = null;
+    SubscriptionRequest request;
 
     if (ser > 0) {
       request = sr.fromNullable(findIdOfSerial(ser).orElse(null));
@@ -129,7 +138,7 @@ public class FactRepositoryImpl implements FactRepository {
         throw ExceptionHelper.toRuntime(e);
       }
     }
-    return obs.list();
+    return obs.facts();
   }
 
   private void setDebugInfo(SubscriptionRequestTO req) {

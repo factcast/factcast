@@ -129,7 +129,7 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
     grid.addSelectionListener(
         selection -> {
           if (!selection.getAllSelectedItems().isEmpty()) {
-            this.reportDownloadName = selection.getFirstSelectedItem().get().name();
+            this.reportDownloadName = selection.getFirstSelectedItem().orElseThrow().name();
             downloadSection.refreshForFile(reportDownloadName);
           }
         });
@@ -262,8 +262,7 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
       binder.writeBean(formBean);
       log.info("{} runs query for {}", userName, formBean);
       // For now this will block the UI in case of long-running queries. Will be refactored in the
-      // future
-      // once the FactRepository is adapted.
+      // future once the FactRepository is adapted.
       List<Fact> dataFromStore = repo.fetchChunk(formBean);
       log.info("Found {} entries", dataFromStore.size());
       if (!dataFromStore.isEmpty()) {
