@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import lombok.SneakyThrows;
 import org.factcast.server.ui.report.Report;
+import org.factcast.server.ui.report.ReportFilterBean;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -73,9 +75,7 @@ class S3ReportStoreTest {
     @SneakyThrows
     void happyPath() {
       // given
-      ObjectNode event = om.getNodeFactory().objectNode();
-      event.put("foo", "bar");
-      final var report = new Report("name.events", List.of(event), "query");
+      final var report = getReport("name.events");
       final var uploadArgumentCaptor = ArgumentCaptor.forClass(UploadRequest.class);
 
       final var fileUpload = mock(Upload.class);
@@ -101,9 +101,7 @@ class S3ReportStoreTest {
     @SneakyThrows
     void reportNameAlreadyExists() {
       // given
-      ObjectNode event = om.getNodeFactory().objectNode();
-      event.put("foo", "bar");
-      final var report = new Report("name.events", List.of(event), "query");
+      final var report = getReport("name.events");
       objectExists();
 
       // expect
@@ -254,6 +252,13 @@ class S3ReportStoreTest {
       assertThat(actualRequest.bucket()).isEqualTo("factcast-reports");
       assertThat(actualRequest.key()).isEqualTo("user/report");
     }
+  }
+
+  private static @NotNull Report getReport(String fileName) {
+    final var om = new ObjectMapper();
+    ObjectNode event = om.getNodeFactory().objectNode();
+    event.put("foo", "bar");
+    return new Report(fileName, List.of(event), new ReportFilterBean(1));
   }
 
   private void objectExists() {
