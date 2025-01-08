@@ -36,9 +36,8 @@ class ReportTest {
   void serialization() {
 
     final var om = new ObjectMapper();
-
-    ObjectNode event = om.getNodeFactory().objectNode();
     om.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
+    ObjectNode event = om.getNodeFactory().objectNode();
     event.put("foo", "bar");
 
     final var criteria = new FactCriteria();

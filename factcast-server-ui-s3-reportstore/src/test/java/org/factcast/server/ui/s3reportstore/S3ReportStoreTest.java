@@ -15,11 +15,11 @@
  */
 package org.factcast.server.ui.s3reportstore;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.net.URL;
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -38,8 +38,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
-import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -61,6 +59,8 @@ class S3ReportStoreTest {
 
   private static final String BUCKET_NAME = "factcast-reports";
 
+  private static final ObjectMapper om = new ObjectMapper();
+
   @BeforeEach
   void setup() {
     ReflectionTestUtils.setField(uut, "bucketName", "factcast-reports");
@@ -73,25 +73,44 @@ class S3ReportStoreTest {
     @SneakyThrows
     void happyPath() {
       // given
-      final var report = new Report("name.json", "events", "query");
-      final var objectMapper = new ObjectMapper();
-      final var uploadRequest =
-          UploadRequest.builder()
-              .putObjectRequest(
-                  PutObjectRequest.builder().bucket(BUCKET_NAME).key("user/name.json").build())
-              .requestBody(AsyncRequestBody.fromBytes(objectMapper.writeValueAsBytes(report)))
-              .build();
+      ObjectNode event = om.getNodeFactory().objectNode();
+      event.put("foo", "bar");
+      final var report = new Report("name.events", List.of(event), "query");
+      final var uploadArgumentCaptor = ArgumentCaptor.forClass(UploadRequest.class);
+
       final var fileUpload = mock(Upload.class);
-      when(s3TransferManager.upload(uploadRequest)).thenReturn(fileUpload);
       final var completedUpload = mock(CompletedUpload.class);
+      when(s3TransferManager.upload(any(UploadRequest.class))).thenReturn(fileUpload);
       when(fileUpload.completionFuture())
           .thenReturn(CompletableFuture.completedFuture(completedUpload));
+      objectDoesNotExist();
 
       // when
-      uut.save("user", report);
+      assertThatCode(() -> uut.save("user", report)).doesNotThrowAnyException();
 
       // then
-      verify(s3TransferManager).upload(uploadRequest);
+      verify(s3TransferManager).upload(uploadArgumentCaptor.capture());
+
+      assertThat(uploadArgumentCaptor.getValue().putObjectRequest().bucket())
+          .isEqualTo(BUCKET_NAME);
+      assertThat(uploadArgumentCaptor.getValue().putObjectRequest().key())
+          .isEqualTo("user/name.events");
+    }
+
+    @Test
+    @SneakyThrows
+    void reportNameAlreadyExists() {
+      // given
+      ObjectNode event = om.getNodeFactory().objectNode();
+      event.put("foo", "bar");
+      final var report = new Report("name.events", List.of(event), "query");
+      objectExists();
+
+      // expect
+      assertThatThrownBy(() -> uut.save("user", report))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("Report was not generated as another report with this name already exists.");
+      verifyNoInteractions(s3TransferManager);
     }
   }
 
@@ -106,11 +125,11 @@ class S3ReportStoreTest {
     @SneakyThrows
     void happyPath() {
       // given
-      when(s3Client.headObject(any(HeadObjectRequest.class))).thenReturn(null);
       final var presignResponse = mock(PresignedGetObjectRequest.class);
       when(s3Presigner.presignGetObject(any(GetObjectPresignRequest.class)))
           .thenReturn(presignResponse);
       when(presignResponse.url()).thenReturn(new URL("http://example.com"));
+      objectExists();
 
       // when
       uut.getReportDownload("user", "report");
@@ -133,8 +152,7 @@ class S3ReportStoreTest {
     @SneakyThrows
     void throwsIfObjectDoesNotExist() {
       // given
-      when(s3Client.headObject(any(HeadObjectRequest.class)))
-          .thenThrow(NoSuchKeyException.builder().build());
+      objectDoesNotExist();
 
       // expect
       assertThatThrownBy(() -> uut.getReportDownload("user", "report"))
@@ -152,7 +170,7 @@ class S3ReportStoreTest {
 
   @Nested
   class WhenListingReports {
-    ArgumentCaptor<ListObjectsV2Request> captor =
+    private final ArgumentCaptor<ListObjectsV2Request> captor =
         ArgumentCaptor.forClass(ListObjectsV2Request.class);
 
     @Test
@@ -224,6 +242,9 @@ class S3ReportStoreTest {
     void happyPath() {
       ArgumentCaptor<DeleteObjectRequest> captor =
           ArgumentCaptor.forClass(DeleteObjectRequest.class);
+      objectExists();
+      when(s3Client.deleteObject(any(DeleteObjectRequest.class)))
+          .thenReturn(CompletableFuture.completedFuture(null));
 
       uut.delete("user", "report");
 
@@ -233,5 +254,15 @@ class S3ReportStoreTest {
       assertThat(actualRequest.bucket()).isEqualTo("factcast-reports");
       assertThat(actualRequest.key()).isEqualTo("user/report");
     }
+  }
+
+  private void objectExists() {
+    when(s3Client.headObject(any(HeadObjectRequest.class)))
+        .thenReturn(CompletableFuture.completedFuture(null));
+  }
+
+  private void objectDoesNotExist() {
+    when(s3Client.headObject(any(HeadObjectRequest.class)))
+        .thenReturn(CompletableFuture.failedFuture(NoSuchKeyException.builder().build()));
   }
 }
