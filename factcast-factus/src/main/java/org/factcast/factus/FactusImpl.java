@@ -271,7 +271,7 @@ public class FactusImpl implements Factus {
     ProjectionAndState<P> projectionAndState =
         projectionSnapshotRepository
             .findLatest(projectionClass)
-            .orElse(ProjectionAndState.of(instantiate(projectionClass), null));
+            .orElseGet(() -> ProjectionAndState.of(instantiate(projectionClass), null));
 
     // catchup
     P projection = projectionAndState.projectionInstance();
