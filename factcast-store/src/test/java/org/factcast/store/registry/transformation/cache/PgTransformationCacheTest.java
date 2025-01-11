@@ -22,36 +22,42 @@ import static org.mockito.Mockito.*;
 import com.google.common.collect.Lists;
 import java.time.ZonedDateTime;
 import java.util.*;
-import lombok.NonNull;
-import lombok.SneakyThrows;
+import lombok.*;
 import nl.altindag.log.LogCaptor;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.jdbc.core.*;
+import org.springframework.jdbc.core.namedparam.*;
+import org.springframework.transaction.*;
 
 @SuppressWarnings("ALL")
 @ExtendWith(MockitoExtension.class)
 class PgTransformationCacheTest {
 
-  private static final int MAX_BUFFER_SIZE = 24;
   @Mock private JdbcTemplate jdbcTemplate;
   @Mock private NamedParameterJdbcTemplate namedJdbcTemplate;
+
+  @Mock(strictness = Mock.Strictness.LENIENT)
+  private PlatformTransactionManager platformTransactionManager;
+
+  @Mock(strictness = Mock.Strictness.LENIENT)
+  private TransactionStatus transaction;
+
   RegistryMetrics registryMetrics = spy(new NOPRegistryMetrics());
 
   @Mock StoreConfigurationProperties storeConfigurationProperties;
+
+  @BeforeEach
+  void setup() {
+    when(platformTransactionManager.getTransaction(any())).thenReturn(transaction);
+  }
 
   @Nested
   class WhenPuting {
@@ -64,6 +70,7 @@ class PgTransformationCacheTest {
       underTest =
           spy(
               new PgTransformationCache(
+                  platformTransactionManager,
                   jdbcTemplate,
                   namedJdbcTemplate,
                   registryMetrics,
@@ -102,6 +109,7 @@ class PgTransformationCacheTest {
       underTest =
           spy(
               new PgTransformationCache(
+                  platformTransactionManager,
                   jdbcTemplate,
                   namedJdbcTemplate,
                   registryMetrics,
@@ -154,6 +162,7 @@ class PgTransformationCacheTest {
       underTest =
           spy(
               new PgTransformationCache(
+                  platformTransactionManager,
                   jdbcTemplate,
                   namedJdbcTemplate,
                   registryMetrics,
@@ -205,6 +214,7 @@ class PgTransformationCacheTest {
       underTest =
           spy(
               new PgTransformationCache(
+                  platformTransactionManager,
                   jdbcTemplate,
                   namedJdbcTemplate,
                   registryMetrics,
@@ -240,7 +250,12 @@ class PgTransformationCacheTest {
     void setup() {
       underTest =
           new PgTransformationCache(
-              jdbcTemplate, namedJdbcTemplate, registryMetrics, storeConfigurationProperties, 10);
+              platformTransactionManager,
+              jdbcTemplate,
+              namedJdbcTemplate,
+              registryMetrics,
+              storeConfigurationProperties,
+              10);
     }
 
     @Test
@@ -248,6 +263,36 @@ class PgTransformationCacheTest {
       underTest.registerWrite(cacheKey, f);
       assertThat(underTest.buffer().containsKey(cacheKey)).isTrue();
       assertThat(underTest.buffer().get(cacheKey)).isNotNull();
+    }
+  }
+
+  @Nested
+  class WhenRunningInTransactionWithLock {
+    private PgTransformationCache underTest;
+
+    @Mock Runnable r;
+
+    @BeforeEach
+    void setup() {
+      underTest =
+          spy(
+              new PgTransformationCache(
+                  platformTransactionManager,
+                  jdbcTemplate,
+                  namedJdbcTemplate,
+                  registryMetrics,
+                  storeConfigurationProperties,
+                  2));
+    }
+
+    @SneakyThrows
+    @Test
+    void locks() {
+      underTest.inTransactionWithLock(r);
+
+      InOrder inOrder = inOrder(jdbcTemplate, r);
+      inOrder.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN SHARE MODE");
+      inOrder.verify(r).run();
     }
   }
 
@@ -263,6 +308,7 @@ class PgTransformationCacheTest {
       underTest =
           spy(
               new PgTransformationCache(
+                  platformTransactionManager,
                   jdbcTemplate,
                   namedJdbcTemplate,
                   registryMetrics,
@@ -292,6 +338,7 @@ class PgTransformationCacheTest {
       underTest =
           spy(
               new PgTransformationCache(
+                  platformTransactionManager,
                   jdbcTemplate,
                   namedJdbcTemplate,
                   registryMetrics,
@@ -305,6 +352,8 @@ class PgTransformationCacheTest {
       underTest.compact(THRESHOLD_DATE);
 
       Mockito.verify(underTest).flush();
+      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN SHARE MODE");
+
       Mockito.verify(jdbcTemplate)
           .update(
               "DELETE FROM transformationcache WHERE last_access < ?",
@@ -314,10 +363,12 @@ class PgTransformationCacheTest {
     @Test
     void doesNotCompactIfInReadOnlyMode() {
       when(storeConfigurationProperties.isReadOnlyModeEnabled()).thenReturn(true);
+      underTest.registerAccess(TransformationCache.Key.of(UUID.randomUUID(), 1, "someChainId"));
+      Assertions.assertThat(underTest.buffer().size()).isOne();
 
       underTest.compact(THRESHOLD_DATE);
 
-      Mockito.verify(underTest).flush();
+      Assertions.assertThat(underTest.buffer().size()).isZero();
       Mockito.verifyNoInteractions(jdbcTemplate);
     }
   }
@@ -334,6 +385,7 @@ class PgTransformationCacheTest {
       underTest =
           spy(
               new PgTransformationCache(
+                  platformTransactionManager,
                   jdbcTemplate,
                   namedJdbcTemplate,
                   registryMetrics,
@@ -360,6 +412,7 @@ class PgTransformationCacheTest {
       underTest.registerAccess(key);
       assertThat(underTest.buffer().size()).isPositive();
       underTest.flush();
+      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN SHARE MODE");
       assertThat(underTest.buffer().size()).isZero();
     }
 
@@ -404,7 +457,7 @@ class PgTransformationCacheTest {
 
   @Nested
   class WhenInsertingBufferedTransformations {
-    final HashMap<TransformationCache.Key, Fact> buffer = new HashMap<>();
+    CacheBuffer buffer;
 
     @Mock private TransformationCache.@NonNull Key key;
     @Mock private @NonNull Fact f;
@@ -415,11 +468,13 @@ class PgTransformationCacheTest {
       underTest =
           spy(
               new PgTransformationCache(
+                  platformTransactionManager,
                   jdbcTemplate,
                   namedJdbcTemplate,
                   registryMetrics,
                   storeConfigurationProperties,
                   10));
+      buffer = underTest.buffer();
     }
 
     @Test
@@ -431,10 +486,11 @@ class PgTransformationCacheTest {
       buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(Fact.class));
       buffer.put(Mockito.mock(TransformationCache.Key.class), null);
 
-      underTest.insertBufferedTransformations(buffer);
+      underTest.flush();
 
       @SuppressWarnings("unchecked")
       ArgumentCaptor<List<Object[]>> m = ArgumentCaptor.forClass(List.class);
+      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN SHARE MODE");
 
       Mockito.verify(jdbcTemplate)
           .batchUpdate(matches("INSERT INTO transformationcache .*"), m.capture());
@@ -445,7 +501,7 @@ class PgTransformationCacheTest {
 
   @Nested
   class WhenInsertingBufferedAccesses {
-    final HashMap<TransformationCache.Key, Fact> buffer = new HashMap<>();
+    CacheBuffer buffer;
 
     @Mock private TransformationCache.@NonNull Key key;
     @Mock private @NonNull Fact f;
@@ -456,11 +512,13 @@ class PgTransformationCacheTest {
       underTest =
           spy(
               new PgTransformationCache(
+                  platformTransactionManager,
                   jdbcTemplate,
                   namedJdbcTemplate,
                   registryMetrics,
                   storeConfigurationProperties,
                   10));
+      buffer = underTest.buffer();
     }
 
     @Test
@@ -472,10 +530,11 @@ class PgTransformationCacheTest {
       buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(Fact.class));
       buffer.put(Mockito.mock(TransformationCache.Key.class), null);
 
-      underTest.insertBufferedAccesses(buffer);
+      underTest.flush();
 
       ArgumentCaptor<SqlParameterSource> m = ArgumentCaptor.forClass(SqlParameterSource.class);
 
+      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN SHARE MODE");
       Mockito.verify(namedJdbcTemplate).update(anyString(), m.capture());
 
       Collection ids = (Collection) m.getValue().getValue("ids");
@@ -492,6 +551,7 @@ class PgTransformationCacheTest {
       underTest =
           spy(
               new PgTransformationCache(
+                  platformTransactionManager,
                   jdbcTemplate,
                   namedJdbcTemplate,
                   registryMetrics,
@@ -503,6 +563,7 @@ class PgTransformationCacheTest {
     void clearsAndFlushesAccessesOnly() {
       underTest.invalidateTransformationFor("theNamespace", "theType");
 
+      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN SHARE MODE");
       verify(underTest, times(1)).flush();
     }
 
@@ -513,6 +574,7 @@ class PgTransformationCacheTest {
       ArgumentCaptor<String> ns = ArgumentCaptor.forClass(String.class);
       ArgumentCaptor<String> type = ArgumentCaptor.forClass(String.class);
 
+      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN SHARE MODE");
       Mockito.verify(jdbcTemplate)
           .update(
               matches("DELETE FROM transformationcache WHERE .*"), ns.capture(), type.capture());
