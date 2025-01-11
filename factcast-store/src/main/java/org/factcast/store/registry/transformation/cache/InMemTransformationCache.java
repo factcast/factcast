@@ -19,9 +19,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NonNull;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.core.Fact;
@@ -104,7 +102,7 @@ public class InMemTransformationCache implements TransformationCache {
   }
 
   @Override
-  public void invalidateTransformationFor(String ns, String type) {
+  public synchronized void invalidateTransformationFor(String ns, String type) {
     Set<Key> toBeInvalidated =
         cache.entrySet().stream()
             .filter(
