@@ -1,6 +1,5 @@
 package org.factcast.schema.registry.cli.validation
 
-import arrow.core.computations.result
 import com.fasterxml.jackson.databind.JsonNode
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.nulls.shouldBeNull
