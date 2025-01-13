@@ -18,36 +18,26 @@ package org.factcast.server.ui.full;
 import com.vaadin.componentfactory.Popup;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.accordion.Accordion;
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.button.*;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.html.H4;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.Autocomplete;
-import com.vaadin.flow.component.textfield.BigDecimalField;
-import com.vaadin.flow.component.textfield.IntegerField;
+import com.vaadin.flow.component.orderedlayout.*;
+import com.vaadin.flow.component.textfield.*;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.server.StreamResource;
 import jakarta.annotation.security.PermitAll;
 import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.util.NoCoverageReportToBeGenerated;
-import org.factcast.server.ui.plugins.JsonViewEntries;
-import org.factcast.server.ui.plugins.JsonViewPluginService;
+import org.factcast.server.ui.plugins.*;
 import org.factcast.server.ui.port.FactRepository;
-import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
-import org.factcast.server.ui.utils.Notifications;
-import org.factcast.server.ui.views.FormContent;
-import org.factcast.server.ui.views.JsonView;
-import org.factcast.server.ui.views.MainLayout;
+import org.factcast.server.ui.utils.*;
+import org.factcast.server.ui.views.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.vaadin.olli.FileDownloadWrapper;
@@ -70,8 +60,8 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
   private final DatePicker until = new DatePicker("Last Serial of Day");
   private final IntegerField limit = new IntegerField("Limit");
   private final IntegerField offset = new IntegerField("Offset");
-  private final BigDecimalField from = new BigDecimalField("Starting Serial");
-  private final BigDecimalField to = new BigDecimalField("Ending Serial");
+  private final BigDecimalField from = new BigDecimalField("Start serial");
+  private final BigDecimalField to = new BigDecimalField("End serial");
   private final Popup fromSerialHelperOverlay = new Popup();
   private final Popup toSerialHelperOverlay = new Popup();
   private final JsonView jsonView = new JsonView(this::updateQuickFilters);
@@ -238,7 +228,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
             fromSerialHelperOverlay.hide();
           });
 
-      final var heading = new H4("Select Starting Serial");
+      final var heading = new H4("Select start serial ");
       return new VerticalLayout(heading, since, latestSerial, fromScratch);
     }
 
@@ -249,7 +239,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
             to.setValue(null);
             toSerialHelperOverlay.hide();
           });
-      final var heading = new H4("Select Last Serial");
+      final var heading = new H4("Select last serial");
       return new VerticalLayout(heading, until, latestSerial);
     }
   }

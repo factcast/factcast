@@ -15,19 +15,15 @@
  */
 package org.factcast.server.ui.full;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.*;
 import com.google.common.collect.Lists;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-import lombok.Data;
-import lombok.NonNull;
+import java.util.*;
+import lombok.*;
 import lombok.experimental.Accessors;
 import org.factcast.core.spec.FactSpec;
 
@@ -81,5 +77,12 @@ public class FullQueryBean implements Serializable {
   @JsonIgnore
   public int getLimitOrDefault() {
     return Optional.ofNullable(limit).orElse(FullQueryBean.DEFAULT_LIMIT);
+  }
+
+  public long getFromOrZero() {
+    return Optional.ofNullable(from)
+        // turn into inclusive offset
+        .map(o -> Math.max(0, o.longValueExact() - 1))
+        .orElse(0L);
   }
 }
