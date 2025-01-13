@@ -59,7 +59,7 @@ jobs:
     strategy:
       matrix:
         postgresVersion:
-        - '16'
+        - '17'
     steps:
     - id: 'step-0'
       name: 'Checkout'
