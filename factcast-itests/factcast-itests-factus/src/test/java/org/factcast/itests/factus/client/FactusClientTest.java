@@ -771,7 +771,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  void testParallelUpdateCallsForRedisTxManaged() {
+  void testParallelUpdateCallsForRedisTxProjections() {
     final var blockingRedisManagedUserNames = new BlockingRedisTxManagedUserNames(redissonClient);
     factus.publish(new UserCreated("John"));
 
