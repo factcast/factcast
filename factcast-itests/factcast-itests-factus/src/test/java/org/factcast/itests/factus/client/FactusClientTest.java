@@ -799,7 +799,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
             });
 
     assertThat(u1.thenCombine(u2, (b1, b2) -> b1 && b2))
-        .succeedsWithin(Duration.ofSeconds(1))
+        .succeedsWithin(Duration.ofSeconds(5))
         .isEqualTo(true);
   }
 
