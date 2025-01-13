@@ -27,8 +27,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import lombok.SneakyThrows;
-import lombok.Value;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
@@ -773,9 +772,9 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
     // the boss signed off kyles deletion, bastard!
     Fact f =
         Fact.buildFrom(deleted)
-            .meta("signee", "theBoss")
-            .meta("signee", "theChef")
-            .meta("signee", "theHeadOfSomething")
+            .addMeta("signee", "theBoss")
+            .addMeta("signee", "theChef")
+            .addMeta("signee", "theHeadOfSomething")
             .build();
     factus.publish(f);
     try (Subscription subscriptionWaiting = factus.subscribeAndBlock(p)) {
