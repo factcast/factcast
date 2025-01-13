@@ -16,11 +16,9 @@
 package org.factcast.factus.redis.tx;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.time.Duration;
 import lombok.NonNull;
 import lombok.experimental.Delegate;
 import org.factcast.core.FactStreamPosition;
-import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.projection.tx.OpenTransactionAware;
 import org.factcast.factus.projection.tx.TransactionBehavior;
 import org.factcast.factus.redis.AbstractRedisProjection;
@@ -48,17 +46,5 @@ abstract class AbstractRedisTxProjection extends AbstractRedisProjection
   public void transactionalFactStreamPosition(@NonNull FactStreamPosition position) {
     assertInTransaction();
     stateBucket(runningTransaction()).set(position);
-  }
-
-  @Override
-  public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
-    assertNoRunningTransaction();
-    return super.acquireWriteToken(maxWait);
-  }
-
-  @Override
-  public AutoCloseable acquireWriteToken() {
-    assertNoRunningTransaction();
-    return super.acquireWriteToken();
   }
 }
