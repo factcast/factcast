@@ -29,6 +29,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -766,6 +767,47 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       subscription.awaitCatchup();
 
       assertThat(subscribedUserNames.names()).hasSize(2).containsExactlyInAnyOrder("Paul", "John");
+    }
+  }
+
+  @Test
+  void testParallelUpdateCallsForRedisTxManaged() {
+    final var blockingRedisManagedUserNames = new BlockingRedisTxManagedUserNames(redissonClient);
+    factus.publish(new UserCreated("John"));
+
+    final Supplier<Boolean> executeUpdate =
+        () -> {
+          try {
+            log.info("Updating blockingRedisManagedUserNames...");
+            factus.update(blockingRedisManagedUserNames);
+            log.info("finished updating blockingRedisManagedUserNames.");
+          } catch (Exception e) {
+            log.info("Error updating blockingRedisManagedUserNames: {}", e.getMessage(), e);
+            return false;
+          }
+
+          return true;
+        };
+
+    final var u1 = CompletableFuture.supplyAsync(executeUpdate);
+    final var u2 =
+        CompletableFuture.supplyAsync(
+            () -> {
+              // wait a bit to run into event handling phase of u1
+              sleep(250);
+              return executeUpdate.get();
+            });
+
+    assertThat(u1.thenCombine(u2, (b1, b2) -> b1 && b2))
+        .succeedsWithin(Duration.ofSeconds(1))
+        .isEqualTo(true);
+  }
+
+  private static void sleep(long ms) {
+    try {
+      Thread.sleep(ms);
+    } catch (InterruptedException e) {
+      // does not matter
     }
   }
 }
