@@ -115,6 +115,9 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
         () -> {
           try {
             subscribeAndBlock(subscribedProjection);
+          } catch (FactusClosedException fce) {
+            LOGGER.info(
+                "Aborting subscription {}: {}", subscribedProjection.getClass(), fce.getMessage());
           } catch (Exception e) {
             LOGGER.error("Error subscribing to {}", subscribedProjection.getClass(), e);
           }

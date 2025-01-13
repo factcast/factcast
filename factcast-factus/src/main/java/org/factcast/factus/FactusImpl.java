@@ -104,6 +104,7 @@ public class FactusImpl implements Factus {
 
   private void assertNotClosed() {
     if (closed.get()) {
+      // ISE is correct here, as this is not supposed to happen
       throw new IllegalStateException("Already closed.");
     }
   }
@@ -191,7 +192,9 @@ public class FactusImpl implements Factus {
             subscribedProjection.getClass());
       }
     }
-    throw new IllegalStateException("Already closed");
+    // this might be thrown in case of shutdown
+    throw new FactusClosedException(
+        "Factus is closed. Halting attempts to acquire a writer token.");
   }
 
   @SneakyThrows
@@ -334,9 +337,6 @@ public class FactusImpl implements Factus {
     return Optional.of(aggregate);
   }
 
-  /**
-   * @return null if no fact was applied
-   */
   private <P extends Projection> void catchupProjection(
       @NonNull P projection,
       FactStreamPosition stateOrNull,
@@ -449,6 +449,7 @@ public class FactusImpl implements Factus {
 
   @Override
   public void close() {
+    log.debug("factus is being closed");
     if (closed.getAndSet(true)) {
       log.warn("close is being called more than once!?");
     } else {
