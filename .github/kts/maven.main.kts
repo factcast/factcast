@@ -109,7 +109,7 @@ workflow(
         strategyMatrix = mapOf(
             // note that 11 is tested already in the regular build job
             // removed 12-14 for now to improve throughput regarding actions
-            "postgresVersion" to listOf("15"),
+            "postgresVersion" to listOf("16"),
         ),
     ) {
         uses(
