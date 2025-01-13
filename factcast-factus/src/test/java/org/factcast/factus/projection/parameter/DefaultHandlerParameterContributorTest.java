@@ -120,6 +120,30 @@ class DefaultHandlerParameterContributorTest {
   }
 
   @Test
+  void providesIterableMeta() {
+    class MetaString {
+      public void apply(@Meta("narf") Iterable<String> narf) {}
+    }
+
+    Method m =
+        Arrays.stream(MetaString.class.getMethods())
+            .filter(me -> me.getName().equals("apply"))
+            .findFirst()
+            .get();
+    DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
+    HandlerParameterProvider provider =
+        undertest.providerFor(
+            m.getParameterTypes()[0],
+            m.getGenericParameterTypes()[0],
+            Sets.newHashSet(m.getParameterAnnotations()[0]));
+    Assertions.assertThat(provider).isNotNull();
+    Fact fact = Fact.builder().meta("narf", "poit").buildWithoutPayload();
+    TestProjection p = mock(TestProjection.class);
+    Assertions.assertThat((List) provider.apply(mock(EventSerializer.class), fact, p))
+        .containsExactly("poit");
+  }
+
+  @Test
   void providesListMetaMultiValue() {
     class MetaString {
       public void apply(@Meta("narf") List<String> narf) {}
@@ -388,6 +412,28 @@ class DefaultHandlerParameterContributorTest {
   void rejectsNonStringType() {
     class MetaString {
       public void apply(@Meta("narf") Integer narf) {}
+    }
+
+    Method m =
+        Arrays.stream(MetaString.class.getMethods())
+            .filter(me -> me.getName().equals("apply"))
+            .findFirst()
+            .get();
+    DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
+    Class<?> type = m.getParameterTypes()[0];
+    Type genericType = m.getGenericParameterTypes()[0];
+    HashSet<Annotation> annotations = Sets.newHashSet(m.getParameterAnnotations()[0]);
+    assertThatThrownBy(
+            () -> {
+              undertest.providerFor(type, genericType, annotations);
+            })
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void rejectsNonStringCollectionType() {
+    class MetaString {
+      public void apply(@Meta("narf") Iterable<Integer> narf) {}
     }
 
     Method m =

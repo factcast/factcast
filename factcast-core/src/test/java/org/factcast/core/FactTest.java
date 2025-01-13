@@ -304,6 +304,29 @@ class FactTest {
     assertThat(f.version()).isZero();
   }
 
+  @Test
+  void buildFromEventObjectWIthVersion() {
+    UUID userId = UUID.randomUUID();
+    UUID factId = UUID.randomUUID();
+    String name = "Peter";
+    SomeUserCreatedEvent event = new SomeUserCreatedEvent(userId, name);
+    Fact.FactFromEventBuilder b = Fact.buildFrom(event);
+    assertThat(b).isNotNull();
+
+    Fact f =
+        b.serial(12).id(factId).version(7).meta("key", "value").meta("key", "otherValue").build();
+
+    assertThat(f.header().serial()).isEqualTo(12);
+    assertThat(f.id()).isEqualTo(factId);
+    assertThat(f.jsonPayload()).isEqualTo(FactCastJson.writeValueAsString(event));
+    assertThat(f.aggIds()).hasSize(1).containsExactly(userId);
+    assertThat(f.ns()).isEqualTo("test");
+    assertThat(f.type()).isEqualTo("SomeUserCreatedEvent");
+    assertThat(f.version()).isEqualTo(7);
+    assertThat(f.header().meta().getFirst("key")).isEqualTo("otherValue"); // overridden
+    assertThat(f.header().meta().getAll("key")).hasSize(1); // overridden
+  }
+
   @Specification(ns = "test")
   private static class MyEventObject implements EventObject {
     @Override

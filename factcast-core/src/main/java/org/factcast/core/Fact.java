@@ -170,7 +170,8 @@ public interface Fact {
     }
 
     public FactFromEventBuilder meta(@NonNull String key, String value) {
-      builder.addMeta(key, value);
+      // for compatibility
+      builder.setMeta(key, value);
       return this;
     }
 
