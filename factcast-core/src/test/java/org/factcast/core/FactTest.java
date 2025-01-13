@@ -198,8 +198,8 @@ class FactTest {
             .aggId(aggId1)
             .aggId(aggId2)
             .aggId(aggId3)
-            .meta("foo", "bar")
-            .meta("buh", "bang")
+            .setMeta("foo", "bar")
+            .setMeta("buh", "bang")
             .id(factId)
             .build("{\"a\":2}");
     assertEquals("ns", f.ns());
@@ -208,8 +208,8 @@ class FactTest {
     assertTrue(f.aggIds().contains(aggId2));
     assertTrue(f.aggIds().contains(aggId3));
     assertFalse(f.aggIds().contains(factId));
-    assertEquals("bar", f.meta("foo"));
-    assertEquals("bang", f.meta("buh"));
+    assertEquals("bar", f.header().meta().getFirst("foo"));
+    assertEquals("bang", f.header().meta().getFirst("buh"));
     assertEquals("{\"a\":2}", f.jsonPayload());
   }
 
@@ -338,6 +338,7 @@ class FactTest {
     Assertions.assertThat(meta.getFirst("foo")).isEqualTo("baz");
   }
 
+  @Test
   void testMultiMapSet() {
     Fact fact = Fact.builder().setMeta("foo", "bar").setMeta("foo", "baz").buildWithoutPayload();
     MetaMap meta = fact.header().meta();
@@ -347,6 +348,7 @@ class FactTest {
     Assertions.assertThat(meta.getFirst("foo")).isEqualTo("baz");
   }
 
+  @Test
   void testMultiMapAdd() {
     Fact fact = Fact.builder().addMeta("foo", "bar").addMeta("foo", "baz").buildWithoutPayload();
     MetaMap meta = fact.header().meta();
