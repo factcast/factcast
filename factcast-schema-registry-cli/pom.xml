@@ -412,7 +412,7 @@
                 <annotationProcessorPath>
                   <groupId>io.micronaut</groupId>
                   <artifactId>micronaut-inject-java</artifactId>
-                  <version>4.7.8</version>
+                  <version>4.7.11</version>
                 </annotationProcessorPath>
                 <annotationProcessorPath>
                   <groupId>io.micronaut.validation</groupId>
@@ -452,7 +452,7 @@
                 <annotationProcessorPath>
                   <groupId>io.micronaut</groupId>
                   <artifactId>micronaut-inject-java</artifactId>
-                  <version>4.7.8</version>
+                  <version>4.7.11</version>
                 </annotationProcessorPath>
                 <annotationProcessorPath>
                   <groupId>io.micronaut.validation</groupId>
