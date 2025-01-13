@@ -63,11 +63,11 @@
     "jsonc-parser": "$jsonc-parser",
     "@vaadin-component-factory/vcf-popup": "$@vaadin-component-factory/vcf-popup",
     "@vaadin/router": "$@vaadin/router",
-    "@vaadin/cookie-consent": "$@vaadin/cookie-consent",
     "@vaadin/react-components": "$@vaadin/react-components",
     "react-dom": "$react-dom",
     "react-router-dom": "$react-router-dom",
-    "react": "$react"
+    "react": "$react",
+    "@vaadin/cookie-consent": "$@vaadin/cookie-consent"
   },
   "vaadin": {
     "dependencies": {
