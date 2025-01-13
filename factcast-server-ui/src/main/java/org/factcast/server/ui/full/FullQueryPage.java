@@ -103,16 +103,18 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     to.setId("ending-serial");
     to.setAutocomplete(Autocomplete.OFF);
     to.addValueChangeListener(e -> updateEndSerialIfLowerThanStartSerial());
-    since.addOpenedChangeListener(e -> {
-      if (!e.isOpened()) {
-        updateFrom();
-      }
-    });
-    until.addOpenedChangeListener(e -> {
-      if (!e.isOpened()) {
-        updateTo();
-      }
-    });
+    since.addOpenedChangeListener(
+        e -> {
+          if (!e.isOpened()) {
+            updateFrom();
+          }
+        });
+    until.addOpenedChangeListener(
+        e -> {
+          if (!e.isOpened()) {
+            updateTo();
+          }
+        });
     until.setMin(since.getValue());
 
     binder = createBinding();
