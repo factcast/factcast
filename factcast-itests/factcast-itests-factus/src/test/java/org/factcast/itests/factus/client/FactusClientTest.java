@@ -803,11 +803,8 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
         .isEqualTo(true);
   }
 
+  @SneakyThrows
   private static void sleep(long ms) {
-    try {
-      Thread.sleep(ms);
-    } catch (InterruptedException e) {
-      // does not matter
-    }
+    Thread.sleep(ms);
   }
 }
