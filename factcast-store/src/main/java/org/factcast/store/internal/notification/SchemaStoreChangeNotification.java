@@ -30,23 +30,21 @@ public class SchemaStoreChangeNotification extends StoreNotification {
   @NonNull String ns;
   @NonNull String type;
   int version;
-  @Nullable Long txId;
+  long txId;
 
   @Override
   public String uniqueId() {
-    if (txId != null)
-      return PgConstants.CHANNEL_SCHEMASTORE_CHANGE
-          + "-"
-          + ns
-          + "-"
-          + type
-          + "-"
-          + version
-          + "-"
-          + txId;
-    else
-      // something went wrong here, so we're cautious
-      return null;
+    // only if coordinates and txid match, we can dedup. coordinates might come from another txid
+    // later, and many changes might come from one txid
+    return PgConstants.CHANNEL_SCHEMASTORE_CHANGE
+        + "-"
+        + ns
+        + "-"
+        + type
+        + "-"
+        + version
+        + "-"
+        + txId;
   }
 
   @Nullable

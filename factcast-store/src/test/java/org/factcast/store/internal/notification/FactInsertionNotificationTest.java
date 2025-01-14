@@ -46,7 +46,7 @@ class FactInsertionNotificationTest {
   }
 
   @Nested
-  class WhenDistributeding {
+  class WhenDistributing {
 
     @Test
     void internalIsNotDistributed() {
