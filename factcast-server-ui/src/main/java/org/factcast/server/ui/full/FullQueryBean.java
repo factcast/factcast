@@ -30,6 +30,7 @@ import lombok.Data;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.server.ui.views.filter.FactCriteria;
 
 @Data
 @SuppressWarnings("java:S1948")

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2023 factcast.org
+ * Copyright © 2017-2024 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.server.ui.full;
+package org.factcast.server.ui.report;
 
-import jakarta.validation.constraints.NotNull;
-import lombok.Data;
-import lombok.experimental.Accessors;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.List;
+import lombok.NonNull;
 
-@Data
-@Accessors(fluent = false, chain = false)
-public class MetaTuple {
-  @NotNull String key;
-  @NotNull String value;
-
-  /** must match for referential equality only */
-  @Override
-  public boolean equals(Object o) {
-    return this == o;
-  }
-
-  /** see equals(Object) */
-  @Override
-  public int hashCode() {
-    return 1;
-  }
-}
+public record Report(
+    @NonNull String name,
+    // Not the nicest approach but changing this to "Fact" will require more effort in terms of
+    // de/serialization and hence is postponed to refactoring the JsonViewPluginService
+    @NonNull List<ObjectNode> events,
+    @NonNull ReportFilterBean query) {}
