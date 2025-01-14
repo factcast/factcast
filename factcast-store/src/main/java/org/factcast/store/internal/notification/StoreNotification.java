@@ -22,6 +22,7 @@ import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.util.FactCastJson;
+import org.factcast.store.internal.PgConstants;
 import org.postgresql.PGNotification;
 
 /**
@@ -84,9 +85,28 @@ public abstract class StoreNotification {
     } catch (JsonProcessingException | NullPointerException e) {
       // unparseable, probably longer than 8k ?
       // fall back to informingAllSubscribers
-      log.warn("Unparseable JSON Parameter from Notification: {}.", n.getName());
+      log.warn("Unparseable or incomplete JSON Parameter from Notification: {}.", n.getName());
       return null;
     }
+  }
+
+  @Nullable
+  public static StoreNotification createFrom(@NonNull PGNotification n) {
+    String name = n.getName();
+    log.trace("Received notification on channel: {}.", name);
+
+    return switch (name) {
+      case PgConstants.CHANNEL_BLACKLIST_CHANGE -> BlacklistChangeNotification.from(n);
+      case PgConstants.CHANNEL_SCHEMASTORE_CHANGE -> SchemaStoreChangeNotification.from(n);
+      case PgConstants.CHANNEL_TRANSFORMATIONSTORE_CHANGE ->
+          TransformationStoreChangeNotification.from(n);
+      case PgConstants.CHANNEL_FACT_INSERT -> FactInsertionNotification.from(n);
+      default -> {
+        if (!n.getName().equals(PgConstants.CHANNEL_ROUNDTRIP))
+          log.warn("Ignored notification from unknown channel: {}", name);
+        yield null;
+      }
+    };
   }
 
   private static long getLong(@NonNull JsonNode root, @NonNull String name) {

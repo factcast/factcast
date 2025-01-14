@@ -22,8 +22,10 @@ import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
 import java.sql.*;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
 import org.factcast.store.internal.notification.*;
@@ -425,6 +427,115 @@ class PgListenerTest {
     try {
       Thread.sleep(i);
     } catch (InterruptedException ignored) {
+    }
+  }
+
+  @Nested
+  class WhenCompactingBlacklistChanges {
+
+    PgListener uut;
+
+    @BeforeEach
+    void setup() {
+      uut = new PgListener(pgConnectionSupplier, eventBus, props, registry);
+    }
+
+    @Test
+    void empty() {
+      org.assertj.core.api.Assertions.assertThat(
+              uut.compactBlacklistChangeNotifications(new ArrayList<>()))
+          .isEmpty();
+    }
+
+    @Test
+    void unrelated() {
+      List<PGNotification> notifications = List.of(new Notification("other", 1, "{}"));
+      org.assertj.core.api.Assertions.assertThat(
+              uut.compactBlacklistChangeNotifications(notifications))
+          .isEqualTo(notifications);
+    }
+
+    @Test
+    void one() {
+      List<PGNotification> notifications =
+          List.of(
+              new Notification("other", 1, "{}"),
+              new Notification(PgConstants.CHANNEL_BLACKLIST_CHANGE, 1, "{}"),
+              new Notification("other", 1, "{}"));
+      org.assertj.core.api.Assertions.assertThat(
+              uut.compactBlacklistChangeNotifications(notifications))
+          .isEqualTo(notifications);
+    }
+
+    @Test
+    void many() {
+      Notification unrelated1 = new Notification("other", 1, "{}");
+      Notification unrelated2 = new Notification("other", 1, "{}");
+      Notification unrelated3 = new Notification("other", 1, "{}");
+
+      Notification tx1 = new Notification(PgConstants.CHANNEL_BLACKLIST_CHANGE, 1, "{\"txId\":1}");
+      Notification tx2 = new Notification(PgConstants.CHANNEL_BLACKLIST_CHANGE, 1, "{\"txId\":2}");
+      Notification tx3 = new Notification(PgConstants.CHANNEL_BLACKLIST_CHANGE, 1, "{\"txId\":3}");
+
+      List<PGNotification> notifications =
+          List.of(unrelated1, tx1, tx2, unrelated2, tx3, unrelated3);
+
+      List<PGNotification> expected = List.of(unrelated1, unrelated2, tx3, unrelated3);
+
+      org.assertj.core.api.Assertions.assertThat(
+              uut.compactBlacklistChangeNotifications(notifications).toList())
+          .isEqualTo(expected);
+    }
+  }
+
+  @Nested
+  class WhenCompactingFactInserts {
+
+    PgListener uut;
+
+    @BeforeEach
+    void setup() {
+      uut = new PgListener(pgConnectionSupplier, eventBus, props, registry);
+    }
+
+    @Test
+    void empty() {
+      org.assertj.core.api.Assertions.assertThat(uut.compact(Stream.empty())).isEmpty();
+    }
+
+    @Test
+    void unrelated() {
+      List<FactInsertionNotification> notifications =
+          List.of(
+              new FactInsertionNotification("ns", "type", 1L),
+              new FactInsertionNotification("ns", "type2", 2L),
+              new FactInsertionNotification("ns", "type3", 3L));
+      org.assertj.core.api.Assertions.assertThat(uut.compact(notifications.stream()).toList())
+          .isEqualTo(notifications);
+    }
+
+    @Test
+    void one() {
+      FactInsertionNotification i1 = new FactInsertionNotification("ns", "type", 1L);
+      FactInsertionNotification i2 = new FactInsertionNotification("ns", "type2", 2L);
+      FactInsertionNotification i3 = new FactInsertionNotification("ns", "type", 3L);
+      List<FactInsertionNotification> notifications = List.of(i1, i2, i3);
+      org.assertj.core.api.Assertions.assertThat(uut.compact(notifications.stream()).toList())
+          .hasSize(2)
+          .contains(i1, i2);
+    }
+
+    @Test
+    void many() {
+      FactInsertionNotification i1 = new FactInsertionNotification("ns", "type", 1L);
+      FactInsertionNotification i2 = new FactInsertionNotification("ns", "type2", 2L);
+      FactInsertionNotification i3 = new FactInsertionNotification("ns", "type", 3L);
+      FactInsertionNotification i4 = new FactInsertionNotification("ns", "type", 4L);
+      FactInsertionNotification i5 = new FactInsertionNotification("ns", "type2", 5L);
+      List<FactInsertionNotification> notifications = List.of(i1, i2, i3, i4, i5);
+      org.assertj.core.api.Assertions.assertThat(uut.compact(notifications.stream()).toList())
+          .hasSize(2)
+          .containsExactly(i1, i2);
     }
   }
 }
