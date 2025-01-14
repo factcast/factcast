@@ -1,16 +1,24 @@
 import { css, html, LitElement, PropertyValues } from "lit";
 import { customElement, query } from "lit/decorators.js";
 import * as monaco from "monaco-editor";
+import { IDisposable, languages, Range } from "monaco-editor";
 import monacoCss from "monaco-editor/min/vs/editor/editor.main.css?inline";
 // @ts-ignore
 import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 // @ts-ignore
 import jsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
-import { IDisposable, languages, Range } from "monaco-editor";
-import { visit, JSONPath, JSONVisitor } from "jsonc-parser";
+import { JSONPath, JSONVisitor, visit } from "jsonc-parser";
 import { JSONPath as jp } from "jsonpath-plus";
 
 type FactFilterOptions = {
+	aggregateId?: string;
+	meta?: {
+		key: string;
+		value: string[];
+	};
+};
+
+type UpdateFactFilterOptions = {
 	aggregateId?: string;
 	meta?: {
 		key: string;
@@ -32,7 +40,7 @@ type CompiledPath = {
 	compiledPath: JSONPath;
 };
 
-type UpdateFactFilterOptions = FactFilterOptions & {
+type MultiCriteriaUpdateFactFilterOptions = UpdateFactFilterOptions & {
 	affectedCriteria: number;
 };
 
@@ -142,7 +150,7 @@ class JsonView extends LitElement {
 
 		this.filterUpdateCommand = this.editor.addCommand(
 			0,
-			async (ctx, arg: UpdateFactFilterOptions) => {
+			async (ctx, arg: MultiCriteriaUpdateFactFilterOptions) => {
 				await this.$server?.updateFilters(JSON.stringify(arg));
 			}
 		);
@@ -396,42 +404,136 @@ class MetaDataJsonVisitor implements JSONVisitor {
 
 		if (!filterOptionsContent) return;
 
-		if (filterOptionsContent?.originalPath) {
+		if (filterOptionsContent.originalPath) {
 			const filter =
 				this.factMetaData.filterOptions[filterOptionsContent.originalPath];
-			// expand range to cover value as well
-			const rangeEnd =
-				startCharacter +
-				1 + // for zero based index
-				property.length +
-				7 + // for quotes around property and value and the " : " in the middle
-				(filter.meta?.value.length ?? filter.aggregateId?.length ?? 0);
 
+			if (filter.aggregateId) {
+				const enrichedMember = this.buildQuickFilterForAggregateIds(
+					startCharacter,
+					property,
+					filter.aggregateId,
+					startLine
+				);
+				this.enrichedMembers.push(enrichedMember);
+			} else if (filter.meta) {
+				if (filter.meta.value.length === 1) {
+					const enrichedMember = this.buildQuickFilterForSingleMeta(
+						startCharacter,
+						property,
+						filter.meta.key,
+						filter.meta.value[0],
+						startLine
+					);
+					this.enrichedMembers.push(enrichedMember);
+				} else {
+					const enrichedMembers = this.buildQuickFilterForMultiMeta(
+						startCharacter,
+						property,
+						filter.meta.key,
+						filter.meta.value,
+						startLine
+					);
+					this.enrichedMembers.push(...enrichedMembers);
+				}
+			} else {
+				throw "Unsupported filter option.";
+			}
+		}
+	}
+
+	private buildQuickFilterForMultiMeta(
+		startCharacter: number,
+		property: string,
+		metaKey: string,
+		metaValues: string[],
+		startLine: number
+	) {
+		const valuesStartColumn = startCharacter + 1 + property.length + 7; // starts at the first value after the opening brackets
+
+		return metaValues.map((value, index) => {
+			const startOfValueColumn = metaValues
+				.slice(0, index)
+				.map((x) => x.length)
+				.reduce((a, b) => a + b + 4, 0);
 			const enrichedMember: EnrichedMember = {
 				range: new monaco.Range(
 					startLine + 1,
-					startCharacter + 1, // +1  zero based index
+					valuesStartColumn + startOfValueColumn,
 					startLine + 1,
-					rangeEnd
+					valuesStartColumn + startOfValueColumn + value.length + 2
 				),
+				contents: this.buildFilterCommandLinks(`${metaKey}:${value}`, {
+					meta: { key: metaKey, value },
+				}),
 			};
+			return enrichedMember;
+		});
+	}
 
-			let label: string = "this"; // fallback value
-			if (filter.meta) {
-				label = `${filter.meta.key}:${filter.meta.value}`;
-			}
-			if (filter.aggregateId) {
-				label = `Aggregate-ID ${filter.aggregateId}`;
-			}
-			enrichedMember.contents = this.buildFilterCommandLinks(label, filter);
+	private buildQuickFilterForSingleMeta(
+		startCharacter: number,
+		property: string,
+		metaKey: string,
+		metaValue: string,
+		startLine: number
+	) {
+		// expand range to cover value as well
+		const rangeEnd =
+			startCharacter +
+			1 + // for zero based index
+			property.length +
+			7 + // for quotes around property and value and the " : " in the middle
+			metaValue.length;
 
-			this.enrichedMembers.push(enrichedMember);
-		}
+		const enrichedMember: EnrichedMember = {
+			range: new monaco.Range(
+				startLine + 1,
+				startCharacter + 1, // +1  zero based index
+				startLine + 1,
+				rangeEnd
+			),
+			contents: this.buildFilterCommandLinks(`${metaKey}:${metaValue}`, {
+				meta: { key: metaKey, value: metaValue },
+			}),
+		};
+
+		return enrichedMember;
+	}
+
+	private buildQuickFilterForAggregateIds(
+		startCharacter: number,
+		property: string,
+		aggregateId: string,
+		startLine: number
+	) {
+		// expand range to cover value as well
+		const rangeEnd =
+			startCharacter +
+			1 + // for zero based index
+			property.length +
+			7 + // for quotes around property and value and the " : " in the middle
+			aggregateId.length;
+
+		const enrichedMember: EnrichedMember = {
+			range: new monaco.Range(
+				startLine + 1,
+				startCharacter + 1, // +1  zero based index
+				startLine + 1,
+				rangeEnd
+			),
+		};
+
+		const label: string = `Aggregate-ID ${aggregateId}`;
+		enrichedMember.contents = this.buildFilterCommandLinks(label, {
+			aggregateId,
+		});
+		return enrichedMember;
 	}
 
 	private buildFilterCommandLinks(
 		forText: string,
-		options: FactFilterOptions
+		options: UpdateFactFilterOptions
 	): monaco.IMarkdownString[] {
 		if (this.conditionCount === 1) {
 			const encodedArgs = encodeURIComponent(
