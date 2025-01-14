@@ -85,8 +85,12 @@ public class ResilientGrpcSubscription implements Subscription {
   }
 
   @Override
-  public void close() throws Exception {
-    Subscription.super.close();
+  public Subscription onClose(@NonNull Runnable e) {
+    return null;
+  }
+
+  @Override
+  public void close() {
     if (!isClosed.getAndSet(true)) {
       try {
         closeAndDetachSubscription();
@@ -199,11 +203,7 @@ public class ResilientGrpcSubscription implements Subscription {
   @VisibleForTesting
   void fail(Throwable exception) {
     log.error("Too many failures, giving up. ({})", originalRequest);
-    try {
       close();
-    } catch (Exception e) {
-      log.warn("Ignoring Exception while closing a subscription ({})", originalRequest, e);
-    }
     currentSubscription.unblock();
     originalObserver.onError(exception);
     throw ExceptionHelper.toRuntime(exception);

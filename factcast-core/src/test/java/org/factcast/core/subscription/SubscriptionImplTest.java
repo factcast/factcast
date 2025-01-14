@@ -15,20 +15,7 @@
  */
 package org.factcast.core.subscription;
 
-import static org.factcast.core.TestHelper.expect;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-
-import java.time.Duration;
-import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import lombok.NonNull;
-import lombok.SneakyThrows;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.TestFact;
@@ -41,6 +28,19 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.Duration;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import static org.factcast.core.TestHelper.expect;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeout;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 @SuppressWarnings("resource")
 @ExtendWith(MockitoExtension.class)
@@ -58,7 +58,6 @@ class SubscriptionImplTest {
   }
 
   @Test
-  @SneakyThrows
   void testClose() {
     expect(TimeoutException.class, () -> uut.awaitCatchup(10));
     expect(TimeoutException.class, () -> uut.awaitComplete(10));
@@ -68,7 +67,6 @@ class SubscriptionImplTest {
   }
 
   @Test
-  @SneakyThrows
   void onCloseStacksUpAndIgnoresException() {
 
     class DoNothing implements Runnable {
@@ -219,7 +217,6 @@ class SubscriptionImplTest {
   }
 
   @Test
-  @SneakyThrows
   void testOnFastForwardSkipsIfClosed() throws TransformationException {
     SubscriptionImpl on = SubscriptionImpl.on(obs);
     FactStreamPosition p = TestFactStreamPosition.random();
@@ -297,7 +294,6 @@ class SubscriptionImplTest {
   }
 
   @Test
-  @SneakyThrows
   void notifyInfoSkipsIfClosed() throws TransformationException {
     uut = SubscriptionImpl.on(obs);
     @NonNull UUID id = UUID.randomUUID();

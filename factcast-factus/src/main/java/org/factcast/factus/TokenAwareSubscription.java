@@ -37,7 +37,6 @@ class TokenAwareSubscription implements Subscription {
       try {
         delegate.close();
       } finally {
-        Subscription.super.close();
         token.close();
       }
     }
@@ -67,5 +66,10 @@ class TokenAwareSubscription implements Subscription {
       throws SubscriptionClosedException, TimeoutException {
     delegate.awaitComplete(waitTimeInMillis);
     return this;
+  }
+
+  @Override
+  public Subscription onClose(@NonNull Runnable e) {
+    return null;
   }
 }
