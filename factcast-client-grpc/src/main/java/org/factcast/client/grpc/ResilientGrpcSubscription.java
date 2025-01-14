@@ -16,10 +16,6 @@
 package org.factcast.client.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
@@ -28,17 +24,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
-import org.factcast.core.subscription.FactStreamInfo;
-import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionClosedException;
-import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.util.ExceptionHelper;
 
-@Slf4j
-public class ResilientGrpcSubscription implements Subscription {
-  @NonNull Runnable onClose = () -> {};
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
+@Slf4j
+public class ResilientGrpcSubscription extends AbstractSubscription {
   private final GrpcFactStore store;
   private final SubscriptionRequestTO originalRequest;
   private final FactObserver originalObserver;
@@ -88,34 +84,12 @@ public class ResilientGrpcSubscription implements Subscription {
     return delegate(Subscription::awaitComplete, waitTimeInMillis);
   }
 
-  @Override
-  public Subscription onClose(@NonNull Runnable e) {
-    Runnable formerOnClose = onClose;
-    onClose =
-        () -> {
-          tryRun(formerOnClose);
-          tryRun(e);
-        };
-    return this;
-  }
 
-  private void tryRun(Runnable e) {
-    try {
-      e.run();
-    } catch (Exception ex) {
-      log.error("While executing onClose:", ex);
-    }
-  }
 
   @Override
-  public void close() {
+  public void internalClose() {
     if (!isClosed.getAndSet(true)) {
-      try {
         closeAndDetachSubscription();
-      } finally {
-        isClosed.set(true);
-        onClose.run();
-      }
     }
   }
 

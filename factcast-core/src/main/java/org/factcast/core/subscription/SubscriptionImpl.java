@@ -36,11 +36,9 @@ import org.factcast.core.util.ExceptionHelper;
  */
 @RequiredArgsConstructor
 @Slf4j
-public class SubscriptionImpl implements InternalSubscription {
+public class SubscriptionImpl extends AbstractSubscription implements InternalSubscription {
 
   @NonNull final FactObserver observer;
-
-  @NonNull Runnable onClose = () -> {};
 
   final AtomicBoolean closed = new AtomicBoolean(false);
 
@@ -49,13 +47,12 @@ public class SubscriptionImpl implements InternalSubscription {
   final CompletableFuture<Void> complete = new CompletableFuture<>();
 
   @Override
-  public void close() {
+  public void internalClose() {
     if (!closed.getAndSet(true)) {
       SubscriptionClosedException closedException =
           new SubscriptionClosedException("Client closed the subscription");
       catchup.completeExceptionally(closedException);
       complete.completeExceptionally(closedException);
-      onClose.run();
     }
   }
 
@@ -188,25 +185,6 @@ public class SubscriptionImpl implements InternalSubscription {
   @Override
   public void flush() {
     observer.flush();
-  }
-
-  @Override
-  public SubscriptionImpl onClose(@NonNull Runnable e) {
-    Runnable formerOnClose = onClose;
-    onClose =
-        () -> {
-          tryRun(formerOnClose);
-          tryRun(e);
-        };
-    return this;
-  }
-
-  private void tryRun(Runnable e) {
-    try {
-      e.run();
-    } catch (Exception ex) {
-      log.error("While executing onClose:", ex);
-    }
   }
 
   public static SubscriptionImpl on(@NonNull FactObserver o) {

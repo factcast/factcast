@@ -74,7 +74,7 @@ class PgStoreTelemetryIntegrationTest {
     waitAtMost(Duration.ofSeconds(5))
         .untilAsserted(
             () -> {
-              assertThat(telemetryListener.consumedSignals).size().isEqualTo(4);
+              assertThat(telemetryListener.consumedSignals).size().isEqualTo(5);
               assertThat(telemetryListener.consumedSignals.get(0))
                   .isInstanceOf(PgStoreTelemetry.Connect.class);
               assertThat(telemetryListener.consumedSignals.get(1))
