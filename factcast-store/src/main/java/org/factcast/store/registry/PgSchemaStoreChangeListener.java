@@ -15,14 +15,12 @@
  */
 package org.factcast.store.registry;
 
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
+import com.google.common.eventbus.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.store.internal.listen.PgListener;
+import org.factcast.store.internal.notification.SchemaStoreChangeNotification;
 import org.factcast.store.registry.validation.schema.SchemaKey;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.SmartInitializingSingleton;
+import org.springframework.beans.factory.*;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
@@ -41,7 +39,7 @@ public class PgSchemaStoreChangeListener implements SmartInitializingSingleton, 
   }
 
   @Subscribe
-  public void on(PgListener.SchemaStoreChangeSignal signal) {
+  public void on(SchemaStoreChangeNotification signal) {
     registry.invalidateNearCache(SchemaKey.of(signal.ns(), signal.type(), signal.version()));
   }
 

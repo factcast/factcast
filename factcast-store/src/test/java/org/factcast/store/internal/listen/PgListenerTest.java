@@ -16,38 +16,20 @@
 package org.factcast.store.internal.listen;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.sql.*;
+import java.util.concurrent.*;
 import java.util.function.Predicate;
 import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.store.internal.PgConstants;
-import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.listen.PgListener.FactInsertionSignal;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.factcast.store.internal.*;
+import org.factcast.store.internal.notification.*;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Answers;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.postgresql.PGNotification;
 import org.postgresql.core.Notification;
@@ -55,11 +37,12 @@ import org.postgresql.jdbc.PgConnection;
 
 @SuppressWarnings("UnstableApiUsage")
 @ExtendWith(MockitoExtension.class)
-public class PgListenerTest {
+class PgListenerTest {
 
-  private static final Predicate<Object> IS_FACT_INSERT = f -> f instanceof FactInsertionSignal;
+  private static final Predicate<Object> IS_FACT_INSERT =
+      f -> f instanceof FactInsertionNotification;
   private static final Predicate<Object> NOT_SCHEDULED_POLL =
-      f -> !((FactInsertionSignal) f).name().equals("scheduled-poll");
+      f -> !f.equals(FactInsertionNotification.internal());
 
   @Mock PgConnectionSupplier pgConnectionSupplier;
 
@@ -95,10 +78,7 @@ public class PgListenerTest {
     verify(eventBus, atLeastOnce()).post(factCaptor.capture());
     assertThat(
             factCaptor.getAllValues().stream()
-                .anyMatch(
-                    e ->
-                        e instanceof FactInsertionSignal
-                            && ((FactInsertionSignal) e).name().equals("scheduled-poll")))
+                .anyMatch(e -> e.equals(FactInsertionNotification.internal())))
         .isTrue();
   }
 
@@ -167,23 +147,28 @@ public class PgListenerTest {
   }
 
   @Test
-  public void subscribersAreOnlyInformedAboutNewFactsInDatabase() {
+  void subscribersAreOnlyInformedAboutNewFactsInDatabase() {
     PGNotification[] receivedNotifications =
         new PGNotification[] {
           new Notification("some notification", 1, "{}"),
-          new Notification(PgConstants.CHANNEL_FACT_INSERT, 1, "{}")
+          new Notification(
+              PgConstants.CHANNEL_FACT_INSERT,
+              1,
+              "{\"ns\":\"ns1\",\"type\":\"type\",\"ser\":1,\"txId\":1}")
         };
 
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
     pgListener.processNotifications(receivedNotifications);
 
     verify(eventBus, times(1)).post(factCaptor.capture());
-    assertThat(factCaptor.getAllValues().stream().anyMatch(e -> e instanceof FactInsertionSignal))
+    assertThat(
+            factCaptor.getAllValues().stream()
+                .anyMatch(FactInsertionNotification.class::isInstance))
         .isTrue();
   }
 
   @Test
-  public void otherNotificationsAreIgnored() {
+  void otherNotificationsAreIgnored() {
     PGNotification[] receivedNotifications =
         new PGNotification[] {
           new Notification("some notification", 1, "{}"),
@@ -193,7 +178,7 @@ public class PgListenerTest {
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
     pgListener.processNotifications(receivedNotifications);
 
-    verify(eventBus, never()).post(any(FactInsertionSignal.class));
+    verify(eventBus, never()).post(any(FactInsertionNotification.class));
   }
 
   @Test
@@ -226,25 +211,25 @@ public class PgListenerTest {
               new Notification(
                   PgConstants.CHANNEL_FACT_INSERT,
                   1,
-                  "{\"ns\":\"namespace\",\"type\":\"theType\"}"),
+                  "{\"ns\":\"namespace\",\"type\":\"theType\",\"ser\":1,\"txId\":123}"),
 
               // should trigger other notification:
               new Notification(
                   PgConstants.CHANNEL_FACT_INSERT,
                   1,
-                  "{\"ns\":\"namespace\",\"type\":\"theOtherType\"}")
+                  "{\"ns\":\"namespace\",\"type\":\"theOtherType\",\"ser\":2,\"txId\":123}")
             },
             new PGNotification[] {
               new Notification(PgConstants.CHANNEL_FACT_INSERT, 2, "{}"),
               new Notification(
                   PgConstants.CHANNEL_FACT_INSERT,
                   1,
-                  "{\"ns\":\"namespace\",\"type\":\"theOtherType\"}"),
+                  "{\"ns\":\"namespace\",\"type\":\"theType\",\"ser\":3,\"txId\":1234}"),
               // recurring notifications in second array:
               new Notification(
                   PgConstants.CHANNEL_FACT_INSERT,
                   1,
-                  "{\"ns\":\"namespace\",\"type\":\"theType\"}"),
+                  "{\"ns\":\"namespace\",\"type\":\"theOtherType\",\"ser\":4,\"txId\":1234}"),
             }, //
             new PGNotification[] {new Notification(PgConstants.CHANNEL_FACT_INSERT, 3, "{}")},
             new PGNotification[] {new Notification(PgConstants.CHANNEL_ROUNDTRIP, 3, "{}")},
@@ -270,29 +255,22 @@ public class PgListenerTest {
             factCaptor.getAllValues().stream()
                 .anyMatch(
                     e ->
-                        e instanceof FactInsertionSignal
-                            && ((FactInsertionSignal) e).name().equals("scheduled-poll")))
+                        e instanceof FactInsertionNotification
+                            && ((FactInsertionNotification) e).ser() == null))
         .isTrue();
     // events 2 - incl. 4 are notifies
     assertTrue(
         allEvents.stream()
-            .filter(e -> !(e instanceof PgListener.BlacklistChangeSignal))
+            .filter(e -> !(e instanceof BlacklistChangeNotification))
             .allMatch(IS_FACT_INSERT));
-
-    // in total there are only 3 notifies
-    // TODO delete or assert?
-    long totalNotifyCount = allEvents.stream().filter(IS_FACT_INSERT).count();
 
     // grouped by tx id, ns and type
     assertThat(allEvents.stream().filter(IS_FACT_INSERT).filter(NOT_SCHEDULED_POLL))
         .containsExactlyInAnyOrder(
-            new FactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT, null, null),
-            new FactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT, null, null),
-            new FactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT, null, null),
-            new FactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theType"),
-            new FactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theOtherType"),
-            new FactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theType"),
-            new FactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT, "namespace", "theOtherType"));
+            new FactInsertionNotification("namespace", "theType", 1L),
+            new FactInsertionNotification("namespace", "theOtherType", 2L),
+            new FactInsertionNotification("namespace", "theType", 3L),
+            new FactInsertionNotification("namespace", "theOtherType", 4L));
   }
 
   @Test
@@ -302,22 +280,22 @@ public class PgListenerTest {
         new Notification(
             PgConstants.CHANNEL_SCHEMASTORE_CHANGE,
             1,
-            "{\"ns\":\"namespace\",\"type\":\"theType\",\"version\":1}");
+            "{\"ns\":\"namespace\",\"type\":\"theType\",\"version\":1,\"txId\":123}");
     PGNotification invalidNotification =
         new Notification(
             PgConstants.CHANNEL_SCHEMASTORE_CHANGE,
             1,
-            "{\"ns\":\"namespace\",\"type\":\"theType\"}");
+            "{\"ns\":\"namespace\",\"type\":\"theType\",\"txId\":123}");
     PGNotification otherChannelNotification =
         new Notification(
             PgConstants.CHANNEL_FACT_INSERT,
             1,
-            "{\"ns\":\"namespace\",\"type\":\"theType\",\"version\":1}");
+            "{\"ns\":\"namespace\",\"type\":\"theType\",\"version\":1,\"txId\":123}");
     PGNotification anotherValidNotification =
         new Notification(
             PgConstants.CHANNEL_SCHEMASTORE_CHANGE,
             1,
-            "{\"ns\":\"namespace\",\"type\":\"theType\",\"version\":2}");
+            "{\"ns\":\"namespace\",\"type\":\"theType\",\"version\":2,\"txId\":123}");
 
     when(pgConnectionSupplier.get(any())).thenReturn(conn);
     when(conn.prepareStatement(anyString())).thenReturn(ps);
@@ -340,15 +318,24 @@ public class PgListenerTest {
     latch.await(1, TimeUnit.MINUTES);
     pgListener.destroy();
 
-    verify(pgListener, times(2)).postSchemaStoreChangeSignal(any());
     verify(pgListener, times(1))
-        .postSchemaStoreChangeSignal(
-            new PgListener.SchemaStoreChangeSignal("namespace", "theType", 1));
+        .post(
+            ArgumentMatchers.argThat(
+                n ->
+                    SchemaStoreChangeNotification.class.isInstance(n)
+                        && ((SchemaStoreChangeNotification) n).ns().equals("namespace")
+                        && ((SchemaStoreChangeNotification) n).type().equals("theType")
+                        && ((SchemaStoreChangeNotification) n).version() == 1));
     verify(pgListener, times(1))
-        .postSchemaStoreChangeSignal(
-            new PgListener.SchemaStoreChangeSignal("namespace", "theType", 2));
+        .post(
+            ArgumentMatchers.argThat(
+                n ->
+                    SchemaStoreChangeNotification.class.isInstance(n)
+                        && ((SchemaStoreChangeNotification) n).ns().equals("namespace")
+                        && ((SchemaStoreChangeNotification) n).type().equals("theType")
+                        && ((SchemaStoreChangeNotification) n).version() == 2));
 
-    verify(eventBus, times(2)).post(any(PgListener.SchemaStoreChangeSignal.class));
+    verify(eventBus, times(2)).post(any(SchemaStoreChangeNotification.class));
   }
 
   @Test
@@ -358,20 +345,22 @@ public class PgListenerTest {
         new Notification(
             PgConstants.CHANNEL_TRANSFORMATIONSTORE_CHANGE,
             1,
-            "{\"ns\":\"namespace\",\"type\":\"theType\"}");
+            "{\"ns\":\"namespace\",\"type\":\"theType\",\"txId\":123}");
     PGNotification invalidNotification =
         new Notification(
             PgConstants.CHANNEL_TRANSFORMATIONSTORE_CHANGE,
             1,
-            "{\"ns\":\"namespace\",\"invalidTypeKey\":\"theType\"}");
+            "{\"ns\":\"namespace\",\"invalidTypeKey\":\"theType\",\"txId\":123}");
     PGNotification otherChannelNotification =
         new Notification(
-            PgConstants.CHANNEL_FACT_INSERT, 1, "{\"ns\":\"namespace\",\"type\":\"theType\"}");
+            PgConstants.CHANNEL_FACT_INSERT,
+            1,
+            "{\"ns\":\"namespace\",\"type\":\"theType\",\"txId\":123}");
     PGNotification anotherValidNotification =
         new Notification(
             PgConstants.CHANNEL_TRANSFORMATIONSTORE_CHANGE,
             1,
-            "{\"ns\":\"namespace\",\"type\":\"theOtherType\"}");
+            "{\"ns\":\"namespace\",\"type\":\"theOtherType\",\"txId\":123}");
 
     when(pgConnectionSupplier.get(any())).thenReturn(conn);
     when(conn.prepareStatement(anyString())).thenReturn(ps);
@@ -394,15 +383,23 @@ public class PgListenerTest {
     latch.await(1, TimeUnit.MINUTES);
     pgListener.destroy();
 
-    verify(pgListener, times(2)).postTransformationStoreChangeSignal(any());
+    verify(eventBus, times(2)).post(any(TransformationStoreChangeNotification.class));
     verify(pgListener, times(1))
-        .postTransformationStoreChangeSignal(
-            new PgListener.TransformationStoreChangeSignal("namespace", "theType"));
+        .post(
+            ArgumentMatchers.argThat(
+                n ->
+                    TransformationStoreChangeNotification.class.isInstance(n)
+                        && ((TransformationStoreChangeNotification) n).ns().equals("namespace")
+                        && ((TransformationStoreChangeNotification) n).type().equals("theType")));
     verify(pgListener, times(1))
-        .postTransformationStoreChangeSignal(
-            new PgListener.TransformationStoreChangeSignal("namespace", "theOtherType"));
-
-    verify(eventBus, times(2)).post(any(PgListener.TransformationStoreChangeSignal.class));
+        .post(
+            ArgumentMatchers.argThat(
+                n ->
+                    TransformationStoreChangeNotification.class.isInstance(n)
+                        && ((TransformationStoreChangeNotification) n).ns().equals("namespace")
+                        && ((TransformationStoreChangeNotification) n)
+                            .type()
+                            .equals("theOtherType")));
   }
 
   @Test
