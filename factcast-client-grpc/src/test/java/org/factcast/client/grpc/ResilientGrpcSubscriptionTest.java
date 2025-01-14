@@ -175,7 +175,6 @@ class ResilientGrpcSubscriptionTest {
         .isTrue();
   }
 
-
   @Test
   void onCloseStacksUpAndIgnoresException() {
 
