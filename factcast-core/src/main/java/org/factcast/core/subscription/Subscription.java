@@ -15,9 +15,8 @@
  */
 package org.factcast.core.subscription;
 
-import lombok.NonNull;
-
 import java.util.concurrent.TimeoutException;
+import lombok.NonNull;
 
 /**
  * @author <uwe.schaefer@prisma-capacity.eu>
