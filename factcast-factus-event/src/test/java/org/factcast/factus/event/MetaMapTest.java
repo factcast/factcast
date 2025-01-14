@@ -15,8 +15,12 @@
  */
 package org.factcast.factus.event;
 
+import static org.mockito.Mockito.*;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Collection;
+import java.util.function.BiConsumer;
 import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Lists;
@@ -155,6 +159,38 @@ class MetaMapTest {
       uut.add("C", "z");
 
       Assertions.assertThat(uut.getAll("C")).containsExactly("x", "y", "z");
+    }
+  }
+
+  @Nested
+  class WhenIterating {
+
+    @Test
+    void forEachEntry() {
+      MetaMap uut = MetaMap.of("A", "1");
+      uut.add("C", "x");
+      uut.add("C", "y");
+
+      BiConsumer<String, String> mock = mock(BiConsumer.class);
+      uut.forEachEntry(mock);
+
+      verify(mock).accept("A", "1");
+      verify(mock).accept("C", "x");
+      verify(mock).accept("C", "y");
+      verifyNoMoreInteractions(mock);
+    }
+
+    @Test
+    void forEachDistinctKey() {
+      MetaMap uut = MetaMap.of("A", "1");
+      uut.add("C", "x");
+      uut.add("C", "y");
+
+      BiConsumer<String, Collection<String>> mock = mock(BiConsumer.class);
+      uut.forEachDistinctKey(mock);
+      verify(mock).accept("A", Lists.newArrayList("1"));
+      verify(mock).accept("C", Lists.newArrayList("x", "y"));
+      verifyNoMoreInteractions(mock);
     }
   }
 }

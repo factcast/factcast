@@ -113,7 +113,7 @@ public interface Fact {
     b.serial(1).id(UUID.randomUUID());
 
     event.aggregateIds().forEach(b::aggId);
-    event.additionalMetaMap().forEach(b::meta);
+    event.additionalMeta().forEachEntry(b::addMeta);
     return b;
   }
 
