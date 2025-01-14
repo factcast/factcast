@@ -15,11 +15,8 @@
  */
 package org.factcast.store.internal.notification;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.util.FactCastJson;
 import org.factcast.store.internal.PgConstants;
 import org.jetbrains.annotations.Nullable;
 import org.postgresql.PGNotification;
@@ -32,16 +29,8 @@ public class TransformationStoreChangeNotification extends StoreNotification {
   long txId;
 
   public static TransformationStoreChangeNotification from(PGNotification n) {
-    try {
-      String json = n.getParameter();
-      JsonNode root = FactCastJson.readTree(json);
-      return new TransformationStoreChangeNotification(
-          getString(root, "ns"), getString(root, "type"), getLong(root, "txId"));
-    } catch (JsonProcessingException | NullPointerException e) {
-      // skipping
-      log.warn("Unparesable JSON parameter from notification: {}.", n.getName());
-      return null;
-    }
+    return convert(
+        n, json -> new TransformationStoreChangeNotification(ns(json), type(json), txId(json)));
   }
 
   @Nullable

@@ -15,13 +15,10 @@
  */
 package org.factcast.store.internal.notification;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import javax.annotation.Nullable;
 import lombok.*;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.util.FactCastJson;
 import org.factcast.store.internal.PgConstants;
 import org.postgresql.PGNotification;
 
@@ -56,21 +53,8 @@ public class FactInsertionNotification extends StoreNotification {
   }
 
   public static FactInsertionNotification from(@NonNull PGNotification pgNotification) {
-    String json = pgNotification.getParameter();
-    try {
-      JsonNode root = FactCastJson.readTree(json);
-      // since 0.5.2, all those attributes are top level
-      String ns = getString(root, "ns");
-      String type = getString(root, "type");
-      Long ser = getLong(root, "ser");
-      // txId not needed (ser is enough to identify)
-      return new FactInsertionNotification(ns, type, ser);
-    } catch (JsonProcessingException | NullPointerException e) {
-      // unparseable, probably longer than 8k ?
-      // fall back to informingAllSubscribers
-      log.warn("Unparseable JSON Parameter from Notification: {}.", pgNotification.getName());
-      return null;
-    }
+    return convert(
+        pgNotification, root -> new FactInsertionNotification(ns(root), type(root), ser(root)));
   }
 
   public String nsAndType() {

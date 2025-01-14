@@ -15,13 +15,10 @@
  */
 package org.factcast.store.internal.notification;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import javax.annotation.Nullable;
 import lombok.*;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.util.FactCastJson;
 import org.factcast.store.internal.PgConstants;
 import org.postgresql.PGNotification;
 
@@ -54,20 +51,8 @@ public class SchemaStoreChangeNotification extends StoreNotification {
 
   @Nullable
   public static SchemaStoreChangeNotification from(@NonNull PGNotification n) {
-    try {
-      JsonNode root = FactCastJson.readTree(n.getParameter());
-
-      String ns = getString(root, "ns");
-      String type = getString(root, "type");
-      int version = getInt(root, "version");
-      Long txId = getLong(root, "txId");
-
-      return new SchemaStoreChangeNotification(ns, type, version, txId);
-
-    } catch (JsonProcessingException | NullPointerException e) {
-      // skipping
-      log.warn("Unparseable JSON parameter from notification: {}.", n.getName());
-    }
-    return null;
+    return convert(
+        n,
+        json -> new SchemaStoreChangeNotification(ns(json), type(json), version(json), txId(json)));
   }
 }

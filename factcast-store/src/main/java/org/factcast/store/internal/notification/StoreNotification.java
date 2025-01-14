@@ -17,7 +17,7 @@ package org.factcast.store.internal.notification;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.annotations.VisibleForTesting;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -44,33 +44,48 @@ public abstract class StoreNotification {
     return true;
   }
 
-  @VisibleForTesting
-  @Nullable
-  static Long extractTxId(@NonNull PGNotification n) {
-    String json = n.getParameter();
-    try {
-      if (json != null) {
-        JsonNode root = FactCastJson.readTree(json);
-        return getLong(root, "txId");
-      }
-    } catch (JsonProcessingException e) {
-      log.warn("unable to extract txId from notification of type {}", n.getName());
-    }
-    return null;
+  static long txId(JsonNode root) {
+    return getLong(root, "txId");
   }
 
-  @VisibleForTesting
-  static long getLong(@NonNull JsonNode root, @NonNull String name) {
+  static long ser(JsonNode root) {
+    return getLong(root, "ser");
+  }
+
+  static int version(JsonNode root) {
+    return getInt(root, "version");
+  }
+
+  static String ns(JsonNode root) {
+    return getString(root, "ns");
+  }
+
+  static String type(JsonNode root) {
+    return getString(root, "type");
+  }
+
+  static <T extends StoreNotification> T convert(
+      PGNotification n, Function<JsonNode, T> initialization) {
+    String json = n.getParameter();
+    try {
+      return initialization.apply(FactCastJson.readTree(json));
+    } catch (JsonProcessingException | NullPointerException e) {
+      // unparseable, probably longer than 8k ?
+      // fall back to informingAllSubscribers
+      log.warn("Unparseable JSON Parameter from Notification: {}.", n.getName());
+      return null;
+    }
+  }
+
+  private static long getLong(@NonNull JsonNode root, @NonNull String name) {
     return root.get(name).asLong();
   }
 
-  @VisibleForTesting
-  static int getInt(@NonNull JsonNode root, @NonNull String name) {
+  private static int getInt(@NonNull JsonNode root, @NonNull String name) {
     return root.get(name).asInt();
   }
 
-  @VisibleForTesting
-  static String getString(@NonNull JsonNode root, @NonNull String name) {
+  private static String getString(@NonNull JsonNode root, @NonNull String name) {
     return root.get(name).asText();
   }
 }

@@ -18,19 +18,19 @@ package org.factcast.store.internal.notification;
 import javax.annotation.Nullable;
 import lombok.*;
 import lombok.experimental.NonFinal;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.internal.PgConstants;
 import org.postgresql.PGNotification;
 
 @Value
+@Slf4j
 @NonFinal
 public class BlacklistChangeNotification extends StoreNotification {
   @NonNull long txId;
 
   @Nullable
   public static BlacklistChangeNotification from(@NonNull PGNotification n) {
-    Long txId1 = extractTxId(n);
-    if (txId1 != null) return new BlacklistChangeNotification(txId1);
-    else return null;
+    return convert(n, json -> new BlacklistChangeNotification(txId(json)));
   }
 
   public static BlacklistChangeNotification internal() {
