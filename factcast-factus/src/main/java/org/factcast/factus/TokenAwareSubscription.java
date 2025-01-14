@@ -33,6 +33,7 @@ class TokenAwareSubscription implements Subscription {
 
   @Override
   public void close() throws Exception {
+    Subscription.super.close();
     if (!closed.getAndSet(true)) {
       try {
         delegate.close();

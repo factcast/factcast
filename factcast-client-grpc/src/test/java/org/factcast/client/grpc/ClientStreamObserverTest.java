@@ -80,6 +80,7 @@ class ClientStreamObserverTest {
   }
 
   @Test
+  @SneakyThrows
   void shutsdownOnSubscriptionClose() {
     subscription.close();
     assertThat(uut.clientBoundExecutor().isShutdown()).isTrue();

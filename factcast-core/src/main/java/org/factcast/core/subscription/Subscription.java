@@ -15,12 +15,20 @@
  */
 package org.factcast.core.subscription;
 
+import lombok.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author <uwe.schaefer@prisma-capacity.eu>
  */
 public interface Subscription extends AutoCloseable {
+  Logger log = LoggerFactory.getLogger(Subscription.class);
+
+  AtomicReference<Runnable> onClose = new AtomicReference<>(() -> {});
 
   /**
    * blocks until Catchup or Cancelled event received
@@ -49,4 +57,29 @@ public interface Subscription extends AutoCloseable {
    */
   Subscription awaitComplete(long waitTimeInMillis)
       throws SubscriptionClosedException, TimeoutException;
+
+  @Override
+  default void close() throws Exception {
+    onClose.get().run();
+  }
+
+  /**
+   * Registers a callback to be executed when the subscription is closed.
+   *
+   * @param e the callback to be executed
+   * @return this
+   */
+  default Subscription onClose(@NonNull Runnable e) {
+    Runnable formerOnClose = onClose.get();
+    onClose.set(
+            () -> {
+              try {
+                formerOnClose.run();
+                e.run();
+              } catch (Exception ex) {
+                log.error("While executing onClose:", ex);
+              }
+            });
+    return this;
+  }
 }

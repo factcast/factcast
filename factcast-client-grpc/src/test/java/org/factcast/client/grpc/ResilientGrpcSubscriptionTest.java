@@ -138,6 +138,7 @@ class ResilientGrpcSubscriptionTest {
   }
 
   @Test
+  @SneakyThrows
   void testAssertSubscriptionStateNotClosed() {
     uut.close();
     assertThrows(SubscriptionClosedException.class, () -> uut.awaitCatchup());
@@ -271,6 +272,7 @@ class ResilientGrpcSubscriptionTest {
     }
 
     @Test
+    @SneakyThrows
     void nextChecksForClosing() {
       uut.close();
       @NonNull Fact f = Fact.builder().ns("foo").type("bar").buildWithoutPayload();

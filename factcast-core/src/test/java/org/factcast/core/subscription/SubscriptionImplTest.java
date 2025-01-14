@@ -28,6 +28,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.TestFact;
@@ -57,6 +58,7 @@ class SubscriptionImplTest {
   }
 
   @Test
+  @SneakyThrows
   void testClose() {
     expect(TimeoutException.class, () -> uut.awaitCatchup(10));
     expect(TimeoutException.class, () -> uut.awaitComplete(10));
@@ -66,6 +68,7 @@ class SubscriptionImplTest {
   }
 
   @Test
+  @SneakyThrows
   void onCloseStacksUpAndIgnoresException() {
 
     class DoNothing implements Runnable {
@@ -216,6 +219,7 @@ class SubscriptionImplTest {
   }
 
   @Test
+  @SneakyThrows
   void testOnFastForwardSkipsIfClosed() throws TransformationException {
     SubscriptionImpl on = SubscriptionImpl.on(obs);
     FactStreamPosition p = TestFactStreamPosition.random();
@@ -293,6 +297,7 @@ class SubscriptionImplTest {
   }
 
   @Test
+  @SneakyThrows
   void notifyInfoSkipsIfClosed() throws TransformationException {
     uut = SubscriptionImpl.on(obs);
     @NonNull UUID id = UUID.randomUUID();
