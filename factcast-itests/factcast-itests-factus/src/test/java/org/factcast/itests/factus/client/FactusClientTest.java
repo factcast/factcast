@@ -758,7 +758,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  class OverrideAndFailSubscribedUserNames extends SubscribedUserNames {
+  static class OverrideAndFailSubscribedUserNames extends SubscribedUserNames {
 
     @Override
     public void apply(UserDeleted deleted, @Nullable String signee) {
