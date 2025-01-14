@@ -409,7 +409,7 @@ class MetaDataJsonVisitor implements JSONVisitor {
 				this.factMetaData.filterOptions[filterOptionsContent.originalPath];
 
 			if (filter.aggregateId) {
-				const enrichedMember = this.buildQuickFilterForAggregateIds(
+				const enrichedMember = this.buildQuickFilterForAggregateId(
 					startCharacter,
 					property,
 					filter.aggregateId,
@@ -426,7 +426,7 @@ class MetaDataJsonVisitor implements JSONVisitor {
 						startLine
 					);
 					this.enrichedMembers.push(enrichedMember);
-				} else {
+				} else if (filter.meta.value.length > 1) {
 					const enrichedMembers = this.buildQuickFilterForMultiMeta(
 						startCharacter,
 						property,
@@ -456,6 +456,7 @@ class MetaDataJsonVisitor implements JSONVisitor {
 				.slice(0, index)
 				.map((x) => x.length)
 				.reduce((a, b) => a + b + 4, 0);
+
 			const enrichedMember: EnrichedMember = {
 				range: new monaco.Range(
 					startLine + 1,
@@ -497,11 +498,10 @@ class MetaDataJsonVisitor implements JSONVisitor {
 				meta: { key: metaKey, value: metaValue },
 			}),
 		};
-
 		return enrichedMember;
 	}
 
-	private buildQuickFilterForAggregateIds(
+	private buildQuickFilterForAggregateId(
 		startCharacter: number,
 		property: string,
 		aggregateId: string,
@@ -522,12 +522,10 @@ class MetaDataJsonVisitor implements JSONVisitor {
 				startLine + 1,
 				rangeEnd
 			),
+			contents: this.buildFilterCommandLinks(`Aggregate-ID ${aggregateId}`, {
+				aggregateId,
+			}),
 		};
-
-		const label: string = `Aggregate-ID ${aggregateId}`;
-		enrichedMember.contents = this.buildFilterCommandLinks(label, {
-			aggregateId,
-		});
 		return enrichedMember;
 	}
 
