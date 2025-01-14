@@ -170,7 +170,7 @@ public class FactusImpl implements Factus {
         subscription.onClose(() -> tryClose(token)); // close token on subscription closing
         // close subscription on shutdown
         managedObjects.add(() -> tryClose(subscription));
-        return new TokenAwareSubscription(subscription, token);
+        return subscription;
       } else {
         log.trace(
             "failed to acquire writer token for {}. Will keep trying.",
@@ -509,8 +509,8 @@ public class FactusImpl implements Factus {
     try {
       log.trace("Closing AutoCloseable for class {}", c.getClass());
       c.close();
-    } catch (Exception ignore) {
-      // intentional
+    } catch (Exception e) {
+      log.debug("Error while closing AutoCloseable for class {}", c.getClass(), e);
     }
   }
 
