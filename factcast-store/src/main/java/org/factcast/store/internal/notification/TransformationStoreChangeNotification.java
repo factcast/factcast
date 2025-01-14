@@ -22,7 +22,9 @@ import org.jetbrains.annotations.Nullable;
 import org.postgresql.PGNotification;
 
 @Value
+@EqualsAndHashCode(callSuper = false)
 @Slf4j
+@SuppressWarnings("java:S1845")
 public class TransformationStoreChangeNotification extends StoreNotification {
   @NonNull String ns;
   @NonNull String type;

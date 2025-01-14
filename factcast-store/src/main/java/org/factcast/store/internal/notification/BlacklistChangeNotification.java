@@ -23,10 +23,12 @@ import org.factcast.store.internal.PgConstants;
 import org.postgresql.PGNotification;
 
 @Value
+@EqualsAndHashCode(callSuper = false)
 @Slf4j
 @NonFinal
+@SuppressWarnings("java:S1845")
 public class BlacklistChangeNotification extends StoreNotification {
-  @NonNull long txId;
+  long txId;
 
   @Nullable
   public static BlacklistChangeNotification from(@NonNull PGNotification n) {

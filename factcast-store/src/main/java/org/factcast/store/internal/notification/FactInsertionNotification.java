@@ -23,8 +23,10 @@ import org.factcast.store.internal.PgConstants;
 import org.postgresql.PGNotification;
 
 @Value
+@EqualsAndHashCode(callSuper = false)
 @NonFinal
 @Slf4j
+@SuppressWarnings("java:S1845")
 public class FactInsertionNotification extends StoreNotification {
   @Nullable String ns;
   @Nullable String type;

@@ -17,19 +17,19 @@ package org.factcast.store.internal.notification;
 
 import javax.annotation.Nullable;
 import lombok.*;
-import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.internal.PgConstants;
 import org.postgresql.PGNotification;
 
 @Value
-@NonFinal
+@EqualsAndHashCode(callSuper = false)
 @Slf4j
+@SuppressWarnings("java:S1845")
 public class SchemaStoreChangeNotification extends StoreNotification {
 
   @NonNull String ns;
   @NonNull String type;
-  @NonNull int version;
+  int version;
   @Nullable Long txId;
 
   @Override

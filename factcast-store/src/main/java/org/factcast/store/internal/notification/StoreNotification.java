@@ -24,7 +24,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.util.FactCastJson;
 import org.postgresql.PGNotification;
 
+/**
+ * Triggered from a PgNotification or by some internal behavior within the store, these
+ * "Notifications" (sorry for the ambiguity) are passed around via an EventBus.
+ *
+ * <p>Also, they might by published to an external fanout if they return true from distributed().
+ *
+ * <p>(Only) In that case, the receiving store will publish them internally unless they have been
+ * published already (a trail for uniqueIds will be kept to deduplicate).
+ *
+ * <p>If uniqueId() returns null, however, deduplication for this Notification will be skipped.
+ */
 @Slf4j
+@SuppressWarnings("java:S1845")
 public abstract class StoreNotification {
   /**
    * returning null here means that this signal must not be deduplicated
