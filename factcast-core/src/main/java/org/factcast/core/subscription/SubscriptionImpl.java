@@ -48,7 +48,6 @@ public class SubscriptionImpl implements InternalSubscription {
 
   @Override
   public void close() throws Exception {
-    InternalSubscription.super.close();
     if (!closed.getAndSet(true)) {
       SubscriptionClosedException closedException =
           new SubscriptionClosedException("Client closed the subscription");
