@@ -112,9 +112,9 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
     @RetryingTest(maxAttempts = 5, minSuccess = 1)
     void queryByEndingSerial() {
       loginFor("/ui/full");
+      fromScratch();
       selectNamespace("users");
       page.getByLabel("End serial").fill("1");
-      fromScratch();
 
       query();
 
