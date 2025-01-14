@@ -15,6 +15,7 @@
  */
 package org.factcast.server.ui.full;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -153,6 +154,21 @@ class FullQueryBeanTest {
     @Test
     void returnsDefault() {
       Assertions.assertThat(underTest.getLimitOrDefault()).isEqualTo(FullQueryBean.DEFAULT_LIMIT);
+    }
+  }
+
+  @Nested
+  class WhenGettingFromInclusive {
+    @Test
+    void returnsZeroWhenFromScratch() {
+      underTest.setFrom(BigDecimal.ZERO);
+      Assertions.assertThat(underTest.getFromOrZero()).isEqualTo(0);
+    }
+
+    @Test
+    void returnsFromMinus1() {
+      underTest.setFrom(BigDecimal.TEN);
+      Assertions.assertThat(underTest.getFromOrZero()).isEqualTo(9L);
     }
   }
 }
