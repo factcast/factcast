@@ -203,7 +203,7 @@ public class ResilientGrpcSubscription implements Subscription {
   @VisibleForTesting
   void fail(Throwable exception) {
     log.error("Too many failures, giving up. ({})", originalRequest);
-      close();
+    close();
     currentSubscription.unblock();
     originalObserver.onError(exception);
     throw ExceptionHelper.toRuntime(exception);

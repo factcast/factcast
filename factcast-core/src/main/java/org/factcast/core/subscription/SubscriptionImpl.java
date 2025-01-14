@@ -194,10 +194,10 @@ public class SubscriptionImpl implements InternalSubscription {
   public SubscriptionImpl onClose(@NonNull Runnable e) {
     Runnable formerOnClose = onClose;
     onClose =
-            () -> {
-              tryRun(formerOnClose);
-              tryRun(e);
-            };
+        () -> {
+          tryRun(formerOnClose);
+          tryRun(e);
+        };
     return this;
   }
 
