@@ -331,6 +331,18 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       assertThat(localFactStore.lastSerialBefore(LocalDate.now())).isEqualTo(lastSerial);
     }
 
+    @Test
+    void testFirstSerialAfterNowReturns() {
+      assertThat(localFactStore.firstSerialAfter(LocalDate.now())).isEqualTo(null);
+
+      // add one to the end, should not change anything
+      UUID id = UUID.randomUUID();
+      Fact fact = Fact.builder().id(id).ns("foo").type("bar").buildWithoutPayload();
+      store.publish(Collections.singletonList(fact));
+
+      assertThat(localFactStore.firstSerialAfter(LocalDate.now())).isEqualTo(1L);
+    }
+
     @SuppressWarnings({"DataFlowIssue", "OptionalGetWithoutIsPresent"})
     @Test
     void testDate2SerTriggerWorks() {
