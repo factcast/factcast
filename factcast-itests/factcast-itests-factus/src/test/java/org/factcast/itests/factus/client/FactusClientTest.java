@@ -15,7 +15,21 @@
  */
 package org.factcast.itests.factus.client;
 
+import static java.util.Arrays.asList;
+import static java.util.UUID.randomUUID;
+import static java.util.stream.Collectors.toList;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import com.google.common.base.Stopwatch;
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -48,21 +62,6 @@ import org.redisson.api.TransactionOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
-
-import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
-
-import static java.util.Arrays.asList;
-import static java.util.UUID.randomUUID;
-import static java.util.stream.Collectors.toList;
-import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ContextConfiguration(
     classes = {
@@ -736,7 +735,8 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
   @Test
   void testTokenReleaseAfterTooManyFailures() throws Exception {
-    OverrideAndFailSubscribedUserNames subscribedUserNames = new OverrideAndFailSubscribedUserNames();
+    OverrideAndFailSubscribedUserNames subscribedUserNames =
+        new OverrideAndFailSubscribedUserNames();
     subscribedUserNames.clear();
 
     factus.publish(new UserCreated("Kyle"));
@@ -746,10 +746,15 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       logCaptor.setLogLevelToTrace();
       factus.subscribe(subscribedUserNames);
 
-      Awaitility.await().until(() ->
-              !logCaptor.getTraceLogs().isEmpty() &&
-                      logCaptor.getTraceLogs().get(0).contains("Closing AutoCloseable for class class org.factcast.factus.projection.LocalWriteToken")
-      );
+      Awaitility.await()
+          .until(
+              () ->
+                  !logCaptor.getTraceLogs().isEmpty()
+                      && logCaptor
+                          .getTraceLogs()
+                          .get(0)
+                          .contains(
+                              "Closing AutoCloseable for class class org.factcast.factus.projection.LocalWriteToken"));
     }
   }
 
