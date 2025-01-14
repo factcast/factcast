@@ -15,12 +15,11 @@
  */
 package org.factcast.core.subscription;
 
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author <uwe.schaefer@prisma-capacity.eu>
@@ -72,14 +71,14 @@ public interface Subscription extends AutoCloseable {
   default Subscription onClose(@NonNull Runnable e) {
     Runnable formerOnClose = onClose.get();
     onClose.set(
-            () -> {
-              try {
-                formerOnClose.run();
-                e.run();
-              } catch (Exception ex) {
-                log.error("While executing onClose:", ex);
-              }
-            });
+        () -> {
+          try {
+            formerOnClose.run();
+            e.run();
+          } catch (Exception ex) {
+            log.error("While executing onClose:", ex);
+          }
+        });
     return this;
   }
 }
