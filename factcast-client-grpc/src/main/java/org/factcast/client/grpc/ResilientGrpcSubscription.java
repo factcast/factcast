@@ -16,6 +16,10 @@
 package org.factcast.client.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
@@ -27,11 +31,6 @@ import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.util.ExceptionHelper;
-
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
 @Slf4j
 public class ResilientGrpcSubscription extends AbstractSubscription {
@@ -84,12 +83,10 @@ public class ResilientGrpcSubscription extends AbstractSubscription {
     return delegate(Subscription::awaitComplete, waitTimeInMillis);
   }
 
-
-
   @Override
   public void internalClose() {
     if (!isClosed.getAndSet(true)) {
-        closeAndDetachSubscription();
+      closeAndDetachSubscription();
     }
   }
 
