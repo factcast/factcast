@@ -26,6 +26,7 @@ import org.postgresql.PGNotification;
 @EqualsAndHashCode(callSuper = false)
 @Slf4j
 @NonFinal
+@AllArgsConstructor
 @SuppressWarnings("java:S1845")
 public class BlacklistChangeNotification extends StoreNotification {
   long txId;

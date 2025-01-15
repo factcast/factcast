@@ -40,7 +40,7 @@ class CondensedQueryExecutor {
   private final Supplier<Boolean> connectionStateSupplier;
   private final Set<String> interests;
 
-  private Timer timer = new Timer(CondensedQueryExecutor.class.getSimpleName() + ".timer", true);
+  @NonNull private final Timer timer;
 
   private final AtomicBoolean currentlyScheduled = new AtomicBoolean(false);
 
@@ -63,6 +63,7 @@ class CondensedQueryExecutor {
       @NonNull PgSynchronizedQuery target,
       @NonNull Supplier<Boolean> connectionStateSupplier,
       @NonNull List<FactSpec> specs) {
+    this.timer = new Timer(CondensedQueryExecutor.class.getSimpleName() + ".timer", true);
     this.maxDelayInMillis = maxDelayInMillis;
     this.target = target;
     this.connectionStateSupplier = connectionStateSupplier;

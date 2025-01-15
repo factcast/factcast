@@ -57,4 +57,19 @@ class BlacklistChangeNotificationTest {
       Assertions.assertThat(from.uniqueId()).isEqualTo("blacklist_change-7");
     }
   }
+
+  @Nested
+  class WhenDistributing {
+
+    @Test
+    void internalIsNotDistributed() {
+      Assertions.assertThat(BlacklistChangeNotification.internal().distributed()).isFalse();
+    }
+
+    @Test
+    void distributedIfSerialKnown() {
+      BlacklistChangeNotification probe = new BlacklistChangeNotification(1L);
+      Assertions.assertThat(probe.distributed()).isTrue();
+    }
+  }
 }
