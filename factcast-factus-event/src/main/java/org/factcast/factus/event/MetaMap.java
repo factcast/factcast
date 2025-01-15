@@ -136,7 +136,7 @@ public class MetaMap {
   }
 
   public void forEachDistinctKey(@NonNull BiConsumer<String, Collection<String>> consumer) {
-    entries.forEach(e -> consumer.accept(e.key(), getAll(e.key)));
+    entries.stream().map(Entry::key).distinct().forEach(e -> consumer.accept(e, getAll(e)));
   }
 
   public boolean containsKey(@NonNull String k) {

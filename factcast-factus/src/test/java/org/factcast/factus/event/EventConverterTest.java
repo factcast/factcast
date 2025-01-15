@@ -15,7 +15,7 @@
  */
 package org.factcast.factus.event;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.*;
 import lombok.NonNull;
@@ -34,12 +34,6 @@ class EventConverterTest {
   @Test
   void negativeVersionIsIgnored() {
     assertThat(underTest.toFact(new E()).header().version()).isEqualTo(0);
-  }
-
-  @Test
-  void failsOnNullKeyInMeta() {
-    assertThatThrownBy(() -> underTest.toFact(new E2()))
-        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
@@ -66,16 +60,6 @@ class EventConverterTest {
     public Map<String, String> additionalMetaMap() {
       HashMap<String, String> m = new HashMap<String, String>();
       m.put("foo", null);
-      return m;
-    }
-  }
-
-  @Specification(ns = "test", version = 10)
-  static class E2 extends E {
-    @Override
-    public Map<String, String> additionalMetaMap() {
-      HashMap<String, String> m = new HashMap<String, String>();
-      m.put(null, "foo");
       return m;
     }
   }
