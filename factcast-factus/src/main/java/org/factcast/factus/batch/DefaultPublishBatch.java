@@ -15,17 +15,13 @@
  */
 package org.factcast.factus.batch;
 
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.*;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.factcast.core.Fact;
-import org.factcast.core.FactCast;
-import org.factcast.core.event.EventConverter;
+import org.factcast.core.*;
+import org.factcast.factus.event.*;
 import org.factcast.factus.event.EventObject;
 
 @RequiredArgsConstructor
