@@ -19,8 +19,7 @@ import static org.factcast.factus.metrics.TagKeys.CLASS;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.*;
 import java.time.Instant;
 import java.util.List;
 import lombok.NonNull;
@@ -28,8 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.observer.BatchingFactObserver;
-import org.factcast.factus.metrics.FactusMetrics;
-import org.factcast.factus.metrics.TimedOperation;
+import org.factcast.factus.metrics.*;
 import org.factcast.factus.projection.ProgressAware;
 import org.factcast.factus.projection.tx.TransactionAware;
 
@@ -107,7 +105,7 @@ abstract class AbstractFactObserver extends BatchingFactObserver {
   // intentionally not async, as metrics timed already is.
   void reportProcessingLatency(@NonNull Fact element) {
     long nowInMillis = Instant.now().toEpochMilli();
-    String ts = element.meta("_ts");
+    String ts = element.header().meta().getFirst("_ts");
     // _ts might not be there in unit testing for instance.
     if (ts != null) {
       long latency = nowInMillis - Long.parseLong(ts);

@@ -15,36 +15,17 @@
  */
 package org.factcast.factus.projection.parameter;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
 import java.util.Iterator;
-import java.util.Set;
-import javax.annotation.Nullable;
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-// TODO find unit tests for parameter package
-
 @ExtendWith(MockitoExtension.class)
 class HandlerParameterContributorsTest {
 
-  HandlerParameterContributor string =
-      new HandlerParameterContributor() {
-        @Nullable
-        @Override
-        public HandlerParameterProvider providerFor(
-            @NonNull Class<?> type,
-            @Nullable Type genericType,
-            @NonNull Set<Annotation> annotations) {
-          return (ser, f, p) -> "Hi There";
-        }
-      };
   private HandlerParameterContributors underTest;
 
   @Nested

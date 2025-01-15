@@ -16,26 +16,19 @@
 package org.factcast.factus.projection.parameter;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Sets;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.lang.reflect.Type;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Optional;
+import java.lang.reflect.*;
+import java.util.*;
 import javax.annotation.Nullable;
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
-import org.factcast.core.Fact;
-import org.factcast.core.FactStreamPosition;
-import org.factcast.core.TestFact;
+import org.factcast.core.*;
 import org.factcast.factus.Meta;
 import org.factcast.factus.event.EventSerializer;
-import org.factcast.factus.projection.FactStreamPositionAware;
-import org.factcast.factus.projection.Projection;
+import org.factcast.factus.projection.*;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings({"ALL", "java:S1186"})
@@ -103,6 +96,79 @@ class DefaultHandlerParameterContributorTest {
   }
 
   @Test
+  void providesListMeta() {
+    class MetaString {
+      public void apply(@Meta("narf") List<String> narf) {}
+    }
+
+    Method m =
+        Arrays.stream(MetaString.class.getMethods())
+            .filter(me -> me.getName().equals("apply"))
+            .findFirst()
+            .get();
+    DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
+    HandlerParameterProvider provider =
+        undertest.providerFor(
+            m.getParameterTypes()[0],
+            m.getGenericParameterTypes()[0],
+            Sets.newHashSet(m.getParameterAnnotations()[0]));
+    Assertions.assertThat(provider).isNotNull();
+    Fact fact = Fact.builder().meta("narf", "poit").buildWithoutPayload();
+    TestProjection p = mock(TestProjection.class);
+    Assertions.assertThat((List) provider.apply(mock(EventSerializer.class), fact, p))
+        .containsExactly("poit");
+  }
+
+  @Test
+  void providesIterableMeta() {
+    class MetaString {
+      public void apply(@Meta("narf") Iterable<String> narf) {}
+    }
+
+    Method m =
+        Arrays.stream(MetaString.class.getMethods())
+            .filter(me -> me.getName().equals("apply"))
+            .findFirst()
+            .get();
+    DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
+    HandlerParameterProvider provider =
+        undertest.providerFor(
+            m.getParameterTypes()[0],
+            m.getGenericParameterTypes()[0],
+            Sets.newHashSet(m.getParameterAnnotations()[0]));
+    Assertions.assertThat(provider).isNotNull();
+    Fact fact = Fact.builder().meta("narf", "poit").buildWithoutPayload();
+    TestProjection p = mock(TestProjection.class);
+    Assertions.assertThat((List) provider.apply(mock(EventSerializer.class), fact, p))
+        .containsExactly("poit");
+  }
+
+  @Test
+  void providesListMetaMultiValue() {
+    class MetaString {
+      public void apply(@Meta("narf") List<String> narf) {}
+    }
+
+    Method m =
+        Arrays.stream(MetaString.class.getMethods())
+            .filter(me -> me.getName().equals("apply"))
+            .findFirst()
+            .get();
+    DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
+    HandlerParameterProvider provider =
+        undertest.providerFor(
+            m.getParameterTypes()[0],
+            m.getGenericParameterTypes()[0],
+            Sets.newHashSet(m.getParameterAnnotations()[0]));
+    Assertions.assertThat(provider).isNotNull();
+    Fact fact =
+        Fact.builder().addMeta("narf", "poit").addMeta("narf", "zort").buildWithoutPayload();
+    TestProjection p = mock(TestProjection.class);
+    Assertions.assertThat((List) provider.apply(mock(EventSerializer.class), fact, p))
+        .containsExactly("poit", "zort");
+  }
+
+  @Test
   void providesEmptyOptionalMeta() {
     class MetaString {
       public void apply(@Meta("narf") Optional<String> narf) {}
@@ -124,6 +190,29 @@ class DefaultHandlerParameterContributorTest {
     TestProjection p = mock(TestProjection.class);
     Assertions.assertThat(((Optional) provider.apply(mock(EventSerializer.class), fact, p)))
         .isEmpty();
+  }
+
+  @Test
+  void providesEmptyListMeta() {
+    class MetaString {
+      public void apply(@Meta("narf") List<String> narf) {}
+    }
+
+    Method m =
+        Arrays.stream(MetaString.class.getMethods())
+            .filter(me -> me.getName().equals("apply"))
+            .findFirst()
+            .get();
+    DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
+    HandlerParameterProvider provider =
+        undertest.providerFor(
+            m.getParameterTypes()[0],
+            m.getGenericParameterTypes()[0],
+            Sets.newHashSet(m.getParameterAnnotations()[0]));
+    Assertions.assertThat(provider).isNotNull();
+    Fact fact = Fact.builder().meta("no-exactly-narf", "poit").buildWithoutPayload();
+    TestProjection p = mock(TestProjection.class);
+    Assertions.assertThat(((List) provider.apply(mock(EventSerializer.class), fact, p))).isEmpty();
   }
 
   @Test
@@ -150,6 +239,29 @@ class DefaultHandlerParameterContributorTest {
   }
 
   @Test
+  void rejectsRawCollection() {
+    //noinspection rawtypes
+    class MetaString {
+      public void apply(@Meta("narf") List narf) {}
+    }
+
+    Method m =
+        Arrays.stream(MetaString.class.getMethods())
+            .filter(me -> me.getName().equals("apply"))
+            .findFirst()
+            .get();
+    DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
+    Class<?> type = m.getParameterTypes()[0];
+    Type genericType = m.getGenericParameterTypes()[0];
+    HashSet<Annotation> annotations = Sets.newHashSet(m.getParameterAnnotations()[0]);
+    assertThatThrownBy(
+            () -> {
+              undertest.providerFor(type, genericType, annotations);
+            })
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
   void rejectsRawOptional() {
     //noinspection rawtypes
     class MetaString {
@@ -171,6 +283,60 @@ class DefaultHandlerParameterContributorTest {
               undertest.providerFor(type, genericType, annotations);
             })
         .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void providesList() {
+    //noinspection rawtypes
+    class MetaList extends TestProjection {
+      @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+      public void apply(@Meta("narf") List<String> narf) {}
+    }
+
+    Method m =
+        Arrays.stream(MetaList.class.getMethods())
+            .filter(me -> me.getName().equals("apply"))
+            .findFirst()
+            .get();
+
+    DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
+    HandlerParameterProvider provider =
+        undertest.providerFor(
+            m.getParameterTypes()[0],
+            m.getGenericParameterTypes()[0],
+            Sets.newHashSet(m.getParameterAnnotations()[0]));
+    Assertions.assertThat(provider).isNotNull();
+    Fact fact =
+        Fact.builder().addMeta("narf", "poit").addMeta("narf", "zort").buildWithoutPayload();
+    MetaList p = mock(MetaList.class);
+    Assertions.assertThat((List) (provider.apply(mock(EventSerializer.class), fact, p)))
+        .containsExactly("poit", "zort");
+  }
+
+  @Test
+  void providesEmptyList() {
+    //noinspection rawtypes
+    class MetaList extends TestProjection {
+      @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+      public void apply(@Meta("narf") List<String> narf) {}
+    }
+
+    Method m =
+        Arrays.stream(MetaList.class.getMethods())
+            .filter(me -> me.getName().equals("apply"))
+            .findFirst()
+            .get();
+
+    DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
+    HandlerParameterProvider provider =
+        undertest.providerFor(
+            m.getParameterTypes()[0],
+            m.getGenericParameterTypes()[0],
+            Sets.newHashSet(m.getParameterAnnotations()[0]));
+    Assertions.assertThat(provider).isNotNull();
+    Fact fact = Fact.builder().buildWithoutPayload();
+    MetaList p = mock(MetaList.class);
+    Assertions.assertThat((List) (provider.apply(mock(EventSerializer.class), fact, p))).isEmpty();
   }
 
   @Test
@@ -246,6 +412,28 @@ class DefaultHandlerParameterContributorTest {
   void rejectsNonStringType() {
     class MetaString {
       public void apply(@Meta("narf") Integer narf) {}
+    }
+
+    Method m =
+        Arrays.stream(MetaString.class.getMethods())
+            .filter(me -> me.getName().equals("apply"))
+            .findFirst()
+            .get();
+    DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
+    Class<?> type = m.getParameterTypes()[0];
+    Type genericType = m.getGenericParameterTypes()[0];
+    HashSet<Annotation> annotations = Sets.newHashSet(m.getParameterAnnotations()[0]);
+    assertThatThrownBy(
+            () -> {
+              undertest.providerFor(type, genericType, annotations);
+            })
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void rejectsNonStringCollectionType() {
+    class MetaString {
+      public void apply(@Meta("narf") Iterable<Integer> narf) {}
     }
 
     Method m =

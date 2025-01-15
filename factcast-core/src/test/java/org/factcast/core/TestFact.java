@@ -15,11 +15,12 @@
  */
 package org.factcast.core;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import com.fasterxml.jackson.databind.node.*;
 import java.util.*;
+import javax.annotation.Nullable;
 import lombok.*;
 import org.factcast.core.util.FactCastJson;
+import org.factcast.factus.event.MetaMap;
 
 @AllArgsConstructor
 @Getter
@@ -42,20 +43,10 @@ public class TestFact implements Fact {
 
   String jsonPayload = "{}";
 
-  Map<String, String> meta = new HashMap<>();
+  MetaMap meta = new MetaMap();
 
   public TestFact() {
-    meta("_ser", String.valueOf(this.serial));
-  }
-
-  @Override
-  public String meta(String key) {
-    return meta.get(key);
-  }
-
-  public TestFact meta(String key, String value) {
-    meta.put(key, value);
-    return this;
+    meta().set("_ser", String.valueOf(this.serial));
   }
 
   @Override
@@ -80,6 +71,12 @@ public class TestFact implements Fact {
     return header;
   }
 
+  @Nullable
+  @Override
+  public String meta(@NonNull String key) {
+    return meta.getFirst(key);
+  }
+
   @SneakyThrows
   public static Fact copy(@NonNull Fact f) {
     String header = f.jsonHeader();
@@ -87,5 +84,15 @@ public class TestFact implements Fact {
     ObjectNode h = (ObjectNode) FactCastJson.readTree(header);
     h.set("id", new TextNode(UUID.randomUUID().toString()));
     return Fact.of(h.toString(), payload);
+  }
+
+  public TestFact meta(String k, String v) {
+    meta().set(k, v);
+    return this;
+  }
+
+  public TestFact meta(String k, Collection<String> vc) {
+    vc.forEach(v -> meta().add(k, v));
+    return this;
   }
 }

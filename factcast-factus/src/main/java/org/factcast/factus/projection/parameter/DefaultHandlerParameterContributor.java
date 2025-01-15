@@ -114,6 +114,20 @@ class MetaProvider implements HandlerParameterProvider {
     checkPreconditionsForKey(key);
     checkPreconditionsForString(targetType, annotations);
     checkPreconditionsForOptional(targetType, genericType);
+    checkPreconditionsForCollection(targetType, genericType);
+  }
+
+  private void checkPreconditionsForCollection(Class<?> targetType, Type genericType) {
+    if (Iterable.class.isAssignableFrom(targetType)) {
+      if (!(genericType instanceof ParameterizedType))
+        throw new IllegalArgumentException(
+            "Unparametrized Collection detected. It should be List<String> instead.");
+      else {
+        if (((ParameterizedType) genericType).getActualTypeArguments()[0] != String.class)
+          throw new IllegalArgumentException(
+              "Badly parametrized Collection detected. It should be List<String> instead.");
+      }
+    }
   }
 
   private void checkPreconditionsForKey(String key) {
@@ -122,9 +136,13 @@ class MetaProvider implements HandlerParameterProvider {
   }
 
   private void checkPreconditionsForAllowedTypes(Class<?> targetType) {
-    if (!(targetType == Optional.class || targetType == String.class))
+    if (!(targetType == Optional.class
+        || targetType == List.class
+        || targetType == Collection.class
+        || targetType == Iterable.class
+        || targetType == String.class))
       throw new IllegalArgumentException(
-          "Only String or Optional<String> types for @Meta annotated Parameters are allowed");
+          "Only String, Optional<String> or List<String> types for @Meta annotated Parameters are allowed");
   }
 
   private static void checkPreconditionsForString(
@@ -152,8 +170,17 @@ class MetaProvider implements HandlerParameterProvider {
   @Override
   public Object apply(
       @NonNull EventSerializer s, @NonNull Fact fact, @NonNull Projection projection) {
-    String value = fact.header().meta(key);
+    String value = fact.header().meta().getFirst(key);
     if (targetType == Optional.class) return Optional.ofNullable(value);
+    if (isList(targetType) || isIterable(targetType)) return fact.header().meta().getAll(key);
     else return value;
+  }
+
+  private boolean isList(Class<?> targetType) {
+    return (targetType.isAssignableFrom(List.class));
+  }
+
+  private boolean isIterable(Class<?> targetType) {
+    return (targetType.isAssignableFrom(Iterable.class));
   }
 }
