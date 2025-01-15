@@ -38,9 +38,10 @@ class PgBlacklistDataProviderTest {
   @Nested
   class WhenAfteringSingletonsInstantiated {
     @Test
-    void fetches() {
+    void fetchesInitially() {
+      underTest = spy(underTest);
       underTest.afterSingletonsInstantiated();
-      verify(blacklist).accept(any());
+      verify(underTest).updateBlacklist();
     }
 
     @Test
@@ -66,6 +67,7 @@ class PgBlacklistDataProviderTest {
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Nested
   class WhenUpdatingBlacklist {
     private final UUID FACT_ID = UUID.randomUUID();
@@ -80,6 +82,7 @@ class PgBlacklistDataProviderTest {
 
     @Test
     void updatesSet() {
+
       underTest.on(new BlacklistChangeNotification(1));
       verify(blacklist).accept(Sets.newHashSet(NEW_FACT_ID, FACT_ID));
 

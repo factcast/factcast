@@ -42,7 +42,7 @@ import org.postgresql.jdbc.PgConnection;
 class PgListenerTest {
 
   private static final Predicate<Object> IS_FACT_INSERT =
-      f -> f instanceof FactInsertionNotification;
+      FactInsertionNotification.class::isInstance;
   private static final Predicate<Object> NOT_SCHEDULED_POLL =
       f -> !f.equals(FactInsertionNotification.internal());
 
@@ -60,7 +60,7 @@ class PgListenerTest {
 
   final StoreConfigurationProperties props = new StoreConfigurationProperties();
 
-  @Captor ArgumentCaptor<Object> factCaptor;
+  @Captor ArgumentCaptor<Object> notificationCaptor;
 
   @Test
   public void postgresListenersAreSetup() throws SQLException {
@@ -77,9 +77,9 @@ class PgListenerTest {
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
     pgListener.informSubscribersAboutFreshConnection();
 
-    verify(eventBus, atLeastOnce()).post(factCaptor.capture());
+    verify(eventBus, atLeastOnce()).post(notificationCaptor.capture());
     assertThat(
-            factCaptor.getAllValues().stream()
+            notificationCaptor.getAllValues().stream()
                 .anyMatch(e -> e.equals(FactInsertionNotification.internal())))
         .isTrue();
   }
@@ -162,9 +162,9 @@ class PgListenerTest {
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
     pgListener.processNotifications(receivedNotifications);
 
-    verify(eventBus, times(1)).post(factCaptor.capture());
+    verify(eventBus, times(1)).post(notificationCaptor.capture());
     assertThat(
-            factCaptor.getAllValues().stream()
+            notificationCaptor.getAllValues().stream()
                 .anyMatch(FactInsertionNotification.class::isInstance))
         .isTrue();
   }
@@ -249,25 +249,27 @@ class PgListenerTest {
     latch.await(1, TimeUnit.MINUTES);
     pgListener.destroy();
 
-    verify(eventBus, atLeastOnce()).post(factCaptor.capture());
-    var allEvents = factCaptor.getAllValues();
+    verify(eventBus, atLeastOnce()).post(notificationCaptor.capture());
+    var allNotifications = notificationCaptor.getAllValues();
 
     // first event is the general wakeup to the subscribers after startup
     assertThat(
-            factCaptor.getAllValues().stream()
+            allNotifications.stream()
                 .anyMatch(
                     e ->
                         e instanceof FactInsertionNotification
                             && ((FactInsertionNotification) e).ser() == null))
         .isTrue();
     // events 2 - incl. 4 are notifies
+    allNotifications.forEach(System.out::println);
     assertTrue(
-        allEvents.stream()
+        allNotifications.stream()
             .filter(e -> !(e instanceof BlacklistChangeNotification))
+            .filter(e -> !(e instanceof SchemaStoreChangeNotification))
             .allMatch(IS_FACT_INSERT));
 
     // grouped by tx id, ns and type
-    assertThat(allEvents.stream().filter(IS_FACT_INSERT).filter(NOT_SCHEDULED_POLL))
+    assertThat(allNotifications.stream().filter(IS_FACT_INSERT).filter(NOT_SCHEDULED_POLL))
         .containsExactlyInAnyOrder(
             new FactInsertionNotification("namespace", "theType", 1L),
             new FactInsertionNotification("namespace", "theOtherType", 2L),
@@ -284,20 +286,17 @@ class PgListenerTest {
             1,
             "{\"ns\":\"namespace\",\"type\":\"theType\",\"version\":1,\"txId\":123}");
     PGNotification invalidNotification =
-        new Notification(
-            PgConstants.CHANNEL_SCHEMASTORE_CHANGE,
-            1,
-            "{\"ns\":\"namespace\",\"type\":\"theType\",\"txId\":123}");
+        new Notification(PgConstants.CHANNEL_SCHEMASTORE_CHANGE, 1, "{\"ns\":\"namespace\"}");
     PGNotification otherChannelNotification =
         new Notification(
             PgConstants.CHANNEL_FACT_INSERT,
             1,
-            "{\"ns\":\"namespace\",\"type\":\"theType\",\"version\":1,\"txId\":123}");
+            "{\"ns\":\"namespace\",\"type\":\"theType\",\"version\":2,\"txId\":123}");
     PGNotification anotherValidNotification =
         new Notification(
             PgConstants.CHANNEL_SCHEMASTORE_CHANGE,
             1,
-            "{\"ns\":\"namespace\",\"type\":\"theType\",\"version\":2,\"txId\":123}");
+            "{\"ns\":\"namespace\",\"type\":\"theType\",\"version\":3,\"txId\":123}");
 
     when(pgConnectionSupplier.get(any())).thenReturn(conn);
     when(conn.prepareStatement(anyString())).thenReturn(ps);
@@ -320,7 +319,7 @@ class PgListenerTest {
     latch.await(1, TimeUnit.MINUTES);
     pgListener.destroy();
 
-    verify(pgListener, times(1))
+    verify(eventBus, times(1))
         .post(
             ArgumentMatchers.argThat(
                 n ->
@@ -328,16 +327,19 @@ class PgListenerTest {
                         && ((SchemaStoreChangeNotification) n).ns().equals("namespace")
                         && ((SchemaStoreChangeNotification) n).type().equals("theType")
                         && ((SchemaStoreChangeNotification) n).version() == 1));
-    verify(pgListener, times(1))
+    verify(eventBus, times(1))
         .post(
             ArgumentMatchers.argThat(
                 n ->
                     SchemaStoreChangeNotification.class.isInstance(n)
                         && ((SchemaStoreChangeNotification) n).ns().equals("namespace")
                         && ((SchemaStoreChangeNotification) n).type().equals("theType")
-                        && ((SchemaStoreChangeNotification) n).version() == 2));
+                        && ((SchemaStoreChangeNotification) n).version() == 3));
 
-    verify(eventBus, times(2)).post(any(SchemaStoreChangeNotification.class));
+    // the initial one
+    // v1
+    // v3
+    verify(eventBus, times(3)).post(any(SchemaStoreChangeNotification.class));
   }
 
   @Test

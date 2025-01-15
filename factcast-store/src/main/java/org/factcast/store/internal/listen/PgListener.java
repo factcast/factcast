@@ -99,6 +99,13 @@ public class PgListener implements InitializingBean, DisposableBean {
         }
       }
     }
+
+    private void sleep() {
+      try {
+        Thread.sleep(props.getFactNotificationNewConnectionWaitTimeInMillis());
+      } catch (InterruptedException ignore) {
+      }
+    }
   }
 
   private void connectionSetup(PgConnection pc) throws SQLException {
@@ -130,6 +137,7 @@ public class PgListener implements InitializingBean, DisposableBean {
   protected void informSubscribersAboutFreshConnection() {
     post(FactInsertionNotification.internal());
     post(BlacklistChangeNotification.internal());
+    post(SchemaStoreChangeNotification.internal());
   }
 
   @VisibleForTesting
@@ -137,6 +145,7 @@ public class PgListener implements InitializingBean, DisposableBean {
     List<PGNotification> list = List.of(notifications);
     Predicate<PGNotification> isFactInsert =
         n -> PgConstants.CHANNEL_FACT_INSERT.equals(n.getName());
+
     List<PGNotification> nonFactInserts =
         list.stream().filter(Predicate.not(isFactInsert)).toList();
 
@@ -148,7 +157,7 @@ public class PgListener implements InitializingBean, DisposableBean {
         .filter(Objects::nonNull)
         .forEach(this::post);
 
-    // if does not make any sense here to filter before parsing, so that we start with mapping
+    // it does not make any sense here to filter before parsing, so that we start with the mapping
     Stream<FactInsertionNotification> factInserts =
         list.stream()
             .filter(isFactInsert)
@@ -157,6 +166,7 @@ public class PgListener implements InitializingBean, DisposableBean {
     compact(factInserts).forEach(this::post);
   }
 
+  /** filters duplications regarding ns&type */
   @VisibleForTesting
   Stream<FactInsertionNotification> compact(Stream<FactInsertionNotification> factInserts) {
     Set<String> coordinatesIncluded = new HashSet<>();
@@ -224,14 +234,6 @@ public class PgListener implements InitializingBean, DisposableBean {
           .timer(StoreMetrics.OP.NOTIFY_ROUNDTRIP)
           .record((System.nanoTime() - start), TimeUnit.NANOSECONDS);
       return notifications;
-    }
-  }
-
-  @VisibleForTesting
-  protected void sleep() {
-    try {
-      Thread.sleep(props.getFactNotificationNewConnectionWaitTimeInMillis());
-    } catch (InterruptedException ignore) {
     }
   }
 

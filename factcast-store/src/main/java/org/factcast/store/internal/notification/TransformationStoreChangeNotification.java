@@ -37,8 +37,20 @@ public class TransformationStoreChangeNotification extends StoreNotification {
 
   @Nullable
   @Override
-  String uniqueId() {
+  public String uniqueId() {
     // there might be multiple changes in on txId
     return PgConstants.CHANNEL_TRANSFORMATIONSTORE_CHANGE + "-" + ns + "-" + type + "-" + txId;
+  }
+
+  /**
+   * TODO suggestion:
+   *
+   * <p>we may consider not even distributing this at all, because handling them would need write
+   * access to the persistent cache. If the (maybe not) publishing party takes care of it, that'd be
+   * enough, ass there are no near caches used.
+   */
+  @Override
+  public boolean distributed() {
+    return false;
   }
 }

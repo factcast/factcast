@@ -45,7 +45,7 @@ public abstract class StoreNotification {
    * @return id to dedup on
    */
   @Nullable
-  abstract String uniqueId();
+  public abstract String uniqueId();
 
   /**
    * some Events are process internal so that
@@ -53,7 +53,7 @@ public abstract class StoreNotification {
    * @return true if the StoreEvent should be distributed to externalized infrastructure, *if* it is
    *     configured, false if it is supposed to be instance-only.
    */
-  boolean distributed() {
+  public boolean distributed() {
     return true;
   }
 

@@ -39,7 +39,7 @@ public class BlacklistChangeNotification extends StoreNotification {
   public static BlacklistChangeNotification internal() {
     return new BlacklistChangeNotification(0L) {
       @Override
-      boolean distributed() {
+      public boolean distributed() {
         return false;
       }
 

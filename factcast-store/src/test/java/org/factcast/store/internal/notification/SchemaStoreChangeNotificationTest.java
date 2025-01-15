@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Objects;
 import lombok.NonNull;
+import org.assertj.core.api.Assertions;
 import org.factcast.store.internal.PgConstants;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -67,6 +68,23 @@ class SchemaStoreChangeNotificationTest {
               "{\"ns\":\"ns1\",\"type\":\"type1\",\"version\":3,\"txId\":1}");
       assertThat(SchemaStoreChangeNotification.from(n1))
           .isEqualTo(new SchemaStoreChangeNotification("ns1", "type1", 3, 1L));
+    }
+  }
+
+  @Nested
+  class WhenDistributing {
+
+    @Test
+    void internalIsNotDistributed() {
+      org.assertj.core.api.Assertions.assertThat(
+              SchemaStoreChangeNotification.internal().distributed())
+          .isFalse();
+    }
+
+    @Test
+    void distributedIfSerialKnown() {
+      SchemaStoreChangeNotification probe = new SchemaStoreChangeNotification("ns", "type", 1, 1L);
+      Assertions.assertThat(probe.distributed()).isTrue();
     }
   }
 }

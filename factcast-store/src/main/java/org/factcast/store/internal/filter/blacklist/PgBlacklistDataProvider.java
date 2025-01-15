@@ -15,6 +15,7 @@
  */
 package org.factcast.store.internal.filter.blacklist;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
 import com.google.common.eventbus.*;
 import java.util.*;
@@ -43,7 +44,7 @@ public final class PgBlacklistDataProvider
   @Override
   public void afterSingletonsInstantiated() {
     bus.register(this);
-    updateBlacklist();
+    updateBlacklist(); // just to be safe
   }
 
   @Subscribe
@@ -52,7 +53,8 @@ public final class PgBlacklistDataProvider
     updateBlacklist();
   }
 
-  private void updateBlacklist() {
+  @VisibleForTesting
+  void updateBlacklist() {
     blacklist.accept(fetchBlacklist());
   }
 
