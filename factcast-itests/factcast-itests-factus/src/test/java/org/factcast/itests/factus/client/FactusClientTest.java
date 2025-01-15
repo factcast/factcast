@@ -33,11 +33,14 @@ import java.util.function.Supplier;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import nl.altindag.log.LogCaptor;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.factcast.core.event.EventConverter;
+import org.factcast.core.store.RetryableException;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.Factus;
+import org.factcast.factus.FactusImpl;
 import org.factcast.factus.HandlerFor;
 import org.factcast.factus.Meta;
 import org.factcast.factus.event.EventObject;
@@ -58,6 +61,7 @@ import org.redisson.api.RedissonClient;
 import org.redisson.api.TransactionOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 @ContextConfiguration(
     classes = {
@@ -726,6 +730,39 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       var factId1 = factus.publish(new UserBored("Kenny"), Fact::id);
       assertThatThrownBy(() -> factus.waitFor(subscribedUserNames, factId1, timeout))
           .isInstanceOf(TimeoutException.class);
+    }
+  }
+
+  @Test
+  void testTokenReleaseAfterTooManyFailures() throws Exception {
+    OverrideAndFailSubscribedUserNames subscribedUserNames =
+        new OverrideAndFailSubscribedUserNames();
+    subscribedUserNames.clear();
+
+    factus.publish(new UserCreated("Kyle"));
+    factus.publish(new UserDeleted(UUID.randomUUID()));
+
+    try (var logCaptor = LogCaptor.forClass(FactusImpl.class)) {
+      logCaptor.setLogLevelToTrace();
+      factus.subscribe(subscribedUserNames);
+
+      Awaitility.await()
+          .until(
+              () ->
+                  !logCaptor.getTraceLogs().isEmpty()
+                      && logCaptor
+                          .getTraceLogs()
+                          .get(0)
+                          .contains(
+                              "Closing AutoCloseable for class class org.factcast.factus.projection.LocalWriteToken"));
+    }
+  }
+
+  static class OverrideAndFailSubscribedUserNames extends SubscribedUserNames {
+
+    @Override
+    public void apply(UserDeleted deleted, @Nullable String signee) {
+      throw new RetryableException(new Throwable("Test exception"));
     }
   }
 
