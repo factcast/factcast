@@ -15,23 +15,22 @@
  */
 package org.factcast.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Sets;
 import java.util.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.util.FactCastJson;
+import org.factcast.factus.event.*;
 import org.factcast.factus.event.EventObject;
-import org.factcast.factus.event.Specification;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-public class FactTest {
+class FactTest {
 
   @Test
   void testOfNull1() {
@@ -156,13 +155,13 @@ public class FactTest {
                 + "}",
             "{}");
 
-    org.assertj.core.api.Assertions.assertThatThrownBy(
+    assertThatThrownBy(
             () -> {
               one.before(two);
             })
         .isInstanceOf(IllegalStateException.class);
 
-    org.assertj.core.api.Assertions.assertThatThrownBy(
+    assertThatThrownBy(
             () -> {
               two.before(one);
             })
@@ -199,8 +198,8 @@ public class FactTest {
             .aggId(aggId1)
             .aggId(aggId2)
             .aggId(aggId3)
-            .meta("foo", "bar")
-            .meta("buh", "bang")
+            .setMeta("foo", "bar")
+            .setMeta("buh", "bang")
             .id(factId)
             .build("{\"a\":2}");
     assertEquals("ns", f.ns());
@@ -209,8 +208,8 @@ public class FactTest {
     assertTrue(f.aggIds().contains(aggId2));
     assertTrue(f.aggIds().contains(aggId3));
     assertFalse(f.aggIds().contains(factId));
-    assertEquals("bar", f.meta("foo"));
-    assertEquals("bang", f.meta("buh"));
+    assertEquals("bar", f.header().meta().getFirst("foo"));
+    assertEquals("bang", f.header().meta().getFirst("buh"));
     assertEquals("{\"a\":2}", f.jsonPayload());
   }
 
@@ -305,6 +304,37 @@ public class FactTest {
     assertThat(f.version()).isZero();
   }
 
+  @Test
+  void buildFromEventObjectWIthVersion() {
+    UUID userId = UUID.randomUUID();
+    UUID factId = UUID.randomUUID();
+    String name = "Peter";
+    SomeUserCreatedEvent event = new SomeUserCreatedEvent(userId, name);
+    Fact.FactFromEventBuilder b = Fact.buildFrom(event);
+    assertThat(b).isNotNull();
+
+    Fact f =
+        b.serial(12).id(factId).version(7).meta("key", "value").meta("key", "otherValue").build();
+
+    assertThat(f.header().serial()).isEqualTo(12);
+    assertThat(f.id()).isEqualTo(factId);
+    assertThat(f.jsonPayload()).isEqualTo(FactCastJson.writeValueAsString(event));
+    assertThat(f.aggIds()).hasSize(1).containsExactly(userId);
+    assertThat(f.ns()).isEqualTo("test");
+    assertThat(f.type()).isEqualTo("SomeUserCreatedEvent");
+    assertThat(f.version()).isEqualTo(7);
+    assertThat(f.header().meta().getFirst("key")).isEqualTo("otherValue"); // overridden
+    assertThat(f.header().meta().getAll("key")).hasSize(1); // overridden
+  }
+
+  @Specification(ns = "test")
+  private static class MyEventObject implements EventObject {
+    @Override
+    public Set<UUID> aggregateIds() {
+      return Sets.newHashSet(UUID.randomUUID());
+    }
+  }
+
   @Data
   @NoArgsConstructor
   @AllArgsConstructor
@@ -318,5 +348,80 @@ public class FactTest {
     public Set<UUID> aggregateIds() {
       return Sets.newHashSet(aggregateId);
     }
+  }
+
+  @SuppressWarnings("deprecation")
+  @Test
+  void testMultiMapCompatibility() {
+    Fact fact = Fact.builder().meta("foo", "bar").meta("foo", "baz").buildWithoutPayload();
+    MetaMap meta = fact.header().meta();
+    Assertions.assertThat(meta).isNotNull();
+    // check that set is being used rather than add
+    Assertions.assertThat(meta.getAll("foo")).hasSize(1);
+    Assertions.assertThat(meta.getFirst("foo")).isEqualTo("baz");
+  }
+
+  @Test
+  void testMultiMapSet() {
+    Fact fact = Fact.builder().setMeta("foo", "bar").setMeta("foo", "baz").buildWithoutPayload();
+    MetaMap meta = fact.header().meta();
+    Assertions.assertThat(meta).isNotNull();
+    // check that set is being used rather than add
+    Assertions.assertThat(meta.getAll("foo")).hasSize(1);
+    Assertions.assertThat(meta.getFirst("foo")).isEqualTo("baz");
+  }
+
+  @Test
+  void testMultiMapAdd() {
+    Fact fact = Fact.builder().addMeta("foo", "bar").addMeta("foo", "baz").buildWithoutPayload();
+    MetaMap meta = fact.header().meta();
+    Assertions.assertThat(meta).isNotNull();
+    // check that set is being used rather than add
+    Assertions.assertThat(meta.getAll("foo")).hasSize(2);
+    Assertions.assertThat(meta.getAll("foo")).containsExactly("bar", "baz");
+  }
+
+  @Test
+  void testVersion() {
+    Fact fact = Fact.builder().version(12).buildWithoutPayload();
+    Assertions.assertThat(fact.version()).isEqualTo(12);
+  }
+
+  @Test
+  void rejectsVersionOutOfBounds() {
+    Fact.Builder builder = Fact.builder();
+    assertThatThrownBy(
+            () -> {
+              builder.version(0);
+            })
+        .isInstanceOf(IllegalArgumentException.class);
+
+    assertThatThrownBy(
+            () -> {
+              builder.version(-1);
+            })
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void usesSerializer() {
+    @NonNull EventObject event = new MyEventObject();
+    String expectedJson = "{\"x\":¸\"y\"}";
+
+    @NonNull
+    EventSerializer mySerializer =
+        new EventSerializer() {
+          @Override
+          public <T extends EventObject> T deserialize(Class<T> targetClass, String json) {
+            return null;
+          }
+
+          @Override
+          public <T extends EventObject> String serialize(T pojo) {
+            return expectedJson;
+          }
+        };
+    Fact.FactFromEventBuilder builder = Fact.buildFrom(event).using(mySerializer);
+    Assertions.assertThat(builder.build().jsonPayload()).isEqualTo(expectedJson);
   }
 }

@@ -93,7 +93,7 @@
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
     <maven.compiler.version>3.13.0</maven.compiler.version>
-    <spotless-maven-plugin.version>2.44.1</spotless-maven-plugin.version>
+    <spotless-maven-plugin.version>2.44.2</spotless-maven-plugin.version>
     <directory-maven-plugin.version>1.0</directory-maven-plugin.version>
     <nexus-staging-maven-plugin.version>1.7.0</nexus-staging-maven-plugin.version>
     <assertj.version>3.27.2</assertj.version>
@@ -116,7 +116,7 @@
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <mockk.version>1.13.16</mockk.version>
     <redisson.version>3.43.0</redisson.version>
-    <aws-sdk.version>2.29.51</aws-sdk.version>
+    <aws-sdk.version>2.29.52</aws-sdk.version>
     <graaljs.version>24.1.1</graaljs.version>
     <shedlock.version>6.2.0</shedlock.version>
     <byte-buddy.version>1.15.11</byte-buddy.version>
