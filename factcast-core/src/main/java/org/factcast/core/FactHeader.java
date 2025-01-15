@@ -37,7 +37,7 @@ public class FactHeader {
 
   @JsonProperty Set<UUID> aggIds = new HashSet<>();
 
-  @JsonProperty final MetaMap meta = new MetaMap();
+  @NonNull @JsonProperty final MetaMap meta = new MetaMap();
 
   @Nullable
   // could be null if not yet published to the factcast server. This should only happen in unit
