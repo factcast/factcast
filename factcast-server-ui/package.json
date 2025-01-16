@@ -60,12 +60,12 @@
     "date-fns": "$date-fns",
     "jsonpath-plus": "$jsonpath-plus",
     "jsonc-parser": "$jsonc-parser",
+    "@vaadin-component-factory/vcf-popup": "$@vaadin-component-factory/vcf-popup",
+    "@vaadin/router": "$@vaadin/router",
     "@vaadin/react-components": "$@vaadin/react-components",
     "react-dom": "$react-dom",
     "react-router-dom": "$react-router-dom",
-    "react": "$react",
-    "@vaadin-component-factory/vcf-popup": "$@vaadin-component-factory/vcf-popup",
-    "@vaadin/router": "$@vaadin/router"
+    "react": "$react"
   },
   "vaadin": {
     "dependencies": {

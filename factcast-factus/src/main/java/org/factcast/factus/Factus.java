@@ -16,32 +16,23 @@
 package org.factcast.factus;
 
 import com.google.common.base.Throwables;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.*;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import java.io.Closeable;
 import java.time.Duration;
-import java.util.List;
-import java.util.OptionalLong;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
-import java.util.function.IntToLongFunction;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.function.*;
 import lombok.NonNull;
-import org.factcast.core.Fact;
-import org.factcast.core.FactStreamPosition;
+import org.factcast.core.*;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.batch.PublishBatch;
 import org.factcast.factus.event.EventObject;
-import org.factcast.factus.lock.Locked;
-import org.factcast.factus.lock.LockedOnSpecs;
+import org.factcast.factus.lock.*;
 import org.factcast.factus.projection.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.*;
 
 /**
  * Factus is a high-level API that should make building EDA with FactCast from java more convenient.

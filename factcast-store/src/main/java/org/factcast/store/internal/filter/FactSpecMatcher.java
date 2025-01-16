@@ -18,16 +18,11 @@ package org.factcast.store.internal.filter;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.*;
 import java.util.function.Predicate;
-import lombok.Generated;
-import lombok.NonNull;
-import lombok.SneakyThrows;
+import lombok.*;
 import org.factcast.core.Fact;
-import org.factcast.core.spec.FactSpec;
-import org.factcast.core.spec.FilterScript;
+import org.factcast.core.spec.*;
 import org.factcast.core.util.FactCastJson;
-import org.factcast.store.internal.script.JSArgument;
-import org.factcast.store.internal.script.JSEngine;
-import org.factcast.store.internal.script.JSEngineFactory;
+import org.factcast.store.internal.script.*;
 
 /**
  * Matches facts against specifications.
@@ -85,7 +80,8 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     if ((meta.isEmpty())) {
       return true;
     }
-    return meta.entrySet().stream().allMatch(e -> e.getValue().equals(t.header().meta(e.getKey())));
+    return meta.entrySet().stream()
+        .allMatch(e -> t.header().meta().getAll(e.getKey()).contains(e.getValue()));
   }
 
   boolean metaKeyExistsMatch(Fact t) {
@@ -96,7 +92,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
         .allMatch(
             e -> {
               boolean mustExist = Objects.requireNonNull(e.getValue());
-              String metaValue = t.header().meta(e.getKey());
+              String metaValue = t.header().meta().getFirst(e.getKey());
               return (mustExist && metaValue != null) || (!mustExist && metaValue == null);
             });
   }

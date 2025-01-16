@@ -15,16 +15,26 @@
  */
 package org.factcast.factus.event;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 /** EventObjects are expected to be annotated with @{@link Specification}. */
 public interface EventObject {
 
+  /**
+   * @return KV-Map that does not allow for multiple values per key
+   * @deprecated Please implement additionalMeta() instead (sorry for the naming)
+   */
+  @Deprecated
   default Map<String, String> additionalMetaMap() {
     return Collections.emptyMap();
+  }
+
+  /**
+   * if we hit this impl, that means that additionalMetaMap() is probably implemented. We'd want to
+   * change it of course, once we can make sure all generated Events implement this method instead.
+   */
+  default MetaMap additionalMeta() {
+    return MetaMap.from(additionalMetaMap());
   }
 
   Set<UUID> aggregateIds();

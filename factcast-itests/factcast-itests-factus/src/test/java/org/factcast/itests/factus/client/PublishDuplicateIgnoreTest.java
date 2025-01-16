@@ -22,26 +22,21 @@ import static org.awaitility.Awaitility.await;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
-import lombok.Getter;
-import lombok.SneakyThrows;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import nl.altindag.console.ConsoleCaptor;
-import org.factcast.core.Fact;
-import org.factcast.core.FactCast;
-import org.factcast.core.event.EventConverter;
-import org.factcast.factus.Factus;
-import org.factcast.factus.Handler;
+import org.factcast.core.*;
+import org.factcast.factus.*;
+import org.factcast.factus.event.EventConverter;
 import org.factcast.factus.projection.LocalManagedProjection;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.config.RedissonProjectionConfiguration;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.*;
 
 @SpringBootTest
 @ContextConfiguration(
