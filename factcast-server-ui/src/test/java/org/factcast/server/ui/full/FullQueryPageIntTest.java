@@ -256,6 +256,24 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
     }
 
     @RetryingTest(maxAttempts = 5, minSuccess = 1)
+    void multiMetaFilterOptions() {
+      loginFor("/ui/full");
+      // setup result
+      selectNamespace("users");
+      fromScratch();
+      query();
+
+      assertThat(jsonView()).containsText(USER1_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
+
+      jsonView().getByText("\"bar2\"").first().hover();
+      jsonView().getByText("Filter for foo:bar2").first().click();
+
+      assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
+      assertThat(jsonView()).not().containsText(USER1_EVENT_ID.toString());
+    }
+
+    @RetryingTest(maxAttempts = 5, minSuccess = 1)
     void aggIdFilterOptions() {
       loginFor("/ui/full");
       // setup result

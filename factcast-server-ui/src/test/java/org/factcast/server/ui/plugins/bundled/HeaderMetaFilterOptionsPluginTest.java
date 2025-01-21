@@ -17,6 +17,7 @@ package org.factcast.server.ui.plugins.bundled;
 
 import static org.mockito.Mockito.*;
 
+import java.util.List;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.factcast.factus.event.MetaMap;
@@ -45,7 +46,7 @@ class HeaderMetaFilterOptionsPluginTest {
 
       underTest.doHandle(fact, payload, jsonEntryMetaData);
 
-      verify(jsonEntryMetaData).addHeaderMetaFilterOption("$.meta.foo", "foo", "bar");
+      verify(jsonEntryMetaData).addHeaderMetaFilterOption("$.meta.foo", "foo", List.of("bar"));
       verifyNoMoreInteractions(jsonEntryMetaData);
     }
   }
