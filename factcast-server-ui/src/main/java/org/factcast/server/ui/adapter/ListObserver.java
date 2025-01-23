@@ -15,8 +15,6 @@
  */
 package org.factcast.server.ui.adapter;
 
-import java.util.ArrayList;
-import java.util.List;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.core.Fact;
@@ -25,7 +23,6 @@ import org.factcast.core.Fact;
 public class ListObserver extends AbstractListObserver {
   private int offset;
   private int limit;
-  private final List<Fact> list = new ArrayList<>();
 
   public ListObserver(int limit, int offset) {
     this.offset = offset;
@@ -42,7 +39,7 @@ public class ListObserver extends AbstractListObserver {
       offset--;
     } else {
       limit--;
-      list.add(0, element);
+      list().add(0, element);
     }
   }
 

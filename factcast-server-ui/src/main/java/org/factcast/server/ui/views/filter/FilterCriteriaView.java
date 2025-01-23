@@ -33,19 +33,19 @@ import org.factcast.server.ui.port.FactRepository;
 import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
 
 @NoCoverageReportToBeGenerated
-public class FilterCriteriaView extends VerticalLayout {
+public class FilterCriteriaView<F extends FilterBean> extends VerticalLayout {
 
   private final NameSpacesComboBox ns;
   private final MultiSelectComboBox<String> type;
   private final TextField aggId = new AggregateIdField();
 
-  private final BeanValidationUrlStateBinder<FilterBean> binder;
+  private final BeanValidationUrlStateBinder<F> binder;
   @Getter private final FactCriteria factCriteria;
-  private final List<Binder.Binding<FilterBean, ?>> bindings = new ArrayList<>();
+  private final List<Binder.Binding<F, ?>> bindings = new ArrayList<>();
 
   FilterCriteriaView(
       @NonNull FactRepository repo,
-      @NonNull BeanValidationUrlStateBinder<FilterBean> binder,
+      @NonNull BeanValidationUrlStateBinder<F> binder,
       @NonNull FactCriteria factCriteria) {
     ns = new NameSpacesComboBox(repo.namespaces(null));
     ns.setId("namespace-selector");
@@ -86,7 +86,7 @@ public class FilterCriteriaView extends VerticalLayout {
     addClassName(LumoUtility.Padding.Bottom.MEDIUM);
   }
 
-  private void bind(BeanValidationUrlStateBinder<FilterBean> b) {
+  private void bind(BeanValidationUrlStateBinder<F> b) {
     bindings.add(
         b.forField(ns)
             .withNullRepresentation("")

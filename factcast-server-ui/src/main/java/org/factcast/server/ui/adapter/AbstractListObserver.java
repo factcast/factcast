@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 @Getter
 public abstract class AbstractListObserver implements FactObserver {
 
-  private final List<Fact> facts = new ArrayList<>();
+  private final List<Fact> list = new ArrayList<>();
 
   protected void handleError(@NonNull Throwable exception) {
     LoggerFactory.getLogger(FactObserver.class).warn("Unhandled onError:", exception);

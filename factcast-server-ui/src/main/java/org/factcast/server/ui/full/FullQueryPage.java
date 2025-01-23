@@ -50,7 +50,6 @@ import org.factcast.server.ui.views.FormContent;
 import org.factcast.server.ui.views.JsonView;
 import org.factcast.server.ui.views.MainLayout;
 import org.factcast.server.ui.views.filter.FactCriteria;
-import org.factcast.server.ui.views.filter.FilterBean;
 import org.factcast.server.ui.views.filter.FilterCriteriaViews;
 import org.factcast.server.ui.views.filter.MetaTuple;
 import org.springframework.security.core.Authentication;
@@ -77,11 +76,11 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
   private final Popup serialHelperOverlay = new Popup();
   private final JsonView jsonView = new JsonView(this::updateQuickFilters);
 
-  private final BeanValidationUrlStateBinder<FilterBean> binder;
+  private final BeanValidationUrlStateBinder<FullFilterBean> binder;
   private final FactRepository repo;
 
   private final JsonViewPluginService jsonViewPluginService;
-  private final FilterCriteriaViews factCriteriaViews;
+  private final FilterCriteriaViews<FullFilterBean> factCriteriaViews;
   private final Button queryBtn = new Button("Query");
   private final Button exportJsonBtn = new Button("Export JSON");
   private JsonViewEntries queryResult;
@@ -103,7 +102,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
 
     binder = createBinding();
 
-    factCriteriaViews = new FilterCriteriaViews(repo, binder, formBean);
+    factCriteriaViews = new FilterCriteriaViews<>(repo, binder, formBean);
 
     final var accordion = new Accordion();
     accordion.setWidthFull();
@@ -158,8 +157,8 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     }
   }
 
-  private BeanValidationUrlStateBinder<FilterBean> createBinding() {
-    var b = new BeanValidationUrlStateBinder<>(FilterBean.class);
+  private BeanValidationUrlStateBinder<FullFilterBean> createBinding() {
+    var b = new BeanValidationUrlStateBinder<>(FullFilterBean.class);
     b.forField(from).withNullRepresentation(BigDecimal.ZERO).bind("from");
     b.forField(since).bind("since");
     b.forField(limit).withNullRepresentation(FullFilterBean.DEFAULT_LIMIT).bind("limit");

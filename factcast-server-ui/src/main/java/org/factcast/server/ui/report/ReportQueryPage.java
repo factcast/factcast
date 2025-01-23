@@ -19,20 +19,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.vaadin.componentfactory.Popup;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.accordion.Accordion;
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.button.*;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.html.H3;
-import com.vaadin.flow.component.html.H4;
-import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.notification.NotificationVariant;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.Autocomplete;
-import com.vaadin.flow.component.textfield.BigDecimalField;
-import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.html.*;
+import com.vaadin.flow.component.notification.*;
+import com.vaadin.flow.component.orderedlayout.*;
+import com.vaadin.flow.component.textfield.*;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.value.ValueChangeMode;
@@ -40,20 +33,15 @@ import com.vaadin.flow.router.*;
 import jakarta.annotation.security.PermitAll;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.OptionalLong;
+import java.util.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.util.NoCoverageReportToBeGenerated;
 import org.factcast.server.ui.plugins.JsonViewPluginService;
-import org.factcast.server.ui.port.FactRepository;
-import org.factcast.server.ui.port.ReportStore;
-import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
-import org.factcast.server.ui.utils.Notifications;
-import org.factcast.server.ui.views.FormContent;
-import org.factcast.server.ui.views.MainLayout;
-import org.factcast.server.ui.views.filter.FilterBean;
+import org.factcast.server.ui.port.*;
+import org.factcast.server.ui.utils.*;
+import org.factcast.server.ui.views.*;
 import org.factcast.server.ui.views.filter.FilterCriteriaViews;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -70,7 +58,7 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
 
   private final ReportStore reportStore;
   private final JsonViewPluginService jsonViewPluginService;
-  private final BeanValidationUrlStateBinder<FilterBean> binder;
+  private final BeanValidationUrlStateBinder<ReportFilterBean> binder;
   private final FactRepository repo;
   private final DataProvider<ReportEntry, Void> reportProvider;
 
@@ -83,7 +71,7 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
   private String fileName = "events.json";
   private String reportDownloadName;
 
-  private final FilterCriteriaViews factCriteriaViews;
+  private final FilterCriteriaViews<ReportFilterBean> factCriteriaViews;
   private final ReportDownloadSection downloadSection;
 
   private final String userName = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -102,7 +90,7 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
 
     formBean = new ReportFilterBean(repo.latestSerial());
     binder = createUrlStateBinding();
-    factCriteriaViews = new FilterCriteriaViews(repo, binder, formBean);
+    factCriteriaViews = new FilterCriteriaViews<>(repo, binder, formBean);
     reportProvider = getReportProvider();
 
     final var accordion = new Accordion();
@@ -151,8 +139,8 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
     return header;
   }
 
-  private BeanValidationUrlStateBinder<FilterBean> createUrlStateBinding() {
-    var b = new BeanValidationUrlStateBinder<>(FilterBean.class);
+  private BeanValidationUrlStateBinder<ReportFilterBean> createUrlStateBinding() {
+    var b = new BeanValidationUrlStateBinder<>(ReportFilterBean.class);
     b.forField(from).withNullRepresentation(BigDecimal.ZERO).bind("from");
     b.forField(since).bind("since");
 

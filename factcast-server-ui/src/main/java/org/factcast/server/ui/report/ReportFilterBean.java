@@ -75,7 +75,9 @@ public class ReportFilterBean implements FilterBean, Serializable {
   }
 
   @Override
-  public void setOffset(Integer offset) {}
+  public void setOffset(Integer offset) {
+    // ignore
+  }
 
   @Override
   @JsonIgnore

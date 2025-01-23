@@ -138,7 +138,7 @@ public class FactRepositoryImpl implements FactRepository {
         throw ExceptionHelper.toRuntime(e);
       }
     }
-    return obs.facts();
+    return obs.list();
   }
 
   private void setDebugInfo(SubscriptionRequestTO req) {

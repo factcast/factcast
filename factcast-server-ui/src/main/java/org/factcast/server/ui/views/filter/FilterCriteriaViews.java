@@ -34,17 +34,17 @@ import org.factcast.server.ui.port.FactRepository;
 import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
 
 @NoCoverageReportToBeGenerated
-public class FilterCriteriaViews extends VerticalLayout {
-  private final BeanValidationUrlStateBinder<FilterBean> binder;
-  private final FilterBean bean;
+public class FilterCriteriaViews<F extends FilterBean> extends VerticalLayout {
+  private final BeanValidationUrlStateBinder<F> binder;
+  private final F bean;
   private final FactRepository repo;
 
   private final List<FilterCriteriaCountUpdateListener> updateListeners = new ArrayList<>();
 
   public FilterCriteriaViews(
       @NonNull FactRepository repo,
-      @NonNull BeanValidationUrlStateBinder<FilterBean> binder,
-      @NonNull FilterBean bean) {
+      @NonNull BeanValidationUrlStateBinder<F> binder,
+      @NonNull F bean) {
     this.repo = repo;
     this.binder = binder;
     this.bean = bean;
@@ -59,7 +59,7 @@ public class FilterCriteriaViews extends VerticalLayout {
     addViewsAccordingTo(bean);
   }
 
-  private void addViewsAccordingTo(@NonNull FilterBean bean) {
+  private void addViewsAccordingTo(@NonNull F bean) {
     AtomicBoolean first = new AtomicBoolean(true);
     bean.getCriteria().forEach(c -> addFilterCriteriaView(!first.getAndSet(false), c));
     binder.readBean(bean);
@@ -82,12 +82,12 @@ public class FilterCriteriaViews extends VerticalLayout {
     return hl;
   }
 
-  private void removeCondition(@NonNull FilterCriteriaView v) {
+  private void removeCondition(@NonNull FilterCriteriaView<F> v) {
     v.getParent().ifPresent(this::remove);
     v.removeBindings();
   }
 
-  private void removeConditionAndBackingBean(@NonNull FilterCriteriaView v) {
+  private void removeConditionAndBackingBean(@NonNull FilterCriteriaView<F> v) {
     final var oldCount = bean.getCriteria().size();
     removeCondition(v);
     bean.getCriteria().remove(v.factCriteria());
@@ -107,7 +107,7 @@ public class FilterCriteriaViews extends VerticalLayout {
   }
 
   private void addFilterCriteriaView(boolean withRemoveButton, @NonNull FactCriteria criteria) {
-    FilterCriteriaView c = new FilterCriteriaView(repo, binder, criteria);
+    FilterCriteriaView<F> c = new FilterCriteriaView<>(repo, binder, criteria);
     Supplier<Integer> indexSupplier = () -> bean.getCriteria().indexOf(criteria);
 
     FilterCriteriaViewContainer viewContainer;
