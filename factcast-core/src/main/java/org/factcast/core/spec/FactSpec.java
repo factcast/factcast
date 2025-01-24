@@ -68,18 +68,10 @@ public class FactSpec {
     return Collections.unmodifiableSet(copy);
   }
 
-  // only for binary compatibility. will be removed in 0.10
-  @Deprecated
-  public FactSpec aggId(@NonNull UUID aggId) {
-    return aggId(aggId, (UUID[]) null);
-  }
-
-  public FactSpec aggId(@NonNull UUID aggId, UUID... otherAggIds) {
-    aggIds.add(aggId);
-    if (otherAggIds != null) {
+  public FactSpec aggId(@NonNull UUID... newAggIds) {
+    if (newAggIds != null && newAggIds.length > 0) {
       aggIds.addAll(
-          Arrays.stream(otherAggIds)
-              .filter(Objects::nonNull)
+          Arrays.stream(newAggIds)
               .collect(Collectors.toList())); // toSet would potentially flip the order
     }
     return this;
