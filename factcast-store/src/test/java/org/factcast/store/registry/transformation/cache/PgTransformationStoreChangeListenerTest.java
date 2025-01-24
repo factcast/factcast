@@ -19,15 +19,13 @@ import static org.factcast.store.registry.transformation.cache.PgTransformationS
 import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import lombok.SneakyThrows;
-import org.factcast.store.internal.listen.PgListener;
+import org.factcast.store.internal.notification.TransformationStoreChangeNotification;
 import org.factcast.store.registry.transformation.TransformationKey;
 import org.factcast.store.registry.transformation.chains.TransformationChains;
 import org.factcast.store.registry.validation.schema.SchemaKey;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -69,13 +67,13 @@ class PgTransformationStoreChangeListenerTest {
 
   @Nested
   class WhenOning {
-    private PgListener.TransformationStoreChangeSignal signal;
+    private TransformationStoreChangeNotification signal;
 
     private final SchemaKey key = SchemaKey.of("ns", "type", 1);
 
     @Test
     void invalidatesCache() {
-      signal = new PgListener.TransformationStoreChangeSignal(key.ns(), key.type());
+      signal = new TransformationStoreChangeNotification(key.ns(), key.type(), 1);
       underTest.on(signal);
       verify(transformationCache, times(1)).invalidateTransformationFor(key.ns(), key.type());
       verify(transformationChains, times(1)).notifyFor(TransformationKey.of(key.ns(), key.type()));
@@ -83,7 +81,7 @@ class PgTransformationStoreChangeListenerTest {
 
     @Test
     void schedulesCacheInvalidationToCoverInflightTransformations() {
-      signal = new PgListener.TransformationStoreChangeSignal(key.ns(), key.type());
+      signal = new TransformationStoreChangeNotification(key.ns(), key.type(), 1);
       underTest.on(signal);
       verify(executor)
           .schedule(
