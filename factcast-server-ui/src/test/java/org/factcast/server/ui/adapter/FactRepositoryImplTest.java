@@ -40,6 +40,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.server.security.auth.FactCastUser;
 import org.factcast.server.ui.full.FullFilterBean;
 import org.factcast.server.ui.id.IdQueryBean;
+import org.factcast.server.ui.report.ReportFilterBean;
 import org.factcast.server.ui.security.SecurityService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -350,6 +351,146 @@ public class FactRepositoryImplTest {
           .thenReturn(mock(Subscription.class));
 
       underTest.fetchChunk(bean);
+
+      assertThat(srCaptor.getValue().debugInfo()).isEqualTo(USER_NAME);
+    }
+  }
+
+  @Nested
+  class WhenFetchingAll {
+    @Mock private ReportFilterBean bean;
+    @Mock private FactCastUser userMock;
+
+    private final String USER_NAME = "user@auth.eu";
+
+    @BeforeEach
+    void setup() {
+      when(bean.createFactSpecs()).thenReturn(nameSpaces);
+      when(userMock.getUsername()).thenReturn(USER_NAME);
+    }
+
+    @Test
+    void testFilters() {
+      when(securityService.filterReadable(nameSpaces))
+          .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
+      when(securityService.getAuthenticatedUser()).thenReturn(userMock);
+      ArgumentCaptor<SubscriptionRequestTO> srCaptor =
+          ArgumentCaptor.forClass(SubscriptionRequestTO.class);
+      when(fs.subscribe(srCaptor.capture(), any(UnlimitedListObserver.class)))
+          .thenReturn(mock(Subscription.class));
+
+      underTest.fetchAll(bean);
+
+      SubscriptionRequest request = srCaptor.getValue();
+      assertThat(request.specs()).containsExactlyInAnyOrderElementsOf(nameSpacesAfterFiltering);
+
+      verify(securityService).filterReadable(nameSpaces);
+    }
+
+    @Test
+    void usesLimitAndOffset() {
+      int offset = 110;
+
+      when(bean.getOffsetOrDefault()).thenReturn(offset);
+
+      when(securityService.filterReadable(nameSpaces))
+          .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
+      when(securityService.getAuthenticatedUser()).thenReturn(userMock);
+      ArgumentCaptor<UnlimitedListObserver> captor =
+          ArgumentCaptor.forClass(UnlimitedListObserver.class);
+      when(fs.subscribe(any(), captor.capture())).thenReturn(mock(Subscription.class));
+
+      underTest.fetchAll(bean);
+
+      UnlimitedListObserver request = captor.getValue();
+      assertThat(request.offset()).isSameAs(offset);
+
+      verify(securityService).filterReadable(nameSpaces);
+    }
+
+    @Test
+    void usesFrom() {
+      UUID id = UUID.randomUUID();
+      Fact factWithId = Fact.builder().id(id).buildWithoutPayload();
+      int offset = 0;
+
+      ArgumentCaptor<SubscriptionRequestTO> srCaptor =
+          ArgumentCaptor.forClass(SubscriptionRequestTO.class);
+      when(bean.getOffsetOrDefault()).thenReturn(offset);
+      when(bean.getFrom()).thenReturn(BigDecimal.valueOf(1984));
+      when(fs.fetchBySerial(1984)).thenReturn(Optional.of(factWithId));
+      when(securityService.filterReadable(nameSpaces))
+          .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
+      when(securityService.getAuthenticatedUser()).thenReturn(userMock);
+      when(fs.subscribe(srCaptor.capture(), any(UnlimitedListObserver.class)))
+          .thenReturn(mock(Subscription.class));
+
+      underTest.fetchAll(bean);
+
+      assertThat(srCaptor.getValue().startingAfter()).isNotEmpty().hasValue(id);
+    }
+
+    @Test
+    @SneakyThrows
+    void propagatesException() {
+
+      when(securityService.filterReadable(nameSpaces))
+          .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
+      when(securityService.getAuthenticatedUser()).thenReturn(userMock);
+      when(fs.subscribe(any(), any()))
+          .thenAnswer(
+              i -> {
+                SubscriptionImpl subscriptionImpl = new SubscriptionImpl(mock(ListObserver.class));
+                CompletableFuture.runAsync(
+                    () -> {
+                      subscriptionImpl.notifyError(new ExampleException());
+                    });
+                return subscriptionImpl;
+              });
+
+      assertThatThrownBy(
+              () -> {
+                underTest.fetchAll(bean);
+              })
+          .isInstanceOf(ExampleException.class);
+    }
+
+    @Test
+    @SneakyThrows
+    void catchesLimitException() {
+
+      when(securityService.filterReadable(nameSpaces))
+          .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
+      when(securityService.getAuthenticatedUser()).thenReturn(userMock);
+      when(fs.subscribe(any(), any()))
+          .thenAnswer(
+              i -> {
+                SubscriptionImpl subscriptionImpl = new SubscriptionImpl(mock(ListObserver.class));
+                CompletableFuture.runAsync(
+                    () -> {
+                      subscriptionImpl.notifyError(new LimitReachedException());
+                    });
+                return subscriptionImpl;
+              });
+
+      assertDoesNotThrow(
+          () -> {
+            underTest.fetchAll(bean);
+          });
+    }
+
+    @Test
+    @SneakyThrows
+    void propagatesUsernameToDebugInfo() {
+      ArgumentCaptor<SubscriptionRequestTO> srCaptor =
+          ArgumentCaptor.forClass(SubscriptionRequestTO.class);
+      when(securityService.filterReadable(nameSpaces))
+          .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
+      when(securityService.getAuthenticatedUser()).thenReturn(userMock);
+      when(fs.subscribe(srCaptor.capture(), any(UnlimitedListObserver.class)))
+          .thenReturn(mock(Subscription.class));
+
+      underTest.fetchAll(bean);
 
       assertThat(srCaptor.getValue().debugInfo()).isEqualTo(USER_NAME);
     }

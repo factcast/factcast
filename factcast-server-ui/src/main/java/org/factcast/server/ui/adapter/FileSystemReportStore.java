@@ -16,6 +16,7 @@
 package org.factcast.server.ui.adapter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 import com.vaadin.flow.server.VaadinRequest;
 import com.vaadin.flow.server.VaadinService;
 import com.vaadin.flow.server.VaadinServletRequest;
@@ -29,9 +30,7 @@ import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.util.ExceptionHelper;
 import org.factcast.server.ui.port.ReportStore;
@@ -44,6 +43,9 @@ public class FileSystemReportStore implements ReportStore {
 
   public final String persistenceDir;
 
+  @Setter(value = AccessLevel.PACKAGE, onMethod = @__({@VisibleForTesting}))
+  private ObjectMapper objectMapper = new ObjectMapper();
+
   @Override
   public void save(@NonNull String userName, @NonNull Report report) {
     final var reportFilePath = Paths.get(persistenceDir, userName, report.name());
@@ -51,7 +53,6 @@ public class FileSystemReportStore implements ReportStore {
     log.info("Usable space in partition: {} MB", getUsableSpaceInMb(persistenceDir));
 
     if (!Files.exists(reportFilePath)) {
-      final var objectMapper = new ObjectMapper();
       try {
         Files.createDirectories(reportFilePath.getParent());
         log.info("Parent dirs created");

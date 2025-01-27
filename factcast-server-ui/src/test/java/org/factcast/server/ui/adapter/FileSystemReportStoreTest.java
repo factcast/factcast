@@ -16,26 +16,21 @@
 package org.factcast.server.ui.adapter;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Comparator;
-import java.util.List;
+import java.io.*;
+import java.nio.file.*;
+import java.util.*;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.server.ui.report.Report;
-import org.factcast.server.ui.report.ReportEntry;
-import org.factcast.server.ui.report.ReportFilterBean;
+import org.factcast.server.ui.report.*;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
+import org.mockito.MockedStatic;
 
 @Slf4j
 class FileSystemReportStoreTest {
@@ -56,10 +51,36 @@ class FileSystemReportStoreTest {
     }
   }
 
-  @Test
-  void save() {
-    uut.save(USER_NAME, getReport("name.json"));
-    assertTrue(Files.exists(new File(PERSISTENCE_DIR + "/user/name.json").toPath()));
+  @Nested
+  class WhenSavingReports {
+    @Test
+    void createsReportFileAndParentDirectories() {
+      uut.save(USER_NAME, getReport("name.json"));
+      assertTrue(Files.exists(new File(PERSISTENCE_DIR + "/user/name.json").toPath()));
+    }
+
+    @Test
+    void throwsIllegalArgumentExceptionIfReportExists() {
+      Report report = getReport("name.json");
+      uut.save(USER_NAME, report);
+      // try again
+      assertThrows(IllegalArgumentException.class, () -> uut.save(USER_NAME, report));
+    }
+
+    @Test
+    @SneakyThrows
+    void throwsWrappedIOExceptionIfSavingFails() {
+      Report report = getReport("name.json");
+      ObjectMapper explodingOm = mock(ObjectMapper.class);
+      doThrow(new IOException("foo"))
+          .when(explodingOm)
+          .writeValue(any(File.class), any(Object.class));
+      uut.objectMapper(explodingOm);
+
+      assertThatThrownBy(() -> uut.save(USER_NAME, report))
+          .isInstanceOf(RuntimeException.class)
+          .hasCauseInstanceOf(IOException.class);
+    }
   }
 
   @Nested
@@ -111,6 +132,19 @@ class FileSystemReportStoreTest {
       assertThatThrownBy(() -> uut.delete(USER_NAME, "report.json"))
           .isInstanceOf(IllegalArgumentException.class)
           .hasMessage("No report exists with name report.json for user user");
+    }
+
+    @Test
+    @SneakyThrows
+    void throwsWrappedIOExceptionIfDeletingFails() {
+      try (MockedStatic<Files> files = mockStatic(Files.class)) {
+        files.when(() -> Files.exists(any())).thenReturn(true);
+        files.when(() -> Files.delete(any())).thenThrow(new IOException("foo"));
+
+        assertThatThrownBy(() -> uut.delete(USER_NAME, "report.json"))
+            .isInstanceOf(RuntimeException.class)
+            .hasCauseInstanceOf(IOException.class);
+      }
     }
 
     @SneakyThrows
