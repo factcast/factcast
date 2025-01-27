@@ -28,9 +28,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class FullQueryBeanTest {
+class FullFilterBeanTest {
 
-  final FullQueryBean underTest = new FullQueryBean(12);
+  final FullFilterBean underTest = new FullFilterBean(12);
 
   @Nested
   class WhenCreatingFactSpecs {
@@ -114,13 +114,13 @@ class FullQueryBeanTest {
 
     @Test
     void specsThrowsIfNsMissing() {
-      Assertions.assertThatThrownBy(() -> underTest.createFactSpecs())
+      Assertions.assertThatThrownBy(underTest::createFactSpecs)
           .isInstanceOf(IllegalArgumentException.class);
     }
   }
 
   @Nested
-  class WhenReseting {
+  class WhenResetting {
     @Test
     void returnsOffset() {
       // even though it is annotated as non null, we need it to be null after reset
@@ -154,7 +154,7 @@ class FullQueryBeanTest {
 
     @Test
     void returnsDefault() {
-      Assertions.assertThat(underTest.getLimitOrDefault()).isEqualTo(FullQueryBean.DEFAULT_LIMIT);
+      Assertions.assertThat(underTest.getLimitOrDefault()).isEqualTo(FullFilterBean.DEFAULT_LIMIT);
     }
   }
 }
