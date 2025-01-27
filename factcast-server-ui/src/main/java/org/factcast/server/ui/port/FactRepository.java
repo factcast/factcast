@@ -43,5 +43,5 @@ public interface FactRepository {
 
   List<Fact> fetchChunk(FullFilterBean bean);
 
-  List<Fact> fetchChunk(ReportFilterBean bean);
+  List<Fact> fetchAll(ReportFilterBean bean);
 }

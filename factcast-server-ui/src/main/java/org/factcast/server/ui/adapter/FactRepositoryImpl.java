@@ -99,18 +99,17 @@ public class FactRepositoryImpl implements FactRepository {
   @Override
   public List<Fact> fetchChunk(FullFilterBean bean) {
     final var observer = new ListObserver(bean.getLimitOrDefault(), bean.getOffsetOrDefault());
-    return fetchChunk(bean, observer);
+    return fetch(bean, observer);
   }
 
   @SneakyThrows
-  @Override
-  public List<Fact> fetchChunk(ReportFilterBean bean) {
+  public List<Fact> fetchAll(ReportFilterBean bean) {
     final var observer = new UnlimitedListObserver(bean.getOffsetOrDefault());
-    return fetchChunk(bean, observer);
+    return fetch(bean, observer);
   }
 
   @SneakyThrows
-  private List<Fact> fetchChunk(FilterBean bean, AbstractListObserver obs) {
+  private List<Fact> fetch(FilterBean bean, AbstractListObserver obs) {
     Set<FactSpec> specs = securityService.filterReadable(bean.createFactSpecs());
 
     SpecBuilder sr = SubscriptionRequest.catchup(specs);

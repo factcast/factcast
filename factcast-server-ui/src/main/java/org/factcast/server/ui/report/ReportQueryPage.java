@@ -53,7 +53,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 @NoCoverageReportToBeGenerated
 public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<String> {
 
-  // externalizable state
+  // externalizeable state
   private final ReportFilterBean formBean;
 
   private final ReportStore reportStore;
@@ -219,6 +219,10 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
 
       add(from, fileNameField);
     }
+
+    private String sanitizeFileName(String fileName) {
+      return fileName.replaceAll("[^a-zA-Z0-9-_]", "");
+    }
   }
 
   @NonNull
@@ -251,7 +255,7 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
       log.info("{} runs query for {}", userName, formBean);
       // For now this will block the UI in case of long-running queries. Will be refactored in the
       // future once the FactRepository is adapted.
-      List<Fact> dataFromStore = repo.fetchChunk(formBean);
+      List<Fact> dataFromStore = repo.fetchAll(formBean);
       log.info("Found {} entries", dataFromStore.size());
       if (!dataFromStore.isEmpty()) {
 
@@ -294,9 +298,5 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
   private static void displayWarning(String message) {
     Notification notification = Notification.show(message);
     notification.addThemeVariants(NotificationVariant.LUMO_WARNING);
-  }
-
-  private String sanitizeFileName(String fileName) {
-    return fileName.replaceAll("[^a-zA-Z0-9-_]", "");
   }
 }
