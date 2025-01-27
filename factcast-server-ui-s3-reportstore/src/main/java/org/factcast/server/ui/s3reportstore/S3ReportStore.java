@@ -22,10 +22,11 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.CompletionException;
+import java.util.concurrent.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.util.ExceptionHelper;
 import org.factcast.server.ui.port.ReportStore;
 import org.factcast.server.ui.report.Report;
 import org.factcast.server.ui.report.ReportEntry;
@@ -70,7 +71,7 @@ public class S3ReportStore implements ReportStore {
       fileUpload.completionFuture().join();
     } catch (IOException e) {
       log.error("Failed to save report", e);
-      throw new RuntimeException(e);
+      throw ExceptionHelper.toRuntime(e);
     }
   }
 
@@ -93,7 +94,7 @@ public class S3ReportStore implements ReportStore {
             .build();
 
     URL url = s3Presigner.presignGetObject(presignRequest).url();
-    log.info("Generated pre-signed URL: " + url.toExternalForm());
+    log.info("Generated pre-signed URL: {}", url.toExternalForm());
     return url;
   }
 
@@ -110,9 +111,9 @@ public class S3ReportStore implements ReportStore {
                   o -> new ReportEntry(getReportNameFromKey(o.key()), Date.from(o.lastModified())));
 
       return reportEntries.toList();
-    } catch (Exception e) {
+    } catch (InterruptedException | ExecutionException e) {
       log.error("Failed to list reports", e);
-      throw new RuntimeException(e);
+      throw ExceptionHelper.toRuntime(e);
     }
   }
 

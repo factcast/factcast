@@ -69,6 +69,7 @@ public class ReportFilterBean implements FilterBean, Serializable {
     from = BigDecimal.valueOf(defaultFrom);
   }
 
+  // TODO get rid of offset as well?
   @Override
   public Integer getOffset() {
     return 0;

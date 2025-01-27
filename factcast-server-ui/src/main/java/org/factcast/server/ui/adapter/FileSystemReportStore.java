@@ -20,7 +20,7 @@ import com.vaadin.flow.server.VaadinRequest;
 import com.vaadin.flow.server.VaadinService;
 import com.vaadin.flow.server.VaadinServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
@@ -33,6 +33,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.util.ExceptionHelper;
 import org.factcast.server.ui.port.ReportStore;
 import org.factcast.server.ui.report.Report;
 import org.factcast.server.ui.report.ReportEntry;
@@ -47,6 +48,7 @@ public class FileSystemReportStore implements ReportStore {
   public void save(@NonNull String userName, @NonNull Report report) {
     final var reportFilePath = Paths.get(persistenceDir, userName, report.name());
     log.info("Saving report to {}", reportFilePath);
+    log.info("Usable space in partition: {} MB", getUsableSpaceInMb(persistenceDir));
 
     if (!Files.exists(reportFilePath)) {
       final var objectMapper = new ObjectMapper();
@@ -59,7 +61,7 @@ public class FileSystemReportStore implements ReportStore {
         objectMapper.writeValue(reportFilePath.toFile(), report);
       } catch (IOException e) {
         log.error("Failed to save report", e);
-        throw new RuntimeException(e);
+        throw ExceptionHelper.toRuntime(e);
       }
     } else {
       throw new IllegalArgumentException(
@@ -89,7 +91,7 @@ public class FileSystemReportStore implements ReportStore {
           .toList();
     } catch (IOException e) {
       log.error("Failed to list reports for user {}", userName, e);
-      throw new RuntimeException(e);
+      throw ExceptionHelper.toRuntime(e);
     }
   }
 
@@ -98,7 +100,7 @@ public class FileSystemReportStore implements ReportStore {
       return Date.from(Files.getLastModifiedTime(path).toInstant());
     } catch (IOException e) {
       log.error("Failed to get last modified time for {}", path, e);
-      throw new RuntimeException(e);
+      throw ExceptionHelper.toRuntime(e);
     }
   }
 
@@ -111,7 +113,7 @@ public class FileSystemReportStore implements ReportStore {
         Files.delete(reportFilePath);
       } catch (IOException e) {
         log.error("Failed to delete report", e);
-        throw new RuntimeException(e);
+        throw ExceptionHelper.toRuntime(e);
       }
     } else {
       throw new IllegalArgumentException(
@@ -129,5 +131,9 @@ public class FileSystemReportStore implements ReportStore {
     return baseUrl;
   }
 
-  // TODO: maxDiskSpace
+  private static long getUsableSpaceInMb(@NonNull String pathInPartition) {
+    // on some file systems, partitions have reserved blocks, would be included in return value of
+    // getFreeSpace()
+    return new File(pathInPartition).getUsableSpace() / (1024 * 1024);
+  }
 }

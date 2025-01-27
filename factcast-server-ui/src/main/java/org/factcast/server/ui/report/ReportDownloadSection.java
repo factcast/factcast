@@ -26,7 +26,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 @Slf4j
 public class ReportDownloadSection extends HorizontalLayout {
 
-  private final ReportStore reportStore;
+  private final transient ReportStore reportStore;
   private final DataProvider<ReportEntry, Void> dataProvider;
 
   private final Button downloadBtn = new Button("Download");
