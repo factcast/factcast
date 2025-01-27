@@ -16,42 +16,52 @@
 package org.factcast.server.ui.report;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import com.microsoft.playwright.Download;
-import com.microsoft.playwright.Page;
+import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.AriaRole;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.Assertions;
 import org.factcast.server.ui.AbstractBrowserTest;
+import org.factcast.server.ui.views.filter.FactCriteria;
 import org.junitpioneer.jupiter.RetryingTest;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.JsonNode;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.*;
 
 @Slf4j
 class ReportQueryPageIntTest extends AbstractBrowserTest {
 
+  final ObjectMapper om = new ObjectMapper();
+
   @RetryingTest(maxAttempts = 3)
   @SneakyThrows
-  void happyPath() {
+  void createReportHappyPath() {
+    // ARRANGE
     loginFor("/ui/report");
     assertThat(page.getByLabel("Types")).isDisabled();
-    selectNamespace("users");
+    final var ns = "users";
+    selectNamespace(ns);
 
     // types input now enabled
     assertThat(page.getByLabel("Types")).isEnabled();
-    selectTypes(List.of("UserCreated"));
+    final var type = "UserCreated";
+    selectTypes(List.of(type));
     fromScratch();
 
     final var id = UUID.randomUUID();
     setReportName(id.toString());
+
+    // ACT
     generate();
+
+    // ASSERT
+
+    final var expectedReportFilename = id + ".json";
+    assertThat(page.getByText(expectedReportFilename)).hasCount(1);
 
     page.getByText(id + ".json").click();
 
-    Download download =
+    final var download =
         page.waitForDownload(
             () ->
                 page.waitForPopup(
@@ -60,25 +70,72 @@ class ReportQueryPageIntTest extends AbstractBrowserTest {
                                 AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Download"))
                             .click()));
 
-    var om = new ObjectMapper();
+    final var e0id = UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec086");
+    final var u0id = UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec087");
+    final var e1id = UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec084");
+    final var u1id = UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec085");
+
     try (final var input = download.createReadStream()) {
-      final JsonNode report = om.readTree(input.readAllBytes());
-      Assertions.assertThat(report.get("name").asText()).isEqualTo(id + ".json");
-      Assertions.assertThat(report.get("events").get(0).get("header").get("type").asText())
-          .isEqualTo("UserCreated");
-      Assertions.assertThat(report.get("events").get(0).get("payload").get("firstName").asText())
-          .isEqualTo("Werner");
-      final var query = om.readValue(report.get("query").toString(), ReportFilterBean.class);
-      Assertions.assertThat(query.getDefaultFrom()).isEqualTo(2);
-      Assertions.assertThat(query.getCriteria().get(0).getNs()).isEqualTo("users");
+      final var report = om.readTree(input.readAllBytes());
+      assertThat(report.get("name").asText()).isEqualTo(id + ".json");
+      assertThat(report.get("events")).hasSize(2);
+
+      assertJsonEvent(report.get("events").get(0), e0id, u0id, type, "Werner", "Ernst");
+      assertJsonEvent(report.get("events").get(1), e1id, u1id, type, "Peter", "Lustig");
+
       log.info(report.get("query").toString());
-      // TODO: assert query
-    } catch (Exception e) {
-      throw e;
+      final var query = om.readValue(report.get("query").toString(), ReportFilterBean.class);
+      assertThat(query.getDefaultFrom()).isEqualTo(2);
+      assertThat(query.getFrom()).isNull();
+      assertThat(query.getOffset()).isZero();
+      assertThat(query.getCriteria()).hasSize(1);
+      assertCriterion(query.getCriteria().get(0), ns, type, null);
     }
   }
 
-  // TODO Add test for deletion
+  @RetryingTest(maxAttempts = 3)
+  @SneakyThrows
+  void generateAndDeleteReport() {
+    // ARRANGE
+    loginFor("/ui/report");
+    assertThat(page.getByLabel("Types")).isDisabled();
+    final var ns = "users";
+    selectNamespace(ns);
+
+    assertThat(page.getByLabel("Types")).isEnabled();
+    final var type = "UserCreated";
+    selectTypes(List.of(type));
+    fromScratch();
+
+    final var id = UUID.randomUUID();
+    setReportName(id.toString());
+    final var expectedReportFilename = id + ".json";
+    final var expectedReportItem = page.getByText(expectedReportFilename);
+
+    // ACT
+    generate();
+    assertThat(expectedReportItem).hasCount(1); // just to make sure
+    expectedReportItem.click();
+    delete();
+
+    // ASSERT
+    assertThat(expectedReportItem).hasCount(0);
+  }
+
+  private void assertJsonEvent(
+      JsonNode event, UUID eventId, UUID userId, String type, String firstName, String lastName) {
+    assertThat(event.get("header").get("type").asText()).isEqualTo(type);
+    assertThat(event.get("header").get("id").asText()).isEqualTo(eventId.toString());
+    assertThat(event.get("payload").get("userId").asText()).isEqualTo(userId.toString());
+    assertThat(event.get("payload").get("firstName").asText()).isEqualTo(firstName);
+    assertThat(event.get("payload").get("lastName").asText()).isEqualTo(lastName);
+  }
+
+  private void assertCriterion(FactCriteria criterion, String ns, String type, UUID aggId) {
+    assertThat(criterion.getNs()).isEqualTo(ns);
+    assertThat(criterion.getType()).containsExactly(type);
+    assertThat(criterion.getAggId()).isEqualTo(aggId);
+  }
 
   private void setReportName(String name) {
     page.getByLabel("Report File Name").fill(name);
@@ -86,5 +143,9 @@ class ReportQueryPageIntTest extends AbstractBrowserTest {
 
   private void generate() {
     clickButton("Generate");
+  }
+
+  private void delete() {
+    clickButton("Delete");
   }
 }

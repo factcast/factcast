@@ -18,8 +18,7 @@ package org.factcast.server.ui;
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
 import com.microsoft.playwright.*;
-import com.microsoft.playwright.options.AriaRole;
-import com.microsoft.playwright.options.LoadState;
+import com.microsoft.playwright.options.*;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -56,7 +55,7 @@ public abstract class AbstractBrowserTest {
 
     if (isRecordPropertySet() || isWatchPropertySet()) {
       long millis = getSlowMotionSpeed().toMillis();
-      log.debug("Using " + millis + "ms delay between UI interactions");
+      log.debug("Using {} ms delay between UI interactions", millis);
       options.setSlowMo(millis);
     }
 
@@ -93,7 +92,7 @@ public abstract class AbstractBrowserTest {
               + info.getTestClass().map(this::retrieveClassName).orElse("Unknown")
               + "_"
               + info.getTestMethod().map(Method::getName).orElse("unknown");
-      log.debug("Recording into " + testPath);
+      log.debug("Recording into {}", testPath);
       contextOptions.setRecordVideoDir(Path.of(testPath));
     }
     browser = playwright.chromium().launch(options);
