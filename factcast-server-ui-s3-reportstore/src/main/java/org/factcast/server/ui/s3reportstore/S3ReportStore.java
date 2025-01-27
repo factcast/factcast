@@ -20,16 +20,13 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.util.ExceptionHelper;
 import org.factcast.server.ui.port.ReportStore;
-import org.factcast.server.ui.report.Report;
-import org.factcast.server.ui.report.ReportEntry;
+import org.factcast.server.ui.report.*;
 import org.springframework.beans.factory.annotation.Value;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
@@ -37,8 +34,7 @@ import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
-import software.amazon.awssdk.transfer.s3.model.Upload;
-import software.amazon.awssdk.transfer.s3.model.UploadRequest;
+import software.amazon.awssdk.transfer.s3.model.*;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -111,9 +107,12 @@ public class S3ReportStore implements ReportStore {
                   o -> new ReportEntry(getReportNameFromKey(o.key()), Date.from(o.lastModified())));
 
       return reportEntries.toList();
-    } catch (InterruptedException | ExecutionException e) {
-      log.error("Failed to list reports", e);
-      throw ExceptionHelper.toRuntime(e);
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+      throw ExceptionHelper.toRuntime(ie);
+    } catch (ExecutionException ee) {
+      log.error("Failed to list reports", ee);
+      throw ExceptionHelper.toRuntime(ee);
     }
   }
 
