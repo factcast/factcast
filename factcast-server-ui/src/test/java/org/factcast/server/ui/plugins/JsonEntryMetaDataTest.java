@@ -94,14 +94,15 @@ class JsonEntryMetaDataTest {
 
     @Test
     void delegates() {
-      underTest.addHeaderMetaFilterOption("path", "foo", "bar");
+      underTest.addHeaderMetaFilterOption("path", "foo", List.of("bar"));
 
       assertThat(underTest.filterOptions()).hasSize(1);
       assertThat(underTest.filterOptions().get("header.path"))
           .extracting(JsonEntryMetaData.FilterOptions::meta)
           .extracting(
-              JsonEntryMetaData.MetaFilterOption::key, JsonEntryMetaData.MetaFilterOption::value)
-          .containsExactlyInAnyOrder("foo", "bar");
+              JsonEntryMetaData.MultiMetaFilterOption::key,
+              JsonEntryMetaData.MultiMetaFilterOption::value)
+          .containsExactlyInAnyOrder("foo", List.of("bar"));
     }
   }
 

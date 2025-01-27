@@ -28,6 +28,7 @@ import java.util.function.Function;
 import java.util.function.IntToLongFunction;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import nl.altindag.log.LogCaptor;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.spec.FactSpec;
@@ -37,10 +38,7 @@ import org.factcast.factus.batch.PublishBatch;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.lock.Locked;
 import org.factcast.factus.lock.LockedOnSpecs;
-import org.factcast.factus.projection.Aggregate;
-import org.factcast.factus.projection.ManagedProjection;
-import org.factcast.factus.projection.SnapshotProjection;
-import org.factcast.factus.projection.SubscribedProjection;
+import org.factcast.factus.projection.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.Mockito;
@@ -162,6 +160,34 @@ class FactusTest {
     sleep(); // call is async, so we wait a bit
 
     verify(underTest).subscribeAndBlock(same(p));
+  }
+
+  @Test
+  void defaultMethod_voidSubscribe_catchesFactusClosedException() {
+    try (LogCaptor logCaptor = LogCaptor.forClass(Factus.class)) {
+      SubscribedProjection p = mock(SubscribedProjection.class);
+      doThrow(new FactusClosedException("closed")).when(underTest).subscribeAndBlock(p);
+      underTest.subscribe(p);
+
+      sleep(); // call is async, so we wait a bit
+
+      assertThat(logCaptor.getInfoLogs())
+          .contains("Aborting subscription " + p.getClass() + ": closed");
+      assertThat(logCaptor.getErrorLogs()).isEmpty();
+    }
+  }
+
+  @Test
+  void defaultMethod_voidSubscribe_catchesException() {
+    try (LogCaptor logCaptor = LogCaptor.forClass(Factus.class)) {
+      SubscribedProjection p = mock(SubscribedProjection.class);
+      doThrow(new RuntimeException("test")).when(underTest).subscribeAndBlock(p);
+      underTest.subscribe(p);
+
+      sleep(); // call is async, so we wait a bit
+
+      assertThat(logCaptor.getErrorLogs()).contains("Error subscribing to " + p.getClass());
+    }
   }
 
   static class SP implements SnapshotProjection {}

@@ -55,15 +55,15 @@ public class JsonViewEntries {
   }
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  record FilterOptions(UUID aggregateId, MetaFilterOption meta) {
+  record FilterOptions(UUID aggregateId, MultiMetaFilterOption meta) {
     static FilterOptions from(JsonEntryMetaData.FilterOptions options) {
-      return new FilterOptions(options.aggregateId(), MetaFilterOption.from(options.meta()));
+      return new FilterOptions(options.aggregateId(), MultiMetaFilterOption.from(options.meta()));
     }
   }
 
-  record MetaFilterOption(String key, String value) {
-    static MetaFilterOption from(JsonEntryMetaData.MetaFilterOption option) {
-      return option != null ? new MetaFilterOption(option.key(), option.value()) : null;
+  record MultiMetaFilterOption(String key, Collection<String> value) {
+    static MultiMetaFilterOption from(JsonEntryMetaData.MultiMetaFilterOption option) {
+      return option != null ? new MultiMetaFilterOption(option.key(), option.value()) : null;
     }
   }
 }
