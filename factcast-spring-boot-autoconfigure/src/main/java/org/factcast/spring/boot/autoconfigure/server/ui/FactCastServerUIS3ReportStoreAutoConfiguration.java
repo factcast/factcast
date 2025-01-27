@@ -25,6 +25,4 @@ import org.springframework.context.annotation.Import;
 @Import({S3ReportStoreConfiguration.class})
 @ConditionalOnClass(S3ReportStoreConfiguration.class)
 @AutoConfigureBefore(FactCastServerUIAutoConfiguration.class)
-public
-class FactCastServerUIS3ReportStoreAutoConfiguration {} // TODO Ui vs. UI... weird: "The name of the
-                                                        // outer type and the file do not match"
+public class FactCastServerUIS3ReportStoreAutoConfiguration {}

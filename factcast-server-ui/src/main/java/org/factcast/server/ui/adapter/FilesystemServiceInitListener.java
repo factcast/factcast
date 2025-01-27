@@ -39,9 +39,8 @@ public class FilesystemServiceInitListener implements VaadinServiceInitListener 
     event.addRequestHandler(
         (VaadinSession session, VaadinRequest request, VaadinResponse response) -> {
           if (request.getPathInfo().startsWith("/files/")) {
-            final String requestedFile = request.getPathInfo().substring("/files/".length());
-            final String userName =
-                SecurityContextHolder.getContext().getAuthentication().getName();
+            final String requestedFile = getRequestedFilename(request);
+            final String userName = getUserName();
             final var filePath = Paths.get(persistenceDir, userName, requestedFile);
 
             if (Files.exists(filePath)) {
@@ -60,5 +59,13 @@ public class FilesystemServiceInitListener implements VaadinServiceInitListener 
           }
           return false; // Pass to the next handler
         });
+  }
+
+  static String getUserName() {
+    return SecurityContextHolder.getContext().getAuthentication().getName();
+  }
+
+  static String getRequestedFilename(VaadinRequest request) {
+    return request.getPathInfo().substring("/files/".length());
   }
 }
