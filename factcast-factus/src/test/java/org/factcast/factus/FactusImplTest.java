@@ -17,55 +17,34 @@ package org.factcast.factus;
 
 import static java.util.UUID.randomUUID;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.*;
 import java.util.stream.Collectors;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
+import lombok.*;
 import org.assertj.core.api.Assertions;
-import org.factcast.core.Fact;
-import org.factcast.core.FactCast;
-import org.factcast.core.FactStreamPosition;
-import org.factcast.core.TestFact;
-import org.factcast.core.event.EventConverter;
+import org.factcast.core.*;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.factus.batch.BatchAbortedException;
-import org.factcast.factus.batch.PublishBatch;
+import org.factcast.factus.batch.*;
+import org.factcast.factus.event.*;
 import org.factcast.factus.event.EventObject;
-import org.factcast.factus.event.EventSerializer;
-import org.factcast.factus.event.Specification;
-import org.factcast.factus.lock.InLockedOperation;
+import org.factcast.factus.lock.*;
 import org.factcast.factus.lock.Locked;
-import org.factcast.factus.lock.LockedOnSpecs;
-import org.factcast.factus.metrics.FactusMetrics;
-import org.factcast.factus.metrics.FactusMetricsImpl;
+import org.factcast.factus.metrics.*;
 import org.factcast.factus.projection.*;
 import org.factcast.factus.projection.parameter.HandlerParameterContributors;
-import org.factcast.factus.projector.Projector;
-import org.factcast.factus.projector.ProjectorFactory;
-import org.factcast.factus.projector.ProjectorImpl;
-import org.factcast.factus.serializer.SnapshotSerializer;
-import org.factcast.factus.serializer.SnapshotSerializerId;
+import org.factcast.factus.projector.*;
+import org.factcast.factus.serializer.*;
 import org.factcast.factus.snapshot.*;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -977,6 +956,21 @@ class FactusImplTest {
       // and still the other one needs to have been closed as well
       verify(subscription1).close();
       verify(subscription2).close();
+    }
+
+    @SneakyThrows
+    @Test
+    void throwsWhenClosedWhileWaitingForToken() {
+      SubscribedProjection subscribedProjection = mock(SubscribedProjection.class);
+      // waiting for token
+      when(subscribedProjection.acquireWriteToken(any())).thenReturn(null);
+      CompletableFuture<Void> future =
+          CompletableFuture.runAsync(() -> underTest.subscribeAndBlock(subscribedProjection));
+
+      verify(subscribedProjection, timeout(5000).atLeast(1)).acquireWriteToken(any());
+      underTest.close();
+
+      assertThatThrownBy(future::get).hasCauseExactlyInstanceOf(FactusClosedException.class);
     }
   }
 

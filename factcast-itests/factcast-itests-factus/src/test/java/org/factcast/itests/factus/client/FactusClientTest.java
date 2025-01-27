@@ -19,19 +19,15 @@ import static java.util.Arrays.asList;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import com.google.common.base.Stopwatch;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import lombok.SneakyThrows;
-import lombok.Value;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import nl.altindag.log.LogCaptor;
 import org.assertj.core.api.Assertions;
@@ -39,14 +35,15 @@ import org.factcast.core.Fact;
 import org.factcast.core.event.EventConverter;
 import org.factcast.core.store.RetryableException;
 import org.factcast.core.subscription.Subscription;
+import org.factcast.factus.*;
+import org.factcast.factus.event.*;
 import org.factcast.factus.Factus;
 import org.factcast.factus.FactusImpl;
 import org.factcast.factus.HandlerFor;
 import org.factcast.factus.Meta;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.lock.LockedOperationAbortedException;
-import org.factcast.factus.projection.Aggregate;
-import org.factcast.factus.projection.LocalManagedProjection;
+import org.factcast.factus.projection.*;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.config.RedissonProjectionConfiguration;
@@ -56,9 +53,7 @@ import org.factcast.spring.boot.autoconfigure.snap.RedissonSnapshotCacheAutoConf
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
-import org.redisson.api.RTransaction;
-import org.redisson.api.RedissonClient;
-import org.redisson.api.TransactionOptions;
+import org.redisson.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
@@ -789,6 +784,46 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
     }
 
     Assertions.assertThat(signee.get()).isEqualTo("theBoss");
+  }
+
+  static class ProjectionWithMutlipleMetaValues extends LocalSubscribedProjection {
+    Collection<String> signee = null;
+    List<String> affiliates = null;
+
+    @Handler
+    public void apply(UserCreated deleted, @Meta("affiliates") List<String> metaAffiliates) {
+      affiliates = metaAffiliates;
+    }
+
+    @Handler
+    public void apply(UserDeleted deleted, @Meta("signee") Collection<String> metaSignees) {
+      signee = metaSignees;
+    }
+  }
+
+  @Test
+  void injectsMetaCollection() throws Exception {
+
+    UserCreated kenny = new UserCreated("Kenny");
+    factus.publish(kenny);
+
+    ProjectionWithMutlipleMetaValues p = new ProjectionWithMutlipleMetaValues();
+
+    UserDeleted deleted = new UserDeleted(kenny.aggregateId());
+    // the boss signed off kyles deletion, bastard!
+    Fact f =
+        Fact.buildFrom(deleted)
+            .addMeta("signee", "theBoss")
+            .addMeta("signee", "theChef")
+            .addMeta("signee", "theHeadOfSomething")
+            .build();
+    factus.publish(f);
+    try (Subscription subscriptionWaiting = factus.subscribeAndBlock(p)) {
+      subscriptionWaiting.awaitCatchup();
+    }
+
+    Assertions.assertThat(p.signee).contains("theBoss", "theChef", "theHeadOfSomething");
+    Assertions.assertThat(p.affiliates).isEmpty();
   }
 
   @Test

@@ -15,16 +15,15 @@
  */
 package org.factcast.store.internal;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.*;
+import javax.annotation.Nullable;
 import lombok.*;
-import org.factcast.core.Fact;
-import org.factcast.core.FactHeader;
+import org.factcast.core.*;
 import org.factcast.core.util.FactCastJson;
+import org.factcast.factus.event.MetaMap;
 
 /**
  * PG Specific implementation of a Fact.
@@ -52,14 +51,20 @@ public class PgFact implements Fact {
 
   @Getter @NonNull final String jsonPayload;
 
-  @JsonProperty Map<String, String> meta = null;
+  @JsonProperty MetaMap meta = null;
 
-  @Override
+  /**
+   * @param key
+   * @return value as String or null
+   * @deprecated use header.meta(String) instead
+   */
+  @Deprecated(since = "0.10", forRemoval = true)
+  @Nullable
   public String meta(String key) {
     if (meta == null) {
       meta = deserializeMeta();
     }
-    return meta.get(key);
+    return meta.getFirst(key);
   }
 
   private transient FactHeader header;
@@ -72,15 +77,8 @@ public class PgFact implements Fact {
     return header;
   }
 
-  private Map<String, String> deserializeMeta() {
+  private MetaMap deserializeMeta() {
     return header().meta();
-  }
-
-  // just picks the MetaData from the Header (as we know the rest already
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  private static class Meta {
-
-    @JsonProperty final Map<String, String> meta = new HashMap<>();
   }
 
   public static Fact from(ResultSet resultSet) throws SQLException {

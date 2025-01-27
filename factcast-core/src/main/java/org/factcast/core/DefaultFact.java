@@ -15,16 +15,9 @@
  */
 package org.factcast.core;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
-import java.util.UUID;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.SneakyThrows;
+import java.io.*;
+import java.util.*;
+import lombok.*;
 import org.factcast.core.util.FactCastJson;
 
 /**
@@ -94,14 +87,14 @@ public class DefaultFact implements Fact, Externalizable {
   }
 
   /**
-   * @deprecated use header.meta(String) instead
    * @param key
    * @return null if does not exist
+   * @deprecated use header.meta(String) instead
    */
   @Override
   @Deprecated
   public String meta(@NonNull String key) {
-    return deserializedHeader.meta(key);
+    return deserializedHeader.meta().getFirst(key);
   }
 
   @Override
