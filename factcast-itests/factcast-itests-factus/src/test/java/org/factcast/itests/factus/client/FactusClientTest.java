@@ -740,10 +740,12 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
     factus.publish(new UserCreated("Kyle"));
     factus.publish(new UserDeleted(UUID.randomUUID()));
 
+    assertThat(subscribedUserNames.isValid()).isFalse();
     try (var logCaptor = LogCaptor.forClass(FactusImpl.class)) {
       logCaptor.setLogLevelToTrace();
       factus.subscribe(subscribedUserNames);
 
+      Awaitility.await().until(subscribedUserNames::isValid);
       Awaitility.await()
           .until(
               () ->
@@ -754,6 +756,8 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
                           .contains(
                               "Closing AutoCloseable for class class org.factcast.factus.projection.LocalWriteToken"));
     }
+
+    assertThat(subscribedUserNames.isValid()).isFalse();
   }
 
   static class OverrideAndFailSubscribedUserNames extends SubscribedUserNames {
