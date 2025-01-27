@@ -60,7 +60,7 @@ public class ReportFilterBean implements FilterBean, Serializable {
   public void reset() {
     since = LocalDate.now();
     criteria.clear();
-    criteria.add(new FactCriteria()); // TODO is it intended to add an empty criteria?
+    criteria.add(new FactCriteria());
     from = BigDecimal.valueOf(defaultFrom);
   }
 

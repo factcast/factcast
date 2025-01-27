@@ -17,22 +17,46 @@ package org.factcast.server.ui.report;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.common.collect.Lists;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.*;
+import org.factcast.server.ui.views.filter.FactCriteria;
 import org.junit.jupiter.api.Test;
 
 class ReportFilterBeanTest {
 
+  final ReportFilterBean underTest = new ReportFilterBean(123);
+
   @Test
   void offsetAlwaysZero() {
-    ReportFilterBean underTest = new ReportFilterBean(123);
-    assertThat(underTest.getOffset()).isZero();
     underTest.setOffset(42);
     assertThat(underTest.getOffset()).isZero();
   }
 
   @Test
   void defaultOffsetAlwaysZero() {
-    ReportFilterBean underTest = new ReportFilterBean(123);
     underTest.setOffset(42);
     assertThat(underTest.getOffsetOrDefault()).isZero();
+  }
+
+  @Test
+  void resetWorks() {
+    // ARRANGE
+    underTest.setCriteria(
+        Lists.newArrayList(
+            new FactCriteria("namespace", Set.of("PizzaOrdered"), UUID.randomUUID(), List.of())));
+    underTest.setFrom(BigDecimal.TEN);
+    LocalDate originalSince = underTest.getSince();
+    // ACT
+    underTest.reset();
+    // ASSERT
+    assertThat(underTest.getCriteria()).hasSize(1);
+    final var factCriteriaAfterReset = underTest.getCriteria().get(0);
+    assertThat(factCriteriaAfterReset.getNs()).isNull();
+    assertThat(factCriteriaAfterReset.getType()).isNull();
+    assertThat(factCriteriaAfterReset.getAggId()).isNull();
+    assertThat(underTest.getSince()).isAfterOrEqualTo(originalSince);
+    assertThat(underTest.getFrom()).isEqualTo(BigDecimal.valueOf(123));
   }
 }
