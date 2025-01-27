@@ -15,21 +15,16 @@
  */
 package org.factcast.server.ui.report;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import com.google.common.collect.Lists;
 import jakarta.validation.Valid;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import lombok.Data;
-import lombok.Getter;
+import lombok.*;
 import lombok.experimental.Accessors;
-import org.factcast.server.ui.views.filter.FactCriteria;
-import org.factcast.server.ui.views.filter.FilterBean;
+import org.factcast.server.ui.views.filter.*;
 
 @Data
 @SuppressWarnings("java:S1948")
@@ -69,7 +64,6 @@ public class ReportFilterBean implements FilterBean, Serializable {
     from = BigDecimal.valueOf(defaultFrom);
   }
 
-  // TODO get rid of offset as well?
   @Override
   public Integer getOffset() {
     return 0;
