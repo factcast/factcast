@@ -52,6 +52,7 @@
     <module>factcast-server-grpc</module>
     <module>factcast-server-security</module>
     <module>factcast-server-ui</module>
+    <module>factcast-server-ui-s3-reportstore</module>
     <module>factcast-grpc-api</module>
     <module>factcast-grpc-lz4</module>
     <module>factcast-grpc-snappy</module>
@@ -110,7 +111,7 @@
     <grpc.version>1.63.0</grpc.version>
     <!-- lter versions seem to break toxi -->
     <testcontainers.version>1.20.4</testcontainers.version>
-    <arrow.version>2.0.1</arrow.version>
+    <arrow.version>1.2.4</arrow.version>
     <micronaut.version>4.7.4</micronaut.version>
     <kotlin.version>2.1.10</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
