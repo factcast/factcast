@@ -64,7 +64,6 @@ public class FileSystemReportStore implements ReportStore {
 
   @SneakyThrows
   @Override
-  // TODO: userName no influence on URL?
   public @NonNull URL getReportDownload(@NonNull String userName, @NonNull String reportName) {
     log.info("Constructing download link to redirect to download of {}", reportName);
     String downloadLink = "files/" + reportName;
