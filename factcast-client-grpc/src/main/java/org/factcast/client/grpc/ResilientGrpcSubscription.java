@@ -33,8 +33,7 @@ import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.util.ExceptionHelper;
 
 @Slf4j
-public class ResilientGrpcSubscription implements Subscription {
-
+public class ResilientGrpcSubscription extends AbstractSubscription {
   private final GrpcFactStore store;
   private final SubscriptionRequestTO originalRequest;
   private final FactObserver originalObserver;
@@ -85,13 +84,9 @@ public class ResilientGrpcSubscription implements Subscription {
   }
 
   @Override
-  public void close() {
+  public void internalClose() {
     if (!isClosed.getAndSet(true)) {
-      try {
-        closeAndDetachSubscription();
-      } finally {
-        isClosed.set(true);
-      }
+      closeAndDetachSubscription();
     }
   }
 

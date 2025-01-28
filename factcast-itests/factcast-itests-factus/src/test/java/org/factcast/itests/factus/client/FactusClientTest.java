@@ -19,24 +19,32 @@ import static java.util.Arrays.asList;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.google.common.base.Stopwatch;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import lombok.*;
+import lombok.SneakyThrows;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import nl.altindag.log.LogCaptor;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
+import org.factcast.core.store.RetryableException;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.*;
-import org.factcast.factus.event.*;
+import org.factcast.factus.event.EventConverter;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.lock.LockedOperationAbortedException;
-import org.factcast.factus.projection.*;
+import org.factcast.factus.projection.Aggregate;
+import org.factcast.factus.projection.LocalManagedProjection;
+import org.factcast.factus.projection.LocalSubscribedProjection;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.config.RedissonProjectionConfiguration;
@@ -46,9 +54,12 @@ import org.factcast.spring.boot.autoconfigure.snap.RedissonSnapshotCacheAutoConf
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
-import org.redisson.api.*;
+import org.redisson.api.RTransaction;
+import org.redisson.api.RedissonClient;
+import org.redisson.api.TransactionOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 @ContextConfiguration(
     classes = {
@@ -717,6 +728,43 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       var factId1 = factus.publish(new UserBored("Kenny"), Fact::id);
       assertThatThrownBy(() -> factus.waitFor(subscribedUserNames, factId1, timeout))
           .isInstanceOf(TimeoutException.class);
+    }
+  }
+
+  @Test
+  void testTokenReleaseAfterTooManyFailures() throws Exception {
+    OverrideAndFailSubscribedUserNames subscribedUserNames =
+        new OverrideAndFailSubscribedUserNames();
+    subscribedUserNames.clear();
+
+    factus.publish(new UserCreated("Kyle"));
+    factus.publish(new UserDeleted(UUID.randomUUID()));
+
+    assertThat(subscribedUserNames.isValid()).isFalse();
+    try (var logCaptor = LogCaptor.forClass(FactusImpl.class)) {
+      logCaptor.setLogLevelToTrace();
+      factus.subscribe(subscribedUserNames);
+
+      Awaitility.await().until(subscribedUserNames::isValid);
+      Awaitility.await()
+          .until(
+              () ->
+                  !logCaptor.getTraceLogs().isEmpty()
+                      && logCaptor
+                          .getTraceLogs()
+                          .get(0)
+                          .contains(
+                              "Closing AutoCloseable for class class org.factcast.factus.projection.LocalWriteToken"));
+    }
+
+    assertThat(subscribedUserNames.isValid()).isFalse();
+  }
+
+  static class OverrideAndFailSubscribedUserNames extends SubscribedUserNames {
+
+    @Override
+    public void apply(UserDeleted deleted, @Nullable String signee) {
+      throw new RetryableException(new Throwable("Test exception"));
     }
   }
 
