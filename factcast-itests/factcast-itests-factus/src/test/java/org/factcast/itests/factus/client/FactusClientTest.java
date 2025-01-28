@@ -743,7 +743,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
     assertThat(subscribedUserNames.isValid()).isFalse();
     try (var logCaptor = LogCaptor.forClass(FactusImpl.class)) {
       logCaptor.setLogLevelToTrace();
-      factus.subscribe(subscribedUserNames);
+      factus.subscribeAndBlock(subscribedUserNames);
 
       Awaitility.await().until(subscribedUserNames::isValid);
       Awaitility.await()

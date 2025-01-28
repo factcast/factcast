@@ -21,11 +21,15 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import nl.altindag.log.LogCaptor;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.factus.Factus;
+import org.factcast.factus.FactusImpl;
 import org.factcast.factus.Handler;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.redis.tx.AbstractRedisTxManagedProjection;
@@ -47,6 +51,7 @@ import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 @SpringBootTest
 @ContextConfiguration(
@@ -128,6 +133,33 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
       }
       log.info("publishing {} Events ", NUMBER_OF_EVENTS);
       factus.publish(l);
+    }
+
+    @Test
+    void testTokenReleaseAfterTooManyFailures_redis() throws Exception {
+      TxRedissonSubscribedUserNamesThrowsError subscribedUserNames =
+              new TxRedissonSubscribedUserNamesThrowsError(redissonClient);
+
+      factus.publish(new UserDeleted(UUID.randomUUID()));
+
+//      assertThat(subscribedUserNames.isValid()).isFalse();
+      try (var logCaptor = LogCaptor.forClass(FactusImpl.class)) {
+        logCaptor.setLogLevelToTrace();
+        factus.subscribe(subscribedUserNames);
+
+//        Awaitility.await().until(subscribedUserNames::isValid);
+        Awaitility.await()
+                .until(
+                        () ->
+                                !logCaptor.getTraceLogs().isEmpty()
+                                        && logCaptor
+                                        .getTraceLogs()
+                                        .get(0)
+                                        .contains(
+                                                "Closing AutoCloseable for class class org.factcast.factus.projection.LocalWriteToken"));
+      }
+
+//      assertThat(subscribedUserNames.isValid()).isFalse();
     }
 
     @SneakyThrows
@@ -265,6 +297,23 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
       super.apply(created, tx);
     }
   }
+
+  @ProjectionMetaData(revision = 1)
+  @RedisTransactional(bulkSize = 1)
+  static class TxRedissonSubscribedUserNamesThrowsError
+          extends TrackingTxRedissonSubscribedUserNames {
+    private int count;
+
+    public TxRedissonSubscribedUserNamesThrowsError(RedissonClient redisson) {
+      super(redisson);
+    }
+
+    @Override
+    protected void apply(UserCreated created, RTransaction tx) {
+        throw new IllegalArgumentException("user should be in map but wasnt");
+    }
+  }
+
 
   @ProjectionMetaData(revision = 1)
   @RedisTransactional
