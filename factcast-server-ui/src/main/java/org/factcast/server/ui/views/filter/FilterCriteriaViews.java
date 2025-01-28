@@ -37,7 +37,7 @@ import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
 public class FilterCriteriaViews<F extends FilterBean> extends VerticalLayout {
   private final BeanValidationUrlStateBinder<F> binder;
   private final F bean;
-  private final FactRepository repo;
+  private final transient FactRepository repo;
 
   private final List<FilterCriteriaCountUpdateListener> updateListeners = new ArrayList<>();
 

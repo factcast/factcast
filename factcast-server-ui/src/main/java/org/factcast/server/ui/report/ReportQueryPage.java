@@ -258,16 +258,9 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
       List<Fact> dataFromStore = repo.fetchAll(formBean);
       log.info("Found {} entries", dataFromStore.size());
       if (!dataFromStore.isEmpty()) {
-
         List<ObjectNode> processedFacts =
             dataFromStore.stream().map(e -> jsonViewPluginService.process(e).fact()).toList();
-
-        try {
-          reportStore.save(userName, new Report(fileName, processedFacts, formBean));
-          reportProvider.refreshAll();
-        } catch (IllegalArgumentException e) {
-          displayWarning(e.getMessage());
-        }
+        trySave(processedFacts);
       } else {
         displayWarning(
             "No data was found for this query and therefore report creation is skipped.");
@@ -279,6 +272,15 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
     }
     // Not re-enabling the queryReportBtn to not incentivise users to generate it
     // multiple times.
+  }
+
+  private void trySave(List<ObjectNode> processedFacts) {
+    try {
+      reportStore.save(userName, new Report(fileName, processedFacts, formBean));
+      reportProvider.refreshAll();
+    } catch (IllegalArgumentException e) {
+      displayWarning(e.getMessage());
+    }
   }
 
   private DataProvider<ReportEntry, Void> getReportProvider() {
