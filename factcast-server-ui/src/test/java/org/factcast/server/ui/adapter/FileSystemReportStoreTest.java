@@ -21,6 +21,8 @@ import static org.mockito.Mockito.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.vaadin.flow.server.*;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
@@ -105,7 +107,7 @@ class FileSystemReportStoreTest {
 
       final var actual = uut.listAllForUser(USER_NAME);
 
-      assertThat(actual.size()).isEqualTo(2);
+      assertThat(actual).hasSize(2);
       assertThat(actual)
           .extracting(ReportEntry::name)
           .containsExactly("report1.json", "report2.json");
@@ -151,6 +153,29 @@ class FileSystemReportStoreTest {
     private void createFile(Path path) {
       Files.createDirectories(path.getParent());
       Files.createFile(path);
+    }
+  }
+
+  @Nested
+  class WhenGettingReportUrls {
+
+    @Test
+    void urlIsCorrect() {
+      // ARRANGE
+      final var reportName = "report.json";
+      final var vaadinServletRequest = mock(VaadinServletRequest.class);
+      final var httpServletRequest = mock(HttpServletRequest.class);
+
+      try (MockedStatic<VaadinService> vaadin = mockStatic(VaadinService.class)) {
+        vaadin.when(VaadinService::getCurrentRequest).thenReturn(vaadinServletRequest);
+        when(vaadinServletRequest.getHttpServletRequest()).thenReturn(httpServletRequest);
+        when(httpServletRequest.getRequestURL())
+            .thenReturn(new StringBuffer("http://localhost:8080/"));
+        // ACT
+        final var actualUrl = uut.getReportDownload(USER_NAME, reportName);
+        // ASSERT
+        assertThat(actualUrl).hasToString("http://localhost:8080/files/" + reportName);
+      }
     }
   }
 

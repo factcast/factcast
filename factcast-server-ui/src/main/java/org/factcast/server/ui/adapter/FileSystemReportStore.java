@@ -17,25 +17,17 @@ package org.factcast.server.ui.adapter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
-import com.vaadin.flow.server.VaadinRequest;
-import com.vaadin.flow.server.VaadinService;
-import com.vaadin.flow.server.VaadinServletRequest;
+import com.vaadin.flow.server.*;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.*;
-import java.net.URI;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
+import java.net.*;
+import java.nio.file.*;
+import java.util.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.util.ExceptionHelper;
 import org.factcast.server.ui.port.ReportStore;
-import org.factcast.server.ui.report.Report;
-import org.factcast.server.ui.report.ReportEntry;
+import org.factcast.server.ui.report.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -72,6 +64,7 @@ public class FileSystemReportStore implements ReportStore {
 
   @SneakyThrows
   @Override
+  // TODO: userName no influence on URL?
   public @NonNull URL getReportDownload(@NonNull String userName, @NonNull String reportName) {
     log.info("Constructing download link to redirect to download of {}", reportName);
     String downloadLink = "files/" + reportName;
