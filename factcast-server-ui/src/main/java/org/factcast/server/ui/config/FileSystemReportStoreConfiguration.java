@@ -26,7 +26,6 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class FileSystemReportStoreConfiguration {
-  // TODO add to documentation
   @Value("${factcast.ui.reports.path:factcast-ui/reports}")
   String reportsPath;
 

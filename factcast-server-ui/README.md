@@ -17,3 +17,11 @@ into videos that you can find in the target folder, respectively.
 Playwrite offers this generative mode which records interactions with the ui and turns them into accessor, which can be
 a great help setting up new integration tests.
 `mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="codegen localhost:8080"`                                  
+
+## Report Generation
+
+The UI offers a report generation feature that can be used to generate and save report based on certain event criteria.
+These reports can be stored either in S3 (`S3ReportStore`) or in your local filesystem (`FileSystemReportStore`).
+
+If you want to use the `S3ReportStore`, you need to provide the configuration property of `factcast.ui.s3.bucket`.
+If you chose to use the `FileSystemReportStore`, you need to set the configuration property of `factcast.ui.reports.path`.
