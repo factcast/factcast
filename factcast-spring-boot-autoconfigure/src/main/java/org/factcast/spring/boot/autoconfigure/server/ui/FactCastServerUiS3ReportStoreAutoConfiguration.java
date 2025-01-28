@@ -21,6 +21,7 @@ import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Import;
 
+// CHECKSTYLE.OFF:OuterTypeFilename
 @AutoConfiguration
 @Import({S3ReportStoreConfiguration.class})
 @ConditionalOnClass(S3ReportStoreConfiguration.class)
