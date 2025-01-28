@@ -16,30 +16,25 @@
 package org.factcast.store.internal.listen;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.factcast.store.internal.PgConstants.CHANNEL_FACT_INSERT;
-import static org.factcast.store.internal.PgConstants.LISTEN_SQL;
+import static org.factcast.store.internal.PgConstants.*;
 
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
+import com.google.common.eventbus.*;
 import java.sql.SQLException;
 import java.util.*;
-import lombok.Getter;
-import lombok.SneakyThrows;
+import lombok.*;
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.internal.PgTestConfiguration;
+import org.factcast.store.internal.notification.FactInsertionNotification;
 import org.factcast.test.IntegrationTest;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.postgresql.PGNotification;
 import org.postgresql.jdbc.PgConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlConfig;
+import org.springframework.test.context.jdbc.*;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ContextConfiguration(classes = {PgTestConfiguration.class})
@@ -117,11 +112,11 @@ class PgListenerIntegrationTest {
     }
 
     public class EventCollector {
-      @Getter final List<PgListener.FactInsertionSignal> signals = new ArrayList<>();
+      @Getter final List<FactInsertionNotification> signals = new ArrayList<>();
 
       @SuppressWarnings("unused")
       @Subscribe
-      public void onEvent(PgListener.FactInsertionSignal ev) {
+      public void onEvent(FactInsertionNotification ev) {
         signals.add(ev);
       }
     }
