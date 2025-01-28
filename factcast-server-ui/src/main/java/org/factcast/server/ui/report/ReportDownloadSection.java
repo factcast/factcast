@@ -15,15 +15,18 @@
  */
 package org.factcast.server.ui.report;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.provider.DataProvider;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.server.ui.port.ReportStore;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @Slf4j
+@Getter(value = AccessLevel.PACKAGE, onMethod = @__({@VisibleForTesting}))
 public class ReportDownloadSection extends HorizontalLayout {
 
   private final transient ReportStore reportStore;
