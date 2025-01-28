@@ -15,13 +15,14 @@
  */
 package org.factcast.server.ui.views.filter;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.NonNull;
 import org.factcast.core.spec.FactSpec;
 
-public interface FilterBean {
+public interface FilterBean extends Serializable {
 
   LocalDate getSince();
 

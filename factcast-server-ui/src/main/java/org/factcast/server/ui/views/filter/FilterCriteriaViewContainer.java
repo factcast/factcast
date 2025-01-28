@@ -34,17 +34,17 @@ import org.factcast.core.util.NoCoverageReportToBeGenerated;
 @NoCoverageReportToBeGenerated
 public class FilterCriteriaViewContainer extends HorizontalLayout
     implements FilterCriteriaViews.FilterCriteriaCountUpdateListener {
-  private final FilterCriteriaView filterCriteriaView;
+  private final FilterCriteriaView<?> filterCriteriaView;
   private final Supplier<Integer> indexSupplier;
   private final Paragraph text;
 
   public FilterCriteriaViewContainer(
-      @NonNull FilterCriteriaView c, @NonNull Supplier<Integer> indexSupplier) {
+      @NonNull FilterCriteriaView<?> c, @NonNull Supplier<Integer> indexSupplier) {
     this(c, indexSupplier, null);
   }
 
   public FilterCriteriaViewContainer(
-      @NonNull FilterCriteriaView filterCriteriaView,
+      @NonNull FilterCriteriaView<?> filterCriteriaView,
       @NonNull Supplier<Integer> indexSupplier,
       Consumer<FilterCriteriaViewContainer> onRemoveClick) {
     this.filterCriteriaView = filterCriteriaView;

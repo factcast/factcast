@@ -76,7 +76,7 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
 
   private final String userName = SecurityContextHolder.getContext().getAuthentication().getName();
 
-  // TODO: load query when selecting report
+  // Nice to have: load query when selecting report
   public ReportQueryPage(
       @NonNull FactRepository repo,
       @NonNull ReportStore reportStore,
