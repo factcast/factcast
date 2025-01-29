@@ -29,18 +29,6 @@ class ReportFilterBeanTest {
   final ReportFilterBean underTest = new ReportFilterBean(123);
 
   @Test
-  void offsetAlwaysZero() {
-    underTest.setOffset(42);
-    assertThat(underTest.getOffset()).isZero();
-  }
-
-  @Test
-  void defaultOffsetAlwaysZero() {
-    underTest.setOffset(42);
-    assertThat(underTest.getOffsetOrDefault()).isZero();
-  }
-
-  @Test
   void resetWorks() {
     // ARRANGE
     underTest.setCriteria(

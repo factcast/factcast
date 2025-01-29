@@ -63,20 +63,4 @@ public class ReportFilterBean implements FilterBean, Serializable {
     criteria.add(new FactCriteria());
     from = BigDecimal.valueOf(defaultFrom);
   }
-
-  @Override
-  public Integer getOffset() {
-    return 0;
-  }
-
-  @Override
-  public void setOffset(Integer offset) {
-    // ignore
-  }
-
-  @Override
-  @JsonIgnore
-  public int getOffsetOrDefault() {
-    return 0;
-  }
 }

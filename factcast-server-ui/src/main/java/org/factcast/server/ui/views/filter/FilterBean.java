@@ -28,10 +28,6 @@ public interface FilterBean extends Serializable {
 
   void setSince(LocalDate since);
 
-  Integer getOffset();
-
-  void setOffset(Integer offset);
-
   BigDecimal getFrom();
 
   void setFrom(BigDecimal from);
@@ -44,6 +40,4 @@ public interface FilterBean extends Serializable {
   }
 
   void reset();
-
-  int getOffsetOrDefault();
 }

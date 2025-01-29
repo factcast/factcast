@@ -87,7 +87,6 @@ class ReportQueryPageIntTest extends AbstractBrowserTest {
       final var query = om.readValue(report.get("query").toString(), ReportFilterBean.class);
       assertThat(query.getDefaultFrom()).isEqualTo(2);
       assertThat(query.getFrom()).isNull();
-      assertThat(query.getOffset()).isZero();
       assertThat(query.getCriteria()).hasSize(1);
       assertCriterion(query.getCriteria().get(0), ns, type, null);
     }

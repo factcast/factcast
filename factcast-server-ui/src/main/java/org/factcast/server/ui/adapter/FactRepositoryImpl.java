@@ -104,7 +104,7 @@ public class FactRepositoryImpl implements FactRepository {
 
   @SneakyThrows
   public List<Fact> fetchAll(ReportFilterBean bean) {
-    final var observer = new UnlimitedListObserver(bean.getOffsetOrDefault());
+    final var observer = new UnlimitedListObserver(0);
     return fetch(bean, observer);
   }
 
