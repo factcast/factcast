@@ -39,7 +39,7 @@ import org.springframework.test.context.ContextConfiguration;
       TestFactusApplication.class,
       RedissonProjectionConfiguration.class,
       RedissonSnapshotCacheAutoConfiguration.class,
-      LoggingAspect.class, // this broke the inner class instantiation
+      SomeAspectAroundProjection.class, // this broke the inner class instantiation
     })
 @Slf4j
 class SimpleRoundtripTest extends AbstractFactCastIntegrationTest {
@@ -61,8 +61,11 @@ class SimpleRoundtripTest extends AbstractFactCastIntegrationTest {
 
 @Aspect
 @Component
-class LoggingAspect {
+class SomeAspectAroundProjection {
 
   @Before("execution(* org.factcast.itests.factus.proj.UserCount.*(..))")
   public void nop() {}
+
+  @Before("execution(* org.factcast.itests.factus.proj.UserCount.Handlers.*(..))")
+  public void nopInner() {}
 }

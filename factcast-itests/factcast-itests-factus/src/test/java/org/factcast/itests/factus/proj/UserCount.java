@@ -25,7 +25,7 @@ public class UserCount extends LocalManagedProjection {
 
   private int users = 0;
 
-  class Handlers {
+  public class Handlers {
     @Handler
     void apply(UserCreated created) {
       users++;
