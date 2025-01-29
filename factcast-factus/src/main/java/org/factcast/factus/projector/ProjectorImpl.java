@@ -629,10 +629,15 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
   }
 
   @SneakyThrows
-  public static Object unwrapProxy(Object bean) {
+  @NonNull
+  public static Object unwrapProxy(@NonNull Object bean) {
     while (org.springframework.aop.support.AopUtils.isAopProxy(bean) && bean instanceof Advised) {
       Advised advised = (Advised) bean;
-      bean = advised.getTargetSource().getTarget();
+      Object targetBean = Objects.requireNonNull(advised.getTargetSource().getTarget());
+      if (targetBean == bean)
+        throw new IllegalStateException(
+            "AOP gone wrong? Advised.targetSource points back to advised?!?!");
+      else bean = targetBean;
     }
     return bean;
   }
