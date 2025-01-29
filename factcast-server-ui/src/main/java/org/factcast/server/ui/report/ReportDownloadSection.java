@@ -16,10 +16,12 @@
 package org.factcast.server.ui.report;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.vaadin.flow.component.ClickEvent;
+import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.provider.DataProvider;
+import java.util.Optional;
+import java.util.function.Supplier;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.server.ui.port.ReportStore;
@@ -36,6 +38,9 @@ public class ReportDownloadSection extends HorizontalLayout {
   private final Button deleteBtn = new Button("Delete");
   private final String userName = SecurityContextHolder.getContext().getAuthentication().getName();
   private String fileName;
+
+  @Setter(value = AccessLevel.PACKAGE, onMethod = @__({@VisibleForTesting}))
+  private transient Supplier<Optional<UI>> uiSupplier = this::getUI;
 
   public ReportDownloadSection(
       ReportStore reportStore, DataProvider<ReportEntry, Void> dataProvider) {
@@ -65,7 +70,7 @@ public class ReportDownloadSection extends HorizontalLayout {
     Button button = buttonClickEvent.getSource();
     button.setText("Preparing download...");
     final var reportDownloadUrl = reportStore.getReportDownload(this.userName, this.fileName);
-    getUI().orElseThrow().getPage().open(reportDownloadUrl.toString());
+    uiSupplier.get().orElseThrow().getPage().open(reportDownloadUrl.toString());
     button.setEnabled(false);
     button.setText("Download");
   }
