@@ -75,7 +75,12 @@
       </dependency>
       <dependency>
         <groupId>org.factcast</groupId>
-        <artifactId>factcast-store-rds</artifactId>
+        <artifactId>factcast-store-notify-export</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-store-notify-export-redis</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
