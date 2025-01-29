@@ -21,14 +21,10 @@ import com.google.common.collect.Sets;
 import com.google.common.eventbus.EventBus;
 import java.util.*;
 import lombok.SneakyThrows;
-import org.factcast.store.internal.listen.PgListener;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.factcast.store.internal.notification.BlacklistChangeNotification;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Spy;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -42,9 +38,10 @@ class PgBlacklistDataProviderTest {
   @Nested
   class WhenAfteringSingletonsInstantiated {
     @Test
-    void fetches() {
+    void fetchesInitially() {
+      underTest = spy(underTest);
       underTest.afterSingletonsInstantiated();
-      verify(blacklist).accept(any());
+      verify(underTest).updateBlacklist();
     }
 
     @Test
@@ -52,9 +49,9 @@ class PgBlacklistDataProviderTest {
       underTest.afterSingletonsInstantiated();
       verify(blacklist, times(1)).accept(any());
       // three more
-      bus.post(new PgListener.BlacklistChangeSignal());
-      bus.post(new PgListener.BlacklistChangeSignal());
-      bus.post(new PgListener.BlacklistChangeSignal());
+      bus.post(new BlacklistChangeNotification(1));
+      bus.post(new BlacklistChangeNotification(2));
+      bus.post(new BlacklistChangeNotification(3));
       verify(blacklist, times(4)).accept(any());
     }
   }
@@ -70,6 +67,7 @@ class PgBlacklistDataProviderTest {
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Nested
   class WhenUpdatingBlacklist {
     private final UUID FACT_ID = UUID.randomUUID();
@@ -84,17 +82,18 @@ class PgBlacklistDataProviderTest {
 
     @Test
     void updatesSet() {
-      underTest.on(new PgListener.BlacklistChangeSignal());
+
+      underTest.on(new BlacklistChangeNotification(1));
       verify(blacklist).accept(Sets.newHashSet(NEW_FACT_ID, FACT_ID));
 
-      underTest.on(new PgListener.BlacklistChangeSignal());
+      underTest.on(new BlacklistChangeNotification(2));
       verify(blacklist).accept(new HashSet<>());
     }
   }
 
   @Nested
   class WhenOning {
-    @Mock private PgListener.BlacklistChangeSignal signal;
+    @Mock private BlacklistChangeNotification signal;
 
     @Test
     void fetches() {
