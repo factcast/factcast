@@ -35,10 +35,12 @@ public class LocalWriteToken {
         return lock::unlock;
       }
       try {
+
         TimeUnit.SECONDS.sleep(1);
       } catch (InterruptedException e) {
         // nobody cares
       }
+      seconds++;
     }
     return null;
   }
