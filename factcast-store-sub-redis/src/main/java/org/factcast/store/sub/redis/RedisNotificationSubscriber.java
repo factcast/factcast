@@ -16,7 +16,7 @@
 package org.factcast.store.sub.redis;
 
 import com.google.common.eventbus.EventBus;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.internal.notification.StoreNotification;
 import org.redisson.api.RedissonClient;
@@ -30,13 +30,16 @@ import org.springframework.stereotype.Component;
 public class RedisNotificationSubscriber
     implements SmartInitializingSingleton, MessageListener<StoreNotification> {
 
-  private final RedissonClient redis;
-  private final EventBus bus;
+  // same is defined on the publisher side, where to put this?
+  // feels bit overengineered to create a module just for a constant class, but
+  // also feels weird to put this into the store module.
+  static final String TOPIC = "factcast.store.notify.export";
+  @NonNull private final RedissonClient redis;
+  @NonNull private final EventBus bus;
 
   @Override
   public void afterSingletonsInstantiated() {
-    String topic = "factcast.store.notify.export";
-    redis.getTopic(topic).addListener(StoreNotification.class, this);
+    redis.getTopic(TOPIC).addListener(StoreNotification.class, this);
   }
 
   @Override

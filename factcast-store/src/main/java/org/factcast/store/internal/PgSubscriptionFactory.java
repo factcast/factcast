@@ -20,19 +20,13 @@ import com.google.common.eventbus.EventBus;
 import java.util.concurrent.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionImpl;
-import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.TransformationException;
-import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.subscription.*;
+import org.factcast.core.subscription.observer.*;
 import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
-import org.factcast.store.internal.pipeline.ServerPipeline;
-import org.factcast.store.internal.pipeline.ServerPipelineFactory;
-import org.factcast.store.internal.query.PgFactIdToSerialMapper;
-import org.factcast.store.internal.query.PgLatestSerialFetcher;
+import org.factcast.store.internal.pipeline.*;
+import org.factcast.store.internal.query.*;
 import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -40,7 +34,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 // TODO integrate with PGQuery
 @SuppressWarnings("UnstableApiUsage")
 @Slf4j
-class PgSubscriptionFactory implements AutoCloseable {
+public class PgSubscriptionFactory implements AutoCloseable {
 
   final JdbcTemplate jdbcTemplate;
 

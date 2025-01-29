@@ -26,16 +26,16 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class RedisNotificationExporter implements SmartInitializingSingleton {
-
+public class RedisNotificationPublisher implements SmartInitializingSingleton {
+  // same is defined on the publisher side
+  static final String TOPIC = "factcast.store.notify.export";
   private final RedissonClient redis;
   private final EventBus bus;
   private RTopic notificationTopic;
 
   @Override
   public void afterSingletonsInstantiated() {
-    String topic = "factcast.store.notify.export";
-    notificationTopic = redis.getTopic(topic);
+    notificationTopic = redis.getTopic(TOPIC);
     bus.register(this);
   }
 
