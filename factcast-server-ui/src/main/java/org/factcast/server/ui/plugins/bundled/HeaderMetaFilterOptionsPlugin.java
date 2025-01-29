@@ -23,16 +23,15 @@ public class HeaderMetaFilterOptionsPlugin extends JsonViewPlugin {
   protected void doHandle(Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData) {
     fact.header()
         .meta()
-        // TODO: needs adaptation regarding multiple values.
         .forEachDistinctKey(
-            (key, value) -> {
+            (key, values) -> {
               if (key.startsWith("_")) {
                 // not annotating _ts and _ser
                 return;
               }
+
               final var keyPath = "$.meta." + key;
-              String valueToUse = value.iterator().next(); // TODO iterate
-              jsonEntryMetaData.addHeaderMetaFilterOption(keyPath, key, valueToUse);
+              jsonEntryMetaData.addHeaderMetaFilterOption(keyPath, key, values);
             });
   }
 

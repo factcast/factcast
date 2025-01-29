@@ -44,7 +44,7 @@ public final class PgBlacklistDataProvider
   @Override
   public void afterSingletonsInstantiated() {
     bus.register(this);
-    updateBlacklist(); // just to be safe
+    updateBlacklist(); // initially necessary
   }
 
   @Subscribe

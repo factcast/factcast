@@ -69,4 +69,8 @@ public class SchemaStoreChangeNotification extends StoreNotification {
       }
     };
   }
+
+  public boolean needToClearWholeNearCache() {
+    return "*".equals(ns);
+  }
 }

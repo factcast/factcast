@@ -445,7 +445,7 @@ class PgListenerTest {
     @Test
     void empty() {
       org.assertj.core.api.Assertions.assertThat(
-              uut.compactBlacklistChangeNotifications(new ArrayList<>()))
+              uut.streamWithCompactedBlacklistChanges(new ArrayList<>()))
           .isEmpty();
     }
 
@@ -453,7 +453,7 @@ class PgListenerTest {
     void unrelated() {
       List<PGNotification> notifications = List.of(new Notification("other", 1, "{}"));
       org.assertj.core.api.Assertions.assertThat(
-              uut.compactBlacklistChangeNotifications(notifications))
+              uut.streamWithCompactedBlacklistChanges(notifications))
           .isEqualTo(notifications);
     }
 
@@ -465,7 +465,7 @@ class PgListenerTest {
               new Notification(PgConstants.CHANNEL_BLACKLIST_CHANGE, 1, "{}"),
               new Notification("other", 1, "{}"));
       org.assertj.core.api.Assertions.assertThat(
-              uut.compactBlacklistChangeNotifications(notifications))
+              uut.streamWithCompactedBlacklistChanges(notifications))
           .isEqualTo(notifications);
     }
 
@@ -485,7 +485,7 @@ class PgListenerTest {
       List<PGNotification> expected = List.of(unrelated1, unrelated2, tx3, unrelated3);
 
       org.assertj.core.api.Assertions.assertThat(
-              uut.compactBlacklistChangeNotifications(notifications).toList())
+              uut.streamWithCompactedBlacklistChanges(notifications).toList())
           .isEqualTo(expected);
     }
   }
