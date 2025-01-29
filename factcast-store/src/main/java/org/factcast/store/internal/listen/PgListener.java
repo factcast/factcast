@@ -23,7 +23,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.StoreConfigurationProperties;
@@ -100,11 +99,9 @@ public class PgListener implements InitializingBean, DisposableBean {
       }
     }
 
+    @SneakyThrows
     private void sleep() {
-      try {
-        Thread.sleep(props.getFactNotificationNewConnectionWaitTimeInMillis());
-      } catch (InterruptedException ignore) {
-      }
+      TimeUnit.MILLISECONDS.sleep(props.getFactNotificationNewConnectionWaitTimeInMillis());
     }
   }
 
@@ -152,7 +149,7 @@ public class PgListener implements InitializingBean, DisposableBean {
     // if there are more than 1 blacklist_change notifications in the array, we need only the last
     // one
     // note we filter BEFORE parsing to save some cpu cycles
-    compactBlacklistChangeNotifications(nonFactInserts)
+    streamWithCompactedBlacklistChanges(nonFactInserts)
         .map(StoreNotification::createFrom)
         .filter(Objects::nonNull)
         .forEach(this::post);
@@ -175,7 +172,7 @@ public class PgListener implements InitializingBean, DisposableBean {
 
   /** remove all but the last CHANNEL_BLACKLIST_CHANGE */
   @VisibleForTesting
-  Stream<PGNotification> compactBlacklistChangeNotifications(List<PGNotification> nonFactInserts) {
+  Stream<PGNotification> streamWithCompactedBlacklistChanges(List<PGNotification> nonFactInserts) {
     Optional<PGNotification> lastBCN =
         nonFactInserts.stream()
             .filter(n -> PgConstants.CHANNEL_BLACKLIST_CHANGE.equals(n.getName()))
@@ -190,8 +187,8 @@ public class PgListener implements InitializingBean, DisposableBean {
   }
 
   @VisibleForTesting
-  void post(@Nullable StoreNotification n) {
-    if (n != null && running.get()) {
+  void post(@NonNull StoreNotification n) {
+    if (running.get()) {
       log.trace("posting to eventBus: {}", n);
       eventBus.post(n);
     }

@@ -43,11 +43,9 @@ public class TransformationStoreChangeNotification extends StoreNotification {
   }
 
   /**
-   * TODO suggestion:
-   *
-   * <p>we may consider not even distributing this at all, because handling them would need write
-   * access to the persistent cache. If the (maybe not) publishing party takes care of it, that'd be
-   * enough, ass there are no near caches used.
+   * still needs to be distributed, because we have a cache of the chains in
+   * org.factcast.store.registry.transformation.chains.TransformationChains#cache that is cleared
+   * when a PG notification for a given ns&type comes in.
    */
   @Override
   public boolean distributed() {
