@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.9.4-SNAPSHOT</version>
+  <version>0.9.5-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>factcast</name>
   <description>factcast is a 'good enough' event store using PostgreSQL
@@ -96,7 +96,7 @@
     <spotless-maven-plugin.version>2.44.2</spotless-maven-plugin.version>
     <directory-maven-plugin.version>1.0</directory-maven-plugin.version>
     <nexus-staging-maven-plugin.version>1.7.0</nexus-staging-maven-plugin.version>
-    <assertj.version>3.27.2</assertj.version>
+    <assertj.version>3.27.3</assertj.version>
     <jackson.version>2.18.2</jackson.version>
     <mockito.version>5.15.2</mockito.version>
     <junit-jupiter.version>5.11.4</junit-jupiter.version>
@@ -110,16 +110,16 @@
     <grpc.version>1.63.0</grpc.version>
     <!-- lter versions seem to break toxi -->
     <testcontainers.version>1.20.4</testcontainers.version>
-    <arrow.version>2.0.0</arrow.version>
+    <arrow.version>2.0.1</arrow.version>
     <micronaut.version>4.7.4</micronaut.version>
-    <kotlin.version>2.1.0</kotlin.version>
+    <kotlin.version>2.1.10</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <mockk.version>1.13.16</mockk.version>
     <redisson.version>3.43.0</redisson.version>
-    <aws-sdk.version>2.29.52</aws-sdk.version>
+    <aws-sdk.version>2.30.7</aws-sdk.version>
     <graaljs.version>24.1.1</graaljs.version>
     <shedlock.version>6.2.0</shedlock.version>
-    <byte-buddy.version>1.15.11</byte-buddy.version>
+    <byte-buddy.version>1.16.1</byte-buddy.version>
     <skipUnitTests>false</skipUnitTests>
     <postgres.version>15</postgres.version>
     <sonar.exclusions>**/src/test/java/**/*.java</sonar.exclusions>

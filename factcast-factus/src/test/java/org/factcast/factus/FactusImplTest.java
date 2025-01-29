@@ -957,6 +957,21 @@ class FactusImplTest {
       verify(subscription1).close();
       verify(subscription2).close();
     }
+
+    @SneakyThrows
+    @Test
+    void throwsWhenClosedWhileWaitingForToken() {
+      SubscribedProjection subscribedProjection = mock(SubscribedProjection.class);
+      // waiting for token
+      when(subscribedProjection.acquireWriteToken(any())).thenReturn(null);
+      CompletableFuture<Void> future =
+          CompletableFuture.runAsync(() -> underTest.subscribeAndBlock(subscribedProjection));
+
+      verify(subscribedProjection, timeout(5000).atLeast(1)).acquireWriteToken(any());
+      underTest.close();
+
+      assertThatThrownBy(future::get).hasCauseExactlyInstanceOf(FactusClosedException.class);
+    }
   }
 
   private void mockEventConverter() {
