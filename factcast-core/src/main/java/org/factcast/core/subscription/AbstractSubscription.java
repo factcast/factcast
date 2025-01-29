@@ -15,25 +15,21 @@
  */
 package org.factcast.core.subscription;
 
+import java.util.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public abstract class AbstractSubscription implements Subscription {
-  @NonNull private Runnable onClose = () -> {};
+  private final List<Runnable> onClose = new LinkedList<>();
 
   @Override
-  public Subscription onClose(@NonNull Runnable e) {
-    Runnable formerOnClose = onClose;
-    onClose =
-        () -> {
-          tryRun(formerOnClose);
-          tryRun(e);
-        };
+  public final Subscription onClose(@NonNull Runnable e) {
+    onClose.add(e);
     return this;
   }
 
-  private void tryRun(Runnable e) {
+  private void tryRun(@NonNull Runnable e) {
     try {
       e.run();
     } catch (Exception ex) {
@@ -48,7 +44,7 @@ public abstract class AbstractSubscription implements Subscription {
     try {
       internalClose();
     } finally {
-      onClose.run();
+      onClose.forEach(this::tryRun);
     }
   }
 }
