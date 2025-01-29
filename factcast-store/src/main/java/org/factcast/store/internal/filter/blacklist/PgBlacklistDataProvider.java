@@ -15,16 +15,14 @@
  */
 package org.factcast.store.internal.filter.blacklist;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
-import java.util.Set;
-import java.util.UUID;
+import com.google.common.eventbus.*;
+import java.util.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.store.internal.listen.PgListener;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.SmartInitializingSingleton;
+import org.factcast.store.internal.notification.BlacklistChangeNotification;
+import org.springframework.beans.factory.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @Slf4j
@@ -46,16 +44,17 @@ public final class PgBlacklistDataProvider
   @Override
   public void afterSingletonsInstantiated() {
     bus.register(this);
-    updateBlacklist();
+    updateBlacklist(); // initially necessary
   }
 
   @Subscribe
-  public void on(PgListener.BlacklistChangeSignal signal) {
+  public void on(BlacklistChangeNotification signal) {
     log.debug("A potential change on blacklist table was triggered.");
     updateBlacklist();
   }
 
-  private void updateBlacklist() {
+  @VisibleForTesting
+  void updateBlacklist() {
     blacklist.accept(fetchBlacklist());
   }
 

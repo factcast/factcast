@@ -17,8 +17,7 @@ package org.factcast.itests.factus.proj;
 
 import org.factcast.factus.Handler;
 import org.factcast.factus.projection.LocalManagedProjection;
-import org.factcast.itests.factus.event.UserCreated;
-import org.factcast.itests.factus.event.UserDeleted;
+import org.factcast.itests.factus.event.*;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -31,9 +30,11 @@ public class UserCount extends LocalManagedProjection {
     users++;
   }
 
-  @Handler
-  void apply(UserDeleted deleted) {
-    users--;
+  class Inner {
+    @Handler
+    void apply(UserDeleted deleted) {
+      users--;
+    }
   }
 
   public int count() {
