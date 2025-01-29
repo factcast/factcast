@@ -173,12 +173,39 @@ class ResilientGrpcSubscriptionTest {
         .isTrue();
     assertThat(ClientExceptionHelper.isRetryable(new StatusRuntimeException(Status.ABORTED)))
         .isTrue();
+  }
 
-    // assertThat(uut.isNotRetryable(new TransformationException());
-    // assertThat(uut.isNotRetryable(new MissingTransformationInformationException());
-    // important because it needs to reconnect, which only happens if it is NOT categorized as
-    // serverException
-    // assertThat(uut.isNotRetryable(new StaleSubscriptionDetectedException())).isFalse();
+  @Test
+  void onCloseStacksUpAndIgnoresException() {
+
+    class DoNothing implements Runnable {
+      @Override
+      public void run() {}
+    }
+
+    class Fails implements Runnable {
+      @Override
+      public void run() {
+        throw new IllegalArgumentException();
+      }
+    }
+
+    Runnable h1 = spy(new DoNothing());
+    Runnable h2 = spy(new DoNothing());
+    Runnable h3 = spy(new Fails());
+    Runnable h4 = spy(new DoNothing());
+
+    uut.onClose(h1);
+    uut.onClose(h2);
+    uut.onClose(h3);
+    uut.onClose(h4);
+
+    uut.close();
+
+    verify(h1).run();
+    verify(h2).run();
+    verify(h3).run();
+    verify(h4).run();
   }
 
   @Test
