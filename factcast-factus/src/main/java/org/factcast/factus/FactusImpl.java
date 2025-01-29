@@ -495,7 +495,7 @@ public class FactusImpl implements Factus {
       log.trace("Closing AutoCloseable for class {}", c.getClass());
       c.close();
     } catch (Exception e) {
-      log.warn("Error while closing AutoCloseable for class {}", c.getClass(), e);
+      log.warn("Error while closing AutoCloseable for {}", c.getClass(), e);
     }
   }
 
