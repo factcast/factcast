@@ -49,6 +49,6 @@ public class TransformationStoreChangeNotification extends StoreNotification {
    */
   @Override
   public boolean distributed() {
-    return false;
+    return true;
   }
 }
