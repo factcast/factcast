@@ -26,23 +26,17 @@ import javax.annotation.Nullable;
 import lombok.*;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.Fact;
-import org.factcast.core.FactStreamPosition;
-import org.factcast.core.spec.FactSpec;
-import org.factcast.core.spec.FactSpecCoordinates;
+import org.factcast.core.*;
+import org.factcast.core.spec.*;
 import org.factcast.core.util.ExceptionHelper;
 import org.factcast.factus.*;
 import org.factcast.factus.SuppressFactusWarnings.Warning;
+import org.factcast.factus.event.*;
 import org.factcast.factus.event.EventObject;
-import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.projection.*;
-import org.factcast.factus.projection.parameter.HandlerParameterContributor;
-import org.factcast.factus.projection.parameter.HandlerParameterContributors;
-import org.factcast.factus.projection.parameter.HandlerParameterProvider;
-import org.factcast.factus.projection.parameter.HandlerParameterTransformer;
-import org.factcast.factus.projection.tx.OpenTransactionAware;
-import org.factcast.factus.projection.tx.TransactionAware;
-import org.factcast.factus.projection.tx.TransactionException;
+import org.factcast.factus.projection.parameter.*;
+import org.factcast.factus.projection.tx.*;
+import org.springframework.aop.framework.Advised;
 
 @Slf4j
 public class ProjectorImpl<A extends Projection> implements Projector<A> {
@@ -602,8 +596,11 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     @VisibleForTesting
     static Object resolveTargetObject(Object parent, Class<?> c) {
       try {
+        parent = unwrapProxy(parent); // in case parent is wrapped by AOP
+
         Constructor<?> ctor;
         try {
+
           ctor = c.getDeclaredConstructor(parent.getClass());
           ctor.setAccessible(true);
           return ctor.newInstance(parent);
@@ -629,5 +626,19 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     static Class<?> getTypeParameter(@NonNull OpenTransactionAware<?> p) {
       return p.getClass().getMethod("runningTransaction").getReturnType();
     }
+  }
+
+  @SneakyThrows
+  @NonNull
+  public static Object unwrapProxy(@NonNull Object bean) {
+    while (org.springframework.aop.support.AopUtils.isAopProxy(bean) && bean instanceof Advised) {
+      Advised advised = (Advised) bean;
+      Object targetBean = Objects.requireNonNull(advised.getTargetSource().getTarget());
+      if (targetBean == bean)
+        throw new IllegalStateException(
+            "AOP gone wrong? Advised.targetSource points back to advised?!?!");
+      else bean = targetBean;
+    }
+    return bean;
   }
 }
