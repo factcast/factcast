@@ -18,8 +18,8 @@ package org.factcast.factus.projection;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.*;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 class LocalWriteTokenTest {
@@ -34,71 +34,35 @@ class LocalWriteTokenTest {
     // we have a lock when this is not null
     assertThat(lock).isNotNull();
 
-    // same thread should be able to get the lock again
-    AutoCloseable otherLock = underTest.acquireWriteToken(Duration.ofSeconds(1));
-
-    assertThat(otherLock).isNotNull();
-
     // test that we can unlock without exception
     lock.close();
-    otherLock.close();
   }
 
   @Test
-  void cannotLock() throws Exception {
-    AtomicReference<AutoCloseable> lock = new AtomicReference<>();
+  void cannotLockTwice() throws Exception {
+    WriterToken first = underTest.acquireWriteToken(Duration.ofSeconds(1));
+    assertThat(first).isNotNull();
+    WriterToken second = underTest.acquireWriteToken(Duration.ofSeconds(1));
+    Assertions.assertThat(second).isNull();
 
-    // signal for other thread to unlock
-    AtomicBoolean unlock = new AtomicBoolean(false);
+    first.close();
+  }
 
-    // another thread that acquires (and keeps) a lock
-    // we test that we cannot acquire one while this thread keeps the lock,
-    // but that we can get one after the thread has released its lock
-    Thread lockingThread =
-        new Thread(
+  @Test
+  void blockedAcquire() throws Exception {
+    WriterToken first = underTest.acquireWriteToken(Duration.ofSeconds(1));
+    CountDownLatch cl = new CountDownLatch(1);
+    CompletableFuture<WriterToken> thirdAttempt =
+        CompletableFuture.supplyAsync(
             () -> {
-              lock.set(underTest.acquireWriteToken(Duration.ofSeconds(1)));
-              while (!unlock.get()) {
-                try {
-                  Thread.sleep(10);
-                } catch (InterruptedException e) {
-                }
-              }
-              // and unlock
-              try {
-                lock.get().close();
-              } catch (Exception e) {
-                e.printStackTrace();
-              }
+              cl.countDown();
+              return underTest.acquireWriteToken(Duration.ofDays(1));
             });
+    cl.await();
+    first.close();
 
-    try {
-      lockingThread.start();
-
-      // wait until locked
-      while (lock.get() == null && lockingThread.isAlive()) {
-        Thread.sleep(10);
-      }
-
-      // make sure the thread really got a lock
-      assertThat(lock.get()).isNotNull();
-
-      // now make sure our thread cannot acquire a lock while the other
-      // thread holds a lock
-      assertThat(underTest.acquireWriteToken(Duration.ofMillis(1))).isNull();
-
-    } finally {
-      // make sure other thread does not run forever in case of exception
-      unlock.set(true);
-    }
-
-    // make sure other thread has finished (and hence released the lock)
-    lockingThread.join();
-
-    // now we should be able to acquire the lock as well
-    AutoCloseable newLock = underTest.acquireWriteToken(Duration.ofMillis(1));
-    assertThat(newLock).isNotNull();
-
-    newLock.close();
+    WriterToken successful = thirdAttempt.get(2, TimeUnit.SECONDS);
+    Assertions.assertThat(successful).isNotNull();
+    successful.close();
   }
 }
