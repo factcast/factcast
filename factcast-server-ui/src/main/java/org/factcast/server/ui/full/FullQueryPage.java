@@ -49,6 +49,9 @@ import org.factcast.server.ui.utils.Notifications;
 import org.factcast.server.ui.views.FormContent;
 import org.factcast.server.ui.views.JsonView;
 import org.factcast.server.ui.views.MainLayout;
+import org.factcast.server.ui.views.filter.FactCriteria;
+import org.factcast.server.ui.views.filter.FilterCriteriaViews;
+import org.factcast.server.ui.views.filter.MetaTuple;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.vaadin.olli.FileDownloadWrapper;
@@ -64,8 +67,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
 
   // externalizable state
 
-  private final FullQueryBean formBean;
-
+  private final FullFilterBean formBean;
   // fields
   private final DatePicker since = new DatePicker("First Serial of Day");
   private final IntegerField limit = new IntegerField("Limit");
@@ -74,11 +76,11 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
   private final Popup serialHelperOverlay = new Popup();
   private final JsonView jsonView = new JsonView(this::updateQuickFilters);
 
-  private final BeanValidationUrlStateBinder<FullQueryBean> binder;
+  private final BeanValidationUrlStateBinder<FullFilterBean> binder;
   private final FactRepository repo;
 
   private final JsonViewPluginService jsonViewPluginService;
-  private final FilterCriteriaViews factCriteriaViews;
+  private final FilterCriteriaViews<FullFilterBean> factCriteriaViews;
   private final Button queryBtn = new Button("Query");
   private final Button exportJsonBtn = new Button("Export JSON");
   private JsonViewEntries queryResult;
@@ -91,7 +93,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     this.repo = repo;
     this.jsonViewPluginService = jsonViewPluginService;
 
-    formBean = new FullQueryBean(repo.latestSerial());
+    formBean = new FullFilterBean(repo.latestSerial());
 
     serialHelperOverlay.setTarget(from.getElement());
     from.setId("starting-serial");
@@ -100,7 +102,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
 
     binder = createBinding();
 
-    factCriteriaViews = new FilterCriteriaViews(repo, binder, formBean);
+    factCriteriaViews = new FilterCriteriaViews<>(repo, binder, formBean);
 
     final var accordion = new Accordion();
     accordion.setWidthFull();
@@ -155,11 +157,11 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     }
   }
 
-  private BeanValidationUrlStateBinder<FullQueryBean> createBinding() {
-    var b = new BeanValidationUrlStateBinder<>(FullQueryBean.class);
+  private BeanValidationUrlStateBinder<FullFilterBean> createBinding() {
+    var b = new BeanValidationUrlStateBinder<>(FullFilterBean.class);
     b.forField(from).withNullRepresentation(BigDecimal.ZERO).bind("from");
     b.forField(since).bind("since");
-    b.forField(limit).withNullRepresentation(FullQueryBean.DEFAULT_LIMIT).bind("limit");
+    b.forField(limit).withNullRepresentation(FullFilterBean.DEFAULT_LIMIT).bind("limit");
     b.forField(offset).withNullRepresentation(0).bind("offset");
 
     b.readBean(formBean);
