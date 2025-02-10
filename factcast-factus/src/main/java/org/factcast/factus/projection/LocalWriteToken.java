@@ -16,61 +16,31 @@
 package org.factcast.factus.projection;
 
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import lombok.*;
+import java.util.concurrent.*;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @SuppressWarnings("unused")
 public class LocalWriteToken {
 
-  private final PseudoLock lock = new PseudoLock();
+  private final Semaphore lock = new Semaphore(1);
 
   public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
-    Duration interval = maxWait.dividedBy(10);
+    long end = System.currentTimeMillis() + maxWait.toMillis();
     int seconds = 0;
-    while (!maxWait.minusSeconds(seconds).isNegative()) {
-      if (lock.tryLock()) {
-        return lock::unlock;
-      }
-      try {
 
-        TimeUnit.SECONDS.sleep(1);
+    do {
+      try {
+        if (lock.tryAcquire(maxWait.toMillis(), TimeUnit.MILLISECONDS)) return lock::release;
       } catch (InterruptedException e) {
         // nobody cares
       }
-      seconds++;
-    }
+    } while (System.currentTimeMillis() < end);
     return null;
   }
 
-  @SneakyThrows
-  private static void sleep(Duration interval) {
-    Thread.sleep(interval.toMillis());
-  }
-
   public boolean isValid() {
-    return lock.isLocked();
-  }
-
-  public static class PseudoLock {
-
-    private final AtomicReference<Boolean> mylock = new AtomicReference<>(Boolean.FALSE);
-
-    boolean tryLock() {
-      return mylock.compareAndSet(Boolean.FALSE, Boolean.TRUE);
-    }
-
-    void unlock() {
-      boolean done = mylock.compareAndSet(Boolean.TRUE, Boolean.FALSE);
-      if (!done) {
-        throw new IllegalStateException("Cannot unlock an unlocked thread");
-      }
-    }
-
-    boolean isLocked() {
-      return mylock.get();
-    }
+    return lock.availablePermits() == 0;
   }
 }

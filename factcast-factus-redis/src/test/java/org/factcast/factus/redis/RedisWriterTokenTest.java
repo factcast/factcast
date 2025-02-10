@@ -16,19 +16,15 @@
 package org.factcast.factus.redis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import lombok.NonNull;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
+import org.redisson.api.*;
 
 @ExtendWith(MockitoExtension.class)
 class RedisWriterTokenTest {
@@ -61,7 +57,7 @@ class RedisWriterTokenTest {
       final RedisWriterToken uut = new RedisWriterToken(redisson, lock, timer);
       uut.close();
 
-      verify(lock).unlock();
+      verify(lock).forceUnlock();
       verify(timer).cancel();
     }
   }
