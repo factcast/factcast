@@ -47,7 +47,7 @@ public class EventInitializer implements InitializingBean {
                 .version(1)
                 .aggId(USER1_AGG_ID)
                 .id(USER1_EVENT_ID)
-                .meta("hugo", "bar")
+                .addMeta("hugo", "bar")
                 .build(
                     """
                             {
@@ -63,6 +63,8 @@ public class EventInitializer implements InitializingBean {
                 .version(1)
                 .aggId(USER2_AGG_ID)
                 .id(USER2_EVENT_ID)
+                .addMeta("foo", "bar")
+                .addMeta("foo", "bar2")
                 .build(
                     """
                             {

@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.9.4-SNAPSHOT</version>
+    <version>0.9.5-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-core</artifactId>
@@ -45,6 +45,9 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <!-- bit weird, but this is the pure minimum used by schema registry,
+        cleaning this dependency tree up is a "break world" kind of change.... We
+        tried." -->
       <groupId>org.factcast</groupId>
       <artifactId>factcast-factus-event</artifactId>
     </dependency>
@@ -59,7 +62,6 @@
       <version>1.0.3</version>
       <scope>test</scope>
     </dependency>
-
   </dependencies>
   <build>
     <plugins>

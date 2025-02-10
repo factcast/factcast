@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.event;
+package org.factcast.factus.event;
 
 import java.util.*;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import org.factcast.core.Fact;
-import org.factcast.factus.event.EventObject;
-import org.factcast.factus.event.EventSerializer;
 
 @RequiredArgsConstructor
 public class EventConverter {
@@ -33,7 +30,7 @@ public class EventConverter {
   public Fact toFact(@NonNull EventObject p, @NonNull UUID factId) {
     // keep compatibility to older code that expects this to throw an IllegalArgException instead of
     // an NPE, when a key in the meta map is null
-    if (p.additionalMetaMap().keySet().stream().anyMatch(Objects::isNull))
+    if (p.additionalMeta().keySet().stream().anyMatch(Objects::isNull))
       throw new IllegalArgumentException("Meta-Keys cannot be null");
 
     return Fact.buildFrom(p).using(ser).id(factId).build();

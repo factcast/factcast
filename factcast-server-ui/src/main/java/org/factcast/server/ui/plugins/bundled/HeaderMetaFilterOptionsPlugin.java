@@ -16,23 +16,22 @@
 package org.factcast.server.ui.plugins.bundled;
 
 import org.factcast.core.Fact;
-import org.factcast.server.ui.plugins.JsonEntryMetaData;
-import org.factcast.server.ui.plugins.JsonPayload;
-import org.factcast.server.ui.plugins.JsonViewPlugin;
+import org.factcast.server.ui.plugins.*;
 
 public class HeaderMetaFilterOptionsPlugin extends JsonViewPlugin {
   @Override
   protected void doHandle(Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData) {
     fact.header()
         .meta()
-        .forEach(
-            (key, value) -> {
+        .forEachDistinctKey(
+            (key, values) -> {
               if (key.startsWith("_")) {
                 // not annotating _ts and _ser
                 return;
               }
+
               final var keyPath = "$.meta." + key;
-              jsonEntryMetaData.addHeaderMetaFilterOption(keyPath, key, value);
+              jsonEntryMetaData.addHeaderMetaFilterOption(keyPath, key, values);
             });
   }
 
