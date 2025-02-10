@@ -53,24 +53,26 @@ public class LocalWriteToken {
   public boolean isValid() {
     return lock.isLocked();
   }
-}
 
-class PseudoLock {
+  public static class PseudoLock {
 
-  private final AtomicReference<Boolean> mylock = new AtomicReference<>(Boolean.FALSE);
+    private final AtomicReference<Boolean> mylock = new AtomicReference<>(Boolean.FALSE);
 
-  boolean tryLock() {
-    return mylock.compareAndSet(Boolean.FALSE, Boolean.TRUE);
-  }
+    boolean tryLock() {
+      return mylock.compareAndSet(Boolean.FALSE, Boolean.TRUE);
+    }
 
-  void unlock() {
-    boolean done = mylock.compareAndSet(Boolean.TRUE, Boolean.FALSE);
-    if (!done) {
-      throw new IllegalStateException("Cannot unlock an unlocked thread");
+    void unlock() {
+      boolean done = mylock.compareAndSet(Boolean.TRUE, Boolean.FALSE);
+      if (!done) {
+        throw new IllegalStateException("Cannot unlock an unlocked thread");
+      }
+    }
+
+    boolean isLocked() {
+      return mylock.get();
     }
   }
-
-  boolean isLocked() {
-    return mylock.get();
-  }
 }
+
+

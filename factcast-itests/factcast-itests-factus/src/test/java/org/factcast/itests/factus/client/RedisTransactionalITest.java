@@ -15,14 +15,8 @@
  */
 package org.factcast.itests.factus.client;
 
-import static java.util.UUID.randomUUID;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import nl.altindag.log.LogCaptor;
@@ -31,6 +25,7 @@ import org.factcast.factus.Factus;
 import org.factcast.factus.FactusImpl;
 import org.factcast.factus.Handler;
 import org.factcast.factus.event.EventObject;
+import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.redis.tx.AbstractRedisTxManagedProjection;
 import org.factcast.factus.redis.tx.RedisTransactional;
 import org.factcast.factus.serializer.ProjectionMetaData;
@@ -41,7 +36,7 @@ import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.TxRedissonManagedUserNames;
 import org.factcast.itests.factus.proj.TxRedissonSubscribedUserNames;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -51,6 +46,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+
+import static java.util.UUID.randomUUID;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @SpringBootTest
 @ContextConfiguration(
@@ -136,17 +141,19 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @Test
     void testTokenReleaseAfterTooManyFailures_redis() throws Exception {
-      TxRedissonSubscribedUserNamesThrowsError subscribedUserNames =
-          new TxRedissonSubscribedUserNamesThrowsError(redissonClient);
+      org.factcast.itests.factus.client.RedisTransactionalITest.TxRedissonSubscribedUserNamesTokenExposedAndThrowsError subscribedUserNames =
+          new org.factcast.itests.factus.client.RedisTransactionalITest.TxRedissonSubscribedUserNamesTokenExposedAndThrowsError(redissonClient);
 
       factus.publish(new UserDeleted(UUID.randomUUID()));
 
-      //      assertThat(subscribedUserNames.isValid()).isFalse();
+      // The projection doesnt have a token yet
+      assertThat(subscribedUserNames.token()).isNull();
       try (var logCaptor = LogCaptor.forClass(FactusImpl.class)) {
         logCaptor.setLogLevelToTrace();
         factus.subscribe(subscribedUserNames);
 
-        //        Awaitility.await().until(subscribedUserNames::isValid);
+        // The projection acquiered a token and
+        subscribedUserNames.latch.await();
         Awaitility.await()
             .until(
                 () ->
@@ -155,10 +162,11 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
                             .getTraceLogs()
                             .get(0)
                             .contains(
-                                "Closing AutoCloseable for class class org.factcast.factus.projection.LocalWriteToken"));
+                                    "Closing AutoCloseable for class class org.factcast.factus.redis.RedisWriterToken"));
       }
 
-      //      assertThat(subscribedUserNames.isValid()).isFalse();
+
+      assertThat(subscribedUserNames.token() != null && !subscribedUserNames.token().isValid()).isFalse();
     }
 
     @SneakyThrows
@@ -297,14 +305,23 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
+  @Getter
   @ProjectionMetaData(revision = 1)
   @RedisTransactional(bulkSize = 1)
-  static class TxRedissonSubscribedUserNamesThrowsError
+  static class TxRedissonSubscribedUserNamesTokenExposedAndThrowsError
       extends TrackingTxRedissonSubscribedUserNames {
-    private int count;
+    private CountDownLatch latch = new CountDownLatch(1);
+    private WriterToken token;
 
-    public TxRedissonSubscribedUserNamesThrowsError(RedissonClient redisson) {
+    public TxRedissonSubscribedUserNamesTokenExposedAndThrowsError(RedissonClient redisson) {
       super(redisson);
+    }
+
+    @Override
+    public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
+      token = super.acquireWriteToken(maxWait);
+      latch.countDown();
+      return token;
     }
 
     @Override
