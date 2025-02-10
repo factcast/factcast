@@ -282,6 +282,7 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
       // setup result
       selectNamespace("users");
       fromScratch();
+      page.getByLabel("Limit").fill("2");
       query();
 
       assertThat(jsonView()).containsText(USER1_EVENT_ID.toString());
