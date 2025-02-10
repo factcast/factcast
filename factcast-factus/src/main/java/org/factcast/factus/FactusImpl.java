@@ -199,8 +199,29 @@ public class FactusImpl implements Factus {
           }
 
           private void assertTokenIsValid() {
-            if (!token.isValid())
-              throw new IllegalStateException("WriterToken is no longer valid.");
+            if (!token.isValid()) {
+
+              WriterToken token = subscribedProjection.acquireWriteToken(Duration.ofMinutes(5));
+              if (token != null) {
+
+                managedObjects.add(
+                        new AutoCloseable() {
+                          @Override
+                          public void close() {
+                            tryClose(token);
+                          }
+
+                          private void tryClose(AutoCloseable c) {
+                            try {
+                              c.close();
+                            } catch (Exception ignore) {
+                              // intentional
+                            }
+                          }
+                        });
+              }
+//              throw new IllegalStateException("WriterToken is no longer valid.");
+            }
           }
 
           @Override
