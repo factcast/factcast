@@ -22,7 +22,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
-
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -34,7 +33,6 @@ import org.factcast.factus.FactusImpl;
 import org.factcast.factus.dynamo.DynamoProjectionState;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.projection.WriterToken;
-import org.factcast.factus.redis.tx.RedisTransactional;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.config.DynamoProjectionConfiguration;
@@ -47,8 +45,6 @@ import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.redisson.api.RTransaction;
-import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
@@ -194,7 +190,7 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
     @Test
     void testTokenReleaseAfterTooManyFailures_redis() throws Exception {
       var subscribedUserNames =
-              new TxDynamoSubscribedUserNamesTokenExposedAndThrowsError(dynamoDbClient);
+          new TxDynamoSubscribedUserNamesTokenExposedAndThrowsError(dynamoDbClient);
 
       factus.publish(new UserDeleted(UUID.randomUUID()));
 
@@ -207,18 +203,18 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
         // The projection acquiered a token and
         subscribedUserNames.latch.await();
         Awaitility.await()
-                .until(
-                        () ->
-                                !logCaptor.getTraceLogs().isEmpty()
-                                        && logCaptor
-                                        .getTraceLogs()
-                                        .get(0)
-                                        .contains(
-                                                "Closing AutoCloseable for class class org.factcast.factus.dynamo.DynamoWriterToken"));
+            .until(
+                () ->
+                    !logCaptor.getTraceLogs().isEmpty()
+                        && logCaptor
+                            .getTraceLogs()
+                            .get(0)
+                            .contains(
+                                "Closing AutoCloseable for class class org.factcast.factus.dynamo.DynamoWriterToken"));
       }
 
-
-      assertThat(subscribedUserNames.token() != null && !subscribedUserNames.token().isValid()).isFalse();
+      assertThat(subscribedUserNames.token() != null && !subscribedUserNames.token().isValid())
+          .isFalse();
     }
   }
 
@@ -287,7 +283,7 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
   @Getter
   @ProjectionMetaData(revision = 1)
   static class TxDynamoSubscribedUserNamesTokenExposedAndThrowsError
-          extends TrackingDynamoSubscribedUserNames {
+      extends TrackingDynamoSubscribedUserNames {
     private CountDownLatch latch = new CountDownLatch(1);
     private WriterToken token;
 

@@ -15,6 +15,15 @@
  */
 package org.factcast.itests.factus.client;
 
+import static java.util.UUID.randomUUID;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -46,16 +55,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
-
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-
-import static java.util.UUID.randomUUID;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @SpringBootTest
 @ContextConfiguration(
@@ -141,8 +140,11 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @Test
     void testTokenReleaseAfterTooManyFailures_redis() throws Exception {
-      org.factcast.itests.factus.client.RedisTransactionalITest.TxRedissonSubscribedUserNamesTokenExposedAndThrowsError subscribedUserNames =
-          new org.factcast.itests.factus.client.RedisTransactionalITest.TxRedissonSubscribedUserNamesTokenExposedAndThrowsError(redissonClient);
+      org.factcast.itests.factus.client.RedisTransactionalITest
+              .TxRedissonSubscribedUserNamesTokenExposedAndThrowsError
+          subscribedUserNames =
+              new org.factcast.itests.factus.client.RedisTransactionalITest
+                  .TxRedissonSubscribedUserNamesTokenExposedAndThrowsError(redissonClient);
 
       factus.publish(new UserDeleted(UUID.randomUUID()));
 
@@ -162,11 +164,11 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
                             .getTraceLogs()
                             .get(0)
                             .contains(
-                                    "Closing AutoCloseable for class class org.factcast.factus.redis.RedisWriterToken"));
+                                "Closing AutoCloseable for class class org.factcast.factus.redis.RedisWriterToken"));
       }
 
-
-      assertThat(subscribedUserNames.token() != null && !subscribedUserNames.token().isValid()).isFalse();
+      assertThat(subscribedUserNames.token() != null && !subscribedUserNames.token().isValid())
+          .isFalse();
     }
 
     @SneakyThrows
