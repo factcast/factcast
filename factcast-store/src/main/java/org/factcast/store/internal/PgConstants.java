@@ -16,9 +16,7 @@
 package org.factcast.store.internal;
 
 import java.util.Random;
-import lombok.AccessLevel;
-import lombok.Generated;
-import lombok.NonNull;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 /**
@@ -321,8 +319,7 @@ public class PgConstants {
           + " WHERE factDate > ?), "
           + "(SELECT MAX(lastSer) FROM "
           + TABLE_DATE2SERIAL
-          + " WHERE factDate <= ?)) "
-          + "AS firstSer";
+          + "))";
 
   private static String fromHeader(String attributeName) {
     return PgConstants.COLUMN_HEADER + "->>'" + attributeName + "' AS " + attributeName;

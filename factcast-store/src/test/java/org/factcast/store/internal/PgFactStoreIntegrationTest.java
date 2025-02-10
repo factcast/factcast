@@ -325,7 +325,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
 
     @Test
     void testFirstSerialAfterNowReturns() {
-      assertThat(localFactStore.firstSerialAfter(LocalDate.now())).isEqualTo(null);
+      assertThat(localFactStore.firstSerialAfter(LocalDate.now())).isNull();
 
       // add one to the end, should not change anything
       UUID id = UUID.randomUUID();
