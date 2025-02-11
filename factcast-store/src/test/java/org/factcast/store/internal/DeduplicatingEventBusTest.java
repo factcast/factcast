@@ -28,7 +28,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DeduplicatingEventBusTest {
-  Duration MAX_WAIT_MS = Duration.ofMillis(200);
+  final Duration MAX_WAIT_MS = Duration.ofMillis(200);
   final DeduplicatingEventBus underTest =
       new DeduplicatingEventBus("poit", Executors.newCachedThreadPool());
 
