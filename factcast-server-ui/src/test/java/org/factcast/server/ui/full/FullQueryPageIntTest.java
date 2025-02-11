@@ -53,8 +53,8 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
 
       query();
 
-      assertThat(jsonView()).containsText(USER1_EVENT_ID.toString());
-      assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER3_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER4_EVENT_ID.toString());
     }
 
     @RetryingTest(maxAttempts = 5, minSuccess = 1)
@@ -68,6 +68,8 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
 
       assertThat(jsonView()).not().containsText(USER1_EVENT_ID.toString());
       assertThat(jsonView()).not().containsText(USER2_EVENT_ID.toString());
+      assertThat(jsonView()).not().containsText(USER3_EVENT_ID.toString());
+      assertThat(jsonView()).not().containsText(USER4_EVENT_ID.toString());
     }
 
     @RetryingTest(maxAttempts = 5, minSuccess = 1)
@@ -108,15 +110,31 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
     }
 
     @RetryingTest(maxAttempts = 5, minSuccess = 1)
+    void queryByEndingSerial() {
+      loginFor("/ui/full");
+      fromScratch();
+      selectNamespace("users");
+      page.getByLabel("End serial").fill("1");
+
+      query();
+
+      assertThat(jsonView()).containsText(USER1_EVENT_ID.toString());
+      assertThat(jsonView()).not().containsText(USER2_EVENT_ID.toString());
+      assertThat(jsonView()).not().containsText(USER3_EVENT_ID.toString());
+      assertThat(jsonView()).not().containsText(USER4_EVENT_ID.toString());
+    }
+
+    @RetryingTest(maxAttempts = 5, minSuccess = 1)
     void queryByOffset() {
       loginFor("/ui/full");
       selectNamespace("users");
-      page.getByLabel("Offset").fill("1");
+      page.getByLabel("Offset").fill("2");
       fromScratch();
 
       query();
 
-      assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER3_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER4_EVENT_ID.toString());
     }
 
     @RetryingTest(maxAttempts = 5, minSuccess = 1)
@@ -130,6 +148,8 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
 
       assertThat(jsonView()).not().containsText(USER1_EVENT_ID.toString());
       assertThat(jsonView()).not().containsText(USER2_EVENT_ID.toString());
+      assertThat(jsonView()).not().containsText(USER3_EVENT_ID.toString());
+      assertThat(jsonView()).not().containsText(USER4_EVENT_ID.toString());
     }
 
     private void assertMetaCount(int count) {
@@ -234,7 +254,7 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
       jsonView().getByText("\"lastName\"").first().hover();
 
       // expect that the hover contents are shown
-      assertThat(jsonView().locator(".hover-contents")).containsText("J. Edgar Hoover: Ernst");
+      assertThat(jsonView().locator(".hover-contents")).containsText("J. Edgar Hoover: Jäger");
     }
 
     @RetryingTest(maxAttempts = 5, minSuccess = 1)
@@ -242,6 +262,7 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
       loginFor("/ui/full");
       // setup result
       selectNamespace("users");
+      page.getByLabel("Limit").fill("2");
       fromScratch();
       query();
 
@@ -261,6 +282,7 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
       // setup result
       selectNamespace("users");
       fromScratch();
+      page.getByLabel("Limit").fill("2");
       query();
 
       assertThat(jsonView()).containsText(USER1_EVENT_ID.toString());
@@ -281,14 +303,14 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
       fromScratch();
       query();
 
-      assertThat(jsonView()).containsText(USER1_EVENT_ID.toString());
-      assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER4_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER3_EVENT_ID.toString());
 
       jsonView().getByText("\"userId\"").first().hover();
       jsonView().getByText("Filter for Aggregate-ID").first().click();
 
-      assertThat(jsonView()).not().containsText(USER1_EVENT_ID.toString());
-      assertThat(jsonView()).containsText(USER2_EVENT_ID.toString());
+      assertThat(jsonView()).not().containsText(USER3_EVENT_ID.toString());
+      assertThat(jsonView()).containsText(USER4_EVENT_ID.toString());
     }
   }
 
@@ -311,7 +333,7 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
       final var mapper = new ObjectMapper();
       final var downloadedJson = mapper.readTree(download.createReadStream());
 
-      Assertions.assertThat(downloadedJson.size()).isEqualTo(2);
+      Assertions.assertThat(downloadedJson.size()).isEqualTo(4);
     }
   }
 

@@ -22,16 +22,11 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
+import lombok.*;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.subscription.SpecBuilder;
-import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.*;
 import org.factcast.core.util.ExceptionHelper;
 import org.factcast.server.ui.full.FullQueryBean;
 import org.factcast.server.ui.id.IdQueryBean;
@@ -101,9 +96,11 @@ public class FactRepositoryImpl implements FactRepository {
 
     Set<FactSpec> specs = securityService.filterReadable(bean.createFactSpecs());
 
-    ListObserver obs = new ListObserver(bean.getLimitOrDefault(), bean.getOffsetOrDefault());
+    Long untilSerial = Optional.ofNullable(bean.getTo()).map(BigDecimal::longValue).orElse(null);
+    ListObserver obs =
+        new ListObserver(untilSerial, bean.getLimitOrDefault(), bean.getOffsetOrDefault());
     SpecBuilder sr = SubscriptionRequest.catchup(specs);
-    long ser = Optional.ofNullable(bean.getFrom()).orElse(BigDecimal.ZERO).longValue();
+    long ser = bean.resolveFromOrZero();
     SubscriptionRequest request = null;
 
     if (ser > 0) {
@@ -137,5 +134,10 @@ public class FactRepositoryImpl implements FactRepository {
   @Override
   public OptionalLong lastSerialBefore(@NonNull LocalDate date) {
     return OptionalLong.of(fs.lastSerialBefore(date));
+  }
+
+  @Override
+  public Optional<Long> firstSerialAfter(@NonNull LocalDate date) {
+    return Optional.ofNullable(fs.firstSerialAfter(date));
   }
 }
