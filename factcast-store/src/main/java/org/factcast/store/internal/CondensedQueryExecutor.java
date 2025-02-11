@@ -18,12 +18,12 @@ package org.factcast.store.internal;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.Subscribe;
 import java.util.*;
-import java.util.concurrent.atomic.*;
-import java.util.function.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.store.internal.listen.PgListener.FactInsertionSignal;
+import org.factcast.store.internal.notification.FactInsertionNotification;
 
 /**
  * Executes a given runnable if triggered, but ignores all subsequent triggers for maxDelayInMillis.
@@ -40,7 +40,7 @@ class CondensedQueryExecutor {
   private final Supplier<Boolean> connectionStateSupplier;
   private final Set<String> interests;
 
-  private Timer timer = new Timer(CondensedQueryExecutor.class.getSimpleName() + ".timer", true);
+  @NonNull private final Timer timer;
 
   private final AtomicBoolean currentlyScheduled = new AtomicBoolean(false);
 
@@ -63,6 +63,7 @@ class CondensedQueryExecutor {
       @NonNull PgSynchronizedQuery target,
       @NonNull Supplier<Boolean> connectionStateSupplier,
       @NonNull List<FactSpec> specs) {
+    this.timer = new Timer(CondensedQueryExecutor.class.getSimpleName() + ".timer", true);
     this.maxDelayInMillis = maxDelayInMillis;
     this.target = target;
     this.connectionStateSupplier = connectionStateSupplier;
@@ -107,7 +108,7 @@ class CondensedQueryExecutor {
 
   // called by the EventBus
   @Subscribe
-  public void onEvent(FactInsertionSignal ev) {
+  public void onEvent(FactInsertionNotification ev) {
 
     String ns = ev.ns();
     String type = ev.type();
