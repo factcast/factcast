@@ -59,7 +59,7 @@ public class PgListenerTest {
 
   private static final Predicate<Object> IS_FACT_INSERT = f -> f instanceof FactInsertionSignal;
   private static final Predicate<Object> NOT_SCHEDULED_POLL =
-      f -> !((FactInsertionSignal) f).name().equals("scheduled-poll");
+      f -> !"scheduled-poll".equals(((FactInsertionSignal) f).name());
 
   @Mock PgConnectionSupplier pgConnectionSupplier;
 
@@ -98,7 +98,7 @@ public class PgListenerTest {
                 .anyMatch(
                     e ->
                         e instanceof FactInsertionSignal
-                            && ((FactInsertionSignal) e).name().equals("scheduled-poll")))
+                            && "scheduled-poll".equals(((FactInsertionSignal) e).name())))
         .isTrue();
   }
 
@@ -271,7 +271,7 @@ public class PgListenerTest {
                 .anyMatch(
                     e ->
                         e instanceof FactInsertionSignal
-                            && ((FactInsertionSignal) e).name().equals("scheduled-poll")))
+                            && "scheduled-poll".equals(((FactInsertionSignal) e).name())))
         .isTrue();
     // events 2 - incl. 4 are notifies
     assertTrue(

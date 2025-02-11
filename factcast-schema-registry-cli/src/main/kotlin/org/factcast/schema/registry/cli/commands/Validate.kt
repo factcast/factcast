@@ -42,7 +42,8 @@ class Validate : Runnable {
 
         val exitCode = commandService.validate(sourceRoot, whiteListPath)
 
-        if (exitCode != 0)
+        if (exitCode != 0) {
             exitProcess(exitCode)
+        }
     }
 }

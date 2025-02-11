@@ -59,4 +59,6 @@ public class ValidationConstants {
   public static Schema jsonString2SchemaV7(@NonNull String schemaJson) {
     return jsonString2SchemaV7().apply(schemaJson);
   }
+
+  private ValidationConstants() {}
 }

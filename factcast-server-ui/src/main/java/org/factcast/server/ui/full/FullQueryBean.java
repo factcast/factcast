@@ -36,15 +36,15 @@ public class FullQueryBean implements Serializable {
   private final long defaultFrom;
 
   private LocalDate since = LocalDate.now();
-  private LocalDate until = null;
+  private LocalDate until;
 
   @Max(1000)
   @Min(1)
-  private Integer limit = null;
+  private Integer limit;
 
   @Min(0)
   @Max(1000)
-  private Integer offset = null;
+  private Integer offset;
 
   @Valid private List<FactCriteria> criteria = Lists.newArrayList(new FactCriteria());
 
@@ -53,7 +53,7 @@ public class FullQueryBean implements Serializable {
   private BigDecimal from;
 
   @Min(1)
-  private BigDecimal to = null;
+  private BigDecimal to;
 
   FullQueryBean(long startingSerial) {
     defaultFrom = startingSerial;

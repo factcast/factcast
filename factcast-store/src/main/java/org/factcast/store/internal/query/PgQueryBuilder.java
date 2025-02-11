@@ -63,7 +63,9 @@ public class PgQueryBuilder {
       }
       p.setLong(++count, serial.get());
 
-      if (statementHolder != null) statementHolder.statement(p);
+      if (statementHolder != null) {
+        statementHolder.statement(p);
+      }
     };
   }
 

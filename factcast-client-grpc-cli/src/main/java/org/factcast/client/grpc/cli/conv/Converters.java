@@ -25,11 +25,13 @@ public class Converters {
 
   public static IStringConverterInstanceFactory factory() {
     return (param, clazz, name) -> {
-      if (clazz == UUID.class)
+      if (clazz == UUID.class) {
         return new SimpleConverter<>(param.description(), UUID.class, UUID::fromString);
-      if (clazz == ExistingJsonFile.class)
+      }
+      if (clazz == ExistingJsonFile.class) {
         return new SimpleConverter<>(
             param.description(), ExistingJsonFile.class, ExistingJsonFile::new);
+      }
       return null;
     };
   }
@@ -56,4 +58,6 @@ public class Converters {
       }
     }
   }
+
+  private Converters() {}
 }

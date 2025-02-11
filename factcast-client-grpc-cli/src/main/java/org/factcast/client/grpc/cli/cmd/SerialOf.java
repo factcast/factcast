@@ -41,8 +41,11 @@ public class SerialOf implements Command {
         id -> {
           System.out.print(id + ": ");
           OptionalLong serial = fc.serialOf(id);
-          if (serial.isPresent()) System.out.println(serial.getAsLong());
-          else System.out.println("not found");
+          if (serial.isPresent()) {
+            System.out.println(serial.getAsLong());
+          } else {
+            System.out.println("not found");
+          }
         });
   }
 }

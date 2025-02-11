@@ -19,7 +19,7 @@ fun JsonNode.filter(name: String) {
             if ((has("type") && get("type").isTextual)
                 || (has("required") && get("required").isArray)
             ) {
-                (this as ObjectNode).remove(name)
+                ( this asObjectNode).remove(name)
             }
 
             forEach { node ->

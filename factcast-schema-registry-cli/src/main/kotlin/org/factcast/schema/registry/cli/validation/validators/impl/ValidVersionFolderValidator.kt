@@ -17,6 +17,8 @@ package org.factcast.schema.registry.cli.validation.validators.impl
 
 import io.micronaut.core.annotation.AnnotationValue
 import io.micronaut.validation.validator.constraints.ConstraintValidator
+import io.micronaut.validation.validator.constraints.ConstraintValidatorContext
+
 import java.nio.file.Path
 import jakarta.inject.Singleton
 import org.factcast.schema.registry.cli.validation.validators.ValidVersionFolder
@@ -26,7 +28,7 @@ class ValidVersionFolderValidator : ConstraintValidator<ValidVersionFolder, Path
     override fun isValid(
         value: Path?,
         annotationMetadata: AnnotationValue<ValidVersionFolder>,
-        context: io.micronaut.validation.validator.constraints.ConstraintValidatorContext
+        context: ConstraintValidatorContext
     ) = value != null && try {
         value.fileName.toString().toInt()
 

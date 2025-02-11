@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.UUID;
+import org.assertj.core.api.Assertions;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,8 +35,7 @@ class BinaryJacksonSnapshotSerializerTest {
 
   @Test
   void hasId() {
-    org.assertj.core.api.Assertions.assertThat(underTest.id().name())
-        .isEqualTo("BinaryJacksonSnapshotSerializer");
+    Assertions.assertThat(underTest.id().name()).isEqualTo("BinaryJacksonSnapshotSerializer");
   }
 
   @Nested

@@ -66,15 +66,20 @@ public class InMemTransformationCache implements TransformationCache {
     keys.forEach(
         k -> {
           FactAndAccessTime factAndAccessTime = cache.get(k);
-          if (factAndAccessTime != null) found.add(factAndAccessTime.fact);
+          if (factAndAccessTime != null) {
+            found.add(factAndAccessTime.fact);
+          }
         });
 
     var hits = found.size();
     var misses = keys.size() - hits;
 
-    if (hits > 0) registryMetrics.increase(RegistryMetrics.EVENT.TRANSFORMATION_CACHE_HIT, hits);
-    if (misses > 0)
+    if (hits > 0) {
+      registryMetrics.increase(RegistryMetrics.EVENT.TRANSFORMATION_CACHE_HIT, hits);
+    }
+    if (misses > 0) {
       registryMetrics.increase(RegistryMetrics.EVENT.TRANSFORMATION_CACHE_MISS, misses);
+    }
 
     return found;
   }

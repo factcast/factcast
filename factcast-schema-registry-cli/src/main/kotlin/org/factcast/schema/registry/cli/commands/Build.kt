@@ -64,7 +64,8 @@ class Build : Runnable {
             if (schemaStripTitles) removeSchemaFields.plus("title") else removeSchemaFields
         )
 
-        if (exitCode != 0)
+        if (exitCode != 0) {
             exitProcess(exitCode)
+        }
     }
 }

@@ -50,18 +50,28 @@ public final class DynamoProjectionState {
   }
 
   public boolean equals(final Object o) {
-    if (o == this) return true;
-    if (!(o instanceof DynamoProjectionState)) return false;
+    if (o == this) {
+      return true;
+    }
+    if (!(o instanceof DynamoProjectionState)) {
+      return false;
+    }
     final DynamoProjectionState other = (DynamoProjectionState) o;
     final Object this$key = this.key();
     final Object other$key = other.key();
-    if (this$key == null ? other$key != null : !this$key.equals(other$key)) return false;
+    if (this$key == null ? other$key != null : !this$key.equals(other$key)) {
+      return false;
+    }
     final Object this$factStreamPosition = this.factStreamPosition();
     final Object other$factStreamPosition = other.factStreamPosition();
     if (this$factStreamPosition == null
         ? other$factStreamPosition != null
-        : !this$factStreamPosition.equals(other$factStreamPosition)) return false;
-    if (this.serial() != other.serial()) return false;
+        : !this$factStreamPosition.equals(other$factStreamPosition)) {
+      return false;
+    }
+    if (this.serial() != other.serial()) {
+      return false;
+    }
     return true;
   }
 

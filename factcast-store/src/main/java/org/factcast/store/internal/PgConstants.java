@@ -360,4 +360,6 @@ public class PgConstants {
   public static String setStatementTimeout(long millis) {
     return "set statement_timeout to " + millis;
   }
+
+  private PgConstants() {}
 }

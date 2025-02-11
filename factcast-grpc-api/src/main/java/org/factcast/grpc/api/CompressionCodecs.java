@@ -48,8 +48,11 @@ public class CompressionCodecs {
   }
 
   public Optional<String> selectFrom(String commaSeparatedList) {
-    if (commaSeparatedList == null) return Optional.empty();
-    else return cache.computeIfAbsent(commaSeparatedList, this::fromCommaSeparatedList);
+    if (commaSeparatedList == null) {
+      return Optional.empty();
+    } else {
+      return cache.computeIfAbsent(commaSeparatedList, this::fromCommaSeparatedList);
+    }
   }
 
   public String available() {
@@ -64,7 +67,9 @@ public class CompressionCodecs {
               .filter(s -> !s.trim().isEmpty())
               .collect(Collectors.toList());
       for (String codec : orderedListOfAvailableCodecs) {
-        if (codecs.contains(codec)) return Optional.of(codec);
+        if (codecs.contains(codec)) {
+          return Optional.of(codec);
+        }
       }
     }
     return Optional.empty();

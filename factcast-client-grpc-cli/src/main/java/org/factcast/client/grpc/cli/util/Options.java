@@ -37,20 +37,20 @@ public class Options {
       names = {"--pretty"},
       help = true,
       description = "format JSON output")
-  boolean pretty = false;
+  boolean pretty;
 
   @Parameter(
       names = {"--no-tls"},
       help = true,
       description = "do NOT use TLS to connect (plaintext-communication)")
-  boolean notls = false;
+  boolean notls;
 
   @Parameter(
       names = {"--debug"},
       help = true,
       description = "show debug-level debug messages",
       order = 0)
-  boolean debug = false;
+  boolean debug;
 
   @Parameter(names = "--address", description = "the address to connect to", order = 1)
   String address = "static://localhost:9090";

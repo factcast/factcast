@@ -174,7 +174,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
       super(redisson);
     }
 
-    @Getter int stateModifications = 0;
+    @Getter int stateModifications;
 
     @Override
     public void transactionalFactStreamPosition(@NotNull FactStreamPosition factStreamPosition) {
@@ -188,7 +188,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
       super(redisson);
     }
 
-    @Getter int stateModifications = 0;
+    @Getter int stateModifications;
 
     @Override
     public void transactionalFactStreamPosition(@NotNull FactStreamPosition factStreamPosition) {

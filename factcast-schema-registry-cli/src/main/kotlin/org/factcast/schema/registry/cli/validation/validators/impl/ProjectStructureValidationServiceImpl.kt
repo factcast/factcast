@@ -73,4 +73,4 @@ class ProjectStructureValidationServiceImpl(private val validator: Validator) : 
     }
 }
 
-fun Any.toFolder() = this as Folder
+fun Any.toFolder() =  this asFolder

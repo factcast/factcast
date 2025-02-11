@@ -26,4 +26,6 @@ public class FactCastServer {
   public static void main(String[] args) {
     SpringApplication.run(FactCastServer.class, args);
   }
+
+  private FactCastServer() {}
 }

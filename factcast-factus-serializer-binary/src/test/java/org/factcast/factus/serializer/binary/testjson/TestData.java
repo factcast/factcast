@@ -32,4 +32,6 @@ public class TestData {
       throw new RuntimeException(e);
     }
   }
+
+  private TestData() {}
 }
