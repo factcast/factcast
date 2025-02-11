@@ -17,6 +17,7 @@ package org.factcast.server.ui.adapter;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.core.Fact;
@@ -27,6 +28,7 @@ import org.slf4j.LoggerFactory;
 public class ListObserver implements FactObserver {
   private int limit;
   private int offset;
+  @Nullable private Long untilSerial;
   private final List<Fact> list = new ArrayList<>();
 
   public ListObserver(int limit, int offset) {
@@ -34,9 +36,15 @@ public class ListObserver implements FactObserver {
     this.offset = offset;
   }
 
+  public ListObserver(Long untilSerial, int limit, int offset) {
+    this.untilSerial = untilSerial;
+    this.limit = limit;
+    this.offset = offset;
+  }
+
   @Override
   public void onNext(@NonNull Fact element) {
-    if (isComplete()) {
+    if (isComplete(element)) {
       throw new LimitReachedException();
     }
 
@@ -59,7 +67,12 @@ public class ListObserver implements FactObserver {
     LoggerFactory.getLogger(FactObserver.class).warn("Unhandled onError:", exception);
   }
 
-  boolean isComplete() {
-    return limit <= 0;
+  boolean isComplete(Fact fact) {
+    return limit <= 0 || hasReachedTheLimitSerial(fact);
+  }
+
+  private boolean hasReachedTheLimitSerial(Fact fact) {
+    Long serial = fact.header().serial();
+    return untilSerial != null && serial != null && untilSerial < serial;
   }
 }
