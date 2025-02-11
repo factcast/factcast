@@ -214,9 +214,8 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
       }
 
       Awaitility.await()
-              .until(
-                      () ->subscribedUserNames.token() != null && !subscribedUserNames.token().isValid());
-
+          .until(
+              () -> subscribedUserNames.token() != null && !subscribedUserNames.token().isValid());
     }
   }
 
