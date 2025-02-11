@@ -136,8 +136,12 @@ public abstract class AbstractBrowserTest {
     clickButton("Query");
   }
 
+  protected Locator getButton(String buttonName) {
+    return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(buttonName));
+  }
+
   protected void clickButton(String buttonName) {
-    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(buttonName)).click();
+    getButton(buttonName).click();
     waitForLoadState();
   }
 

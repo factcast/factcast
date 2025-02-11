@@ -264,6 +264,9 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
       } else {
         displayWarning(
             "No data was found for this query and therefore report creation is skipped.");
+        // no report was produced, report with same name could still be produced,
+        // people will probably want to adjust their filter criteria and try again right away
+        queryBtn.setEnabled(true);
       }
     } catch (ValidationException e) {
       Notifications.warn(e.getMessage());

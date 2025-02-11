@@ -18,7 +18,7 @@ package org.factcast.server.ui.report;
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.microsoft.playwright.*;
+import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import java.util.*;
 import lombok.SneakyThrows;
@@ -119,6 +119,36 @@ class ReportQueryPageIntTest extends AbstractBrowserTest {
 
     // ASSERT
     assertThat(expectedReportItem).hasCount(0);
+  }
+
+  @RetryingTest(maxAttempts = 3)
+  @SneakyThrows
+  void generateButtonStaysEnabledIfPreviousAttemptDidNotProduceReport() {
+    // ARRANGE
+    loginFor("/ui/report");
+    assertThat(page.getByLabel("Types")).isDisabled();
+    final var ns = "users";
+    selectNamespace(ns);
+
+    // types input now enabled
+    assertThat(page.getByLabel("Types")).isEnabled();
+    final var type = "UserCreated";
+    selectTypes(List.of(type));
+    fromLatest(); // should not find anything
+
+    final var id = UUID.randomUUID();
+    setReportName(id.toString());
+
+    // ACT
+    generate();
+
+    // ASSERT
+    final var expectedReportFilename = id + ".json";
+    // no report created, no file created
+    assertThat(page.getByText(expectedReportFilename)).hasCount(0);
+    // chosen report file name is still valid as name for new report,
+    // users will probably adjust filter criteria and try to generate report again immediately
+    assertThat(getButton("Generate")).isEnabled();
   }
 
   private void assertJsonEvent(
