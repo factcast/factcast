@@ -26,17 +26,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.store.FactStore;
 import org.factcast.server.ui.adapter.FactRepositoryImpl;
-import org.factcast.server.ui.metrics.MeterRegistryMetrics;
-import org.factcast.server.ui.metrics.UiMetrics;
+import org.factcast.server.ui.metrics.*;
 import org.factcast.server.ui.port.FactRepository;
-import org.factcast.server.ui.security.DefaultSecurityService;
-import org.factcast.server.ui.security.SecurityService;
+import org.factcast.server.ui.security.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.autoconfigure.condition.*;
+import org.springframework.context.annotation.*;
 
 @Configuration
 @Theme(value = "fcui")
