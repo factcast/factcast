@@ -37,8 +37,15 @@ import org.factcast.factus.projection.parameter.HandlerParameterContributors;
 import org.factcast.factus.projection.tx.*;
 import org.factcast.factus.projector.ProjectorImpl.ReflectionTools;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.aop.framework.Advised;
+import org.springframework.aop.support.AopUtils;
+import org.springframework.aop.target.SingletonTargetSource;
 
 @SuppressWarnings({"deprecation", "java:S1186"})
+@ExtendWith(MockitoExtension.class)
 class ProjectorImplTest {
 
   private final DefaultEventSerializer eventSerializer =
@@ -1056,6 +1063,59 @@ class ProjectorImplTest {
     void deepInspection3() {
       ProjectorImpl<Projection> uut = new ProjectorImpl<>(new L3(), eventSerializer);
       assertThat(uut.createFactSpecs().get(0).ns()).isEqualTo("l3");
+    }
+  }
+
+  @Nested
+  class WhenUnwrapping {
+    @Mock Advised a;
+
+    @Mock Object b;
+
+    @Test
+    void throwsIfTargetIsNull() {
+
+      try (MockedStatic<AopUtils> utilities = Mockito.mockStatic(AopUtils.class)) {
+        utilities.when(() -> AopUtils.isAopProxy(any())).thenReturn(true);
+        when(a.getTargetSource()).thenReturn(null);
+
+        assertThatThrownBy(
+                () -> {
+                  ProjectorImpl.unwrapProxy(a);
+                })
+            .isInstanceOf(NullPointerException.class);
+      }
+    }
+
+    @Test
+    void breaksCircuit() {
+      try (MockedStatic<AopUtils> utilities = Mockito.mockStatic(AopUtils.class)) {
+        utilities.when(() -> AopUtils.isAopProxy(any())).thenReturn(true);
+        when(a.getTargetSource()).thenReturn(new SingletonTargetSource(a));
+
+        assertThatThrownBy(
+                () -> {
+                  ProjectorImpl.unwrapProxy(a);
+                })
+            .isInstanceOf(IllegalStateException.class);
+      }
+    }
+
+    @Test
+    void unwraps() {
+      try (MockedStatic<AopUtils> utilities = Mockito.mockStatic(AopUtils.class)) {
+        utilities.when(() -> AopUtils.isAopProxy(any())).thenReturn(true);
+        when(a.getTargetSource()).thenReturn(new SingletonTargetSource(b));
+        Assertions.assertThat(ProjectorImpl.unwrapProxy(a)).isSameAs(b);
+      }
+    }
+
+    @Test
+    void leavesUnrelatedObjectsAlone() {
+      try (MockedStatic<AopUtils> utilities = Mockito.mockStatic(AopUtils.class)) {
+        utilities.when(() -> AopUtils.isAopProxy(any())).thenReturn(true);
+        Assertions.assertThat(ProjectorImpl.unwrapProxy(b)).isSameAs(b);
+      }
     }
   }
 }
