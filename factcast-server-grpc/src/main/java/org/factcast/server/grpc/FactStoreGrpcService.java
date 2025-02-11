@@ -214,7 +214,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
                         Bandwidth.classic(
                             grpcLimitProperties.initialNumberOfFollowRequestsAllowedPerClient(),
                             refill);
-                    return Bucket4j.builder().addLimit(limit).build();
+                    return Bucket.builder().addLimit(limit).build();
                   } else {
 
                     log.trace(
@@ -230,7 +230,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
                         Bandwidth.classic(
                             grpcLimitProperties.initialNumberOfCatchupRequestsAllowedPerClient(),
                             refill);
-                    return Bucket4j.builder().addLimit(limit).build();
+                    return Bucket.builder().addLimit(limit).build();
                   }
                 }
               });
