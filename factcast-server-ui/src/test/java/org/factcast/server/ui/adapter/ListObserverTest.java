@@ -15,7 +15,8 @@
  */
 package org.factcast.server.ui.adapter;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
@@ -24,10 +25,12 @@ import java.util.List;
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
+import org.factcast.core.FactHeader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,7 +45,9 @@ public class ListObserverTest {
     @BeforeEach
     void setup() {
       for (int i = 0; i < 30; i++) {
-        mockFacts.add(mock(Fact.class));
+        Fact mock = mock(Fact.class);
+        lenient().when(mock.header()).thenReturn(mock(FactHeader.class));
+        mockFacts.add(mock);
       }
     }
 
@@ -54,7 +59,7 @@ public class ListObserverTest {
 
       var result = underTest.list();
       Assertions.assertThat(result).isNotNull().hasSize(3);
-      Assertions.assertThat(underTest.isComplete()).isTrue();
+      Assertions.assertThat(underTest.isComplete(mockFacts.get(0))).isTrue();
     }
 
     @Test
@@ -64,7 +69,7 @@ public class ListObserverTest {
 
       var result = underTest.list();
       Assertions.assertThat(result).isNotNull().hasSize(28);
-      Assertions.assertThat(underTest.isComplete()).isFalse();
+      Assertions.assertThat(underTest.isComplete(mockFacts.get(0))).isFalse();
     }
 
     @Test
@@ -79,7 +84,7 @@ public class ListObserverTest {
           .hasSize(3)
           .containsExactly(mockFacts.get(4), mockFacts.get(3), mockFacts.get(2));
 
-      Assertions.assertThat(underTest.isComplete()).isTrue();
+      Assertions.assertThat(underTest.isComplete(mockFacts.get(0))).isTrue();
     }
   }
 
@@ -89,22 +94,24 @@ public class ListObserverTest {
     void switchesToComplete() {
       underTest = new ListObserver(2, 2);
       // first skipped for offset
-      underTest.onNext(mock(Fact.class));
-      assertThat(underTest.isComplete()).isFalse();
+      Fact mock = mock(Fact.class);
+      when(mock.header()).thenReturn(mock(FactHeader.class));
+      underTest.onNext(mock);
+      assertThat(underTest.isComplete(mock)).isFalse();
       // second skipped for offset
-      underTest.onNext(mock(Fact.class));
-      assertThat(underTest.isComplete()).isFalse();
+      underTest.onNext(mock);
+      assertThat(underTest.isComplete(mock)).isFalse();
       // third is taken, reduce limit to 1
-      underTest.onNext(mock(Fact.class));
-      assertThat(underTest.isComplete()).isFalse();
+      underTest.onNext(mock);
+      assertThat(underTest.isComplete(mock)).isFalse();
       // fourth is taken, reduce limit to 0
-      underTest.onNext(mock(Fact.class));
-      assertThat(underTest.isComplete()).isTrue();
+      underTest.onNext(mock);
+      assertThat(underTest.isComplete(mock)).isTrue();
 
       // more should trigger an exception
       assertThatThrownBy(
               () -> {
-                underTest.onNext(mock(Fact.class));
+                underTest.onNext(mock);
               })
           .isInstanceOf(LimitReachedException.class);
     }
@@ -138,6 +145,34 @@ public class ListObserverTest {
         underTest.onError(exc);
         verify(underTest, never()).handleError(exc);
       }
+    }
+  }
+
+  @Nested
+  class WhenCheckingIfHasReachedTheLimitSerial {
+    @Test
+    void switchesToComplete() {
+      underTest = new ListObserver(3L, 4, 1);
+      // first skipped for offset
+      Fact mock1 = mock(Fact.class, Answers.RETURNS_DEEP_STUBS);
+      when(mock1.header().serial()).thenReturn(1L);
+      Fact mock2 = mock(Fact.class, Answers.RETURNS_DEEP_STUBS);
+      when(mock2.header().serial()).thenReturn(2L);
+      Fact mock3 = mock(Fact.class, Answers.RETURNS_DEEP_STUBS);
+      when(mock3.header().serial()).thenReturn(3L);
+      Fact mock4 = mock(Fact.class, Answers.RETURNS_DEEP_STUBS);
+      when(mock4.header().serial()).thenReturn(4L);
+
+      // First one skipped for offset
+      underTest.onNext(mock1);
+      // second is taken, still under end serial
+      underTest.onNext(mock2);
+      // third is taken, still under end serial
+      underTest.onNext(mock3);
+
+      // fourth is ignored, over the end serial
+      // more should trigger an exception
+      assertThatThrownBy(() -> underTest.onNext(mock4)).isInstanceOf(LimitReachedException.class);
     }
   }
 }

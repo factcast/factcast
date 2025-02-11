@@ -1,6 +1,6 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("io.github.typesafegithub:github-workflows-kt:3.1.0")
+@file:DependsOn("io.github.typesafegithub:github-workflows-kt:3.2.0")
 
 
 @file:Repository("https://repo.maven.apache.org/maven2/")
@@ -109,7 +109,7 @@ workflow(
         strategyMatrix = mapOf(
             // note that 15 is tested already in the regular build job
             // removed others for now to improve throughput regarding actions
-            "postgresVersion" to listOf("17"),
+            "postgresVersion" to listOf("16"),
         ),
     ) {
         uses(
