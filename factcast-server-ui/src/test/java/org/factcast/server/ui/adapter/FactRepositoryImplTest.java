@@ -264,7 +264,7 @@ public class FactRepositoryImplTest {
           ArgumentCaptor.forClass(SubscriptionRequestTO.class);
       when(bean.getLimitOrDefault()).thenReturn(limit);
       when(bean.getOffsetOrDefault()).thenReturn(offset);
-      when(bean.getFromOrZero()).thenReturn(1984L);
+      when(bean.resolveFromOrZero()).thenReturn(1984L);
       when(fs.fetchBySerial(1984)).thenReturn(Optional.of(factWithId));
       when(securityService.filterReadable(nameSpaces))
           .thenReturn(Set.copyOf(nameSpacesAfterFiltering));

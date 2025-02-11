@@ -43,7 +43,7 @@ public class FullQueryBean implements Serializable {
   private Integer limit = null;
 
   @Min(0)
-  @Max(Integer.MAX_VALUE)
+  @Max(1000)
   private Integer offset = null;
 
   @Valid private List<FactCriteria> criteria = Lists.newArrayList(new FactCriteria());
@@ -84,7 +84,8 @@ public class FullQueryBean implements Serializable {
     return Optional.ofNullable(limit).orElse(FullQueryBean.DEFAULT_LIMIT);
   }
 
-  public long getFromOrZero() {
+  // renamed from get* to escape the property detection
+  public long resolveFromOrZero() {
     return Optional.ofNullable(from)
         // turn into inclusive offset
         .map(o -> Math.max(0, o.longValueExact() - 1))

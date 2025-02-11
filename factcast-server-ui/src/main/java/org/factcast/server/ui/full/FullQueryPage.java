@@ -18,36 +18,26 @@ package org.factcast.server.ui.full;
 import com.vaadin.componentfactory.Popup;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.accordion.Accordion;
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.button.*;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.html.H4;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.Autocomplete;
-import com.vaadin.flow.component.textfield.BigDecimalField;
-import com.vaadin.flow.component.textfield.IntegerField;
+import com.vaadin.flow.component.orderedlayout.*;
+import com.vaadin.flow.component.textfield.*;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.server.StreamResource;
 import jakarta.annotation.security.PermitAll;
 import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.util.NoCoverageReportToBeGenerated;
-import org.factcast.server.ui.plugins.JsonViewEntries;
-import org.factcast.server.ui.plugins.JsonViewPluginService;
+import org.factcast.server.ui.plugins.*;
 import org.factcast.server.ui.port.FactRepository;
-import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
-import org.factcast.server.ui.utils.Notifications;
-import org.factcast.server.ui.views.FormContent;
-import org.factcast.server.ui.views.JsonView;
-import org.factcast.server.ui.views.MainLayout;
+import org.factcast.server.ui.utils.*;
+import org.factcast.server.ui.views.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.vaadin.olli.FileDownloadWrapper;
@@ -210,10 +200,10 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
 
   private void updateEndSerialIfLowerThanStartSerial() {
     if (until.getValue() != null && since.getValue().isAfter(until.getValue())) {
-      until.setValue(since.getValue());
+      until.setValue(since.getValue()); // that would give us one day of facts
     }
     if (to.getValue() != null && from.getValue().compareTo(to.getValue()) > 0) {
-      to.setValue(from.getValue());
+      to.setValue(null); // remove the limit
     }
   }
 

@@ -16,13 +16,10 @@
 package org.factcast.server.ui.full;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.spec.FactSpec;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -162,13 +159,13 @@ class FullQueryBeanTest {
     @Test
     void returnsZeroWhenFromScratch() {
       underTest.setFrom(BigDecimal.ZERO);
-      Assertions.assertThat(underTest.getFromOrZero()).isEqualTo(0);
+      Assertions.assertThat(underTest.resolveFromOrZero()).isZero();
     }
 
     @Test
     void returnsFromMinus1() {
       underTest.setFrom(BigDecimal.TEN);
-      Assertions.assertThat(underTest.getFromOrZero()).isEqualTo(9L);
+      Assertions.assertThat(underTest.resolveFromOrZero()).isEqualTo(9L);
     }
   }
 }

@@ -100,7 +100,7 @@ public class FactRepositoryImpl implements FactRepository {
     ListObserver obs =
         new ListObserver(untilSerial, bean.getLimitOrDefault(), bean.getOffsetOrDefault());
     SpecBuilder sr = SubscriptionRequest.catchup(specs);
-    long ser = bean.getFromOrZero();
+    long ser = bean.resolveFromOrZero();
     SubscriptionRequest request = null;
 
     if (ser > 0) {
