@@ -37,6 +37,8 @@ public interface FactRepository {
 
   OptionalLong lastSerialBefore(@NonNull LocalDate date);
 
+  Optional<Long> firstSerialAfter(@NonNull LocalDate date);
+
   long latestSerial();
 
   Optional<UUID> findIdOfSerial(long longValue);

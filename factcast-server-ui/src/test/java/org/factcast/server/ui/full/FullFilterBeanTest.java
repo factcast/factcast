@@ -15,15 +15,11 @@
  */
 package org.factcast.server.ui.full;
 
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.server.ui.views.filter.FactCriteria;
-import org.factcast.server.ui.views.filter.MetaTuple;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.factcast.server.ui.views.filter.*;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -114,13 +110,13 @@ class FullFilterBeanTest {
 
     @Test
     void specsThrowsIfNsMissing() {
-      Assertions.assertThatThrownBy(underTest::createFactSpecs)
+      Assertions.assertThatThrownBy(() -> underTest.createFactSpecs())
           .isInstanceOf(IllegalArgumentException.class);
     }
   }
 
   @Nested
-  class WhenResetting {
+  class WhenReseting {
     @Test
     void returnsOffset() {
       // even though it is annotated as non null, we need it to be null after reset

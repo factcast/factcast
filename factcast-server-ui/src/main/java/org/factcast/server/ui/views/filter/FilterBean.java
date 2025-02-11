@@ -18,7 +18,7 @@ package org.factcast.server.ui.views.filter;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
+import java.util.*;
 import lombok.NonNull;
 import org.factcast.core.spec.FactSpec;
 
@@ -40,4 +40,12 @@ public interface FilterBean extends Serializable {
   }
 
   void reset();
+
+  // renamed from get* to escape the property detection
+  default long resolveFromOrZero() {
+    return Optional.ofNullable(getFrom())
+        // turn into inclusive offset
+        .map(o -> Math.max(0, o.longValueExact() - 1))
+        .orElse(0L);
+  }
 }

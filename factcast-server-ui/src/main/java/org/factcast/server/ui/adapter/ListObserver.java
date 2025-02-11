@@ -15,23 +15,30 @@
  */
 package org.factcast.server.ui.adapter;
 
-import lombok.Getter;
-import lombok.NonNull;
+import javax.annotation.Nullable;
+import lombok.*;
 import org.factcast.core.Fact;
 
 @Getter
 public class ListObserver extends AbstractListObserver {
-  private int offset;
   private int limit;
+  private int offset;
+  @Nullable private Long untilSerial;
 
   public ListObserver(int limit, int offset) {
-    this.offset = offset;
     this.limit = limit;
+    this.offset = offset;
+  }
+
+  public ListObserver(Long untilSerial, int limit, int offset) {
+    this.untilSerial = untilSerial;
+    this.limit = limit;
+    this.offset = offset;
   }
 
   @Override
   public void onNext(@NonNull Fact element) {
-    if (isComplete()) {
+    if (isComplete(element)) {
       throw new LimitReachedException();
     }
 
@@ -50,7 +57,12 @@ public class ListObserver extends AbstractListObserver {
     }
   }
 
-  boolean isComplete() {
-    return limit <= 0;
+  boolean isComplete(Fact fact) {
+    return limit <= 0 || hasReachedTheLimitSerial(fact);
+  }
+
+  private boolean hasReachedTheLimitSerial(Fact fact) {
+    Long serial = fact.header().serial();
+    return untilSerial != null && serial != null && untilSerial < serial;
   }
 }

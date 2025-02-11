@@ -20,7 +20,6 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -266,7 +265,7 @@ public class FactRepositoryImplTest {
           ArgumentCaptor.forClass(SubscriptionRequestTO.class);
       when(bean.getLimitOrDefault()).thenReturn(limit);
       when(bean.getOffsetOrDefault()).thenReturn(offset);
-      when(bean.getFrom()).thenReturn(BigDecimal.valueOf(1984));
+      when(bean.resolveFromOrZero()).thenReturn(1984L);
       when(fs.fetchBySerial(1984)).thenReturn(Optional.of(factWithId));
       when(securityService.filterReadable(nameSpaces))
           .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
@@ -375,7 +374,7 @@ public class FactRepositoryImplTest {
 
       ArgumentCaptor<SubscriptionRequestTO> srCaptor =
           ArgumentCaptor.forClass(SubscriptionRequestTO.class);
-      when(bean.getFrom()).thenReturn(BigDecimal.valueOf(1984));
+      when(bean.resolveFromOrZero()).thenReturn(1984L);
       when(fs.fetchBySerial(1984)).thenReturn(Optional.of(factWithId));
       when(securityService.filterReadable(nameSpaces))
           .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
@@ -468,6 +467,16 @@ public class FactRepositoryImplTest {
       LocalDate d = LocalDate.now();
       when(fs.lastSerialBefore(d)).thenReturn(72L);
       Assertions.assertThat(underTest.lastSerialBefore(d)).isNotEmpty().hasValue(72L);
+    }
+  }
+
+  @Nested
+  class WhenFirstSerialAfter {
+    @Test
+    void passesParamAndResponse() {
+      LocalDate d = LocalDate.now();
+      when(fs.firstSerialAfter(d)).thenReturn(72L);
+      Assertions.assertThat(underTest.firstSerialAfter(d)).isNotEmpty().hasValue(72L);
     }
   }
 }

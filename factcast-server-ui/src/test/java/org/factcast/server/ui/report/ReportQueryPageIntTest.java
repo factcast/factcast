@@ -70,22 +70,28 @@ class ReportQueryPageIntTest extends AbstractBrowserTest {
                                 AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Download"))
                             .click()));
 
-    final var e0id = UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec086");
-    final var u0id = UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec087");
-    final var e1id = UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec084");
-    final var u1id = UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec085");
+    final var e0id = UUID.fromString("82369346-3b82-4703-9803-d91ae71d0b7e");
+    final var u0id = UUID.fromString("07ff11b5-437e-4ab8-92c8-e5d29ed376d4");
+    final var e1id = UUID.fromString("7ea100c6-9175-423d-b7e2-2d9bc66e328f");
+    final var u1id = UUID.fromString("fe3d3a2e-9b36-4b1b-8e68-406f4b37c70d");
+    final var e2id = UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec086");
+    final var u2id = UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec087");
+    final var e3id = UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec084");
+    final var u3id = UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec085");
 
     try (final var input = download.createReadStream()) {
       final var report = om.readTree(input.readAllBytes());
       assertThat(report.get("name").asText()).isEqualTo(id + ".json");
-      assertThat(report.get("events")).hasSize(2);
+      assertThat(report.get("events")).hasSize(4);
 
-      assertJsonEvent(report.get("events").get(0), e0id, u0id, type, "Werner", "Ernst");
-      assertJsonEvent(report.get("events").get(1), e1id, u1id, type, "Peter", "Lustig");
+      assertJsonEvent(report.get("events").get(0), e0id, u0id, type, "Edwin", "Jäger");
+      assertJsonEvent(report.get("events").get(1), e1id, u1id, type, "Dillon", "Keller");
+      assertJsonEvent(report.get("events").get(2), e2id, u2id, type, "Werner", "Ernst");
+      assertJsonEvent(report.get("events").get(3), e3id, u3id, type, "Peter", "Lustig");
 
       log.info(report.get("query").toString());
       final var query = om.readValue(report.get("query").toString(), ReportFilterBean.class);
-      assertThat(query.getDefaultFrom()).isEqualTo(2);
+      assertThat(query.getDefaultFrom()).isEqualTo(4);
       assertThat(query.getFrom()).isNull();
       assertThat(query.getCriteria()).hasSize(1);
       assertCriterion(query.getCriteria().get(0), ns, type, null);
@@ -134,7 +140,8 @@ class ReportQueryPageIntTest extends AbstractBrowserTest {
     assertThat(page.getByLabel("Types")).isEnabled();
     final var type = "UserCreated";
     selectTypes(List.of(type));
-    fromLatest(); // should not find anything
+
+    page.getByLabel("Starting Serial").fill("5"); // too far, should not find anything
 
     final var id = UUID.randomUUID();
     setReportName(id.toString());

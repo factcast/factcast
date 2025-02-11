@@ -15,29 +15,22 @@
  */
 package org.factcast.store.internal.listen;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.sql.*;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.Value;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.util.FactCastJson;
 import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.store.internal.PgConstants;
-import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.StoreMetrics;
+import org.factcast.store.internal.*;
+import org.factcast.store.internal.notification.*;
 import org.postgresql.PGNotification;
 import org.postgresql.jdbc.PgConnection;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.*;
 
 /**
  * Listens (sql LISTEN command) to a channel on Postgresql and passes a trigger on an EventBus.
@@ -105,6 +98,11 @@ public class PgListener implements InitializingBean, DisposableBean {
         }
       }
     }
+
+    @SneakyThrows
+    private void sleep() {
+      TimeUnit.MILLISECONDS.sleep(props.getFactNotificationNewConnectionWaitTimeInMillis());
+    }
   }
 
   private void connectionSetup(PgConnection pc) throws SQLException {
@@ -115,130 +113,85 @@ public class PgListener implements InitializingBean, DisposableBean {
 
   @VisibleForTesting
   protected void setupPostgresListeners(PgConnection pc) throws SQLException {
-    try (PreparedStatement ps = pc.prepareStatement(PgConstants.LISTEN_SQL)) {
-      ps.execute();
-    }
-    try (PreparedStatement ps = pc.prepareStatement(PgConstants.LISTEN_ROUNDTRIP_CHANNEL_SQL)) {
-      ps.execute();
-    }
-    try (PreparedStatement ps =
-        pc.prepareStatement(PgConstants.LISTEN_BLACKLIST_CHANGE_CHANNEL_SQL)) {
-      ps.execute();
-    }
-    try (PreparedStatement ps =
-        pc.prepareStatement(PgConstants.LISTEN_SCHEMASTORE_CHANGE_CHANNEL_SQL)) {
-      ps.execute();
-    }
-    try (PreparedStatement ps =
-        pc.prepareStatement(PgConstants.LISTEN_TRANSFORMATIONSTORE_CHANGE_CHANNEL_SQL)) {
-      ps.execute();
+    try (PreparedStatement ps1 = pc.prepareStatement(PgConstants.LISTEN_SQL);
+        PreparedStatement ps2 = pc.prepareStatement(PgConstants.LISTEN_ROUNDTRIP_CHANNEL_SQL);
+        PreparedStatement ps3 =
+            pc.prepareStatement(PgConstants.LISTEN_BLACKLIST_CHANGE_CHANNEL_SQL);
+        PreparedStatement ps4 =
+            pc.prepareStatement(PgConstants.LISTEN_SCHEMASTORE_CHANGE_CHANNEL_SQL);
+        PreparedStatement ps5 =
+            pc.prepareStatement(PgConstants.LISTEN_TRANSFORMATIONSTORE_CHANGE_CHANNEL_SQL); ) {
+      ps1.execute();
+      ps2.execute();
+      ps3.execute();
+      ps4.execute();
+      ps5.execute();
     }
   }
 
   // make sure subscribers did not miss anything while we reconnected
   @VisibleForTesting
   protected void informSubscribersAboutFreshConnection() {
-
-    postFactInsertionSignal(PgConstants.CHANNEL_SCHEDULED_POLL);
-    postBlacklistChangeSignal();
+    post(FactInsertionNotification.internal());
+    post(BlacklistChangeNotification.internal());
+    post(SchemaStoreChangeNotification.internal());
   }
 
   @VisibleForTesting
   protected void processNotifications(PGNotification[] notifications) {
+    List<PGNotification> list = List.of(notifications);
+    Predicate<PGNotification> isFactInsert =
+        n -> PgConstants.CHANNEL_FACT_INSERT.equals(n.getName());
 
-    AtomicBoolean oncePerArray = new AtomicBoolean(false);
+    List<PGNotification> nonFactInserts =
+        list.stream().filter(Predicate.not(isFactInsert)).toList();
 
-    Arrays.asList(notifications)
-        .forEach(
-            n -> {
-              String name = n.getName();
-              log.trace("Received notification on channel: {}.", name);
+    // if there are more than 1 blacklist_change notifications in the array, we need only the last
+    // one
+    // note we filter BEFORE parsing to save some cpu cycles
+    streamWithCompactedBlacklistChanges(nonFactInserts)
+        .map(StoreNotification::createFrom)
+        .filter(Objects::nonNull)
+        .forEach(this::post);
 
-              if (PgConstants.CHANNEL_BLACKLIST_CHANGE.equals(name)) {
-                postBlacklistChangeSignal();
-              } else if (PgConstants.CHANNEL_SCHEMASTORE_CHANGE.equals(name)) {
-                processSchemaStoreChangeNotification(n);
-              } else if (PgConstants.CHANNEL_TRANSFORMATIONSTORE_CHANGE.equals(name)) {
-                processTransformationStoreChangeNotification(n);
-              } else if (PgConstants.CHANNEL_FACT_INSERT.equals(name)) {
-                processFactInsertNotification(n, oncePerArray);
-              } else if (!PgConstants.CHANNEL_ROUNDTRIP.equals(name)) {
-                log.warn("Ignored notification from unknown channel: {}", name);
-              }
-            });
+    // it does not make any sense here to filter before parsing, so that we start with the mapping
+    Stream<FactInsertionNotification> factInserts =
+        list.stream()
+            .filter(isFactInsert)
+            .map(FactInsertionNotification::from)
+            .filter(Objects::nonNull);
+    compact(factInserts).forEach(this::post);
   }
 
-  private void processSchemaStoreChangeNotification(PGNotification n) {
-    String json = n.getParameter();
-    try {
-      JsonNode root = FactCastJson.readTree(json);
-
-      String ns = root.get("ns").asText();
-      String type = root.get("type").asText();
-      Integer version = root.get("version").asInt();
-
-      postSchemaStoreChangeSignal(new SchemaStoreChangeSignal(ns, type, version));
-
-    } catch (JsonProcessingException | NullPointerException e) {
-      // skipping
-      log.warn("Unparesable JSON parameter from notification: {}.", n.getName());
-    }
+  /** filters duplications regarding ns&type */
+  @VisibleForTesting
+  Stream<FactInsertionNotification> compact(Stream<FactInsertionNotification> factInserts) {
+    Set<String> coordinatesIncluded = new HashSet<>();
+    return factInserts.filter(n -> coordinatesIncluded.add(n.nsAndType()));
   }
 
-  private void processTransformationStoreChangeNotification(PGNotification n) {
-    String json = n.getParameter();
-    try {
-      JsonNode root = FactCastJson.readTree(json);
+  /** remove all but the last CHANNEL_BLACKLIST_CHANGE */
+  @VisibleForTesting
+  Stream<PGNotification> streamWithCompactedBlacklistChanges(List<PGNotification> nonFactInserts) {
+    Optional<PGNotification> lastBCN =
+        nonFactInserts.stream()
+            .filter(n -> PgConstants.CHANNEL_BLACKLIST_CHANGE.equals(n.getName()))
+            .reduce((a, b) -> b);
 
-      String ns = root.get("ns").asText();
-      String type = root.get("type").asText();
-
-      postTransformationStoreChangeSignal(new TransformationStoreChangeSignal(ns, type));
-
-    } catch (JsonProcessingException | NullPointerException e) {
-      // skipping
-      log.warn("Unparesable JSON parameter from notification: {}.", n.getName());
-    }
-  }
-
-  private void processFactInsertNotification(PGNotification n, AtomicBoolean oncePerArray) {
-    String json = n.getParameter();
-    try {
-      JsonNode root = FactCastJson.readTree(json);
-      // since 0.5.2, all those attributes are top level
-      String ns = root.get("ns").asText();
-      String type = root.get("type").asText();
-
-      postFactInsertionSignal(new FactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT, ns, type));
-
-    } catch (JsonProcessingException | NullPointerException e) {
-      // unparseable, probably longer than 8k ?
-      // fall back to informingAllSubscribers
-      if (!oncePerArray.getAndSet(true)) {
-        log.warn(
-            "Unparesable JSON header from Notification: {}. Notifying everyone - just" + " in case",
-            n.getName());
-        postFactInsertionSignal(PgConstants.CHANNEL_FACT_INSERT);
-      }
-    }
-  }
-
-  private void postBlacklistChangeSignal() {
-    log.trace("Potential blacklist change detected");
-    eventBus.post(new BlacklistChangeSignal());
+    if (lastBCN.isPresent()) {
+      // delete all others
+      PGNotification last = lastBCN.get();
+      return nonFactInserts.stream()
+          .filter(n -> !PgConstants.CHANNEL_BLACKLIST_CHANGE.equals(n.getName()) || n == last);
+    } else return nonFactInserts.stream();
   }
 
   @VisibleForTesting
-  protected void postSchemaStoreChangeSignal(PgListener.SchemaStoreChangeSignal signal) {
-    log.trace("Schema store change detected");
-    eventBus.post(signal);
-  }
-
-  @VisibleForTesting
-  protected void postTransformationStoreChangeSignal(
-      PgListener.TransformationStoreChangeSignal signal) {
-    log.trace("Transformation store change detected");
-    eventBus.post(signal);
+  void post(@NonNull StoreNotification n) {
+    if (running.get()) {
+      log.trace("posting to eventBus: {}", n);
+      eventBus.post(n);
+    }
   }
 
   // try to receive Postgres notifications until timeout is over. In case we
@@ -246,7 +199,6 @@ public class PgListener implements InitializingBean, DisposableBean {
   // check if the database connection is still healthy
   @VisibleForTesting
   protected PGNotification[] receiveNotifications(PgConnection pc) throws SQLException {
-
     PGNotification[] notifications =
         pc.getNotifications(props.getFactNotificationBlockingWaitTimeInMillis());
     if (notifications == null || notifications.length == 0) {
@@ -280,54 +232,6 @@ public class PgListener implements InitializingBean, DisposableBean {
           .record((System.nanoTime() - start), TimeUnit.NANOSECONDS);
       return notifications;
     }
-  }
-
-  @VisibleForTesting
-  protected void sleep() {
-    try {
-      Thread.sleep(props.getFactNotificationNewConnectionWaitTimeInMillis());
-    } catch (InterruptedException ignore) {
-    }
-  }
-
-  @VisibleForTesting
-  protected void postFactInsertionSignal(@NonNull String name) {
-    postFactInsertionSignal(new FactInsertionSignal(name, null, null));
-  }
-
-  @VisibleForTesting
-  protected void postFactInsertionSignal(@NonNull PgListener.FactInsertionSignal signal) {
-    if (running.get()) {
-      log.trace(
-          "notifying consumers for '{}' with ns={}, type={}",
-          signal.name(),
-          signal.ns(),
-          signal.type());
-      eventBus.post(signal);
-    }
-  }
-
-  @Value
-  public static class FactInsertionSignal {
-    @NonNull String name;
-    String ns;
-    String type;
-  }
-
-  @Value
-  public static class BlacklistChangeSignal {}
-
-  @Value
-  public static class SchemaStoreChangeSignal {
-    @NonNull String ns;
-    @NonNull String type;
-    @NonNull Integer version;
-  }
-
-  @Value
-  public static class TransformationStoreChangeSignal {
-    @NonNull String ns;
-    @NonNull String type;
   }
 
   @Override

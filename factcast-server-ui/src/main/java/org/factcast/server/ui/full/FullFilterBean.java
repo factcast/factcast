@@ -15,56 +15,57 @@
  */
 package org.factcast.server.ui.full;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.*;
 import com.google.common.collect.Lists;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import lombok.Data;
 import lombok.experimental.Accessors;
-import org.factcast.server.ui.views.filter.FactCriteria;
-import org.factcast.server.ui.views.filter.FilterBean;
+import org.factcast.server.ui.views.filter.*;
 
-/** Currently it is not possible to filter on more than one aggId via api */
 @Data
 @SuppressWarnings("java:S1948")
 @Accessors(fluent = false, chain = false)
 @JsonIgnoreProperties("since")
-public class FullFilterBean implements FilterBean, Serializable {
+public class FullFilterBean implements Serializable, FilterBean {
   public static final int DEFAULT_LIMIT = 50;
   private final long defaultFrom;
 
   private LocalDate since = LocalDate.now();
+  private LocalDate until = null;
 
   @Max(1000)
+  @Min(1)
   private Integer limit = null;
 
   @Min(0)
+  @Max(1000)
   private Integer offset = null;
 
-  private BigDecimal from = null;
-
   @Valid private List<FactCriteria> criteria = Lists.newArrayList(new FactCriteria());
+
+  // currently not possible to filter on more than one aggId via api
+  @Min(0)
+  private BigDecimal from;
+
+  @Min(1)
+  private BigDecimal to = null;
 
   FullFilterBean(long startingSerial) {
     defaultFrom = startingSerial;
     from = BigDecimal.valueOf(startingSerial);
   }
 
-  @Override
   @SuppressWarnings("java:S2637") // settings ns to null is intended
   public void reset() {
     since = LocalDate.now();
     limit = null;
     offset = null;
-    criteria.clear();
-    criteria.add(new FactCriteria());
+    criteria = Lists.newArrayList(new FactCriteria());
     from = BigDecimal.valueOf(defaultFrom);
   }
 

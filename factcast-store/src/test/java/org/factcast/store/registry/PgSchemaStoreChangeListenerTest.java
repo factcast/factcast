@@ -15,19 +15,15 @@
  */
 package org.factcast.store.registry;
 
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
 import lombok.SneakyThrows;
-import org.factcast.store.internal.listen.PgListener;
+import org.factcast.store.internal.notification.SchemaStoreChangeNotification;
 import org.factcast.store.registry.validation.schema.SchemaKey;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Spy;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -61,12 +57,12 @@ class PgSchemaStoreChangeListenerTest {
 
   @Nested
   class WhenOning {
-    private PgListener.SchemaStoreChangeSignal signal;
+    private SchemaStoreChangeNotification signal;
     private final SchemaKey key = SchemaKey.of("ns", "type", 1);
 
     @Test
     void invalidatesCache() {
-      signal = new PgListener.SchemaStoreChangeSignal(key.ns(), key.type(), key.version());
+      signal = new SchemaStoreChangeNotification(key.ns(), key.type(), key.version(), 1L);
       underTest.on(signal);
       verify(registry, times(1)).invalidateNearCache(key);
     }

@@ -16,9 +16,7 @@
 package org.factcast.store.internal;
 
 import java.util.Random;
-import lombok.AccessLevel;
-import lombok.Generated;
-import lombok.NonNull;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 /**
@@ -72,7 +70,6 @@ public class PgConstants {
   private static final String TABLE_TOKENSTORE = "tokenstore";
 
   public static final String CHANNEL_FACT_INSERT = "fact_insert";
-  public static final String CHANNEL_SCHEDULED_POLL = "scheduled-poll";
   public static final String CHANNEL_BLACKLIST_CHANGE = "blacklist_change";
   public static final String CHANNEL_SCHEMASTORE_CHANGE = "schemastore_change";
   public static final String CHANNEL_TRANSFORMATIONSTORE_CHANGE = "transformationstore_change";
@@ -313,6 +310,15 @@ public class PgConstants {
       "SELECT COALESCE(max(lastSer),0) AS lastSer FROM "
           + TABLE_DATE2SERIAL
           + " where factDate < ?";
+
+  public static final String FIRST_SERIAL_AFTER_DATE =
+      "SELECT COALESCE("
+          + "(SELECT MIN(lastSer) FROM "
+          + TABLE_DATE2SERIAL
+          + " WHERE factDate > ?), "
+          + "(SELECT MAX(lastSer) FROM "
+          + TABLE_DATE2SERIAL
+          + "))";
 
   private static String fromHeader(String attributeName) {
     return PgConstants.COLUMN_HEADER + "->>'" + attributeName + "' AS " + attributeName;
