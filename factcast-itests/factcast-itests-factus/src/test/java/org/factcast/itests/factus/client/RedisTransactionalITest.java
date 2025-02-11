@@ -167,7 +167,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
                                 "Closing AutoCloseable for class class org.factcast.factus.redis.RedisWriterToken"));
       }
 
-      assertThat(subscribedUserNames.token() != null && !subscribedUserNames.token().isValid())
+      assertThat(subscribedUserNames.token() != null && subscribedUserNames.token().isValid())
           .isFalse();
     }
 
