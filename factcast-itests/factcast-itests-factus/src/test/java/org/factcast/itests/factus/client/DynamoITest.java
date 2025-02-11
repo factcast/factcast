@@ -213,8 +213,10 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
                                 "Closing AutoCloseable for class class org.factcast.factus.dynamo.DynamoWriterToken"));
       }
 
-      assertThat(subscribedUserNames.token() != null && !subscribedUserNames.token().isValid())
-          .isFalse();
+      Awaitility.await()
+              .until(
+                      () ->subscribedUserNames.token() != null && !subscribedUserNames.token().isValid());
+
     }
   }
 
