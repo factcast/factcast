@@ -20,4 +20,6 @@ public class TagKeys {
   public static final String CLASS = "class";
 
   public static final String TAG_NAME = "name";
+
+  private TagKeys() {}
 }

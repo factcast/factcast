@@ -63,8 +63,9 @@ public abstract class AbstractRedisProjection implements RedisProjection {
   @Override
   public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
     try {
-      if (lock.tryLock(maxWait.toMillis(), TimeUnit.MILLISECONDS))
+      if (lock.tryLock(maxWait.toMillis(), TimeUnit.MILLISECONDS)) {
         return new RedisWriterToken(redisson, lock);
+      }
     } catch (InterruptedException e) {
       // assume lock unsuccessful
     }

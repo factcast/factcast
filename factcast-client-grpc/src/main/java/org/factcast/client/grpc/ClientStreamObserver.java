@@ -89,9 +89,10 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
     lastNotification.set(System.currentTimeMillis());
 
     try {
-      if (clientBoundExecutor.isShutdown())
+      if (clientBoundExecutor.isShutdown()) {
         throw new IllegalStateException(
             "Executor for this observer already shut down. THIS IS A BUG!");
+      }
 
       clientBoundExecutor.submit(() -> process(f)).get();
     } catch (ExecutionException e) {

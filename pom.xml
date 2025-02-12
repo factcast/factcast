@@ -765,5 +765,36 @@
         </plugins>
       </build>
     </profile>
+    <profile>
+      <id>openrewrite</id>
+      <activation>
+        <property>
+          <name>rewrite</name>
+        </property>
+      </activation>
+
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.openrewrite.maven</groupId>
+            <artifactId>rewrite-maven-plugin</artifactId>
+            <version>6.1.0</version>
+            <configuration>
+              <activeRecipes>
+                <recipe>org.openrewrite.staticanalysis.CodeCleanup</recipe>
+              </activeRecipes>
+              <failOnDryRunResults>true</failOnDryRunResults>
+            </configuration>
+            <dependencies>
+              <dependency>
+                <groupId>org.openrewrite.recipe</groupId>
+                <artifactId>rewrite-static-analysis</artifactId>
+                <version>2.2.0</version>
+              </dependency>
+            </dependencies>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 </project>

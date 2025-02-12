@@ -26,7 +26,7 @@ public final class IntermediatePublishResult {
   @Getter @NonNull private final List<Fact> factsToPublish;
   @Getter private final boolean wasSkipped;
 
-  @Setter @NonNull private Runnable andThen = null;
+  @Setter @NonNull private Runnable andThen;
 
   IntermediatePublishResult(@NonNull List<Fact> factsToPublish, boolean wasSkipped) {
     this.factsToPublish = factsToPublish;

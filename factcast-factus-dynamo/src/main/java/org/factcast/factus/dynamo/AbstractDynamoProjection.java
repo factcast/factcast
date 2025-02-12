@@ -88,7 +88,7 @@ abstract class AbstractDynamoProjection implements DynamoProjection {
   @Override
   public void factStreamPosition(@NonNull FactStreamPosition position) {
     UUID factStreamPosition = position.factId();
-    if (factStreamPosition != null)
+    if (factStreamPosition != null) {
       stateTable.updateItem(
           UpdateItemEnhancedRequest.builder(DynamoProjectionState.class)
               .item(
@@ -98,6 +98,7 @@ abstract class AbstractDynamoProjection implements DynamoProjection {
                       .serial(position.serial())
                       .build())
               .build());
+    }
   }
 
   @SuppressWarnings("ReassignedVariable")
