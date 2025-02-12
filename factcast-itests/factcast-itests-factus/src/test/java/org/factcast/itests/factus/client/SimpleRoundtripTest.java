@@ -21,37 +21,28 @@ import static java.util.UUID.randomUUID;
 import java.util.UUID;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.aspectj.lang.annotation.*;
 import org.assertj.core.api.Assertions;
 import org.factcast.factus.Factus;
-import org.factcast.factus.event.EventConverter;
 import org.factcast.itests.TestFactusApplication;
-import org.factcast.itests.factus.config.RedissonProjectionConfiguration;
 import org.factcast.itests.factus.event.*;
-import org.factcast.itests.factus.proj.*;
-import org.factcast.spring.boot.autoconfigure.snap.RedissonSnapshotCacheAutoConfiguration;
+import org.factcast.itests.factus.proj.UserCount;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
-import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.test.context.ContextConfiguration;
 
 @ContextConfiguration(
     classes = {
-      TestFactusApplication.class,
-      RedissonProjectionConfiguration.class,
-      RedissonSnapshotCacheAutoConfiguration.class
+      TestFactusApplication.class, // this broke the inner class instantiation
     })
 @Slf4j
 class SimpleRoundtripTest extends AbstractFactCastIntegrationTest {
 
   @Autowired Factus factus;
 
-  @Autowired EventConverter eventConverter;
-
-  @Autowired RedissonTxManagedUserNames externalizedUserNames;
-
   @Autowired UserCount userCount;
-  @Autowired RedissonClient redissonClient;
 
   @Test
   void simpleRoundTrip() {
@@ -67,4 +58,15 @@ class SimpleRoundtripTest extends AbstractFactCastIntegrationTest {
   private static void sleep(long ms) {
     Thread.sleep(ms);
   }
+}
+
+@Aspect
+@Component
+class SomeAspectAroundProjection {
+
+  @Before("execution(* org.factcast.itests.factus.proj.UserCount.*(..))")
+  public void nop() {}
+
+  @Before("execution(* org.factcast.itests.factus.proj.UserCount.Handlers.*(..))")
+  public void nopInner() {}
 }

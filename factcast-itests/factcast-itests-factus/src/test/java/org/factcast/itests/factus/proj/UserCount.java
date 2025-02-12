@@ -25,12 +25,12 @@ public class UserCount extends LocalManagedProjection {
 
   private int users = 0;
 
-  @Handler
-  void apply(UserCreated created) {
-    users++;
-  }
+  public class Handlers {
+    @Handler
+    void apply(UserCreated created) {
+      users++;
+    }
 
-  class Inner {
     @Handler
     void apply(UserDeleted deleted) {
       users--;
