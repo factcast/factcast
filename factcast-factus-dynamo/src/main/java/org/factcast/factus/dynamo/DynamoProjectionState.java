@@ -16,8 +16,7 @@
 package org.factcast.factus.dynamo;
 
 import java.util.UUID;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbImmutable;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 
 @DynamoDbImmutable(builder = DynamoProjectionState.DynamoProjectionStateBuilder.class)
 public final class DynamoProjectionState {
@@ -69,10 +68,7 @@ public final class DynamoProjectionState {
         : !this$factStreamPosition.equals(other$factStreamPosition)) {
       return false;
     }
-    if (this.serial() != other.serial()) {
-      return false;
-    }
-    return true;
+    return this.serial() == other.serial();
   }
 
   public int hashCode() {
