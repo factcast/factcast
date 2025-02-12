@@ -9,7 +9,7 @@
     <version>0.9.5-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
-  <artifactId>factcast-store-pub-redis</artifactId>
+  <artifactId>factcast-store-sub</artifactId>
   <properties>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
@@ -33,11 +33,7 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
-      <artifactId>factcast-store-pub</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.factcast</groupId>
-      <artifactId>factcast-store-redis</artifactId>
+      <artifactId>factcast-store</artifactId>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>

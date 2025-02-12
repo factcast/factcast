@@ -19,23 +19,22 @@ import com.google.common.eventbus.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.internal.notification.StoreNotification;
+import org.factcast.store.pub.StoreNotificationPublisher;
+import org.factcast.store.redis.RedisPubSubConstants;
 import org.redisson.api.*;
 import org.springframework.beans.factory.SmartInitializingSingleton;
-import org.springframework.stereotype.Component;
 
 @Slf4j
-@Component
 @RequiredArgsConstructor
-public class RedisNotificationPublisher implements SmartInitializingSingleton {
-  // same is defined on the publisher side
-  static final String TOPIC = "factcast.store.notify.export";
+public class RedisNotificationPublisher
+    implements StoreNotificationPublisher, SmartInitializingSingleton {
   private final RedissonClient redis;
   private final EventBus bus;
   private RTopic notificationTopic;
 
   @Override
   public void afterSingletonsInstantiated() {
-    notificationTopic = redis.getTopic(TOPIC);
+    notificationTopic = redis.getTopic(RedisPubSubConstants.TOPIC);
     bus.register(this);
   }
 

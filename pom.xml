@@ -44,6 +44,9 @@
     <module>factcast-client-grpc-cli</module>
     <module>factcast-store</module>
     <module>factcast-store-test</module>
+    <module>factcast-store-pub</module>
+    <module>factcast-store-sub</module>
+    <module>factcast-store-redis</module>
     <module>factcast-store-pub-redis</module>
     <module>factcast-store-sub-redis</module>
     <module>factcast-core</module>

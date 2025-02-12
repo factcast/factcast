@@ -19,6 +19,7 @@ import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
 import org.factcast.store.internal.notification.*;
+import org.factcast.store.redis.RedisPubSubConstants;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -36,7 +37,7 @@ class RedisNotificationSubscriberTest {
 
   @BeforeEach
   void setup() {
-    when(redis.getTopic(RedisNotificationSubscriber.TOPIC)).thenReturn(topic);
+    when(redis.getTopic(RedisPubSubConstants.TOPIC)).thenReturn(topic);
   }
 
   @Nested
@@ -57,7 +58,7 @@ class RedisNotificationSubscriberTest {
     void exports() {
       StoreNotification probe = new SchemaStoreChangeNotification("x", "y", 1, 0);
       underTest.afterSingletonsInstantiated();
-      underTest.onMessage(RedisNotificationSubscriber.TOPIC, probe);
+      underTest.onMessage(RedisPubSubConstants.TOPIC, probe);
 
       verify(bus).post(probe);
     }

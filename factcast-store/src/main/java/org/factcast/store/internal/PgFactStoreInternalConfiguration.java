@@ -15,7 +15,7 @@
  */
 package org.factcast.store.internal;
 
-import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.*;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.concurrent.Executors;
@@ -74,11 +74,14 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @Import({SchemaRegistryConfiguration.class, PGTailIndexingConfiguration.class})
 public class PgFactStoreInternalConfiguration {
 
+  /**
+   * may be overruled by defining a @Primary DeduplicatingEventBus in PgFactStoreAutoConfiguration
+   */
   @Bean
   @ConditionalOnMissingBean(EventBus.class)
-  public EventBus eventBus(@NonNull PgMetrics metrics) {
-    return new DeduplicatingEventBus(
-        getClass().getSimpleName(),
+  public EventBus regularEventBus(@NonNull PgMetrics metrics) {
+    return new AsyncEventBus(
+        EventBus.class.getSimpleName(),
         metrics.monitor(Executors.newCachedThreadPool(), "pg-listener"));
   }
 
@@ -161,6 +164,7 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
+  @IsReadAndWriteEnv // do not try to listen in RO mode
   public PgListener pgListener(
       @NonNull PgConnectionSupplier pgConnectionSupplier,
       @NonNull EventBus eventBus,

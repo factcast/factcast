@@ -19,6 +19,7 @@ import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
 import org.factcast.store.internal.notification.*;
+import org.factcast.store.redis.RedisPubSubConstants;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -56,7 +57,7 @@ class RedisNotificationPublisherTest {
     @Test
     void exports() {
 
-      when(redis.getTopic(RedisNotificationPublisher.TOPIC)).thenReturn(topic);
+      when(redis.getTopic(RedisPubSubConstants.TOPIC)).thenReturn(topic);
       StoreNotification probe = new SchemaStoreChangeNotification("x", "y", 1, 0);
       underTest.afterSingletonsInstantiated();
       underTest.on(probe);
@@ -67,7 +68,7 @@ class RedisNotificationPublisherTest {
     @Test
     void doesNotExportInternalOnes() {
 
-      when(redis.getTopic(RedisNotificationPublisher.TOPIC)).thenReturn(topic);
+      when(redis.getTopic(RedisPubSubConstants.TOPIC)).thenReturn(topic);
       StoreNotification probe = SchemaStoreChangeNotification.internal();
       underTest.afterSingletonsInstantiated();
       underTest.on(probe);
@@ -78,7 +79,7 @@ class RedisNotificationPublisherTest {
     @Test
     void wiresToBusProperly() {
 
-      when(redis.getTopic(RedisNotificationPublisher.TOPIC)).thenReturn(topic);
+      when(redis.getTopic(RedisPubSubConstants.TOPIC)).thenReturn(topic);
       StoreNotification probe = new SchemaStoreChangeNotification("x", "y", 1, 0);
       underTest.afterSingletonsInstantiated();
       bus.post(probe);
