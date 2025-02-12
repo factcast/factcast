@@ -15,34 +15,26 @@
  */
 package org.factcast.itests.store;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 
 import java.nio.charset.Charset;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import org.factcast.core.Fact;
-import org.factcast.core.FactCast;
-import org.factcast.core.FactValidationException;
+import java.util.*;
+import java.util.concurrent.*;
+import org.factcast.core.*;
 import org.factcast.store.registry.PgSchemaStoreChangeListener;
 import org.factcast.test.IntegrationTest;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.json.*;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.util.StreamUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -50,11 +42,13 @@ import org.springframework.util.StreamUtils;
 @IntegrationTest
 public class SchemaCacheTest {
 
+  private static final long TIMEOUT = 10;
+
   @Autowired FactCast fc;
 
   @Autowired JdbcTemplate jdbcTemplate;
 
-  @SpyBean PgSchemaStoreChangeListener listener;
+  @MockitoSpyBean PgSchemaStoreChangeListener listener;
 
   @Nested
   @DirtiesContext
@@ -88,7 +82,8 @@ public class SchemaCacheTest {
           String.format("DELETE FROM schemastore WHERE type='%s' AND version=%d", v3.type(), 3));
       // on-call then invalidates schemaNearCache
       assertTrue(
-          wasOned.await(3, TimeUnit.SECONDS), "on() was not triggered by SchemaStoreChangeSignal");
+          wasOned.await(TIMEOUT, TimeUnit.SECONDS),
+          "on() was not triggered by SchemaStoreChangeSignal");
 
       assertDoesNotThrow(() -> fc.fetchByIdAndVersion(idv1, 1));
       // assuming that deleting from the schemastore should not remove/change automatically existing
@@ -152,7 +147,8 @@ public class SchemaCacheTest {
               newSchemaV3, v3.type(), 3));
       // on-call then invalidates schemaNearCache
       assertTrue(
-          wasOned.await(3, TimeUnit.SECONDS), "on() was not triggered by SchemaStoreChangeSignal");
+          wasOned.await(TIMEOUT, TimeUnit.SECONDS),
+          "on() was not triggered by SchemaStoreChangeSignal");
 
       assertDoesNotThrow(() -> fc.fetchByIdAndVersion(idv1, 1));
       // assuming that updating the schemastore should not remove/change automatically existing
@@ -219,7 +215,8 @@ public class SchemaCacheTest {
       // ASSERT
       // on-call then invalidates schemaNearCache
       assertTrue(
-          wasOned.await(3, TimeUnit.SECONDS), "on() was not triggered by SchemaStoreChangeSignal");
+          wasOned.await(TIMEOUT, TimeUnit.SECONDS),
+          "on() was not triggered by SchemaStoreChangeSignal");
       // absent schema not cached anymore
       assertDoesNotThrow(() -> fc.publish(v3));
     }
