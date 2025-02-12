@@ -18,10 +18,12 @@ package org.factcast.store.internal;
 import com.google.common.eventbus.AsyncEventBus;
 import java.util.*;
 import java.util.concurrent.Executor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.LRUMap;
-import org.factcast.store.internal.notification.StoreNotification;
+import org.factcast.store.internal.notification.*;
 import org.jetbrains.annotations.NotNull;
 
+@Slf4j
 public class DeduplicatingEventBus extends AsyncEventBus {
 
   private static final Object DUMMY = new Object();
@@ -36,8 +38,18 @@ public class DeduplicatingEventBus extends AsyncEventBus {
   @SuppressWarnings("java:S6201") // not yet
   public void post(@NotNull Object event) {
     if (event instanceof StoreNotification) {
+
+      if (event instanceof FactTruncationNotification) {
+        dedupIdTrail.clear();
+      }
+
+      // no else here, there might be someone else listening to truncations
+
       String id = ((StoreNotification) event).uniqueId();
-      if (id != null && dedupIdTrail.put(id, DUMMY) != null) return; // early exit
+      if (id != null && dedupIdTrail.put(id, DUMMY) != null) {
+        log.debug("Ignoring StoreNotification as duplicate: id={}, notification={}", id, event);
+        return; // early exit
+      }
     }
     // either not identifiable StoreNotification, or first time
     super.post(event);
