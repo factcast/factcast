@@ -766,6 +766,9 @@
       </build>
     </profile>
     <profile>
+      <!-- This profile is VERY experimental and currently definitely breaks
+        stuff. Please do not consider using it in an automated fashion, without checking
+        the outcome from its execution. -->
       <id>openrewrite</id>
       <activation>
         <property>

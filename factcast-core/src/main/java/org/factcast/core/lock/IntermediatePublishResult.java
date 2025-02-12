@@ -16,9 +16,7 @@
 package org.factcast.core.lock;
 
 import java.util.*;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.Setter;
+import lombok.*;
 import org.factcast.core.Fact;
 
 public final class IntermediatePublishResult {
@@ -26,7 +24,7 @@ public final class IntermediatePublishResult {
   @Getter @NonNull private final List<Fact> factsToPublish;
   @Getter private final boolean wasSkipped;
 
-  @Setter @NonNull private Runnable andThen;
+  @Setter private Runnable andThen;
 
   IntermediatePublishResult(@NonNull List<Fact> factsToPublish, boolean wasSkipped) {
     this.factsToPublish = factsToPublish;
