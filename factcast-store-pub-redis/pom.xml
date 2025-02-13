@@ -33,10 +33,6 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
-      <artifactId>factcast-store-pub</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.factcast</groupId>
       <artifactId>factcast-store-redis</artifactId>
     </dependency>
     <dependency>

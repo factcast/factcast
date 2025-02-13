@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.sub;
+package org.factcast.spring.boot.autoconfigure.store;
 
-/** just a marker class to detect if any subscriber dependency is on the CP */
-public interface StoreNotificationSubscriber {}
+class NotificationSubscriberMissingForReadonlyModeException extends IllegalStateException {
+  NotificationSubscriberMissingForReadonlyModeException(String msg) {
+    super(msg);
+  }
+}

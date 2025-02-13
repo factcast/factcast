@@ -75,16 +75,6 @@
       </dependency>
       <dependency>
         <groupId>org.factcast</groupId>
-        <artifactId>factcast-store-pub</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.factcast</groupId>
-        <artifactId>factcast-store-sub</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.factcast</groupId>
         <artifactId>factcast-store-pub-redis</artifactId>
         <version>${project.version}</version>
       </dependency>

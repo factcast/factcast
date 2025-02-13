@@ -21,7 +21,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.PgFactStoreConfiguration;
 import org.factcast.store.internal.*;
-import org.factcast.store.sub.StoreNotificationSubscriber;
+import org.factcast.store.internal.notification.StoreNotificationSubscriber;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

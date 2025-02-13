@@ -16,20 +16,24 @@
 package org.factcast.spring.boot.autoconfigure.store.redis;
 
 import com.google.common.eventbus.EventBus;
-import org.factcast.store.pub.StoreNotificationPublisher;
+import lombok.extern.slf4j.Slf4j;
+import org.factcast.store.internal.PgFactStore;
+import org.factcast.store.internal.notification.StoreNotificationPublisher;
 import org.factcast.store.pub.redis.RedisNotificationPublisher;
 import org.redisson.api.RedissonClient;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.context.annotation.Bean;
 
+@Slf4j
 @AutoConfiguration
-@ConditionalOnClass({RedisNotificationPublisher.class})
+@ConditionalOnClass({RedisNotificationPublisher.class, PgFactStore.class})
 public class StoreNotificationRedisPublisherAutoConfiguration {
   @Bean
   @ConditionalOnClass(RedisNotificationPublisher.class)
   @ConditionalOnMissingBean(StoreNotificationPublisher.class)
   public StoreNotificationPublisher redisNotificationPublisher(RedissonClient redis, EventBus bus) {
+    log.info("Configuring {}", RedisNotificationPublisher.class.getSimpleName());
     return new RedisNotificationPublisher(redis, bus);
   }
 }

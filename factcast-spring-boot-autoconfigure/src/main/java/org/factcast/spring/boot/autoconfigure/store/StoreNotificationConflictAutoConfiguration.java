@@ -16,12 +16,11 @@
 package org.factcast.spring.boot.autoconfigure.store;
 
 import javax.annotation.Nullable;
-import lombok.*;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgFactStore;
-import org.factcast.store.internal.notification.StoreNotificationSubscriber;
-import org.springframework.beans.factory.SmartInitializingSingleton;
+import org.factcast.store.internal.notification.*;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 
@@ -29,24 +28,17 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 @AutoConfiguration
 @RequiredArgsConstructor
 @ConditionalOnClass(PgFactStore.class)
-public class StoreNotificationAutoConfiguration implements SmartInitializingSingleton {
-  @NonNull private final StoreConfigurationProperties p;
+public class StoreNotificationConflictAutoConfiguration implements InitializingBean {
+  @Nullable private final StoreNotificationPublisher pub;
   @Nullable private final StoreNotificationSubscriber sub;
 
   @Override
-  public void afterSingletonsInstantiated() {
-
-    boolean readOnlyModeEnabled = p.isReadOnlyModeEnabled();
-    if (!readOnlyModeEnabled && sub != null) {
-      // Dear reviewer: Better fail here?
-      log.warn(
-          "ReadOnly-mode is not enabled, but subscriber is configured. This might be an unwanted configuration.");
-    }
-
-    if (readOnlyModeEnabled && sub == null) {
-      String msg = "ReadOnly-mode is enabled, but no subscriber is configured.";
+  public void afterPropertiesSet() throws Exception {
+    if (pub != null && sub != null) {
+      String msg =
+          "Dependency Conflict: You must not have both a store-sub* and a store-pub* dependency in your classpath. Either this instance should publish, or subscribe.";
       log.error(msg);
-      throw new NotificationSubscriberMissingForReadonlyModeException(msg);
+      throw new NotificationPubSubConflictException(msg);
     }
   }
 }
