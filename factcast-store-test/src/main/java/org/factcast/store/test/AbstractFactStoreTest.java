@@ -23,28 +23,17 @@ import static org.mockito.Mockito.*;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
-import java.util.stream.*;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.SneakyThrows;
-import org.factcast.core.DuplicateFactException;
-import org.factcast.core.Fact;
-import org.factcast.core.FactCast;
-import org.factcast.core.lock.Attempt;
-import org.factcast.core.lock.AttemptAbortedException;
-import org.factcast.core.lock.ExceptionAfterPublish;
-import org.factcast.core.lock.PublishingResult;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import lombok.*;
+import org.factcast.core.*;
+import org.factcast.core.lock.*;
 import org.factcast.core.lock.WithOptimisticLock.OptimisticRetriesExceededException;
-import org.factcast.core.spec.FactSpec;
-import org.factcast.core.spec.FilterScript;
+import org.factcast.core.spec.*;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 
 @SuppressWarnings({"deprecation", "java:S1192"})
@@ -735,22 +724,24 @@ public abstract class AbstractFactStoreTest {
     SubscriptionRequest request =
         SubscriptionRequest.follow(FactSpec.ns("followtest")).fromScratch();
     FactObserver observer = element -> l.get().countDown();
-    uut.subscribe(request, observer);
-    // make sure, you got the first one
-    assertTrue(l.get().await(1500, TimeUnit.MILLISECONDS));
+    try (Subscription s = uut.subscribe(request, observer)) {
+      // make sure, you got the first one
+      assertTrue(l.get().await(1500, TimeUnit.MILLISECONDS));
 
-    l.set(new CountDownLatch(3));
-    uut.publish(newFollowTestFact());
-    uut.publish(newFollowTestFact());
-    // needs to fail
-    assertFalse(l.get().await(1500, TimeUnit.MILLISECONDS));
-    assertEquals(1, l.get().getCount());
+      l.set(new CountDownLatch(3));
+      uut.publish(newFollowTestFact());
+      uut.publish(newFollowTestFact());
+      // needs to fail
+      assertFalse(l.get().await(1500, TimeUnit.MILLISECONDS));
+      assertEquals(1, l.get().getCount());
 
-    uut.publish(newFollowTestFact());
+      uut.publish(newFollowTestFact());
 
-    assertTrue(
-        l.get().await(10, TimeUnit.SECONDS),
-        "failed to see all the facts published within 10 seconds.");
+      assertTrue(
+          l.get().await(10, TimeUnit.SECONDS),
+          "failed to see all the facts published within 10 seconds. Count by now is:"
+              + l.get().getCount());
+    }
   }
 
   @Test
