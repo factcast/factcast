@@ -40,7 +40,6 @@ public class SubscriptionImpl extends AbstractSubscription implements InternalSu
 
   @NonNull final FactObserver observer;
 
-  final AtomicBoolean closed = new AtomicBoolean(false);
 
   final CompletableFuture<Void> catchup = new CompletableFuture<>();
 
@@ -48,12 +47,11 @@ public class SubscriptionImpl extends AbstractSubscription implements InternalSu
 
   @Override
   public void internalClose() {
-    if (!closed.getAndSet(true)) {
       SubscriptionClosedException closedException =
           new SubscriptionClosedException("Client closed the subscription");
       catchup.completeExceptionally(closedException);
       complete.completeExceptionally(closedException);
-    }
+
   }
 
   @Override
@@ -115,7 +113,7 @@ public class SubscriptionImpl extends AbstractSubscription implements InternalSu
   @Override
   @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
   public void notifyCatchup() {
-    if (!closed.get()) {
+    if (!isSubscriptionClosed()) {
       observer.onCatchup();
       if (!catchup.isDone()) {
         catchup.complete(null);
@@ -125,14 +123,14 @@ public class SubscriptionImpl extends AbstractSubscription implements InternalSu
 
   @Override
   public void notifyFastForward(@NonNull FactStreamPosition pos) {
-    if (!closed.get()) {
+    if (!isSubscriptionClosed()) {
       observer.onFastForward(pos);
     }
   }
 
   @Override
   public void notifyFactStreamInfo(@NonNull FactStreamInfo info) {
-    if (!closed.get()) {
+    if (!isSubscriptionClosed()) {
       observer.onFactStreamInfo(info);
     }
   }
@@ -140,7 +138,7 @@ public class SubscriptionImpl extends AbstractSubscription implements InternalSu
   @Override
   @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
   public void notifyComplete() {
-    if (!closed.get()) {
+    if (!isSubscriptionClosed()) {
       observer.onComplete();
       if (!catchup.isDone()) {
         catchup.complete(null);
@@ -154,7 +152,7 @@ public class SubscriptionImpl extends AbstractSubscription implements InternalSu
 
   @Override
   public void notifyError(@NonNull Throwable e) {
-    if (!closed.get()) {
+    if (!isSubscriptionClosed()) {
       if (!catchup.isDone()) {
         catchup.completeExceptionally(e);
       }
@@ -176,7 +174,7 @@ public class SubscriptionImpl extends AbstractSubscription implements InternalSu
 
   @Override
   public void notifyElement(@NonNull Fact e) throws TransformationException {
-    if (!closed.get()) {
+    if (!isSubscriptionClosed()) {
       // note that this fact is already transformed
       observer.onNext(e);
     }

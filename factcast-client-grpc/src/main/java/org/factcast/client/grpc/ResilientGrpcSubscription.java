@@ -41,7 +41,6 @@ public class ResilientGrpcSubscription extends AbstractSubscription {
 
   private final AtomicReference<FactStreamPosition> lastPosition = new AtomicReference<>();
   private final SubscriptionHolder currentSubscription = new SubscriptionHolder();
-  private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
   @Getter(value = AccessLevel.PACKAGE)
   private final AtomicReference<Throwable> onErrorCause = new AtomicReference<>();
@@ -85,9 +84,8 @@ public class ResilientGrpcSubscription extends AbstractSubscription {
 
   @Override
   public void internalClose() {
-    if (!isClosed.getAndSet(true)) {
       closeAndDetachSubscription();
-    }
+
   }
 
   @VisibleForTesting
@@ -134,7 +132,7 @@ public class ResilientGrpcSubscription extends AbstractSubscription {
 
   @SneakyThrows
   private void assertSubscriptionStateNotClosed() {
-    if (isClosed.get()) {
+    if (isSubscriptionClosed()) {
       Throwable cause = onErrorCause.get();
       if (cause != null)
         // Re-throwing exception if there is a known reason for the closed subscription to
@@ -207,7 +205,7 @@ public class ResilientGrpcSubscription extends AbstractSubscription {
   class DelegatingFactObserver implements FactObserver {
     @Override
     public void onNext(@NonNull Fact element) {
-      if (!isClosed.get()) {
+      if (!isSubscriptionClosed()) {
         originalObserver.onNext(element);
         lastPosition.set(FactStreamPosition.from(element));
       } else {

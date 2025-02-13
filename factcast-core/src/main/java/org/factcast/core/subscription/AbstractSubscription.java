@@ -24,7 +24,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public abstract class AbstractSubscription implements Subscription {
   private final List<Runnable> onClose = new LinkedList<>();
-  final AtomicBoolean isSubscriptionClosed = new AtomicBoolean(false);
+  private final AtomicBoolean isSubscriptionClosed = new AtomicBoolean(false);
+
+  public boolean isSubscriptionClosed() {
+    return isSubscriptionClosed.get();
+  }
 
   @Override
   public final Subscription onClose(@NonNull Runnable e) {
