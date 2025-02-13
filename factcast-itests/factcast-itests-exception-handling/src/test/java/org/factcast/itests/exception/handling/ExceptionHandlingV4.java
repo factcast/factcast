@@ -74,7 +74,7 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
             () ->
                 ec.withLockOn(Collections.singletonList(FactSpec.ns("users")))
                     .attempt(
-                        (tx) ->
+                        tx ->
                             tx.publish(
                                 createTestFact(
                                     aggId,

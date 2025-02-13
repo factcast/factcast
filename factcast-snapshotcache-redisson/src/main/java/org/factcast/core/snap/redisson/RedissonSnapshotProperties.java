@@ -81,20 +81,28 @@ public class RedissonSnapshotProperties {
 
     @NonNull
     public Optional<Codec> codec() {
-      if (codec == null) return Optional.empty();
+      if (codec == null) {
+        return Optional.empty();
+      }
       return Optional.ofNullable(codec.get());
     }
 
     @NonNull
     public <T> RBucket<T> getBucket(@NonNull RedissonClient redisson, @NonNull String key) {
-      if (codec == null) return redisson.getBucket(key);
-      else return redisson.getBucket(key, codec.get());
+      if (codec == null) {
+        return redisson.getBucket(key);
+      } else {
+        return redisson.getBucket(key, codec.get());
+      }
     }
 
     @NonNull
     public <K, V> RMap<K, V> getMap(@NonNull RedissonClient redisson, @NonNull String key) {
-      if (codec == null) return redisson.getMap(key);
-      else return redisson.getMap(key, codec.get());
+      if (codec == null) {
+        return redisson.getMap(key);
+      } else {
+        return redisson.getMap(key, codec.get());
+      }
     }
   }
 }

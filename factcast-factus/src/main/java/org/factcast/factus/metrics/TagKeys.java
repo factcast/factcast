@@ -15,6 +15,9 @@
  */
 package org.factcast.factus.metrics;
 
+import lombok.experimental.UtilityClass;
+
+@UtilityClass
 public class TagKeys {
 
   public static final String CLASS = "class";

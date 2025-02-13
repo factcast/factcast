@@ -95,8 +95,8 @@ public class DefaultSecurityServiceTest {
 
     @Test
     void delegates() {
-      Assertions.assertThat(underTest.canRead(("1"))).isTrue();
-      Assertions.assertThat(underTest.canRead(("a"))).isFalse();
+      Assertions.assertThat(underTest.canRead("1")).isTrue();
+      Assertions.assertThat(underTest.canRead("a")).isFalse();
     }
   }
 

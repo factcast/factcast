@@ -43,4 +43,6 @@ public class Headers {
   public static final Metadata.Key<String> CLIENT_MAX_INBOUND_MESSAGE_SIZE =
       Metadata.Key.of(
           Headers.GRPC_CLIENT_MAX_INBOUND_MESSAGE_SIZE, Metadata.ASCII_STRING_MARSHALLER);
+
+  private Headers() {}
 }

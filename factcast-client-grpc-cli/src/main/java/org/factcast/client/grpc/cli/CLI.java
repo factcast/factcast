@@ -35,7 +35,9 @@ public class CLI {
 
   public static void main(String[] args) {
     String[] arguments = args;
-    if (arguments == null || arguments.length == 0) arguments = new String[] {"--help"};
+    if (arguments == null || arguments.length == 0) {
+      arguments = new String[] {"--help"};
+    }
     Parser parser =
         new Parser(
             new Catchup(),
@@ -46,8 +48,9 @@ public class CLI {
             new SerialOf());
     try {
       Command cmd = parser.parse(arguments);
-      if (cmd != null)
+      if (cmd != null) {
         cmd.runWith(SpringApplication.run(CLI.class).getBean(FactCast.class), parser.options());
+      }
     } catch (ParameterException e) {
       System.err.println();
       System.err.println("*** Error: " + e.getMessage());

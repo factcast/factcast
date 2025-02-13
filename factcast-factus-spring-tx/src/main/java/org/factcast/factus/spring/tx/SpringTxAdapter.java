@@ -50,14 +50,19 @@ public class SpringTxAdapter implements TransactionAdapter<TransactionStatus> {
   }
 
   protected @NonNull TransactionDefinition transactionOptions() {
-    if (annotation != null) return SpringTransactional.Defaults.with(annotation);
-    else return SpringTransactional.Defaults.create();
+    if (annotation != null) {
+      return SpringTransactional.Defaults.with(annotation);
+    } else {
+      return SpringTransactional.Defaults.create();
+    }
   }
 
   @Override
   public int maxBatchSizePerTransaction() {
     if (annotation == null || annotation.bulkSize() < 1) {
       return SpringTransactional.DEFAULT_BULK_SIZE;
-    } else return annotation.bulkSize();
+    } else {
+      return annotation.bulkSize();
+    }
   }
 }

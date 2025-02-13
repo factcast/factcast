@@ -65,7 +65,7 @@ class JsonViewPluginTest {
   }
 
   class Foo extends JsonViewPlugin {
-    @Setter boolean ready = false;
+    @Setter boolean ready;
 
     @Override
     protected boolean isReady() {

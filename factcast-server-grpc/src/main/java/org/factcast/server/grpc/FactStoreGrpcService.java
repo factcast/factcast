@@ -181,13 +181,14 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
   @VisibleForTesting
   void initialize(StreamObserver<?> responseObserver) {
-    if (responseObserver instanceof ServerCallStreamObserver)
+    if (responseObserver instanceof ServerCallStreamObserver) {
       ((ServerCallStreamObserver) responseObserver)
           .setOnCancelHandler(
               () -> {
                 throw new RequestCanceledByClientException(
                     clientIdPrefix() + "The request was canceled by the client");
               });
+    }
   }
 
   private final LoadingCache<String, Bucket> subscriptionTrail =

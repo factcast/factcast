@@ -38,9 +38,10 @@ public abstract class AbstractBaseMojo extends AbstractMojo {
   protected Set<String> removeSchemaFields = new HashSet<>();
 
   protected void checkSourceDirectory() {
-    if (!sourceDirectory.exists())
+    if (!sourceDirectory.exists()) {
       throw new IllegalArgumentException(
           "Source directory (property 'sourceDirectory') does not exist: "
               + sourceDirectory.getPath());
+    }
   }
 }

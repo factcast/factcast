@@ -21,7 +21,7 @@ import org.factcast.factus.projection.LocalManagedProjection;
 
 class SimpleProjectionWithStaticSubclass extends LocalManagedProjection {
 
-  @Getter private static SimpleEvent recordedEvent = null;
+  @Getter private static SimpleEvent recordedEvent;
 
   static class handlers {
 

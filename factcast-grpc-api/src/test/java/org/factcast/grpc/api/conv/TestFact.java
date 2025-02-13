@@ -49,7 +49,7 @@ public class TestFact implements Fact {
 
   @JsonProperty String ns = "default";
 
-  @JsonProperty int version = 0;
+  @JsonProperty int version;
 
   String jsonPayload = "{}";
 
@@ -83,7 +83,9 @@ public class TestFact implements Fact {
 
   @Override
   public @NonNull FactHeader header() {
-    if (header == null) header = FactCastJson.readValue(FactHeader.class, jsonHeader());
+    if (header == null) {
+      header = FactCastJson.readValue(FactHeader.class, jsonHeader());
+    }
     return header;
   }
 }

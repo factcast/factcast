@@ -378,7 +378,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
   @Slf4j
   abstract static class AbstractTrackingUserProjection extends AbstractSpringTxManagedProjection {
     private final JdbcTemplate jdbcTemplate;
-    @Getter private int factStreamPositionModifications = 0;
+    @Getter private int factStreamPositionModifications;
 
     @Getter private final Set<String> txSeen = new HashSet<>();
 
@@ -440,7 +440,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
   abstract static class AbstractTrackingUserSubscribedProjection
       extends AbstractSpringTxSubscribedProjection {
     private final JdbcTemplate jdbcTemplate;
-    @Getter private int factStreamPositionModifications = 0;
+    @Getter private int factStreamPositionModifications;
 
     @Getter private final Set<String> txSeen = new HashSet<>();
 

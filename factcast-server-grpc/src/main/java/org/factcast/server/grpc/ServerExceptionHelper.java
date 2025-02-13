@@ -37,7 +37,9 @@ public class ServerExceptionHelper {
     } else if (e instanceof AuthenticationException) {
       if (e instanceof AuthenticationCredentialsNotFoundException) {
         return new StatusRuntimeException(Status.UNAUTHENTICATED, meta);
-      } else return new StatusRuntimeException(Status.PERMISSION_DENIED, meta);
+      } else {
+        return new StatusRuntimeException(Status.PERMISSION_DENIED, meta);
+      }
     } else {
       return new StatusRuntimeException(Status.UNKNOWN, meta);
     }

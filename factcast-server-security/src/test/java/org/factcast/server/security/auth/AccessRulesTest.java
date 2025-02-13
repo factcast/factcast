@@ -17,6 +17,7 @@ package org.factcast.server.security.auth;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.*;
 
 class AccessRulesTest {
@@ -69,6 +70,6 @@ class AccessRulesTest {
   @Test
   void testMissesPositiveWildcard() {
     uut.include().add("fo*");
-    org.assertj.core.api.Assertions.assertThat(uut.includes("bar")).isNull();
+    Assertions.assertThat(uut.includes("bar")).isNull();
   }
 }

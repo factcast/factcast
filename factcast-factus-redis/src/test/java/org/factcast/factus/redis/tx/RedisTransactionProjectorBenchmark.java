@@ -32,6 +32,7 @@ import org.factcast.factus.projector.ProjectorImpl;
 import org.factcast.factus.redis.FactStreamPositionCodec;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.mockito.Mockito;
+import org.openjdk.jmh.Main;
 import org.openjdk.jmh.annotations.*;
 import org.redisson.api.RBucket;
 import org.redisson.api.RTransaction;
@@ -111,7 +112,7 @@ public class RedisTransactionProjectorBenchmark {
   }
 
   public static void main(String[] args) throws Exception {
-    org.openjdk.jmh.Main.main(args);
+    Main.main(args);
     new RedisTransactionProjectorBenchmark().applyBatchDefaultSize();
   }
 }

@@ -27,9 +27,9 @@ import org.factcast.factus.event.MetaMap;
 @EqualsAndHashCode(of = {"id"})
 public class FactHeader {
 
-  @JsonProperty @NonNull UUID id;
+  @JsonProperty UUID id;
 
-  @JsonProperty @NonNull String ns;
+  @JsonProperty String ns;
 
   @JsonProperty String type;
 

@@ -53,7 +53,9 @@ public class FactCastIntegrationTestExecutionListener implements TestExecutionLi
   @Override
   public void beforeTestClass(@NonNull TestContext testContext) throws Exception {
 
-    if (!initialized.getAndSet(true)) initialize();
+    if (!initialized.getAndSet(true)) {
+      initialize();
+    }
 
     for (FactCastIntegrationTestExtension e : extensions) {
       e.prepareContainers(testContext);
@@ -124,7 +126,7 @@ public class FactCastIntegrationTestExecutionListener implements TestExecutionLi
     // proxy will be started just once and always be the same container.
     initializeProxy();
 
-    ArrayList<org.factcast.test.FactCastIntegrationTestExtension> discovered =
+    ArrayList<FactCastIntegrationTestExtension> discovered =
         Lists.newArrayList(ServiceLoader.load(FactCastIntegrationTestExtension.class).iterator());
     AtomicInteger count = new AtomicInteger(discovered.size());
     while (!discovered.isEmpty()) {

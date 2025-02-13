@@ -82,8 +82,9 @@ public class DefaultFact implements Fact, Externalizable {
     if (deserializedHeader.ns() == null || deserializedHeader.ns().trim().isEmpty()) {
       throw new IllegalArgumentException("ns attribute missing from " + jsonHeader);
     }
-    if (deserializedHeader.version() < 0)
+    if (deserializedHeader.version() < 0) {
       throw new IllegalArgumentException("version attribute is not valid " + jsonHeader);
+    }
   }
 
   /**

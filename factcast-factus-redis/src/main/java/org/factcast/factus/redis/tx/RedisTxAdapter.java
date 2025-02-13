@@ -38,8 +38,11 @@ public class RedisTxAdapter implements TransactionAdapter<RTransaction> {
   @VisibleForTesting
   @NonNull
   public TransactionOptions transactionOptions() {
-    if (annotation != null) return RedisTransactional.Defaults.with(annotation);
-    else return TransactionOptions.defaults();
+    if (annotation != null) {
+      return RedisTransactional.Defaults.with(annotation);
+    } else {
+      return TransactionOptions.defaults();
+    }
   }
 
   @Override
@@ -56,6 +59,8 @@ public class RedisTxAdapter implements TransactionAdapter<RTransaction> {
   public int maxBatchSizePerTransaction() {
     if (annotation != null) {
       return annotation.bulkSize();
-    } else return RedisTransactional.DEFAULT_BULK_SIZE;
+    } else {
+      return RedisTransactional.DEFAULT_BULK_SIZE;
+    }
   }
 }

@@ -88,7 +88,9 @@ public class PgFetchingCatchup implements PgCatchup {
   RowCallbackHandler createRowCallbackHandler(PgFactExtractor extractor) {
     return rs -> {
       try {
-        if (statementHolder.wasCanceled() || rs.isClosed()) return;
+        if (statementHolder.wasCanceled() || rs.isClosed()) {
+          return;
+        }
 
         Fact f = extractor.mapRow(rs, 0);
         pipeline.process(Signal.of(f));
@@ -97,7 +99,9 @@ public class PgFetchingCatchup implements PgCatchup {
         if (statementHolder.wasCanceled()) {
           // then we just swallow the exception
           log.trace("Swallowing because statement was cancelled", psql);
-        } else throw psql;
+        } else {
+          throw psql;
+        }
       }
     };
   }

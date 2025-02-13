@@ -60,7 +60,9 @@ public class ClientExceptionHelper {
         }
       }
 
-      if (isRetryable(toReturn)) return new RetryableException(toReturn);
+      if (isRetryable(toReturn)) {
+        return new RetryableException(toReturn);
+      }
     }
     return ExceptionHelper.toRuntime(toReturn);
   }
@@ -73,7 +75,9 @@ public class ClientExceptionHelper {
           Status.DEADLINE_EXCEEDED.getCode());
 
   public static boolean isRetryable(@NonNull Throwable exception) {
-    if (exception instanceof RetryableException) return true;
+    if (exception instanceof RetryableException) {
+      return true;
+    }
 
     if (exception instanceof StatusRuntimeException) {
       StatusRuntimeException runtimeException = (StatusRuntimeException) exception;

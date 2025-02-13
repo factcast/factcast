@@ -20,6 +20,6 @@ import lombok.Data;
 
 @Data
 public class HighWaterMark {
-  private UUID targetId = null;
-  private long targetSer = 0;
+  private UUID targetId;
+  private long targetSer;
 }

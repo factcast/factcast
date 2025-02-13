@@ -118,7 +118,7 @@ class AbstractRedisTxManagedProjectionTest {
 
       underTest.begin();
 
-      FactStreamPosition pos = org.factcast.core.TestFactStreamPosition.random();
+      FactStreamPosition pos = TestFactStreamPosition.random();
       RBucket<Object> bucket = mock(RBucket.class);
       when(redisson.getBucket(any(), any())).thenReturn(bucket);
       when(bucket.get()).thenReturn(pos);

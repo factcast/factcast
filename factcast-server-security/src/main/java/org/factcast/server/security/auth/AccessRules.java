@@ -40,15 +40,21 @@ public class AccessRules implements Serializable {
   @Nullable
   Boolean includes(@NonNull String ns) {
     boolean excluded = exclude.stream().anyMatch(s -> matches(s, ns));
-    if (excluded) return false;
+    if (excluded) {
+      return false;
+    }
 
-    if (include.stream().anyMatch(s -> matches(s, ns))) return true;
+    if (include.stream().anyMatch(s -> matches(s, ns))) {
+      return true;
+    }
 
     return null;
   }
 
   private boolean matches(@NonNull String pattern, @NonNull String ns) {
-    if (pattern.equals(ns) || "*".equals(pattern)) return true;
+    if (pattern.equals(ns) || "*".equals(pattern)) {
+      return true;
+    }
 
     return pattern.endsWith("*") && ns.startsWith(pattern.substring(0, pattern.length() - 1));
   }

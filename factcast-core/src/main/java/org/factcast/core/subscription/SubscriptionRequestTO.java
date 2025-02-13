@@ -43,9 +43,9 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
 
   @JsonProperty long maxBatchDelayInMs = DEFAULT_MAX_BATCH_DELAY_IN_MS;
 
-  @JsonProperty long keepaliveIntervalInMs = 0;
+  @JsonProperty long keepaliveIntervalInMs;
 
-  @JsonProperty boolean streamInfo = false; // defaults to false if not set (backwards comp.)
+  @JsonProperty boolean streamInfo; // defaults to false if not set (backwards comp.)
 
   @JsonProperty boolean continuous;
 
@@ -64,8 +64,8 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
   }
 
   @Override
-  public java.util.Optional<UUID> startingAfter() {
-    return java.util.Optional.ofNullable(startingAfter);
+  public Optional<UUID> startingAfter() {
+    return Optional.ofNullable(startingAfter);
   }
 
   // copy constr. from a SR

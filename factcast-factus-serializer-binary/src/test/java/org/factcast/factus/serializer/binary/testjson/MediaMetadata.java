@@ -16,8 +16,9 @@
 package org.factcast.factus.serializer.binary.testjson;
 
 import com.fasterxml.jackson.annotation.*;
+import lombok.Data;
 
-@lombok.Data
+@Data
 @JsonAutoDetect
 public class MediaMetadata {
 

@@ -72,11 +72,12 @@ public class FactValidationAspect {
             .map(FactValidationError::toString)
             .collect(Collectors.toList());
     int numberOfErrors = orderedSet.size();
-    if (numberOfErrors > MAX_ERROR_MESSAGES)
+    if (numberOfErrors > MAX_ERROR_MESSAGES) {
       errMsgs.add(
           "... "
               + (numberOfErrors - MAX_ERROR_MESSAGES)
               + " more validation errors were suppressed");
+    }
     return errMsgs;
   }
 

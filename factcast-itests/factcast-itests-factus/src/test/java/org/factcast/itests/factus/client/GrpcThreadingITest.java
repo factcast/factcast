@@ -112,7 +112,7 @@ public class GrpcThreadingITest extends AbstractFactCastIntegrationTest {
   @Slf4j
   static class TestProjection extends AbstractSpringTxSubscribedProjection {
     private final JdbcTemplate jdbcTemplate;
-    @Getter private int factStreamPositionModifications = 0;
+    @Getter private int factStreamPositionModifications;
 
     @Getter private final Set<String> txSeen = new HashSet<>();
 

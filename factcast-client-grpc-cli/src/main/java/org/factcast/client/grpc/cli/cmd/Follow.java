@@ -38,16 +38,20 @@ public class Follow implements Command {
   UUID from;
 
   @Parameter(names = "-fromNowOn", help = true, description = "read only future facts")
-  boolean fromNow = false;
+  boolean fromNow;
 
   @Override
   public void runWith(FactCast fc, Options opt) {
     ConsoleFactObserver obs = new ConsoleFactObserver(opt);
     SpecBuilder catchup = SubscriptionRequest.follow(FactSpec.ns(ns));
-    if (fromNow) fc.subscribeEphemeral(catchup.fromNowOn(), obs);
-    else {
-      if (from == null) fc.subscribeEphemeral(catchup.fromScratch(), obs);
-      else fc.subscribeEphemeral(catchup.from(from), obs);
+    if (fromNow) {
+      fc.subscribeEphemeral(catchup.fromNowOn(), obs);
+    } else {
+      if (from == null) {
+        fc.subscribeEphemeral(catchup.fromScratch(), obs);
+      } else {
+        fc.subscribeEphemeral(catchup.from(from), obs);
+      }
     }
     obs.awaitTermination();
   }

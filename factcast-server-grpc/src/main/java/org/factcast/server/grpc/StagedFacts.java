@@ -39,8 +39,9 @@ public class StagedFacts {
 
   public boolean add(@NonNull Fact fact) {
     int bytes = byteSizeOf(fact);
-    if (currentBytes + bytes >= maxBytes) return false;
-    else {
+    if (currentBytes + bytes >= maxBytes) {
+      return false;
+    } else {
       staged.add(fact);
       currentBytes += bytes;
       return true;

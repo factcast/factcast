@@ -28,4 +28,6 @@ public class TestHelper {
   public static void expect(Class<? extends Throwable> ex, Executable e) {
     assertThrows(ex, e);
   }
+
+  private TestHelper() {}
 }

@@ -25,4 +25,6 @@ public class ExceptionHelper {
     }
     return new RuntimeException(exception);
   }
+
+  private ExceptionHelper() {}
 }

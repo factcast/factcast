@@ -74,6 +74,8 @@ public class Benchmark {
   }
 
   private static void assertEquals(long bar, long foo) {
-    if (foo != bar) throw new IllegalStateException();
+    if (foo != bar) {
+      throw new IllegalStateException();
+    }
   }
 }

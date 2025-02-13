@@ -77,7 +77,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
   }
 
   boolean metaMatch(Fact t) {
-    if ((meta.isEmpty())) {
+    if (meta.isEmpty()) {
       return true;
     }
     return meta.entrySet().stream()
@@ -85,7 +85,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
   }
 
   boolean metaKeyExistsMatch(Fact t) {
-    if ((metaKeyExists.isEmpty())) {
+    if (metaKeyExists.isEmpty()) {
       return true;
     }
     return metaKeyExists.entrySet().stream()

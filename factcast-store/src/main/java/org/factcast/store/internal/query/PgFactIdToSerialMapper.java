@@ -40,7 +40,7 @@ public class PgFactIdToSerialMapper implements InitializingBean {
   private static final long MAX_SIZE = 10_000;
   private final JdbcTemplate jdbcTemplate;
   private final PgMetrics metrics;
-  private MeterRegistry registry;
+  private final MeterRegistry registry;
 
   private final Cache<UUID, Long> cache;
 

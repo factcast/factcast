@@ -143,7 +143,9 @@ public class SnapshotDiskRepositoryImpl implements SnapshotDiskRepository {
    */
   @VisibleForTesting
   protected void triggerCleanup() {
-    if (needsCleanup()) CompletableFuture.runAsync(this::cleanup);
+    if (needsCleanup()) {
+      CompletableFuture.runAsync(this::cleanup);
+    }
   }
 
   @VisibleForTesting

@@ -34,8 +34,13 @@ public class BlacklistFilterServerPipeline extends AbstractServerPipeline {
   public void process(@NonNull Signal s) {
     if (s instanceof Signal.FactSignal fs) {
       Fact fact = fs.fact();
-      if (!blacklist.isBlocked(fact.header().id())) parent.process(s);
-      else log.trace("removing blacklisted fact from pipeline {}", fact);
-    } else parent.process(s);
+      if (!blacklist.isBlocked(fact.header().id())) {
+        parent.process(s);
+      } else {
+        log.trace("removing blacklisted fact from pipeline {}", fact);
+      }
+    } else {
+      parent.process(s);
+    }
   }
 }

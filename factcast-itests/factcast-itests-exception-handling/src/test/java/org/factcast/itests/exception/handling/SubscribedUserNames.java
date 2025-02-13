@@ -33,7 +33,7 @@ public class SubscribedUserNames implements SubscribedProjection {
 
   @Getter private Throwable exception;
 
-  private FactStreamPosition factStreamPosition = null;
+  private FactStreamPosition factStreamPosition;
 
   @HandlerFor(ns = "users", type = "UserCreated", version = 2)
   void apply(Fact f) {}

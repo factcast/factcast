@@ -40,11 +40,11 @@ public class FactSpec {
 
   @NonNull @JsonProperty private String ns;
 
-  @JsonProperty private String type = null;
+  @JsonProperty private String type;
 
-  @JsonProperty private int version = 0; // 0 means I don't care
+  @JsonProperty private int version; // 0 means I don't care
 
-  @JsonProperty private UUID aggId = null;
+  @JsonProperty private UUID aggId;
 
   @JsonProperty private final Set<UUID> aggIds = new LinkedHashSet<>();
 
@@ -53,7 +53,7 @@ public class FactSpec {
   /** expresses the mandatory existence or absence of a key. Needs stable order. */
   @JsonProperty private final Map<String, Boolean> metaKeyExists = new LinkedHashMap<>();
 
-  @JsonProperty private FilterScript filterScript = null;
+  @JsonProperty private FilterScript filterScript;
 
   /**
    * only to be used internally, will be removed again once aggId field is removed.
@@ -64,7 +64,9 @@ public class FactSpec {
   public Set<UUID> mergedAggIds() {
     Set<UUID> copy = new HashSet<>(aggIds);
     // merge the single aggId for compatibility with clients < 0.9
-    if (aggId != null) copy.add(aggId);
+    if (aggId != null) {
+      copy.add(aggId);
+    }
     return Collections.unmodifiableSet(copy);
   }
 
@@ -106,7 +108,9 @@ public class FactSpec {
   }
 
   private static void assertNotEmpty(String ns) {
-    if (ns.trim().isEmpty()) throw new IllegalArgumentException("Namespace must not be empty");
+    if (ns.trim().isEmpty()) {
+      throw new IllegalArgumentException("Namespace must not be empty");
+    }
   }
 
   public FactSpec(@NonNull @JsonProperty("ns") String ns) {
@@ -116,8 +120,11 @@ public class FactSpec {
   }
 
   public FilterScript filterScript() {
-    if (filterScript != null) return filterScript;
-    else return null;
+    if (filterScript != null) {
+      return filterScript;
+    } else {
+      return null;
+    }
   }
 
   @NonNull

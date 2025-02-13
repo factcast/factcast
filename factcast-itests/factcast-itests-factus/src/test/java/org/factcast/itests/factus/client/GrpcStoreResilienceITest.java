@@ -219,7 +219,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
     // Reconnect with 3 concurrent threads
     CountDownLatch latch = new CountDownLatch(3);
     ExecutorService threads = Executors.newFixedThreadPool(3);
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 3; i++) {
       threads.submit(
           () -> {
             assertThat(fc.enumerateNamespaces()).isNotEmpty();

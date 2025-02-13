@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserCount extends LocalManagedProjection {
 
-  private int users = 0;
+  private int users;
 
   public class Handlers {
     @Handler

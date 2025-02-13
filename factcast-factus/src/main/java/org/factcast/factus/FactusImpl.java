@@ -199,8 +199,9 @@ public class FactusImpl implements Factus {
           }
 
           private void assertTokenIsValid() {
-            if (!token.isValid())
+            if (!token.isValid()) {
               throw new IllegalStateException("WriterToken is no longer valid.");
+            }
           }
 
           @Override
@@ -315,7 +316,9 @@ public class FactusImpl implements Factus {
       aggregateSnapshotRepository.store(aggregate, state);
     } else {
       // special behavior for aggregates, if no event has ever been applied, we return empty
-      if (projectionAndState.lastFactIdApplied() == null) return Optional.empty();
+      if (projectionAndState.lastFactIdApplied() == null) {
+        return Optional.empty();
+      }
     }
 
     return Optional.of(aggregate);
@@ -440,7 +443,9 @@ public class FactusImpl implements Factus {
       ArrayList<AutoCloseable> closeables = new ArrayList<>(managedObjects);
       for (AutoCloseable c : closeables) {
         try {
-          if (c != null) c.close();
+          if (c != null) {
+            c.close();
+          }
         } catch (Exception e) {
           // needs to be swallowed
           log.warn("While closing {} of type {}:", c, c.getClass().getName(), e);

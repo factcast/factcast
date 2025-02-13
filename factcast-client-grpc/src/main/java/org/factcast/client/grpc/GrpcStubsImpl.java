@@ -39,7 +39,7 @@ public class GrpcStubsImpl implements GrpcStubs {
   private final @NonNull FactCastGrpcClientProperties properties;
 
   // can change at runtime (failover)
-  @Setter @Nullable private String compression = null;
+  @Setter @Nullable private String compression;
 
   public GrpcStubsImpl(
       @NonNull FactCastGrpcChannelFactory channelFactory,
@@ -75,8 +75,12 @@ public class GrpcStubsImpl implements GrpcStubs {
   @VisibleForTesting
   @NonNull
   <T extends AbstractStub<T>> T configure(@NonNull T stub, @Nullable Deadline deadline) {
-    if (basic != null) stub = stub.withCallCredentials(basic);
-    if (deadline != null) stub = stub.withDeadline(deadline);
+    if (basic != null) {
+      stub = stub.withCallCredentials(basic);
+    }
+    if (deadline != null) {
+      stub = stub.withDeadline(deadline);
+    }
     stub = stub.withInterceptors(MetadataUtils.newAttachHeadersInterceptor(meta));
     stub = stub.withMaxInboundMessageSize(properties.getMaxInboundMessageSize());
     return stub.withWaitForReady();
@@ -91,10 +95,12 @@ public class GrpcStubsImpl implements GrpcStubs {
   @VisibleForTesting
   @NonNull
   <T extends AbstractStub<T>> T configureCompression(@NonNull T stub) {
-    if (compression != null)
+    if (compression != null) {
       return stub.withCompression(compression)
           .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(forCompression(compression)));
-    else return stub;
+    } else {
+      return stub;
+    }
   }
 
   @NonNull

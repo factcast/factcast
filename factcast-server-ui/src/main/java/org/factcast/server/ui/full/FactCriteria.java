@@ -32,8 +32,8 @@ public class FactCriteria implements Serializable {
 
   @NotNull private String ns;
 
-  private Set<String> type = null;
-  private UUID aggId = null;
+  private Set<String> type;
+  private UUID aggId;
   private List<MetaTuple> meta = new LinkedList<>();
 
   public Stream<FactSpec> createFactSpecs() {

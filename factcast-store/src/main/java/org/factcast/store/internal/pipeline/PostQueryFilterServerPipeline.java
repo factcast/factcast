@@ -34,8 +34,13 @@ public class PostQueryFilterServerPipeline extends AbstractServerPipeline {
   public void process(@NonNull Signal s) {
     if (s instanceof Signal.FactSignal fs) {
       Fact fact = fs.fact();
-      if (matcher.canBeSkipped() || matcher.test(fact)) parent.process(s);
-      else log.trace("removing unmatched fact from pipeline {}", fact);
-    } else parent.process(s);
+      if (matcher.canBeSkipped() || matcher.test(fact)) {
+        parent.process(s);
+      } else {
+        log.trace("removing unmatched fact from pipeline {}", fact);
+      }
+    } else {
+      parent.process(s);
+    }
   }
 }

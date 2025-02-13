@@ -49,7 +49,7 @@ class FileLevelLocking {
   // convenience methods
   // READ
 
-  <T> T withReadLockOn(File toLockOn, java.util.function.Supplier<T> supplier) {
+  <T> T withReadLockOn(File toLockOn, Supplier<T> supplier) {
     return withLockOn(Mode.READ, toLockOn, supplier);
   }
 

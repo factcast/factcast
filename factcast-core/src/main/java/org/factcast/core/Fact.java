@@ -101,14 +101,16 @@ public interface Fact {
 
   // create a fact from the event, especially useful for testing purposes
 
-  static FactFromEventBuilder buildFrom(@NonNull org.factcast.factus.event.EventObject event) {
+  static FactFromEventBuilder buildFrom(@NonNull EventObject event) {
     FactFromEventBuilder b = new FactFromEventBuilder(event);
     // from event
     FactSpecCoordinates coords = FactSpecCoordinates.from(event.getClass());
     b.type(coords.type()).ns(coords.ns());
 
     int v = coords.version();
-    if (v > 0) b.version(v);
+    if (v > 0) {
+      b.version(v);
+    }
     // defaults
     b.serial(1).id(UUID.randomUUID());
 
@@ -121,10 +123,12 @@ public interface Fact {
     Long serial = header().serial();
     Long otherSerial = other.header().serial();
 
-    if (serial == null || otherSerial == null)
+    if (serial == null || otherSerial == null) {
       throw new IllegalStateException(
           "Can only decide if both Facts have been published (have a serial)");
-    else return serial < otherSerial;
+    } else {
+      return serial < otherSerial;
+    }
   }
 
   @RequiredArgsConstructor

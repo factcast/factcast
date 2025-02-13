@@ -57,13 +57,15 @@ public class TransactionBehavior<T> {
   }
 
   public void assertNoRunningTransaction() throws TransactionException {
-    if (this.runningTransaction() != null)
+    if (this.runningTransaction() != null) {
       throw new TransactionAlreadyRunningException("Transaction already running");
+    }
   }
 
   public void assertInTransaction() throws TransactionException {
-    if (this.runningTransaction() == null)
+    if (this.runningTransaction() == null) {
       throw new TransactionNotRunningException("Transaction is not running");
+    }
   }
 
   public boolean inTransaction() {

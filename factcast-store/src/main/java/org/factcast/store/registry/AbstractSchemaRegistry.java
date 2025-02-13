@@ -114,7 +114,9 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
       } else {
         log.warn("lock already exists, skipping initial schema-registry update");
       }
-    } else doFetchInitial();
+    } else {
+      doFetchInitial();
+    }
   }
 
   private void doFetchInitial() {

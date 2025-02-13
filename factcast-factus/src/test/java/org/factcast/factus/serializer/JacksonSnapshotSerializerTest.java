@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.UUID;
 import lombok.Data;
+import org.assertj.core.api.Assertions;
 import org.factcast.factus.projection.ProgressAware;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.junit.jupiter.api.Nested;
@@ -34,8 +35,7 @@ class JacksonSnapshotSerializerTest {
 
   @Test
   void hasId() {
-    org.assertj.core.api.Assertions.assertThat(underTest.id().name())
-        .isEqualTo("JacksonSnapshotSerializer");
+    Assertions.assertThat(underTest.id().name()).isEqualTo("JacksonSnapshotSerializer");
   }
 
   @Test

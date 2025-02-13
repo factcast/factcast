@@ -21,6 +21,7 @@ import static org.mockito.Mockito.*;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import java.time.Duration;
 import java.util.function.*;
@@ -46,13 +47,9 @@ class ServerMetricsImplTest {
 
   @BeforeEach
   void setUp() {
-    when(meterRegistry.timer(
-            eq(ServerMetricsImpl.METRIC_NAME_TIMINGS),
-            any(io.micrometer.core.instrument.Tags.class)))
+    when(meterRegistry.timer(eq(ServerMetricsImpl.METRIC_NAME_TIMINGS), any(Tags.class)))
         .thenReturn(timer);
-    when(meterRegistry.counter(
-            eq(ServerMetricsImpl.METRIC_NAME_COUNTS),
-            any(io.micrometer.core.instrument.Tags.class)))
+    when(meterRegistry.counter(eq(ServerMetricsImpl.METRIC_NAME_COUNTS), any(Tags.class)))
         .thenReturn(counter);
   }
 
@@ -63,9 +60,7 @@ class ServerMetricsImplTest {
     verify(meterRegistry)
         .timer(
             ServerMetricsImpl.METRIC_NAME_TIMINGS,
-            io.micrometer.core.instrument.Tags.of(
-                io.micrometer.core.instrument.Tag.of(
-                    ServerMetricsImpl.TAG_NAME_KEY, OP.HANDSHAKE.op())));
+            Tags.of(Tag.of(ServerMetricsImpl.TAG_NAME_KEY, OP.HANDSHAKE.op())));
   }
 
   @Test
@@ -75,8 +70,8 @@ class ServerMetricsImplTest {
     verify(meterRegistry)
         .counter(
             ServerMetricsImpl.METRIC_NAME_COUNTS,
-            io.micrometer.core.instrument.Tags.of(
-                io.micrometer.core.instrument.Tag.of(
+            Tags.of(
+                Tag.of(
                     ServerMetricsImpl.TAG_NAME_KEY,
                     ServerMetrics.EVENT.SOME_EVENT_CHANGE_ME.event())));
   }
@@ -90,17 +85,14 @@ class ServerMetricsImplTest {
 
   @Test
   void testTimerRunnableAndTags() {
-    var customTag = io.micrometer.core.instrument.Tag.of("foo", "bar");
-    uut.timed(OP.HANDSHAKE, io.micrometer.core.instrument.Tags.of(customTag), () -> {});
+    var customTag = Tag.of("foo", "bar");
+    uut.timed(OP.HANDSHAKE, Tags.of(customTag), () -> {});
 
     verify(timer).record(any(Runnable.class));
     verify(meterRegistry)
         .timer(
             ServerMetricsImpl.METRIC_NAME_TIMINGS,
-            io.micrometer.core.instrument.Tags.of(
-                customTag,
-                io.micrometer.core.instrument.Tag.of(
-                    ServerMetricsImpl.TAG_NAME_KEY, OP.HANDSHAKE.op())));
+            Tags.of(customTag, Tag.of(ServerMetricsImpl.TAG_NAME_KEY, OP.HANDSHAKE.op())));
   }
 
   @Test
@@ -112,32 +104,25 @@ class ServerMetricsImplTest {
 
   @Test
   void testTimerRunnableWithExceptionsAndTags() {
-    var customTag = io.micrometer.core.instrument.Tag.of("foo", "bar");
+    var customTag = Tag.of("foo", "bar");
 
-    uut.timed(
-        OP.HANDSHAKE,
-        IllegalArgumentException.class,
-        io.micrometer.core.instrument.Tags.of(customTag),
-        () -> {});
+    uut.timed(OP.HANDSHAKE, IllegalArgumentException.class, Tags.of(customTag), () -> {});
 
     verify(timer).record(any(Duration.class));
     verify(meterRegistry)
         .timer(
             ServerMetricsImpl.METRIC_NAME_TIMINGS,
-            io.micrometer.core.instrument.Tags.of(
-                customTag,
-                io.micrometer.core.instrument.Tag.of(
-                    ServerMetricsImpl.TAG_NAME_KEY, OP.HANDSHAKE.op())));
+            Tags.of(customTag, Tag.of(ServerMetricsImpl.TAG_NAME_KEY, OP.HANDSHAKE.op())));
   }
 
   @Test
   void testTimerSupplier() {
-    var customTag = io.micrometer.core.instrument.Tag.of("foo", "bar");
+    var customTag = Tag.of("foo", "bar");
 
     when(timer.record(any(Supplier.class)))
         .thenAnswer(invocation -> invocation.getArgument(0, Supplier.class).get());
 
-    var result = uut.timed(OP.HANDSHAKE, io.micrometer.core.instrument.Tags.of(customTag), () -> 5);
+    var result = uut.timed(OP.HANDSHAKE, Tags.of(customTag), () -> 5);
 
     assertEquals(5, result);
 
@@ -145,10 +130,7 @@ class ServerMetricsImplTest {
     verify(meterRegistry)
         .timer(
             ServerMetricsImpl.METRIC_NAME_TIMINGS,
-            io.micrometer.core.instrument.Tags.of(
-                customTag,
-                io.micrometer.core.instrument.Tag.of(
-                    ServerMetricsImpl.TAG_NAME_KEY, OP.HANDSHAKE.op())));
+            Tags.of(customTag, Tag.of(ServerMetricsImpl.TAG_NAME_KEY, OP.HANDSHAKE.op())));
   }
 
   @Test
@@ -182,15 +164,15 @@ class ServerMetricsImplTest {
 
   @Test
   void testCounterWithTags() {
-    var customTag = io.micrometer.core.instrument.Tag.of("foo", "bar");
+    var customTag = Tag.of("foo", "bar");
 
-    uut.count(EVENT.SOME_EVENT_CHANGE_ME, io.micrometer.core.instrument.Tags.of(customTag));
+    uut.count(EVENT.SOME_EVENT_CHANGE_ME, Tags.of(customTag));
 
     verify(counter).increment();
     verify(meterRegistry)
         .counter(
             ServerMetricsImpl.METRIC_NAME_COUNTS,
-            io.micrometer.core.instrument.Tags.of(
+            Tags.of(
                 customTag,
                 Tag.of(ServerMetricsImpl.TAG_NAME_KEY, EVENT.SOME_EVENT_CHANGE_ME.event())));
   }

@@ -17,6 +17,7 @@ package org.factcast.schema.registry.plugin.mojo;
 
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.factcast.schema.registry.cli.Application;
 import org.factcast.schema.registry.plugin.CliArgumentBuilder;
 
 @Mojo(name = "build", defaultPhase = LifecyclePhase.GENERATE_RESOURCES)
@@ -30,7 +31,7 @@ public class BuildMojo extends AbstractBaseMojo {
       outputDirectory.mkdirs();
     }
 
-    org.factcast.schema.registry.cli.Application.main(
+    Application.main(
         CliArgumentBuilder.build(
             "build",
             sourceDirectory,

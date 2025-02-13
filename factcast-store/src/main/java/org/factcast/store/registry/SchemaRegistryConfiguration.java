@@ -130,6 +130,8 @@ public class SchemaRegistryConfiguration {
       SchemaRegistry registry, StoreConfigurationProperties properties) {
     if (properties.isSchemaRegistryConfigured()) {
       return new ScheduledRegistryRefresher(registry);
-    } else return null;
+    } else {
+      return null;
+    }
   }
 }

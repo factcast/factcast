@@ -68,9 +68,14 @@ public @interface FactcastTestConfig {
 
     private static String resolve(@NonNull String versionAsAnnotated) {
       if (versionAsAnnotated.isEmpty()) {
-        if (runFromJar()) return jarVersion();
-        else return "latest";
-      } else return versionAsAnnotated;
+        if (runFromJar()) {
+          return jarVersion();
+        } else {
+          return "latest";
+        }
+      } else {
+        return versionAsAnnotated;
+      }
     }
 
     private static String jarVersion() {

@@ -42,4 +42,6 @@ public class InLockedOperation {
               + " allowed");
     }
   }
+
+  private InLockedOperation() {}
 }

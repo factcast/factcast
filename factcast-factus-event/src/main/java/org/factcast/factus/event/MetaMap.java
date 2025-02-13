@@ -180,12 +180,18 @@ public class MetaMap {
           e -> {
             String k = e.getKey();
             JsonNode n = e.getValue();
-            if (n.isNull()) ret.set(k, null);
-            else if (n.isTextual()) ret.add(k, n.textValue());
-            else if (n.isNumber()) ret.add(k, n.numberValue().toString());
-            else if (n.isBoolean()) ret.add(k, Boolean.toString(n.booleanValue()));
-            else {
-              if (!n.isArray()) throw new IllegalStateException("expected array but got " + n);
+            if (n.isNull()) {
+              ret.set(k, null);
+            } else if (n.isTextual()) {
+              ret.add(k, n.textValue());
+            } else if (n.isNumber()) {
+              ret.add(k, n.numberValue().toString());
+            } else if (n.isBoolean()) {
+              ret.add(k, Boolean.toString(n.booleanValue()));
+            } else {
+              if (!n.isArray()) {
+                throw new IllegalStateException("expected array but got " + n);
+              }
 
               n.iterator().forEachRemaining(v -> ret.add(k, v.textValue()));
             }

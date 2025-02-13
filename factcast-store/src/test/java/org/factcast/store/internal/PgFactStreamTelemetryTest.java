@@ -18,6 +18,7 @@ package org.factcast.store.internal;
 import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
+import java.sql.Connection;
 import javax.sql.DataSource;
 import lombok.SneakyThrows;
 import org.factcast.core.subscription.SubscriptionImpl;
@@ -81,7 +82,7 @@ class PgFactStreamTelemetryTest {
     var req = mock(SubscriptionRequestTO.class);
     when(req.continuous()).thenReturn(true);
     when(jdbcTemplate.getDataSource()).thenReturn(dataSource);
-    when(dataSource.getConnection()).thenReturn(mock(java.sql.Connection.class));
+    when(dataSource.getConnection()).thenReturn(mock(Connection.class));
     when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any()))
         .thenReturn(mock(PgCatchup.class));
 
@@ -99,7 +100,7 @@ class PgFactStreamTelemetryTest {
     var req = mock(SubscriptionRequestTO.class);
     when(req.continuous()).thenReturn(true);
     when(jdbcTemplate.getDataSource()).thenReturn(dataSource);
-    when(dataSource.getConnection()).thenReturn(mock(java.sql.Connection.class));
+    when(dataSource.getConnection()).thenReturn(mock(Connection.class));
     when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any()))
         .thenReturn(mock(PgCatchup.class));
     uut.connect(req);

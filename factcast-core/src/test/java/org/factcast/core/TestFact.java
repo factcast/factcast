@@ -67,7 +67,9 @@ public class TestFact implements Fact {
 
   @Override
   public @NonNull FactHeader header() {
-    if (header == null) header = FactCastJson.readValue(FactHeader.class, jsonHeader());
+    if (header == null) {
+      header = FactCastJson.readValue(FactHeader.class, jsonHeader());
+    }
     return header;
   }
 

@@ -63,7 +63,9 @@ class PgQueryTest {
       StringBuilder sb = new StringBuilder();
       meta.forEach(
           (k, v) -> {
-            if (!sb.isEmpty()) sb.append(",");
+            if (!sb.isEmpty()) {
+              sb.append(",");
+            }
             sb.append("\"").append(k).append("\":");
             sb.append("\"").append(v).append("\"");
           });

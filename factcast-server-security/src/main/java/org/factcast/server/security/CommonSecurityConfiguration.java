@@ -148,16 +148,18 @@ public class CommonSecurityConfiguration {
       // look for secrets in properties
       List<String> ids = cfg.accounts().stream().map(FactCastAccount::id).toList();
       for (String id : ids) {
-        if (!accessSecrets.getSecrets().containsKey(id))
+        if (!accessSecrets.getSecrets().containsKey(id)) {
           throw new IllegalArgumentException("Missing secret for account: '" + id + "'");
+        }
       }
 
       for (String k : accessSecrets.getSecrets().keySet()) {
-        if (!ids.contains(k))
+        if (!ids.contains(k)) {
           log.warn(
               "Secret found for account '"
                   + k
                   + "' but the account is not defined in FactCastAccessConfiguration");
+        }
       }
 
       return cfg;

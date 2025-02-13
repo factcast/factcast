@@ -33,7 +33,7 @@ public class GrpcLimitProperties {
 
   private int numberOfCatchupRequestsAllowedPerClientPerMinute = 6000;
 
-  private boolean disabled = false;
+  private boolean disabled;
 
   // Spring needs classic setters
   public void setInitialNumberOfFollowRequestsAllowedPerClient(

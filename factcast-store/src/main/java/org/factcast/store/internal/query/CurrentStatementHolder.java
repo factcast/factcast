@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 public class CurrentStatementHolder implements Closeable {
   private final Object mutex = new Object();
   private Statement statement;
-  private boolean wasCanceled = false;
+  private boolean wasCanceled;
 
   @Override
   public void close() {

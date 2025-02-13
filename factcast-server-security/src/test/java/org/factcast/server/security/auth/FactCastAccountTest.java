@@ -18,6 +18,7 @@ package org.factcast.server.security.auth;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 
@@ -104,7 +105,7 @@ class FactCastAccountTest {
 
     FactCastAccessConfiguration cfg = new FactCastAccessConfiguration();
     cfg.initialize();
-    org.assertj.core.api.Assertions.assertThatThrownBy(
+    Assertions.assertThatThrownBy(
             () -> {
               uut.initialize(cfg);
             })
@@ -120,7 +121,7 @@ class FactCastAccountTest {
   @Test
   void cannotReadUninitialized() {
     var underTest = new FactCastAccount();
-    org.assertj.core.api.Assertions.assertThatThrownBy(
+    Assertions.assertThatThrownBy(
             () -> {
               underTest.canRead("foo");
             })
@@ -130,7 +131,7 @@ class FactCastAccountTest {
   @Test
   void cannotWriteUninitialized() {
     var underTest = new FactCastAccount();
-    org.assertj.core.api.Assertions.assertThatThrownBy(
+    Assertions.assertThatThrownBy(
             () -> {
               underTest.canWrite("foo");
             })
