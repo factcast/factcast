@@ -17,7 +17,6 @@ package org.factcast.core.subscription;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
