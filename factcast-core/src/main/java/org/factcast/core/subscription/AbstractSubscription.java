@@ -16,12 +16,15 @@
 package org.factcast.core.subscription;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public abstract class AbstractSubscription implements Subscription {
   private final List<Runnable> onClose = new LinkedList<>();
+  final AtomicBoolean isSubscriptionClosed = new AtomicBoolean(false);
 
   @Override
   public final Subscription onClose(@NonNull Runnable e) {
@@ -41,10 +44,12 @@ public abstract class AbstractSubscription implements Subscription {
 
   @Override
   public void close() {
-    try {
-      internalClose();
-    } finally {
-      onClose.forEach(this::tryRun);
+    if (!isSubscriptionClosed.getAndSet(true)) {
+      try {
+        internalClose();
+      } finally {
+        onClose.forEach(this::tryRun);
+      }
     }
   }
 }
