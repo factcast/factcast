@@ -16,18 +16,14 @@
 package org.factcast.store.registry.transformation.cache;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import com.google.common.eventbus.*;
+import java.util.concurrent.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.store.internal.listen.PgListener;
+import org.factcast.store.internal.notification.TransformationStoreChangeNotification;
 import org.factcast.store.registry.transformation.TransformationKey;
 import org.factcast.store.registry.transformation.chains.TransformationChains;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.SmartInitializingSingleton;
+import org.springframework.beans.factory.*;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
@@ -65,7 +61,7 @@ public class PgTransformationStoreChangeListener
   }
 
   @Subscribe
-  public void on(PgListener.TransformationStoreChangeSignal signal) {
+  public void on(TransformationStoreChangeNotification signal) {
     invalidateCachesFor(signal);
     // schedule another cache invalidation
     // to avoid in-flight transformations to be persisted
@@ -76,7 +72,7 @@ public class PgTransformationStoreChangeListener
   }
 
   @VisibleForTesting
-  void invalidateCachesFor(PgListener.TransformationStoreChangeSignal signal) {
+  void invalidateCachesFor(TransformationStoreChangeNotification signal) {
     cache.invalidateTransformationFor(signal.ns(), signal.type());
     chains.notifyFor(TransformationKey.of(signal.ns(), signal.type()));
   }

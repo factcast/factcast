@@ -70,7 +70,6 @@ public class PgConstants {
   private static final String TABLE_TOKENSTORE = "tokenstore";
 
   public static final String CHANNEL_FACT_INSERT = "fact_insert";
-  public static final String CHANNEL_SCHEDULED_POLL = "scheduled-poll";
   public static final String CHANNEL_BLACKLIST_CHANGE = "blacklist_change";
   public static final String CHANNEL_SCHEMASTORE_CHANGE = "schemastore_change";
   public static final String CHANNEL_TRANSFORMATIONSTORE_CHANGE = "transformationstore_change";
