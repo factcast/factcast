@@ -17,7 +17,6 @@ package org.factcast.client.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import lombok.AccessLevel;
@@ -84,8 +83,7 @@ public class ResilientGrpcSubscription extends AbstractSubscription {
 
   @Override
   public void internalClose() {
-      closeAndDetachSubscription();
-
+    closeAndDetachSubscription();
   }
 
   @VisibleForTesting

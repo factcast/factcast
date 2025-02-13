@@ -20,7 +20,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,18 +39,16 @@ public class SubscriptionImpl extends AbstractSubscription implements InternalSu
 
   @NonNull final FactObserver observer;
 
-
   final CompletableFuture<Void> catchup = new CompletableFuture<>();
 
   final CompletableFuture<Void> complete = new CompletableFuture<>();
 
   @Override
   public void internalClose() {
-      SubscriptionClosedException closedException =
-          new SubscriptionClosedException("Client closed the subscription");
-      catchup.completeExceptionally(closedException);
-      complete.completeExceptionally(closedException);
-
+    SubscriptionClosedException closedException =
+        new SubscriptionClosedException("Client closed the subscription");
+    catchup.completeExceptionally(closedException);
+    complete.completeExceptionally(closedException);
   }
 
   @Override
