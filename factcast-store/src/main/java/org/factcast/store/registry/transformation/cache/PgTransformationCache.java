@@ -30,8 +30,8 @@ import org.factcast.store.registry.metrics.RegistryMetrics.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.*;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.transaction.*;
+import org.springframework.transaction.support.*;
 
 @Slf4j
 public class PgTransformationCache implements TransformationCache, AutoCloseable {
@@ -57,6 +57,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   private int bufferThreshold = 1000;
 
   public final int maxBufferSize;
+  private final Object flushLock = new Object();
 
   public PgTransformationCache(
       PlatformTransactionManager platformTransactionManager,
@@ -235,17 +236,21 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
     // note that this is important even in readonly mode, as otherwise we'd run short on memory
     Map<Key, Fact> copy = buffer.clear();
 
-    if (!copy.isEmpty() && !storeConfigurationProperties.isReadOnlyModeEnabled()) {
-      // we want to serialize flushing beyond instances in order to avoid parallel
-      // updates/insertions/deletions causing deadlocks
-      try {
-        inTransactionWithLock(
-            () -> {
-              insertBufferedTransformations(copy);
-              insertBufferedAccesses(copy);
-            });
-      } catch (Exception e) {
-        log.error("Could not complete batch update of transformations on transformation cache.", e);
+    synchronized (flushLock) {
+      if (!copy.isEmpty() && !storeConfigurationProperties.isReadOnlyModeEnabled()) {
+        // we want to serialize flushing beyond instances in order to avoid parallel
+        // updates/insertions/deletions causing deadlocks
+
+        try {
+          inTransactionWithLock(
+              () -> {
+                insertBufferedTransformations(copy);
+                insertBufferedAccesses(copy);
+              });
+        } catch (Exception e) {
+          log.error(
+              "Could not complete batch update of transformations on transformation cache.", e);
+        }
       }
     }
   }
@@ -256,7 +261,9 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
    */
   @VisibleForTesting
   void inTransactionWithLock(@NonNull Runnable o) {
-    new TransactionTemplate(platformTransactionManager)
+    new TransactionTemplate(
+            platformTransactionManager,
+            new DefaultTransactionDefinition(TransactionDefinition.ISOLATION_SERIALIZABLE))
         // will join an existing tx, or create and commit a new one
         .execute(
             status -> {
