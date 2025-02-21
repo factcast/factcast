@@ -532,13 +532,17 @@ class PgTransformationCacheTest {
 
       underTest.flush();
 
-      ArgumentCaptor<SqlParameterSource> m = ArgumentCaptor.forClass(SqlParameterSource.class);
+      ArgumentCaptor<List<Object[]>> m = ArgumentCaptor.forClass(List.class);
 
-      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN SHARE MODE");
-      Mockito.verify(namedJdbcTemplate).update(anyString(), m.capture());
+      Mockito.verify(jdbcTemplate, times(1))
+          .execute("LOCK TABLE transformationcache IN SHARE MODE");
+      Mockito.verify(jdbcTemplate, times(1)).batchUpdate(matches("INSERT.*"), m.capture());
+      assertThat((Collection) m.getValue()).isNotNull().hasSize(3);
 
-      Collection ids = (Collection) m.getValue().getValue("ids");
-      assertThat(ids).isNotNull().hasSize(2);
+      ArgumentCaptor<MapSqlParameterSource> ids =
+          ArgumentCaptor.forClass(MapSqlParameterSource.class);
+      Mockito.verify(namedJdbcTemplate, times(1)).update(matches("UPDATE.*"), ids.capture());
+      assertThat((Collection) (ids.getValue().getValue("ids"))).isNotNull().hasSize(2);
     }
   }
 
