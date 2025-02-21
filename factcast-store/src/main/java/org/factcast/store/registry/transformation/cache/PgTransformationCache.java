@@ -236,21 +236,17 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
     // note that this is important even in readonly mode, as otherwise we'd run short on memory
     Map<Key, Fact> copy = buffer.clear();
 
-    synchronized (flushLock) {
-      if (!copy.isEmpty() && !storeConfigurationProperties.isReadOnlyModeEnabled()) {
-        // we want to serialize flushing beyond instances in order to avoid parallel
-        // updates/insertions/deletions causing deadlocks
-
-        try {
-          inTransactionWithLock(
-              () -> {
-                insertBufferedTransformations(copy);
-                insertBufferedAccesses(copy);
-              });
-        } catch (Exception e) {
-          log.error(
-              "Could not complete batch update of transformations on transformation cache.", e);
-        }
+    if (!copy.isEmpty() && !storeConfigurationProperties.isReadOnlyModeEnabled()) {
+      // we want to serialize flushing beyond instances in order to avoid parallel
+      // updates/insertions/deletions causing deadlocks
+      try {
+        inTransactionWithLock(
+            () -> {
+              insertBufferedTransformations(copy);
+              insertBufferedAccesses(copy);
+            });
+      } catch (Exception e) {
+        log.error("Could not complete batch update of transformations on transformation cache.", e);
       }
     }
   }
