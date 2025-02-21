@@ -291,7 +291,7 @@ class PgTransformationCacheTest {
       underTest.inTransactionWithLock(r);
 
       InOrder inOrder = inOrder(jdbcTemplate, r);
-      inOrder.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN SHARE MODE");
+      inOrder.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
       inOrder.verify(r).run();
     }
   }
@@ -352,7 +352,7 @@ class PgTransformationCacheTest {
       underTest.compact(THRESHOLD_DATE);
 
       Mockito.verify(underTest).flush();
-      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN SHARE MODE");
+      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
 
       Mockito.verify(jdbcTemplate)
           .update(
@@ -412,7 +412,7 @@ class PgTransformationCacheTest {
       underTest.registerAccess(key);
       assertThat(underTest.buffer().size()).isPositive();
       underTest.flush();
-      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN SHARE MODE");
+      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
       assertThat(underTest.buffer().size()).isZero();
     }
 
@@ -490,7 +490,7 @@ class PgTransformationCacheTest {
 
       @SuppressWarnings("unchecked")
       ArgumentCaptor<List<Object[]>> m = ArgumentCaptor.forClass(List.class);
-      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN SHARE MODE");
+      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
 
       Mockito.verify(jdbcTemplate)
           .batchUpdate(matches("INSERT INTO transformationcache .*"), m.capture());
@@ -535,7 +535,7 @@ class PgTransformationCacheTest {
       ArgumentCaptor<List<Object[]>> m = ArgumentCaptor.forClass(List.class);
 
       Mockito.verify(jdbcTemplate, times(1))
-          .execute("LOCK TABLE transformationcache IN SHARE MODE");
+          .execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
       Mockito.verify(jdbcTemplate, times(1)).batchUpdate(matches("INSERT.*"), m.capture());
       assertThat((Collection) m.getValue()).isNotNull().hasSize(3);
 
