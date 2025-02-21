@@ -305,6 +305,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
         copy.entrySet().stream()
             .filter(e -> e.getValue() == null)
             .map(p -> p.getKey().id())
+            .sorted()
             .collect(Collectors.toList());
 
     if (!keys.isEmpty()) {
