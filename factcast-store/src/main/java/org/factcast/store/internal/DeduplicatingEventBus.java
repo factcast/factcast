@@ -37,14 +37,14 @@ public class DeduplicatingEventBus extends AsyncEventBus {
   @Override
   @SuppressWarnings("java:S6201") // not yet
   public void post(@NotNull Object event) {
-    if (event instanceof StoreNotification) {
+    if (event instanceof StoreNotification sn) {
 
       if (event instanceof FactTruncationNotification) {
         dedupIdTrail.clear();
       }
 
       // no else here, there might be someone else listening to truncations
-      String id = ((StoreNotification) event).uniqueId();
+      String id = sn.uniqueId();
       if (id != null && dedupIdTrail.put(id, DUMMY) != null) {
         log.debug("Ignoring StoreNotification as duplicate: id={}, notification={}", id, event);
         return; // early exit
