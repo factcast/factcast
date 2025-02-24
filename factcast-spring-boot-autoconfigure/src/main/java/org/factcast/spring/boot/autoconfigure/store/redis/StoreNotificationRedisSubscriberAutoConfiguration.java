@@ -30,7 +30,6 @@ import org.springframework.context.annotation.Bean;
 @ConditionalOnClass({RedisNotificationSubscriber.class, PgFactStore.class})
 public class StoreNotificationRedisSubscriberAutoConfiguration {
   @Bean
-  @ConditionalOnClass(RedisNotificationSubscriber.class)
   @ConditionalOnMissingBean(StoreNotificationSubscriber.class)
   public StoreNotificationSubscriber redisNotificationSubscriber(
       RedissonClient redis, EventBus bus) {
