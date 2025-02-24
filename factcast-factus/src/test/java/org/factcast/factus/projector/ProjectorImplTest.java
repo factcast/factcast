@@ -28,6 +28,7 @@ import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Maps;
 import org.factcast.core.*;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.spec.FilterScript;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.*;
 import org.factcast.factus.event.*;
@@ -674,8 +675,7 @@ class ProjectorImplTest {
         HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithFilterScript", Fact.class);
     ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
 
-    assertThat(spec.filterScript())
-        .isEqualTo(org.factcast.core.spec.FilterScript.js("function myfilter(e){}"));
+    assertThat(spec.filterScript()).isEqualTo(FilterScript.js("function myfilter(e){}"));
   }
 
   @Test
@@ -822,8 +822,9 @@ class ProjectorImplTest {
 
       @HandlerFor(ns = "test", type = "test")
       void apply(Fact f) {
-        if (f.header().meta().containsKey("pleaseThrow"))
+        if (f.header().meta().containsKey("pleaseThrow")) {
           throw new RuntimeException("you asked me to");
+        }
       }
     }
 
@@ -893,7 +894,7 @@ class ProjectorImplTest {
   }
 
   @Specification(ns = "ns1")
-  static class E1 implements org.factcast.factus.event.EventObject {
+  static class E1 implements EventObject {
     @Override
     public Set<UUID> aggregateIds() {
       return new HashSet<>();
@@ -901,7 +902,7 @@ class ProjectorImplTest {
   }
 
   @Specification(ns = "ns2")
-  static class E2 implements org.factcast.factus.event.EventObject {
+  static class E2 implements EventObject {
     @Override
     public Set<UUID> aggregateIds() {
       return new HashSet<>();
@@ -909,7 +910,7 @@ class ProjectorImplTest {
   }
 
   @Specification(ns = "ns2")
-  static class Unrelated implements org.factcast.factus.event.EventObject {
+  static class Unrelated implements EventObject {
     @Override
     public Set<UUID> aggregateIds() {
       return new HashSet<>();
@@ -1020,8 +1021,8 @@ class ProjectorImplTest {
       ProjectorImpl<Projection> uut =
           new ProjectorImpl<>(new SomeProjectionWithTypeAnnotationOnParent(), eventSerializer);
       List<FactSpec> factSpecs = uut.createFactSpecs();
-      Optional<FactSpec> e1 = factSpecs.stream().filter(fs -> fs.type().equals("E1")).findFirst();
-      Optional<FactSpec> e2 = factSpecs.stream().filter(fs -> fs.type().equals("E2")).findFirst();
+      Optional<FactSpec> e1 = factSpecs.stream().filter(fs -> "E1".equals(fs.type())).findFirst();
+      Optional<FactSpec> e2 = factSpecs.stream().filter(fs -> "E2".equals(fs.type())).findFirst();
       Assertions.assertThat(e1.get().ns()).isEqualTo("s-targetForE1");
       Assertions.assertThat(e2.get().ns()).isEqualTo("s-targetForE2");
     }

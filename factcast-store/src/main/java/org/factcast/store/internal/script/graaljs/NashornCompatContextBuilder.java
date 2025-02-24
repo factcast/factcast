@@ -85,9 +85,9 @@ public class NashornCompatContextBuilder {
         Value.class,
         Object.class,
         // if the value has array elements and members
-        (v) -> v.hasArrayElements() && v.hasMembers(),
+        v -> v.hasArrayElements() && v.hasMembers(),
         // convert to List (instead of Map)
-        (v) -> v.as(List.class));
+        v -> v.as(List.class));
     return b.build();
   }
 

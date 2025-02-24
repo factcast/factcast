@@ -25,7 +25,7 @@ public class PersonAggregate extends Aggregate {
 
   private String name = "";
 
-  private int processed = 0;
+  private int processed;
 
   @Handler
   void process(NameEvent event) {

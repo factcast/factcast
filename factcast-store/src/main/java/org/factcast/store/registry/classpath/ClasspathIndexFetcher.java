@@ -38,8 +38,9 @@ public class ClasspathIndexFetcher implements IndexFetcher {
       } finally {
         initialRun = false;
       }
-    } else
+    } else {
       // assume unchanged
       return Optional.empty();
+    }
   }
 }

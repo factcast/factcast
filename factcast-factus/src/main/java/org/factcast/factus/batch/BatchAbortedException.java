@@ -27,7 +27,10 @@ public class BatchAbortedException extends RuntimeException {
   }
 
   public static BatchAbortedException wrap(@NonNull Throwable e) {
-    if (e instanceof BatchAbortedException) return (BatchAbortedException) e;
-    else return new BatchAbortedException(e);
+    if (e instanceof BatchAbortedException) {
+      return (BatchAbortedException) e;
+    } else {
+      return new BatchAbortedException(e);
+    }
   }
 }

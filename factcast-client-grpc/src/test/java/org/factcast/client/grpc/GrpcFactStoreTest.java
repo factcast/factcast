@@ -31,6 +31,7 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.*;
 import lombok.NonNull;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.DuplicateFactException;
 import org.factcast.core.Fact;
 import org.factcast.core.FactValidationException;
@@ -761,7 +762,7 @@ class GrpcFactStoreTest {
   void latestSerial() {
     MSG_Serial ser = conv.toProto(2L);
     when(blockingStub.latestSerial(any())).thenReturn(ser);
-    org.assertj.core.api.Assertions.assertThat(uut.latestSerial()).isEqualTo(2);
+    Assertions.assertThat(uut.latestSerial()).isEqualTo(2);
   }
 
   @Test
@@ -769,7 +770,7 @@ class GrpcFactStoreTest {
     LocalDate date = LocalDate.of(2003, 12, 24);
     MSG_Date msgDate = conv.toProto(date);
     when(blockingStub.lastSerialBefore(msgDate)).thenReturn(conv.toProto(2L));
-    org.assertj.core.api.Assertions.assertThat(uut.lastSerialBefore(date)).isEqualTo(2);
+    Assertions.assertThat(uut.lastSerialBefore(date)).isEqualTo(2);
   }
 
   @Test
@@ -777,7 +778,7 @@ class GrpcFactStoreTest {
     LocalDate date = LocalDate.of(2003, 12, 24);
     MSG_Date msgDate = conv.toProto(date);
     when(blockingStub.firstSerialAfter(msgDate)).thenReturn(conv.toProto(2L));
-    org.assertj.core.api.Assertions.assertThat(uut.firstSerialAfter(date)).isEqualTo(2);
+    Assertions.assertThat(uut.firstSerialAfter(date)).isEqualTo(2);
   }
 
   @Test
