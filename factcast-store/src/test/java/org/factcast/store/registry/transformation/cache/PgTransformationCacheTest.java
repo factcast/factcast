@@ -291,7 +291,7 @@ class PgTransformationCacheTest {
       underTest.inTransactionWithLock(r);
 
       InOrder inOrder = inOrder(jdbcTemplate, r);
-      inOrder.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN SHARE MODE");
+      inOrder.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
       inOrder.verify(r).run();
     }
   }
@@ -352,7 +352,7 @@ class PgTransformationCacheTest {
       underTest.compact(THRESHOLD_DATE);
 
       Mockito.verify(underTest).flush();
-      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN SHARE MODE");
+      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
 
       Mockito.verify(jdbcTemplate)
           .update(
@@ -412,7 +412,7 @@ class PgTransformationCacheTest {
       underTest.registerAccess(key);
       assertThat(underTest.buffer().size()).isPositive();
       underTest.flush();
-      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN SHARE MODE");
+      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
       assertThat(underTest.buffer().size()).isZero();
     }
 
@@ -490,7 +490,7 @@ class PgTransformationCacheTest {
 
       @SuppressWarnings("unchecked")
       ArgumentCaptor<List<Object[]>> m = ArgumentCaptor.forClass(List.class);
-      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN SHARE MODE");
+      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
 
       Mockito.verify(jdbcTemplate)
           .batchUpdate(matches("INSERT INTO transformationcache .*"), m.capture());
@@ -532,13 +532,17 @@ class PgTransformationCacheTest {
 
       underTest.flush();
 
-      ArgumentCaptor<SqlParameterSource> m = ArgumentCaptor.forClass(SqlParameterSource.class);
+      ArgumentCaptor<List<Object[]>> m = ArgumentCaptor.forClass(List.class);
 
-      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN SHARE MODE");
-      Mockito.verify(namedJdbcTemplate).update(anyString(), m.capture());
+      Mockito.verify(jdbcTemplate, times(1))
+          .execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
+      Mockito.verify(jdbcTemplate, times(1)).batchUpdate(matches("INSERT.*"), m.capture());
+      assertThat((Collection) m.getValue()).isNotNull().hasSize(3);
 
-      Collection ids = (Collection) m.getValue().getValue("ids");
-      assertThat(ids).isNotNull().hasSize(2);
+      ArgumentCaptor<MapSqlParameterSource> ids =
+          ArgumentCaptor.forClass(MapSqlParameterSource.class);
+      Mockito.verify(namedJdbcTemplate, times(1)).update(matches("UPDATE.*"), ids.capture());
+      assertThat((Collection) (ids.getValue().getValue("ids"))).isNotNull().hasSize(2);
     }
   }
 
@@ -563,7 +567,7 @@ class PgTransformationCacheTest {
     void clearsAndFlushesAccessesOnly() {
       underTest.invalidateTransformationFor("theNamespace", "theType");
 
-      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN SHARE MODE");
+      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
       verify(underTest, times(1)).flush();
     }
 
@@ -574,7 +578,7 @@ class PgTransformationCacheTest {
       ArgumentCaptor<String> ns = ArgumentCaptor.forClass(String.class);
       ArgumentCaptor<String> type = ArgumentCaptor.forClass(String.class);
 
-      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN SHARE MODE");
+      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
       Mockito.verify(jdbcTemplate)
           .update(
               matches("DELETE FROM transformationcache WHERE .*"), ns.capture(), type.capture());
