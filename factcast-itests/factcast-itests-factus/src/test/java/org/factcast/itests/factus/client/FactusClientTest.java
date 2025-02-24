@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
 import org.factcast.core.Fact;
+import org.factcast.core.store.RetryableException;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.Factus;
 import org.factcast.factus.Handler;
@@ -49,6 +50,7 @@ import org.redisson.api.RedissonClient;
 import org.redisson.api.TransactionOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 import java.time.Duration;
 import java.util.*;
@@ -733,6 +735,37 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       var factId1 = factus.publish(new UserBored("Kenny"), Fact::id);
       assertThatThrownBy(() -> factus.waitFor(subscribedUserNames, factId1, timeout))
           .isInstanceOf(TimeoutException.class);
+    }
+  }
+
+  @Test
+  void testTokenReleaseAfterTooManyFailures() {
+    OverrideAndFailSubscribedUserNames subscribedUserNames =
+        new OverrideAndFailSubscribedUserNames();
+    subscribedUserNames.clear();
+
+    factus.publish(new UserDeleted(UUID.randomUUID()));
+
+    assertThat(subscribedUserNames.isValid()).isFalse();
+    factus.subscribeAndBlock(subscribedUserNames);
+    try {
+      // it should acquire the lock
+      subscribedUserNames.latch.await();
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+    // the initial lock was closed
+    Awaitility.await().until(() -> !subscribedUserNames.isValid()); // someone locked it
+  }
+
+  static class OverrideAndFailSubscribedUserNames extends SubscribedUserNames {
+
+    CountDownLatch latch = new CountDownLatch(1);
+
+    @Override
+    public void apply(UserDeleted deleted, @Nullable String signee) {
+      latch.countDown();
+      throw new RetryableException(new Throwable("Test exception"));
     }
   }
 

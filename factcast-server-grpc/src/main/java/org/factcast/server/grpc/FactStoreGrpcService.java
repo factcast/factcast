@@ -62,7 +62,7 @@ import org.springframework.security.core.context.*;
 @SuppressWarnings("all")
 public class FactStoreGrpcService extends RemoteFactStoreImplBase implements InitializingBean {
 
-  public static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 6, 0);
+  public static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 7, 0);
 
   static final AtomicLong subscriptionIdStore = new AtomicLong();
 
@@ -214,7 +214,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
                         Bandwidth.classic(
                             grpcLimitProperties.initialNumberOfFollowRequestsAllowedPerClient(),
                             refill);
-                    return Bucket4j.builder().addLimit(limit).build();
+                    return Bucket.builder().addLimit(limit).build();
                   } else {
 
                     log.trace(
@@ -230,7 +230,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
                         Bandwidth.classic(
                             grpcLimitProperties.initialNumberOfCatchupRequestsAllowedPerClient(),
                             refill);
-                    return Bucket4j.builder().addLimit(limit).build();
+                    return Bucket.builder().addLimit(limit).build();
                   }
                 }
               });

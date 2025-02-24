@@ -208,4 +208,6 @@ service RemoteFactStore {
   // rpc getSnapshot (MSG_SnapshotId) returns (MSG_OptionalSnapshot) {}
   // 1.6 we added support for multiple aggregate ids in the FactSpecs
 
+  // 1.7 we added support for event explorer until filter
+  rpc firstSerialAfter(MSG_Date) returns (MSG_Serial) {}
 }
