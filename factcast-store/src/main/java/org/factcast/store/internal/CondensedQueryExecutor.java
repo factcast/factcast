@@ -126,7 +126,6 @@ class CondensedQueryExecutor {
         interests.contains(ns + ":" + type)
         || // listens to the whole namespace
         interests.contains(ns)
-        // is a catchall
         || // is a catchall
         interests.contains("*");
   }
