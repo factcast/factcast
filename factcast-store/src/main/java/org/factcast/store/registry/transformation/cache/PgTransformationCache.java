@@ -57,7 +57,6 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   private int bufferThreshold = 1000;
 
   public final int maxBufferSize;
-  private final Object flushLock = new Object();
 
   public PgTransformationCache(
       PlatformTransactionManager platformTransactionManager,
