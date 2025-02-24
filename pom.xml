@@ -781,7 +781,7 @@
           <plugin>
             <groupId>org.openrewrite.maven</groupId>
             <artifactId>rewrite-maven-plugin</artifactId>
-            <version>6.1.0</version>
+            <version>6.2.0</version>
             <configuration>
               <activeRecipes>
                 <recipe>org.openrewrite.staticanalysis.CodeCleanup</recipe>
