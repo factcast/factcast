@@ -745,7 +745,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
     factus.publish(new UserDeleted(UUID.randomUUID()));
 
-    assertThat(subscribedUserNames.token().isValid()).isFalse();
+    assertThat(subscribedUserNames.token()).isNull();
     factus.subscribeAndBlock(subscribedUserNames);
     try {
       // it should acquire the lock
