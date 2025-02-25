@@ -19,15 +19,14 @@ import static java.util.Arrays.asList;
 import static java.util.UUID.randomUUID;
 
 import java.util.UUID;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.annotation.*;
 import org.assertj.core.api.Assertions;
 import org.factcast.factus.Factus;
 import org.factcast.itests.TestFactusApplication;
-import org.factcast.itests.factus.config.RedissonProjectionConfiguration;
 import org.factcast.itests.factus.event.*;
 import org.factcast.itests.factus.proj.UserCount;
-import org.factcast.spring.boot.autoconfigure.snap.RedissonSnapshotCacheAutoConfiguration;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,17 +35,14 @@ import org.springframework.test.context.ContextConfiguration;
 
 @ContextConfiguration(
     classes = {
-      TestFactusApplication.class,
-      RedissonProjectionConfiguration.class,
-      RedissonSnapshotCacheAutoConfiguration.class,
-      SomeAspectAroundProjection.class, // this broke the inner class instantiation
+      TestFactusApplication.class, // this broke the inner class instantiation
     })
 @Slf4j
 class SimpleRoundtripTest extends AbstractFactCastIntegrationTest {
 
   @Autowired Factus factus;
 
-  @Autowired UserCount userCount; // note the inner class
+  @Autowired UserCount userCount;
 
   @Test
   void simpleRoundTrip() {
@@ -56,6 +52,11 @@ class SimpleRoundtripTest extends AbstractFactCastIntegrationTest {
     factus.publish(new UserDeleted(johnsId));
     factus.update(userCount);
     Assertions.assertThat(userCount.count()).isEqualTo(1);
+  }
+
+  @SneakyThrows
+  private static void sleep(long ms) {
+    Thread.sleep(ms);
   }
 }
 

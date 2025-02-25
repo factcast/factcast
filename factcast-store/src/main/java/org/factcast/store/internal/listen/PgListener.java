@@ -113,7 +113,7 @@ public class PgListener implements InitializingBean, DisposableBean {
 
   @VisibleForTesting
   protected void setupPostgresListeners(PgConnection pc) throws SQLException {
-    try (PreparedStatement ps1 = pc.prepareStatement(PgConstants.LISTEN_SQL);
+    try (PreparedStatement ps1 = pc.prepareStatement(PgConstants.LISTEN_INSERT_CHANNEL_SQL);
         PreparedStatement ps2 = pc.prepareStatement(PgConstants.LISTEN_ROUNDTRIP_CHANNEL_SQL);
         PreparedStatement ps3 =
             pc.prepareStatement(PgConstants.LISTEN_BLACKLIST_CHANGE_CHANNEL_SQL);
@@ -121,11 +121,13 @@ public class PgListener implements InitializingBean, DisposableBean {
             pc.prepareStatement(PgConstants.LISTEN_SCHEMASTORE_CHANGE_CHANNEL_SQL);
         PreparedStatement ps5 =
             pc.prepareStatement(PgConstants.LISTEN_TRANSFORMATIONSTORE_CHANGE_CHANNEL_SQL); ) {
+      PreparedStatement ps6 = pc.prepareStatement(PgConstants.LISTEN_TRUNCATION_CHANNEL_SQL);
       ps1.execute();
       ps2.execute();
       ps3.execute();
       ps4.execute();
       ps5.execute();
+      ps6.execute();
     }
   }
 
@@ -216,7 +218,7 @@ public class PgListener implements InitializingBean, DisposableBean {
 
     long start = System.nanoTime();
 
-    connection.prepareCall(PgConstants.NOTIFY_ROUNDTRIP).execute();
+    connection.prepareCall(PgConstants.NOTIFY_ROUNDTRIP_SQL).execute();
     PGNotification[] notifications =
         connection.getNotifications(props.getFactNotificationMaxRoundTripLatencyInMillis());
     if (notifications == null || notifications.length == 0) {

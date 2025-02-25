@@ -15,8 +15,7 @@
  */
 package org.factcast.store.internal;
 
-import com.google.common.eventbus.AsyncEventBus;
-import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.*;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.concurrent.Executors;
@@ -30,39 +29,26 @@ import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
 import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
 import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMode;
 import net.javacrumbs.shedlock.support.KeepAliveLockProvider;
-import org.factcast.core.store.FactStore;
-import org.factcast.core.store.TokenStore;
+import org.factcast.core.store.*;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.core.subscription.transformation.FactTransformerService;
-import org.factcast.store.IsReadAndWriteEnv;
-import org.factcast.store.IsReadOnlyEnv;
-import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.*;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.catchup.fetching.PgFetchingCatchUpFactory;
 import org.factcast.store.internal.check.IndexCheck;
 import org.factcast.store.internal.filter.blacklist.*;
-import org.factcast.store.internal.listen.PgConnectionSupplier;
-import org.factcast.store.internal.listen.PgConnectionTester;
-import org.factcast.store.internal.listen.PgListener;
-import org.factcast.store.internal.lock.AdvisoryWriteLock;
-import org.factcast.store.internal.lock.FactTableWriteLock;
+import org.factcast.store.internal.listen.*;
+import org.factcast.store.internal.lock.*;
 import org.factcast.store.internal.pipeline.ServerPipelineFactory;
-import org.factcast.store.internal.query.PgFactIdToSerialMapper;
-import org.factcast.store.internal.query.PgLatestSerialFetcher;
+import org.factcast.store.internal.query.*;
 import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.tail.PGTailIndexingConfiguration;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
-import org.factcast.store.registry.PgSchemaStoreChangeListener;
-import org.factcast.store.registry.SchemaRegistry;
-import org.factcast.store.registry.SchemaRegistryConfiguration;
-import org.factcast.store.registry.transformation.cache.PgTransformationStoreChangeListener;
-import org.factcast.store.registry.transformation.cache.TransformationCache;
+import org.factcast.store.registry.*;
+import org.factcast.store.registry.transformation.cache.*;
 import org.factcast.store.registry.transformation.chains.TransformationChains;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.autoconfigure.condition.*;
+import org.springframework.context.annotation.*;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -88,11 +74,14 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @Import({SchemaRegistryConfiguration.class, PGTailIndexingConfiguration.class})
 public class PgFactStoreInternalConfiguration {
 
+  /**
+   * may be overruled by defining a @Primary DeduplicatingEventBus in PgFactStoreAutoConfiguration
+   */
   @Bean
   @ConditionalOnMissingBean(EventBus.class)
-  public EventBus eventBus(@NonNull PgMetrics metrics) {
+  public EventBus regularEventBus(@NonNull PgMetrics metrics) {
     return new AsyncEventBus(
-        getClass().getSimpleName(),
+        EventBus.class.getSimpleName(),
         metrics.monitor(Executors.newCachedThreadPool(), "pg-listener"));
   }
 
@@ -175,6 +164,7 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
+  @IsReadAndWriteEnv // do not try to listen in RO mode
   public PgListener pgListener(
       @NonNull PgConnectionSupplier pgConnectionSupplier,
       @NonNull EventBus eventBus,

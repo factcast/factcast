@@ -352,9 +352,9 @@ databaseChangeLog:
       preConditions:
         - onFail: MARK_RAN
         - sqlCheck:
-             expectedResult: t
-             sql: SELECT count_estimate('SELECT * FROM fact') < 10000000;
-      comment: If you have less than 10mio facts, this will be executed, if not, we kindly ask you to execute this script manually  
+            expectedResult: t
+            sql: SELECT count_estimate('SELECT * FROM fact') < 10000000;
+      comment: If you have less than 10mio facts, this will be executed, if not, we kindly ask you to execute this script manually
       changes:
         - sqlFile:
             encoding: utf8
@@ -362,7 +362,7 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
-        
+
   - changeSet:
       id: issue2589_add_pk_to_blacklist
       runInTransaction: false
@@ -399,4 +399,17 @@ databaseChangeLog:
             path: factcast/issue3033/drop_snapshot_cache.sql
             relativeToChangelogFile: true
             splitStatements: true
+            stripComments: true
+
+  - changeSet:
+      id: issue2531_create_truncate_trigger
+      runInTransaction: false
+      author: uweschaefer
+      comment: create trigger for truncation (necessary for container reuse in integration test)
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2531/create_truncate_trigger.sql
+            relativeToChangelogFile: true
+            splitStatements: false
             stripComments: true

@@ -15,14 +15,41 @@
  */
 package org.factcast.spring.boot.autoconfigure.store;
 
+import com.google.common.eventbus.EventBus;
+import java.util.concurrent.Executors;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.PgFactStoreConfiguration;
+import org.factcast.store.internal.*;
+import org.factcast.store.internal.notification.StoreNotificationSubscriber;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.*;
 
+@Slf4j
 @AutoConfiguration
 @EnableConfigurationProperties
 @ConditionalOnClass(PgFactStoreConfiguration.class)
 @Import(PgFactStoreConfiguration.class)
-public class PgFactStoreAutoConfiguration {}
+public class PgFactStoreAutoConfiguration {
+  // TODO this is no longer a good name.
+  // When changing it however, we need to remember adapting dashboards, alarms & documentation
+  private static final String EVENTBUS_IDENTIFIER = "pg-listener";
+
+  // As defining the EventBus is now dependent on subscribers existing, this was moved to
+  // autoconfiguration
+
+  /** dedup is only necessary, if we have a subscriber. */
+  @Bean
+  @ConditionalOnClass(StoreNotificationSubscriber.class)
+  @Primary
+  public EventBus dedupEventBus(@NonNull PgMetrics metrics) {
+    log.info(
+        "A {} was detected. Deduplication eventStore. ",
+        StoreNotificationSubscriber.class.getSimpleName());
+    return new DeduplicatingEventBus(
+        DeduplicatingEventBus.class.getSimpleName(),
+        metrics.monitor(Executors.newCachedThreadPool(), EVENTBUS_IDENTIFIER));
+  }
+}

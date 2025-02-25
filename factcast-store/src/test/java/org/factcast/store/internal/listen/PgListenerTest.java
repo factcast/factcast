@@ -69,7 +69,7 @@ class PgListenerTest {
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
     pgListener.setupPostgresListeners(conn);
 
-    verify(conn.prepareStatement(anyString()), times(5)).execute();
+    verify(conn.prepareStatement(anyString()), times(6)).execute();
   }
 
   @Test
@@ -122,7 +122,7 @@ class PgListenerTest {
 
   @Test
   public void onSuccessfulHealthCheckNotificationsArePassedThrough() throws SQLException {
-    when(conn.prepareCall(PgConstants.NOTIFY_ROUNDTRIP).execute()).thenReturn(true);
+    when(conn.prepareCall(PgConstants.NOTIFY_ROUNDTRIP_SQL).execute()).thenReturn(true);
     // we found some notifications
     when(conn.getNotifications(anyInt()))
         .thenReturn(new PGNotification[] {new Notification("some notification", 1)});
@@ -136,7 +136,7 @@ class PgListenerTest {
 
   @Test
   public void throwsSqlExceptionWhenNoRoundtripNotificationWasReceived() throws SQLException {
-    when(conn.prepareCall(PgConstants.NOTIFY_ROUNDTRIP).execute()).thenReturn(true);
+    when(conn.prepareCall(PgConstants.NOTIFY_ROUNDTRIP_SQL).execute()).thenReturn(true);
     // no answer from the database
     when(conn.getNotifications(anyInt())).thenReturn(null);
 
