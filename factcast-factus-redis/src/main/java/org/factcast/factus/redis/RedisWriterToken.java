@@ -16,8 +16,6 @@
 package org.factcast.factus.redis;
 
 import com.google.common.annotations.VisibleForTesting;
-
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.NonNull;
@@ -42,7 +40,7 @@ public class RedisWriterToken implements WriterToken {
         new TimerTask() {
           @Override
           public void run() {
-              liveness.set(lock.isLocked());
+            liveness.set(lock.isLocked());
           }
         };
     timer.scheduleAtFixedRate(timerTask, 0, (long) (watchDogTimeout / 1.5));

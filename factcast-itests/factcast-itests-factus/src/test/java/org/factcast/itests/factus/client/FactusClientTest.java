@@ -783,7 +783,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
     factus.publish(new UserCreated(UUID.randomUUID(), "name"));
 
-    //Initially the lock is acquired when subscribing
+    // Initially the lock is acquired when subscribing
     assertThat(subscribedUserNames.token()).isNull();
     factus.subscribeAndBlock(subscribedUserNames);
 
