@@ -15,6 +15,15 @@
  */
 package org.factcast.itests.factus.client;
 
+import static java.util.UUID.randomUUID;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -46,16 +55,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
-
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-
-import static java.util.UUID.randomUUID;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @SpringBootTest
 @ContextConfiguration(
@@ -172,14 +171,13 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
           .isFalse();
     }
 
-
     @Test
     void testTokenReAcquired_Redis() throws Exception {
       org.factcast.itests.factus.client.RedisTransactionalITest
               .TxRedissonSubscribedUserNamesTokenExposed
-              subscribedUserNames =
+          subscribedUserNames =
               new org.factcast.itests.factus.client.RedisTransactionalITest
-                      .TxRedissonSubscribedUserNamesTokenExposed(redissonClient);
+                  .TxRedissonSubscribedUserNamesTokenExposed(redissonClient);
 
       factus.publish(new UserCreated(UUID.randomUUID(), "hugo"));
 
@@ -191,7 +189,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
       subscribedUserNames.latch.await();
       assertThat(subscribedUserNames.token().isValid()).isTrue();
 
-      //Manually close the token
+      // Manually close the token
       subscribedUserNames.token().close();
       assertThat(subscribedUserNames.token().isValid()).isFalse();
 
@@ -366,7 +364,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
   @ProjectionMetaData(revision = 1)
   @RedisTransactional(bulkSize = 1)
   static class TxRedissonSubscribedUserNamesTokenExposed
-          extends TrackingTxRedissonSubscribedUserNames {
+      extends TrackingTxRedissonSubscribedUserNames {
 
     private CountDownLatch latch = new CountDownLatch(1);
     private WriterToken token;

@@ -15,11 +15,24 @@
  */
 package org.factcast.factus;
 
+import static org.factcast.factus.metrics.TagKeys.CLASS;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
+import java.lang.reflect.Constructor;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -47,20 +60,6 @@ import org.factcast.factus.projector.ProjectorFactory;
 import org.factcast.factus.snapshot.AggregateRepository;
 import org.factcast.factus.snapshot.ProjectionAndState;
 import org.factcast.factus.snapshot.SnapshotRepository;
-
-import javax.annotation.Nullable;
-import java.lang.reflect.Constructor;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import static org.factcast.factus.metrics.TagKeys.CLASS;
 
 /** Single entry point to the factus API. */
 @RequiredArgsConstructor
@@ -203,10 +202,12 @@ public class FactusImpl implements Factus {
           }
 
           private void reAcquireTokenIfNeeded() {
-            // If token is invalid will block the thread trying to re acquire the token and continue processing
+            // If token is invalid will block the thread trying to re acquire the token and continue
+            // processing
             if (!subscriptionToken.isValid()) {
               while (!closed.get()) {
-                WriterToken newToken = subscribedProjection.acquireWriteToken(Duration.ofMinutes(5));
+                WriterToken newToken =
+                    subscribedProjection.acquireWriteToken(Duration.ofMinutes(5));
                 if (newToken != null) {
                   subscriptionToken = newToken;
                   managedObjects.add(() -> tryClose(subscriptionToken));

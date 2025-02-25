@@ -15,7 +15,22 @@
  */
 package org.factcast.itests.factus.client;
 
+import static java.util.Arrays.asList;
+import static java.util.UUID.randomUUID;
+import static java.util.stream.Collectors.toList;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import com.google.common.base.Stopwatch;
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.Value;
@@ -50,22 +65,6 @@ import org.redisson.api.RedissonClient;
 import org.redisson.api.TransactionOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
-
-import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
-
-import static java.util.Arrays.asList;
-import static java.util.UUID.randomUUID;
-import static java.util.stream.Collectors.toList;
-import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ContextConfiguration(
     classes = {
@@ -771,13 +770,12 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   @Test
   @SneakyThrows
   void testTokenIsReAcquiredAfterExpiration() {
-    TokenExposedSubscribedUserNames subscribedUserNames =
-            new TokenExposedSubscribedUserNames();
+    TokenExposedSubscribedUserNames subscribedUserNames = new TokenExposedSubscribedUserNames();
     subscribedUserNames.clear();
 
     factus.publish(new UserCreated(UUID.randomUUID(), "name"));
 
-    //Initially the lock is acquired when subscribing
+    // Initially the lock is acquired when subscribing
     assertThat(subscribedUserNames.isValid()).isFalse();
     factus.subscribeAndBlock(subscribedUserNames);
 
