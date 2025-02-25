@@ -800,6 +800,81 @@ class FactusImplTest {
     }
 
     @Test
+    void subscribeAndReAcquireToken() {
+      // INIT
+      SubscribedProjection subscribedProjection = mock(SubscribedProjection.class);
+      Projector<SubscribedProjection> eventApplier = mock(Projector.class);
+
+      WriterToken writerToken = mock(WriterToken.class);
+      when(subscribedProjection.acquireWriteToken(any())).thenReturn(writerToken);
+      when(writerToken.isValid()).thenReturn(false);
+
+      when(ehFactory.create(subscribedProjection)).thenReturn(eventApplier);
+
+      when(eventApplier.createFactSpecs())
+              .thenReturn(Collections.singletonList(mock(FactSpec.class)));
+      doAnswer(
+              i -> {
+                Fact argument = Iterables.getLast((List<Fact>) (i.getArgument(0)));
+                subscribedProjection.factStreamPosition(FactStreamPosition.from(argument));
+                return null;
+              })
+              .when(eventApplier)
+              .apply(any(List.class));
+
+      Subscription subscription = mock(Subscription.class);
+      when(fc.subscribe(any(), any())).thenReturn(subscription);
+
+      // RUN
+      underTest.subscribeAndBlock(subscribedProjection);
+
+      // ASSERT
+
+      verify(fc).subscribe(any(), factObserverArgumentCaptor.capture());
+
+      FactObserver factObserver = factObserverArgumentCaptor.getValue();
+
+      UUID factId = randomUUID();
+      Fact mockedFact = Fact.builder().id(factId).serial(12L).buildWithoutPayload();
+
+      // onNext(...)
+      // now assume a new fact has been observed...
+      factObserver.onNext(mockedFact);
+      factObserver.flush();
+
+      verify(subscribedProjection, times(2)).acquireWriteToken(retryWaitTime.capture());
+      assertThat(retryWaitTime.getValue()).isEqualTo(Duration.ofMinutes(5));
+
+      // ... and then it should be applied to event projector
+      verify(eventApplier).apply(Lists.newArrayList(mockedFact));
+
+      // ... and the fact stream position should be updated as well
+      verify(subscribedProjection).factStreamPosition(FactStreamPosition.of(factId, 12));
+
+      // onCatchup()
+      // assume onCatchup got called on the fact observer...
+      factObserver.onCatchup();
+
+      // ... then make sure it got called on the subscribed projection
+      verify(subscribedProjection).onCatchup();
+
+      // onComplete()
+      // assume onComplete got called on the fact observer...
+      factObserver.onComplete();
+
+      // ... then make sure it got called on the subscribed projection
+      verify(subscribedProjection).onComplete();
+
+      // onError(...)
+      // assume onError got called on the fact observer...
+      Exception exc = new Exception();
+      factObserver.onError(exc);
+
+      // ... then make sure it got called on the subscribed projection
+      verify(subscribedProjection).onError(exc);
+    }
+
+    @Test
     void ignoresFastForwardIfBehindConsumedFact() {
       // INIT
       SubscribedProjection subscribedProjection = mock(SubscribedProjection.class);

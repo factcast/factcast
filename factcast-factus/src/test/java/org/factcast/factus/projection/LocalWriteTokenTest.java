@@ -16,6 +16,8 @@
 package org.factcast.factus.projection;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
 import java.util.concurrent.*;
@@ -29,14 +31,17 @@ class LocalWriteTokenTest {
   @Test
   void acquireWriteToken() throws Exception {
     // acquire lock
-    AutoCloseable lock = underTest.acquireWriteToken(Duration.ofSeconds(1));
+    WriterToken lock = underTest.acquireWriteToken(Duration.ofSeconds(1));
 
     // we have a lock when this is not null
     assertThat(lock).isNotNull();
+    assertTrue(lock.isValid());
 
     // test that we can unlock without exception
     lock.close();
+    assertFalse(lock.isValid());
   }
+
 
   @Test
   void cannotLockTwice() throws Exception {
