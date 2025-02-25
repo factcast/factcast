@@ -16,14 +16,17 @@
 package org.factcast.factus.redis;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.util.*;
+
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.projection.WriterToken;
-import org.redisson.api.*;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 
-@Slf4j
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class RedisWriterToken implements WriterToken {
   private final @NonNull RLock lock;
   private final Timer timer;
