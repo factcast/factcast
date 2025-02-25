@@ -17,7 +17,6 @@ package org.factcast.client.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import lombok.AccessLevel;
@@ -33,8 +32,7 @@ import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.util.ExceptionHelper;
 
 @Slf4j
-public class ResilientGrpcSubscription implements Subscription {
-
+public class ResilientGrpcSubscription extends AbstractSubscription {
   private final GrpcFactStore store;
   private final SubscriptionRequestTO originalRequest;
   private final FactObserver originalObserver;
@@ -42,7 +40,6 @@ public class ResilientGrpcSubscription implements Subscription {
 
   private final AtomicReference<FactStreamPosition> lastPosition = new AtomicReference<>();
   private final SubscriptionHolder currentSubscription = new SubscriptionHolder();
-  private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
   @Getter(value = AccessLevel.PACKAGE)
   private final AtomicReference<Throwable> onErrorCause = new AtomicReference<>();
@@ -85,14 +82,8 @@ public class ResilientGrpcSubscription implements Subscription {
   }
 
   @Override
-  public void close() {
-    if (!isClosed.getAndSet(true)) {
-      try {
-        closeAndDetachSubscription();
-      } finally {
-        isClosed.set(true);
-      }
-    }
+  public void internalClose() {
+    closeAndDetachSubscription();
   }
 
   @VisibleForTesting
@@ -139,7 +130,7 @@ public class ResilientGrpcSubscription implements Subscription {
 
   @SneakyThrows
   private void assertSubscriptionStateNotClosed() {
-    if (isClosed.get()) {
+    if (isSubscriptionClosed()) {
       Throwable cause = onErrorCause.get();
       if (cause != null) {
         // Re-throwing exception if there is a known reason for the closed subscription to
@@ -215,7 +206,7 @@ public class ResilientGrpcSubscription implements Subscription {
   class DelegatingFactObserver implements FactObserver {
     @Override
     public void onNext(@NonNull Fact element) {
-      if (!isClosed.get()) {
+      if (!isSubscriptionClosed()) {
         originalObserver.onNext(element);
         lastPosition.set(FactStreamPosition.from(element));
       } else {

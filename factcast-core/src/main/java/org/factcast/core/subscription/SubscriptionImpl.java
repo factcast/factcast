@@ -20,7 +20,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,27 +35,20 @@ import org.factcast.core.util.ExceptionHelper;
  */
 @RequiredArgsConstructor
 @Slf4j
-public class SubscriptionImpl implements InternalSubscription {
+public class SubscriptionImpl extends AbstractSubscription implements InternalSubscription {
 
   @NonNull final FactObserver observer;
-
-  @NonNull Runnable onClose = () -> {};
-
-  final AtomicBoolean closed = new AtomicBoolean(false);
 
   final CompletableFuture<Void> catchup = new CompletableFuture<>();
 
   final CompletableFuture<Void> complete = new CompletableFuture<>();
 
   @Override
-  public void close() {
-    if (!closed.getAndSet(true)) {
-      SubscriptionClosedException closedException =
-          new SubscriptionClosedException("Client closed the subscription");
-      catchup.completeExceptionally(closedException);
-      complete.completeExceptionally(closedException);
-      onClose.run();
-    }
+  public void internalClose() {
+    SubscriptionClosedException closedException =
+        new SubscriptionClosedException("Client closed the subscription");
+    catchup.completeExceptionally(closedException);
+    complete.completeExceptionally(closedException);
   }
 
   @Override
@@ -118,7 +110,7 @@ public class SubscriptionImpl implements InternalSubscription {
   @Override
   @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
   public void notifyCatchup() {
-    if (!closed.get()) {
+    if (!isSubscriptionClosed()) {
       observer.onCatchup();
       if (!catchup.isDone()) {
         catchup.complete(null);
@@ -128,14 +120,14 @@ public class SubscriptionImpl implements InternalSubscription {
 
   @Override
   public void notifyFastForward(@NonNull FactStreamPosition pos) {
-    if (!closed.get()) {
+    if (!isSubscriptionClosed()) {
       observer.onFastForward(pos);
     }
   }
 
   @Override
   public void notifyFactStreamInfo(@NonNull FactStreamInfo info) {
-    if (!closed.get()) {
+    if (!isSubscriptionClosed()) {
       observer.onFactStreamInfo(info);
     }
   }
@@ -143,7 +135,7 @@ public class SubscriptionImpl implements InternalSubscription {
   @Override
   @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
   public void notifyComplete() {
-    if (!closed.get()) {
+    if (!isSubscriptionClosed()) {
       observer.onComplete();
       if (!catchup.isDone()) {
         catchup.complete(null);
@@ -157,7 +149,7 @@ public class SubscriptionImpl implements InternalSubscription {
 
   @Override
   public void notifyError(@NonNull Throwable e) {
-    if (!closed.get()) {
+    if (!isSubscriptionClosed()) {
       if (!catchup.isDone()) {
         catchup.completeExceptionally(e);
       }
@@ -179,7 +171,7 @@ public class SubscriptionImpl implements InternalSubscription {
 
   @Override
   public void notifyElement(@NonNull Fact e) throws TransformationException {
-    if (!closed.get()) {
+    if (!isSubscriptionClosed()) {
       // note that this fact is already transformed
       observer.onNext(e);
     }
@@ -188,25 +180,6 @@ public class SubscriptionImpl implements InternalSubscription {
   @Override
   public void flush() {
     observer.flush();
-  }
-
-  @Override
-  public SubscriptionImpl onClose(Runnable e) {
-    Runnable formerOnClose = onClose;
-    onClose =
-        () -> {
-          tryRun(formerOnClose);
-          tryRun(e);
-        };
-    return this;
-  }
-
-  private void tryRun(Runnable e) {
-    try {
-      e.run();
-    } catch (Exception ex) {
-      log.error("While executing onClose:", ex);
-    }
   }
 
   public static SubscriptionImpl on(@NonNull FactObserver o) {
