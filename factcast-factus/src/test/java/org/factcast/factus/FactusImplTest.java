@@ -812,15 +812,15 @@ class FactusImplTest {
       when(ehFactory.create(subscribedProjection)).thenReturn(eventApplier);
 
       when(eventApplier.createFactSpecs())
-              .thenReturn(Collections.singletonList(mock(FactSpec.class)));
+          .thenReturn(Collections.singletonList(mock(FactSpec.class)));
       doAnswer(
               i -> {
                 Fact argument = Iterables.getLast((List<Fact>) (i.getArgument(0)));
                 subscribedProjection.factStreamPosition(FactStreamPosition.from(argument));
                 return null;
               })
-              .when(eventApplier)
-              .apply(any(List.class));
+          .when(eventApplier)
+          .apply(any(List.class));
 
       Subscription subscription = mock(Subscription.class);
       when(fc.subscribe(any(), any())).thenReturn(subscription);

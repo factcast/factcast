@@ -42,7 +42,6 @@ class LocalWriteTokenTest {
     assertFalse(lock.isValid());
   }
 
-
   @Test
   void cannotLockTwice() throws Exception {
     WriterToken first = underTest.acquireWriteToken(Duration.ofSeconds(1));
