@@ -15,35 +15,52 @@
  */
 package org.factcast.factus;
 
-import static org.factcast.factus.metrics.TagKeys.CLASS;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
-import io.micrometer.core.instrument.*;
-import java.lang.reflect.Constructor;
-import java.time.*;
-import java.util.*;
-import java.util.concurrent.atomic.*;
-import java.util.function.*;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
-import lombok.*;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.*;
+import org.factcast.core.Fact;
+import org.factcast.core.FactCast;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.subscription.*;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.factus.batch.*;
-import org.factcast.factus.event.*;
+import org.factcast.factus.batch.DefaultPublishBatch;
+import org.factcast.factus.batch.PublishBatch;
+import org.factcast.factus.event.EventConverter;
 import org.factcast.factus.event.EventObject;
-import org.factcast.factus.lock.*;
+import org.factcast.factus.lock.InLockedOperation;
 import org.factcast.factus.lock.Locked;
-import org.factcast.factus.metrics.*;
+import org.factcast.factus.lock.LockedOnSpecs;
+import org.factcast.factus.metrics.FactusMetrics;
+import org.factcast.factus.metrics.TimedOperation;
 import org.factcast.factus.projection.*;
-import org.factcast.factus.projector.*;
-import org.factcast.factus.snapshot.*;
+import org.factcast.factus.projector.Projector;
+import org.factcast.factus.projector.ProjectorFactory;
+import org.factcast.factus.snapshot.AggregateRepository;
+import org.factcast.factus.snapshot.ProjectionAndState;
+import org.factcast.factus.snapshot.SnapshotRepository;
+
+import javax.annotation.Nullable;
+import java.lang.reflect.Constructor;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static org.factcast.factus.metrics.TagKeys.CLASS;
 
 /** Single entry point to the factus API. */
 @RequiredArgsConstructor
@@ -176,37 +193,26 @@ public class FactusImpl implements Factus {
         new AbstractFactObserver(subscribedProjection, PROGRESS_INTERVAL, factusMetrics) {
 
           FactStreamPosition lastPositionApplied = null;
+          WriterToken subscriptionToken = token;
 
           @Override
           public void onNextFacts(@NonNull List<Fact> elements) {
-            assertTokenIsValid();
+            reAcquireTokenIfNeeded();
             handler.apply(elements);
             lastPositionApplied = FactStreamPosition.from(Iterables.getLast(elements));
           }
 
-          private void assertTokenIsValid() {
-            if (!token.isValid()) {
-
-              WriterToken token = subscribedProjection.acquireWriteToken(Duration.ofMinutes(5));
-              if (token != null) {
-
-                managedObjects.add(
-                        new AutoCloseable() {
-                          @Override
-                          public void close() {
-                            tryClose(token);
-                          }
-
-                          private void tryClose(AutoCloseable c) {
-                            try {
-                              c.close();
-                            } catch (Exception ignore) {
-                              // intentional
-                            }
-                          }
-                        });
+          private void reAcquireTokenIfNeeded() {
+            // If token is invalid will block the thread trying to re acquire the token and continue processing
+            if (!subscriptionToken.isValid()) {
+              while (!closed.get()) {
+                WriterToken newToken = subscribedProjection.acquireWriteToken(Duration.ofMinutes(5));
+                if (newToken != null) {
+                  subscriptionToken = newToken;
+                  managedObjects.add(() -> tryClose(subscriptionToken));
+                  break;
+                }
               }
-//              throw new IllegalStateException("WriterToken is no longer valid.");
             }
           }
 

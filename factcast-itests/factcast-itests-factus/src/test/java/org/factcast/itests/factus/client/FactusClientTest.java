@@ -50,7 +50,6 @@ import org.redisson.api.RedissonClient;
 import org.redisson.api.TransactionOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
-import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 import java.time.Duration;
 import java.util.*;

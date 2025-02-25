@@ -33,7 +33,7 @@ public class GrpcRequestMetadata {
   public static final String UNKNOWN = "unknown";
 
   @Setter(AccessLevel.PROTECTED)
-  Metadata headers;
+  Metadata headers = new Metadata();
 
   int clientMaxInboundMessageSize() {
     Preconditions.checkNotNull(
