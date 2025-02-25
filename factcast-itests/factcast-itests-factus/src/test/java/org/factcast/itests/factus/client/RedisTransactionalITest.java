@@ -191,12 +191,12 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
 
       // Manually close the token
       subscribedUserNames.token().close();
-      assertThat(subscribedUserNames.token().isValid()).isFalse();
+      Awaitility.await().atMost(Duration.ofSeconds(10)).until(() -> !subscribedUserNames.token().isValid());
 
       // New event and tries to re acquire token
       factus.publish(new UserCreated(UUID.randomUUID(), "hugo"));
 
-      assertThat(subscribedUserNames.token().isValid()).isTrue();
+      Awaitility.await().atMost(Duration.ofSeconds(10)).until(() -> subscribedUserNames.token().isValid());
     }
 
     @SneakyThrows

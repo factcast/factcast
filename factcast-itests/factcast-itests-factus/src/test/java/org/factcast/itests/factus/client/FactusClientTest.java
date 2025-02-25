@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.Value;
@@ -744,7 +745,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
     factus.publish(new UserDeleted(UUID.randomUUID()));
 
-    assertThat(subscribedUserNames.isValid()).isFalse();
+    assertThat(subscribedUserNames.token().isValid()).isFalse();
     factus.subscribeAndBlock(subscribedUserNames);
     try {
       // it should acquire the lock
@@ -753,12 +754,19 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       throw new RuntimeException(e);
     }
     // the initial lock was closed
-    Awaitility.await().until(() -> !subscribedUserNames.isValid()); // someone locked it
+    Awaitility.await().until(() -> !subscribedUserNames.token().isValid()); // someone locked it
   }
 
+  @Getter
   static class OverrideAndFailSubscribedUserNames extends SubscribedUserNames {
-
     CountDownLatch latch = new CountDownLatch(1);
+    WriterToken token;
+
+    @Override
+    public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
+      token = super.acquireWriteToken(maxWait);
+      return token;
+    }
 
     @Override
     public void apply(UserDeleted deleted, @Nullable String signee) {
@@ -775,22 +783,24 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
     factus.publish(new UserCreated(UUID.randomUUID(), "name"));
 
-    // Initially the lock is acquired when subscribing
-    assertThat(subscribedUserNames.isValid()).isFalse();
+    //Initially the lock is acquired when subscribing
+    assertThat(subscribedUserNames.token()).isNull();
     factus.subscribeAndBlock(subscribedUserNames);
 
-    assertThat(subscribedUserNames.isValid()).isTrue();
+    assertThat(subscribedUserNames.token().isValid()).isTrue();
     subscribedUserNames.latch.await();
 
     // If the lock expires, then, we should try to re-acquire the lock instead of throwing exception
     subscribedUserNames.token.close();
-    assertThat(subscribedUserNames.isValid()).isFalse();
+    assertThat(subscribedUserNames.token().isValid()).isFalse();
+
     factus.publish(new UserCreated(UUID.randomUUID(), "name"));
 
     // The token was re-acquired
-    Awaitility.await().until(subscribedUserNames::isValid);
+    Awaitility.await().until(() -> subscribedUserNames.token().isValid());
   }
 
+  @Getter
   static class TokenExposedSubscribedUserNames extends SubscribedUserNames {
     CountDownLatch latch = new CountDownLatch(1);
     WriterToken token;

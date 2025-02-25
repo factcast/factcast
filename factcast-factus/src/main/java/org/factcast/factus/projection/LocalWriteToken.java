@@ -32,15 +32,21 @@ public class LocalWriteToken {
 
     do {
       try {
-        if (lock.tryAcquire(maxWait.toMillis(), TimeUnit.MILLISECONDS)) return lock::release;
+        if (lock.tryAcquire(maxWait.toMillis(), TimeUnit.MILLISECONDS)) return new WriterToken() {
+          @Override
+          public void close() throws Exception {
+            lock.release();
+          }
+
+          @Override
+            public boolean isValid() {
+            return lock.availablePermits() == 0;
+          }
+        };
       } catch (InterruptedException e) {
         // nobody cares
       }
     } while (System.currentTimeMillis() < end);
     return null;
-  }
-
-  public boolean isValid() {
-    return lock.availablePermits() == 0;
   }
 }
