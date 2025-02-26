@@ -179,11 +179,11 @@ public class SchemaCacheTest {
       // ARRANGE
 
       // we expect two on calls, one for the deletion, and one for the insertion.
-      CountDownLatch wasOned = new CountDownLatch(2);
+      CountDownLatch wasNotified = new CountDownLatch(2);
       Mockito.doAnswer(
               spy -> {
                 spy.callRealMethod();
-                wasOned.countDown();
+                wasNotified.countDown();
                 return null;
               })
           .when(listener)
@@ -217,7 +217,7 @@ public class SchemaCacheTest {
       // ASSERT
       // on-call then invalidates schemaNearCache
       assertTrue(
-          wasOned.await(TIMEOUT, TimeUnit.SECONDS),
+          wasNotified.await(TIMEOUT, TimeUnit.SECONDS),
           "on() was not triggered by SchemaStoreChangeSignal");
       // absent schema not cached anymore
       assertDoesNotThrow(() -> fc.publish(v3));
