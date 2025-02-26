@@ -171,6 +171,34 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
           .isFalse();
     }
 
+    @Test
+    void testTokenReAcquired_Redis() throws Exception {
+      org.factcast.itests.factus.client.RedisTransactionalITest
+              .TxRedissonSubscribedUserNamesTokenExposed
+          subscribedUserNames =
+              new org.factcast.itests.factus.client.RedisTransactionalITest
+                  .TxRedissonSubscribedUserNamesTokenExposed(redissonClient);
+
+      factus.publish(new UserCreated(UUID.randomUUID(), "hugo"));
+
+      // The projection doesnt have a token yet
+      assertThat(subscribedUserNames.token()).isNull();
+      factus.subscribe(subscribedUserNames);
+
+      // The projection acquiered a token and
+      subscribedUserNames.latch.await();
+      assertThat(subscribedUserNames.token().isValid()).isTrue();
+
+      // Manually close the token
+      subscribedUserNames.token().close();
+      Awaitility.await().until(() -> !subscribedUserNames.token().isValid());
+
+      // New event and tries to re acquire token
+      factus.publish(new UserCreated(UUID.randomUUID(), "hugo"));
+
+      Awaitility.await().until(() -> subscribedUserNames.token().isValid());
+    }
+
     @SneakyThrows
     @Test
     void bulkAppliesInTransaction3() {
@@ -329,6 +357,27 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     @Override
     protected void apply(UserCreated created, RTransaction tx) {
       throw new IllegalArgumentException("user should be in map but wasnt");
+    }
+  }
+
+  @Getter
+  @ProjectionMetaData(revision = 1)
+  @RedisTransactional(bulkSize = 1)
+  static class TxRedissonSubscribedUserNamesTokenExposed
+      extends TrackingTxRedissonSubscribedUserNames {
+
+    private CountDownLatch latch = new CountDownLatch(1);
+    private WriterToken token;
+
+    public TxRedissonSubscribedUserNamesTokenExposed(RedissonClient redisson) {
+      super(redisson);
+    }
+
+    @Override
+    public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
+      token = super.acquireWriteToken(maxWait);
+      latch.countDown();
+      return token;
     }
   }
 
