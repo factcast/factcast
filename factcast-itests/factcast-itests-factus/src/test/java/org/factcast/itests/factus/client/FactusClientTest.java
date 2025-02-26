@@ -601,7 +601,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
     static final String ns = "ns";
     static final String type = "foo";
 
-    transient int factsConsumed = 0;
+    transient int factsConsumed;
 
     @HandlerFor(ns = ns, type = type)
     void apply(Fact f) {
@@ -613,7 +613,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
     static final String ns = "ns";
     static final String type = "foo";
 
-    transient int factsConsumed = 0;
+    transient int factsConsumed;
 
     @HandlerFor(ns = ns, type = type)
     void apply(Fact f) {
@@ -746,8 +746,8 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   static class ProjectionWithMutlipleMetaValues extends LocalSubscribedProjection {
-    Collection<String> signee = null;
-    List<String> affiliates = null;
+    Collection<String> signee;
+    List<String> affiliates;
 
     @Handler
     public void apply(UserCreated deleted, @Meta("affiliates") List<String> metaAffiliates) {

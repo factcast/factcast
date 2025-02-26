@@ -51,7 +51,7 @@ public class PgFact implements Fact {
 
   @Getter @NonNull final String jsonPayload;
 
-  @JsonProperty MetaMap meta = null;
+  @JsonProperty MetaMap meta;
 
   /**
    * @param key

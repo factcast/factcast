@@ -43,8 +43,11 @@ public class FactTransformers {
     } else {
 
       Set<Integer> versions = requested.get(ns, type);
-      if (versions.isEmpty()) return null;
-      else return new TransformationRequest(e, versions);
+      if (versions.isEmpty()) {
+        return null;
+      } else {
+        return new TransformationRequest(e, versions);
+      }
     }
   }
 

@@ -39,11 +39,18 @@ public class FactValidation {
     List<String> errors = new LinkedList<>();
     facts.forEach(
         f -> {
-          if (lacksRequiredNamespace(f))
+          if (lacksRequiredNamespace(f)) {
             errors.add("Fact " + f.id() + " lacks required namespace.");
-          if (lacksRequiredId(f)) errors.add("Fact " + f.jsonHeader() + " lacks required id.");
-          if (lacksRequiredType(f)) errors.add("Fact " + f.jsonHeader() + " lacks required type.");
+          }
+          if (lacksRequiredId(f)) {
+            errors.add("Fact " + f.jsonHeader() + " lacks required id.");
+          }
+          if (lacksRequiredType(f)) {
+            errors.add("Fact " + f.jsonHeader() + " lacks required type.");
+          }
         });
-    if (!errors.isEmpty()) throw new FactValidationException(errors);
+    if (!errors.isEmpty()) {
+      throw new FactValidationException(errors);
+    }
   }
 }

@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import org.assertj.core.api.Assertions;
 import org.factcast.store.registry.transformation.cache.TransformationCache;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,7 +47,7 @@ class TransformationCacheCompactorTest {
 
     uut.compact();
 
-    org.assertj.core.api.Assertions.assertThat(cap.getValue().truncatedTo(ChronoUnit.DAYS))
+    Assertions.assertThat(cap.getValue().truncatedTo(ChronoUnit.DAYS))
         .isNotNull()
         .isEqualTo(ZonedDateTime.now().minusDays(RETENTION_DAYS).truncatedTo(ChronoUnit.DAYS));
   }

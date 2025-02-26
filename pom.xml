@@ -104,7 +104,7 @@
     <mockito.version>5.15.2</mockito.version>
     <junit-jupiter.version>5.12.0</junit-jupiter.version>
     <lombok.version>1.18.36</lombok.version>
-    <slf4j-api.version>2.0.16</slf4j-api.version>
+    <slf4j-api.version>2.0.17</slf4j-api.version>
     <!--suppress UnresolvedMavenProperty -->
     <etc>${session.executionRootDirectory}/src/etc</etc>
     <spring-boot.version>3.4.2</spring-boot.version>
@@ -119,9 +119,9 @@
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <mockk.version>1.13.16</mockk.version>
     <redisson.version>3.44.0</redisson.version>
-    <aws-sdk.version>2.30.18</aws-sdk.version>
+    <aws-sdk.version>2.30.28</aws-sdk.version>
     <graaljs.version>24.1.2</graaljs.version>
-    <shedlock.version>6.2.0</shedlock.version>
+    <shedlock.version>6.3.0</shedlock.version>
     <byte-buddy.version>1.17.1</byte-buddy.version>
     <skipUnitTests>false</skipUnitTests>
     <postgres.version>15</postgres.version>
@@ -764,6 +764,40 @@
                 </configuration>
               </execution>
             </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <!-- This profile is VERY experimental and currently definitely breaks
+        stuff. Please do not consider using it in an automated fashion, without checking
+        the outcome from its execution. -->
+      <id>openrewrite</id>
+      <activation>
+        <property>
+          <name>rewrite</name>
+        </property>
+      </activation>
+
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.openrewrite.maven</groupId>
+            <artifactId>rewrite-maven-plugin</artifactId>
+            <version>6.2.1</version>
+            <configuration>
+              <activeRecipes>
+                <recipe>org.openrewrite.staticanalysis.CodeCleanup</recipe>
+              </activeRecipes>
+              <failOnDryRunResults>true</failOnDryRunResults>
+            </configuration>
+            <dependencies>
+              <dependency>
+                <groupId>org.openrewrite.recipe</groupId>
+                <artifactId>rewrite-static-analysis</artifactId>
+                <version>2.3.0</version>
+              </dependency>
+            </dependencies>
           </plugin>
         </plugins>
       </build>

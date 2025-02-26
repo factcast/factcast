@@ -41,7 +41,9 @@ public abstract class BatchingFactObserver implements FactObserver {
   @Override
   public void onNext(@NonNull Fact element) {
     buffer.add(element);
-    if (buffer.size() >= maxNumberOfFactsToBuffer) flush();
+    if (buffer.size() >= maxNumberOfFactsToBuffer) {
+      flush();
+    }
   }
 
   @Override

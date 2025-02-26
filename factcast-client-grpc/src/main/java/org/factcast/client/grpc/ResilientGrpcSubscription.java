@@ -141,15 +141,16 @@ public class ResilientGrpcSubscription implements Subscription {
   private void assertSubscriptionStateNotClosed() {
     if (isClosed.get()) {
       Throwable cause = onErrorCause.get();
-      if (cause != null)
+      if (cause != null) {
         // Re-throwing exception if there is a known reason for the closed subscription to
         // consistently reflect underlying problems like a StatusRuntimeException (e.g.
         // "PERMISSION_DENIED"). Otherwise, sometimes underlying problems are hidden behind a
         // generic SubscriptionClosedException, see https://github.com/factcast/factcast/issues/2949
         throw cause;
-      else
+      } else {
         throw new SubscriptionClosedException(
             "Subscription already closed  (" + originalRequest + ")");
+      }
     }
   }
 
@@ -189,7 +190,9 @@ public class ResilientGrpcSubscription implements Subscription {
   private void closeAndDetachSubscription() {
     Subscription current = currentSubscription.getAndSet(null);
     try {
-      if (current != null) current.close();
+      if (current != null) {
+        current.close();
+      }
     } catch (Exception justLog) {
       log.warn("Ignoring Exception while closing a subscription ({})", originalRequest, justLog);
     }
@@ -283,8 +286,9 @@ public class ResilientGrpcSubscription implements Subscription {
             try {
               long now = System.currentTimeMillis();
               long waitTime = maxPause == 0 ? 0 : end - now;
-              if (maxPause != 0 && waitTime < 1)
+              if (maxPause != 0 && waitTime < 1) {
                 throw new TimeoutException("Timeout while acquiring subscription");
+              }
 
               currentSubscription.wait(waitTime);
             } catch (InterruptedException ignore) {

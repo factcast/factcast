@@ -36,10 +36,10 @@ public class FactCastGrpcClientProperties implements InitializingBean {
 
   private boolean enableFastForward = true;
 
-  private String id = null;
+  private String id;
 
-  private String user = null;
-  private String password = null;
+  private String user;
+  private String password;
 
   /**
    * Ignores and skips duplicate exceptions during publishing (does not include conditional
@@ -63,7 +63,7 @@ public class FactCastGrpcClientProperties implements InitializingBean {
    *
    * @since 0.5.7
    */
-  private boolean ignoreDuplicateFacts = false;
+  private boolean ignoreDuplicateFacts;
 
   @NestedConfigurationProperty
   private ResilienceConfiguration resilience = new ResilienceConfiguration();
