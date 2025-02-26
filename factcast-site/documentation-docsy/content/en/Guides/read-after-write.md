@@ -16,7 +16,7 @@ before delving into this guide.
 
 ## Problem statement
 
-Factus its projections follow the CQRS Pattern, which - next to plenty of other advantages - provides
+Factus and its projections follow the CQRS Pattern, which - next to plenty of other advantages - provides
 the application with a good way to make use of _Eventual Consistency_.
 Depending on the Projection you use, it can be updated
 
@@ -29,14 +29,14 @@ Depending on the Projection you use, it can be updated
 Eventual consistency is a great way of drastically improving scalability of your application in scenarios,
 where the exact moment of an update of the model is not important.
 
-Consider building a model that provides the number of currently logged in users for your social network application.
+Consider building a model that provides the number of currently logged-in users for your social network application.
 It might be used on every web-page (in the header) and also will be publicly available, so that you really would
 not want each request to go to the factcast server and find out, if the count needs to be updated.
-
 Apart from that being a significant scalability (may DoS) risk, it really is not important for that number
-to be exact. If it changes with a (undefined, from single digit ms up to seconds) latency when somebody logs in, nobody
-will care.
-This latency, from the moment when a potentially interesting fact is published up to when a callbacl on the handler
+to be exact. If it changes with a (undefined, from single digit ms up to whatever you choose) latency when
+somebody logs in, nobody will care.
+
+This latency, from the moment when a potentially interesting fact is published up to when a callback on the handler
 method of a projection is invoked, we call the **window of inconsistency**.
 
 #### Snapshot / Aggregate
@@ -132,7 +132,7 @@ defer his query after the write _until the relevant change has been applied_.
 This can be done using the `factus.waitFor(mySubscribedProjection, factIdOfTheFactToWaitFor [, duration])` method.
 In order to achieve this, you'd need to return the id of the fact published to the client and make it
 come back for a read with this id (or a token that you asssociate with this id).
-This way, you could implement your queries to wait for model to get consistent to the change represented by
+This way, you could implement your queries to wait for the model to get consistent to the change represented by
 the id.
 
 For in-depth discussion of how to use this approach,
