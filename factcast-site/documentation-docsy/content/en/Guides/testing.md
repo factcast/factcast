@@ -64,7 +64,6 @@ only carries the user ID to remove.
 Here is a possible projection using the FactCast low-level API:
 
 ```java
-
 @Slf4j
 public class UserEmailsProjection {
 
@@ -136,20 +135,19 @@ check the customized view of the internal map.
 Let's look at an example for the `UserAdded` fact:
 
 ```java
-
 @Test
 void whenHandlingUserAddedFactEmailIsAdded() {
     // arrange
     String jsonPayload = String.format(
-            "{\"id\":\"%s\", \"email\": \"%s\"}",
-            UUID.randomUUID(),
-            "user@bar.com");
+        "{\"id\":\"%s\", \"email\": \"%s\"}",
+        UUID.randomUUID(),
+        "user@bar.com");
     Fact userAdded = Fact.builder()
-            .id(UUID.randomUUID())
-            .ns("user")
-            .type("UserAdded")
-            .version(1)
-            .build(jsonPayload);
+        .id(UUID.randomUUID())
+        .ns("user")
+        .type("UserAdded")
+        .version(1)
+        .build(jsonPayload);
 
     // act
     uut.handleUserAdded(userAdded);
@@ -164,8 +162,7 @@ Note the use of the convenient builder the `Fact` class is providing.
 
 Since the focus of this unit test is on `handleUserAdded`, we execute the method directly.
 [The full unit test](https://github.com/factcast/factcast/tree/master/factcast-itests/factcast-itests-doc/src/test/java/org/factcast/itests/docexample/factcastlowlevel/UserEmailsProjectionTest.java)
-also contains a test for the dispatching logic of the `apply` method, as well as a similar test for the
-`handleUserRemoved` method.
+also contains a test for the dispatching logic of the `apply` method, as well as a similar test for the `handleUserRemoved` method.
 
 Checking your projection's logic should preferably be done with unit tests in the first place, even though you might
 also want to add an integration test to prove it to work in conjunction with its collaborators.
@@ -208,13 +205,11 @@ Our integration test builds upon the previous unit test example. This time howev
 `UserEmailsProjection` can also be updated by a real FactCast server:
 
 ```java
-
 @SpringBootTest
 @ExtendWith(FactCastExtension.class)
 class UserEmailsProjectionITest {
 
-    @Autowired
-    FactCast factCast;
+    @Autowired FactCast factCast;
 
     private final UserEmailsProjection uut = new UserEmailsProjection();
 
@@ -230,28 +225,28 @@ class UserEmailsProjectionITest {
     void projectionHandlesUserAddedFact() {
         UUID userId = UUID.randomUUID();
         Fact userAdded = Fact.builder()
-                .id(UUID.randomUUID())
-                .ns("user")
-                .type("UserAdded")
-                .version(1)
-                .build(String.format(
-                        "{\"id\":\"%s\", \"email\": \"%s\"}",
-                        userId,
-                        "user@bar.com"));
+            .id(UUID.randomUUID())
+            .ns("user")
+            .type("UserAdded")
+            .version(1)
+            .build(String.format(
+                "{\"id\":\"%s\", \"email\": \"%s\"}",
+                userId,
+                "user@bar.com"));
 
         factCast.publish(userAdded);
 
         SubscriptionRequest subscriptionRequest = SubscriptionRequest
-                .catchup(FactSpec.ns("user").type("UserAdded"))
-                .or(FactSpec.ns("user").type("UserRemoved"))
-                .fromScratch();
+            .catchup(FactSpec.ns("user").type("UserAdded"))
+            .or(FactSpec.ns("user").type("UserRemoved"))
+            .fromScratch();
 
         factCast.subscribe(subscriptionRequest, new FactObserverImpl()).awaitComplete();
 
         Set<String> userEmails = uut.getUserEmails();
         assertThat(userEmails).hasSize(1).containsExactly("user@bar.com");
-    }
-//...
+  }
+  //...
 ```
 
 The previously mentioned `FactCastExtension` starts the FactCast server and the Postgres database _once_ before the
@@ -270,22 +265,18 @@ use the same scenario as before, an `UserEmailsProjection` which we will ask for
 
 These are the events we need to handle:
 
-- [
-  `UserAdded`](https://github.com/factcast/factcast/tree/master/factcast-itests/factcast-itests-doc/src/main/java/org/factcast/itests/docexample/factus/event/UserAdded.java)
+- [`UserAdded`](https://github.com/factcast/factcast/tree/master/factcast-itests/factcast-itests-doc/src/main/java/org/factcast/itests/docexample/factus/event/UserAdded.java)
   and
-- [
-  `UserRemoved`](https://github.com/factcast/factcast/tree/master/factcast-itests/factcast-itests-doc/src/main/java/org/factcast/itests/docexample/factus/event/UserRemoved.java)
+- [`UserRemoved`](https://github.com/factcast/factcast/tree/master/factcast-itests/factcast-itests-doc/src/main/java/org/factcast/itests/docexample/factus/event/UserRemoved.java)
   .
 
-The `UserAdded` event contains two properties, the user ID and the email whereas `UserRemoved` only contains the user
-ID.
+The `UserAdded` event contains two properties, the user ID and the email whereas `UserRemoved` only contains the user ID.
 
 ### An Example Event
 
 To get an idea of how the events are defined, let's have a look inside `UserAdded`:
 
 ```java
-
 @Getter
 @Specification(ns = "user", type = "UserAdded", version = 1)
 public class UserAdded implements EventObject {
@@ -294,8 +285,7 @@ public class UserAdded implements EventObject {
     private String email;
 
     // used by Jackson deserializer
-    protected UserAdded() {
-    }
+    protected UserAdded(){}
 
     public static UserAdded of(UUID userId, String email) {
         UserAdded fact = new UserAdded();
@@ -307,16 +297,14 @@ public class UserAdded implements EventObject {
     @Override
     public Set<UUID> aggregateIds() {
         return Collections.emptySet();
-    }
+      }
 }
 ```
 
 We create a Factus compatible event by implementing the `EventObject` interface and supplying the fact details via
 the `@Specification` annotation. The event itself contains the properties `userId` and `email` which are simply fields
-of the `UserAdded` class. The `protected` no-args constructor is used by Jackson when deserializing from JSON back to a
-POJO.
-The `of` factory method is used by application- and test code to create an `UserAdded` event. For more details on how to
-define a Factus event read on
+of the `UserAdded` class. The `protected` no-args constructor is used by Jackson when deserializing from JSON back to a POJO.
+The `of` factory method is used by application- and test code to create an `UserAdded` event. For more details on how to define a Factus event read on
 [here]({{< ref "/usage/factus/introduction">}}).
 
 ### The User Emails Projection
@@ -358,7 +346,6 @@ The unit test for this projection tests each handler method individually. As an 
 the `UserAdded` event handler:
 
 ```java
-
 @Test
 void whenHandlingUserAddedEventEmailIsAdded() {
     UUID someUserId = UUID.randomUUID();
@@ -382,13 +369,11 @@ against a real FactCast server.
 Here is an example:
 
 ```java
-
 @SpringBootTest
 @ExtendWith(FactCastExtension.class)
 public class UserEmailsProjectionITest {
 
-    @Autowired
-    Factus factus;
+    @Autowired Factus factus;
 
     @Test
     void projectionHandlesUserAddedEvent() {
@@ -401,7 +386,7 @@ public class UserEmailsProjectionITest {
         Set<String> emails = uut.getEmails();
         assertThat(emails).hasSize(1).containsExactly("user@bar.com");
     }
-//...
+    //...
 ```
 
 The annotations of the test class are identical to the integration test shown for the low-level API. Hence, we only
