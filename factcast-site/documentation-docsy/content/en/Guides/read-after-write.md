@@ -136,4 +136,4 @@ This way, you could implement your queries to wait for model to get consistent t
 the id.
 
 For in-depth discussion of how to use this approach,
-see [Projections](/usage/factus/projections/types/subscribed-projection/)
+see [Subscribed Projections](/usage/factus/projections/types/subscribed-projection/)
