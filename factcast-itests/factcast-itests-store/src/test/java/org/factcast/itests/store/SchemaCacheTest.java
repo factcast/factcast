@@ -53,7 +53,7 @@ public class SchemaCacheTest {
 
   @Nested
   @DirtiesContext
-  class whenDeletingFromSchemaStore {
+  class WhenDeletingFromSchemaStore {
     @Test
     void schemaCacheIsInvalidated() throws Exception {
       CountDownLatch wasOned = new CountDownLatch(1);
@@ -102,7 +102,7 @@ public class SchemaCacheTest {
 
   @Nested
   @DirtiesContext
-  class whenUpdatingTransformationStore {
+  class WhenUpdatingTransformationStore {
     @Test
     void schemaCacheIsInvalidated() throws Exception {
       CountDownLatch wasOned = new CountDownLatch(1);
