@@ -152,24 +152,10 @@ public class FactusImpl implements Factus {
       if (token != null) {
         log.info("Acquired writer token for {}", subscribedProjection.getClass());
         Subscription subscription = doSubscribe(subscribedProjection, token);
-        // close token & subscription on shutdown
-        managedObjects.add(
-            new AutoCloseable() {
-              @Override
-              public void close() {
-                tryClose(subscription);
-                tryClose(token);
-              }
-
-              private void tryClose(AutoCloseable c) {
-                try {
-                  c.close();
-                } catch (Exception ignore) {
-                  // intentional
-                }
-              }
-            });
-        return new TokenAwareSubscription(subscription, token);
+        subscription.onClose(() -> tryClose(token)); // close token on subscription closing
+        // close subscription on shutdown
+        managedObjects.add(() -> tryClose(subscription));
+        return subscription;
       } else {
         log.trace(
             "failed to acquire writer token for {}. Will keep trying.",
@@ -507,6 +493,15 @@ public class FactusImpl implements Factus {
   @NonNull
   public FactStore store() {
     return fc.store();
+  }
+
+  private void tryClose(AutoCloseable c) {
+    try {
+      log.trace("Closing AutoCloseable for class {}", c.getClass());
+      c.close();
+    } catch (Exception e) {
+      log.warn("Error while closing AutoCloseable for {}", c.getClass(), e);
+    }
   }
 
   abstract static class IntervalSnapshotter<P extends SnapshotProjection>
