@@ -22,6 +22,7 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.*;
 import org.factcast.core.*;
+import org.factcast.store.internal.notification.SchemaStoreChangeNotification;
 import org.factcast.store.registry.PgSchemaStoreChangeListener;
 import org.factcast.test.IntegrationTest;
 import org.json.*;
@@ -172,10 +173,22 @@ public class SchemaCacheTest {
 
   @Nested
   @DirtiesContext
-  class whenInsertingIntoSchemaStore {
+  class WhenInsertingIntoSchemaStore {
     @Test
     void cachedEmptyOptionalInSchemaCacheIsInvalidated() throws Exception {
       // ARRANGE
+
+      // we expect two on calls, one for the deletion, and one for the insertion.
+      CountDownLatch wasOned = new CountDownLatch(2);
+      Mockito.doAnswer(
+              spy -> {
+                spy.callRealMethod();
+                wasOned.countDown();
+                return null;
+              })
+          .when(listener)
+          .on(any(SchemaStoreChangeNotification.class));
+
       String schemaV3 =
           StreamUtils.copyToString(
               new ClassPathResource("/example-registry/users/UserCreated/3/schema.json")
@@ -187,24 +200,13 @@ public class SchemaCacheTest {
               UUID.randomUUID(),
               3,
               "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"v3\"}");
-
+      // this will cause one callback
       jdbcTemplate.update(
           String.format(
               "DELETE FROM schemastore WHERE type='%s' AND version=%d", v3.type(), v3.version()));
 
-      // just making sure...
+      // just making sure... there is no schema in there
       assertThrows(FactValidationException.class, () -> fc.publish(v3));
-
-      // after the DELETE, to not capture THAT signal (or the resulting on-call)
-      CountDownLatch wasOned = new CountDownLatch(1);
-      Mockito.doAnswer(
-              spy -> {
-                spy.callRealMethod();
-                wasOned.countDown();
-                return null;
-              })
-          .when(listener)
-          .on(any());
 
       // ACT
       jdbcTemplate.update(
