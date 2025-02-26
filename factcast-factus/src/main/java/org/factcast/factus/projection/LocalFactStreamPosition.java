@@ -19,7 +19,7 @@ import lombok.NonNull;
 import org.factcast.core.FactStreamPosition;
 
 final class LocalFactStreamPosition {
-  private FactStreamPosition factStreamPosition = null;
+  private FactStreamPosition factStreamPosition;
 
   public FactStreamPosition factStreamPosition() {
     return factStreamPosition;

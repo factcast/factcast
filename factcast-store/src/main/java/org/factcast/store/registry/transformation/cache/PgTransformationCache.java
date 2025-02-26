@@ -261,7 +261,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
         .execute(
             status -> {
               // we're using share mode here in order not to block reads from happening
-              jdbcTemplate.execute("LOCK TABLE transformationcache IN SHARE MODE");
+              jdbcTemplate.execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
               o.run();
               return null;
             });

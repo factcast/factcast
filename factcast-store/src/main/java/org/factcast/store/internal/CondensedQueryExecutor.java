@@ -122,14 +122,11 @@ class CondensedQueryExecutor {
   @VisibleForTesting
   boolean mightMatch(String ns, String type) {
     return ns == null
-        ||
-        // listens to this exact type
+        || // listens to this exact type
         interests.contains(ns + ":" + type)
-        ||
-        // listens to the whole namespace
+        || // listens to the whole namespace
         interests.contains(ns)
-        ||
-        // is a catchall
+        || // is a catchall
         interests.contains("*");
   }
 

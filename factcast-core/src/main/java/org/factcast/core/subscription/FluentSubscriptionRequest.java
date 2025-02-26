@@ -15,10 +15,7 @@
  */
 package org.factcast.core.subscription;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
@@ -35,11 +32,11 @@ import org.factcast.core.spec.FactSpec;
 @Getter
 class FluentSubscriptionRequest implements SubscriptionRequest {
 
-  boolean ephemeral = false;
+  boolean ephemeral;
 
   long maxBatchDelayInMs = SubscriptionRequestTO.DEFAULT_MAX_BATCH_DELAY_IN_MS;
 
-  long keepaliveIntervalInMs = 0;
+  long keepaliveIntervalInMs;
 
   boolean streamInfo;
 
@@ -157,8 +154,8 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
   }
 
   @Override
-  public java.util.Optional<UUID> startingAfter() {
-    return java.util.Optional.ofNullable(startingAfter);
+  public Optional<UUID> startingAfter() {
+    return Optional.ofNullable(startingAfter);
   }
 
   @Override

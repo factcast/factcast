@@ -97,7 +97,7 @@ public class FactValidationAspectTest {
   void extractMessagesLimits() {
     List<FactValidationError> manyErrors = new ArrayList<>();
     for (int i = 0; i < 1000; i++) {
-      manyErrors.add(new FactValidationError("meh " + (i)));
+      manyErrors.add(new FactValidationError("meh " + i));
     }
     List<String> actual = FactValidationAspect.extractMessages(manyErrors);
     assertThat(actual).hasSize(FactValidationAspect.MAX_ERROR_MESSAGES + 1);
@@ -107,7 +107,7 @@ public class FactValidationAspectTest {
   void extractMessagesLimitsAndAddsMessage() {
     List<FactValidationError> manyErrors = new ArrayList<>();
     for (int i = 0; i < 1000; i++) {
-      manyErrors.add(new FactValidationError("meh " + (i)));
+      manyErrors.add(new FactValidationError("meh " + i));
     }
     List<String> actual = FactValidationAspect.extractMessages(manyErrors);
     assertThat(actual)

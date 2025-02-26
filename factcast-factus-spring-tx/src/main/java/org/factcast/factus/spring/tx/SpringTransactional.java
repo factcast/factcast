@@ -58,5 +58,7 @@ public @interface SpringTransactional {
 
       return opts;
     }
+
+    private Defaults() {}
   }
 }

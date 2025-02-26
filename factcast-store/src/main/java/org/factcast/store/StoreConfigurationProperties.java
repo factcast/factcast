@@ -82,7 +82,7 @@ public class StoreConfigurationProperties implements InitializingBean {
    * If validation is enabled, this controls if transformed facts are persistently cached in
    * postgres, rather than in memory. (Defaults to false)
    */
-  boolean persistentTransformationCache = false;
+  boolean persistentTransformationCache;
 
   /**
    * when using the inmem impl of the transformation cache, this is the max number of entries
@@ -97,13 +97,13 @@ public class StoreConfigurationProperties implements InitializingBean {
    * missing meta-data or due to missing schema in the registry) are allowed to be published or
    * should be rejected. (Defaults to false)
    */
-  boolean allowUnvalidatedPublish = false;
+  boolean allowUnvalidatedPublish;
 
   /**
    * If a schema can be replaced by an updated version from the registry (not a good idea in
    * production environments)
    */
-  boolean allowSchemaReplace = false;
+  boolean allowSchemaReplace;
 
   /**
    * Controls how long to block waiting for new notifications from the database (Postgres LISTEN/
@@ -136,7 +136,7 @@ public class StoreConfigurationProperties implements InitializingBean {
    * like schemareg). That makes it possible to wipe the database between integration tests in order
    * to prevent side-effects.
    */
-  boolean integrationTestMode = false;
+  boolean integrationTestMode;
 
   /** tail indexing feature state */
   boolean tailIndexingEnabled = true;
@@ -189,14 +189,14 @@ public class StoreConfigurationProperties implements InitializingBean {
    * <p>You can still use a persistent schema store and transformation cache, however they will work
    * in read-only mode. Additionally, liquibase is disabled.
    */
-  boolean readOnlyModeEnabled = false;
+  boolean readOnlyModeEnabled;
 
   /**
    * used to direct the enumerateTypes/Namespaces calls against the store directly, thus bypass the
    * schema-registry even it is configured. This is useful, if you want to see ns/types that are not
    * yet found in the registry, but exist in the factStore.
    */
-  boolean enumerationDirectModeEnabled = false;
+  boolean enumerationDirectModeEnabled;
 
   public boolean isSchemaRegistryConfigured() {
     return schemaRegistryUrl != null;

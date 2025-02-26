@@ -90,7 +90,9 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
   public List<Fact> transform(@NonNull List<TransformationRequest> req)
       throws TransformationException {
 
-    if (req.isEmpty()) return Collections.emptyList();
+    if (req.isEmpty()) {
+      return Collections.emptyList();
+    }
 
     try {
       return CompletableFuture.supplyAsync(
@@ -127,8 +129,9 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
                         c -> {
                           Fact e = c.left().toTransform();
                           Fact cached = found.get(e.id());
-                          if (cached != null) return cached;
-                          else {
+                          if (cached != null) {
+                            return cached;
+                          } else {
                             return doTransform(e, c.right());
                           }
                         })

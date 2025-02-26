@@ -225,7 +225,7 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
       super(client);
     }
 
-    int stateModifications = 0;
+    int stateModifications;
 
     @Override
     public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {
@@ -240,7 +240,7 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
       super(dynamoDbClient);
     }
 
-    int stateModifications = 0;
+    int stateModifications;
 
     @Override
     public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {

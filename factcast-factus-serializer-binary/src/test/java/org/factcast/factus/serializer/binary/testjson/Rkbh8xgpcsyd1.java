@@ -17,8 +17,9 @@ package org.factcast.factus.serializer.binary.testjson;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import java.util.ArrayList;
+import lombok.Data;
 
-@lombok.Data
+@Data
 @JsonAutoDetect
 public class Rkbh8xgpcsyd1 {
 

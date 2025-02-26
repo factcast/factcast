@@ -77,7 +77,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <maven-clean-plugin.version>3.4.0</maven-clean-plugin.version>
+    <maven-clean-plugin.version>3.4.1</maven-clean-plugin.version>
     <maven-javadoc-plugin.version>3.11.2</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
     <maven-gpg-plugin.version>3.2.7</maven-gpg-plugin.version>
@@ -92,16 +92,16 @@
     <!-- defaults to 11, client modules will be compiled with/to 8 -->
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
-    <maven.compiler.version>3.13.0</maven.compiler.version>
-    <spotless-maven-plugin.version>2.44.2</spotless-maven-plugin.version>
+    <maven.compiler.version>3.14.0</maven.compiler.version>
+    <spotless-maven-plugin.version>2.44.3</spotless-maven-plugin.version>
     <directory-maven-plugin.version>1.0</directory-maven-plugin.version>
     <nexus-staging-maven-plugin.version>1.7.0</nexus-staging-maven-plugin.version>
     <assertj.version>3.27.3</assertj.version>
     <jackson.version>2.18.2</jackson.version>
     <mockito.version>5.15.2</mockito.version>
-    <junit-jupiter.version>5.11.4</junit-jupiter.version>
+    <junit-jupiter.version>5.12.0</junit-jupiter.version>
     <lombok.version>1.18.36</lombok.version>
-    <slf4j-api.version>2.0.16</slf4j-api.version>
+    <slf4j-api.version>2.0.17</slf4j-api.version>
     <!--suppress UnresolvedMavenProperty -->
     <etc>${session.executionRootDirectory}/src/etc</etc>
     <spring-boot.version>3.4.2</spring-boot.version>
@@ -109,17 +109,17 @@
     <spring-grpc.version>3.1.0.RELEASE</spring-grpc.version>
     <grpc.version>1.63.0</grpc.version>
     <!-- lter versions seem to break toxi -->
-    <testcontainers.version>1.20.4</testcontainers.version>
+    <testcontainers.version>1.20.5</testcontainers.version>
     <arrow.version>1.2.4</arrow.version>
     <micronaut.version>4.7.4</micronaut.version>
     <kotlin.version>2.1.10</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <mockk.version>1.13.16</mockk.version>
     <redisson.version>3.44.0</redisson.version>
-    <aws-sdk.version>2.30.18</aws-sdk.version>
+    <aws-sdk.version>2.30.28</aws-sdk.version>
     <graaljs.version>24.1.2</graaljs.version>
-    <shedlock.version>6.2.0</shedlock.version>
-    <byte-buddy.version>1.17.0</byte-buddy.version>
+    <shedlock.version>6.3.0</shedlock.version>
+    <byte-buddy.version>1.17.1</byte-buddy.version>
     <skipUnitTests>false</skipUnitTests>
     <postgres.version>15</postgres.version>
     <sonar.exclusions>**/src/test/java/**/*.java</sonar.exclusions>
@@ -136,7 +136,7 @@
       <dependency>
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
-        <version>5.11.4</version>
+        <version>5.12.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -761,6 +761,40 @@
                 </configuration>
               </execution>
             </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <!-- This profile is VERY experimental and currently definitely breaks
+        stuff. Please do not consider using it in an automated fashion, without checking
+        the outcome from its execution. -->
+      <id>openrewrite</id>
+      <activation>
+        <property>
+          <name>rewrite</name>
+        </property>
+      </activation>
+
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.openrewrite.maven</groupId>
+            <artifactId>rewrite-maven-plugin</artifactId>
+            <version>6.2.1</version>
+            <configuration>
+              <activeRecipes>
+                <recipe>org.openrewrite.staticanalysis.CodeCleanup</recipe>
+              </activeRecipes>
+              <failOnDryRunResults>true</failOnDryRunResults>
+            </configuration>
+            <dependencies>
+              <dependency>
+                <groupId>org.openrewrite.recipe</groupId>
+                <artifactId>rewrite-static-analysis</artifactId>
+                <version>2.3.0</version>
+              </dependency>
+            </dependencies>
           </plugin>
         </plugins>
       </build>

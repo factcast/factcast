@@ -16,9 +16,10 @@
 package org.factcast.factus.serializer.fury.testjson;
 
 import com.fasterxml.jackson.annotation.*;
+import lombok.Data;
 import org.factcast.factus.serializer.fury.*;
 
-@lombok.Data
+@Data
 @JsonAutoDetect
 public class MediaMetadata {
 
