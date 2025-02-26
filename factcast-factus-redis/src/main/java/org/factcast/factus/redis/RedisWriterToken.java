@@ -42,7 +42,7 @@ public class RedisWriterToken implements WriterToken {
           @Override
           public void run() {
             synchronized (this) {
-            boolean isLocked = lock.isLocked();
+              boolean isLocked = lock.isLocked();
               if (!isClosed.get()) {
                 liveness.set(isLocked);
               }
