@@ -28,11 +28,13 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.*;
 import org.factcast.core.util.ExceptionHelper;
-import org.factcast.server.ui.full.FullQueryBean;
+import org.factcast.server.ui.full.FullFilterBean;
 import org.factcast.server.ui.id.IdQueryBean;
 import org.factcast.server.ui.metrics.UiMetrics;
 import org.factcast.server.ui.port.FactRepository;
+import org.factcast.server.ui.report.ReportFilterBean;
 import org.factcast.server.ui.security.SecurityService;
+import org.factcast.server.ui.views.filter.FilterBean;
 
 @Timed(value = UiMetrics.TIMER_METRIC_NAME)
 @RequiredArgsConstructor
@@ -92,13 +94,25 @@ public class FactRepositoryImpl implements FactRepository {
 
   @SneakyThrows
   @Override
-  public List<Fact> fetchChunk(FullQueryBean bean) {
-
-    Set<FactSpec> specs = securityService.filterReadable(bean.createFactSpecs());
-
+  public List<Fact> fetchChunk(FullFilterBean bean) {
     Long untilSerial = Optional.ofNullable(bean.getTo()).map(BigDecimal::longValue).orElse(null);
     ListObserver obs =
         new ListObserver(untilSerial, bean.getLimitOrDefault(), bean.getOffsetOrDefault());
+    return fetch(bean, obs);
+  }
+
+  @SneakyThrows
+  @Override
+  public List<Fact> fetchAll(ReportFilterBean bean) {
+    final var observer = new UnlimitedListObserver(0);
+    return fetch(bean, observer);
+  }
+
+  @SneakyThrows
+  public List<Fact> fetch(FilterBean bean, AbstractListObserver obs) {
+
+    Set<FactSpec> specs = securityService.filterReadable(bean.createFactSpecs());
+
     SpecBuilder sr = SubscriptionRequest.catchup(specs);
     long ser = bean.resolveFromOrZero();
     SubscriptionRequest request = null;

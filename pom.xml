@@ -55,6 +55,7 @@
     <module>factcast-server-grpc</module>
     <module>factcast-server-security</module>
     <module>factcast-server-ui</module>
+    <module>factcast-server-ui-s3-reportstore</module>
     <module>factcast-grpc-api</module>
     <module>factcast-grpc-lz4</module>
     <module>factcast-grpc-snappy</module>
