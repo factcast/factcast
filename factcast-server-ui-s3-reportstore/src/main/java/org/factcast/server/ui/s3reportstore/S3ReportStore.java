@@ -58,8 +58,7 @@ public class S3ReportStore implements ReportStore {
     try {
       UploadRequest uploadRequest =
           UploadRequest.builder()
-              .putObjectRequest(
-                  PutObjectRequest.builder().bucket(bucketName).key(reportKey).build())
+              .putObjectRequest(put -> put.bucket(bucketName).key(reportKey))
               .requestBody(AsyncRequestBody.fromBytes(objectMapper.writeValueAsBytes(report)))
               .build();
 
@@ -81,12 +80,10 @@ public class S3ReportStore implements ReportStore {
     checkObjectExists(key);
 
     // Generate the pre-signed URL.
-    final var getObjectRequest = GetObjectRequest.builder().bucket(bucketName).key(key).build();
-
     final var presignRequest =
         GetObjectPresignRequest.builder()
             .signatureDuration(Duration.ofHours(2))
-            .getObjectRequest(getObjectRequest)
+            .getObjectRequest(get -> get.bucket(bucketName).key(key))
             .build();
 
     URL url = s3Presigner.presignGetObject(presignRequest).url();
