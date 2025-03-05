@@ -314,6 +314,7 @@ your application.
 Check the following [guide](https://docs.factcast.org/usage/factus/tips/) regularly, as it is updated with tips to
 improve performance, or fix common issues.
 
-When using Snapshot Projections, consider using the [factcast-snapshotcache-redisson](https://docs.factcast.org/usage/factus/setup/#redis-snapshotcache)
+When using Snapshot Projections, consider using
+the [factcast-snapshotcache-redisson](https://docs.factcast.org/usage/factus/setup/#redis-snapshotcache)
 module, to store the snapshots in a Redis cluster, instead of the Event Store.
 This will reduce the load on the Event Store, and will allow to scale the snapshots cache independently.
