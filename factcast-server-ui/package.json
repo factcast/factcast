@@ -97,7 +97,37 @@
     "@vaadin/react-components": "$@vaadin/react-components",
     "react-dom": "$react-dom",
     "react-router-dom": "$react-router-dom",
-    "react": "$react"
+    "react": "$react",
+    "@vaadin/component-base": "$@vaadin/component-base",
+    "@vaadin/confirm-dialog": "$@vaadin/confirm-dialog",
+    "@vaadin/context-menu": "$@vaadin/context-menu",
+    "@vaadin/custom-field": "$@vaadin/custom-field",
+    "@vaadin/date-picker": "$@vaadin/date-picker",
+    "@vaadin/date-time-picker": "$@vaadin/date-time-picker",
+    "@vaadin/details": "$@vaadin/details",
+    "@vaadin/dialog": "$@vaadin/dialog",
+    "@vaadin/email-field": "$@vaadin/email-field",
+    "@vaadin/field-base": "$@vaadin/field-base",
+    "@vaadin/field-highlighter": "$@vaadin/field-highlighter",
+    "@vaadin/form-layout": "$@vaadin/form-layout",
+    "@vaadin/grid": "$@vaadin/grid",
+    "@vaadin/horizontal-layout": "$@vaadin/horizontal-layout",
+    "@vaadin/icon": "$@vaadin/icon",
+    "@vaadin/icons": "$@vaadin/icons",
+    "@vaadin/input-container": "$@vaadin/input-container",
+    "@vaadin/integer-field": "$@vaadin/integer-field",
+    "@vaadin/item": "$@vaadin/item",
+    "@vaadin/list-box": "$@vaadin/list-box",
+    "@vaadin/lit-renderer": "$@vaadin/lit-renderer",
+    "@vaadin/login": "$@vaadin/login",
+    "@vaadin/menu-bar": "$@vaadin/menu-bar",
+    "@vaadin/message-input": "$@vaadin/message-input",
+    "@vaadin/message-list": "$@vaadin/message-list",
+    "@vaadin/multi-select-combo-box": "$@vaadin/multi-select-combo-box",
+    "@vaadin/notification": "$@vaadin/notification",
+    "@vaadin/number-field": "$@vaadin/number-field",
+    "@vaadin/overlay": "$@vaadin/overlay",
+    "@vaadin/password-field": "$@vaadin/password-field"
   },
   "vaadin": {
     "dependencies": {
@@ -145,7 +175,7 @@
       "workbox-core": "7.1.0",
       "workbox-precaching": "7.1.0"
     },
-    "hash": "ec656599ae848bc5bb4bb8defb6c893a8a279c9fab50018fb20c50528a36a1e2"
+    "hash": "83bf2ce49b8242cc0cead18d1c527bfcf4458abd7b15509fafa54c0956b6a594"
   },
   "type": "module"
 }
