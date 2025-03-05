@@ -79,7 +79,6 @@ public class S3ReportStore implements ReportStore {
     String key = getReportKey(userName, reportName);
     checkObjectExists(key);
 
-    // Generate the pre-signed URL.
     final var presignRequest =
         GetObjectPresignRequest.builder()
             .signatureDuration(Duration.ofHours(2))
