@@ -26,9 +26,9 @@ class ComplexAggregate extends Aggregate {
     super(aggregateId);
   }
 
-  @Getter private ComplexEvent recordedEvent = null;
+  @Getter private ComplexEvent recordedEvent;
 
-  @Getter private ComplexEvent2 recordedEvent2 = null;
+  @Getter private ComplexEvent2 recordedEvent2;
 
   class Nested {
 

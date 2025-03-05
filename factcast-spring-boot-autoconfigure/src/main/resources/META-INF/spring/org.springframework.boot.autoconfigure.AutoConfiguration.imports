@@ -20,6 +20,10 @@ org.factcast.spring.boot.autoconfigure.server.grpc.SnappycServerAutoConfiguratio
 org.factcast.spring.boot.autoconfigure.server.FactCastServerCommonSecurityAutoConfiguration
 org.factcast.spring.boot.autoconfigure.server.ui.FactCastServerUIAutoConfiguration
 org.factcast.spring.boot.autoconfigure.server.ui.FactCastServerUISecurityAutoConfiguration
+org.factcast.spring.boot.autoconfigure.store.StoreNotificationConflictAutoConfiguration
+org.factcast.spring.boot.autoconfigure.store.StoreNotificationAutoConfiguration
+org.factcast.spring.boot.autoconfigure.store.redis.StoreNotificationRedisPublisherAutoConfiguration
+org.factcast.spring.boot.autoconfigure.store.redis.StoreNotificationRedisSubscriberAutoConfiguration
 org.factcast.spring.boot.autoconfigure.server.ui.FactCastServerUiS3ReportStoreAutoConfiguration
 org.factcast.spring.boot.autoconfigure.store.PgFactStoreAutoConfiguration
 org.factcast.spring.boot.autoconfigure.store.script.engine.GraalJSScriptEngineAutoConfiguration

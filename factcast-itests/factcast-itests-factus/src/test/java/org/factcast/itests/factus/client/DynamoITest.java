@@ -18,19 +18,26 @@ package org.factcast.itests.factus.client;
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.util.ArrayList;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import nl.altindag.log.LogCaptor;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.factus.Factus;
+import org.factcast.factus.FactusImpl;
 import org.factcast.factus.dynamo.DynamoProjectionState;
 import org.factcast.factus.event.EventObject;
+import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.config.DynamoProjectionConfiguration;
 import org.factcast.itests.factus.event.UserCreated;
+import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.DynamoManagedUserNames;
 import org.factcast.itests.factus.proj.DynamoSubscribedUserNames;
 import org.factcast.itests.factus.proj.DynamoUserNamesSchema;
@@ -41,6 +48,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 import software.amazon.awssdk.core.internal.waiters.ResponseOrException;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
@@ -178,6 +186,37 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
       assertThat(p.count()).isEqualTo(6);
       assertThat(p.stateModifications()).isEqualTo(6);
     }
+
+    @Test
+    void testTokenReleaseAfterTooManyFailures_redis() throws Exception {
+      var subscribedUserNames =
+          new TxDynamoSubscribedUserNamesTokenExposedAndThrowsError(dynamoDbClient);
+
+      factus.publish(new UserDeleted(UUID.randomUUID()));
+
+      // The projection doesnt have a token yet
+      assertThat(subscribedUserNames.token()).isNull();
+      try (var logCaptor = LogCaptor.forClass(FactusImpl.class)) {
+        logCaptor.setLogLevelToTrace();
+        factus.subscribe(subscribedUserNames);
+
+        // The projection acquiered a token and
+        subscribedUserNames.latch.await();
+        Awaitility.await()
+            .until(
+                () ->
+                    !logCaptor.getTraceLogs().isEmpty()
+                        && logCaptor
+                            .getTraceLogs()
+                            .get(0)
+                            .contains(
+                                "Closing AutoCloseable for class class org.factcast.factus.dynamo.DynamoWriterToken"));
+      }
+
+      Awaitility.await()
+          .until(
+              () -> subscribedUserNames.token() != null && !subscribedUserNames.token().isValid());
+    }
   }
 
   @Getter
@@ -186,7 +225,7 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
       super(client);
     }
 
-    int stateModifications = 0;
+    int stateModifications;
 
     @Override
     public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {
@@ -201,7 +240,7 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
       super(dynamoDbClient);
     }
 
-    int stateModifications = 0;
+    int stateModifications;
 
     @Override
     public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {
@@ -239,6 +278,30 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
         throw new IllegalStateException("Bad luck");
       }
       super.apply(created);
+    }
+  }
+
+  @Getter
+  @ProjectionMetaData(revision = 1)
+  static class TxDynamoSubscribedUserNamesTokenExposedAndThrowsError
+      extends TrackingDynamoSubscribedUserNames {
+    private CountDownLatch latch = new CountDownLatch(1);
+    private WriterToken token;
+
+    public TxDynamoSubscribedUserNamesTokenExposedAndThrowsError(DynamoDbClient dynamoDbClient) {
+      super(dynamoDbClient);
+    }
+
+    @Override
+    public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
+      token = super.acquireWriteToken(maxWait);
+      latch.countDown();
+      return token;
+    }
+
+    @Override
+    protected void apply(UserCreated created) {
+      throw new IllegalArgumentException("user should be in map but wasnt");
     }
   }
 

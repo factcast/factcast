@@ -126,8 +126,9 @@ class FactusClientFetchingTransformedTest extends AbstractFactCastIntegrationTes
         timeUntilCatchupWithTransformation,
         timeUntilCatchupWithoutTransformation);
 
-    if (timeUntilCatchupWithoutTransformation > timeUntilCatchupWithTransformation)
+    if (timeUntilCatchupWithoutTransformation > timeUntilCatchupWithTransformation) {
       log.error(
           "******** Unexpected Runtime behavior. Intentionally not failing the test here to avoid flaky CI builds, where the runtime parameters cannot be controlled, but we should have a closer look.");
+    }
   }
 }

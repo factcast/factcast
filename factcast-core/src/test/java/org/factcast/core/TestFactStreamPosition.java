@@ -32,4 +32,6 @@ public class TestFactStreamPosition {
   public static FactStreamPosition fromString(@NonNull String uuid) {
     return FactStreamPosition.of(UUID.fromString(uuid), Math.abs(random.nextLong()) + 1);
   }
+
+  private TestFactStreamPosition() {}
 }

@@ -31,6 +31,7 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
+import org.factcast.core.store.RetryableException;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.*;
 import org.factcast.factus.event.*;
@@ -49,6 +50,7 @@ import org.junit.jupiter.api.Test;
 import org.redisson.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 @ContextConfiguration(
     classes = {
@@ -601,7 +603,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
     static final String ns = "ns";
     static final String type = "foo";
 
-    transient int factsConsumed = 0;
+    transient int factsConsumed;
 
     @HandlerFor(ns = ns, type = type)
     void apply(Fact f) {
@@ -613,7 +615,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
     static final String ns = "ns";
     static final String type = "foo";
 
-    transient int factsConsumed = 0;
+    transient int factsConsumed;
 
     @HandlerFor(ns = ns, type = type)
     void apply(Fact f) {
@@ -721,6 +723,37 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
+  void testTokenReleaseAfterTooManyFailures() {
+    OverrideAndFailSubscribedUserNames subscribedUserNames =
+        new OverrideAndFailSubscribedUserNames();
+    subscribedUserNames.clear();
+
+    factus.publish(new UserDeleted(UUID.randomUUID()));
+
+    assertThat(subscribedUserNames.isValid()).isFalse();
+    factus.subscribeAndBlock(subscribedUserNames);
+    try {
+      // it should acquire the lock
+      subscribedUserNames.latch.await();
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+    // the initial lock was closed
+    Awaitility.await().until(() -> !subscribedUserNames.isValid()); // someone locked it
+  }
+
+  static class OverrideAndFailSubscribedUserNames extends SubscribedUserNames {
+
+    CountDownLatch latch = new CountDownLatch(1);
+
+    @Override
+    public void apply(UserDeleted deleted, @Nullable String signee) {
+      latch.countDown();
+      throw new RetryableException(new Throwable("Test exception"));
+    }
+  }
+
+  @Test
   void injectsMeta() throws Exception {
     AtomicReference<String> signee = new AtomicReference<>();
     SubscribedUserNames subscribedUserNames =
@@ -746,8 +779,8 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   static class ProjectionWithMutlipleMetaValues extends LocalSubscribedProjection {
-    Collection<String> signee = null;
-    List<String> affiliates = null;
+    Collection<String> signee;
+    List<String> affiliates;
 
     @Handler
     public void apply(UserCreated deleted, @Meta("affiliates") List<String> metaAffiliates) {

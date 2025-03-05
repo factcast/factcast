@@ -28,6 +28,7 @@ import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Maps;
 import org.factcast.core.*;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.spec.FilterScript;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.*;
 import org.factcast.factus.event.*;
@@ -37,8 +38,15 @@ import org.factcast.factus.projection.parameter.HandlerParameterContributors;
 import org.factcast.factus.projection.tx.*;
 import org.factcast.factus.projector.ProjectorImpl.ReflectionTools;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.aop.framework.Advised;
+import org.springframework.aop.support.AopUtils;
+import org.springframework.aop.target.SingletonTargetSource;
 
 @SuppressWarnings({"deprecation", "java:S1186"})
+@ExtendWith(MockitoExtension.class)
 class ProjectorImplTest {
 
   private final DefaultEventSerializer eventSerializer =
@@ -667,8 +675,7 @@ class ProjectorImplTest {
         HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithFilterScript", Fact.class);
     ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
 
-    assertThat(spec.filterScript())
-        .isEqualTo(org.factcast.core.spec.FilterScript.js("function myfilter(e){}"));
+    assertThat(spec.filterScript()).isEqualTo(FilterScript.js("function myfilter(e){}"));
   }
 
   @Test
@@ -815,8 +822,9 @@ class ProjectorImplTest {
 
       @HandlerFor(ns = "test", type = "test")
       void apply(Fact f) {
-        if (f.header().meta().containsKey("pleaseThrow"))
+        if (f.header().meta().containsKey("pleaseThrow")) {
           throw new RuntimeException("you asked me to");
+        }
       }
     }
 
@@ -886,7 +894,7 @@ class ProjectorImplTest {
   }
 
   @Specification(ns = "ns1")
-  static class E1 implements org.factcast.factus.event.EventObject {
+  static class E1 implements EventObject {
     @Override
     public Set<UUID> aggregateIds() {
       return new HashSet<>();
@@ -894,7 +902,7 @@ class ProjectorImplTest {
   }
 
   @Specification(ns = "ns2")
-  static class E2 implements org.factcast.factus.event.EventObject {
+  static class E2 implements EventObject {
     @Override
     public Set<UUID> aggregateIds() {
       return new HashSet<>();
@@ -902,7 +910,7 @@ class ProjectorImplTest {
   }
 
   @Specification(ns = "ns2")
-  static class Unrelated implements org.factcast.factus.event.EventObject {
+  static class Unrelated implements EventObject {
     @Override
     public Set<UUID> aggregateIds() {
       return new HashSet<>();
@@ -1013,8 +1021,8 @@ class ProjectorImplTest {
       ProjectorImpl<Projection> uut =
           new ProjectorImpl<>(new SomeProjectionWithTypeAnnotationOnParent(), eventSerializer);
       List<FactSpec> factSpecs = uut.createFactSpecs();
-      Optional<FactSpec> e1 = factSpecs.stream().filter(fs -> fs.type().equals("E1")).findFirst();
-      Optional<FactSpec> e2 = factSpecs.stream().filter(fs -> fs.type().equals("E2")).findFirst();
+      Optional<FactSpec> e1 = factSpecs.stream().filter(fs -> "E1".equals(fs.type())).findFirst();
+      Optional<FactSpec> e2 = factSpecs.stream().filter(fs -> "E2".equals(fs.type())).findFirst();
       Assertions.assertThat(e1.get().ns()).isEqualTo("s-targetForE1");
       Assertions.assertThat(e2.get().ns()).isEqualTo("s-targetForE2");
     }
@@ -1056,6 +1064,59 @@ class ProjectorImplTest {
     void deepInspection3() {
       ProjectorImpl<Projection> uut = new ProjectorImpl<>(new L3(), eventSerializer);
       assertThat(uut.createFactSpecs().get(0).ns()).isEqualTo("l3");
+    }
+  }
+
+  @Nested
+  class WhenUnwrapping {
+    @Mock Advised a;
+
+    @Mock Object b;
+
+    @Test
+    void throwsIfTargetIsNull() {
+
+      try (MockedStatic<AopUtils> utilities = Mockito.mockStatic(AopUtils.class)) {
+        utilities.when(() -> AopUtils.isAopProxy(any())).thenReturn(true);
+        when(a.getTargetSource()).thenReturn(null);
+
+        assertThatThrownBy(
+                () -> {
+                  ProjectorImpl.unwrapProxy(a);
+                })
+            .isInstanceOf(NullPointerException.class);
+      }
+    }
+
+    @Test
+    void breaksCircuit() {
+      try (MockedStatic<AopUtils> utilities = Mockito.mockStatic(AopUtils.class)) {
+        utilities.when(() -> AopUtils.isAopProxy(any())).thenReturn(true);
+        when(a.getTargetSource()).thenReturn(new SingletonTargetSource(a));
+
+        assertThatThrownBy(
+                () -> {
+                  ProjectorImpl.unwrapProxy(a);
+                })
+            .isInstanceOf(IllegalStateException.class);
+      }
+    }
+
+    @Test
+    void unwraps() {
+      try (MockedStatic<AopUtils> utilities = Mockito.mockStatic(AopUtils.class)) {
+        utilities.when(() -> AopUtils.isAopProxy(any())).thenReturn(true);
+        when(a.getTargetSource()).thenReturn(new SingletonTargetSource(b));
+        Assertions.assertThat(ProjectorImpl.unwrapProxy(a)).isSameAs(b);
+      }
+    }
+
+    @Test
+    void leavesUnrelatedObjectsAlone() {
+      try (MockedStatic<AopUtils> utilities = Mockito.mockStatic(AopUtils.class)) {
+        utilities.when(() -> AopUtils.isAopProxy(any())).thenReturn(true);
+        Assertions.assertThat(ProjectorImpl.unwrapProxy(b)).isSameAs(b);
+      }
     }
   }
 }

@@ -41,12 +41,12 @@ public abstract class AbstractBrowserTest {
   @LocalServerPort protected int port;
 
   private static BrowserType.LaunchOptions options;
-  private static Playwright playwright = null;
-  private Browser browser = null;
+  private static Playwright playwright;
+  private Browser browser;
 
   // New instance for each test method.
-  protected BrowserContext context = null;
-  protected Page page = null;
+  protected BrowserContext context;
+  protected Page page;
 
   @BeforeAll
   static void beforeAll() {
@@ -64,9 +64,11 @@ public abstract class AbstractBrowserTest {
 
   private static Duration getSlowMotionSpeed() {
     var watch = System.getProperty("ui.watch");
-    if (watch == null || watch.isBlank() || !StringUtils.isNumeric(watch))
+    if (watch == null || watch.isBlank() || !StringUtils.isNumeric(watch)) {
       return Duration.ofMillis(500);
-    else return Duration.ofMillis(Long.parseLong(watch));
+    } else {
+      return Duration.ofMillis(Long.parseLong(watch));
+    }
   }
 
   private static boolean isRecordPropertySet() {

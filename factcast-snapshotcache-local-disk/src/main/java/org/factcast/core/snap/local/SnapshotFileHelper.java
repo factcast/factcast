@@ -74,8 +74,11 @@ class SnapshotFileHelper {
       return walk.mapToLong(
               p -> {
                 File file = p.toFile();
-                if (file.isDirectory()) return 0;
-                else return file.length();
+                if (file.isDirectory()) {
+                  return 0;
+                } else {
+                  return file.length();
+                }
               })
           .sum();
     }

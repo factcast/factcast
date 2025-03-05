@@ -55,7 +55,7 @@ class DefaultHandlerParameterContributorTest {
 
     Method m =
         Arrays.stream(MetaString.class.getMethods())
-            .filter(me -> me.getName().equals("apply"))
+            .filter(me -> "apply".equals(me.getName()))
             .findFirst()
             .get();
     DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
@@ -79,7 +79,7 @@ class DefaultHandlerParameterContributorTest {
 
     Method m =
         Arrays.stream(MetaString.class.getMethods())
-            .filter(me -> me.getName().equals("apply"))
+            .filter(me -> "apply".equals(me.getName()))
             .findFirst()
             .get();
     DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
@@ -103,7 +103,7 @@ class DefaultHandlerParameterContributorTest {
 
     Method m =
         Arrays.stream(MetaString.class.getMethods())
-            .filter(me -> me.getName().equals("apply"))
+            .filter(me -> "apply".equals(me.getName()))
             .findFirst()
             .get();
     DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
@@ -127,7 +127,7 @@ class DefaultHandlerParameterContributorTest {
 
     Method m =
         Arrays.stream(MetaString.class.getMethods())
-            .filter(me -> me.getName().equals("apply"))
+            .filter(me -> "apply".equals(me.getName()))
             .findFirst()
             .get();
     DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
@@ -151,7 +151,7 @@ class DefaultHandlerParameterContributorTest {
 
     Method m =
         Arrays.stream(MetaString.class.getMethods())
-            .filter(me -> me.getName().equals("apply"))
+            .filter(me -> "apply".equals(me.getName()))
             .findFirst()
             .get();
     DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
@@ -176,7 +176,7 @@ class DefaultHandlerParameterContributorTest {
 
     Method m =
         Arrays.stream(MetaString.class.getMethods())
-            .filter(me -> me.getName().equals("apply"))
+            .filter(me -> "apply".equals(me.getName()))
             .findFirst()
             .get();
     DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
@@ -200,7 +200,7 @@ class DefaultHandlerParameterContributorTest {
 
     Method m =
         Arrays.stream(MetaString.class.getMethods())
-            .filter(me -> me.getName().equals("apply"))
+            .filter(me -> "apply".equals(me.getName()))
             .findFirst()
             .get();
     DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
@@ -223,7 +223,7 @@ class DefaultHandlerParameterContributorTest {
 
     Method m =
         Arrays.stream(MetaString.class.getMethods())
-            .filter(me -> me.getName().equals("apply"))
+            .filter(me -> "apply".equals(me.getName()))
             .findFirst()
             .get();
     DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
@@ -247,7 +247,7 @@ class DefaultHandlerParameterContributorTest {
 
     Method m =
         Arrays.stream(MetaString.class.getMethods())
-            .filter(me -> me.getName().equals("apply"))
+            .filter(me -> "apply".equals(me.getName()))
             .findFirst()
             .get();
     DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
@@ -271,7 +271,7 @@ class DefaultHandlerParameterContributorTest {
 
     Method m =
         Arrays.stream(MetaString.class.getMethods())
-            .filter(me -> me.getName().equals("apply"))
+            .filter(me -> "apply".equals(me.getName()))
             .findFirst()
             .get();
     DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
@@ -295,7 +295,7 @@ class DefaultHandlerParameterContributorTest {
 
     Method m =
         Arrays.stream(MetaList.class.getMethods())
-            .filter(me -> me.getName().equals("apply"))
+            .filter(me -> "apply".equals(me.getName()))
             .findFirst()
             .get();
 
@@ -323,7 +323,7 @@ class DefaultHandlerParameterContributorTest {
 
     Method m =
         Arrays.stream(MetaList.class.getMethods())
-            .filter(me -> me.getName().equals("apply"))
+            .filter(me -> "apply".equals(me.getName()))
             .findFirst()
             .get();
 
@@ -349,7 +349,7 @@ class DefaultHandlerParameterContributorTest {
 
     Method m =
         Arrays.stream(MetaString.class.getMethods())
-            .filter(me -> me.getName().equals("apply"))
+            .filter(me -> "apply".equals(me.getName()))
             .findFirst()
             .get();
     DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
@@ -372,7 +372,7 @@ class DefaultHandlerParameterContributorTest {
 
     Method m =
         Arrays.stream(MetaString.class.getMethods())
-            .filter(me -> me.getName().equals("apply"))
+            .filter(me -> "apply".equals(me.getName()))
             .findFirst()
             .get();
     DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
@@ -394,7 +394,7 @@ class DefaultHandlerParameterContributorTest {
 
     Method m =
         Arrays.stream(MetaString.class.getMethods())
-            .filter(me -> me.getName().equals("apply"))
+            .filter(me -> "apply".equals(me.getName()))
             .findFirst()
             .get();
     DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
@@ -416,7 +416,7 @@ class DefaultHandlerParameterContributorTest {
 
     Method m =
         Arrays.stream(MetaString.class.getMethods())
-            .filter(me -> me.getName().equals("apply"))
+            .filter(me -> "apply".equals(me.getName()))
             .findFirst()
             .get();
     DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();
@@ -438,7 +438,7 @@ class DefaultHandlerParameterContributorTest {
 
     Method m =
         Arrays.stream(MetaString.class.getMethods())
-            .filter(me -> me.getName().equals("apply"))
+            .filter(me -> "apply".equals(me.getName()))
             .findFirst()
             .get();
     DefaultHandlerParameterContributor undertest = new DefaultHandlerParameterContributor();

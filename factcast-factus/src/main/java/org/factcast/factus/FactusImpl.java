@@ -152,24 +152,10 @@ public class FactusImpl implements Factus {
       if (token != null) {
         log.info("Acquired writer token for {}", subscribedProjection.getClass());
         Subscription subscription = doSubscribe(subscribedProjection, token);
-        // close token & subscription on shutdown
-        managedObjects.add(
-            new AutoCloseable() {
-              @Override
-              public void close() {
-                tryClose(subscription);
-                tryClose(token);
-              }
-
-              private void tryClose(AutoCloseable c) {
-                try {
-                  c.close();
-                } catch (Exception ignore) {
-                  // intentional
-                }
-              }
-            });
-        return new TokenAwareSubscription(subscription, token);
+        subscription.onClose(() -> tryClose(token)); // close token on subscription closing
+        // close subscription on shutdown
+        managedObjects.add(() -> tryClose(subscription));
+        return subscription;
       } else {
         log.trace(
             "failed to acquire writer token for {}. Will keep trying.",
@@ -199,8 +185,9 @@ public class FactusImpl implements Factus {
           }
 
           private void assertTokenIsValid() {
-            if (!token.isValid())
+            if (!token.isValid()) {
               throw new IllegalStateException("WriterToken is no longer valid.");
+            }
           }
 
           @Override
@@ -315,7 +302,9 @@ public class FactusImpl implements Factus {
       aggregateSnapshotRepository.store(aggregate, state);
     } else {
       // special behavior for aggregates, if no event has ever been applied, we return empty
-      if (projectionAndState.lastFactIdApplied() == null) return Optional.empty();
+      if (projectionAndState.lastFactIdApplied() == null) {
+        return Optional.empty();
+      }
     }
 
     return Optional.of(aggregate);
@@ -440,7 +429,9 @@ public class FactusImpl implements Factus {
       ArrayList<AutoCloseable> closeables = new ArrayList<>(managedObjects);
       for (AutoCloseable c : closeables) {
         try {
-          if (c != null) c.close();
+          if (c != null) {
+            c.close();
+          }
         } catch (Exception e) {
           // needs to be swallowed
           log.warn("While closing {} of type {}:", c, c.getClass().getName(), e);
@@ -502,6 +493,15 @@ public class FactusImpl implements Factus {
   @NonNull
   public FactStore store() {
     return fc.store();
+  }
+
+  private void tryClose(AutoCloseable c) {
+    try {
+      log.trace("Closing AutoCloseable for class {}", c.getClass());
+      c.close();
+    } catch (Exception e) {
+      log.warn("Error while closing AutoCloseable for {}", c.getClass(), e);
+    }
   }
 
   abstract static class IntervalSnapshotter<P extends SnapshotProjection>
