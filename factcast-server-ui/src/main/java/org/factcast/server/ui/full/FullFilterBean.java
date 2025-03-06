@@ -23,14 +23,14 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
-import lombok.Data;
+import lombok.*;
 import lombok.experimental.Accessors;
 import org.factcast.server.ui.views.filter.*;
 
 @Data
 @SuppressWarnings("java:S1948")
 @Accessors(fluent = false, chain = false)
-@JsonIgnoreProperties("since")
+@JsonIgnoreProperties({"since", "until"})
 public class FullFilterBean implements Serializable, FilterBean {
   public static final int DEFAULT_LIMIT = 50;
   private final long defaultFrom;

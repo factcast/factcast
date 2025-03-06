@@ -185,6 +185,7 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     final var location = event.getLocation();
 
     binder.readFromQueryParams(location.getQueryParameters(), formBean);
+
     factCriteriaViews.rebuild();
   }
 
