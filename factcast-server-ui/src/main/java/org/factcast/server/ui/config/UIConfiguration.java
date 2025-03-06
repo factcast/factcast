@@ -37,7 +37,7 @@ import org.springframework.context.annotation.*;
 @Theme(value = "fcui")
 @EnableVaadin("org.factcast.server.ui")
 @RequiredArgsConstructor
-@Import(JsonViewPluginConfiguration.class)
+@Import({JsonViewPluginConfiguration.class, FileSystemReportStoreConfiguration.class})
 @Slf4j
 public class UIConfiguration implements AppShellConfigurator {
 

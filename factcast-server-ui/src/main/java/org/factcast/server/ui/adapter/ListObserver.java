@@ -15,21 +15,15 @@
  */
 package org.factcast.server.ui.adapter;
 
-import java.util.ArrayList;
-import java.util.List;
 import javax.annotation.Nullable;
-import lombok.Getter;
-import lombok.NonNull;
+import lombok.*;
 import org.factcast.core.Fact;
-import org.factcast.core.subscription.observer.FactObserver;
-import org.slf4j.LoggerFactory;
 
 @Getter
-public class ListObserver implements FactObserver {
+public class ListObserver extends AbstractListObserver {
   private int limit;
   private int offset;
   @Nullable private Long untilSerial;
-  private final List<Fact> list = new ArrayList<>();
 
   public ListObserver(int limit, int offset) {
     this.limit = limit;
@@ -52,7 +46,7 @@ public class ListObserver implements FactObserver {
       offset--;
     } else {
       limit--;
-      list.add(0, element);
+      list().add(0, element);
     }
   }
 
@@ -61,10 +55,6 @@ public class ListObserver implements FactObserver {
     if (!LimitReachedException.matches(exception)) {
       handleError(exception);
     }
-  }
-
-  protected void handleError(@NonNull Throwable exception) {
-    LoggerFactory.getLogger(FactObserver.class).warn("Unhandled onError:", exception);
   }
 
   boolean isComplete(Fact fact) {
