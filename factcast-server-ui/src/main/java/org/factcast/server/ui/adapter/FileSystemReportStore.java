@@ -35,7 +35,7 @@ public class FileSystemReportStore implements ReportStore {
 
   public final String persistenceDir;
 
-  @Setter(value = AccessLevel.PACKAGE, onMethod = @__({@VisibleForTesting}))
+  @Setter(value = AccessLevel.PACKAGE)
   private ObjectMapper objectMapper = new ObjectMapper();
 
   @Override

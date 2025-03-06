@@ -39,7 +39,7 @@ public class ReportDownloadSection extends HorizontalLayout {
   private final String userName = SecurityContextHolder.getContext().getAuthentication().getName();
   private String fileName;
 
-  @Setter(value = AccessLevel.PACKAGE, onMethod = @__({@VisibleForTesting}))
+  @Setter(value = AccessLevel.PACKAGE)
   private transient Supplier<Optional<UI>> uiSupplier = this::getUI;
 
   public ReportDownloadSection(
