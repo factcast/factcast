@@ -16,7 +16,6 @@
 package org.factcast.server.ui.adapter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.annotations.VisibleForTesting;
 import com.vaadin.flow.server.*;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.*;
