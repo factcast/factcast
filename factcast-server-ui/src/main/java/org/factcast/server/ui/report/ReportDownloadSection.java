@@ -28,7 +28,7 @@ import org.factcast.server.ui.port.ReportStore;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @Slf4j
-@Getter(value = AccessLevel.PACKAGE, onMethod = @__({@VisibleForTesting}))
+@Getter(value = AccessLevel.PACKAGE)
 public class ReportDownloadSection extends HorizontalLayout {
 
   private final transient ReportStore reportStore;
