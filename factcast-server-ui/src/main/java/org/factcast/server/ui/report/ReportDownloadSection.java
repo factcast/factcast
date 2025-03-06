@@ -15,7 +15,6 @@
  */
 package org.factcast.server.ui.report;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
