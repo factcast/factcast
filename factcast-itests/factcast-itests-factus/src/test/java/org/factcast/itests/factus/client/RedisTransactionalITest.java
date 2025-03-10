@@ -190,7 +190,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
       assertThat(subscribedUserNames.token().isValid()).isTrue();
 
       // Wait a bit to avoid the race condition and close the token
-      Thread.sleep(100);
+      Thread.sleep(1000);
       // Manually close the token
       subscribedUserNames.token().close();
       Awaitility.await().until(() -> !subscribedUserNames.token().isValid());
