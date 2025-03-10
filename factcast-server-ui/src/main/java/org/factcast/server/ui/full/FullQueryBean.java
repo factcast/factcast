@@ -30,7 +30,7 @@ import org.factcast.core.spec.FactSpec;
 @Data
 @SuppressWarnings("java:S1948")
 @Accessors(fluent = false, chain = false)
-@JsonIgnoreProperties("since")
+@JsonIgnoreProperties({"since", "until"})
 public class FullQueryBean implements Serializable {
   public static final int DEFAULT_LIMIT = 50;
   private final long defaultFrom;
