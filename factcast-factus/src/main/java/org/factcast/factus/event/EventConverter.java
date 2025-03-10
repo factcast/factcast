@@ -30,8 +30,9 @@ public class EventConverter {
   public Fact toFact(@NonNull EventObject p, @NonNull UUID factId) {
     // keep compatibility to older code that expects this to throw an IllegalArgException instead of
     // an NPE, when a key in the meta map is null
-    if (p.additionalMeta().keySet().stream().anyMatch(Objects::isNull))
+    if (p.additionalMeta().keySet().stream().anyMatch(Objects::isNull)) {
       throw new IllegalArgumentException("Meta-Keys cannot be null");
+    }
 
     return Fact.buildFrom(p).using(ser).id(factId).build();
   }

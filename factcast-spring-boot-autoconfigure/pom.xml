@@ -58,6 +58,21 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
+      <artifactId>factcast-store-pub-redis</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-store-sub-redis</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-store-redis</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
       <artifactId>factcast-factus</artifactId>
       <optional>true</optional>
     </dependency>
@@ -84,6 +99,11 @@
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-server-ui</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-server-ui-s3-reportstore</artifactId>
       <optional>true</optional>
     </dependency>
     <dependency>

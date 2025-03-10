@@ -17,9 +17,10 @@ package org.factcast.factus.serializer.fury.testjson;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import java.util.ArrayList;
+import lombok.Data;
 import org.factcast.factus.serializer.fury.*;
 
-@lombok.Data
+@Data
 @JsonAutoDetect
 public class Jre8pj2jsryd1 {
 

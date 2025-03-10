@@ -16,7 +16,8 @@
 package org.factcast.factus.serializer.fury.testjson;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import lombok.Data;
 
-@lombok.Data
+@Data
 @JsonAutoDetect
 public class Gildings {}

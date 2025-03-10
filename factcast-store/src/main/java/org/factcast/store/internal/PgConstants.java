@@ -73,6 +73,8 @@ public class PgConstants {
   public static final String CHANNEL_BLACKLIST_CHANGE = "blacklist_change";
   public static final String CHANNEL_SCHEMASTORE_CHANGE = "schemastore_change";
   public static final String CHANNEL_TRANSFORMATIONSTORE_CHANGE = "transformationstore_change";
+  // for testing
+  public static final String CHANNEL_FACT_TRUNCATE = "fact_truncate";
 
   @SuppressWarnings("java:S2245") // jesus christ, YES IT IS SAFE
   public static final Random RANDOM = new Random();
@@ -195,21 +197,18 @@ public class PgConstants {
   public static final String SELECT_BY_HEADER_JSON =
       "SELECT " + COLUMN_SER + " FROM " + TABLE_FACT + " WHERE " + COLUMN_HEADER + " @> ?::jsonb";
 
-  public static final String LISTEN_SQL = "LISTEN " + CHANNEL_FACT_INSERT;
-
-  public static final String NOTIFY_ROUNDTRIP = "NOTIFY " + CHANNEL_ROUNDTRIP;
-
-  public static final String LISTEN_ROUNDTRIP_CHANNEL_SQL = "LISTEN " + CHANNEL_ROUNDTRIP;
-
+  private static final String LISTEN = "LISTEN ";
+  public static final String LISTEN_INSERT_CHANNEL_SQL = LISTEN + CHANNEL_FACT_INSERT;
+  public static final String LISTEN_TRUNCATION_CHANNEL_SQL = LISTEN + CHANNEL_FACT_TRUNCATE;
+  public static final String LISTEN_ROUNDTRIP_CHANNEL_SQL = LISTEN + CHANNEL_ROUNDTRIP;
   public static final String LISTEN_BLACKLIST_CHANGE_CHANNEL_SQL =
-      "LISTEN " + CHANNEL_BLACKLIST_CHANGE;
-
+      LISTEN + CHANNEL_BLACKLIST_CHANGE;
   public static final String LISTEN_SCHEMASTORE_CHANGE_CHANNEL_SQL =
-      "LISTEN " + CHANNEL_SCHEMASTORE_CHANGE;
-
+      LISTEN + CHANNEL_SCHEMASTORE_CHANGE;
   public static final String LISTEN_TRANSFORMATIONSTORE_CHANGE_CHANNEL_SQL =
-      "LISTEN " + CHANNEL_TRANSFORMATIONSTORE_CHANGE;
+      LISTEN + CHANNEL_TRANSFORMATIONSTORE_CHANGE;
 
+  public static final String NOTIFY_ROUNDTRIP_SQL = "NOTIFY " + CHANNEL_ROUNDTRIP;
   public static final String UPDATE_FACT_SERIALS =
       "update "
           + TABLE_FACT
@@ -359,4 +358,6 @@ public class PgConstants {
   public static String setStatementTimeout(long millis) {
     return "set statement_timeout to " + millis;
   }
+
+  private PgConstants() {}
 }

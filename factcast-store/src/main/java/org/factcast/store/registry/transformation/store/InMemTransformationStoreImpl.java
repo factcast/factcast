@@ -86,7 +86,7 @@ public class InMemTransformationStoreImpl extends AbstractTransformationStore {
   @Override
   public List<Transformation> get(@NonNull TransformationKey key) {
     synchronized (mutex) {
-      return transformationCache.computeIfAbsent(key, (k) -> new CopyOnWriteArrayList<>());
+      return transformationCache.computeIfAbsent(key, k -> new CopyOnWriteArrayList<>());
     }
   }
 }

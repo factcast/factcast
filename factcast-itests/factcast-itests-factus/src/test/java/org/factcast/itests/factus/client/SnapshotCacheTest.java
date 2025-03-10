@@ -25,6 +25,7 @@ import org.factcast.factus.serializer.SnapshotSerializerId;
 import org.factcast.factus.snapshot.SnapshotCache;
 import org.factcast.factus.snapshot.SnapshotData;
 import org.factcast.factus.snapshot.SnapshotIdentifier;
+import org.factcast.itests.factus.proj.UserV1;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
 
@@ -36,8 +37,7 @@ public abstract class SnapshotCacheTest extends AbstractFactCastIntegrationTest 
 
   @Test
   public void simpleSnapshotRoundtrip() {
-    SnapshotIdentifier id =
-        SnapshotIdentifier.of(org.factcast.itests.factus.proj.UserV1.class, randomUUID());
+    SnapshotIdentifier id = SnapshotIdentifier.of(UserV1.class, randomUUID());
     // initially empty
     assertThat(repository.find(id)).isEmpty();
 

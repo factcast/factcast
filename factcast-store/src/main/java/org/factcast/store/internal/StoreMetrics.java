@@ -100,4 +100,6 @@ public class StoreMetrics {
       return name;
     }
   }
+
+  private StoreMetrics() {}
 }

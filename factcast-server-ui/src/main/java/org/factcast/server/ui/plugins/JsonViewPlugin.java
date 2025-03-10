@@ -20,7 +20,9 @@ import org.factcast.core.Fact;
 
 public abstract class JsonViewPlugin {
   public final void handle(Fact fact, JsonPayload payload, JsonEntryMetaData jsonEntryMetaData) {
-    if (isReady()) doHandle(fact, payload, jsonEntryMetaData);
+    if (isReady()) {
+      doHandle(fact, payload, jsonEntryMetaData);
+    }
   }
 
   protected abstract boolean isReady();

@@ -147,8 +147,9 @@ public class BufferedTransformingServerPipeline extends AbstractServerPipeline {
         FluentIterable<TransformedFactSupplier> pendingTransformations =
             FluentIterable.from(buffer).filter(TransformedFactSupplier.class);
 
-        if (pendingTransformations.isEmpty())
+        if (pendingTransformations.isEmpty()) {
           throw new IllegalStateException("No pending transformations in buffer!");
+        }
 
         try {
 
@@ -159,9 +160,10 @@ public class BufferedTransformingServerPipeline extends AbstractServerPipeline {
 
           List<Fact> transformedFacts = service.transform(requests);
 
-          if (pendingTransformations.size() != transformedFacts.size())
+          if (pendingTransformations.size() != transformedFacts.size()) {
             throw new IllegalStateException(
                 "transformation resulted in unexpected number of facts");
+          }
 
           // pass results back to TransformedFactSuppliers
           Iterator<Fact> transformedIterator = transformedFacts.iterator();

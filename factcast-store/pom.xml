@@ -160,7 +160,7 @@
     <dependency>
       <groupId>io.javalin</groupId>
       <artifactId>javalin</artifactId>
-      <version>6.4.0</version>
+      <version>6.5.0</version>
       <scope>test</scope>
     </dependency>
     <!-- explicit jetty dependencies to workaround missing jetty12 compat ->
@@ -247,6 +247,11 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.awaitility</groupId>
+      <artifactId>awaitility</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

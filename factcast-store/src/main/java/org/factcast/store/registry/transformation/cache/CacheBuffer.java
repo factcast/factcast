@@ -42,7 +42,9 @@ class CacheBuffer {
     synchronized (mutex) {
       // do not override potential transformations
       // cannot use computeIfAbsent here as null values are not allowed.
-      if (factOrNull != null || !buffer.containsKey(cacheKey)) buffer.put(cacheKey, factOrNull);
+      if (factOrNull != null || !buffer.containsKey(cacheKey)) {
+        buffer.put(cacheKey, factOrNull);
+      }
     }
   }
 

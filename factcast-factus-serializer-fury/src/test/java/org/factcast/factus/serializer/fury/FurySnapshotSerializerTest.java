@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.fasterxml.jackson.core.StreamReadFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import org.assertj.core.api.Assertions;
 import org.factcast.factus.serializer.fury.testjson.*;
 import org.junit.jupiter.api.*;
 
@@ -42,8 +43,8 @@ class FurySnapshotSerializerTest {
 
   @Test
   void hasId() {
-    org.assertj.core.api.Assertions.assertThat(underTest.id().name()).isEqualTo("fury");
-    org.assertj.core.api.Assertions.assertThat(lz4UnderTest.id().name()).isEqualTo("lz4fury");
+    Assertions.assertThat(underTest.id().name()).isEqualTo("fury");
+    Assertions.assertThat(lz4UnderTest.id().name()).isEqualTo("lz4fury");
   }
 
   @Nested

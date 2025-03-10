@@ -21,9 +21,9 @@ import org.factcast.factus.projection.LocalManagedProjection;
 
 class ComplexProjection extends LocalManagedProjection {
 
-  @Getter private ComplexEvent recordedEvent = null;
+  @Getter private ComplexEvent recordedEvent;
 
-  @Getter private ComplexEvent2 recordedEvent2 = null;
+  @Getter private ComplexEvent2 recordedEvent2;
 
   class Nested {
 

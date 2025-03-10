@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Factus;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.config.RedissonProjectionConfiguration;
+import org.factcast.itests.factus.event.versioned.v1.UserCreated;
 import org.factcast.itests.factus.proj.UserV1;
 import org.factcast.itests.factus.proj.UserV2;
 import org.factcast.spring.boot.autoconfigure.snap.RedissonSnapshotCacheAutoConfiguration;
@@ -49,7 +50,7 @@ class FactusClientTestWithSchemaRegistry extends AbstractFactCastIntegrationTest
     UUID aggId = UUID.randomUUID();
 
     // RUN
-    ec.publish(new org.factcast.itests.factus.event.versioned.v1.UserCreated(aggId, "foo"));
+    ec.publish(new UserCreated(aggId, "foo"));
 
     // ASSERT
     // this should work anyways:

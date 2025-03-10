@@ -60,6 +60,11 @@
       </dependency>
       <dependency>
         <groupId>org.factcast</groupId>
+        <artifactId>factcast-server-ui-s3-reportstore</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
         <artifactId>factcast-server-security</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -75,7 +80,17 @@
       </dependency>
       <dependency>
         <groupId>org.factcast</groupId>
-        <artifactId>factcast-store-rds</artifactId>
+        <artifactId>factcast-store-pub-redis</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-store-sub-redis</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-store-redis</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
