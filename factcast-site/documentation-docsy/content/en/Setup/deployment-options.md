@@ -45,7 +45,7 @@ to any kind of messaging system.
 
 Given, you have a redis instance nearby, what you'd need to do is to choose **one** instance with read-write
 access to the primary database to additionally **emit** the notifications, and your replica based
-FactCast Server to consumer those.
+FactCast Server to consume those.
 
 #### Emitter
 
