@@ -18,7 +18,6 @@ package org.factcast.client.grpc;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
@@ -26,17 +25,13 @@ import static org.mockito.Mockito.*;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import java.io.IOException;
-import java.time.Duration;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
-import lombok.NonNull;
-import lombok.SneakyThrows;
+import lombok.*;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
-import org.factcast.client.grpc.ResilientGrpcSubscription.DelegatingFactObserver;
-import org.factcast.client.grpc.ResilientGrpcSubscription.SubscriptionHolder;
-import org.factcast.client.grpc.ResilientGrpcSubscription.ThrowingBiConsumer;
+import org.factcast.client.grpc.ResilientGrpcSubscription.*;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.TestFactStreamPosition;
@@ -50,9 +45,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -73,7 +66,7 @@ class ResilientGrpcSubscriptionTest {
   ResilientGrpcSubscription uut;
 
   @BeforeEach
-  public void setup() {
+  void setup() {
     // order is important here, you have been warned
     when(store.internalSubscribe(any(), observerAC.capture())).thenReturn(subscription);
     uut = spy(new ResilientGrpcSubscription(store, req, obs, config));
@@ -109,15 +102,16 @@ class ResilientGrpcSubscriptionTest {
         .thenThrow(TimeoutException.class)
         .then(x -> subscription);
 
-    assertThrows(TimeoutException.class, () -> uut.awaitComplete(551));
+    final long deterministicNow = System.currentTimeMillis();
+    try (MockedStatic<NowProvider> nowProvider = mockStatic(NowProvider.class)) {
+      // to make sure we can have deterministic expectations on the waitTimeInMillis
+      nowProvider.when(NowProvider::get).thenReturn(deterministicNow);
 
-    assertTimeout(
-        Duration.ofMillis(1000),
-        () -> {
-          assertThat(uut.awaitComplete(552)).isSameAs(uut);
-        });
-    // await call was passed
-    verify(subscription).awaitComplete(552);
+      assertThrows(TimeoutException.class, () -> uut.awaitComplete(551));
+      assertThat(uut.awaitComplete(552)).isSameAs(uut);
+      // await call was passed
+      verify(subscription).awaitComplete(552);
+    }
   }
 
   @Test
@@ -126,15 +120,16 @@ class ResilientGrpcSubscriptionTest {
         .thenThrow(TimeoutException.class)
         .then(x -> subscription);
 
-    assertThrows(TimeoutException.class, () -> uut.awaitCatchup(551));
+    final long deterministicNow = System.currentTimeMillis();
+    try (MockedStatic<NowProvider> nowProvider = mockStatic(NowProvider.class)) {
+      // to make sure we can have deterministic expectations on the waitTimeInMillis
+      nowProvider.when(NowProvider::get).thenReturn(deterministicNow);
+      assertThrows(TimeoutException.class, () -> uut.awaitCatchup(551));
 
-    assertTimeout(
-        Duration.ofMillis(1000),
-        () -> {
-          assertThat(uut.awaitCatchup(552)).isSameAs(uut);
-        });
-    // await call was passed
-    verify(subscription).awaitCatchup(552);
+      assertThat(uut.awaitCatchup(552)).isSameAs(uut);
+      // await call was passed
+      verify(subscription).awaitCatchup(552);
+    }
   }
 
   @Test
@@ -180,7 +175,9 @@ class ResilientGrpcSubscriptionTest {
 
     class DoNothing implements Runnable {
       @Override
-      public void run() {}
+      public void run() {
+        // do nothing
+      }
     }
 
     class Fails implements Runnable {
@@ -276,7 +273,7 @@ class ResilientGrpcSubscriptionTest {
     DelegatingFactObserver dfo;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
       // order is important here, you have been warned
       when(store.internalSubscribe(any(), observerAC.capture())).thenReturn(subscription);
       uut = spy(new ResilientGrpcSubscription(store, req, obs, config));
@@ -332,6 +329,7 @@ class ResilientGrpcSubscriptionTest {
       try {
         dfo.onError(new IOException());
       } catch (Exception ignore) {
+        // ignore
       }
 
       verify(subscription).close();
@@ -405,7 +403,7 @@ class ResilientGrpcSubscriptionTest {
     private SubscriptionHolder sh;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
       // order is important here, you have been warned
       when(store.internalSubscribe(any(), observerAC.capture())).thenReturn(subscription);
       uut = new ResilientGrpcSubscription(store, req, obs, config);
