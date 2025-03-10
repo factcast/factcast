@@ -20,6 +20,8 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import java.lang.reflect.Field;
 import java.util.*;
 import lombok.NonNull;
@@ -167,6 +169,47 @@ class FactSpecTest {
     FactSpec f2 = FactSpec.ns("x").aggId(new UUID(0, 1), new UUID(0, 2));
     assertEquals(f1, f2);
     assertNotSame(f1, f2);
+  }
+
+  @Test
+  @SneakyThrows
+  void testFactSpecEqualityBehavesAsExpectedWithDeprecatedField() {
+    final ObjectMapper om = new JsonMapper();
+    final UUID id = UUID.randomUUID();
+    final UUID differentId = UUID.randomUUID();
+    final FactSpec newSpec =
+        om.readValue("{\"ns\":\"foo\",\"aggIds\":[\"" + id + "\"]}", FactSpec.class);
+    final FactSpec newSpecDifferenId =
+        om.readValue("{\"ns\":\"foo\",\"aggIds\":[\"" + differentId + "\"]}", FactSpec.class);
+    final FactSpec oldSpecSameId =
+        om.readValue("{\"ns\":\"foo\",\"aggId\":\"" + id + "\"}", FactSpec.class);
+    final FactSpec oldSpecDifferentId =
+        om.readValue("{\"ns\":\"foo\",\"aggId\":\"" + differentId + "\"}", FactSpec.class);
+
+    assertThat(newSpec).isEqualTo(oldSpecSameId);
+    assertThat(newSpec).isNotEqualTo(newSpecDifferenId);
+    assertThat(newSpec).isNotEqualTo(oldSpecDifferentId);
+  }
+
+  @Test
+  @SneakyThrows
+  void testFactSpecHashCodeBehavesAsExpectedWithDeprecatedField() {
+    final ObjectMapper om = new JsonMapper();
+    final UUID id = UUID.randomUUID();
+    final UUID differentId = UUID.randomUUID();
+    final FactSpec newSpec =
+        om.readValue("{\"ns\":\"foo\",\"aggIds\":[\"" + id + "\"]}", FactSpec.class);
+    final FactSpec newSpecDifferenId =
+        om.readValue("{\"ns\":\"foo\",\"aggIds\":[\"" + differentId + "\"]}", FactSpec.class);
+    final FactSpec oldSpecSameId =
+        om.readValue("{\"ns\":\"foo\",\"aggId\":\"" + id + "\"}", FactSpec.class);
+    final FactSpec oldSpecDifferentId =
+        om.readValue("{\"ns\":\"foo\",\"aggId\":\"" + differentId + "\"}", FactSpec.class);
+
+    assertThat(newSpec.hashCode()).isEqualTo(newSpec.hashCode());
+    assertThat(newSpec.hashCode()).isEqualTo(oldSpecSameId.hashCode());
+    assertThat(newSpec.hashCode()).isNotEqualTo(newSpecDifferenId.hashCode());
+    assertThat(newSpec.hashCode()).isNotEqualTo(oldSpecDifferentId.hashCode());
   }
 
   @Test
