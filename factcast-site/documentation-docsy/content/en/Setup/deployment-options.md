@@ -44,7 +44,7 @@ At the time of writing, the codebase only has Redis PUB/SUB implemented, but thi
 to any kind of messaging system.
 
 Given, you have a redis instance nearby, what you'd need to do is to choose **one** instance with read-write
-access to the primary database to additionally **emit** the notificatiions, and your replica based
+access to the primary database to additionally **emit** the notifications, and your replica based
 FactCast Server to consumer those.
 
 #### Emitter
