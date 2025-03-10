@@ -103,6 +103,11 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
+      <artifactId>factcast-server-ui-s3-reportstore</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
       <artifactId>factcast-factus-serializer-binary</artifactId>
       <optional>true</optional>
     </dependency>

@@ -23,6 +23,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 import org.factcast.core.Fact;
@@ -90,10 +91,10 @@ public class ResilientGrpcSubscription extends AbstractSubscription {
   ResilientGrpcSubscription delegate(
       ThrowingBiConsumer<Subscription, Long> consumer, long waitTimeInMillis)
       throws TimeoutException {
-    long startTime = System.currentTimeMillis();
+    long startTime = NowProvider.get();
     for (; ; ) {
       assertSubscriptionStateNotClosed();
-      long maxPause = waitTimeInMillis - (System.currentTimeMillis() - startTime);
+      long maxPause = waitTimeInMillis - (NowProvider.get() - startTime);
 
       try {
         Subscription cur = currentSubscription.getAndBlock(maxPause);
@@ -106,7 +107,7 @@ public class ResilientGrpcSubscription extends AbstractSubscription {
           throw e;
         }
       }
-      if ((System.currentTimeMillis() - startTime) > waitTimeInMillis) {
+      if ((NowProvider.get() - startTime) > waitTimeInMillis) {
         throw new TimeoutException();
       }
     }
@@ -269,13 +270,13 @@ public class ResilientGrpcSubscription extends AbstractSubscription {
 
     @NonNull
     public Subscription getAndBlock(long maxPause) throws TimeoutException {
-      long end = System.currentTimeMillis() + maxPause;
+      long end = NowProvider.get() + maxPause;
       synchronized (currentSubscription) {
         do {
           assertSubscriptionStateNotClosed();
           if (currentSubscription.get() == null) {
             try {
-              long now = System.currentTimeMillis();
+              long now = NowProvider.get();
               long waitTime = maxPause == 0 ? 0 : end - now;
               if (maxPause != 0 && waitTime < 1) {
                 throw new TimeoutException("Timeout while acquiring subscription");
@@ -316,6 +317,23 @@ public class ResilientGrpcSubscription extends AbstractSubscription {
       synchronized (currentSubscription) {
         currentSubscription.notifyAll();
       }
+    }
+  }
+
+  /**
+   * Just a vehicle for tests. Static mocking anything from java.lang - like
+   * System.currentTimeMillis() - is not possible with Mockito. It complains: "It is not possible to
+   * mock static methods of java.lang.System to avoid interfering with class loading what leads to
+   * infinite loops".
+   *
+   * <p>Making System.currentTimeMillis() predictable became desirable to phrase more deterministic
+   * expectations in unit tests.
+   */
+  @UtilityClass
+  @VisibleForTesting
+  static class NowProvider {
+    static long get() {
+      return System.currentTimeMillis();
     }
   }
 }
