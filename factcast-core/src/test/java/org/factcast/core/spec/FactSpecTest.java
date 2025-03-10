@@ -20,7 +20,6 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import java.lang.reflect.Field;
 import java.util.*;
@@ -174,7 +173,7 @@ class FactSpecTest {
   @Test
   @SneakyThrows
   void testFactSpecEqualityBehavesAsExpectedWithDeprecatedField() {
-    final ObjectMapper om = new JsonMapper();
+    final JsonMapper om = new JsonMapper();
     final UUID id = UUID.randomUUID();
     final UUID differentId = UUID.randomUUID();
     final FactSpec newSpec =
@@ -194,7 +193,7 @@ class FactSpecTest {
   @Test
   @SneakyThrows
   void testFactSpecHashCodeBehavesAsExpectedWithDeprecatedField() {
-    final ObjectMapper om = new JsonMapper();
+    final JsonMapper om = new JsonMapper();
     final UUID id = UUID.randomUUID();
     final UUID differentId = UUID.randomUUID();
     final FactSpec newSpec =
