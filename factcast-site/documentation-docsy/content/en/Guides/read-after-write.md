@@ -49,7 +49,7 @@ as it would probably be
 - updated with (often 0) facts that happened since the last time we looked
 - serialized (in case new facts were applied)
 
-before it can be queried to return a simple int (or long if you are up to something great).
+before it can be queried to return a simple `int` (or `long` if you are up to something great).
 
 What the more applicable alternative is (Managed or Subscribed Projection), depends
 on your tolerance for the window of inconsistency and the level of control you'd like to have over
@@ -59,7 +59,7 @@ updating your model.
 
 A managed projection is called managed because the application can decide how often & when to update it.
 For instance, you could decide that a window of inconsistency can be as large as 60 seconds, so that ideally
-you pull the latest state every 60 seconds, so you use your favorite `cron`-ish mechanism to call
+you pull the latest state every 60 seconds. You may use your favorite scheduler mechanism to call
 `factus.update(myManagedUserCount);` with that fixed interval. This way you would end up with an average
 latency of 30s.
 
@@ -69,20 +69,19 @@ published in between.
 
 ##### Subscribed Projection
 
-A subscribed projection will have its handler method invoked, when a relevant fact was published
-(latency caused by network, deserialization etc). This method is more convenient
-(as there is less on the application layer to do) and also reduces the window of inconsistency to
-few milliseconds, depending on your networking & hardware setup.
+A subscribed projection will have its handler method invoked, when a relevant fact arrived.
+This method is more convenient (as there is less on the application layer to do) and also
+reduces the window of inconsistency to few milliseconds, depending on your networking & hardware setup.
 
 ## Eventual consistency, and when to **not** use it
 
 The use of eventual consistent models of course needs to be limited to the read-path of you application.
 When using eventual consistent models to validate constraints, you risk wrong business decisions due to race conditions.
 
-You have been warned.
+**You have been warned.**
 
-But sometimes, things are not as simple as in the above example. Let's consider a backoffice application
-where your customers are listed, maybe a master-detail-dialog.
+But sometimes, even on the read side things are not as simple as in the above example. Let's consider a backoffice
+application where your customers are listed, maybe a master-detail-dialog.
 As you have a lot of customers, and a window of inconsistency is _usually_ irrelevant, you may go for a
 managed or subscribed projection.
 There is however a use case, where inconsistency might not be appreciated:
