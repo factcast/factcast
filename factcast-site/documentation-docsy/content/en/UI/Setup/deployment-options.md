@@ -22,7 +22,7 @@ You can add a new project to your landscape that just acts as a UI Server. In th
 the gRPC layer (factcast-server-grpc) because it uses a jdbc connection to your database directly. The config is
 basically the
 same than with your FactCast Server (in terms of how to access the backing database), but additionally, you may want
-to set the role of this instance to readOnly by setting `factcast.store.readOnlyModeEnabled=true`.
+to set the role of this instance to readOnly (see [readonly deployment](/setup/deployment-options)).
 
 ### Option 3: as standalone instance facilitating an existing factcast-server over gRPC
 
