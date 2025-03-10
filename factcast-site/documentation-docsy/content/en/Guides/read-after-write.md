@@ -32,7 +32,7 @@ where the exact moment of an update of the model is not important.
 Consider building a model that provides the number of currently logged-in users for your social network application.
 It might be used on every web-page (in the header) and also will be publicly available, so that you really would
 not want each request to go to the factcast server and find out, if the count needs to be updated.
-Apart from that being a significant scalability (may DoS) risk, it really is not important for that number
+Apart from that being a significant scalability (maybe DoS) risk, it really is not important for that number
 to be exact. If it changes with a (undefined, from single digit ms up to whatever you choose) latency when
 somebody logs in, nobody will care.
 
