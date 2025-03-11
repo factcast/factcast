@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast-examples</artifactId>
-    <version>0.9.5</version>
+    <version>0.9.6-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-example-schema-registry</artifactId>
@@ -27,7 +27,7 @@
       <plugin>
         <groupId>org.factcast</groupId>
         <artifactId>factcast-schema-registry-maven-plugin</artifactId>
-        <version>0.9.5</version>
+        <version>0.9.6-SNAPSHOT</version>
         <executions>
           <execution>
             <id>build</id>
