@@ -9,7 +9,7 @@ description: Properties you want to use to configure FactCast UI.
 
 This setting should be set in every instance that factcast-server-ui is part of.
 
-| Property                 | Description                                                                                                                                 | Default             |
-| ------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------ | :------------------ |
-| vaadin.productionMode    | Should be set to true, otherwise vaadin tries to generate a dev bundle which is not necessary, and probably will fail.                      | false               |
-| factcast.ui.report.path | The path under which reports are stored if no external ReportStore is configured. | /tmp/factcast-ui/report |
+| Property                | Description                                                                                                            | Default                 |
+| ----------------------- | :--------------------------------------------------------------------------------------------------------------------- | :---------------------- |
+| vaadin.productionMode   | Should be set to true, otherwise vaadin tries to generate a dev bundle which is not necessary, and probably will fail. | false                   |
+| factcast.ui.report.path | The path under which reports are stored if no external ReportStore is configured.                                      | /tmp/factcast-ui/report |

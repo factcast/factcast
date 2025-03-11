@@ -52,6 +52,6 @@ When setting up the S3 Bucket ensure the following permissions are granted to yo
 
 Finally in the `application.properties` file, configure the following properties:
 
-| Property              | Description                                                                     | Default |
-| --------------------- | :------------------------------------------------------------------------------ | :------ |
+| Property                    | Description                                                                     | Default |
+| --------------------------- | :------------------------------------------------------------------------------ | :------ |
 | factcast.ui.report.store.s3 | The name of the S3 Bucket in which the reports are stored by the S3ReportStore. | -/-     |
