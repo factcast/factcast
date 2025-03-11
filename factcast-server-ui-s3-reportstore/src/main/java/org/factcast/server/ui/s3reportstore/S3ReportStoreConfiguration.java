@@ -15,13 +15,16 @@
  */
 package org.factcast.server.ui.s3reportstore;
 
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.server.ui.port.ReportStore;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.*;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
 
+@Slf4j
 @Configuration
 public class S3ReportStoreConfiguration {
 
@@ -43,10 +46,17 @@ public class S3ReportStoreConfiguration {
     return S3TransferManager.builder().s3Client(client).build();
   }
 
+  @Value("${factcast.ui.report.store.path:}")
+  private String filesystemReportPath;
+
   @Bean
   @ConditionalOnMissingBean
   ReportStore s3ReportStore(
       S3AsyncClient s3Client, S3TransferManager s3TransferManager, S3Presigner s3Presigner) {
+    if (!filesystemReportPath.isEmpty()) {
+      log.warn(
+          "'factcast.ui.report.store.path' is configured when using s3 report store. This is likely a misconfiguration.");
+    }
     return new S3ReportStore(s3Client, s3TransferManager, s3Presigner);
   }
 }
