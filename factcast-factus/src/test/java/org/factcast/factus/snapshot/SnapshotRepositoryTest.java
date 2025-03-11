@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2025 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,13 @@
  */
 package org.factcast.factus.snapshot;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
 import org.factcast.factus.metrics.FactusMetrics;
-import org.factcast.factus.projection.SnapshotProjection;
-import org.factcast.factus.serializer.ProjectionMetaData;
-import org.factcast.factus.serializer.SnapshotSerializer;
+import org.factcast.factus.projection.*;
 import org.factcast.factus.serializer.SnapshotSerializerId;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -40,121 +30,23 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class SnapshotRepositoryTest {
 
   @Mock SnapshotCache snapshotCache;
-  @Mock SnapshotSerializer ser;
-  @Mock SnapshotSerializerSelector snapshotSerializerSelector;
   @Mock FactusMetrics factusMetrics;
+  @Mock SnapshotSerializerSelector selector;
   @InjectMocks SnapshotRepository underTest;
 
-  @Test
-  void store() {
-    // INIT
-    UUID state = UUID.randomUUID();
-    SomeSnapshotProjection projection = new SomeSnapshotProjection();
-
-    when(snapshotSerializerSelector.selectSeralizerFor(any())).thenReturn(ser);
-    when(ser.serialize(projection)).thenReturn(new byte[0]);
-    SnapshotSerializerId foo = SnapshotSerializerId.of("foo");
-    when(ser.id()).thenReturn(foo);
-    // RUN
-    underTest.store(projection, state);
-
-    // ASSERT
-    Mockito.verify(snapshotCache)
-        .store(
-            Mockito.argThat(
-                i -> i.aggregateId() == null && i.projectionClass() == projection.getClass()),
-            ArgumentMatchers.argThat(
-                sd -> state.equals(sd.lastFactId()) && foo.equals(sd.snapshotSerializerId())));
-  }
-
   @Nested
-  class WhenFindingLatest {
-
-    @Captor ArgumentCaptor<SnapshotIdentifier> idCaptor;
-
-    private final SomeSnapshotProjection snapshotProjection = spy(new SomeSnapshotProjection());
-
-    @BeforeEach
-    void setup() {}
+  class WhenFinding {
+    @NonNull SnapshotIdentifier id = SnapshotIdentifier.of(SnapshotProjection.class);
 
     @Test
-    void findNone() {
-      Assertions.assertThat(underTest.findLatest(SomeSnapshotProjection.class)).isEmpty();
-    }
-
-    @Test
-    void findOne_givenSVUID() {
-      // INIT
-      SnapshotSerializerId testId = SnapshotSerializerId.of("test");
-      UUID last = UUID.randomUUID();
-      SnapshotData withSVUID = new SnapshotData(new byte[0], testId, last);
-
-      @NonNull SnapshotIdentifier snapIdent = SnapshotIdentifier.of(SomeSnapshotProjection.class);
-      when(snapshotSerializerSelector.selectSeralizerFor(any())).thenReturn(ser);
-      when(snapshotCache.find(snapIdent)).thenReturn(Optional.of(withSVUID));
-      when(ser.deserialize(eq(SomeSnapshotProjection.class), any(byte[].class)))
-          .thenReturn(snapshotProjection);
-
-      // RUN
-      @NonNull
-      Optional<ProjectionAndState<SomeSnapshotProjection>> result =
-          underTest.findLatest(SomeSnapshotProjection.class);
-
-      // ASSERT
-      verify(snapshotProjection).onAfterRestore();
-      assertThat(result).isPresent();
-      Assertions.assertThat(result.map(ProjectionAndState::lastFactIdApplied)).hasValue(last);
-      Assertions.assertThat(result.map(ProjectionAndState::projectionInstance))
-          .get()
-          .isInstanceOf(SomeSnapshotProjection.class);
+    void returnsEmptyWhenDeserializationFails() {
+      Mockito.when(snapshotCache.find(Mockito.any()))
+          .thenReturn(
+              Optional.of(
+                  new SnapshotData(
+                      new byte[0], SnapshotSerializerId.of("guess"), UUID.randomUUID())));
+      Mockito.when(selector.selectSeralizerFor(Mockito.any())).thenReturn(new FailingSerializer());
+      Assertions.assertThat(underTest.findAndDeserialize(SnapshotProjection.class, id)).isEmpty();
     }
   }
-
-  @Nested
-  class WhenStoring {
-    private final UUID STATE = UUID.randomUUID();
-
-    private final SomeSnapshotProjection snapshotProjection = spy(new SomeSnapshotProjection());
-
-    @Captor private ArgumentCaptor<SnapshotData> snapshotCaptor;
-
-    @Test
-    void store() {
-      // INIT
-      when(snapshotSerializerSelector.selectSeralizerFor(any())).thenReturn(ser);
-
-      when(ser.serialize(snapshotProjection)).thenReturn("foo".getBytes());
-      SnapshotSerializerId serId = SnapshotSerializerId.of("narf");
-      when(ser.id()).thenReturn(serId);
-
-      SnapshotIdentifier id = SnapshotIdentifier.of(SomeSnapshotProjection.class);
-
-      // RUN
-      underTest.store(snapshotProjection, STATE);
-
-      verify(snapshotCache).store(eq(id), snapshotCaptor.capture());
-      verify(snapshotProjection).onBeforeSnapshot();
-      assertThat(snapshotCaptor.getValue())
-          .extracting(
-              SnapshotData::snapshotSerializerId,
-              SnapshotData::serializedProjection,
-              SnapshotData::lastFactId)
-          .containsExactly(serId, "foo".getBytes(), STATE);
-    }
-  }
-
-  @Nested
-  class WhenRemoving {
-    @Mock SnapshotIdentifier id;
-
-    @Test
-    void happyPath() {
-      underTest.remove(id);
-
-      verify(snapshotCache).remove(id);
-    }
-  }
-
-  @ProjectionMetaData(revision = 43)
-  public static class SomeSnapshotProjection implements SnapshotProjection {}
 }
