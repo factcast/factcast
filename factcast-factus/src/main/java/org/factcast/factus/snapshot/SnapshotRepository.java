@@ -36,11 +36,6 @@ public class SnapshotRepository extends AbstractSnapshotRepository {
 
   public <T extends SnapshotProjection> @NonNull Optional<ProjectionAndState<T>> findLatest(
       @NonNull Class<T> type) {
-    SnapshotIdentifier id = SnapshotIdentifier.of(type);
-    return find(id)
-        .map(
-            sd ->
-                ProjectionAndState.of(
-                    deserialize(sd.serializedProjection(), type), sd.lastFactId()));
+    return findAndDeserialize(type, SnapshotIdentifier.of(type));
   }
 }

@@ -25,13 +25,11 @@ import java.util.UUID;
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
 import org.factcast.factus.metrics.FactusMetrics;
-import org.factcast.factus.projection.Aggregate;
-import org.factcast.factus.projection.AggregateUtil;
+import org.factcast.factus.projection.*;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.serializer.SnapshotSerializerId;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -44,6 +42,23 @@ class AggregateRepositoryTest {
   @Mock SnapshotSerializerSelector snapshotSerializerSelector;
   @Mock FactusMetrics factusMetrics;
   @InjectMocks AggregateRepository underTest;
+
+  @Nested
+  class WhenFinding {
+    SnapshotIdentifier id = SnapshotIdentifier.of(Aggregate.class, UUID.randomUUID());
+
+    @Test
+    void returnsEmptyWhenDeserializationFails() {
+      Mockito.when(snapshotCache.find(Mockito.any()))
+          .thenReturn(
+              Optional.of(
+                  new SnapshotData(
+                      new byte[0], SnapshotSerializerId.of("guess"), UUID.randomUUID())));
+      Mockito.when(snapshotSerializerSelector.selectSeralizerFor(Mockito.any()))
+          .thenReturn(new FailingSerializer());
+      Assertions.assertThat(underTest.findAndDeserialize(Aggregate.class, id)).isEmpty();
+    }
+  }
 
   @Test
   void store() {

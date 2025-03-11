@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.metrics.GaugedEvent;
 import org.factcast.factus.metrics.TagKeys;
-import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.projection.*;
 import org.factcast.factus.serializer.SnapshotSerializer;
 
 @RequiredArgsConstructor
@@ -58,9 +58,14 @@ abstract class AbstractSnapshotRepository {
 
   protected final <T extends SnapshotProjection> T deserialize(
       @NonNull byte[] bytes, @NonNull Class<T> type) {
-    T instance = seralizerFor(type).deserialize(type, bytes);
-    instance.onAfterRestore();
-    return instance;
+    try {
+      T instance = seralizerFor(type).deserialize(type, bytes);
+      instance.onAfterRestore();
+      return instance;
+    } catch (Exception e) {
+      log.warn("Failed to deserialize snapshot of type {}", type, e);
+      return null;
+    }
   }
 
   protected final <T extends SnapshotProjection> SnapshotData serialize(
@@ -76,5 +81,15 @@ abstract class AbstractSnapshotRepository {
         GaugedEvent.FETCH_SIZE,
         Tags.of(Tag.of(TagKeys.CLASS, projectionClass.getName())),
         ret.serializedProjection().length);
+  }
+
+  protected <T extends SnapshotProjection> Optional<ProjectionAndState<T>> findAndDeserialize(
+      Class<T> type, SnapshotIdentifier id) {
+    Optional<SnapshotData> snapshotData = find(id);
+    if (snapshotData.isPresent()) {
+      SnapshotData sd = snapshotData.get();
+      return Optional.ofNullable(deserialize(sd.serializedProjection(), type))
+          .map(i -> ProjectionAndState.of(i, sd.lastFactId()));
+    } else return Optional.empty();
   }
 }
