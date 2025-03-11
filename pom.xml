@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.9.5-SNAPSHOT</version>
+  <version>0.9.6-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>factcast</name>
   <description>factcast is a 'good enough' event store using PostgreSQL
@@ -785,7 +785,7 @@
           <plugin>
             <groupId>org.openrewrite.maven</groupId>
             <artifactId>rewrite-maven-plugin</artifactId>
-            <version>6.2.3</version>
+            <version>6.3.0</version>
             <configuration>
               <activeRecipes>
                 <recipe>org.openrewrite.staticanalysis.CodeCleanup</recipe>

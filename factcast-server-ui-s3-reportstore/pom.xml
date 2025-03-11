@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.9.5-SNAPSHOT</version>
+    <version>0.9.6-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-server-ui-s3-reportstore</artifactId>
@@ -62,7 +62,7 @@
     <dependency>
       <groupId>software.amazon.awssdk.crt</groupId>
       <artifactId>aws-crt</artifactId>
-      <version>0.36.1</version>
+      <version>0.36.2</version>
     </dependency>
 
     <!-- Test dependencies -->
