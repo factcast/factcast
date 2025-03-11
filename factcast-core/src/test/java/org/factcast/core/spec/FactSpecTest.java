@@ -20,6 +20,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.fasterxml.jackson.databind.*;
 import java.lang.reflect.Field;
 import java.util.*;
 import lombok.NonNull;
@@ -265,5 +266,58 @@ class FactSpecTest {
 
     org.meta("foo", "bar");
     assertThat(copy).isNotEqualTo(org);
+  }
+
+  @Test
+  @SneakyThrows
+  void testFactSpecEqualityBehavesAsExpectedWithDeprecatedField() {
+    ObjectReader om = FactCastJson.getObjectMapper().readerFor(FactSpec.class);
+    UUID id = UUID.randomUUID();
+    UUID differentId = UUID.randomUUID();
+    FactSpec newSpec = om.readValue("{\"ns\":\"foo\",\"aggIds\":[\"" + id + "\"]}");
+    FactSpec newSpecDifferenId =
+        om.readValue("{\"ns\":\"foo\",\"aggIds\":[\"" + differentId + "\"]}");
+    FactSpec oldSpecSameId = om.readValue("{\"ns\":\"foo\",\"aggId\":\"" + id + "\"}");
+    FactSpec oldSpecDifferentId =
+        om.readValue("{\"ns\":\"foo\",\"aggId\":\"" + differentId + "\"}");
+
+    assertThat(newSpec).isEqualTo(oldSpecSameId);
+    assertThat(newSpec).isNotEqualTo(newSpecDifferenId);
+    assertThat(newSpec).isNotEqualTo(oldSpecDifferentId);
+  }
+
+  @Test
+  @SneakyThrows
+  void testFactSpecHashCodeBehavesAsExpectedWithDeprecatedField() {
+    ObjectReader om = FactCastJson.getObjectMapper().readerFor(FactSpec.class);
+    UUID id = UUID.randomUUID();
+    UUID differentId = UUID.randomUUID();
+    FactSpec newSpec = om.readValue("{\"ns\":\"foo\",\"aggIds\":[\"" + id + "\"]}");
+    FactSpec newSpecDifferenId =
+        om.readValue("{\"ns\":\"foo\",\"aggIds\":[\"" + differentId + "\"]}");
+    FactSpec oldSpecSameId = om.readValue("{\"ns\":\"foo\",\"aggId\":\"" + id + "\"}");
+    FactSpec oldSpecDifferentId =
+        om.readValue("{\"ns\":\"foo\",\"aggId\":\"" + differentId + "\"}");
+
+    assertThat(newSpec)
+        .hasSameHashCodeAs(newSpec)
+        .hasSameHashCodeAs(oldSpecSameId)
+        .doesNotHaveSameHashCodeAs(newSpecDifferenId)
+        .isNotEqualTo(oldSpecDifferentId);
+  }
+
+  @Test
+  @SneakyThrows
+  void equalsNoMatterWhereIdCameFrom() {
+    ObjectReader om = FactCastJson.getObjectMapper().readerFor(FactSpec.class);
+    UUID id = UUID.randomUUID();
+    UUID differentId = UUID.randomUUID();
+    FactSpec newSpecArray =
+        om.readValue("{\"ns\":\"foo\",\"aggIds\":[\"" + id + "\",\"" + differentId + " \"]}");
+    FactSpec newSpecMixed =
+        om.readValue(
+            "{\"ns\":\"foo\",\"aggId\":\"" + id + "\",\"aggIds\":[\"" + differentId + "\"]}");
+
+    assertThat(newSpecArray).hasSameHashCodeAs(newSpecMixed).isEqualTo(newSpecMixed);
   }
 }
