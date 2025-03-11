@@ -54,4 +54,4 @@ Finally in the `application.properties` file, configure the following properties
 
 | Property              | Description                                                                     | Default |
 | --------------------- | :------------------------------------------------------------------------------ | :------ |
-| factcast.ui.s3.bucket | The name of the S3 Bucket in which the reports are stored by the S3ReportStore. | -/-     |
+| factcast.ui.report.store.s3 | The name of the S3 Bucket in which the reports are stored by the S3ReportStore. | -/-     |
