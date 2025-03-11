@@ -15,7 +15,7 @@ Optionally, you could add `-Dui.watch` or `-Dui.record` to either see the tests 
 into videos that you can find in the target folder, respectively.
 
 Playwrite offers this generative mode which records interactions with the ui and turns them into accessor, which can be
-a great help setting up new integration tests.
+a great help setting up new integration tests. Make sure to remove <test> scope from the playwrite dependency before.
 `mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="codegen localhost:8080"`                                  
 
 ## Report Generation
