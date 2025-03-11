@@ -24,15 +24,11 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.*;
 import java.util.stream.*;
-import lombok.Data;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
-import org.factcast.core.lock.Attempt;
-import org.factcast.core.lock.AttemptAbortedException;
-import org.factcast.core.lock.PublishingResult;
+import org.factcast.core.lock.*;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.factus.Factus;
 import org.factcast.factus.event.EventObject;
@@ -107,8 +103,11 @@ public class Locked<I extends Projection> {
                       try {
                         InLockedOperation.enterLockedOperation();
                         bodyToExecute.accept(updatedProjection, txWithLockOnSpecs);
-                        return Attempt.publishUnlessEmpty(
-                            toPublish.stream().map(Supplier::get).collect(Collectors.toList()));
+                        IntermediatePublishResult im =
+                            Attempt.publishUnlessEmpty(
+                                toPublish.stream().map(Supplier::get).collect(Collectors.toList()));
+                        txWithLockOnSpecs.onSuccess().ifPresent(im::andThen);
+                        return im;
                       } finally {
                         InLockedOperation.exitLockedOperation();
                       }
@@ -161,6 +160,25 @@ public class Locked<I extends Projection> {
 
   private RetryableTransaction createTransaction(Factus factus, List<Supplier<Fact>> toPublish) {
     return new RetryableTransaction() {
+
+      private Runnable onSuccess = null;
+
+      @Override
+      public void onSuccess(@NonNull Runnable willBeRunOnSuccessOnly) {
+        if (this.onSuccess == null) {
+          onSuccess = willBeRunOnSuccessOnly;
+        } else
+          onSuccess =
+              () -> {
+                onSuccess.run();
+                willBeRunOnSuccessOnly.run();
+              };
+      }
+
+      public Optional<Runnable> onSuccess() {
+        return Optional.ofNullable(onSuccess);
+      }
+
       @Override
       public void publish(@NonNull EventObject e) {
         toPublish.add(() -> factus.toFact(e));

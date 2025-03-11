@@ -15,6 +15,7 @@
  */
 package org.factcast.factus.lock;
 
+import java.util.Optional;
 import lombok.NonNull;
 import org.factcast.factus.*;
 
@@ -28,4 +29,8 @@ public interface RetryableTransaction extends SimplePublisher, ProjectionAccesso
   default void abort(@NonNull LockedOperationAbortedException cause) {
     throw cause;
   }
+
+  void onSuccess(Runnable willBeRunOnSuccessOnly);
+
+  Optional<Runnable> onSuccess();
 }
