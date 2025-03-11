@@ -44,7 +44,7 @@ public class S3ReportStore implements ReportStore {
   private final S3TransferManager s3TransferManager;
   private final S3Presigner s3Presigner;
 
-  @Value("${factcast.ui.s3.bucket}")
+  @Value("${factcast.ui.report.s3}")
   private String bucketName;
 
   @Override

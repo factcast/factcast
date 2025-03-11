@@ -42,7 +42,7 @@ public class AwsS3TestConfig {
 
   @Bean
   public S3TransferManager localS3(
-      @Value("${factcast.ui.s3.bucket}") String bucketName, LocalStackContainer container) {
+      @Value("${factcast.ui.report.s3}") String bucketName, LocalStackContainer container) {
 
     S3AsyncClient s3 = getClient(container.getEndpointOverride(LocalStackContainer.Service.S3));
     S3TransferManager s3TransferManager = S3TransferManager.builder().s3Client(s3).build();
@@ -56,8 +56,9 @@ public class AwsS3TestConfig {
 
   private void createBucket(S3AsyncClient client, String bucketName) {
     if (doesBucketExist(client, bucketName)) {
-      log.info("Found bucket, do nothing");
+      log.debug("Bucket found, skip creation.");
     } else {
+      log.debug("Bucket not found, creating");
       client.createBucket(x -> x.bucket(bucketName)).join();
 
       CORSRule corsRule =
@@ -69,8 +70,6 @@ public class AwsS3TestConfig {
       client
           .putBucketCors(x -> x.bucket(bucketName).corsConfiguration(c -> c.corsRules(corsRule)))
           .join();
-
-      log.info("Did not found bucket, creating");
     }
   }
 

@@ -4,4 +4,4 @@ To be used in combination with factcast-server-ui in order to store generated re
 
 ## Configuration properties
 
-`factcast.ui.s3.bucket`=  the name of your S3 bucket.
+`factcast.ui.report.s3`= the name of your S3 bucket.
