@@ -124,6 +124,7 @@ class ReportQueryPageIntTest extends AbstractBrowserTest {
     delete();
 
     // ASSERT
+    page.reload();
     assertThat(expectedReportItem).hasCount(0);
   }
 
