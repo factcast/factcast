@@ -23,9 +23,9 @@ a great help setting up new integration tests. Make sure to remove <test> scope 
 The UI offers a report generation feature that can be used to generate and save reports based on certain event criteria.
 These reports can be stored either in S3 (`S3ReportStore`) or in your local filesystem (`FileSystemReportStore`).
 
-If you want to use the `S3ReportStore`, you need to provide the configuration property of `factcast.ui.report.s3`.
+If you want to use the `S3ReportStore`, you need to provide the configuration property of `factcast.ui.report.store.s3`.
 If you chose to use the `FileSystemReportStore`, you need to set the configuration property of
-`factcast.ui.report.path`.
+`factcast.ui.report.store.path`.
 
 ## Keeping the package.json in correct state
 

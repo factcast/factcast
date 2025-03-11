@@ -11,7 +11,7 @@ are only visible for the user that created them and can be downloaded and delete
 ### Filesystem Storage
 
 Per default reports are stored on the filesystem of the instance that is running the FactCast-Server UI. The path can be
-configured using the `factcast.ui.report.path` property.
+configured using the `factcast.ui.report.store.path` property.
 This setup has the downside that reports are lost when the instance is restarted or the filesystem is wiped, as well as
 that large amounts of reports can fill up the disk. Because of this, it is recommended to use an external ReportStore.
 

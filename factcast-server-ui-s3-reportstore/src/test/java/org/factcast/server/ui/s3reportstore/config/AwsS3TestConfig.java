@@ -42,7 +42,7 @@ public class AwsS3TestConfig {
 
   @Bean
   public S3TransferManager localS3(
-      @Value("${factcast.ui.report.s3}") String bucketName, LocalStackContainer container) {
+      @Value("${factcast.ui.report.store.s3}") String bucketName, LocalStackContainer container) {
 
     S3AsyncClient s3 = getClient(container.getEndpointOverride(LocalStackContainer.Service.S3));
     S3TransferManager s3TransferManager = S3TransferManager.builder().s3Client(s3).build();

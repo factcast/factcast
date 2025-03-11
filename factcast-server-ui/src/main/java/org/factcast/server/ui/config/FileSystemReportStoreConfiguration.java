@@ -26,7 +26,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class FileSystemReportStoreConfiguration {
-  @Value("${factcast.ui.report.path:/tmp/factcast-ui/report}")
+  @Value("${factcast.ui.report.store.path:/tmp/factcast-ui/report}")
   String reportsPath;
 
   @Bean
