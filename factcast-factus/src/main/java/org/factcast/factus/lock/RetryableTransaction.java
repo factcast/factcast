@@ -15,7 +15,7 @@
  */
 package org.factcast.factus.lock;
 
-import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import lombok.NonNull;
 import org.factcast.factus.*;
 
@@ -30,7 +30,9 @@ public interface RetryableTransaction extends SimplePublisher, ProjectionAccesso
     throw cause;
   }
 
-  void onSuccess(Runnable willBeRunOnSuccessOnly);
+  void onSuccess(@NonNull Runnable willBeRunOnSuccessOnly);
 
-  Optional<Runnable> onSuccess();
+  default void onSuccessAsync(@NonNull Runnable willBeRunOnSuccessOnly) {
+    onSuccess(() -> CompletableFuture.runAsync(willBeRunOnSuccessOnly));
+  }
 }

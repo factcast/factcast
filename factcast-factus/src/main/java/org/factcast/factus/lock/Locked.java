@@ -19,9 +19,7 @@ import static org.factcast.factus.metrics.TagKeys.CLASS;
 
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
-import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.*;
 import java.util.function.*;
 import java.util.stream.*;
 import lombok.*;
@@ -31,7 +29,6 @@ import org.factcast.core.FactCast;
 import org.factcast.core.lock.*;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.factus.Factus;
-import org.factcast.factus.event.EventObject;
 import org.factcast.factus.metrics.CountedEvent;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.projection.*;
@@ -98,7 +95,8 @@ public class Locked<I extends Projection> {
 
                       List<Supplier<Fact>> toPublish =
                           Collections.synchronizedList(new LinkedList<>());
-                      RetryableTransaction txWithLockOnSpecs = createTransaction(factus, toPublish);
+                      RetryableTransactionImpl txWithLockOnSpecs =
+                          createTransaction(factus, toPublish);
 
                       try {
                         InLockedOperation.enterLockedOperation();
@@ -158,58 +156,8 @@ public class Locked<I extends Projection> {
     throw new IllegalStateException("Don't know how to update " + projection);
   }
 
-  private RetryableTransaction createTransaction(Factus factus, List<Supplier<Fact>> toPublish) {
-    return new RetryableTransaction() {
-
-      private Runnable onSuccess = null;
-
-      @Override
-      public void onSuccess(@NonNull Runnable willBeRunOnSuccessOnly) {
-        if (this.onSuccess == null) {
-          onSuccess = willBeRunOnSuccessOnly;
-        } else
-          onSuccess =
-              () -> {
-                onSuccess.run();
-                willBeRunOnSuccessOnly.run();
-              };
-      }
-
-      public Optional<Runnable> onSuccess() {
-        return Optional.ofNullable(onSuccess);
-      }
-
-      @Override
-      public void publish(@NonNull EventObject e) {
-        toPublish.add(() -> factus.toFact(e));
-      }
-
-      @Override
-      public void publish(@NonNull List<EventObject> eventPojos) {
-        eventPojos.forEach(this::publish);
-      }
-
-      @Override
-      public void publish(@NonNull Fact e) {
-        toPublish.add(() -> e);
-      }
-
-      @Override
-      public <P extends SnapshotProjection> P fetch(@NonNull Class<P> projectionClass) {
-        return factus.fetch(projectionClass);
-      }
-
-      @Override
-      public <A extends Aggregate> Optional<A> find(
-          @NonNull Class<A> aggregateClass, @NonNull UUID aggregateId) {
-        return factus.find(aggregateClass, aggregateId);
-      }
-
-      @Override
-      public <P extends ManagedProjection> void update(
-          @NonNull P managedProjection, @NonNull Duration maxWaitTime) throws TimeoutException {
-        factus.update(managedProjection, maxWaitTime);
-      }
-    };
+  private RetryableTransactionImpl createTransaction(
+      Factus factus, List<Supplier<Fact>> toPublish) {
+    return new RetryableTransactionImpl(toPublish, factus);
   }
 }
