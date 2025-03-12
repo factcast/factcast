@@ -280,15 +280,6 @@
           <version>${maven-clean-plugin.version}</version>
         </plugin>
         <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-release-plugin</artifactId>
-          <version>${maven-release-plugin.version}</version>
-          <configuration>
-            <arguments>-Dossrh=true</arguments>
-            <preparationGoals>clean validate</preparationGoals>
-          </configuration>
-        </plugin>
-        <plugin>
           <groupId>org.commonjava.maven.plugins</groupId>
           <artifactId>directory-maven-plugin</artifactId>
           <version>${directory-maven-plugin.version}</version>
@@ -530,9 +521,13 @@
             <include>*</include>
           </includes>
           <excludedGroups>integration,uitest</excludedGroups>
+          <!-- even though -XX:+EnableDynamicAgentLoading will be removed, for
+            now it works around mockk when using bytebuddy agent in a self-attaching
+            way -->
           <!--suppress UnresolvedMavenProperty -->
           <argLine>${surefire.jacoco.args}
-            -javaagent:${org.mockito:mockito-core:jar}</argLine>
+            -javaagent:${org.mockito:mockito-core:jar}
+            -XX:+EnableDynamicAgentLoading</argLine>
           <skip>${skipUnitTests}</skip>
           <parallel>classes</parallel>
           <threadCountClasses>8</threadCountClasses>
