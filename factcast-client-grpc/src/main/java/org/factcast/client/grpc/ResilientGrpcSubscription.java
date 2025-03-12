@@ -17,13 +17,13 @@ package org.factcast.client.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 import org.factcast.core.Fact;
@@ -33,8 +33,7 @@ import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.util.ExceptionHelper;
 
 @Slf4j
-public class ResilientGrpcSubscription implements Subscription {
-
+public class ResilientGrpcSubscription extends AbstractSubscription {
   private final GrpcFactStore store;
   private final SubscriptionRequestTO originalRequest;
   private final FactObserver originalObserver;
@@ -42,7 +41,6 @@ public class ResilientGrpcSubscription implements Subscription {
 
   private final AtomicReference<FactStreamPosition> lastPosition = new AtomicReference<>();
   private final SubscriptionHolder currentSubscription = new SubscriptionHolder();
-  private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
   @Getter(value = AccessLevel.PACKAGE)
   private final AtomicReference<Throwable> onErrorCause = new AtomicReference<>();
@@ -85,24 +83,18 @@ public class ResilientGrpcSubscription implements Subscription {
   }
 
   @Override
-  public void close() {
-    if (!isClosed.getAndSet(true)) {
-      try {
-        closeAndDetachSubscription();
-      } finally {
-        isClosed.set(true);
-      }
-    }
+  public void internalClose() {
+    closeAndDetachSubscription();
   }
 
   @VisibleForTesting
   ResilientGrpcSubscription delegate(
       ThrowingBiConsumer<Subscription, Long> consumer, long waitTimeInMillis)
       throws TimeoutException {
-    long startTime = System.currentTimeMillis();
+    long startTime = NowProvider.get();
     for (; ; ) {
       assertSubscriptionStateNotClosed();
-      long maxPause = waitTimeInMillis - (System.currentTimeMillis() - startTime);
+      long maxPause = waitTimeInMillis - (NowProvider.get() - startTime);
 
       try {
         Subscription cur = currentSubscription.getAndBlock(maxPause);
@@ -115,7 +107,7 @@ public class ResilientGrpcSubscription implements Subscription {
           throw e;
         }
       }
-      if ((System.currentTimeMillis() - startTime) > waitTimeInMillis) {
+      if ((NowProvider.get() - startTime) > waitTimeInMillis) {
         throw new TimeoutException();
       }
     }
@@ -139,17 +131,18 @@ public class ResilientGrpcSubscription implements Subscription {
 
   @SneakyThrows
   private void assertSubscriptionStateNotClosed() {
-    if (isClosed.get()) {
+    if (isSubscriptionClosed()) {
       Throwable cause = onErrorCause.get();
-      if (cause != null)
+      if (cause != null) {
         // Re-throwing exception if there is a known reason for the closed subscription to
         // consistently reflect underlying problems like a StatusRuntimeException (e.g.
         // "PERMISSION_DENIED"). Otherwise, sometimes underlying problems are hidden behind a
         // generic SubscriptionClosedException, see https://github.com/factcast/factcast/issues/2949
         throw cause;
-      else
+      } else {
         throw new SubscriptionClosedException(
             "Subscription already closed  (" + originalRequest + ")");
+      }
     }
   }
 
@@ -189,7 +182,9 @@ public class ResilientGrpcSubscription implements Subscription {
   private void closeAndDetachSubscription() {
     Subscription current = currentSubscription.getAndSet(null);
     try {
-      if (current != null) current.close();
+      if (current != null) {
+        current.close();
+      }
     } catch (Exception justLog) {
       log.warn("Ignoring Exception while closing a subscription ({})", originalRequest, justLog);
     }
@@ -212,7 +207,7 @@ public class ResilientGrpcSubscription implements Subscription {
   class DelegatingFactObserver implements FactObserver {
     @Override
     public void onNext(@NonNull Fact element) {
-      if (!isClosed.get()) {
+      if (!isSubscriptionClosed()) {
         originalObserver.onNext(element);
         lastPosition.set(FactStreamPosition.from(element));
       } else {
@@ -275,16 +270,17 @@ public class ResilientGrpcSubscription implements Subscription {
 
     @NonNull
     public Subscription getAndBlock(long maxPause) throws TimeoutException {
-      long end = System.currentTimeMillis() + maxPause;
+      long end = NowProvider.get() + maxPause;
       synchronized (currentSubscription) {
         do {
           assertSubscriptionStateNotClosed();
           if (currentSubscription.get() == null) {
             try {
-              long now = System.currentTimeMillis();
+              long now = NowProvider.get();
               long waitTime = maxPause == 0 ? 0 : end - now;
-              if (maxPause != 0 && waitTime < 1)
+              if (maxPause != 0 && waitTime < 1) {
                 throw new TimeoutException("Timeout while acquiring subscription");
+              }
 
               currentSubscription.wait(waitTime);
             } catch (InterruptedException ignore) {
@@ -321,6 +317,23 @@ public class ResilientGrpcSubscription implements Subscription {
       synchronized (currentSubscription) {
         currentSubscription.notifyAll();
       }
+    }
+  }
+
+  /**
+   * Just a vehicle for tests. Static mocking anything from java.lang - like
+   * System.currentTimeMillis() - is not possible with Mockito. It complains: "It is not possible to
+   * mock static methods of java.lang.System to avoid interfering with class loading what leads to
+   * infinite loops".
+   *
+   * <p>Making System.currentTimeMillis() predictable became desirable to phrase more deterministic
+   * expectations in unit tests.
+   */
+  @UtilityClass
+  @VisibleForTesting
+  static class NowProvider {
+    static long get() {
+      return System.currentTimeMillis();
     }
   }
 }

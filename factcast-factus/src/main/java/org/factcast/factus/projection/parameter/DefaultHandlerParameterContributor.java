@@ -59,8 +59,9 @@ public class DefaultHandlerParameterContributor implements HandlerParameterContr
             .filter(Predicates.instanceOf(Meta.class))
             .map(Meta.class::cast)
             .findFirst();
-    if (metaAnnotation.isPresent())
+    if (metaAnnotation.isPresent()) {
       return new MetaProvider(metaAnnotation.get(), type, genericType, annotations);
+    }
 
     // fall through
     return null;
@@ -114,37 +115,60 @@ class MetaProvider implements HandlerParameterProvider {
     checkPreconditionsForKey(key);
     checkPreconditionsForString(targetType, annotations);
     checkPreconditionsForOptional(targetType, genericType);
+    checkPreconditionsForCollection(targetType, genericType);
+  }
+
+  private void checkPreconditionsForCollection(Class<?> targetType, Type genericType) {
+    if (Iterable.class.isAssignableFrom(targetType)) {
+      if (!(genericType instanceof ParameterizedType)) {
+        throw new IllegalArgumentException(
+            "Unparametrized Collection detected. It should be List<String> instead.");
+      } else {
+        if (((ParameterizedType) genericType).getActualTypeArguments()[0] != String.class) {
+          throw new IllegalArgumentException(
+              "Badly parametrized Collection detected. It should be List<String> instead.");
+        }
+      }
+    }
   }
 
   private void checkPreconditionsForKey(String key) {
-    if (key == null || key.trim().isEmpty())
+    if (key == null || key.trim().isEmpty()) {
       throw new IllegalArgumentException("@Meta must specify a valid key");
+    }
   }
 
   private void checkPreconditionsForAllowedTypes(Class<?> targetType) {
-    if (!(targetType == Optional.class || targetType == String.class))
+    if (!(targetType == Optional.class
+        || targetType == List.class
+        || targetType == Collection.class
+        || targetType == Iterable.class
+        || targetType == String.class)) {
       throw new IllegalArgumentException(
-          "Only String or Optional<String> types for @Meta annotated Parameters are allowed");
+          "Only String, Optional<String> or List<String> types for @Meta annotated Parameters are allowed");
+    }
   }
 
   private static void checkPreconditionsForString(
       Class<?> targetType, Set<Annotation> annotations) {
     if (targetType == String.class
         && annotations.stream()
-            .noneMatch(a -> a.annotationType().getSimpleName().equals("Nullable")))
+            .noneMatch(a -> "Nullable".equals(a.annotationType().getSimpleName()))) {
       throw new IllegalArgumentException(
           "Parameters of type String declared with @Meta must also be annotated with @Nullable. You could also change it to Optional<String>.");
+    }
   }
 
   private static void checkPreconditionsForOptional(Class<?> targetType, Type genericType) {
     if (targetType == Optional.class) {
-      if (!(genericType instanceof ParameterizedType))
+      if (!(genericType instanceof ParameterizedType)) {
         throw new IllegalArgumentException(
             "Unparametrized Optional detected. It should be Optional<String> instead.");
-      else {
-        if (((ParameterizedType) genericType).getActualTypeArguments()[0] != String.class)
+      } else {
+        if (((ParameterizedType) genericType).getActualTypeArguments()[0] != String.class) {
           throw new IllegalArgumentException(
               "Badly parametrized Optional detected. It should be Optional<String> instead.");
+        }
       }
     }
   }
@@ -152,8 +176,22 @@ class MetaProvider implements HandlerParameterProvider {
   @Override
   public Object apply(
       @NonNull EventSerializer s, @NonNull Fact fact, @NonNull Projection projection) {
-    String value = fact.header().meta(key);
-    if (targetType == Optional.class) return Optional.ofNullable(value);
-    else return value;
+    String value = fact.header().meta().getFirst(key);
+    if (targetType == Optional.class) {
+      return Optional.ofNullable(value);
+    }
+    if (isList(targetType) || isIterable(targetType)) {
+      return fact.header().meta().getAll(key);
+    } else {
+      return value;
+    }
+  }
+
+  private boolean isList(Class<?> targetType) {
+    return targetType.isAssignableFrom(List.class);
+  }
+
+  private boolean isIterable(Class<?> targetType) {
+    return targetType.isAssignableFrom(Iterable.class);
   }
 }

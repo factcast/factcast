@@ -15,18 +15,13 @@
  */
 package org.factcast.client.grpc.cli.cmd;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
+import com.beust.jcommander.*;
 import com.beust.jcommander.converters.CommaParameterSplitter;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.OptionalLong;
-import java.util.UUID;
-import org.factcast.client.grpc.cli.util.Command;
-import org.factcast.client.grpc.cli.util.Options;
+import java.util.*;
+import org.factcast.client.grpc.cli.util.*;
 import org.factcast.core.FactCast;
 
-@SuppressWarnings("ALL")
+@SuppressWarnings({"all"})
 @Parameters(
     commandNames = "serialOf",
     commandDescription = "get the serial of a fact identified by id")
@@ -41,8 +36,11 @@ public class SerialOf implements Command {
         id -> {
           System.out.print(id + ": ");
           OptionalLong serial = fc.serialOf(id);
-          if (serial.isPresent()) System.out.println(serial.getAsLong());
-          else System.out.println("not found");
+          if (serial.isPresent()) {
+            System.out.println(serial.getAsLong());
+          } else {
+            System.out.println("not found");
+          }
         });
   }
 }

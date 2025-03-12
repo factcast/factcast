@@ -18,42 +18,28 @@ package org.factcast.store.internal;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.ZonedDateTime;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.UUID;
+import java.time.*;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
+import lombok.*;
 import lombok.experimental.Delegate;
 import org.assertj.core.util.Lists;
-import org.factcast.core.Fact;
-import org.factcast.core.FactStreamPosition;
+import org.factcast.core.*;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.store.FactStore;
-import org.factcast.core.store.State;
-import org.factcast.core.store.StateToken;
-import org.factcast.core.store.TokenStore;
-import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.store.*;
+import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.store.internal.tail.FastForwardTargetRefresher;
 import org.factcast.store.test.AbstractFactStoreTest;
 import org.factcast.test.IntegrationTest;
 import org.jetbrains.annotations.Nullable;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlConfig;
+import org.springframework.test.context.jdbc.*;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ContextConfiguration(classes = {PgTestConfiguration.class})
@@ -124,13 +110,16 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
 
     assertThat(fact).isPresent();
 
-    assertThat(Long.parseLong(fact.get().meta("_ser"))).isPositive();
+    String ser = fact.get().header().meta().getFirst("_ser");
+    assertThat(Long.parseLong(Objects.requireNonNull(ser))).isPositive();
 
-    assertThat(Long.parseLong(fact.get().meta("_ts")))
+    String ts = fact.get().header().meta().getFirst("_ts");
+    assertThat(Long.parseLong(Objects.requireNonNull(ts)))
         .isGreaterThanOrEqualTo(before)
         .isLessThanOrEqualTo(after);
   }
 
+  @SuppressWarnings("resource")
   @Nested
   class FastForward {
     @NonNull final UUID id = UUID.randomUUID();
@@ -143,7 +132,9 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
         new FactObserver() {
 
           @Override
-          public void onNext(@NonNull Fact element) {}
+          public void onNext(@NonNull Fact element) {
+            //
+          }
 
           @Override
           public void onCatchup() {
@@ -257,6 +248,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
     assertThat(state.get()).extracting(State::serialOfLastMatchingFact).isEqualTo(0L);
   }
 
+  @SuppressWarnings("deprecation")
   @Nested
   class FactStoreTest {
     final FactStore localFactStore = fs;
@@ -329,6 +321,18 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       store.publish(Collections.singletonList(fact));
 
       assertThat(localFactStore.lastSerialBefore(LocalDate.now())).isEqualTo(lastSerial);
+    }
+
+    @Test
+    void testFirstSerialAfterNowReturns() {
+      assertThat(localFactStore.firstSerialAfter(LocalDate.now())).isNull();
+
+      // add one to the end, should not change anything
+      UUID id = UUID.randomUUID();
+      Fact fact = Fact.builder().id(id).ns("foo").type("bar").buildWithoutPayload();
+      store.publish(Collections.singletonList(fact));
+
+      assertThat(localFactStore.firstSerialAfter(LocalDate.now())).isEqualTo(1L);
     }
 
     @SuppressWarnings({"DataFlowIssue", "OptionalGetWithoutIsPresent"})

@@ -19,9 +19,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NonNull;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.LRUMap;
 import org.factcast.core.Fact;
@@ -68,15 +66,20 @@ public class InMemTransformationCache implements TransformationCache {
     keys.forEach(
         k -> {
           FactAndAccessTime factAndAccessTime = cache.get(k);
-          if (factAndAccessTime != null) found.add(factAndAccessTime.fact);
+          if (factAndAccessTime != null) {
+            found.add(factAndAccessTime.fact);
+          }
         });
 
     var hits = found.size();
     var misses = keys.size() - hits;
 
-    if (hits > 0) registryMetrics.increase(RegistryMetrics.EVENT.TRANSFORMATION_CACHE_HIT, hits);
-    if (misses > 0)
+    if (hits > 0) {
+      registryMetrics.increase(RegistryMetrics.EVENT.TRANSFORMATION_CACHE_HIT, hits);
+    }
+    if (misses > 0) {
       registryMetrics.increase(RegistryMetrics.EVENT.TRANSFORMATION_CACHE_MISS, misses);
+    }
 
     return found;
   }
@@ -104,7 +107,7 @@ public class InMemTransformationCache implements TransformationCache {
   }
 
   @Override
-  public void invalidateTransformationFor(String ns, String type) {
+  public synchronized void invalidateTransformationFor(String ns, String type) {
     Set<Key> toBeInvalidated =
         cache.entrySet().stream()
             .filter(

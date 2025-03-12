@@ -63,14 +63,19 @@ public class PgQueryBuilder {
       }
       p.setLong(++count, serial.get());
 
-      if (statementHolder != null) statementHolder.statement(p);
+      if (statementHolder != null) {
+        statementHolder.statement(p);
+      }
     };
   }
 
   private int setMeta(PreparedStatement p, int count, FactSpec spec) throws SQLException {
     Map<String, String> meta = spec.meta();
     for (Entry<String, String> e : meta.entrySet()) {
+      // single value
       p.setString(++count, "{\"meta\":{\"" + e.getKey() + "\":\"" + e.getValue() + "\"}}");
+      // array
+      p.setString(++count, "{\"meta\":{\"" + e.getKey() + "\":[\"" + e.getValue() + "\"]}}");
     }
     return count;
   }
@@ -140,7 +145,11 @@ public class PgQueryBuilder {
           Map<String, String> meta = spec.meta();
           meta.forEach(
               (key, value) ->
-                  sb.append(" AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb"));
+                  sb.append(" AND (")
+                      .append(PgConstants.COLUMN_HEADER)
+                      .append(" @> ?::jsonb OR ") // single
+                      .append(PgConstants.COLUMN_HEADER)
+                      .append(" @> ?::jsonb)")); // array
 
           Map<String, Boolean> metaKeyExists = spec.metaKeyExists();
           metaKeyExists.forEach(

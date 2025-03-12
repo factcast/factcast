@@ -57,9 +57,11 @@ public class LegacySnapshotKeys {
       @Nullable UUID aggregateId) {
 
     // better safe than sorry
-    if (Aggregate.class.isAssignableFrom(type))
+    if (Aggregate.class.isAssignableFrom(type)) {
       return createKeyForType(RepoType.AGGREGATE, type, serId, aggregateId);
-    else return createKeyForType(RepoType.SNAPSHOT, type, serId, null);
+    } else {
+      return createKeyForType(RepoType.SNAPSHOT, type, serId, null);
+    }
   }
 
   private static @NonNull String createKeyForType(
@@ -77,4 +79,6 @@ public class LegacySnapshotKeys {
             classLevelKey.asString() + Optional.ofNullable(aggregateUUID).orElse(DEFAULT_UUID))
         .asString();
   }
+
+  private LegacySnapshotKeys() {}
 }

@@ -16,11 +16,9 @@
 package org.factcast.spring.boot.autoconfigure.snap;
 
 import org.factcast.factus.Factus;
-import org.factcast.factus.snapshot.NoSnapshotCache;
-import org.factcast.factus.snapshot.SnapshotCache;
+import org.factcast.factus.snapshot.*;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.context.annotation.Bean;
 
 @AutoConfiguration

@@ -22,8 +22,6 @@ import org.factcast.core.FactStreamPosition;
 
 @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
 public interface InternalSubscription extends Subscription {
-  void close();
-
   void notifyCatchup();
 
   void notifyFastForward(@NonNull FactStreamPosition pos);
@@ -37,6 +35,4 @@ public interface InternalSubscription extends Subscription {
   void notifyElement(@NonNull Fact e) throws TransformationException;
 
   void flush();
-
-  SubscriptionImpl onClose(Runnable e);
 }

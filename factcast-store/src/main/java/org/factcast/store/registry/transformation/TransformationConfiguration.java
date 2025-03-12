@@ -23,19 +23,14 @@ import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.registry.SchemaRegistry;
 import org.factcast.store.registry.metrics.RegistryMetrics;
-import org.factcast.store.registry.transformation.cache.InMemTransformationCache;
-import org.factcast.store.registry.transformation.cache.PgTransformationCache;
-import org.factcast.store.registry.transformation.cache.TransformationCache;
-import org.factcast.store.registry.transformation.chains.JsTransformer;
-import org.factcast.store.registry.transformation.chains.TransformationChains;
-import org.factcast.store.registry.transformation.chains.Transformer;
-import org.factcast.store.registry.transformation.store.InMemTransformationStoreImpl;
-import org.factcast.store.registry.transformation.store.PgTransformationStoreImpl;
+import org.factcast.store.registry.transformation.cache.*;
+import org.factcast.store.registry.transformation.chains.*;
+import org.factcast.store.registry.transformation.store.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Configuration
@@ -48,8 +43,9 @@ public class TransformationConfiguration {
       @NonNull StoreConfigurationProperties props,
       @NonNull RegistryMetrics registryMetrics,
       @Autowired(required = false) SpringLiquibase unused) {
-    if (props.isSchemaRegistryConfigured() && props.isPersistentRegistry())
+    if (props.isSchemaRegistryConfigured() && props.isPersistentRegistry()) {
       return new PgTransformationStoreImpl(jdbcTemplate, txTemplate, registryMetrics, props);
+    }
 
     // otherwise
     return new InMemTransformationStoreImpl(registryMetrics);
@@ -57,13 +53,16 @@ public class TransformationConfiguration {
 
   @Bean
   public TransformationCache transformationCache(
+      @NonNull PlatformTransactionManager platformTransactionManager,
       @NonNull JdbcTemplate jdbcTemplate,
       @NonNull NamedParameterJdbcTemplate namedJdbcTemplate,
       @NonNull StoreConfigurationProperties props,
       @NonNull RegistryMetrics registryMetrics,
       @Autowired(required = false) SpringLiquibase unused) {
-    if (props.isSchemaRegistryConfigured() && props.isPersistentTransformationCache())
-      return new PgTransformationCache(jdbcTemplate, namedJdbcTemplate, registryMetrics, props);
+    if (props.isSchemaRegistryConfigured() && props.isPersistentTransformationCache()) {
+      return new PgTransformationCache(
+          platformTransactionManager, jdbcTemplate, namedJdbcTemplate, registryMetrics, props);
+    }
 
     // otherwise
     return new InMemTransformationCache(

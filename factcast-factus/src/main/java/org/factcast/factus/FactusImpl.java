@@ -20,46 +20,30 @@ import static org.factcast.factus.metrics.TagKeys.CLASS;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.*;
 import java.lang.reflect.Constructor;
-import java.time.Duration;
-import java.time.Instant;
+import java.time.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
+import java.util.concurrent.atomic.*;
+import java.util.function.*;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.Fact;
-import org.factcast.core.FactCast;
-import org.factcast.core.FactStreamPosition;
-import org.factcast.core.event.EventConverter;
+import org.factcast.core.*;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.factus.batch.DefaultPublishBatch;
-import org.factcast.factus.batch.PublishBatch;
+import org.factcast.factus.batch.*;
+import org.factcast.factus.event.*;
 import org.factcast.factus.event.EventObject;
-import org.factcast.factus.lock.InLockedOperation;
+import org.factcast.factus.lock.*;
 import org.factcast.factus.lock.Locked;
-import org.factcast.factus.lock.LockedOnSpecs;
-import org.factcast.factus.metrics.FactusMetrics;
-import org.factcast.factus.metrics.TimedOperation;
+import org.factcast.factus.metrics.*;
 import org.factcast.factus.projection.*;
-import org.factcast.factus.projector.Projector;
-import org.factcast.factus.projector.ProjectorFactory;
-import org.factcast.factus.snapshot.AggregateRepository;
-import org.factcast.factus.snapshot.ProjectionAndState;
-import org.factcast.factus.snapshot.SnapshotRepository;
+import org.factcast.factus.projector.*;
+import org.factcast.factus.snapshot.*;
 
 /** Single entry point to the factus API. */
 @RequiredArgsConstructor
@@ -104,6 +88,7 @@ public class FactusImpl implements Factus {
 
   private void assertNotClosed() {
     if (closed.get()) {
+      // ISE is correct here, as this is not supposed to happen
       throw new IllegalStateException("Already closed.");
     }
   }
@@ -167,31 +152,19 @@ public class FactusImpl implements Factus {
       if (token != null) {
         log.info("Acquired writer token for {}", subscribedProjection.getClass());
         Subscription subscription = doSubscribe(subscribedProjection, token);
-        // close token & subscription on shutdown
-        managedObjects.add(
-            new AutoCloseable() {
-              @Override
-              public void close() {
-                tryClose(subscription);
-                tryClose(token);
-              }
-
-              private void tryClose(AutoCloseable c) {
-                try {
-                  c.close();
-                } catch (Exception ignore) {
-                  // intentional
-                }
-              }
-            });
-        return new TokenAwareSubscription(subscription, token);
+        subscription.onClose(() -> tryClose(token)); // close token on subscription closing
+        // close subscription on shutdown
+        managedObjects.add(() -> tryClose(subscription));
+        return subscription;
       } else {
         log.trace(
             "failed to acquire writer token for {}. Will keep trying.",
             subscribedProjection.getClass());
       }
     }
-    throw new IllegalStateException("Already closed");
+    // this might be thrown in case of shutdown
+    throw new FactusClosedException(
+        "Factus is closed. Halting attempts to acquire a writer token.");
   }
 
   @SneakyThrows
@@ -212,8 +185,9 @@ public class FactusImpl implements Factus {
           }
 
           private void assertTokenIsValid() {
-            if (!token.isValid())
+            if (!token.isValid()) {
               throw new IllegalStateException("WriterToken is no longer valid.");
+            }
           }
 
           @Override
@@ -271,7 +245,7 @@ public class FactusImpl implements Factus {
     ProjectionAndState<P> projectionAndState =
         projectionSnapshotRepository
             .findLatest(projectionClass)
-            .orElse(ProjectionAndState.of(instantiate(projectionClass), null));
+            .orElseGet(() -> ProjectionAndState.of(instantiate(projectionClass), null));
 
     // catchup
     P projection = projectionAndState.projectionInstance();
@@ -328,15 +302,14 @@ public class FactusImpl implements Factus {
       aggregateSnapshotRepository.store(aggregate, state);
     } else {
       // special behavior for aggregates, if no event has ever been applied, we return empty
-      if (projectionAndState.lastFactIdApplied() == null) return Optional.empty();
+      if (projectionAndState.lastFactIdApplied() == null) {
+        return Optional.empty();
+      }
     }
 
     return Optional.of(aggregate);
   }
 
-  /**
-   * @return null if no fact was applied
-   */
   private <P extends Projection> void catchupProjection(
       @NonNull P projection,
       FactStreamPosition stateOrNull,
@@ -449,13 +422,16 @@ public class FactusImpl implements Factus {
 
   @Override
   public void close() {
+    log.debug("factus is being closed");
     if (closed.getAndSet(true)) {
       log.warn("close is being called more than once!?");
     } else {
       ArrayList<AutoCloseable> closeables = new ArrayList<>(managedObjects);
       for (AutoCloseable c : closeables) {
         try {
-          if (c != null) c.close();
+          if (c != null) {
+            c.close();
+          }
         } catch (Exception e) {
           // needs to be swallowed
           log.warn("While closing {} of type {}:", c, c.getClass().getName(), e);
@@ -477,12 +453,8 @@ public class FactusImpl implements Factus {
   }
 
   @Override
-  public <A extends Aggregate> Locked<A> withLockOn(Class<A> aggregateClass, UUID id) {
-    A fresh =
-        factusMetrics.timed(
-            TimedOperation.FIND_DURATION,
-            Tags.of(Tag.of(CLASS, aggregateClass.getName())),
-            () -> find(aggregateClass, id).orElse(instantiate(aggregateClass)));
+  public <A extends Aggregate> Locked<A> withLockOn(@NonNull Class<A> aggregateClass, UUID id) {
+    A fresh = find(aggregateClass, id).orElseGet(() -> instantiate(aggregateClass));
     Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
     List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
     return new Locked<>(fc, this, fresh, specs, factusMetrics);
@@ -521,6 +493,15 @@ public class FactusImpl implements Factus {
   @NonNull
   public FactStore store() {
     return fc.store();
+  }
+
+  private void tryClose(AutoCloseable c) {
+    try {
+      log.trace("Closing AutoCloseable for class {}", c.getClass());
+      c.close();
+    } catch (Exception e) {
+      log.warn("Error while closing AutoCloseable for {}", c.getClass(), e);
+    }
   }
 
   abstract static class IntervalSnapshotter<P extends SnapshotProjection>

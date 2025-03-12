@@ -15,6 +15,7 @@
  */
 package org.factcast.core.snap.local;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.hash.Hashing;
 import java.io.File;
@@ -22,15 +23,29 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Stream;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.factus.projection.ScopedName;
 import org.factcast.factus.snapshot.SnapshotIdentifier;
 
 @UtilityClass
 @Slf4j
 class SnapshotFileHelper {
+  private static final String PREFIX = "sc_";
+
+  @NonNull
+  @VisibleForTesting
+  String createKeyFor(@NonNull SnapshotIdentifier id) {
+    return PREFIX
+        + ScopedName.fromProjectionMetaData(id.projectionClass())
+            .with(Optional.ofNullable(id.aggregateId()).map(UUID::toString).orElse("snapshot"))
+            .asString();
+  }
+
   void updateLastModified(@NonNull File persistenceFile) {
     if (persistenceFile.exists() && !persistenceFile.setLastModified(System.currentTimeMillis())) {
       log.warn("Unable to set lastModified on {}", persistenceFile.getAbsolutePath());
@@ -39,7 +54,7 @@ class SnapshotFileHelper {
 
   File createFile(@NonNull File persistenceDirectory, @NonNull SnapshotIdentifier id) {
     Preconditions.checkArgument(persistenceDirectory.exists());
-    String hash = Hashing.sha256().hashString(id.toString(), StandardCharsets.UTF_8).toString();
+    String hash = Hashing.sha256().hashString(createKeyFor(id), StandardCharsets.UTF_8).toString();
     String withSlashes = addSlashes(hash);
     return new File(persistenceDirectory, withSlashes);
   }
@@ -59,8 +74,11 @@ class SnapshotFileHelper {
       return walk.mapToLong(
               p -> {
                 File file = p.toFile();
-                if (file.isDirectory()) return 0;
-                else return file.length();
+                if (file.isDirectory()) {
+                  return 0;
+                } else {
+                  return file.length();
+                }
               })
           .sum();
     }

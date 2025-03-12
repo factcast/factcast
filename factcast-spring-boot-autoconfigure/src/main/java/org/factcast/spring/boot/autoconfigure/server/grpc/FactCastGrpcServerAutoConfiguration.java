@@ -15,14 +15,10 @@
  */
 package org.factcast.spring.boot.autoconfigure.server.grpc;
 
-import net.devh.boot.grpc.server.autoconfigure.*;
-import org.factcast.server.grpc.FactCastGrpcServerConfiguration;
-import org.factcast.server.grpc.FactCastSecurityConfiguration;
-import org.factcast.server.grpc.FactStoreGrpcService;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.AutoConfigureBefore;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import net.devh.boot.grpc.server.autoconfigure.GrpcServerAutoConfiguration;
+import org.factcast.server.grpc.*;
+import org.springframework.boot.autoconfigure.*;
+import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.context.annotation.Import;
 
 @AutoConfiguration

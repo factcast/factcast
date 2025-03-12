@@ -16,35 +16,22 @@
 package org.factcast.store.registry.transformation.cache;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.SneakyThrows;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.metrics.RegistryMetrics;
-import org.factcast.store.registry.metrics.RegistryMetrics.EVENT;
-import org.factcast.store.registry.metrics.RegistryMetrics.OP;
+import org.factcast.store.registry.metrics.RegistryMetrics.*;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.jdbc.core.namedparam.*;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Slf4j
 public class PgTransformationCache implements TransformationCache, AutoCloseable {
@@ -62,18 +49,22 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
   @Getter(AccessLevel.PROTECTED)
   @VisibleForTesting
-  /* entry of null means read, entry of non-null means write */
-  private final CacheBuffer buffer = new CacheBuffer();
+  /* entry of null means read, entry of non-null means write */ private final CacheBuffer buffer =
+      new CacheBuffer();
+
+  private final PlatformTransactionManager platformTransactionManager;
 
   private int bufferThreshold = 1000;
 
   public final int maxBufferSize;
 
   public PgTransformationCache(
+      PlatformTransactionManager platformTransactionManager,
       JdbcTemplate jdbcTemplate,
       NamedParameterJdbcTemplate namedJdbcTemplate,
       RegistryMetrics registryMetrics,
       StoreConfigurationProperties storeConfigurationProperties) {
+    this.platformTransactionManager = platformTransactionManager;
     this.jdbcTemplate = jdbcTemplate;
     this.namedJdbcTemplate = namedJdbcTemplate;
     this.registryMetrics = registryMetrics;
@@ -86,11 +77,13 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
   @VisibleForTesting
   PgTransformationCache(
+      PlatformTransactionManager platformTransactionManager,
       JdbcTemplate jdbcTemplate,
       NamedParameterJdbcTemplate namedJdbcTemplate,
       RegistryMetrics registryMetrics,
       StoreConfigurationProperties storeConfigurationProperties,
       int bufferThreshold) {
+    this.platformTransactionManager = platformTransactionManager;
     this.jdbcTemplate = jdbcTemplate;
     this.namedJdbcTemplate = namedJdbcTemplate;
     this.registryMetrics = registryMetrics;
@@ -204,41 +197,74 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
   @Override
   public void compact(@NonNull ZonedDateTime thresholdDate) {
+    // we need to flush even if we're in read only mode in order to prevent a buffer overflow
     flush();
 
     if (!storeConfigurationProperties.isReadOnlyModeEnabled()) {
+      // it is fine if flush worked in another transaction, it just has to be serialized
       registryMetrics.timed(
           OP.COMPACT_TRANSFORMATION_CACHE,
           () ->
-              jdbcTemplate.update(
-                  "DELETE FROM transformationcache WHERE last_access < ?",
-                  new Date(thresholdDate.toInstant().toEpochMilli())));
+              inTransactionWithLock(
+                  () ->
+                      jdbcTemplate.update(
+                          "DELETE FROM transformationcache WHERE last_access < ?",
+                          new Date(thresholdDate.toInstant().toEpochMilli()))));
     }
   }
 
   @Override
   public void invalidateTransformationFor(String ns, String type) {
+    // we need to flush even if we're in read only mode in order to prevent a buffer overflow
     flush();
 
     if (!storeConfigurationProperties.isReadOnlyModeEnabled()) {
-      jdbcTemplate.update(
-          "DELETE FROM transformationcache WHERE header ->> 'ns' = ? AND header ->> 'type' = ?",
-          ns,
-          type);
+      // it is fine if flush worked in another transaction, it just has to be serialized
+      inTransactionWithLock(
+          () ->
+              jdbcTemplate.update(
+                  "DELETE FROM transformationcache WHERE header ->> 'ns' = ? AND header ->> 'type' = ?",
+                  ns,
+                  type));
     }
   }
 
   @Scheduled(fixedRate = 10, timeUnit = TimeUnit.MINUTES)
   public void flush() {
+    // after this call, the buffer is wiped and again open for business
+    // note that this is important even in readonly mode, as otherwise we'd run short on memory
     Map<Key, Fact> copy = buffer.clear();
+
     if (!copy.isEmpty() && !storeConfigurationProperties.isReadOnlyModeEnabled()) {
+      // we want to serialize flushing beyond instances in order to avoid parallel
+      // updates/insertions/deletions causing deadlocks
       try {
-        insertBufferedTransformations(copy);
-        insertBufferedAccesses(copy);
+        inTransactionWithLock(
+            () -> {
+              insertBufferedTransformations(copy);
+              insertBufferedAccesses(copy);
+            });
       } catch (Exception e) {
         log.error("Could not complete batch update of transformations on transformation cache.", e);
       }
     }
+  }
+
+  /**
+   * this is used to serialize writes to the table in order to prevent circular row lock situations
+   * leading to #3279
+   */
+  @VisibleForTesting
+  void inTransactionWithLock(@NonNull Runnable o) {
+    new TransactionTemplate(platformTransactionManager)
+        // will join an existing tx, or create and commit a new one
+        .execute(
+            status -> {
+              // we're using share mode here in order not to block reads from happening
+              jdbcTemplate.execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
+              o.run();
+              return null;
+            });
   }
 
   @VisibleForTesting

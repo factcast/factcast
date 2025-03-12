@@ -128,7 +128,9 @@ class PgSynchronizedQuery {
       // #2165 swallow exception after cancel.
       if (statementHolder.wasCanceled()) {
         log.trace("Query was cancelled during execution", e);
-      } else throw e;
+      } else {
+        throw e;
+      }
     }
   }
 
@@ -147,10 +149,12 @@ class PgSynchronizedQuery {
     public void processRow(ResultSet rs) throws SQLException {
       if (Boolean.TRUE.equals(isConnectedSupplier.get())) {
         if (rs.isClosed()) {
-          if (!statementHolder.wasCanceled())
+          if (!statementHolder.wasCanceled()) {
             throw new IllegalStateException(
                 "ResultSet already closed. We should not have got here. THIS IS A BUG!");
-          else return;
+          } else {
+            return;
+          }
         }
         Fact f = null;
         try {
@@ -162,7 +166,9 @@ class PgSynchronizedQuery {
           if (statementHolder.wasCanceled()) {
             // then we just swallow the exception
             log.trace("Swallowing because statement was cancelled", psql);
-          } else escalateError(rs, psql);
+          } else {
+            escalateError(rs, psql);
+          }
         } catch (Exception e) {
           escalateError(rs, e);
         }

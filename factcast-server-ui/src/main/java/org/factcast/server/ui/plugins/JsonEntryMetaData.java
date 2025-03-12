@@ -61,7 +61,8 @@ public class JsonEntryMetaData {
     hoverContent.put(p, l);
   }
 
-  public void addHeaderMetaFilterOption(@NonNull String path, String key, String value) {
+  public void addHeaderMetaFilterOption(
+      @NonNull String path, String key, Collection<String> value) {
     var p = HEADER + path;
     filterOptions.put(p, FilterOptions.forMeta(key, value));
   }
@@ -71,15 +72,15 @@ public class JsonEntryMetaData {
     filterOptions.put(p, FilterOptions.forAggregateId(aggregateId));
   }
 
-  public record FilterOptions(UUID aggregateId, MetaFilterOption meta) {
+  public record FilterOptions(UUID aggregateId, MultiMetaFilterOption meta) {
     public static FilterOptions forAggregateId(UUID aggregateId) {
       return new FilterOptions(aggregateId, null);
     }
 
-    public static FilterOptions forMeta(String key, String value) {
-      return new FilterOptions(null, new MetaFilterOption(key, value));
+    public static FilterOptions forMeta(String key, Collection<String> value) {
+      return new FilterOptions(null, new MultiMetaFilterOption(key, value));
     }
   }
 
-  public record MetaFilterOption(String key, String value) {}
+  public record MultiMetaFilterOption(String key, Collection<String> value) {}
 }

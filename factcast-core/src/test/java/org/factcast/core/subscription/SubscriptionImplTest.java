@@ -28,6 +28,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import lombok.NonNull;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.TestFact;
@@ -133,7 +134,7 @@ class SubscriptionImplTest {
     CountDownLatch l = new CountDownLatch(1);
     uut.onClose(l::countDown);
     uut.close();
-    org.assertj.core.api.Assertions.assertThat(l.await(10, TimeUnit.SECONDS)).isTrue();
+    Assertions.assertThat(l.await(10, TimeUnit.SECONDS)).isTrue();
   }
 
   private FactObserver obs;
@@ -272,7 +273,7 @@ class SubscriptionImplTest {
 
   @Test
   void testCloseThrowsException() {
-    org.assertj.core.api.Assertions.assertThatNoException()
+    Assertions.assertThatNoException()
         .isThrownBy(
             () -> {
               uut = spy(uut);

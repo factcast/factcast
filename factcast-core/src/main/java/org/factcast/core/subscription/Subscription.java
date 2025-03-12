@@ -16,12 +16,12 @@
 package org.factcast.core.subscription;
 
 import java.util.concurrent.TimeoutException;
+import lombok.NonNull;
 
 /**
  * @author <uwe.schaefer@prisma-capacity.eu>
  */
 public interface Subscription extends AutoCloseable {
-
   /**
    * blocks until Catchup or Cancelled event received
    *
@@ -49,4 +49,12 @@ public interface Subscription extends AutoCloseable {
    */
   Subscription awaitComplete(long waitTimeInMillis)
       throws SubscriptionClosedException, TimeoutException;
+
+  /**
+   * Registers a callback to be executed when the subscription is closed.
+   *
+   * @param e the callback to be executed
+   * @return this
+   */
+  Subscription onClose(@NonNull Runnable e);
 }

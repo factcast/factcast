@@ -16,17 +16,13 @@
 package org.factcast.core;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import javax.annotation.Nullable;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import org.factcast.core.spec.FactSpecCoordinates;
 import org.factcast.core.util.FactCastJson;
-import org.factcast.factus.event.DefaultEventSerializer;
+import org.factcast.factus.event.*;
 import org.factcast.factus.event.EventObject;
-import org.factcast.factus.event.EventSerializer;
 
 /**
  * Defines a fact to be either published or consumed. Consists of two JSON Strings: jsonHeader and
@@ -61,7 +57,7 @@ public interface Fact {
   /**
    * @param key
    * @return value as String or null
-   * @deprecated use header.meta(String) instead
+   * @deprecated use header.meta() instead
    */
   @Deprecated
   @Nullable
@@ -112,12 +108,14 @@ public interface Fact {
     b.type(coords.type()).ns(coords.ns());
 
     int v = coords.version();
-    if (v > 0) b.version(v);
+    if (v > 0) {
+      b.version(v);
+    }
     // defaults
     b.serial(1).id(UUID.randomUUID());
 
     event.aggregateIds().forEach(b::aggId);
-    event.additionalMetaMap().forEach(b::meta);
+    event.additionalMeta().forEachEntry(b::addMeta);
     return b;
   }
 
@@ -125,10 +123,12 @@ public interface Fact {
     Long serial = header().serial();
     Long otherSerial = other.header().serial();
 
-    if (serial == null || otherSerial == null)
+    if (serial == null || otherSerial == null) {
       throw new IllegalStateException(
           "Can only decide if both Facts have been published (have a serial)");
-    else return serial < otherSerial;
+    } else {
+      return serial < otherSerial;
+    }
   }
 
   @RequiredArgsConstructor
@@ -174,7 +174,16 @@ public interface Fact {
     }
 
     public FactFromEventBuilder meta(@NonNull String key, String value) {
-      builder.meta(key, value);
+      return setMeta(key, value);
+    }
+
+    public FactFromEventBuilder addMeta(@NonNull String key, String value) {
+      builder.addMeta(key, value);
+      return this;
+    }
+
+    public FactFromEventBuilder setMeta(@NonNull String key, String value) {
+      builder.setMeta(key, value);
       return this;
     }
 
@@ -219,7 +228,7 @@ public interface Fact {
     }
 
     public Builder serial(long id) {
-      meta("_ser", String.valueOf(id));
+      header.meta().set("_ser", String.valueOf(id));
       return this;
     }
 
@@ -231,8 +240,23 @@ public interface Fact {
       return this;
     }
 
+    @Deprecated
+    /**
+     * uses setMeta for compatibility
+     *
+     * @deprecated use addMeta/setMeta instead
+     */
     public Builder meta(@NonNull String key, String value) {
-      header.meta().put(key, value);
+      return setMeta(key, value);
+    }
+
+    public Builder addMeta(@NonNull String key, String value) {
+      header.meta().add(key, value);
+      return this;
+    }
+
+    public Builder setMeta(@NonNull String key, String value) {
+      header.meta().set(key, value);
       return this;
     }
 

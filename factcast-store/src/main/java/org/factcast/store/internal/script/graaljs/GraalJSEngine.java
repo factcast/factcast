@@ -68,8 +68,11 @@ public class GraalJSEngine implements JSEngine {
       }
     } catch (Exception e) {
       log.debug("Exception during the invocation of '{}'. Escalating.", functionName, e);
-      if (e instanceof ScriptEngineException) throw e;
-      else throw new ScriptEngineException(e);
+      if (e instanceof ScriptEngineException) {
+        throw e;
+      } else {
+        throw new ScriptEngineException(e);
+      }
     }
   }
 

@@ -24,7 +24,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.snap.Snapshot;
-import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.projection.*;
 import org.factcast.factus.serializer.SnapshotSerializerId;
 import org.factcast.factus.snapshot.SnapshotCache;
 import org.factcast.factus.snapshot.SnapshotData;
@@ -40,7 +40,6 @@ import org.redisson.client.codec.ByteArrayCodec;
 public class RedissonSnapshotCache implements SnapshotCache {
 
   private static final String PREFIX = "sc_";
-  private static final String SEPARATOR = ";";
 
   final RedissonClient redisson;
   final SnapshotSerializerSelector selector;
@@ -49,12 +48,10 @@ public class RedissonSnapshotCache implements SnapshotCache {
   @NonNull
   @VisibleForTesting
   String createKeyFor(@NonNull SnapshotIdentifier id) {
-    StringBuilder sb = new StringBuilder(PREFIX + id.projectionClass().getName());
-    if (id.aggregateId() != null) {
-      sb.append(SEPARATOR);
-      sb.append(id.aggregateId());
-    }
-    return sb.toString();
+    return PREFIX
+        + ScopedName.fromProjectionMetaData(id.projectionClass())
+            .with(Optional.ofNullable(id.aggregateId()).map(UUID::toString).orElse("snapshot"))
+            .asString();
   }
 
   @NonNull

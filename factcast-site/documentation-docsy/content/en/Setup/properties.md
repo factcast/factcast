@@ -80,6 +80,12 @@ description: Properties you can use to configure FactCast
 | factcast.snapshot.jdbc.deleteSnapshotStaleForDays | min number of days a snapshot is kept even though it is not read anymore. Must be a positive number. | 90                |
 | factcast.snapshot.jdbc.snapshotTableName          | optional name of the table for the snapshots. When not provided the default will be used             | factcast_snapshot |
 
+### Snapshot Serializers
+
+| Property                          | Description                                                             | Default |
+| --------------------------------- | :---------------------------------------------------------------------- | :------ |
+| factcast.factus.snapshot.compress | Compress serialized snapshots before sending them to the snapshot-cache | true    |
+
 ---
 
 ### gRPC
@@ -162,8 +168,10 @@ grpc.server.permit-keep-alive-time=100
 
 ### UI
 
-| Property              | Description                                                                                                            | Default |
-| --------------------- | :--------------------------------------------------------------------------------------------------------------------- | :------ |
-| vaadin.productionMode | Should be set to true, otherwise vaadin tries to generate a dev bundle which is not necessary, and probably will fail. | false   |
+| Property                      | Description                                                                                                                  | Default                 |
+| ----------------------------- | :--------------------------------------------------------------------------------------------------------------------------- | :---------------------- |
+| vaadin.productionMode         | Should be set to true, otherwise vaadin tries to generate a dev bundle which is not necessary, and probably will fail.       | false                   |
+| factcast.ui.report.store.path | The path under which reports are stored if no external ReportStore is configured.                                            | /tmp/factcast-ui/report |
+| factcast.ui.report.store.s3   | The name of the S3 Bucket in which the reports are stored by the S3ReportStore. This overrides factcast.ui.report.store.path |                         |
 
 Further details can be found here : `net.devh.boot.grpc.server.config.GrpcServerProperties`.

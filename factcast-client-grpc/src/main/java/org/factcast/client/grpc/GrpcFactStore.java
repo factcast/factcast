@@ -65,7 +65,7 @@ import org.springframework.beans.factory.annotation.Value;
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Slf4j
 public class GrpcFactStore implements FactStore {
-  public static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 6, 0);
+  public static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 7, 0);
 
   private final CompressionCodecs codecs = new CompressionCodecs();
 
@@ -188,9 +188,11 @@ public class GrpcFactStore implements FactStore {
   @NonNull
   public Subscription subscribe(
       @NonNull SubscriptionRequestTO req, @NonNull FactObserver observer) {
-    if (properties.getResilience().isEnabled())
+    if (properties.getResilience().isEnabled()) {
       return new ResilientGrpcSubscription(this, req, observer, properties.getResilience());
-    else return internalSubscribe(req, observer);
+    } else {
+      return internalSubscribe(req, observer);
+    }
   }
 
   public Subscription internalSubscribe(
@@ -363,7 +365,9 @@ public class GrpcFactStore implements FactStore {
 
     meta.put(Headers.CLIENT_MAX_INBOUND_MESSAGE_SIZE, String.valueOf(p.getMaxInboundMessageSize()));
 
-    if (clientId != null) meta.put(Headers.CLIENT_ID, clientId);
+    if (clientId != null) {
+      meta.put(Headers.CLIENT_ID, clientId);
+    }
     meta.put(
         Headers.CLIENT_VERSION,
         MavenHelper.getVersion("factcast-client-grpc", GrpcFactStore.class).orElse("UNKNOWN"));
@@ -416,14 +420,16 @@ public class GrpcFactStore implements FactStore {
   @Override
   @NonNull
   public StateToken currentStateFor(List<FactSpec> specs) {
-    if (!this.fastStateToken) return stateFor(specs);
-    else
+    if (!this.fastStateToken) {
+      return stateFor(specs);
+    } else {
       return callAndHandle(
           () -> {
             MSG_FactSpecsJson msg = converter.toProtoFactSpecs(specs);
             MSG_UUID result = stubs.blocking().currentStateForSpecsJson(msg);
             return new StateToken(converter.fromProto(result));
           });
+    }
   }
 
   @Override
@@ -484,6 +490,13 @@ public class GrpcFactStore implements FactStore {
     log.trace("fetching latest serial before {}", date);
     return callAndHandle(
         () -> converter.fromProto(stubs.blocking().lastSerialBefore(converter.toProto(date))));
+  }
+
+  @Override
+  public Long firstSerialAfter(@NonNull LocalDate date) {
+    log.trace("fetching first serial after {}", date);
+    return callAndHandle(
+        () -> converter.fromProto(stubs.blocking().firstSerialAfter(converter.toProto(date))));
   }
 
   @Override

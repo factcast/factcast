@@ -15,39 +15,28 @@
  */
 package org.factcast.server.ui.adapter;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionImpl;
-import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.*;
 import org.factcast.server.security.auth.FactCastUser;
-import org.factcast.server.ui.full.FullQueryBean;
+import org.factcast.server.ui.full.FullFilterBean;
 import org.factcast.server.ui.id.IdQueryBean;
+import org.factcast.server.ui.report.ReportFilterBean;
 import org.factcast.server.ui.security.SecurityService;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -57,11 +46,11 @@ public class FactRepositoryImplTest {
   @Mock private SecurityService securityService;
   @InjectMocks private FactRepositoryImpl underTest;
 
-  private FactSpec fs1 = FactSpec.ns("1");
-  private FactSpec fs2 = FactSpec.ns("3");
-  private FactSpec fsa = FactSpec.ns("a");
-  List<FactSpec> nameSpaces = List.of(fs1, fs2, fsa);
-  List<FactSpec> nameSpacesAfterFiltering = List.of(fs1, fs2);
+  private final FactSpec fs1 = FactSpec.ns("1");
+  private final FactSpec fs2 = FactSpec.ns("3");
+  private final FactSpec fsa = FactSpec.ns("a");
+  final List<FactSpec> nameSpaces = List.of(fs1, fs2, fsa);
+  final List<FactSpec> nameSpacesAfterFiltering = List.of(fs1, fs2);
 
   @Nested
   class WhenFindingBy {
@@ -163,30 +152,30 @@ public class FactRepositoryImplTest {
 
   @Nested
   class WhenTypesing {
-    private final String NS = "ns";
+    private final String ns = "ns";
 
     @BeforeEach
     void setup() {}
 
     @Test
     void emptyOnLackingPermissions() {
-      when(securityService.canRead(NS)).thenReturn(false);
-      Assertions.assertThat(underTest.types(NS, null)).isEmpty();
-      Assertions.assertThat(underTest.types(NS, "dlskfhsdk")).isEmpty();
+      when(securityService.canRead(ns)).thenReturn(false);
+      Assertions.assertThat(underTest.types(ns, null)).isEmpty();
+      Assertions.assertThat(underTest.types(ns, "dlskfhsdk")).isEmpty();
     }
 
     @Test
     void sorts() {
-      when(securityService.canRead(NS)).thenReturn(true);
-      when(fs.enumerateTypes(NS)).thenReturn(Set.of("t3", "t1", "t2"));
-      Assertions.assertThat(underTest.types(NS, null)).containsExactly("t1", "t2", "t3");
+      when(securityService.canRead(ns)).thenReturn(true);
+      when(fs.enumerateTypes(ns)).thenReturn(Set.of("t3", "t1", "t2"));
+      Assertions.assertThat(underTest.types(ns, null)).containsExactly("t1", "t2", "t3");
     }
 
     @Test
     void filtersByInput() {
-      when(securityService.canRead(NS)).thenReturn(true);
-      when(fs.enumerateTypes(NS)).thenReturn(Set.of("t3", "t1z", "t2z"));
-      Assertions.assertThat(underTest.types(NS, "z")).containsExactly("t1z", "t2z");
+      when(securityService.canRead(ns)).thenReturn(true);
+      when(fs.enumerateTypes(ns)).thenReturn(Set.of("t3", "t1z", "t2z"));
+      Assertions.assertThat(underTest.types(ns, "z")).containsExactly("t1z", "t2z");
     }
   }
 
@@ -201,27 +190,27 @@ public class FactRepositoryImplTest {
 
   @Nested
   class WhenFindingIdOfSerial {
-    UUID ID = UUID.randomUUID();
+    final UUID id = UUID.randomUUID();
 
     @Test
     void passesResponse() {
       when(fs.fetchBySerial(123))
-          .thenReturn(Optional.of(Fact.builder().id(ID).buildWithoutPayload()));
-      Assertions.assertThat(underTest.findIdOfSerial(123)).isNotNull().isNotEmpty().hasValue(ID);
+          .thenReturn(Optional.of(Fact.builder().id(id).buildWithoutPayload()));
+      Assertions.assertThat(underTest.findIdOfSerial(123)).isNotNull().isNotEmpty().hasValue(id);
     }
   }
 
   @Nested
   class WhenFetchingChunk {
-    @Mock private FullQueryBean bean;
+    @Mock private FullFilterBean bean;
     @Mock private FactCastUser userMock;
 
-    private final String USER_NAME = "user@auth.eu";
+    private final String username = "user@auth.eu";
 
     @BeforeEach
     void setup() {
       when(bean.createFactSpecs()).thenReturn(nameSpaces);
-      when(userMock.getUsername()).thenReturn(USER_NAME);
+      when(userMock.getUsername()).thenReturn(username);
     }
 
     @Test
@@ -276,7 +265,7 @@ public class FactRepositoryImplTest {
           ArgumentCaptor.forClass(SubscriptionRequestTO.class);
       when(bean.getLimitOrDefault()).thenReturn(limit);
       when(bean.getOffsetOrDefault()).thenReturn(offset);
-      when(bean.getFrom()).thenReturn(BigDecimal.valueOf(1984));
+      when(bean.resolveFromOrZero()).thenReturn(1984L);
       when(fs.fetchBySerial(1984)).thenReturn(Optional.of(factWithId));
       when(securityService.filterReadable(nameSpaces))
           .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
@@ -301,17 +290,11 @@ public class FactRepositoryImplTest {
               i -> {
                 SubscriptionImpl subscriptionImpl = new SubscriptionImpl(mock(ListObserver.class));
                 CompletableFuture.runAsync(
-                    () -> {
-                      subscriptionImpl.notifyError(new ExampleException());
-                    });
+                    () -> subscriptionImpl.notifyError(new ExampleException()));
                 return subscriptionImpl;
               });
 
-      assertThatThrownBy(
-              () -> {
-                underTest.fetchChunk(bean);
-              })
-          .isInstanceOf(ExampleException.class);
+      assertThatThrownBy(() -> underTest.fetchChunk(bean)).isInstanceOf(ExampleException.class);
     }
 
     @Test
@@ -326,9 +309,7 @@ public class FactRepositoryImplTest {
               i -> {
                 SubscriptionImpl subscriptionImpl = new SubscriptionImpl(mock(ListObserver.class));
                 CompletableFuture.runAsync(
-                    () -> {
-                      subscriptionImpl.notifyError(new LimitReachedException());
-                    });
+                    () -> subscriptionImpl.notifyError(new LimitReachedException()));
                 return subscriptionImpl;
               });
 
@@ -351,14 +332,121 @@ public class FactRepositoryImplTest {
 
       underTest.fetchChunk(bean);
 
-      assertThat(srCaptor.getValue().debugInfo()).isEqualTo(USER_NAME);
+      assertThat(srCaptor.getValue().debugInfo()).isEqualTo(username);
+    }
+  }
+
+  @Nested
+  class WhenFetchingAll {
+    @Mock private ReportFilterBean bean;
+    @Mock private FactCastUser userMock;
+
+    private final String username = "user@auth.eu";
+
+    @BeforeEach
+    void setup() {
+      when(bean.createFactSpecs()).thenReturn(nameSpaces);
+      when(userMock.getUsername()).thenReturn(username);
+    }
+
+    @Test
+    void testFilters() {
+      when(securityService.filterReadable(nameSpaces))
+          .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
+      when(securityService.getAuthenticatedUser()).thenReturn(userMock);
+      ArgumentCaptor<SubscriptionRequestTO> srCaptor =
+          ArgumentCaptor.forClass(SubscriptionRequestTO.class);
+      when(fs.subscribe(srCaptor.capture(), any(UnlimitedListObserver.class)))
+          .thenReturn(mock(Subscription.class));
+
+      underTest.fetchAll(bean);
+
+      SubscriptionRequest request = srCaptor.getValue();
+      assertThat(request.specs()).containsExactlyInAnyOrderElementsOf(nameSpacesAfterFiltering);
+
+      verify(securityService).filterReadable(nameSpaces);
+    }
+
+    @Test
+    void usesFrom() {
+      UUID id = UUID.randomUUID();
+      Fact factWithId = Fact.builder().id(id).buildWithoutPayload();
+
+      ArgumentCaptor<SubscriptionRequestTO> srCaptor =
+          ArgumentCaptor.forClass(SubscriptionRequestTO.class);
+      when(bean.resolveFromOrZero()).thenReturn(1984L);
+      when(fs.fetchBySerial(1984)).thenReturn(Optional.of(factWithId));
+      when(securityService.filterReadable(nameSpaces))
+          .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
+      when(securityService.getAuthenticatedUser()).thenReturn(userMock);
+      when(fs.subscribe(srCaptor.capture(), any(UnlimitedListObserver.class)))
+          .thenReturn(mock(Subscription.class));
+
+      underTest.fetchAll(bean);
+
+      assertThat(srCaptor.getValue().startingAfter()).isNotEmpty().hasValue(id);
+    }
+
+    @Test
+    @SneakyThrows
+    void propagatesException() {
+
+      when(securityService.filterReadable(nameSpaces))
+          .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
+      when(securityService.getAuthenticatedUser()).thenReturn(userMock);
+      when(fs.subscribe(any(), any()))
+          .thenAnswer(
+              i -> {
+                SubscriptionImpl subscriptionImpl = new SubscriptionImpl(mock(ListObserver.class));
+                CompletableFuture.runAsync(
+                    () -> subscriptionImpl.notifyError(new ExampleException()));
+                return subscriptionImpl;
+              });
+
+      assertThatThrownBy(() -> underTest.fetchAll(bean)).isInstanceOf(ExampleException.class);
+    }
+
+    @Test
+    @SneakyThrows
+    void catchesLimitException() {
+
+      when(securityService.filterReadable(nameSpaces))
+          .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
+      when(securityService.getAuthenticatedUser()).thenReturn(userMock);
+      when(fs.subscribe(any(), any()))
+          .thenAnswer(
+              i -> {
+                SubscriptionImpl subscriptionImpl = new SubscriptionImpl(mock(ListObserver.class));
+                CompletableFuture.runAsync(
+                    () -> subscriptionImpl.notifyError(new LimitReachedException()));
+                return subscriptionImpl;
+              });
+
+      assertDoesNotThrow(
+          () -> {
+            underTest.fetchAll(bean);
+          });
+    }
+
+    @Test
+    @SneakyThrows
+    void propagatesUsernameToDebugInfo() {
+      ArgumentCaptor<SubscriptionRequestTO> srCaptor =
+          ArgumentCaptor.forClass(SubscriptionRequestTO.class);
+      when(securityService.filterReadable(nameSpaces))
+          .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
+      when(securityService.getAuthenticatedUser()).thenReturn(userMock);
+      when(fs.subscribe(srCaptor.capture(), any(UnlimitedListObserver.class)))
+          .thenReturn(mock(Subscription.class));
+
+      underTest.fetchAll(bean);
+
+      assertThat(srCaptor.getValue().debugInfo()).isEqualTo(username);
     }
   }
 
   @Nested
   class WhenFilteringFactSpecs {
-    @Mock private FullQueryBean bean;
-
     @Test
     void filtersViaSecurityService() {
       when(fs.enumerateNamespaces()).thenReturn(Set.of("1", "2", "3"));
@@ -379,6 +467,16 @@ public class FactRepositoryImplTest {
       LocalDate d = LocalDate.now();
       when(fs.lastSerialBefore(d)).thenReturn(72L);
       Assertions.assertThat(underTest.lastSerialBefore(d)).isNotEmpty().hasValue(72L);
+    }
+  }
+
+  @Nested
+  class WhenFirstSerialAfter {
+    @Test
+    void passesParamAndResponse() {
+      LocalDate d = LocalDate.now();
+      when(fs.firstSerialAfter(d)).thenReturn(72L);
+      Assertions.assertThat(underTest.firstSerialAfter(d)).isNotEmpty().hasValue(72L);
     }
   }
 }

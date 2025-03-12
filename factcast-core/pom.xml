@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.9.1-SNAPSHOT</version>
+    <version>0.9.6-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-core</artifactId>
@@ -45,13 +45,16 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <!-- bit weird, but this is the pure minimum used by schema registry,
+        cleaning this dependency tree up is a "break world" kind of change.... We
+        tried." -->
       <groupId>org.factcast</groupId>
       <artifactId>factcast-factus-event</artifactId>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>33.3.1-jre</version>
+      <version>33.4.0-jre</version>
     </dependency>
     <dependency>
       <groupId>io.github.hakky54</groupId>
@@ -59,7 +62,6 @@
       <version>1.0.3</version>
       <scope>test</scope>
     </dependency>
-
   </dependencies>
   <build>
     <plugins>

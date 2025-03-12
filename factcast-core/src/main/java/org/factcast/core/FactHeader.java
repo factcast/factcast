@@ -15,11 +15,11 @@
  */
 package org.factcast.core;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import java.util.*;
 import javax.annotation.Nullable;
 import lombok.*;
+import org.factcast.factus.event.MetaMap;
 
 @Getter
 @Setter(value = AccessLevel.PROTECTED)
@@ -27,9 +27,9 @@ import lombok.*;
 @EqualsAndHashCode(of = {"id"})
 public class FactHeader {
 
-  @JsonProperty @NonNull UUID id;
+  @JsonProperty UUID id;
 
-  @JsonProperty @NonNull String ns;
+  @JsonProperty String ns;
 
   @JsonProperty String type;
 
@@ -37,13 +37,13 @@ public class FactHeader {
 
   @JsonProperty Set<UUID> aggIds = new HashSet<>();
 
-  @JsonProperty final Map<String, String> meta = new HashMap<>();
+  @NonNull @JsonProperty final MetaMap meta = new MetaMap();
 
   @Nullable
   // could be null if not yet published to the factcast server. This should only happen in unit
   // tests.
   public Long serial() {
-    String s = meta("_ser");
+    String s = meta.getFirst("_ser");
     if (s != null) {
       return Long.parseLong(s);
     } else return null;
@@ -53,14 +53,20 @@ public class FactHeader {
   // could be null if not yet published to the factcast server. This should only happen in unit
   // tests.
   public Long timestamp() {
-    String s = meta("_ts");
+    String s = meta.getFirst("_ts");
     if (s != null) {
       return Long.parseLong(s);
     } else return null;
   }
 
+  /**
+   * @param key
+   * @return
+   * @deprecated use meta() instead
+   */
+  @Deprecated
   @Nullable
   public String meta(@NonNull String key) {
-    return meta.get(key);
+    return meta.getFirst(key);
   }
 }

@@ -16,43 +16,28 @@
 package org.factcast.store.internal;
 
 import com.google.common.collect.Lists;
+import java.sql.*;
 import java.sql.Date;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.DuplicateFactException;
-import org.factcast.core.Fact;
+import org.factcast.core.*;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.store.AbstractFactStore;
-import org.factcast.core.store.State;
-import org.factcast.core.store.StateToken;
-import org.factcast.core.store.TokenStore;
-import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.TransformationException;
+import org.factcast.core.store.*;
+import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.core.subscription.transformation.FactTransformerService;
-import org.factcast.core.subscription.transformation.TransformationRequest;
+import org.factcast.core.subscription.transformation.*;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.lock.FactTableWriteLock;
-import org.factcast.store.internal.query.PgFactIdToSerialMapper;
-import org.factcast.store.internal.query.PgQueryBuilder;
+import org.factcast.store.internal.query.*;
 import org.factcast.store.registry.SchemaRegistry;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.dao.DataAccessException;
-import org.springframework.dao.DuplicateKeyException;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.PreparedStatementSetter;
-import org.springframework.jdbc.core.ResultSetExtractor;
-import org.springframework.jdbc.core.SingleColumnRowMapper;
+import org.springframework.dao.*;
+import org.springframework.jdbc.core.*;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.*;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -193,9 +178,11 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   public @NonNull Set<String> enumerateNamespaces() {
-    if (schemaRegistry.isActive() && !props.isEnumerationDirectModeEnabled())
+    if (schemaRegistry.isActive() && !props.isEnumerationDirectModeEnabled()) {
       return schemaRegistry.enumerateNamespaces();
-    else return enumerateNamespacesFromPg();
+    } else {
+      return enumerateNamespacesFromPg();
+    }
   }
 
   public @NonNull Set<String> enumerateNamespacesFromPg() {
@@ -222,9 +209,11 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   public @NonNull Set<String> enumerateTypes(@NonNull String ns) {
-    if (schemaRegistry.isActive() && !props.isEnumerationDirectModeEnabled())
+    if (schemaRegistry.isActive() && !props.isEnumerationDirectModeEnabled()) {
       return schemaRegistry.enumerateTypes(ns);
-    else return enumerateTypesFromPg(ns);
+    } else {
+      return enumerateTypesFromPg(ns);
+    }
   }
 
   public @NonNull Set<String> enumerateTypesFromPg(@NonNull String ns) {
@@ -348,6 +337,18 @@ public class PgFactStore extends AbstractFactStore {
       return Optional.ofNullable(lastSer).orElse(0L);
     } catch (EmptyResultDataAccessException noFactsAtAll) {
       return 0L;
+    }
+  }
+
+  @Override
+  public Long firstSerialAfter(@NonNull LocalDate date) {
+    try {
+      return jdbcTemplate.queryForObject(
+          PgConstants.FIRST_SERIAL_AFTER_DATE,
+          new SingleColumnRowMapper<>(Long.class),
+          Date.valueOf(date));
+    } catch (EmptyResultDataAccessException noFactsAtAll) {
+      return null;
     }
   }
 }

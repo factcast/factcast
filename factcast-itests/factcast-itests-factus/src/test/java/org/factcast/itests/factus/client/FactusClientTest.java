@@ -19,30 +19,25 @@ import static java.util.Arrays.asList;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import com.google.common.base.Stopwatch;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
-import lombok.SneakyThrows;
-import lombok.Value;
+import java.util.function.Supplier;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
-import org.factcast.core.event.EventConverter;
+import org.factcast.core.store.RetryableException;
 import org.factcast.core.subscription.Subscription;
-import org.factcast.factus.Factus;
-import org.factcast.factus.HandlerFor;
-import org.factcast.factus.Meta;
+import org.factcast.factus.*;
+import org.factcast.factus.event.*;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.lock.LockedOperationAbortedException;
-import org.factcast.factus.projection.Aggregate;
-import org.factcast.factus.projection.LocalManagedProjection;
+import org.factcast.factus.projection.*;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.config.RedissonProjectionConfiguration;
@@ -52,11 +47,10 @@ import org.factcast.spring.boot.autoconfigure.snap.RedissonSnapshotCacheAutoConf
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
-import org.redisson.api.RTransaction;
-import org.redisson.api.RedissonClient;
-import org.redisson.api.TransactionOptions;
+import org.redisson.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 @ContextConfiguration(
     classes = {
@@ -609,7 +603,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
     static final String ns = "ns";
     static final String type = "foo";
 
-    transient int factsConsumed = 0;
+    transient int factsConsumed;
 
     @HandlerFor(ns = ns, type = type)
     void apply(Fact f) {
@@ -621,7 +615,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
     static final String ns = "ns";
     static final String type = "foo";
 
-    transient int factsConsumed = 0;
+    transient int factsConsumed;
 
     @HandlerFor(ns = ns, type = type)
     void apply(Fact f) {
@@ -729,6 +723,37 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
+  void testTokenReleaseAfterTooManyFailures() {
+    OverrideAndFailSubscribedUserNames subscribedUserNames =
+        new OverrideAndFailSubscribedUserNames();
+    subscribedUserNames.clear();
+
+    factus.publish(new UserDeleted(UUID.randomUUID()));
+
+    assertThat(subscribedUserNames.isValid()).isFalse();
+    factus.subscribeAndBlock(subscribedUserNames);
+    try {
+      // it should acquire the lock
+      subscribedUserNames.latch.await();
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+    // the initial lock was closed
+    Awaitility.await().until(() -> !subscribedUserNames.isValid()); // someone locked it
+  }
+
+  static class OverrideAndFailSubscribedUserNames extends SubscribedUserNames {
+
+    CountDownLatch latch = new CountDownLatch(1);
+
+    @Override
+    public void apply(UserDeleted deleted, @Nullable String signee) {
+      latch.countDown();
+      throw new RetryableException(new Throwable("Test exception"));
+    }
+  }
+
+  @Test
   void injectsMeta() throws Exception {
     AtomicReference<String> signee = new AtomicReference<>();
     SubscribedUserNames subscribedUserNames =
@@ -753,6 +778,46 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
     Assertions.assertThat(signee.get()).isEqualTo("theBoss");
   }
 
+  static class ProjectionWithMutlipleMetaValues extends LocalSubscribedProjection {
+    Collection<String> signee;
+    List<String> affiliates;
+
+    @Handler
+    public void apply(UserCreated deleted, @Meta("affiliates") List<String> metaAffiliates) {
+      affiliates = metaAffiliates;
+    }
+
+    @Handler
+    public void apply(UserDeleted deleted, @Meta("signee") Collection<String> metaSignees) {
+      signee = metaSignees;
+    }
+  }
+
+  @Test
+  void injectsMetaCollection() throws Exception {
+
+    UserCreated kenny = new UserCreated("Kenny");
+    factus.publish(kenny);
+
+    ProjectionWithMutlipleMetaValues p = new ProjectionWithMutlipleMetaValues();
+
+    UserDeleted deleted = new UserDeleted(kenny.aggregateId());
+    // the boss signed off kyles deletion, bastard!
+    Fact f =
+        Fact.buildFrom(deleted)
+            .addMeta("signee", "theBoss")
+            .addMeta("signee", "theChef")
+            .addMeta("signee", "theHeadOfSomething")
+            .build();
+    factus.publish(f);
+    try (Subscription subscriptionWaiting = factus.subscribeAndBlock(p)) {
+      subscriptionWaiting.awaitCatchup();
+    }
+
+    Assertions.assertThat(p.signee).contains("theBoss", "theChef", "theHeadOfSomething");
+    Assertions.assertThat(p.affiliates).isEmpty();
+  }
+
   @Test
   void testOverriddenNsSubscription() throws Exception {
     SubscribedUserNames subscribedUserNames = new OverrideNsSubscribedUserNames();
@@ -767,5 +832,43 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
       assertThat(subscribedUserNames.names()).hasSize(2).containsExactlyInAnyOrder("Paul", "John");
     }
+  }
+
+  @Test
+  void testParallelUpdateCallsForRedisTxProjections() {
+    final var blockingRedisManagedUserNames = new BlockingRedisTxManagedUserNames(redissonClient);
+    factus.publish(new UserCreated("John"));
+
+    final Supplier<Boolean> executeUpdate =
+        () -> {
+          try {
+            log.info("Updating blockingRedisManagedUserNames...");
+            factus.update(blockingRedisManagedUserNames);
+            log.info("finished updating blockingRedisManagedUserNames.");
+          } catch (Exception e) {
+            log.info("Error updating blockingRedisManagedUserNames: {}", e.getMessage(), e);
+            return false;
+          }
+
+          return true;
+        };
+
+    final var u1 = CompletableFuture.supplyAsync(executeUpdate);
+    final var u2 =
+        CompletableFuture.supplyAsync(
+            () -> {
+              // wait a bit to run into event handling phase of u1
+              sleep(250);
+              return executeUpdate.get();
+            });
+
+    assertThat(u1.thenCombine(u2, (b1, b2) -> b1 && b2))
+        .succeedsWithin(Duration.ofSeconds(5))
+        .isEqualTo(true);
+  }
+
+  @SneakyThrows
+  private static void sleep(long ms) {
+    Thread.sleep(ms);
   }
 }

@@ -12,7 +12,22 @@ E2E Tests are not automatically executed as part of failsafe. In order to run th
 `-Dui` to your maven run.
 
 Optionally, you could add `-Dui.watch` or `-Dui.record` to either see the tests execute, or to record their execution
-into videos that you can find in the target folder, respectively. 
+into videos that you can find in the target folder, respectively.
 
+Playwrite offers this generative mode which records interactions with the ui and turns them into accessor, which can be
+a great help setting up new integration tests. Make sure to remove <test> scope from the playwrite dependency before.
+`mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="codegen localhost:8080"`
 
+## Report Generation
 
+The UI offers a report generation feature that can be used to generate and save reports based on certain event criteria.
+These reports can be stored either in S3 (`S3ReportStore`) or in your local filesystem (`FileSystemReportStore`).
+
+If you want to use the `S3ReportStore`, you need to provide the configuration property of `factcast.ui.report.store.s3`.
+If you chose to use the `FileSystemReportStore`, you need to set the configuration property of
+`factcast.ui.report.store.path`.
+
+## Keeping the package.json in correct state
+
+When making changes to the ui code make sure to run the ExampleUiServer once and then execute `mvn clean install`  
+before commiting your changes. This will ensure that the package.json and the created bundle are in sync.
