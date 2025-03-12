@@ -37,7 +37,11 @@
         "org.testcontainers:postgresql",
         "org.testcontainers:junit-jupiter",
         "org.mockito:mockito-core",
-        "com.google.guava:guava"
+        "com.google.guava:guava",
+        "software.amazon.awssdk:s3",
+        "software.amazon.awssdk:s3-transfer-manage",
+        "software.amazon.awssdk.crt:aws-crt",
+        ""
       ],
       "automerge": true
     }
@@ -45,8 +49,8 @@
   "labels": [
     "dependencies"
   ],
-   "prConcurrentLimit": 40,
-   "prHourlyLimit": 40
+  "prConcurrentLimit": 40,
+  "prHourlyLimit": 40
 }
 
 
