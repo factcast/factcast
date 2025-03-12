@@ -33,16 +33,18 @@ import software.amazon.awssdk.transfer.s3.S3TransferManager;
 @Configuration
 public class AwsS3TestConfig {
 
+  @Value("${factcast.ui.report.store.s3}")
+  private String bucketName;
+
   @Primary
   @Bean
   S3ReportStore s3ReportStore(
       S3TransferManager s3TransferManager, S3AsyncClient s3Client, S3Presigner s3Presigner) {
-    return new S3ReportStore(s3Client, s3TransferManager, s3Presigner);
+    return new S3ReportStore(s3Client, s3TransferManager, s3Presigner, bucketName);
   }
 
   @Bean
-  public S3TransferManager localS3(
-      @Value("${factcast.ui.report.store.s3}") String bucketName, LocalStackContainer container) {
+  public S3TransferManager localS3(LocalStackContainer container) {
 
     S3AsyncClient s3 = getClient(container.getEndpointOverride(LocalStackContainer.Service.S3));
     S3TransferManager s3TransferManager = S3TransferManager.builder().s3Client(s3).build();

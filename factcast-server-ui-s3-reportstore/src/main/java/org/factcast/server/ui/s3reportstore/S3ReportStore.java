@@ -27,7 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.util.ExceptionHelper;
 import org.factcast.server.ui.port.ReportStore;
 import org.factcast.server.ui.report.*;
-import org.springframework.beans.factory.annotation.Value;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.model.*;
@@ -43,9 +42,7 @@ public class S3ReportStore implements ReportStore {
   private final S3AsyncClient s3Client;
   private final S3TransferManager s3TransferManager;
   private final S3Presigner s3Presigner;
-
-  @Value("${factcast.ui.report.store.s3}")
-  private String bucketName;
+  private final String bucketName;
 
   @Override
   public void save(@NonNull String userName, @NonNull Report report) {
