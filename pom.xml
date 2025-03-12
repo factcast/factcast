@@ -522,7 +522,7 @@
           </includes>
           <excludedGroups>integration,uitest</excludedGroups>
           <!-- even though -XX:+EnableDynamicAgentLoading will be removed, for
-            now it works around mockk when using bytebuddy agent in a self-attaching
+            now it works around warnings, when mockk is using bytebuddy agent in a self-attaching
             way -->
           <!--suppress UnresolvedMavenProperty -->
           <argLine>${surefire.jacoco.args}
