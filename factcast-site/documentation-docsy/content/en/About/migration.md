@@ -79,7 +79,7 @@ automatically migrated by Spring for a while.
 
 Ssnapshots are now stored under different keys in Redis using
 a simpler
-[ByteArrayCodec](https://github.com/redisson/redisson/blob/master/redisson/src/main/java/org/redisson/client/codec/ByteArrayCodec.java)
+[ByteArrayCodec](https://github.com/redisson/redisson/blob/main/redisson/src/main/java/org/redisson/client/codec/ByteArrayCodec.java)
 codec.
 
 The migration to new snapshots happens automatically. Old snapshots will remain in Redis for the duration specified by

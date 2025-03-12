@@ -91,4 +91,4 @@ void applySomethingRemoved(FactHeader factHeader, UUID factId, Fact fact) {
 
 ### Full Example
 
-See [here](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/FactusVariousHandlerParametersDemoITest.java) for the full example.
+See [here](https://github.com/factcast/factcast/blob/main/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/FactusVariousHandlerParametersDemoITest.java) for the full example.

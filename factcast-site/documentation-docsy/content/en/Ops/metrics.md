@@ -48,10 +48,10 @@ There are a bunch of metrics already emitted in the server. These metrics can be
 
 As this list is continuously growing, we cannot guarantee
 the documentation's completeness. If you want to see the current list of operations, please look
-at [StoreMetrics.java](https://github.com/factcast/factcast/blob/master/factcast-store/src/main/java/org/factcast/store/internal/StoreMetrics.java)
-, [RegistryMetrics.java](https://github.com/factcast/factcast/blob/master/factcast-store/src/main/java/org/factcast/store/registry/metrics/RegistryMetrics.java)
-, [ServerMetrics.java](https://github.com/factcast/factcast/blob/master/factcast-server-grpc/src/main/java/org/factcast/server/grpc/metrics/ServerMetrics.java),
-or [UIMetrics.java](https://github.com/factcast/factcast/blob/master/factcast-server-ui/src/main/java/org/factcast/server/ui/metrics/UiMetrics.java)
+at [StoreMetrics.java](https://github.com/factcast/factcast/blob/main/factcast-store/src/main/java/org/factcast/store/internal/StoreMetrics.java)
+, [RegistryMetrics.java](https://github.com/factcast/factcast/blob/main/factcast-store/src/main/java/org/factcast/store/registry/metrics/RegistryMetrics.java)
+, [ServerMetrics.java](https://github.com/factcast/factcast/blob/main/factcast-server-grpc/src/main/java/org/factcast/server/grpc/metrics/ServerMetrics.java),
+or [UIMetrics.java](https://github.com/factcast/factcast/blob/main/factcast-server-ui/src/main/java/org/factcast/server/ui/metrics/UiMetrics.java)
 respectively.
 
 At the **time of writing (0.4.3)**, the metrics exposed by the namespaces group `factcast.server` are:
@@ -117,7 +117,7 @@ The relevant namespaces are:
 - `grpcServerResponsesSent`
 
 These automatically added metrics only focus on service methods defined in
-the [protocol buffer specs](https://github.com/factcast/factcast/blob/master/factcast-grpc-api/src/main/proto/FactStore.proto).
+the [protocol buffer specs](https://github.com/factcast/factcast/blob/main/factcast-grpc-api/src/main/proto/FactStore.proto).
 Since a gRPC remote call triggers not everything we want to measure, we introduced additional metrics. When comparing,
 for instance, the automatically added durations of gRPC vs. the 'factcast.store.duration', you will find a subtle
 difference. The reason for this is that instead of including the gRPC overhead, we chose to only measure the actual

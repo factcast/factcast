@@ -14,7 +14,7 @@ A Liquibase changeset takes care of creating and populating the `date2serial` ta
 store contains more than **10 million events**. This is to prevent the migration from taking too long on larger setups.
 
 As mentioned in the changeset comments, it is suggested to run the changeset manually in such cases. The changeset can
-be found in the `factcast-store` module under [`src/main/resources/db/changelog/factcast/issue2479/date2serial_for_existing_events.sql`](https://github.com/factcast/factcast/blob/master/factcast-store/src/main/resources/db/changelog/factcast/issue2479/date2serial_for_existing_events.sql).
+be found in the `factcast-store` module under [`src/main/resources/db/changelog/factcast/issue2479/date2serial_for_existing_events.sql`](https://github.com/factcast/factcast/blob/main/factcast-store/src/main/resources/db/changelog/factcast/issue2479/date2serial_for_existing_events.sql).
 
 ## Optimize GIN indexes updates
 
