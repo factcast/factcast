@@ -24,7 +24,7 @@ workflow(
     on = listOf(
         PullRequest(),
         Push(
-            branches = listOf("master"),
+            branches = listOf("main"),
         ),
     ),
     sourceFile = __FILE__,
