@@ -8,7 +8,7 @@
     "enabled": false
   },
   "baseBranches": [
-    "master"
+    "main"
   ],
   "packageRules": [
     {

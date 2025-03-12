@@ -1,7 +1,8 @@
 FactCast Schema Registry Maven Plugin
 =====================================
 
-A wrapper to run the [FactCast Schema Registry CLI](https://github.com/factcast/factcast/tree/master/factcast-schema-registry-cli) within maven.
+A wrapper to run the [FactCast Schema Registry
+CLI](https://github.com/factcast/factcast/tree/main/factcast-schema-registry-cli) within maven.
 
 Example Configuration
 ---------------------
