@@ -102,7 +102,9 @@ You can do this, because when asking for a FactStream for that Aggregate,
 the facts will be filtered for those, that have a header with the array-attribute `aggIds` containing the id of the
 user.
 
-All fine until here. But what happens, if you add another user reference to the UserDeleted Event?
+All fine until here.
+
+But what happens, if you add another user reference to the UserDeleted Event?
 
 ```
 UserDeleted {
