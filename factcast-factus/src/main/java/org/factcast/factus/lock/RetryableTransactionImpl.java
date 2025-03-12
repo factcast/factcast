@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 import lombok.NonNull;
+import org.checkerframework.checker.units.qual.A;
 import org.factcast.core.Fact;
 import org.factcast.factus.Factus;
 import org.factcast.factus.event.EventObject;
@@ -41,12 +42,14 @@ class RetryableTransactionImpl implements RetryableTransaction {
   public void onSuccess(@NonNull Runnable willBeRunOnSuccessOnly) {
     if (this.onSuccess == null) {
       onSuccess = willBeRunOnSuccessOnly;
-    } else
+    } else {
+      Runnable formerRunnable = onSuccess;
       onSuccess =
           () -> {
-            onSuccess.run();
+            formerRunnable.run();
             willBeRunOnSuccessOnly.run();
           };
+    }
   }
 
   public Optional<Runnable> onSuccess() {
