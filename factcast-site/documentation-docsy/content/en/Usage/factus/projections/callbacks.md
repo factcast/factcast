@@ -4,7 +4,7 @@ weight = 60
 type = "docs"
 +++
 
-When implementing the [Projection interface](https://github.com/factcast/factcast/blob/master/factcast-factus/src/main/java/org/factcast/factus/projection/Projection.java), the user can choose to override these default hook methods for more fine-grained control:
+When implementing the [Projection interface](https://github.com/factcast/factcast/blob/main/factcast-factus/src/main/java/org/factcast/factus/projection/Projection.java), the user can choose to override these default hook methods for more fine-grained control:
 
 | Method Signature                                               | Description                                                                                                                                                          |
 | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

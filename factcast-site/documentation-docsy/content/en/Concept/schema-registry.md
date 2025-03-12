@@ -20,7 +20,7 @@ markdown, example json payloads) into a nice, browsable website as well as gener
 discover new schema on the fly.
 
 An example can be
-found [here](https://github.com/factcast/factcast/tree/master/factcast-examples/factcast-example-server/src/main/resources)
+found [here](https://github.com/factcast/factcast/tree/main/factcast-examples/factcast-example-server/src/main/resources)
 which is generated from the module 'factcast-examples/factcast-example-schema-registry/'
 
 See the [Properties](/setup/properties)-Section on how to configure this.

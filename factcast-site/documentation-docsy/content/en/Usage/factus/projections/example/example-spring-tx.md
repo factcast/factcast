@@ -196,6 +196,6 @@ the projection to provide us with user names by calling `getUserNames()`.
 
 To study the full example see
 
-- [the UserNames projection using `@SpringTransactional`](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/proj/SpringJdbcTransactionalProjectionExample.java),
-- [example code using this projection](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/SpringJdbcTransactionalProjectionExampleITest.java) and
-- [the Factus integration tests](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/SpringTransactionalITest.java) including managed- and subscribed projections.
+- [the UserNames projection using `@SpringTransactional`](https://github.com/factcast/factcast/blob/main/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/proj/SpringJdbcTransactionalProjectionExample.java),
+- [example code using this projection](https://github.com/factcast/factcast/blob/main/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/SpringJdbcTransactionalProjectionExampleITest.java) and
+- [the Factus integration tests](https://github.com/factcast/factcast/blob/main/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/SpringTransactionalITest.java) including managed- and subscribed projections.
