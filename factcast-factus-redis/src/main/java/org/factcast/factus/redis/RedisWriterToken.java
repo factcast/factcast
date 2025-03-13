@@ -16,16 +16,19 @@
 package org.factcast.factus.redis;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.util.*;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.NonNull;
 import org.factcast.factus.projection.WriterToken;
-import org.redisson.api.*;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 
 public class RedisWriterToken implements WriterToken {
   private final @NonNull RLock lock;
   private final Timer timer;
   private final AtomicBoolean liveness;
+  private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
   @VisibleForTesting
   protected RedisWriterToken(
@@ -38,7 +41,12 @@ public class RedisWriterToken implements WriterToken {
         new TimerTask() {
           @Override
           public void run() {
-            liveness.set(lock.isLocked());
+            synchronized (this) {
+              boolean isLocked = lock.isLocked();
+              if (!isClosed.get()) {
+                liveness.set(isLocked);
+              }
+            }
           }
         };
     timer.scheduleAtFixedRate(timerTask, 0, (long) (watchDogTimeout / 1.5));
@@ -50,9 +58,12 @@ public class RedisWriterToken implements WriterToken {
 
   @Override
   public void close() throws Exception {
-    timer.cancel();
-    liveness.set(false);
-    lock.forceUnlock();
+    synchronized (this) {
+      isClosed.set(true);
+      lock.forceUnlock();
+      timer.cancel();
+      liveness.set(false);
+    }
   }
 
   @Override
