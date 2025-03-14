@@ -38,10 +38,11 @@
         "org.testcontainers:junit-jupiter",
         "org.mockito:mockito-core",
         "com.google.guava:guava",
-        "software.amazon.awssdk:s3",
-        "software.amazon.awssdk:s3-transfer-manage",
-        "software.amazon.awssdk.crt:aws-crt",
-        "org.openrewrite.maven:rewrite-maven-plugin"
+        "software.amazon.awssdk:{/,}**",
+        "software.amazon.awssdk.crt:{/,}**",
+        "org.openrewrite.maven:rewrite-maven-plugin",
+        "org.apache.maven.plugins{/,}**",
+        "org.jacoco:jacoco-maven-plugin{/,}**"
       ],
       "automerge": true
     }
