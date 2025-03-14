@@ -40,7 +40,8 @@
         "com.google.guava:guava",
         "software.amazon.awssdk:s3",
         "software.amazon.awssdk:s3-transfer-manage",
-        "software.amazon.awssdk.crt:aws-crt"
+        "software.amazon.awssdk.crt:aws-crt",
+        "org.openrewrite.maven:rewrite-maven-plugin"
       ],
       "automerge": true
     }
