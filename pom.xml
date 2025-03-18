@@ -102,7 +102,7 @@
     <nexus-staging-maven-plugin.version>1.7.0</nexus-staging-maven-plugin.version>
     <assertj.version>3.27.3</assertj.version>
     <jackson.version>2.18.3</jackson.version>
-    <mockito.version>5.16.0</mockito.version>
+    <mockito.version>5.16.1</mockito.version>
     <junit-jupiter.version>5.12.1</junit-jupiter.version>
     <lombok.version>1.18.36</lombok.version>
     <slf4j-api.version>2.0.17</slf4j-api.version>
@@ -120,7 +120,7 @@
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <mockk.version>1.13.17</mockk.version>
     <redisson.version>3.45.0</redisson.version>
-    <aws-sdk.version>2.31.0</aws-sdk.version>
+    <aws-sdk.version>2.31.2</aws-sdk.version>
     <graaljs.version>24.1.2</graaljs.version>
     <shedlock.version>6.3.0</shedlock.version>
     <byte-buddy.version>1.17.2</byte-buddy.version>
