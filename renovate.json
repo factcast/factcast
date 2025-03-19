@@ -1,16 +1,19 @@
 {
   "extends": [
-    "config:base",
+    "config:recommended",
     ":automergeMinor",
     ":label(ready)"
   ],
-  "js": {
-    "enabled": false
-  },
   "baseBranches": [
     "master"
   ],
   "packageRules": [
+    {
+      "matchCategories": [
+        "js"
+      ],
+      "enabled": false
+    },
     {
       "matchManagers": [
         "npm"
@@ -18,13 +21,13 @@
       "enabled": false
     },
     {
-      "matchPackagePatterns": [
-        "^org\\.factcast"
-      ],
-      "enabled": false
+      "enabled": false,
+      "matchPackageNames": [
+        "/^org\\.factcast/"
+      ]
     },
     {
-      "matchLanguages": [
+      "matchCategories": [
         "java"
       ],
       "matchPackageNames": [
@@ -53,9 +56,3 @@
   "prConcurrentLimit": 40,
   "prHourlyLimit": 40
 }
-
-
-
-
-
-
