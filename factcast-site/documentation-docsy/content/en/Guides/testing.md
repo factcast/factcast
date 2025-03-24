@@ -161,7 +161,7 @@ void whenHandlingUserAddedFactEmailIsAdded() {
 Note the use of the convenient builder the `Fact` class is providing.
 
 Since the focus of this unit test is on `handleUserAdded`, we execute the method directly.
-[The full unit test](https://github.com/factcast/factcast/tree/master/factcast-itests/factcast-itests-doc/src/test/java/org/factcast/itests/docexample/factcastlowlevel/UserEmailsProjectionTest.java)
+[The full unit test](https://github.com/factcast/factcast/tree/main/factcast-itests/factcast-itests-doc/src/test/java/org/factcast/itests/docexample/factcastlowlevel/UserEmailsProjectionTest.java)
 also contains a test for the dispatching logic of the `apply` method, as well as a similar test for the `handleUserRemoved` method.
 
 Checking your projection's logic should preferably be done with unit tests in the first place, even though you might
@@ -265,9 +265,9 @@ use the same scenario as before, an `UserEmailsProjection` which we will ask for
 
 These are the events we need to handle:
 
-- [`UserAdded`](https://github.com/factcast/factcast/tree/master/factcast-itests/factcast-itests-doc/src/main/java/org/factcast/itests/docexample/factus/event/UserAdded.java)
+- [`UserAdded`](https://github.com/factcast/factcast/tree/main/factcast-itests/factcast-itests-doc/src/main/java/org/factcast/itests/docexample/factus/event/UserAdded.java)
   and
-- [`UserRemoved`](https://github.com/factcast/factcast/tree/master/factcast-itests/factcast-itests-doc/src/main/java/org/factcast/itests/docexample/factus/event/UserRemoved.java)
+- [`UserRemoved`](https://github.com/factcast/factcast/tree/main/factcast-itests/factcast-itests-doc/src/main/java/org/factcast/itests/docexample/factus/event/UserRemoved.java)
   .
 
 The `UserAdded` event contains two properties, the user ID and the email whereas `UserRemoved` only contains the user ID.
@@ -408,4 +408,4 @@ The test concludes by checking if the state of the `UserEmailsProjection` was up
 ## Full Example Code
 
 The code for all examples introduced here can be
-found [here](https://github.com/factcast/factcast/tree/master/factcast-itests/factcast-itests-doc/).
+found [here](https://github.com/factcast/factcast/tree/main/factcast-itests/factcast-itests-doc/).

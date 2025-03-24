@@ -56,6 +56,6 @@ public class MyTelemetryListener {
 }
 ```
 
-You can check out the full example in the [factcast-example-server-telemetry](https://github.com/factcast/factcast/blob/master/factcast-examples/factcast-example-server-telemetry)
+You can check out the full example in the [factcast-example-server-telemetry](https://github.com/factcast/factcast/blob/main/factcast-examples/factcast-example-server-telemetry)
 module. That module contains a simple example of how to listen to each subscription lifecycle event, to log the request
 details and maintaining a list of _following_ subscriptions, which can be read through the actuator `/info` endpoint.
