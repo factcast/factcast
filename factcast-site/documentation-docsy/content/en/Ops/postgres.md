@@ -62,4 +62,6 @@ work_mem:100000
 log_statement:'none'
 log_min_duration_statement:500
 default_statistics_target:100
+# allows to deploy major version updates via blue/green deployments, significantly reducing downtime
+rds.logical_replication:'1'
 ```
