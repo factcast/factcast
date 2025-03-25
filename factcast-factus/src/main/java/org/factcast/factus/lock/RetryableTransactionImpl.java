@@ -20,7 +20,6 @@ import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 import lombok.NonNull;
-import org.checkerframework.checker.units.qual.A;
 import org.factcast.core.Fact;
 import org.factcast.factus.Factus;
 import org.factcast.factus.event.EventObject;
