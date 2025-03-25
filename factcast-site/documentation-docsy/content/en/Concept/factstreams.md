@@ -79,7 +79,8 @@ User {
 }
 ```
 
-and Facts like `UserCreated` (skipping here), and `UserDeleted` containing just the id of the user to delete.
+and Facts like `UserCreated` (trivial, so we're skipping it here), and `UserDeleted` that just has the id of the
+user to delete.
 
 This will lead to an Aggregate class User with handler methods similar to: (using Factus Syntax here for
 brevity)
@@ -114,7 +115,9 @@ UserDeleted {
 ```
 
 If the handlers stay unchanged, then (as the `aggIds` should contain all the aggregates involved)
-one Fact would trigger not only the intended deletion, but also the deletion of the user triggering.
+one UserDeleted Fact would not only be handled by the Aggregate of the deleted user but also by
+the Aggregate of the user that triggered the deletion, resulting in both being marked as deleted.
+
 This is especially true if you use Event Objects that build the `aggIds` header attribute automatically.
 
 So in this case, it'd be necessary, to ensure that the reason the handler method receives the fact/event is
