@@ -15,6 +15,7 @@
  */
 package org.factcast.factus.lock;
 
+import java.util.concurrent.CompletableFuture;
 import lombok.NonNull;
 import org.factcast.factus.*;
 
@@ -27,5 +28,11 @@ public interface RetryableTransaction extends SimplePublisher, ProjectionAccesso
 
   default void abort(@NonNull LockedOperationAbortedException cause) {
     throw cause;
+  }
+
+  void onSuccess(@NonNull Runnable willBeRunOnSuccessOnly);
+
+  default void onSuccessAsync(@NonNull Runnable willBeRunOnSuccessOnly) {
+    onSuccess(() -> CompletableFuture.runAsync(willBeRunOnSuccessOnly));
   }
 }
