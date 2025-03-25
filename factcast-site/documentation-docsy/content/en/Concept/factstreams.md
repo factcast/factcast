@@ -81,7 +81,7 @@ User {
 
 and Facts like `UserCreated` (skipping here), and `UserDeleted` containing just the id of the user to delete.
 
-This will probably lead to an Aggregate class User with handler methods similar to: (using Factus Syntax here for
+This will lead to an Aggregate class User with handler methods similar to: (using Factus Syntax here for
 brevity)
 
 ```java
