@@ -6,12 +6,12 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.9.5-SNAPSHOT</version>
+    <version>0.9.6-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-store</artifactId>
   <properties>
-    <jetty-javalin.version>11.0.24</jetty-javalin.version>
+    <jetty-javalin.version>11.0.25</jetty-javalin.version>
   </properties>
   <dependencyManagement>
     <dependencies>

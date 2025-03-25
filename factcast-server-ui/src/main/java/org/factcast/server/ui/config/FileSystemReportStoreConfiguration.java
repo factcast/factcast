@@ -18,26 +18,25 @@ package org.factcast.server.ui.config;
 import org.factcast.server.ui.adapter.FileSystemReportStore;
 import org.factcast.server.ui.adapter.FilesystemServiceInitListener;
 import org.factcast.server.ui.port.ReportStore;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@EnableConfigurationProperties(ReportStoreConfigurationProperties.class)
 public class FileSystemReportStoreConfiguration {
-  @Value("${factcast.ui.reports.path:factcast-ui/reports}")
-  String reportsPath;
-
   @Bean
   @ConditionalOnMissingBean
-  ReportStore fileSystemReportStore() {
-    return new FileSystemReportStore(reportsPath);
+  ReportStore fileSystemReportStore(ReportStoreConfigurationProperties properties) {
+    return new FileSystemReportStore(properties.getPath());
   }
 
   @Bean
   @ConditionalOnBean(value = ReportStore.class, name = "fileSystemReportStore")
-  public FilesystemServiceInitListener filesystemServiceInitListener() {
-    return new FilesystemServiceInitListener(reportsPath);
+  public FilesystemServiceInitListener filesystemServiceInitListener(
+      ReportStoreConfigurationProperties properties) {
+    return new FilesystemServiceInitListener(properties.getPath());
   }
 }

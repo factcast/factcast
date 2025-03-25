@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.9.5-SNAPSHOT</version>
+    <version>0.9.6-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-schema-registry-cli</artifactId>
@@ -475,22 +475,6 @@
             </configuration>
           </execution>
         </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>${maven-surefire-plugin.version}</version>
-        <configuration>
-          <includes>
-            <include>*</include>
-          </includes>
-          <excludedGroups>integration</excludedGroups>
-
-          <!--suppress UnresolvedMavenProperty -->
-          <argLine>${surefire.jacoco.args}</argLine>
-          <skip>${skipSurefire}</skip>
-          <forkCount>1</forkCount>
-        </configuration>
       </plugin>
     </plugins>
   </build>

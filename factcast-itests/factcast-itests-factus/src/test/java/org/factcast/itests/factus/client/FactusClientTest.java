@@ -29,6 +29,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import lombok.Getter;
@@ -60,10 +61,8 @@ import org.factcast.itests.factus.proj.*;
 import org.factcast.spring.boot.autoconfigure.snap.RedissonSnapshotCacheAutoConfiguration;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.jetbrains.annotations.Nullable;
-import org.junit.jupiter.api.Test;
-import org.redisson.api.RTransaction;
-import org.redisson.api.RedissonClient;
-import org.redisson.api.TransactionOptions;
+import org.junit.jupiter.api.*;
+import org.redisson.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 
@@ -840,7 +839,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       subscriptionWaiting.awaitCatchup();
     }
 
-    Assertions.assertThat(signee.get()).isEqualTo("theBoss");
+    assertThat(signee.get()).isEqualTo("theBoss");
   }
 
   static class ProjectionWithMutlipleMetaValues extends LocalSubscribedProjection {
@@ -879,8 +878,8 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       subscriptionWaiting.awaitCatchup();
     }
 
-    Assertions.assertThat(p.signee).contains("theBoss", "theChef", "theHeadOfSomething");
-    Assertions.assertThat(p.affiliates).isEmpty();
+    assertThat(p.signee).contains("theBoss", "theChef", "theHeadOfSomething");
+    assertThat(p.affiliates).isEmpty();
   }
 
   @Test
@@ -935,5 +934,153 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   @SneakyThrows
   private static void sleep(long ms) {
     Thread.sleep(ms);
+  }
+
+  @Nested
+  class OnSuccess {
+
+    private int countBefore;
+
+    @BeforeEach
+    void setup() {
+      factus.update(userCount);
+      countBefore = userCount.count();
+    }
+
+    @Test
+    void happyPathWithCallback() {
+      CountDownLatch latch = new CountDownLatch(1);
+      factus
+          .withLockOn(userCount)
+          .attempt(
+              (uc, tx) -> {
+                tx.publish(new UserCreated("JohnLocked"));
+                tx.onSuccess(latch::countDown);
+              });
+
+      assertThat(latch.getCount()).isZero();
+
+      factus.update(userCount);
+      assertThat(userCount.count()).isEqualTo(countBefore + 1);
+    }
+
+    @Test
+    void happyPathWithoutCallback() {
+      factus
+          .withLockOn(userCount)
+          .attempt(
+              (uc, tx) -> {
+                tx.publish(new UserCreated("JohnLocked"));
+              });
+
+      factus.update(userCount);
+      assertThat(userCount.count()).isEqualTo(countBefore + 1);
+    }
+
+    @Test
+    void callbackOnlyOnce() {
+      CountDownLatch latch = new CountDownLatch(1);
+      AtomicInteger executions = new AtomicInteger(0);
+      AtomicInteger callbacks = new AtomicInteger(0);
+      factus
+          .withLockOn(userCount)
+          .attempt(
+              (uc, tx) -> {
+                executions.incrementAndGet();
+
+                CompletableFuture.runAsync(
+                    () -> {
+                      if (latch.getCount() == 1) {
+                        // we're in the first execution
+                        factus.publish(new UserCreated("John Published in parallel"));
+                        latch.countDown();
+                      }
+                    });
+
+                try {
+                  latch.await();
+                } catch (InterruptedException e) {
+                  throw new RuntimeException(e);
+                }
+
+                tx.publish(new UserCreated("JohnLocked"));
+                tx.onSuccess(callbacks::incrementAndGet);
+              });
+
+      factus.update(userCount);
+      assertThat(userCount.count()).isEqualTo(countBefore + 2);
+
+      assertThat(executions).hasValue(2);
+      assertThat(callbacks).hasValue(1);
+    }
+
+    @Test
+    void noCallbackOnAbort() {
+      AtomicInteger executions = new AtomicInteger(0);
+      AtomicInteger callbacks = new AtomicInteger(0);
+      Assertions.assertThatThrownBy(
+              () -> {
+                factus
+                    .withLockOn(userCount)
+                    .attempt(
+                        (uc, tx) -> {
+                          executions.incrementAndGet();
+                          tx.onSuccess(callbacks::incrementAndGet);
+                          tx.abort("oh dear");
+                        });
+              })
+          .isInstanceOf(LockedOperationAbortedException.class);
+
+      factus.update(userCount);
+      assertThat(userCount.count()).isEqualTo(countBefore);
+
+      assertThat(executions).hasValue(1);
+      assertThat(callbacks).hasValue(0);
+    }
+
+    @Test
+    void noCallbackOnStarvation() {
+      AtomicInteger executions = new AtomicInteger(0);
+      AtomicInteger callbacks = new AtomicInteger(0);
+      AtomicReference<CountDownLatch> latch = new AtomicReference<>(new CountDownLatch(1));
+
+      Assertions.assertThatThrownBy(
+              () -> {
+                factus
+                    .withLockOn(userCount)
+                    .retries(3)
+                    .attempt(
+                        (uc, tx) -> {
+                          executions.incrementAndGet();
+
+                          CompletableFuture.runAsync(
+                              () -> {
+                                if (latch.get().getCount() == 1) {
+                                  // we're in the first execution
+                                  factus.publish(new UserCreated("John Published in parallel"));
+                                  latch.get().countDown();
+                                }
+                              });
+
+                          try {
+                            latch.get().await();
+                          } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                          }
+                          // reset
+                          latch.set(new CountDownLatch(1));
+
+                          tx.publish(new UserCreated("JohnLocked"));
+                          tx.onSuccess(callbacks::incrementAndGet);
+                        });
+              })
+          .isInstanceOf(ConcurrentModificationException.class);
+
+      factus.update(userCount);
+      assertThat(userCount.count()).isEqualTo(countBefore + 3);
+
+      assertThat(executions).hasValue(3);
+      assertThat(callbacks).hasValue(0);
+    }
   }
 }
