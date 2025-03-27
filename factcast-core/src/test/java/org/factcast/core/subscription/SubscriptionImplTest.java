@@ -100,6 +100,22 @@ class SubscriptionImplTest {
   }
 
   @Test
+  void onCloseIsCalledIfClosedAlready() {
+
+    class DoNothing implements Runnable {
+      @Override
+      public void run() {}
+    }
+
+    Runnable h1 = spy(new DoNothing());
+
+    uut.close();
+
+    uut.onClose(h1);
+    verify(h1).run();
+  }
+
+  @Test
   void testAwaitCatchup() {
     expect(TimeoutException.class, () -> uut.awaitCatchup(10));
     expect(TimeoutException.class, () -> uut.awaitComplete(10));
