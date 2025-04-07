@@ -15,34 +15,30 @@
  */
 package org.factcast.server.ui.report;
 
-import com.fasterxml.jackson.annotation.*;
-import com.google.common.collect.Lists;
-import jakarta.validation.Valid;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
-import lombok.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import org.factcast.server.ui.views.filter.*;
+import org.factcast.server.ui.views.filter.AbstractFilterBean;
+import org.factcast.server.ui.views.filter.FactCriteria;
+import org.factcast.server.ui.views.filter.FilterBean;
 
 @Data
 @SuppressWarnings("java:S1948")
 @Accessors(fluent = false, chain = false)
+@EqualsAndHashCode(callSuper = true)
 @JsonIgnoreProperties("since")
-public class ReportFilterBean implements FilterBean, Serializable {
+public class ReportFilterBean extends AbstractFilterBean implements FilterBean, Serializable {
   private final long defaultFrom;
 
-  private LocalDate since = LocalDate.now();
-
-  // currently not possible to filter on more than one aggId via api
-  private BigDecimal from;
-
-  @Valid @Getter private List<FactCriteria> criteria = Lists.newArrayList(new FactCriteria());
-
   public ReportFilterBean(long startingSerial) {
+    super(startingSerial);
     defaultFrom = startingSerial;
-    from = BigDecimal.valueOf(startingSerial);
   }
 
   @JsonCreator
@@ -50,17 +46,12 @@ public class ReportFilterBean implements FilterBean, Serializable {
       @JsonProperty("defaultFrom") long defaultFrom,
       @JsonProperty("from") BigDecimal from,
       @JsonProperty("criteria") List<FactCriteria> criteria) {
+    super(from, criteria);
     this.defaultFrom = defaultFrom;
-    this.from = from;
-    this.criteria = criteria;
   }
 
   @Override
-  @SuppressWarnings("java:S2637") // settings ns to null is intended
   public void reset() {
-    since = LocalDate.now();
-    criteria.clear();
-    criteria.add(new FactCriteria());
-    from = BigDecimal.valueOf(defaultFrom);
+    super.reset(BigDecimal.valueOf(defaultFrom));
   }
 }

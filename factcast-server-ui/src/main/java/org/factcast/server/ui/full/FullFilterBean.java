@@ -15,28 +15,27 @@
  */
 package org.factcast.server.ui.full;
 
-import com.fasterxml.jackson.annotation.*;
-import com.google.common.collect.Lists;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.*;
-import lombok.*;
+import java.util.Optional;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import org.factcast.server.ui.views.filter.*;
+import org.factcast.server.ui.views.filter.AbstractFilterBean;
 
 @Data
 @SuppressWarnings("java:S1948")
 @Accessors(fluent = false, chain = false)
+@EqualsAndHashCode(callSuper = true)
 @JsonIgnoreProperties({"since", "until"})
-public class FullFilterBean implements Serializable, FilterBean {
-  public static final int DEFAULT_LIMIT = 50;
+public class FullFilterBean extends AbstractFilterBean implements Serializable {
   private final long defaultFrom;
 
-  private LocalDate since = LocalDate.now();
-  private LocalDate until;
+  public static final int DEFAULT_LIMIT = 50;
 
   @Max(1000)
   @Min(1)
@@ -46,27 +45,16 @@ public class FullFilterBean implements Serializable, FilterBean {
   @Max(1000)
   private Integer offset;
 
-  @Valid private List<FactCriteria> criteria = Lists.newArrayList(new FactCriteria());
-
-  // currently not possible to filter on more than one aggId via api
-  @Min(0)
-  private BigDecimal from;
-
-  @Min(1)
-  private BigDecimal to;
-
-  FullFilterBean(long startingSerial) {
-    defaultFrom = startingSerial;
-    from = BigDecimal.valueOf(startingSerial);
+  public FullFilterBean(long startingSerial) {
+    super(startingSerial);
+    this.defaultFrom = startingSerial;
   }
 
-  @SuppressWarnings("java:S2637") // settings ns to null is intended
+  @Override
   public void reset() {
-    since = LocalDate.now();
+    super.reset(BigDecimal.valueOf(defaultFrom));
     limit = null;
     offset = null;
-    criteria = Lists.newArrayList(new FactCriteria());
-    from = BigDecimal.valueOf(defaultFrom);
   }
 
   @JsonIgnore
