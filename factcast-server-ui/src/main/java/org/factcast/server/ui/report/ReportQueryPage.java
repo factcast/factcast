@@ -30,6 +30,7 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.*;
 import jakarta.annotation.security.PermitAll;
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.*;
 import lombok.Getter;
 import lombok.NonNull;
@@ -115,7 +116,7 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
     grid.setId("report-table");
     grid.setSelectionMode(Grid.SelectionMode.SINGLE);
     grid.addColumn(ReportEntry::name).setHeader("Filename");
-    grid.addColumn(ReportEntry::lastChanged).setHeader("Last Modified");
+    grid.addColumn(ReportEntry::lastChanged).setHeader("Created");
     grid.addSelectionListener(
         selection -> {
           if (!selection.getAllSelectedItems().isEmpty()) {
@@ -219,6 +220,7 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
     try {
       queryBtn.setEnabled(false);
       binder.writeBean(formBean);
+      final var queryTimestamp = OffsetDateTime.now();
       log.info("{} runs query for {}", userName, formBean);
       // For now this will block the UI in case of long-running queries. Will be refactored in the
       // future once the FactRepository is adapted.
@@ -227,7 +229,7 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
       if (!dataFromStore.isEmpty()) {
         List<ObjectNode> processedFacts =
             dataFromStore.stream().map(e -> jsonViewPluginService.process(e).fact()).toList();
-        trySave(processedFacts);
+        trySave(processedFacts, queryTimestamp);
       } else {
         displayWarning(
             "No data was found for this query and therefore report creation is skipped.");
@@ -244,9 +246,10 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
     // multiple times.
   }
 
-  private void trySave(List<ObjectNode> processedFacts) {
+  private void trySave(List<ObjectNode> processedFacts, OffsetDateTime queriedAt) {
     try {
-      reportStore.save(userName, new Report(fileNameField.value(), processedFacts, formBean));
+      reportStore.save(
+          userName, new Report(fileNameField.value(), processedFacts, formBean, queriedAt));
       reportProvider.refreshAll();
     } catch (IllegalArgumentException e) {
       displayWarning(e.getMessage());
