@@ -43,10 +43,7 @@ public class SerialInputPanel extends HorizontalLayout {
   private final Popup fromSerialHelperOverlay = new Popup();
   private final Popup toSerialHelperOverlay = new Popup();
 
-  public final Button latestSerial = new Button("Latest serial");
-  public final Button fromScratch = new Button("From scratch");
-
-  private final FactRepository repo;
+  private final transient FactRepository repo;
 
   public SerialInputPanel(FactRepository repo) {
     this.repo = repo;
@@ -77,21 +74,6 @@ public class SerialInputPanel extends HorizontalLayout {
         });
     until.setMin(since.getValue());
 
-    latestSerial.addClickListener(
-        event -> {
-          from.setValue(BigDecimal.valueOf(repo.latestSerial()));
-          fromSerialHelperOverlay.hide();
-        });
-
-    fromScratch.addClickListener(
-        event -> {
-          from.setValue(BigDecimal.ZERO);
-          fromSerialHelperOverlay.hide();
-        });
-
-    //    final var heading = new H4("Select Starting Serial");
-    //    final var overlayContent = new VerticalLayout(heading, since, latestSerial, fromScratch);
-
     final var fromOverlayContent = getFromVerticalLayout();
     fromOverlayContent.setSpacing(false);
     fromOverlayContent.getThemeList().add("spacing-xs");
@@ -106,8 +88,6 @@ public class SerialInputPanel extends HorizontalLayout {
 
     from.setWidth("auto");
     to.setWidth("auto");
-    //    limit.setWidth("auto");
-    //    offset.setWidth("auto");
     add(from, to);
   }
 
