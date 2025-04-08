@@ -16,7 +16,6 @@
 package org.factcast.server.ui.full;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.io.Serializable;
@@ -31,7 +30,6 @@ import org.factcast.server.ui.views.filter.AbstractFilterBean;
 @SuppressWarnings("java:S1948")
 @Accessors(fluent = false, chain = false)
 @EqualsAndHashCode(callSuper = true)
-@JsonIgnoreProperties({"since", "until"})
 public class FullFilterBean extends AbstractFilterBean implements Serializable {
   private final long defaultFrom;
 

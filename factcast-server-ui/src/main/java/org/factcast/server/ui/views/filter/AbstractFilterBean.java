@@ -15,6 +15,7 @@
  */
 package org.factcast.server.ui.views.filter;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.collect.Lists;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -23,11 +24,13 @@ import java.time.LocalDate;
 import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import lombok.experimental.Accessors;
 
 @Data
 @Accessors(fluent = false, chain = false)
 @NoArgsConstructor
+@JsonIgnoreProperties({"since", "until"})
 public abstract class AbstractFilterBean implements FilterBean {
   private LocalDate since = LocalDate.now();
   private LocalDate until;
@@ -51,7 +54,7 @@ public abstract class AbstractFilterBean implements FilterBean {
   }
 
   @SuppressWarnings("java:S2637") // settings ns to null is intended
-  public void reset(BigDecimal fromDefault) {
+  public void reset(@NonNull BigDecimal fromDefault) {
     since = LocalDate.now();
     criteria = Lists.newArrayList(new FactCriteria());
     this.from = fromDefault;

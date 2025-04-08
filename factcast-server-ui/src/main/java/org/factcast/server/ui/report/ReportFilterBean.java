@@ -16,7 +16,6 @@
 package org.factcast.server.ui.report;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -32,7 +31,6 @@ import org.factcast.server.ui.views.filter.FilterBean;
 @SuppressWarnings("java:S1948")
 @Accessors(fluent = false, chain = false)
 @EqualsAndHashCode(callSuper = true)
-@JsonIgnoreProperties("since")
 public class ReportFilterBean extends AbstractFilterBean implements FilterBean, Serializable {
   private final long defaultFrom;
 
