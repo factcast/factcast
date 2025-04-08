@@ -92,8 +92,10 @@ public class UnlimitedListObserverTest {
       underTest.onNext(mock1);
       // second is taken, still under end serial
       underTest.onNext(mock2);
-      // third is taken, still under end serial
+      // third is taken, equals end serial
+      assertThat(underTest.isComplete(mock3)).isFalse();
       underTest.onNext(mock3);
+      // fourth is above end serial
       assertThat(underTest.isComplete(mock4)).isTrue();
 
       // more should trigger an exception

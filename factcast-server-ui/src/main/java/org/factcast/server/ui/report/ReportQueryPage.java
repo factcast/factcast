@@ -163,6 +163,7 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
   }
 
   @Getter
+  @NoCoverageReportToBeGenerated
   private static class FileNameInputField extends TextField {
     private String value = "events.json";
 
