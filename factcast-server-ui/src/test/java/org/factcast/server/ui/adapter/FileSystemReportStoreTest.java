@@ -25,6 +25,7 @@ import com.vaadin.flow.server.*;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.nio.file.*;
+import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
@@ -43,7 +44,7 @@ class FileSystemReportStoreTest {
 
   @AfterEach
   @SneakyThrows
-  void setup() {
+  void cleanup() {
     log.info("Cleaning up.");
     Path reportPath = Path.of(PERSISTENCE_DIR);
     if (Files.exists(reportPath)) {
@@ -183,6 +184,6 @@ class FileSystemReportStoreTest {
     final var om = new ObjectMapper();
     ObjectNode event = om.getNodeFactory().objectNode();
     event.put("foo", "bar");
-    return new Report(fileName, List.of(event), new ReportFilterBean(1));
+    return new Report(fileName, List.of(event), new ReportFilterBean(1), OffsetDateTime.now());
   }
 }

@@ -28,8 +28,17 @@ public class UnlimitedListObserver extends AbstractListObserver {
     this.offset = offset;
   }
 
+  public UnlimitedListObserver(Long untilSerial, int offset) {
+    this.untilSerial = untilSerial;
+    this.offset = offset;
+  }
+
   @Override
   public void onNext(@NonNull Fact element) {
+    if (isComplete(element)) {
+      throw new LimitReachedException();
+    }
+
     if (offset > 0) {
       offset--;
     } else {
@@ -40,5 +49,9 @@ public class UnlimitedListObserver extends AbstractListObserver {
   @Override
   public void onError(@NonNull Throwable exception) {
     handleError(exception);
+  }
+
+  boolean isComplete(@NonNull Fact fact) {
+    return hasReachedTheLimitSerial(fact);
   }
 }

@@ -16,6 +16,7 @@
 package org.factcast.server.ui.report;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.time.OffsetDateTime;
 import java.util.List;
 import lombok.NonNull;
 
@@ -24,4 +25,5 @@ public record Report(
     // Not the nicest approach but changing this to "Fact" will require more effort in terms of
     // de/serialization and hence is postponed to refactoring the JsonViewPluginService
     @NonNull List<ObjectNode> events,
-    @NonNull ReportFilterBean query) {}
+    @NonNull ReportFilterBean query,
+    @NonNull OffsetDateTime generatedAt) {}

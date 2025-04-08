@@ -104,8 +104,9 @@ public class FactRepositoryImpl implements FactRepository {
   @SneakyThrows
   @Override
   public List<Fact> fetchAll(ReportFilterBean bean) {
-    final var observer = new UnlimitedListObserver(0);
-    return fetch(bean, observer);
+    Long untilSerial = Optional.ofNullable(bean.getTo()).map(BigDecimal::longValue).orElse(null);
+    final var obs = new UnlimitedListObserver(untilSerial, 0);
+    return fetch(bean, obs);
   }
 
   @SneakyThrows

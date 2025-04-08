@@ -16,6 +16,8 @@
 package org.factcast.server.ui.adapter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.vaadin.flow.server.*;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.*;
@@ -29,13 +31,20 @@ import org.factcast.server.ui.port.ReportStore;
 import org.factcast.server.ui.report.*;
 
 @Slf4j
-@RequiredArgsConstructor
 public class FileSystemReportStore implements ReportStore {
 
   public final String persistenceDir;
 
   @Setter(value = AccessLevel.PACKAGE)
-  private ObjectMapper objectMapper = new ObjectMapper();
+  private ObjectMapper objectMapper;
+
+  public FileSystemReportStore(@NonNull String persistenceDir) {
+    this.persistenceDir = persistenceDir;
+    final var om = new ObjectMapper();
+    om.registerModule(new JavaTimeModule());
+    om.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    this.objectMapper = om;
+  }
 
   @Override
   public void save(@NonNull String userName, @NonNull Report report) {

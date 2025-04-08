@@ -18,15 +18,20 @@ package org.factcast.server.ui.report;
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
-import java.util.*;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.UUID;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.server.ui.AbstractBrowserTest;
 import org.factcast.server.ui.views.filter.FactCriteria;
 import org.junitpioneer.jupiter.RetryingTest;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.*;
 
 @Slf4j
 class ReportQueryPageIntTest extends AbstractBrowserTest {
@@ -36,6 +41,8 @@ class ReportQueryPageIntTest extends AbstractBrowserTest {
   @RetryingTest(maxAttempts = 3)
   @SneakyThrows
   void createReportHappyPath() {
+    om.registerModule(new JavaTimeModule());
+    om.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     // ARRANGE
     loginFor("/ui/report");
     assertThat(page.getByLabel("Types")).isDisabled();
@@ -95,6 +102,11 @@ class ReportQueryPageIntTest extends AbstractBrowserTest {
       assertThat(query.getFrom()).isNull();
       assertThat(query.getCriteria()).hasSize(1);
       assertCriterion(query.getCriteria().get(0), ns, type, null);
+
+      final var timestamp =
+          om.treeToValue((JsonNode) report.get("generatedAt"), OffsetDateTime.class);
+      // Just checking it's actually a date
+      assertThat(timestamp.getDayOfMonth()).isEqualTo(OffsetDateTime.now().getDayOfMonth());
     }
   }
 
