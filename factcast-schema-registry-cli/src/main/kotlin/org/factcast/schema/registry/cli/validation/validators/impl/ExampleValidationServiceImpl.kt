@@ -21,9 +21,9 @@ import org.factcast.schema.registry.cli.utils.SchemaService
 import org.factcast.schema.registry.cli.utils.mapEventVersions
 import org.factcast.schema.registry.cli.validation.ProjectError
 import org.factcast.schema.registry.cli.validation.validators.ExampleValidationService
-import jakarta.inject.Singleton
+import org.springframework.stereotype.Component
 
-@Singleton
+@Component
 class ExampleValidationServiceImpl(
     private val fileSystemService: FileSystemService,
     private val schemaService: SchemaService

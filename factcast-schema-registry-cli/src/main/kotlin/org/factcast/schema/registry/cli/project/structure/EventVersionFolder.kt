@@ -15,8 +15,6 @@
  */
 package org.factcast.schema.registry.cli.project.structure
 
-import io.micronaut.core.annotation.Introspected
-import java.nio.file.Path
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
 import org.factcast.schema.registry.cli.domain.Example
@@ -25,8 +23,8 @@ import org.factcast.schema.registry.cli.validation.NO_DESCRIPTION
 import org.factcast.schema.registry.cli.validation.NO_EXAMPLES
 import org.factcast.schema.registry.cli.validation.NO_SCHEMA
 import org.factcast.schema.registry.cli.validation.validators.ValidVersionFolder
+import java.nio.file.Path
 
-@Introspected
 data class EventVersionFolder(
     @field:ValidVersionFolder
     override val path: Path,

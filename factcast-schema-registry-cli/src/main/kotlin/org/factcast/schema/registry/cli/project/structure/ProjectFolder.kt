@@ -16,18 +16,16 @@
 package org.factcast.schema.registry.cli.project.structure
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.micronaut.core.annotation.Introspected
 import jakarta.validation.Valid
-import java.nio.file.Path
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.validation.NO_DESCRIPTION
 import org.factcast.schema.registry.cli.validation.NO_NAMESPACES
+import java.nio.file.Path
 
 private val logger = KotlinLogging.logger {}
 
-@Introspected(classes = [ProjectFolder::class, List::class])
 data class ProjectFolder(
     override val path: Path,
 

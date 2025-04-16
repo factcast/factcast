@@ -21,10 +21,10 @@ import com.github.fge.jsonschema.main.JsonSchema
 import com.github.fge.jsonschema.main.JsonSchemaFactory
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.validation.ProjectError
+import org.springframework.stereotype.Component
 import java.nio.file.Path
-import jakarta.inject.Singleton
 
-@Singleton
+@Component
 class SchemaServiceImpl(
     private val fileSystemService: FileSystemService,
     private val jsonSchemaFactory: JsonSchemaFactory

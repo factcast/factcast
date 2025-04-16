@@ -15,9 +15,6 @@
  */
 package org.factcast.schema.registry.cli.registry.impl
 
-import java.nio.file.Path
-import java.nio.file.Paths
-import jakarta.inject.Singleton
 import org.factcast.schema.registry.cli.domain.Event
 import org.factcast.schema.registry.cli.domain.Namespace
 import org.factcast.schema.registry.cli.domain.Project
@@ -25,8 +22,11 @@ import org.factcast.schema.registry.cli.domain.Version
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.registry.StaticPageCreator
 import org.factcast.schema.registry.cli.registry.TemplateService
+import org.springframework.stereotype.Component
+import java.nio.file.Path
+import java.nio.file.Paths
 
-@Singleton
+@Component
 class HugoPageCreatorImpl(
     private val fileSystemService: FileSystemService,
     private val templateService: TemplateService

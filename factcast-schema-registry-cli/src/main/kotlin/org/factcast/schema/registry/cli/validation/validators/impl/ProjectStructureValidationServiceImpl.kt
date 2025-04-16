@@ -16,16 +16,16 @@
 package org.factcast.schema.registry.cli.validation.validators.impl
 
 import arrow.core.Either
+import jakarta.validation.Validator
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.project.structure.Folder
 import org.factcast.schema.registry.cli.project.structure.ProjectFolder
 import org.factcast.schema.registry.cli.project.structure.toProject
 import org.factcast.schema.registry.cli.validation.*
 import org.factcast.schema.registry.cli.validation.validators.ProjectStructureValidationService
-import jakarta.inject.Singleton
-import jakarta.validation.Validator
+import org.springframework.stereotype.Component
 
-@Singleton
+@Component
 class ProjectStructureValidationServiceImpl(private val validator: Validator) : ProjectStructureValidationService {
     override fun validateProjectStructure(projectFolder: ProjectFolder): Either<List<ProjectError>, Project> {
         val errors = validator

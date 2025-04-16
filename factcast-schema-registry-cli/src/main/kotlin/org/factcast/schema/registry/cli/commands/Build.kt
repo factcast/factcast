@@ -15,7 +15,8 @@
  */
 package org.factcast.schema.registry.cli.commands
 
-import jakarta.inject.Inject
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Component
 import picocli.CommandLine.Command
 import picocli.CommandLine.Option
 import java.nio.file.Paths
@@ -26,6 +27,7 @@ import kotlin.system.exitProcess
     mixinStandardHelpOptions = true,
     description = ["Validates and builds your registry"]
 )
+@Component
 class Build : Runnable {
     @Option(names = ["-p", "--base-path"], description = ["The directory where your source files live"])
     var basePath: String = Paths.get(".").toString()
@@ -49,7 +51,7 @@ class Build : Runnable {
     )
     var removeSchemaFields: Set<String> = emptySet()
 
-    @Inject
+    @Autowired
     lateinit var commandService: CommandService
 
     override fun run() {

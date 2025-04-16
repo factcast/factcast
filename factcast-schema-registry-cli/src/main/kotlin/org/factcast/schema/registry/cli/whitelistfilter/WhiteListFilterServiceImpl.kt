@@ -15,15 +15,11 @@
  */
 package org.factcast.schema.registry.cli.whitelistfilter
 
-import jakarta.inject.Singleton
-import org.factcast.schema.registry.cli.project.structure.EventFolder
-import org.factcast.schema.registry.cli.project.structure.EventVersionFolder
-import org.factcast.schema.registry.cli.project.structure.NamespaceFolder
-import org.factcast.schema.registry.cli.project.structure.ProjectFolder
-import org.factcast.schema.registry.cli.project.structure.TransformationFolder
+import org.factcast.schema.registry.cli.project.structure.*
+import org.springframework.stereotype.Component
 
 // returns a filtered ProjectFolder.
-@Singleton
+@Component
 class WhiteListFilterServiceImpl : WhiteListFilterService {
 
     override fun filter(project: ProjectFolder, whiteListEntries: List<String>): ProjectFolder {
