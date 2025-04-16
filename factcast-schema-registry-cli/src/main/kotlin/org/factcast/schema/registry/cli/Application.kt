@@ -40,9 +40,7 @@ open class Application : Runnable {
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
-            println("oink")
             runApplication<Application>(*args)
-
         }
     }
 }
