@@ -24,9 +24,9 @@ import org.factcast.store.registry.transformation.SingleTransformation
 import org.factcast.store.registry.transformation.TransformationKey
 import org.factcast.store.registry.transformation.chains.TransformationChain
 import org.factcast.store.registry.transformation.chains.Transformer
-import jakarta.inject.Singleton
+import org.springframework.stereotype.Component
 
-@Singleton
+@Component
 class TransformationEvaluator(
     private val transformer: Transformer,
     private val fs: FileSystemService

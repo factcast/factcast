@@ -16,18 +16,18 @@
 package org.factcast.schema.registry.cli.commands
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import java.io.IOException
-import java.nio.file.Path
-import jakarta.inject.Singleton
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.project.ProjectService
 import org.factcast.schema.registry.cli.registry.DistributionCreatorService
 import org.factcast.schema.registry.cli.validation.ValidationService
 import org.factcast.schema.registry.cli.validation.formatErrors
+import org.springframework.stereotype.Component
+import java.io.IOException
+import java.nio.file.Path
 
 private val logger = KotlinLogging.logger {}
 
-@Singleton
+@Component
 class CommandServiceImpl(
     private val fileSystemService: FileSystemService,
     private val validationService: ValidationService,

@@ -15,14 +15,14 @@
  */
 package org.factcast.schema.registry.cli
 
-import io.micronaut.configuration.picocli.PicocliRunner
-import io.micronaut.core.annotation.Introspected
-import kotlin.system.exitProcess
 import org.factcast.schema.registry.cli.commands.Build
 import org.factcast.schema.registry.cli.commands.Validate
 import org.factcast.schema.registry.cli.utils.BANNER
+import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.runApplication
 import picocli.CommandLine
 import picocli.CommandLine.Command
+
 
 @Command(
     name = "fc-schema",
@@ -31,8 +31,8 @@ import picocli.CommandLine.Command
     subcommands = [Validate::class, Build::class],
     mixinStandardHelpOptions = true
 )
-@Introspected
-class Application : Runnable {
+@SpringBootApplication(scanBasePackages = arrayOf("org.factcast.schema.registry.cli"))
+open class Application : Runnable {
     override fun run() {
         CommandLine.usage(this, System.out)
     }
@@ -40,8 +40,9 @@ class Application : Runnable {
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
-            val exitCode = PicocliRunner.execute(Application::class.java, *args)
-            if (exitCode != 0)exitProcess(exitCode)
+            println("oink")
+            runApplication<Application>(*args)
+
         }
     }
 }

@@ -12,13 +12,14 @@
   <artifactId>factcast-schema-registry-cli</artifactId>
   <properties>
     <main.class>org.factcast.schema.registry.cli.Application</main.class>
+
   </properties>
 
   <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>org.factcast</groupId>
-        <artifactId>factcast-internal-dep</artifactId>
+        <artifactId>factcast-internal-dep-boot</artifactId>
         <version>${project.version}</version>
         <type>pom</type>
         <scope>import</scope>
@@ -30,24 +31,11 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
-      <dependency>
-        <groupId>io.micronaut.platform</groupId>
-        <artifactId>micronaut-platform</artifactId>
-        <version>${micronaut.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
+
     </dependencies>
   </dependencyManagement>
   <dependencies>
-    <dependency>
-      <groupId>io.micronaut</groupId>
-      <artifactId>micronaut-runtime</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.micronaut.validation</groupId>
-      <artifactId>micronaut-validation</artifactId>
-    </dependency>
+
     <dependency>
       <groupId>org.jetbrains.kotlin</groupId>
       <artifactId>kotlin-stdlib-jdk8</artifactId>
@@ -123,11 +111,7 @@
       <artifactId>picocli</artifactId>
       <version>4.7.6</version>
     </dependency>
-    <dependency>
-      <groupId>io.micronaut.picocli</groupId>
-      <artifactId>micronaut-picocli</artifactId>
-      <version>5.7.0</version>
-    </dependency>
+
     <dependency>
       <groupId>com.fasterxml.jackson.module</groupId>
       <artifactId>jackson-module-kotlin</artifactId>
@@ -153,7 +137,7 @@
     <dependency>
       <groupId>io.arrow-kt</groupId>
       <artifactId>arrow-core-jvm</artifactId>
-      <version>${arrow.version}</version>
+      <version>1.2.4</version>
     </dependency>
     <dependency>
       <groupId>com.github.java-json-tools</groupId>
@@ -169,26 +153,33 @@
       <artifactId>commons-codec</artifactId>
       <version>1.18.0</version>
     </dependency>
-    <dependency>
-      <groupId>io.micronaut.test</groupId>
-      <artifactId>micronaut-test-kotest5</artifactId>
-      <scope>test</scope>
-    </dependency>
+
     <dependency>
       <groupId>io.kotest</groupId>
       <artifactId>kotest-runner-junit5-jvm</artifactId>
+      <version>5.9.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>io.kotest.extensions</groupId>
       <artifactId>kotest-assertions-arrow-jvm</artifactId>
-      <version>2.0.0</version>
+      <version>1.4.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>io.kotest</groupId>
       <artifactId>kotest-assertions-core-jvm</artifactId>
+      <version>5.9.1</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>info.picocli</groupId>
+      <artifactId>picocli-spring-boot-starter</artifactId>
+      <version>4.7.6</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-autoconfigure</artifactId>
     </dependency>
     <dependency>
       <groupId>io.mockk</groupId>
@@ -223,52 +214,6 @@
   </dependencies>
 
   <build>
-    <pluginManagement>
-      <plugins>
-        <!--This plugin's configuration is used to store Eclipse m2e settings
-          only. It has no influence on the Maven build itself. -->
-        <plugin>
-          <groupId>org.eclipse.m2e</groupId>
-          <artifactId>lifecycle-mapping</artifactId>
-          <version>1.0.0</version>
-          <configuration>
-            <lifecycleMappingMetadata>
-              <pluginExecutions>
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>org.jetbrains.kotlin</groupId>
-                    <artifactId>kotlin-maven-plugin</artifactId>
-                    <versionRange>[1.3.61,)</versionRange>
-                    <goals>
-                      <goal>kapt</goal>
-                      <goal>test-kapt</goal>
-                      <goal>compile</goal>
-                      <goal>test-compile</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <ignore></ignore>
-                  </action>
-                </pluginExecution>
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>eu.prismacapacity</groupId>
-                    <artifactId>unixuid-maven-plugin</artifactId>
-                    <versionRange>[1.0.8,)</versionRange>
-                    <goals>
-                      <goal>unixuid</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <ignore></ignore>
-                  </action>
-                </pluginExecution>
-              </pluginExecutions>
-            </lifecycleMappingMetadata>
-          </configuration>
-        </plugin>
-      </plugins>
-    </pluginManagement>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -329,67 +274,82 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>3.5.0</version>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
         <executions>
           <execution>
-            <id>build</id>
             <goals>
-              <goal>exec</goal>
+              <goal>repackage</goal>
             </goals>
-            <phase>integration-test</phase>
-            <configuration>
-              <executable>java</executable>
-              <arguments>
-                <argument>-jar</argument>
-                <argument>target/fc-schema-cli.jar</argument>
-                <argument>build</argument>
-                <argument>--base-path</argument>
-                <argument>../factcast-examples/factcast-example-schema-registry/src/main/resources</argument>
-              </arguments>
-            </configuration>
-          </execution>
-          <execution>
-            <id>hugo</id>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <phase>post-integration-test</phase>
-            <configuration>
-              <executable>docker</executable>
-              <!-- optional -->
-              <workingDirectory>output</workingDirectory>
-              <arguments>
-                <argument>run</argument>
-                <argument>--rm</argument>
-                <argument>-u</argument>
-                <argument>${os.detected.userid}</argument>
-                <argument>-v</argument>
-                <argument>${project.basedir}/output:/srv/hugo</argument>
-                <argument>yanqd0/hugo:0.61.0</argument>
-                <argument>hugo</argument>
-              </arguments>
-            </configuration>
           </execution>
         </executions>
       </plugin>
+      <!-- <plugin> -->
+      <!-- <groupId>org.codehaus.mojo</groupId> -->
+      <!-- <artifactId>exec-maven-plugin</artifactId> -->
+      <!-- <version>3.5.0</version> -->
+      <!-- <executions> -->
+      <!-- <execution> -->
+      <!-- <id>build</id> -->
+      <!-- <goals> -->
+      <!-- <goal>exec</goal> -->
+      <!-- </goals> -->
+      <!-- <phase>integration-test</phase> -->
+      <!-- <configuration> -->
+      <!-- <executable>java</executable> -->
+      <!-- <arguments> -->
+      <!-- <argument>-jar</argument> -->
+      <!-- <argument>target/fc-schema-cli.jar</argument> -->
+      <!-- <argument>build</argument> -->
+      <!-- <argument>&#45;&#45;base-path</argument> -->
+      <!-- <argument>../factcast-examples/factcast-example-schema-registry/src/main/resources -->
+      <!-- </argument> -->
+      <!-- </arguments> -->
+      <!-- </configuration> -->
+      <!-- </execution> -->
+      <!-- <execution> -->
+      <!-- <id>hugo</id> -->
+      <!-- <goals> -->
+      <!-- <goal>exec</goal> -->
+      <!-- </goals> -->
+      <!-- <phase>post-integration-test</phase> -->
+      <!-- <configuration> -->
+      <!-- <executable>docker</executable> -->
+      <!-- &lt;!&ndash; optional &ndash;&gt; -->
+      <!-- <workingDirectory>output</workingDirectory> -->
+      <!-- <arguments> -->
+      <!-- <argument>run</argument> -->
+      <!-- <argument>&#45;&#45;rm</argument> -->
+      <!-- <argument>-u</argument> -->
+      <!-- <argument>${os.detected.userid}</argument> -->
+      <!-- <argument>-v</argument> -->
+      <!-- <argument>${project.basedir}/output:/srv/hugo</argument> -->
+      <!-- <argument>yanqd0/hugo:0.61.0</argument> -->
+      <!-- <argument>hugo</argument> -->
+      <!-- </arguments> -->
+      <!-- </configuration> -->
+      <!-- </execution> -->
+      <!-- </executions> -->
+      <!-- </plugin> -->
       <plugin>
         <groupId>org.jetbrains.kotlin</groupId>
         <artifactId>kotlin-maven-plugin</artifactId>
         <version>${kotlin.version}</version>
         <configuration>
           <compilerPlugins>
-            <plugin>all-open</plugin>
+            <plugin>spring</plugin>
           </compilerPlugins>
-          <pluginOptions>
-            <option>all-open:annotation=io.micronaut.aop.Around</option>
-          </pluginOptions>
+          <jvmTarget>17</jvmTarget>
         </configuration>
         <dependencies>
           <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-maven-allopen</artifactId>
+            <version>${kotlin.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-maven-noarg</artifactId>
             <version>${kotlin.version}</version>
           </dependency>
         </dependencies>
@@ -409,16 +369,7 @@
                   <artifactId>picocli-codegen</artifactId>
                   <version>4.7.6</version>
                 </annotationProcessorPath>
-                <annotationProcessorPath>
-                  <groupId>io.micronaut</groupId>
-                  <artifactId>micronaut-inject-java</artifactId>
-                  <version>4.7.13</version>
-                </annotationProcessorPath>
-                <annotationProcessorPath>
-                  <groupId>io.micronaut.validation</groupId>
-                  <artifactId>micronaut-validation-processor</artifactId>
-                  <version>4.9.0</version>
-                </annotationProcessorPath>
+
               </annotationProcessorPaths>
             </configuration>
           </execution>
@@ -449,16 +400,7 @@
                   <artifactId>picocli-codegen</artifactId>
                   <version>4.7.6</version>
                 </annotationProcessorPath>
-                <annotationProcessorPath>
-                  <groupId>io.micronaut</groupId>
-                  <artifactId>micronaut-inject-java</artifactId>
-                  <version>4.7.13</version>
-                </annotationProcessorPath>
-                <annotationProcessorPath>
-                  <groupId>io.micronaut.validation</groupId>
-                  <artifactId>micronaut-validation-processor</artifactId>
-                  <version>4.9.0</version>
-                </annotationProcessorPath>
+
               </annotationProcessorPaths>
             </configuration>
           </execution>

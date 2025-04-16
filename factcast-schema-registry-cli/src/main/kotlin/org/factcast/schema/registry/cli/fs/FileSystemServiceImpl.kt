@@ -16,6 +16,9 @@
 package org.factcast.schema.registry.cli.fs
 
 import com.github.fge.jackson.JsonLoader
+import org.apache.commons.io.FileUtils
+import org.factcast.schema.registry.cli.utils.filterJson
+import org.springframework.stereotype.Component
 import java.io.File
 import java.io.IOException
 import java.net.JarURLConnection
@@ -23,12 +26,8 @@ import java.net.URLConnection
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
-import jakarta.inject.Singleton
-import kotlin.streams.toList
-import org.apache.commons.io.FileUtils
-import org.factcast.schema.registry.cli.utils.filterJson
 
-@Singleton
+@Component
 class FileSystemServiceImpl() : FileSystemService {
     override fun exists(path: Path) =
         Files.exists(path)

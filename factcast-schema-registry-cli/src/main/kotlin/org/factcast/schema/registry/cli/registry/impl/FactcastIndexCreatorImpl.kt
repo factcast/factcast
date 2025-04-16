@@ -17,8 +17,6 @@ package org.factcast.schema.registry.cli.registry.impl
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.annotations.VisibleForTesting
-import java.nio.file.Path
-import jakarta.inject.Singleton
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.registry.FactcastIndexCreator
@@ -27,8 +25,10 @@ import org.factcast.schema.registry.cli.registry.getEventId
 import org.factcast.schema.registry.cli.registry.getTransformationId
 import org.factcast.schema.registry.cli.utils.mapEventTransformations
 import org.factcast.schema.registry.cli.utils.mapEventVersions
+import org.springframework.stereotype.Component
+import java.nio.file.Path
 
-@Singleton
+@Component
 class FactcastIndexCreatorImpl(
     private val fileSystemService: FileSystemService,
     private val om: ObjectMapper,

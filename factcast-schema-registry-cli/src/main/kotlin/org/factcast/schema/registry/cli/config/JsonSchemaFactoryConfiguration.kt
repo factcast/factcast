@@ -16,11 +16,11 @@
 package org.factcast.schema.registry.cli.config
 
 import com.github.fge.jsonschema.main.JsonSchemaFactory
-import io.micronaut.context.annotation.Bean
-import io.micronaut.context.annotation.Factory
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 
-@Factory
-class JsonSchemaFactoryConfiguration {
+@Configuration
+open class JsonSchemaFactoryConfiguration {
     @Bean
-    fun factory() = JsonSchemaFactory.byDefault()
+    open fun factory() = JsonSchemaFactory.byDefault()
 }

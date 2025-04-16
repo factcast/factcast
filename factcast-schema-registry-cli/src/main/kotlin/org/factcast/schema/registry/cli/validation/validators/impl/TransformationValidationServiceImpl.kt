@@ -17,7 +17,7 @@ package org.factcast.schema.registry.cli.validation.validators.impl
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.google.common.annotations.VisibleForTesting
-import org.factcast.schema.registry.cli.domain.*
+import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.utils.SchemaService
 import org.factcast.schema.registry.cli.utils.mapEventTransformations
@@ -26,9 +26,9 @@ import org.factcast.schema.registry.cli.validation.MissingTransformationCalculat
 import org.factcast.schema.registry.cli.validation.ProjectError
 import org.factcast.schema.registry.cli.validation.TransformationEvaluator
 import org.factcast.schema.registry.cli.validation.validators.TransformationValidationService
-import jakarta.inject.Singleton
+import org.springframework.stereotype.Component
 
-@Singleton
+@Component
 class TransformationValidationServiceImpl(
     private val missingTransformationCalculator: MissingTransformationCalculator,
     private val fileSystemService: FileSystemService,
