@@ -15,6 +15,7 @@
  */
 package org.factcast.server.ui.adapter;
 
+import jakarta.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -25,10 +26,16 @@ import org.slf4j.LoggerFactory;
 
 @Getter
 public abstract class AbstractListObserver implements FactObserver {
+  @Nullable protected Long untilSerial;
 
   private final List<Fact> list = new ArrayList<>();
 
   protected void handleError(@NonNull Throwable exception) {
     LoggerFactory.getLogger(FactObserver.class).warn("Unhandled onError:", exception);
+  }
+
+  protected boolean hasReachedTheLimitSerial(@NonNull Fact fact) {
+    Long serial = fact.header().serial();
+    return untilSerial != null && serial != null && untilSerial < serial;
   }
 }

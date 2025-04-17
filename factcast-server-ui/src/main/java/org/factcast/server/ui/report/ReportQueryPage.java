@@ -16,11 +16,9 @@
 package org.factcast.server.ui.report;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.vaadin.componentfactory.Popup;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.button.*;
-import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.notification.*;
@@ -32,8 +30,9 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.*;
 import jakarta.annotation.security.PermitAll;
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.*;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
@@ -63,12 +62,8 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
   private final DataProvider<ReportEntry, Void> reportProvider;
 
   // fields
-  private final DatePicker since = new DatePicker("First Serial of Day");
-  private final BigDecimalField from = new BigDecimalField("Starting Serial");
-  private final Popup serialHelperOverlay = new Popup();
-  private final TextField fileNameField = new TextField("File Name");
+  private final FileNameInputField fileNameField = new FileNameInputField("Report File Name");
   private final Button queryBtn = new Button("Generate");
-  private String fileName = "events.json";
   private String reportDownloadName;
 
   private final FilterCriteriaViews<ReportFilterBean> factCriteriaViews;
@@ -89,23 +84,31 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
     this.jsonViewPluginService = jsonViewPluginService;
 
     formBean = new ReportFilterBean(repo.latestSerial());
-    binder = createUrlStateBinding();
+    final var inputPanel = new SerialInputPanel(repo);
+
+    binder = createUrlStateBinding(inputPanel);
     factCriteriaViews = new FilterCriteriaViews<>(repo, binder, formBean);
     reportProvider = getReportProvider();
+
+    fileNameField.disableButtonWhenBlank(queryBtn);
 
     final var accordion = new Accordion();
     accordion.setWidthFull();
     accordion.add("Conditions", factCriteriaViews);
 
-    final var queryFormSection = new FormContent(accordion, new InputFields(), queryButtons());
-    add(queryFormSection, serialHelperOverlay);
+    final var queryFormSection =
+        new FormContent(accordion, fileNameField, inputPanel, queryButtons());
+    add(queryFormSection);
+    add(inputPanel.fromSerialHelperOverlay());
+    add(inputPanel.toSerialHelperOverlay());
 
     final var reportViewHeader = getReportHeaderSection(reportProvider);
     downloadSection = new ReportDownloadSection(reportStore, reportProvider);
     final var reportGrid = getReportGrid();
     add(reportViewHeader, reportGrid, downloadSection);
 
-    updateFrom();
+    inputPanel.updateFrom();
+    inputPanel.updateTo();
   }
 
   private Grid<ReportEntry> getReportGrid() {
@@ -113,7 +116,7 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
     grid.setId("report-table");
     grid.setSelectionMode(Grid.SelectionMode.SINGLE);
     grid.addColumn(ReportEntry::name).setHeader("Filename");
-    grid.addColumn(ReportEntry::lastChanged).setHeader("Last Modified");
+    grid.addColumn(ReportEntry::lastChanged).setHeader("Created");
     grid.addSelectionListener(
         selection -> {
           if (!selection.getAllSelectedItems().isEmpty()) {
@@ -139,10 +142,13 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
     return header;
   }
 
-  private BeanValidationUrlStateBinder<ReportFilterBean> createUrlStateBinding() {
+  private BeanValidationUrlStateBinder<ReportFilterBean> createUrlStateBinding(
+      SerialInputPanel inputFields) {
     var b = new BeanValidationUrlStateBinder<>(ReportFilterBean.class);
-    b.forField(from).withNullRepresentation(BigDecimal.ZERO).bind("from");
-    b.forField(since).bind("since");
+    b.forField(inputFields.from()).withNullRepresentation(BigDecimal.ZERO).bind("from");
+    b.forField(inputFields.to()).bind("to");
+    b.forField(inputFields.since()).bind("since");
+    b.forField(inputFields.until()).bind("until");
 
     b.readBean(formBean);
     return b;
@@ -156,68 +162,31 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
     factCriteriaViews.rebuild();
   }
 
-  private void updateFrom() {
-    LocalDate value = since.getValue();
-    if (value == null) {
-      from.setValue(null);
-    } else {
-      OptionalLong firstSerialFor = repo.lastSerialBefore(value);
-      from.setValue(BigDecimal.valueOf(firstSerialFor.orElse(0)));
-    }
-  }
-
+  @Getter
   @NoCoverageReportToBeGenerated
-  class InputFields extends HorizontalLayout {
-    public InputFields() {
-      setClassName("flex-wrap");
-      setJustifyContentMode(JustifyContentMode.BETWEEN);
+  private static class FileNameInputField extends TextField {
+    private String value = "events.json";
 
-      serialHelperOverlay.setTarget(from.getElement());
-      from.setId("starting-serial");
-      from.setAutocomplete(Autocomplete.OFF);
-      since.addValueChangeListener(e -> updateFrom());
+    public FileNameInputField(@NonNull String label) {
+      super(label);
+      this.setPlaceholder("events");
+      this.setMinLength(1);
+      this.setTooltipText("The name of the file generated by the report.");
+      this.setClearButtonVisible(true);
+      this.setSuffixComponent(new Span(".json"));
+      this.setValueChangeMode(ValueChangeMode.EAGER);
+    }
 
-      Button latestSerial = new Button("Latest serial");
-      latestSerial.addClickListener(
-          event -> {
-            from.setValue(BigDecimal.valueOf(repo.latestSerial()));
-            serialHelperOverlay.hide();
-          });
-
-      Button fromScratch = new Button("From scratch");
-      fromScratch.addClickListener(
-          event -> {
-            from.setValue(BigDecimal.ZERO);
-            serialHelperOverlay.hide();
-          });
-
-      final var heading = new H4("Select Starting Serial");
-      final var overlayContent = new VerticalLayout(heading, since, latestSerial, fromScratch);
-      overlayContent.setSpacing(false);
-      overlayContent.getThemeList().add("spacing-xs");
-      overlayContent.setAlignItems(Alignment.STRETCH);
-      serialHelperOverlay.add(overlayContent);
-
-      from.setWidth("auto");
-
-      fileNameField.setLabel("Report File Name");
-      fileNameField.setPlaceholder("events");
-      fileNameField.setMinLength(1);
-      fileNameField.setTooltipText("The name of the file generated by the report.");
-      fileNameField.setClearButtonVisible(true);
-      fileNameField.setSuffixComponent(new Span(".json"));
-      fileNameField.setValueChangeMode(ValueChangeMode.EAGER);
-      fileNameField.addValueChangeListener(
+    public void disableButtonWhenBlank(@NonNull Button button) {
+      this.addValueChangeListener(
           e -> {
-            if (!fileNameField.isEmpty()) {
-              queryBtn.setEnabled(true);
-              fileName = sanitizeFileName(e.getValue()) + ".json";
+            if (!this.isEmpty()) {
+              button.setEnabled(true);
+              this.value = sanitizeFileName(e.getValue()) + ".json";
             } else {
-              queryBtn.setEnabled(false);
+              button.setEnabled(false);
             }
           });
-
-      add(from, fileNameField);
     }
 
     private String sanitizeFileName(String fileName) {
@@ -252,6 +221,7 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
     try {
       queryBtn.setEnabled(false);
       binder.writeBean(formBean);
+      final var queryTimestamp = OffsetDateTime.now();
       log.info("{} runs query for {}", userName, formBean);
       // For now this will block the UI in case of long-running queries. Will be refactored in the
       // future once the FactRepository is adapted.
@@ -260,7 +230,7 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
       if (!dataFromStore.isEmpty()) {
         List<ObjectNode> processedFacts =
             dataFromStore.stream().map(e -> jsonViewPluginService.process(e).fact()).toList();
-        trySave(processedFacts);
+        trySave(processedFacts, queryTimestamp);
       } else {
         displayWarning(
             "No data was found for this query and therefore report creation is skipped.");
@@ -277,9 +247,10 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
     // multiple times.
   }
 
-  private void trySave(List<ObjectNode> processedFacts) {
+  private void trySave(List<ObjectNode> processedFacts, OffsetDateTime queriedAt) {
     try {
-      reportStore.save(userName, new Report(fileName, processedFacts, formBean));
+      reportStore.save(
+          userName, new Report(fileNameField.value(), processedFacts, formBean, queriedAt));
       reportProvider.refreshAll();
     } catch (IllegalArgumentException e) {
       displayWarning(e.getMessage());

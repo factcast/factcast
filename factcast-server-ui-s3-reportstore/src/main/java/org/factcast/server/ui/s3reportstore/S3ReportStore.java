@@ -16,6 +16,8 @@
 package org.factcast.server.ui.s3reportstore;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Paths;
@@ -35,7 +37,6 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
 import software.amazon.awssdk.transfer.s3.model.*;
 
-@RequiredArgsConstructor
 @Slf4j
 public class S3ReportStore implements ReportStore {
 
@@ -43,11 +44,26 @@ public class S3ReportStore implements ReportStore {
   private final S3TransferManager s3TransferManager;
   private final S3Presigner s3Presigner;
   private final String bucketName;
+  private final ObjectMapper objectMapper;
+
+  public S3ReportStore(
+      @NonNull S3AsyncClient s3Client,
+      @NonNull S3TransferManager s3TransferManager,
+      @NonNull S3Presigner s3Presigner,
+      @NonNull String bucketName) {
+    this.s3Client = s3Client;
+    this.s3TransferManager = s3TransferManager;
+    this.s3Presigner = s3Presigner;
+    this.bucketName = bucketName;
+    final var om = new ObjectMapper();
+    om.registerModule(new JavaTimeModule());
+    om.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    this.objectMapper = om;
+  }
 
   @Override
   public void save(@NonNull String userName, @NonNull Report report) {
     final var reportKey = getReportKey(userName, report.name());
-    final var objectMapper = new ObjectMapper();
     if (doesObjectExist(reportKey)) {
       throw new IllegalArgumentException(
           "Report was not generated as another report with this name already exists.");

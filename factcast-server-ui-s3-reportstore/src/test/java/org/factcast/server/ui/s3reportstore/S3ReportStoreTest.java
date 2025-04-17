@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.net.URL;
 import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.Date;
@@ -36,10 +37,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -57,15 +56,13 @@ class S3ReportStoreTest {
   @Mock private S3Presigner s3Presigner;
   @Mock private S3TransferManager s3TransferManager;
 
-  @InjectMocks S3ReportStore uut;
-
   private static final String BUCKET_NAME = "factcast-reports";
 
-  private static final ObjectMapper om = new ObjectMapper();
+  S3ReportStore uut;
 
   @BeforeEach
   void setup() {
-    ReflectionTestUtils.setField(uut, "bucketName", "factcast-reports");
+    uut = new S3ReportStore(s3Client, s3TransferManager, s3Presigner, BUCKET_NAME);
   }
 
   @Nested
@@ -258,7 +255,7 @@ class S3ReportStoreTest {
     final var om = new ObjectMapper();
     ObjectNode event = om.getNodeFactory().objectNode();
     event.put("foo", "bar");
-    return new Report(fileName, List.of(event), new ReportFilterBean(1));
+    return new Report(fileName, List.of(event), new ReportFilterBean(1), OffsetDateTime.now());
   }
 
   private void objectExists() {
