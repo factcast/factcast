@@ -407,7 +407,7 @@
                 <annotationProcessorPath>
                   <groupId>info.picocli</groupId>
                   <artifactId>picocli-codegen</artifactId>
-                  <version>4.7.6</version>
+                  <version>4.7.7</version>
                 </annotationProcessorPath>
                 <annotationProcessorPath>
                   <groupId>io.micronaut</groupId>
@@ -447,7 +447,7 @@
                 <annotationProcessorPath>
                   <groupId>info.picocli</groupId>
                   <artifactId>picocli-codegen</artifactId>
-                  <version>4.7.6</version>
+                  <version>4.7.7</version>
                 </annotationProcessorPath>
                 <annotationProcessorPath>
                   <groupId>io.micronaut</groupId>
