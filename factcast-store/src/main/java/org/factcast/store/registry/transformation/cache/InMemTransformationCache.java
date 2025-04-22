@@ -121,6 +121,17 @@ public class InMemTransformationCache implements TransformationCache {
     }
   }
 
+  @Override
+  public synchronized void invalidateTransformationFor(UUID factId) {
+    Set<Key> toBeInvalidated =
+        cache.keySet().stream()
+            .filter(e -> e.id().contains(factId.toString()))
+            .collect(Collectors.toSet());
+    if (!toBeInvalidated.isEmpty()) {
+      toBeInvalidated.forEach(cache::remove);
+    }
+  }
+
   @Data
   @AllArgsConstructor
   private static class FactAndAccessTime {
