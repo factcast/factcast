@@ -121,7 +121,7 @@
     <dependency>
       <groupId>info.picocli</groupId>
       <artifactId>picocli</artifactId>
-      <version>4.7.6</version>
+      <version>4.7.7</version>
     </dependency>
     <dependency>
       <groupId>io.micronaut.picocli</groupId>
@@ -138,7 +138,7 @@
     <dependency>
       <groupId>io.github.oshai</groupId>
       <artifactId>kotlin-logging-jvm</artifactId>
-      <version>7.0.6</version>
+      <version>7.0.7</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -162,7 +162,7 @@
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-      <version>2.18.0</version>
+      <version>2.19.0</version>
     </dependency>
     <dependency>
       <groupId>commons-codec</groupId>
@@ -407,7 +407,7 @@
                 <annotationProcessorPath>
                   <groupId>info.picocli</groupId>
                   <artifactId>picocli-codegen</artifactId>
-                  <version>4.7.6</version>
+                  <version>4.7.7</version>
                 </annotationProcessorPath>
                 <annotationProcessorPath>
                   <groupId>io.micronaut</groupId>
@@ -447,7 +447,7 @@
                 <annotationProcessorPath>
                   <groupId>info.picocli</groupId>
                   <artifactId>picocli-codegen</artifactId>
-                  <version>4.7.6</version>
+                  <version>4.7.7</version>
                 </annotationProcessorPath>
                 <annotationProcessorPath>
                   <groupId>io.micronaut</groupId>
