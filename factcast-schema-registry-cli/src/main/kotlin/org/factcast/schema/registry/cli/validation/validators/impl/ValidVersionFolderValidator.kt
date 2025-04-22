@@ -17,24 +17,17 @@ package org.factcast.schema.registry.cli.validation.validators.impl
 
 import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext
-import jakarta.validation.Path
 import org.factcast.schema.registry.cli.validation.validators.ValidVersionFolder
 import org.springframework.stereotype.Component
+import java.nio.file.Path
 
 @Component
 class ValidVersionFolderValidator : ConstraintValidator<ValidVersionFolder, Path> {
-    //    override fun isValid(
-//        value: Path?,
-//        annotationMetadata: AnnotationValue<ValidVersionFolder>,
-//        context: io.micronaut.validation.validator.constraints.ConstraintValidatorContext
-//    ) = value != null && try {
-//        value.fileName.toString().toInt()
-//
-//        true
-//    } catch (e: NumberFormatException) {
-//        false
-//    }
-    override fun isValid(value: Path?, context: ConstraintValidatorContext?): Boolean {
-        return true; }
-
+    override fun isValid(value: Path?, context: ConstraintValidatorContext?): Boolean =
+        value != null && try {
+            value.fileName.toString().toInt()
+            true
+        } catch (e: NumberFormatException) {
+            false
+        }
 }

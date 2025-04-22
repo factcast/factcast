@@ -1,4 +1,5 @@
 package org.factcast.schema.registry.cli.validation.validators.impl
+// TODO
 
 //@MicronautTest
 //class ProjectStructureValidationServiceIntTest(private val uut: ProjectStructureValidationService) : StringSpec() {

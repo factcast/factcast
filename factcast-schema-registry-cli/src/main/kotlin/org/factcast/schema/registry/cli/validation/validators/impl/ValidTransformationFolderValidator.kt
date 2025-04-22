@@ -17,18 +17,13 @@ package org.factcast.schema.registry.cli.validation.validators.impl
 
 import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext
-import jakarta.validation.Path
 import org.factcast.schema.registry.cli.validation.validators.ValidTransformationFolder
 import org.springframework.stereotype.Component
+import java.nio.file.Path
 
 @Component
 class ValidTransformationFolderValidator : ConstraintValidator<ValidTransformationFolder, Path> {
-    //    override fun isValid(
-//        value: Path?,
-//        annotationMetadata: AnnotationValue<ValidTransformationFolder>,
-//        context: ConstraintValidatorContext
-//    ) = (value == null || Regex("[0-9]+-[0-9]+").matches(value.fileName.toString()))
-    override fun isValid(value: Path?, context: ConstraintValidatorContext?): Boolean {
-        return true;
-    }
+    override fun isValid(value: Path?, context: ConstraintValidatorContext?): Boolean =
+        (value == null || Regex("[0-9]+-[0-9]+").matches(value.fileName.toString()))
+
 }
