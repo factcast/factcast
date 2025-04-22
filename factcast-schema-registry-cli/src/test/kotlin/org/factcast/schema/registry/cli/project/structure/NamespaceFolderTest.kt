@@ -8,7 +8,12 @@ import java.nio.file.Paths
 class NamespaceFolderTest : StringSpec() {
     val path = Paths.get("namespaceA")
     val dummyPath = Paths.get(".")
-    val eventFolder = EventFolder(dummyPath, emptyList(), dummyPath, emptyList())
+    val eventFolder = EventFolder(
+        dummyPath,
+        emptyList(),
+        dummyPath,
+        emptyList()
+    )
 
     init {
         "toNamespace" {

@@ -52,7 +52,12 @@ class WhiteListFilterServiceImpl : WhiteListFilterService {
                 }
             }
 
-        return EventFolder(event.path, filteredVersionsFolder, event.description, filteredTransformationFolders)
+        return EventFolder(
+            event.path,
+            filteredVersionsFolder,
+            event.description,
+            filteredTransformationFolders
+        )
     }
 
     private fun determineTransformationVersions(it: TransformationFolder) =

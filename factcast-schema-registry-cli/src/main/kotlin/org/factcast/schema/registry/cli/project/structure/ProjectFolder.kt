@@ -53,4 +53,4 @@ fun ProjectFolder.log() =
         ns.eventFolders.flatMap { folder ->
             folder.versionFolders
         }
-    }.forEach { logger.debug("Included event ${it.path}") }
+    }.forEach { logger.debug { "Included event ${it.path}" } }
