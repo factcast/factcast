@@ -121,11 +121,8 @@ public class PgListener implements InitializingBean, DisposableBean {
             pc.prepareStatement(PgConstants.LISTEN_SCHEMASTORE_CHANGE_CHANNEL_SQL);
         PreparedStatement ps5 =
             pc.prepareStatement(PgConstants.LISTEN_TRANSFORMATIONSTORE_CHANGE_CHANNEL_SQL);
-        PreparedStatement ps7 = pc.prepareStatement(PgConstants.LISTEN_UPDATE_CHANNEL_SQL); ) {
-      PreparedStatement ps6 =
-          pc.prepareStatement(
-              PgConstants
-                  .LISTEN_TRUNCATION_CHANNEL_SQL); // TODO: why is this outside of the try block?
+        PreparedStatement ps6 = pc.prepareStatement(PgConstants.LISTEN_TRUNCATION_CHANNEL_SQL);
+        PreparedStatement ps7 = pc.prepareStatement(PgConstants.LISTEN_UPDATE_CHANNEL_SQL)) {
       ps1.execute();
       ps2.execute();
       ps3.execute();
