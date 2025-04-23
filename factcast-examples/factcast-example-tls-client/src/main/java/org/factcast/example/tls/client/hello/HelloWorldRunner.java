@@ -25,6 +25,8 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @SuppressWarnings("ALL")
 @RequiredArgsConstructor
 @Component
@@ -35,15 +37,20 @@ public class HelloWorldRunner implements CommandLineRunner {
   @Override
   public void run(String... args) throws Exception {
 
-    Fact fact = Fact.builder().ns("smoke").type("foo").build("{\"bla\":\"fasel\"}");
-    fc.publish(fact);
-    System.out.println("published " + fact);
+    UUID aggId = UUID.fromString("50000000-4000-3000-2000-100000000000");
 
-    Subscription sub =
-        fc.subscribe(
-                SubscriptionRequest.follow(FactSpec.ns("smoke")).fromScratch(), System.out::println)
-            .awaitCatchup(5000);
+    Fact factToFind = Fact.builder().ns("smoke").type("foo").aggId(aggId).build("{\"bla\":\"fasel\"}");
+    fc.publish(factToFind);
+     for (int i = 0; i < 100_000; i++) {
+      Fact fact = Fact.builder().ns("smoke").type("foo").aggId(UUID.randomUUID()).build("{\"bla\":\"fasel\"}");
+      fc.publish(fact);
+      System.out.println("published " + fact);
+     }
 
-    sub.close();
+    for (int i = 0; i < 100; i++) {
+      Subscription sub = fc.subscribe(SubscriptionRequest.catchup(FactSpec.ns("smoke").aggId(aggId)).fromScratch(), System.out::println)
+          .awaitComplete(5000);
+      sub.close();
+    }
   }
 }
