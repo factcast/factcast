@@ -15,6 +15,7 @@
  */
 package org.factcast.example.tls.client.hello;
 
+import java.util.UUID;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
@@ -24,8 +25,6 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
-
-import java.util.UUID;
 
 @SuppressWarnings("ALL")
 @RequiredArgsConstructor
@@ -39,17 +38,26 @@ public class HelloWorldRunner implements CommandLineRunner {
 
     UUID aggId = UUID.fromString("50000000-4000-3000-2000-100000000000");
 
-    Fact factToFind = Fact.builder().ns("smoke").type("foo").aggId(aggId).build("{\"bla\":\"fasel\"}");
+    Fact factToFind =
+        Fact.builder().ns("smoke").type("foo").aggId(aggId).build("{\"bla\":\"fasel\"}");
     fc.publish(factToFind);
-     for (int i = 0; i < 100_000; i++) {
-      Fact fact = Fact.builder().ns("smoke").type("foo").aggId(UUID.randomUUID()).build("{\"bla\":\"fasel\"}");
+    for (int i = 0; i < 100_000; i++) {
+      Fact fact =
+          Fact.builder()
+              .ns("smoke")
+              .type("foo")
+              .aggId(UUID.randomUUID())
+              .build("{\"bla\":\"fasel\"}");
       fc.publish(fact);
       System.out.println("published " + fact);
-     }
+    }
 
     for (int i = 0; i < 100; i++) {
-      Subscription sub = fc.subscribe(SubscriptionRequest.catchup(FactSpec.ns("smoke").aggId(aggId)).fromScratch(), System.out::println)
-          .awaitComplete(5000);
+      Subscription sub =
+          fc.subscribe(
+                  SubscriptionRequest.catchup(FactSpec.ns("smoke").aggId(aggId)).fromScratch(),
+                  System.out::println)
+              .awaitComplete(5000);
       sub.close();
     }
   }
