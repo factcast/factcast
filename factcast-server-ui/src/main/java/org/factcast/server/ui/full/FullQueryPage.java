@@ -15,30 +15,32 @@
  */
 package org.factcast.server.ui.full;
 
-import com.vaadin.componentfactory.Popup;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.accordion.Accordion;
-import com.vaadin.flow.component.button.*;
-import com.vaadin.flow.component.datepicker.DatePicker;
-import com.vaadin.flow.component.html.H4;
-import com.vaadin.flow.component.orderedlayout.*;
-import com.vaadin.flow.component.textfield.*;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.server.StreamResource;
 import jakarta.annotation.security.PermitAll;
 import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.List;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.util.NoCoverageReportToBeGenerated;
-import org.factcast.server.ui.plugins.*;
+import org.factcast.server.ui.plugins.JsonViewEntries;
+import org.factcast.server.ui.plugins.JsonViewPluginService;
 import org.factcast.server.ui.port.FactRepository;
-import org.factcast.server.ui.utils.*;
+import org.factcast.server.ui.utils.BeanValidationUrlStateBinder;
+import org.factcast.server.ui.utils.Notifications;
 import org.factcast.server.ui.views.*;
-import org.factcast.server.ui.views.filter.*;
+import org.factcast.server.ui.views.filter.FactCriteria;
+import org.factcast.server.ui.views.filter.FilterCriteriaViews;
+import org.factcast.server.ui.views.filter.MetaTuple;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.vaadin.olli.FileDownloadWrapper;
@@ -53,18 +55,9 @@ import org.vaadin.olli.FileDownloadWrapper;
 public class FullQueryPage extends VerticalLayout implements HasUrlParameter<String> {
 
   // externalizable state
-
   private final FullFilterBean formBean;
 
   // fields
-  private final DatePicker since = new DatePicker("First Serial of Day");
-  private final DatePicker until = new DatePicker("Last Serial of Day");
-  private final IntegerField limit = new IntegerField("Limit");
-  private final IntegerField offset = new IntegerField("Offset");
-  private final BigDecimalField from = new BigDecimalField("Start serial");
-  private final BigDecimalField to = new BigDecimalField("End serial");
-  private final Popup fromSerialHelperOverlay = new Popup();
-  private final Popup toSerialHelperOverlay = new Popup();
   private final JsonView jsonView = new JsonView(this::updateQuickFilters);
 
   private final BeanValidationUrlStateBinder<FullFilterBean> binder;
@@ -86,29 +79,8 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
 
     formBean = new FullFilterBean(repo.latestSerial());
 
-    fromSerialHelperOverlay.setTarget(from.getElement());
-    from.setId("starting-serial");
-    from.setAutocomplete(Autocomplete.OFF);
-    from.addValueChangeListener(e -> updateEndSerialIfLowerThanStartSerial());
-    toSerialHelperOverlay.setTarget(to.getElement());
-    to.setId("ending-serial");
-    to.setAutocomplete(Autocomplete.OFF);
-    to.addValueChangeListener(e -> updateEndSerialIfLowerThanStartSerial());
-    since.addOpenedChangeListener(
-        e -> {
-          if (!e.isOpened()) {
-            updateFrom();
-          }
-        });
-    until.addOpenedChangeListener(
-        e -> {
-          if (!e.isOpened()) {
-            updateTo();
-          }
-        });
-    until.setMin(since.getValue());
-
-    binder = createBinding();
+    var serialPanel = new SerialInputPanel(repo).withLimitAndOffset();
+    binder = createBinding(serialPanel);
 
     factCriteriaViews = new FilterCriteriaViews<>(repo, binder, formBean);
 
@@ -116,15 +88,15 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     accordion.setWidthFull();
     accordion.add("Conditions", factCriteriaViews);
 
-    final var form = new FormContent(accordion, new SerialPanel(), formButtons());
+    final var form = new FormContent(accordion, serialPanel, formButtons());
 
     add(form);
     add(jsonView);
-    add(fromSerialHelperOverlay);
-    add(toSerialHelperOverlay);
+    add(serialPanel.fromSerialHelperOverlay());
+    add(serialPanel.toSerialHelperOverlay());
 
-    updateFrom();
-    updateTo();
+    serialPanel.updateFrom();
+    serialPanel.updateTo();
 
     factCriteriaViews.addFilterCriteriaCountUpdateListener(
         (oldCount, newCount) -> {
@@ -167,14 +139,16 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     }
   }
 
-  private BeanValidationUrlStateBinder<FullFilterBean> createBinding() {
+  private BeanValidationUrlStateBinder<FullFilterBean> createBinding(SerialInputPanel serialPanel) {
     var b = new BeanValidationUrlStateBinder<>(FullFilterBean.class);
-    b.forField(from).withNullRepresentation(BigDecimal.ZERO).bind("from");
-    b.forField(to).bind("to");
-    b.forField(since).bind("since");
-    b.forField(until).bind("until");
-    b.forField(limit).withNullRepresentation(FullFilterBean.DEFAULT_LIMIT).bind("limit");
-    b.forField(offset).withNullRepresentation(0).bind("offset");
+    b.forField(serialPanel.from()).withNullRepresentation(BigDecimal.ZERO).bind("from");
+    b.forField(serialPanel.to()).bind("to");
+    b.forField(serialPanel.since()).bind("since");
+    b.forField(serialPanel.until()).bind("until");
+    b.forField(serialPanel.limit())
+        .withNullRepresentation(FullFilterBean.DEFAULT_LIMIT)
+        .bind("limit");
+    b.forField(serialPanel.offset()).withNullRepresentation(0).bind("offset");
 
     b.readBean(formBean);
     return b;
@@ -187,89 +161,6 @@ public class FullQueryPage extends VerticalLayout implements HasUrlParameter<Str
     binder.readFromQueryParams(location.getQueryParameters(), formBean);
 
     factCriteriaViews.rebuild();
-  }
-
-  private void updateFrom() {
-    Optional.ofNullable(since.getValue())
-        .ifPresentOrElse(
-            value -> {
-              from.setValue(BigDecimal.valueOf(repo.lastSerialBefore(value).orElse(0)));
-              updateEndSerialIfLowerThanStartSerial();
-              until.setMin(value);
-            },
-            () -> from.setValue(null));
-  }
-
-  private void updateEndSerialIfLowerThanStartSerial() {
-    if (until.getValue() != null && since.getValue().isAfter(until.getValue())) {
-      until.setValue(since.getValue()); // that would give us one day of facts
-    }
-    if (to.getValue() != null && from.getValue().compareTo(to.getValue()) > 0) {
-      to.setValue(null); // remove the limit
-    }
-  }
-
-  private void updateTo() {
-    Optional.ofNullable(until.getValue())
-        .flatMap(repo::firstSerialAfter)
-        .map(BigDecimal::valueOf)
-        .ifPresentOrElse(to::setValue, () -> to.setValue(null));
-  }
-
-  @NoCoverageReportToBeGenerated
-  class SerialPanel extends HorizontalLayout {
-    public SerialPanel() {
-      setClassName("flex-wrap");
-      setJustifyContentMode(JustifyContentMode.BETWEEN);
-
-      final var fromOverlayContent = getFromVerticalLayout();
-      fromOverlayContent.setSpacing(false);
-      fromOverlayContent.getThemeList().add("spacing-xs");
-      fromOverlayContent.setAlignItems(FlexComponent.Alignment.STRETCH);
-      fromSerialHelperOverlay.add(fromOverlayContent);
-
-      final var toOverlayContent = getToVerticalLayout();
-      toOverlayContent.setSpacing(false);
-      toOverlayContent.getThemeList().add("spacing-xs");
-      toOverlayContent.setAlignItems(FlexComponent.Alignment.STRETCH);
-      toSerialHelperOverlay.add(toOverlayContent);
-
-      from.setWidth("auto");
-      to.setWidth("auto");
-      limit.setWidth("auto");
-      offset.setWidth("auto");
-      add(from, to, limit, offset);
-    }
-
-    private VerticalLayout getFromVerticalLayout() {
-      Button latestSerial = new Button("Latest serial");
-      latestSerial.addClickListener(
-          event -> {
-            from.setValue(BigDecimal.valueOf(repo.latestSerial()));
-            fromSerialHelperOverlay.hide();
-          });
-
-      Button fromScratch = new Button("From scratch");
-      fromScratch.addClickListener(
-          event -> {
-            from.setValue(BigDecimal.ZERO);
-            fromSerialHelperOverlay.hide();
-          });
-
-      final var heading = new H4("Select start serial ");
-      return new VerticalLayout(heading, since, latestSerial, fromScratch);
-    }
-
-    private VerticalLayout getToVerticalLayout() {
-      Button latestSerial = new Button("Remove last serial");
-      latestSerial.addClickListener(
-          event -> {
-            to.setValue(null);
-            toSerialHelperOverlay.hide();
-          });
-      final var heading = new H4("Select last serial");
-      return new VerticalLayout(heading, until, latestSerial);
-    }
   }
 
   private void runQuery() {

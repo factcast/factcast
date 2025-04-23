@@ -31,7 +31,16 @@ public abstract class AbstractSubscription implements Subscription {
 
   @Override
   public final Subscription onClose(@NonNull Runnable e) {
-    onClose.add(e);
+    // align with close method
+    synchronized (onClose) {
+      if (!isSubscriptionClosed.get()) {
+        // register deferred call
+        onClose.add(e);
+        return this; // exit asap to release lock on onClose
+      }
+    }
+    // if we're closed already, execute immediately
+    e.run();
     return this;
   }
 
@@ -47,11 +56,13 @@ public abstract class AbstractSubscription implements Subscription {
 
   @Override
   public void close() {
-    if (!isSubscriptionClosed.getAndSet(true)) {
-      try {
-        internalClose();
-      } finally {
-        onClose.forEach(this::tryRun);
+    synchronized (onClose) {
+      if (!isSubscriptionClosed.getAndSet(true)) {
+        try {
+          internalClose();
+        } finally {
+          onClose.forEach(this::tryRun);
+        }
       }
     }
   }

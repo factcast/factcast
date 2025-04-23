@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Set;
 import lombok.SneakyThrows;
@@ -36,6 +37,7 @@ class ReportTest {
   void serialization() {
 
     final var om = new ObjectMapper();
+    om.findAndRegisterModules();
     om.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
     ObjectNode event = om.getNodeFactory().objectNode();
     event.put("foo", "bar");
@@ -44,8 +46,9 @@ class ReportTest {
     criteria.setNs("ns");
     criteria.setType(Set.of("type"));
     final var qb = new ReportFilterBean(0, BigDecimal.TEN, List.of(criteria));
+    final var timestamp = OffsetDateTime.now();
 
-    final var report = new Report("event.json", List.of(event), qb);
+    final var report = new Report("event.json", List.of(event), qb, timestamp);
 
     final var serialized = om.writeValueAsString(report);
     final var deserialized = om.readValue(serialized, Report.class);
@@ -58,5 +61,6 @@ class ReportTest {
         .extracting(FactCriteria::getNs, FactCriteria::getType)
         .hasSize(1)
         .contains(Tuple.tuple("ns", Set.of("type")));
+    assertThat(deserialized.generatedAt()).isEqualTo(timestamp);
   }
 }
