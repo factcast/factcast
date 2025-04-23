@@ -34,8 +34,8 @@ import picocli.CommandLine.Command
     subcommands = [Validate::class, Build::class],
     mixinStandardHelpOptions = true
 )
-@SpringBootApplication(scanBasePackages = arrayOf("org.factcast.schema.registry.cli"))
-open class Application : Runnable {
+@SpringBootApplication(scanBasePackages = ["org.factcast.schema.registry.cli"])
+class Application : Runnable {
     override fun run() {
         CommandLine.usage(this, System.out)
     }

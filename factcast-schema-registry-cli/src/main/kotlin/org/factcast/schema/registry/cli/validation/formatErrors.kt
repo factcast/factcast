@@ -70,7 +70,7 @@ ${
             "Version ${it.fromVersion} or ${it.toVersion} does not exist for ${it.transformationPath}"
 
         is ProjectError.TransformationError -> """Exception during transformation of ${it.type} from ${it.fromVersion} to ${it.toVersion}:
-${it.exception?.message}
+${it.exception.message}
         """.trimIndent()
     }
 }

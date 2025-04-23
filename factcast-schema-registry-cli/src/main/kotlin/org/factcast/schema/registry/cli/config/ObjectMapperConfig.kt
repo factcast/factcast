@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration
-open class ObjectMapperConfig {
+class ObjectMapperConfig {
     @Bean
-    open fun objectMapper() = ObjectMapper()
+    fun objectMapper() = ObjectMapper()
 }

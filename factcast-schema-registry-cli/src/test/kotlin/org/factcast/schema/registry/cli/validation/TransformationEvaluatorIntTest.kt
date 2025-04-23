@@ -18,7 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 
 @SpringBootTest
-class TransformationEvaluatorIntTest() :
+class TransformationEvaluatorIntTest :
     StringSpec() {
     @Autowired
     private lateinit var uut: TransformationEvaluator

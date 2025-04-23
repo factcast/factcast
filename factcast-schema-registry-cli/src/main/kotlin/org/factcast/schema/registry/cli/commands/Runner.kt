@@ -13,14 +13,13 @@ class Runner(
     private val factory: IFactory
 ) : CommandLineRunner,
     ExitCodeGenerator {
-    private var exitCode = 0
+    private var exitCode: Int = 0
 
     @Throws(Exception::class)
     override fun run(vararg args: String) {
-        exitCode = CommandLine(command, factory).execute(*args)
+        this.exitCode = CommandLine(command, factory).execute(*args)
     }
 
-    override fun getExitCode(): Int {
-        return exitCode
-    }
+    override fun getExitCode(): Int = this.exitCode
+
 }

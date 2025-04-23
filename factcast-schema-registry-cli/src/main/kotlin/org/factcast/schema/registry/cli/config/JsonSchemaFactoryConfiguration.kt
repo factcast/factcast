@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration
-open class JsonSchemaFactoryConfiguration {
+class JsonSchemaFactoryConfiguration {
     @Bean
-    open fun factory() = JsonSchemaFactory.byDefault()
+    fun factory() = JsonSchemaFactory.byDefault()
 }

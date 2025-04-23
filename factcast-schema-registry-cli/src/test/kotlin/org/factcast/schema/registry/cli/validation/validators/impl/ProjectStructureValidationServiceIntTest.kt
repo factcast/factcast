@@ -15,7 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import java.nio.file.Paths
 
 @SpringBootTest
-class ProjectStructureValidationServiceIntTest() : StringSpec() {
+class ProjectStructureValidationServiceIntTest : StringSpec() {
 
     val dummyPath = Paths.get(".")
 

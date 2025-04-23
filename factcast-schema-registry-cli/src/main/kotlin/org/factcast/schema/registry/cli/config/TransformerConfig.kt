@@ -8,11 +8,11 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration
-open class TransformerConfig {
+class TransformerConfig {
     @Bean
-    open fun engineFactory(): JSEngineFactory = GraalJSEngineFactory()
+    fun engineFactory(): JSEngineFactory = GraalJSEngineFactory()
 
     @Bean
-    open fun transformer(engineFactory: JSEngineFactory): Transformer =
+    fun transformer(engineFactory: JSEngineFactory): Transformer =
         JsTransformer(engineFactory)
 }

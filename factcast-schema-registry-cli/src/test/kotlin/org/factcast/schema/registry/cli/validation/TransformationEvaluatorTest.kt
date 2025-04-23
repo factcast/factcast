@@ -47,7 +47,7 @@ class TransformationEvaluatorTest : StringSpec() {
                 fs.readToString(transformation.transformationPath.toFile())
             } returns dummyTransformation
 
-            every { transformer.transform(capture(chainSlot), eq(dummyData)) } returns resultData;
+            every { transformer.transform(capture(chainSlot), eq(dummyData)) } returns resultData
 
             val result = uut.evaluate(ns, event, transformation, dummyData)
 
@@ -63,7 +63,7 @@ class TransformationEvaluatorTest : StringSpec() {
 
             verify {
                 fs.readToString(transformation.transformationPath.toFile())
-                transformer.transform(any(), eq(dummyData));
+                transformer.transform(any(), eq(dummyData))
             }
         }
 
@@ -80,13 +80,13 @@ class TransformationEvaluatorTest : StringSpec() {
                 fs.readToString(transformation.transformationPath.toFile())
             } returns skippedDummyTransformation
 
-            every { transformer.transform(capture(chainSlot), eq(dummyData)) } returns resultData;
+            every { transformer.transform(capture(chainSlot), eq(dummyData)) } returns resultData
 
             uut.evaluate(ns, event, transformation, dummyData).shouldBeNull()
 
             verify {
                 fs.readToString(transformation.transformationPath.toFile())
-                transformer.transform(any(), eq(dummyData));
+                transformer.transform(any(), eq(dummyData))
             }
         }
     }

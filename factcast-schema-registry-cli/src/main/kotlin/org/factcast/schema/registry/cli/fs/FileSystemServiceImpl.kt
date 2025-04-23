@@ -28,7 +28,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 @Component
-class FileSystemServiceImpl() : FileSystemService {
+class FileSystemServiceImpl : FileSystemService {
     override fun exists(path: Path) =
         Files.exists(path)
 
