@@ -58,8 +58,8 @@ public class PgConnectionSupplier {
   @SneakyThrows
   public Connection getPooledConnection(String clientId) {
     Connection c = ds.getConnection();
-    try (PreparedStatement ps = c.prepareStatement("SET application_name=?"); ) {
-      ps.setString(1, applicationName + "|" + clientId);
+    try (PreparedStatement ps =
+        c.prepareStatement("SET application_name='" + applicationName + "|" + clientId + "'"); ) {
       ps.execute();
     }
     return c;

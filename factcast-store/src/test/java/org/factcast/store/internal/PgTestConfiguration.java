@@ -79,4 +79,15 @@ public class PgTestConfiguration {
   JSEngineFactory engineFactory() {
     return new GraalJSEngineFactory();
   }
+
+  //  @Bean
+  //  public DataSource datasource() {
+  //    PoolProperties poolProperties = new PoolProperties();
+  //    poolProperties.setDriverClassName(Driver.class.getName());
+  //    poolProperties.setUrl(System.getProperty("spring.datasource.url"));
+  //    poolProperties.setUsername(System.getProperty("spring.datasource.username"));
+  //    poolProperties.setPassword(System.getProperty("spring.datasource.password"));
+  //
+  //    return new org.apache.tomcat.jdbc.pool.DataSource(poolProperties);
+  //  }
 }
