@@ -176,7 +176,7 @@ public class PgConnectionSupplierTest {
     org.apache.tomcat.jdbc.pool.DataSource ds = new org.apache.tomcat.jdbc.pool.DataSource();
     ds.setUrl(url);
     PgConnectionSupplier uut = new PgConnectionSupplier(ds);
-    assertThatThrownBy(() -> uut.get("")).isInstanceOf(SQLException.class);
+    assertThatThrownBy(() -> uut.getUnpooledConnection("")).isInstanceOf(SQLException.class);
   }
 
   @Test
@@ -202,7 +202,7 @@ public class PgConnectionSupplierTest {
 
       driverManager.when(() -> DriverManager.getDriver(anyString())).thenReturn(driver);
 
-      assertThat(uut.get("client-id")).isSameAs(pgConnection);
+      assertThat(uut.getUnpooledConnection("client-id")).isSameAs(pgConnection);
 
       driverManager.verify(() -> DriverManager.getDriver(ds.getUrl()));
     }
@@ -236,7 +236,7 @@ public class PgConnectionSupplierTest {
 
       driverManager.when(() -> DriverManager.getDriver(anyString())).thenReturn(driver);
 
-      assertThat(underTest.get("client-id")).isSameAs(pgConnection);
+      assertThat(underTest.getUnpooledConnection("client-id")).isSameAs(pgConnection);
 
       driverManager.verify(() -> DriverManager.getDriver(ds.getUrl()));
     }

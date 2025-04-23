@@ -224,7 +224,8 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
   @SneakyThrows
   protected CloseableJdbcTemplate buildTemplate() {
     var singleConnectionDataSource =
-        new SingleConnectionDataSource(pgConnectionSupplier.get("tail-index-maintenance"), true);
+        new SingleConnectionDataSource(
+            pgConnectionSupplier.getUnpooledConnection("tail-index-maintenance"), true);
     return new CloseableJdbcTemplate(singleConnectionDataSource);
   }
 
