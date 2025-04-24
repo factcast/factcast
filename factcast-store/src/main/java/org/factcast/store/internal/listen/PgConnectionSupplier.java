@@ -80,6 +80,7 @@ public class PgConnectionSupplier {
   }
 
   @VisibleForTesting
+  @SuppressWarnings("java:S3776") // any alternative makes it harder to read
   Properties buildPgConnectionProperties(org.apache.tomcat.jdbc.pool.DataSource ds) {
     Properties dbp = new Properties();
     PoolConfiguration poolProperties = ds.getPoolProperties();
