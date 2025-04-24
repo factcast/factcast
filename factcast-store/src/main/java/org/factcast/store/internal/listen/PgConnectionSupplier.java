@@ -56,6 +56,7 @@ public class PgConnectionSupplier {
   }
 
   @SneakyThrows
+  @SuppressWarnings("java:S2077")
   public Connection getPooledConnection(String clientId) {
     Connection c = ds.getConnection();
     try (PreparedStatement ps =
