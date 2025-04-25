@@ -65,8 +65,13 @@ public class PgFetchingCatchup implements PgCatchup {
       fetch(jdbc);
     } finally {
       statementHolder.clear();
+
+      // resetting the connection to its initial state
       connection.setAutoCommit(true);
+      connectionSupplier.resetConnectionApplicationName(connection);
+      // closing the DS will "close" (and by this return) the connection to the pool.
       ds.close();
+
       log.trace("Done fetching, flushing.");
       pipeline.process(Signal.flush());
     }

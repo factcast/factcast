@@ -59,11 +59,22 @@ public class PgConnectionSupplier {
   @SuppressWarnings("java:S2077")
   public Connection getPooledConnection(String clientId) {
     Connection c = ds.getConnection();
+    setConnectionApplicationName(clientId, c);
+    return c;
+  }
+
+  private void setConnectionApplicationName(String clientId, Connection c) throws SQLException {
     try (PreparedStatement ps =
         c.prepareStatement("SET application_name='" + applicationName + "|" + clientId + "'"); ) {
       ps.execute();
     }
-    return c;
+  }
+
+  public void resetConnectionApplicationName(Connection c) throws SQLException {
+    try (PreparedStatement ps =
+        c.prepareStatement("SET application_name='" + applicationName + "'"); ) {
+      ps.execute();
+    }
   }
 
   @SuppressWarnings("resource")
@@ -123,9 +134,5 @@ public class PgConnectionSupplier {
       }
     }
     return dbp;
-  }
-
-  public DataSource getPool() {
-    return ds;
   }
 }
