@@ -185,7 +185,7 @@ class PgListenerTest {
 
   @Test
   public void notificationLoopHandlesSqlException() throws SQLException {
-    when(pgConnectionSupplier.get(any()))
+    when(pgConnectionSupplier.getUnpooledConnection(any()))
         .thenThrow(SQLException.class, RuntimeException.class, Error.class);
 
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
@@ -193,7 +193,7 @@ class PgListenerTest {
         pgListener.new NotificationReceiverLoop();
 
     Assertions.assertThrows(Error.class, notificationReceiverLoop::run);
-    verify(pgConnectionSupplier, times(3)).get("notification-receiver-loop");
+    verify(pgConnectionSupplier, times(3)).getUnpooledConnection("notification-receiver-loop");
   }
 
   @Test
@@ -201,7 +201,7 @@ class PgListenerTest {
 
     CountDownLatch latch = new CountDownLatch(1);
 
-    when(pgConnectionSupplier.get(any())).thenReturn(conn);
+    when(pgConnectionSupplier.getUnpooledConnection(any())).thenReturn(conn);
     when(conn.prepareStatement(anyString())).thenReturn(ps);
     when(conn.prepareCall(anyString()).execute()).thenReturn(true);
     when(conn.getNotifications(anyInt()))
@@ -298,7 +298,7 @@ class PgListenerTest {
             1,
             "{\"ns\":\"namespace\",\"type\":\"theType\",\"version\":3,\"txId\":123}");
 
-    when(pgConnectionSupplier.get(any())).thenReturn(conn);
+    when(pgConnectionSupplier.getUnpooledConnection(any())).thenReturn(conn);
     when(conn.prepareStatement(anyString())).thenReturn(ps);
     when(conn.getNotifications(anyInt()))
         .thenReturn(
@@ -366,7 +366,7 @@ class PgListenerTest {
             1,
             "{\"ns\":\"namespace\",\"type\":\"theOtherType\",\"txId\":123}");
 
-    when(pgConnectionSupplier.get(any())).thenReturn(conn);
+    when(pgConnectionSupplier.getUnpooledConnection(any())).thenReturn(conn);
     when(conn.prepareStatement(anyString())).thenReturn(ps);
     when(conn.getNotifications(anyInt()))
         .thenReturn(
@@ -408,7 +408,7 @@ class PgListenerTest {
 
   @Test
   void testConnectionIsStopped() throws Exception {
-    when(pgConnectionSupplier.get(any())).thenReturn(conn);
+    when(pgConnectionSupplier.getUnpooledConnection(any())).thenReturn(conn);
     when(conn.prepareStatement(anyString())).thenReturn(mock(PreparedStatement.class));
 
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);

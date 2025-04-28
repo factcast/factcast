@@ -19,21 +19,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.factcast.store.internal.PgConstants.*;
 
 import com.google.common.eventbus.*;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.*;
 import java.util.concurrent.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.util.FactCastJson;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.internal.notification.*;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.postgresql.PGNotification;
-import org.postgresql.jdbc.PgConnection;
+import org.postgresql.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
@@ -50,85 +48,61 @@ class PgListenerIntegrationTest {
   @Nested
   class FactInsertTrigger {
 
-    @Autowired PgConnectionSupplier pgConnectionSupplier;
     @Autowired EventBus eventBus;
     @Autowired FactStore factStore;
-
-    @AfterEach
-    @SneakyThrows
-    void unregisterListener() {
-      registerTestAsListener(pgConnectionSupplier.get("test"), "UNLISTEN " + CHANNEL_FACT_INSERT);
-    }
 
     @Test
     @SneakyThrows
     void containsTransactionId() {
-      // INIT
-      var pc = pgConnectionSupplier.get("test");
+      EventCollector events = new EventCollector();
+      try {
+        eventBus.register(events);
 
-      // let us also register as LISTENER
-      registerTestAsListener(pc, LISTEN_INSERT_CHANNEL_SQL);
+        UUID id1 = UUID.randomUUID();
+        UUID id2 = UUID.randomUUID();
+        UUID id3 = UUID.randomUUID();
 
-      // also register on event bus
-      var events = new EventCollector();
-      eventBus.register(events);
+        // RUN
+        // publish together, should have same tx id
+        factStore.publish(
+            List.of(
+                Fact.builder().ns("test").type("listenerTest1").id(id1).buildWithoutPayload(),
+                Fact.builder().ns("test").type("listenerTest1").id(id2).buildWithoutPayload()));
+        // separate, should have another tx id
+        factStore.publish(
+            List.of(Fact.builder().ns("test").type("listenerTest2").id(id3).buildWithoutPayload()));
 
-      UUID id1 = UUID.randomUUID();
-      UUID id2 = UUID.randomUUID();
-      UUID id3 = UUID.randomUUID();
+        events.latch().await(5, TimeUnit.SECONDS);
 
-      // RUN
-      // publish together, should have same tx id
-      factStore.publish(
-          List.of(
-              Fact.builder().ns("test").type("listenerTest1").id(id1).buildWithoutPayload(),
-              Fact.builder().ns("test").type("listenerTest1").id(id2).buildWithoutPayload()));
-      // separate, should have another tx id
-      factStore.publish(
-          List.of(Fact.builder().ns("test").type("listenerTest2").id(id3).buildWithoutPayload()));
-
-      // ASSERT
-      // first, check trigger
-      var notifications = pc.getNotifications(5_000);
-
-      assertThat(notifications)
-          .extracting(PGNotification::getName)
-          .allMatch(CHANNEL_FACT_INSERT::equals);
-
-      assertThat(notifications)
-          .extracting(n -> FactCastJson.readTree(n.getParameter()))
-          // 2nd insert has been condensed within database, see updateNotifyFactInsert_condensed.sql
-          .hasSize(2)
-          .anySatisfy(
-              n -> {
-                var h = n.get("header");
-                assertThat(h.get("ns").asText()).isEqualTo("test");
-                assertThat(h.get("type").asText()).isEqualTo("listenerTest1");
-                assertThat(h.get("id").asText()).isEqualTo(id1.toString().toLowerCase());
-              })
-          .anySatisfy(
-              n -> {
-                var h = n.get("header");
-                assertThat(h.get("ns").asText()).isEqualTo("test");
-                assertThat(h.get("type").asText()).isEqualTo("listenerTest2");
-                assertThat(h.get("id").asText()).isEqualTo(id3.toString().toLowerCase());
-              });
+        assertThat(events.signals())
+            .hasSize(2)
+            .anySatisfy(
+                n -> {
+                  assertThat(n.ns()).isEqualTo("test");
+                  assertThat(n.type()).isEqualTo("listenerTest1");
+                })
+            .anySatisfy(
+                n -> {
+                  assertThat(n.ns()).isEqualTo("test");
+                  assertThat(n.type()).isEqualTo("listenerTest2");
+                });
+      } finally {
+        eventBus.unregister(events);
+      }
     }
 
-    public class EventCollector {
-      @Getter final List<FactInsertionNotification> signals = new ArrayList<>();
+    @Getter
+    public static class EventCollector {
+      final List<FactInsertionNotification> signals = new ArrayList<>();
 
       @SuppressWarnings("unused")
       @Subscribe
       public void onEvent(FactInsertionNotification ev) {
         signals.add(ev);
+        latch.countDown();
       }
-    }
 
-    private void registerTestAsListener(PgConnection pc, String listenSql) throws SQLException {
-      try (var ps = pc.prepareStatement(listenSql)) {
-        ps.execute();
-      }
+      private CountDownLatch latch = new CountDownLatch(2);
     }
   }
 
@@ -143,41 +117,44 @@ class PgListenerIntegrationTest {
     @SneakyThrows
     @SuppressWarnings("unused")
     void listensToDatabase() {
-
       TruncateNotificationCollector ec = new TruncateNotificationCollector();
-      eventBus.register(ec);
+      try {
+        eventBus.register(ec);
 
-      // make sure we catch the initial truncate, even though it might have passed already
-      log.info("Waiting up to three seconds to receive truncate event from test start");
-      boolean mightHaveBeenTooLate = ec.latch.await(3, TimeUnit.SECONDS);
-      ec.reset();
+        // make sure we catch the initial truncate, even though it might have passed already
+        log.info("Waiting up to three seconds to receive truncate event from test start");
+        boolean mightHaveBeenTooLate = ec.latch().await(3, TimeUnit.SECONDS);
+        ec.reset();
 
-      log.debug("inserting a few facts");
-      UUID id1 = UUID.randomUUID();
-      UUID id2 = UUID.randomUUID();
-      UUID id3 = UUID.randomUUID();
+        log.debug("inserting a few facts");
+        UUID id1 = UUID.randomUUID();
+        UUID id2 = UUID.randomUUID();
+        UUID id3 = UUID.randomUUID();
 
-      // publish together, should have same tx id
-      factStore.publish(
-          List.of(
-              Fact.builder().ns("test").type("listenerTest1").id(id1).buildWithoutPayload(),
-              Fact.builder().ns("test").type("listenerTest1").id(id2).buildWithoutPayload()));
-      // separate, should have another tx id
-      factStore.publish(
-          List.of(Fact.builder().ns("test").type("listenerTest2").id(id3).buildWithoutPayload()));
+        // publish together, should have same tx id
+        factStore.publish(
+            List.of(
+                Fact.builder().ns("test").type("listenerTest1").id(id1).buildWithoutPayload(),
+                Fact.builder().ns("test").type("listenerTest1").id(id2).buildWithoutPayload()));
+        // separate, should have another tx id
+        factStore.publish(
+            List.of(Fact.builder().ns("test").type("listenerTest2").id(id3).buildWithoutPayload()));
 
-      assertThat(ec.latch.await(2, TimeUnit.SECONDS)).isFalse();
+        assertThat(ec.latch().await(2, TimeUnit.SECONDS)).isFalse();
 
-      // act
-      log.info("truncating now");
-      jdbc.execute("truncate fact");
+        // act
+        log.info("truncating now");
+        jdbc.execute("truncate fact");
 
-      // assert
-      assertThat(ec.latch.await(50, TimeUnit.SECONDS)).isTrue();
+        // assert
+        assertThat(ec.latch().await(5, TimeUnit.SECONDS)).isTrue();
+      } finally {
+        eventBus.unregister(ec);
+      }
     }
 
     public static class TruncateNotificationCollector {
-      private CountDownLatch latch = new CountDownLatch(1);
+      @Getter private CountDownLatch latch = new CountDownLatch(1);
 
       @SuppressWarnings("unused")
       @Subscribe

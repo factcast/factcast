@@ -16,6 +16,7 @@
 package org.factcast.store.internal.catchup.fetching;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.sql.Connection;
 import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +32,6 @@ import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
-import org.postgresql.jdbc.PgConnection;
 import org.postgresql.util.PSQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
@@ -56,21 +56,24 @@ public class PgFetchingCatchup implements PgCatchup {
   @SneakyThrows
   @Override
   public void run() {
-
-    PgConnection connection = connectionSupplier.get(req.debugInfo());
-    connection.setAutoCommit(false); // necessary for using cursors
-
-    // connection may stay open quite a while, and we do not want a CPool to interfere
-    SingleConnectionDataSource ds = new SingleConnectionDataSource(connection, true);
-
+    Connection connection = connectionSupplier.getPooledConnection(req.debugInfo());
+    SingleConnectionDataSource ds = new SingleConnectionDataSource(connection, false);
+    // DO NOT use try-with-resources here
     try {
+      connection.setAutoCommit(false); // necessary for using cursors
       var jdbc = new JdbcTemplate(ds);
       fetch(jdbc);
     } finally {
+      statementHolder.clear();
+
+      // resetting the connection to its initial state
+      connection.setAutoCommit(true);
+      connectionSupplier.resetConnectionApplicationName(connection);
+      // closing the DS will "close" (and by this return) the connection to the pool.
+      ds.close();
+
       log.trace("Done fetching, flushing.");
       pipeline.process(Signal.flush());
-      ds.destroy();
-      statementHolder.clear();
     }
   }
 
