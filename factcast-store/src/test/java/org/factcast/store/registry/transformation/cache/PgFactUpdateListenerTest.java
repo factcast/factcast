@@ -15,7 +15,7 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
-import static org.factcast.store.registry.transformation.cache.PgTransformationStoreChangeListener.INFLIGHT_TRANSFORMATIONS_DELAY_SECONDS;
+import static org.factcast.store.registry.transformation.cache.PgFactUpdateListener.INFLIGHT_TRANSFORMATIONS_DELAY_SECONDS;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
