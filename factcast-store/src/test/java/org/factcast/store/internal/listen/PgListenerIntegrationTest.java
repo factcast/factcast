@@ -277,7 +277,7 @@ class PgListenerIntegrationTest {
               });
     }
 
-    public class UpdateNotificationEventCollector {
+    public static class UpdateNotificationEventCollector {
       @Getter final List<FactUpdateNotification> signals = new ArrayList<>();
 
       @SuppressWarnings("unused")
