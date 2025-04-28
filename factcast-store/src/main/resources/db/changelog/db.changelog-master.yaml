@@ -413,3 +413,16 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
+
+  - changeSet:
+      id: issue3612_create_update_trigger
+      runInTransaction: false
+      author: benediktkaiser
+      comment: create trigger to evict transformation cache eviction on fact updates
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue3612/evict_transformation_cache.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
