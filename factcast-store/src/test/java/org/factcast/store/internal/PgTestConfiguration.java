@@ -56,7 +56,8 @@ public class PgTestConfiguration {
       postgres.start();
       url = postgres.getJdbcUrl();
       System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
-      System.setProperty("spring.datasource.url", url);
+      System.setProperty(
+          "spring.datasource.url", url + "?socketTimeout=0&preparedStatementCacheSize=0");
       System.setProperty("spring.datasource.username", postgres.getUsername());
       System.setProperty("spring.datasource.password", postgres.getPassword());
       System.setProperty("spring.datasource.tomcat.connectionProperties", "foo=bar;");

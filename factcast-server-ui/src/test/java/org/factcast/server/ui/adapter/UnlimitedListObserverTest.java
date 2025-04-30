@@ -17,6 +17,7 @@ package org.factcast.server.ui.adapter;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -28,6 +29,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,13 +38,13 @@ public class UnlimitedListObserverTest {
   private UnlimitedListObserver underTest;
 
   @Nested
-  class WhenOningNext {
+  class WhenOnNext {
     private final List<Fact> mockFacts = new LinkedList<>();
 
     @BeforeEach
     void setup() {
       for (int i = 0; i < 30; i++) {
-        mockFacts.add(mock(Fact.class));
+        mockFacts.add(mock(Fact.class, Answers.RETURNS_DEEP_STUBS));
       }
     }
 
@@ -68,6 +70,40 @@ public class UnlimitedListObserverTest {
       @NonNull Throwable exc = new IOException("expected - can be ignored");
       underTest.onError(exc);
       verify(underTest).handleError(exc);
+    }
+  }
+
+  @Nested
+  class WhenCheckingIfIsComplete {
+    @Test
+    void switchesToComplete() {
+      underTest = new UnlimitedListObserver(3L, 2);
+      // first skipped for offset
+      Fact mock1 = mock(Fact.class, Answers.RETURNS_DEEP_STUBS);
+      when(mock1.header().serial()).thenReturn(1L);
+      Fact mock2 = mock(Fact.class, Answers.RETURNS_DEEP_STUBS);
+      when(mock2.header().serial()).thenReturn(2L);
+      Fact mock3 = mock(Fact.class, Answers.RETURNS_DEEP_STUBS);
+      when(mock3.header().serial()).thenReturn(3L);
+      Fact mock4 = mock(Fact.class, Answers.RETURNS_DEEP_STUBS);
+      when(mock4.header().serial()).thenReturn(4L);
+
+      // First one skipped for offset
+      underTest.onNext(mock1);
+      // second is taken, still under end serial
+      underTest.onNext(mock2);
+      // third is taken, equals end serial
+      assertThat(underTest.isComplete(mock3)).isFalse();
+      underTest.onNext(mock3);
+      // fourth is above end serial
+      assertThat(underTest.isComplete(mock4)).isTrue();
+
+      // more should trigger an exception
+      assertThatThrownBy(
+              () -> {
+                underTest.onNext(mock4);
+              })
+          .isInstanceOf(LimitReachedException.class);
     }
   }
 }

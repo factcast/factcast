@@ -21,15 +21,12 @@ import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.*;
 
 import com.google.common.base.Splitter;
-import java.sql.Connection;
-import java.sql.Driver;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.Map;
 import java.util.Properties;
 import javax.sql.DataSource;
 import lombok.SneakyThrows;
-import org.apache.tomcat.jdbc.pool.PoolConfiguration;
+import org.apache.tomcat.jdbc.pool.*;
 import org.junit.jupiter.api.*;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -62,7 +59,7 @@ public class PgConnectionSupplierTest {
 
   @Test
   void test_wrongDataSourceImplementation() {
-    Assertions.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
         () -> {
           DataSource ds = mock(DataSource.class);
@@ -133,7 +130,7 @@ public class PgConnectionSupplierTest {
 
   @Test
   void test_propertySyntaxBroken() {
-    Assertions.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
         () -> {
           setupConnectionProperties("sockettimeout:30");
@@ -149,7 +146,7 @@ public class PgConnectionSupplierTest {
 
   @Test
   void test_invalidConnectionProperties() {
-    Assertions.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
         () -> {
           // given
@@ -162,7 +159,7 @@ public class PgConnectionSupplierTest {
 
   @Test
   void test_constructor() {
-    Assertions.assertThrows(
+    assertThrows(
         NullPointerException.class,
         () -> {
           new PgConnectionSupplier(null);
@@ -176,7 +173,7 @@ public class PgConnectionSupplierTest {
     org.apache.tomcat.jdbc.pool.DataSource ds = new org.apache.tomcat.jdbc.pool.DataSource();
     ds.setUrl(url);
     PgConnectionSupplier uut = new PgConnectionSupplier(ds);
-    assertThatThrownBy(() -> uut.get("")).isInstanceOf(SQLException.class);
+    assertThatThrownBy(() -> uut.getUnpooledConnection("")).isInstanceOf(SQLException.class);
   }
 
   @Test
@@ -202,7 +199,7 @@ public class PgConnectionSupplierTest {
 
       driverManager.when(() -> DriverManager.getDriver(anyString())).thenReturn(driver);
 
-      assertThat(uut.get("client-id")).isSameAs(pgConnection);
+      assertThat(uut.getUnpooledConnection("client-id")).isSameAs(pgConnection);
 
       driverManager.verify(() -> DriverManager.getDriver(ds.getUrl()));
     }
@@ -236,7 +233,7 @@ public class PgConnectionSupplierTest {
 
       driverManager.when(() -> DriverManager.getDriver(anyString())).thenReturn(driver);
 
-      assertThat(underTest.get("client-id")).isSameAs(pgConnection);
+      assertThat(underTest.getUnpooledConnection("client-id")).isSameAs(pgConnection);
 
       driverManager.verify(() -> DriverManager.getDriver(ds.getUrl()));
     }
@@ -245,5 +242,18 @@ public class PgConnectionSupplierTest {
     verify(driver).connect(eq("hugo"), propertiesCaptor.capture());
     final var actualProperties = propertiesCaptor.getValue();
     assertThat(actualProperties.getProperty("ApplicationName")).isEqualTo("foo|client-id");
+  }
+
+  @Test
+  @SneakyThrows
+  void pooledConnection() {
+    Connection c = mock(Connection.class);
+    when(ds.getConnection()).thenReturn(c);
+    PreparedStatement ps = mock(PreparedStatement.class);
+    when(c.prepareStatement("SET application_name='factcast|poit'")).thenReturn(ps);
+
+    Connection poit = uut.getPooledConnection("poit");
+    assertThat(poit).isNotNull().isSameAs(c);
+    verify(ps).execute();
   }
 }
