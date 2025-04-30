@@ -26,12 +26,14 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
+import org.factcast.core.util.FactCastJson;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.internal.notification.*;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.postgresql.*;
+import org.postgresql.jdbc.PgConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
@@ -178,14 +180,15 @@ class PgListenerIntegrationTest {
     @AfterEach
     @SneakyThrows
     void unregisterListener() {
-      registerTestAsListener(pgConnectionSupplier.get("test"), "UNLISTEN " + CHANNEL_FACT_UPDATE);
+      registerTestAsListener(
+          pgConnectionSupplier.getUnpooledConnection("test"), "UNLISTEN " + CHANNEL_FACT_UPDATE);
     }
 
     @Test
     @SneakyThrows
     void containsTransactionId() {
       // INIT
-      var pc = pgConnectionSupplier.get("test");
+      var pc = pgConnectionSupplier.getUnpooledConnection("test");
 
       // let us also register as LISTENER
       registerTestAsListener(pc, LISTEN_UPDATE_CHANNEL_SQL);
