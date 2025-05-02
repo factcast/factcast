@@ -15,14 +15,17 @@
  */
 package org.factcast.schema.registry.cli
 
-import io.micronaut.configuration.picocli.PicocliRunner
-import io.micronaut.core.annotation.Introspected
-import kotlin.system.exitProcess
+import jakarta.validation.Validator
 import org.factcast.schema.registry.cli.commands.Build
 import org.factcast.schema.registry.cli.commands.Validate
 import org.factcast.schema.registry.cli.utils.BANNER
+import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.runApplication
+import org.springframework.context.annotation.Bean
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean
 import picocli.CommandLine
 import picocli.CommandLine.Command
+
 
 @Command(
     name = "fc-schema",
@@ -31,7 +34,7 @@ import picocli.CommandLine.Command
     subcommands = [Validate::class, Build::class],
     mixinStandardHelpOptions = true
 )
-@Introspected
+@SpringBootApplication(scanBasePackages = ["org.factcast.schema.registry.cli"])
 class Application : Runnable {
     override fun run() {
         CommandLine.usage(this, System.out)
@@ -40,8 +43,10 @@ class Application : Runnable {
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
-            val exitCode = PicocliRunner.execute(Application::class.java, *args)
-            if (exitCode != 0)exitProcess(exitCode)
+            runApplication<Application>(*args)
         }
     }
+
+    @Bean
+    fun validator(): Validator = LocalValidatorFactoryBean()
 }

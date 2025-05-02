@@ -2,9 +2,9 @@ package org.factcast.schema.registry.cli.validation
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
-import io.micronaut.test.extensions.kotest5.annotation.MicronautTest
 import io.mockk.every
 import io.mockk.mockk
 import org.factcast.core.subscription.TransformationException
@@ -13,12 +13,19 @@ import org.factcast.schema.registry.cli.domain.Namespace
 import org.factcast.schema.registry.cli.domain.Transformation
 import org.factcast.schema.registry.cli.fixture
 import org.factcast.schema.registry.cli.fs.FileSystemService
-import org.junit.jupiter.api.Tag
+import org.factcast.schema.registry.cli.integration
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
 
-@MicronautTest
-@Tag("integration")
-class TransformationEvaluatorIntTest(private val uut: TransformationEvaluator, private val fs: FileSystemService) :
+@SpringBootTest
+class TransformationEvaluatorIntTest :
     StringSpec() {
+    @Autowired
+    private lateinit var uut: TransformationEvaluator
+
+    @Autowired
+    private lateinit var fs: FileSystemService
+
 
     val ns = mockk<Namespace>()
     val event = mockk<Event>()
@@ -29,6 +36,9 @@ class TransformationEvaluatorIntTest(private val uut: TransformationEvaluator, p
     val skippedTransformation = fixture("transformation/skipped.js")
 
     init {
+        extension(SpringExtension)
+        tags(integration)
+
         "basic transformations" {
             every { ns.name } returns "ns"
             every { event.type } returns "type"

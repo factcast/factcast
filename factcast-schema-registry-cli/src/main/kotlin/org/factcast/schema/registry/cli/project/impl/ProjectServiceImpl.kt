@@ -16,18 +16,13 @@
 package org.factcast.schema.registry.cli.project.impl
 
 import com.google.common.annotations.VisibleForTesting
-import java.nio.file.NoSuchFileException
-import java.nio.file.Path
-import jakarta.inject.Singleton
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.project.ProjectService
-import org.factcast.schema.registry.cli.project.structure.EventFolder
-import org.factcast.schema.registry.cli.project.structure.EventVersionFolder
-import org.factcast.schema.registry.cli.project.structure.NamespaceFolder
-import org.factcast.schema.registry.cli.project.structure.ProjectFolder
-import org.factcast.schema.registry.cli.project.structure.TransformationFolder
-import org.factcast.schema.registry.cli.project.structure.log
+import org.factcast.schema.registry.cli.project.structure.*
 import org.factcast.schema.registry.cli.whitelistfilter.WhiteListFilterService
+import org.springframework.stereotype.Component
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
 
 const val VERSIONS_FOLDER = "versions"
 const val TRANSFORMATIONS_FOLDER = "transformations"
@@ -36,7 +31,7 @@ const val DESCRIPTION_FILE = "index.md"
 const val TRANSFORMATION_FILE = "transform.js"
 const val SCHEMA_FILE = "schema.json"
 
-@Singleton
+@Component
 class ProjectServiceImpl(
     private val fileSystem: FileSystemService,
     private val whiteListService: WhiteListFilterService

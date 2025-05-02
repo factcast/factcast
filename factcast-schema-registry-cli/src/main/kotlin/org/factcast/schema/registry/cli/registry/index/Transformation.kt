@@ -16,7 +16,6 @@
 package org.factcast.schema.registry.cli.registry.index
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import io.micronaut.core.annotation.Introspected
 
 interface Transformation {
     val id: String
@@ -35,7 +34,6 @@ data class FileBasedTransformation(
     val hash: String
 ) : Transformation
 
-@Introspected
 data class SyntheticTransformation(
     @get:JsonIgnore
     val syntheticId: String,
