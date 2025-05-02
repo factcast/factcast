@@ -9,7 +9,7 @@ CREATE OR REPLACE FUNCTION notifyExistingFactUpdated() RETURNS trigger AS $$
 BEGIN
     PERFORM pg_notify('fact_update', json_build_object(
             'ser', OLD.ser,
-            'header', OLD.header
+            'id', OLD.header ->> 'id'
         )::text);
 RETURN NULL; -- result is ignored since this is an AFTER trigger
 END;

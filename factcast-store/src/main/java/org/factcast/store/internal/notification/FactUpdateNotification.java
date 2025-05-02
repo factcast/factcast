@@ -29,11 +29,11 @@ import org.postgresql.PGNotification;
 @NonFinal
 @Slf4j
 public class FactUpdateNotification extends StoreNotification {
-  @NonNull UUID factId;
+  @NonNull UUID updatedFactId;
 
   @Override
   public String uniqueId() {
-    return PgConstants.CHANNEL_FACT_UPDATE + "-" + factId;
+    return PgConstants.CHANNEL_FACT_UPDATE + "-" + updatedFactId;
   }
 
   /**

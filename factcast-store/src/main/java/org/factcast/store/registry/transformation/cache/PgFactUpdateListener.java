@@ -75,7 +75,7 @@ public class PgFactUpdateListener implements SmartInitializingSingleton, Disposa
 
   @VisibleForTesting
   void invalidateCachesFor(FactUpdateNotification signal) {
-    cache.invalidateTransformationFor(signal.factId());
+    cache.invalidateTransformationFor(signal.updatedFactId());
   }
 
   @Override

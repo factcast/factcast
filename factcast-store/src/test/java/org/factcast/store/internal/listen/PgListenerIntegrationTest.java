@@ -16,24 +16,19 @@
 package org.factcast.store.internal.listen;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.factcast.store.internal.PgConstants.*;
 
 import com.google.common.eventbus.*;
-import java.sql.*;
 import java.util.*;
 import java.util.concurrent.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.util.FactCastJson;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.internal.notification.*;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.postgresql.*;
-import org.postgresql.jdbc.PgConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
@@ -45,6 +40,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
+@SuppressWarnings("ResultOfMethodCallIgnored")
 class PgListenerIntegrationTest {
 
   @Nested
@@ -104,7 +100,7 @@ class PgListenerIntegrationTest {
         latch.countDown();
       }
 
-      private CountDownLatch latch = new CountDownLatch(2);
+      private final CountDownLatch latch = new CountDownLatch(2);
     }
   }
 
@@ -155,8 +151,9 @@ class PgListenerIntegrationTest {
       }
     }
 
+    @Getter
     public static class TruncateNotificationCollector {
-      @Getter private CountDownLatch latch = new CountDownLatch(1);
+      private CountDownLatch latch = new CountDownLatch(1);
 
       @SuppressWarnings("unused")
       @Subscribe
@@ -173,27 +170,13 @@ class PgListenerIntegrationTest {
   @Nested
   class FactUpdateTrigger {
 
-    @Autowired PgConnectionSupplier pgConnectionSupplier;
     @Autowired EventBus eventBus;
     @Autowired FactStore factStore;
-
-    @AfterEach
-    @SneakyThrows
-    void unregisterListener() {
-      registerTestAsListener(
-          pgConnectionSupplier.getUnpooledConnection("test"), "UNLISTEN " + CHANNEL_FACT_UPDATE);
-    }
+    @Autowired JdbcTemplate jdbc;
 
     @Test
     @SneakyThrows
     void containsTransactionId() {
-      // INIT
-      var pc = pgConnectionSupplier.getUnpooledConnection("test");
-
-      // let us also register as LISTENER
-      registerTestAsListener(pc, LISTEN_UPDATE_CHANNEL_SQL);
-
-      // also register on event bus
       var events = new UpdateNotificationEventCollector();
       eventBus.register(events);
 
@@ -223,54 +206,27 @@ class PgListenerIntegrationTest {
                   .build("{\"value\":\"1\"}")));
 
       // RUN
-      final var statement =
-          pc.prepareStatement(
-              String.format(
-                  "UPDATE fact SET payload = '{\"value\":\"2\"}' WHERE header @> '{\"type\": \"%s\"}'",
-                  "listenerTest1"));
-      statement.executeUpdate();
+      jdbc.update(
+          "UPDATE fact SET payload = '{\"value\":\"2\"}' WHERE header @> '{\"type\": \"listenerTest1\"}'"); // changing two rows
 
-      // ASSERT
-      // first, check trigger
-      var notifications = pc.getNotifications(5_000);
-
-      assertThat(notifications)
-          .extracting(PGNotification::getName)
-          .hasSize(2)
-          .allMatch(CHANNEL_FACT_UPDATE::equals);
-
-      assertThat(notifications)
-          .extracting(n -> FactCastJson.readTree(n.getParameter()))
-          .anySatisfy(
-              n -> {
-                var h = n.get("header");
-                assertThat(h.get("ns").asText()).isEqualTo("test");
-                assertThat(h.get("type").asText()).isEqualTo("listenerTest1");
-                assertThat(h.get("id").asText()).isEqualTo(id1.toString().toLowerCase());
-              })
-          .anySatisfy(
-              n -> {
-                var h = n.get("header");
-                assertThat(h.get("ns").asText()).isEqualTo("test");
-                assertThat(h.get("type").asText()).isEqualTo("listenerTest1");
-                assertThat(h.get("id").asText()).isEqualTo(id2.toString().toLowerCase());
-              });
+      // assert
+      assertThat(events.latch().await(2, TimeUnit.SECONDS)).isTrue();
+      assertThat(events.signals())
+          .containsExactly(new FactUpdateNotification(id1), new FactUpdateNotification(id2));
     }
 
-    public class UpdateNotificationEventCollector {
-      @Getter final List<FactUpdateNotification> signals = new ArrayList<>();
+    @Getter
+    public static class UpdateNotificationEventCollector {
+      final List<FactUpdateNotification> signals = new ArrayList<>();
 
       @SuppressWarnings("unused")
       @Subscribe
       public void onEvent(FactUpdateNotification ev) {
+        latch.countDown();
         signals.add(ev);
       }
-    }
 
-    private void registerTestAsListener(PgConnection pc, String listenSql) throws SQLException {
-      try (var ps = pc.prepareStatement(listenSql)) {
-        ps.execute();
-      }
+      private final CountDownLatch latch = new CountDownLatch(2);
     }
   }
 }
