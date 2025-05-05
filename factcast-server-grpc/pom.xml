@@ -66,9 +66,9 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.github.vladimir-bukhtoyarov</groupId>
+      <groupId>com.bucket4j</groupId>
       <artifactId>bucket4j-core</artifactId>
-      <version>4.10.0</version>
+      <version>8.0.1</version>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
