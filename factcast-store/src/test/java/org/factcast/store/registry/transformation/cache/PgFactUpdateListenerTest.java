@@ -26,7 +26,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.SneakyThrows;
 import org.factcast.store.internal.notification.FactUpdateNotification;
-import org.factcast.store.registry.transformation.chains.TransformationChains;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,8 +37,6 @@ class PgFactUpdateListenerTest {
   @Spy private EventBus bus = new EventBus();
 
   @Mock private TransformationCache transformationCache;
-
-  @Mock private TransformationChains transformationChains;
 
   @Mock private ScheduledExecutorService executor;
 

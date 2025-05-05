@@ -38,9 +38,18 @@ public class PgFactUpdateListener implements SmartInitializingSingleton, Disposa
 
   private final TransformationCache cache;
 
-  private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+  private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
   static final long INFLIGHT_TRANSFORMATIONS_DELAY_SECONDS = 10L;
+
+  @VisibleForTesting
+  // used in test, don't let idea fool you
+  protected PgFactUpdateListener(
+      EventBus bus, TransformationCache cache, ScheduledExecutorService executor) {
+    this.bus = bus;
+    this.cache = cache;
+    this.executor = executor;
+  }
 
   @Override
   public void afterSingletonsInstantiated() {

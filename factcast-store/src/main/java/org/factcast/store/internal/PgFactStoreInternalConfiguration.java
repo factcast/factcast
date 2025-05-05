@@ -287,10 +287,8 @@ public class PgFactStoreInternalConfiguration {
 
   @Bean
   public PgFactUpdateListener pgFactUpdateListener(
-      EventBus bus,
-      TransformationCache transformationCache,
-      TransformationChains transformationChains) {
-    return new PgFactUpdateListener(bus, transformationCache, transformationChains);
+      EventBus bus, TransformationCache transformationCache) {
+    return new PgFactUpdateListener(bus, transformationCache);
   }
 
   // we create a custom SpringLiquibase bean to avoid autoconfiguration and configure it to not run
