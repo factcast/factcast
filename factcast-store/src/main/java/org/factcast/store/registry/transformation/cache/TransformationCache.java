@@ -38,6 +38,8 @@ public interface TransformationCache {
 
   void invalidateTransformationFor(String ns, String type);
 
+  void invalidateTransformationFor(UUID factId);
+
   @Value
   class Key {
 

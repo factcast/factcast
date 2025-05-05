@@ -17,6 +17,7 @@ package org.factcast.store.internal.notification;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import java.util.UUID;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 import lombok.NonNull;
@@ -55,6 +56,10 @@ public abstract class StoreNotification {
    */
   public boolean distributed() {
     return true;
+  }
+
+  static UUID factId(JsonNode root) {
+    return getUUID(root, "id");
   }
 
   static long txId(JsonNode root) {
@@ -102,6 +107,7 @@ public abstract class StoreNotification {
           TransformationStoreChangeNotification.from(n);
       case PgConstants.CHANNEL_FACT_INSERT -> FactInsertionNotification.from(n);
       case PgConstants.CHANNEL_FACT_TRUNCATE -> FactTruncationNotification.from(n);
+      case PgConstants.CHANNEL_FACT_UPDATE -> FactUpdateNotification.from(n);
       default -> {
         if (!n.getName().equals(PgConstants.CHANNEL_ROUNDTRIP))
           log.warn("Ignored notification from unknown channel: {}", name);
@@ -120,5 +126,9 @@ public abstract class StoreNotification {
 
   private static String getString(@NonNull JsonNode root, @NonNull String name) {
     return root.get(name).asText();
+  }
+
+  private static UUID getUUID(@NonNull JsonNode root, @NonNull String name) {
+    return UUID.fromString(getString(root, name));
   }
 }

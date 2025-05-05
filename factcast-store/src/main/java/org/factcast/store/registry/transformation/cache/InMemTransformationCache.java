@@ -107,17 +107,32 @@ public class InMemTransformationCache implements TransformationCache {
   }
 
   @Override
-  public synchronized void invalidateTransformationFor(String ns, String type) {
-    Set<Key> toBeInvalidated =
-        cache.entrySet().stream()
-            .filter(
-                e ->
-                    e.getValue().fact().ns().equals(ns)
-                        && Objects.equals(e.getValue().fact().type(), type))
-            .map(Entry::getKey)
-            .collect(Collectors.toSet());
-    if (!toBeInvalidated.isEmpty()) {
-      toBeInvalidated.forEach(cache::remove);
+  public void invalidateTransformationFor(String ns, String type) {
+    synchronized (cache) {
+      Set<Key> toBeInvalidated =
+          cache.entrySet().stream()
+              .filter(
+                  e ->
+                      e.getValue().fact().ns().equals(ns)
+                          && Objects.equals(e.getValue().fact().type(), type))
+              .map(Entry::getKey)
+              .collect(Collectors.toSet());
+      if (!toBeInvalidated.isEmpty()) {
+        toBeInvalidated.forEach(cache::remove);
+      }
+    }
+  }
+
+  @Override
+  public void invalidateTransformationFor(UUID factId) {
+    synchronized (cache) {
+      Set<Key> toBeInvalidated =
+          cache.keySet().stream()
+              .filter(e -> e.id().contains(factId.toString()))
+              .collect(Collectors.toSet());
+      if (!toBeInvalidated.isEmpty()) {
+        toBeInvalidated.forEach(cache::remove);
+      }
     }
   }
 

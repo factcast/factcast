@@ -547,7 +547,7 @@ class PgTransformationCacheTest {
   }
 
   @Nested
-  class WhenInvalidatingTransformationFor {
+  class WhenInvalidatingTransformationForNamespaceAndType {
     private PgTransformationCache underTest;
 
     @BeforeEach
@@ -592,6 +592,56 @@ class PgTransformationCacheTest {
       when(storeConfigurationProperties.isReadOnlyModeEnabled()).thenReturn(true);
 
       underTest.invalidateTransformationFor("theNamespace", "theType");
+
+      verifyNoInteractions(jdbcTemplate);
+    }
+  }
+
+  @Nested
+  class WhenInvalidatingTransformationForFactId {
+    private PgTransformationCache underTest;
+
+    @BeforeEach
+    void setup() {
+      underTest =
+          spy(
+              new PgTransformationCache(
+                  platformTransactionManager,
+                  jdbcTemplate,
+                  namedJdbcTemplate,
+                  registryMetrics,
+                  storeConfigurationProperties,
+                  10));
+    }
+
+    @Test
+    void clearsAndFlushesAccessesOnly() {
+      underTest.invalidateTransformationFor(UUID.randomUUID());
+
+      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
+      verify(underTest, times(1)).flush();
+    }
+
+    @Test
+    void deletesFromTransformationCache() {
+      final var factId = UUID.randomUUID();
+
+      underTest.invalidateTransformationFor(factId);
+
+      ArgumentCaptor<String> id = ArgumentCaptor.forClass(String.class);
+
+      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
+      Mockito.verify(jdbcTemplate)
+          .update(matches("DELETE FROM transformationcache WHERE cache_key LIKE ?"), id.capture());
+
+      assertThat(id.getAllValues().get(0)).isEqualTo(factId + "%");
+    }
+
+    @Test
+    void doesNotDeleteWhenReadOnlyMode() {
+      when(storeConfigurationProperties.isReadOnlyModeEnabled()).thenReturn(true);
+
+      underTest.invalidateTransformationFor(UUID.randomUUID());
 
       verifyNoInteractions(jdbcTemplate);
     }

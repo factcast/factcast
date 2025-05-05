@@ -121,14 +121,16 @@ public class PgListener implements InitializingBean, DisposableBean {
         PreparedStatement ps4 =
             pc.prepareStatement(PgConstants.LISTEN_SCHEMASTORE_CHANGE_CHANNEL_SQL);
         PreparedStatement ps5 =
-            pc.prepareStatement(PgConstants.LISTEN_TRANSFORMATIONSTORE_CHANGE_CHANNEL_SQL); ) {
-      PreparedStatement ps6 = pc.prepareStatement(PgConstants.LISTEN_TRUNCATION_CHANNEL_SQL);
+            pc.prepareStatement(PgConstants.LISTEN_TRANSFORMATIONSTORE_CHANGE_CHANNEL_SQL);
+        PreparedStatement ps6 = pc.prepareStatement(PgConstants.LISTEN_TRUNCATION_CHANNEL_SQL);
+        PreparedStatement ps7 = pc.prepareStatement(PgConstants.LISTEN_UPDATE_CHANNEL_SQL)) {
       ps1.execute();
       ps2.execute();
       ps3.execute();
       ps4.execute();
       ps5.execute();
       ps6.execute();
+      ps7.execute();
     }
   }
 

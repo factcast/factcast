@@ -229,6 +229,21 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
     }
   }
 
+  @Override
+  public void invalidateTransformationFor(UUID factId) {
+    // we need to flush even if we're in read only mode in order to prevent a buffer overflow
+    flush();
+
+    if (!storeConfigurationProperties.isReadOnlyModeEnabled()) {
+      final var cacheKeySearchString = factId.toString() + "%";
+      // it is fine if flush worked in another transaction, it just has to be serialized
+      inTransactionWithLock(
+          () ->
+              jdbcTemplate.update(
+                  "DELETE FROM transformationcache WHERE cache_key LIKE ?", cacheKeySearchString));
+    }
+  }
+
   @Scheduled(fixedRate = 10, timeUnit = TimeUnit.MINUTES)
   public void flush() {
     // after this call, the buffer is wiped and again open for business
