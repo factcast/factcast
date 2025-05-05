@@ -16,10 +16,15 @@
 package org.factcast.schema.registry.cli.validation.validators
 
 import jakarta.validation.Constraint
+import jakarta.validation.Payload
 import org.factcast.schema.registry.cli.validation.TRANSFORMATION_VERSION_INVALID
+import org.factcast.schema.registry.cli.validation.validators.impl.ValidTransformationFolderValidator
+import kotlin.reflect.KClass
 
 @Retention(AnnotationRetention.RUNTIME)
-@Constraint(validatedBy = [])
+@Constraint(validatedBy = [ValidTransformationFolderValidator::class])
 annotation class ValidTransformationFolder(
-    val message: String = TRANSFORMATION_VERSION_INVALID
+    val message: String = TRANSFORMATION_VERSION_INVALID,
+    val groups: Array<KClass<*>> = [],
+    val payload: Array<KClass<out Payload>> = []
 )

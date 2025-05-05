@@ -15,12 +15,12 @@
  */
 package org.factcast.schema.registry.cli.validation
 
-import jakarta.inject.Singleton
 import org.factcast.schema.registry.cli.domain.Event
 import org.factcast.schema.registry.cli.domain.Transformation
 import org.factcast.schema.registry.cli.domain.Version
+import org.springframework.stereotype.Component
 
-@Singleton
+@Component
 class MissingTransformationCalculatorImpl : MissingTransformationCalculator {
     override fun calculateDowncastTransformations(event: Event): List<MissingTransformation> {
         val sortedByVersion = event.versions

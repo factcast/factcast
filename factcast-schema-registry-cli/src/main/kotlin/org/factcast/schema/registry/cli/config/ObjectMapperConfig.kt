@@ -1,10 +1,10 @@
 package org.factcast.schema.registry.cli.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.micronaut.context.annotation.Bean
-import io.micronaut.context.annotation.Factory
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 
-@Factory
+@Configuration
 class ObjectMapperConfig {
     @Bean
     fun objectMapper() = ObjectMapper()

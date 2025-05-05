@@ -10,7 +10,12 @@ class EventFolderKtTest : StringSpec() {
 
     init {
         "toEvent" {
-            val eventFolder = EventFolder(path, emptyList(), descriptionPath, emptyList())
+            val eventFolder = EventFolder(
+                path,
+                emptyList(),
+                descriptionPath,
+                emptyList()
+            )
             val event = eventFolder.toEvent()
 
             event.type shouldBe "eventA"

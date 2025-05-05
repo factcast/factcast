@@ -15,16 +15,14 @@
  */
 package org.factcast.schema.registry.cli.project.structure
 
-import io.micronaut.core.annotation.Introspected
-import java.nio.file.Path
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
 import org.factcast.schema.registry.cli.domain.Namespace
 import org.factcast.schema.registry.cli.validation.NO_DESCRIPTION
 import org.factcast.schema.registry.cli.validation.NO_EVENTS
+import java.nio.file.Path
 
-@Introspected
 data class NamespaceFolder(
     override val path: Path,
 
