@@ -15,15 +15,15 @@
  */
 package org.factcast.schema.registry.cli.registry.impl
 
-import java.nio.file.Path
-import java.nio.file.Paths
-import jakarta.inject.Singleton
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.registry.DistributionCreatorService
 import org.factcast.schema.registry.cli.registry.FactcastIndexCreator
 import org.factcast.schema.registry.cli.registry.StaticPageCreator
+import org.springframework.stereotype.Component
+import java.nio.file.Path
+import java.nio.file.Paths
 
-@Singleton
+@Component
 class DistributionCreatorServiceImpl(
     private val staticPageCreator: StaticPageCreator,
     private val factcastIndexCreator: FactcastIndexCreator

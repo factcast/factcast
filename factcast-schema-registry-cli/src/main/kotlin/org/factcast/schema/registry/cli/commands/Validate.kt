@@ -15,17 +15,19 @@
  */
 package org.factcast.schema.registry.cli.commands
 
-import java.nio.file.Paths
-import jakarta.inject.Inject
-import kotlin.system.exitProcess
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Component
 import picocli.CommandLine.Command
 import picocli.CommandLine.Option
+import java.nio.file.Paths
+import kotlin.system.exitProcess
 
 @Command(
     name = "validate",
     mixinStandardHelpOptions = true,
     description = ["Validate your current events"]
 )
+@Component
 class Validate : Runnable {
     @Option(names = ["-p", "--base-path"], description = ["The directory where your source files live"])
     var basePath: String = Paths.get(".").toString()
@@ -33,7 +35,7 @@ class Validate : Runnable {
     @Option(names = ["-w", "--white-list"], description = ["Path to an optional whitelist file."])
     var whiteList: String? = null
 
-    @Inject
+    @Autowired
     lateinit var commandService: CommandService
 
     override fun run() {

@@ -25,16 +25,12 @@ import org.factcast.schema.registry.cli.registry.index.FileBasedTransformation
 import org.factcast.schema.registry.cli.registry.index.Index
 import org.factcast.schema.registry.cli.registry.index.Schema
 import org.factcast.schema.registry.cli.registry.index.SyntheticTransformation
-import org.factcast.schema.registry.cli.utils.ChecksumService
-import org.factcast.schema.registry.cli.utils.filterJson
-import org.factcast.schema.registry.cli.utils.mapEventTransformations
-import org.factcast.schema.registry.cli.utils.mapEventVersions
-import org.factcast.schema.registry.cli.utils.mapEvents
+import org.factcast.schema.registry.cli.utils.*
 import org.factcast.schema.registry.cli.validation.MissingTransformationCalculator
+import org.springframework.stereotype.Component
 import java.nio.file.Path
-import jakarta.inject.Singleton
 
-@Singleton
+@Component
 class IndexFileCalculatorImpl(
     private val checksumService: ChecksumService,
     private val missingTransformationCalculator: MissingTransformationCalculator,

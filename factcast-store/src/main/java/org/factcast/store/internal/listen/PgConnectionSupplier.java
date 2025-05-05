@@ -16,12 +16,11 @@
 package org.factcast.store.internal.listen;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.Optional;
 import java.util.Properties;
 import javax.sql.DataSource;
-import lombok.NonNull;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.jdbc.pool.PoolConfiguration;
 import org.postgresql.jdbc.PgConnection;
@@ -33,11 +32,13 @@ public class PgConnectionSupplier {
   @NonNull @VisibleForTesting protected final Properties props;
 
   public static final String APPLICATION_NAME = "ApplicationName";
+  private final String applicationName;
 
   public PgConnectionSupplier(DataSource dataSource) {
     if (org.apache.tomcat.jdbc.pool.DataSource.class.isAssignableFrom(dataSource.getClass())) {
       ds = (org.apache.tomcat.jdbc.pool.DataSource) dataSource;
       props = buildPgConnectionProperties(ds);
+      applicationName = Optional.ofNullable(props.getProperty(APPLICATION_NAME)).orElse("factcast");
     } else {
       throw new IllegalArgumentException(
           "expected "
@@ -47,14 +48,37 @@ public class PgConnectionSupplier {
     }
   }
 
-  public PgConnection get(@NonNull String clientId) throws SQLException {
+  public PgConnection getUnpooledConnection(@NonNull String clientId) throws SQLException {
     Properties connectionProps = new Properties();
     connectionProps.putAll(props);
-    setClientIdProperty(connectionProps, clientId);
-    return getConnection(connectionProps);
+    connectionProps.setProperty(APPLICATION_NAME, applicationName + "|" + clientId);
+    return getConnectionFromDriverManager(connectionProps);
   }
 
-  private PgConnection getConnection(Properties props) throws SQLException {
+  @SneakyThrows
+  @SuppressWarnings("java:S2077")
+  public Connection getPooledConnection(String clientId) {
+    Connection c = ds.getConnection();
+    setConnectionApplicationName(clientId, c);
+    return c;
+  }
+
+  private void setConnectionApplicationName(String clientId, Connection c) throws SQLException {
+    try (PreparedStatement ps =
+        c.prepareStatement("SET application_name='" + applicationName + "|" + clientId + "'"); ) {
+      ps.execute();
+    }
+  }
+
+  public void resetConnectionApplicationName(Connection c) throws SQLException {
+    try (PreparedStatement ps =
+        c.prepareStatement("SET application_name='" + applicationName + "'"); ) {
+      ps.execute();
+    }
+  }
+
+  @SuppressWarnings("resource")
+  private PgConnection getConnectionFromDriverManager(Properties props) throws SQLException {
     try {
       return DriverManager.getDriver(ds.getUrl())
           .connect(ds.getUrl(), props)
@@ -66,32 +90,32 @@ public class PgConnectionSupplier {
     }
   }
 
-  private void setProperty(Properties dbp, String propertyName, String value) {
-    if (value != null) {
-      dbp.setProperty(propertyName, value);
-    }
-  }
-
-  private void setClientIdProperty(Properties properties, String clientId) {
-    final var applicationName =
-        Optional.ofNullable(properties.getProperty(APPLICATION_NAME)).orElse("factcast");
-    setProperty(properties, APPLICATION_NAME, applicationName + "|" + clientId);
-  }
-
   @VisibleForTesting
+  @SuppressWarnings("java:S3776") // any alternative makes it harder to read
   Properties buildPgConnectionProperties(org.apache.tomcat.jdbc.pool.DataSource ds) {
     Properties dbp = new Properties();
     PoolConfiguration poolProperties = ds.getPoolProperties();
     if (poolProperties != null) {
-      setProperty(dbp, "user", poolProperties.getUsername());
-      setProperty(dbp, "password", poolProperties.getPassword());
+      String username = poolProperties.getUsername();
+      if (username != null) {
+        dbp.setProperty("user", username);
+      }
+      String password = poolProperties.getPassword();
+      if (password != null) {
+        dbp.setProperty("password", password);
+      }
 
       Properties connectionProperties = poolProperties.getDbProperties();
 
       if (connectionProperties != null) {
         try {
           // restore all custom properties
-          connectionProperties.forEach((k, v) -> setProperty(dbp, (String) k, (String) v));
+          connectionProperties.forEach(
+              (k, v) -> {
+                if ((String) v != null) {
+                  dbp.setProperty((String) k, (String) v);
+                }
+              });
 
           // the sockettimeout is explicitly set to 0 due to the long lifetime of the connection for
           // NOTIFY/LISTEN and CURSOR usage reasons.
@@ -99,11 +123,10 @@ public class PgConnectionSupplier {
           if (socketTimeout != null && !"0".equals(socketTimeout)) {
             log.info("Supressed JDBC SocketTimeout parameter for long running connections");
           }
-
-          setProperty(dbp, "socketTimeout", "0");
+          dbp.setProperty("socketTimeout", "0");
 
           // disable statement caching
-          setProperty(dbp, "preparedStatementCacheQueries", "0");
+          dbp.setProperty("preparedStatementCacheQueries", "0");
         } catch (IllegalArgumentException e) {
           throw new IllegalArgumentException(
               "illegal connectionProperties: " + connectionProperties);
