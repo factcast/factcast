@@ -24,7 +24,6 @@ import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.internal.notification.FactUpdateNotification;
-import org.factcast.store.registry.transformation.chains.TransformationChains;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.core.Ordered;
@@ -39,23 +38,9 @@ public class PgFactUpdateListener implements SmartInitializingSingleton, Disposa
 
   private final TransformationCache cache;
 
-  private final TransformationChains chains;
-
-  private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+  private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
   static final long INFLIGHT_TRANSFORMATIONS_DELAY_SECONDS = 10L;
-
-  @VisibleForTesting
-  protected PgFactUpdateListener(
-      EventBus bus,
-      TransformationCache cache,
-      TransformationChains chains,
-      ScheduledExecutorService executor) {
-    this.bus = bus;
-    this.cache = cache;
-    this.chains = chains;
-    this.executor = executor;
-  }
 
   @Override
   public void afterSingletonsInstantiated() {
