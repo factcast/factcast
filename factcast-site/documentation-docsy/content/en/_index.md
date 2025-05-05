@@ -9,7 +9,7 @@ title = "FactCast"
 	<p class="lead mt-2 py-5"><b>A 'good enough' Event-store based on PostgreSQL.</b></p>
 </div>
 
-[![Actions Status](https://github.com/factcast/factcast/actions/workflows/maven.yaml/badge.svg?branch=master)](https://github.com/factcast/factcast/actions)
+[![Actions Status](https://github.com/factcast/factcast/actions/workflows/maven.yaml/badge.svg?branch=main)](https://github.com/factcast/factcast/actions)
 [![codecov](https://codecov.io/gh/factcast/factcast/graph/badge.svg?token=0eHdAKj2ZY)](https://codecov.io/gh/factcast/factcast)
 [![CodeFactor](https://www.codefactor.io/repository/github/factcast/factcast/badge)](https://www.codefactor.io/repository/github/factcast/factcast)
 [![Maven

@@ -20,5 +20,5 @@ grpc.client.factstore.credentials=myUserName:mySecretPassword
 You can always use environment variables or a `-D` switch in order to inject the credentials.
 
 see
-module [examples/factcast-example-client-basicauth](https://github.com/factcast/factcast/tree/master/factcast-examples/factcast-example-client-basicauth)
+module [examples/factcast-example-client-basicauth](https://github.com/factcast/factcast/tree/main/factcast-examples/factcast-example-client-basicauth)
 for an example

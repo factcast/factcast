@@ -11,7 +11,7 @@
   <description>factcast is a 'good enough' event store using PostgreSQL
     for persistence, and offers an GRPC interface and a java client
     library for rapid application development.</description>
-  <url>https://github.com/factcast/factcast/tree/master/</url>
+  <url>https://github.com/factcast/factcast/tree/main/</url>
   <inceptionYear>2018</inceptionYear>
   <organization>
     <name>factcast</name>
@@ -368,7 +368,7 @@
         <version>1.21.0</version>
         <configuration>
           <gitFlowConfig>
-            <developmentBranch>master</developmentBranch>
+            <developmentBranch>main</developmentBranch>
           </gitFlowConfig>
         </configuration>
       </plugin>
