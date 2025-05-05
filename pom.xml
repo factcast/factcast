@@ -103,7 +103,7 @@
     <grpc.version>1.30.2</grpc.version>
     <spring-boot-maven-plugin.version>2.5.5</spring-boot-maven-plugin.version>
     <testcontainers.version>1.16.0</testcontainers.version>
-    <arrow.version>0.12.1</arrow.version>
+    <arrow.version>0.13.3</arrow.version>
     <micronaut.version>2.5.13</micronaut.version>
     <kotlin.version>1.5.31</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
