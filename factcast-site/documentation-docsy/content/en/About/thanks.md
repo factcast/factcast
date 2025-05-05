@@ -7,7 +7,7 @@ weight = 100030
 Any Contribution, be it code, issues, docs etc. are more than welcome if they comply with ASL2. Please head over to
 [GitHub](https://github.com/factcast/factcast) and help!
 
-Have a look at the [guide on contributing](https://github.com/factcast/factcast/blob/master/CONTRIBUTING.md) for the first steps.
+Have a look at the [guide on contributing](https://github.com/factcast/factcast/blob/main/CONTRIBUTING.md) for the first steps.
 
 #### Thank you
 

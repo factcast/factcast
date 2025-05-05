@@ -135,6 +135,6 @@ public class UserNames extends AbstractRedisTxManagedProjection {
 
 To study the full example, see
 
-- [the UserNames projection using `@RedisTransactional`](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/proj/RedisTransactionalProjectionExample.java)
+- [the UserNames projection using `@RedisTransactional`](https://github.com/factcast/factcast/blob/main/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/proj/RedisTransactionalProjectionExample.java)
   and
-- [example code using this projection](https://github.com/factcast/factcast/blob/master/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/RedisTransactionalProjectionExampleITest.java)
+- [example code using this projection](https://github.com/factcast/factcast/blob/main/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/RedisTransactionalProjectionExampleITest.java)
