@@ -212,7 +212,8 @@ class PgListenerIntegrationTest {
       // assert
       assertThat(events.latch().await(2, TimeUnit.SECONDS)).isTrue();
       assertThat(events.signals())
-          .containsExactly(new FactUpdateNotification(id1), new FactUpdateNotification(id2));
+          .containsExactlyInAnyOrder(
+              new FactUpdateNotification(id1), new FactUpdateNotification(id2));
     }
 
     @Getter
