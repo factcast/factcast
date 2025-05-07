@@ -19,26 +19,40 @@ import static java.util.Arrays.asList;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.google.common.base.Stopwatch;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import lombok.*;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.SneakyThrows;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
+import org.awaitility.Awaitility;
 import org.factcast.core.Fact;
 import org.factcast.core.store.RetryableException;
 import org.factcast.core.subscription.Subscription;
-import org.factcast.factus.*;
-import org.factcast.factus.event.*;
+import org.factcast.factus.Factus;
+import org.factcast.factus.Handler;
+import org.factcast.factus.HandlerFor;
+import org.factcast.factus.Meta;
+import org.factcast.factus.event.EventConverter;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.lock.LockedOperationAbortedException;
-import org.factcast.factus.projection.*;
+import org.factcast.factus.projection.Aggregate;
+import org.factcast.factus.projection.LocalManagedProjection;
+import org.factcast.factus.projection.LocalSubscribedProjection;
+import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.config.RedissonProjectionConfiguration;
@@ -51,7 +65,6 @@ import org.junit.jupiter.api.*;
 import org.redisson.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
-import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 @ContextConfiguration(
     classes = {
@@ -731,7 +744,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
     factus.publish(new UserDeleted(UUID.randomUUID()));
 
-    assertThat(subscribedUserNames.isValid()).isFalse();
+    assertThat(subscribedUserNames.token()).isNull();
     factus.subscribeAndBlock(subscribedUserNames);
     try {
       // it should acquire the lock
@@ -740,17 +753,67 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       throw new RuntimeException(e);
     }
     // the initial lock was closed
-    Awaitility.await().until(() -> !subscribedUserNames.isValid()); // someone locked it
+    Awaitility.await().until(() -> !subscribedUserNames.token().isValid()); // someone locked it
   }
 
+  @Getter
   static class OverrideAndFailSubscribedUserNames extends SubscribedUserNames {
-
     CountDownLatch latch = new CountDownLatch(1);
+    WriterToken token;
+
+    @Override
+    public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
+      token = super.acquireWriteToken(maxWait);
+      return token;
+    }
 
     @Override
     public void apply(UserDeleted deleted, @Nullable String signee) {
       latch.countDown();
       throw new RetryableException(new Throwable("Test exception"));
+    }
+  }
+
+  @Test
+  @SneakyThrows
+  void testTokenIsReAcquiredAfterExpiration() {
+    TokenExposedSubscribedUserNames subscribedUserNames = new TokenExposedSubscribedUserNames();
+    subscribedUserNames.clear();
+
+    factus.publish(new UserCreated(UUID.randomUUID(), "name"));
+
+    // Initially the lock is acquired when subscribing
+    assertThat(subscribedUserNames.token()).isNull();
+    factus.subscribeAndBlock(subscribedUserNames);
+
+    assertThat(subscribedUserNames.token().isValid()).isTrue();
+    subscribedUserNames.latch.await();
+
+    // If the lock expires, then, we should try to re-acquire the lock instead of throwing exception
+    subscribedUserNames.token.close();
+    assertThat(subscribedUserNames.token().isValid()).isFalse();
+
+    factus.publish(new UserCreated(UUID.randomUUID(), "name"));
+
+    // The token was re-acquired
+    Awaitility.await().until(() -> subscribedUserNames.token().isValid());
+  }
+
+  @Getter
+  static class TokenExposedSubscribedUserNames extends SubscribedUserNames {
+    CountDownLatch latch = new CountDownLatch(1);
+    WriterToken token;
+
+    @Override
+    public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
+      token = super.acquireWriteToken(maxWait);
+      return token;
+    }
+
+    @Override
+    public void apply(UserCreated created) {
+      super.apply(created);
+      latch.countDown();
     }
   }
 
