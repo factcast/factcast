@@ -60,7 +60,7 @@ import software.amazon.awssdk.services.dynamodb.waiters.DynamoDbWaiter;
 @SpringBootTest
 @ContextConfiguration(classes = {TestFactusApplication.class, DynamoProjectionConfiguration.class})
 @Slf4j
-public class DynamoITest extends AbstractFactCastIntegrationTest {
+class DynamoITest extends AbstractFactCastIntegrationTest {
   @Autowired Factus factus;
   @Autowired DynamoDbClient dynamoDbClient;
   @Autowired DynamoDbEnhancedClient dynamoDbEnhancedClient;
@@ -146,6 +146,7 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
     }
   }
 
+  @SuppressWarnings("resource")
   @Nested
   class Subscribed {
     @BeforeEach
@@ -273,7 +274,7 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    public void apply(UserCreated created) {
+    void apply(UserCreated created) {
       if (++count == 7) { // blow the second bulk
         throw new IllegalStateException("Bad luck");
       }
@@ -285,7 +286,7 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
   @ProjectionMetaData(revision = 1)
   static class TxDynamoSubscribedUserNamesTokenExposedAndThrowsError
       extends TrackingDynamoSubscribedUserNames {
-    private CountDownLatch latch = new CountDownLatch(1);
+    private final CountDownLatch latch = new CountDownLatch(1);
     private WriterToken token;
 
     public TxDynamoSubscribedUserNamesTokenExposedAndThrowsError(DynamoDbClient dynamoDbClient) {
@@ -300,7 +301,7 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    public void apply(UserCreated created) {
+    void apply(UserCreated created) {
       throw new IllegalArgumentException("user should be in map but wasnt");
     }
   }
@@ -314,7 +315,7 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    public void apply(UserCreated created) {
+    void apply(UserCreated created) {
       if (++count == 7) { // blow the second bulk
         throw new IllegalStateException("Bad luck");
       }
