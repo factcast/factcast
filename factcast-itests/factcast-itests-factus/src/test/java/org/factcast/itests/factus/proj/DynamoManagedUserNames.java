@@ -16,7 +16,6 @@
 package org.factcast.itests.factus.proj;
 
 import java.util.*;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.dynamo.AbstractDynamoManagedProjection;
 import org.factcast.factus.serializer.ProjectionMetaData;
@@ -26,14 +25,15 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 @Slf4j
 @ProjectionMetaData(revision = 1)
-public class DynamoManagedUserNames extends AbstractDynamoManagedProjection implements DynamoUserNames {
+public class DynamoManagedUserNames extends AbstractDynamoManagedProjection
+    implements DynamoUserNames {
 
   private final DynamoDbTable<DynamoUserNamesSchema> userNames;
 
   public DynamoManagedUserNames(DynamoDbClient dynamoDbClient) {
     super(dynamoDbClient, "DynamoProjectionStateTracking");
     this.userNames =
-            enhancedClient.table("UserNames", TableSchema.fromBean(DynamoUserNamesSchema.class));
+        enhancedClient.table("UserNames", TableSchema.fromBean(DynamoUserNamesSchema.class));
   }
 
   @Override

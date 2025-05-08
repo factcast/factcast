@@ -16,34 +16,26 @@
 package org.factcast.itests.factus.proj;
 
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Handler;
-import org.factcast.factus.dynamo.AbstractDynamoSubscribedProjection;
-import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Expression;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.DeleteItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
-import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
-import java.util.Map;
-import java.util.UUID;
-
-public interface DynamoUserNames  {
+public interface DynamoUserNames {
 
   DynamoDbTable<DynamoUserNamesSchema> userNames();
 
-   default int count() {
+  default int count() {
     return userNames().describeTable().table().itemCount().intValue();
   }
 
-   default boolean contains(String name) {
+  default boolean contains(String name) {
     return userNames()
         .query(
             QueryEnhancedRequest.builder()
@@ -61,21 +53,23 @@ public interface DynamoUserNames  {
   @SneakyThrows
   @Handler
   default void apply(UserCreated created) {
-    userNames().putItem(
-        PutItemEnhancedRequest.builder(DynamoUserNamesSchema.class)
-            .item(
-                new DynamoUserNamesSchema()
-                    .userId(created.aggregateId())
-                    .userName(created.userName()))
-            .build());
+    userNames()
+        .putItem(
+            PutItemEnhancedRequest.builder(DynamoUserNamesSchema.class)
+                .item(
+                    new DynamoUserNamesSchema()
+                        .userId(created.aggregateId())
+                        .userName(created.userName()))
+                .build());
   }
 
   @SneakyThrows
   @Handler
   default void apply(UserDeleted deleted) {
-    userNames().deleteItem(
-        DeleteItemEnhancedRequest.builder()
-            .key(Key.builder().partitionValue(deleted.aggregateId().toString()).build())
-            .build());
+    userNames()
+        .deleteItem(
+            DeleteItemEnhancedRequest.builder()
+                .key(Key.builder().partitionValue(deleted.aggregateId().toString()).build())
+                .build());
   }
 }

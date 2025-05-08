@@ -15,26 +15,17 @@
  */
 package org.factcast.itests.factus.proj;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.factus.Handler;
 import org.factcast.factus.dynamo.AbstractDynamoSubscribedProjection;
 import org.factcast.factus.serializer.ProjectionMetaData;
-import org.factcast.itests.factus.event.UserCreated;
-import org.factcast.itests.factus.event.UserDeleted;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
-import software.amazon.awssdk.enhanced.dynamodb.Expression;
-import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.enhanced.dynamodb.model.DeleteItemEnhancedRequest;
-import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 @Slf4j
 @ProjectionMetaData(revision = 1)
-public class DynamoSubscribedUserNames extends AbstractDynamoSubscribedProjection implements DynamoUserNames{
+public class DynamoSubscribedUserNames extends AbstractDynamoSubscribedProjection
+    implements DynamoUserNames {
 
   private final DynamoDbTable<DynamoUserNamesSchema> userNames;
 
