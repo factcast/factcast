@@ -146,7 +146,6 @@ class DynamoITest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  @SuppressWarnings("resource")
   @Nested
   class Subscribed {
     @BeforeEach
@@ -274,7 +273,7 @@ class DynamoITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    void apply(UserCreated created) {
+    public void apply(UserCreated created) {
       if (++count == 7) { // blow the second bulk
         throw new IllegalStateException("Bad luck");
       }
@@ -301,7 +300,7 @@ class DynamoITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    void apply(UserCreated created) {
+    public void apply(UserCreated created) {
       throw new IllegalArgumentException("user should be in map but wasnt");
     }
   }
@@ -315,7 +314,7 @@ class DynamoITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    void apply(UserCreated created) {
+    public void apply(UserCreated created) {
       if (++count == 7) { // blow the second bulk
         throw new IllegalStateException("Bad luck");
       }
