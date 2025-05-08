@@ -20,16 +20,24 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.dynamo.AbstractDynamoManagedProjection;
 import org.factcast.factus.serializer.ProjectionMetaData;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 @Slf4j
 @ProjectionMetaData(revision = 1)
-public class DynamoManagedUserNames extends AbstractDynamoManagedProjection implements UserNames {
+public class DynamoManagedUserNames extends AbstractDynamoManagedProjection implements DynamoUserNames {
 
-  @Getter private final Map<UUID, String> userNames;
+  private final DynamoDbTable<DynamoUserNamesSchema> userNames;
 
   public DynamoManagedUserNames(DynamoDbClient dynamoDbClient) {
     super(dynamoDbClient, "DynamoProjectionStateTracking");
-    userNames = new HashMap<>();
+    this.userNames =
+            enhancedClient.table("UserNames", TableSchema.fromBean(DynamoUserNamesSchema.class));
+  }
+
+  @Override
+  public DynamoDbTable<DynamoUserNamesSchema> userNames() {
+    return userNames;
   }
 }
