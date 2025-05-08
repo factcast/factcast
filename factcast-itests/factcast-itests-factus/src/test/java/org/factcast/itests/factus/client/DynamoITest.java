@@ -300,7 +300,7 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    protected void apply(UserCreated created) {
+    public void apply(UserCreated created) {
       throw new IllegalArgumentException("user should be in map but wasnt");
     }
   }
@@ -314,7 +314,7 @@ public class DynamoITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    protected void apply(UserCreated created) {
+    public void apply(UserCreated created) {
       if (++count == 7) { // blow the second bulk
         throw new IllegalStateException("Bad luck");
       }
