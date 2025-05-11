@@ -690,8 +690,8 @@
       </activation>
       <distributionManagement>
         <repository>
-          <name>Central Portal Snapshots</name>
           <id>central-snapshot</id>
+          <name>Central Portal Snapshots</name>
           <url>https://central.sonatype.com/repository/maven-snapshots/</url>
           <releases>
             <enabled>false</enabled>
