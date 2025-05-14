@@ -284,6 +284,9 @@
         <artifactId>spring-boot-maven-plugin</artifactId>
         <configuration>
           <mainClass>org.factcast.schema.registry.cli.Application</mainClass>
+          <classifier>exec</classifier>
+          <attach>true</attach>
+          <includeTools>false</includeTools>
         </configuration>
 
       </plugin>
