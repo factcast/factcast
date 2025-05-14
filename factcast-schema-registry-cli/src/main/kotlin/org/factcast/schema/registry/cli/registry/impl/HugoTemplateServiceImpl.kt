@@ -15,28 +15,17 @@
  */
 package org.factcast.schema.registry.cli.registry.impl
 
-import jakarta.inject.Singleton
 import org.factcast.schema.registry.cli.domain.Event
 import org.factcast.schema.registry.cli.domain.Namespace
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.domain.Version
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.registry.TemplateService
-import org.factcast.schema.registry.cli.registry.templates.data.ChangelogEntry
-import org.factcast.schema.registry.cli.registry.templates.data.EventTemplateData
-import org.factcast.schema.registry.cli.registry.templates.data.ExampleTemplateData
-import org.factcast.schema.registry.cli.registry.templates.data.HomeTemplateData
-import org.factcast.schema.registry.cli.registry.templates.data.NamespaceTemplateData
-import org.factcast.schema.registry.cli.registry.templates.data.TransformationData
-import org.factcast.schema.registry.cli.registry.templates.data.TransformationTemplateData
-import org.factcast.schema.registry.cli.registry.templates.data.VersionTemplateData
-import org.factcast.schema.registry.cli.registry.templates.eventTemplate
-import org.factcast.schema.registry.cli.registry.templates.homeTemplate
-import org.factcast.schema.registry.cli.registry.templates.namespaceTemplate
-import org.factcast.schema.registry.cli.registry.templates.transformationTemplate
-import org.factcast.schema.registry.cli.registry.templates.versionTemplate
+import org.factcast.schema.registry.cli.registry.templates.*
+import org.factcast.schema.registry.cli.registry.templates.data.*
+import org.springframework.stereotype.Component
 
-@Singleton
+@Component
 class HugoTemplateServiceImpl(private val fileSystemService: FileSystemService) : TemplateService {
     override fun loadHomeTemplate(project: Project): String {
         val description =

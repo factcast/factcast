@@ -16,10 +16,15 @@
 package org.factcast.schema.registry.cli.validation.validators
 
 import jakarta.validation.Constraint
+import jakarta.validation.Payload
 import org.factcast.schema.registry.cli.validation.VERSION_INVALID
+import org.factcast.schema.registry.cli.validation.validators.impl.ValidVersionFolderValidator
+import kotlin.reflect.KClass
 
 @Retention(AnnotationRetention.RUNTIME)
-@Constraint(validatedBy = [])
+@Constraint(validatedBy = [ValidVersionFolderValidator::class])
 annotation class ValidVersionFolder(
-    val message: String = VERSION_INVALID
+    val message: String = VERSION_INVALID,
+    val groups: Array<KClass<*>> = [],
+    val payload: Array<KClass<out Payload>> = []
 )

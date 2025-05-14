@@ -69,7 +69,7 @@ class PgListenerTest {
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
     pgListener.setupPostgresListeners(conn);
 
-    verify(conn.prepareStatement(anyString()), times(6)).execute();
+    verify(conn.prepareStatement(anyString()), times(7)).execute();
   }
 
   @Test

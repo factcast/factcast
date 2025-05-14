@@ -16,18 +16,18 @@
 package org.factcast.schema.registry.cli.commands
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import java.io.IOException
-import java.nio.file.Path
-import jakarta.inject.Singleton
 import org.factcast.schema.registry.cli.fs.FileSystemService
 import org.factcast.schema.registry.cli.project.ProjectService
 import org.factcast.schema.registry.cli.registry.DistributionCreatorService
 import org.factcast.schema.registry.cli.validation.ValidationService
 import org.factcast.schema.registry.cli.validation.formatErrors
+import org.springframework.stereotype.Component
+import java.io.IOException
+import java.nio.file.Path
 
 private val logger = KotlinLogging.logger {}
 
-@Singleton
+@Component
 class CommandServiceImpl(
     private val fileSystemService: FileSystemService,
     private val validationService: ValidationService,
@@ -37,25 +37,25 @@ class CommandServiceImpl(
     override fun build(sourceRoot: Path, outputRoot: Path, whiteList: Path?, removedSchemaProps: Set<String>) = try {
         fileSystemService.deleteDirectory(outputRoot)
 
-        logger.info("Starting building Factcast Schema Registry")
-        logger.info("Input: $sourceRoot")
-        logger.info("Output: $outputRoot")
-        whiteList?.let { logger.info("White list: $whiteList") }
-        logger.info("")
+        logger.info { "Starting building Factcast Schema Registry" }
+        logger.info { "Input: $sourceRoot" }
+        logger.info { "Output: $outputRoot" }
+        whiteList?.let { logger.info { "White list: $whiteList" } }
+        logger.info { "" }
 
         val project = projectService.detectProject(sourceRoot, whiteList)
 
         validationService
             .validateProject(project)
             .fold({ errors ->
-                formatErrors(errors).forEach { logger.error(it) }
+                formatErrors(errors).forEach { logger.error { it } }
 
                 1
             }, {
                 try {
                     distributionCreatorService.createDistributable(outputRoot, it, removedSchemaProps)
 
-                    logger.info("Build finished!")
+                    logger.info { "Build finished!" }
 
                     0
                 } catch (e: IOException) {
@@ -71,23 +71,23 @@ class CommandServiceImpl(
     }
 
     override fun validate(sourceRoot: Path, whiteList: Path?) = try {
-        logger.info("Starting validating Factcast Schema Registry")
-        logger.info("Input: $sourceRoot")
-        whiteList?.let { logger.info("White list: $whiteList") }
-        logger.info("")
+        logger.info { "Starting validating Factcast Schema Registry" }
+        logger.info { "Input: $sourceRoot" }
+        whiteList?.let { logger.info { "White list: $whiteList" } }
+        logger.info { "" }
 
         val project = projectService.detectProject(sourceRoot, whiteList)
 
         validationService
             .validateProject(project)
             .fold({ errors ->
-                formatErrors(errors).forEach { logger.error(it) }
-                logger.info("")
-                logger.error("Validation failed!")
+                formatErrors(errors).forEach { logger.error { it } }
+                logger.info { "" }
+                logger.error { "Validation failed!" }
 
                 1
             }, {
-                logger.info("Project seems to be valid!")
+                logger.info { "Project seems to be valid!" }
 
                 0
             })

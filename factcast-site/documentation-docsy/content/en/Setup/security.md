@@ -97,7 +97,7 @@ In case of conflicting information:
 Note, there is no fancy wildcard handling other than a trailing '\*'.
 
 see
-module [examples/factcast-example-server-basicauth](https://github.com/factcast/factcast/tree/master/factcast-examples/factcast-example-server-basicauth)
+module [examples/factcast-example-server-basicauth](https://github.com/factcast/factcast/tree/main/factcast-examples/factcast-example-server-basicauth)
 for an example
 
 ### Using BasicAuth from a client
@@ -110,7 +110,7 @@ used on every request in a Basic-Auth fashion (added header to request).
 You can always use environment variables or a `-D` switch in order to inject the credentials.
 
 see
-module [examples/factcast-example-client-basicauth](https://github.com/factcast/factcast/tree/master/factcast-examples/factcast-example-client-basicauth)
+module [examples/factcast-example-client-basicauth](https://github.com/factcast/factcast/tree/main/factcast-examples/factcast-example-client-basicauth)
 for an example
 
 ### Customizing Credential Loading

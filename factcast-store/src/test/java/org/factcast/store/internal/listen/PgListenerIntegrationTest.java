@@ -16,10 +16,8 @@
 package org.factcast.store.internal.listen;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.factcast.store.internal.PgConstants.*;
 
 import com.google.common.eventbus.*;
-import java.sql.*;
 import java.util.*;
 import java.util.concurrent.*;
 import lombok.*;
@@ -31,7 +29,6 @@ import org.factcast.store.internal.notification.*;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.postgresql.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
@@ -43,6 +40,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
+@SuppressWarnings("ResultOfMethodCallIgnored")
 class PgListenerIntegrationTest {
 
   @Nested
@@ -102,7 +100,7 @@ class PgListenerIntegrationTest {
         latch.countDown();
       }
 
-      private CountDownLatch latch = new CountDownLatch(2);
+      private final CountDownLatch latch = new CountDownLatch(2);
     }
   }
 
@@ -153,8 +151,9 @@ class PgListenerIntegrationTest {
       }
     }
 
+    @Getter
     public static class TruncateNotificationCollector {
-      @Getter private CountDownLatch latch = new CountDownLatch(1);
+      private CountDownLatch latch = new CountDownLatch(1);
 
       @SuppressWarnings("unused")
       @Subscribe
@@ -165,6 +164,70 @@ class PgListenerIntegrationTest {
       public void reset() {
         latch = new CountDownLatch(1);
       }
+    }
+  }
+
+  @Nested
+  class FactUpdateTrigger {
+
+    @Autowired EventBus eventBus;
+    @Autowired FactStore factStore;
+    @Autowired JdbcTemplate jdbc;
+
+    @Test
+    @SneakyThrows
+    void containsTransactionId() {
+      var events = new UpdateNotificationEventCollector();
+      eventBus.register(events);
+
+      UUID id1 = UUID.randomUUID();
+      UUID id2 = UUID.randomUUID();
+      UUID id3 = UUID.randomUUID();
+
+      factStore.publish(
+          List.of(
+              Fact.builder()
+                  .ns("test")
+                  .type("listenerTest1")
+                  .id(id1)
+                  .version(1)
+                  .build("{\"value\":\"1\"}"),
+              Fact.builder()
+                  .ns("test")
+                  .type("listenerTest1")
+                  .id(id2)
+                  .version(2)
+                  .build("{\"value\":\"1\"}"),
+              Fact.builder()
+                  .ns("test")
+                  .type("listenerTest2")
+                  .id(id3)
+                  .version(2)
+                  .build("{\"value\":\"1\"}")));
+
+      // RUN
+      jdbc.update(
+          "UPDATE fact SET payload = '{\"value\":\"2\"}' WHERE header @> '{\"type\": \"listenerTest1\"}'"); // changing two rows
+
+      // assert
+      assertThat(events.latch().await(2, TimeUnit.SECONDS)).isTrue();
+      assertThat(events.signals())
+          .containsExactlyInAnyOrder(
+              new FactUpdateNotification(id1), new FactUpdateNotification(id2));
+    }
+
+    @Getter
+    public static class UpdateNotificationEventCollector {
+      final List<FactUpdateNotification> signals = new ArrayList<>();
+
+      @SuppressWarnings("unused")
+      @Subscribe
+      public void onEvent(FactUpdateNotification ev) {
+        latch.countDown();
+        signals.add(ev);
+      }
+
+      private final CountDownLatch latch = new CountDownLatch(2);
     }
   }
 }

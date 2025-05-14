@@ -12,7 +12,7 @@ Factus will look at these methods in order to discover [fact specifications]({{<
 These fact specifications form a query which is sent to the FactCast server to create a fact-stream suited for this projection.
 In detail, for each handler method, a Projector inspects the method's annotations and parameter types
 including their annotations to build a
-[`FactSpec`](https://github.com/factcast/factcast/blob/master/factcast-core/src/main/java/org/factcast/core/spec/FactSpec.java) object.
+[`FactSpec`](https://github.com/factcast/factcast/blob/main/factcast-core/src/main/java/org/factcast/core/spec/FactSpec.java) object.
 This object contains at least the `ns`, `type` properties. Optionally the `version` property is set.
 
 If you look at a `FactSpec` however, sometimes it makes sense to use additional filtering possibilities like

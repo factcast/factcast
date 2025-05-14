@@ -150,4 +150,20 @@ public abstract class AbstractTransformationCacheTest {
     assertThat(uut.find(TransformationCache.Key.of(f1.id(), 1, "foo1"))).isEmpty();
     assertThat(uut.find(TransformationCache.Key.of(f2.id(), 2, "foo2"))).isEmpty();
   }
+
+  @Test
+  void testInvalidateTransformationForMatchingFactId() {
+    UUID matchingFactId = UUID.randomUUID();
+    Fact f1 = Fact.builder().id(matchingFactId).version(1).build("{}");
+    Fact f2 = Fact.builder().id(UUID.randomUUID()).version(2).build("{}");
+    uut.put(TransformationCache.Key.of(f1.id(), 1, "foo1.1"), f1);
+    uut.put(TransformationCache.Key.of(f1.id(), 2, "foo1.2"), f1);
+    uut.put(TransformationCache.Key.of(f2.id(), 2, "foo2"), f2);
+
+    uut.invalidateTransformationFor(matchingFactId);
+
+    assertThat(uut.find(TransformationCache.Key.of(f1.id(), 1, "foo1.1"))).isEmpty();
+    assertThat(uut.find(TransformationCache.Key.of(f1.id(), 2, "foo1.2"))).isEmpty();
+    assertThat(uut.find(TransformationCache.Key.of(f2.id(), 2, "foo2"))).isNotEmpty();
+  }
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("io.github.typesafegithub:github-workflows-kt:3.3.0")
+@file:DependsOn("io.github.typesafegithub:github-workflows-kt:3.4.0")
 
 
 @file:Repository("https://repo.maven.apache.org/maven2/")
@@ -24,13 +24,12 @@ import io.github.typesafegithub.workflows.dsl.workflow
 import io.github.typesafegithub.workflows.yaml.ConsistencyCheckJobConfig
 
 
-
 workflow(
     name = "Maven all in one",
     on = listOf(
         PullRequest(),
         Push(
-            branches = listOf("master"),
+            branches = listOf("main"),
         ),
     ),
     sourceFile = __FILE__,
