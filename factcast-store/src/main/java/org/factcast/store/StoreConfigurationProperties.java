@@ -141,6 +141,12 @@ public class StoreConfigurationProperties implements InitializingBean {
   /** tail indexing feature state */
   boolean tailIndexingEnabled = true;
 
+  /** defines, if tail indexes should enable the fastUpdate feature */
+  boolean tailIndexingFastUpdateEnabled = false;
+
+  /** parameter will only be used, if fastUpdate is enabled */
+  int tailIndexingPendingListLimit = 4096;
+
   /**
    * the number of tail indexes to keep. The higher the number, the slower the inserts. Probably 2
    * or 3 is a good value unless you have a very high tail rebuild frequency and not permanently

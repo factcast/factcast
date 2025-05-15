@@ -93,7 +93,7 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
         PgConstants.setStatementTimeout(props.getTailCreationTimeout().minusSeconds(5).toMillis()));
 
     try {
-      jdbc.update(PgConstants.createTailIndex(indexName, serial));
+      jdbc.update(PgConstants.createTailIndex(indexName, serial, props));
     } catch (RuntimeException e) {
       // keep log message in sync with asserts in
       // PGTailIndexManagerImplIntTest.doesNotCreateIndexConcurrently
