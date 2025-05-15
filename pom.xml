@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.9.8-SNAPSHOT</version>
+  <version>0.9.9-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>factcast</name>
   <description>factcast is a 'good enough' event store using PostgreSQL
@@ -121,7 +121,7 @@
     <mockk.version>1.14.2</mockk.version>
     <graaljs.version>24.2.1</graaljs.version>
     <redisson.version>3.46.0</redisson.version>
-    <aws-sdk.version>2.31.42</aws-sdk.version>
+    <aws-sdk.version>2.31.43</aws-sdk.version>
     <shedlock.version>6.6.1</shedlock.version>
     <byte-buddy.version>1.17.5</byte-buddy.version>
     <skipUnitTests>false</skipUnitTests>
@@ -667,10 +667,10 @@
   </build>
   <profiles>
     <profile>
-      <id>not-ossrh</id>
+      <id>not-central</id>
       <activation>
         <property>
-          <name>!ossrh</name>
+          <name>!central</name>
         </property>
       </activation>
       <modules>
@@ -685,18 +685,21 @@
       <id>oss.release-sign-artifacts</id>
       <activation>
         <property>
-          <name>ossrh</name>
+          <name>central</name>
         </property>
       </activation>
       <distributionManagement>
         <repository>
-          <id>ossrh</id>
-          <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+          <id>central-snapshot</id>
+          <name>Central Portal Snapshots</name>
+          <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+          <releases>
+            <enabled>false</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
         </repository>
-        <snapshotRepository>
-          <id>ossrh</id>
-          <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
       </distributionManagement>
       <build>
         <plugins>
@@ -715,19 +718,14 @@
             </executions>
           </plugin>
           <plugin>
-            <groupId>org.sonatype.plugins</groupId>
-            <artifactId>nexus-staging-maven-plugin</artifactId>
-            <version>${nexus-staging-maven-plugin.version}</version>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
+            <version>0.7.0</version>
             <extensions>true</extensions>
             <configuration>
-              <serverId>ossrh</serverId>
-              <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-              <autoReleaseAfterClose>true</autoReleaseAfterClose>
-              <stagingProgressTimeoutMinutes>20</stagingProgressTimeoutMinutes>
-              <detail>true</detail>
-              <keepStagingRepositoryOnFailure>true</keepStagingRepositoryOnFailure>
-              <keepStagingRepositoryOnCloseRuleFailure>true</keepStagingRepositoryOnCloseRuleFailure>
-              <showReleased>true</showReleased>
+              <publishingServerId>central</publishingServerId>
+              <autoPublish>false</autoPublish>
+              <waitUntil>published</waitUntil>
             </configuration>
           </plugin>
           <plugin>

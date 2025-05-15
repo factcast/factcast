@@ -18,6 +18,7 @@ package org.factcast.store.internal;
 import java.util.Random;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.factcast.store.StoreConfigurationProperties;
 
 /**
  * String constants mainly used in SQL-Statement creation
@@ -325,14 +326,27 @@ public class PgConstants {
     return PgConstants.COLUMN_HEADER + "->>'" + attributeName + "' AS " + attributeName;
   }
 
-  public static String createTailIndex(String indexName, long ser) {
+  public static String createTailIndex(
+      @NonNull String indexName, long ser, @NonNull StoreConfigurationProperties props) {
+
+    StringBuilder with = new StringBuilder();
+
+    if (props.isTailIndexingFastUpdateEnabled()) {
+      with.append(" WITH (");
+      with.append("gin_pending_list_limit = ");
+      with.append(props.getTailIndexingPendingListLimit());
+      with.append(", fastupdate = true ) ");
+    }
+
     return "create index concurrently "
         + indexName
         + " on "
         + TABLE_FACT
         + " using GIN("
         + COLUMN_HEADER
-        + " jsonb_path_ops) WITH (gin_pending_list_limit = 16384 , fastupdate = true)  WHERE "
+        + " jsonb_path_ops) "
+        + with.toString()
+        + " WHERE "
         + COLUMN_SER
         + ">"
         + ser;
