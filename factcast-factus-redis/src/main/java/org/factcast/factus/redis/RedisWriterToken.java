@@ -16,47 +16,96 @@
 package org.factcast.factus.redis;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import lombok.NonNull;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.*;
+import javax.annotation.Nullable;
+import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.projection.WriterToken;
 import org.redisson.api.*;
 
+@Slf4j
 public class RedisWriterToken implements WriterToken {
-  private final @NonNull RLock lock;
-  private final Timer timer;
-  private final AtomicBoolean liveness;
+  private static final long CHECK_INTERVAL = Duration.ofSeconds(15).toMillis();
+  private final @NonNull RFencedLock lock;
+
+  @Getter(AccessLevel.PROTECTED)
+  @VisibleForTesting
+  private @Nullable AtomicLong liveness;
+
+  @Getter(AccessLevel.PROTECTED)
+  @VisibleForTesting
+  private final Long token;
 
   @VisibleForTesting
-  protected RedisWriterToken(
-      @NonNull RedissonClient redisson, @NonNull RLock lock, @NonNull Timer timer) {
-    this.lock = lock;
-    this.timer = timer;
-    liveness = new AtomicBoolean(lock.isLocked());
-    long watchDogTimeout = redisson.getConfig().getLockWatchdogTimeout();
-    TimerTask timerTask =
-        new TimerTask() {
-          @Override
-          public void run() {
-            liveness.set(lock.isLocked());
-          }
-        };
-    timer.scheduleAtFixedRate(timerTask, 0, (long) (watchDogTimeout / 1.5));
+  @Deprecated
+  // keep signature for migration
+  public RedisWriterToken(@NonNull RedissonClient redisson, @NonNull RLock lock) {
+    this(replaceByFenced(redisson, lock));
   }
 
-  public RedisWriterToken(@NonNull RedissonClient redisson, @NonNull RLock lock) {
-    this(redisson, lock, new Timer());
+  // dirty hack to hopefully relock with fenced (unless someone else was faster)
+  // sadly, this is not possible to wrap into a transaction or batch
+  @SneakyThrows
+  @VisibleForTesting
+  protected static @NonNull RFencedLock replaceByFenced(
+      @NonNull RedissonClient redisson, @NonNull RLock lock) {
+    Preconditions.checkArgument(lock.isLocked());
+    log.warn(
+        "You are using deprecated code when creating a RedisWriterToken, by passing an RLock. Trying to upgrade your RLock to RFencedLock. Please consider updating your code asap.");
+
+    RFencedLock fencedLock = redisson.getFencedLock(lock.getName());
+
+    CompletableFuture<Void> cf = CompletableFuture.runAsync(fencedLock::lock);
+    Thread.sleep(50); // i know... temporary code.
+    lock.forceUnlock();
+    cf.get(); // wait until locking of fenced on worked, or block forever.
+
+    return fencedLock;
+  }
+
+  public RedisWriterToken(@NonNull RFencedLock lock) {
+    Preconditions.checkArgument(lock.isLocked());
+    this.lock = lock;
+    this.token = lock.getToken();
+    liveness = new AtomicLong(System.currentTimeMillis());
   }
 
   @Override
-  public void close() throws Exception {
-    timer.cancel();
-    liveness.set(false);
-    lock.forceUnlock();
+  public void close() {
+    if (lockedAndOwned()) {
+      lock.forceUnlock();
+    }
+    liveness = null;
+  }
+
+  private boolean lockedAndOwned() {
+    return lock.isLocked() && lock.getToken().equals(token);
   }
 
   @Override
   public boolean isValid() {
-    return liveness.get();
+    if (alreadyClosed()) return false; // it'll never come back
+
+    long lastCheck = liveness.get();
+    if (System.currentTimeMillis() - lastCheck < CHECK_INTERVAL) {
+      return true;
+    } else {
+      // recheck
+      if (lockedAndOwned()) {
+        liveness.set(System.currentTimeMillis());
+        return true;
+      } else {
+        close();
+        return false;
+      }
+    }
+  }
+
+  private boolean alreadyClosed() {
+    return liveness == null;
   }
 }

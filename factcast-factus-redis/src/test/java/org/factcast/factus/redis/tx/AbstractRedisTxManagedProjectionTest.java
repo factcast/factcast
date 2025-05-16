@@ -37,7 +37,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.redisson.api.*;
-import org.redisson.config.Config;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("unchecked")
@@ -45,8 +44,8 @@ class AbstractRedisTxManagedProjectionTest {
 
   @Mock private RedissonClient redisson;
   @Mock private RLock lock;
+  @Mock private RFencedLock flock;
   @Mock private RTransaction tx;
-  @Mock private Config config;
 
   @InjectMocks private TestProjection underTest;
 
@@ -172,33 +171,29 @@ class AbstractRedisTxManagedProjectionTest {
     @SneakyThrows
     @Test
     void happyPath() {
-
-      when(redisson.getLock(anyString())).thenReturn(lock);
-      when(redisson.getConfig()).thenReturn(config);
-      when(config.getLockWatchdogTimeout()).thenReturn(1000L);
-      when(lock.tryLock(anyLong(), any())).thenReturn(true);
+      when(flock.isLocked()).thenReturn(true);
+      when(flock.tryLock(anyLong(), any())).thenReturn(true);
+      when(redisson.getFencedLock(anyString())).thenReturn(flock);
       AbstractRedisTxManagedProjection testProjection = new TestProjection(redisson);
 
       AutoCloseable wt = testProjection.acquireWriteToken();
 
       assertThat(wt).isInstanceOf(RedisWriterToken.class);
-      verify(lock).tryLock(anyLong(), any(TimeUnit.class));
+      verify(flock).tryLock(anyLong(), any(TimeUnit.class));
     }
 
     @SneakyThrows
     @Test
     void passesWaitTime() {
-
-      when(redisson.getLock(anyString())).thenReturn(lock);
-      when(redisson.getConfig()).thenReturn(config);
-      when(config.getLockWatchdogTimeout()).thenReturn(1000L);
-      when(lock.tryLock(anyLong(), any())).thenReturn(true);
+      when(flock.tryLock(anyLong(), any())).thenReturn(true);
+      when(flock.isLocked()).thenReturn(true);
+      when(redisson.getFencedLock(anyString())).thenReturn(flock);
       AbstractRedisTxManagedProjection testProjection = new TestProjection(redisson);
 
       @NonNull Duration dur = Duration.ofMillis(127);
       AutoCloseable wt = testProjection.acquireWriteToken(dur);
 
-      verify(lock).tryLock(dur.toMillis(), TimeUnit.MILLISECONDS);
+      verify(flock).tryLock(dur.toMillis(), TimeUnit.MILLISECONDS);
       assertThat(wt).isInstanceOf(RedisWriterToken.class);
     }
 
@@ -206,14 +201,14 @@ class AbstractRedisTxManagedProjectionTest {
     @Test
     void withWaitTimeExpiring() {
 
-      when(redisson.getLock(anyString())).thenReturn(lock);
-      when(lock.tryLock(anyLong(), any())).thenReturn(false);
+      when(redisson.getFencedLock(anyString())).thenReturn(flock);
+      when(flock.tryLock(anyLong(), any())).thenReturn(false);
       AbstractRedisTxManagedProjection testProjection = new TestProjection(redisson);
 
       @NonNull Duration dur = Duration.ofMillis(127);
       AutoCloseable wt = testProjection.acquireWriteToken(dur);
 
-      verify(lock).tryLock(dur.toMillis(), TimeUnit.MILLISECONDS);
+      verify(flock).tryLock(dur.toMillis(), TimeUnit.MILLISECONDS);
       assertThat(wt).isNull();
     }
 
@@ -221,14 +216,14 @@ class AbstractRedisTxManagedProjectionTest {
     @Test
     void withWaitInterruption() {
 
-      when(redisson.getLock(anyString())).thenReturn(lock);
-      when(lock.tryLock(anyLong(), any())).thenThrow(InterruptedException.class);
+      when(redisson.getFencedLock(anyString())).thenReturn(flock);
+      when(flock.tryLock(anyLong(), any())).thenThrow(InterruptedException.class);
       AbstractRedisTxManagedProjection testProjection = new TestProjection(redisson);
 
       @NonNull Duration dur = Duration.ofMillis(127);
       AutoCloseable wt = testProjection.acquireWriteToken(dur);
 
-      verify(lock).tryLock(dur.toMillis(), TimeUnit.MILLISECONDS);
+      verify(flock).tryLock(dur.toMillis(), TimeUnit.MILLISECONDS);
       assertThat(wt).isNull();
     }
   }
