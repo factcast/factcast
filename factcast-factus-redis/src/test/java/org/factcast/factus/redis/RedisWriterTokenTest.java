@@ -39,22 +39,6 @@ class RedisWriterTokenTest {
   private RedissonClient redisson;
 
   @Nested
-  class WhenConstructingWithLegacyLock {
-    @Test
-    void lockIsReplaced() {
-      when(redisson.getFencedLock(LOCKNAME)).thenReturn(flock);
-      when(lock.getName()).thenReturn(LOCKNAME);
-      when(lock.isLocked()).thenReturn(true);
-      when(flock.isLocked()).thenReturn(true);
-      new RedisWriterToken(redisson, lock);
-
-      verify(redisson, times(1)).getFencedLock(LOCKNAME);
-      verify(lock).unlock();
-      verify(flock).lock();
-    }
-  }
-
-  @Nested
   class WhenConstructingWithFencedLock {
     @Test
     void tokenIsMemorized() {

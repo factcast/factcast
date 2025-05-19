@@ -39,29 +39,6 @@ public class RedisWriterToken implements WriterToken {
   @VisibleForTesting
   private final Long token;
 
-  @VisibleForTesting
-  @Deprecated
-  // keep signature for migration
-  public RedisWriterToken(@NonNull RedissonClient redisson, @NonNull RLock lock) {
-    this(replaceByFenced(redisson, lock));
-  }
-
-  // dirty hack to hopefully relock with fenced (unless someone else was faster)
-  // sadly, this is not possible to wrap into a transaction or batch
-  @SneakyThrows
-  @VisibleForTesting
-  protected static @NonNull RFencedLock replaceByFenced(
-      @NonNull RedissonClient redisson, @NonNull RLock lock) {
-    Preconditions.checkArgument(lock.isLocked());
-    log.warn(
-        "You are using deprecated code when creating a RedisWriterToken, by passing an RLock. Trying to upgrade your RLock to RFencedLock. Please consider updating your code asap.");
-
-    RFencedLock fencedLock = redisson.getFencedLock(lock.getName());
-    fencedLock.lock(); // this is still possible, as the rlock was created by the same instance.
-    lock.unlock();
-    return fencedLock;
-  }
-
   public RedisWriterToken(@NonNull RFencedLock lock) {
     Preconditions.checkArgument(lock.isLocked());
     this.lock = lock;
