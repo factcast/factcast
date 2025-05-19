@@ -28,6 +28,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.redisson.api.*;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("resource")
 class RedisWriterTokenTest {
 
   private static final String LOCKNAME = "dalock";
@@ -45,10 +46,10 @@ class RedisWriterTokenTest {
       when(lock.getName()).thenReturn(LOCKNAME);
       when(lock.isLocked()).thenReturn(true);
       when(flock.isLocked()).thenReturn(true);
-      RedisWriterToken uut = new RedisWriterToken(redisson, lock);
+      new RedisWriterToken(redisson, lock);
 
       verify(redisson, times(1)).getFencedLock(LOCKNAME);
-      verify(lock).forceUnlock();
+      verify(lock).unlock();
       verify(flock).lock();
     }
   }

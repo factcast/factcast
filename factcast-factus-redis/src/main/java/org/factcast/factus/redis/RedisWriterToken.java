@@ -19,7 +19,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.*;
 import javax.annotation.Nullable;
 import lombok.*;
@@ -58,12 +57,8 @@ public class RedisWriterToken implements WriterToken {
         "You are using deprecated code when creating a RedisWriterToken, by passing an RLock. Trying to upgrade your RLock to RFencedLock. Please consider updating your code asap.");
 
     RFencedLock fencedLock = redisson.getFencedLock(lock.getName());
-
-    CompletableFuture<Void> cf = CompletableFuture.runAsync(fencedLock::lock);
-    Thread.sleep(50); // i know... temporary code.
-    lock.forceUnlock();
-    cf.get(); // wait until locking of fenced on worked, or block forever.
-
+    fencedLock.lock(); // this is still possible, as the rlock was created by the same instance.
+    lock.unlock();
     return fencedLock;
   }
 
