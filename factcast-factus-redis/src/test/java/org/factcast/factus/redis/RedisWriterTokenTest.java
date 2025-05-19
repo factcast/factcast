@@ -15,10 +15,8 @@
  */
 package org.factcast.factus.redis;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.util.*;
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.*;

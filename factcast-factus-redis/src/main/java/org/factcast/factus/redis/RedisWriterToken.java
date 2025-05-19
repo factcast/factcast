@@ -18,7 +18,6 @@ package org.factcast.factus.redis;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.time.Duration;
-import java.util.*;
 import java.util.concurrent.atomic.*;
 import javax.annotation.Nullable;
 import lombok.*;
