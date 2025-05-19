@@ -386,6 +386,17 @@ public class ProtoConverterTest {
   }
 
   @Test
+  public void testFromProtoMSG_IntSet() {
+    assertThrows(NullPointerException.class, () -> uut.toProtoIntSet((Set<Integer>) null));
+
+    HashSet<Integer> set1 = Sets.newHashSet(1, 2);
+    Set<Integer> set2 = uut.fromProtoIntSet(uut.toProtoIntSet(set1));
+
+    assertNotSame(set1, set2);
+    assertEquals(set1, set2);
+  }
+
+  @Test
   public void testFromProtoMSG_StateForRequest_nsSet() {
 
     MSG_StateForRequest request =

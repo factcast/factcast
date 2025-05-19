@@ -270,6 +270,28 @@ public class PgConstants {
           + ALIAS_TYPE
           + "') IS NOT NULL";
 
+  public static final String SELECT_DISTINCT_VERSIONS_FOR_NS_AND_TYPE =
+      "SELECT DISTINCT("
+          + COLUMN_HEADER
+          + "->>'"
+          + ALIAS_VERSION
+          + "') "
+          + " FROM "
+          + TABLE_FACT
+          + " WHERE ("
+          + COLUMN_HEADER
+          + "->>'"
+          + ALIAS_NS
+          + "')=? AND ( "
+          + COLUMN_HEADER
+          + "->>'"
+          + ALIAS_TYPE
+          + "') IS NOT NULL AND ("
+          + COLUMN_HEADER
+          + "->>'"
+          + ALIAS_TYPE
+          + "')=?";
+
   public static final String SELECT_SER_BY_ID =
       "SELECT "
           + COLUMN_SER

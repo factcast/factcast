@@ -45,6 +45,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.grpc.api.ConditionalPublishRequest;
+import org.factcast.grpc.api.EnumerateVersionsRequest;
 import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.*;
@@ -505,6 +506,34 @@ public class FactStoreGrpcServiceTest {
               when(backend.enumerateTypes(eq("ns"))).thenThrow(UnsupportedOperationException.class);
 
               uut.enumerateTypes(conv.toProto("ns"), so);
+            })
+        .isInstanceOf(UnsupportedOperationException.class);
+  }
+
+  @Test
+  void testEnumerateVersions() {
+    uut = new FactStoreGrpcService(backend, meta);
+    StreamObserver so = mock(StreamObserver.class);
+
+    when(backend.enumerateVersions(eq("ns"), eq("type"))).thenReturn(Sets.newHashSet(1, 2));
+
+    uut.enumerateVersions(conv.toProto(new EnumerateVersionsRequest("ns", "type")), so);
+
+    verify(so).onCompleted();
+    verify(so).onNext(eq(conv.toProtoIntSet(Sets.newHashSet(1, 2))));
+    verifyNoMoreInteractions(so);
+  }
+
+  @Test
+  void testEnumerateVersionsThrows() {
+    assertThatThrownBy(
+            () -> {
+              uut = new FactStoreGrpcService(backend, meta);
+              StreamObserver so = mock(StreamObserver.class);
+              when(backend.enumerateVersions(eq("ns"), eq("type")))
+                  .thenThrow(UnsupportedOperationException.class);
+
+              uut.enumerateVersions(conv.toProto(new EnumerateVersionsRequest("ns", "type")), so);
             })
         .isInstanceOf(UnsupportedOperationException.class);
   }
