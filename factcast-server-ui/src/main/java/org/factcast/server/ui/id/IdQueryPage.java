@@ -26,6 +26,7 @@ import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.converter.StringToUuidConverter;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.*;
 import jakarta.annotation.security.PermitAll;
 import java.util.*;
@@ -216,6 +217,7 @@ public class IdQueryPage extends VerticalLayout implements HasUrlParameter<Strin
     id.setLabel("Fact-ID");
     id.setAutofocus(true);
     id.setWidthFull();
+    id.setValueChangeMode(ValueChangeMode.EAGER);
 
     b.forField(id)
         .withNullRepresentation("")
