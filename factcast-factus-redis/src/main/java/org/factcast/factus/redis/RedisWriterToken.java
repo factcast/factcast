@@ -16,47 +16,67 @@
 package org.factcast.factus.redis;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import lombok.NonNull;
+import com.google.common.base.Preconditions;
+import java.time.Duration;
+import java.util.concurrent.atomic.*;
+import javax.annotation.Nullable;
+import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.projection.WriterToken;
 import org.redisson.api.*;
 
+@Slf4j
 public class RedisWriterToken implements WriterToken {
-  private final @NonNull RLock lock;
-  private final Timer timer;
-  private final AtomicBoolean liveness;
+  private static final long CHECK_INTERVAL = Duration.ofSeconds(15).toMillis();
+  private final @NonNull RFencedLock lock;
 
+  @Getter(AccessLevel.PROTECTED)
   @VisibleForTesting
-  protected RedisWriterToken(
-      @NonNull RedissonClient redisson, @NonNull RLock lock, @NonNull Timer timer) {
-    this.lock = lock;
-    this.timer = timer;
-    liveness = new AtomicBoolean(lock.isLocked());
-    long watchDogTimeout = redisson.getConfig().getLockWatchdogTimeout();
-    TimerTask timerTask =
-        new TimerTask() {
-          @Override
-          public void run() {
-            liveness.set(lock.isLocked());
-          }
-        };
-    timer.scheduleAtFixedRate(timerTask, 0, (long) (watchDogTimeout / 1.5));
-  }
+  private @Nullable AtomicLong liveness;
 
-  public RedisWriterToken(@NonNull RedissonClient redisson, @NonNull RLock lock) {
-    this(redisson, lock, new Timer());
+  @Getter(AccessLevel.PROTECTED)
+  @VisibleForTesting
+  private final Long token;
+
+  public RedisWriterToken(@NonNull RFencedLock lock) {
+    Preconditions.checkArgument(lock.isLocked());
+    this.lock = lock;
+    this.token = lock.getToken();
+    liveness = new AtomicLong(System.currentTimeMillis());
   }
 
   @Override
-  public void close() throws Exception {
-    timer.cancel();
-    liveness.set(false);
-    lock.forceUnlock();
+  public void close() {
+    if (lockedAndOwned()) {
+      lock.forceUnlock();
+    }
+    liveness = null;
+  }
+
+  private boolean lockedAndOwned() {
+    return lock.isLocked() && lock.getToken().equals(token);
   }
 
   @Override
   public boolean isValid() {
-    return liveness.get();
+    if (alreadyClosed()) return false; // it'll never come back
+
+    long lastCheck = liveness.get();
+    if (System.currentTimeMillis() - lastCheck < CHECK_INTERVAL) {
+      return true;
+    } else {
+      // recheck
+      if (lockedAndOwned()) {
+        liveness.set(System.currentTimeMillis());
+        return true;
+      } else {
+        close();
+        return false;
+      }
+    }
+  }
+
+  boolean alreadyClosed() {
+    return liveness == null;
   }
 }

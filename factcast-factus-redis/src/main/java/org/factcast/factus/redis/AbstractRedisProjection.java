@@ -29,7 +29,7 @@ import org.redisson.api.*;
 public abstract class AbstractRedisProjection implements RedisProjection {
   @Getter protected final RedissonClient redisson;
 
-  protected final RLock lock;
+  protected final RFencedLock lock;
   protected final String stateBucketName;
 
   @Getter protected final String redisKey;
@@ -41,7 +41,7 @@ public abstract class AbstractRedisProjection implements RedisProjection {
     stateBucketName = redisKey + "_state_tracking";
 
     // needs to be free from transactions, obviously
-    lock = redisson.getLock(redisKey + "_lock");
+    lock = redisson.getFencedLock(redisKey + "_lock");
   }
 
   @VisibleForTesting
@@ -64,7 +64,7 @@ public abstract class AbstractRedisProjection implements RedisProjection {
   public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
     try {
       if (lock.tryLock(maxWait.toMillis(), TimeUnit.MILLISECONDS)) {
-        return new RedisWriterToken(redisson, lock);
+        return new RedisWriterToken(lock);
       }
     } catch (InterruptedException e) {
       // assume lock unsuccessful
