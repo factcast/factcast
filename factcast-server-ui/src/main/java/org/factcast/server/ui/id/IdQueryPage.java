@@ -16,6 +16,7 @@
 package org.factcast.server.ui.id;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static org.factcast.server.ui.id.SelectedVersionConverter.AS_PUBLISHED;
 
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
@@ -54,10 +55,8 @@ public class IdQueryPage extends VerticalLayout implements HasUrlParameter<Strin
   private final BeanValidationUrlStateBinder<IdQueryBean> b =
       new BeanValidationUrlStateBinder<>(IdQueryBean.class);
 
-  static final String AS_PUBLISHED = "as published";
-
-  public Fact cachedFact;
-  public String selectedVersion = AS_PUBLISHED;
+  private Fact cachedFact;
+  private String selectedVersion = AS_PUBLISHED;
 
   public IdQueryPage(FactRepository fc, JsonViewPluginService jsonViewPluginService) {
     setHeightFull();
@@ -154,7 +153,7 @@ public class IdQueryPage extends VerticalLayout implements HasUrlParameter<Strin
         // Only query again if a specific version was selected or there somehow is no fact saved
         // from the version query
         var fact =
-            selectedVersion.equals(AS_PUBLISHED) & cachedFact != null
+            selectedVersion.equals(AS_PUBLISHED) && cachedFact != null
                 ? Optional.of(cachedFact)
                 : fc.findBy(formBean);
 
@@ -179,10 +178,7 @@ public class IdQueryPage extends VerticalLayout implements HasUrlParameter<Strin
     versionSelector.setId("version-selector");
     versionSelector.setEnabled(false);
 
-    versionSelector.addValueChangeListener(
-        event -> {
-          this.selectedVersion = event.getValue();
-        });
+    versionSelector.addValueChangeListener(event -> this.selectedVersion = event.getValue());
 
     b.forField(versionSelector)
         .withNullRepresentation(AS_PUBLISHED)

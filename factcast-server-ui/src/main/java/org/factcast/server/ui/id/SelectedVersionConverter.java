@@ -15,8 +15,6 @@
  */
 package org.factcast.server.ui.id;
 
-import static org.factcast.server.ui.id.IdQueryPage.AS_PUBLISHED;
-
 import com.vaadin.flow.data.binder.Result;
 import com.vaadin.flow.data.binder.ValueContext;
 import com.vaadin.flow.data.converter.Converter;
@@ -26,6 +24,9 @@ import com.vaadin.flow.data.converter.Converter;
  * the value equals AS_PUBLISHED which will query for the published version.
  */
 public class SelectedVersionConverter implements Converter<String, Integer> {
+
+  static final String AS_PUBLISHED = "as published";
+
   @Override
   public Result<Integer> convertToModel(String s, ValueContext valueContext) {
     if (s != null && !s.equals(AS_PUBLISHED)) {
