@@ -44,8 +44,6 @@ public class FactRepositoryImpl implements FactRepository {
 
   private final SecurityService securityService;
 
-  public static final int WAIT_TIME = 20000;
-
   @Override
   public Optional<Fact> findBy(@NonNull IdQueryBean bean) {
     UUID id = bean.getId();
@@ -53,7 +51,8 @@ public class FactRepositoryImpl implements FactRepository {
       return Optional.empty();
     }
 
-    int v = Optional.ofNullable(bean.getVersion()).orElse(0);
+    int v = bean.getVersion();
+
     return fs.fetchByIdAndVersion(id, v).filter(securityService::canRead);
   }
 
@@ -80,6 +79,17 @@ public class FactRepositoryImpl implements FactRepository {
     }
 
     return type.sorted().toList();
+  }
+
+  @Override
+  public List<Integer> versions(@NonNull String namespace, @NonNull String type) {
+    if (!securityService.canRead(namespace)) {
+      return Collections.emptyList();
+    }
+
+    Stream<Integer> versions = fs.enumerateVersions(namespace, type).stream();
+
+    return versions.sorted().toList();
   }
 
   @Override

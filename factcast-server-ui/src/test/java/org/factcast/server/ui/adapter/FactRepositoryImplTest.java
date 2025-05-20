@@ -68,7 +68,7 @@ public class FactRepositoryImplTest {
       UUID id = UUID.randomUUID();
       IdQueryBean q = new IdQueryBean();
       q.setId(id);
-      q.setVersion(null);
+      q.setVersion(0);
       Assertions.assertThat(underTest.findBy(q)).isEmpty();
 
       verify(fs).fetchByIdAndVersion(id, 0);
