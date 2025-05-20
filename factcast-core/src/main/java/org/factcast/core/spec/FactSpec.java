@@ -41,7 +41,7 @@ public class FactSpec {
 
   @JsonProperty private final Map<String, String> meta = new LinkedHashMap<>();
 
-  @JsonProperty private final Map<String, UUID> aggIdProperties = new LinkedHashMap<>();
+  @JsonProperty private final SortedMap<String, UUID> aggIdProperties = new TreeMap<>();
 
   /** expresses the mandatory existence or absence of a key. Needs stable order. */
   @JsonProperty private final Map<String, Boolean> metaKeyExists = new LinkedHashMap<>();
@@ -161,10 +161,12 @@ public class FactSpec {
   }
 
   public Set<UUID> aggIds() {
-    return Collections.unmodifiableSet(aggIds);
+    Set<UUID> ret = new HashSet<>(aggIds);
+    ret.addAll(aggIdProperties.values());
+    return Collections.unmodifiableSet(ret);
   }
 
-  public Map<String, UUID> aggIdProperties() {
-    return Collections.unmodifiableMap(aggIdProperties);
+  public SortedMap<String, UUID> aggIdProperties() {
+    return Collections.unmodifiableSortedMap(aggIdProperties);
   }
 }
