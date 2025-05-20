@@ -76,7 +76,7 @@ public class RedisWriterToken implements WriterToken {
     }
   }
 
-  private boolean alreadyClosed() {
+  boolean alreadyClosed() {
     return liveness == null;
   }
 }

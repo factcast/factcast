@@ -107,5 +107,22 @@ class RedisWriterTokenTest {
       verify(flock).getToken();
       verify(flock).isLocked();
     }
+
+    @Test
+    void notValidIfAlreadyClosed() {
+      when(flock.isLocked()).thenReturn(true);
+      when(flock.getToken()).thenReturn(1L, 2L);
+      final RedisWriterToken uut = new RedisWriterToken(flock);
+      // initial call, should close
+      uut.liveness().set(System.currentTimeMillis() - 1000000);
+      Assertions.assertThat(uut.isValid()).isFalse();
+
+      // subsequent calls should exit early
+      Assertions.assertThat(uut.isValid()).isFalse();
+      Assertions.assertThat(uut.isValid()).isFalse();
+      Assertions.assertThat(uut.isValid()).isFalse();
+      // due to
+      Assertions.assertThat(uut.alreadyClosed()).isTrue();
+    }
   }
 }
