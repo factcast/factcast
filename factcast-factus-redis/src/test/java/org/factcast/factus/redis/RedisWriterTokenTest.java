@@ -15,11 +15,10 @@
  */
 package org.factcast.factus.redis;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-import java.util.*;
 import lombok.NonNull;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -27,38 +26,49 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.redisson.api.*;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("resource")
 class RedisWriterTokenTest {
 
+  private static final String LOCKNAME = "dalock";
   @Mock private @NonNull RLock lock;
+  @Mock private @NonNull RFencedLock flock;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private RedissonClient redisson;
 
-  @Mock private Timer timer;
-
   @Nested
-  class WhenConstructing {
+  class WhenConstructingWithFencedLock {
     @Test
-    void testClose() {
-      when(redisson.getConfig().getLockWatchdogTimeout()).thenReturn(3L);
-      when(lock.isLocked()).thenReturn(true);
-
-      final RedisWriterToken uut = new RedisWriterToken(redisson, lock, timer);
-
-      assertThat(uut.isValid()).isTrue();
-      verify(timer).scheduleAtFixedRate(any(), anyLong(), eq(2L));
+    void tokenIsMemorized() {
+      when(flock.isLocked()).thenReturn(true);
+      when(flock.getToken()).thenReturn(1L);
+      RedisWriterToken uut = new RedisWriterToken(flock);
+      verify(flock).getToken();
+      Assertions.assertThat(uut.token()).isEqualTo(1L);
     }
-  }
 
-  @Nested
-  class WhenClosing {
     @Test
-    void testClose() throws Exception {
-      final RedisWriterToken uut = new RedisWriterToken(redisson, lock, timer);
-      uut.close();
+    void closesIfOwned() {
+      when(flock.isLocked()).thenReturn(true);
+      when(flock.getToken()).thenReturn(1L);
+      new RedisWriterToken(flock).close();
+      verify(flock).forceUnlock();
+    }
 
-      verify(lock).forceUnlock();
-      verify(timer).cancel();
+    @Test
+    void doesNotCloseIfNotOwned() {
+      when(flock.isLocked()).thenReturn(true);
+      when(flock.getToken()).thenReturn(1L, 2L);
+      new RedisWriterToken(flock).close();
+      verify(flock, never()).forceUnlock();
+    }
+
+    @Test
+    void doesNotCloseIfNotLocked() {
+      when(flock.isLocked()).thenReturn(true, false);
+      when(flock.getToken()).thenReturn(1L);
+      new RedisWriterToken(flock).close();
+      verify(flock, never()).forceUnlock();
     }
   }
 
@@ -66,19 +76,53 @@ class RedisWriterTokenTest {
   class WhenCheckingIfIsValid {
     @Test
     void testIsValid() {
-      when(lock.isLocked()).thenReturn(true, false);
+      when(flock.isLocked()).thenReturn(true);
+      when(flock.getToken()).thenReturn(1L);
+      final RedisWriterToken uut = new RedisWriterToken(flock);
+      // initial call
+      Assertions.assertThat(uut.isValid()).isTrue();
 
-      final RedisWriterToken uut = new RedisWriterToken(redisson, lock, timer);
+      verify(flock).getToken();
+      verify(flock).isLocked();
 
-      assertThat(uut.isValid()).isTrue();
+      Mockito.reset(flock);
+      when(flock.isLocked()).thenReturn(true);
+      when(flock.getToken()).thenReturn(1L);
 
-      final ArgumentCaptor<TimerTask> taskCaptor = ArgumentCaptor.forClass(TimerTask.class);
-      verify(timer).scheduleAtFixedRate(taskCaptor.capture(), anyLong(), anyLong());
+      // another 5 calls within the cache period
+      for (int i = 0; i < 5; i++) {
+        Assertions.assertThat(uut.isValid()).isTrue();
+      }
 
-      final TimerTask task = taskCaptor.getValue();
-      task.run();
+      verify(flock, never()).getToken();
+      verify(flock, never()).isLocked();
 
-      assertThat(uut.isValid()).isFalse();
+      // simulate time passed
+      uut.liveness().set(System.currentTimeMillis() - 1000000);
+
+      // another 5 calls, first will refresh
+      for (int i = 0; i < 5; i++) {
+        Assertions.assertThat(uut.isValid()).isTrue();
+      }
+      verify(flock).getToken();
+      verify(flock).isLocked();
+    }
+
+    @Test
+    void notValidIfAlreadyClosed() {
+      when(flock.isLocked()).thenReturn(true);
+      when(flock.getToken()).thenReturn(1L, 2L);
+      final RedisWriterToken uut = new RedisWriterToken(flock);
+      // initial call, should close
+      uut.liveness().set(System.currentTimeMillis() - 1000000);
+      Assertions.assertThat(uut.isValid()).isFalse();
+
+      // subsequent calls should exit early
+      Assertions.assertThat(uut.isValid()).isFalse();
+      Assertions.assertThat(uut.isValid()).isFalse();
+      Assertions.assertThat(uut.isValid()).isFalse();
+      // due to
+      Assertions.assertThat(uut.alreadyClosed()).isTrue();
     }
   }
 }

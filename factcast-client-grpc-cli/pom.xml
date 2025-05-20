@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.9.8-SNAPSHOT</version>
+    <version>0.9.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-client-grpc-cli</artifactId>
@@ -86,20 +86,19 @@
 
   </dependencies>
   <build>
+    <finalName>fc-cli</finalName>
     <plugins>
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
-        <configuration>
-          <finalName>fc-cli</finalName>
-        </configuration>
         <executions>
           <execution>
             <goals>
               <goal>repackage</goal>
             </goals>
             <configuration>
-              <executable>true</executable>
+              <attach>true</attach>
+              <includeTools>false</includeTools>
             </configuration>
           </execution>
         </executions>
