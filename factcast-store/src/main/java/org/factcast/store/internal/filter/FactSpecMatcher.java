@@ -41,6 +41,8 @@ public final class FactSpecMatcher implements Predicate<Fact> {
 
   final Map<String, String> meta;
 
+  final Map<String, UUID> aggIdProperties;
+
   final FilterScript script;
 
   final JSEngine scriptEngine;
@@ -56,7 +58,8 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     ns = spec.ns();
     type = spec.type();
     version = spec.version();
-    aggIds = spec.mergedAggIds();
+    aggIds = spec.aggIds();
+    aggIdProperties = spec.aggIdProperties();
     meta = spec.meta();
     metaKeyExists = spec.metaKeyExists();
     script = spec.filterScript();

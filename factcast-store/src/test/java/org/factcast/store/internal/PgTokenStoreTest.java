@@ -34,7 +34,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ContextConfiguration(classes = {PgTestConfiguration.class})
 @ExtendWith(SpringExtension.class)
 @IntegrationTest
-public class PgTokenStoreTest extends AbstractTokenStoreTest {
+class PgTokenStoreTest extends AbstractTokenStoreTest {
 
   @Autowired PgMetrics metrics;
   @Autowired JdbcTemplate jdbc;
@@ -46,7 +46,7 @@ public class PgTokenStoreTest extends AbstractTokenStoreTest {
   }
 
   @Test
-  public void testStateJsonSerializable() throws Exception {
+  void testStateJsonSerializable() {
 
     State s = new State();
     s.serialOfLastMatchingFact(99);
@@ -64,7 +64,7 @@ public class PgTokenStoreTest extends AbstractTokenStoreTest {
 
     Assertions.assertThat(json)
         .isEqualTo(
-            "{\"specs\":[{\"ns\":\"foo\",\"type\":null,\"version\":0,\"aggId\":null,\"aggIds\":[\"00000000-0000-0000-0000-000000000001\",\"00000000-0000-0000-0000-000000000002\"],\"meta\":{},\"metaKeyExists\":{},\"filterScript\":null},{\"ns\":\"bar\",\"type\":\"someType\",\"version\":0,\"aggId\":null,\"aggIds\":[],\"meta\":{\"foo\":\"bar\"},\"metaKeyExists\":{\"mustExist\":true,\"mustNotExist\":false},\"filterScript\":null}],\"serialOfLastMatchingFact\":99}");
+            "{\"specs\":[{\"ns\":\"foo\",\"type\":null,\"version\":0,\"aggIds\":[\"00000000-0000-0000-0000-000000000001\",\"00000000-0000-0000-0000-000000000002\"],\"meta\":{},\"aggIdProperties\":{},\"metaKeyExists\":{},\"filterScript\":null},{\"ns\":\"bar\",\"type\":\"someType\",\"version\":0,\"aggIds\":[],\"meta\":{\"foo\":\"bar\"},\"aggIdProperties\":{},\"metaKeyExists\":{\"mustExist\":true,\"mustNotExist\":false},\"filterScript\":null}],\"serialOfLastMatchingFact\":99}");
   }
 
   @Test
