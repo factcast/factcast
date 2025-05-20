@@ -180,6 +180,29 @@ public class FactRepositoryImplTest {
   }
 
   @Nested
+  class WhenGettingVersions {
+    private final String ns = "ns";
+    private final String type = "type";
+
+    @BeforeEach
+    void setup() {}
+
+    @Test
+    void emptyOnLackingPermissions() {
+      when(securityService.canRead(ns)).thenReturn(false);
+      Assertions.assertThat(underTest.versions(ns, type)).isEmpty();
+    }
+
+    @Test
+    void sorts() {
+      when(securityService.canRead(ns)).thenReturn(true);
+      when(fs.enumerateVersions(ns, type)).thenReturn(Set.of(2, 1, 3));
+      Assertions.assertThat(underTest.versions(ns, type)).containsExactly(1, 2, 3);
+      Assertions.assertThat(underTest.versions(ns, "foo")).isEmpty();
+    }
+  }
+
+  @Nested
   class WhenLatestingSerial {
     @Test
     void passesResponse() {
