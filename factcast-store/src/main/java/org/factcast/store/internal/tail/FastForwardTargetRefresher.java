@@ -17,12 +17,11 @@ package org.factcast.store.internal.tail;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.observer.FastForwardTarget;
-import org.factcast.store.internal.HighWaterMark;
+import org.factcast.core.subscription.observer.HighWaterMark;
 import org.factcast.store.internal.PgConstants;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -31,38 +30,26 @@ import org.springframework.scheduling.annotation.Scheduled;
 @RequiredArgsConstructor
 public class FastForwardTargetRefresher implements FastForwardTarget {
   private final JdbcTemplate jdbc;
-
-  private HighWaterMark target = new HighWaterMark();
-
-  @Nullable
-  @Override
-  public UUID targetId() {
-    return target.targetId();
-  }
-
-  @Override
-  public long targetSer() {
-    return target.targetSer();
-  }
+  @Getter private HighWaterMark highWaterMark = HighWaterMark.empty();
 
   @Scheduled(fixedRate = 5, timeUnit = TimeUnit.MINUTES)
   public void refresh() {
     log.debug("Triggering fast forward target refresh");
 
     try {
-      target =
+      highWaterMark =
           jdbc.queryForObject(
               PgConstants.HIGHWATER_MARK,
               (rs, rowNum) -> {
                 final var targetId = rs.getObject("targetId", UUID.class);
                 final var targetSer = rs.getLong("targetSer");
 
-                return new HighWaterMark().targetSer(targetSer).targetId(targetId);
+                return HighWaterMark.of(targetId, targetSer);
               });
     } catch (EmptyResultDataAccessException noFactsAtAll) {
       // ignore but resetting target to initial values, can happen in integration tests when facts
       // are wiped between runs
-      target = new HighWaterMark();
+      highWaterMark = HighWaterMark.empty();
     }
   }
 }
