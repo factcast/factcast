@@ -202,5 +202,12 @@ class AbstractSchemaRegistryTest {
       assertThat(underTest.enumerateTypes("ns1")).containsExactlyInAnyOrder("t1", "t2");
       assertThat(underTest.enumerateTypes("ns2")).containsExactlyInAnyOrder("t3");
     }
+
+    @Test
+    void enumeratesVersionsForNamespaceAndType() {
+      when(schemaStore.getAllSchemaKeys()).thenReturn(allKeys);
+      assertThat(underTest.enumerateVersions("ns1", "t1")).containsExactlyInAnyOrder(1, 2);
+      assertThat(underTest.enumerateVersions("ns1", "t2")).containsExactlyInAnyOrder(1);
+    }
   }
 }

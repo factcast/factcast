@@ -157,6 +157,12 @@ public class PgFactStore extends AbstractFactStore {
     return resultSet.getString(1);
   }
 
+  @NonNull
+  private Integer extractIntFromResultSet(
+      ResultSet resultSet, @SuppressWarnings("unused") int rowNum) throws SQLException {
+    return resultSet.getInt(1);
+  }
+
   @Override
   public @NonNull Subscription subscribe(
       @NonNull SubscriptionRequestTO request, @NonNull FactObserver observer) {
@@ -225,6 +231,27 @@ public class PgFactStore extends AbstractFactStore {
                     PgConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE,
                     this::extractStringFromResultSet,
                     ns)));
+  }
+
+  @Override
+  public @NonNull Set<Integer> enumerateVersions(@NonNull String ns, @NonNull String type) {
+    if (schemaRegistry.isActive() && !props.isEnumerationDirectModeEnabled()) {
+      return schemaRegistry.enumerateVersions(ns, type);
+    } else {
+      return enumerateVersionsFromPg(ns, type);
+    }
+  }
+
+  public @NonNull Set<Integer> enumerateVersionsFromPg(@NonNull String ns, @NonNull String type) {
+    return metrics.time(
+        StoreMetrics.OP.ENUMERATE_VERSIONS,
+        () ->
+            new HashSet<>(
+                jdbcTemplate.query(
+                    PgConstants.SELECT_DISTINCT_VERSIONS_FOR_NS_AND_TYPE,
+                    this::extractIntFromResultSet,
+                    ns,
+                    type)));
   }
 
   @Override
