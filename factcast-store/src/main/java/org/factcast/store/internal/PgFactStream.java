@@ -30,7 +30,7 @@ import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.subscription.observer.*;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
@@ -111,6 +111,12 @@ public class PgFactStream {
 
   @VisibleForTesting
   void catchupAndFollow(SubscriptionRequest request, PgSynchronizedQuery query) {
+
+    // we need to copy and preserve the current highwatermark **before** starzikng the query
+    // in order not to lose facts by the ffTarget being updated after the phase 2 query, but
+    // before the sending of the ffwd signal (#3722)
+    HighWaterMark atTheStartOfQuery = ffwdTarget.highWaterMark();
+
     if (request.ephemeral()) {
       // just fast forward to the latest event published by now
       serial.set(fetcher.retrieveLatestSer());
@@ -118,7 +124,7 @@ public class PgFactStream {
       catchup();
     }
 
-    fastForward(request);
+    fastForward(atTheStartOfQuery);
 
     // propagate catchup
     if (isConnected()) {
@@ -168,21 +174,16 @@ public class PgFactStream {
   }
 
   @VisibleForTesting
-  void fastForward(SubscriptionRequest request) {
+  void fastForward(@NonNull HighWaterMark atTheStartOfQuery) {
     if (isConnected()) {
 
-      long startedSer = 0;
-      UUID startedId = null;
-      Optional<UUID> startingAfter = request.startingAfter();
-      if (startingAfter.isPresent()) {
-        startedId = startingAfter.get();
-        startedSer = idToSerMapper.retrieve(startedId); // should be cached anyway
-      }
+      UUID targetId = atTheStartOfQuery.targetId();
+      long targetSer = atTheStartOfQuery.targetSer();
 
-      UUID targetId = ffwdTarget.targetId();
-      long targetSer = ffwdTarget.targetSer();
+      // there is no need to check for the start id, as it'll be
+      // contained in serial or smaller, see initializeSerialToStartAfter
 
-      if (targetId != null && (targetSer > startedSer) && serial.get() < targetSer) {
+      if (targetId != null && serial.get() < targetSer) {
         pipeline.process(Signal.of(FactStreamPosition.of(targetId, targetSer)));
       }
     }

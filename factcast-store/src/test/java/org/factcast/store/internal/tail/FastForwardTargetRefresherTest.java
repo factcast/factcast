@@ -19,16 +19,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.util.UUID;
-import org.factcast.store.internal.HighWaterMark;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.factcast.core.subscription.observer.HighWaterMark;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.*;
 
 @ExtendWith(MockitoExtension.class)
 public class FastForwardTargetRefresherTest {
@@ -43,44 +41,45 @@ public class FastForwardTargetRefresherTest {
     void refresh() {
       var uut = spy(underTest);
 
-      assertThat(uut.targetId()).isNull();
-      assertThat(uut.targetSer()).isZero();
+      HighWaterMark highWaterMark = uut.highWaterMark();
+      assertThat(highWaterMark.targetId()).isNull();
+      assertThat(highWaterMark.targetSer()).isZero();
 
       UUID id = UUID.randomUUID();
       long ser = 42L;
 
       when(jdbc.queryForObject(anyString(), any(RowMapper.class)))
-          .thenReturn(new HighWaterMark().targetId(id).targetSer(ser));
+          .thenReturn(HighWaterMark.of(id, ser));
 
       uut.refresh();
-
-      assertThat(uut.targetId()).isEqualTo(id);
-      assertThat(uut.targetSer()).isEqualTo(ser);
+      highWaterMark = uut.highWaterMark();
+      assertThat(highWaterMark.targetId()).isEqualTo(id);
+      assertThat(highWaterMark.targetSer()).isEqualTo(ser);
     }
 
     @Test
     void resetAfterEmptyResult() {
       var uut = spy(underTest);
 
-      assertThat(uut.targetId()).isNull();
-      assertThat(uut.targetSer()).isZero();
+      assertThat(uut.highWaterMark().targetId()).isNull();
+      assertThat(uut.highWaterMark().targetSer()).isZero();
 
       UUID id = UUID.randomUUID();
       long ser = 42L;
 
       when(jdbc.queryForObject(anyString(), any(RowMapper.class)))
-          .thenReturn(new HighWaterMark().targetId(id).targetSer(ser))
+          .thenReturn(HighWaterMark.of(id, ser))
           .thenThrow(new EmptyResultDataAccessException(1));
 
       uut.refresh();
 
-      assertThat(uut.targetId()).isEqualTo(id);
-      assertThat(uut.targetSer()).isEqualTo(ser);
+      assertThat(uut.highWaterMark().targetId()).isEqualTo(id);
+      assertThat(uut.highWaterMark().targetSer()).isEqualTo(ser);
 
       uut.refresh();
 
-      assertThat(uut.targetId()).isNull();
-      assertThat(uut.targetSer()).isZero();
+      assertThat(uut.highWaterMark().targetId()).isNull();
+      assertThat(uut.highWaterMark().targetSer()).isZero();
     }
   }
 }

@@ -23,7 +23,7 @@ import javax.sql.DataSource;
 import lombok.SneakyThrows;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.subscription.observer.*;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
@@ -67,7 +67,7 @@ class PgFactStreamTelemetryTest {
     when(jdbcTemplate.getDataSource()).thenReturn(dataSource);
     when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any()))
         .thenReturn(mock(PgCatchup.class));
-
+    when(ffwdTarget.highWaterMark()).thenReturn(HighWaterMark.empty());
     uut.connect(req);
 
     InOrder inOrder = inOrder(telemetry);
@@ -85,6 +85,7 @@ class PgFactStreamTelemetryTest {
     when(dataSource.getConnection()).thenReturn(mock(Connection.class));
     when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any()))
         .thenReturn(mock(PgCatchup.class));
+    when(ffwdTarget.highWaterMark()).thenReturn(HighWaterMark.empty());
 
     uut.connect(req);
 
@@ -103,6 +104,8 @@ class PgFactStreamTelemetryTest {
     when(dataSource.getConnection()).thenReturn(mock(Connection.class));
     when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any()))
         .thenReturn(mock(PgCatchup.class));
+    when(ffwdTarget.highWaterMark()).thenReturn(HighWaterMark.empty());
+
     uut.connect(req);
 
     uut.close();
