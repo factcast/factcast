@@ -113,7 +113,7 @@ public class PgFactStream {
   void catchupAndFollow(SubscriptionRequest request, PgSynchronizedQuery query) {
 
     // we need to copy and preserve the current highwatermark **before** starzikng the query
-    // in order not to loose facts by the ffTarget being updated after the pahse 2 query, but
+    // in order not to lose facts by the ffTarget being updated after the phase 2 query, but
     // before the sending of the ffwd signal (#3722)
     HighWaterMark atTheStartOfQuery = ffwdTarget.highWaterMark();
 
