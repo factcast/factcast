@@ -28,8 +28,8 @@ import org.factcast.core.*;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.*;
 import org.factcast.core.subscription.*;
-import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.store.internal.tail.FastForwardTargetRefresher;
+import org.factcast.core.subscription.observer.*;
+import org.factcast.store.internal.tail.MemoizedFastForwardTarget;
 import org.factcast.store.test.AbstractFactStoreTest;
 import org.factcast.test.IntegrationTest;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +58,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
 
   @Autowired TokenStore tokenStore;
 
-  @Autowired FastForwardTargetRefresher fastForwardTargetRefresher;
+  @Autowired MemoizedFastForwardTarget fastForwardTarget;
 
   @Autowired JdbcTemplate jdbcTemplate;
 
@@ -77,12 +77,6 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
   @RequiredArgsConstructor
   private static class FactStoreWrapper implements FactStore {
     @Delegate final FactStore delegate;
-  }
-
-  @BeforeEach
-  void setup() {
-    // update the highwatermarks
-    fastForwardTargetRefresher.refresh();
   }
 
   /** This happens in a trigger */
@@ -158,7 +152,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       store.publish(
           Collections.singletonList(Fact.builder().ns("unrelated").buildWithoutPayload()));
       // update the highwatermarks
-      fastForwardTargetRefresher.refresh();
+      fastForwardTarget.expire();
     }
 
     @Test
@@ -184,7 +178,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       SubscriptionRequest newtail = SubscriptionRequest.catchup(spec).from(id);
       store.subscribe(SubscriptionRequestTO.from(newtail), obs).awaitCatchup();
 
-      fastForwardTargetRefresher.refresh();
+      fastForwardTarget.expire();
       fwd.set(null);
 
       // check for empty catchup
@@ -218,7 +212,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       // publish unrelated stuff and update ffwd target
       store.publish(
           Collections.singletonList(Fact.builder().ns("unrelated").buildWithoutPayload()));
-      fastForwardTargetRefresher.refresh();
+      fastForwardTarget.expire();
 
       SubscriptionRequest further = SubscriptionRequest.catchup(spec).from(id2);
       store.subscribe(SubscriptionRequestTO.from(further), obs).awaitCatchup();
