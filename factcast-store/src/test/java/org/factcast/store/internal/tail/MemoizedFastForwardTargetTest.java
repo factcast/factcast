@@ -54,7 +54,7 @@ public class MemoizedFastForwardTargetTest {
       assertThat(uut.highWaterMark()).isSameAs(highWaterMark);
       assertThat(uut.highWaterMark()).isSameAs(highWaterMark);
 
-      uut.refresh();
+      uut.expire();
 
       assertThat(uut.highWaterMark()).isNotSameAs(highWaterMark);
       highWaterMark = uut.highWaterMark();
@@ -71,12 +71,12 @@ public class MemoizedFastForwardTargetTest {
           .thenReturn(HighWaterMark.of(id, ser))
           .thenThrow(new EmptyResultDataAccessException(1));
 
-      uut.refresh();
+      uut.expire();
 
       assertThat(uut.highWaterMark().targetId()).isEqualTo(id);
       assertThat(uut.highWaterMark().targetSer()).isEqualTo(ser);
 
-      uut.refresh();
+      uut.expire();
 
       assertThat(uut.highWaterMark().targetId()).isNull();
       assertThat(uut.highWaterMark().targetSer()).isZero();

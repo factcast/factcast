@@ -152,7 +152,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       store.publish(
           Collections.singletonList(Fact.builder().ns("unrelated").buildWithoutPayload()));
       // update the highwatermarks
-      fastForwardTarget.refresh();
+      fastForwardTarget.expire();
     }
 
     @Test
@@ -178,7 +178,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       SubscriptionRequest newtail = SubscriptionRequest.catchup(spec).from(id);
       store.subscribe(SubscriptionRequestTO.from(newtail), obs).awaitCatchup();
 
-      fastForwardTarget.refresh();
+      fastForwardTarget.expire();
       fwd.set(null);
 
       // check for empty catchup
@@ -212,7 +212,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       // publish unrelated stuff and update ffwd target
       store.publish(
           Collections.singletonList(Fact.builder().ns("unrelated").buildWithoutPayload()));
-      fastForwardTarget.refresh();
+      fastForwardTarget.expire();
 
       SubscriptionRequest further = SubscriptionRequest.catchup(spec).from(id2);
       store.subscribe(SubscriptionRequestTO.from(further), obs).awaitCatchup();

@@ -65,7 +65,7 @@ public class MemoizedFastForwardTarget implements FastForwardTarget {
   }
 
   @VisibleForTesting
-  public void refresh() {
+  public void expire() {
     highWaterMark = null;
   }
 }
