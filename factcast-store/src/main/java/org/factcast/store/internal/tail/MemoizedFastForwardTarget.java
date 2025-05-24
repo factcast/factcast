@@ -60,8 +60,9 @@ public class MemoizedFastForwardTarget implements FastForwardTarget {
     return highWaterMark;
   }
 
-  private boolean needsRefresh(long now) {
-    return now - lastFetched > REFRESH_AFTER_MS;
+  @VisibleForTesting
+  boolean needsRefresh(long now) {
+    return highWaterMark == null || now - lastFetched > REFRESH_AFTER_MS;
   }
 
   @VisibleForTesting

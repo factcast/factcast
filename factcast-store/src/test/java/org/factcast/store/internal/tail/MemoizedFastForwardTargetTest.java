@@ -16,6 +16,7 @@
 package org.factcast.store.internal.tail;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.UUID;
@@ -80,6 +81,46 @@ public class MemoizedFastForwardTargetTest {
 
       assertThat(uut.highWaterMark().targetId()).isNull();
       assertThat(uut.highWaterMark().targetSer()).isZero();
+    }
+  }
+
+  @Nested
+  class WhenNeedingRefresh {
+    @Test
+    void falseIfInRange() {
+      UUID id = UUID.randomUUID();
+      long ser = 42L;
+      when(jdbc.queryForObject(anyString(), any(RowMapper.class)))
+          .thenReturn(HighWaterMark.of(id, ser))
+          .thenThrow(new EmptyResultDataAccessException(1));
+      underTest.highWaterMark();
+
+      assertThat(underTest.needsRefresh(System.currentTimeMillis())).isFalse();
+    }
+
+    @Test
+    void trueIfNotInRange() {
+      UUID id = UUID.randomUUID();
+      long ser = 42L;
+      when(jdbc.queryForObject(anyString(), any(RowMapper.class)))
+          .thenReturn(HighWaterMark.of(id, ser))
+          .thenThrow(new EmptyResultDataAccessException(1));
+      underTest.highWaterMark();
+
+      assertThat(underTest.needsRefresh(System.currentTimeMillis() * 2)).isTrue();
+    }
+
+    @Test
+    void trueIfEmpty() {
+      UUID id = UUID.randomUUID();
+      long ser = 42L;
+      when(jdbc.queryForObject(anyString(), any(RowMapper.class)))
+          .thenReturn(HighWaterMark.of(id, ser))
+          .thenThrow(new EmptyResultDataAccessException(1));
+      underTest.highWaterMark();
+
+      underTest.expire();
+      assertThat(underTest.needsRefresh(System.currentTimeMillis())).isTrue();
     }
   }
 }
