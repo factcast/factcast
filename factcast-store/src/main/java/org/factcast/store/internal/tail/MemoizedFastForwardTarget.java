@@ -16,6 +16,7 @@
 package org.factcast.store.internal.tail;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.time.Duration;
 import java.util.UUID;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +29,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 @Slf4j
 @RequiredArgsConstructor
 public class MemoizedFastForwardTarget implements FastForwardTarget {
-  private static final long REFRESH_AFTER_MS = 5 * 60 * 1000;
+  private static final long REFRESH_AFTER_MS = Duration.ofMinutes(5).toMillis();
   private final JdbcTemplate jdbc;
   private HighWaterMark highWaterMark;
   private long lastFetched = 0;
