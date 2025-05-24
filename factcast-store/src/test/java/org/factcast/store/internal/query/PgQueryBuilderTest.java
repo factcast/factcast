@@ -157,7 +157,7 @@ WHERE (
     AND header @> ?::jsonb
     AND header @> ?::jsonb
     AND header @> ?::jsonb
-    AND (payload -> 'myId'::UUID) = ?
+    AND (payload ->> 'myId')::UUID = ?
     AND (header @> ?::jsonb OR header @> ?::jsonb)
     )
   )
