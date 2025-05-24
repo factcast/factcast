@@ -83,6 +83,10 @@ public class PgQueryBuilder {
     return count;
   }
 
+  private boolean filterByAggregateIdProperty(FactSpec spec) {
+    return (spec.aggIdProperties() != null && !spec.aggIdProperties().isEmpty());
+  }
+
   private String calculateJsonbExpressionFromPropertyPath(String key) {
     String path =
         Arrays.stream(key.split("\\.")).map(s -> "'" + s + "'").collect(Collectors.joining("."));
@@ -169,7 +173,7 @@ public class PgQueryBuilder {
           }
 
           if (filterByAggregateIds(spec)) {
-            sb.append(AND).append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb");
+            sb.append(" AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb");
           }
 
           if (filterByAggregateIdProperty(spec)) {
@@ -178,7 +182,6 @@ public class PgQueryBuilder {
               sb.append(AND).append(exp).append(" = ? ");
             }
           }
-
           Map<String, String> meta = spec.meta();
           meta.forEach(
               (key, value) ->
@@ -199,10 +202,6 @@ public class PgQueryBuilder {
         });
     String predicatesAsString = String.join(" OR ", predicates);
     return "( " + predicatesAsString + " ) AND " + PgConstants.COLUMN_SER + ">?";
-  }
-
-  private static boolean filterByAggregateIdProperty(FactSpec spec) {
-    return spec.aggIdProperties() != null && !spec.aggIdProperties().isEmpty();
   }
 
   public String createSQL() {

@@ -109,6 +109,7 @@ class PgQueryBuilderTest {
   @Nested
   class WhenCreatingSQL {
 
+    @SneakyThrows
     @Test
     void happyPath() {
       var spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
@@ -194,8 +195,8 @@ WHERE (
                   AND header @> ?::jsonb
                   AND header @> ?::jsonb
                   AND header @> ?::jsonb
-                  AND (payload -> 'myId'::UUID) = ?
-                  AND (payload -> 'schnick' -> 'schnack' -> 'schnuck' -> 'orgId'::UUID) = ?
+                  AND (payload ->> 'myId')::UUID = ?
+                  AND (payload -> 'schnick' -> 'schnack' -> 'schnuck' ->> 'orgId')::UUID = ?
                   AND (header @> ?::jsonb OR header @> ?::jsonb)
                   )
                 )
