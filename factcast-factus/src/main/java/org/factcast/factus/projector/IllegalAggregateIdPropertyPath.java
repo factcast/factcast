@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2025 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus;
+package org.factcast.factus.projector;
 
-import java.lang.annotation.*;
-
-@Retention(RetentionPolicy.RUNTIME)
-@Target(value = ElementType.METHOD)
-public @interface FilterByAggIdProperty {
-  String value();
+public class IllegalAggregateIdPropertyPath extends Exception {
+  public IllegalAggregateIdPropertyPath(String msg) {
+    super(msg);
+  }
 }
