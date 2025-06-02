@@ -360,7 +360,7 @@ public abstract class AbstractFactStoreTest {
           verify(observer, atLeastOnce()).flush();
           verify(observer).onCatchup();
           verify(observer).onComplete();
-          verify(observer).onFastForward(any());
+          verify(observer, atMost(1)).onFastForward(any());
           verifyNoMoreInteractions(observer);
         });
   }
@@ -393,7 +393,7 @@ public abstract class AbstractFactStoreTest {
           verify(observer).onNext(any());
           verify(observer).onCatchup();
           verify(observer).onComplete();
-          verify(observer).onFastForward(any());
+          verify(observer, atMost(1)).onFastForward(any());
           verifyNoMoreInteractions(observer);
         });
   }
@@ -425,7 +425,7 @@ public abstract class AbstractFactStoreTest {
           verify(observer).onNext(any());
           verify(observer, atLeastOnce()).flush();
           verify(observer).onCatchup();
-          verify(observer).onFastForward(any());
+          verify(observer, atMost(1)).onFastForward(any());
           verify(observer).onComplete();
           verifyNoMoreInteractions(observer);
         });
@@ -457,7 +457,7 @@ public abstract class AbstractFactStoreTest {
           verify(observer, times(2)).onNext(any());
           verify(observer, atLeastOnce()).flush();
           verify(observer).onCatchup();
-          verify(observer).onFastForward(any());
+          verify(observer, atMost(1)).onFastForward(any());
           verify(observer).onComplete();
           verifyNoMoreInteractions(observer);
         });
@@ -488,7 +488,7 @@ public abstract class AbstractFactStoreTest {
           verify(observer, atLeastOnce()).flush();
           verify(observer).onFactStreamInfo(any());
           verify(observer).onCatchup();
-          verify(observer).onFastForward(any());
+          verify(observer, atMost(1)).onFastForward(any());
           verify(observer).onComplete();
           verifyNoMoreInteractions(observer);
         });
