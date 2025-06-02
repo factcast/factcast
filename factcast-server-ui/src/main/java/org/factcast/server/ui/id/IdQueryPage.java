@@ -95,11 +95,13 @@ public class IdQueryPage extends VerticalLayout implements HasUrlParameter<Strin
               if (fact.isPresent()) {
                 // Save fact to prevent subsequent queries with the same version
                 this.cachedFact = fact.get();
-                final var availableVersions = newArrayList(AS_PUBLISHED);
-                availableVersions.addAll(
-                    fc.versions(cachedFact.ns(), cachedFact.type()).stream()
-                        .map(String::valueOf)
-                        .toList());
+                final var availableVersions =
+                    newArrayList(
+                        fc.versions(cachedFact.ns(), cachedFact.type()).stream()
+                            .map(String::valueOf)
+                            .sorted(Comparator.reverseOrder())
+                            .toList());
+                availableVersions.add(AS_PUBLISHED);
                 versionSelector.setItems(availableVersions);
                 versionSelectionEnabled = true;
               }
