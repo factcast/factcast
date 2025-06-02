@@ -241,8 +241,6 @@ SELECT ser, header, payload,
 
   @Nested
   class WhenCreatingStateSQL {
-    @BeforeEach
-    void setup() {}
 
     @SneakyThrows
     @Test

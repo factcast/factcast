@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2022 factcast.org
+ * Copyright © 2017-2025 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,37 +15,33 @@
  */
 package org.factcast.core.subscription.observer;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.UUID;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class FastForwardTargetTest {
+class HighWaterMarkTest {
+
+  private HighWaterMark underTest;
 
   @Nested
-  class WhenForingTest {
+  class WhenCheckingIfIsEmpty {
     @Test
-    void createsAnyInstance() {
-      assertThat(FastForwardTarget.forTest()).isNotNull();
+    void trueIfIdNull() {
+      underTest = HighWaterMark.of(null, 42);
+      assertTrue(underTest.isEmpty());
+
+      underTest = HighWaterMark.empty();
+      assertTrue(underTest.isEmpty());
     }
   }
 
-  @Nested
-  class WhenOfing {
-    private final UUID ID = UUID.randomUUID();
-    private final long SER = 67;
-
-    @Test
-    void passesValues() {
-      assertThat(FastForwardTarget.of(ID, SER))
-          .extracting(f -> f.highWaterMark().targetId())
-          .isEqualTo(ID);
-      assertThat(FastForwardTarget.of(ID, SER))
-          .extracting(f -> f.highWaterMark().targetSer())
-          .isEqualTo(SER);
-    }
+  @Test
+  void falseIfIdNotNull() {
+    underTest = HighWaterMark.of(UUID.randomUUID(), 42);
+    assertFalse(underTest.isEmpty());
   }
 }

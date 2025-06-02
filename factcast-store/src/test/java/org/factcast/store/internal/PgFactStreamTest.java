@@ -34,7 +34,7 @@ import org.factcast.core.TestFactStreamPosition;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.subscription.observer.*;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.pipeline.ServerPipeline;
@@ -46,15 +46,13 @@ import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.*;
 import org.mockito.quality.Strictness;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.ServerErrorMessage;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-public class PgFactStreamTest {
+class PgFactStreamTest {
 
   @Mock SubscriptionRequest req;
   @Mock SubscriptionImpl sub;
@@ -92,8 +90,6 @@ public class PgFactStreamTest {
 
     @Mock SubscriptionImpl subscription;
 
-    @Mock final AtomicLong serial = new AtomicLong(0);
-
     @Mock final AtomicBoolean disconnected = new AtomicBoolean(false);
 
     @Mock PgLatestSerialFetcher fetcher;
@@ -114,16 +110,7 @@ public class PgFactStreamTest {
     void noFfwdNotConnected() {
 
       underTest.close();
-      underTest.fastForward(request);
-
-      verifyNoInteractions(pipeline);
-    }
-
-    @Test
-    void noFfwdFromScratch() {
-      when(request.startingAfter()).thenReturn(Optional.empty());
-
-      underTest.fastForward(request);
+      underTest.fastForward(HighWaterMark.of(UUID.randomUUID(), 1000));
 
       verifyNoInteractions(pipeline);
     }
@@ -133,36 +120,30 @@ public class PgFactStreamTest {
       UUID uuid = UUID.randomUUID();
       when(request.startingAfter()).thenReturn(Optional.of(uuid));
       when(idToSerMapper.retrieve(uuid)).thenReturn(10L);
-      when(ffwdTarget.targetId()).thenReturn(null);
 
-      underTest.fastForward(request);
+      underTest.fastForward(HighWaterMark.empty());
 
       verifyNoInteractions(pipeline);
     }
 
     @Test
-    void ffwdIfFactsHaveBeenSent() {
+    void ffwdIfTargetAhead() {
       UUID uuid = UUID.randomUUID();
-      when(request.startingAfter()).thenReturn(Optional.of(uuid));
       when(idToSerMapper.retrieve(uuid)).thenReturn(10L);
       FactStreamPosition target = TestFactStreamPosition.random();
-      when(ffwdTarget.targetId()).thenReturn(target.factId());
-      when(ffwdTarget.targetSer()).thenReturn(target.serial());
 
-      underTest.fastForward(request);
+      UUID targetId = UUID.randomUUID();
+      long targetSer = 1000;
+      underTest.fastForward(HighWaterMark.of(targetId, targetSer));
 
-      verify(pipeline).process(Signal.of(target));
+      verify(pipeline).process(Signal.of(FactStreamPosition.of(targetId, targetSer)));
     }
 
     @Test
     void noFfwdIfTargetBehind() {
-      UUID uuid = UUID.randomUUID();
-      when(request.startingAfter()).thenReturn(Optional.of(uuid));
-      when(idToSerMapper.retrieve(uuid)).thenReturn(10L);
-      when(ffwdTarget.targetId()).thenReturn(UUID.randomUUID());
-      when(ffwdTarget.targetSer()).thenReturn(9L);
+      underTest.serial().set(10);
 
-      underTest.fastForward(request);
+      underTest.fastForward(HighWaterMark.of(UUID.randomUUID(), 9));
 
       verifyNoInteractions(pipeline);
     }
@@ -171,27 +152,11 @@ public class PgFactStreamTest {
     void noFfwdIfTargetBehindConsumed() {
       UUID uuid = UUID.randomUUID();
       when(request.startingAfter()).thenReturn(Optional.empty());
-      when(ffwdTarget.targetId()).thenReturn(UUID.randomUUID());
-      when(ffwdTarget.targetSer()).thenReturn(5L);
       underTest.serial().set(6);
 
-      underTest.fastForward(request);
+      underTest.fastForward(HighWaterMark.of(UUID.randomUUID(), 5));
 
       verifyNoInteractions(pipeline);
-    }
-
-    @Test
-    void ffwdIfTargetAhead() {
-      UUID uuid = UUID.randomUUID();
-      when(request.startingAfter()).thenReturn(Optional.of(uuid));
-      when(idToSerMapper.retrieve(uuid)).thenReturn(10L);
-      FactStreamPosition target = TestFactStreamPosition.random();
-      when(ffwdTarget.targetId()).thenReturn(target.factId());
-      when(ffwdTarget.targetSer()).thenReturn(target.serial());
-
-      underTest.fastForward(request);
-
-      verify(pipeline).process(Signal.of(target));
     }
   }
 

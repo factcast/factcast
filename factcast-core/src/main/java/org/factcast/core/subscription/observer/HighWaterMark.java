@@ -13,13 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal;
+package org.factcast.core.subscription.observer;
 
 import java.util.UUID;
-import lombok.Data;
+import javax.annotation.Nullable;
+import lombok.*;
 
-@Data
+@Value(staticConstructor = "of")
 public class HighWaterMark {
-  private UUID targetId;
-  private long targetSer;
+  @Nullable UUID targetId;
+  long targetSer;
+
+  public static HighWaterMark empty() {
+    return of(null, 0);
+  }
+
+  public boolean isEmpty() {
+    return targetId == null;
+  }
 }
