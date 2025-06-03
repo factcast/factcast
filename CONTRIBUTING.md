@@ -213,7 +213,7 @@ You can be invited to join the team after a few contributions. Please contact th
 
 ## Publishing
 
-I you are a project team member and have the permission to publish factcast artifacts to maven central, make sure you
+If you are a project team member and have the permission to publish factcast artifacts to maven central, make sure you
 set up the local credentials like described here:
 
 https://central.sonatype.org/publish/publish-portal-maven/
