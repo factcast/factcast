@@ -439,3 +439,20 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
+
+  - changeSet:
+      id: issue2645_migration
+      author: benediktkaiser
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: t
+            sql: SELECT count_estimate('SELECT * FROM fact') < 10000000;
+      comment: If you have less than 10mio facts, this will be executed, if not, we kindly ask you to execute this script manually
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2645/create_published_versions_for_existing_events.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true

@@ -32,4 +32,3 @@ CREATE OR REPLACE TRIGGER save_published_schema_version
     ON fact
     FOR EACH ROW
 EXECUTE FUNCTION notifyTypeAndVersionOnInsert();
-
