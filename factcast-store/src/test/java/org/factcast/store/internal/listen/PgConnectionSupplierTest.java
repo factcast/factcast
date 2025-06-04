@@ -22,17 +22,18 @@ import static org.mockito.MockitoAnnotations.*;
 
 import com.google.common.base.Splitter;
 import java.sql.*;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import javax.sql.DataSource;
-import lombok.SneakyThrows;
+import lombok.*;
 import org.apache.tomcat.jdbc.pool.*;
 import org.junit.jupiter.api.*;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.postgresql.jdbc.PgConnection;
 
-public class PgConnectionSupplierTest {
+@ExtendWith(MockitoExtension.class)
+class PgConnectionSupplierTest {
 
   PgConnectionSupplier uut;
 
@@ -40,7 +41,6 @@ public class PgConnectionSupplierTest {
 
   @BeforeEach
   void setUp() {
-    initMocks(this);
     uut = new PgConnectionSupplier(ds);
   }
 
@@ -255,5 +255,33 @@ public class PgConnectionSupplierTest {
     Connection poit = uut.getPooledConnection("poit");
     assertThat(poit).isNotNull().isSameAs(c);
     verify(ps).execute();
+  }
+
+  @Nested
+  class ModifiedSingleConnectionDataSourceTest {
+    @Mock Connection c;
+    @Mock ConnectionModifier cm1;
+    @Mock ConnectionModifier cm2;
+
+    @Test
+    void cleansUpConnection() {
+      var uut = new PgConnectionSupplier.ModifiedSingleConnectionDataSource(c, List.of(cm1));
+      uut.close();
+
+      verify(cm1).beforeReturn(c);
+    }
+
+    @Test
+    void reversesOrder() {
+      InOrder inOrder = inOrder(cm1, cm2);
+      var uut = new PgConnectionSupplier.ModifiedSingleConnectionDataSource(c, List.of(cm1, cm2));
+      inOrder.verify(cm1).afterBorrow(c);
+      inOrder.verify(cm2).afterBorrow(c);
+
+      uut.close();
+
+      inOrder.verify(cm2).beforeReturn(c);
+      inOrder.verify(cm1).beforeReturn(c);
+    }
   }
 }

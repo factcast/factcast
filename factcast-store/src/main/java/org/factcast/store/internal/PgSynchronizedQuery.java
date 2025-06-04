@@ -90,9 +90,9 @@ class PgSynchronizedQuery {
   // the synchronized here is crucial!
   @SuppressWarnings("SameReturnValue")
   public synchronized void run(boolean useIndex) {
-    List<ConnectionFilter> filters = new LinkedList<>();
+    List<ConnectionModifier> filters = new LinkedList<>();
     // TODO add clientid
-    if (!useIndex) filters.add(ConnectionFilter.withBitmapScanDisabled());
+    if (!useIndex) filters.add(ConnectionModifier.withBitmapScanDisabled());
     try (SingleConnectionDataSource ds = connectionSupplier.getPooledAsSingleDataSource(filters)) {
       long latest = latestFetcher.retrieveLatestSer();
       new JdbcTemplate(ds)

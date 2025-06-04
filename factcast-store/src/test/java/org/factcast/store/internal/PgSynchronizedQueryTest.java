@@ -15,7 +15,6 @@
  */
 package org.factcast.store.internal;
 
-import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
@@ -73,7 +72,7 @@ class PgSynchronizedQueryTest {
     Connection con = Mockito.mock(Connection.class);
     PreparedStatement p = mock(PreparedStatement.class);
 
-    ArgumentCaptor<List<ConnectionFilter>> cap = ArgumentCaptor.forClass(List.class);
+    ArgumentCaptor<List<ConnectionModifier>> cap = ArgumentCaptor.forClass(List.class);
     when(connectionSupplier.getPooledAsSingleDataSource(cap.capture())).thenReturn(ds);
     when(ds.getConnection()).thenReturn(con);
     when(con.prepareStatement(anyString())).thenReturn(p);
@@ -94,7 +93,7 @@ class PgSynchronizedQueryTest {
 
     uut.run(true);
 
-    assertThat(cap.getValue()).doesNotContain(ConnectionFilter.withBitmapScanDisabled());
+    assertThat(cap.getValue()).doesNotContain(ConnectionModifier.withBitmapScanDisabled());
   }
 
   @SneakyThrows
@@ -104,7 +103,7 @@ class PgSynchronizedQueryTest {
     Connection con = Mockito.mock(Connection.class);
     PreparedStatement p = mock(PreparedStatement.class);
 
-    ArgumentCaptor<List<ConnectionFilter>> cap = ArgumentCaptor.forClass(List.class);
+    ArgumentCaptor<List<ConnectionModifier>> cap = ArgumentCaptor.forClass(List.class);
     when(connectionSupplier.getPooledAsSingleDataSource(cap.capture())).thenReturn(ds);
     when(ds.getConnection()).thenReturn(con);
     when(con.prepareStatement(anyString())).thenReturn(p);
@@ -122,7 +121,7 @@ class PgSynchronizedQueryTest {
             fetcher,
             statementHolder);
     uut.run(false);
-    assertThat(cap.getValue()).contains(ConnectionFilter.withBitmapScanDisabled());
+    assertThat(cap.getValue()).contains(ConnectionModifier.withBitmapScanDisabled());
   }
 
   @Test

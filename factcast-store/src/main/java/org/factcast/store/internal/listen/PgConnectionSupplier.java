@@ -63,6 +63,7 @@ public class PgConnectionSupplier {
     return c;
   }
 
+  // TODO remove
   private void setConnectionApplicationName(String clientId, Connection c) throws SQLException {
     try (PreparedStatement ps =
         c.prepareStatement("SET application_name='" + applicationName + "|" + clientId + "'"); ) {
@@ -70,6 +71,7 @@ public class PgConnectionSupplier {
     }
   }
 
+  // TODO remove
   public void resetConnectionApplicationName(Connection c) throws SQLException {
     try (PreparedStatement ps =
         c.prepareStatement("SET application_name='" + applicationName + "'"); ) {
@@ -138,23 +140,38 @@ public class PgConnectionSupplier {
 
   @SneakyThrows
   @SuppressWarnings("java:S2077")
-  public SingleConnectionDataSource getPooledAsSingleDataSource(ConnectionFilter... filters) {
+  public SingleConnectionDataSource getPooledAsSingleDataSource(ConnectionModifier... filters) {
     return getPooledAsSingleDataSource(Arrays.asList(filters));
   }
 
   @SneakyThrows
   @SuppressWarnings("java:S2077")
-  public SingleConnectionDataSource getPooledAsSingleDataSource(List<ConnectionFilter> filterList) {
+  public SingleConnectionDataSource getPooledAsSingleDataSource(
+      @NonNull List<ConnectionModifier> filterList) {
     Connection c = ds.getConnection();
-    filterList.forEach(f -> f.onBorrow(c));
-    return new SingleConnectionDataSource(c, true) {
-      @Override
-      public void destroy() {
-        var rev = new ArrayList<>(filterList);
-        Collections.reverse(rev);
-        rev.forEach(f -> f.onReturn(c));
-        super.destroy();
-      }
-    };
+    return new ModifiedSingleConnectionDataSource(
+        c, filterList != null ? filterList : Collections.emptyList());
+  }
+
+  static class ModifiedSingleConnectionDataSource extends SingleConnectionDataSource {
+    private final Connection c;
+    private final List<ConnectionModifier> filterList;
+
+    public ModifiedSingleConnectionDataSource(
+        @NonNull Connection c, @NonNull List<ConnectionModifier> filterList) {
+      super(c, true);
+      this.c = c;
+      this.filterList = filterList;
+
+      filterList.forEach(f -> f.afterBorrow(c));
+    }
+
+    @Override
+    public void destroy() {
+      var rev = new ArrayList<>(filterList);
+      Collections.reverse(rev);
+      rev.forEach(f -> f.beforeReturn(c));
+      super.destroy();
+    }
   }
 }
