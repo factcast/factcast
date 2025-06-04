@@ -25,18 +25,18 @@ import org.factcast.core.subscription.observer.*;
 import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
+import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.*;
 import org.factcast.store.internal.query.*;
 import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 // TODO integrate with PGQuery
 @SuppressWarnings("UnstableApiUsage")
 @Slf4j
 public class PgSubscriptionFactory implements AutoCloseable {
 
-  final JdbcTemplate jdbcTemplate;
+  final PgConnectionSupplier connectionSupplier;
 
   final EventBus eventBus;
 
@@ -54,7 +54,7 @@ public class PgSubscriptionFactory implements AutoCloseable {
   private final int maxPipelineBufferSize;
 
   public PgSubscriptionFactory(
-      JdbcTemplate jdbcTemplate,
+      PgConnectionSupplier connectionSupplier,
       EventBus eventBus,
       PgFactIdToSerialMapper idToSerialMapper,
       PgLatestSerialFetcher fetcher,
@@ -65,7 +65,7 @@ public class PgSubscriptionFactory implements AutoCloseable {
       JSEngineFactory jsEngineFactory,
       PgMetrics metrics,
       PgStoreTelemetry telemetry) {
-    this.jdbcTemplate = jdbcTemplate;
+    this.connectionSupplier = connectionSupplier;
     this.eventBus = eventBus;
     this.idToSerialMapper = idToSerialMapper;
     this.fetcher = fetcher;
@@ -92,7 +92,7 @@ public class PgSubscriptionFactory implements AutoCloseable {
 
     PgFactStream pgsub =
         new PgFactStream(
-            jdbcTemplate,
+            connectionSupplier,
             eventBus,
             idToSerialMapper,
             fetcher,

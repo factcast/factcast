@@ -15,20 +15,21 @@
  */
 package org.factcast.store.internal;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.LoggerContext;
-import java.sql.ResultSet;
+import ch.qos.logback.classic.*;
+import java.sql.*;
+import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
-import org.assertj.core.api.Assertions;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
@@ -36,27 +37,21 @@ import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Answers;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.quality.Strictness;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.ServerErrorMessage;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessResourceFailureException;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
-import slf4jtest.LogLevel;
+import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 @ExtendWith(MockitoExtension.class)
 class PgSynchronizedQueryTest {
 
   PgSynchronizedQuery uut;
-
-  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-  JdbcTemplate jdbcTemplate;
 
   final String sql = "SELECT 42";
 
@@ -69,29 +64,57 @@ class PgSynchronizedQueryTest {
   @Mock PgLatestSerialFetcher fetcher;
   @Mock CurrentStatementHolder statementHolder;
   @Mock ServerPipeline pipeline;
+  @Mock PgConnectionSupplier connectionSupplier;
 
+  @SneakyThrows
   @Test
   void testRunWithIndex() {
+    SingleConnectionDataSource ds = Mockito.mock(SingleConnectionDataSource.class);
+    Connection con = Mockito.mock(Connection.class);
+    PreparedStatement p = mock(PreparedStatement.class);
+
+    ArgumentCaptor<List<ConnectionFilter>> cap = ArgumentCaptor.forClass(List.class);
+    when(connectionSupplier.getPooledAsSingleDataSource(cap.capture())).thenReturn(ds);
+    when(ds.getConnection()).thenReturn(con);
+    when(con.prepareStatement(anyString())).thenReturn(p);
+    ResultSet rs = Mockito.mock(ResultSet.class);
+    Mockito.when(rs.next()).thenReturn(false);
+    when(p.executeQuery()).thenReturn(rs);
+
     uut =
         new PgSynchronizedQuery(
             pipeline,
-            jdbcTemplate,
+            connectionSupplier,
             sql,
             setter,
             () -> true,
             serialToContinueFrom,
             fetcher,
             statementHolder);
+
     uut.run(true);
-    verify(jdbcTemplate, never()).execute(startsWith("SET LOCAL enable_bitmapscan"));
+
+    assertThat(cap.getValue()).doesNotContain(ConnectionFilter.withBitmapScanDisabled());
   }
 
+  @SneakyThrows
   @Test
   void testRunWithoutIndex() {
+    SingleConnectionDataSource ds = Mockito.mock(SingleConnectionDataSource.class);
+    Connection con = Mockito.mock(Connection.class);
+    PreparedStatement p = mock(PreparedStatement.class);
+
+    ArgumentCaptor<List<ConnectionFilter>> cap = ArgumentCaptor.forClass(List.class);
+    when(connectionSupplier.getPooledAsSingleDataSource(cap.capture())).thenReturn(ds);
+    when(ds.getConnection()).thenReturn(con);
+    when(con.prepareStatement(anyString())).thenReturn(p);
+    ResultSet rs = Mockito.mock(ResultSet.class);
+    Mockito.when(rs.next()).thenReturn(false);
+    when(p.executeQuery()).thenReturn(rs);
     uut =
         new PgSynchronizedQuery(
             pipeline,
-            jdbcTemplate,
+            connectionSupplier,
             sql,
             setter,
             () -> true,
@@ -99,7 +122,7 @@ class PgSynchronizedQueryTest {
             fetcher,
             statementHolder);
     uut.run(false);
-    verify(jdbcTemplate).execute(startsWith("SET LOCAL enable_bitmapscan"));
+    assertThat(cap.getValue()).contains(ConnectionFilter.withBitmapScanDisabled());
   }
 
   @Test
@@ -108,20 +131,25 @@ class PgSynchronizedQueryTest {
     uut =
         new PgSynchronizedQuery(
             pipeline,
-            jdbcTemplate,
+            connectionSupplier,
             sql,
             setter,
             () -> true,
             serialToContinueFrom,
             fetcher,
             statementHolder);
-    when(statementHolder.wasCanceled()).thenReturn(false);
+    SingleConnectionDataSource ds = Mockito.mock(SingleConnectionDataSource.class);
+    Connection con = Mockito.mock(Connection.class);
+    PreparedStatement p = mock(PreparedStatement.class);
     DataAccessResourceFailureException exc = new DataAccessResourceFailureException("oh my");
-    doThrow(exc)
-        .when(jdbcTemplate)
-        .query(anyString(), any(PreparedStatementSetter.class), any(RowCallbackHandler.class));
 
-    Assertions.assertThatThrownBy(
+    when(statementHolder.wasCanceled()).thenReturn(false);
+    when(connectionSupplier.getPooledAsSingleDataSource(any(List.class))).thenReturn(ds);
+    when(ds.getConnection()).thenReturn(con);
+    when(con.prepareStatement(anyString())).thenReturn(p);
+    when(p.executeQuery()).thenThrow(exc);
+
+    assertThatThrownBy(
             () -> {
               uut.run(false);
             })
@@ -139,24 +167,31 @@ class PgSynchronizedQueryTest {
     uut =
         new PgSynchronizedQuery(
             pipeline,
-            jdbcTemplate,
+            connectionSupplier,
             sql,
             setter,
             () -> true,
             serialToContinueFrom,
             fetcher,
             statementHolder);
+
+    SingleConnectionDataSource ds = Mockito.mock(SingleConnectionDataSource.class);
+    Connection con = Mockito.mock(Connection.class);
+    PreparedStatement p = mock(PreparedStatement.class);
+    DataAccessResourceFailureException exc = new DataAccessResourceFailureException("oh my");
+
     when(statementHolder.wasCanceled()).thenReturn(true);
-    doThrow(DataAccessResourceFailureException.class)
-        .when(jdbcTemplate)
-        .query(anyString(), any(PreparedStatementSetter.class), any(RowCallbackHandler.class));
+    when(connectionSupplier.getPooledAsSingleDataSource(any(List.class))).thenReturn(ds);
+    when(ds.getConnection()).thenReturn(con);
+    when(con.prepareStatement(anyString())).thenReturn(p);
+    when(p.executeQuery()).thenThrow(exc);
 
     uut.run(false);
 
-    // make sure suppressed exceptzion was trace-logged
+    // make sure suppressed exception was trace-logged
     assertThat(logCaptor.getLogs()).hasSize(1);
     assertThat(logCaptor.getLogEvents().stream())
-        .anyMatch(l -> l.getLevel() == LogLevel.TraceLevel.toString())
+        .anyMatch(l -> Objects.equals(l.getLevel(), Level.TRACE.toString()))
         .isNotEmpty();
   }
 

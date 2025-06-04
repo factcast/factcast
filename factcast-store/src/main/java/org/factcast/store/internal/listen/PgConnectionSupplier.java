@@ -17,13 +17,13 @@ package org.factcast.store.internal.listen;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.sql.*;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 import javax.sql.DataSource;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.jdbc.pool.PoolConfiguration;
 import org.postgresql.jdbc.PgConnection;
+import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 @Slf4j
 public class PgConnectionSupplier {
@@ -134,5 +134,27 @@ public class PgConnectionSupplier {
       }
     }
     return dbp;
+  }
+
+  @SneakyThrows
+  @SuppressWarnings("java:S2077")
+  public SingleConnectionDataSource getPooledAsSingleDataSource(ConnectionFilter... filters) {
+    return getPooledAsSingleDataSource(Arrays.asList(filters));
+  }
+
+  @SneakyThrows
+  @SuppressWarnings("java:S2077")
+  public SingleConnectionDataSource getPooledAsSingleDataSource(List<ConnectionFilter> filterList) {
+    Connection c = ds.getConnection();
+    filterList.forEach(f -> f.onBorrow(c));
+    return new SingleConnectionDataSource(c, true) {
+      @Override
+      public void destroy() {
+        var rev = new ArrayList<>(filterList);
+        Collections.reverse(rev);
+        rev.forEach(f -> f.onReturn(c));
+        super.destroy();
+      }
+    };
   }
 }
