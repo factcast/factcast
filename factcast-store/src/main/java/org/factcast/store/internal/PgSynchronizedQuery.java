@@ -15,6 +15,7 @@
  */
 package org.factcast.store.internal;
 
+import com.google.common.collect.Lists;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -57,6 +58,7 @@ class PgSynchronizedQuery {
 
   @NonNull final RowCallbackHandler rowHandler;
 
+  @NonNull final String debugInfo;
   @NonNull final ServerPipeline pipe;
   @NonNull final AtomicLong serialToContinueFrom;
 
@@ -66,6 +68,7 @@ class PgSynchronizedQuery {
   private final @NonNull PgConnectionSupplier connectionSupplier;
 
   PgSynchronizedQuery(
+      @NonNull String debugInfo,
       @NonNull ServerPipeline pipe,
       @NonNull PgConnectionSupplier connectionSupplier,
       @NonNull String sql,
@@ -74,6 +77,7 @@ class PgSynchronizedQuery {
       @NonNull AtomicLong serialToContinueFrom,
       @NonNull PgLatestSerialFetcher fetcher,
       @NonNull CurrentStatementHolder statementHolder) {
+    this.debugInfo = debugInfo;
     this.pipe = pipe;
     this.serialToContinueFrom = serialToContinueFrom;
     latestFetcher = fetcher;
@@ -90,8 +94,8 @@ class PgSynchronizedQuery {
   // the synchronized here is crucial!
   @SuppressWarnings("SameReturnValue")
   public synchronized void run(boolean useIndex) {
-    List<ConnectionModifier> filters = new LinkedList<>();
-    // TODO add clientid
+    List<ConnectionModifier> filters =
+        Lists.newArrayList(ConnectionModifier.withApplicationName(debugInfo));
     if (!useIndex) filters.add(ConnectionModifier.withBitmapScanDisabled());
     try (SingleConnectionDataSource ds = connectionSupplier.getPooledAsSingleDataSource(filters)) {
       long latest = latestFetcher.retrieveLatestSer();

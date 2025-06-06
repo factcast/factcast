@@ -141,16 +141,15 @@ public class PgConnectionSupplier {
   @SneakyThrows
   @SuppressWarnings("java:S2077")
   public SingleConnectionDataSource getPooledAsSingleDataSource(ConnectionModifier... filters) {
-    return getPooledAsSingleDataSource(Arrays.asList(filters));
+    return getPooledAsSingleDataSource(
+        filters != null ? Arrays.asList(filters) : Collections.emptyList());
   }
 
   @SneakyThrows
   @SuppressWarnings("java:S2077")
   public SingleConnectionDataSource getPooledAsSingleDataSource(
       @NonNull List<ConnectionModifier> filterList) {
-    Connection c = ds.getConnection();
-    return new ModifiedSingleConnectionDataSource(
-        c, filterList != null ? filterList : Collections.emptyList());
+    return new ModifiedSingleConnectionDataSource(ds.getConnection(), filterList);
   }
 
   static class ModifiedSingleConnectionDataSource extends SingleConnectionDataSource {

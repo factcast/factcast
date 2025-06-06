@@ -82,6 +82,7 @@ class PgSynchronizedQueryTest {
 
     uut =
         new PgSynchronizedQuery(
+            "test",
             pipeline,
             connectionSupplier,
             sql,
@@ -112,6 +113,7 @@ class PgSynchronizedQueryTest {
     when(p.executeQuery()).thenReturn(rs);
     uut =
         new PgSynchronizedQuery(
+            "test",
             pipeline,
             connectionSupplier,
             sql,
@@ -129,6 +131,7 @@ class PgSynchronizedQueryTest {
   void test_exception_during_query() {
     uut =
         new PgSynchronizedQuery(
+            "test",
             pipeline,
             connectionSupplier,
             sql,
@@ -165,6 +168,7 @@ class PgSynchronizedQueryTest {
 
     uut =
         new PgSynchronizedQuery(
+            "test",
             pipeline,
             connectionSupplier,
             sql,

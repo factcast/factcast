@@ -47,7 +47,6 @@ import org.springframework.jdbc.core.PreparedStatementSetter;
  *
  * @author <uwe.schaefer@prisma-capacity.eu>
  */
-@SuppressWarnings("UnstableApiUsage")
 @Slf4j
 @RequiredArgsConstructor
 public class PgFactStream {
@@ -90,6 +89,7 @@ public class PgFactStream {
     PreparedStatementSetter setter = q.createStatementSetter(serial);
     PgSynchronizedQuery query =
         new PgSynchronizedQuery(
+            request.debugInfo(),
             pipeline,
             connectionSupplier,
             sql,

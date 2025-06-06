@@ -45,7 +45,7 @@ import org.springframework.dao.DataAccessResourceFailureException;
 
 @ExtendWith(MockitoExtension.class)
 class PGTailIndexManagerImplTest {
-  @Mock private PGTailIndexManagerImpl.CloseableJdbcTemplate jdbc;
+  @Mock private PGTailIndexManagerImpl.ClosingJdbcTemplate jdbc;
   @Mock private PgConnectionSupplier pgConnectionSupplier;
   @Mock private StoreConfigurationProperties props;
 
