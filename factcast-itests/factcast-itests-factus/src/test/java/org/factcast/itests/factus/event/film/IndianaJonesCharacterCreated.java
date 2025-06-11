@@ -28,6 +28,13 @@ import org.factcast.factus.event.EventObject;
 @AllArgsConstructor
 @Specification(ns = "action")
 public class IndianaJonesCharacterCreated implements EventObject {
+  @Override
+  public MetaMap additionalMeta() {
+    MetaMap metaMap = new MetaMap();
+    metaMap.add("director", "lucas");
+    return metaMap;
+  }
+
   UUID aggregateId;
 
   String name;
@@ -39,12 +46,5 @@ public class IndianaJonesCharacterCreated implements EventObject {
 
   public IndianaJonesCharacterCreated(String name) {
     this(UUID.randomUUID(), name);
-  }
-
-  @Override
-  public MetaMap additionalMeta() {
-    MetaMap metaMap = new MetaMap();
-    metaMap.add("director", "lucas");
-    return metaMap;
   }
 }

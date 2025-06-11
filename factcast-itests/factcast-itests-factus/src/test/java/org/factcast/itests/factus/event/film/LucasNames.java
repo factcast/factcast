@@ -26,13 +26,13 @@ import org.factcast.factus.serializer.ProjectionMetaData;
 @ProjectionMetaData(revision = 1)
 public class LucasNames extends LocalManagedProjection {
 
-  @Getter private final Map<UUID, String> userNames = new HashMap<>();
-
   @HandlerFor(ns = "*", type = "*")
   @FilterByMeta(key = "director", value = "lucas")
   void apply(CharacterCreated created) {
     userNames().put(created.aggregateId(), created.name());
   }
+
+  @Getter private final Map<UUID, String> userNames = new HashMap<>();
 
   public int count() {
     return userNames().size();

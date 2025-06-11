@@ -27,7 +27,14 @@ import org.factcast.factus.event.EventObject;
 @NoArgsConstructor
 @AllArgsConstructor
 @Specification(ns = "scifi")
-public class StarwarsCharacterCreated implements EventObject {
+public class StarWarsCharacterCreated implements EventObject {
+  @Override
+  public MetaMap additionalMeta() {
+    MetaMap metaMap = new MetaMap();
+    metaMap.add("director", "lucas");
+    return metaMap;
+  }
+
   UUID aggregateId;
 
   String name;
@@ -37,14 +44,7 @@ public class StarwarsCharacterCreated implements EventObject {
     return Sets.newHashSet(aggregateId);
   }
 
-  public StarwarsCharacterCreated(String name) {
+  public StarWarsCharacterCreated(String name) {
     this(UUID.randomUUID(), name);
-  }
-
-  @Override
-  public MetaMap additionalMeta() {
-    MetaMap metaMap = new MetaMap();
-    metaMap.add("director", "lucas");
-    return metaMap;
   }
 }

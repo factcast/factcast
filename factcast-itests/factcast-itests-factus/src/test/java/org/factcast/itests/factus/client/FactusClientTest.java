@@ -74,10 +74,10 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   @Autowired RedissonClient redissonClient;
 
   @Test
-  void differendNamespaces() {
+  void differentNamespaces() {
     factus.publish(new StarTrekCharacterCreated("Kirk"));
-    factus.publish(new StarwarsCharacterCreated("Han"));
-    factus.publish(new StarwarsCharacterCreated("Luke"));
+    factus.publish(new StarWarsCharacterCreated("Han"));
+    factus.publish(new StarWarsCharacterCreated("Luke"));
     factus.publish(new IndianaJonesCharacterCreated("Indy"));
     factus.publish(new IndianaJonesCharacterCreated("Shorty"));
 
