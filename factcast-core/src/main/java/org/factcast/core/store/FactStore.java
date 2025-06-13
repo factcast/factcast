@@ -54,6 +54,9 @@ public interface FactStore {
   @NonNull
   Set<String> enumerateTypes(@NonNull String ns);
 
+  @NonNull
+  Set<Integer> enumerateVersions(@NonNull String ns, @NonNull String type);
+
   boolean publishIfUnchanged(
       @NonNull List<? extends Fact> factsToPublish, @NonNull Optional<StateToken> token);
 
