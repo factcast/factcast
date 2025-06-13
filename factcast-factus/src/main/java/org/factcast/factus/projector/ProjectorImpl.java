@@ -37,6 +37,7 @@ import org.factcast.factus.projection.*;
 import org.factcast.factus.projection.parameter.*;
 import org.factcast.factus.projection.tx.*;
 import org.springframework.aop.framework.Advised;
+import org.springframework.util.StringUtils;
 
 @Slf4j
 public class ProjectorImpl<A extends Projection> implements Projector<A> {
@@ -502,6 +503,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       spec = filterByMetaExists(m, spec);
       spec = filterByMetaDoesNotExist(m, spec);
       spec = filterByAggIds(m, spec);
+      spec = checkFilterByAggIdProperty(m, spec);
       spec = filterByScript(m, spec);
       return spec;
     }
@@ -521,6 +523,69 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
         }
       }
       return spec;
+    }
+
+    /**
+     * this will only check for applicability of the FilterByAggIdProperty annotation. The actual
+     * pair needs to be created from the instance, rather than statically, as the value (the
+     * aggregate id) is dynamic.
+     */
+    @VisibleForTesting
+    static @NonNull FactSpec checkFilterByAggIdProperty(@NonNull Method m, @NonNull FactSpec spec) {
+      FilterByAggIdProperty annotation = m.getAnnotation(FilterByAggIdProperty.class);
+      if (annotation != null) {
+
+        if (!Aggregate.class.isAssignableFrom(m.getClass()))
+          throw new IllegalAnnotationForTargetClassException(
+              "FilterByAggIdProperty can only be used on classes extending Aggregate, but was found on "
+                  + m.toString());
+
+        if (m.getAnnotation(HandlerFor.class) != null) {
+          log.warn(
+              "Using FilterByAggIdProperty on HandlerFor method "
+                  + m.toString()
+                  + " which means the property cannot be verified.");
+          return spec;
+        }
+
+        // check applicability if param is eventObject
+        Parameter[] params = Objects.requireNonNull(m.getParameters());
+        Class<?> paramType = Objects.requireNonNull(params[0]).getClass();
+        try {
+          verifyPropertyExpressionAgainstClass(annotation.value(), paramType);
+        } catch (IllegalAggregateIdPropertyPath e) {
+          throw new RuntimeException(
+              "FilterByAggIdProperty('"
+                  + annotation.value()
+                  + "') failed to validate on method "
+                  + m,
+              e);
+        }
+      }
+      return spec;
+    }
+
+    @VisibleForTesting
+    static void verifyPropertyExpressionAgainstClass(
+        @NonNull String value, @NonNull Class<?> paramType) throws IllegalAggregateIdPropertyPath {
+      String[] path = value.split("\\.");
+      Class<?> type = paramType;
+      for (int i = 0; i < path.length - 1; i++) {
+        try {
+          type = type.getMethod("get" + StringUtils.capitalize(path[i])).getReturnType();
+        } catch (NoSuchMethodException e) {
+          throw new IllegalAggregateIdPropertyPath(
+              "Cannot resolve property "
+                  + path[i]
+                  + " on type "
+                  + type
+                  + " (full path='"
+                  + value
+                  + "' from "
+                  + type
+                  + ")");
+        }
+      }
     }
 
     private static FactSpec filterByMetaDoesNotExist(@NonNull Method m, @NonNull FactSpec spec) {
