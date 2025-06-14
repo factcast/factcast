@@ -13,22 +13,25 @@ RUN java -Djarmode=tools -jar application.jar extract --layers --destination ext
 FROM openjdk:21-slim
 EXPOSE 9090
 EXPOSE 9443
-RUN mkdir /config
-RUN mkdir /log
+RUN mkdir /application
+RUN mkdir config
+RUN mkdir log
 
-VOLUME /log
-VOLUME /config
-WORKDIR /application
+VOLUME log
+VOLUME config
+
+WORKDIR /
+
 # Copy the extracted jar contents from the builder container into the working directory in the runtime container
 # Every copy step creates a new docker layer
 # This allows docker to only pull the changes it really needs
-COPY --from=builder /builder/extracted/dependencies/ ./
-COPY --from=builder /builder/extracted/spring-boot-loader/ ./
-COPY --from=builder /builder/extracted/snapshot-dependencies/ ./
-COPY --from=builder /builder/extracted/application/ ./
+COPY --from=builder /builder/extracted/dependencies/ application/
+COPY --from=builder /builder/extracted/spring-boot-loader/ application/
+COPY --from=builder /builder/extracted/snapshot-dependencies/ application/
+COPY --from=builder /builder/extracted/application/ application/
 # Execute the CDS training run
-RUN java -XX:ArchiveClassesAtExit=application.jsa -Dspring.context.exit=onRefresh -jar application.jar | true 
+RUN java -XX:ArchiveClassesAtExit=application.jsa -Dspring.context.exit=onRefresh -jar application/application.jar | true 
 # Start the application jar with CDS enabled - this is not the uber jar used by the builder
 # This jar only contains application code and references to the extracted jar files
 # This layout is efficient to start up and CDS friendly
-ENTRYPOINT ["java","-XX:TieredStopAtLevel=1","-Xms1G", "-XX:SharedArchiveFile=application.jsa", "-jar", "application.jar"]
+ENTRYPOINT ["java","-XX:TieredStopAtLevel=1","-Xms1G", "-XX:SharedArchiveFile=application.jsa", "-jar", "application/application.jar"]
