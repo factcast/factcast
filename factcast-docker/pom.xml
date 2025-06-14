@@ -71,7 +71,7 @@
               <goal>repackage</goal>
             </goals>
             <configuration>
-              <executable>true</executable>
+              <executable>false</executable>
             </configuration>
           </execution>
         </executions>
