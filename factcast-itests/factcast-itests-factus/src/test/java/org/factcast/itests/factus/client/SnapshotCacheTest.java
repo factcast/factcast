@@ -28,9 +28,11 @@ import org.factcast.factus.snapshot.SnapshotIdentifier;
 import org.factcast.itests.factus.proj.UserV1;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.annotation.DirtiesContext;
 
 @Slf4j
 @RequiredArgsConstructor
+@DirtiesContext
 public abstract class SnapshotCacheTest extends AbstractFactCastIntegrationTest {
 
   final SnapshotCache repository;

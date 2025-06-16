@@ -27,9 +27,11 @@ import org.factcast.core.util.FactCastJson;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 
 @ContextConfiguration(classes = TransformationApplication.class)
+@DirtiesContext
 public class TransformationTest extends AbstractFactCastIntegrationTest {
 
   @Autowired FactCast fc;

@@ -30,6 +30,7 @@ import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
@@ -40,6 +41,7 @@ import org.springframework.test.context.ContextConfiguration;
       RedissonSnapshotCacheAutoConfiguration.class
     })
 @Slf4j
+@DirtiesContext
 class FactusClientTestWithSchemaRegistry extends AbstractFactCastIntegrationTest {
 
   @Autowired Factus ec;

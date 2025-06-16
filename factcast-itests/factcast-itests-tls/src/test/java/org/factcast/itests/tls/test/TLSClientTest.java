@@ -25,9 +25,11 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 
 @ContextConfiguration(classes = TLSApplication.class)
+@DirtiesContext
 public class TLSClientTest extends AbstractFactCastIntegrationTest {
 
   @Autowired FactCast fc;

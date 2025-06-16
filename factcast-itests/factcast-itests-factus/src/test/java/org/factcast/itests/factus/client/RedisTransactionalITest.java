@@ -53,6 +53,7 @@ import org.redisson.api.RTransaction;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 
@@ -60,6 +61,7 @@ import org.testcontainers.shaded.org.awaitility.Awaitility;
 @ContextConfiguration(
     classes = {TestFactusApplication.class, RedissonProjectionConfiguration.class})
 @Slf4j
+@DirtiesContext
 public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
   @Autowired Factus factus;
   @Autowired RedissonClient redissonClient;

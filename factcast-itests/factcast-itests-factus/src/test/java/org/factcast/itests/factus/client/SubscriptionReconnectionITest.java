@@ -46,6 +46,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 
@@ -57,6 +58,7 @@ import org.springframework.test.context.TestPropertySource;
           + SubscriptionReconnectionITest.NUMBER_OF_ATTEMPTS,
     })
 @Slf4j
+@DirtiesContext
 class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
   static final int NUMBER_OF_ATTEMPTS = 30;
 

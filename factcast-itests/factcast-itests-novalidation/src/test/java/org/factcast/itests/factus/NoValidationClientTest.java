@@ -25,9 +25,11 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 
 @ContextConfiguration(classes = NoValidationClient.class)
+@DirtiesContext
 public class NoValidationClientTest extends AbstractFactCastIntegrationTest {
 
   @Autowired FactCast fc;

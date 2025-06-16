@@ -50,6 +50,7 @@ import org.springframework.test.context.TestPropertySource;
       "factcast.grpc.client.id=d38cb1af-ea5c-49d7-8aca-cd74cdcf75c9",
     })
 @Slf4j
+@DirtiesContext
 class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
   static final int NUMBER_OF_ATTEMPTS = Integer.MAX_VALUE;
   private static final int MAX_FACTS = 10000;

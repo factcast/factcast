@@ -50,6 +50,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.*;
 import org.redisson.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 
@@ -60,6 +61,7 @@ import org.testcontainers.shaded.org.awaitility.Awaitility;
       RedissonSnapshotCacheAutoConfiguration.class
     })
 @Slf4j
+@DirtiesContext
 class FactusClientTest extends AbstractFactCastIntegrationTest {
   private static final long WAIT_TIME_FOR_ASYNC_FACT_DELIVERY = 1000;
 

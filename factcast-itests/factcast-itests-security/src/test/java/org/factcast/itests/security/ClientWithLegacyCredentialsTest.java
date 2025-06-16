@@ -26,12 +26,14 @@ import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.FactcastTestConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 
 @ContextConfiguration(classes = {TestApplication.class})
 @TestPropertySource(locations = "/application-legacy-creds.properties")
 @Slf4j
+@DirtiesContext
 @FactcastTestConfig(securityEnabled = true)
 class ClientWithLegacyCredentialsTest extends AbstractFactCastIntegrationTest {
   @Autowired FactCast fc;

@@ -48,6 +48,7 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -55,6 +56,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 @SpringBootTest
 @ContextConfiguration(classes = TestFactusApplication.class)
 @EnableAutoConfiguration
+@DirtiesContext
 @Slf4j
 public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
   @Autowired JdbcTemplate jdbcTemplate;

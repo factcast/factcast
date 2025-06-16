@@ -36,6 +36,7 @@ import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.*;
 
 @SpringBootTest
@@ -43,6 +44,7 @@ import org.springframework.test.context.*;
     classes = {TestFactusApplication.class, RedissonProjectionConfiguration.class})
 @TestPropertySource(properties = {"factcast.grpc.client.ignore-duplicate-facts:true"})
 @Slf4j
+@DirtiesContext
 class PublishDuplicateIgnoreTest extends AbstractFactCastIntegrationTest {
 
   @Autowired FactCast factCast;
