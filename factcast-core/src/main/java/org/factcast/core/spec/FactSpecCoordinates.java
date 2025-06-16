@@ -76,6 +76,7 @@ public class FactSpecCoordinates {
     return new FactSpecCoordinates(_ns, _type, version);
   }
 
+  @SuppressWarnings("java:S1066")
   public boolean matches(@NonNull FactSpecCoordinates key) {
     if (key.ns.equals(ns) || key.ns.equals("*") || ns.equals("*")) {
       if (key.type.equals(type) || key.type.equals("*") || type.equals("*")) {
