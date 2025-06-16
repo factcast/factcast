@@ -27,9 +27,11 @@ import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.ByteArrayCodec;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
+@DirtiesContext
 @ContextConfiguration(
     classes = {TestFactusApplication.class, RedissonSnapshotCacheAutoConfiguration.class})
 public class RedissonSnapshotCacheTest extends SnapshotCacheTest {
