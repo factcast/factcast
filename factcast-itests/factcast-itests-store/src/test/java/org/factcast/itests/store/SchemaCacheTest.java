@@ -41,6 +41,7 @@ import org.springframework.util.StreamUtils;
 @ExtendWith(MockitoExtension.class)
 @SpringBootTest
 @IntegrationTest
+@DirtiesContext
 public class SchemaCacheTest {
 
   private static final long TIMEOUT = 10;

@@ -12,9 +12,11 @@ import org.factcast.schema.registry.cli.validation.ProjectError
 import org.factcast.schema.registry.cli.validation.validators.ProjectStructureValidationService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.annotation.DirtiesContext
 import java.nio.file.Paths
 
 @SpringBootTest
+@DirtiesContext
 class ProjectStructureValidationServiceIntTest : StringSpec() {
 
     val dummyPath = Paths.get(".")

@@ -42,6 +42,7 @@ import org.springframework.test.annotation.DirtiesContext;
 @ExtendWith(MockitoExtension.class)
 @SpringBootTest
 @IntegrationTest
+@DirtiesContext
 public class TransformationCacheTest {
 
   @Autowired FactCast fc;
