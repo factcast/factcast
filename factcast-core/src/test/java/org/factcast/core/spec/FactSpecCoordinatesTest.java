@@ -50,6 +50,98 @@ class FactSpecCoordinatesTest {
       assertThat(res.type()).isEqualTo("fact");
       assertThat(res.version()).isEqualTo(9);
     }
+
+    @Test
+    void matchesBaseline() {
+      FactSpecCoordinates c1 = FactSpecCoordinates.from(new SomeFact());
+      FactSpecCoordinates c2 = FactSpecCoordinates.from(new SomeFact());
+
+      assertThat(c1.matches(c1)).isTrue();
+      assertThat(c2.matches(c2)).isTrue();
+      assertThat(c1.matches(c2)).isTrue();
+      assertThat(c2.matches(c1)).isTrue();
+    }
+
+    @Test
+    void matchesWildcardType() {
+      FactSpecCoordinates c1 = FactSpecCoordinates.from(new SomeFact());
+      FactSpecCoordinates c2 = FactSpecCoordinates.from(new SomeFact()).withType("*");
+
+      assertThat(c1.matches(c1)).isTrue();
+      assertThat(c2.matches(c2)).isTrue();
+      assertThat(c1.matches(c2)).isTrue();
+      assertThat(c2.matches(c1)).isTrue();
+    }
+
+    @Test
+    void matchesWildcardNs() {
+      FactSpecCoordinates c1 = FactSpecCoordinates.from(new SomeFact());
+      FactSpecCoordinates c2 = FactSpecCoordinates.from(new SomeFact()).withNs("*");
+
+      assertThat(c1.matches(c1)).isTrue();
+      assertThat(c2.matches(c2)).isTrue();
+      assertThat(c1.matches(c2)).isTrue();
+      assertThat(c2.matches(c1)).isTrue();
+    }
+
+    @Test
+    void matchesWildcardVersion() {
+      FactSpecCoordinates c1 = FactSpecCoordinates.from(new SomeFact());
+      FactSpecCoordinates c2 = FactSpecCoordinates.from(new SomeFact()).withVersion(0);
+
+      assertThat(c1.matches(c1)).isTrue();
+      assertThat(c2.matches(c2)).isTrue();
+      assertThat(c1.matches(c2)).isTrue();
+      assertThat(c2.matches(c1)).isTrue();
+    }
+
+    @Test
+    void matchesWildcardNsAndType() {
+      FactSpecCoordinates c1 = FactSpecCoordinates.from(new SomeFact());
+      FactSpecCoordinates c2 = FactSpecCoordinates.from(new SomeFact()).withNs("*").withType("*");
+
+      assertThat(c1.matches(c1)).isTrue();
+      assertThat(c2.matches(c2)).isTrue();
+      assertThat(c1.matches(c2)).isTrue();
+      assertThat(c2.matches(c1)).isTrue();
+    }
+
+    @Test
+    void matchesDifferentType() {
+      FactSpecCoordinates c1 = FactSpecCoordinates.from(new SomeFact());
+      FactSpecCoordinates c2 = FactSpecCoordinates.from(new SomeFact()).withType("newType");
+
+      assertThat(c1.matches(c2)).isFalse();
+      assertThat(c2.matches(c1)).isFalse();
+    }
+
+    @Test
+    void matchesDifferentNs() {
+      FactSpecCoordinates c1 = FactSpecCoordinates.from(new SomeFact());
+      FactSpecCoordinates c2 = FactSpecCoordinates.from(new SomeFact()).withNs("newNs");
+
+      assertThat(c1.matches(c2)).isFalse();
+      assertThat(c2.matches(c1)).isFalse();
+    }
+
+    @Test
+    void matchesDifferentVersion() {
+      FactSpecCoordinates c1 = FactSpecCoordinates.from(new SomeFact());
+      FactSpecCoordinates c2 = FactSpecCoordinates.from(new SomeFact()).withVersion(3);
+
+      assertThat(c1.matches(c2)).isFalse();
+      assertThat(c2.matches(c1)).isFalse();
+    }
+
+    @Test
+    void matchesDifferentNsAndType() {
+      FactSpecCoordinates c1 = FactSpecCoordinates.from(new SomeFact());
+      FactSpecCoordinates c2 =
+          FactSpecCoordinates.from(new SomeFact()).withNs("newNs").withType("newType");
+
+      assertThat(c1.matches(c2)).isFalse();
+      assertThat(c2.matches(c1)).isFalse();
+    }
   }
 
   static class SomeFact extends TestFact {
