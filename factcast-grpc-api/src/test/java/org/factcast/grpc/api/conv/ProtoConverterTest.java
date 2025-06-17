@@ -31,6 +31,7 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.grpc.api.ConditionalPublishRequest;
+import org.factcast.grpc.api.EnumerateVersionsRequest;
 import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.FactStoreProto.*;
@@ -383,6 +384,28 @@ public class ProtoConverterTest {
     String s2 = uut.fromProto(uut.toProto(s1));
 
     assertSame(s1, s2);
+  }
+
+  @Test
+  public void testFromProtoMSG_IntSet() {
+    assertThrows(NullPointerException.class, () -> uut.toProtoIntSet((Set<Integer>) null));
+
+    HashSet<Integer> set1 = Sets.newHashSet(1, 2);
+    Set<Integer> set2 = uut.fromProtoIntSet(uut.toProtoIntSet(set1));
+
+    assertNotSame(set1, set2);
+    assertEquals(set1, set2);
+  }
+
+  @Test
+  public void testToProtoMSG_NsAndType() {
+    assertThrows(NullPointerException.class, () -> uut.toProto((EnumerateVersionsRequest) null));
+
+    EnumerateVersionsRequest req = new EnumerateVersionsRequest("foo", "bar");
+    EnumerateVersionsRequest returned = uut.fromProto(uut.toProto(req));
+
+    assertNotSame(req, returned);
+    assertEquals(req, returned);
   }
 
   @Test

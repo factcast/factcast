@@ -68,7 +68,7 @@ public class FactRepositoryImplTest {
       UUID id = UUID.randomUUID();
       IdQueryBean q = new IdQueryBean();
       q.setId(id);
-      q.setVersion(null);
+      q.setVersion(0);
       Assertions.assertThat(underTest.findBy(q)).isEmpty();
 
       verify(fs).fetchByIdAndVersion(id, 0);
@@ -176,6 +176,29 @@ public class FactRepositoryImplTest {
       when(securityService.canRead(ns)).thenReturn(true);
       when(fs.enumerateTypes(ns)).thenReturn(Set.of("t3", "t1z", "t2z"));
       Assertions.assertThat(underTest.types(ns, "z")).containsExactly("t1z", "t2z");
+    }
+  }
+
+  @Nested
+  class WhenGettingVersions {
+    private final String ns = "ns";
+    private final String type = "type";
+
+    @BeforeEach
+    void setup() {}
+
+    @Test
+    void emptyOnLackingPermissions() {
+      when(securityService.canRead(ns)).thenReturn(false);
+      Assertions.assertThat(underTest.versions(ns, type)).isEmpty();
+    }
+
+    @Test
+    void sorts() {
+      when(securityService.canRead(ns)).thenReturn(true);
+      when(fs.enumerateVersions(ns, type)).thenReturn(Set.of(2, 1, 3));
+      Assertions.assertThat(underTest.versions(ns, type)).containsExactly(1, 2, 3);
+      Assertions.assertThat(underTest.versions(ns, "foo")).isEmpty();
     }
   }
 

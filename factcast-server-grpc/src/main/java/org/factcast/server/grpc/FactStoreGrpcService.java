@@ -62,7 +62,7 @@ import org.springframework.security.core.context.*;
 @SuppressWarnings("all")
 public class FactStoreGrpcService extends RemoteFactStoreImplBase implements InitializingBean {
 
-  public static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 7, 0);
+  public static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 8, 0);
 
   static final AtomicLong subscriptionIdStore = new AtomicLong();
 
@@ -368,6 +368,22 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
     assertCanRead(ns);
     Set<String> types = store.enumerateTypes(ns);
     responseObserver.onNext(converter.toProto(types));
+    responseObserver.onCompleted();
+  }
+
+  @Override
+  @Secured(FactCastAuthority.AUTHENTICATED)
+  public void enumerateVersions(
+      MSG_NsAndType request, StreamObserver<MSG_IntSet> responseObserver) {
+    initialize(responseObserver);
+
+    enableResponseCompression(responseObserver);
+    EnumerateVersionsRequest req = converter.fromProto(request);
+    String ns = req.ns();
+    assertCanRead(ns);
+
+    Set<Integer> versions = store.enumerateVersions(ns, req.type());
+    responseObserver.onNext(converter.toProtoIntSet(versions));
     responseObserver.onCompleted();
   }
 

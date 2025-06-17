@@ -30,6 +30,7 @@ import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.grpc.api.ConditionalPublishRequest;
+import org.factcast.grpc.api.EnumerateVersionsRequest;
 import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Type;
@@ -238,6 +239,27 @@ public class ProtoConverter {
   @NonNull
   public MSG_StringSet toProto(@NonNull Set<String> set) {
     return MSG_StringSet.newBuilder().addAllEmbeddedString(set).build();
+  }
+
+  @NonNull
+  public Set<Integer> fromProtoIntSet(@NonNull MSG_IntSet set) {
+    List<Integer> iList = set.getEmbeddedIntegerList();
+    return new HashSet<>(iList);
+  }
+
+  @NonNull
+  public MSG_IntSet toProtoIntSet(@NonNull Set<Integer> set) {
+    return MSG_IntSet.newBuilder().addAllEmbeddedInteger(set).build();
+  }
+
+  @NonNull
+  public EnumerateVersionsRequest fromProto(@NonNull MSG_NsAndType request) {
+    return new EnumerateVersionsRequest(request.getNs(), request.getType());
+  }
+
+  @NonNull
+  public MSG_NsAndType toProto(@NonNull EnumerateVersionsRequest request) {
+    return MSG_NsAndType.newBuilder().setNs(request.ns()).setType(request.type()).build();
   }
 
   @NonNull
