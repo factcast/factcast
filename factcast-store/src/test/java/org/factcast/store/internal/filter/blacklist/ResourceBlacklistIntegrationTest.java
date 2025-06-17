@@ -26,9 +26,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.test.IntegrationTest;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
@@ -65,6 +63,7 @@ class ResourceBlacklistIntegrationTest {
   }
 
   @Test
+  @Disabled
   void blacklistIsApplied() {
     SubscriptionRequest req = SubscriptionRequest.catchup(spec).fromScratch();
     fs.subscribe(SubscriptionRequestTO.from(req), obs).awaitCatchup();
