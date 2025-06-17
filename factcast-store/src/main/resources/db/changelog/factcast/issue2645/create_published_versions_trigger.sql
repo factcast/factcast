@@ -1,7 +1,7 @@
 -- on fact insert we're saving the type and version of the fact to
 -- prevent extensive queries when enumerating them later.
 
-CREATE TABLE IF NOT EXISTS publishedschemaversions
+CREATE TABLE IF NOT EXISTS published_schema_versions
 (
     ns      varchar(255),
     type    varchar(255),
@@ -20,7 +20,7 @@ BEGIN
     type := NEW.header ->> 'type';
     version := NEW.header ->> 'version';
 
-    INSERT INTO publishedschemaversions (ns, type, version)
+    INSERT INTO published_schema_versions (ns, type, version)
     VALUES (ns, type, version)
     ON CONFLICT DO NOTHING;
     RETURN NULL; -- result is ignored since this is an AFTER trigger

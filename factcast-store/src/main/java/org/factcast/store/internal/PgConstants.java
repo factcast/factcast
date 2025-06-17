@@ -37,7 +37,7 @@ public class PgConstants {
 
   public static final String TABLE_DATE2SERIAL = "date2serial";
 
-  public static final String TABLE_PUBLISHED_SCHEMA_VERSIONS = "publishedschemaversions";
+  public static final String TABLE_PUBLISHED_SCHEMA_VERSIONS = "published_schema_versions";
 
   public static final String TAIL_INDEX_NAME_PREFIX = "idx_fact_tail_";
 
