@@ -35,9 +35,7 @@ runtime.
 In order to fulfill the above requirements, we could imaging to just add the new projection as a different class to 
 our application, deploy, wait for it to catch up, flip a toggle and remove the old projection in the next deployment.
 
-Easy.
-
-There are some drawbacks, though:
+There are some drawbacks with this approach, though:
 
 #### You may run out of good names
 
