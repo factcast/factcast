@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
@@ -36,6 +37,7 @@ import org.factcast.server.ui.report.ReportFilterBean;
 import org.factcast.server.ui.security.SecurityService;
 import org.factcast.server.ui.views.filter.FilterBean;
 
+@Slf4j
 @Timed(value = UiMetrics.TIMER_METRIC_NAME)
 @RequiredArgsConstructor
 public class FactRepositoryImpl implements FactRepository {
@@ -84,6 +86,10 @@ public class FactRepositoryImpl implements FactRepository {
   @Override
   public List<Integer> versions(@NonNull String namespace, @NonNull String type) {
     if (!securityService.canRead(namespace)) {
+      log.warn(
+          "User requested to enumerate versions for namespace {} and type {} without read permissions.",
+          namespace,
+          type);
       return Collections.emptyList();
     }
 
