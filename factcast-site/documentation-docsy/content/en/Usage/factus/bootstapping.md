@@ -5,50 +5,46 @@ weight: 1800
 ---
 
 Imagine the following scenario:
-You have a subscribed projection with externalized state (e.g. in a relational DB) which contains a lot of events and
-backs a user-facing functionality in the frontend (e.g. reporting table). After we made some changes to one of the
-consumed Facts or changed the way the projection handles its Facts it's required to reconsume all events, which is
-initiated by increasing its revision.
-The problem is, depending on the size of your Fact Stream and the complexity of the event handlers, a projection might
-take a long time (several hours or even days) to fully read the entire history from scratch. But we neither want to
-prolong the deployment of the new service instance until the projection caught up, nor ignore the fact that customer
-experience is impacted because our reporting table will fill up slowly over time.
+You have a subscribed projection with externalized state (e.g., in a relational database) that processes a large number
+of events and supports a user-facing frontend feature (e.g., a reporting table). After making changes to one of the
+consumed Facts or modifying how the projection handles its Facts, it becomes necessary to reconsume the entire event
+stream from scratch. This is typically triggered by increasing the projection’s revision.
 
-This scenario can be solved by implementing a way to rebuild the read model asynchronously in the background which we
-call **bootstrapping** and that is described in this section.
+This situation can be addressed by implementing a mechanism to rebuild the read model asynchronously in the background,
+a process we refer to as **bootstrapping**, which is described in this section.
 
 ## Considerations
 
-Before describing the approach how to implement bootstrapping on a projection level, there are some considerations
-that need to be taken care of:
+Before diving into how to implement bootstrapping at the projection level, there are several important considerations:
 
-- To bootstrap a projection, it needs to be deployed and running and requires that the Factus client is connected to
-  the FactCast server so that it can handle events. At the same time, we don't want the projection to handle any
-  requests from users, messages from queues, quartz jobs etc.
-- The process of bootstrapping can take some time. Therefore, it might be a good option to deploy a standalone version
-  of the service. This way it does not interfere with or block regular deployments while it is in progress.
+- To bootstrap a projection, it must be deployed and running, with the Factus client connected to the FactCast server so
+  it can receive events. At the same time, we must prevent the projection from handling any user-facing requests,
+  processing messages from queues, executing Quartz jobs, etc.
+- Since bootstrapping may take a significant amount of time, it is often best to deploy a standalone version of the
+  service. This avoids blocking or interfering with regular deployments during the process.
 
 ## Example-Approach
 
-Taking into account the considerations above, we can implement bootstrapping in a way that it is isolated from
-regular deployments and does not interfere with other projections by deploying a separated instance whoose sole purpose
-it is to update the projection.
+Taking these considerations into account, we can implement bootstrapping in a way that isolates it from regular
+deployments and other projections. This is achieved by deploying a separate instance whose sole purpose is to update the
+projection.
 
-WWhen taking this approach it is important to ensure that while the projection is bootstrapped no other subscribed
-projection should be subscribed. The reason is that once a write lock of another projection is acquired by the
-bootstrapping instance, any instance created by a regular deployment that happends in between it won't be able to quire
-the lock until the bootstrapping instance is shutdown. This could interfere with any update or rollback of another
-projection of the regularly deployed service during bootstrapping.
+When following this approach, it is important to ensure that no other subscribed projections are active while
+bootstrapping is in progress. The reason is that, once the bootstrapping instance acquires the write lock for a
+projection, any instance from a regular deployment that starts in the meantime will be unable to obtain the lock until
+the bootstrapping instance is shut down. This could interfere with the update or rollback of other projections in the
+regularly deployed service during bootstrapping.
 
-The following steps outline the approach:
+Here is a step-by-step outline of the approach:
 
-- Create a new service instance dedicated to bootstrapping the projection. This instance should not be started as part
-  of the regular deployment process. But for example by a dedicated deployment job or script.
-- Mark the projection for bootstrapping by setting a flag in the configuration or environment variable. At the same time
-  this flag should disable all other subscribed projections. We recommend pass a tag with the merge request id to the
-  bootstrapping configuration to ensure only one instance can be deployed bootstrapping that projection at a time.
-- Configure a service profile for bootstrapping that disables all processes like liquibase, quartz jobs, etc.
-- Adapt the health check configuration to ensure that the bootstrapping instance is not considered healthy until the
-  bootstrapping process is finished. This way it won't be picked up by load balancers or service discovery.
+- Create a dedicated service instance for bootstrapping the projection. This instance should not be part of the regular
+  deployment pipeline but should instead be started by a dedicated deployment job or script.
+- Mark the projection for bootstrapping by setting a flag in the configuration or as an environment variable. This flag
+  should also disable all other subscribed projections. We recommend passing a tag (e.g., the merge request ID) to the
+  bootstrapping configuration to ensure that only one instance is bootstrapping the projection at any given time.
+- Configure a dedicated service profile for bootstrapping that disables unrelated components such as Liquibase, Quartz
+  jobs, etc.
+- Adjust the health check configuration so that the bootstrapping instance is not considered healthy until the process
+  is complete. This prevents it from being registered with load balancers or service discovery.
 
-Once the bootstrapping is finished, the service instance can be stopped and the regular deployment process can continue.
+Once bootstrapping is complete, the service instance can be stopped, and regular deployments can resume as usual.
