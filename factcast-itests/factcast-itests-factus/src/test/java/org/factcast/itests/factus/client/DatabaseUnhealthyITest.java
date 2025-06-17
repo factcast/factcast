@@ -37,13 +37,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
 @ContextConfiguration(classes = TestFactusApplication.class)
 @Slf4j
-@DirtiesContext
 class DatabaseUnhealthyITest extends AbstractFactCastIntegrationTest {
   @Autowired Factus factus;
   PostgresqlProxy proxy;

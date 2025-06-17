@@ -47,7 +47,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 import software.amazon.awssdk.core.internal.waiters.ResponseOrException;
@@ -61,7 +60,6 @@ import software.amazon.awssdk.services.dynamodb.waiters.DynamoDbWaiter;
 @SpringBootTest
 @ContextConfiguration(classes = {TestFactusApplication.class, DynamoProjectionConfiguration.class})
 @Slf4j
-@DirtiesContext
 class DynamoITest extends AbstractFactCastIntegrationTest {
   @Autowired Factus factus;
   @Autowired DynamoDbClient dynamoDbClient;

@@ -21,9 +21,7 @@ import org.factcast.server.ui.AbstractBrowserTest;
 import org.factcast.server.ui.example.ExampleUiServer;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
 
-@DirtiesContext
 @SpringBootTest(
     classes = ExampleUiServer.class,
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)

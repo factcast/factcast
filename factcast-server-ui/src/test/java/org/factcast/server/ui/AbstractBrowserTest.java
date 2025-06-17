@@ -30,7 +30,6 @@ import org.factcast.server.ui.example.ExampleUiServer;
 import org.junit.jupiter.api.*;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.test.annotation.DirtiesContext;
 
 @SpringBootTest(
     classes = ExampleUiServer.class,
@@ -38,7 +37,6 @@ import org.springframework.test.annotation.DirtiesContext;
 @Tag("uitest")
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 @Slf4j
-@DirtiesContext
 public abstract class AbstractBrowserTest {
   @LocalServerPort protected int port;
 

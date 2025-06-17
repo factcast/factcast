@@ -36,12 +36,10 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
 
 @SpringBootTest
 @Slf4j
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-@DirtiesContext
 class FactusExtensionProxyFeatureTest extends AbstractFactCastIntegrationTest {
   public static final long LATENCY = 1000L;
   @Autowired Factus factus;

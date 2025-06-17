@@ -34,14 +34,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.util.StreamUtils;
 
 @ExtendWith(MockitoExtension.class)
 @SpringBootTest
 @IntegrationTest
-@DirtiesContext
 public class SchemaCacheTest {
 
   private static final long TIMEOUT = 10;
@@ -53,7 +51,6 @@ public class SchemaCacheTest {
   @MockitoSpyBean PgSchemaStoreChangeListener listener;
 
   @Nested
-  @DirtiesContext
   class WhenDeletingFromSchemaStore {
     @Test
     void schemaCacheIsInvalidated() throws Exception {
@@ -102,7 +99,6 @@ public class SchemaCacheTest {
   }
 
   @Nested
-  @DirtiesContext
   class WhenUpdatingTransformationStore {
     @Test
     void schemaCacheIsInvalidated() throws Exception {
@@ -173,7 +169,6 @@ public class SchemaCacheTest {
   }
 
   @Nested
-  @DirtiesContext
   class WhenInsertingIntoSchemaStore {
     @Test
     void cachedEmptyOptionalInSchemaCacheIsInvalidated() throws Exception {

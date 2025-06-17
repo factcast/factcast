@@ -26,14 +26,12 @@ import org.factcast.test.FactcastTestConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 
 @Slf4j
 @FactcastTestConfig(factcastVersion = "latest")
 @SpringBootTest
 @ContextConfiguration(classes = TestFactusApplication.class)
-@DirtiesContext
 public class StateTokenTest_Latest extends AbstractFactCastIntegrationTest {
   @Autowired FactCast fc;
 

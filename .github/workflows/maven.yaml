@@ -48,7 +48,7 @@ jobs:
       run: './mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }}'
     - id: 'step-7'
       name: 'Test - Integration'
-      run: './mvnw -B verify -DskipUnitTests'
+      run: './mvnw -B verify -DskipUnitTests -Dspring-boot.run.arguments="--debug"'
   postgres-compatibility:
     runs-on: 'ubuntu-latest'
     strategy:

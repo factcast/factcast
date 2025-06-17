@@ -30,11 +30,9 @@ import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
 
 @SpringBootTest
 @Slf4j
-@DirtiesContext
 public class FactusVariousHandlerParametersDemoITest extends AbstractFactCastIntegrationTest {
 
   @Autowired Factus factus;

@@ -31,7 +31,6 @@ import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 
 @ContextConfiguration(
@@ -39,7 +38,6 @@ import org.springframework.test.context.ContextConfiguration;
       TestFactusApplication.class, // this broke the inner class instantiation
     })
 @Slf4j
-@DirtiesContext
 class SimpleRoundtripTest extends AbstractFactCastIntegrationTest {
 
   @Autowired Factus factus;

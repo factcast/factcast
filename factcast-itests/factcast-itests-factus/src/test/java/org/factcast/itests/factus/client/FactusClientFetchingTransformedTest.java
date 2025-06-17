@@ -36,13 +36,11 @@ import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
 @ContextConfiguration(classes = TestFactusApplication.class)
 @Slf4j
-@DirtiesContext
 class FactusClientFetchingTransformedTest extends AbstractFactCastIntegrationTest {
 
   private static final int MAX = 10000;

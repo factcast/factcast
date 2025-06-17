@@ -37,11 +37,9 @@ import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.FactcastTestConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.annotation.DirtiesContext;
 
 @Slf4j
 @FactcastTestConfig(factcastVersion = "latest")
-@DirtiesContext
 public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
 
   public static final int LATCH_TIMEOUT = 3000;

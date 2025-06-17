@@ -38,7 +38,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 
@@ -50,7 +49,6 @@ import org.springframework.test.context.TestPropertySource;
       "factcast.grpc.client.id=d38cb1af-ea5c-49d7-8aca-cd74cdcf75c9",
     })
 @Slf4j
-@DirtiesContext
 class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
   static final int NUMBER_OF_ATTEMPTS = Integer.MAX_VALUE;
   private static final int MAX_FACTS = 10000;
@@ -73,7 +71,6 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
   }
 
   @SneakyThrows
-  @DirtiesContext
   @Test
   void testRetryBehaviorWithoutResponse() {
 
@@ -101,7 +98,6 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
   }
 
   @SneakyThrows
-  @DirtiesContext
   @Test
   void testConcurrentRetryBehaviorWithoutResponse() {
     LogCaptor logCaptor = LogCaptor.forClass(GrpcFactStore.class);
@@ -143,7 +139,6 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
   }
 
   @SneakyThrows
-  @DirtiesContext
   @Test
   void testRetryBehaviorWithResponse() {
 
@@ -169,7 +164,6 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
   }
 
   @SneakyThrows
-  @DirtiesContext
   @Test
   void testRetryBehaviorWithResponseBreakingDownstream() {
 
@@ -195,7 +189,6 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
   }
 
   @SneakyThrows
-  @DirtiesContext
   @Test
   void testConcurrentRetryBehaviorWithResponse() {
     LogCaptor logCaptor = LogCaptor.forClass(GrpcFactStore.class);
@@ -233,7 +226,6 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
   }
 
   @SneakyThrows
-  @DirtiesContext
   @Test
   void testMultipleRetriesWithResponse() {
     // see issue #2868

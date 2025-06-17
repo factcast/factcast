@@ -37,12 +37,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.annotation.DirtiesContext;
 
 @ExtendWith(MockitoExtension.class)
 @SpringBootTest
 @IntegrationTest
-@DirtiesContext
 public class TransformationCacheTest {
 
   @Autowired FactCast fc;
@@ -54,7 +52,6 @@ public class TransformationCacheTest {
   @SpyBean PgTransformationStoreChangeListener listener;
 
   @Nested
-  @DirtiesContext
   class whenDeletingFromTransformationStore {
     @Test
     public void transformationCacheIsInvalidated() throws Exception {
@@ -88,7 +85,6 @@ public class TransformationCacheTest {
   }
 
   @Nested
-  @DirtiesContext
   class whenUpdatingTransformationStore {
     @Test
     public void transformationCacheIsInvalidated() throws Exception {

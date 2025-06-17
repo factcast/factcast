@@ -90,7 +90,7 @@ workflow(
 
         run(
             name = "Test - Integration",
-            command = "./mvnw -B verify -DskipUnitTests",
+            command = "./mvnw -B verify -DskipUnitTests -Dspring-boot.run.arguments=\"--debug\"",
         )
     }
 
