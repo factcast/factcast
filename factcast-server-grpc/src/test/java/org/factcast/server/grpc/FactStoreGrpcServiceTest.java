@@ -157,7 +157,7 @@ public class FactStoreGrpcServiceTest {
 
     uut.fetchById(new ProtoConverter().toProto(fact.id()), stream);
 
-    verify(stream).onNext(eq(new ProtoConverter().toProto(Optional.of(fact))));
+    verify(stream).onNext(new ProtoConverter().toProto(Optional.of(fact)));
     verify(stream).onCompleted();
     verifyNoMoreInteractions(stream);
   }
@@ -174,7 +174,7 @@ public class FactStoreGrpcServiceTest {
 
     uut.fetchById(new ProtoConverter().toProto(id), stream);
 
-    verify(stream).onNext(eq(new ProtoConverter().toProto(Optional.empty())));
+    verify(stream).onNext(new ProtoConverter().toProto(Optional.empty()));
     verify(stream).onCompleted();
     verifyNoMoreInteractions(stream);
   }
@@ -211,7 +211,7 @@ public class FactStoreGrpcServiceTest {
 
     uut.fetchByIdAndVersion(new ProtoConverter().toProto(fact.id(), 1), stream);
 
-    verify(stream).onNext(eq(new ProtoConverter().toProto(Optional.of(fact))));
+    verify(stream).onNext(new ProtoConverter().toProto(Optional.of(fact)));
     verify(stream).onCompleted();
     verifyNoMoreInteractions(stream);
   }
@@ -227,7 +227,7 @@ public class FactStoreGrpcServiceTest {
 
     uut.fetchByIdAndVersion(new ProtoConverter().toProto(id, 1), stream);
 
-    verify(stream).onNext(eq(new ProtoConverter().toProto(Optional.empty())));
+    verify(stream).onNext(new ProtoConverter().toProto(Optional.empty()));
     verify(stream).onCompleted();
     verifyNoMoreInteractions(stream);
   }
@@ -466,20 +466,16 @@ public class FactStoreGrpcServiceTest {
     uut.enumerateNamespaces(conv.empty(), so);
 
     verify(so).onCompleted();
-    verify(so).onNext(eq(conv.toProto(Sets.newHashSet("foo", "bar"))));
+    verify(so).onNext(conv.toProto(Sets.newHashSet("foo", "bar")));
     verifyNoMoreInteractions(so);
   }
 
   @Test
   void testEnumerateNamespacesThrows() {
-    assertThatThrownBy(
-            () -> {
-              uut = new FactStoreGrpcService(backend, meta);
-              StreamObserver so = mock(StreamObserver.class);
-              when(backend.enumerateNamespaces()).thenThrow(UnsupportedOperationException.class);
-
-              uut.enumerateNamespaces(conv.empty(), so);
-            })
+    uut = new FactStoreGrpcService(backend, meta);
+    StreamObserver so = mock(StreamObserver.class);
+    when(backend.enumerateNamespaces()).thenThrow(UnsupportedOperationException.class);
+    assertThatThrownBy(() -> uut.enumerateNamespaces(conv.empty(), so))
         .isInstanceOf(UnsupportedOperationException.class);
   }
 
@@ -488,25 +484,22 @@ public class FactStoreGrpcServiceTest {
     uut = new FactStoreGrpcService(backend, meta);
     StreamObserver so = mock(StreamObserver.class);
 
-    when(backend.enumerateTypes(eq("ns"))).thenReturn(Sets.newHashSet("foo", "bar"));
+    when(backend.enumerateTypes("ns")).thenReturn(Sets.newHashSet("foo", "bar"));
 
     uut.enumerateTypes(conv.toProto("ns"), so);
 
     verify(so).onCompleted();
-    verify(so).onNext(eq(conv.toProto(Sets.newHashSet("foo", "bar"))));
+    verify(so).onNext(conv.toProto(Sets.newHashSet("foo", "bar")));
     verifyNoMoreInteractions(so);
   }
 
   @Test
   void testEnumerateTypesThrows() {
-    assertThatThrownBy(
-            () -> {
-              uut = new FactStoreGrpcService(backend, meta);
-              StreamObserver so = mock(StreamObserver.class);
-              when(backend.enumerateTypes(eq("ns"))).thenThrow(UnsupportedOperationException.class);
+    uut = new FactStoreGrpcService(backend, meta);
+    StreamObserver so = mock(StreamObserver.class);
+    when(backend.enumerateTypes("ns")).thenThrow(UnsupportedOperationException.class);
 
-              uut.enumerateTypes(conv.toProto("ns"), so);
-            })
+    assertThatThrownBy(() -> uut.enumerateTypes(conv.toProto("ns"), so))
         .isInstanceOf(UnsupportedOperationException.class);
   }
 
@@ -515,39 +508,34 @@ public class FactStoreGrpcServiceTest {
     uut = new FactStoreGrpcService(backend, meta);
     StreamObserver so = mock(StreamObserver.class);
 
-    when(backend.enumerateVersions(eq("ns"), eq("type"))).thenReturn(Sets.newHashSet(1, 2));
+    when(backend.enumerateVersions("ns", "type")).thenReturn(Sets.newHashSet(1, 2));
 
     uut.enumerateVersions(conv.toProto(new EnumerateVersionsRequest("ns", "type")), so);
 
     verify(so).onCompleted();
-    verify(so).onNext(eq(conv.toProtoIntSet(Sets.newHashSet(1, 2))));
+    verify(so).onNext(conv.toProtoIntSet(Sets.newHashSet(1, 2)));
     verifyNoMoreInteractions(so);
   }
 
   @Test
   void testEnumerateVersionsThrows() {
-    assertThatThrownBy(
-            () -> {
-              uut = new FactStoreGrpcService(backend, meta);
-              StreamObserver so = mock(StreamObserver.class);
-              when(backend.enumerateVersions(eq("ns"), eq("type")))
-                  .thenThrow(UnsupportedOperationException.class);
+    when(backend.enumerateVersions("ns", "type")).thenThrow(UnsupportedOperationException.class);
+    StreamObserver so = mock(StreamObserver.class);
 
-              uut.enumerateVersions(conv.toProto(new EnumerateVersionsRequest("ns", "type")), so);
-            })
+    uut = new FactStoreGrpcService(backend, meta);
+    final var request = conv.toProto(new EnumerateVersionsRequest("ns", "type"));
+
+    assertThatThrownBy(() -> uut.enumerateVersions(request, so))
         .isInstanceOf(UnsupportedOperationException.class);
   }
 
   @Test
   void testPublishThrows() {
-    assertThatThrownBy(
-            () -> {
-              doThrow(UnsupportedOperationException.class).when(backend).publish(anyList());
-              List<Fact> toPublish = Lists.newArrayList(Fact.builder().build("{}"));
-              StreamObserver so = mock(StreamObserver.class);
+    doThrow(UnsupportedOperationException.class).when(backend).publish(anyList());
+    List<Fact> toPublish = Lists.newArrayList(Fact.builder().build("{}"));
+    StreamObserver so = mock(StreamObserver.class);
 
-              uut.publish(conv.toProto(toPublish), so);
-            })
+    assertThatThrownBy(() -> uut.publish(conv.toProto(toPublish), so))
         .isInstanceOf(UnsupportedOperationException.class);
   }
 
@@ -599,7 +587,7 @@ public class FactStoreGrpcServiceTest {
     StreamObserver o = mock(StreamObserver.class);
     uut.invalidate(req, o);
 
-    verify(backend).invalidate(eq(new StateToken(id)));
+    verify(backend).invalidate(new StateToken(id));
     verify(o).onNext(any());
     verify(o).onCompleted();
   }
@@ -616,7 +604,7 @@ public class FactStoreGrpcServiceTest {
               uut.invalidate(req, o);
             })
         .isInstanceOf(StatusRuntimeException.class);
-    verify(backend).invalidate(eq(new StateToken(id)));
+    verify(backend).invalidate(new StateToken(id));
     verifyNoMoreInteractions(o);
   }
 
@@ -632,8 +620,8 @@ public class FactStoreGrpcServiceTest {
     uut.stateFor(req, o);
     ArrayList<FactSpec> expectedFactSpecs = Lists.newArrayList(FactSpec.ns("foo").aggId(id));
 
-    verify(backend).stateFor(eq(expectedFactSpecs));
-    verify(o).onNext(eq(conv.toProto(token)));
+    verify(backend).stateFor(expectedFactSpecs);
+    verify(o).onNext(conv.toProto(token));
     verify(o).onCompleted();
   }
 
@@ -651,7 +639,7 @@ public class FactStoreGrpcServiceTest {
             })
         .isInstanceOf(StatusRuntimeException.class);
     ArrayList<FactSpec> expectedFactSpecs = Lists.newArrayList(FactSpec.ns("foo").aggId(id));
-    verify(backend).stateFor(eq(expectedFactSpecs));
+    verify(backend).stateFor(expectedFactSpecs);
     verifyNoMoreInteractions(o);
   }
 
@@ -690,9 +678,8 @@ public class FactStoreGrpcServiceTest {
 
     uut.publishConditional(req, o);
 
-    verify(backend)
-        .publishIfUnchanged(eq(Lists.newArrayList()), eq(Optional.of(new StateToken(id))));
-    verify(o).onNext(eq(conv.toProto(true)));
+    verify(backend).publishIfUnchanged(Lists.newArrayList(), Optional.of(new StateToken(id)));
+    verify(o).onNext(conv.toProto(true));
     verify(o).onCompleted();
   }
 
@@ -713,8 +700,7 @@ public class FactStoreGrpcServiceTest {
               uut.publishConditional(req, o);
             })
         .isInstanceOf(StatusRuntimeException.class);
-    verify(backend)
-        .publishIfUnchanged(eq(Lists.newArrayList()), eq(Optional.of(new StateToken(id))));
+    verify(backend).publishIfUnchanged(Lists.newArrayList(), Optional.of(new StateToken(id)));
     verifyNoMoreInteractions(o);
   }
 
@@ -741,7 +727,7 @@ public class FactStoreGrpcServiceTest {
     assertThat(fact.meta("source")).isEqualTo(clientId);
     Assertions.assertThat(fact.jsonHeader()).contains(clientId);
 
-    verify(o).onNext(eq(conv.toProto(true)));
+    verify(o).onNext(conv.toProto(true));
     verify(o).onCompleted();
   }
 
@@ -834,12 +820,12 @@ public class FactStoreGrpcServiceTest {
     StreamObserver<MSG_UUID> obs = mock(StreamObserver.class);
     UUID tokenId = UUID.randomUUID();
 
-    when(backend.stateFor(eq(list))).thenReturn(new StateToken(tokenId));
+    when(backend.stateFor(list)).thenReturn(new StateToken(tokenId));
 
     // ACT
     uut.stateForSpecsJson(req, obs);
 
-    verify(obs).onNext(eq(conv.toProto(tokenId)));
+    verify(obs).onNext(conv.toProto(tokenId));
     verify(obs).onCompleted();
   }
 
@@ -852,12 +838,12 @@ public class FactStoreGrpcServiceTest {
     StreamObserver<MSG_UUID> obs = mock(StreamObserver.class);
     UUID tokenId = UUID.randomUUID();
 
-    when(backend.currentStateFor(eq(list))).thenReturn(new StateToken(tokenId));
+    when(backend.currentStateFor(list)).thenReturn(new StateToken(tokenId));
 
     // ACT
     uut.currentStateForSpecsJson(req, obs);
 
-    verify(obs).onNext(eq(conv.toProto(tokenId)));
+    verify(obs).onNext(conv.toProto(tokenId));
     verify(obs).onCompleted();
   }
 
@@ -942,7 +928,7 @@ public class FactStoreGrpcServiceTest {
     // ACT
     uut.invalidate(req, obs);
 
-    verify(backend).invalidate(eq(stateToken));
+    verify(backend).invalidate(stateToken);
     verify(obs).onNext(any(MSG_Empty.class));
     verify(obs).onCompleted();
   }
@@ -960,7 +946,7 @@ public class FactStoreGrpcServiceTest {
               // ACT
               uut.invalidate(req, obs);
 
-              verify(backend).invalidate(eq(stateToken));
+              verify(backend).invalidate(stateToken);
               verifyNoMoreInteractions(obs);
             })
         .isInstanceOf(RuntimeException.class);
