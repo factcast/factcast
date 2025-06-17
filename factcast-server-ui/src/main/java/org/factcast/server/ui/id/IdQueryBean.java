@@ -28,5 +28,5 @@ import org.factcast.core.util.NoCoverageReportToBeGenerated;
 public class IdQueryBean implements Serializable {
   @NotNull private UUID id;
 
-  @NotNull private int version;
+  private int version;
 }
