@@ -30,6 +30,7 @@ import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
+import java.io.Serial;
 import java.time.LocalDate;
 import java.util.*;
 import lombok.NonNull;
@@ -100,7 +101,7 @@ public class FactStoreGrpcServiceTest {
           Authentication testToken =
               new TestToken(new FactCastUser(FactCastAccount.GOD, "DISABLED"));
 
-          private static final long serialVersionUID = 1L;
+          @Serial private static final long serialVersionUID = 1L;
 
           @Override
           public void setAuthentication(Authentication authentication) {
@@ -243,7 +244,7 @@ public class FactStoreGrpcServiceTest {
           null);
     }
 
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
   }
 
   static class TokenWithoutPrincipal extends RunAsUserToken {
@@ -257,7 +258,7 @@ public class FactStoreGrpcServiceTest {
           null);
     }
 
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
   }
 
   @Test
@@ -304,7 +305,7 @@ public class FactStoreGrpcServiceTest {
     Fact f1 = Fact.builder().ns("test").build("{}");
     MSG_Fact msg1 = conv.toProto(f1);
     Builder b = MSG_Facts.newBuilder();
-    b.addAllFact(Arrays.asList(msg1));
+    b.addAllFact(List.of(msg1));
     MSG_Facts r = b.build();
     uut.publish(r, mock(StreamObserver.class));
     verify(backend).publish(acFactList.capture());
@@ -328,7 +329,7 @@ public class FactStoreGrpcServiceTest {
   }
 
   @Test
-  void testSubscribeExhaustContinous() {
+  void testSubscribeExhaustContinuous() {
     uut =
         new FactStoreGrpcService(
             backend,
@@ -599,11 +600,7 @@ public class FactStoreGrpcServiceTest {
     UUID id = UUID.randomUUID();
     MSG_UUID req = conv.toProto(id);
     StreamObserver o = mock(StreamObserver.class);
-    assertThatThrownBy(
-            () -> {
-              uut.invalidate(req, o);
-            })
-        .isInstanceOf(StatusRuntimeException.class);
+    assertThatThrownBy(() -> uut.invalidate(req, o)).isInstanceOf(StatusRuntimeException.class);
     verify(backend).invalidate(new StateToken(id));
     verifyNoMoreInteractions(o);
   }
@@ -633,11 +630,7 @@ public class FactStoreGrpcServiceTest {
     StateForRequest sfr = new StateForRequest(Lists.newArrayList(id), "foo");
     MSG_StateForRequest req = conv.toProto(sfr);
     StreamObserver o = mock(StreamObserver.class);
-    assertThatThrownBy(
-            () -> {
-              uut.stateFor(req, o);
-            })
-        .isInstanceOf(StatusRuntimeException.class);
+    assertThatThrownBy(() -> uut.stateFor(req, o)).isInstanceOf(StatusRuntimeException.class);
     ArrayList<FactSpec> expectedFactSpecs = Lists.newArrayList(FactSpec.ns("foo").aggId(id));
     verify(backend).stateFor(expectedFactSpecs);
     verifyNoMoreInteractions(o);
@@ -695,10 +688,7 @@ public class FactStoreGrpcServiceTest {
     MSG_ConditionalPublishRequest req = conv.toProto(sfr);
     StreamObserver o = mock(StreamObserver.class);
 
-    assertThatThrownBy(
-            () -> {
-              uut.publishConditional(req, o);
-            })
+    assertThatThrownBy(() -> uut.publishConditional(req, o))
         .isInstanceOf(StatusRuntimeException.class);
     verify(backend).publishIfUnchanged(Lists.newArrayList(), Optional.of(new StateToken(id)));
     verifyNoMoreInteractions(o);
@@ -746,7 +736,7 @@ public class FactStoreGrpcServiceTest {
       uut.assertCanRead("foo");
       fail();
     } catch (StatusRuntimeException s) {
-      assertEquals(s.getStatus(), Status.PERMISSION_DENIED);
+      assertThat(s.getStatus()).isEqualTo(Status.PERMISSION_DENIED);
     } catch (Throwable s) {
       fail(s);
     }
@@ -767,7 +757,7 @@ public class FactStoreGrpcServiceTest {
       uut.assertCanRead(Lists.newArrayList("foo", "bar"));
       fail();
     } catch (StatusRuntimeException s) {
-      assertEquals(s.getStatus(), Status.PERMISSION_DENIED);
+      assertThat(s.getStatus()).isEqualTo(Status.PERMISSION_DENIED);
     } catch (Throwable s) {
       fail(s);
     }
@@ -788,7 +778,7 @@ public class FactStoreGrpcServiceTest {
       uut.assertCanWrite(Lists.newArrayList("foo", "bar"));
       fail();
     } catch (StatusRuntimeException s) {
-      assertEquals(s.getStatus(), Status.PERMISSION_DENIED);
+      assertThat(s.getStatus()).isEqualTo(Status.PERMISSION_DENIED);
     } catch (Throwable s) {
       fail(s);
     }
@@ -958,7 +948,7 @@ public class FactStoreGrpcServiceTest {
         new SecurityContext() {
           Authentication testToken = new TokenWithoutPrincipal();
 
-          private static final long serialVersionUID = 1L;
+          @Serial private static final long serialVersionUID = 1L;
 
           @Override
           public void setAuthentication(Authentication authentication) {
@@ -972,10 +962,6 @@ public class FactStoreGrpcServiceTest {
         });
 
     assertThrows(StatusRuntimeException.class, () -> uut.getFactcastUser());
-  }
-
-  static class TestException extends RuntimeException {
-    private static final long serialVersionUID = -3012325109668741715L;
   }
 
   @Test
