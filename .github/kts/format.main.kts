@@ -20,7 +20,7 @@ import io.github.typesafegithub.workflows.yaml.ConsistencyCheckJobConfig
 workflow(
     name = "Format",
     on = listOf(Push()),
-    sourceFile =  __FILE__,
+    sourceFile = __FILE__,
     consistencyCheckJobConfig = ConsistencyCheckJobConfig.Disabled
 ) {
     job(
@@ -53,7 +53,7 @@ workflow(
             action = CustomAction(
                 actionOwner = "stefanzweifel",
                 actionName = "git-auto-commit-action",
-                actionVersion = "v5",
+                actionVersion = "v6",
                 inputs = mapOf(
                     "commit_message" to "Apply formatter",
                 )
