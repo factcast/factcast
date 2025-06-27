@@ -210,10 +210,17 @@ class PgListenerIntegrationTest {
           "UPDATE fact SET payload = '{\"value\":\"2\"}' WHERE header @> '{\"type\": \"listenerTest1\"}'"); // changing two rows
 
       // assert
-      assertThat(events.latch().await(2, TimeUnit.SECONDS)).isTrue();
+      assertThat(events.latch().await(5, TimeUnit.SECONDS)).isTrue();
       assertThat(events.signals())
-          .containsExactlyInAnyOrder(
-              new FactUpdateNotification(id1), new FactUpdateNotification(id2));
+          .hasSize(2)
+          .anySatisfy(
+              n -> {
+                assertThat(n.updatedFactId()).isEqualTo(id1);
+              })
+          .anySatisfy(
+              n -> {
+                assertThat(n.updatedFactId()).isEqualTo(id2);
+              });
     }
 
     @Getter

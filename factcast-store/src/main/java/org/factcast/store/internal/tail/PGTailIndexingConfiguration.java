@@ -40,6 +40,6 @@ public class PGTailIndexingConfiguration {
   @Bean
   @ConditionalOnMissingBean
   public FastForwardTarget fastForwardTarget(JdbcTemplate jdbc) {
-    return new FastForwardTargetRefresher(jdbc);
+    return new MemoizedFastForwardTarget(jdbc);
   }
 }

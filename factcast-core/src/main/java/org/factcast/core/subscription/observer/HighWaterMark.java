@@ -27,4 +27,8 @@ public class HighWaterMark {
   public static HighWaterMark empty() {
     return of(null, 0);
   }
+
+  public boolean isEmpty() {
+    return targetId == null;
+  }
 }

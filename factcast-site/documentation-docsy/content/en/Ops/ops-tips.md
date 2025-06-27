@@ -18,22 +18,33 @@ be found in the `factcast-store` module under [`src/main/resources/db/changelog/
 
 ## Optimize GIN indexes updates
 
-While GIN Indexes make querying jsonb faster they are also expensive to update. Especially because a single change can
-cause the update of multiple index entries. In order to keep the overhead on write and update statements low, postgres
-per default enables the `fastupdate` setting which defers the update of the index and instead gathers changes to execute
-them all at once. This update happens when:
+While GIN Indexes make querying jsonb faster, they are also expensive to update. Especially because a single change can
+cause the update of multiple index entries. To keep the overhead on write and update statements low, postgres per
+default enables the `fastupdate` setting which defers the update of the index and instead gathers changes to execute
+them all at once. This update happens:
 
-- the `gin_pending_list_limit` is reached (default 4MB)
-- the `gin_clean_pending_list` function is called
-- at the end of the autovacuum of the table
+- when the `gin_pending_list_limit` is reached (default 4MB)
+- when the `gin_clean_pending_list` function is called
+- at the end of an autovacuum operation on a table
 
-This can cause the query whose change eventually fills the `gin_pending_list_limit` to be a lot slower than usual. If
-this kind of behavior is observed it might make sense to consider to:
+However, there can be certain disadvantages of `fastupdate` on GIN indexes
+
+- query performance can suffer significantly when looking through both, the main index and pending list
+- when reaching the size limits, in-query cleanups can block other queries
+
+This can cause queries to be a lot slower than usual which we have observed in production setups. In general, if this
+kind of behavior is observed, it might make sense to consider to:
 
 - reduce the `gin_pending_list_limit` -> more frequent, smaller flushes
 - increase the limit and do manual flushes outside of workload
 - turn off `fastupdate`
 - let autovacuum run more often or manually call the clean operation
+
+For now, we have decided to disable the `fastupdate` setting via [`src/main/resources/db/changelog/factcast/issue3755/disable_fast_update.sql`](https://github.com/factcast/factcast/blob/main/factcast-store/src/main/resources/db/changelog/factcast/issue3755/disable_fast_update.sql)
+
+Please note that flushing the pending list as part of disabling the `fastupdate` setting could in theory block any other
+query. This is why this change set is **not executed automatically** if the attached condition senses a larger setup
+(> 10 million events). In this case please execute the change set manually to disable the `fastupdate` setting.
 
 ## Autoanalyse & Autovacuum settings
 
