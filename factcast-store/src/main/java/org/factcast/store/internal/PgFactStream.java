@@ -112,7 +112,7 @@ public class PgFactStream {
   @VisibleForTesting
   void catchupAndFollow(SubscriptionRequest request, PgSynchronizedQuery query) {
 
-    // we need to copy and preserve the current highwatermark **before** starzikng the query
+    // we need to copy and preserve the current highwatermark **before** starting the query
     // in order not to lose facts by the ffTarget being updated after the phase 2 query, but
     // before the sending of the ffwd signal (#3722)
     HighWaterMark atTheStartOfQuery = ffwdTarget.highWaterMark();
@@ -184,6 +184,7 @@ public class PgFactStream {
       // contained in serial or smaller, see initializeSerialToStartAfter
 
       if (targetId != null && serial.get() < targetSer) {
+        log.debug("{} sending ffwd to id {} (serial {})", request, targetId, targetSer);
         pipeline.process(Signal.of(FactStreamPosition.of(targetId, targetSer)));
       }
     }
