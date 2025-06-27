@@ -336,6 +336,8 @@ public class PgConstants {
       with.append("gin_pending_list_limit = ");
       with.append(props.getTailIndexingPendingListLimit());
       with.append(", fastupdate = true ) ");
+    } else {
+      with.append(" WITH (fastupdate = false) ");
     }
 
     return "create index concurrently "
