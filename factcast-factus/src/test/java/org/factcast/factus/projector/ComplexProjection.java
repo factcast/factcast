@@ -15,8 +15,11 @@
  */
 package org.factcast.factus.projector;
 
-import lombok.Getter;
-import org.factcast.factus.Handler;
+import java.util.*;
+import lombok.*;
+import org.factcast.factus.*;
+import org.factcast.factus.event.*;
+import org.factcast.factus.event.EventObject;
 import org.factcast.factus.projection.LocalManagedProjection;
 
 class ComplexProjection extends LocalManagedProjection {
@@ -35,6 +38,29 @@ class ComplexProjection extends LocalManagedProjection {
     @Handler
     void apply2(ComplexEvent2 foo) {
       recordedEvent2 = foo;
+    }
+  }
+}
+
+class ComplexProjectionWithCatchall extends ComplexProjection {
+  @Getter private LocalEvent recordedEvent3;
+
+  @HandlerFor(ns = "*", type = "*")
+  void wildarc(LocalEvent foo) {
+    recordedEvent3 = foo;
+  }
+
+  @Data
+  @AllArgsConstructor
+  @NoArgsConstructor
+  @Specification(ns = "neverMind")
+  public static class LocalEvent implements EventObject {
+
+    private String code;
+
+    @Override
+    public Set<UUID> aggregateIds() {
+      return new HashSet<>();
     }
   }
 }
