@@ -10,6 +10,7 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-docker-dep</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
   <properties>
     <sonar.skip>true</sonar.skip>
     <docker.image.prefix>factcast</docker.image.prefix>

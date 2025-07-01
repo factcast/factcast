@@ -10,6 +10,7 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-test-dynamo</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
   <properties>
     <sonar.skip>true</sonar.skip>
   </properties>

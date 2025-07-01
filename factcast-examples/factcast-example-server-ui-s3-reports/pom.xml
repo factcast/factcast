@@ -10,6 +10,7 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-example-server-ui-s3-reports</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
   <dependencyManagement>
     <dependencies>
       <!-- note: the order is important here! -->

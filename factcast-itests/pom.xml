@@ -11,6 +11,7 @@
   </parent>
   <artifactId>factcast-itests</artifactId>
   <packaging>pom</packaging>
+  <name>${project.groupId}:${project.artifactId}</name>
   <modules>
     <module>factcast-itests-tls</module>
     <module>factcast-itests-transformation</module>
