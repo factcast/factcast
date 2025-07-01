@@ -11,6 +11,7 @@
   </parent>
 
   <artifactId>factcast-server-security</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
 
   <dependencyManagement>
     <dependencies>
