@@ -10,9 +10,9 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-factus-dynamo</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
-    <name>${project.groupId}:${project.artifactId}</name>
     <maven.compiler.target>1.8</maven.compiler.target>
   </properties>
   <dependencyManagement>
