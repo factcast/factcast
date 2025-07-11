@@ -20,6 +20,7 @@ import com.google.common.cache.*;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import java.io.Closeable;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.*;
@@ -220,4 +221,16 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
    */
   @NonNull
   FactStore store();
+
+  /**
+   * @return Current time in seconds since 1970-01-01 00:00:00-00 (can be negative).
+   */
+  default long currentTimeInMillis() {
+    return store().currentTime();
+  }
+
+  @NonNull
+  default Instant currentTimeAsInstant() {
+    return Instant.ofEpochMilli(store().currentTime());
+  }
 }
