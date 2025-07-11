@@ -74,6 +74,11 @@ public class NOPSchemaRegistry implements SchemaRegistry {
   }
 
   @Override
+  public Set<Integer> enumerateVersions(String ns, String type) {
+    return Set.of();
+  }
+
+  @Override
   public boolean isActive() {
     return false;
   }

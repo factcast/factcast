@@ -49,6 +49,8 @@ public class StoreMetrics {
 
     ENUMERATE_TYPES("enumerateTypes"),
 
+    ENUMERATE_VERSIONS("enumerateVersions"),
+
     GET_STATE_FOR("getStateFor"),
 
     PUBLISH_IF_UNCHANGED("publishIfUnchanged"),

@@ -146,6 +146,15 @@ message MSG_String {
   string embeddedString = 1;
 }
 
+message MSG_IntSet {
+  repeated int32 embeddedInteger = 1;
+}
+
+message MSG_NsAndType {
+  string ns = 1;
+  string type = 2;
+}
+
 message MSG_StateForRequest {
   bool nsPresent = 1;
   string ns = 2;
@@ -186,6 +195,7 @@ service RemoteFactStore {
   rpc handshake (MSG_Empty) returns (MSG_ServerConfig) {}
   rpc enumerateNamespaces (MSG_Empty) returns (MSG_StringSet) {}
   rpc enumerateTypes (MSG_String) returns (MSG_StringSet) {}
+  rpc enumerateVersions (MSG_NsAndType) returns (MSG_IntSet) {}
 
   rpc publishConditional (MSG_ConditionalPublishRequest) returns (MSG_ConditionalPublishResult) {}
   rpc invalidate (MSG_UUID) returns (MSG_Empty) {}

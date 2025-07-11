@@ -30,6 +30,7 @@ import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
+import java.io.Serial;
 import java.time.LocalDate;
 import java.util.*;
 import lombok.NonNull;
@@ -45,6 +46,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.grpc.api.ConditionalPublishRequest;
+import org.factcast.grpc.api.EnumerateVersionsRequest;
 import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.*;
@@ -99,7 +101,7 @@ public class FactStoreGrpcServiceTest {
           Authentication testToken =
               new TestToken(new FactCastUser(FactCastAccount.GOD, "DISABLED"));
 
-          private static final long serialVersionUID = 1L;
+          @Serial private static final long serialVersionUID = 1L;
 
           @Override
           public void setAuthentication(Authentication authentication) {
@@ -156,7 +158,7 @@ public class FactStoreGrpcServiceTest {
 
     uut.fetchById(new ProtoConverter().toProto(fact.id()), stream);
 
-    verify(stream).onNext(eq(new ProtoConverter().toProto(Optional.of(fact))));
+    verify(stream).onNext(new ProtoConverter().toProto(Optional.of(fact)));
     verify(stream).onCompleted();
     verifyNoMoreInteractions(stream);
   }
@@ -173,7 +175,7 @@ public class FactStoreGrpcServiceTest {
 
     uut.fetchById(new ProtoConverter().toProto(id), stream);
 
-    verify(stream).onNext(eq(new ProtoConverter().toProto(Optional.empty())));
+    verify(stream).onNext(new ProtoConverter().toProto(Optional.empty()));
     verify(stream).onCompleted();
     verifyNoMoreInteractions(stream);
   }
@@ -210,7 +212,7 @@ public class FactStoreGrpcServiceTest {
 
     uut.fetchByIdAndVersion(new ProtoConverter().toProto(fact.id(), 1), stream);
 
-    verify(stream).onNext(eq(new ProtoConverter().toProto(Optional.of(fact))));
+    verify(stream).onNext(new ProtoConverter().toProto(Optional.of(fact)));
     verify(stream).onCompleted();
     verifyNoMoreInteractions(stream);
   }
@@ -226,7 +228,7 @@ public class FactStoreGrpcServiceTest {
 
     uut.fetchByIdAndVersion(new ProtoConverter().toProto(id, 1), stream);
 
-    verify(stream).onNext(eq(new ProtoConverter().toProto(Optional.empty())));
+    verify(stream).onNext(new ProtoConverter().toProto(Optional.empty()));
     verify(stream).onCompleted();
     verifyNoMoreInteractions(stream);
   }
@@ -242,7 +244,7 @@ public class FactStoreGrpcServiceTest {
           null);
     }
 
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
   }
 
   static class TokenWithoutPrincipal extends RunAsUserToken {
@@ -256,7 +258,7 @@ public class FactStoreGrpcServiceTest {
           null);
     }
 
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
   }
 
   @Test
@@ -303,7 +305,7 @@ public class FactStoreGrpcServiceTest {
     Fact f1 = Fact.builder().ns("test").build("{}");
     MSG_Fact msg1 = conv.toProto(f1);
     Builder b = MSG_Facts.newBuilder();
-    b.addAllFact(Arrays.asList(msg1));
+    b.addAllFact(List.of(msg1));
     MSG_Facts r = b.build();
     uut.publish(r, mock(StreamObserver.class));
     verify(backend).publish(acFactList.capture());
@@ -327,7 +329,7 @@ public class FactStoreGrpcServiceTest {
   }
 
   @Test
-  void testSubscribeExhaustContinous() {
+  void testSubscribeExhaustContinuous() {
     uut =
         new FactStoreGrpcService(
             backend,
@@ -465,20 +467,16 @@ public class FactStoreGrpcServiceTest {
     uut.enumerateNamespaces(conv.empty(), so);
 
     verify(so).onCompleted();
-    verify(so).onNext(eq(conv.toProto(Sets.newHashSet("foo", "bar"))));
+    verify(so).onNext(conv.toProto(Sets.newHashSet("foo", "bar")));
     verifyNoMoreInteractions(so);
   }
 
   @Test
   void testEnumerateNamespacesThrows() {
-    assertThatThrownBy(
-            () -> {
-              uut = new FactStoreGrpcService(backend, meta);
-              StreamObserver so = mock(StreamObserver.class);
-              when(backend.enumerateNamespaces()).thenThrow(UnsupportedOperationException.class);
-
-              uut.enumerateNamespaces(conv.empty(), so);
-            })
+    uut = new FactStoreGrpcService(backend, meta);
+    StreamObserver so = mock(StreamObserver.class);
+    when(backend.enumerateNamespaces()).thenThrow(UnsupportedOperationException.class);
+    assertThatThrownBy(() -> uut.enumerateNamespaces(conv.empty(), so))
         .isInstanceOf(UnsupportedOperationException.class);
   }
 
@@ -487,38 +485,58 @@ public class FactStoreGrpcServiceTest {
     uut = new FactStoreGrpcService(backend, meta);
     StreamObserver so = mock(StreamObserver.class);
 
-    when(backend.enumerateTypes(eq("ns"))).thenReturn(Sets.newHashSet("foo", "bar"));
+    when(backend.enumerateTypes("ns")).thenReturn(Sets.newHashSet("foo", "bar"));
 
     uut.enumerateTypes(conv.toProto("ns"), so);
 
     verify(so).onCompleted();
-    verify(so).onNext(eq(conv.toProto(Sets.newHashSet("foo", "bar"))));
+    verify(so).onNext(conv.toProto(Sets.newHashSet("foo", "bar")));
     verifyNoMoreInteractions(so);
   }
 
   @Test
   void testEnumerateTypesThrows() {
-    assertThatThrownBy(
-            () -> {
-              uut = new FactStoreGrpcService(backend, meta);
-              StreamObserver so = mock(StreamObserver.class);
-              when(backend.enumerateTypes(eq("ns"))).thenThrow(UnsupportedOperationException.class);
+    uut = new FactStoreGrpcService(backend, meta);
+    StreamObserver so = mock(StreamObserver.class);
+    when(backend.enumerateTypes("ns")).thenThrow(UnsupportedOperationException.class);
 
-              uut.enumerateTypes(conv.toProto("ns"), so);
-            })
+    assertThatThrownBy(() -> uut.enumerateTypes(conv.toProto("ns"), so))
+        .isInstanceOf(UnsupportedOperationException.class);
+  }
+
+  @Test
+  void testEnumerateVersions() {
+    uut = new FactStoreGrpcService(backend, meta);
+    StreamObserver so = mock(StreamObserver.class);
+
+    when(backend.enumerateVersions("ns", "type")).thenReturn(Sets.newHashSet(1, 2));
+
+    uut.enumerateVersions(conv.toProto(new EnumerateVersionsRequest("ns", "type")), so);
+
+    verify(so).onCompleted();
+    verify(so).onNext(conv.toProtoIntSet(Sets.newHashSet(1, 2)));
+    verifyNoMoreInteractions(so);
+  }
+
+  @Test
+  void testEnumerateVersionsThrows() {
+    when(backend.enumerateVersions("ns", "type")).thenThrow(UnsupportedOperationException.class);
+    StreamObserver so = mock(StreamObserver.class);
+
+    uut = new FactStoreGrpcService(backend, meta);
+    final var request = conv.toProto(new EnumerateVersionsRequest("ns", "type"));
+
+    assertThatThrownBy(() -> uut.enumerateVersions(request, so))
         .isInstanceOf(UnsupportedOperationException.class);
   }
 
   @Test
   void testPublishThrows() {
-    assertThatThrownBy(
-            () -> {
-              doThrow(UnsupportedOperationException.class).when(backend).publish(anyList());
-              List<Fact> toPublish = Lists.newArrayList(Fact.builder().build("{}"));
-              StreamObserver so = mock(StreamObserver.class);
+    doThrow(UnsupportedOperationException.class).when(backend).publish(anyList());
+    List<Fact> toPublish = Lists.newArrayList(Fact.builder().build("{}"));
+    StreamObserver so = mock(StreamObserver.class);
 
-              uut.publish(conv.toProto(toPublish), so);
-            })
+    assertThatThrownBy(() -> uut.publish(conv.toProto(toPublish), so))
         .isInstanceOf(UnsupportedOperationException.class);
   }
 
@@ -570,7 +588,7 @@ public class FactStoreGrpcServiceTest {
     StreamObserver o = mock(StreamObserver.class);
     uut.invalidate(req, o);
 
-    verify(backend).invalidate(eq(new StateToken(id)));
+    verify(backend).invalidate(new StateToken(id));
     verify(o).onNext(any());
     verify(o).onCompleted();
   }
@@ -582,12 +600,8 @@ public class FactStoreGrpcServiceTest {
     UUID id = UUID.randomUUID();
     MSG_UUID req = conv.toProto(id);
     StreamObserver o = mock(StreamObserver.class);
-    assertThatThrownBy(
-            () -> {
-              uut.invalidate(req, o);
-            })
-        .isInstanceOf(StatusRuntimeException.class);
-    verify(backend).invalidate(eq(new StateToken(id)));
+    assertThatThrownBy(() -> uut.invalidate(req, o)).isInstanceOf(StatusRuntimeException.class);
+    verify(backend).invalidate(new StateToken(id));
     verifyNoMoreInteractions(o);
   }
 
@@ -603,8 +617,8 @@ public class FactStoreGrpcServiceTest {
     uut.stateFor(req, o);
     ArrayList<FactSpec> expectedFactSpecs = Lists.newArrayList(FactSpec.ns("foo").aggId(id));
 
-    verify(backend).stateFor(eq(expectedFactSpecs));
-    verify(o).onNext(eq(conv.toProto(token)));
+    verify(backend).stateFor(expectedFactSpecs);
+    verify(o).onNext(conv.toProto(token));
     verify(o).onCompleted();
   }
 
@@ -616,13 +630,9 @@ public class FactStoreGrpcServiceTest {
     StateForRequest sfr = new StateForRequest(Lists.newArrayList(id), "foo");
     MSG_StateForRequest req = conv.toProto(sfr);
     StreamObserver o = mock(StreamObserver.class);
-    assertThatThrownBy(
-            () -> {
-              uut.stateFor(req, o);
-            })
-        .isInstanceOf(StatusRuntimeException.class);
+    assertThatThrownBy(() -> uut.stateFor(req, o)).isInstanceOf(StatusRuntimeException.class);
     ArrayList<FactSpec> expectedFactSpecs = Lists.newArrayList(FactSpec.ns("foo").aggId(id));
-    verify(backend).stateFor(eq(expectedFactSpecs));
+    verify(backend).stateFor(expectedFactSpecs);
     verifyNoMoreInteractions(o);
   }
 
@@ -661,9 +671,8 @@ public class FactStoreGrpcServiceTest {
 
     uut.publishConditional(req, o);
 
-    verify(backend)
-        .publishIfUnchanged(eq(Lists.newArrayList()), eq(Optional.of(new StateToken(id))));
-    verify(o).onNext(eq(conv.toProto(true)));
+    verify(backend).publishIfUnchanged(Lists.newArrayList(), Optional.of(new StateToken(id)));
+    verify(o).onNext(conv.toProto(true));
     verify(o).onCompleted();
   }
 
@@ -679,13 +688,9 @@ public class FactStoreGrpcServiceTest {
     MSG_ConditionalPublishRequest req = conv.toProto(sfr);
     StreamObserver o = mock(StreamObserver.class);
 
-    assertThatThrownBy(
-            () -> {
-              uut.publishConditional(req, o);
-            })
+    assertThatThrownBy(() -> uut.publishConditional(req, o))
         .isInstanceOf(StatusRuntimeException.class);
-    verify(backend)
-        .publishIfUnchanged(eq(Lists.newArrayList()), eq(Optional.of(new StateToken(id))));
+    verify(backend).publishIfUnchanged(Lists.newArrayList(), Optional.of(new StateToken(id)));
     verifyNoMoreInteractions(o);
   }
 
@@ -712,7 +717,7 @@ public class FactStoreGrpcServiceTest {
     assertThat(fact.meta("source")).isEqualTo(clientId);
     Assertions.assertThat(fact.jsonHeader()).contains(clientId);
 
-    verify(o).onNext(eq(conv.toProto(true)));
+    verify(o).onNext(conv.toProto(true));
     verify(o).onCompleted();
   }
 
@@ -731,7 +736,7 @@ public class FactStoreGrpcServiceTest {
       uut.assertCanRead("foo");
       fail();
     } catch (StatusRuntimeException s) {
-      assertEquals(s.getStatus(), Status.PERMISSION_DENIED);
+      assertThat(s.getStatus()).isEqualTo(Status.PERMISSION_DENIED);
     } catch (Throwable s) {
       fail(s);
     }
@@ -752,7 +757,7 @@ public class FactStoreGrpcServiceTest {
       uut.assertCanRead(Lists.newArrayList("foo", "bar"));
       fail();
     } catch (StatusRuntimeException s) {
-      assertEquals(s.getStatus(), Status.PERMISSION_DENIED);
+      assertThat(s.getStatus()).isEqualTo(Status.PERMISSION_DENIED);
     } catch (Throwable s) {
       fail(s);
     }
@@ -773,7 +778,7 @@ public class FactStoreGrpcServiceTest {
       uut.assertCanWrite(Lists.newArrayList("foo", "bar"));
       fail();
     } catch (StatusRuntimeException s) {
-      assertEquals(s.getStatus(), Status.PERMISSION_DENIED);
+      assertThat(s.getStatus()).isEqualTo(Status.PERMISSION_DENIED);
     } catch (Throwable s) {
       fail(s);
     }
@@ -805,12 +810,12 @@ public class FactStoreGrpcServiceTest {
     StreamObserver<MSG_UUID> obs = mock(StreamObserver.class);
     UUID tokenId = UUID.randomUUID();
 
-    when(backend.stateFor(eq(list))).thenReturn(new StateToken(tokenId));
+    when(backend.stateFor(list)).thenReturn(new StateToken(tokenId));
 
     // ACT
     uut.stateForSpecsJson(req, obs);
 
-    verify(obs).onNext(eq(conv.toProto(tokenId)));
+    verify(obs).onNext(conv.toProto(tokenId));
     verify(obs).onCompleted();
   }
 
@@ -823,12 +828,12 @@ public class FactStoreGrpcServiceTest {
     StreamObserver<MSG_UUID> obs = mock(StreamObserver.class);
     UUID tokenId = UUID.randomUUID();
 
-    when(backend.currentStateFor(eq(list))).thenReturn(new StateToken(tokenId));
+    when(backend.currentStateFor(list)).thenReturn(new StateToken(tokenId));
 
     // ACT
     uut.currentStateForSpecsJson(req, obs);
 
-    verify(obs).onNext(eq(conv.toProto(tokenId)));
+    verify(obs).onNext(conv.toProto(tokenId));
     verify(obs).onCompleted();
   }
 
@@ -913,7 +918,7 @@ public class FactStoreGrpcServiceTest {
     // ACT
     uut.invalidate(req, obs);
 
-    verify(backend).invalidate(eq(stateToken));
+    verify(backend).invalidate(stateToken);
     verify(obs).onNext(any(MSG_Empty.class));
     verify(obs).onCompleted();
   }
@@ -931,7 +936,7 @@ public class FactStoreGrpcServiceTest {
               // ACT
               uut.invalidate(req, obs);
 
-              verify(backend).invalidate(eq(stateToken));
+              verify(backend).invalidate(stateToken);
               verifyNoMoreInteractions(obs);
             })
         .isInstanceOf(RuntimeException.class);
@@ -943,7 +948,7 @@ public class FactStoreGrpcServiceTest {
         new SecurityContext() {
           Authentication testToken = new TokenWithoutPrincipal();
 
-          private static final long serialVersionUID = 1L;
+          @Serial private static final long serialVersionUID = 1L;
 
           @Override
           public void setAuthentication(Authentication authentication) {
@@ -957,10 +962,6 @@ public class FactStoreGrpcServiceTest {
         });
 
     assertThrows(StatusRuntimeException.class, () -> uut.getFactcastUser());
-  }
-
-  static class TestException extends RuntimeException {
-    private static final long serialVersionUID = -3012325109668741715L;
   }
 
   @Test

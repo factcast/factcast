@@ -35,6 +35,8 @@ public interface FactRepository {
 
   List<String> types(@NonNull String namespace, @Nullable String optionalInput);
 
+  List<Integer> versions(@NonNull String namespace, @NonNull String type);
+
   OptionalLong lastSerialBefore(@NonNull LocalDate date);
 
   Optional<Long> firstSerialAfter(@NonNull LocalDate date);
