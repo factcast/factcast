@@ -285,7 +285,7 @@ public class FactusImpl implements Factus {
     ProjectionAndState<A> projectionAndState =
         aggregateSnapshotRepository
             .findLatest(aggregateClass, aggregateId)
-            .orElse(ProjectionAndState.of(initial(aggregateClass, aggregateId), null));
+            .orElseGet(() -> ProjectionAndState.of(initial(aggregateClass, aggregateId), null));
 
     A aggregate = projectionAndState.projectionInstance();
     UUID state =
