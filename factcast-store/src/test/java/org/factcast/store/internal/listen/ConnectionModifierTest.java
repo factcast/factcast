@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 
 import java.sql.*;
 import lombok.SneakyThrows;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -87,6 +88,28 @@ class ConnectionModifierTest {
       Mockito.reset(p);
       uut.beforeReturn(c);
       Mockito.verify(p).execute("SET myproperty='old'");
+    }
+  }
+
+  @Nested
+  class Withers {
+    @Test
+    void checkPropertyWither() {
+      Assertions.assertThat(ConnectionModifier.withApplicationName("gurke"))
+          .isInstanceOf(ConnectionModifier.Property.class)
+          .isEqualTo(new ConnectionModifier.Property("application_name", "gurke"));
+    }
+
+    @Test
+    void checkAutoCommitWither() {
+      Assertions.assertThat(ConnectionModifier.withAutoCommitDisabled())
+          .isInstanceOf(ConnectionModifier.DisableAutoCommit.class);
+    }
+
+    @Test
+    void checkBitmapScanWither() {
+      Assertions.assertThat(ConnectionModifier.withBitmapScanDisabled())
+          .isInstanceOf(ConnectionModifier.DisableBitmapScan.class);
     }
   }
 }

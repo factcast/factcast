@@ -63,18 +63,10 @@ public class PgConnectionSupplier {
     return c;
   }
 
-  // TODO remove
+  @SuppressWarnings("java:S2077")
   private void setConnectionApplicationName(String clientId, Connection c) throws SQLException {
     try (PreparedStatement ps =
         c.prepareStatement("SET application_name='" + applicationName + "|" + clientId + "'"); ) {
-      ps.execute();
-    }
-  }
-
-  // TODO remove
-  public void resetConnectionApplicationName(Connection c) throws SQLException {
-    try (PreparedStatement ps =
-        c.prepareStatement("SET application_name='" + applicationName + "'"); ) {
       ps.execute();
     }
   }

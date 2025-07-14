@@ -38,7 +38,7 @@ public interface ConnectionModifier {
     return new DisableBitmapScan();
   }
 
-  static ConnectionModifier withDisabledAutoCommit() {
+  static ConnectionModifier withAutoCommitDisabled() {
     return new DisableAutoCommit();
   }
 
@@ -48,8 +48,9 @@ public interface ConnectionModifier {
 
   @RequiredArgsConstructor
   @EqualsAndHashCode(of = {"property", "value"})
-  class Property implements ConnectionModifier {
-    final String property;
+  @SuppressWarnings("java:S2077")
+  public class Property implements ConnectionModifier {
+    final String propertyName;
     final String value;
 
     String oldValue;
@@ -57,13 +58,13 @@ public interface ConnectionModifier {
     @Override
     public void afterBorrow(Connection connection) {
       JdbcTemplate jdbc = jdbc(connection);
-      oldValue = jdbc.queryForObject("SHOW " + property, String.class);
-      jdbc.execute("SET " + property + "='" + value + "'");
+      oldValue = jdbc.queryForObject("SHOW " + propertyName, String.class);
+      jdbc.execute("SET " + propertyName + "='" + value + "'");
     }
 
     @Override
     public void beforeReturn(Connection connection) {
-      jdbc(connection).execute("SET " + property + "='" + oldValue + "'");
+      jdbc(connection).execute("SET " + propertyName + "='" + oldValue + "'");
     }
   }
 

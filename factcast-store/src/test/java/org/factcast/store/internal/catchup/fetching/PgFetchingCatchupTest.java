@@ -94,7 +94,7 @@ class PgFetchingCatchupTest {
 
       verify(connectionSupplier)
           .getPooledAsSingleDataSource(
-              ConnectionModifier.withDisabledAutoCommit(),
+              ConnectionModifier.withAutoCommitDisabled(),
               ConnectionModifier.withApplicationName(req.debugInfo()));
     }
 

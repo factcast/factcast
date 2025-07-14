@@ -56,7 +56,7 @@ public class PgFetchingCatchup implements PgCatchup {
   public void run() {
     try (var ds =
         connectionSupplier.getPooledAsSingleDataSource(
-            ConnectionModifier.withDisabledAutoCommit(),
+            ConnectionModifier.withAutoCommitDisabled(),
             ConnectionModifier.withApplicationName(req.debugInfo())); ) {
       var jdbc = new JdbcTemplate(ds);
       fetch(jdbc);
