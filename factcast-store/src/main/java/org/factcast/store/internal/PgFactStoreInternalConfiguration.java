@@ -128,7 +128,7 @@ public class PgFactStoreInternalConfiguration {
 
   @Bean
   public PgSubscriptionFactory pgSubscriptionFactory(
-      JdbcTemplate jdbcTemplate,
+      PgConnectionSupplier connectionSupplier,
       EventBus eventBus,
       PgFactIdToSerialMapper pgFactIdToSerialMapper,
       PgLatestSerialFetcher pgLatestSerialFetcher,
@@ -140,7 +140,7 @@ public class PgFactStoreInternalConfiguration {
       ServerPipelineFactory pipelineFactory,
       PgMetrics metrics) {
     return new PgSubscriptionFactory(
-        jdbcTemplate,
+        connectionSupplier,
         eventBus,
         pgFactIdToSerialMapper,
         pgLatestSerialFetcher,
