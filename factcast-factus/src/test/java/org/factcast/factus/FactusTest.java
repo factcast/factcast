@@ -362,8 +362,7 @@ class FactusTest {
       when(mockedStore.currentTime()).thenReturn(epochMilli);
 
       // RUN / ASSERT
-      assertThat(underTest.currentTimeInMillis()).isEqualTo(1_234);
-      assertThat(underTest.currentTimeAsInstant()).isEqualTo(now);
+      assertThat(underTest.currentTime()).isEqualTo(now);
     }
   }
 }

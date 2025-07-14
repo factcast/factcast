@@ -223,22 +223,13 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
   FactStore store();
 
   /**
-   * @return Current time in seconds since 1970-01-01 00:00:00-00 (can be negative) from the
-   *     factstore.
-   *     <p>Can be used to synchronize across clients (e.g. to decide if it is too late to publish a
-   *     certain event)
-   */
-  default long currentTimeInMillis() {
-    return store().currentTime();
-  }
-
-  /**
    * @return Current time as Instant from the factstore.
    *     <p>Can be used to synchronize across clients (e.g. to decide if it is too late to publish a
    *     certain event)
+   * @since 0.10.0
    */
   @NonNull
-  default Instant currentTimeAsInstant() {
+  default Instant currentTime() {
     return Instant.ofEpochMilli(store().currentTime());
   }
 }

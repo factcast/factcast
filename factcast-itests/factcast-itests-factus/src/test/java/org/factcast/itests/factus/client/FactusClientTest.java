@@ -891,19 +891,10 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   class Clock {
 
     @Test
-    void currentTimeInMillis() {
-      long beforeMillis = System.currentTimeMillis();
-      long now = factus.currentTimeInMillis();
-      long afterMillis = System.currentTimeMillis();
-
-      assertThat(now).isGreaterThanOrEqualTo(beforeMillis).isLessThanOrEqualTo(afterMillis);
-    }
-
-    @Test
-    void currentTimeAsInstant() {
-      Instant before = Instant.now();
-      Instant now = factus.currentTimeAsInstant();
-      Instant after = Instant.now();
+    void currentTimeIsMonotonouslyIncreasing() {
+      Instant before = factus.currentTime();
+      Instant now = factus.currentTime();
+      Instant after = factus.currentTime();
 
       assertThat(now).isAfterOrEqualTo(before).isBeforeOrEqualTo(after);
     }
