@@ -140,9 +140,9 @@ public class PgConnectionSupplier {
 
   @SneakyThrows
   @SuppressWarnings("java:S2077")
-  public SingleConnectionDataSource getPooledAsSingleDataSource(ConnectionModifier... filters) {
+  public SingleConnectionDataSource getPooledAsSingleDataSource(ConnectionModifier... modifiers) {
     return getPooledAsSingleDataSource(
-        filters != null ? Arrays.asList(filters) : Collections.emptyList());
+        modifiers != null ? Arrays.asList(modifiers) : Collections.emptyList());
   }
 
   @SneakyThrows
