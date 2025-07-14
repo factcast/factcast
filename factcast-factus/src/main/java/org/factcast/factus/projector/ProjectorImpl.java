@@ -15,6 +15,8 @@
  */
 package org.factcast.factus.projector;
 
+import static java.util.Collections.*;
+
 import com.google.common.annotations.VisibleForTesting;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
@@ -187,13 +189,32 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     }
 
     if (dispatch == null) {
-      InvalidHandlerDefinition ihd =
-          new InvalidHandlerDefinition("Unexpected Fact coordinates: '" + coords + "'");
-      projection.onError(ihd);
-      throw ihd;
+      // fallback for wildcard usage
+      // TODO is there a need to cache this?
+
+      List<Map.Entry<FactSpecCoordinates, Dispatcher>> found =
+          dispatchInfo.entrySet().stream()
+              .filter(e -> coords.matches(e.getKey()))
+              .collect(Collectors.toList());
+
+      if (found.size() > 1) {
+        InvalidHandlerDefinition ihd =
+            new InvalidHandlerDefinition(
+                "Ambiguous handler definition for coordinates: '" + coords + "'");
+        projection.onError(ihd);
+        throw ihd;
+      }
+
+      if (found.isEmpty()) {
+        InvalidHandlerDefinition ihd =
+            new InvalidHandlerDefinition("Unexpected Fact coordinates: '" + coords + "'");
+        projection.onError(ihd);
+        throw ihd;
+      }
+
+      dispatch = found.iterator().next().getValue();
     }
     dispatch.invoke(serializer, projection, f);
-
     return factId;
   }
 
@@ -283,7 +304,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
               + projection.getClass()
               + ". Either add handler methods or implement postprocess(List<FactSpec)");
     }
-    return Collections.unmodifiableList(ret);
+    return unmodifiableList(ret);
   }
 
   @Override
@@ -381,7 +402,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
     private static Set<Method> collectMethods(Class<?> clazz) {
       if (clazz == null) {
-        return Collections.emptySet();
+        return emptySet();
       }
 
       HashSet<Method> m = new HashSet<>();

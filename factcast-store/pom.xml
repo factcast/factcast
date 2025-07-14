@@ -6,10 +6,11 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.9.9-SNAPSHOT</version>
+    <version>0.10.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-store</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
   <properties>
     <jetty-javalin.version>11.0.25</jetty-javalin.version>
   </properties>
@@ -166,7 +167,7 @@
     <dependency>
       <groupId>io.javalin</groupId>
       <artifactId>javalin</artifactId>
-      <version>6.6.0</version>
+      <version>6.7.0</version>
       <scope>test</scope>
     </dependency>
     <!-- explicit jetty dependencies to workaround missing jetty12 compat ->
@@ -221,8 +222,8 @@
     </dependency>
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
-      <artifactId>okhttp</artifactId>
-      <version>4.12.0</version>
+      <artifactId>okhttp-jvm</artifactId>
+      <version>5.1.0</version>
     </dependency>
     <dependency>
       <groupId>org.graalvm.polyglot</groupId>

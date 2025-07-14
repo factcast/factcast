@@ -278,6 +278,57 @@ class PgFactStoreTest {
     }
   }
 
+  @SuppressWarnings("unchecked")
+  @Nested
+  class WhenEnumeratingVersions {
+    private final String NS = "NS";
+    private final String TYPE = "TYPE";
+
+    @BeforeEach
+    void setup() {}
+
+    @Test
+    void withoutSchemaRegistry() {
+      when(schemaRegistry.isActive()).thenReturn(false);
+      configureMetricTimeSupplier();
+
+      underTest.enumerateVersions(NS, TYPE);
+      verify(jdbcTemplate)
+          .query(
+              eq(PgConstants.SELECT_DISTINCT_VERSIONS_FOR_NS_AND_TYPE),
+              any(RowMapper.class),
+              same(NS),
+              same(TYPE));
+    }
+
+    @Test
+    void withSchemaRegistry() {
+
+      Set<Integer> versions = Set.of(1, 2);
+      underTest = spy(underTest);
+      when(schemaRegistry.isActive()).thenReturn(true);
+      when(schemaRegistry.enumerateVersions(anyString(), anyString())).thenReturn(versions);
+
+      Assertions.assertThat(underTest.enumerateVersions(NS, TYPE)).isSameAs(versions);
+
+      verify(underTest, never()).enumerateVersionsFromPg(NS, TYPE);
+    }
+
+    @Test
+    void usesDirectMode() {
+      configureMetricTimeSupplier();
+      when(schemaRegistry.isActive()).thenReturn(true);
+      when(storeConfigurationProperties.isEnumerationDirectModeEnabled()).thenReturn(true);
+      underTest.enumerateVersions(NS, TYPE);
+      verify(jdbcTemplate)
+          .query(
+              eq(PgConstants.SELECT_DISTINCT_VERSIONS_FOR_NS_AND_TYPE),
+              any(RowMapper.class),
+              same(NS),
+              same(TYPE));
+    }
+  }
+
   @Nested
   class WhenPublishingIfUnchanged {
     @Mock private Fact fact;

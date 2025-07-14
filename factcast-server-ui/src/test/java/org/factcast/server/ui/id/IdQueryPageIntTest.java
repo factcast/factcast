@@ -18,6 +18,8 @@ package org.factcast.server.ui.id;
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 import static org.factcast.server.ui.example.EventInitializer.USER1_EVENT_ID;
 
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.AriaRole;
 import java.util.UUID;
 import lombok.NonNull;
 import org.factcast.server.ui.AbstractBrowserTest;
@@ -31,7 +33,14 @@ class IdQueryPageIntTest extends AbstractBrowserTest {
     @RetryingTest(maxAttempts = 5, minSuccess = 1)
     void queryById() {
       loginFor("/ui/id");
+
+      final var versionSelector = page.getByLabel("Version");
+      assertThat(versionSelector).isDisabled();
+
       setId(USER1_EVENT_ID);
+
+      assertThat(versionSelector).isEnabled();
+      assertThat(versionSelector).containsText("as published");
 
       query();
 
@@ -41,7 +50,12 @@ class IdQueryPageIntTest extends AbstractBrowserTest {
     @RetryingTest(maxAttempts = 5, minSuccess = 1)
     void queryByIdAndVersion() {
       loginFor("/ui/id");
+
+      setId(UUID.randomUUID());
+      assertThat(page.getByLabel("Version")).isDisabled();
+
       setId(USER1_EVENT_ID);
+      assertThat(page.getByLabel("Version")).isEnabled();
       setVersion(3);
 
       query();
@@ -49,11 +63,15 @@ class IdQueryPageIntTest extends AbstractBrowserTest {
       assertThat(jsonView()).containsText(USER1_EVENT_ID.toString());
       assertThat(jsonView()).containsText("displayName");
       assertThat(jsonView()).containsText("Peter Lustig");
+      assertThat(jsonView()).containsText("\"version\" : 3");
     }
   }
 
   private void setVersion(int version) {
-    page.getByLabel("Version").fill(String.valueOf(version));
+    page.locator("#version-selector vaadin-input-container div").click();
+    page.getByRole(AriaRole.OPTION, new Page.GetByRoleOptions().setName(String.valueOf(version)))
+        .locator("div")
+        .click();
   }
 
   private void setId(@NonNull UUID id) {

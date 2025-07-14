@@ -426,3 +426,51 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
+
+  - changeSet:
+      id: issue3755_disable_fast_update
+      runInTransaction: false
+      author: leflamm
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: t
+            sql: SELECT count_estimate('SELECT * FROM fact') < 10000000;
+      comment: Disable fast update for large GIN index; If you have less than 10mio facts, this will be executed, if not, we kindly ask you to execute this script manually
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue3755/disable_fast_update.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue2645_create_published_versions_trigger
+      runInTransaction: false
+      author: benediktkaiser
+      comment: create trigger for saving type and version information of published facts
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2645/create_published_versions_trigger.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue2645_migration
+      author: benediktkaiser
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: t
+            sql: SELECT count_estimate('SELECT * FROM fact') < 10000000;
+      comment: If you have less than 10mio facts, this will be executed, if not, we kindly ask you to execute this script manually
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue2645/create_published_versions_for_existing_events.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true

@@ -20,17 +20,16 @@ import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 
 import com.google.common.base.Stopwatch;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.Supplier;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.RetryableException;
@@ -44,6 +43,7 @@ import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.config.RedissonProjectionConfiguration;
 import org.factcast.itests.factus.event.*;
+import org.factcast.itests.factus.event.film.*;
 import org.factcast.itests.factus.proj.*;
 import org.factcast.spring.boot.autoconfigure.snap.RedissonSnapshotCacheAutoConfiguration;
 import org.factcast.test.AbstractFactCastIntegrationTest;
@@ -74,6 +74,20 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
   @Autowired UserCount userCount;
   @Autowired RedissonClient redissonClient;
+
+  @Test
+  void differentNamespaces() {
+    factus.publish(new StarTrekCharacterCreated("Kirk"));
+    factus.publish(new StarWarsCharacterCreated("Han"));
+    factus.publish(new StarWarsCharacterCreated("Luke"));
+    factus.publish(new IndianaJonesCharacterCreated("Indy"));
+    factus.publish(new IndianaJonesCharacterCreated("Shorty"));
+
+    LucasNames names = new LucasNames();
+    factus.update(names);
+
+    assertThat(names.userNames()).containsValues("Han", "Luke", "Indy", "Shorty");
+  }
 
   @Test
   void allWaysToPublish() {
@@ -895,6 +909,19 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Nested
+  class Clock {
+
+    @Test
+    void currentTimeIsMonotonouslyIncreasing() {
+      Instant before = factus.currentTime();
+      Instant now = factus.currentTime();
+      Instant after = factus.currentTime();
+
+      assertThat(now).isAfterOrEqualTo(before).isBeforeOrEqualTo(after);
+    }
+  }
+
+  @Nested
   class OnSuccess {
 
     private int countBefore;
@@ -976,7 +1003,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
     void noCallbackOnAbort() {
       AtomicInteger executions = new AtomicInteger(0);
       AtomicInteger callbacks = new AtomicInteger(0);
-      Assertions.assertThatThrownBy(
+      assertThatThrownBy(
               () -> {
                 factus
                     .withLockOn(userCount)
@@ -1002,7 +1029,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       AtomicInteger callbacks = new AtomicInteger(0);
       AtomicReference<CountDownLatch> latch = new AtomicReference<>(new CountDownLatch(1));
 
-      Assertions.assertThatThrownBy(
+      assertThatThrownBy(
               () -> {
                 factus
                     .withLockOn(userCount)

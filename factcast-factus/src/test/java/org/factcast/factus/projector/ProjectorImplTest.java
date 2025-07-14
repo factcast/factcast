@@ -127,6 +127,25 @@ class ProjectorImplTest {
     }
 
     @Test
+    void applyWithWildcard() {
+      ComplexProjectionWithCatchall projection = new ComplexProjectionWithCatchall();
+
+      ProjectorImpl<ComplexProjectionWithCatchall> underTest =
+          new ProjectorImpl<>(projection, eventSerializer);
+
+      // RUN
+      underTest.apply(
+          Lists.newArrayList(
+              Fact.builder()
+                  .ns("alien")
+                  .type("alsoAlien")
+                  .version(1)
+                  .build("{\"code\":\"poit\"}")));
+
+      assertThat(projection.recordedEvent3().code()).isEqualTo("poit");
+    }
+
+    @Test
     void applyWithStaticSubclass() {
       SimpleProjectionWithStaticSubclass projection = new SimpleProjectionWithStaticSubclass();
 
@@ -202,9 +221,8 @@ class ProjectorImplTest {
 
       // ASSERT
       assertThat(factSpecs)
-          .hasSize(2)
           .flatExtracting(FactSpec::aggIds, FactSpec::ns, FactSpec::version, FactSpec::type)
-          .contains(
+          .containsExactlyInAnyOrder(
               // ComplexProjection has two handlers
               Collections.emptySet(),
               "test",

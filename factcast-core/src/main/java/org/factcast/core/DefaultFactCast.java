@@ -77,6 +77,12 @@ class DefaultFactCast implements FactCast {
 
   @Override
   @NonNull
+  public Set<Integer> enumerateVersions(@NonNull String ns, @NonNull String type) {
+    return store.enumerateVersions(ns, type);
+  }
+
+  @Override
+  @NonNull
   public MultiAggregateLockedOperationBuilder lock(@NonNull String ns) {
     if (ns.trim().isEmpty()) {
       throw new IllegalArgumentException("Namespace must not be empty");

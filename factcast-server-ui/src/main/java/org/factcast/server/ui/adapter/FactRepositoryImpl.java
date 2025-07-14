@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
@@ -36,6 +37,7 @@ import org.factcast.server.ui.report.ReportFilterBean;
 import org.factcast.server.ui.security.SecurityService;
 import org.factcast.server.ui.views.filter.FilterBean;
 
+@Slf4j
 @Timed(value = UiMetrics.TIMER_METRIC_NAME)
 @RequiredArgsConstructor
 public class FactRepositoryImpl implements FactRepository {
@@ -44,8 +46,6 @@ public class FactRepositoryImpl implements FactRepository {
 
   private final SecurityService securityService;
 
-  public static final int WAIT_TIME = 20000;
-
   @Override
   public Optional<Fact> findBy(@NonNull IdQueryBean bean) {
     UUID id = bean.getId();
@@ -53,7 +53,8 @@ public class FactRepositoryImpl implements FactRepository {
       return Optional.empty();
     }
 
-    int v = Optional.ofNullable(bean.getVersion()).orElse(0);
+    int v = bean.getVersion();
+
     return fs.fetchByIdAndVersion(id, v).filter(securityService::canRead);
   }
 
@@ -80,6 +81,21 @@ public class FactRepositoryImpl implements FactRepository {
     }
 
     return type.sorted().toList();
+  }
+
+  @Override
+  public List<Integer> versions(@NonNull String namespace, @NonNull String type) {
+    if (!securityService.canRead(namespace)) {
+      log.warn(
+          "User requested to enumerate versions for namespace {} and type {} without read permissions.",
+          namespace,
+          type);
+      return Collections.emptyList();
+    }
+
+    Stream<Integer> versions = fs.enumerateVersions(namespace, type).stream();
+
+    return versions.sorted().toList();
   }
 
   @Override
