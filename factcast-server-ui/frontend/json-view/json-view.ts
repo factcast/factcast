@@ -408,6 +408,11 @@ class MetaDataJsonVisitor implements JSONVisitor {
 			const filter =
 				this.factMetaData.filterOptions[filterOptionsContent.originalPath];
 
+			if (Object.keys(filter).length === 0) {
+				// no filter options defined for this property
+				return;
+			}
+
 			if (filter.aggregateId) {
 				const enrichedMember = this.buildQuickFilterForAggregateId(
 					startCharacter,
@@ -437,7 +442,7 @@ class MetaDataJsonVisitor implements JSONVisitor {
 					this.enrichedMembers.push(...enrichedMembers);
 				}
 			} else {
-				throw "Unsupported filter option.";
+				console.error("Unsupported filter option:", filter);
 			}
 		}
 	}

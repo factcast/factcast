@@ -1,6 +1,6 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("io.github.typesafegithub:github-workflows-kt:3.4.0")
+@file:DependsOn("io.github.typesafegithub:github-workflows-kt:3.5.0")
 
 
 @file:Repository("https://repo.maven.apache.org/maven2/")
@@ -9,13 +9,11 @@
 @file:DependsOn("actions:checkout:v4")
 @file:DependsOn("actions:cache:v4")
 @file:DependsOn("actions:setup-java:v4")
-@file:DependsOn("codecov:codecov-action:v5")
 
 
 import io.github.typesafegithub.workflows.actions.actions.Cache
 import io.github.typesafegithub.workflows.actions.actions.Checkout
 import io.github.typesafegithub.workflows.actions.actions.SetupJava
-import io.github.typesafegithub.workflows.actions.codecov.CodecovAction
 import io.github.typesafegithub.workflows.domain.RunnerType
 import io.github.typesafegithub.workflows.domain.triggers.PullRequest
 import io.github.typesafegithub.workflows.domain.triggers.Push
@@ -93,12 +91,6 @@ workflow(
         run(
             name = "Test - Integration",
             command = "./mvnw -B verify -DskipUnitTests",
-        )
-        uses(
-            name = "Codecov upload",
-            action = CodecovAction(
-                token = "${'$'}{{ secrets.CODECOV_TOKEN }}"
-            ),
         )
     }
 

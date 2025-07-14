@@ -124,6 +124,13 @@ class DefaultFactCastTest {
   }
 
   @Test
+  void testEnumerateVersions() {
+    Set<Integer> test = new HashSet<>();
+    when(store.enumerateVersions("test", "type")).thenReturn(test);
+    assertSame(test, FactCast.from(store).enumerateVersions("test", "type"));
+  }
+
+  @Test
   void testLockReturns() {
     assertThat(uut.lock("foo")).isNotNull().hasFieldOrPropertyWithValue("ns", "foo");
   }

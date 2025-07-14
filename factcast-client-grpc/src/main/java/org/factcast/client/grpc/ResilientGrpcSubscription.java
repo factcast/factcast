@@ -148,15 +148,22 @@ public class ResilientGrpcSubscription extends AbstractSubscription {
 
   private synchronized void connect() {
     log.debug("Connecting ({})", originalRequest);
-    store.initializeIfNecessary();
-    doConnect();
+    initializeAndConnect();
   }
 
   @VisibleForTesting
   synchronized void reConnect() {
     log.debug("Reconnecting ({})", originalRequest);
-    store.initializeIfNecessary();
-    doConnect();
+    initializeAndConnect();
+  }
+
+  private void initializeAndConnect() {
+    try {
+      store.initializeIfNecessary();
+      doConnect();
+    } catch (RuntimeException e) {
+      fail(e);
+    }
   }
 
   @VisibleForTesting
