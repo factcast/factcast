@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import com.google.common.base.Stopwatch;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -884,6 +885,19 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   @SneakyThrows
   private static void sleep(long ms) {
     Thread.sleep(ms);
+  }
+
+  @Nested
+  class Clock {
+
+    @Test
+    void currentTimeIsMonotonouslyIncreasing() {
+      Instant before = factus.currentTime();
+      Instant now = factus.currentTime();
+      Instant after = factus.currentTime();
+
+      assertThat(now).isAfterOrEqualTo(before).isBeforeOrEqualTo(after);
+    }
   }
 
   @Nested
