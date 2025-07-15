@@ -43,6 +43,11 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
+      <artifactId>factcast-test-mongodb</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
       <artifactId>factcast-grpc-lz4</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -113,6 +118,10 @@
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-snapshotcache-local-memory</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-snapshotcache-mongodb</artifactId>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
