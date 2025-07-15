@@ -17,9 +17,7 @@ package org.factcast.itests.factus.client;
 
 import org.factcast.factus.snapshot.SnapshotCache;
 import org.factcast.itests.TestFactusApplication;
-import org.factcast.itests.factus.config.DynamoProjectionConfiguration;
 import org.factcast.itests.factus.config.MongoProjectionConfiguration;
-import org.factcast.spring.boot.autoconfigure.snap.InMemoryAndDiskSnapshotCacheAutoConfiguration;
 import org.factcast.spring.boot.autoconfigure.snap.MongoDbSnapshotCacheAutoConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,7 +25,11 @@ import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
 @ContextConfiguration(
-    classes = {TestFactusApplication.class, MongoDbSnapshotCacheAutoConfiguration.class, MongoProjectionConfiguration.class})
+    classes = {
+      TestFactusApplication.class,
+      MongoDbSnapshotCacheAutoConfiguration.class,
+      MongoProjectionConfiguration.class
+    })
 public class MongoSnapshotCacheTest extends SnapshotCacheTest {
 
   @Autowired

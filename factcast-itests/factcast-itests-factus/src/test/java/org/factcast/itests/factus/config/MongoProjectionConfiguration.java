@@ -21,9 +21,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 
 public class MongoProjectionConfiguration {
-    @Bean
-    MongoClient dynamoDbClient(
-            @Value("${mongodb.local.host}") String url, @Value("${mongodb.local.port}") String port) {
-        return MongoClients.create("mongodb://" + url + ":" + port);
-    }
+  @Bean
+  MongoClient dynamoDbClient(
+      @Value("${mongodb.local.host}") String url, @Value("${mongodb.local.port}") String port) {
+    return MongoClients.create("mongodb://" + url + ":" + port);
+  }
 }
