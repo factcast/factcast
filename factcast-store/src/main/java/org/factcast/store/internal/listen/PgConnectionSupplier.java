@@ -17,13 +17,13 @@ package org.factcast.store.internal.listen;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.sql.*;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 import javax.sql.DataSource;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.jdbc.pool.PoolConfiguration;
 import org.postgresql.jdbc.PgConnection;
+import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 @Slf4j
 public class PgConnectionSupplier {
@@ -63,16 +63,10 @@ public class PgConnectionSupplier {
     return c;
   }
 
+  @SuppressWarnings("java:S2077")
   private void setConnectionApplicationName(String clientId, Connection c) throws SQLException {
     try (PreparedStatement ps =
         c.prepareStatement("SET application_name='" + applicationName + "|" + clientId + "'"); ) {
-      ps.execute();
-    }
-  }
-
-  public void resetConnectionApplicationName(Connection c) throws SQLException {
-    try (PreparedStatement ps =
-        c.prepareStatement("SET application_name='" + applicationName + "'"); ) {
       ps.execute();
     }
   }
@@ -134,5 +128,41 @@ public class PgConnectionSupplier {
       }
     }
     return dbp;
+  }
+
+  @SneakyThrows
+  @SuppressWarnings("java:S2077")
+  public SingleConnectionDataSource getPooledAsSingleDataSource(ConnectionModifier... modifiers) {
+    return getPooledAsSingleDataSource(
+        modifiers != null ? Arrays.asList(modifiers) : Collections.emptyList());
+  }
+
+  @SneakyThrows
+  @SuppressWarnings("java:S2077")
+  public SingleConnectionDataSource getPooledAsSingleDataSource(
+      @NonNull List<ConnectionModifier> filterList) {
+    return new ModifiedSingleConnectionDataSource(ds.getConnection(), filterList);
+  }
+
+  static class ModifiedSingleConnectionDataSource extends SingleConnectionDataSource {
+    private final Connection c;
+    private final List<ConnectionModifier> filterList;
+
+    public ModifiedSingleConnectionDataSource(
+        @NonNull Connection c, @NonNull List<ConnectionModifier> filterList) {
+      super(c, true);
+      this.c = c;
+      this.filterList = filterList;
+
+      filterList.forEach(f -> f.afterBorrow(c));
+    }
+
+    @Override
+    public void destroy() {
+      var rev = new ArrayList<>(filterList);
+      Collections.reverse(rev);
+      rev.forEach(f -> f.beforeReturn(c));
+      super.destroy();
+    }
   }
 }
