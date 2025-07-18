@@ -20,7 +20,6 @@ import lombok.NonNull;
 import org.factcast.core.snap.mongo.MongoDbSnapshotCache;
 import org.factcast.core.snap.mongo.MongoDbSnapshotProperties;
 import org.factcast.factus.snapshot.SnapshotCache;
-import org.factcast.factus.snapshot.SnapshotSerializerSelector;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
@@ -36,11 +35,12 @@ import org.springframework.context.annotation.Import;
 @AutoConfigureBefore(NoSnapshotCacheAutoConfiguration.class)
 public class MongoDbSnapshotCacheAutoConfiguration {
 
-    @Bean
-    @ConditionalOnMissingBean
-    public SnapshotCache snapshotCache(
-            @NonNull MongoClient client, @Value("${spring.data.mongodb.database:factcast}") String databaseName,
-            @NonNull MongoDbSnapshotProperties props) {
-        return new MongoDbSnapshotCache(client, databaseName, props);
-    }
+  @Bean
+  @ConditionalOnMissingBean
+  public SnapshotCache snapshotCache(
+      @NonNull MongoClient client,
+      @Value("${spring.data.mongodb.database:factcast}") String databaseName,
+      @NonNull MongoDbSnapshotProperties props) {
+    return new MongoDbSnapshotCache(client, databaseName, props);
+  }
 }

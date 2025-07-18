@@ -1,10 +1,33 @@
+/*
+ * Copyright © 2017-2025 factcast.org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.factcast.core.snap.mongo;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
+import static org.mockito.Mockito.*;
 
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.ReplaceOptions;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
+import java.util.UUID;
 import org.bson.BsonBinarySubType;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -22,197 +45,201 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.within;
-import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 class MongoDbSnapshotCacheTest {
 
-    @Mock
-    private MongoClient mongoClient;
-    @Mock
-    private MongoDatabase mongoDatabase;
-    @Mock
-    private MongoCollection<Document> collection;
+  @Mock private MongoClient mongoClient;
+  @Mock private MongoDatabase mongoDatabase;
+  @Mock private MongoCollection<Document> collection;
 
-    private MongoDbSnapshotCache underTest;
+  private MongoDbSnapshotCache underTest;
 
-    private final SnapshotIdentifier id = SnapshotIdentifier.of(SnapshotProjection.class);
-    private final SnapshotSerializerId serId = SnapshotSerializerId.of("buh");
+  private final SnapshotIdentifier id = SnapshotIdentifier.of(SnapshotProjection.class);
+  private final SnapshotSerializerId serId = SnapshotSerializerId.of("buh");
 
-    @BeforeEach
-    void setUp() {
-        MongoDbSnapshotProperties props = new MongoDbSnapshotProperties();
-        when(mongoClient.getDatabase("db"))
-                .thenReturn(mongoDatabase);
-        when(mongoDatabase.getCollection("factus_snapshot"))
-                .thenReturn(collection);
-        underTest = new MongoDbSnapshotCache(mongoClient, "db", props);
+  @BeforeEach
+  void setUp() {
+    MongoDbSnapshotProperties props = new MongoDbSnapshotProperties();
+    when(mongoClient.getDatabase("db")).thenReturn(mongoDatabase);
+    when(mongoDatabase.getCollection("factus_snapshot")).thenReturn(collection);
+    underTest = new MongoDbSnapshotCache(mongoClient, "db", props);
 
-        verify(collection, times(2)).createIndex(any(Bson.class), any());
-        verify(collection, times(1)).createIndex(any(Bson.class));
+    verify(collection, times(2)).createIndex(any(Bson.class), any());
+    verify(collection, times(1)).createIndex(any(Bson.class));
+  }
+
+  @Nested
+  class WhenGettingSnapshot {
+    @Captor private ArgumentCaptor<Document> documentCaptor;
+
+    @Test
+    void happyCase() {
+      FindIterable<Document> findIterable = mock(FindIterable.class);
+      UUID lastFactId = UUID.randomUUID();
+      Document result =
+          new Document()
+              .append("projectionClass", id.projectionClass().getName())
+              .append("aggregateId", id.aggregateId() != null ? id.aggregateId().toString() : null)
+              .append("snapshotSerializerId", serId.name())
+              .append(
+                  "serializedProjection",
+                  new org.bson.types.Binary(BsonBinarySubType.BINARY, "foo".getBytes()))
+              .append("lastFactId", lastFactId.toString());
+
+      when(collection.find(documentCaptor.capture())).thenReturn(findIterable);
+      when(findIterable.first()).thenReturn(result);
+
+      Optional<SnapshotData> found = underTest.find(id);
+
+      assertThat(found).isPresent();
+      assertThat(found.get().serializedProjection()).isEqualTo("foo".getBytes());
+      assertThat(found.get().snapshotSerializerId()).isEqualTo(serId);
+      assertThat(found.get().lastFactId()).isEqualTo(lastFactId);
+
+      verify(collection).updateOne(eq(documentCaptor.getValue()), any(Bson.class));
     }
 
-    @Nested
-    class WhenGettingSnapshot {
-        @Captor
-        private ArgumentCaptor<Document> documentCaptor;
+    @Test
+    void shouldReturnEmptyOptionalWhenNoSnapshotFound() {
+      FindIterable<Document> findIterable = mock(FindIterable.class);
 
-        @Test
-        void happyCase() {
-            FindIterable<Document> findIterable = mock(FindIterable.class);
-            UUID lastFactId = UUID.randomUUID();
-            Document result = new Document()
-                    .append("projectionClass", id.projectionClass().getName())
-                    .append("aggregateId", id.aggregateId() != null ? id.aggregateId().toString() : null)
-                    .append("snapshotSerializerId", serId.name())
-                    .append("serializedProjection", new org.bson.types.Binary(BsonBinarySubType.BINARY, "foo".getBytes()))
-                    .append("lastFactId", lastFactId.toString());
+      when(collection.find(documentCaptor.capture())).thenReturn(findIterable);
+      when(findIterable.first()).thenReturn(null);
 
-            when(collection.find(documentCaptor.capture())).thenReturn(findIterable);
-            when(findIterable.first()).thenReturn(result);
+      Optional<SnapshotData> found = underTest.find(id);
 
-            Optional<SnapshotData> found = underTest.find(id);
+      assertThat(found).isEmpty();
+    }
+  }
 
-            assertThat(found).isPresent();
-            assertThat(found.get().serializedProjection()).isEqualTo("foo".getBytes());
-            assertThat(found.get().snapshotSerializerId()).isEqualTo(serId);
-            assertThat(found.get().lastFactId()).isEqualTo(lastFactId);
+  @Nested
+  class WhenStoringSnapshot {
 
-            verify(collection).updateOne(eq(documentCaptor.getValue()), any(Bson.class));
-        }
+    @Captor private ArgumentCaptor<Document> keyCaptor;
+    @Captor private ArgumentCaptor<Document> documentCaptor;
 
-        @Test
-        void shouldReturnEmptyOptionalWhenNoSnapshotFound() {
-            FindIterable<Document> findIterable = mock(FindIterable.class);
+    @Test
+    void happyCase() {
+      final SnapshotData snap = new SnapshotData("foo".getBytes(), serId, UUID.randomUUID());
+      Instant expectedExpireAt = Instant.now().plus(90, ChronoUnit.DAYS);
 
-            when(collection.find(documentCaptor.capture())).thenReturn(findIterable);
-            when(findIterable.first()).thenReturn(null);
+      underTest.store(id, snap);
 
-            Optional<SnapshotData> found = underTest.find(id);
+      verify(collection)
+          .replaceOne(keyCaptor.capture(), documentCaptor.capture(), any(ReplaceOptions.class));
+      Document keyDocument = keyCaptor.getValue();
+      Document storedDocument = documentCaptor.getValue();
 
-            assertThat(found).isEmpty();
-        }
+      // Validate key document
+      assertThat(keyDocument.getString("projectionClass"))
+          .isEqualTo(id.projectionClass().getName());
+      assertThat(keyDocument.getString("aggregateId"))
+          .isEqualTo(id.aggregateId() != null ? id.aggregateId().toString() : null);
+
+      // Validate stored document
+      assertThat(storedDocument.getString("projectionClass"))
+          .isEqualTo(id.projectionClass().getName());
+      assertThat(storedDocument.getString("snapshotSerializerId")).isEqualTo(serId.name());
+      assertThat(storedDocument.get("serializedProjection", Binary.class).getData())
+          .isEqualTo("foo".getBytes());
+      assertThat(storedDocument.getString("lastFactId")).isEqualTo(snap.lastFactId().toString());
+      assertThat(storedDocument.get("expireAt", Instant.class))
+          .isCloseTo(expectedExpireAt, within(1, ChronoUnit.SECONDS));
     }
 
-    @Nested
-    class WhenStoringSnapshot {
+    @Test
+    void overwriteExistingSnapshot() {
+      final SnapshotData snap1 = new SnapshotData("foo".getBytes(), serId, UUID.randomUUID());
+      final SnapshotData snap2 = new SnapshotData("bar".getBytes(), serId, UUID.randomUUID());
+      Instant expectedExpireAt = Instant.now().plus(90, ChronoUnit.DAYS);
 
-        @Captor
-        private ArgumentCaptor<Document> keyCaptor;
-        @Captor
-        private ArgumentCaptor<Document> documentCaptor;
+      underTest.store(id, snap1);
+      underTest.store(id, snap2);
 
-        @Test
-        void happyCase() {
-            final SnapshotData snap = new SnapshotData("foo".getBytes(), serId, UUID.randomUUID());
-            Instant expectedExpireAt = Instant.now().plus(90, ChronoUnit.DAYS);
+      verify(collection, times(2))
+          .replaceOne(keyCaptor.capture(), documentCaptor.capture(), any(ReplaceOptions.class));
 
-            underTest.store(id, snap);
+      // Validate key document
+      Document keyDocument = keyCaptor.getValue();
+      assertThat(keyDocument.getString("projectionClass"))
+          .isEqualTo(id.projectionClass().getName());
+      assertThat(keyDocument.getString("aggregateId"))
+          .isEqualTo(id.aggregateId() != null ? id.aggregateId().toString() : null);
 
-            verify(collection).replaceOne(keyCaptor.capture(), documentCaptor.capture(), any(ReplaceOptions.class));
-            Document keyDocument = keyCaptor.getValue();
-            Document storedDocument = documentCaptor.getValue();
-
-            // Validate key document
-            assertThat(keyDocument.getString("projectionClass")).isEqualTo(id.projectionClass().getName());
-            assertThat(keyDocument.getString("aggregateId")).isEqualTo(id.aggregateId() != null ? id.aggregateId().toString() : null);
-
-            // Validate stored document
-            assertThat(storedDocument.getString("projectionClass")).isEqualTo(id.projectionClass().getName());
-            assertThat(storedDocument.getString("snapshotSerializerId")).isEqualTo(serId.name());
-            assertThat(storedDocument.get("serializedProjection", Binary.class).getData()).isEqualTo("foo".getBytes());
-            assertThat(storedDocument.getString("lastFactId")).isEqualTo(snap.lastFactId().toString());
-            assertThat(storedDocument.get("expireAt", Instant.class)).isCloseTo(expectedExpireAt, within(1, ChronoUnit.SECONDS));
-        }
-
-        @Test
-        void overwriteExistingSnapshot() {
-            final SnapshotData snap1 = new SnapshotData("foo".getBytes(), serId, UUID.randomUUID());
-            final SnapshotData snap2 = new SnapshotData("bar".getBytes(), serId, UUID.randomUUID());
-            Instant expectedExpireAt = Instant.now().plus(90, ChronoUnit.DAYS);
-
-            underTest.store(id, snap1);
-            underTest.store(id, snap2);
-
-            verify(collection, times(2)).replaceOne(keyCaptor.capture(), documentCaptor.capture(), any(ReplaceOptions.class));
-
-            // Validate key document
-            Document keyDocument = keyCaptor.getValue();
-            assertThat(keyDocument.getString("projectionClass")).isEqualTo(id.projectionClass().getName());
-            assertThat(keyDocument.getString("aggregateId")).isEqualTo(id.aggregateId() != null ? id.aggregateId().toString() : null);
-
-            // Validate stored document
-            Document storedDocument = documentCaptor.getValue();
-            assertThat(storedDocument.getString("projectionClass")).isEqualTo(id.projectionClass().getName());
-            assertThat(storedDocument.getString("snapshotSerializerId")).isEqualTo(serId.name());
-            assertThat(storedDocument.get("serializedProjection", Binary.class).getData()).isEqualTo("bar".getBytes());
-            assertThat(storedDocument.getString("lastFactId")).isEqualTo(snap2.lastFactId().toString());
-            assertThat(storedDocument.get("expireAt", Instant.class)).isCloseTo(expectedExpireAt, within(1, ChronoUnit.SECONDS));
-        }
-
-        @Test
-        void storeSnapshotWithoutAggregateId() {
-            SnapshotIdentifier idWithoutAggregate = SnapshotIdentifier.of(SnapshotProjection.class);
-            final SnapshotData snap = new SnapshotData("foo".getBytes(), serId, UUID.randomUUID());
-            Instant expectedExpireAt = Instant.now().plus(90, ChronoUnit.DAYS);
-
-            underTest.store(idWithoutAggregate, snap);
-
-            verify(collection).replaceOne(keyCaptor.capture(), documentCaptor.capture(), any(ReplaceOptions.class));
-            Document keyDocument = keyCaptor.getValue();
-            Document storedDocument = documentCaptor.getValue();
-
-            // Validate key document
-            assertThat(keyDocument.getString("projectionClass")).isEqualTo(idWithoutAggregate.projectionClass().getName());
-            assertThat(keyDocument.containsKey("aggregateId")).isFalse();
-
-            // Validate stored document
-            assertThat(storedDocument.getString("projectionClass")).isEqualTo(idWithoutAggregate.projectionClass().getName());
-            assertThat(storedDocument.getString("snapshotSerializerId")).isEqualTo(serId.name());
-            assertThat(storedDocument.get("serializedProjection", Binary.class).getData()).isEqualTo("foo".getBytes());
-            assertThat(storedDocument.getString("lastFactId")).isEqualTo(snap.lastFactId().toString());
-            assertThat(storedDocument.get("expireAt", Instant.class)).isCloseTo(expectedExpireAt, within(1, ChronoUnit.SECONDS));
-        }
-
+      // Validate stored document
+      Document storedDocument = documentCaptor.getValue();
+      assertThat(storedDocument.getString("projectionClass"))
+          .isEqualTo(id.projectionClass().getName());
+      assertThat(storedDocument.getString("snapshotSerializerId")).isEqualTo(serId.name());
+      assertThat(storedDocument.get("serializedProjection", Binary.class).getData())
+          .isEqualTo("bar".getBytes());
+      assertThat(storedDocument.getString("lastFactId")).isEqualTo(snap2.lastFactId().toString());
+      assertThat(storedDocument.get("expireAt", Instant.class))
+          .isCloseTo(expectedExpireAt, within(1, ChronoUnit.SECONDS));
     }
 
-    @Nested
-    class WhenRemovingSnapshot {
+    @Test
+    void storeSnapshotWithoutAggregateId() {
+      SnapshotIdentifier idWithoutAggregate = SnapshotIdentifier.of(SnapshotProjection.class);
+      final SnapshotData snap = new SnapshotData("foo".getBytes(), serId, UUID.randomUUID());
+      Instant expectedExpireAt = Instant.now().plus(90, ChronoUnit.DAYS);
 
-        @Captor
-        private ArgumentCaptor<Document> keyCaptor;
+      underTest.store(idWithoutAggregate, snap);
 
-        @Test
-        void happyCase() {
-            underTest.remove(id);
+      verify(collection)
+          .replaceOne(keyCaptor.capture(), documentCaptor.capture(), any(ReplaceOptions.class));
+      Document keyDocument = keyCaptor.getValue();
+      Document storedDocument = documentCaptor.getValue();
 
-            verify(collection).deleteOne(keyCaptor.capture());
-            Document capturedKeyDocument = keyCaptor.getValue();
+      // Validate key document
+      assertThat(keyDocument.getString("projectionClass"))
+          .isEqualTo(idWithoutAggregate.projectionClass().getName());
+      assertThat(keyDocument.containsKey("aggregateId")).isFalse();
 
-            // Validate captured key document
-            assertThat(capturedKeyDocument.getString("projectionClass")).isEqualTo(id.projectionClass().getName());
-            assertThat(capturedKeyDocument.getString("aggregateId")).isEqualTo(id.aggregateId() != null ? id.aggregateId().toString() : null);
-        }
-
-        @Test
-        void removeSnapshotWithoutAggregateId() {
-            SnapshotIdentifier idWithoutAggregate = SnapshotIdentifier.of(SnapshotProjection.class);
-
-            underTest.remove(idWithoutAggregate);
-
-            verify(collection).deleteOne(keyCaptor.capture());
-            Document capturedKeyDocument = keyCaptor.getValue();
-
-            // Validate captured key document
-            assertThat(capturedKeyDocument.getString("projectionClass")).isEqualTo(idWithoutAggregate.projectionClass().getName());
-            assertThat(capturedKeyDocument.containsKey("aggregateId")).isFalse();
-        }
+      // Validate stored document
+      assertThat(storedDocument.getString("projectionClass"))
+          .isEqualTo(idWithoutAggregate.projectionClass().getName());
+      assertThat(storedDocument.getString("snapshotSerializerId")).isEqualTo(serId.name());
+      assertThat(storedDocument.get("serializedProjection", Binary.class).getData())
+          .isEqualTo("foo".getBytes());
+      assertThat(storedDocument.getString("lastFactId")).isEqualTo(snap.lastFactId().toString());
+      assertThat(storedDocument.get("expireAt", Instant.class))
+          .isCloseTo(expectedExpireAt, within(1, ChronoUnit.SECONDS));
     }
+  }
+
+  @Nested
+  class WhenRemovingSnapshot {
+
+    @Captor private ArgumentCaptor<Document> keyCaptor;
+
+    @Test
+    void happyCase() {
+      underTest.remove(id);
+
+      verify(collection).deleteOne(keyCaptor.capture());
+      Document capturedKeyDocument = keyCaptor.getValue();
+
+      // Validate captured key document
+      assertThat(capturedKeyDocument.getString("projectionClass"))
+          .isEqualTo(id.projectionClass().getName());
+      assertThat(capturedKeyDocument.getString("aggregateId"))
+          .isEqualTo(id.aggregateId() != null ? id.aggregateId().toString() : null);
+    }
+
+    @Test
+    void removeSnapshotWithoutAggregateId() {
+      SnapshotIdentifier idWithoutAggregate = SnapshotIdentifier.of(SnapshotProjection.class);
+
+      underTest.remove(idWithoutAggregate);
+
+      verify(collection).deleteOne(keyCaptor.capture());
+      Document capturedKeyDocument = keyCaptor.getValue();
+
+      // Validate captured key document
+      assertThat(capturedKeyDocument.getString("projectionClass"))
+          .isEqualTo(idWithoutAggregate.projectionClass().getName());
+      assertThat(capturedKeyDocument.containsKey("aggregateId")).isFalse();
+    }
+  }
 }
