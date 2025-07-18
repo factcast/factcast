@@ -94,7 +94,7 @@
     <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
     <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
     <jacoco-maven-plugin.version>0.8.13</jacoco-maven-plugin.version>
-    <maven.version>3.9.10</maven.version>
+    <maven.version>3.9.11</maven.version>
     <!-- defaults to 11, client modules will be compiled with/to 8 -->
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
@@ -120,10 +120,10 @@
     <micronaut.version>4.7.5</micronaut.version>
     <kotlin.version>2.2.0</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
-    <mockk.version>1.14.4</mockk.version>
-    <graaljs.version>24.2.1</graaljs.version>
+    <mockk.version>1.14.5</mockk.version>
+    <graaljs.version>24.2.2</graaljs.version>
     <redisson.version>3.50.0</redisson.version>
-    <aws-sdk.version>2.31.78</aws-sdk.version>
+    <aws-sdk.version>2.32.3</aws-sdk.version>
     <mongodb-driver.version>5.5.1</mongodb-driver.version>
     <shedlock.version>6.9.2</shedlock.version>
     <byte-buddy.version>1.17.6</byte-buddy.version>
@@ -332,7 +332,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <version>3.6.0</version>
+        <version>3.6.1</version>
         <executions>
           <execution>
             <id>enforce-versions</id>
