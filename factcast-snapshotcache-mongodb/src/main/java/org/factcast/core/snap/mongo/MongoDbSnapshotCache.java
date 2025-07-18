@@ -128,7 +128,7 @@ public class MongoDbSnapshotCache implements SnapshotCache {
 
     // Add expiration time to the document
     doc.append(
-            EXPIRE_AT_FIELD,
+        EXPIRE_AT_FIELD,
         Instant.now().plus(properties.getDeleteSnapshotStaleForDays(), ChronoUnit.DAYS));
 
     Document query = getDocumentById(id);
