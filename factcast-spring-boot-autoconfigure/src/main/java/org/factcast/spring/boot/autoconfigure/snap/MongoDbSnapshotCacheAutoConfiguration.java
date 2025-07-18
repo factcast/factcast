@@ -36,13 +36,11 @@ import org.springframework.context.annotation.Import;
 @AutoConfigureBefore(NoSnapshotCacheAutoConfiguration.class)
 public class MongoDbSnapshotCacheAutoConfiguration {
 
-  @Bean
-  @ConditionalOnMissingBean
-  public SnapshotCache snapshotCache(
-      @NonNull MongoClient client,
-      @Value("${spring.data.mongodb.database:factcast}") String databaseName,
-      @NonNull MongoDbSnapshotProperties props,
-      @NonNull SnapshotSerializerSelector selector) {
-    return new MongoDbSnapshotCache(client, databaseName, selector, props);
-  }
+    @Bean
+    @ConditionalOnMissingBean
+    public SnapshotCache snapshotCache(
+            @NonNull MongoClient client, @Value("${spring.data.mongodb.database:factcast}") String databaseName,
+            @NonNull MongoDbSnapshotProperties props) {
+        return new MongoDbSnapshotCache(client, databaseName, props);
+    }
 }

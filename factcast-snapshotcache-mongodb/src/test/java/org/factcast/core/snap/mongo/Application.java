@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.snap.redisson;
+package org.factcast.core.snap.mongo;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
