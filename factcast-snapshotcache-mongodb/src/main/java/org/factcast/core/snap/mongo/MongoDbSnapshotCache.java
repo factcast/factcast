@@ -43,6 +43,7 @@ public class MongoDbSnapshotCache implements SnapshotCache {
   public static final String SNAPSHOT_SERIALIZER_ID_FIELD = "snapshotSerializerId";
   public static final String LAST_FACT_ID_FIELD = "lastFactId";
   public static final String SERIALIZED_PROJECTION_FIELD = "serializedProjection";
+  public static final String EXPIRE_AT_FIELD = "expireAt";
 
   private final MongoDbSnapshotProperties properties;
   private final MongoCollection<Document> collection;
@@ -127,7 +128,7 @@ public class MongoDbSnapshotCache implements SnapshotCache {
 
     // Add expiration time to the document
     doc.append(
-        "expireAt",
+            EXPIRE_AT_FIELD,
         Instant.now().plus(properties.getDeleteSnapshotStaleForDays(), ChronoUnit.DAYS));
 
     Document query = getDocumentById(id);
