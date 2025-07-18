@@ -75,7 +75,7 @@ public class MongoDbSnapshotCache implements SnapshotCache {
     // Third index for TTL management of documents, expires the document after 0 seconds of the
     // `expireAt` field. So, immediately.
     collection.createIndex(
-        Indexes.ascending("expireAt"), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS));
+        Indexes.ascending(EXPIRE_AT_FIELD), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS));
   }
 
   @Override
@@ -104,7 +104,7 @@ public class MongoDbSnapshotCache implements SnapshotCache {
       collection.updateOne(
           getDocumentById(id),
           Updates.set(
-              "expireAt",
+                  EXPIRE_AT_FIELD,
               Instant.now().plus(properties.getDeleteSnapshotStaleForDays(), ChronoUnit.DAYS)));
     } catch (Exception e) {
       log.warn("Failed to update expiration date for snapshot with id: {}", id, e);
