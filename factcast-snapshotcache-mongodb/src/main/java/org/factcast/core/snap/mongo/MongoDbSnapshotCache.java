@@ -104,7 +104,7 @@ public class MongoDbSnapshotCache implements SnapshotCache {
       collection.updateOne(
           getDocumentById(id),
           Updates.set(
-                  EXPIRE_AT_FIELD,
+              EXPIRE_AT_FIELD,
               Instant.now().plus(properties.getDeleteSnapshotStaleForDays(), ChronoUnit.DAYS)));
     } catch (Exception e) {
       log.warn("Failed to update expiration date for snapshot with id: {}", id, e);
