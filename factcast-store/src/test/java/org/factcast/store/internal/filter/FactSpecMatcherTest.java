@@ -15,6 +15,7 @@
  */
 package org.factcast.store.internal.filter;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.google.common.collect.Lists;
@@ -24,7 +25,8 @@ import org.factcast.core.*;
 import org.factcast.core.spec.*;
 import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.script.graaljs.GraalJSEngineFactory;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
+import org.mockito.*;
 
 /** see FactSpecMatcherScriptingTest for more tests including execution of scripts */
 class FactSpecMatcherTest {
@@ -196,5 +198,163 @@ class FactSpecMatcherTest {
   @Test
   void testMatchesNull() {
     TestHelper.expectNPE(() -> FactSpecMatcher.matches(null, ef));
+  }
+
+  @Nested
+  class FieldName {
+    @Test
+    void returnsSimpleName() {
+      String probe = "a";
+      assertThat(FactSpecMatcher.fieldName(probe)).isSameAs(probe);
+    }
+
+    @Test
+    void returnsLastPart() {
+      String probe = "a.b.c.d";
+      assertThat(FactSpecMatcher.fieldName(probe)).isEqualTo("d");
+    }
+  }
+
+  @Nested
+  class AggregateIdProperty {
+
+    @Test
+    void notContained() {
+      Fact f = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).build("{}");
+
+      FactSpec spec = new FactSpec("*");
+      spec.aggIdProperty("foo", UUID.randomUUID());
+
+      assertThat(new FactSpecMatcher(spec, Mockito.mock(JSEngineFactory.class)).test(f)).isFalse();
+    }
+
+    @Test
+    void notContainedNested() {
+      Fact f = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).build("{}");
+
+      FactSpec spec = new FactSpec("*");
+      spec.aggIdProperty("foo.bar.baz", UUID.randomUUID());
+
+      assertThat(new FactSpecMatcher(spec, Mockito.mock(JSEngineFactory.class)).test(f)).isFalse();
+    }
+
+    @Test
+    void notContainedArray() {
+
+      Fact f =
+          Fact.builder()
+              .ns("ns")
+              .type("type")
+              .id(UUID.randomUUID())
+              .build("{\"foo\":[\"" + UUID.randomUUID() + ",\"" + UUID.randomUUID() + "\"]}");
+      FactSpec spec = new FactSpec("*");
+      spec.aggIdProperty("foo", UUID.randomUUID());
+      assertThat(new FactSpecMatcher(spec, Mockito.mock(JSEngineFactory.class)).test(f)).isFalse();
+    }
+
+    @Test
+    void notContainedNonUnique() {
+      UUID id = UUID.randomUUID();
+      Fact f =
+          Fact.builder()
+              .ns("ns")
+              .type("type")
+              .id(UUID.randomUUID())
+              .build("{\"baz\":\"" + id + "\"}");
+
+      FactSpec spec = new FactSpec("*");
+      spec.aggIdProperty("foo.bar.baz", id);
+
+      assertThat(new FactSpecMatcher(spec, Mockito.mock(JSEngineFactory.class)).test(f)).isFalse();
+    }
+
+    @Test
+    void notContainedNonUniqueNested() {
+      UUID id = UUID.randomUUID();
+      Fact f =
+          Fact.builder()
+              .ns("ns")
+              .type("type")
+              .id(UUID.randomUUID())
+              .build("{\"foo\":{\"baz\":\"" + id + "\"}}");
+
+      FactSpec spec = new FactSpec("*");
+      spec.aggIdProperty("foo.bar.baz", id);
+
+      assertThat(new FactSpecMatcher(spec, Mockito.mock(JSEngineFactory.class)).test(f)).isFalse();
+    }
+
+    @Test
+    void contained() {
+      UUID id = UUID.randomUUID();
+      Fact f =
+          Fact.builder()
+              .ns("ns")
+              .type("type")
+              .aggId(id)
+              .id(UUID.randomUUID())
+              .build("{\"id\":\"" + id + "\"}");
+
+      FactSpec spec = new FactSpec("*");
+      spec.aggIdProperty("id", id);
+
+      assertThat(new FactSpecMatcher(spec, Mockito.mock(JSEngineFactory.class)).test(f)).isTrue();
+    }
+
+    @Test
+    void containedNested() {
+      UUID id = UUID.randomUUID();
+      Fact f =
+          Fact.builder()
+              .ns("ns")
+              .type("type")
+              .aggId(id)
+              .id(UUID.randomUUID())
+              .build("{\"foo\":{\"id\":\"" + id + "\"}}");
+
+      FactSpec spec = new FactSpec("*");
+      spec.aggIdProperty("foo.id", id);
+
+      assertThat(new FactSpecMatcher(spec, Mockito.mock(JSEngineFactory.class)).test(f)).isTrue();
+    }
+
+    @Test
+    void containedArrayMiss() {
+      UUID id = UUID.randomUUID();
+      Fact f =
+          Fact.builder()
+              .ns("ns")
+              .type("type")
+              .aggId(id)
+              .id(UUID.randomUUID())
+              .build(
+                  "{\"foo\":{\"id\":[\""
+                      + UUID.randomUUID()
+                      + "\",\""
+                      + UUID.randomUUID()
+                      + "\"]}}");
+
+      FactSpec spec = new FactSpec("*");
+      spec.aggIdProperty("foo.id", id);
+
+      assertThat(new FactSpecMatcher(spec, Mockito.mock(JSEngineFactory.class)).test(f)).isFalse();
+    }
+
+    @Test
+    void containedNested2() {
+      UUID id = UUID.randomUUID();
+      Fact f =
+          Fact.builder()
+              .ns("ns")
+              .type("type")
+              .aggId(id)
+              .id(UUID.randomUUID())
+              .build("{\"foo\":{\"bar\":{\"id\":\"" + id + "\"}}}");
+
+      FactSpec spec = new FactSpec("*");
+      spec.aggIdProperty("foo.bar.id", id);
+
+      assertThat(new FactSpecMatcher(spec, Mockito.mock(JSEngineFactory.class)).test(f)).isTrue();
+    }
   }
 }

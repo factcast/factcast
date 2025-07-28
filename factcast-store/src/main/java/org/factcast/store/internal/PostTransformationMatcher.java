@@ -15,6 +15,7 @@
  */
 package org.factcast.store.internal;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;
@@ -37,21 +38,25 @@ import org.factcast.store.internal.script.JSEngineFactory;
  * @author uwe.schaefer@prisma-capacity.eu
  */
 @Slf4j
-public class PostQueryMatcher implements Predicate<Fact> {
+public class PostTransformationMatcher implements Predicate<Fact> {
 
   @Getter
+  @VisibleForTesting
   @Accessors(fluent = true)
   final boolean canBeSkipped;
 
   final List<FactSpecMatcher> matchers = new LinkedList<>();
 
-  public PostQueryMatcher(@NonNull SubscriptionRequest req, @NonNull JSEngineFactory ef) {
-    canBeSkipped = req.specs().stream().noneMatch(s -> s.filterScript() != null);
-    if (canBeSkipped) {
+  public PostTransformationMatcher(@NonNull SubscriptionRequest req, @NonNull JSEngineFactory ef) {
+    boolean hasNoFilterScript = req.specs().stream().noneMatch(s -> s.filterScript() != null);
+    boolean hasNoAggIdProperties =
+        req.specs().stream().noneMatch(s -> s.aggIdProperties().isEmpty());
+    if (hasNoFilterScript && hasNoAggIdProperties) {
+      canBeSkipped = true;
       log.trace("{} post query filtering has been disabled", req);
     } else {
-      this.matchers.addAll(
-          req.specs().stream().map(s -> new FactSpecMatcher(s, ef)).collect(Collectors.toList()));
+      canBeSkipped = false;
+      this.matchers.addAll(req.specs().stream().map(s -> new FactSpecMatcher(s, ef)).toList());
     }
   }
 

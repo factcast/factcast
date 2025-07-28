@@ -15,6 +15,7 @@
  */
 package org.factcast.core;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import java.io.*;
 import java.util.*;
 import lombok.*;
@@ -135,7 +136,19 @@ public class DefaultFact implements Fact, Externalizable {
   }
 
   @Override
-  public Set<UUID> aggIds() {
+  public @NonNull Set<UUID> aggIds() {
     return deserializedHeader.aggIds();
+  }
+
+  @SuppressWarnings("java:S2065")
+  private transient JsonNode parsedPayload = null;
+
+  @SneakyThrows
+  @Override
+  public @NonNull JsonNode jsonPayloadParsed() {
+    if (parsedPayload == null) {
+      parsedPayload = FactCastJson.readTree(jsonPayload);
+    }
+    return parsedPayload;
   }
 }

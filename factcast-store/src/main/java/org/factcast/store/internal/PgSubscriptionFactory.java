@@ -88,7 +88,10 @@ public class PgSubscriptionFactory implements AutoCloseable {
 
     ServerPipeline pipe =
         pipelineFactory.create(
-            req, subscription, new PostQueryMatcher(req, jsEngineFactory), maxPipelineBufferSize);
+            req,
+            subscription,
+            new PostTransformationMatcher(req, jsEngineFactory),
+            maxPipelineBufferSize);
 
     PgFactStream pgsub =
         new PgFactStream(

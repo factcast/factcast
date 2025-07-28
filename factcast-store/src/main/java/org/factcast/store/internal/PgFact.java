@@ -15,10 +15,12 @@
  */
 package org.factcast.store.internal;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.annotations.VisibleForTesting;
 import java.sql.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 import lombok.*;
 import org.factcast.core.*;
@@ -102,5 +104,20 @@ public class PgFact implements Fact {
       }
     }
     return Collections.emptySet();
+  }
+
+  @SuppressWarnings("java:S2065")
+  @JsonIgnore
+  private transient AtomicReference<JsonNode> parsedPayload = new AtomicReference<JsonNode>();
+
+  @SneakyThrows
+  @Override
+  public @NonNull JsonNode jsonPayloadParsed() {
+    JsonNode p = parsedPayload.get();
+    if (p == null) {
+      p = FactCastJson.readTree(jsonPayload);
+      parsedPayload.set(p);
+    }
+    return p;
   }
 }

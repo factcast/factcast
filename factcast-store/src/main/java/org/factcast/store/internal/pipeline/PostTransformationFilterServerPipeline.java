@@ -18,14 +18,14 @@ package org.factcast.store.internal.pipeline;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
-import org.factcast.store.internal.PostQueryMatcher;
+import org.factcast.store.internal.PostTransformationMatcher;
 
 @Slf4j
-public class PostQueryFilterServerPipeline extends AbstractServerPipeline {
-  @NonNull final PostQueryMatcher matcher;
+public class PostTransformationFilterServerPipeline extends AbstractServerPipeline {
+  @NonNull final PostTransformationMatcher matcher;
 
-  public PostQueryFilterServerPipeline(
-      @NonNull ServerPipeline parent, @NonNull PostQueryMatcher matcher) {
+  public PostTransformationFilterServerPipeline(
+      @NonNull ServerPipeline parent, @NonNull PostTransformationMatcher matcher) {
     super(parent);
     this.matcher = matcher;
   }
@@ -34,7 +34,7 @@ public class PostQueryFilterServerPipeline extends AbstractServerPipeline {
   public void process(@NonNull Signal s) {
     if (s instanceof Signal.FactSignal fs) {
       Fact fact = fs.fact();
-      if (matcher.canBeSkipped() || matcher.test(fact)) {
+      if (matcher.test(fact)) {
         parent.process(s);
       } else {
         log.trace("removing unmatched fact from pipeline {}", fact);

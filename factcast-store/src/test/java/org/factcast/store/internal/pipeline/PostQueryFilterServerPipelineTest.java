@@ -22,7 +22,7 @@ import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
-import org.factcast.store.internal.PostQueryMatcher;
+import org.factcast.store.internal.PostTransformationMatcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -34,9 +34,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class PostQueryFilterServerPipelineTest {
 
-  @Mock private @NonNull PostQueryMatcher matcher;
+  @Mock private @NonNull PostTransformationMatcher matcher;
   @Mock private @NonNull ServerPipeline parent;
-  @InjectMocks private PostQueryFilterServerPipeline underTest;
+  @InjectMocks private PostTransformationFilterServerPipeline underTest;
 
   @Nested
   class WhenProcessing {

@@ -23,7 +23,7 @@ import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.FactTransformers;
 import org.factcast.core.util.NoCoverageReportToBeGenerated;
 import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.PostQueryMatcher;
+import org.factcast.store.internal.PostTransformationMatcher;
 import org.factcast.store.internal.filter.blacklist.Blacklist;
 import org.factcast.store.internal.script.JSEngineFactory;
 
@@ -39,18 +39,21 @@ public class ServerPipelineFactory {
   public ServerPipeline create(
       @NonNull SubscriptionRequest subreq,
       @NonNull SubscriptionImpl sub,
-      @NonNull PostQueryMatcher perRequestMatcher,
+      @NonNull PostTransformationMatcher perRequestMatcher,
       int maxBufferSize) {
 
     ServerPipeline chain = new ServerPipelineAdapter(sub);
     chain = new MetricServerPipeline(chain, metrics);
+
+    // needs to be executed AFTER transformation
+    // TODO document potentially breaking change
+    chain = new PostTransformationFilterServerPipeline(chain, perRequestMatcher);
 
     chain =
         new BufferedTransformingServerPipeline(
             chain, factTransformerService, FactTransformers.createFor(subreq), maxBufferSize);
 
     chain = new BlacklistFilterServerPipeline(chain, blacklist);
-    chain = new PostQueryFilterServerPipeline(chain, perRequestMatcher);
 
     return chain;
   }

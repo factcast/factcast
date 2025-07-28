@@ -15,10 +15,13 @@
  */
 package org.factcast.store.internal.filter;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.*;
 import java.util.function.Predicate;
 import lombok.*;
+import org.apache.commons.lang3.StringUtils;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.*;
 import org.factcast.core.util.FactCastJson;
@@ -31,6 +34,7 @@ import org.factcast.store.internal.script.*;
  */
 public final class FactSpecMatcher implements Predicate<Fact> {
 
+  public boolean UNSAFE_STRING_PREMATCHING = true;
   @NonNull final String ns;
 
   final Integer version;
@@ -72,11 +76,65 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     match = match && typeMatch(t);
     match = match && versionMatch(t);
     match = match && aggIdMatch(t);
+    match = match && aggIdPropertiesMatch(t);
     match = match && metaMatch(t);
     match = match && metaKeyExistsMatch(t);
     match = match && scriptMatch(t);
 
     return match;
+  }
+
+  @VisibleForTesting
+  boolean aggIdPropertiesMatch(Fact t) {
+
+    for (Map.Entry<String, UUID> entry : aggIdProperties.entrySet()) {
+      String k = entry.getKey();
+      UUID v = entry.getValue();
+      String uuidAsString = v.toString();
+      String fieldName = fieldName(k);
+      // as we know the fact json being normalized (comes from the database), we can try to
+      // get away with a cheap string contains to detect non matching ones quicker.
+      String extectedString = String.format("\"%s\":\"%s\"", fieldName, uuidAsString);
+      if (UNSAFE_STRING_PREMATCHING)
+        if (!t.jsonPayload().contains(extectedString)) {
+          return false;
+        }
+
+      // we'll have to have a closer look to make sure
+
+      JsonNode payload = null;
+      try {
+        payload = FactCastJson.readTree(t.jsonPayload());
+      } catch (JsonProcessingException e) {
+        throw new RuntimeException(e);
+      }
+      String[] nodes = path(k);
+      for (String node : nodes) {
+        payload = payload.path(node);
+        if (payload.isMissingNode()) {
+          return false; // as early as possible
+        }
+      }
+      return v.toString().equals(payload.asText());
+    }
+
+    return true;
+  }
+
+  private String[] path(String k) {
+    return k.split("\\.");
+  }
+
+  /**
+   * extract fieldname from propertyPath expression
+   *
+   * @param k
+   * @return
+   */
+  @VisibleForTesting
+  static String fieldName(@NonNull String k) {
+    if (!k.contains(".")) return k;
+    else return StringUtils.substringAfterLast(k, '.');
   }
 
   boolean metaMatch(Fact t) {
@@ -101,7 +159,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
   }
 
   boolean nsMatch(Fact t) {
-    return ns.equals(t.ns());
+    return ns.equals(t.ns()) || ns.equals("*");
   }
 
   boolean typeMatch(Fact t) {
