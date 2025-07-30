@@ -30,7 +30,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
+import lombok.EqualsAndHashCode;
 import lombok.NonNull;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.DuplicateFactException;
 import org.factcast.core.Fact;
@@ -308,20 +310,28 @@ public class PgFactStore extends AbstractFactStore {
                     // exclusively lock all namespaces that we publish into,
                     factsToPublish.stream()
                         .map(Fact::ns)
+                        // to make sure the two streams are ordered
+                        .sorted()
                         .distinct()
                         .map(cache::getUnchecked)
-                        .map(c -> Pair.of(c, (Consumer<Integer>) lock::aquireExclusiveTXLock)),
+                        .map(c -> new LockPair(c, (Consumer<Integer>) lock::aquireExclusiveTXLock)),
                     // and get a read lock for all namespace we read from in our projection
                     state.get().specs().stream()
                         .map(FactSpec::ns)
+                        // to make sure the two streams are ordered
+                        .sorted()
                         .distinct()
                         .map(cache::getUnchecked)
-                        .map(c -> Pair.of(c, (Consumer<Integer>) lock::aquireExclusiveTXLock)))
+                        .map(c -> new LockPair(c, (Consumer<Integer>) lock::aquireSharedTXLock)))
+                // here it is important that the exclusive locks are preserved, while the shared
+                // locks are dropped,
+                // in case of duplicate locks on the same namespace. We get that since concat on two
+                // ordered streams is ordered.
                 .distinct()
-                // order by code to prevent dead locks
-                .sorted(Comparator.comparing(Pair::left))
-                .filter(c -> c.left() != 1)
-                .forEachOrdered(p -> p.right().accept(p.left()));
+                // after dropping duplicate locks, order by code to prevent dead locks
+                .sorted(Comparator.comparing(LockPair::code))
+                .filter(c -> c.code() != STAR_NAMESPACE_CODE)
+                .forEachOrdered(LockPair::acquireLock);
           } else {
             // get exclusive locks for all namespaces we publish into
             factsToPublish.stream()
@@ -334,6 +344,17 @@ public class PgFactStore extends AbstractFactStore {
           }
           return super.publishIfUnchanged(factsToPublish, optionalToken);
         });
+  }
+
+  @Value
+  @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+  static class LockPair {
+    @EqualsAndHashCode.Include int code;
+    Consumer<Integer> lock;
+
+    void acquireLock() {
+      lock.accept(code);
+    }
   }
 
   @Override
