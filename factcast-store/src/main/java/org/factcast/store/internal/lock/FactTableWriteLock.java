@@ -17,5 +17,31 @@ package org.factcast.store.internal.lock;
 
 public interface FactTableWriteLock {
 
+  int STAR_NAMESPACE_CODE = 5_000;
+
   void aquireExclusiveTXLock();
+
+  void aquireExclusiveTXLock(int code);
+
+  void aquireSharedTXLock(int code);
+
+  /**
+   * Needs to be called every time we publish, to make sure we can serialise conditional publish
+   * with lock on namespace *.
+   *
+   * <p><b>Caution: Needs to be called before acquiring any other lock!</b>
+   */
+  default void aquireGeneralPublishLock() {
+    aquireSharedTXLock(STAR_NAMESPACE_CODE);
+  }
+
+  /**
+   * Needs to be called every time we publish with a conditional lock on the "*" namespace, as in
+   * that case, we need an exclusive lock.
+   *
+   * <p><b>Caution: Needs to be called before acquiring any other lock!</b>
+   */
+  default void upgradeGeneralPublishLock() {
+    aquireExclusiveTXLock(STAR_NAMESPACE_CODE);
+  }
 }
