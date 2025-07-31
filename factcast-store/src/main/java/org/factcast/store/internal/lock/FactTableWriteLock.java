@@ -41,7 +41,7 @@ public interface FactTableWriteLock {
    *
    * <p><b>Caution: Needs to be called before acquiring any other lock!</b>
    */
-  default void upgradeGeneralPublishLock() {
+  default void aquireExclusiveGeneralPublishLock() {
     aquireExclusiveTXLock(STAR_NAMESPACE_CODE);
   }
 }

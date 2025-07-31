@@ -286,10 +286,6 @@ public class PgFactStore extends AbstractFactStore {
     return metrics.time(
         StoreMetrics.OP.PUBLISH_IF_UNCHANGED,
         () -> {
-          // shared lock on *, to indicate we are writing to some namespaces.
-          // if this lock is exclusively taken by someone who reads from *,
-          // we need to wait until they are done.
-          lock.aquireGeneralPublishLock();
 
           // we get the state from the tokens tore again in the super method, not sure if that is
           // wasteful...
@@ -302,8 +298,13 @@ public class PgFactStore extends AbstractFactStore {
                 .distinct()
                 .map(cache::getUnchecked)
                 .anyMatch(c -> c == STAR_NAMESPACE_CODE)) {
-              // upgrade general publish lock to exclusive
-              lock.upgradeGeneralPublishLock();
+              // get exclusive general publish lock
+              lock.aquireExclusiveGeneralPublishLock();
+            } else {
+              // shared lock on *, to indicate we are writing to some namespaces.
+              // if this lock is exclusively taken by someone who reads from *,
+              // we need to wait until they are done.
+              lock.aquireGeneralPublishLock();
             }
 
             Stream.concat(
@@ -333,6 +334,11 @@ public class PgFactStore extends AbstractFactStore {
                 .filter(c -> c.code() != STAR_NAMESPACE_CODE)
                 .forEachOrdered(LockPair::acquireLock);
           } else {
+            // shared lock on *, to indicate we are writing to some namespaces.
+            // if this lock is exclusively taken by someone who reads from *,
+            // we need to wait until they are done.
+            lock.aquireGeneralPublishLock();
+
             // get exclusive locks for all namespaces we publish into
             factsToPublish.stream()
                 .map(Fact::ns)
