@@ -22,7 +22,7 @@ import java.util.concurrent.CountDownLatch;
 import lombok.SneakyThrows;
 import org.factcast.core.Fact;
 import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.store.internal.PgTestConfiguration;
+import org.factcast.store.internal.*;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -68,7 +68,9 @@ class PgTransformationCacheITest extends AbstractTransformationCacheTest {
 
   @Test
   void testAddToBatchAfterFind() {
-    Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}");
+    PgFact fact =
+        PgFact.from(
+            Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}"));
     String chainId = "1-2-3";
     TransformationCache.Key cacheKey =
         TransformationCache.Key.of(fact.id(), fact.version(), chainId);
@@ -93,7 +95,9 @@ class PgTransformationCacheITest extends AbstractTransformationCacheTest {
         .flush();
 
     for (int i = 0; i < maxBufferSize; i++) {
-      Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}");
+      PgFact fact =
+          PgFact.from(
+              Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}"));
       String chainId = String.valueOf(i);
       uut.put(TransformationCache.Key.of(fact.id(), fact.version(), chainId), fact);
 

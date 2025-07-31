@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.subscription.transformation;
+package org.factcast.store.internal.transformation;
 
 import java.util.*;
 import lombok.NonNull;
@@ -23,5 +23,6 @@ import org.factcast.core.subscription.TransformationException;
 public interface FactTransformerService {
   Fact transform(@NonNull TransformationRequest req) throws TransformationException;
 
-  List<Fact> transform(@NonNull List<TransformationRequest> req) throws TransformationException;
+  List<org.factcast.store.internal.PgFact> transform(@NonNull List<TransformationRequest> req)
+      throws TransformationException;
 }

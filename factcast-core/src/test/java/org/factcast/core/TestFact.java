@@ -15,7 +15,6 @@
  */
 package org.factcast.core;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 import java.util.*;
 import javax.annotation.Nullable;
@@ -97,11 +96,5 @@ public class TestFact implements Fact {
   public TestFact meta(String k, Collection<String> vc) {
     vc.forEach(v -> meta().add(k, v));
     return this;
-  }
-
-  @SneakyThrows
-  @Override
-  public @NonNull JsonNode jsonPayloadParsed() {
-    return FactCastJson.readTree(jsonPayload);
   }
 }

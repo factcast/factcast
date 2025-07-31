@@ -132,7 +132,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   static class JohnOnlyUserNames extends SnapshotUserNames {
     @Override
     public @NonNull List<FactSpec> postprocess(@NonNull List<FactSpec> specsAsDiscovered) {
-      specsAsDiscovered.get(0).aggIdProperty("aggregateId", johnsId);
+      specsAsDiscovered.forEach(s -> s.aggIdProperty("aggregateId", johnsId));
       return super.postprocess(specsAsDiscovered);
     }
   }

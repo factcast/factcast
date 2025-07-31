@@ -23,12 +23,9 @@ import java.sql.*;
 import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
-import org.factcast.core.Fact;
-import org.factcast.core.TestFact;
 import org.factcast.core.subscription.*;
 import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.StoreMetrics;
+import org.factcast.store.internal.*;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
@@ -145,7 +142,7 @@ class PgFetchingCatchupTest {
     void passesFact() {
       final var cbh = underTest.createRowCallbackHandler(extractor);
       ResultSet rs = mock(ResultSet.class);
-      Fact testFact = new TestFact();
+      PgFact testFact = Mockito.mock(PgFact.class);
       when(extractor.mapRow(rs, 0)).thenReturn(testFact);
       cbh.processRow(rs);
 
@@ -157,7 +154,7 @@ class PgFetchingCatchupTest {
     void passesFactEscalatesException() {
       final var cbh = underTest.createRowCallbackHandler(extractor);
       ResultSet rs = mock(ResultSet.class);
-      Fact testFact = new TestFact();
+      PgFact testFact = Mockito.mock(PgFact.class);
       when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
       doThrow(TransformationException.class).when(pipeline).process(Signal.of(testFact));
 

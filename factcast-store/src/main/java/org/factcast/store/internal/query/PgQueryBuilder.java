@@ -36,6 +36,7 @@ import org.springframework.jdbc.core.PreparedStatementSetter;
 @Slf4j
 public class PgQueryBuilder {
 
+  public static final String CONTAINS_JSONB = " @> ?::jsonb";
   private final @NonNull List<FactSpec> factSpecs;
   private final CurrentStatementHolder statementHolder;
   private final String AND = " AND ";
@@ -73,7 +74,10 @@ public class PgQueryBuilder {
 
   @SneakyThrows
   private int setAggProperties(PreparedStatement p, int count, FactSpec spec) {
+
     if (filterByAggregateIdProperty(spec)) {
+      var version = spec.version();
+      if (version != 0) p.setInt(++count, version);
       Set<Entry<String, UUID>> entries = spec.aggIdProperties().entrySet();
       // we need to make sure we have a stable sort order
       for (Entry<String, UUID> entry : entries) {
@@ -159,28 +163,34 @@ public class PgQueryBuilder {
     factSpecs.forEach(
         spec -> {
           StringBuilder sb = new StringBuilder();
-          sb.append("(1=1");
+          sb.append("(true ");
 
           String ns = spec.ns();
 
           if (ns != null && !"*".equals(ns)) {
-            sb.append(AND).append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb");
+            sb.append(AND).append(PgConstants.COLUMN_HEADER).append(CONTAINS_JSONB);
           }
 
           String type = spec.type();
           if (type != null && !"*".equals(type)) {
-            sb.append(" AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb");
+            sb.append(" AND ").append(PgConstants.COLUMN_HEADER).append(CONTAINS_JSONB);
           }
 
           if (filterByAggregateIds(spec)) {
-            sb.append(" AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb");
+            sb.append(" AND ").append(PgConstants.COLUMN_HEADER).append(CONTAINS_JSONB);
           }
 
           if (filterByAggregateIdProperty(spec)) {
+            sb.append(AND).append("(");
+
+            if (spec.version() != 0) sb.append("(header ->> 'version')::int != ? OR ");
+            sb.append("(true ");
+
             for (Entry<String, UUID> entry : spec.aggIdProperties().entrySet()) {
               String exp = calculateJsonbExpressionFromPropertyPath(entry.getKey());
-              sb.append(AND).append(exp).append(" = ? ");
+              sb.append(AND).append("(").append(exp).append(" = ? )");
             }
+            sb.append("))");
           }
           Map<String, String> meta = spec.meta();
           meta.forEach(

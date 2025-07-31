@@ -19,54 +19,33 @@ import com.fasterxml.jackson.databind.JsonNode;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import lombok.*;
-import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.util.FactCastJson;
-import org.factcast.store.internal.script.*;
+import org.factcast.store.internal.PgFact;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 import org.springframework.core.io.ClassPathResource;
 
 @State(Scope.Benchmark)
-public class FactSpecMatcherBenchmark {
+public class AggIdPropertyMatcherBenchmark {
 
   private String json;
   private @NonNull UUID id = UUID.fromString("c648d357-639a-11f0-a1d7-0278bb6dd5f3");
-  private Fact testFact;
-  private FactSpec spec;
-  private FactSpecMatcher parsing;
-  private FactSpecMatcher prematching;
+  private PgFact testFact;
+  private AggIdPropertyMatcher parsing;
 
   @SneakyThrows
   @Setup(Level.Iteration)
   public void readJson() {
     json = new ClassPathResource("/sample.json").getContentAsString(StandardCharsets.UTF_8);
     JsonNode tree = FactCastJson.readTree(json);
-    testFact = Fact.of(tree.path("header").toString(), tree.path("payload").toString());
-    spec = FactSpec.ns("*").aggIdProperty("myProperty", id);
-    prematching =
-        new FactSpecMatcher(
-            spec,
-            script -> {
-              throw new RuntimeException("irrelevant");
-            });
-    prematching.UNSAFE_STRING_PREMATCHING = true;
-    parsing =
-        new FactSpecMatcher(
-            spec,
-            script -> {
-              throw new RuntimeException("irrelevant");
-            });
-    parsing.UNSAFE_STRING_PREMATCHING = false;
+    testFact = PgFact.of(tree.path("header"), tree.path("payload"));
+    FactSpec spec = FactSpec.ns("*").aggIdProperty("myProperty", id);
+    parsing = AggIdPropertyMatcher.matches(spec);
   }
 
   @Benchmark
   @Fork(value = 1, warmups = 1)
-  public void withPrematching(Blackhole blackhole) {
-    blackhole.consume(prematching.test(testFact));
-  }
-
-  @Benchmark
   public void withoutPrematching(Blackhole blackhole) {
     blackhole.consume(parsing.test(testFact));
   }

@@ -17,10 +17,10 @@ package org.factcast.store.internal.pipeline;
 
 import lombok.NonNull;
 import lombok.Value;
-import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.SubscriptionImpl;
+import org.factcast.store.internal.PgFact;
 
 public sealed interface Signal
     permits Signal.FlushSignal,
@@ -49,7 +49,7 @@ public sealed interface Signal
     return new FastForwardSignal(ffwd);
   }
 
-  static FactSignal of(Fact fact) {
+  static FactSignal of(PgFact fact) {
     return new FactSignal(fact);
   }
 
@@ -108,7 +108,7 @@ public sealed interface Signal
 
   @Value
   class FactSignal implements Signal {
-    @NonNull Fact fact;
+    @NonNull PgFact fact;
 
     @Override
     public void pass(SubscriptionImpl target) {

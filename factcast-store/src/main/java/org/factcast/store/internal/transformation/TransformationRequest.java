@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.subscription.transformation;
+package org.factcast.store.internal.transformation;
 
 import java.util.*;
 import lombok.NonNull;
 import lombok.Value;
-import org.factcast.core.Fact;
+import org.factcast.store.internal.PgFact;
 
 @Value
 public class TransformationRequest {
-  @NonNull Fact toTransform;
+  @NonNull PgFact toTransform;
   Set<Integer> targetVersions;
 }

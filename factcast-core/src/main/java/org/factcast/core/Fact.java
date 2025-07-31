@@ -131,9 +131,6 @@ public interface Fact {
     }
   }
 
-  @NonNull
-  JsonNode jsonPayloadParsed();
-
   @RequiredArgsConstructor
   class FactFromEventBuilder {
     @NonNull private final EventObject event;

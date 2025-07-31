@@ -21,8 +21,8 @@ import java.util.concurrent.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.*;
+import org.factcast.core.subscription.MissingTransformationInformationException;
 import org.factcast.core.subscription.observer.*;
-import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
@@ -86,12 +86,7 @@ public class PgSubscriptionFactory implements AutoCloseable {
   public Subscription subscribe(SubscriptionRequestTO req, FactObserver observer) {
     SubscriptionImpl subscription = SubscriptionImpl.on(observer);
 
-    ServerPipeline pipe =
-        pipelineFactory.create(
-            req,
-            subscription,
-            new PostTransformationMatcher(req, jsEngineFactory),
-            maxPipelineBufferSize);
+    ServerPipeline pipe = pipelineFactory.create(req, subscription, maxPipelineBufferSize);
 
     PgFactStream pgsub =
         new PgFactStream(

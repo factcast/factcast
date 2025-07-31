@@ -55,6 +55,41 @@ public class PgFact implements Fact {
 
   @JsonProperty MetaMap meta;
 
+  public static PgFact of(@NonNull JsonNode header, @NonNull JsonNode transformedPayload) {
+    // horribly wasteful here: TODO
+    Fact fact = Fact.of(header.toString(), transformedPayload.toString());
+    PgFact pgFact =
+        new PgFact(
+            fact.id(),
+            fact.ns(),
+            fact.type(),
+            fact.version(),
+            fact.aggIds(),
+            fact.jsonHeader(),
+            fact.jsonPayload());
+    pgFact.parsedHeader.set(header);
+    pgFact.parsedPayload.set(transformedPayload);
+    return pgFact;
+  }
+
+  public static PgFact of(@NonNull String header, @NonNull String transformedPayload) {
+    // bit wasteful here: TODO
+    Fact fact = Fact.of(header, transformedPayload);
+    return new PgFact(
+        fact.id(),
+        fact.ns(),
+        fact.type(),
+        fact.version(),
+        fact.aggIds(),
+        fact.jsonHeader(),
+        fact.jsonPayload());
+  }
+
+  @VisibleForTesting
+  public static PgFact from(@NonNull Fact f) {
+    return of(f.jsonHeader(), f.jsonPayload());
+  }
+
   /**
    * @param key
    * @return value as String or null
@@ -74,6 +109,7 @@ public class PgFact implements Fact {
   @Override
   public @NonNull FactHeader header() {
     if (header == null) {
+      // prefer parsedHeader if avail TODO
       header = FactCastJson.readValue(FactHeader.class, jsonHeader);
     }
     return header;
@@ -83,7 +119,7 @@ public class PgFact implements Fact {
     return header().meta();
   }
 
-  public static Fact from(ResultSet resultSet) throws SQLException {
+  public static PgFact from(ResultSet resultSet) throws SQLException {
     String id = resultSet.getString(PgConstants.ALIAS_ID);
     String aggId = resultSet.getString(PgConstants.ALIAS_AGGID);
     String type = resultSet.getString(PgConstants.ALIAS_TYPE);
@@ -110,13 +146,26 @@ public class PgFact implements Fact {
   @JsonIgnore
   private transient AtomicReference<JsonNode> parsedPayload = new AtomicReference<JsonNode>();
 
+  @SuppressWarnings("java:S2065")
+  @JsonIgnore
+  private transient AtomicReference<JsonNode> parsedHeader = new AtomicReference<JsonNode>();
+
   @SneakyThrows
-  @Override
   public @NonNull JsonNode jsonPayloadParsed() {
     JsonNode p = parsedPayload.get();
     if (p == null) {
       p = FactCastJson.readTree(jsonPayload);
       parsedPayload.set(p);
+    }
+    return p;
+  }
+
+  @SneakyThrows
+  public @NonNull JsonNode jsonHeaderParsed() {
+    JsonNode p = parsedHeader.get();
+    if (p == null) {
+      p = FactCastJson.readTree(jsonHeader);
+      parsedHeader.set(p);
     }
     return p;
   }

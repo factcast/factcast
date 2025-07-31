@@ -22,17 +22,17 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.Value;
-import org.factcast.core.Fact;
+import org.factcast.store.internal.PgFact;
 
 public interface TransformationCache {
 
   // maybe optimize by passing header and payload separately as
   // string/jsonnode?
-  void put(@NonNull TransformationCache.Key key, @NonNull Fact f);
+  void put(@NonNull TransformationCache.Key key, @NonNull PgFact f);
 
-  Optional<Fact> find(Key key);
+  Optional<PgFact> find(Key key);
 
-  Set<Fact> findAll(Collection<Key> keys);
+  Set<PgFact> findAll(Collection<Key> keys);
 
   void compact(ZonedDateTime thresholdDate);
 

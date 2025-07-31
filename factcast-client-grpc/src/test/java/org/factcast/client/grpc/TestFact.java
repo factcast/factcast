@@ -16,7 +16,6 @@
 package org.factcast.client.grpc;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -59,12 +58,6 @@ public class TestFact implements Fact {
   @Override
   public String meta(String key) {
     return meta.get(key);
-  }
-
-  @SneakyThrows
-  @Override
-  public @NonNull JsonNode jsonPayloadParsed() {
-    return FactCastJson.readTree(jsonPayload);
   }
 
   private transient FactHeader header;

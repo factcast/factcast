@@ -126,8 +126,8 @@ SELECT ser, header, payload,
   header->>'version' AS version
   FROM fact
   WHERE (
-  (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
-  (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)))
+  (true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
+  (true AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)))
   AND ser>?
   ORDER BY ser ASC
 """;
@@ -138,7 +138,12 @@ SELECT ser, header, payload,
     void withAggIdProperties() {
       UUID id1 = new UUID(0, 1);
       var spec1 =
-          FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(id1).aggIdProperty("myId", id1);
+          FactSpec.ns("ns1")
+              .type("t1")
+              .meta("foo", "bar")
+              .aggId(id1)
+              .aggIdProperty("myId", id1)
+              .version(1);
       var specs = Lists.newArrayList(spec1);
       var underTest = new PgQueryBuilder(specs);
       var sql = underTest.createSQL();
@@ -153,16 +158,17 @@ SELECT ser, header, payload,
   header->>'version' AS version
 FROM fact
 WHERE (
-    (1=1
+    (true
     AND header @> ?::jsonb
     AND header @> ?::jsonb
     AND header @> ?::jsonb
-    AND (payload ->> 'myId')::UUID = ?
+    AND ((header ->> 'version')::int != ? OR (true AND ((payload ->> 'myId')::UUID = ?)))
     AND (header @> ?::jsonb OR header @> ?::jsonb)
     )
   )
   AND ser>? ORDER BY ser ASC
 """;
+
       assertThat(normalized(sql)).isEqualTo(normalized(expected));
     }
 
@@ -183,26 +189,26 @@ WHERE (
 
       var expected =
           """
-              SELECT ser, header, payload,
-                header->>'id' AS id,
-                header->>'aggIds' AS aggIds,
-                header->>'ns' AS ns,
-                header->>'type' AS type,
-                header->>'version' AS version
-              FROM fact
-              WHERE (
-                  (1=1
-                  AND header @> ?::jsonb
-                  AND header @> ?::jsonb
-                  AND header @> ?::jsonb
-                  AND (payload ->> 'myId')::UUID = ?
-                  AND (payload -> 'schnick' -> 'schnack' -> 'schnuck' ->> 'orgId')::UUID = ?
-                  AND (header @> ?::jsonb OR header @> ?::jsonb)
-                  )
-                )
-                AND ser>? ORDER BY ser ASC
-              """;
+            SELECT ser,
+                   header,
+                   payload,
+                   header ->> 'id'      AS id,
+                   header ->> 'aggIds'  AS aggIds,
+                   header ->> 'ns'      AS ns,
+                   header ->> 'type'    AS type,
+                   header ->> 'version' AS version
+            FROM fact
+            WHERE ((true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND
+                    ((true
+                        AND ((payload ->> 'myId')::UUID = ?)
+                        AND ((payload -> 'schnick' -> 'schnack' -> 'schnuck' ->> 'orgId')::UUID = ?)
+                        )) AND
+                    (header @> ?::jsonb OR header @> ?::jsonb)))
+              AND ser>?
+            ORDER BY ser ASC
 
+            """;
+      System.out.println(sql);
       assertThat(normalized(sql)).isEqualTo(normalized(expected));
     }
 
@@ -229,8 +235,8 @@ SELECT ser, header, payload,
  header->>'version' AS version
  FROM fact
  WHERE (
- (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb) AND jsonb_path_exists(header, ?::jsonpath) AND NOT jsonb_path_exists(header, ?::jsonpath)) OR
- (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) )
+ (true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb) AND jsonb_path_exists(header, ?::jsonpath) AND NOT jsonb_path_exists(header, ?::jsonpath)) OR
+ (true AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) )
  AND ser>?
  ORDER BY ser ASC
 """;
@@ -255,9 +261,9 @@ SELECT ser, header, payload,
           """
 SELECT ser FROM fact
 WHERE (
-(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
-(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
-(1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb))
+(true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
+(true AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
+(true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb))
 AND ser > ? ORDER BY ser DESC LIMIT 1
 """;
 

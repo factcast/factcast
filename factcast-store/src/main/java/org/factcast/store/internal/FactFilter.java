@@ -17,51 +17,58 @@ package org.factcast.store.internal;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.util.*;
-import java.util.function.*;
-import java.util.stream.*;
-import lombok.Getter;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.Fact;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.store.internal.filter.FactSpecMatcher;
+import org.factcast.store.internal.filter.*;
 import org.factcast.store.internal.script.JSEngineFactory;
 
 /**
  * Predicate to filter Facts selected by the database query.
  *
- * <p>For PG, we can safely assume that only those rows are returned from the DB, that match the
- * queryable criteria. The only untested thing is the script-match which can be skipped, if no
- * FactSpec has a scripted filter.
- *
  * @author uwe.schaefer@prisma-capacity.eu
  */
 @Slf4j
-public class PostTransformationMatcher implements Predicate<Fact> {
+public class FactFilter implements PGFactMatcher {
 
-  @Getter
   @VisibleForTesting
   @Accessors(fluent = true)
-  final boolean canBeSkipped;
+  private final boolean canBeSkipped;
 
-  final List<FactSpecMatcher> matchers = new LinkedList<>();
+  private final List<PGFactMatcher> matchers = new LinkedList<>();
 
-  public PostTransformationMatcher(@NonNull SubscriptionRequest req, @NonNull JSEngineFactory ef) {
-    boolean hasNoFilterScript = req.specs().stream().noneMatch(s -> s.filterScript() != null);
-    boolean hasNoAggIdProperties =
-        req.specs().stream().noneMatch(s -> s.aggIdProperties().isEmpty());
-    if (hasNoFilterScript && hasNoAggIdProperties) {
-      canBeSkipped = true;
+  public FactFilter(@NonNull SubscriptionRequest req, @NonNull JSEngineFactory ef) {
+
+    for (FactSpec spec : req.specs()) {
+      // in order to test to true, we need to find ANY spec for which we match ALL matchers
+      // (1A && 1B && 1C) || (2A && 2B) || ...
+
+      @Nullable PGFactMatcher js = JSFilterScriptMatcher.matches(spec, ef);
+      @Nullable PGFactMatcher aggID = AggIdPropertyMatcher.matches(spec);
+
+      if (js != null || aggID != null) {
+        matchers.add(PGFactMatcher.and(new BasicMatcher(spec), js, aggID));
+      }
+      // otherwise we skip filtering for this spec completely
+    }
+
+    if (matchers.isEmpty()) {
       log.trace("{} post query filtering has been disabled", req);
+      canBeSkipped = true;
     } else {
       canBeSkipped = false;
-      this.matchers.addAll(req.specs().stream().map(s -> new FactSpecMatcher(s, ef)).toList());
     }
   }
 
   @Override
-  public boolean test(Fact input) {
-    return canBeSkipped || matchers.stream().anyMatch(m -> m.test(input));
+  public boolean test(PgFact input) {
+    return canBeSkipped() || matchers.stream().anyMatch(m -> m.test(input));
+  }
+
+  public boolean canBeSkipped() {
+    return this.canBeSkipped;
   }
 }

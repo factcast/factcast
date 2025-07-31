@@ -25,20 +25,21 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.factcast.store.internal.PgFact;
 
 class CacheBuffer {
   private final Object mutex = new Object() {};
 
   @Getter(AccessLevel.PROTECTED)
-  private final Map<TransformationCache.Key, Fact> buffer = new HashMap<>();
+  private final Map<TransformationCache.Key, PgFact> buffer = new HashMap<>();
 
-  Fact get(@NonNull TransformationCache.Key key) {
+  PgFact get(@NonNull TransformationCache.Key key) {
     synchronized (mutex) {
       return buffer.get(key);
     }
   }
 
-  void put(@NonNull TransformationCache.Key cacheKey, @Nullable Fact factOrNull) {
+  void put(@NonNull TransformationCache.Key cacheKey, @Nullable PgFact factOrNull) {
     synchronized (mutex) {
       // do not override potential transformations
       // cannot use computeIfAbsent here as null values are not allowed.
