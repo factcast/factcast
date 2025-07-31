@@ -52,6 +52,7 @@
     <module>factcast-factus-redis</module>
     <module>factcast-factus-spring-tx</module>
     <module>factcast-factus-dynamo</module>
+    <module>factcast-factus-mongodb</module>
     <module>factcast-server-grpc</module>
     <module>factcast-server-security</module>
     <module>factcast-server-ui</module>
@@ -122,6 +123,7 @@
     <graaljs.version>24.2.2</graaljs.version>
     <redisson.version>3.50.0</redisson.version>
     <aws-sdk.version>2.32.10</aws-sdk.version>
+    <mongodb-driver.version>5.5.1</mongodb-driver.version>
     <shedlock.version>6.9.2</shedlock.version>
     <byte-buddy.version>1.17.6</byte-buddy.version>
     <skipUnitTests>false</skipUnitTests>
