@@ -15,6 +15,7 @@
  */
 package org.factcast.factus;
 
+import static java.util.UUID.fromString;
 import static java.util.UUID.randomUUID;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.*;
@@ -460,13 +461,28 @@ class FactusImplTest {
     }
 
     @Test
-    void withLockOnAggregateClass() {
+    void withLockOnAggregateClass_aggregateExists() {
       // INIT
       when(ehFactory.create(any(PersonAggregate.class))).thenReturn(projector);
 
       when(projector.createFactSpecs()).thenReturn(specs);
 
-      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
+      when(fc.subscribe(any(), any()))
+          .thenAnswer(
+              inv -> {
+                // make sure the fact position is set, so we do not get an
+                // empty optional when doing find.
+                AbstractFactObserver fo = inv.getArgument(1, AbstractFactObserver.class);
+
+                final Fact spec = mock(Fact.class);
+                final FactHeader mockedHeader = mock(FactHeader.class);
+                when(mockedHeader.id()).thenReturn(UUID.randomUUID());
+                when(spec.header()).thenReturn(mockedHeader);
+                // apply fact and with that, set position
+                fo.onNext(Collections.singletonList(spec));
+
+                return mock(Subscription.class);
+              });
 
       // RUN
       UUID aggId = randomUUID();
@@ -484,6 +500,23 @@ class FactusImplTest {
       // this is important; if they are not the specs for the given
       // projection, the lock would be broken
       assertThat(locked.specs()).isEqualTo(projector.createFactSpecs());
+    }
+
+    @Test
+    void withLockOnAggregateClass_aggregateDoesNotExist() {
+      // INIT
+      when(ehFactory.create(any(PersonAggregate.class))).thenReturn(projector);
+
+      when(projector.createFactSpecs()).thenReturn(specs);
+
+      when(fc.subscribe(any(), any())).thenReturn(mock(Subscription.class));
+
+      // RUN
+      UUID aggId = fromString("40aaf918-c678-44a4-9962-ac6823a40ea5");
+      assertThatThrownBy(() -> underTest.withLockOn(PersonAggregate.class, aggId))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessage(
+              "Aggregate PersonAggregate with id 40aaf918-c678-44a4-9962-ac6823a40ea5 does not exist.");
     }
 
     @Test
