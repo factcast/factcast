@@ -449,7 +449,7 @@ public class FactusImpl implements Factus {
   public <M extends ManagedProjection> Locked<M> withLockOn(@NonNull M managedProjection) {
     Projector<M> applier = ehFactory.create(managedProjection);
     List<FactSpec> specs = applier.createFactSpecs();
-    return new Locked<>(fc, this, managedProjection, specs, factusMetrics);
+    return new Locked<>(fc, this, managedProjection, specs, specs, factusMetrics);
   }
 
   @Override
@@ -457,7 +457,7 @@ public class FactusImpl implements Factus {
     A fresh = find(aggregateClass, id).orElseGet(() -> instantiate(aggregateClass));
     Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
     List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
-    return new Locked<>(fc, this, fresh, specs, factusMetrics);
+    return new Locked<>(fc, this, fresh, specs, specs, factusMetrics);
   }
 
   @Override
@@ -465,7 +465,7 @@ public class FactusImpl implements Factus {
     P fresh = fetch(projectionClass);
     Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
     List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
-    return new Locked<>(fc, this, fresh, specs, factusMetrics);
+    return new Locked<>(fc, this, fresh, specs, specs, factusMetrics);
   }
 
   @Override

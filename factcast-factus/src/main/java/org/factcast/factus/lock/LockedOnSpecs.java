@@ -64,7 +64,7 @@ public class LockedOnSpecs {
   @SuppressWarnings({"UnusedReturnValue", "rawtypes"})
   public <R, I extends Projection> R attempt(
       Consumer<RetryableTransaction> consumer, Function<List<Fact>, R> resultFn) {
-    Locked<I> delegate = new Locked<I>(fc, factus, null, specs, metrics);
+    Locked<I> delegate = new Locked<I>(fc, factus, null, specs, specs, metrics);
 
     if (retries != null) {
       delegate.retries(retries);
