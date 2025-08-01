@@ -20,9 +20,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.*;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+import lombok.SneakyThrows;
+import org.assertj.core.api.Assertions;
+import org.factcast.core.*;
+import org.factcast.core.util.FactCastJson;
 import org.junit.jupiter.api.Test;
 
 public class PgFactTest {
@@ -111,5 +117,20 @@ public class PgFactTest {
     PgFact uut = (PgFact) PgFact.from(rs);
 
     assertEquals("PgFact(id=" + uut.id() + ")", uut.toString());
+  }
+
+  @SneakyThrows
+  @Test
+  void prefersToDeserializeFromTree() {
+    String jsonHeader = new TestFact().ns("x").type("y").version(1).jsonHeader();
+    JsonNode headerAsTree = FactCastJson.readTree(jsonHeader);
+
+    String jsonPayload = "{}";
+    JsonNode payloadAsTree = FactCastJson.readTree(jsonPayload);
+
+    ((ObjectNode) headerAsTree).set("version", IntNode.valueOf(2));
+
+    Assertions.assertThat(PgFact.of(headerAsTree, payloadAsTree).version()).isEqualTo(2);
+    Assertions.assertThat(PgFact.of(jsonHeader, jsonPayload).version()).isEqualTo(1);
   }
 }

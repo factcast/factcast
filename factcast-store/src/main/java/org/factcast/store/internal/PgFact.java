@@ -61,20 +61,21 @@ public class PgFact implements Fact {
   public static PgFact of(@NonNull JsonNode header, @NonNull JsonNode transformedPayload) {
 
     // twice as fast as going through deser.
-
-    UUID _id = UUID.fromString(header.path("id").asText());
-    String _ns = header.path("ns").asText();
-    String _type = header.path("type").asText();
-    int _version = header.path("version").asInt();
+    // note that meta is materialized lazily
+    UUID id = UUID.fromString(header.path("id").asText());
+    String ns = header.path("ns").asText();
+    String type = header.path("type").asText();
+    int version = header.path("version").asInt();
     ArrayNode aggIdsNode = (ArrayNode) header.path("aggIds");
-    Set<UUID> _aggIds =
+    Set<UUID> aggIds =
         Lists.newArrayList(aggIdsNode).stream()
             .map(n -> UUID.fromString(n.asText()))
             .collect(Collectors.toSet());
-    String _headerString = header.toString();
-    String _payloadString = transformedPayload.toString();
+    // this might be reasonable to turn to lazy, some day
+    String jsonHeader = header.toString();
+    String jsonPayload = transformedPayload.toString();
 
-    PgFact pgFact = new PgFact(_id, _ns, _type, _version, _aggIds, _headerString, _payloadString);
+    PgFact pgFact = new PgFact(id, ns, type, version, aggIds, jsonHeader, jsonPayload);
     pgFact.parsedHeader.set(header);
     pgFact.parsedPayload.set(transformedPayload);
     return pgFact;
