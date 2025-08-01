@@ -104,13 +104,19 @@ public class PgFact implements Fact {
     return meta.getFirst(key);
   }
 
+  @SuppressWarnings("java:S2065")
+  @JsonIgnore
   private transient FactHeader header;
 
   @Override
   public @NonNull FactHeader header() {
     if (header == null) {
-      // prefer parsedHeader if avail TODO
-      header = FactCastJson.readValue(FactHeader.class, jsonHeader);
+      // prefer preparsed header if avail
+      if (parsedHeader.get() != null) {
+        header = FactCastJson.readValue(FactHeader.class, parsedHeader.get());
+      } else {
+        header = FactCastJson.readValue(FactHeader.class, jsonHeader);
+      }
     }
     return header;
   }
@@ -144,11 +150,11 @@ public class PgFact implements Fact {
 
   @SuppressWarnings("java:S2065")
   @JsonIgnore
-  private transient AtomicReference<JsonNode> parsedPayload = new AtomicReference<JsonNode>();
+  private transient AtomicReference<JsonNode> parsedPayload = new AtomicReference<>();
 
   @SuppressWarnings("java:S2065")
   @JsonIgnore
-  private transient AtomicReference<JsonNode> parsedHeader = new AtomicReference<JsonNode>();
+  private transient AtomicReference<JsonNode> parsedHeader = new AtomicReference<>();
 
   @SneakyThrows
   public @NonNull JsonNode jsonPayloadParsed() {

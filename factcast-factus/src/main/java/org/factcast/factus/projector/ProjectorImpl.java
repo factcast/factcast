@@ -524,8 +524,9 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       spec = filterByMetaExists(m, spec);
       spec = filterByMetaDoesNotExist(m, spec);
       spec = filterByAggIds(m, spec);
-      spec = checkFilterByAggIdProperty(m, spec);
       spec = filterByScript(m, spec);
+
+      checkFilterByAggIdProperty(m, spec);
       return spec;
     }
 
@@ -552,7 +553,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
      * aggregate id) is dynamic.
      */
     @VisibleForTesting
-    static @NonNull FactSpec checkFilterByAggIdProperty(@NonNull Method m, @NonNull FactSpec spec) {
+    static void checkFilterByAggIdProperty(@NonNull Method m, @NonNull FactSpec spec) {
       FilterByAggIdProperty annotation = m.getAnnotation(FilterByAggIdProperty.class);
       if (annotation != null) {
 
@@ -566,24 +567,14 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
               "Using FilterByAggIdProperty on HandlerFor method "
                   + m.toString()
                   + " which means the property cannot be verified.");
-          return spec;
+          return;
         }
 
         // check applicability if param is eventObject
         Parameter[] params = Objects.requireNonNull(m.getParameters());
         Class<?> paramType = Objects.requireNonNull(params[0]).getClass();
-        try {
-          verifyPropertyExpressionAgainstClass(annotation.value(), paramType);
-        } catch (IllegalAggregateIdPropertyPath e) {
-          throw new RuntimeException(
-              "FilterByAggIdProperty('"
-                  + annotation.value()
-                  + "') failed to validate on method "
-                  + m,
-              e);
-        }
+        verifyPropertyExpressionAgainstClass(annotation.value(), paramType);
       }
-      return spec;
     }
 
     @VisibleForTesting

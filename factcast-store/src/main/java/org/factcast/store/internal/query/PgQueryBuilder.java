@@ -36,10 +36,10 @@ import org.springframework.jdbc.core.PreparedStatementSetter;
 @Slf4j
 public class PgQueryBuilder {
 
+  private static final String AND = " AND ";
   public static final String CONTAINS_JSONB = " @> ?::jsonb";
   private final @NonNull List<FactSpec> factSpecs;
   private final CurrentStatementHolder statementHolder;
-  private final String AND = " AND ";
 
   public PgQueryBuilder(@NonNull List<FactSpec> specs) {
     factSpecs = specs;
@@ -53,7 +53,6 @@ public class PgQueryBuilder {
 
   public PreparedStatementSetter createStatementSetter(@NonNull AtomicLong serial) {
     return p -> {
-      // TODO vulnerable of json injection attack
       int count = 0;
       for (FactSpec spec : factSpecs) {
         count = setNs(p, count, spec);
@@ -173,11 +172,11 @@ public class PgQueryBuilder {
 
           String type = spec.type();
           if (type != null && !"*".equals(type)) {
-            sb.append(" AND ").append(PgConstants.COLUMN_HEADER).append(CONTAINS_JSONB);
+            sb.append(AND).append(PgConstants.COLUMN_HEADER).append(CONTAINS_JSONB);
           }
 
           if (filterByAggregateIds(spec)) {
-            sb.append(" AND ").append(PgConstants.COLUMN_HEADER).append(CONTAINS_JSONB);
+            sb.append(AND).append(PgConstants.COLUMN_HEADER).append(CONTAINS_JSONB);
           }
 
           if (filterByAggregateIdProperty(spec)) {
@@ -195,7 +194,7 @@ public class PgQueryBuilder {
           Map<String, String> meta = spec.meta();
           meta.forEach(
               (key, value) ->
-                  sb.append(" AND (")
+                  sb.append(AND + "(")
                       .append(PgConstants.COLUMN_HEADER)
                       .append(" @> ?::jsonb OR ") // single
                       .append(PgConstants.COLUMN_HEADER)
@@ -211,7 +210,7 @@ public class PgQueryBuilder {
           predicates.add(sb.toString());
         });
     String predicatesAsString = String.join(" OR ", predicates);
-    return "( " + predicatesAsString + " ) AND " + PgConstants.COLUMN_SER + ">?";
+    return "( " + predicatesAsString + " ) " + AND + PgConstants.COLUMN_SER + ">?";
   }
 
   public String createSQL() {
