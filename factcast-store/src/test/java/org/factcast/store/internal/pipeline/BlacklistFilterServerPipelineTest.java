@@ -19,7 +19,7 @@ import static org.mockito.Mockito.*;
 
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
-import org.factcast.core.Fact;
+import org.factcast.store.internal.PgFact;
 import org.factcast.store.internal.filter.blacklist.Blacklist;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -41,7 +41,7 @@ class BlacklistFilterServerPipelineTest {
   @Nested
   class WhenFacting {
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-    private Fact fact;
+    private PgFact fact;
 
     @BeforeEach
     void setup() {}

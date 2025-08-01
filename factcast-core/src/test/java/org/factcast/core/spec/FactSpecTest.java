@@ -21,10 +21,8 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.fasterxml.jackson.databind.*;
-import java.lang.reflect.Field;
 import java.util.*;
 import lombok.NonNull;
-import lombok.SneakyThrows;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.event.Specification;
 import org.junit.jupiter.api.Assertions;
@@ -91,12 +89,6 @@ class FactSpecTest {
   }
 
   @Test
-  void testFactSpecAggId() {
-    UUID id = UUID.randomUUID();
-    assertThat(FactSpec.ns("x").aggId(id).mergedAggIds()).containsOnly(id);
-  }
-
-  @Test
   void testFactSpecMultipleAggIds() {
     Set<UUID> ids = new HashSet<>();
     UUID id1 = UUID.randomUUID();
@@ -105,36 +97,18 @@ class FactSpecTest {
     ids.add(id1);
     ids.add(id2);
     ids.add(id3);
-    assertEquals(ids, FactSpec.ns("x").aggId(id1, id2, id3).mergedAggIds());
-  }
-
-  @SneakyThrows
-  @Test
-  void testFactSpecMultipleAggIdsCompatibility() {
-    Set<UUID> ids = new HashSet<>();
-    UUID id1 = UUID.randomUUID();
-    UUID id2 = UUID.randomUUID();
-    UUID id3 = UUID.randomUUID();
-    ids.add(id1);
-    ids.add(id2);
-    ids.add(id3);
-
-    FactSpec fs = FactSpec.ns("x").aggId(id2, id3);
-    Field aggIdField = FactSpec.class.getDeclaredField("aggId");
-    aggIdField.setAccessible(true);
-    aggIdField.set(fs, id1);
-    assertEquals(ids, FactSpec.ns("x").aggId(id1, id2, id3).mergedAggIds());
+    assertEquals(ids, FactSpec.ns("x").aggId(id1, id2, id3).aggIds());
   }
 
   @Test
   void testFactSpecEmptyAggIds() {
-    assertEquals(Collections.emptySet(), FactSpec.ns("x").mergedAggIds());
+    assertEquals(Collections.emptySet(), FactSpec.ns("x").aggIds());
   }
 
   @Test
   void testFactSpecSingleAggIds() {
     @NonNull UUID id = UUID.randomUUID();
-    assertThat(FactSpec.ns("x").aggId(id).mergedAggIds()).hasSize(1).containsOnly(id);
+    assertThat(FactSpec.ns("x").aggId(id).aggIds()).hasSize(1).containsOnly(id);
   }
 
   @Test
@@ -143,23 +117,6 @@ class FactSpecTest {
     ns = ns.filterScript(FilterScript.js("foo"));
     String script = ns.filterScript().source();
     assertEquals("foo", script);
-  }
-
-  @SneakyThrows
-  @Test
-  void testFactSpecEqualityCompatibility() {
-    UUID id2 = new UUID(0, 2);
-    UUID id1 = new UUID(0, 1);
-
-    FactSpec f1 = FactSpec.ns("x").aggId(id2);
-
-    Field aggIdField = FactSpec.class.getDeclaredField("aggId");
-    aggIdField.setAccessible(true);
-    aggIdField.set(f1, id1);
-
-    FactSpec f2 = FactSpec.ns("x").aggId(id1, id2);
-    assertEquals(f1, f2);
-    assertNotSame(f1, f2);
   }
 
   @Test
@@ -266,58 +223,5 @@ class FactSpecTest {
 
     org.meta("foo", "bar");
     assertThat(copy).isNotEqualTo(org);
-  }
-
-  @Test
-  @SneakyThrows
-  void testFactSpecEqualityBehavesAsExpectedWithDeprecatedField() {
-    ObjectReader om = FactCastJson.getObjectMapper().readerFor(FactSpec.class);
-    UUID id = UUID.randomUUID();
-    UUID differentId = UUID.randomUUID();
-    FactSpec newSpec = om.readValue("{\"ns\":\"foo\",\"aggIds\":[\"" + id + "\"]}");
-    FactSpec newSpecDifferenId =
-        om.readValue("{\"ns\":\"foo\",\"aggIds\":[\"" + differentId + "\"]}");
-    FactSpec oldSpecSameId = om.readValue("{\"ns\":\"foo\",\"aggId\":\"" + id + "\"}");
-    FactSpec oldSpecDifferentId =
-        om.readValue("{\"ns\":\"foo\",\"aggId\":\"" + differentId + "\"}");
-
-    assertThat(newSpec).isEqualTo(oldSpecSameId);
-    assertThat(newSpec).isNotEqualTo(newSpecDifferenId);
-    assertThat(newSpec).isNotEqualTo(oldSpecDifferentId);
-  }
-
-  @Test
-  @SneakyThrows
-  void testFactSpecHashCodeBehavesAsExpectedWithDeprecatedField() {
-    ObjectReader om = FactCastJson.getObjectMapper().readerFor(FactSpec.class);
-    UUID id = UUID.randomUUID();
-    UUID differentId = UUID.randomUUID();
-    FactSpec newSpec = om.readValue("{\"ns\":\"foo\",\"aggIds\":[\"" + id + "\"]}");
-    FactSpec newSpecDifferenId =
-        om.readValue("{\"ns\":\"foo\",\"aggIds\":[\"" + differentId + "\"]}");
-    FactSpec oldSpecSameId = om.readValue("{\"ns\":\"foo\",\"aggId\":\"" + id + "\"}");
-    FactSpec oldSpecDifferentId =
-        om.readValue("{\"ns\":\"foo\",\"aggId\":\"" + differentId + "\"}");
-
-    assertThat(newSpec)
-        .hasSameHashCodeAs(newSpec)
-        .hasSameHashCodeAs(oldSpecSameId)
-        .doesNotHaveSameHashCodeAs(newSpecDifferenId)
-        .isNotEqualTo(oldSpecDifferentId);
-  }
-
-  @Test
-  @SneakyThrows
-  void equalsNoMatterWhereIdCameFrom() {
-    ObjectReader om = FactCastJson.getObjectMapper().readerFor(FactSpec.class);
-    UUID id = UUID.randomUUID();
-    UUID differentId = UUID.randomUUID();
-    FactSpec newSpecArray =
-        om.readValue("{\"ns\":\"foo\",\"aggIds\":[\"" + id + "\",\"" + differentId + " \"]}");
-    FactSpec newSpecMixed =
-        om.readValue(
-            "{\"ns\":\"foo\",\"aggId\":\"" + id + "\",\"aggIds\":[\"" + differentId + "\"]}");
-
-    assertThat(newSpecArray).hasSameHashCodeAs(newSpecMixed).isEqualTo(newSpecMixed);
   }
 }

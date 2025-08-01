@@ -34,12 +34,12 @@ import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.core.subscription.transformation.FactTransformerService;
-import org.factcast.core.subscription.transformation.TransformationRequest;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
+import org.factcast.store.internal.transformation.FactTransformerService;
+import org.factcast.store.internal.transformation.TransformationRequest;
 import org.factcast.store.registry.SchemaRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -115,8 +115,10 @@ class PgFactStoreTest {
     void testFetchByIdWithUnmatchedVersion() {
 
       UUID id = UUID.randomUUID();
-      Fact factAsPublished = Fact.builder().ns("ns").type("type").version(1).buildWithoutPayload();
-      Fact transformedFact = Fact.builder().ns("ns").type("type").version(27).buildWithoutPayload();
+      PgFact factAsPublished =
+          PgFact.from(Fact.builder().ns("ns").type("type").version(1).buildWithoutPayload());
+      PgFact transformedFact =
+          PgFact.from(Fact.builder().ns("ns").type("type").version(27).buildWithoutPayload());
       when(jdbcTemplate.query(anyString(), any(Object[].class), any(RowMapper.class)))
           .thenReturn(Lists.newArrayList(factAsPublished));
       ArgumentCaptor<TransformationRequest> reqCaptor =

@@ -21,9 +21,9 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.PgFact;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.pipeline.ServerPipeline;
@@ -86,7 +86,7 @@ public class PgFetchingCatchup implements PgCatchup {
           return;
         }
 
-        Fact f = extractor.mapRow(rs, 0);
+        PgFact f = extractor.mapRow(rs, 0);
         pipeline.process(Signal.of(f));
       } catch (PSQLException psql) {
         // see #2088
