@@ -161,9 +161,7 @@ public class FactSpec {
   }
 
   public Set<UUID> aggIds() {
-    Set<UUID> ret = new HashSet<>(aggIds);
-    ret.addAll(aggIdProperties.values());
-    return Collections.unmodifiableSet(ret);
+    return Collections.unmodifiableSet(aggIds);
   }
 
   public SortedMap<String, UUID> aggIdProperties() {
