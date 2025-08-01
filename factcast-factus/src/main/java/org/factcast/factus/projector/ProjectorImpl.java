@@ -579,14 +579,15 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
     @VisibleForTesting
     static void verifyPropertyExpressionAgainstClass(
-        @NonNull String value, @NonNull Class<?> paramType) throws IllegalAggregateIdPropertyPath {
+        @NonNull String value, @NonNull Class<?> paramType)
+        throws IllegalAggregateIdPropertyPathException {
       String[] path = value.split("\\.");
       Class<?> type = paramType;
       for (int i = 0; i < path.length - 1; i++) {
         try {
           type = type.getMethod("get" + StringUtils.capitalize(path[i])).getReturnType();
         } catch (NoSuchMethodException e) {
-          throw new IllegalAggregateIdPropertyPath(
+          throw new IllegalAggregateIdPropertyPathException(
               "Cannot resolve property "
                   + path[i]
                   + " on type "

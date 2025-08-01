@@ -18,8 +18,8 @@ package org.factcast.factus.projector;
 /**
  * this exception is supposed to fail the application start, thats why it is a runtime exception.
  */
-public class IllegalAggregateIdPropertyPath extends RuntimeException {
-  public IllegalAggregateIdPropertyPath(String msg) {
+public class IllegalAggregateIdPropertyPathException extends RuntimeException {
+  public IllegalAggregateIdPropertyPathException(String msg) {
     super(msg);
   }
 }
