@@ -117,7 +117,7 @@ public final class BasicMatcher implements PGFactMatcher {
     return t.aggIds().containsAll(aggIds);
   }
 
-  public static PGFactMatcher matches(@NonNull FactSpec spec) {
+  public static BasicMatcher matches(@NonNull FactSpec spec) {
     return new BasicMatcher(spec);
   }
 }
