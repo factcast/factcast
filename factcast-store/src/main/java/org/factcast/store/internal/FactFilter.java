@@ -18,7 +18,7 @@ package org.factcast.store.internal;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.*;
 import javax.annotation.Nullable;
-import lombok.NonNull;
+import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.FactSpec;

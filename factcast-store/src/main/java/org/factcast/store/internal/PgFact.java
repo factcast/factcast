@@ -17,10 +17,13 @@ package org.factcast.store.internal;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import lombok.*;
 import org.factcast.core.*;
@@ -56,38 +59,35 @@ public class PgFact implements Fact {
   @JsonProperty MetaMap meta;
 
   public static PgFact of(@NonNull JsonNode header, @NonNull JsonNode transformedPayload) {
-    // horribly wasteful here: TODO
-    Fact fact = Fact.of(header.toString(), transformedPayload.toString());
-    PgFact pgFact =
-        new PgFact(
-            fact.id(),
-            fact.ns(),
-            fact.type(),
-            fact.version(),
-            fact.aggIds(),
-            fact.jsonHeader(),
-            fact.jsonPayload());
+
+    // twice as fast as going through deser.
+
+    UUID _id = UUID.fromString(header.path("id").asText());
+    String _ns = header.path("ns").asText();
+    String _type = header.path("type").asText();
+    int _version = header.path("version").asInt();
+    ArrayNode aggIdsNode = (ArrayNode) header.path("aggIds");
+    Set<UUID> _aggIds =
+        Lists.newArrayList(aggIdsNode).stream()
+            .map(n -> UUID.fromString(n.asText()))
+            .collect(Collectors.toSet());
+    String _headerString = header.toString();
+    String _payloadString = transformedPayload.toString();
+
+    PgFact pgFact = new PgFact(_id, _ns, _type, _version, _aggIds, _headerString, _payloadString);
     pgFact.parsedHeader.set(header);
     pgFact.parsedPayload.set(transformedPayload);
     return pgFact;
   }
 
   public static PgFact of(@NonNull String header, @NonNull String transformedPayload) {
-    // bit wasteful here: TODO
-    Fact fact = Fact.of(header, transformedPayload);
-    return new PgFact(
-        fact.id(),
-        fact.ns(),
-        fact.type(),
-        fact.version(),
-        fact.aggIds(),
-        fact.jsonHeader(),
-        fact.jsonPayload());
+    return from(Fact.of(header, transformedPayload));
   }
 
   @VisibleForTesting
   public static PgFact from(@NonNull Fact f) {
-    return of(f.jsonHeader(), f.jsonPayload());
+    return new PgFact(
+        f.id(), f.ns(), f.type(), f.version(), f.aggIds(), f.jsonHeader(), f.jsonPayload());
   }
 
   /**
@@ -112,8 +112,9 @@ public class PgFact implements Fact {
   public @NonNull FactHeader header() {
     if (header == null) {
       // prefer preparsed header if avail
-      if (parsedHeader.get() != null) {
-        header = FactCastJson.readValue(FactHeader.class, parsedHeader.get());
+      JsonNode headerNode = parsedHeader.get();
+      if (headerNode != null) {
+        header = FactCastJson.readValue(FactHeader.class, headerNode);
       } else {
         header = FactCastJson.readValue(FactHeader.class, jsonHeader);
       }
@@ -150,11 +151,11 @@ public class PgFact implements Fact {
 
   @SuppressWarnings("java:S2065")
   @JsonIgnore
-  private transient AtomicReference<JsonNode> parsedPayload = new AtomicReference<>();
+  private final transient AtomicReference<JsonNode> parsedPayload = new AtomicReference<>();
 
   @SuppressWarnings("java:S2065")
   @JsonIgnore
-  private transient AtomicReference<JsonNode> parsedHeader = new AtomicReference<>();
+  private final transient AtomicReference<JsonNode> parsedHeader = new AtomicReference<>();
 
   @SneakyThrows
   public @NonNull JsonNode jsonPayloadParsed() {

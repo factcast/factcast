@@ -49,20 +49,22 @@ public final class AggIdPropertyMatcher implements PGFactMatcher {
 
   @VisibleForTesting
   boolean aggIdPropertiesMatch(PgFact t) {
+    JsonNode payloadRoot = t.jsonPayloadParsed();
 
     for (Map.Entry<String, UUID> entry : aggIdProperties.entrySet()) {
       String k = entry.getKey();
       UUID v = entry.getValue();
-      JsonNode payload = null;
-      payload = t.jsonPayloadParsed();
       String[] nodes = path(k);
+      JsonNode payload = payloadRoot;
+      // we decent into the tree
       for (String node : nodes) {
         payload = payload.path(node);
         if (payload.isMissingNode()) {
           return false; // as early as possible
         }
       }
-      return v.toString().equals(payload.asText());
+      // string comparison is twice as fast, compared to parsing a UUID
+      if (!v.toString().equals(payload.asText())) return false;
     }
 
     return true;
