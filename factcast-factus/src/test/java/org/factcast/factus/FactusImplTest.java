@@ -475,7 +475,8 @@ class FactusImplTest {
                 // fact position is set, so that we do not get an empty optional when doing find.
                 AbstractFactObserver fo = inv.getArgument(1, AbstractFactObserver.class);
 
-                Fact f = new TestFact()
+                Fact f =
+                    new TestFact()
                         .ns("test")
                         .type("SomethingHappenedToPersonAggregate")
                         .aggId(aggId);
