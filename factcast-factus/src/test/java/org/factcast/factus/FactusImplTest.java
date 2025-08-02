@@ -463,6 +463,7 @@ class FactusImplTest {
     @Test
     void withLockOnAggregateClass_aggregateExists() {
       // INIT
+      UUID aggId = randomUUID();
       when(ehFactory.create(any(PersonAggregate.class))).thenReturn(projector);
 
       when(projector.createFactSpecs()).thenReturn(specs);
@@ -470,22 +471,21 @@ class FactusImplTest {
       when(fc.subscribe(any(), any()))
           .thenAnswer(
               inv -> {
-                // make sure the fact position is set, so we do not get an
-                // empty optional when doing find.
+                // There must be one fact referencing this aggregate to make sure the
+                // fact position is set, so that we do not get an empty optional when doing find.
                 AbstractFactObserver fo = inv.getArgument(1, AbstractFactObserver.class);
 
-                final Fact spec = mock(Fact.class);
-                final FactHeader mockedHeader = mock(FactHeader.class);
-                when(mockedHeader.id()).thenReturn(UUID.randomUUID());
-                when(spec.header()).thenReturn(mockedHeader);
+                Fact f = new TestFact()
+                        .ns("test")
+                        .type("SomethingHappenedToPersonAggregate")
+                        .aggId(aggId);
                 // apply fact and with that, set position
-                fo.onNext(Collections.singletonList(spec));
+                fo.onNext(Collections.singletonList(f));
 
                 return mock(Subscription.class);
               });
 
       // RUN
-      UUID aggId = randomUUID();
       Locked<PersonAggregate> locked = underTest.withLockOn(PersonAggregate.class, aggId);
 
       // ASSERT
