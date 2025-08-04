@@ -15,38 +15,44 @@
  */
 package org.factcast.factus.mongodb;
 
-import java.time.Duration;
-import java.util.Optional;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import net.javacrumbs.shedlock.core.SimpleLock;
+import net.javacrumbs.shedlock.core.*;
 import org.factcast.factus.projection.WriterToken;
 
+// TODO consider making this a general ShedlockWriterToken implementation
 @Slf4j
 public class MongoDbWriterToken implements WriterToken {
   private @NonNull SimpleLock lock;
+  private LockProvider lockProvider;
+  private LockConfiguration lockConfiguration;
 
-  protected MongoDbWriterToken(@NonNull SimpleLock lock) {
+  protected MongoDbWriterToken(
+      @NonNull SimpleLock lock,
+      @NonNull LockProvider lockProvider,
+      LockConfiguration lockConfiguration) {
+    this.lockProvider = lockProvider;
     this.lock = lock;
+    this.lockConfiguration = lockConfiguration;
   }
 
   /**
-   * Attempts to extend the lock with a duration of 10s. Returns true if successful, and false if
-   * the lock cannot be obtained.
+   * Checks if the lock is held and returns true if successful, and false if the lock cannot be
+   * obtained.
    */
   @Override
   public boolean isValid() {
-    try {
-      // TODO: reconsider durations
-      Optional<SimpleLock> refreshedLock = lock.extend(Duration.ofSeconds(10L), Duration.ZERO);
-      if (refreshedLock.isPresent()) {
-        this.lock = refreshedLock.get();
-        return true;
-      }
-    } catch (IllegalStateException e) {
-      log.debug("Failed to extend lock, it is no longer valid: {}", e.getMessage());
-    }
-    return false;
+    return lockProvider.lock(lockConfiguration).isPresent();
+    //        if (lock.isEmpty()) {
+    //            log.debug("Lock is no longer valid, it has been released or cannot be obtained.");
+    //            return false;
+    //        }
+    //
+    //      return true;
+    //    } catch (IllegalStateException e) {
+    //      log.debug("Failed to assert lock, it is no longer valid: {}", e.getMessage());
+    //    }
+    //    return false;
   }
 
   @Override

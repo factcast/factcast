@@ -15,15 +15,14 @@
  */
 package org.factcast.factus.mongodb;
 
-import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoDatabase;
 import lombok.NonNull;
 import org.factcast.factus.projection.SubscribedProjection;
 
 public abstract class AbstractMongoDbSubscribedProjection extends AbstractMongoDbProjection
     implements SubscribedProjection {
 
-  protected AbstractMongoDbSubscribedProjection(
-      MongoClient mongoDbClient, @NonNull String databaseName) {
-    super(mongoDbClient, databaseName);
+  protected AbstractMongoDbSubscribedProjection(@NonNull MongoDatabase mongoDb) {
+    super(mongoDb);
   }
 }

@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
-import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import lombok.NonNull;
@@ -34,11 +33,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class AbstractMongoDbSubscribedProjectionTest {
-  private static final String DB_NAME = "testDb";
   static final String SCOPED_NAME =
       "org.factcast.factus.mongodb.AbstractMongoDbSubscribedProjectionTest$TestProjection_1";
 
-  @Mock MongoClient mongoClient;
   @Mock MongoDatabase mongoDatabase;
   @Mock MongoCollection<Document> stateTable;
   @Mock MongoCollection<Document> lockTable;
@@ -47,12 +44,11 @@ class AbstractMongoDbSubscribedProjectionTest {
 
   @BeforeEach
   void setUp() {
-    when(mongoClient.getDatabase(DB_NAME)).thenReturn(mongoDatabase);
     when(mongoDatabase.getCollection(AbstractMongoDbManagedProjection.STATE_COLLECTION))
         .thenReturn(stateTable);
     when(mongoDatabase.getCollection(AbstractMongoDbManagedProjection.LOCK_COLLECTION))
         .thenReturn(lockTable);
-    uut = new TestProjection(mongoClient);
+    uut = new TestProjection(mongoDatabase);
   }
 
   @Nested
@@ -67,7 +63,7 @@ class AbstractMongoDbSubscribedProjectionTest {
   class MissingProjectionMetaDataAnnotation {
     @Test
     void happyPath() {
-      assertThatThrownBy(() -> new MissingAnnotationTestProjection(mongoClient))
+      assertThatThrownBy(() -> new MissingAnnotationTestProjection(mongoDatabase))
           .isInstanceOf(IllegalStateException.class);
     }
   }
@@ -75,15 +71,15 @@ class AbstractMongoDbSubscribedProjectionTest {
   @ProjectionMetaData(revision = 1)
   static class TestProjection extends AbstractMongoDbSubscribedProjection {
 
-    public TestProjection(@NonNull MongoClient mongoClient) {
-      super(mongoClient, DB_NAME);
+    public TestProjection(@NonNull MongoDatabase mongoDatabase) {
+      super(mongoDatabase);
     }
   }
 
   static class MissingAnnotationTestProjection extends AbstractMongoDbSubscribedProjection {
 
-    public MissingAnnotationTestProjection(@NonNull MongoClient mongoClient) {
-      super(mongoClient, DB_NAME);
+    public MissingAnnotationTestProjection(@NonNull MongoDatabase mongoClient) {
+      super(mongoClient);
     }
   }
 }

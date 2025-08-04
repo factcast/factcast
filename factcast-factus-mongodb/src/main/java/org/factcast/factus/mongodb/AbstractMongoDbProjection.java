@@ -29,9 +29,7 @@ import java.util.concurrent.Executors;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import net.javacrumbs.shedlock.core.LockConfiguration;
-import net.javacrumbs.shedlock.core.LockProvider;
-import net.javacrumbs.shedlock.core.SimpleLock;
+import net.javacrumbs.shedlock.core.*;
 import net.javacrumbs.shedlock.provider.mongo.MongoLockProvider;
 import net.javacrumbs.shedlock.support.KeepAliveLockProvider;
 import org.bson.Document;
@@ -53,29 +51,34 @@ abstract class AbstractMongoDbProjection implements MongoDbProjection {
   private static final long MAX_LEASE_DURATION_SECONDS = 60;
   private static final long MAX_RETRY_INTERVAL_MILLISECONDS = 30_000;
 
-  @Getter @NonNull protected final MongoClient mongoDb;
+  @Getter @NonNull private final MongoDatabase mongoDb;
   @Getter @NonNull private final String projectionKey;
-  @NonNull private final MongoCollection<Document> stateTable;
+  @NonNull private final MongoCollection<Document> stateCollection;
   @NonNull private final LockProvider lockProvider;
 
-  protected AbstractMongoDbProjection(@NonNull MongoClient mongoDb, @NonNull String databaseName) {
-    this(mongoDb, mongoDb.getDatabase(databaseName));
+  protected AbstractMongoDbProjection(
+      @NonNull MongoClient mongoClient, @NonNull String databaseName) {
+    this(mongoClient.getDatabase(databaseName));
   }
 
-  private AbstractMongoDbProjection(@NonNull MongoClient mongoDb, @NonNull MongoDatabase database) {
-    // Collections are created automatically when non-existent
-    this(mongoDb, database.getCollection(STATE_COLLECTION), createLockClient(database));
+  protected AbstractMongoDbProjection(@NonNull MongoDatabase mongoDb) {
+    this(
+        mongoDb,
+        // Collections are created automatically when non-existent
+        mongoDb.getCollection(STATE_COLLECTION),
+        createLockClient(mongoDb));
   }
 
   @VisibleForTesting
   protected AbstractMongoDbProjection(
-      @NonNull MongoClient mongoDb,
-      @NonNull MongoCollection<Document> stateTable,
+      @NonNull MongoDatabase mongoDb,
+      @NonNull MongoCollection<Document> stateCollection,
       @NonNull LockProvider lockProvider) {
     this.mongoDb = mongoDb;
     this.projectionKey = this.getScopedName().asString();
+    // Collections are created automatically when non-existent
+    this.stateCollection = stateCollection;
     this.lockProvider = lockProvider;
-    this.stateTable = stateTable;
   }
 
   private static LockProvider createLockClient(MongoDatabase database) {
@@ -88,7 +91,7 @@ abstract class AbstractMongoDbProjection implements MongoDbProjection {
 
   @Override
   public FactStreamPosition factStreamPosition() {
-    final Document state = stateTable.find(getProjectionStateByKey(projectionKey)).first();
+    final Document state = stateCollection.find(getProjectionStateByKey(projectionKey)).first();
 
     return state != null
         ? FactStreamPosition.of(
@@ -108,7 +111,7 @@ abstract class AbstractMongoDbProjection implements MongoDbProjection {
           new Document(PROJECTION_CLASS_FIELD, projectionKey)
               .append(LAST_FACT_ID_FIELD, factStreamPosition)
               .append(LAST_FACT_SERIAL_FIELD, position.serial());
-      stateTable.replaceOne(
+      stateCollection.replaceOne(
           getProjectionStateByKey(projectionKey),
           positionDocument,
           new ReplaceOptions().upsert(true));
@@ -127,7 +130,7 @@ abstract class AbstractMongoDbProjection implements MongoDbProjection {
     Optional<SimpleLock> lock =
         tryToAcquireLock(lockConfiguration, ZonedDateTime.now().plus(maxWait));
 
-    return lock.map(MongoDbWriterToken::new).orElse(null);
+    return lock.map(l -> new MongoDbWriterToken(l, lockProvider, lockConfiguration)).orElse(null);
   }
 
   /**

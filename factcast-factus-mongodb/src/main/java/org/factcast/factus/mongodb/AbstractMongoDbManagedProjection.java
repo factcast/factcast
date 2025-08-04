@@ -16,8 +16,8 @@
 package org.factcast.factus.mongodb;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import lombok.NonNull;
 import net.javacrumbs.shedlock.core.LockProvider;
 import org.bson.Document;
@@ -26,9 +26,8 @@ import org.factcast.factus.projection.ManagedProjection;
 public abstract class AbstractMongoDbManagedProjection extends AbstractMongoDbProjection
     implements ManagedProjection {
 
-  protected AbstractMongoDbManagedProjection(
-      @NonNull MongoClient mongoDbClient, @NonNull String databaseName) {
-    super(mongoDbClient, databaseName);
+  protected AbstractMongoDbManagedProjection(@NonNull MongoDatabase mongoDb) {
+    super(mongoDb);
   }
 
   /**
@@ -37,7 +36,7 @@ public abstract class AbstractMongoDbManagedProjection extends AbstractMongoDbPr
   @VisibleForTesting
   @Deprecated
   protected AbstractMongoDbManagedProjection(
-      @NonNull MongoClient mongoDb,
+      @NonNull MongoDatabase mongoDb,
       @NonNull MongoCollection<Document> stateTable,
       @NonNull LockProvider lockProvider) {
     super(mongoDb, stateTable, lockProvider);

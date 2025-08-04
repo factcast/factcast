@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2024 factcast.org
+ * Copyright © 2017-2022 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.mongodb;
+package org.factcast.test.mongodb;
 
-import com.mongodb.client.MongoDatabase;
+import eu.rekawek.toxiproxy.ToxiproxyClient;
 import lombok.NonNull;
-import org.factcast.factus.projection.ExternalizedProjection;
+import org.factcast.test.toxi.AbstractToxiProxySupplier;
+import org.testcontainers.containers.ToxiproxyContainer;
 
-public interface MongoDbProjection extends ExternalizedProjection {
-  @NonNull
-  MongoDatabase mongoDb();
+public class MongoDbProxy extends AbstractToxiProxySupplier {
+  public MongoDbProxy(
+      @NonNull ToxiproxyContainer.ContainerProxy proxy, @NonNull ToxiproxyClient client) {
+    super(proxy, proxy.getName(), client);
+  }
 }

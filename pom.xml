@@ -35,6 +35,7 @@
     <module>factcast-test</module>
     <module>factcast-test-redis</module>
     <module>factcast-test-dynamo</module>
+    <module>factcast-test-mongodb</module>
     <module>factcast-internal-dep</module>
     <module>factcast-internal-dep-boot</module>
     <module>factcast-spring-boot-autoconfigure</module>

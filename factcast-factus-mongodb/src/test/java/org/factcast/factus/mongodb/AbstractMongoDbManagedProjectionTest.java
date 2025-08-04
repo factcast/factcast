@@ -41,11 +41,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class AbstractMongoDbManagedProjectionTest {
-  private static final String DB_NAME = "testDb";
   static final String SCOPED_NAME =
       "org.factcast.factus.mongodb.AbstractMongoDbManagedProjectionTest$TestProjection_1";
 
-  @Mock MongoClient mongoClient;
   @Mock MongoDatabase mongoDatabase;
   @Mock MongoCollection<Document> stateTable;
   @Mock MongoCollection<Document> lockTable;
@@ -54,12 +52,11 @@ class AbstractMongoDbManagedProjectionTest {
 
   @BeforeEach
   void setUp() {
-    when(mongoClient.getDatabase(DB_NAME)).thenReturn(mongoDatabase);
     when(mongoDatabase.getCollection(AbstractMongoDbManagedProjection.STATE_COLLECTION))
         .thenReturn(stateTable);
     when(mongoDatabase.getCollection(AbstractMongoDbManagedProjection.LOCK_COLLECTION))
         .thenReturn(lockTable);
-    uut = new TestProjection(mongoClient);
+    uut = new TestProjection(mongoDatabase);
   }
 
   @Nested
@@ -132,7 +129,7 @@ class AbstractMongoDbManagedProjectionTest {
 
     @BeforeEach
     void setUp() {
-      uut = new TestProjection(mongoClient, stateTable, lockProvider);
+      uut = new TestProjection(mongoDatabase, stateTable, lockProvider);
     }
 
     @Test
@@ -192,7 +189,7 @@ class AbstractMongoDbManagedProjectionTest {
   class MissingProjectionMetaDataAnnotation {
     @Test
     void happyPath() {
-      assertThatThrownBy(() -> new MissingAnnotationTestProjection(mongoClient))
+      assertThatThrownBy(() -> new MissingAnnotationTestProjection(mongoDatabase))
           .isInstanceOf(IllegalStateException.class);
     }
   }
@@ -200,12 +197,12 @@ class AbstractMongoDbManagedProjectionTest {
   @ProjectionMetaData(revision = 1)
   static class TestProjection extends AbstractMongoDbManagedProjection {
 
-    public TestProjection(@NonNull MongoClient mongoClient) {
-      super(mongoClient, DB_NAME);
+    public TestProjection(@NonNull MongoDatabase mongoDatabase) {
+      super(mongoDatabase);
     }
 
     public TestProjection(
-        @NonNull MongoClient mongoDb,
+        @NonNull MongoDatabase mongoDb,
         @NonNull MongoCollection<Document> stateTable,
         @NonNull LockProvider lockProvider) {
       super(mongoDb, stateTable, lockProvider);
@@ -214,8 +211,8 @@ class AbstractMongoDbManagedProjectionTest {
 
   static class MissingAnnotationTestProjection extends AbstractMongoDbManagedProjection {
 
-    public MissingAnnotationTestProjection(@NonNull MongoClient mongoClient) {
-      super(mongoClient, DB_NAME);
+    public MissingAnnotationTestProjection(@NonNull MongoDatabase MongoDatabase) {
+      super(MongoDatabase);
     }
   }
 }
