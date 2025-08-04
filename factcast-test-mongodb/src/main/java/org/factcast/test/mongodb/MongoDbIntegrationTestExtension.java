@@ -74,6 +74,7 @@ public class MongoDbIntegrationTestExtension implements FactCastIntegrationTestE
 
   @Override
   public void wipeExternalDataStore(TestContext ctx) {
+    log.info("Wiping MongoDB database for test: {}", TEST_MONGO_DB_NAME);
     final MongoClient client =
         ctx.getApplicationContext().getAutowireCapableBeanFactory().getBean(MongoClient.class);
 

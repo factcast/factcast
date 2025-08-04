@@ -25,13 +25,12 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.Executors;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.*;
 import net.javacrumbs.shedlock.provider.mongo.MongoLockProvider;
-import net.javacrumbs.shedlock.support.KeepAliveLockProvider;
 import org.bson.Document;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.factus.projection.WriterToken;
@@ -46,15 +45,16 @@ abstract class AbstractMongoDbProjection implements MongoDbProjection {
   public static final String LAST_FACT_SERIAL_FIELD = "lastFactSerial";
 
   // Time after which the lock is released if unlock() is called
-  private static final long MIN_LEASE_DURATION_SECONDS = 1;
+  protected static final Duration MIN_LEASE_DURATION_SECONDS = Duration.ofSeconds(1);
   // Time after which the lock is automatically released
-  private static final long MAX_LEASE_DURATION_SECONDS = 60;
+  protected static final Duration MAX_LEASE_DURATION_SECONDS = Duration.ofSeconds(60);
   private static final long MAX_RETRY_INTERVAL_MILLISECONDS = 30_000;
 
   @Getter @NonNull private final MongoDatabase mongoDb;
-  @Getter @NonNull private final String projectionKey;
+  @Getter @NonNull protected final String projectionKey;
   @NonNull private final MongoCollection<Document> stateCollection;
   @NonNull private final LockProvider lockProvider;
+  @Getter @Setter private SimpleLock lock;
 
   protected AbstractMongoDbProjection(
       @NonNull MongoClient mongoClient, @NonNull String databaseName) {
@@ -84,9 +84,7 @@ abstract class AbstractMongoDbProjection implements MongoDbProjection {
   private static LockProvider createLockClient(MongoDatabase database) {
     log.debug("Configuring lock provider: MongoDB.");
     MongoCollection<Document> lockTable = database.getCollection(LOCK_COLLECTION);
-    // Attempts to extend the lock every (MAX_LEASE_DURATION_SECONDS / 2) seconds
-    return new KeepAliveLockProvider(
-        new MongoLockProvider(lockTable), Executors.newSingleThreadScheduledExecutor());
+    return new MongoLockProvider(lockTable);
   }
 
   @Override
@@ -120,17 +118,20 @@ abstract class AbstractMongoDbProjection implements MongoDbProjection {
 
   @Override
   public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
-    String lockKey = projectionKey + "_lock";
-    final LockConfiguration lockConfiguration =
-        new LockConfiguration(
-            Instant.now(),
-            lockKey,
-            Duration.ofSeconds(MAX_LEASE_DURATION_SECONDS),
-            Duration.ofSeconds(MIN_LEASE_DURATION_SECONDS));
+    final LockConfiguration lockConfiguration = getLockConfiguration(getLockKey());
     Optional<SimpleLock> lock =
         tryToAcquireLock(lockConfiguration, ZonedDateTime.now().plus(maxWait));
-
+    this.lock = lock.orElse(null);
     return lock.map(l -> new MongoDbWriterToken(l, lockProvider, lockConfiguration)).orElse(null);
+  }
+
+  private String getLockKey() {
+    return projectionKey + "_lock";
+  }
+
+  private static LockConfiguration getLockConfiguration(String lockKey) {
+    return new LockConfiguration(
+        Instant.now(), lockKey, MAX_LEASE_DURATION_SECONDS, MIN_LEASE_DURATION_SECONDS);
   }
 
   /**

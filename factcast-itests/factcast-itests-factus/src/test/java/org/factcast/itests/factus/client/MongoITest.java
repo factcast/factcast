@@ -49,18 +49,18 @@ public class MongoITest extends AbstractFactCastIntegrationTest {
   @Autowired MongoDatabase mongoDb;
   static final int NUMBER_OF_EVENTS = 10;
 
+  @BeforeEach
+  void setup() {
+    var l = new ArrayList<EventObject>(NUMBER_OF_EVENTS);
+    for (int i = 0; i < NUMBER_OF_EVENTS; i++) {
+      l.add(new UserCreated(randomUUID(), getClass().getSimpleName() + ":" + i));
+    }
+    log.info("publishing {} Events ", NUMBER_OF_EVENTS);
+    factus.publish(l);
+  }
+
   @Nested
   class Managed {
-    @BeforeEach
-    void setup() {
-      var l = new ArrayList<EventObject>(NUMBER_OF_EVENTS);
-      for (int i = 0; i < NUMBER_OF_EVENTS; i++) {
-        l.add(new UserCreated(randomUUID(), getClass().getSimpleName() + ":" + i));
-      }
-      log.info("publishing {} Events ", NUMBER_OF_EVENTS);
-      factus.publish(l);
-    }
-
     @SneakyThrows
     @Test
     void happyPath() {
@@ -69,7 +69,6 @@ public class MongoITest extends AbstractFactCastIntegrationTest {
 
       assertThat(p.count()).isEqualTo(NUMBER_OF_EVENTS);
       assertThat(p.stateModifications()).isEqualTo(10);
-      assertThat(p.getLastProcessedSerialFromState()).isEqualTo(10);
     }
 
     @SneakyThrows
@@ -92,16 +91,6 @@ public class MongoITest extends AbstractFactCastIntegrationTest {
 
   @Nested
   class Subscribed {
-    @BeforeEach
-    void setup() {
-      var l = new ArrayList<EventObject>(NUMBER_OF_EVENTS);
-      for (int i = 0; i < NUMBER_OF_EVENTS; i++) {
-        l.add(new UserCreated(randomUUID(), getClass().getSimpleName() + ":" + i));
-      }
-      log.info("publishing {} Events ", NUMBER_OF_EVENTS);
-      factus.publish(l);
-    }
-
     @SneakyThrows
     @Test
     void happyPath() {

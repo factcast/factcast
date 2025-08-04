@@ -15,6 +15,8 @@
  */
 package org.factcast.factus.mongodb;
 
+import java.time.Duration;
+import java.util.Optional;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.*;
@@ -37,22 +39,22 @@ public class MongoDbWriterToken implements WriterToken {
   }
 
   /**
-   * Checks if the lock is held and returns true if successful, and false if the lock cannot be
+   * TODO Checks if the lock is held and returns true if successful, and false if the lock cannot be
    * obtained.
    */
   @Override
   public boolean isValid() {
-    return lockProvider.lock(lockConfiguration).isPresent();
-    //        if (lock.isEmpty()) {
-    //            log.debug("Lock is no longer valid, it has been released or cannot be obtained.");
-    //            return false;
-    //        }
-    //
-    //      return true;
-    //    } catch (IllegalStateException e) {
-    //      log.debug("Failed to assert lock, it is no longer valid: {}", e.getMessage());
-    //    }
-    //    return false;
+    try {
+      Optional<SimpleLock> extendedLock =
+          lock.extend(Duration.ofSeconds(60), Duration.ofSeconds(1));
+      if (extendedLock.isPresent()) {
+        this.lock = extendedLock.get();
+        return true;
+      }
+    } catch (IllegalStateException e) {
+      log.debug("Failed to extend lock, it is no longer valid: {}", e.getMessage());
+    }
+    return false;
   }
 
   @Override

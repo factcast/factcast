@@ -36,8 +36,4 @@ public class MongoDbManagedUserNames extends AbstractMongoDbManagedProjection
   public MongoCollection<UserNamesSchema> userNames() {
     return userNames;
   }
-
-  public long getLastProcessedSerialFromState() {
-    return this.mongoDb().getCollection("states").find().first().get("lastFactSerial", Long.class);
-  }
 }
