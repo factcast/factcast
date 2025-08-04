@@ -17,7 +17,10 @@ package org.factcast.test.mongodb;
 
 import static org.factcast.test.mongodb.MongoDbConfig.TEST_MONGO_DB_NAME;
 
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 import java.util.Map;
 import java.util.Optional;
@@ -56,7 +59,14 @@ public class MongoDbIntegrationTestExtension implements FactCastIntegrationTestE
                   new MongoDbProxy(
                       FactCastIntegrationTestExecutionListener.createProxy(mongoDbContainer, port),
                       FactCastIntegrationTestExecutionListener.client());
-              return new Containers(mongoDbContainer, mongoDbProxy);
+              return new Containers(
+                  mongoDbContainer,
+                  mongoDbProxy,
+                  MongoClients.create(
+                      MongoClientSettings.builder()
+                          .applyConnectionString(
+                              new ConnectionString(mongoDbContainer.getConnectionString()))
+                          .build()));
             });
 
     ContainerProxy mongoContainerProxy = container.mongoDbProxy().get();
@@ -74,9 +84,9 @@ public class MongoDbIntegrationTestExtension implements FactCastIntegrationTestE
 
   @Override
   public void wipeExternalDataStore(TestContext ctx) {
-    log.info("Wiping MongoDB database for test: {}", TEST_MONGO_DB_NAME);
-    final MongoClient client =
-        ctx.getApplicationContext().getAutowireCapableBeanFactory().getBean(MongoClient.class);
+    log.debug("Wiping MongoDB database for test: {}", TEST_MONGO_DB_NAME);
+    final MongoDbConfig.Config config = discoverConfig(ctx.getTestClass());
+    final MongoClient client = executions.get(config).client;
 
     final MongoDatabase database = client.getDatabase(TEST_MONGO_DB_NAME);
     database.drop();
@@ -100,6 +110,7 @@ public class MongoDbIntegrationTestExtension implements FactCastIntegrationTestE
   static class Containers {
     GenericContainer container;
     MongoDbProxy mongoDbProxy;
+    MongoClient client;
   }
 
   @Override

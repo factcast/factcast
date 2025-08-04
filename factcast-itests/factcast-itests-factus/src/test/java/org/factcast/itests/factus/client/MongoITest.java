@@ -19,18 +19,25 @@ import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.mongodb.client.MongoDatabase;
+import java.time.Duration;
 import java.util.ArrayList;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import nl.altindag.log.LogCaptor;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.factus.Factus;
+import org.factcast.factus.FactusImpl;
 import org.factcast.factus.event.EventObject;
+import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.config.MongoDbProjectionConfiguration;
 import org.factcast.itests.factus.event.UserCreated;
+import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.MongoDbManagedUserNames;
 import org.factcast.itests.factus.proj.MongoDbSubscribedUserNames;
 import org.factcast.test.AbstractFactCastIntegrationTest;
@@ -40,6 +47,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 @SpringBootTest
 @ContextConfiguration(classes = {TestFactusApplication.class, MongoDbProjectionConfiguration.class})
@@ -100,6 +108,53 @@ public class MongoITest extends AbstractFactCastIntegrationTest {
       assertThat(p.count()).isEqualTo(NUMBER_OF_EVENTS);
       assertThat(p.stateModifications()).isEqualTo(10);
     }
+
+    @SneakyThrows
+    @Test
+    void projectionStoppedAtException() {
+      // throws while applying the 7th event.
+      SubscribedUserNamesSizeBlowAt7th p = new SubscribedUserNamesSizeBlowAt7th(mongoDb);
+
+      assertThat(p.count()).isZero();
+
+      try {
+        factus.subscribeAndBlock(p).awaitCatchup().close();
+      } catch (Throwable expected) {
+        // ignore
+      }
+
+      assertThat(p.count()).isEqualTo(6);
+      assertThat(p.stateModifications()).isEqualTo(6);
+    }
+
+    @Test
+    void testTokenReleaseAfterTooManyFailures() throws Exception {
+      var subscribedUserNames = new SubscribedUserNamesTokenExposedAndThrowsError(mongoDb);
+
+      factus.publish(new UserDeleted(UUID.randomUUID()));
+
+      assertThat(subscribedUserNames.token()).isNull();
+      try (var logCaptor = LogCaptor.forClass(FactusImpl.class)) {
+        logCaptor.setLogLevelToTrace();
+        factus.subscribe(subscribedUserNames);
+
+        // The projection acquired a token and
+        subscribedUserNames.latch.await();
+        Awaitility.await()
+            .until(
+                () ->
+                    !logCaptor.getTraceLogs().isEmpty()
+                        && logCaptor
+                            .getTraceLogs()
+                            .get(0)
+                            .contains(
+                                "Closing AutoCloseable for class class org.factcast.factus.mongodb.MongoDbWriterToken"));
+      }
+
+      Awaitility.await()
+          .until(
+              () -> subscribedUserNames.token() != null && !subscribedUserNames.token().isValid());
+    }
   }
 
   // Managed Test Projections
@@ -147,6 +202,47 @@ public class MongoITest extends AbstractFactCastIntegrationTest {
   static class SubscribedUserNames extends TrackingMongoDbSubscribedUserNames {
     public SubscribedUserNames(MongoDatabase mongoDb) {
       super(mongoDb);
+    }
+  }
+
+  @ProjectionMetaData(revision = 1)
+  static class SubscribedUserNamesSizeBlowAt7th extends TrackingMongoDbSubscribedUserNames {
+    private int count;
+
+    public SubscribedUserNamesSizeBlowAt7th(MongoDatabase mongoDb) {
+      super(mongoDb);
+    }
+
+    @Override
+    public void apply(UserCreated created) {
+      if (++count == 7) { // blow the second bulk
+        throw new IllegalStateException("Bad luck");
+      }
+      super.apply(created);
+    }
+  }
+
+  @Getter
+  @ProjectionMetaData(revision = 1)
+  static class SubscribedUserNamesTokenExposedAndThrowsError
+      extends TrackingMongoDbSubscribedUserNames {
+    private final CountDownLatch latch = new CountDownLatch(1);
+    private WriterToken token;
+
+    public SubscribedUserNamesTokenExposedAndThrowsError(MongoDatabase mongoDb) {
+      super(mongoDb);
+    }
+
+    @Override
+    public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
+      token = super.acquireWriteToken(maxWait);
+      latch.countDown();
+      return token;
+    }
+
+    @Override
+    public void apply(UserDeleted created) {
+      throw new IllegalArgumentException("user should be in map but wasnt");
     }
   }
 
