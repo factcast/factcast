@@ -36,6 +36,7 @@ import org.factcast.store.*;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.catchup.fetching.PgFetchingCatchUpFactory;
 import org.factcast.store.internal.check.IndexCheck;
+import org.factcast.store.internal.concurrency.*;
 import org.factcast.store.internal.filter.blacklist.*;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.lock.*;
@@ -102,12 +103,12 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
-  public FactStore factStore(
+  public PgFactStore factStore(
       JdbcTemplate jdbcTemplate,
       PgSubscriptionFactory subscriptionFactory,
       TokenStore tokenStore,
       SchemaRegistry schemaRegistry,
-      FactTableWriteLock lock,
+      ConcurrencyStrategy concurrencyStrategy,
       FactTransformerService factTransformerService,
       PgFactIdToSerialMapper pgFactIdToSerialMapper,
       PgMetrics pgMetrics,
@@ -118,7 +119,7 @@ public class PgFactStoreInternalConfiguration {
         subscriptionFactory,
         tokenStore,
         schemaRegistry,
-        lock,
+        concurrencyStrategy,
         factTransformerService,
         pgFactIdToSerialMapper,
         pgMetrics,
@@ -312,5 +313,24 @@ public class PgFactStoreInternalConfiguration {
         .blacklist(blacklist)
         .metrics(metrics)
         .build();
+  }
+
+  @Bean
+  ConcurrencyStrategy concurrencyStrategy(
+      @NonNull StoreConfigurationProperties props,
+      @NonNull PlatformTransactionManager platformTransactionManager,
+      @NonNull FactTableWriteLock lock,
+      @NonNull JdbcTemplate jdbc) {
+
+    return switch (props.getConcurrencyStrategy()) {
+      case LEGACY -> new LegacyConcurrencyStrategy(platformTransactionManager, lock, jdbc);
+      case FULL_SERIALIZE ->
+          new SerializeInsertOnlyConcurrencyStrategy(platformTransactionManager, lock, jdbc);
+      case CHECK_EARLIER ->
+          new CheckEarlierConcurrencyStrategy(platformTransactionManager, lock, jdbc);
+      default ->
+          throw new IllegalStateException(
+              "Unmapped concurrency Strategy " + props.getConcurrencyStrategy());
+    };
   }
 }

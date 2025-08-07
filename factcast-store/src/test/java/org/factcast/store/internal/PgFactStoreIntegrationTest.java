@@ -20,7 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.nio.charset.StandardCharsets;
 import java.time.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 import lombok.*;
 import lombok.experimental.Delegate;
 import org.assertj.core.util.Lists;
@@ -29,12 +30,15 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.*;
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.*;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.tail.MemoizedFastForwardTarget;
+import org.factcast.store.registry.SchemaRegistry;
 import org.factcast.store.test.AbstractFactStoreTest;
 import org.factcast.test.IntegrationTest;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.slf4j.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -61,6 +65,9 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
   @Autowired MemoizedFastForwardTarget fastForwardTarget;
 
   @Autowired JdbcTemplate jdbcTemplate;
+  @Autowired private PgSubscriptionFactory pgSubscriptionFactory;
+  @Autowired private SchemaRegistry schemaRegistry;
+  @Autowired private StoreConfigurationProperties props;
 
   @Override
   protected FactStore createStoreToTest() {
