@@ -15,12 +15,12 @@
  */
 package org.factcast.store.internal;
 
-import com.google.common.collect.Lists;
 import java.sql.*;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.*;
@@ -30,13 +30,13 @@ import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.transformation.*;
 import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.store.internal.lock.FactTableWriteLock;
+import org.factcast.store.internal.concurrency.*;
 import org.factcast.store.internal.query.*;
 import org.factcast.store.registry.SchemaRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.dao.*;
 import org.springframework.jdbc.core.*;
-import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.*;
 import org.springframework.transaction.annotation.*;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -46,6 +46,7 @@ import org.springframework.transaction.support.TransactionTemplate;
  * @author uwe.schaefer@prisma-capacity.eu
  */
 @Slf4j
+@SuppressWarnings({"java:S6809", "SpringTransactionalMethodCallsInspection"})
 public class PgFactStore extends AbstractFactStore {
 
   @NonNull private final JdbcTemplate jdbcTemplate;
@@ -53,8 +54,7 @@ public class PgFactStore extends AbstractFactStore {
 
   @NonNull private final PgSubscriptionFactory subscriptionFactory;
 
-  @NonNull private final FactTableWriteLock lock;
-
+  @NonNull private final ConcurrencyStrategy concurrencyStrategy;
   @NonNull private final FactTransformerService factTransformerService;
   @NonNull private final PgFactIdToSerialMapper pgFactIdToSerialMapper;
 
@@ -69,7 +69,7 @@ public class PgFactStore extends AbstractFactStore {
       @NonNull PgSubscriptionFactory subscriptionFactory,
       @NonNull TokenStore tokenStore,
       @NonNull SchemaRegistry schemaRegistry,
-      @NonNull FactTableWriteLock lock,
+      @NonNull ConcurrencyStrategy concurrencyStrategy,
       @NonNull FactTransformerService factTransformerService,
       @NonNull PgFactIdToSerialMapper pgFactIdToSerialMapper,
       @NonNull PgMetrics metrics,
@@ -80,7 +80,7 @@ public class PgFactStore extends AbstractFactStore {
     this.jdbcTemplate = jdbcTemplate;
     this.subscriptionFactory = subscriptionFactory;
     this.schemaRegistry = schemaRegistry;
-    this.lock = lock;
+    this.concurrencyStrategy = concurrencyStrategy;
     this.pgFactIdToSerialMapper = pgFactIdToSerialMapper;
     this.metrics = metrics;
     this.factTransformerService = factTransformerService;
@@ -114,7 +114,6 @@ public class PgFactStore extends AbstractFactStore {
   }
 
   @Override
-  @Transactional(propagation = Propagation.REQUIRED)
   public void publish(@NonNull List<? extends Fact> factsToPublish) {
     if (props.isReadOnlyModeEnabled()) {
       throw new UnsupportedOperationException("Publishing is not allowed in read-only mode");
@@ -124,22 +123,7 @@ public class PgFactStore extends AbstractFactStore {
         StoreMetrics.OP.PUBLISH,
         () -> {
           try {
-            lock.aquireExclusiveTXLock();
-
-            List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
-            int numberOfFactsToPublish = factsToPublish.size();
-            log.trace("Inserting {} fact(s)", numberOfFactsToPublish);
-            jdbcTemplate.batchUpdate(
-                PgConstants.INSERT_FACT,
-                copiedListOfFacts,
-                // batch limitation not necessary
-                Integer.MAX_VALUE,
-                (statement, fact) -> {
-                  statement.setString(1, fact.jsonHeader());
-                  statement.setString(2, fact.jsonPayload());
-                });
-            // adding serials to headers is done via trigger
-
+            concurrencyStrategy.publish(factsToPublish);
           } catch (DuplicateKeyException dupkey) {
             throw new DuplicateFactException(dupkey.getMessage());
           }
@@ -255,7 +239,6 @@ public class PgFactStore extends AbstractFactStore {
   }
 
   @Override
-  @Transactional(propagation = Propagation.REQUIRED)
   public boolean publishIfUnchanged(
       @NonNull List<? extends Fact> factsToPublish, @NonNull Optional<StateToken> optionalToken) {
     if (props.isReadOnlyModeEnabled()) {
@@ -264,43 +247,34 @@ public class PgFactStore extends AbstractFactStore {
 
     return metrics.time(
         StoreMetrics.OP.PUBLISH_IF_UNCHANGED,
-        () -> {
-          lock.aquireExclusiveTXLock();
-          return super.publishIfUnchanged(factsToPublish, optionalToken);
-        });
+        () ->
+            concurrencyStrategy.publishIfUnchanged(
+                factsToPublish, until -> hasNoConflictingChangeUntil(until, optionalToken)));
   }
 
   @Override
   @NonNull
-  protected State getStateFor(@NonNull List<FactSpec> specs) {
-    return doGetState(specs, 0);
+  protected State getStateFor(
+      @NonNull List<FactSpec> specs, long lastMatchingSerial, @Nullable Long toExclusive) {
+    return doGetState(specs, lastMatchingSerial, toExclusive);
   }
 
-  @Override
-  @NonNull
-  protected State getStateFor(@NonNull List<FactSpec> specs, long lastMatchingSerial) {
-    return doGetState(specs, lastMatchingSerial);
-  }
-
-  private State doGetState(@NotNull List<FactSpec> specs, long lastMatchingSerial) {
+  private State doGetState(
+      @NotNull List<FactSpec> specs, long lastMatchingSerial, @Nullable Long toExclusive) {
     return metrics.time(
         StoreMetrics.OP.GET_STATE_FOR,
         () -> {
           PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
-          String stateSQL = pgQueryBuilder.createStateSQL();
+          String stateSQL = pgQueryBuilder.createStateSQL(toExclusive);
           PreparedStatementSetter statementSetter =
-              pgQueryBuilder.createStatementSetter(new AtomicLong(lastMatchingSerial));
+              pgQueryBuilder.createStatementSetter(new AtomicLong(lastMatchingSerial), toExclusive);
 
           ResultSetExtractor<Long> rch =
-              new ResultSetExtractor<>() {
-                @Override
-                public Long extractData(ResultSet resultSet)
-                    throws SQLException, DataAccessException {
-                  if (!resultSet.next()) {
-                    return 0L;
-                  } else {
-                    return resultSet.getLong(1);
-                  }
+              resultSet -> {
+                if (!resultSet.next()) {
+                  return 0L;
+                } else {
+                  return resultSet.getLong(1);
                 }
               };
           long lastSerial = jdbcTemplate.query(stateSQL, statementSetter, rch);
@@ -308,6 +282,9 @@ public class PgFactStore extends AbstractFactStore {
         });
   }
 
+  // TODO really necessary? most of the time we could hint at a min ser
+  // this way it always needs to run from 0
+  // remove if at all possible, maybe defaulting to 0 when we cannot get any info from the client
   @Override
   @NonNull
   protected State getCurrentStateFor(List<FactSpec> specs) {

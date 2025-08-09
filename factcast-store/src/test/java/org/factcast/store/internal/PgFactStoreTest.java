@@ -24,7 +24,6 @@ import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
-import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
@@ -37,7 +36,7 @@ import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.TransformationRequest;
 import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.store.internal.lock.FactTableWriteLock;
+import org.factcast.store.internal.concurrency.*;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.registry.SchemaRegistry;
@@ -45,9 +44,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.*;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -58,7 +55,6 @@ class PgFactStoreTest {
 
   @Mock private @NonNull JdbcTemplate jdbcTemplate;
   @Mock private @NonNull PgSubscriptionFactory subscriptionFactory;
-  @Mock private @NonNull FactTableWriteLock lock;
   @Mock private @NonNull FactTransformerService factTransformerService;
   @Mock private @NonNull PgFactIdToSerialMapper pgFactIdToSerialMapper;
 
@@ -66,10 +62,11 @@ class PgFactStoreTest {
   private @NonNull PgMetrics metrics;
 
   @Mock private @NonNull TokenStore tokenStore;
-  @Mock private StoreConfigurationProperties storeConfigurationProperties;
+  @Spy private StoreConfigurationProperties storeConfigurationProperties;
   @Mock SchemaRegistry schemaRegistry;
 
   @Mock private PlatformTransactionManager platformTransactionManager;
+  @Mock private @NonNull ConcurrencyStrategy concurrency;
 
   @InjectMocks private PgFactStore underTest;
 
@@ -138,15 +135,9 @@ class PgFactStoreTest {
     }
 
     @Test
-    void publishLock() {
+    void publishDelegates() {
       underTest.publish(Collections.singletonList(fact));
-      verify(jdbcTemplate)
-          .batchUpdate(
-              eq(PgConstants.INSERT_FACT),
-              eq(Lists.newArrayList(fact)),
-              eq(Integer.MAX_VALUE),
-              any(ParameterizedPreparedStatementSetter.class));
-      verify(lock).aquireExclusiveTXLock();
+      verify(concurrency).publish(eq(Lists.newArrayList(fact)));
     }
 
     @Test
@@ -157,7 +148,6 @@ class PgFactStoreTest {
           .isInstanceOf(UnsupportedOperationException.class);
 
       verifyNoInteractions(jdbcTemplate);
-      verifyNoInteractions(lock);
     }
   }
 
@@ -262,7 +252,7 @@ class PgFactStoreTest {
       when(schemaRegistry.isActive()).thenReturn(true);
       when(schemaRegistry.enumerateTypes(anyString())).thenReturn(types);
 
-      Assertions.assertThat(underTest.enumerateTypes("foo")).isSameAs(types);
+      assertThat(underTest.enumerateTypes("foo")).isSameAs(types);
 
       verify(underTest, never()).enumerateTypesFromPg(any());
     }
@@ -309,7 +299,7 @@ class PgFactStoreTest {
       when(schemaRegistry.isActive()).thenReturn(true);
       when(schemaRegistry.enumerateVersions(anyString(), anyString())).thenReturn(versions);
 
-      Assertions.assertThat(underTest.enumerateVersions(NS, TYPE)).isSameAs(versions);
+      assertThat(underTest.enumerateVersions(NS, TYPE)).isSameAs(versions);
 
       verify(underTest, never()).enumerateVersionsFromPg(NS, TYPE);
     }
@@ -342,13 +332,7 @@ class PgFactStoreTest {
 
     @Test
     void noToken() {
-
-      underTest = spy(underTest);
-
-      boolean b = underTest.publishIfUnchanged(Lists.newArrayList(fact), Optional.empty());
-      verify(lock).aquireExclusiveTXLock();
-      assertThat(b).isTrue();
-      verify(underTest).publish(any(List.class));
+      assertThat(underTest.hasNoConflictingChangeUntil(1L, Optional.empty())).isTrue();
     }
 
     @Test
@@ -364,11 +348,8 @@ class PgFactStoreTest {
               anyString(), any(PreparedStatementSetter.class), any(ResultSetExtractor.class)))
           .thenReturn(32L);
 
-      boolean b =
-          underTest.publishIfUnchanged(Lists.newArrayList(fact), Optional.of(optionalToken));
-      verify(lock).aquireExclusiveTXLock();
-      assertThat(b).isFalse();
-      verify(underTest, never()).publish(any(List.class));
+      assertThat(underTest.hasNoConflictingChangeUntil(Long.MAX_VALUE, Optional.of(optionalToken)))
+          .isFalse();
     }
 
     @Test
@@ -379,17 +360,15 @@ class PgFactStoreTest {
       List<FactSpec> specs = Lists.newArrayList(FactSpec.ns("hubba"));
       when(state.specs()).thenReturn(specs);
       when(state.serialOfLastMatchingFact()).thenReturn(32L);
-      when(tokenStore.get(optionalToken)).thenReturn(Optional.of(state));
+      Optional<State> state = Optional.of(this.state);
+      when(tokenStore.get(optionalToken)).thenReturn(state);
       // query for newer serial should return 0
       when(jdbcTemplate.query(
               anyString(), any(PreparedStatementSetter.class), any(ResultSetExtractor.class)))
           .thenReturn(0L);
 
-      boolean b =
-          underTest.publishIfUnchanged(Lists.newArrayList(fact), Optional.of(optionalToken));
-      verify(lock).aquireExclusiveTXLock();
-      assertThat(b).isTrue();
-      verify(underTest).publish(any(List.class));
+      assertThat(underTest.hasNoConflictingChangeUntil(Long.MAX_VALUE, Optional.of(optionalToken)))
+          .isTrue();
     }
 
     @Test
@@ -403,7 +382,6 @@ class PgFactStoreTest {
           .isInstanceOf(UnsupportedOperationException.class);
 
       verifyNoInteractions(jdbcTemplate);
-      verifyNoInteractions(lock);
     }
   }
 
@@ -418,20 +396,21 @@ class PgFactStoreTest {
 
     @SneakyThrows
     @Test
-    void name() {
+    // TODO name
+    void needsAName() {
       FactSpec spec1 = FactSpec.ns("ns1").type("type1");
       List<FactSpec> specs = Lists.newArrayList(spec1);
 
       PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
-      String stateSQL = pgQueryBuilder.createStateSQL();
+      String stateSQL = pgQueryBuilder.createStateSQL(null);
       PreparedStatementSetter statementSetter =
-          pgQueryBuilder.createStatementSetter(new AtomicLong(0));
+          pgQueryBuilder.createStatementSetter(new AtomicLong(0), null);
 
       ArgumentCaptor<PreparedStatementSetter> captor =
           ArgumentCaptor.forClass(PreparedStatementSetter.class);
       when(jdbcTemplate.query(eq(stateSQL), captor.capture(), any(ResultSetExtractor.class)))
           .thenReturn(32L);
-      assertThat(underTest.getStateFor(specs, 16L).serialOfLastMatchingFact()).isEqualTo(32L);
+      assertThat(underTest.getStateFor(specs, 16L, null).serialOfLastMatchingFact()).isEqualTo(32L);
 
       PreparedStatement ps = mock(PreparedStatement.class);
       captor.getValue().setValues(ps);
@@ -451,19 +430,20 @@ class PgFactStoreTest {
 
     @SneakyThrows
     @Test
+    // TODO name
     void name() {
       FactSpec spec1 = FactSpec.ns("ns1").type("type1");
       List<FactSpec> specs = Lists.newArrayList(spec1);
 
       PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
-      String stateSQL = pgQueryBuilder.createStateSQL();
+      String stateSQL = pgQueryBuilder.createStateSQL(null);
       PreparedStatementSetter statementSetter =
-          pgQueryBuilder.createStatementSetter(new AtomicLong(12));
+          pgQueryBuilder.createStatementSetter(new AtomicLong(12), null);
       ArgumentCaptor<PreparedStatementSetter> captor =
           ArgumentCaptor.forClass(PreparedStatementSetter.class);
       when(jdbcTemplate.query(eq(stateSQL), captor.capture(), any(ResultSetExtractor.class)))
           .thenReturn(32L);
-      assertThat(underTest.getStateFor(specs, 16L).serialOfLastMatchingFact()).isEqualTo(32L);
+      assertThat(underTest.getStateFor(specs, 16L, null).serialOfLastMatchingFact()).isEqualTo(32L);
 
       PreparedStatement ps = mock(PreparedStatement.class);
       captor.getValue().setValues(ps);
@@ -487,7 +467,7 @@ class PgFactStoreTest {
       List<FactSpec> specs = Lists.newArrayList(spec1);
 
       PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
-      String stateSQL = pgQueryBuilder.createStateSQL();
+      String stateSQL = pgQueryBuilder.createStateSQL(null);
       when(jdbcTemplate.queryForObject(PgConstants.LAST_SERIAL_IN_LOG, Long.class)).thenReturn(32L);
       assertThat(underTest.getCurrentStateFor(specs).serialOfLastMatchingFact()).isEqualTo(32L);
     }
