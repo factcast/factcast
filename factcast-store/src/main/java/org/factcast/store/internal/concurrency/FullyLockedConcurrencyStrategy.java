@@ -19,23 +19,19 @@ import java.util.*;
 import java.util.function.*;
 import lombok.NonNull;
 import org.factcast.core.Fact;
-import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.*;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /** behavior of factcast <=0.9.9 */
-public class LegacyConcurrencyStrategy extends ConcurrencyStrategy {
+public class FullyLockedConcurrencyStrategy extends ConcurrencyStrategy {
   @NonNull private final PlatformTransactionManager platformTransactionManager;
-  @NonNull private final FactTableWriteLock lock;
 
-  public LegacyConcurrencyStrategy(
-      @NonNull PlatformTransactionManager platformTransactionManager,
-      @NonNull FactTableWriteLock lock,
-      @NonNull JdbcTemplate jdbc) {
+  public FullyLockedConcurrencyStrategy(
+      @NonNull PlatformTransactionManager platformTransactionManager, @NonNull JdbcTemplate jdbc) {
     super(jdbc);
     this.platformTransactionManager = platformTransactionManager;
-    this.lock = lock;
   }
 
   @Override
@@ -43,7 +39,7 @@ public class LegacyConcurrencyStrategy extends ConcurrencyStrategy {
     TransactionTemplate tpl = new TransactionTemplate(platformTransactionManager);
     tpl.executeWithoutResult(
         ts -> {
-          lock.acquireExclusiveTxLock();
+          lock();
           batchInsertFacts(factsToPublish);
         });
   }
@@ -57,11 +53,17 @@ public class LegacyConcurrencyStrategy extends ConcurrencyStrategy {
     return Boolean.TRUE.equals(
         tpl.execute(
             ts -> {
-              lock.acquireExclusiveTxLock();
+              lock();
               if (isUnchanged.test(null)) {
                 batchInsertFacts(factsToPublish);
                 return true;
               } else return false;
             }));
+  }
+
+  @Transactional(propagation = Propagation.MANDATORY)
+  public void lock() {
+    // TODO add metrics
+    jdbc.execute("SELECT pg_advisory_xact_lock(" + AdvisoryLocks.PUBLISH.code() + ")");
   }
 }

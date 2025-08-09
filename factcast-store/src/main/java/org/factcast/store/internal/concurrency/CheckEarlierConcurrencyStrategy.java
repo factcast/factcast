@@ -15,17 +15,17 @@
  */
 package org.factcast.store.internal.concurrency;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.util.*;
 import java.util.function.*;
 import lombok.*;
 import org.factcast.core.Fact;
-import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- *
+ * This is superexperimental, and for the daring people out there only.
  *
  * <pre>
  * unconditional:
@@ -44,15 +44,11 @@ import org.springframework.transaction.support.TransactionTemplate;
 @SuppressWarnings("SpringTransactionalMethodCallsInspection")
 public class CheckEarlierConcurrencyStrategy extends ConcurrencyStrategy {
   @NonNull private final PlatformTransactionManager platformTransactionManager;
-  @NonNull private final FactTableWriteLock lock;
 
   public CheckEarlierConcurrencyStrategy(
-      @NonNull PlatformTransactionManager platformTransactionManager,
-      @NonNull FactTableWriteLock lock,
-      @NonNull JdbcTemplate jdbc) {
+      @NonNull PlatformTransactionManager platformTransactionManager, @NonNull JdbcTemplate jdbc) {
     super(jdbc);
     this.platformTransactionManager = platformTransactionManager;
-    this.lock = lock;
   }
 
   @Override
@@ -60,7 +56,7 @@ public class CheckEarlierConcurrencyStrategy extends ConcurrencyStrategy {
     TransactionTemplate tpl = new TransactionTemplate(platformTransactionManager);
     tpl.executeWithoutResult(
         ts -> {
-          lock.acquireSharedTxLock();
+          lockShared();
           batchInsertFacts(factsToPublish);
         });
   }
@@ -70,24 +66,23 @@ public class CheckEarlierConcurrencyStrategy extends ConcurrencyStrategy {
   public boolean publishIfUnchanged(
       @NonNull List<? extends Fact> factsToPublish, @NonNull Predicate<Long> isUnchanged) {
     TransactionTemplate tpl = new TransactionTemplate(platformTransactionManager);
-    jdbcTemplate.execute("SET APPLICATION_NAME = 'fc_cond_ins'");
+    jdbc.execute("SET APPLICATION_NAME = 'fc_cond_ins'");
     try {
       return Boolean.TRUE.equals(
           tpl.execute(
               ts -> {
                 long ser;
-                lock.acquireExclusiveTxLock();
+                lock();
                 try {
                   ser = batchInsertFacts(factsToPublish);
                 } finally {
                   // release lock early, now that we have assigned the serials
-                  lock.releaseExclusiveLock();
+                  unlock();
                 }
 
                 // wait for earlier
                 boolean readyToCheck =
-                    jdbcTemplate.queryForObject(
-                        "SELECT waitForEarlierConditionalInserts()", boolean.class);
+                    jdbc.queryForObject("SELECT waitForEarlierConditionalInserts()", boolean.class);
 
                 if (readyToCheck && isUnchanged.test(ser)) {
                   return true;
@@ -98,7 +93,25 @@ public class CheckEarlierConcurrencyStrategy extends ConcurrencyStrategy {
               }));
 
     } finally {
-      jdbcTemplate.execute("SET APPLICATION_NAME = ''");
+      jdbc.execute("SET APPLICATION_NAME = ''");
     }
+  }
+
+  @VisibleForTesting
+  protected void unlock() {
+    // TODO add metrics
+    jdbc.execute("SELECT pg_advisory_unlock(" + AdvisoryLocks.PUBLISH.code() + ")");
+  }
+
+  @VisibleForTesting
+  protected void lockShared() {
+    // TODO add metrics
+    jdbc.execute("SELECT pg_advisory_xact_lock_shared(" + AdvisoryLocks.PUBLISH.code() + ")");
+  }
+
+  @VisibleForTesting
+  protected void lock() {
+    // TODO add metrics
+    jdbc.execute("SELECT pg_advisory_xact_lock(" + AdvisoryLocks.PUBLISH.code() + ")");
   }
 }

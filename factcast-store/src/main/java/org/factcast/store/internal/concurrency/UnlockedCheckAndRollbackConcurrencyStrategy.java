@@ -16,41 +16,27 @@
 package org.factcast.store.internal.concurrency;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.*;
 import lombok.*;
 import org.factcast.core.Fact;
-import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.*;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * This does not allow for much more concurrency, but takes the test out of the lock scope. In case
- * the test takes a while, this might help a bit with overall throughput.
+ * This allows for more concurrency in the unconditional case, but holds all the guarantees from
+ * LEGACY.
  *
- * <pre>
- * unconditional:
- * - locks exclusive
- * conditional
- * - locks exclusive
- * - inserts
- * - unlocks
- * - tests for conflicts
- * - commits/rollsback based on the above
- * </pre>
+ * <p>WARNING: In multi-instance setups, migration is not trivial and might require a downtime
  */
-@SuppressWarnings("SpringTransactionalMethodCallsInspection")
-public class SerializeInsertOnlyConcurrencyStrategy extends ConcurrencyStrategy {
+public class UnlockedCheckAndRollbackConcurrencyStrategy extends ConcurrencyStrategy {
   @NonNull private final PlatformTransactionManager platformTransactionManager;
-  @NonNull private final FactTableWriteLock lock;
 
-  public SerializeInsertOnlyConcurrencyStrategy(
-      @NonNull PlatformTransactionManager platformTransactionManager,
-      @NonNull FactTableWriteLock lock,
-      @NonNull JdbcTemplate jdbc) {
+  public UnlockedCheckAndRollbackConcurrencyStrategy(
+      @NonNull PlatformTransactionManager platformTransactionManager, @NonNull JdbcTemplate jdbc) {
     super(jdbc);
     this.platformTransactionManager = platformTransactionManager;
-    this.lock = lock;
   }
 
   @Override
@@ -58,7 +44,7 @@ public class SerializeInsertOnlyConcurrencyStrategy extends ConcurrencyStrategy 
     TransactionTemplate tpl = new TransactionTemplate(platformTransactionManager);
     tpl.executeWithoutResult(
         ts -> {
-          lock.acquireExclusiveTxLock();
+          lockUnConditional();
           batchInsertFacts(factsToPublish);
         });
   }
@@ -66,19 +52,14 @@ public class SerializeInsertOnlyConcurrencyStrategy extends ConcurrencyStrategy 
   @Override
   public boolean publishIfUnchanged(
       @NonNull List<? extends Fact> factsToPublish, @NonNull Predicate<Long> isUnchanged) {
+
     TransactionTemplate tpl = new TransactionTemplate(platformTransactionManager);
-    return Boolean.TRUE.equals( // idea made me do it.
+    return Boolean.TRUE.equals(
         tpl.execute(
             ts -> {
-              long ser;
-              lock.acquireExclusiveTxLock();
-              try {
-                ser = batchInsertFacts(factsToPublish);
-              } finally {
-                // release lock early, now that we have assigned the serials
-                lock.releaseExclusiveLock();
-              }
-
+              lockBoth();
+              long ser = batchInsertFacts(factsToPublish);
+              releaseLockForUnconditional();
               if (isUnchanged.test(ser)) {
                 return true;
               } else {
@@ -86,5 +67,26 @@ public class SerializeInsertOnlyConcurrencyStrategy extends ConcurrencyStrategy 
                 return false;
               }
             }));
+  }
+
+  private void lockBoth() {
+    // TODO add metrics
+    jdbc.execute(
+        "SELECT pg_advisory_xact_lock("
+            + AdvisoryLocks.PUBLISH.code()
+            + ", "
+            + AdvisoryLocks.PUBLISH_CONDITIONAL.code()
+            + ")");
+  }
+
+  private void releaseLockForUnconditional() {
+    jdbc.execute("SELECT pg_advisory_unlock(" + AdvisoryLocks.PUBLISH.code() + ")");
+  }
+
+  static AtomicLong count = new AtomicLong();
+
+  private void lockUnConditional() {
+    // TODO add metrics
+    jdbc.execute("SELECT pg_advisory_xact_lock_shared(" + AdvisoryLocks.PUBLISH.code() + ")");
   }
 }

@@ -39,7 +39,6 @@ import org.factcast.store.internal.check.IndexCheck;
 import org.factcast.store.internal.concurrency.*;
 import org.factcast.store.internal.filter.blacklist.*;
 import org.factcast.store.internal.listen.*;
-import org.factcast.store.internal.lock.*;
 import org.factcast.store.internal.pipeline.ServerPipelineFactory;
 import org.factcast.store.internal.query.*;
 import org.factcast.store.internal.script.JSEngineFactory;
@@ -198,11 +197,6 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
-  public FactTableWriteLock factTableWriteLock(JdbcTemplate tpl) {
-    return new AdvisoryWriteLock(tpl);
-  }
-
-  @Bean
   public PlatformTransactionManager txManager(DataSource ds) {
     return new DataSourceTransactionManager(ds);
   }
@@ -319,15 +313,14 @@ public class PgFactStoreInternalConfiguration {
   ConcurrencyStrategy concurrencyStrategy(
       @NonNull StoreConfigurationProperties props,
       @NonNull PlatformTransactionManager platformTransactionManager,
-      @NonNull FactTableWriteLock lock,
       @NonNull JdbcTemplate jdbc) {
 
     return switch (props.getConcurrencyStrategy()) {
-      case LEGACY -> new LegacyConcurrencyStrategy(platformTransactionManager, lock, jdbc);
-      case FULL_SERIALIZE ->
-          new SerializeInsertOnlyConcurrencyStrategy(platformTransactionManager, lock, jdbc);
-      case CHECK_EARLIER ->
-          new CheckEarlierConcurrencyStrategy(platformTransactionManager, lock, jdbc);
+      case LEGACY -> new FullyLockedConcurrencyStrategy(platformTransactionManager, jdbc);
+      case UNLOCKED_CHECK ->
+          new UnlockedCheckAndRollbackConcurrencyStrategy(platformTransactionManager, jdbc);
+      case UNLOCKED_CHECK_EARLIER_TX ->
+          new CheckEarlierConcurrencyStrategy(platformTransactionManager, jdbc);
       default ->
           throw new IllegalStateException(
               "Unmapped concurrency Strategy " + props.getConcurrencyStrategy());

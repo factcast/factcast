@@ -30,7 +30,7 @@ import org.springframework.jdbc.support.*;
 @Slf4j
 @RequiredArgsConstructor
 public abstract class ConcurrencyStrategy {
-  protected final JdbcTemplate jdbcTemplate;
+  protected final JdbcTemplate jdbc;
 
   public abstract void publish(@NonNull List<? extends Fact> factsToPublish);
 
@@ -61,7 +61,7 @@ public abstract class ConcurrencyStrategy {
     f.setGeneratedKeysColumnNames(PgConstants.COLUMN_SER);
     PreparedStatementCreator psc = f.newPreparedStatementCreator(Collections.emptyList());
 
-    jdbcTemplate.batchUpdate(
+    jdbc.batchUpdate(
         psc,
         new BatchPreparedStatementSetter() {
 

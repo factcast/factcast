@@ -258,7 +258,7 @@ public class StoreConfigurationProperties implements InitializingBean {
 
   public enum PgConcurrencyStrategy {
     LEGACY,
-    FULL_SERIALIZE,
-    CHECK_EARLIER
+    UNLOCKED_CHECK,
+    UNLOCKED_CHECK_EARLIER_TX
   }
 }

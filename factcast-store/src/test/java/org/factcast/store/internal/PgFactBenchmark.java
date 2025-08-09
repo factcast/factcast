@@ -15,16 +15,12 @@
  */
 package org.factcast.store.internal;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import ch.qos.logback.classic.Level;
 import com.google.common.base.Stopwatch;
-import java.sql.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import lombok.*;
-import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Lists;
 import org.factcast.core.*;
 import org.factcast.core.spec.FactSpec;
@@ -38,7 +34,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.*;
-import org.springframework.jdbc.support.*;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.*;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -49,10 +44,13 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @IntegrationTest
 class PgFactBenchmark {
 
+  private static final boolean WITH_CONDITIONAL = false;
+  private static final int CONFLICT_PERCENT = 5;
+
   static {
     System.setProperty(
         "factcast.store.concurrencyStrategy",
-        StoreConfigurationProperties.PgConcurrencyStrategy.LEGACY.name());
+        StoreConfigurationProperties.PgConcurrencyStrategy.UNLOCKED_CHECK.name());
   }
 
   @Autowired FactStore fs;
@@ -72,7 +70,9 @@ class PgFactBenchmark {
   @Disabled
   class ConcurrentInsertBenchmark {
     private ExecutorService es;
-    private AtomicLong retries = new AtomicLong();
+    private AtomicLong retries = new AtomicLong(0);
+    private AtomicLong unconditional = new AtomicLong(0);
+    private AtomicLong conditional = new AtomicLong(0);
     private Collection<Long> dataPoints = new LinkedList<>();
 
     @BeforeEach
@@ -81,48 +81,10 @@ class PgFactBenchmark {
     }
 
     @Test
-    void irre() {
-      Fact f = dummyFact();
-      {
-        fs.publish(Collections.singletonList(f));
-
-        StateToken stateToken =
-            fs.stateFor(Collections.singletonList(FactSpec.ns(f.ns()).type(f.type())));
-        Optional<State> state = tokenStore.get(stateToken);
-        if (state.get().serialOfLastMatchingFact() == 0) throw new IllegalStateException();
-
-        System.out.println(state.get().serialOfLastMatchingFact());
-      }
-
-      {
-        StateToken stateToken =
-            fs.stateFor(Collections.singletonList(FactSpec.ns(f.ns()).type(f.type())));
-
-        List<Fact> l = new ArrayList<>();
-        for (int i = 0; i < 50; i++) {
-          l.add(dummyFact());
-        }
-        // should work as nothing has happened in between
-        Assertions.assertThat(fs.publishIfUnchanged(l, Optional.of(stateToken))).isTrue();
-        Assertions.assertThat(
-                fs.publishIfUnchanged(
-                    Collections.singletonList(dummyFact()), Optional.of(stateToken)))
-            .isFalse();
-      }
-    }
-
-    @Test
     @SneakyThrows
-    void testSerialized() {
+    void runSomeInserts() {
 
-      Fact f = dummyFact();
-      fs.publish(Collections.singletonList(f));
-      {
-        StateToken stateToken =
-            fs.stateFor(Collections.singletonList(FactSpec.ns(f.ns()).type(f.type())));
-        Optional<State> state = tokenStore.get(stateToken);
-        if (state.get().serialOfLastMatchingFact() == 0) throw new IllegalStateException();
-      }
+      // mute logging
       ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger("org.factcast"))
           .setLevel(Level.INFO);
 
@@ -130,10 +92,9 @@ class PgFactBenchmark {
       for (int i = 0; i < 10000; i++) {
         enqueue();
       }
+      ThreadPoolExecutor e = (ThreadPoolExecutor) es;
 
       es.shutdown();
-
-      ThreadPoolExecutor e = (ThreadPoolExecutor) es;
 
       while (e.isTerminating()) {
         long compl = e.getCompletedTaskCount();
@@ -143,8 +104,13 @@ class PgFactBenchmark {
           dataPoints.add(perSecond);
           System.out.println(
               String.format(
-                  "progress: active: %s, completed: %s, perSecond: %s",
-                  e.getActiveCount(), e.getCompletedTaskCount(), perSecond));
+                  "progress: active: %s, completed: %s (unconditional=%s,conditional=%s, retries=%s), perSecond: %s",
+                  e.getActiveCount(),
+                  e.getCompletedTaskCount(),
+                  unconditional.get(),
+                  conditional.get(),
+                  retries.get(),
+                  perSecond));
         }
       }
 
@@ -154,6 +120,9 @@ class PgFactBenchmark {
               stopwatch.stop().elapsed(TimeUnit.MILLISECONDS),
               retries.get(),
               dataPoints.stream().mapToLong(Long::longValue).average().getAsDouble()));
+
+      if (jdbcTemplate.queryForObject("SELECT COUNT(*) FROM fact", Long.class).longValue()
+          != 100000) throw new IllegalStateException();
     }
 
     static AtomicLong count = new AtomicLong();
@@ -168,8 +137,13 @@ class PgFactBenchmark {
       es.submit(this::singleUnconditionalInsert);
       es.submit(this::singleUnconditionalInsert);
 
-      es.submit(this::singleUnconditionalInsert);
-      es.submit(this::singleUnconditionalInsert);
+      if (WITH_CONDITIONAL) {
+        es.submit(this::singleConditionalInsert);
+        es.submit(this::singleConditionalInsert);
+      } else {
+        es.submit(this::singleUnconditionalInsert);
+        es.submit(this::singleUnconditionalInsert);
+      }
     }
 
     private void singleConditionalInsert() {
@@ -181,11 +155,17 @@ class PgFactBenchmark {
         // now the client executes some business logic and comes back a while later,
         // we'll add some latency here to make it more realistic
         sleep(20);
-        if (!fs.publishIfUnchanged(facts, Optional.of(token))) {
-          retries.incrementAndGet();
-        } else break;
+        try {
+          if (!fs.publishIfUnchanged(facts, Optional.of(token))) {
+            retries.incrementAndGet();
+          } else {
+            conditional.incrementAndGet();
+            break;
+          }
+        } catch (Exception e) {
+
+        }
       }
-      ;
     }
 
     private static void sleep(long ms) {
@@ -197,13 +177,23 @@ class PgFactBenchmark {
     }
 
     private Fact dummyFact() {
-      // 5% conflict likeability
-      String type = "type" + count.incrementAndGet();
+      long l = count.incrementAndGet();
+      String type = "type";
+      if (CONFLICT_PERCENT > 0) {
+        type += l % (100 / CONFLICT_PERCENT);
+      } else {
+        type += l;
+      }
       return Fact.builder().ns("default").type(type).build("{}");
     }
 
     private void singleUnconditionalInsert() {
-      fs.publish(Collections.singletonList(dummyFact()));
+      try {
+        fs.publish(Collections.singletonList(dummyFact()));
+        unconditional.incrementAndGet();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
   }
 }

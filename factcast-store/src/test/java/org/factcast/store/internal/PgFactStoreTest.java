@@ -37,7 +37,6 @@ import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.TransformationRequest;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.concurrency.*;
-import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.registry.SchemaRegistry;
@@ -56,7 +55,6 @@ class PgFactStoreTest {
 
   @Mock private @NonNull JdbcTemplate jdbcTemplate;
   @Mock private @NonNull PgSubscriptionFactory subscriptionFactory;
-  @Mock private @NonNull FactTableWriteLock lock;
   @Mock private @NonNull FactTransformerService factTransformerService;
   @Mock private @NonNull PgFactIdToSerialMapper pgFactIdToSerialMapper;
 
@@ -150,7 +148,6 @@ class PgFactStoreTest {
           .isInstanceOf(UnsupportedOperationException.class);
 
       verifyNoInteractions(jdbcTemplate);
-      verifyNoInteractions(lock);
     }
   }
 
@@ -385,7 +382,6 @@ class PgFactStoreTest {
           .isInstanceOf(UnsupportedOperationException.class);
 
       verifyNoInteractions(jdbcTemplate);
-      verifyNoInteractions(lock);
     }
   }
 

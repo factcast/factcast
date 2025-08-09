@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.lock;
+package org.factcast.store.internal.concurrency;
 
-public interface FactTableWriteLock {
+import lombok.Getter;
 
-  void acquireExclusiveLock();
+public enum AdvisoryLocks {
+  PUBLISH(128),
+  PUBLISH_CONDITIONAL(129);
 
-  void releaseExclusiveLock();
+  @Getter private final int code;
 
-  void acquireSharedTxLock();
-
-  void acquireExclusiveTxLock();
+  AdvisoryLocks(int code) {
+    this.code = code;
+  }
 }
