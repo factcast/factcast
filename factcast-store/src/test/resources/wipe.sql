@@ -9,7 +9,7 @@ truncate table published_schema_versions restart identity;
 
 select dropAllTailIndexes();
 
-
+set synchronous_commit=off;
 
 
 
