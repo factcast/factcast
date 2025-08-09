@@ -26,9 +26,10 @@ import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.TransformationException;
-import org.factcast.core.subscription.transformation.TransformationRequest;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.PgFact;
+import org.factcast.store.internal.transformation.TransformationRequest;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.cache.TransformationCache;
@@ -55,8 +56,8 @@ class FactTransformerServiceImplTest {
   @Nested
   class WhenTransforming {
     @Mock private @NonNull TransformationRequest req;
-    @Mock private @NonNull Fact fact;
-    @Mock private @NonNull Fact fact2;
+    @Mock private @NonNull PgFact fact;
+    @Mock private @NonNull PgFact fact2;
     @Mock private @NonNull TransformationChain chain;
 
     @BeforeEach
@@ -163,8 +164,8 @@ class FactTransformerServiceImplTest {
 
   @Nested
   class WhenDoingTransform {
-    @Mock private @NonNull Fact fact;
-    @Mock private @NonNull Fact fact2;
+    @Mock private @NonNull PgFact fact;
+    @Mock private @NonNull PgFact fact2;
 
     @Mock private @NonNull TransformationChain chain;
     @Mock private @NonNull TransformationRequest req;
@@ -180,7 +181,13 @@ class FactTransformerServiceImplTest {
     void throwsException() {
 
       fact =
-          Fact.builder().version(4).ns("ns").type("type").id(UUID.randomUUID()).build("{\"a\":1}");
+          PgFact.from(
+              Fact.builder()
+                  .version(4)
+                  .ns("ns")
+                  .type("type")
+                  .id(UUID.randomUUID())
+                  .build("{\"a\":1}"));
 
       TransformationKey key = TransformationKey.from(fact);
 
@@ -212,7 +219,13 @@ class FactTransformerServiceImplTest {
     void transforms() {
 
       fact =
-          Fact.builder().version(4).ns("ns").type("type").id(UUID.randomUUID()).build("{\"a\":1}");
+          PgFact.from(
+              Fact.builder()
+                  .version(4)
+                  .ns("ns")
+                  .type("type")
+                  .id(UUID.randomUUID())
+                  .build("{\"a\":1}"));
 
       TransformationKey key = TransformationKey.from(fact);
 
@@ -237,7 +250,13 @@ class FactTransformerServiceImplTest {
     void transformsList() {
 
       fact =
-          Fact.builder().version(4).ns("ns").type("type").id(UUID.randomUUID()).build("{\"a\":1}");
+          PgFact.from(
+              Fact.builder()
+                  .version(4)
+                  .ns("ns")
+                  .type("type")
+                  .id(UUID.randomUUID())
+                  .build("{\"a\":1}"));
 
       TransformationKey key = TransformationKey.from(fact);
 
@@ -254,7 +273,7 @@ class FactTransformerServiceImplTest {
       when(trans.transform(same(chain), eq(FactCastJson.readTree(fact.jsonPayload()))))
           .thenReturn(FactCastJson.readTree("{\"a\":2}"));
 
-      List<Fact> transformed = underTest.transform(Lists.newArrayList(req));
+      List<PgFact> transformed = underTest.transform(Lists.newArrayList(req));
       assertThat(transformed.get(0).jsonPayload()).isEqualTo("{\"a\":2}");
       assertThat(transformed).hasSize(1);
     }
@@ -264,12 +283,25 @@ class FactTransformerServiceImplTest {
     void transformsListAndMixesInCacheResults() {
 
       fact =
-          Fact.builder().version(4).ns("ns").type("type1").id(UUID.randomUUID()).build("{\"a\":1}");
+          PgFact.from(
+              Fact.builder()
+                  .version(4)
+                  .ns("ns")
+                  .type("type1")
+                  .id(UUID.randomUUID())
+                  .build("{\"a\":1}"));
       fact2 =
-          Fact.builder().version(4).ns("ns").type("type2").id(UUID.randomUUID()).build("{\"a\":2}");
+          PgFact.from(
+              Fact.builder()
+                  .version(4)
+                  .ns("ns")
+                  .type("type2")
+                  .id(UUID.randomUUID())
+                  .build("{\"a\":2}"));
 
-      Fact fact2transformed =
-          Fact.builder().version(5).ns("ns").type("type2").id(fact2.id()).build("{\"a\":3}");
+      PgFact fact2transformed =
+          PgFact.from(
+              Fact.builder().version(5).ns("ns").type("type2").id(fact2.id()).build("{\"a\":3}"));
 
       TransformationKey key1 = TransformationKey.from(fact);
       TransformationKey key2 = TransformationKey.from(fact2);
@@ -287,7 +319,7 @@ class FactTransformerServiceImplTest {
       when(trans.transform(same(chain), eq(FactCastJson.readTree(fact.jsonPayload()))))
           .thenReturn(FactCastJson.readTree("{\"a\":2}"));
 
-      List<Fact> transformed = underTest.transform(Lists.newArrayList(req1, req2));
+      List<PgFact> transformed = underTest.transform(Lists.newArrayList(req1, req2));
       assertThat(transformed.get(0).type()).isEqualTo("type1");
       assertThat(transformed.get(0).jsonPayload()).isEqualTo("{\"a\":2}");
       assertThat(transformed.get(1).type()).isEqualTo("type2");

@@ -32,7 +32,7 @@ public class PgFactExtractor implements RowMapper<Fact> {
 
   @Override
   @NonNull
-  public Fact mapRow(@NonNull ResultSet rs, int rowNum) throws SQLException {
+  public PgFact mapRow(@NonNull ResultSet rs, int rowNum) throws SQLException {
     serial.set(rs.getLong(PgConstants.COLUMN_SER));
     return PgFact.from(rs);
   }

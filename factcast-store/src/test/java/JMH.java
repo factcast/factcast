@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2022 factcast.org
+ * Copyright © 2017-2025 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.registry.transformation.cache;
+import java.net.*;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import org.factcast.core.Fact;
-import org.springframework.jdbc.core.RowMapper;
-
-class FactRowMapper implements RowMapper<Fact> {
-
-  @Override
-  public Fact mapRow(ResultSet rs, int rowNum) throws SQLException {
-    String header = rs.getString("header");
-    String payload = rs.getString("payload");
-
-    return Fact.of(header, payload);
+public class JMH {
+  public static void main(String[] args) throws Exception {
+    org.openjdk.jmh.Main.main(args);
   }
 }

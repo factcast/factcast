@@ -19,30 +19,30 @@ import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import lombok.NonNull;
-import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
-import org.factcast.store.internal.PostQueryMatcher;
+import org.factcast.store.internal.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class PostQueryFilterServerPipelineTest {
+class ServerSideFilterServerPipelineTest {
 
-  @Mock private @NonNull PostQueryMatcher matcher;
+  @Mock private @NonNull FactFilter matcher;
   @Mock private @NonNull ServerPipeline parent;
-  @InjectMocks private PostQueryFilterServerPipeline underTest;
+  private FilteringServerPipeline underTest;
 
   @Nested
   class WhenProcessing {
 
     @BeforeEach
-    void setup() {}
+    void setup() {
+      underTest = new FilteringServerPipeline(parent, matcher);
+    }
 
     @Test
     void passesCatchup() {
@@ -82,21 +82,20 @@ class PostQueryFilterServerPipelineTest {
     @Test
     void passesFactWithDisabledMatcher() {
       when(matcher.canBeSkipped()).thenReturn(true);
-      assertPasses(Signal.of(mock(Fact.class)));
+      when(matcher.test(any())).thenCallRealMethod();
+      assertPasses(Signal.of(mock(PgFact.class)));
     }
 
     @Test
     void filtersNonMatchingFact() {
-      Fact f = mock(Fact.class);
-      when(matcher.canBeSkipped()).thenReturn(false);
+      PgFact f = mock(PgFact.class);
       when(matcher.test(f)).thenReturn(true);
       assertPasses(Signal.of(f));
     }
 
     @Test
     void passesMatchingFact() {
-      Fact f = mock(Fact.class);
-      when(matcher.canBeSkipped()).thenReturn(false);
+      PgFact f = mock(PgFact.class);
       when(matcher.test(f)).thenReturn(false);
       underTest.process(Signal.of(f));
       verifyNoInteractions(parent);
