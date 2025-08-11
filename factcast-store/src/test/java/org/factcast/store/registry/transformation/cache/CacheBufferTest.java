@@ -91,19 +91,32 @@ class CacheBufferTest {
   }
 
   @Nested
-  class WhenClearing {
+  class WhenClearingAfter {
     @Mock private TransformationCache.@NonNull Key cacheKey;
     @Mock private Fact factOrNull;
 
-    @BeforeEach
-    void setup() {}
+    @Test
+    void clears() {
+      underTest.put(cacheKey, factOrNull);
+      assertThat(underTest.buffer()).hasSize(1);
+      underTest.clearAfter(bufferCopy -> assertThat(bufferCopy).hasSize(1));
+      assertThat(underTest.buffer()).isEmpty();
+      assertThat(underTest.flushingBuffer()).isEmpty();
+      assertThat(underTest.get(cacheKey)).isNull();
+    }
 
     @Test
-    void clear() {
-      underTest.put(cacheKey, null);
+    void ensuresConsistentRead() {
+      underTest.put(cacheKey, factOrNull);
       assertThat(underTest.buffer()).hasSize(1);
-      assertThat(underTest.clear()).hasSize(1);
-      assertThat(underTest.buffer()).isEmpty();
+      underTest.clearAfter(
+          bufferCopy -> {
+            assertThat(bufferCopy).hasSize(1);
+            assertThat(underTest.buffer()).isEmpty();
+            assertThat(underTest.flushingBuffer()).hasSize(1);
+            // ensure consistent read while processing the buffer
+            assertThat(underTest.get(cacheKey)).isEqualTo(factOrNull);
+          });
     }
   }
 

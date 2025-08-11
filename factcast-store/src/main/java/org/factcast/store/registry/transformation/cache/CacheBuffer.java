@@ -16,10 +16,8 @@
 package org.factcast.store.registry.transformation.cache;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -32,9 +30,12 @@ class CacheBuffer {
   @Getter(AccessLevel.PROTECTED)
   private final Map<TransformationCache.Key, Fact> buffer = new HashMap<>();
 
+  @Getter(AccessLevel.PROTECTED)
+  private final Map<TransformationCache.Key, Fact> flushingBuffer = new HashMap<>();
+
   Fact get(@NonNull TransformationCache.Key key) {
     synchronized (mutex) {
-      return buffer.get(key);
+      return Optional.ofNullable(buffer.get(key)).orElse(flushingBuffer.get(key));
     }
   }
 
@@ -54,12 +55,18 @@ class CacheBuffer {
     }
   }
 
-  Map<TransformationCache.Key, Fact> clear() {
-    synchronized (mutex) {
-      Map<TransformationCache.Key, Fact> ret = Collections.unmodifiableMap(new HashMap<>(buffer));
-      buffer.clear();
-      return ret;
-    }
+  /**
+   * Copies the buffer content, clears it and passes a copy to the consumer. This allows for a
+   * consistent view of the data during processing.
+   *
+   * @param consumer the consumer that will process the buffered data before being cleared.
+   */
+  void clearAfter(@NonNull Consumer<Map<TransformationCache.Key, Fact>> consumer) {
+    // the consumer is not synchronized, in order to allow concurrent access to the buffer
+    // while it's processing the data.
+    beforeClearConsumer();
+    consumer.accept(Collections.unmodifiableMap(flushingBuffer));
+    afterClearConsumer();
   }
 
   void putAllNull(Collection<TransformationCache.Key> keys) {
@@ -72,6 +79,19 @@ class CacheBuffer {
   boolean containsKey(TransformationCache.Key key) {
     synchronized (mutex) {
       return buffer.containsKey(key);
+    }
+  }
+
+  private void beforeClearConsumer() {
+    synchronized (mutex) {
+      flushingBuffer.putAll(buffer);
+      buffer.clear();
+    }
+  }
+
+  private void afterClearConsumer() {
+    synchronized (mutex) {
+      flushingBuffer.clear();
     }
   }
 }

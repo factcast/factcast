@@ -246,23 +246,26 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
   @Scheduled(fixedRate = 10, timeUnit = TimeUnit.MINUTES)
   public void flush() {
-    // after this call, the buffer is wiped and again open for business
-    // note that this is important even in readonly mode, as otherwise we'd run short on memory
-    Map<Key, Fact> copy = buffer.clear();
-
-    if (!copy.isEmpty() && !storeConfigurationProperties.isReadOnlyModeEnabled()) {
-      // we want to serialize flushing beyond instances in order to avoid parallel
-      // updates/insertions/deletions causing deadlocks
-      try {
-        inTransactionWithLock(
-            () -> {
-              insertBufferedTransformations(copy);
-              insertBufferedAccesses(copy);
-            });
-      } catch (Exception e) {
-        log.error("Could not complete batch update of transformations on transformation cache.", e);
-      }
-    }
+    // Before flushing, the buffer is wiped and again open for business.
+    // Until the flush is done, a copy of the buffer can be used to read from.
+    // Note that this is important even in readonly mode, as otherwise we'd run short on memory
+    buffer.clearAfter(
+        copy -> {
+          if (!copy.isEmpty() && !storeConfigurationProperties.isReadOnlyModeEnabled()) {
+            // we want to serialize flushing beyond instances in order to avoid parallel
+            // updates/insertions/deletions causing deadlocks
+            try {
+              inTransactionWithLock(
+                  () -> {
+                    insertBufferedTransformations(copy);
+                    insertBufferedAccesses(copy);
+                  });
+            } catch (Exception e) {
+              log.error(
+                  "Could not complete batch update of transformations on transformation cache.", e);
+            }
+          }
+        });
   }
 
   /**
