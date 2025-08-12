@@ -20,6 +20,7 @@ import org.factcast.core.util.ExceptionHelper;
 public interface ManagedProjection extends Projection, FactStreamPositionAware, WriterTokenAware {
 
   default void withLock(Runnable runnable) {
+    // TODO: this will try to acquire the lock forever, which is not what we expect here.
     try (AutoCloseable token = acquireWriteToken()) {
       if (token == null) {
         throw new IllegalStateException("cannot acquire write token");
