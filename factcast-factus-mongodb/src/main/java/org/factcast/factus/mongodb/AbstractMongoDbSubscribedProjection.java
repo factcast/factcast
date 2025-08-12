@@ -31,6 +31,10 @@ public abstract class AbstractMongoDbSubscribedProjection extends AbstractMongoD
     super(mongoDb);
   }
 
+  /**
+   * Adding a keep-alive mechanism here, because the shedlock KeepAliveLock does not support
+   * extending the lock manually, which we need for the isValid implementation in the WriterToken.
+   */
   // Must be smaller than MAX_LEASE_DURATION_SECONDS
   @Scheduled(cron = "*/30 * * * * *")
   private void refreshWriterToken() {

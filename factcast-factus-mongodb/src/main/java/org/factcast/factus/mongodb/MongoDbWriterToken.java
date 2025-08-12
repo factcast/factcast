@@ -38,9 +38,10 @@ public class MongoDbWriterToken implements WriterToken {
     this.lockConfiguration = lockConfiguration;
   }
 
+  // TODO: test if this behaves like expected or if multiple threads fight over the same lock
   /**
-   * TODO Checks if the lock is held and returns true if successful, and false if the lock cannot be
-   * obtained.
+   * Attempts to extend the lock, which will only succeed of the lock is either free or held by the
+   * instance.
    */
   @Override
   public boolean isValid() {
