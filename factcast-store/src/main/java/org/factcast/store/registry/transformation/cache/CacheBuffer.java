@@ -15,23 +15,40 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
+import static org.factcast.store.registry.metrics.RegistryMetrics.GAUGE.CACHE_BUFFER;
+import static org.factcast.store.registry.metrics.RegistryMetrics.GAUGE.CACHE_FLUSHING_BUFFER;
+
 import com.google.common.annotations.VisibleForTesting;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.factcast.store.registry.metrics.RegistryMetrics;
 
 class CacheBuffer {
   private final Object mutex = new Object() {};
 
+  // Currently we allow null values in the buffer, reason why we can't use ConcurrentHashMap.
   @Getter(AccessLevel.PROTECTED)
   private final Map<TransformationCache.Key, Fact> buffer = new HashMap<>();
 
   @Getter(AccessLevel.PROTECTED)
   private final Map<TransformationCache.Key, Fact> flushingBuffer = new HashMap<>();
+
+  @Getter(AccessLevel.PROTECTED)
+  private final AtomicLong bufferSizeMetric;
+
+  @Getter(AccessLevel.PROTECTED)
+  private final AtomicLong flushingBufferSizeMetric;
+
+  public CacheBuffer(RegistryMetrics registryMetrics) {
+    this.bufferSizeMetric = registryMetrics.gauge(CACHE_BUFFER, new AtomicLong(0));
+    this.flushingBufferSizeMetric = registryMetrics.gauge(CACHE_FLUSHING_BUFFER, new AtomicLong(0));
+  }
 
   Fact get(@NonNull TransformationCache.Key key) {
     synchronized (mutex) {
@@ -64,9 +81,12 @@ class CacheBuffer {
   void clearAfter(@NonNull Consumer<Map<TransformationCache.Key, Fact>> consumer) {
     // the consumer is not synchronized, in order to allow concurrent access to the buffer
     // while it's processing the data.
-    beforeClearConsumer();
-    consumer.accept(Collections.unmodifiableMap(flushingBuffer));
-    afterClearConsumer();
+    try {
+      beforeClearConsumer();
+      consumer.accept(Collections.unmodifiableMap(flushingBuffer));
+    } finally {
+      afterClearConsumer();
+    }
   }
 
   void putAllNull(Collection<TransformationCache.Key> keys) {
@@ -84,6 +104,7 @@ class CacheBuffer {
 
   private void beforeClearConsumer() {
     synchronized (mutex) {
+      bufferSizeMetric.set(buffer.size());
       flushingBuffer.putAll(buffer);
       buffer.clear();
     }
@@ -91,6 +112,7 @@ class CacheBuffer {
 
   private void afterClearConsumer() {
     synchronized (mutex) {
+      flushingBufferSizeMetric.set(flushingBuffer.size());
       flushingBuffer.clear();
     }
   }

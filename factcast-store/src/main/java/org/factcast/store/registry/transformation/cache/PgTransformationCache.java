@@ -49,8 +49,8 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
   @Getter(AccessLevel.PROTECTED)
   @VisibleForTesting
-  /* entry of null means read, entry of non-null means write */ private final CacheBuffer buffer =
-      new CacheBuffer();
+  // entry of null means read, entry of non-null means write
+  private final CacheBuffer buffer;
 
   private final PlatformTransactionManager platformTransactionManager;
 
@@ -73,6 +73,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
     registryMetrics.monitor(tpe, "transformation-cache");
 
     this.maxBufferSize = bufferThreshold * 30;
+    this.buffer = new CacheBuffer(registryMetrics);
   }
 
   @VisibleForTesting
@@ -90,6 +91,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
     this.bufferThreshold = bufferThreshold;
     this.maxBufferSize = bufferThreshold;
     this.storeConfigurationProperties = storeConfigurationProperties;
+    this.buffer = new CacheBuffer(registryMetrics);
   }
 
   @Override
