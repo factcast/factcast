@@ -18,22 +18,29 @@ package org.factcast.store.internal.pipeline;
 import io.micrometer.core.instrument.Counter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.StoreMetrics;
 
 @Slf4j
 public class MetricServerPipeline extends AbstractServerPipeline {
-  private final Counter counter;
+  private final Counter factsCounter;
+  private final Counter bytesCounter;
 
-  public MetricServerPipeline(@NonNull ServerPipeline parent, @NonNull PgMetrics metrics) {
+  public MetricServerPipeline(
+      @NonNull ServerPipeline parent,
+      @NonNull PgMetrics metrics,
+      @NonNull SubscriptionRequest request) {
     super(parent);
-    counter = metrics.counter(StoreMetrics.EVENT.FACTS_SENT);
+    factsCounter = metrics.counter(StoreMetrics.EVENT.FACTS_SENT, request.debugInfo());
+    bytesCounter = metrics.counter(StoreMetrics.EVENT.BYTES_SENT, request.debugInfo());
   }
 
   @Override
   public void process(@NonNull Signal s) {
-    if (s instanceof Signal.FactSignal) {
-      counter.increment();
+    if (s instanceof Signal.FactSignal factSignal) {
+      factsCounter.increment();
+      bytesCounter.increment(factSignal.fact().size());
     }
     // either way
     parent.process(s);

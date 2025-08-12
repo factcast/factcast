@@ -43,7 +43,7 @@ public class ServerPipelineFactory {
       int maxBufferSize) {
 
     ServerPipeline chain = new ServerPipelineAdapter(sub);
-    chain = new MetricServerPipeline(chain, metrics);
+    chain = new MetricServerPipeline(chain, metrics, subreq);
 
     chain =
         new BufferedTransformingServerPipeline(

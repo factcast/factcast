@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.Counter;
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
+import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.store.internal.PgMetrics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -41,11 +42,12 @@ class MetricServerPipelineTest {
   class WhenProcessing {
     @Mock Fact fact;
     @Mock Counter count;
+    @Mock SubscriptionRequest request;
 
     @BeforeEach
     void setup() {
       when(metrics.counter(any())).thenReturn(count);
-      underTest = new MetricServerPipeline(parent, metrics);
+      underTest = new MetricServerPipeline(parent, metrics, request);
     }
 
     @Test

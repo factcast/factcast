@@ -15,6 +15,8 @@
  */
 package org.factcast.store.internal;
 
+import static org.factcast.store.internal.StoreMetrics.TAG_CLIENT_ID_KEY;
+
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -43,6 +45,15 @@ public class PgMetrics implements InitializingBean {
     Tags tags = forOperation(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
     // omitting the meter description here
     return Counter.builder(StoreMetrics.METER_METRIC_NAME).tags(tags).register(registry);
+  }
+
+  @NonNull
+  public Counter counter(@NonNull StoreMetrics.EVENT operation, String clientId) {
+    Tags t =
+        forOperation(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE)
+            .and(Tag.of(TAG_CLIENT_ID_KEY, clientId));
+    // omitting the meter description here
+    return Counter.builder(StoreMetrics.METER_METRIC_NAME).tags(t).register(registry);
   }
 
   @NonNull
