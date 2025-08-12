@@ -15,6 +15,7 @@
  */
 package org.factcast.store.internal.concurrency;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.util.*;
 import java.util.function.*;
 import lombok.NonNull;
@@ -67,8 +68,8 @@ public class FullyLockedConcurrencyStrategy extends ConcurrencyStrategy {
             }));
   }
 
-  @Transactional(propagation = Propagation.MANDATORY)
-  public void lock() {
+  @VisibleForTesting
+  protected void lock() {
     metrics.time(
         StoreMetrics.OP.LOCK_UNCONDITIONAL_PUBLISH,
         () -> jdbc.execute("SELECT pg_advisory_xact_lock(" + AdvisoryLocks.PUBLISH.code() + ")"));
