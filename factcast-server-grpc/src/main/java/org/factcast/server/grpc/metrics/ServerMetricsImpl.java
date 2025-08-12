@@ -122,13 +122,18 @@ public class ServerMetricsImpl implements ServerMetrics, InitializingBean {
 
   @Override
   public void count(@NonNull EVENT event, Tags tags) {
-    Counter counter = counter(event, tags);
-    counter.increment();
+    count(event, tags, 1.0);
   }
 
   @Override
   public void count(@NonNull EVENT event) {
     count(event, Tags.empty());
+  }
+
+  @Override
+  public void count(@NonNull EVENT event, Tags tags, double value) {
+    Counter counter = counter(event, tags);
+    counter.increment(value);
   }
 
   @Override

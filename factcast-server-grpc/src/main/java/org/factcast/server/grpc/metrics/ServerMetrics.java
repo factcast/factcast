@@ -24,6 +24,9 @@ import org.factcast.core.util.SupplierWithException;
 
 public interface ServerMetrics {
 
+  String TAG_CLIENT_ID_KEY = "id";
+  String TAG_VERSION_KEY = "version";
+
   void timed(OP operation, Runnable fn);
 
   void timed(OP operation, Tags tags, Runnable fn);
@@ -48,6 +51,8 @@ public interface ServerMetrics {
 
   void count(EVENT event, Tags tags);
 
+  void count(EVENT event, Tags tags, double value);
+
   enum OP {
     HANDSHAKE("handshake");
 
@@ -60,7 +65,9 @@ public interface ServerMetrics {
 
   enum EVENT {
     SOME_EVENT_CHANGE_ME("something"),
-    CLIENT_VERSION("clientversion");
+    CLIENT_VERSION("clientversion"),
+    FACTS_SENT("factsSent"),
+    BYTES_SENT("bytesSent");
 
     @NonNull @Getter final String event;
 

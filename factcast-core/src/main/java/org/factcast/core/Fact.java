@@ -131,10 +131,6 @@ public interface Fact {
     }
   }
 
-  default double size() {
-    return jsonHeader().getBytes().length + jsonPayload().getBytes().length;
-  }
-
   @RequiredArgsConstructor
   class FactFromEventBuilder {
     @NonNull private final EventObject event;

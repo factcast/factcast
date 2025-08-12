@@ -33,8 +33,6 @@ public class StoreMetrics {
 
   static final String TAG_EXCEPTION_VALUE_NONE = "None";
 
-  static final String TAG_CLIENT_ID_KEY = "id";
-
   public enum OP implements MetricName {
     PUBLISH("publish"),
 
@@ -75,8 +73,7 @@ public class StoreMetrics {
 
   public enum EVENT implements MetricName {
     MISSED_ROUNDTRIP("missedRoundtrip"),
-    FACTS_SENT("factsSent"),
-    BYTES_SENT("bytesSent");
+    FACTS_SENT("factsSent");
 
     @NonNull final String name;
 

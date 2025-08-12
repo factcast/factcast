@@ -15,8 +15,13 @@
  */
 package org.factcast.server.grpc;
 
+import static org.factcast.server.grpc.metrics.ServerMetrics.EVENT.BYTES_SENT;
+import static org.factcast.server.grpc.metrics.ServerMetrics.EVENT.FACTS_SENT;
+import static org.factcast.server.grpc.metrics.ServerMetrics.TAG_CLIENT_ID_KEY;
+
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.stub.StreamObserver;
+import io.micrometer.core.instrument.Tags;
 import java.util.Timer;
 import java.util.TimerTask;
 import lombok.AccessLevel;
@@ -29,6 +34,8 @@ import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
+import org.factcast.server.grpc.metrics.NOPServerMetrics;
+import org.factcast.server.grpc.metrics.ServerMetrics;
 
 /**
  * FactObserver implementation, that translates observer Events to transport layer messages.
@@ -45,6 +52,9 @@ class GrpcObserverAdapter implements FactObserver {
   @NonNull private final StreamObserver<MSG_Notification> notificationStreamObserver;
   @NonNull private final ServerExceptionLogger serverExceptionLogger;
 
+  @NonNull private final ServerMetrics serverMetrics;
+  @NonNull private final Tags metricTags;
+
   @Getter(AccessLevel.PROTECTED)
   @VisibleForTesting
   private final ServerKeepalive keepalive;
@@ -58,6 +68,7 @@ class GrpcObserverAdapter implements FactObserver {
       @NonNull StreamObserver<MSG_Notification> observer,
       @NonNull GrpcRequestMetadata meta,
       @NonNull ServerExceptionLogger serverExceptionLogger,
+      @NonNull ServerMetrics serverMetrics,
       long keepaliveInMilliseconds) {
     this.id = id;
     this.notificationStreamObserver = observer;
@@ -70,6 +81,9 @@ class GrpcObserverAdapter implements FactObserver {
     } else {
       keepalive = null;
     }
+    this.serverMetrics = serverMetrics;
+    this.metricTags =
+        Tags.of(TAG_CLIENT_ID_KEY, meta.clientIdAsString()); // TODO would this be the same as id?
   }
 
   @VisibleForTesting
@@ -77,13 +91,25 @@ class GrpcObserverAdapter implements FactObserver {
       @NonNull String id,
       @NonNull StreamObserver<MSG_Notification> observer,
       @NonNull ServerExceptionLogger serverExceptionLogger) {
-    this(id, observer, GrpcRequestMetadata.forTest(), serverExceptionLogger, 0);
+    this(
+        id,
+        observer,
+        GrpcRequestMetadata.forTest(),
+        serverExceptionLogger,
+        new NOPServerMetrics(),
+        0);
   }
 
   @VisibleForTesting
   @Deprecated
   GrpcObserverAdapter(@NonNull String id, @NonNull StreamObserver<MSG_Notification> observer) {
-    this(id, observer, GrpcRequestMetadata.forTest(), new ServerExceptionLogger(), 0);
+    this(
+        id,
+        observer,
+        GrpcRequestMetadata.forTest(),
+        new ServerExceptionLogger(),
+        new NOPServerMetrics(),
+        0);
   }
 
   @VisibleForTesting
@@ -91,13 +117,19 @@ class GrpcObserverAdapter implements FactObserver {
       @NonNull String id,
       @NonNull StreamObserver<MSG_Notification> observer,
       GrpcRequestMetadata meta) {
-    this(id, observer, meta, new ServerExceptionLogger(), 0);
+    this(id, observer, meta, new ServerExceptionLogger(), new NOPServerMetrics(), 0);
   }
 
   @VisibleForTesting
   GrpcObserverAdapter(
       @NonNull String id, @NonNull StreamObserver<MSG_Notification> observer, long keepalive) {
-    this(id, observer, GrpcRequestMetadata.forTest(), new ServerExceptionLogger(), keepalive);
+    this(
+        id,
+        observer,
+        GrpcRequestMetadata.forTest(),
+        new ServerExceptionLogger(),
+        new NOPServerMetrics(),
+        keepalive);
   }
 
   @VisibleForTesting
@@ -106,7 +138,7 @@ class GrpcObserverAdapter implements FactObserver {
       @NonNull StreamObserver<MSG_Notification> observer,
       @NonNull GrpcRequestMetadata meta,
       @NonNull ServerExceptionLogger serverExceptionLogger) {
-    this(id, observer, meta, serverExceptionLogger, 0);
+    this(id, observer, meta, serverExceptionLogger, new NOPServerMetrics(), 0);
   }
 
   @Override
@@ -152,6 +184,10 @@ class GrpcObserverAdapter implements FactObserver {
     // yes, it is used in a threadsafe manner
     if (!stagedFacts.isEmpty()) {
       log.trace("{} flushing batch of {} facts", id, stagedFacts.size());
+
+      serverMetrics.count(BYTES_SENT, metricTags, stagedFacts.currentBytes());
+      serverMetrics.count(FACTS_SENT, metricTags, stagedFacts.size());
+
       notificationStreamObserver.onNext(converter.createNotificationFor(stagedFacts.popAll()));
     }
   }
