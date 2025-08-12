@@ -92,6 +92,7 @@ class GrpcObserverAdapterTest {
 
     GrpcRequestMetadata mockGrpcRequestMetaData = mock(GrpcRequestMetadata.class);
     when(mockGrpcRequestMetaData.supportsFastForward()).thenReturn(true);
+    when(mockGrpcRequestMetaData.clientIdAsString()).thenReturn("testClient");
 
     FastForwardTarget ffwd = FastForwardTarget.of(null, 112);
 
@@ -110,6 +111,7 @@ class GrpcObserverAdapterTest {
 
     GrpcRequestMetadata mockGrpcRequestMetaData = mock(GrpcRequestMetadata.class);
     when(mockGrpcRequestMetaData.supportsFastForward()).thenReturn(true);
+    when(mockGrpcRequestMetaData.clientIdAsString()).thenReturn("testClient");
 
     FastForwardTarget ffwd = FastForwardTarget.of(new UUID(1, 1), 0);
 
@@ -128,6 +130,7 @@ class GrpcObserverAdapterTest {
 
     GrpcRequestMetadata mockGrpcRequestMetaData = mock(GrpcRequestMetadata.class);
     when(mockGrpcRequestMetaData.supportsFastForward()).thenReturn(false);
+    when(mockGrpcRequestMetaData.clientIdAsString()).thenReturn("testClient");
 
     FastForwardTarget ffwd = FastForwardTarget.of(new UUID(10, 10), 112);
 
@@ -180,6 +183,7 @@ class GrpcObserverAdapterTest {
     ProtoConverter conv = new ProtoConverter();
     @NonNull GrpcRequestMetadata meta = mock(GrpcRequestMetadata.class);
     when(meta.supportsFastForward()).thenReturn(false);
+    when(meta.clientIdAsString()).thenReturn("testingStuff");
     GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, meta);
     FactStreamPosition id = TestFactStreamPosition.random();
     uut.onFastForward(id);

@@ -168,7 +168,7 @@ class ServerMetricsImplTest {
 
     uut.count(EVENT.SOME_EVENT_CHANGE_ME, Tags.of(customTag));
 
-    verify(counter).increment();
+    verify(counter).increment(1.0);
     verify(meterRegistry)
         .counter(
             ServerMetricsImpl.METRIC_NAME_COUNTS,
