@@ -262,7 +262,7 @@ public class PgFactStore extends AbstractFactStore {
   private State doGetState(
       @NotNull List<FactSpec> specs, long lastMatchingSerial, @Nullable Long toExclusive) {
     return metrics.time(
-        StoreMetrics.OP.GET_STATE_FOR,
+        StoreMetrics.OP.GET_STATE_FOR_WITH_START,
         () -> {
           PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
           String stateSQL = pgQueryBuilder.createStateSQL(toExclusive);

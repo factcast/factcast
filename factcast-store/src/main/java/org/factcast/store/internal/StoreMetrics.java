@@ -52,12 +52,18 @@ public class StoreMetrics {
     ENUMERATE_VERSIONS("enumerateVersions"),
 
     GET_STATE_FOR("getStateFor"),
+    GET_STATE_FOR_WITH_START("getStateForWithStart"),
 
     PUBLISH_IF_UNCHANGED("publishIfUnchanged"),
 
     INVALIDATE_STATE_TOKEN("invalidateStateToken"),
 
-    NOTIFY_ROUNDTRIP("notifyRoundTripLatency");
+    NOTIFY_ROUNDTRIP("notifyRoundTripLatency"),
+
+    LOCK_UNCONDITIONAL_PUBLISH("lockUnconditionalPublish"),
+    LOCK_UNCONDITIONAL_PUBLISH_SHARED("lockUnconditionalPublishShared"),
+    UNLOCK_UNCONDITIONAL_PUBLISH("unlockUnconditionalPublish"),
+    LOCK_CONDITIONAL_AND_UNCONDITIONAL_PUBLISH("lockConditionalAndUnconditionalPublish");
 
     @NonNull final String name;
 

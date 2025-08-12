@@ -19,6 +19,8 @@ import java.util.*;
 import java.util.function.*;
 import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.factcast.store.internal.PgMetrics;
+import org.factcast.store.internal.StoreMetrics;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.*;
@@ -27,11 +29,15 @@ import org.springframework.transaction.support.TransactionTemplate;
 /** behavior of factcast <=0.9.9 */
 public class FullyLockedConcurrencyStrategy extends ConcurrencyStrategy {
   @NonNull private final PlatformTransactionManager platformTransactionManager;
+  private final PgMetrics metrics;
 
   public FullyLockedConcurrencyStrategy(
-      @NonNull PlatformTransactionManager platformTransactionManager, @NonNull JdbcTemplate jdbc) {
+      @NonNull PlatformTransactionManager platformTransactionManager,
+      @NonNull JdbcTemplate jdbc,
+      @NonNull PgMetrics metrics) {
     super(jdbc);
     this.platformTransactionManager = platformTransactionManager;
+    this.metrics = metrics;
   }
 
   @Override
@@ -63,7 +69,8 @@ public class FullyLockedConcurrencyStrategy extends ConcurrencyStrategy {
 
   @Transactional(propagation = Propagation.MANDATORY)
   public void lock() {
-    // TODO add metrics
-    jdbc.execute("SELECT pg_advisory_xact_lock(" + AdvisoryLocks.PUBLISH.code() + ")");
+    metrics.time(
+        StoreMetrics.OP.LOCK_UNCONDITIONAL_PUBLISH,
+        () -> jdbc.execute("SELECT pg_advisory_xact_lock(" + AdvisoryLocks.PUBLISH.code() + ")"));
   }
 }

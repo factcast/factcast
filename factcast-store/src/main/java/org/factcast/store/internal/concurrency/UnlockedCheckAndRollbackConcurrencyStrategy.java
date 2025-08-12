@@ -16,10 +16,11 @@
 package org.factcast.store.internal.concurrency;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.*;
 import lombok.*;
 import org.factcast.core.Fact;
+import org.factcast.store.internal.PgMetrics;
+import org.factcast.store.internal.StoreMetrics;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.*;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -32,11 +33,15 @@ import org.springframework.transaction.support.TransactionTemplate;
  */
 public class UnlockedCheckAndRollbackConcurrencyStrategy extends ConcurrencyStrategy {
   @NonNull private final PlatformTransactionManager platformTransactionManager;
+  private final PgMetrics metrics;
 
   public UnlockedCheckAndRollbackConcurrencyStrategy(
-      @NonNull PlatformTransactionManager platformTransactionManager, @NonNull JdbcTemplate jdbc) {
+      @NonNull PlatformTransactionManager platformTransactionManager,
+      @NonNull JdbcTemplate jdbc,
+      @NonNull PgMetrics metrics) {
     super(jdbc);
     this.platformTransactionManager = platformTransactionManager;
+    this.metrics = metrics;
   }
 
   @Override
@@ -70,23 +75,28 @@ public class UnlockedCheckAndRollbackConcurrencyStrategy extends ConcurrencyStra
   }
 
   private void lockBoth() {
-    // TODO add metrics
-    jdbc.execute(
-        "SELECT pg_advisory_xact_lock("
-            + AdvisoryLocks.PUBLISH.code()
-            + ", "
-            + AdvisoryLocks.PUBLISH_CONDITIONAL.code()
-            + ")");
+    metrics.time(
+        StoreMetrics.OP.LOCK_CONDITIONAL_AND_UNCONDITIONAL_PUBLISH,
+        () ->
+            jdbc.execute(
+                "SELECT pg_advisory_xact_lock("
+                    + AdvisoryLocks.PUBLISH.code()
+                    + ", "
+                    + AdvisoryLocks.PUBLISH_CONDITIONAL.code()
+                    + ")"));
   }
 
   private void releaseLockForUnconditional() {
-    jdbc.execute("SELECT pg_advisory_unlock(" + AdvisoryLocks.PUBLISH.code() + ")");
+    metrics.time(
+        StoreMetrics.OP.UNLOCK_UNCONDITIONAL_PUBLISH,
+        () -> jdbc.execute("SELECT pg_advisory_unlock(" + AdvisoryLocks.PUBLISH.code() + ")"));
   }
 
-  static AtomicLong count = new AtomicLong();
-
   private void lockUnConditional() {
-    // TODO add metrics
-    jdbc.execute("SELECT pg_advisory_xact_lock_shared(" + AdvisoryLocks.PUBLISH.code() + ")");
+    metrics.time(
+        StoreMetrics.OP.LOCK_UNCONDITIONAL_PUBLISH_SHARED,
+        () ->
+            jdbc.execute(
+                "SELECT pg_advisory_xact_lock_shared(" + AdvisoryLocks.PUBLISH.code() + ")"));
   }
 }

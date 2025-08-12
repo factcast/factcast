@@ -313,17 +313,16 @@ public class PgFactStoreInternalConfiguration {
   ConcurrencyStrategy concurrencyStrategy(
       @NonNull StoreConfigurationProperties props,
       @NonNull PlatformTransactionManager platformTransactionManager,
-      @NonNull JdbcTemplate jdbc) {
+      @NonNull JdbcTemplate jdbc,
+      @NonNull PgMetrics metrics) {
 
     return switch (props.getConcurrencyStrategy()) {
-      case LEGACY -> new FullyLockedConcurrencyStrategy(platformTransactionManager, jdbc);
+      case LEGACY -> new FullyLockedConcurrencyStrategy(platformTransactionManager, jdbc, metrics);
       case UNLOCKED_CHECK ->
-          new UnlockedCheckAndRollbackConcurrencyStrategy(platformTransactionManager, jdbc);
+          new UnlockedCheckAndRollbackConcurrencyStrategy(
+              platformTransactionManager, jdbc, metrics);
       case UNLOCKED_CHECK_EARLIER_TX ->
-          new CheckEarlierConcurrencyStrategy(platformTransactionManager, jdbc);
-      default ->
-          throw new IllegalStateException(
-              "Unmapped concurrency Strategy " + props.getConcurrencyStrategy());
+          new CheckEarlierConcurrencyStrategy(platformTransactionManager, jdbc, metrics);
     };
   }
 }

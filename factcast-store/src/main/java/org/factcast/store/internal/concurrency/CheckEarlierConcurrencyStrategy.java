@@ -20,6 +20,8 @@ import java.util.*;
 import java.util.function.*;
 import lombok.*;
 import org.factcast.core.Fact;
+import org.factcast.store.internal.PgMetrics;
+import org.factcast.store.internal.StoreMetrics;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -44,11 +46,15 @@ import org.springframework.transaction.support.TransactionTemplate;
 @SuppressWarnings("SpringTransactionalMethodCallsInspection")
 public class CheckEarlierConcurrencyStrategy extends ConcurrencyStrategy {
   @NonNull private final PlatformTransactionManager platformTransactionManager;
+  private final PgMetrics metrics;
 
   public CheckEarlierConcurrencyStrategy(
-      @NonNull PlatformTransactionManager platformTransactionManager, @NonNull JdbcTemplate jdbc) {
+      @NonNull PlatformTransactionManager platformTransactionManager,
+      @NonNull JdbcTemplate jdbc,
+      @NonNull PgMetrics metrics) {
     super(jdbc);
     this.platformTransactionManager = platformTransactionManager;
+    this.metrics = metrics;
   }
 
   @Override
@@ -99,19 +105,24 @@ public class CheckEarlierConcurrencyStrategy extends ConcurrencyStrategy {
 
   @VisibleForTesting
   protected void unlock() {
-    // TODO add metrics
-    jdbc.execute("SELECT pg_advisory_unlock(" + AdvisoryLocks.PUBLISH.code() + ")");
+    metrics.time(
+        StoreMetrics.OP.UNLOCK_UNCONDITIONAL_PUBLISH,
+        () -> jdbc.execute("SELECT pg_advisory_unlock(" + AdvisoryLocks.PUBLISH.code() + ")"));
   }
 
   @VisibleForTesting
   protected void lockShared() {
-    // TODO add metrics
-    jdbc.execute("SELECT pg_advisory_xact_lock_shared(" + AdvisoryLocks.PUBLISH.code() + ")");
+    metrics.time(
+        StoreMetrics.OP.LOCK_UNCONDITIONAL_PUBLISH_SHARED,
+        () ->
+            jdbc.execute(
+                "SELECT pg_advisory_xact_lock_shared(" + AdvisoryLocks.PUBLISH.code() + ")"));
   }
 
   @VisibleForTesting
   protected void lock() {
-    // TODO add metrics
-    jdbc.execute("SELECT pg_advisory_xact_lock(" + AdvisoryLocks.PUBLISH.code() + ")");
+    metrics.time(
+        StoreMetrics.OP.LOCK_UNCONDITIONAL_PUBLISH,
+        () -> jdbc.execute("SELECT pg_advisory_xact_lock(" + AdvisoryLocks.PUBLISH.code() + ")"));
   }
 }
