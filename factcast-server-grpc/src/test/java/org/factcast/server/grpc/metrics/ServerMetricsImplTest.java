@@ -159,7 +159,7 @@ class ServerMetricsImplTest {
   void testCounter() {
     uut.count(EVENT.SOME_EVENT_CHANGE_ME);
 
-    verify(counter).increment();
+    verify(counter).increment(1.0);
   }
 
   @Test
