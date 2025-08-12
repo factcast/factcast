@@ -74,7 +74,7 @@ public class PgFactStream {
 
   void connect(@NonNull SubscriptionRequestTO request) {
     this.request = request;
-    log.debug("{} connect subscription {}", request, request.dump());
+    log.debug("{} connect subscription", request);
     // signal connect
     telemetry.onConnect(request);
     PgQueryBuilder q = new PgQueryBuilder(request.specs(), statementHolder);
@@ -86,6 +86,7 @@ public class PgFactStream {
     }
 
     String sql = q.createSQL();
+    log.trace("created query SQL for {} - SQL={}", request.specs(), sql);
     PreparedStatementSetter setter = q.createStatementSetter(serial);
     PgSynchronizedQuery query =
         new PgSynchronizedQuery(
