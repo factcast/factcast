@@ -135,7 +135,7 @@ class AbstractMongoDbManagedProjectionTest {
     @Test
     @SneakyThrows
     void returnsTokenWhenLockingSuccessful() {
-      Duration maxWaitDuration = Duration.ofSeconds(7);
+      Duration maxWaitDuration = Duration.ofSeconds(60L);
       SimpleLock lock = mock(SimpleLock.class);
       when(lockProvider.lock(any(LockConfiguration.class))).thenReturn(Optional.of(lock));
 
@@ -145,7 +145,7 @@ class AbstractMongoDbManagedProjectionTest {
       final LockConfiguration lockConfig = captor.getValue();
       assertThat(lockConfig.getName()).isEqualTo(SCOPED_NAME + "_lock");
       assertThat(lockConfig.getLockAtLeastFor()).isEqualTo(Duration.ofSeconds(1L));
-      assertThat(lockConfig.getLockAtMostFor()).isEqualTo(Duration.ofSeconds(60L));
+      assertThat(lockConfig.getLockAtMostFor()).isEqualTo(maxWaitDuration);
 
       assertThat(res).isNotNull();
     }
@@ -166,7 +166,7 @@ class AbstractMongoDbManagedProjectionTest {
       final LockConfiguration lockConfig = captor.getValue();
       assertThat(lockConfig.getName()).isEqualTo(SCOPED_NAME + "_lock");
       assertThat(lockConfig.getLockAtLeastFor()).isEqualTo(Duration.ofSeconds(1L));
-      assertThat(lockConfig.getLockAtMostFor()).isEqualTo(Duration.ofSeconds(60L));
+      assertThat(lockConfig.getLockAtMostFor()).isEqualTo(maxWaitDuration);
 
       assertThat(res).isNotNull();
     }

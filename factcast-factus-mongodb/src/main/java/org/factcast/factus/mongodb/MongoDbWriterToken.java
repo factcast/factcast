@@ -15,7 +15,6 @@
  */
 package org.factcast.factus.mongodb;
 
-import java.time.Duration;
 import java.util.Optional;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -26,14 +25,9 @@ import org.factcast.factus.projection.WriterToken;
 @Slf4j
 public class MongoDbWriterToken implements WriterToken {
   private @NonNull SimpleLock lock;
-  private LockProvider lockProvider;
   private LockConfiguration lockConfiguration;
 
-  protected MongoDbWriterToken(
-      @NonNull SimpleLock lock,
-      @NonNull LockProvider lockProvider,
-      LockConfiguration lockConfiguration) {
-    this.lockProvider = lockProvider;
+  protected MongoDbWriterToken(@NonNull SimpleLock lock, LockConfiguration lockConfiguration) {
     this.lock = lock;
     this.lockConfiguration = lockConfiguration;
   }
@@ -47,7 +41,7 @@ public class MongoDbWriterToken implements WriterToken {
   public boolean isValid() {
     try {
       Optional<SimpleLock> extendedLock =
-          lock.extend(Duration.ofSeconds(60), Duration.ofSeconds(1));
+          lock.extend(lockConfiguration.getLockAtMostFor(), lockConfiguration.getLockAtLeastFor());
       if (extendedLock.isPresent()) {
         this.lock = extendedLock.get();
         return true;

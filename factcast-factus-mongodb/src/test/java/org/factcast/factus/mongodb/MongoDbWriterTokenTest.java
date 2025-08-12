@@ -21,6 +21,7 @@ import static org.mockito.Mockito.*;
 
 import java.time.Duration;
 import java.util.Optional;
+import net.javacrumbs.shedlock.core.LockConfiguration;
 import net.javacrumbs.shedlock.core.SimpleLock;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class MongoDbWriterTokenTest {
 
   @Mock SimpleLock lock;
+  @Mock LockConfiguration lockConfiguration;
   @InjectMocks MongoDbWriterToken uut;
 
   @Test
@@ -40,10 +42,14 @@ class MongoDbWriterTokenTest {
   void testIsValid() {
     when(lock.extend(any(Duration.class), any(Duration.class)))
         .thenReturn(Optional.of(mock(SimpleLock.class)));
+    final Duration minDuration = Duration.ofSeconds(1L);
+    final Duration maxDuration = Duration.ofSeconds(1L);
+    when(lockConfiguration.getLockAtLeastFor()).thenReturn(minDuration);
+    when(lockConfiguration.getLockAtMostFor()).thenReturn(maxDuration);
 
     assertThat(uut.isValid()).isTrue();
 
-    verify(lock).extend(Duration.ofSeconds(10L), Duration.ZERO);
+    verify(lock).extend(maxDuration, minDuration);
   }
 
   @Test
@@ -51,10 +57,14 @@ class MongoDbWriterTokenTest {
   void testIsValid_fails() {
     when(lock.extend(any(Duration.class), any(Duration.class)))
         .thenThrow(IllegalStateException.class);
+    final Duration minDuration = Duration.ofSeconds(1L);
+    final Duration maxDuration = Duration.ofSeconds(1L);
+    when(lockConfiguration.getLockAtLeastFor()).thenReturn(minDuration);
+    when(lockConfiguration.getLockAtMostFor()).thenReturn(maxDuration);
 
     assertThat(uut.isValid()).isFalse();
 
-    verify(lock).extend(Duration.ofSeconds(10L), Duration.ZERO);
+    verify(lock).extend(maxDuration, minDuration);
   }
 
   @Test
