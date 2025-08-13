@@ -132,7 +132,7 @@ public class PgConstants {
           + COLUMN_HEADER
           + ","
           + COLUMN_PAYLOAD
-          + ") VALUES (cast(? as jsonb),cast (? as jsonb))";
+          + ") VALUES (cast(? as jsonb),cast (? as jsonb)) RETURNING ser";
 
   public static final String INSERT_TOKEN =
       "INSERT INTO "

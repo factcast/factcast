@@ -74,8 +74,9 @@ public class PgFetchingCatchup implements PgCatchup {
     jdbc.setQueryTimeout(0); // disable query timeout
     PgQueryBuilder b = new PgQueryBuilder(req.specs(), statementHolder);
     var extractor = new PgFactExtractor(serial);
-    String catchupSQL = b.createSQL();
-    jdbc.query(catchupSQL, b.createStatementSetter(serial), createRowCallbackHandler(extractor));
+    String catchupSQL = b.createSQL(null);
+    jdbc.query(
+        catchupSQL, b.createStatementSetter(serial, null), createRowCallbackHandler(extractor));
   }
 
   @VisibleForTesting

@@ -17,18 +17,19 @@ package org.factcast.core.store;
 
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 
 @RequiredArgsConstructor
 public abstract class AbstractFactStore implements FactStore {
   @NonNull protected final TokenStore tokenStore;
 
-  @Override
-  public boolean publishIfUnchanged(
-      @NonNull List<? extends Fact> factsToPublish, @NonNull Optional<StateToken> optionalToken) {
+  // TODO negate
+  // TODO remove stupid optional use?
+  public boolean hasNoConflictingChangeUntil(
+      @Nullable Long until, @NonNull Optional<StateToken> optionalToken) {
 
     if (optionalToken.isPresent()) {
       StateToken token = optionalToken.get();
@@ -36,12 +37,7 @@ public abstract class AbstractFactStore implements FactStore {
 
       if (state.isPresent()) {
         try {
-          if (isStateUnchanged(state.get())) {
-            publish(factsToPublish);
-            return true;
-          } else {
-            return false;
-          }
+          return isStateUnchanged(until, state.get());
         } finally {
           invalidate(token);
         }
@@ -51,7 +47,6 @@ public abstract class AbstractFactStore implements FactStore {
       }
     } else {
       // publish unconditionally
-      publish(factsToPublish);
       return true;
     }
   }
@@ -64,7 +59,7 @@ public abstract class AbstractFactStore implements FactStore {
   @Override
   @NonNull
   public StateToken stateFor(@NonNull List<FactSpec> specs) {
-    State state = getStateFor(specs);
+    State state = getStateFor(specs, 0, null);
     return tokenStore.create(state);
   }
 
@@ -76,21 +71,18 @@ public abstract class AbstractFactStore implements FactStore {
   }
 
   @SuppressWarnings("WeakerAccess")
-  protected final boolean isStateUnchanged(@NonNull State snapshotState) {
+  protected final boolean isStateUnchanged(@Nullable Long until, @NonNull State snapshotState) {
     long serialOfLastMatchingFact = snapshotState.serialOfLastMatchingFact();
 
-    State currentState = getStateFor(snapshotState.specs(), serialOfLastMatchingFact);
+    State currentState = getStateFor(snapshotState.specs(), serialOfLastMatchingFact, until);
     return currentState.serialOfLastMatchingFact() == 0L;
   }
-
-  protected abstract State getStateFor(@NonNull List<FactSpec> specs);
 
   @NonNull
   protected abstract State getCurrentStateFor(List<FactSpec> specs);
 
   /** This can be overridden for performance optimizations */
   @NonNull
-  protected State getStateFor(@NonNull List<FactSpec> specs, long lastMatchingSerial) {
-    return getStateFor(specs);
-  }
+  protected abstract State getStateFor(
+      @NonNull List<FactSpec> specs, long lastMatchingSerial, @Nullable Long toExclusive);
 }
