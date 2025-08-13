@@ -25,8 +25,21 @@ public class AdvisoryWriteLock implements FactTableWriteLock {
   private final JdbcTemplate tpl;
 
   @Override
+  @Deprecated
   @Transactional(propagation = Propagation.MANDATORY)
   public void aquireExclusiveTXLock() {
-    tpl.execute("SELECT pg_advisory_xact_lock(" + AdvisoryLocks.PUBLISH.code() + ")");
+    aquireExclusiveTXLock(AdvisoryLocks.PUBLISH.code());
+  }
+
+  @Override
+  @Transactional(propagation = Propagation.MANDATORY)
+  public void aquireExclusiveTXLock(int code) {
+    tpl.execute("SELECT pg_advisory_xact_lock(" + code + ")");
+  }
+
+  @Override
+  @Transactional(propagation = Propagation.MANDATORY)
+  public void aquireSharedTXLock(int code) {
+    tpl.execute("SELECT pg_advisory_xact_lock_shared(" + code + ")");
   }
 }

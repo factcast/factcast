@@ -47,6 +47,7 @@ public class Locked<I extends Projection> {
   private final I projectionOrNull;
 
   @NonNull private final List<FactSpec> specs;
+  @NonNull private final List<FactSpec> writeSpecs;
 
   @NonNull private final FactusMetrics factusMetrics;
 
