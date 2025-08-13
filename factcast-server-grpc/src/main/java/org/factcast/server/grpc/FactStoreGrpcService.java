@@ -15,6 +15,9 @@
  */
 package org.factcast.server.grpc;
 
+import static org.factcast.server.grpc.metrics.ServerMetrics.TAG_CLIENT_ID_KEY;
+import static org.factcast.server.grpc.metrics.ServerMetrics.TAG_VERSION_KEY;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.*;
 import com.google.common.hash.Hashing;
@@ -164,6 +167,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
               resp,
               grpcRequestMetadata,
               serverExceptionLogger,
+              metrics,
               req.keepaliveIntervalInMs());
 
       final var cancelHandler = new OnCancelHandler(clientIdPrefix(), req, subRef, observer);
@@ -291,7 +295,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
           log.info("Handshake from '{}' using version {}", clientId, clientVersion);
           metrics.count(
               ServerMetrics.EVENT.CLIENT_VERSION,
-              Tags.of(Tag.of("id", clientId), Tag.of("version", clientVersion)));
+              Tags.of(Tag.of(TAG_CLIENT_ID_KEY, clientId), Tag.of(TAG_VERSION_KEY, clientVersion)));
 
           ServerConfig cfg = ServerConfig.of(PROTOCOL_VERSION, collectProperties());
           responseObserver.onNext(converter.toProto(cfg));
