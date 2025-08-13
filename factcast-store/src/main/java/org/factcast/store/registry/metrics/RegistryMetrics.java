@@ -17,6 +17,7 @@ package org.factcast.store.registry.metrics;
 
 import io.micrometer.core.instrument.Tags;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.*;
 import lombok.Getter;
 import lombok.NonNull;
@@ -54,6 +55,8 @@ public interface RegistryMetrics {
 
   void increase(EVENT transformationCacheHit, int hits);
 
+  AtomicLong gauge(GAUGE gauge, AtomicLong value);
+
   ExecutorService monitor(ExecutorService executor, String name);
 
   enum OP {
@@ -86,6 +89,17 @@ public interface RegistryMetrics {
 
     EVENT(@NonNull String event) {
       this.event = event;
+    }
+  }
+
+  enum GAUGE {
+    CACHE_BUFFER("transformationCacheBufferSize"),
+    CACHE_FLUSHING_BUFFER("transformationCacheFlushingBufferSize");
+
+    @NonNull @Getter final String metric;
+
+    GAUGE(@NonNull String metric) {
+      this.metric = metric;
     }
   }
 }

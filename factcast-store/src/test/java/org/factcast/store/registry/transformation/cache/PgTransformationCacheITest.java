@@ -103,6 +103,6 @@ class PgTransformationCacheITest extends AbstractTransformationCacheTest {
     wasFlushed.await();
 
     // either empty, or just registered accesses
-    assertThat(underTest.buffer().clear().values()).noneMatch(Objects::nonNull);
+    assertThat(underTest.buffer().buffer().values()).noneMatch(Objects::nonNull);
   }
 }
