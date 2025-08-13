@@ -175,7 +175,6 @@ public class PgQueryBuilder {
             + " ORDER BY "
             + PgConstants.COLUMN_SER
             + " ASC";
-    log.trace("creating query SQL for {} - SQL={}", factSpecs, sql);
     return sql;
   }
 
