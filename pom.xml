@@ -116,7 +116,7 @@
     <testcontainers.version>1.21.3</testcontainers.version>
     <arrow.version>2.1.1</arrow.version>
     <micronaut.version>4.7.5</micronaut.version>
-    <kotlin.version>2.2.0</kotlin.version>
+    <kotlin.version>2.2.10</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <mockk.version>1.14.5</mockk.version>
     <graaljs.version>24.2.2</graaljs.version>
