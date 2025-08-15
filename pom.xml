@@ -102,7 +102,7 @@
     <nexus-staging-maven-plugin.version>1.7.0</nexus-staging-maven-plugin.version>
     <assertj.version>3.27.4</assertj.version>
     <jackson.version>2.19.2</jackson.version>
-    <mockito.version>5.18.0</mockito.version>
+    <mockito.version>5.19.0</mockito.version>
     <junit-jupiter.version>5.13.4</junit-jupiter.version>
     <lombok.version>1.18.38</lombok.version>
     <slf4j-api.version>2.0.17</slf4j-api.version>
