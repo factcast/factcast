@@ -97,7 +97,7 @@ class PgSubscriptionFactoryTest {
     void testSubscribe_happyCase() {
       final var runnable = mock(Runnable.class);
       final var spyUut = spy(underTest);
-      doReturn(runnable).when(spyUut).connect(any(), any(), any());
+      doReturn(runnable).when(spyUut).connect(any(), any());
 
       try (var cf = Mockito.mockStatic(CompletableFuture.class)) {
         spyUut.subscribe(req, observer);
@@ -112,21 +112,26 @@ class PgSubscriptionFactoryTest {
     @Mock private SubscriptionImpl subscription;
     @Mock private PgFactStream pgsub;
 
+    @BeforeEach
+    void setUp() {
+      lenient().when(pgsub.request()).thenReturn(req);
+    }
+
     @Test
     void testConnect_happyCase() {
-      underTest.connect(req, subscription, pgsub).run();
-      verify(pgsub).connect(req);
+      underTest.connect(subscription, pgsub).run();
+      verify(pgsub).connect();
     }
 
     @Test
     void testConnect_transformationException() {
       var e = new TransformationException("foo");
 
-      doThrow(e).when(pgsub).connect(req);
+      doThrow(e).when(pgsub).connect();
 
-      underTest.connect(req, subscription, pgsub).run();
+      underTest.connect(subscription, pgsub).run();
 
-      verify(pgsub).connect(req);
+      verify(pgsub).connect();
       verify(subscription).notifyError(e);
     }
 
@@ -134,20 +139,20 @@ class PgSubscriptionFactoryTest {
     void testConnect_someException() {
       var e = new IllegalArgumentException("foo");
 
-      doThrow(e).when(pgsub).connect(req);
+      doThrow(e).when(pgsub).connect();
 
-      underTest.connect(req, subscription, pgsub).run();
+      underTest.connect(subscription, pgsub).run();
 
-      verify(pgsub).connect(req);
+      verify(pgsub).connect();
       verify(subscription).notifyError(e);
     }
 
     @Test
     void warnsForMissingTransformations() {
       underTest = spy(underTest);
-      doThrow(MissingTransformationInformationException.class).when(pgsub).connect(any());
+      doThrow(MissingTransformationInformationException.class).when(pgsub).connect();
 
-      underTest.connect(req, subscription, pgsub).run();
+      underTest.connect(subscription, pgsub).run();
 
       verify(underTest)
           .warnAndNotify(
@@ -161,9 +166,9 @@ class PgSubscriptionFactoryTest {
     @Test
     void errsForTransformationErrors() {
       underTest = spy(underTest);
-      doThrow(TransformationException.class).when(pgsub).connect(any());
+      doThrow(TransformationException.class).when(pgsub).connect();
 
-      underTest.connect(req, subscription, pgsub).run();
+      underTest.connect(subscription, pgsub).run();
 
       verify(underTest)
           .errorAndNotify(
@@ -177,12 +182,13 @@ class PgSubscriptionFactoryTest {
     @Test
     void warnsForRuntimeExceptions() {
       underTest = spy(underTest);
-      doThrow(RuntimeException.class).when(pgsub).connect(any());
+      doThrow(RuntimeException.class).when(pgsub).connect();
 
-      underTest.connect(req, subscription, pgsub).run();
+      underTest.connect(subscription, pgsub).run();
 
       verify(underTest)
-          .warnAndNotify(same(subscription), same(req), eq("runtime"), any(RuntimeException.class));
+          .warnAndNotify(
+              same(subscription), same(req), eq("runtime"), any(RuntimeException.class));
       verify(subscription).notifyError(any(Exception.class));
     }
   }
