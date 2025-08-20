@@ -218,6 +218,9 @@ public class PgFactStream {
     statementHolder.close();
     log.debug("{} disconnected ", request);
     // signal close
-    telemetry.onClose(this.request);
+    if (request != null) {
+      // request can be null when connect is not called yet
+      telemetry.onClose(this.request);
+    }
   }
 }
