@@ -187,8 +187,7 @@ class PgSubscriptionFactoryTest {
       underTest.connect(subscription, pgsub).run();
 
       verify(underTest)
-          .warnAndNotify(
-              same(subscription), same(req), eq("runtime"), any(RuntimeException.class));
+          .warnAndNotify(same(subscription), same(req), eq("runtime"), any(RuntimeException.class));
       verify(subscription).notifyError(any(Exception.class));
     }
   }

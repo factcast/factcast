@@ -59,6 +59,7 @@ public class PgFactStream {
   final FastForwardTarget ffwdTarget;
   final ServerPipeline pipeline;
   final PgStoreTelemetry telemetry;
+
   @Getter(AccessLevel.PROTECTED)
   final SubscriptionRequestTO request;
 
