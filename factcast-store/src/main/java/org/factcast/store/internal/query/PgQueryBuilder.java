@@ -21,7 +21,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-import lombok.NonNull;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.store.internal.PgConstants;
@@ -36,6 +36,8 @@ import org.springframework.jdbc.core.PreparedStatementSetter;
 @Slf4j
 public class PgQueryBuilder {
 
+  private static final String AND = " AND ";
+  public static final String CONTAINS_JSONB = " @> ?::jsonb";
   private final @NonNull List<FactSpec> factSpecs;
   private final CurrentStatementHolder statementHolder;
 
@@ -51,13 +53,13 @@ public class PgQueryBuilder {
 
   public PreparedStatementSetter createStatementSetter(@NonNull AtomicLong serial) {
     return p -> {
-      // TODO vulnerable of json injection attack
       int count = 0;
       for (FactSpec spec : factSpecs) {
         count = setNs(p, count, spec);
         count = setType(p, count, spec);
         // version is intentionally not used here
         count = setAggIds(p, count, spec);
+        count = setAggProperties(p, count, spec);
         count = setMeta(p, count, spec);
         count = setMetaKeyExists(p, count, spec);
       }
@@ -67,6 +69,42 @@ public class PgQueryBuilder {
         statementHolder.statement(p);
       }
     };
+  }
+
+  @SneakyThrows
+  private int setAggProperties(PreparedStatement p, int count, FactSpec spec) {
+
+    if (filterByAggregateIdProperty(spec)) {
+      var version = spec.version();
+      if (version != 0) p.setInt(++count, version);
+      Set<Entry<String, UUID>> entries = spec.aggIdProperties().entrySet();
+      // we need to make sure we have a stable sort order
+      for (Entry<String, UUID> entry : entries) {
+        p.setObject(++count, entry.getValue());
+      }
+    }
+    return count;
+  }
+
+  private boolean filterByAggregateIdProperty(FactSpec spec) {
+    return (spec.aggIdProperties() != null && !spec.aggIdProperties().isEmpty());
+  }
+
+  private String calculateJsonbExpressionFromPropertyPath(String key) {
+    String path =
+        Arrays.stream(key.split("\\.")).map(s -> "'" + s + "'").collect(Collectors.joining("."));
+    String exp = "(payload -> " + path.replace(".", " -> ") + ")::UUID";
+    return replaceLast(exp, "->", "->>");
+  }
+
+  public static String replaceLast(
+      @NonNull String string, @NonNull String toReplace, @NonNull String replacement) {
+    int pos = string.lastIndexOf(toReplace);
+    if (pos > -1) {
+      return string.substring(0, pos) + replacement + string.substring(pos + toReplace.length());
+    } else {
+      return string;
+    }
   }
 
   private int setMeta(PreparedStatement p, int count, FactSpec spec) throws SQLException {
@@ -92,7 +130,7 @@ public class PgQueryBuilder {
   private int setAggIds(PreparedStatement p, int count, FactSpec spec) throws SQLException {
     if (filterByAggregateIds(spec)) {
       String a =
-          spec.mergedAggIds().stream()
+          spec.aggIds().stream()
               .map(UUID::toString)
               .collect(Collectors.joining("\",\"", "\"", "\""));
       p.setString(++count, "{\"aggIds\": [" + a + "]}");
@@ -101,8 +139,7 @@ public class PgQueryBuilder {
   }
 
   private static boolean filterByAggregateIds(FactSpec specs) {
-    Set<UUID> aggIds = specs.mergedAggIds();
-    return aggIds != null && !aggIds.isEmpty();
+    return specs.aggIds() != null && !specs.aggIds().isEmpty();
   }
 
   private int setType(PreparedStatement p, int count, FactSpec spec) throws SQLException {
@@ -126,26 +163,39 @@ public class PgQueryBuilder {
     factSpecs.forEach(
         spec -> {
           StringBuilder sb = new StringBuilder();
-          sb.append("(1=1");
+          sb.append("(true ");
 
           String ns = spec.ns();
+
           if (ns != null && !"*".equals(ns)) {
-            sb.append(" AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb");
+            sb.append(AND).append(PgConstants.COLUMN_HEADER).append(CONTAINS_JSONB);
           }
 
           String type = spec.type();
           if (type != null && !"*".equals(type)) {
-            sb.append(" AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb");
+            sb.append(AND).append(PgConstants.COLUMN_HEADER).append(CONTAINS_JSONB);
           }
 
           if (filterByAggregateIds(spec)) {
-            sb.append(" AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb");
+            sb.append(AND).append(PgConstants.COLUMN_HEADER).append(CONTAINS_JSONB);
           }
 
+          if (filterByAggregateIdProperty(spec)) {
+            sb.append(AND).append("(");
+
+            if (spec.version() != 0) sb.append("(header ->> 'version')::int != ? OR ");
+            sb.append("(true ");
+
+            for (Entry<String, UUID> entry : spec.aggIdProperties().entrySet()) {
+              String exp = calculateJsonbExpressionFromPropertyPath(entry.getKey());
+              sb.append(AND).append("(").append(exp).append(" = ? )");
+            }
+            sb.append("))");
+          }
           Map<String, String> meta = spec.meta();
           meta.forEach(
               (key, value) ->
-                  sb.append(" AND (")
+                  sb.append(AND + "(")
                       .append(PgConstants.COLUMN_HEADER)
                       .append(" @> ?::jsonb OR ") // single
                       .append(PgConstants.COLUMN_HEADER)
@@ -154,14 +204,14 @@ public class PgQueryBuilder {
           Map<String, Boolean> metaKeyExists = spec.metaKeyExists();
           metaKeyExists.forEach(
               (key, value) ->
-                  sb.append(" AND ")
+                  sb.append(AND)
                       .append(Boolean.TRUE.equals(value) ? "" : "NOT ")
                       .append("jsonb_path_exists(" + PgConstants.COLUMN_HEADER + ", ?::jsonpath)"));
-          sb.append(")");
+          sb.append(" )");
           predicates.add(sb.toString());
         });
     String predicatesAsString = String.join(" OR ", predicates);
-    return "( " + predicatesAsString + " ) AND " + PgConstants.COLUMN_SER + ">?";
+    return "( " + predicatesAsString + " ) " + AND + PgConstants.COLUMN_SER + ">?";
   }
 
   public String createSQL() {
@@ -191,26 +241,6 @@ public class PgQueryBuilder {
             + PgConstants.COLUMN_SER
             + " DESC LIMIT 1";
     log.trace("creating state SQL for {} - SQL={}", factSpecs, sql);
-    return sql;
-  }
-
-  public String catchupSQL() {
-    String sql = //
-        "INSERT INTO "
-            + PgConstants.TABLE_CATCHUP
-            + " ("
-            + PgConstants.COLUMN_SER
-            + ") "
-            + "(SELECT "
-            + PgConstants.COLUMN_SER
-            + " FROM "
-            + //
-            PgConstants.TABLE_FACT
-            + " WHERE ("
-            + createWhereClause()
-            + //
-            "))";
-    log.trace("creating catchup-table SQL for {} - SQL={}", factSpecs, sql);
     return sql;
   }
 }

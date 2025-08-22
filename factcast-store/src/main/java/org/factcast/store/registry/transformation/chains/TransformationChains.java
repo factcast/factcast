@@ -34,7 +34,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
-import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
+import org.factcast.core.subscription.MissingTransformationInformationException;
 import org.factcast.store.registry.SchemaRegistry;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.Transformation;

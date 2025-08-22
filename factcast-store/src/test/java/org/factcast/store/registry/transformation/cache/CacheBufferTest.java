@@ -20,12 +20,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.*;
 import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.factcast.store.internal.PgFact;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,7 +43,7 @@ class CacheBufferTest {
 
     @Test
     void get() {
-      Fact f = Fact.builder().ns("ns").buildWithoutPayload();
+      PgFact f = Mockito.mock(PgFact.class);
       underTest.buffer().put(key, f);
       assertThat(underTest.get(key)).isSameAs(f);
     }
@@ -59,14 +59,14 @@ class CacheBufferTest {
 
     @Test
     void put() {
-      Fact f = Fact.builder().ns("ns").buildWithoutPayload();
+      PgFact f = Mockito.mock(PgFact.class);
       underTest.put(cacheKey, f);
       assertThat(underTest.buffer().get(cacheKey)).isSameAs(f);
     }
 
     @Test
     void putNullDoesNotHide() {
-      Fact f = Fact.builder().ns("ns").buildWithoutPayload();
+      PgFact f = Mockito.mock(PgFact.class);
       underTest.put(cacheKey, f);
       underTest.put(cacheKey, null);
       assertThat(underTest.buffer().get(cacheKey)).isSameAs(f);
@@ -83,7 +83,7 @@ class CacheBufferTest {
 
     @Test
     void size() {
-      Fact f = Fact.builder().ns("ns").buildWithoutPayload();
+      PgFact f = Mockito.mock(PgFact.class);
       assertThat(underTest.buffer()).isEmpty();
       underTest.put(cacheKey, f);
       assertThat(underTest.buffer()).hasSize(1);
@@ -118,7 +118,7 @@ class CacheBufferTest {
 
     @Test
     void doesNotHide() {
-      Fact f = Fact.builder().ns("ns").buildWithoutPayload();
+      PgFact f = Mockito.mock(PgFact.class);
       underTest.put(key1, f);
       assertThat(underTest.buffer()).hasSize(1);
       underTest.putAllNull(Set.of(key1, key2, key3));
