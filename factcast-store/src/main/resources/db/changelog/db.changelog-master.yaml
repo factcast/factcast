@@ -474,3 +474,15 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
+  - changeSet:
+      id: issue3900_waitForEarlierTransactions
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue3900/wait_for_earlier_conditional_inserts.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+

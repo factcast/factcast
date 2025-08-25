@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.FactSpec;
@@ -49,7 +50,8 @@ public class PgQueryBuilder {
     this.statementHolder = holder;
   }
 
-  public PreparedStatementSetter createStatementSetter(@NonNull AtomicLong serial) {
+  public PreparedStatementSetter createStatementSetter(
+      @NonNull AtomicLong serial, @Nullable Long toExclusive) {
     return p -> {
       // TODO vulnerable of json injection attack
       int count = 0;
@@ -62,6 +64,10 @@ public class PgQueryBuilder {
         count = setMetaKeyExists(p, count, spec);
       }
       p.setLong(++count, serial.get());
+
+      if (toExclusive != null) {
+        p.setLong(++count, toExclusive);
+      }
 
       if (statementHolder != null) {
         statementHolder.statement(p);
@@ -121,7 +127,7 @@ public class PgQueryBuilder {
     return count;
   }
 
-  private String createWhereClause() {
+  private String createWhereClause(@Nullable Long toExclusive) {
     List<String> predicates = new LinkedList<>();
     factSpecs.forEach(
         spec -> {
@@ -161,17 +167,21 @@ public class PgQueryBuilder {
           predicates.add(sb.toString());
         });
     String predicatesAsString = String.join(" OR ", predicates);
-    return "( " + predicatesAsString + " ) AND " + PgConstants.COLUMN_SER + ">?";
+    String SERPOS = PgConstants.COLUMN_SER + ">?";
+    if (toExclusive != null) {
+      SERPOS += " AND " + PgConstants.COLUMN_SER + "<?";
+    }
+    return "( " + predicatesAsString + " ) AND (" + SERPOS + ")";
   }
 
-  public String createSQL() {
+  public String createSQL(@Nullable Long toExclusive) {
     String sql =
         "SELECT "
             + PgConstants.PROJECTION_FACT
             + " FROM "
             + PgConstants.TABLE_FACT
             + " WHERE "
-            + createWhereClause()
+            + createWhereClause(toExclusive)
             + " ORDER BY "
             + PgConstants.COLUMN_SER
             + " ASC";
@@ -179,14 +189,14 @@ public class PgQueryBuilder {
     return sql;
   }
 
-  public String createStateSQL() {
+  public String createStateSQL(@Nullable Long toExclusive) {
     String sql =
         "SELECT "
             + PgConstants.COLUMN_SER
             + " FROM "
             + PgConstants.TABLE_FACT
             + " WHERE "
-            + createWhereClause()
+            + createWhereClause(toExclusive)
             + " ORDER BY "
             + PgConstants.COLUMN_SER
             + " DESC LIMIT 1";
@@ -207,7 +217,7 @@ public class PgQueryBuilder {
             + //
             PgConstants.TABLE_FACT
             + " WHERE ("
-            + createWhereClause()
+            + createWhereClause(null)
             + //
             "))";
     log.trace("creating catchup-table SQL for {} - SQL={}", factSpecs, sql);
