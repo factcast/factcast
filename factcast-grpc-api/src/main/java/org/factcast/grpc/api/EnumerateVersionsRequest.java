@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2023 factcast.org
+ * Copyright © 2017-2025 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal;
+package org.factcast.grpc.api;
 
-import java.util.UUID;
-import lombok.Data;
+import lombok.NonNull;
+import lombok.Value;
 
-@Data
-public class HighWaterMark {
-  private UUID targetId;
-  private long targetSer;
+@Value
+public class EnumerateVersionsRequest {
+  @NonNull String ns;
+  @NonNull String type;
 }

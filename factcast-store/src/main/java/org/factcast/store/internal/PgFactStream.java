@@ -30,8 +30,9 @@ import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.subscription.observer.*;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
+import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
@@ -39,7 +40,6 @@ import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 
 /**
@@ -47,12 +47,11 @@ import org.springframework.jdbc.core.PreparedStatementSetter;
  *
  * @author <uwe.schaefer@prisma-capacity.eu>
  */
-@SuppressWarnings("UnstableApiUsage")
 @Slf4j
 @RequiredArgsConstructor
 public class PgFactStream {
 
-  final JdbcTemplate jdbcTemplate;
+  final PgConnectionSupplier connectionSupplier;
   final EventBus eventBus;
   final PgFactIdToSerialMapper idToSerMapper;
   final PgLatestSerialFetcher fetcher;
@@ -74,10 +73,10 @@ public class PgFactStream {
   final CurrentStatementHolder statementHolder = new CurrentStatementHolder();
 
   void connect(@NonNull SubscriptionRequestTO request) {
+    this.request = request;
     log.debug("{} connect subscription {}", request, request.dump());
     // signal connect
     telemetry.onConnect(request);
-    this.request = request;
     PgQueryBuilder q = new PgQueryBuilder(request.specs(), statementHolder);
     initializeSerialToStartAfter();
 
@@ -90,8 +89,9 @@ public class PgFactStream {
     PreparedStatementSetter setter = q.createStatementSetter(serial);
     PgSynchronizedQuery query =
         new PgSynchronizedQuery(
+            request.debugInfo(),
             pipeline,
-            jdbcTemplate,
+            connectionSupplier,
             sql,
             setter,
             this::isConnected,
@@ -111,6 +111,12 @@ public class PgFactStream {
 
   @VisibleForTesting
   void catchupAndFollow(SubscriptionRequest request, PgSynchronizedQuery query) {
+
+    // we need to copy and preserve the current highwatermark **before** starting the query
+    // in order not to lose facts by the ffTarget being updated after the phase 2 query, but
+    // before the sending of the ffwd signal (#3722)
+    HighWaterMark atTheStartOfQuery = ffwdTarget.highWaterMark();
+
     if (request.ephemeral()) {
       // just fast forward to the latest event published by now
       serial.set(fetcher.retrieveLatestSer());
@@ -118,7 +124,7 @@ public class PgFactStream {
       catchup();
     }
 
-    fastForward(request);
+    fastForward(atTheStartOfQuery);
 
     // propagate catchup
     if (isConnected()) {
@@ -168,21 +174,17 @@ public class PgFactStream {
   }
 
   @VisibleForTesting
-  void fastForward(SubscriptionRequest request) {
+  void fastForward(@NonNull HighWaterMark atTheStartOfQuery) {
     if (isConnected()) {
 
-      long startedSer = 0;
-      UUID startedId = null;
-      Optional<UUID> startingAfter = request.startingAfter();
-      if (startingAfter.isPresent()) {
-        startedId = startingAfter.get();
-        startedSer = idToSerMapper.retrieve(startedId); // should be cached anyway
-      }
+      UUID targetId = atTheStartOfQuery.targetId();
+      long targetSer = atTheStartOfQuery.targetSer();
 
-      UUID targetId = ffwdTarget.targetId();
-      long targetSer = ffwdTarget.targetSer();
+      // there is no need to check for the start id, as it'll be
+      // contained in serial or smaller, see initializeSerialToStartAfter
 
-      if (targetId != null && (targetSer > startedSer) && serial.get() < targetSer) {
+      if (targetId != null && serial.get() < targetSer) {
+        log.debug("{} sending ffwd to id {} (serial {})", request, targetId, targetSer);
         pipeline.process(Signal.of(FactStreamPosition.of(targetId, targetSer)));
       }
     }

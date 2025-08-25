@@ -46,7 +46,7 @@ public class DeduplicatingEventBus extends AsyncEventBus {
       // no else here, there might be someone else listening to truncations
       String id = sn.uniqueId();
       if (id != null && dedupIdTrail.put(id, DUMMY) != null) {
-        log.debug("Ignoring StoreNotification as duplicate: id={}, notification={}", id, event);
+        log.trace("Ignoring StoreNotification as duplicate: id={}, notification={}", id, event);
         return; // early exit
       }
     }

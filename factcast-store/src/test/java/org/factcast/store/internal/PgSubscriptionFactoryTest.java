@@ -30,6 +30,7 @@ import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
+import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.ServerPipelineFactory;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
@@ -63,6 +64,7 @@ class PgSubscriptionFactoryTest {
 
   @Mock private JSEngineFactory engineFactory;
   @Mock private ServerPipelineFactory pipelineFactory;
+  @Mock private PgConnectionSupplier connectionSupplier;
 
   @Spy private ExecutorService executorService = Executors.newSingleThreadExecutor();
   private PgSubscriptionFactory underTest;
@@ -73,7 +75,7 @@ class PgSubscriptionFactoryTest {
     when(metrics.monitor(any(), anyString())).thenReturn(executorService);
     underTest =
         new PgSubscriptionFactory(
-            jdbcTemplate,
+            connectionSupplier,
             eventBus,
             idToSerialMapper,
             fetcher,

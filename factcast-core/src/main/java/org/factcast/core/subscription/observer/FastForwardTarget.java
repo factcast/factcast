@@ -16,7 +16,6 @@
 package org.factcast.core.subscription.observer;
 
 import java.util.UUID;
-import javax.annotation.Nullable;
 import lombok.Value;
 
 public interface FastForwardTarget {
@@ -25,17 +24,14 @@ public interface FastForwardTarget {
   }
 
   static FastForwardTarget of(UUID id, long ser) {
-    return Impl.of(id, ser);
+    return Impl.of(HighWaterMark.of(id, ser));
   }
 
-  @Nullable
-  UUID targetId();
-
-  long targetSer();
+  // we cannot have single getters for id and ser (race condition)
+  HighWaterMark highWaterMark();
 
   @Value(staticConstructor = "of")
   class Impl implements FastForwardTarget {
-    UUID targetId;
-    long targetSer;
+    HighWaterMark highWaterMark;
   }
 }

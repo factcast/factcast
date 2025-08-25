@@ -18,16 +18,15 @@ package org.factcast.store.internal;
 import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
-import java.sql.Connection;
-import javax.sql.DataSource;
 import lombok.SneakyThrows;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.subscription.observer.*;
 import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.filter.blacklist.Blacklist;
+import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
@@ -35,10 +34,14 @@ import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+@ExtendWith(MockitoExtension.class)
 class PgFactStreamTelemetryTest {
+
   @Mock JdbcTemplate jdbcTemplate;
   @Mock EventBus eventBus;
   @Mock PgFactIdToSerialMapper idToSerMapper;
@@ -52,22 +55,33 @@ class PgFactStreamTelemetryTest {
   @Mock ServerPipeline serverPipeline;
   @Mock JSEngineFactory ef;
   @Mock PgStoreTelemetry telemetry;
-  @Mock DataSource dataSource;
 
-  @InjectMocks PgFactStream uut;
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  PgConnectionSupplier connectionSupplier;
+
+  PgFactStream uut;
 
   @BeforeEach
   void setUp() {
-    MockitoAnnotations.openMocks(this);
+    uut =
+        new PgFactStream(
+            connectionSupplier,
+            eventBus,
+            idToSerMapper,
+            fetcher,
+            pgCatchupFactory,
+            ffwdTarget,
+            serverPipeline,
+            telemetry);
   }
 
   @Test
   void postsTelemetryOnCatchup() {
     var req = mock(SubscriptionRequestTO.class);
-    when(jdbcTemplate.getDataSource()).thenReturn(dataSource);
+    when(req.debugInfo()).thenReturn("test");
     when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any()))
         .thenReturn(mock(PgCatchup.class));
-
+    when(ffwdTarget.highWaterMark()).thenReturn(HighWaterMark.empty());
     uut.connect(req);
 
     InOrder inOrder = inOrder(telemetry);
@@ -81,10 +95,10 @@ class PgFactStreamTelemetryTest {
   void postsTelemetryOnFollow() {
     var req = mock(SubscriptionRequestTO.class);
     when(req.continuous()).thenReturn(true);
-    when(jdbcTemplate.getDataSource()).thenReturn(dataSource);
-    when(dataSource.getConnection()).thenReturn(mock(Connection.class));
+    when(req.debugInfo()).thenReturn("test");
     when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any()))
         .thenReturn(mock(PgCatchup.class));
+    when(ffwdTarget.highWaterMark()).thenReturn(HighWaterMark.empty());
 
     uut.connect(req);
 
@@ -99,10 +113,11 @@ class PgFactStreamTelemetryTest {
   void postsTelemetryOnClose() {
     var req = mock(SubscriptionRequestTO.class);
     when(req.continuous()).thenReturn(true);
-    when(jdbcTemplate.getDataSource()).thenReturn(dataSource);
-    when(dataSource.getConnection()).thenReturn(mock(Connection.class));
+    when(req.debugInfo()).thenReturn("test");
     when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any()))
         .thenReturn(mock(PgCatchup.class));
+    when(ffwdTarget.highWaterMark()).thenReturn(HighWaterMark.empty());
+
     uut.connect(req);
 
     uut.close();

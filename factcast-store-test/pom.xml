@@ -6,10 +6,11 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.9.8</version>
+    <version>0.9.10</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-store-test</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
   <properties>
     <sonar.skip>true</sonar.skip>
   </properties>

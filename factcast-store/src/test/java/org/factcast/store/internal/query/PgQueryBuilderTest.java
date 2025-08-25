@@ -107,8 +107,6 @@ class PgQueryBuilderTest {
 
   @Nested
   class WhenCreatingSQL {
-    @BeforeEach
-    void setup() {}
 
     @Test
     void happyPath() {
@@ -145,8 +143,6 @@ class PgQueryBuilderTest {
 
   @Nested
   class WhenCreatingStateSQL {
-    @BeforeEach
-    void setup() {}
 
     @Test
     void happyPath() {
@@ -177,8 +173,6 @@ class PgQueryBuilderTest {
 
   @Nested
   class WhenCatchupingSQL {
-    @BeforeEach
-    void setup() {}
 
     @Test
     void happyPath() {

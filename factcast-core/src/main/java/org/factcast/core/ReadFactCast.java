@@ -58,6 +58,9 @@ public interface ReadFactCast {
   @NonNull
   Set<String> enumerateTypes(@NonNull String ns);
 
+  @NonNull
+  Set<Integer> enumerateVersions(@NonNull String ns, @NonNull String type);
+
   /**
    * Internal API: subject to change - use at your own risk
    *

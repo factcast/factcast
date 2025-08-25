@@ -6,10 +6,11 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast-examples</artifactId>
-    <version>0.9.8</version>
+    <version>0.9.10</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-example-server-ui-s3-reports</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
   <dependencyManagement>
     <dependencies>
       <!-- note: the order is important here! -->
@@ -60,7 +61,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>localstack</artifactId>
-      <version>1.21.0</version>
+      <version>1.21.3</version>
     </dependency>
   </dependencies>
   <build>

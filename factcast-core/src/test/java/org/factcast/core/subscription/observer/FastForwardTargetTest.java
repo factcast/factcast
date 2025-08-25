@@ -41,10 +41,10 @@ class FastForwardTargetTest {
     @Test
     void passesValues() {
       assertThat(FastForwardTarget.of(ID, SER))
-          .extracting(FastForwardTarget::targetId)
+          .extracting(f -> f.highWaterMark().targetId())
           .isEqualTo(ID);
       assertThat(FastForwardTarget.of(ID, SER))
-          .extracting(FastForwardTarget::targetSer)
+          .extracting(f -> f.highWaterMark().targetSer())
           .isEqualTo(SER);
     }
   }

@@ -107,7 +107,7 @@ public class PgQueryBuilder {
 
   private int setType(PreparedStatement p, int count, FactSpec spec) throws SQLException {
     String type = spec.type();
-    if (type != null) {
+    if (type != null && !"*".equals(type)) {
       p.setString(++count, "{\"type\": \"" + type + "\"}");
     }
     return count;
@@ -134,7 +134,7 @@ public class PgQueryBuilder {
           }
 
           String type = spec.type();
-          if (type != null) {
+          if (type != null && !"*".equals(type)) {
             sb.append(" AND ").append(PgConstants.COLUMN_HEADER).append(" @> ?::jsonb");
           }
 

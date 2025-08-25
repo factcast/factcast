@@ -18,6 +18,7 @@ package org.factcast.store.internal;
 import java.util.Random;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.factcast.store.StoreConfigurationProperties;
 
 /**
  * String constants mainly used in SQL-Statement creation
@@ -35,6 +36,8 @@ public class PgConstants {
   public static final String TABLE_FACT = "fact";
 
   public static final String TABLE_DATE2SERIAL = "date2serial";
+
+  public static final String TABLE_PUBLISHED_SCHEMA_VERSIONS = "published_schema_versions";
 
   public static final String TAIL_INDEX_NAME_PREFIX = "idx_fact_tail_";
 
@@ -227,18 +230,13 @@ public class PgConstants {
 
   public static final String SELECT_DISTINCT_NAMESPACE =
       "SELECT DISTINCT("
-          + COLUMN_HEADER
-          + "->>'"
           + ALIAS_NS
-          + "') "
-          + ALIAS_NS
+          + ") "
           + " FROM "
-          + TABLE_FACT
-          + " WHERE "
-          + COLUMN_HEADER
-          + "->>'"
+          + TABLE_PUBLISHED_SCHEMA_VERSIONS
+          + " WHERE ("
           + ALIAS_NS
-          + "' IS NOT NULL";
+          + ") IS NOT NULL";
 
   /**
    * discourages the use of seq scan, if any other alternative is possible (force preferring an
@@ -254,21 +252,27 @@ public class PgConstants {
 
   public static final String SELECT_DISTINCT_TYPE_IN_NAMESPACE =
       "SELECT DISTINCT("
-          + COLUMN_HEADER
-          + "->>'"
           + ALIAS_TYPE
-          + "') "
-          + " FROM "
-          + TABLE_FACT
+          + ") FROM "
+          + TABLE_PUBLISHED_SCHEMA_VERSIONS
           + " WHERE ("
-          + COLUMN_HEADER
-          + "->>'"
           + ALIAS_NS
-          + "')=? AND ( "
-          + COLUMN_HEADER
-          + "->>'"
+          + ")=? AND ("
           + ALIAS_TYPE
-          + "') IS NOT NULL";
+          + ") IS NOT NULL";
+
+  public static final String SELECT_DISTINCT_VERSIONS_FOR_NS_AND_TYPE =
+      "SELECT DISTINCT("
+          + ALIAS_VERSION
+          + ") FROM "
+          + TABLE_PUBLISHED_SCHEMA_VERSIONS
+          + " WHERE ("
+          + ALIAS_NS
+          + ")=? AND ("
+          + ALIAS_TYPE
+          + ") IS NOT NULL AND ("
+          + ALIAS_TYPE
+          + ")=?";
 
   public static final String SELECT_SER_BY_ID =
       "SELECT "
@@ -325,14 +329,29 @@ public class PgConstants {
     return PgConstants.COLUMN_HEADER + "->>'" + attributeName + "' AS " + attributeName;
   }
 
-  public static String createTailIndex(String indexName, long ser) {
+  public static String createTailIndex(
+      @NonNull String indexName, long ser, @NonNull StoreConfigurationProperties props) {
+
+    StringBuilder with = new StringBuilder();
+
+    if (props.isTailIndexingFastUpdateEnabled()) {
+      with.append(" WITH (");
+      with.append("gin_pending_list_limit = ");
+      with.append(props.getTailIndexingPendingListLimit());
+      with.append(", fastupdate = true ) ");
+    } else {
+      with.append(" WITH (fastupdate = false) ");
+    }
+
     return "create index concurrently "
         + indexName
         + " on "
         + TABLE_FACT
         + " using GIN("
         + COLUMN_HEADER
-        + " jsonb_path_ops) WITH (gin_pending_list_limit = 16384 , fastupdate = true)  WHERE "
+        + " jsonb_path_ops) "
+        + with.toString()
+        + " WHERE "
         + COLUMN_SER
         + ">"
         + ser;
