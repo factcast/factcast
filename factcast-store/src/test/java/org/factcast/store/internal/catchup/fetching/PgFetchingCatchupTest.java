@@ -19,8 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 import io.micrometer.core.instrument.Counter;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -30,35 +29,32 @@ import org.factcast.core.subscription.*;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.StoreMetrics;
-import org.factcast.store.internal.listen.PgConnectionSupplier;
+import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.quality.Strictness;
-import org.postgresql.jdbc.PgConnection;
 import org.postgresql.util.PSQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
+import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 @ExtendWith(MockitoExtension.class)
 class PgFetchingCatchupTest {
-
-  @Mock @NonNull PgConnectionSupplier connectionSupplier;
 
   @Mock(strictness = Mock.Strictness.LENIENT)
   @NonNull
   StoreConfigurationProperties props;
 
-  @Mock @NonNull SubscriptionRequestTO req;
-  @Mock @NonNull AtomicLong serial;
+  @Mock(strictness = Mock.Strictness.LENIENT)
+  SubscriptionRequestTO req;
+
   @Mock @NonNull CurrentStatementHolder statementHolder;
   @Mock @NonNull ServerPipeline pipeline;
 
@@ -67,7 +63,17 @@ class PgFetchingCatchupTest {
   PgMetrics metrics;
 
   @Mock @NonNull Counter counter;
+
+  @Mock @NonNull Connection c;
+  @Mock @NonNull AtomicLong serial;
+  @Mock @NonNull PgConnectionSupplier connectionSupplier;
+  @Mock SingleConnectionDataSource ds;
+
   @InjectMocks PgFetchingCatchup underTest;
+
+  @SneakyThrows
+  @BeforeEach
+  void setup() {}
 
   @Nested
   class WhenRunning {
@@ -75,26 +81,34 @@ class PgFetchingCatchupTest {
     @SneakyThrows
     @Test
     void connectionHandling() {
-      PgConnection con = mock(PgConnection.class);
-      when(connectionSupplier.getPooledConnection(any())).thenReturn(con);
 
-      var uut = spy(underTest);
+      when(req.debugInfo()).thenReturn("appName");
+      when(connectionSupplier.getPooledAsSingleDataSource(any(ConnectionModifier[].class)))
+          .thenReturn(ds);
+      var uut =
+          spy(
+              new PgFetchingCatchup(
+                  connectionSupplier, props, req, pipeline, serial, statementHolder));
       doNothing().when(uut).fetch(any());
-
       uut.run();
 
-      verify(con).setAutoCommit(false);
-      verify(con).close();
+      verify(connectionSupplier)
+          .getPooledAsSingleDataSource(
+              ConnectionModifier.withAutoCommitDisabled(),
+              ConnectionModifier.withApplicationName(req.debugInfo()));
     }
 
     @SneakyThrows
     @Test
     void removesCurrentStatement() {
-      PgConnection con = mock(PgConnection.class);
-      when(connectionSupplier.getPooledConnection(any())).thenReturn(con);
-      var uut = spy(underTest);
+      when(req.debugInfo()).thenReturn("appName");
+      when(connectionSupplier.getPooledAsSingleDataSource(any(ConnectionModifier[].class)))
+          .thenReturn(ds);
+      var uut =
+          spy(
+              new PgFetchingCatchup(
+                  connectionSupplier, props, req, pipeline, serial, statementHolder));
       doNothing().when(uut).fetch(any());
-
       uut.run();
 
       verify(statementHolder).clear();
@@ -107,7 +121,7 @@ class PgFetchingCatchupTest {
 
     @BeforeEach
     void setup() {
-      Mockito.when(props.getPageSize()).thenReturn(47);
+      when(props.getPageSize()).thenReturn(47);
       when(metrics.counter(StoreMetrics.EVENT.FACTS_SENT)).thenReturn(counter);
     }
 

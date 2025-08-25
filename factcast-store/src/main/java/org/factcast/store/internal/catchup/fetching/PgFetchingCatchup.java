@@ -16,7 +16,6 @@
 package org.factcast.store.internal.catchup.fetching;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.sql.Connection;
 import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +25,7 @@ import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchup;
-import org.factcast.store.internal.listen.PgConnectionSupplier;
+import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
@@ -35,7 +34,6 @@ import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.postgresql.util.PSQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
-import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -56,21 +54,14 @@ public class PgFetchingCatchup implements PgCatchup {
   @SneakyThrows
   @Override
   public void run() {
-    Connection connection = connectionSupplier.getPooledConnection(req.debugInfo());
-    SingleConnectionDataSource ds = new SingleConnectionDataSource(connection, false);
-    // DO NOT use try-with-resources here
-    try {
-      connection.setAutoCommit(false); // necessary for using cursors
+    try (var ds =
+        connectionSupplier.getPooledAsSingleDataSource(
+            ConnectionModifier.withAutoCommitDisabled(),
+            ConnectionModifier.withApplicationName(req.debugInfo())); ) {
       var jdbc = new JdbcTemplate(ds);
       fetch(jdbc);
     } finally {
       statementHolder.clear();
-
-      // resetting the connection to its initial state
-      connection.setAutoCommit(true);
-      connectionSupplier.resetConnectionApplicationName(connection);
-      // closing the DS will "close" (and by this return) the connection to the pool.
-      ds.close();
 
       log.trace("Done fetching, flushing.");
       pipeline.process(Signal.flush());

@@ -20,6 +20,7 @@ import com.google.common.cache.*;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import java.io.Closeable;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.*;
@@ -220,4 +221,15 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
    */
   @NonNull
   FactStore store();
+
+  /**
+   * @return Current time as Instant from the factstore.
+   *     <p>Can be used to synchronize across clients (e.g. to decide if it is too late to publish a
+   *     certain event)
+   * @since 0.10.0
+   */
+  @NonNull
+  default Instant currentTime() {
+    return Instant.ofEpochMilli(store().currentTime());
+  }
 }

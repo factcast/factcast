@@ -15,25 +15,25 @@
  */
 package org.factcast.store.internal;
 
+import com.google.common.collect.Lists;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
+import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.postgresql.util.PSQLException;
 import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.PreparedStatementSetter;
-import org.springframework.jdbc.core.RowCallbackHandler;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.jdbc.core.*;
+import org.springframework.jdbc.datasource.*;
 
 /**
  * executes a query in a synchronized fashion, to make sure, results are processed in order as well
@@ -52,36 +52,36 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Slf4j
 class PgSynchronizedQuery {
 
-  @NonNull final JdbcTemplate jdbcTemplate;
-
   @NonNull final String sql;
 
   @NonNull final PreparedStatementSetter setter;
 
   @NonNull final RowCallbackHandler rowHandler;
 
-  @NonNull final TransactionTemplate transactionTemplate;
-
+  @NonNull final String debugInfo;
   @NonNull final ServerPipeline pipe;
   @NonNull final AtomicLong serialToContinueFrom;
 
   @NonNull final PgLatestSerialFetcher latestFetcher;
 
   @NonNull final CurrentStatementHolder statementHolder;
+  private final @NonNull PgConnectionSupplier connectionSupplier;
 
   PgSynchronizedQuery(
+      @NonNull String debugInfo,
       @NonNull ServerPipeline pipe,
-      @NonNull JdbcTemplate jdbcTemplate,
+      @NonNull PgConnectionSupplier connectionSupplier,
       @NonNull String sql,
       @NonNull PreparedStatementSetter setter,
       @NonNull Supplier<Boolean> isConnected,
       @NonNull AtomicLong serialToContinueFrom,
       @NonNull PgLatestSerialFetcher fetcher,
       @NonNull CurrentStatementHolder statementHolder) {
+    this.debugInfo = debugInfo;
     this.pipe = pipe;
     this.serialToContinueFrom = serialToContinueFrom;
     latestFetcher = fetcher;
-    this.jdbcTemplate = jdbcTemplate;
+    this.connectionSupplier = connectionSupplier;
     this.sql = sql;
     this.setter = setter;
     this.statementHolder = statementHolder;
@@ -89,37 +89,24 @@ class PgSynchronizedQuery {
     rowHandler =
         new PgSynchronizedQuery.FactRowCallbackHandler(
             pipe, isConnected, serialToContinueFrom, statementHolder);
-
-    // noinspection ConstantConditions
-    DataSourceTransactionManager transactionManager =
-        new DataSourceTransactionManager(jdbcTemplate.getDataSource());
-    transactionTemplate = new TransactionTemplate(transactionManager);
   }
 
   // the synchronized here is crucial!
   @SuppressWarnings("SameReturnValue")
   public synchronized void run(boolean useIndex) {
-    // TODO recheck latest handling - looks b0rken
-    long latest = latestFetcher.retrieveLatestSer();
-    try {
-      transactionTemplate.execute(
-          status -> {
-            if (!useIndex) {
-              jdbcTemplate.execute("SET LOCAL enable_bitmapscan=0;");
-            }
-
-            jdbcTemplate.query(
-                sql,
-                ps -> {
-                  statementHolder.statement(ps);
-                  setter.setValues(ps);
-                },
-                rowHandler);
-
-            pipe.process(Signal.flush());
-
-            return null;
-          });
+    List<ConnectionModifier> filters =
+        Lists.newArrayList(ConnectionModifier.withApplicationName(debugInfo));
+    if (!useIndex) filters.add(ConnectionModifier.withBitmapScanDisabled());
+    try (SingleConnectionDataSource ds = connectionSupplier.getPooledAsSingleDataSource(filters)) {
+      long latest = latestFetcher.retrieveLatestSer();
+      new JdbcTemplate(ds)
+          .query(
+              sql,
+              ps -> {
+                statementHolder.statement(ps);
+                setter.setValues(ps);
+              },
+              rowHandler);
 
       // shift to max(retrievedLatestSer, and ser as updated in
       // rowHandler)
@@ -131,6 +118,9 @@ class PgSynchronizedQuery {
       } else {
         throw e;
       }
+    } finally {
+      statementHolder.clear();
+      pipe.process(Signal.flush());
     }
   }
 

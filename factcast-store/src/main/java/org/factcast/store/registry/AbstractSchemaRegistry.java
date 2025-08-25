@@ -277,4 +277,20 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
         .map(SchemaKey::type)
         .collect(Collectors.toSet());
   }
+
+  /**
+   * This method queries the schema store directly for all the SchemaKeys and doesn't use the
+   * schemaNearCache
+   *
+   * @param ns to filter keys for
+   * @param type to filter keys for
+   * @return the set of all versions for the given Namespace and Type
+   */
+  @Override
+  public Set<Integer> enumerateVersions(String ns, String type) {
+    return schemaStore.getAllSchemaKeys().stream()
+        .filter(sk -> ns.equals(sk.ns()) && type.equals(sk.type()))
+        .map(SchemaKey::version)
+        .collect(Collectors.toSet());
+  }
 }

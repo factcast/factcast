@@ -22,6 +22,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
@@ -41,11 +42,14 @@ import org.factcast.factus.lock.LockedOnSpecs;
 import org.factcast.factus.projection.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class FactusTest {
+
+  @Mock FactStore mockedStore;
 
   private final Factus underTest =
       spy(
@@ -140,7 +144,7 @@ class FactusTest {
 
             @Override
             public FactStore store() {
-              return null;
+              return mockedStore;
             }
           });
 
@@ -345,6 +349,20 @@ class FactusTest {
       // considering that the pipeline might be slower than the local environment
       verify(subscribedProjectionMock, atLeast(1)).factStreamPosition();
       verify(subscribedProjectionMock, atMost(3)).factStreamPosition();
+    }
+  }
+
+  @Nested
+  class ClockTests {
+    @Test
+    void testEpochSeconds() {
+      // INIT
+      long epochMilli = 1_234;
+      Instant now = Instant.ofEpochMilli(epochMilli);
+      when(mockedStore.currentTime()).thenReturn(epochMilli);
+
+      // RUN / ASSERT
+      assertThat(underTest.currentTime()).isEqualTo(now);
     }
   }
 }

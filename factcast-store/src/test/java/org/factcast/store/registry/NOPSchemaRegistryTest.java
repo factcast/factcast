@@ -82,6 +82,12 @@ public class NOPSchemaRegistryTest {
   }
 
   @Test
+  void enumerateVersionsIsEmpty() {
+    NOPSchemaRegistry uut = new NOPSchemaRegistry();
+    assertThat(uut.enumerateVersions("ns", "type")).isEmpty();
+  }
+
+  @Test
   void isNotActive() {
     assertThat(new NOPSchemaRegistry().isActive()).isFalse();
   }

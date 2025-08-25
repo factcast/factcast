@@ -6,11 +6,12 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.9.9</version>
+    <version>0.9.11-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
   <artifactId>factcast-server-security</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
 
   <dependencyManagement>
     <dependencies>

@@ -44,10 +44,7 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.util.MavenHelper;
-import org.factcast.grpc.api.Capabilities;
-import org.factcast.grpc.api.CompressionCodecs;
-import org.factcast.grpc.api.ConditionalPublishRequest;
-import org.factcast.grpc.api.Headers;
+import org.factcast.grpc.api.*;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.conv.ProtocolVersion;
 import org.factcast.grpc.api.conv.ServerConfig;
@@ -65,7 +62,7 @@ import org.springframework.beans.factory.annotation.Value;
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Slf4j
 public class GrpcFactStore implements FactStore {
-  public static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 7, 0);
+  public static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 8, 0);
 
   private final CompressionCodecs codecs = new CompressionCodecs();
 
@@ -389,6 +386,17 @@ public class GrpcFactStore implements FactStore {
   public Set<String> enumerateTypes(@NonNull String ns) {
     return callAndHandle(
         () -> converter.fromProto(stubs.blocking().enumerateTypes(converter.toProto(ns))));
+  }
+
+  @Override
+  @NonNull
+  public Set<Integer> enumerateVersions(@NonNull String ns, @NonNull String type) {
+    return callAndHandle(
+        () ->
+            converter.fromProtoIntSet(
+                stubs
+                    .blocking()
+                    .enumerateVersions(converter.toProto(new EnumerateVersionsRequest(ns, type)))));
   }
 
   @Override

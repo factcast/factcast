@@ -28,7 +28,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.*;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
@@ -66,11 +66,10 @@ public class CommonSecurityConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  @ConditionalOnResource(resources = "file:./config/" + FACTCAST_ACCESS_JSON)
+  @ConditionalOnResource(resources = "file:./config" + FACTCAST_ACCESS_JSON)
   public FactCastAccessConfiguration authenticationConfigViaConfig(
       FactCastSecretProperties accessSecrets) throws IOException {
-    ClassPathResource access = new ClassPathResource("file:./config/" + FACTCAST_ACCESS_JSON);
-
+    Resource access = new FileUrlResource("./config" + FACTCAST_ACCESS_JSON);
     return parseAccessConfiguration(accessSecrets, access);
   }
 
@@ -135,7 +134,7 @@ public class CommonSecurityConfiguration {
   }
 
   private static FactCastAccessConfiguration parseAccessConfiguration(
-      FactCastSecretProperties accessSecrets, ClassPathResource access) throws IOException {
+      FactCastSecretProperties accessSecrets, Resource access) throws IOException {
     try (InputStream is = access.getInputStream()) {
       FactCastAccessConfiguration cfg = FactCastAccessConfiguration.read(is);
 

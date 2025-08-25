@@ -328,6 +328,22 @@ class GrpcFactStoreTest {
   }
 
   @Test
+  void testEnumerateVersionsPropagatesRetryableExceptionOnUnavailableStatus() {
+    when(blockingStub.enumerateVersions(any()))
+        .thenThrow(new StatusRuntimeException(Status.UNAVAILABLE));
+    assertThrows(RetryableException.class, () -> uut.enumerateVersions("ns", "type"));
+  }
+
+  @Test
+  void testEnumerateVersions() {
+    HashSet<Integer> types = Sets.newHashSet(1, 2);
+    when(blockingStub.enumerateVersions(any())).thenReturn(conv.toProtoIntSet(types));
+    Set<Integer> enumerateVersions = uut.enumerateVersions("ns", "type");
+    assertEquals(types, enumerateVersions);
+    assertNotSame(types, enumerateVersions);
+  }
+
+  @Test
   void testCompatibleProtocolVersion() {
     when(blockingStub.withInterceptors(any())).thenReturn(blockingStub);
     when(blockingStub.handshake(any()))

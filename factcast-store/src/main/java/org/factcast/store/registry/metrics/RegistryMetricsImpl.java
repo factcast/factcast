@@ -19,6 +19,7 @@ import com.google.common.base.Stopwatch;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.*;
 import lombok.NonNull;
 import org.factcast.core.util.RunnableWithException;
@@ -29,6 +30,8 @@ public class RegistryMetricsImpl implements RegistryMetrics, InitializingBean {
   public static final String METRIC_NAME_TIMINGS = "factcast.registry.timer";
 
   public static final String METRIC_NAME_COUNTS = "factcast.registry.meter";
+
+  public static final String METRIC_NAME_GAUGE = "factcast.registry.gauge";
 
   public static final String TAG_NAME_KEY = "name";
 
@@ -48,6 +51,12 @@ public class RegistryMetricsImpl implements RegistryMetrics, InitializingBean {
     var t = Tags.of(Tag.of(TAG_NAME_KEY, op.op())).and(tags);
 
     return meterRegistry.timer(METRIC_NAME_TIMINGS, t);
+  }
+
+  private AtomicLong gauge(@NonNull GAUGE gauge, Tags tags, @NonNull AtomicLong value) {
+    var t = Tags.of(Tag.of(TAG_NAME_KEY, gauge.metric())).and(tags);
+
+    return meterRegistry.gauge(METRIC_NAME_GAUGE, t, value);
   }
 
   @Override
@@ -142,6 +151,11 @@ public class RegistryMetricsImpl implements RegistryMetrics, InitializingBean {
   @Override
   public void count(@NonNull EVENT event) {
     count(event, Tags.empty());
+  }
+
+  @Override
+  public AtomicLong gauge(@NonNull GAUGE gauge, AtomicLong value) {
+    return gauge(gauge, Tags.empty(), value);
   }
 
   @Override

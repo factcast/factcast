@@ -222,18 +222,18 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
 
   @VisibleForTesting
   @SneakyThrows
-  protected CloseableJdbcTemplate buildTemplate() {
+  protected ClosingJdbcTemplate buildTemplate() {
     var singleConnectionDataSource =
         new SingleConnectionDataSource(
             pgConnectionSupplier.getUnpooledConnection("tail-index-maintenance"), true);
-    return new CloseableJdbcTemplate(singleConnectionDataSource);
+    return new ClosingJdbcTemplate(singleConnectionDataSource);
   }
 
   @VisibleForTesting
-  protected static class CloseableJdbcTemplate extends JdbcTemplate implements AutoCloseable {
+  protected static class ClosingJdbcTemplate extends JdbcTemplate implements AutoCloseable {
     private final SingleConnectionDataSource singleConnectionDataSource;
 
-    public CloseableJdbcTemplate(SingleConnectionDataSource dataSource) {
+    public ClosingJdbcTemplate(SingleConnectionDataSource dataSource) {
       super(dataSource);
       this.singleConnectionDataSource = dataSource;
     }
