@@ -16,7 +16,6 @@
 package org.factcast.store.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
@@ -71,11 +70,6 @@ class PgFactStreamTest {
   @BeforeEach
   void setup() {
     MockitoAnnotations.openMocks(this);
-  }
-
-  @Test
-  public void testConnectNullParameter() {
-    assertThrows(NullPointerException.class, () -> uut.connect(null));
   }
 
   @SuppressWarnings({"unused", "UnstableApiUsage"})
@@ -342,7 +336,6 @@ class PgFactStreamTest {
     @Test
     void fromScratch() {
       when(reqTo.startingAfter()).thenReturn(Optional.empty());
-      uut.request = reqTo;
       uut.initializeSerialToStartAfter();
       assertThat(uut.serial()).hasValue(0);
     }
@@ -352,7 +345,6 @@ class PgFactStreamTest {
       UUID id = UUID.randomUUID();
       when(reqTo.startingAfter()).thenReturn(Optional.of(id));
       when(id2ser.retrieve(id)).thenReturn(123L);
-      uut.request = reqTo;
       uut.initializeSerialToStartAfter();
       assertThat(uut.serial()).hasValue(123L);
     }
@@ -362,7 +354,6 @@ class PgFactStreamTest {
       UUID id = UUID.randomUUID();
       when(reqTo.startingAfter()).thenReturn(Optional.of(id));
       when(id2ser.retrieve(id)).thenReturn(0L);
-      uut.request = reqTo;
       uut.initializeSerialToStartAfter();
       assertThat(uut.serial()).hasValue(0);
     }
