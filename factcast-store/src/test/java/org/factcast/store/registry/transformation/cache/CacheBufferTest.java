@@ -20,18 +20,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.*;
 import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.factcast.store.registry.NOPRegistryMetrics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class CacheBufferTest {
   @Mock private Object mutex;
   @Mock private Map<TransformationCache.Key, Fact> buffer;
+  @Spy private NOPRegistryMetrics registryMetrics = new NOPRegistryMetrics();
   @InjectMocks private CacheBuffer underTest;
 
   @Nested
@@ -50,7 +53,7 @@ class CacheBufferTest {
   }
 
   @Nested
-  class WhenPuting {
+  class WhenPutting {
     @Mock private TransformationCache.@NonNull Key cacheKey;
     @Mock private Fact factOrNull;
 
@@ -91,19 +94,50 @@ class CacheBufferTest {
   }
 
   @Nested
-  class WhenClearing {
+  class WhenClearingAfter {
     @Mock private TransformationCache.@NonNull Key cacheKey;
     @Mock private Fact factOrNull;
 
-    @BeforeEach
-    void setup() {}
+    @Test
+    void clears() {
+      underTest.put(cacheKey, factOrNull);
+      assertThat(underTest.buffer()).hasSize(1);
+      underTest.clearAfter(bufferCopy -> assertThat(bufferCopy).hasSize(1));
+      assertThat(underTest.buffer()).isEmpty();
+      assertThat(underTest.flushingBuffer()).isEmpty();
+      assertThat(underTest.get(cacheKey)).isNull();
+      assertThat(underTest.bufferSizeMetric().get()).isEqualTo(1);
+      assertThat(underTest.flushingBufferSizeMetric().get()).isEqualTo(1);
+    }
 
     @Test
-    void clear() {
-      underTest.put(cacheKey, null);
+    void ensuresConsistentRead() {
+      underTest.put(cacheKey, factOrNull);
       assertThat(underTest.buffer()).hasSize(1);
-      assertThat(underTest.clear()).hasSize(1);
+      underTest.clearAfter(
+          bufferCopy -> {
+            assertThat(bufferCopy).hasSize(1);
+            assertThat(underTest.buffer()).isEmpty();
+            assertThat(underTest.flushingBuffer()).hasSize(1);
+            // ensure consistent read while processing the buffer
+            assertThat(underTest.get(cacheKey)).isEqualTo(factOrNull);
+          });
+    }
+
+    @Test
+    void propagatesConsumerExceptionAndClearsBuffers() {
+      underTest.put(cacheKey, factOrNull);
+      assertThat(underTest.buffer()).hasSize(1);
+      try {
+        underTest.clearAfter(
+            bufferCopy -> {
+              throw new RuntimeException("testing");
+            });
+      } catch (RuntimeException e) {
+        assertThat(e).hasMessage("testing");
+      }
       assertThat(underTest.buffer()).isEmpty();
+      assertThat(underTest.flushingBuffer()).isEmpty();
     }
   }
 
