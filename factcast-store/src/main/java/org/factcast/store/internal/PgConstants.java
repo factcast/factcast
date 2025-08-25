@@ -293,7 +293,7 @@ public class PgConstants {
       "SELECT " + COLUMN_NAMESPACE + " FROM " + TABLE_TOKENSTORE + " WHERE " + COLUMN_TOKEN + "=?";
 
   public static final String LAST_SERIAL_IN_LOG =
-      "SELECT COALESCE(MAX(" + COLUMN_SER + "),0) from " + TABLE_FACT;
+      "SELECT COALESCE(MAX(" + COLUMN_SER + "),0) FROM " + TABLE_FACT;
   public static final String HIGHWATER_MARK =
       "SELECT ("
           + COLUMN_HEADER
@@ -303,27 +303,19 @@ public class PgConstants {
           + TABLE_FACT
           + " WHERE "
           + COLUMN_SER
-          + "=(SELECT max("
+          + "=(SELECT MAX("
           + COLUMN_SER
           + ") FROM "
           + TABLE_FACT
           + ")";
 
-  public static final String HIGHWATER_SERIAL = "SELECT max(" + COLUMN_SER + ") FROM " + TABLE_FACT;
+  public static final String HIGHWATER_SERIAL = "SELECT MAX(" + COLUMN_SER + ") FROM " + TABLE_FACT;
 
   public static final String LAST_SERIAL_BEFORE_DATE =
-      "SELECT COALESCE(max(lastSer),0) AS lastSer FROM "
-          + TABLE_DATE2SERIAL
-          + " where factDate < ?";
+      "SELECT COALESCE(MIN(firstser),0)-1 FROM " + TABLE_DATE2SERIAL + " WHERE factDate >= ?";
 
   public static final String FIRST_SERIAL_AFTER_DATE =
-      "SELECT COALESCE("
-          + "(SELECT MIN(lastSer) FROM "
-          + TABLE_DATE2SERIAL
-          + " WHERE factDate > ?), "
-          + "(SELECT MAX(lastSer) FROM "
-          + TABLE_DATE2SERIAL
-          + "))";
+      "SELECT MIN(firstser) FROM " + TABLE_DATE2SERIAL + " WHERE factDate >= ?";
 
   private static String fromHeader(String attributeName) {
     return PgConstants.COLUMN_HEADER + "->>'" + attributeName + "' AS " + attributeName;
