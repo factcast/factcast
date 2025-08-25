@@ -328,7 +328,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
     if (meta != null) {
       newId = meta.clientId().map(id -> id + "|").orElse("") + newId;
     }
-    log.debug("{}subscribing {}", clientIdPrefix(), newId);
+    log.debug("{}subscribing {} for {} ", clientIdPrefix(), newId, req);
     req.debugInfo(newId);
   }
 
