@@ -17,31 +17,28 @@ package org.factcast.example.client.mongodb.hello;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import java.util.List;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.factcast.example.client.mongodb.hello.events.UserChangedV1;
 import org.factcast.example.client.mongodb.hello.events.UserCreatedV1;
 import org.factcast.factus.Handler;
-import org.factcast.factus.mongodb.AbstractMongoDbManagedProjection;
+import org.factcast.factus.mongodb.AbstractMongoDbSubscribedProjection;
 import org.factcast.factus.serializer.ProjectionMetaData;
+import org.springframework.stereotype.Component;
 
-@ProjectionMetaData(revision = 1)
 @Slf4j
-public class MongoDbProjection extends AbstractMongoDbManagedProjection {
+@Component
+@ProjectionMetaData(revision = 1)
+public class MongoDbSubscribedProjection extends AbstractMongoDbSubscribedProjection {
 
   private final MongoCollection<UserSchema> userTable;
 
-  public MongoDbProjection(@NonNull MongoDatabase mongoDatabase) {
+  public MongoDbSubscribedProjection(@NonNull MongoDatabase mongoDatabase) {
 
     super(mongoDatabase);
 
-    userTable = mongoDatabase.getCollection("users", UserSchema.class);
-  }
-
-  public List<UserSchema> findsAll() {
-    return userTable.find(UserSchema.class).into(new java.util.ArrayList<>());
+    userTable = mongoDatabase.getCollection("usersSubscribed", UserSchema.class);
   }
 
   public UserSchema findByFirstName(@NonNull String firstName) {
@@ -57,7 +54,7 @@ public class MongoDbProjection extends AbstractMongoDbManagedProjection {
             .lastName(e.lastName())
             .build());
 
-    log.info("UserCreated processed");
+    log.info("Subscribed: UserCreated processed");
   }
 
   @Handler
@@ -71,6 +68,6 @@ public class MongoDbProjection extends AbstractMongoDbManagedProjection {
             .lastName(e.lastName())
             .build());
 
-    log.info("UserChanged processed");
+    log.info("Subscribed: UserChanged processed");
   }
 }

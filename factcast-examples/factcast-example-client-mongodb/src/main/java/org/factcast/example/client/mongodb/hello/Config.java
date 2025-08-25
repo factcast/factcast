@@ -42,13 +42,12 @@ public class Config {
     final String connectionString = "mongodb://" + url + ":" + port;
     CodecRegistry pojoCodecRegistry =
         fromProviders(PojoCodecProvider.builder().automatic(true).build());
-    CodecRegistry codecRegistry =
-        fromRegistries(MongoClientSettings.getDefaultCodecRegistry(), pojoCodecRegistry);
     return MongoClients.create(
         MongoClientSettings.builder()
             .uuidRepresentation(UuidRepresentation.STANDARD)
             .applyConnectionString(new ConnectionString(connectionString))
-            .codecRegistry(codecRegistry)
+            .codecRegistry(
+                fromRegistries(MongoClientSettings.getDefaultCodecRegistry(), pojoCodecRegistry))
             .build());
   }
 

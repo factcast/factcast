@@ -38,8 +38,11 @@ public class HelloWorldRunner implements CommandLineRunner {
 
   @NonNull private MongoDatabase mongoDatabase;
 
+  @NonNull private MongoDbSubscribedProjection subscription;
+
   @Override
   public void run(String... args) throws Exception {
+    factus.subscribe(subscription);
 
     val factId1 = UUID.randomUUID();
     val firstNameUuid = UUID.randomUUID();
@@ -75,5 +78,15 @@ public class HelloWorldRunner implements CommandLineRunner {
     final MongoDbProjection projection = new MongoDbProjection(mongoDatabase);
     factus.update(projection);
     log.info("Position is {}", projection.factStreamPosition());
+
+    log.info("User 1: {}", projection.findByFirstName(firstNameUuid.toString()));
+    log.info("User 2: {}", projection.findByFirstName(firstNameUuid2.toString()));
+    log.info("all users count: {}", projection.findsAll().size());
+
+    Thread.sleep(2000);
+    //    subscription.acquireWriteToken();
+
+    log.info("Subscription position is {}", subscription.factStreamPosition());
+    log.info("User1 from subscription: {}", subscription.findByFirstName(firstNameUuid.toString()));
   }
 }
