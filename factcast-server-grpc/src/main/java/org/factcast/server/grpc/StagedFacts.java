@@ -18,13 +18,14 @@ package org.factcast.server.grpc;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 
 public class StagedFacts {
 
   private final int maxBytes;
-  private int currentBytes;
+  @Getter private int currentBytes;
   private final List<Fact> staged = new ArrayList<>(128);
 
   /**
