@@ -16,12 +16,16 @@
 package org.factcast.server.grpc;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.factcast.server.grpc.metrics.ServerMetrics.EVENT.BYTES_SENT;
+import static org.factcast.server.grpc.metrics.ServerMetrics.EVENT.FACTS_SENT;
+import static org.factcast.server.grpc.metrics.ServerMetrics.TAG_CLIENT_ID_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import io.grpc.stub.StreamObserver;
+import io.micrometer.core.instrument.Tags;
 import java.util.UUID;
 import java.util.function.Function;
 import lombok.NonNull;
@@ -35,6 +39,7 @@ import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Type;
+import org.factcast.server.grpc.metrics.ServerMetrics;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -180,10 +185,9 @@ class GrpcObserverAdapterTest {
 
   @Test
   void skipsOnFastForwardIfUnsupported() {
-    ProtoConverter conv = new ProtoConverter();
     @NonNull GrpcRequestMetadata meta = mock(GrpcRequestMetadata.class);
     when(meta.supportsFastForward()).thenReturn(false);
-    when(meta.clientIdAsString()).thenReturn("testingStuff");
+    when(meta.clientIdAsString()).thenReturn("testClient");
     GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, meta);
     FactStreamPosition id = TestFactStreamPosition.random();
     uut.onFastForward(id);
@@ -269,5 +273,30 @@ class GrpcObserverAdapterTest {
     Assertions.assertThat(msg2.getFacts().getFactCount()).isOne();
 
     verifyNoMoreInteractions(observer);
+  }
+
+  @Test
+  void testMetricsOnFlush() {
+    ServerMetrics metrics = mock(ServerMetrics.class);
+    GrpcRequestMetadata meta = mock(GrpcRequestMetadata.class);
+    when(meta.clientMaxInboundMessageSize()).thenReturn(1024);
+    when(meta.clientIdAsString()).thenReturn("testClient");
+    GrpcObserverAdapter uut =
+        new GrpcObserverAdapter("foo", observer, meta, serverExceptionLogger, metrics, 1L);
+    Fact f1 = new TestFact();
+    Fact f2 = new TestFact();
+    uut.onNext(f1);
+    uut.onNext(f2);
+
+    uut.flush();
+
+    var expectedBytes =
+        f1.jsonHeader().length()
+            + f1.jsonPayload().length()
+            + f2.jsonHeader().length()
+            + f2.jsonPayload().length()
+            + 16; // protobuf overhead
+    verify(metrics).count(BYTES_SENT, Tags.of(TAG_CLIENT_ID_KEY, "testClient"), expectedBytes);
+    verify(metrics).count(FACTS_SENT, Tags.of(TAG_CLIENT_ID_KEY, "testClient"), 2);
   }
 }

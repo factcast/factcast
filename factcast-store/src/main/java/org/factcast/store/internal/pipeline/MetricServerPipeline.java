@@ -25,7 +25,6 @@ import org.factcast.store.internal.StoreMetrics;
 public class MetricServerPipeline extends AbstractServerPipeline {
   private final Counter factsCounter;
 
-  // TODO should we get rid of this now that we push this metric from the grpcObserver?
   public MetricServerPipeline(@NonNull ServerPipeline parent, @NonNull PgMetrics metrics) {
     super(parent);
     factsCounter = metrics.counter(StoreMetrics.EVENT.FACTS_SENT);

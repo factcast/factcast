@@ -82,8 +82,7 @@ class GrpcObserverAdapter implements FactObserver {
       keepalive = null;
     }
     this.serverMetrics = serverMetrics;
-    this.metricTags =
-        Tags.of(TAG_CLIENT_ID_KEY, meta.clientIdAsString()); // TODO would this be the same as id?
+    this.metricTags = Tags.of(TAG_CLIENT_ID_KEY, meta.clientIdAsString());
   }
 
   @VisibleForTesting
