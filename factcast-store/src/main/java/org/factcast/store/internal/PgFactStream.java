@@ -74,7 +74,7 @@ public class PgFactStream {
 
   void connect(@NonNull SubscriptionRequestTO request) {
     this.request = request;
-    log.debug("{} connect subscription", request);
+    log.debug("{} connect subscription {}", request, request.dump());
     // signal connect
     telemetry.onConnect(request);
     PgQueryBuilder q = new PgQueryBuilder(request.specs(), statementHolder);
