@@ -12,7 +12,7 @@
   <artifactId>factcast-store</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
   <properties>
-    <jetty-javalin.version>11.0.25</jetty-javalin.version>
+    <jetty-javalin.version>11.0.26</jetty-javalin.version>
   </properties>
   <dependencyManagement>
     <dependencies>
