@@ -55,7 +55,7 @@ class PgQueryBuilderTest {
       var spec4 = FactSpec.ns("ns4").aggId(new UUID(0, 1), new UUID(0, 2));
       var specs = Lists.newArrayList(spec1, spec2, spec3, spec4);
       var underTest = new PgQueryBuilder(specs);
-      var setter = underTest.createStatementSetter(serial);
+      var setter = underTest.createStatementSetter(serial, null);
       var ps = mock(PreparedStatement.class);
 
       setter.setValues(ps);
@@ -96,7 +96,7 @@ class PgQueryBuilderTest {
     void setsCurrentStatement() {
       Mockito.when(serial.get()).thenReturn(120L);
       var underTest = new PgQueryBuilder(Lists.newArrayList(FactSpec.ns("ns3")), holder);
-      var setter = underTest.createStatementSetter(serial);
+      var setter = underTest.createStatementSetter(serial, null);
       var ps = mock(PreparedStatement.class);
 
       setter.setValues(ps);
@@ -114,11 +114,11 @@ class PgQueryBuilderTest {
       var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
       var specs = Lists.newArrayList(spec1, spec2);
       var underTest = new PgQueryBuilder(specs);
-      var sql = underTest.createSQL();
+      var sql = underTest.createSQL(null);
 
       assertThat(sql)
           .isEqualTo(
-              "SELECT ser, header, payload, header->>'id' AS id, header->>'aggIds' AS aggIds, header->>'ns' AS ns, header->>'type' AS type, header->>'version' AS version FROM fact WHERE ( (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) ) AND ser>? ORDER BY ser ASC");
+              "SELECT ser, header, payload, header->>'id' AS id, header->>'aggIds' AS aggIds, header->>'ns' AS ns, header->>'type' AS type, header->>'version' AS version FROM fact WHERE ( (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) ) AND (ser>?) ORDER BY ser ASC");
     }
 
     @Test
@@ -133,11 +133,11 @@ class PgQueryBuilderTest {
       var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
       var specs = Lists.newArrayList(spec1, spec2);
       var underTest = new PgQueryBuilder(specs);
-      var sql = underTest.createSQL();
+      var sql = underTest.createSQL(null);
 
       assertThat(sql)
           .isEqualTo(
-              "SELECT ser, header, payload, header->>'id' AS id, header->>'aggIds' AS aggIds, header->>'ns' AS ns, header->>'type' AS type, header->>'version' AS version FROM fact WHERE ( (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb) AND jsonb_path_exists(header, ?::jsonpath) AND NOT jsonb_path_exists(header, ?::jsonpath)) OR (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) ) AND ser>? ORDER BY ser ASC");
+              "SELECT ser, header, payload, header->>'id' AS id, header->>'aggIds' AS aggIds, header->>'ns' AS ns, header->>'type' AS type, header->>'version' AS version FROM fact WHERE ( (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb) AND jsonb_path_exists(header, ?::jsonpath) AND NOT jsonb_path_exists(header, ?::jsonpath)) OR (1=1 AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) ) AND (ser>?) ORDER BY ser ASC");
     }
   }
 
@@ -151,7 +151,7 @@ class PgQueryBuilderTest {
       var spec3 = FactSpec.ns("ns3").type("t3").aggId(new UUID(0, 1), new UUID(0, 2));
       var specs = Lists.newArrayList(spec1, spec2, spec3);
       var underTest = new PgQueryBuilder(specs);
-      var sql = underTest.createStateSQL();
+      var sql = underTest.createStateSQL(null);
 
       // projection
       assertThat(sql).startsWith("SELECT ser FROM fact");

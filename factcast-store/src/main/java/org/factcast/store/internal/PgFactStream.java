@@ -85,8 +85,8 @@ public class PgFactStream {
       pipeline.process(Signal.of(factStreamInfo));
     }
 
-    String sql = q.createSQL();
-    PreparedStatementSetter setter = q.createStatementSetter(serial);
+    String sql = q.createSQL(null);
+    PreparedStatementSetter setter = q.createStatementSetter(serial, null);
     PgSynchronizedQuery query =
         new PgSynchronizedQuery(
             request.debugInfo(),

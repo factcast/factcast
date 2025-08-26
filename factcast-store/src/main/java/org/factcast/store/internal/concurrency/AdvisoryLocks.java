@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.lock;
+package org.factcast.store.internal.concurrency;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
+import lombok.Getter;
 
-@RequiredArgsConstructor
-public class AdvisoryWriteLock implements FactTableWriteLock {
-  private final JdbcTemplate tpl;
+public enum AdvisoryLocks {
+  PUBLISH(128),
+  PUBLISH_CONDITIONAL(129);
 
-  @Override
-  @Transactional(propagation = Propagation.MANDATORY)
-  public void aquireExclusiveTXLock() {
-    tpl.execute("SELECT pg_advisory_xact_lock(" + AdvisoryLocks.PUBLISH.code() + ")");
+  @Getter private final int code;
+
+  AdvisoryLocks(int code) {
+    this.code = code;
   }
 }

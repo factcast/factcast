@@ -15,6 +15,7 @@
  */
 package org.factcast.core.store;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -22,6 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Lists;
 import org.factcast.core.spec.FactSpec;
 import org.junit.jupiter.api.*;
@@ -48,18 +50,14 @@ class AbstractFactStoreTest {
 
   @Test
   void shouldPublishWithEmptyToken() {
-    boolean published = uut.publishIfUnchanged(Lists.emptyList(), Optional.empty());
-    verify(uut).publish(any());
-    assert published;
+    Assertions.assertThat(uut.hasNoConflictingChangeUntil(null, Optional.empty())).isTrue();
   }
 
   @Test
   void shouldNotPublishIfStateUnknown() {
     StateToken token = new StateToken(UUID.randomUUID());
     when(tokenStore.get(eq(token))).thenReturn(Optional.empty());
-    boolean published = uut.publishIfUnchanged(Lists.emptyList(), Optional.of(token));
-    verify(uut, never()).publish(any());
-    assert !published;
+    Assertions.assertThat(uut.hasNoConflictingChangeUntil(null, Optional.of(token))).isFalse();
   }
 
   @Test
@@ -69,12 +67,11 @@ class AbstractFactStoreTest {
     long notZero = 2L;
     State state = State.of(Lists.emptyList(), lastSerial);
     when(tokenStore.get(eq(token))).thenReturn(Optional.of(state));
-    when(uut.getStateFor(Lists.emptyList(), lastSerial))
+    when(uut.getStateFor(eq(Lists.emptyList()), eq(lastSerial), any()))
         .thenReturn(State.of(Lists.emptyList(), notZero));
-    boolean published = uut.publishIfUnchanged(Lists.emptyList(), Optional.of(token));
-    verify(uut, never()).publish(any());
+
+    Assertions.assertThat(uut.hasNoConflictingChangeUntil(null, Optional.of(token))).isFalse();
     verify(uut).invalidate(eq(token));
-    assert !published;
   }
 
   @Test
@@ -84,12 +81,10 @@ class AbstractFactStoreTest {
     long zero = 0L;
     State state = State.of(Lists.emptyList(), lastSerial);
     when(tokenStore.get(eq(token))).thenReturn(Optional.of(state));
-    when(uut.getStateFor(Lists.emptyList(), lastSerial))
+    when(uut.getStateFor(eq(Lists.emptyList()), eq(lastSerial), any()))
         .thenReturn(State.of(Lists.emptyList(), zero));
-    boolean published = uut.publishIfUnchanged(Lists.emptyList(), Optional.of(token));
-    verify(uut).publish(any());
+    Assertions.assertThat(uut.hasNoConflictingChangeUntil(null, Optional.of(token))).isTrue();
     verify(uut).invalidate(eq(token));
-    assert published;
   }
 
   @Test
@@ -103,7 +98,7 @@ class AbstractFactStoreTest {
   void shouldCallCreateOnTokenStore() {
     List<FactSpec> specs = Lists.emptyList();
     State state = State.of(Lists.emptyList(), 1L);
-    when(uut.getStateFor(eq(specs))).thenReturn(state);
+    when(uut.getStateFor(eq(specs), anyLong(), any())).thenReturn(state);
     uut.stateFor(specs);
     verify(tokenStore).create(eq(state));
   }
@@ -113,8 +108,8 @@ class AbstractFactStoreTest {
     State state = spy(State.of(Lists.emptyList(), 1L));
     State notChanged = State.of(Lists.emptyList(), 0L);
     // lenient as we overload getStateFor and mockito complains
-    lenient().doReturn(notChanged).when(uut).getStateFor(any());
-    boolean isStateUnchanged = uut.isStateUnchanged(state);
+    lenient().doReturn(notChanged).when(uut).getStateFor(any(), anyLong(), any());
+    boolean isStateUnchanged = uut.isStateUnchanged(null, state);
     verify(state).serialOfLastMatchingFact();
     assert isStateUnchanged;
   }
@@ -124,19 +119,10 @@ class AbstractFactStoreTest {
     State state = spy(State.of(Lists.emptyList(), 1L));
     State notChanged = State.of(Lists.emptyList(), 1L);
     // lenient as we overload getStateFor and mockito complains
-    lenient().doReturn(notChanged).when(uut).getStateFor(any());
-    boolean isStateUnchanged = uut.isStateUnchanged(state);
+    lenient().doReturn(notChanged).when(uut).getStateFor(any(), anyLong(), any());
+    boolean isStateUnchanged = uut.isStateUnchanged(null, state);
     verify(state).serialOfLastMatchingFact();
     assert !isStateUnchanged;
-  }
-
-  @Test
-  void shouldDefaultToAbstractImplementation() {
-    List<FactSpec> specs = Lists.list(FactSpec.ns("test"));
-
-    uut.getStateFor(specs, 1L);
-
-    verify(uut).getStateFor(eq(specs));
   }
 
   @Test

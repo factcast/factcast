@@ -40,6 +40,7 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 public class StoreConfigurationProperties implements InitializingBean {
 
+  // should be ".pg."
   public static final String PROPERTIES_PREFIX = "factcast.store";
 
   /** defines the fetchSize of a database query */
@@ -204,6 +205,12 @@ public class StoreConfigurationProperties implements InitializingBean {
    */
   boolean enumerationDirectModeEnabled;
 
+  /**
+   * defines strategy to use when inserting to make sure the APIs guarantees are provided. Defaults
+   * to LEGACY for now, but might change to faster proven strategies.
+   */
+  PgConcurrencyStrategy concurrencyStrategy = PgConcurrencyStrategy.LEGACY;
+
   public boolean isSchemaRegistryConfigured() {
     return schemaRegistryUrl != null;
   }
@@ -247,5 +254,11 @@ public class StoreConfigurationProperties implements InitializingBean {
         }
       }
     }
+  }
+
+  public enum PgConcurrencyStrategy {
+    LEGACY,
+    UNLOCKED_CHECK,
+    UNLOCKED_CHECK_EARLIER_TX
   }
 }
