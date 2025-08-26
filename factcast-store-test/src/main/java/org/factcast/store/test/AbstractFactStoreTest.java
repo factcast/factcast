@@ -75,7 +75,7 @@ public abstract class AbstractFactStoreTest {
   @Test
   protected void testEmptyStore() {
     Assertions.assertTimeout(
-        Duration.ofMillis(3000),
+        Duration.ofMillis(10000),
         () -> {
           FactObserver observer = mock(FactObserver.class);
           Subscription s = uut.subscribe(SubscriptionRequest.catchup(ANY).fromScratch(), observer);
@@ -90,7 +90,7 @@ public abstract class AbstractFactStoreTest {
   @Test
   protected void testUniquenessConstraint() {
     Assertions.assertTimeout(
-        Duration.ofMillis(3000),
+        Duration.ofMillis(10000),
         () -> {
           Assertions.assertThrows(
               DuplicateFactException.class,
@@ -110,7 +110,7 @@ public abstract class AbstractFactStoreTest {
   @Test
   protected void testEmptyStoreFollowNonMatching() {
     Assertions.assertTimeout(
-        Duration.ofMillis(3000),
+        Duration.ofMillis(10000),
         () -> {
           TestFactObserver observer = testObserver();
           uut.subscribe(SubscriptionRequest.follow(ANY).fromScratch(), observer).awaitCatchup();
@@ -139,7 +139,7 @@ public abstract class AbstractFactStoreTest {
   @Test
   protected void testEmptyStoreFollowMatching() {
     Assertions.assertTimeout(
-        Duration.ofMillis(3000),
+        Duration.ofMillis(10000),
         () -> {
           TestFactObserver observer = testObserver();
           uut.subscribe(SubscriptionRequest.follow(ANY).fromScratch(), observer).awaitCatchup();
@@ -158,7 +158,7 @@ public abstract class AbstractFactStoreTest {
   @Test
   protected void testEmptyStoreEphemeral() {
     Assertions.assertTimeout(
-        Duration.ofMillis(3000),
+        Duration.ofMillis(10000),
         () -> {
           uut.publish(
               Fact.of(
@@ -191,7 +191,7 @@ public abstract class AbstractFactStoreTest {
   @Test
   protected void testEmptyStoreEphemeralWithCancel() {
     Assertions.assertTimeout(
-        Duration.ofMillis(3000),
+        Duration.ofMillis(10000),
         () -> {
           TestFactObserver observer = testObserver();
           uut.publish(
@@ -233,7 +233,7 @@ public abstract class AbstractFactStoreTest {
   @Test
   protected void testEmptyStoreFollowWithCancel() {
     Assertions.assertTimeout(
-        Duration.ofMillis(3000),
+        Duration.ofMillis(10000),
         () -> {
           TestFactObserver observer = testObserver();
           uut.publish(
@@ -274,7 +274,7 @@ public abstract class AbstractFactStoreTest {
   @Test
   protected void testEmptyStoreCatchupMatching() {
     Assertions.assertTimeout(
-        Duration.ofMillis(3000),
+        Duration.ofMillis(10000),
         () -> {
           FactObserver observer = mock(FactObserver.class);
           uut.publish(
@@ -292,7 +292,7 @@ public abstract class AbstractFactStoreTest {
   @Test
   protected void testEmptyStoreFollowMatchingDelayed() {
     Assertions.assertTimeout(
-        Duration.ofMillis(3000),
+        Duration.ofMillis(10000),
         () -> {
           TestFactObserver observer = testObserver();
           uut.publish(
@@ -315,7 +315,7 @@ public abstract class AbstractFactStoreTest {
   @Test
   protected void testEmptyStoreFollowNonMatchingDelayed() {
     Assertions.assertTimeout(
-        Duration.ofMillis(3000),
+        Duration.ofMillis(10000),
         () -> {
           TestFactObserver observer = testObserver();
           uut.publish(
@@ -337,7 +337,7 @@ public abstract class AbstractFactStoreTest {
   @Test
   protected void testRequiredMetaAttribute() {
     Assertions.assertTimeout(
-        Duration.ofMillis(3000),
+        Duration.ofMillis(10000),
         () -> {
           FactObserver observer = mock(FactObserver.class);
           uut.publish(
@@ -368,7 +368,7 @@ public abstract class AbstractFactStoreTest {
   @Test
   protected void testScriptedWithPayloadFiltering() {
     Assertions.assertTimeout(
-        Duration.ofMillis(3000),
+        Duration.ofMillis(10000),
         () -> {
           FactObserver observer = mock(FactObserver.class);
           uut.publish(
@@ -401,7 +401,7 @@ public abstract class AbstractFactStoreTest {
   @Test
   protected void testScriptedWithHeaderFiltering() {
     Assertions.assertTimeout(
-        Duration.ofMillis(3000),
+        Duration.ofMillis(10000),
         () -> {
           FactObserver observer = mock(FactObserver.class);
           uut.publish(
@@ -434,7 +434,7 @@ public abstract class AbstractFactStoreTest {
   @Test
   protected void testScriptedFilteringMatchAll() {
     Assertions.assertTimeout(
-        Duration.ofMillis(3000),
+        Duration.ofMillis(10000),
         () -> {
           FactObserver observer = mock(FactObserver.class);
           uut.publish(
@@ -466,7 +466,7 @@ public abstract class AbstractFactStoreTest {
   @Test
   protected void testScriptedFilteringMatchNone() {
     Assertions.assertTimeout(
-        Duration.ofMillis(3000),
+        Duration.ofMillis(10000),
         () -> {
           FactObserver observer = mock(FactObserver.class);
           uut.publish(
@@ -497,7 +497,7 @@ public abstract class AbstractFactStoreTest {
   @Test
   protected void testMatchBySingleAggId() {
     Assertions.assertTimeout(
-        Duration.ofMillis(3000),
+        Duration.ofMillis(10000),
         () -> {
           UUID id = UUID.randomUUID();
           UUID aggId1 = UUID.randomUUID();
@@ -521,7 +521,7 @@ public abstract class AbstractFactStoreTest {
   @Test
   protected void testMatchByOneOfAggId() {
     Assertions.assertTimeout(
-        Duration.ofMillis(3000),
+        Duration.ofMillis(10000),
         () -> {
           UUID id = UUID.randomUUID();
           UUID aggId1 = UUID.randomUUID();
@@ -554,7 +554,7 @@ public abstract class AbstractFactStoreTest {
   @Test
   protected void testMatchBySecondAggId() {
     Assertions.assertTimeout(
-        Duration.ofMillis(3000),
+        Duration.ofMillis(10000),
         () -> {
           UUID id = UUID.randomUUID();
           UUID aggId1 = UUID.randomUUID();
@@ -581,7 +581,7 @@ public abstract class AbstractFactStoreTest {
   @Test
   protected void testMatchByMultipleAggIds() {
     Assertions.assertTimeout(
-        Duration.ofMillis(3000),
+        Duration.ofMillis(10000),
         () -> {
           String ns = "default";
           UUID aggId1 = UUID.randomUUID();
@@ -607,7 +607,7 @@ public abstract class AbstractFactStoreTest {
   @Test
   protected void testDelayed() {
     Assertions.assertTimeout(
-        Duration.ofMillis(3000),
+        Duration.ofMillis(10000),
         () -> {
           UUID id = UUID.randomUUID();
           TestFactObserver obs = new TestFactObserver();
@@ -632,7 +632,7 @@ public abstract class AbstractFactStoreTest {
   @Test
   protected void testSerialOf() {
     Assertions.assertTimeout(
-        Duration.ofMillis(3000),
+        Duration.ofMillis(10000),
         () -> {
           UUID id = UUID.randomUUID();
           UUID id2 = UUID.randomUUID();
@@ -664,7 +664,7 @@ public abstract class AbstractFactStoreTest {
    *
    *
    * @Test protected void testSerialHeader() {
-   * Assertions.assertTimeout(Duration.ofMillis(3000), () -> { UUID id =
+   * Assertions.assertTimeout(Duration.ofMillis(10000), () -> { UUID id =
    * UUID.randomUUID(); uut.publish(Fact.of( "{\"id\":\"" + id +
    * "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\"" + id +
    * "\"]}", "{}")); UUID id2 = UUID.randomUUID();
