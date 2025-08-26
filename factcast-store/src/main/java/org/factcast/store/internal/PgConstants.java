@@ -27,6 +27,7 @@ import org.factcast.store.StoreConfigurationProperties;
  */
 @FieldDefaults(level = AccessLevel.PUBLIC, makeFinal = true)
 @Generated
+@SuppressWarnings("java:S1192")
 public class PgConstants {
 
   public static final String CURRENT_TIME_MILLIS = "SELECT TRUNC(EXTRACT(EPOCH FROM now()) * 1000)";
