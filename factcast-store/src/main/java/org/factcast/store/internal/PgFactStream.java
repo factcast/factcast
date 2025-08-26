@@ -60,6 +60,9 @@ public class PgFactStream {
   final ServerPipeline pipeline;
   final PgStoreTelemetry telemetry;
 
+  @Getter(AccessLevel.PROTECTED)
+  final SubscriptionRequestTO request;
+
   CondensedQueryExecutor condensedExecutor;
 
   @VisibleForTesting
@@ -68,12 +71,9 @@ public class PgFactStream {
 
   final AtomicBoolean disconnected = new AtomicBoolean(false);
 
-  @VisibleForTesting protected SubscriptionRequestTO request;
-
   final CurrentStatementHolder statementHolder = new CurrentStatementHolder();
 
-  void connect(@NonNull SubscriptionRequestTO request) {
-    this.request = request;
+  void connect() {
     log.debug("{} connect subscription {}", request, request.dump());
     // signal connect
     telemetry.onConnect(request);
@@ -218,6 +218,6 @@ public class PgFactStream {
     statementHolder.close();
     log.debug("{} disconnected ", request);
     // signal close
-    telemetry.onClose(this.request);
+    telemetry.onClose(request);
   }
 }
