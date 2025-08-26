@@ -17,9 +17,7 @@ package org.factcast.store.internal.catchup.fetching;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.util.concurrent.atomic.*;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -49,6 +47,8 @@ public class PgFetchingCatchup implements PgCatchup {
 
   @NonNull final AtomicLong serial;
 
+  long fastForward = 0;
+
   @NonNull final CurrentStatementHolder statementHolder;
 
   @SneakyThrows
@@ -75,7 +75,10 @@ public class PgFetchingCatchup implements PgCatchup {
     PgQueryBuilder b = new PgQueryBuilder(req.specs(), statementHolder);
     var extractor = new PgFactExtractor(serial);
     String catchupSQL = b.createSQL();
-    jdbc.query(catchupSQL, b.createStatementSetter(serial), createRowCallbackHandler(extractor));
+    jdbc.query(
+        catchupSQL,
+        b.createStatementSetter(serial.get() < fastForward ? new AtomicLong(fastForward) : serial),
+        createRowCallbackHandler(extractor));
   }
 
   @VisibleForTesting
@@ -98,5 +101,10 @@ public class PgFetchingCatchup implements PgCatchup {
         }
       }
     };
+  }
+
+  @Override
+  public void fastForward(long serialToStartFrom) {
+    this.fastForward = serialToStartFrom;
   }
 }

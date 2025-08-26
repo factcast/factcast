@@ -306,7 +306,7 @@ class PgFactStreamTest {
       uut = spy(uut);
       when(uut.isConnected()).thenReturn(false);
 
-      uut.catchup();
+      uut.catchup(0);
 
       verifyNoInteractions(pgCatchupFactory);
     }
@@ -319,7 +319,7 @@ class PgFactStreamTest {
       when(uut.isConnected()).thenReturn(true);
       when(pgCatchupFactory.create(any(), any(), any(), any())).thenReturn(catchup1, catchup2);
 
-      uut.catchup();
+      uut.catchup(0);
 
       verify(catchup1, times(1)).run();
       verify(catchup2, times(1)).run();

@@ -31,7 +31,7 @@ import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.*;
-import org.factcast.store.internal.catchup.PgCatchupFactory;
+import org.factcast.store.internal.catchup.*;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
@@ -116,12 +116,11 @@ public class PgFactStream {
     // in order not to lose facts by the ffTarget being updated after the phase 2 query, but
     // before the sending of the ffwd signal (#3722)
     HighWaterMark atTheStartOfQuery = ffwdTarget.highWaterMark();
-
     if (request.ephemeral()) {
       // just fast forward to the latest event published by now
       serial.set(fetcher.retrieveLatestSer());
     } else {
-      catchup();
+      catchup(atTheStartOfQuery.targetSer());
     }
 
     fastForward(atTheStartOfQuery);
@@ -182,23 +181,33 @@ public class PgFactStream {
 
       // there is no need to check for the start id, as it'll be
       // contained in serial or smaller, see initializeSerialToStartAfter
+      long currentSerial = serial.get();
 
-      if (targetId != null && serial.get() < targetSer) {
+      if (targetId != null && currentSerial < targetSer) {
         log.debug("{} sending ffwd to id {} (serial {})", request, targetId, targetSer);
         pipeline.process(Signal.of(FactStreamPosition.of(targetId, targetSer)));
+
+        // this is basically an internal ffwd:
+        serial.compareAndSet(currentSerial, targetSer);
       }
     }
   }
 
   @VisibleForTesting
-  void catchup() {
+  void catchup(long highWaterMarkBeforeCatchup) {
     if (isConnected()) {
       log.trace("{} catchup phase1 - historic facts staring with SER={}", request, serial.get());
       pgCatchupFactory.create(request, pipeline, serial, statementHolder).run();
     }
     if (isConnected()) {
-      log.trace("{} catchup phase2 - facts since connect (SER={})", request, serial.get());
-      pgCatchupFactory.create(request, pipeline, serial, statementHolder).run();
+      // if we did not find anything in phase1,
+      // in order to prevent us from scanning the whole bunch again, we rather start at
+      // the highwatermark BEFORE phase1 started
+      log.trace(
+          "{} catchup phase2 - facts since connect (SER={})", request, highWaterMarkBeforeCatchup);
+      PgCatchup pgCatchup = pgCatchupFactory.create(request, pipeline, serial, statementHolder);
+      pgCatchup.fastForward(highWaterMarkBeforeCatchup);
+      pgCatchup.run();
     }
   }
 

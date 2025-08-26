@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.nio.charset.StandardCharsets;
 import java.time.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.*;
 import lombok.*;
 import lombok.experimental.Delegate;
 import org.assertj.core.util.Lists;
@@ -29,7 +29,6 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.*;
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.*;
-import org.factcast.store.internal.tail.MemoizedFastForwardTarget;
 import org.factcast.store.test.AbstractFactStoreTest;
 import org.factcast.test.IntegrationTest;
 import org.jetbrains.annotations.Nullable;
@@ -58,9 +57,8 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
 
   @Autowired TokenStore tokenStore;
 
-  @Autowired MemoizedFastForwardTarget fastForwardTarget;
-
   @Autowired JdbcTemplate jdbcTemplate;
+  @Autowired private FastForwardTarget fastForwardTarget;
 
   @Override
   protected FactStore createStoreToTest() {
@@ -326,7 +324,8 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       Fact fact = Fact.builder().id(id).ns("foo").type("bar").buildWithoutPayload();
       store.publish(Collections.singletonList(fact));
 
-      assertThat(localFactStore.firstSerialAfter(LocalDate.now())).isEqualTo(1L);
+      assertThat(localFactStore.firstSerialAfter(LocalDate.now()))
+          .isEqualTo(localFactStore.latestSerial());
     }
 
     @SuppressWarnings({"DataFlowIssue", "OptionalGetWithoutIsPresent"})
@@ -400,6 +399,9 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       var today = ZonedDateTime.now();
       var weekAgo = today.minusWeeks(1);
       var yearAgo = today.minusYears(1);
+
+      jdbcTemplate.execute("TRUNCATE fact RESTART IDENTITY ;");
+      fastForwardTarget.expire();
 
       // lets assume we have facts that were inserted before the date2serial trigger was enabled
       jdbcTemplate.execute("ALTER TABLE fact DISABLE TRIGGER tr_fact_date2serial;");

@@ -26,9 +26,9 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.*;
 import org.factcast.test.IntegrationTest;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -46,6 +46,13 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 class PgQueryTest {
 
   final FactSpec defaultSpec = FactSpec.ns("default-ns").type("type1");
+
+  @Autowired FastForwardTarget fastForwardTarget;
+
+  @BeforeEach
+  void setUp() {
+    fastForwardTarget.expire();
+  }
 
   @Data
   public static class TestHeader {

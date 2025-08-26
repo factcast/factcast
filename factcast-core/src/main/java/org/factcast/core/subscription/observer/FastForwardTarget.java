@@ -30,8 +30,13 @@ public interface FastForwardTarget {
   // we cannot have single getters for id and ser (race condition)
   HighWaterMark highWaterMark();
 
+  void expire();
+
   @Value(staticConstructor = "of")
   class Impl implements FastForwardTarget {
     HighWaterMark highWaterMark;
+
+    @Override
+    public void expire() {}
   }
 }

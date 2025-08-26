@@ -1,11 +1,16 @@
-truncate table fact restart identity;
-truncate table blacklist restart identity;
-truncate table schemastore restart identity;
-truncate table transformationstore restart identity;
-truncate table transformationcache restart identity;
-truncate table tokenstore restart identity;
-truncate table date2serial restart identity;
-truncate table published_schema_versions restart identity;
+-- we do no longer reset identites here, as it would require additional
+-- effort in the tests (HighwaterMark)
+--
+-- wherever you NEED predictable serials, please reset them yourself in your test
+--
+truncate table fact;
+truncate table blacklist;
+truncate table schemastore;
+truncate table transformationstore;
+truncate table transformationcache;
+truncate table tokenstore;
+truncate table date2serial;
+truncate table published_schema_versions;
 
 select dropAllTailIndexes();
 
@@ -18,4 +23,3 @@ select dropAllTailIndexes();
 
 
 
-#
