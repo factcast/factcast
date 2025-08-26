@@ -14,12 +14,4 @@ truncate table published_schema_versions;
 
 select dropAllTailIndexes();
 
-
-
-
-
-
-
-
-
-
+#
