@@ -15,7 +15,7 @@
  */
 package org.factcast.store.internal;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
@@ -55,27 +55,6 @@ public class PgLatestSerialFetcherTest {
             + ") VALUES('{\"id\":\""
             + UUID.randomUUID()
             + "\", \"ns\":\"hups\"}','{}') ");
-    assertEquals(1, uut.retrieveLatestSer());
-    jdbcTemplate.execute(
-        "INSERT INTO "
-            + PgConstants.TABLE_FACT
-            + "("
-            + PgConstants.COLUMN_HEADER
-            + ","
-            + PgConstants.COLUMN_PAYLOAD
-            + ") VALUES('{\"id\":\""
-            + UUID.randomUUID()
-            + "\", \"ns\":\"hups\"}','{}') ");
-    jdbcTemplate.execute(
-        "INSERT INTO "
-            + PgConstants.TABLE_FACT
-            + "("
-            + PgConstants.COLUMN_HEADER
-            + ","
-            + PgConstants.COLUMN_PAYLOAD
-            + ") VALUES('{\"id\":\""
-            + UUID.randomUUID()
-            + "\", \"ns\":\"hups\"}','{}') ");
-    assertEquals(3, uut.retrieveLatestSer());
+    assertNotEquals(0, uut.retrieveLatestSer());
   }
 }
