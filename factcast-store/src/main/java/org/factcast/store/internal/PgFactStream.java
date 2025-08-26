@@ -196,16 +196,17 @@ public class PgFactStream {
   @VisibleForTesting
   void catchup(long highWaterMarkBeforeCatchup) {
     if (isConnected()) {
-      log.trace("{} catchup phase1 - historic facts staring with SER={}", request, serial.get());
-      pgCatchupFactory.create(request, pipeline, serial, statementHolder).run();
+      pgCatchupFactory
+          .create(request, pipeline, serial, statementHolder, PgCatchupFactory.Phase.PHASE_1)
+          .run();
     }
     if (isConnected()) {
       // if we did not find anything in phase1,
       // in order to prevent us from scanning the whole bunch again, we rather start at
       // the highwatermark BEFORE phase1 started
-      log.trace(
-          "{} catchup phase2 - facts since connect (SER={})", request, highWaterMarkBeforeCatchup);
-      PgCatchup pgCatchup = pgCatchupFactory.create(request, pipeline, serial, statementHolder);
+      PgCatchup pgCatchup =
+          pgCatchupFactory.create(
+              request, pipeline, serial, statementHolder, PgCatchupFactory.Phase.PHASE_2);
       pgCatchup.fastForward(highWaterMarkBeforeCatchup);
       pgCatchup.run();
     }

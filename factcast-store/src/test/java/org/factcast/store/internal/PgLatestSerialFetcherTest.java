@@ -21,6 +21,7 @@ import static org.mockito.Mockito.*;
 import java.util.*;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.test.IntegrationTest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,9 +41,14 @@ public class PgLatestSerialFetcherTest {
 
   private PgLatestSerialFetcher uut;
 
+  @BeforeEach
+  void setup() {
+    jdbcTemplate.execute("TRUNCATE fact RESTART IDENTITY ;");
+    uut = new PgLatestSerialFetcher(jdbcTemplate);
+  }
+
   @Test
   void testRetrieveLatestSer() {
-    uut = new PgLatestSerialFetcher(jdbcTemplate);
     assertEquals(0, uut.retrieveLatestSer());
     assertEquals(0, uut.retrieveLatestSer());
     jdbcTemplate.execute(

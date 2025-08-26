@@ -317,7 +317,8 @@ class PgFactStreamTest {
       PgCatchup catchup1 = mock(PgCatchup.class);
       PgCatchup catchup2 = mock(PgCatchup.class);
       when(uut.isConnected()).thenReturn(true);
-      when(pgCatchupFactory.create(any(), any(), any(), any())).thenReturn(catchup1, catchup2);
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any()))
+          .thenReturn(catchup1, catchup2);
 
       uut.catchup(0);
 
