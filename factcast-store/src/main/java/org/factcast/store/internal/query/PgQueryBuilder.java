@@ -165,17 +165,15 @@ public class PgQueryBuilder {
   }
 
   public String createSQL() {
-    String sql =
-        "SELECT "
-            + PgConstants.PROJECTION_FACT
-            + " FROM "
-            + PgConstants.TABLE_FACT
-            + " WHERE "
-            + createWhereClause()
-            + " ORDER BY "
-            + PgConstants.COLUMN_SER
-            + " ASC";
-    return sql;
+    return "SELECT "
+        + PgConstants.PROJECTION_FACT
+        + " FROM "
+        + PgConstants.TABLE_FACT
+        + " WHERE "
+        + createWhereClause()
+        + " ORDER BY "
+        + PgConstants.COLUMN_SER
+        + " ASC";
   }
 
   public String createStateSQL() {
