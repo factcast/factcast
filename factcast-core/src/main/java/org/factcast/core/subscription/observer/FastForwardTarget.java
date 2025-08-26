@@ -37,6 +37,8 @@ public interface FastForwardTarget {
     HighWaterMark highWaterMark;
 
     @Override
-    public void expire() {}
+    public void expire() {
+      // no need, only used for testing
+    }
   }
 }
