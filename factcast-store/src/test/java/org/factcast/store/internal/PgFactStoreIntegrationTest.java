@@ -149,8 +149,6 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       // have some more facts in the database
       store.publish(
           Collections.singletonList(Fact.builder().ns("unrelated").buildWithoutPayload()));
-      // update the highwatermarks
-      fastForwardTarget.expire();
     }
 
     @Test
@@ -176,7 +174,6 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       SubscriptionRequest newtail = SubscriptionRequest.catchup(spec).from(id);
       store.subscribe(SubscriptionRequestTO.from(newtail), obs).awaitCatchup();
 
-      fastForwardTarget.expire();
       fwd.set(null);
 
       // check for empty catchup
@@ -210,7 +207,6 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       // publish unrelated stuff and update ffwd target
       store.publish(
           Collections.singletonList(Fact.builder().ns("unrelated").buildWithoutPayload()));
-      fastForwardTarget.expire();
 
       SubscriptionRequest further = SubscriptionRequest.catchup(spec).from(id2);
       store.subscribe(SubscriptionRequestTO.from(further), obs).awaitCatchup();
@@ -393,9 +389,6 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       var today = ZonedDateTime.now();
       var weekAgo = today.minusWeeks(1);
       var yearAgo = today.minusYears(1);
-
-      jdbcTemplate.execute("TRUNCATE fact RESTART IDENTITY ;");
-      fastForwardTarget.expire();
 
       // lets assume we have facts that were inserted before the date2serial trigger was enabled
       jdbcTemplate.execute("ALTER TABLE fact DISABLE TRIGGER tr_fact_date2serial;");

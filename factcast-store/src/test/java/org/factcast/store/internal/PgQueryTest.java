@@ -47,13 +47,6 @@ class PgQueryTest {
 
   final FactSpec defaultSpec = FactSpec.ns("default-ns").type("type1");
 
-  @Autowired FastForwardTarget fastForwardTarget;
-
-  @BeforeEach
-  void setUp() {
-    fastForwardTarget.expire();
-  }
-
   @Data
   public static class TestHeader {
 

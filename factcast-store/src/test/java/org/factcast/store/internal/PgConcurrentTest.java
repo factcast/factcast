@@ -28,8 +28,7 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.test.IntegrationTest;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
@@ -53,7 +52,7 @@ public class PgConcurrentTest {
     return Fact.builder().ns("concurrenttest").id(UUID.randomUUID()).type("lonely").build("{}");
   }
 
-  @Test
+  @RepeatedTest(20) // suspected of being flaky on github runners
   void testConcurrent() throws Exception {
     // prepare facts
     List<Fact> factsForAsyncBatchPublish =
