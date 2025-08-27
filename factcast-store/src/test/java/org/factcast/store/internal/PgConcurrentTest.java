@@ -52,7 +52,7 @@ public class PgConcurrentTest {
     return Fact.builder().ns("concurrenttest").id(UUID.randomUUID()).type("lonely").build("{}");
   }
 
-  @RepeatedTest(50) // suspected of being flaky on github runners
+  @Test
   void testConcurrent() throws Exception {
     // prepare facts
     List<Fact> factsForAsyncBatchPublish =
