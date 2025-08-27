@@ -61,6 +61,7 @@ public class PgTestConfiguration {
           "spring.datasource.url", url + "?socketTimeout=0&preparedStatementCacheSize=0");
       System.setProperty("spring.datasource.username", postgres.getUsername());
       System.setProperty("spring.datasource.password", postgres.getPassword());
+      System.setProperty("spring.datasource.maxActive", "20");
       System.setProperty("spring.datasource.tomcat.connectionProperties", "foo=bar;");
     } else {
       log.info("Using predefined external postgres URL: " + url);
