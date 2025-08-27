@@ -86,6 +86,7 @@ public class PgFactStream {
     }
 
     String sql = q.createSQL();
+    log.trace("created query SQL for {} - SQL={}", request.specs(), sql);
     PreparedStatementSetter setter = q.createStatementSetter(serial);
     PgSynchronizedQuery query =
         new PgSynchronizedQuery(

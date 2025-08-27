@@ -91,13 +91,12 @@ public class BufferedTransformingServerPipeline extends AbstractServerPipeline {
       TransformationRequest transformationRequest = transformers.prepareTransformation(fact);
 
       if (transformationRequest == null) {
-        log.trace("passing fact signal without transformation: {}", fact);
         passOrBuffer(s);
       } else {
         // needs transformation
+        log.trace("passing fact signal WITH transformation: {}", fact);
 
         // switch to buffering no matter what it was before
-        log.trace("passing fact signal WITH transformation: {}", fact);
         mode = Mode.BUFFERING;
         buffer(transformationRequest);
       }

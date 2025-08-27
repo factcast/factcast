@@ -295,24 +295,30 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
     }
 
     @Test
-    void testLastSerialBeforeNowReturns() {
-      LocalDate aWeekAgo = LocalDate.now().minusWeeks(1);
-      long firstSerial = 100L;
-      long lastSerial = 300L;
-      jdbcTemplate.update(
-          "INSERT INTO " + PgConstants.TABLE_DATE2SERIAL + " VALUES (?, ?, ?)",
-          aWeekAgo,
-          firstSerial,
-          lastSerial);
-
-      assertThat(localFactStore.lastSerialBefore(LocalDate.now())).isEqualTo(lastSerial);
-
-      // add one to the end, should not change anything
+    void testLastSerialBeforeFutureDate() {
       UUID id = UUID.randomUUID();
       Fact fact = Fact.builder().id(id).ns("foo").type("bar").buildWithoutPayload();
       store.publish(Collections.singletonList(fact));
 
-      assertThat(localFactStore.lastSerialBefore(LocalDate.now())).isEqualTo(lastSerial);
+      long ser = store.fetchById(id).get().serial();
+
+      assertThat(localFactStore.lastSerialBefore(LocalDate.now().plusWeeks(1))).isEqualTo(ser);
+    }
+
+    @Test
+    void testLastSerialBeforePastDate() {
+
+      jdbcTemplate.update(
+          "INSERT INTO " + PgConstants.TABLE_DATE2SERIAL + "(factdate,firstser) VALUES (?, ?)",
+          LocalDate.now().minusWeeks(1),
+          100L);
+
+      jdbcTemplate.update(
+          "INSERT INTO " + PgConstants.TABLE_DATE2SERIAL + "(factdate,firstser) VALUES (?, ?)",
+          LocalDate.now().minusDays(1),
+          200L);
+
+      assertThat(localFactStore.lastSerialBefore(LocalDate.now().minusDays(1))).isEqualTo(200L - 1);
     }
 
     @Test
@@ -345,10 +351,8 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
         assertThat(rowsAfterInsert).isOne();
 
         var first = getFirstSerial(LocalDate.now());
-        var last = getLastSerial(LocalDate.now());
 
         // ser should be first & last
-        assertThat(first).isEqualTo(last);
         assertThat(first).isEqualTo(ser);
       }
       // add another
@@ -363,20 +367,10 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
         assertThat(rowsAfterInsert).isOne();
 
         var first = getFirstSerial(LocalDate.now());
-        var last = getLastSerial(LocalDate.now());
 
-        // ser should be first & last
+        // ser should be first
         assertThat(first).isEqualTo(ser);
-        assertThat(last).isEqualTo(otherSer);
       }
-    }
-
-    @Nullable
-    private Long getLastSerial(@NonNull LocalDate date) {
-      return jdbcTemplate.queryForObject(
-          "SELECT lastSer FROM " + PgConstants.TABLE_DATE2SERIAL + " WHERE factDate = ?",
-          new Object[] {date},
-          Long.class);
     }
 
     @Nullable
@@ -431,7 +425,6 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       // date2Ser should now have one row with (today,4,5)
       assertThat(getRowsInDate2Serial()).isOne();
       assertThat(getFirstSerial(today.toLocalDate())).isEqualTo(4);
-      assertThat(getLastSerial(today.toLocalDate())).isEqualTo(5);
 
       // 4 is technically wrong as first (should be corrected to 3)
       // also facts 1&2 should be accounted for after migration
