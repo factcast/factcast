@@ -15,6 +15,8 @@
  */
 package org.factcast.store.internal.tail;
 
+import com.google.common.annotations.VisibleForTesting;
+import java.sql.*;
 import java.util.UUID;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -35,19 +37,17 @@ public class SimpleFastForwardTarget implements FastForwardTarget {
   @Override
   public HighWaterMark highWaterMark() {
     try {
-      return jdbc.queryForObject(
-          PgConstants.HIGHWATER_MARK,
-          (rs, rowNum) -> {
-            final var targetId = rs.getObject("targetId", UUID.class);
-            final var targetSer = rs.getLong("targetSer");
-
-            return HighWaterMark.of(targetId, targetSer);
-          });
+      return jdbc.queryForObject(PgConstants.HIGHWATER_MARK, this::extract);
     } catch (EmptyResultDataAccessException noFactsAtAll) {
       // ignore but resetting target to initial values, can happen in integration tests when
       // facts
       // are wiped between runs
       return HighWaterMark.empty();
     }
+  }
+
+  @VisibleForTesting
+  protected HighWaterMark extract(ResultSet rs, int i) throws SQLException {
+    return HighWaterMark.of(rs.getObject("targetId", UUID.class), rs.getLong("targetSer"));
   }
 }
