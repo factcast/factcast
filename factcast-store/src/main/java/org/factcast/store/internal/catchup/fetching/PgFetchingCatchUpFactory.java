@@ -44,7 +44,9 @@ public class PgFetchingCatchUpFactory implements PgCatchupFactory {
       @NonNull SubscriptionRequestTO request,
       @NonNull ServerPipeline pipeline,
       @NonNull AtomicLong serial,
-      @NonNull CurrentStatementHolder holder) {
-    return new PgFetchingCatchup(connectionSupplier, props, request, pipeline, serial, holder);
+      @NonNull CurrentStatementHolder holder,
+      @NonNull Phase phase) {
+    return new PgFetchingCatchup(
+        connectionSupplier, props, request, pipeline, serial, holder, phase);
   }
 }
