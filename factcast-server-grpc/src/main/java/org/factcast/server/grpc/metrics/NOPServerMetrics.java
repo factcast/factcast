@@ -70,4 +70,7 @@ public class NOPServerMetrics implements ServerMetrics {
 
   @Override
   public void count(EVENT event, Tags tags) {}
+
+  @Override
+  public void count(EVENT event, Tags tags, double value) {}
 }
