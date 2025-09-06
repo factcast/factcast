@@ -104,7 +104,7 @@
     <jackson.version>2.20.0</jackson.version>
     <mockito.version>5.19.0</mockito.version>
     <junit-jupiter.version>5.13.4</junit-jupiter.version>
-    <lombok.version>1.18.38</lombok.version>
+    <lombok.version>1.18.40</lombok.version>
     <slf4j-api.version>2.0.17</slf4j-api.version>
     <!--suppress UnresolvedMavenProperty -->
     <etc>${session.executionRootDirectory}/src/etc</etc>
