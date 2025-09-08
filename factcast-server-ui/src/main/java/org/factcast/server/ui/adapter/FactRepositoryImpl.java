@@ -120,6 +120,7 @@ public class FactRepositoryImpl implements FactRepository {
   @SneakyThrows
   @Override
   public List<Fact> fetchAll(ReportFilterBean bean) {
+    // TODO: return stream here?
     Long untilSerial = Optional.ofNullable(bean.getTo()).map(BigDecimal::longValue).orElse(null);
     final var obs = new UnlimitedListObserver(untilSerial, 0);
     return fetch(bean, obs);

@@ -22,6 +22,7 @@ import org.factcast.core.Fact;
 @Getter
 @Log
 public class UnlimitedListObserver extends AbstractListObserver {
+  final int batchSize = 1000;
   int offset;
 
   public UnlimitedListObserver(int offset) {
@@ -42,6 +43,7 @@ public class UnlimitedListObserver extends AbstractListObserver {
     if (offset > 0) {
       offset--;
     } else {
+      // check batch size here & push to stream if full
       list().add(0, element);
     }
   }
