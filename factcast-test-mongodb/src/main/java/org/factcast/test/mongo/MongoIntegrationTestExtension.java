@@ -18,16 +18,19 @@ package org.factcast.test.mongo;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.bson.Document;
 import org.factcast.test.FactCastIntegrationTestExecutionListener;
 import org.factcast.test.FactCastIntegrationTestExtension;
 import org.springframework.test.context.TestContext;
+import org.testcontainers.containers.Container;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.ToxiproxyContainer.ContainerProxy;
+
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings({"rawtypes", "resource"})
 @Slf4j
@@ -43,14 +46,37 @@ public class MongoIntegrationTestExtension implements FactCastIntegrationTestExt
             key -> {
               GenericContainer mongo =
                   new GenericContainer<>("mongo:" + config.mongoVersion())
+                          .withCommand("--replSet", "rs0", "--bind_ip_all")
                       .withExposedPorts(MONGO_PORT)
                       .withNetwork(FactCastIntegrationTestExecutionListener._docker_network);
               mongo.start();
 
+
+              try {
+                Container.ExecResult init = mongo.execInContainer(
+                        "mongosh", "--quiet", "--eval",
+                        "rs.initiate({_id:'rs0', members:[{_id:0, host:'localhost:27017'}]})"
+                );
+                if (init.getExitCode() != 0 && !init.getStderr().contains("already initialized")) {
+                  throw new IllegalStateException("rs.initiate failed: " + init.getStderr());
+                }
+
+                Container.ExecResult wait = mongo.execInContainer(
+                        "mongosh", "--quiet", "--eval",
+                        "while(rs.status().myState!=1){ sleep(200); } ; 'PRIMARY'"
+                );
+                if (wait.getExitCode() != 0) {
+                  throw new IllegalStateException("RS never became PRIMARY: " + wait.getStderr());
+                }
+              } catch (Exception e) {
+                throw new RuntimeException(e);
+              }
+
               MongoProxy mongoProxy =
-                  new MongoProxy(
-                      FactCastIntegrationTestExecutionListener.createProxy(mongo, MONGO_PORT),
-                      FactCastIntegrationTestExecutionListener.client());
+                      new MongoProxy(
+                              FactCastIntegrationTestExecutionListener.createProxy(mongo, MONGO_PORT),
+                              FactCastIntegrationTestExecutionListener.client());
+
               return new Containers(
                   mongo,
                   mongoProxy,
@@ -58,10 +84,11 @@ public class MongoIntegrationTestExtension implements FactCastIntegrationTestExt
                       "mongodb://"
                           + mongoProxy.get().getContainerIpAddress()
                           + ":"
-                          + mongoProxy.get().getProxyPort()));
+                          + mongoProxy.get().getProxyPort()
+                          + "/?replicaSet=rs0&directConnection=true"));
             });
 
-    ContainerProxy mongoProxy = container.dynamoProxy().get();
+    ContainerProxy mongoProxy = container.mongoProxy().get();
     System.setProperty("mongodb.local.host", mongoProxy.getContainerIpAddress());
     System.setProperty("mongodb.local.port", String.valueOf(mongoProxy.getProxyPort()));
   }
@@ -72,6 +99,9 @@ public class MongoIntegrationTestExtension implements FactCastIntegrationTestExt
     final MongoClient client = executions.get(config).client;
 
     for (String dbName : client.listDatabaseNames()) {
+      if (dbName.equals("admin") || dbName.equals("local") || dbName.equals("config")) {
+        continue; // skip internal databases
+      }
       MongoDatabase db = client.getDatabase(dbName);
       for (String collName : db.listCollectionNames()) {
         if (collName.contains("system.")) {
@@ -87,7 +117,7 @@ public class MongoIntegrationTestExtension implements FactCastIntegrationTestExt
   public void injectFields(TestContext ctx) {
     final MongoConfig.Config config = discoverConfig(ctx.getTestClass());
     final Containers containers = executions.get(config);
-    FactCastIntegrationTestExtension.inject(ctx.getTestInstance(), containers.dynamoProxy);
+    FactCastIntegrationTestExtension.inject(ctx.getTestInstance(), containers.container);
   }
 
   private MongoConfig.Config discoverConfig(Class<?> i) {
@@ -100,7 +130,7 @@ public class MongoIntegrationTestExtension implements FactCastIntegrationTestExt
   @Value
   static class Containers {
     GenericContainer container;
-    MongoProxy dynamoProxy;
+    MongoProxy mongoProxy;
     MongoClient client;
   }
 

@@ -17,13 +17,19 @@ package org.factcast.itests.factus.config;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoDatabase;
+import lombok.SneakyThrows;
+import org.bson.Document;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 
+import java.util.List;
+
 public class MongoProjectionConfiguration {
   @Bean
+  @SneakyThrows
   MongoClient mongoDbClient(
       @Value("${mongodb.local.host}") String url, @Value("${mongodb.local.port}") String port) {
-    return MongoClients.create("mongodb://" + url + ":" + port);
+    return MongoClients.create("mongodb://" + url + ":" + port + "/?replicaSet=rs0&directConnection=true");
   }
 }

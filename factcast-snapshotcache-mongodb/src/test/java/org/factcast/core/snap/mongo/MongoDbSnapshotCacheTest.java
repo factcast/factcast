@@ -41,6 +41,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -72,10 +73,26 @@ class MongoDbSnapshotCacheTest {
     when(mongoClient.getDatabase("db")).thenReturn(mongoDatabase);
     when(mongoDatabase.getCollection("factus_snapshot")).thenReturn(collection);
     when(mongoDatabase.getCollection("fs.files", GridFSFile.class)).thenReturn(gridFsCollection);
-    when(gridFsCollection.withCodecRegistry(any())).thenReturn(gridFsCollection);
     when(mongoDatabase.getCollection("fs.chunks", BsonDocument.class)).thenReturn(gridFsChunkCollection);
-    when(gridFsChunkCollection.withCodecRegistry(any())).thenReturn(gridFsChunkCollection);
 
+    MongoCollection<Object> innerCollection = mock(MongoCollection.class);
+    when(innerCollection.withTimeout(anyLong(), any(TimeUnit.class))).thenReturn(innerCollection);
+    when(innerCollection.withReadPreference(any())).thenReturn(innerCollection);
+    FindIterable iterable = mock(FindIterable.class);
+    when(innerCollection.find()).thenReturn(iterable);
+    when(iterable.projection(any())).thenReturn(iterable);
+    when(iterable.first()).thenReturn(null);
+
+    when(gridFsCollection.withCodecRegistry(any())).thenReturn(gridFsCollection);
+    when(gridFsCollection.withDocumentClass(any())).thenReturn(innerCollection);
+    when(gridFsCollection.createIndex(any(Bson.class), any())).thenReturn("index");
+    when(gridFsCollection.createIndex(any(Bson.class))).thenReturn("index");
+    when(gridFsCollection.withTimeout(anyLong(), any(TimeUnit.class))).thenReturn(gridFsCollection);
+    when(gridFsCollection.withReadPreference(any())).thenReturn(gridFsCollection);
+    when(gridFsCollection.listIndexes()).thenReturn(gridFsCollection);
+
+    when(gridFsChunkCollection.withCodecRegistry(any())).thenReturn(gridFsChunkCollection);
+    when(gridFsChunkCollection.withTimeout(anyLong(), any(TimeUnit.class))).thenReturn(gridFsChunkCollection);
 
     underTest = spy(new MongoDbSnapshotCache(mongoClient, "db", props));
 
