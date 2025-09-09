@@ -356,12 +356,17 @@ public class PgFactStore extends AbstractFactStore {
   @Override
   public long lastSerialBefore(@NonNull LocalDate date) {
     try {
-      Long lastSer =
+      @SuppressWarnings("DataFlowIssue")
+      // ^ as we know this will return a long and cannot be empty
+      long lastSer =
           jdbcTemplate.queryForObject(
               PgConstants.LAST_SERIAL_BEFORE_DATE,
               new SingleColumnRowMapper<>(Long.class),
               Date.valueOf(date));
-      return Optional.ofNullable(lastSer).orElse(0L);
+      if (lastSer == -1) {
+        // must be in the future... we'd better return max(ser) here
+        return latestSerial();
+      } else return lastSer;
     } catch (EmptyResultDataAccessException noFactsAtAll) {
       return 0L;
     }

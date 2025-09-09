@@ -99,30 +99,31 @@ public class PgSubscriptionFactory implements AutoCloseable {
             catchupFactory,
             target,
             pipe,
-            telemetry);
+            telemetry,
+            req);
 
     // when closing the subscription, also close the PgFactStream
     subscription.onClose(pgsub::close);
-    CompletableFuture.runAsync(connect(req, subscription, pgsub), es);
+    CompletableFuture.runAsync(connect(subscription, pgsub), es);
 
     return subscription;
   }
 
   @NonNull
   @VisibleForTesting
-  Runnable connect(SubscriptionRequestTO req, SubscriptionImpl subscription, PgFactStream pgsub) {
+  Runnable connect(SubscriptionImpl subscription, PgFactStream pgSub) {
     return () -> {
       try {
-        pgsub.connect(req);
+        pgSub.connect();
       } catch (MissingTransformationInformationException e) {
         // warn level because it hints at broken transformations/schema registry
-        warnAndNotify(subscription, req, "missing transformation", e);
+        warnAndNotify(subscription, pgSub.request(), "missing transformation", e);
       } catch (TransformationException e) {
-        errorAndNotify(subscription, req, "failing transformation", e);
+        errorAndNotify(subscription, pgSub.request(), "failing transformation", e);
       } catch (Exception e) {
         // warn level because it is unexpected and unlikely to be a client induced error
         // not limiting to RuntimeException, in case anyone used @SneakyThrows
-        warnAndNotify(subscription, req, "runtime", e);
+        warnAndNotify(subscription, pgSub.request(), "runtime", e);
       }
     };
   }
