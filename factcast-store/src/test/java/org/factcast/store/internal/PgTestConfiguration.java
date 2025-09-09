@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.PgFactStoreConfiguration;
 import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.script.graaljs.GraalJSEngineFactory;
+import org.factcast.store.internal.tail.*;
 import org.factcast.test.PostgresVersion;
 import org.mockito.Mockito;
 import org.postgresql.Driver;
@@ -60,6 +61,7 @@ public class PgTestConfiguration {
           "spring.datasource.url", url + "?socketTimeout=0&preparedStatementCacheSize=0");
       System.setProperty("spring.datasource.username", postgres.getUsername());
       System.setProperty("spring.datasource.password", postgres.getPassword());
+      System.setProperty("spring.datasource.maxActive", "20");
       System.setProperty("spring.datasource.tomcat.connectionProperties", "foo=bar;");
     } else {
       log.info("Using predefined external postgres URL: " + url);
