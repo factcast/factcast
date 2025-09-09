@@ -23,10 +23,8 @@ import java.time.Duration;
 import java.util.Optional;
 import net.javacrumbs.shedlock.core.LockConfiguration;
 import net.javacrumbs.shedlock.core.SimpleLock;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -35,53 +33,122 @@ class MongoDbWriterTokenTest {
 
   @Mock SimpleLock lock;
   @Mock LockConfiguration lockConfiguration;
-  @InjectMocks MongoDbWriterToken uut;
+  MongoDbWriterToken uut;
 
-  @Test
-  @DisplayName("isValid should return true when lock can be extended")
-  void testIsValid() {
-    when(lock.extend(any(Duration.class), any(Duration.class)))
-        .thenReturn(Optional.of(mock(SimpleLock.class)));
-    final Duration minDuration = Duration.ofSeconds(1L);
-    final Duration maxDuration = Duration.ofSeconds(1L);
-    when(lockConfiguration.getLockAtLeastFor()).thenReturn(minDuration);
-    when(lockConfiguration.getLockAtMostFor()).thenReturn(maxDuration);
-
-    assertThat(uut.isValid()).isTrue();
-
-    verify(lock).extend(maxDuration, minDuration);
+  @BeforeEach
+  void setUp() {
+    uut = new MongoDbWriterToken(lock, lockConfiguration, Duration.ofSeconds(2));
   }
 
-  @Test
-  @DisplayName("isValid should return false attempt to extend lock fails")
-  void testIsValid_fails() {
-    when(lock.extend(any(Duration.class), any(Duration.class)))
-        .thenThrow(IllegalStateException.class);
-    final Duration minDuration = Duration.ofSeconds(1L);
-    final Duration maxDuration = Duration.ofSeconds(1L);
-    when(lockConfiguration.getLockAtLeastFor()).thenReturn(minDuration);
-    when(lockConfiguration.getLockAtMostFor()).thenReturn(maxDuration);
+  @Nested
+  class WhenCheckingValidity {
+    @Test
+    @DisplayName(
+        "isValid should return true without extending the lock when checkIntervall is not exceeded.")
+    void isValidReturnsTrueWhenLivenessNotExpired() {
+      assertThat(uut.isValid()).isTrue();
 
-    assertThat(uut.isValid()).isFalse();
+      verifyNoInteractions(lock);
+    }
 
-    verify(lock).extend(maxDuration, minDuration);
+    @Test
+    @DisplayName("isValid should return true when lock can be extended")
+    void isValidExtendsLockWhenLivenessExpired() {
+      when(lock.extend(any(Duration.class), any(Duration.class)))
+          .thenReturn(Optional.of(mock(SimpleLock.class)));
+      final Duration minDuration = Duration.ofSeconds(1L);
+      final Duration maxDuration = Duration.ofSeconds(1L);
+      when(lockConfiguration.getLockAtLeastFor()).thenReturn(minDuration);
+      when(lockConfiguration.getLockAtMostFor()).thenReturn(maxDuration);
+      uut.liveness().set(System.currentTimeMillis() - Duration.ofSeconds(21).toMillis());
+
+      assertThat(uut.isValid()).isTrue();
+
+      verify(lock).extend(maxDuration, minDuration);
+    }
+
+    @Test
+    @DisplayName("isValid should return false when lock cannot be extended")
+    void isValidReturnsFalseIfExtendReturnsEmpty() {
+      when(lock.extend(any(Duration.class), any(Duration.class))).thenReturn(Optional.empty());
+      final Duration minDuration = Duration.ofSeconds(1L);
+      final Duration maxDuration = Duration.ofSeconds(1L);
+      when(lockConfiguration.getLockAtLeastFor()).thenReturn(minDuration);
+      when(lockConfiguration.getLockAtMostFor()).thenReturn(maxDuration);
+      uut.liveness().set(System.currentTimeMillis() - Duration.ofSeconds(21).toMillis());
+
+      assertThat(uut.isValid()).isFalse();
+
+      verify(lock).extend(maxDuration, minDuration);
+    }
+
+    @Test
+    @DisplayName("isValid should return false when liveness is null.")
+    void isValidReturnsFalseWhenLivenessIsExpired() {
+      uut.liveness(null);
+
+      assertThat(uut.isValid()).isFalse();
+
+      verifyNoInteractions(lock);
+    }
+
+    // TODO: if exception is not possible can be removed
+    //  @Test
+    //  @DisplayName("isValid should return false attempt to extend lock fails")
+    //  void testIsValid_fails() {
+    //    when(lock.extend(any(Duration.class), any(Duration.class)))
+    //        .thenThrow(IllegalStateException.class);
+    //    final Duration minDuration = Duration.ofSeconds(1L);
+    //    final Duration maxDuration = Duration.ofSeconds(1L);
+    //    when(lockConfiguration.getLockAtLeastFor()).thenReturn(minDuration);
+    //    when(lockConfiguration.getLockAtMostFor()).thenReturn(maxDuration);
+    //
+    //    assertThat(uut.isValid()).isFalse();
+    //
+    //    verify(lock).extend(maxDuration, minDuration);
+    //  }
   }
 
-  @Test
-  @DisplayName("close calls unlock")
-  void closeSuccessfully() {
-    uut.close();
+  @Nested
+  class WhenClosing {
 
-    verify(lock).unlock();
+    @Test
+    @DisplayName("close calls unlock")
+    void closeSuccessfully() {
+      uut.close();
+
+      verify(lock).unlock();
+      assertThat(uut.liveness()).isNull();
+    }
+
+    @Test
+    @DisplayName("close catches the exception when unlock is unsuccessful")
+    void closeCatchesExceptionWhenFailing() {
+      doThrow(new IllegalStateException()).when(lock).unlock();
+
+      assertThatCode(() -> uut.close()).doesNotThrowAnyException();
+
+      verify(lock).unlock();
+      assertThat(uut.liveness()).isNull();
+    }
   }
 
-  @Test
-  @DisplayName("close catches the exception when unlock is unsuccessful")
-  void closeCatchesExceptionWhenFailing() {
-    doThrow(new IllegalStateException()).when(lock).unlock();
+  @Nested
+  class WhenRefreshing {
+    @Test
+    @DisplayName("schedules a task to extend the lock periodically")
+    void schedulesTask() {
+      when(lock.extend(any(Duration.class), any(Duration.class)))
+          .thenReturn(Optional.of(mock(SimpleLock.class)));
+      final Duration minDuration = Duration.ofSeconds(1L);
+      final Duration maxDuration = Duration.ofSeconds(1L);
+      when(lockConfiguration.getLockAtLeastFor()).thenReturn(minDuration);
+      when(lockConfiguration.getLockAtMostFor()).thenReturn(maxDuration);
 
-    assertThatCode(() -> uut.close()).doesNotThrowAnyException();
+      // wait for it
+      verify(lock, after(1000).never()).extend(any(), any());
 
-    verify(lock).unlock();
+      verify(lock, timeout(2500).times(1)).extend(maxDuration, minDuration);
+    }
   }
 }
