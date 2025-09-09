@@ -15,25 +15,36 @@
  */
 package org.factcast.core.snap.mongo;
 
+import com.mongodb.ReadConcern;
+import com.mongodb.ReadPreference;
+import com.mongodb.TransactionOptions;
+import com.mongodb.WriteConcern;
+import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.gridfs.GridFSBucket;
+import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.model.*;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
+import org.bson.Document;
+import org.bson.types.ObjectId;
+import org.factcast.factus.serializer.SnapshotSerializerId;
+import org.factcast.factus.snapshot.SnapshotCache;
+import org.factcast.factus.snapshot.SnapshotData;
+import org.factcast.factus.snapshot.SnapshotIdentifier;
+
+import javax.validation.constraints.NotNull;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import javax.validation.constraints.NotNull;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
-import org.bson.BsonBinarySubType;
-import org.bson.Document;
-import org.bson.types.Binary;
-import org.factcast.factus.serializer.SnapshotSerializerId;
-import org.factcast.factus.snapshot.SnapshotCache;
-import org.factcast.factus.snapshot.SnapshotData;
-import org.factcast.factus.snapshot.SnapshotIdentifier;
 
 @SuppressWarnings("deprecation")
 @Slf4j
@@ -43,15 +54,22 @@ public class MongoDbSnapshotCache implements SnapshotCache {
   public static final String SNAPSHOT_SERIALIZER_ID_FIELD = "snapshotSerializerId";
   public static final String LAST_FACT_ID_FIELD = "lastFactId";
   public static final String SERIALIZED_PROJECTION_FIELD = "serializedProjection";
+  public static final String FILE_ID_FIELD = "fileID";
   public static final String EXPIRE_AT_FIELD = "expireAt";
+
+  // Recommended by the docs to use Majority for gridfs operations
+  public static final TransactionOptions txnOptions = TransactionOptions.builder().readPreference(ReadPreference.primary()).readConcern(ReadConcern.MAJORITY).writeConcern(WriteConcern.MAJORITY).build();
 
   private final MongoDbSnapshotProperties properties;
   private final MongoCollection<Document> collection;
+  private final GridFSBucket gridFSBucket;
+  private final MongoClient mongoClient;
 
   public MongoDbSnapshotCache(
       @NonNull MongoClient mongoClient,
       @NotNull String databaseName,
       @NonNull MongoDbSnapshotProperties properties) {
+    this.mongoClient = mongoClient;
     this.properties = properties;
     MongoDatabase database = mongoClient.getDatabase(databaseName);
     this.collection = database.getCollection("factus_snapshot");
@@ -76,17 +94,32 @@ public class MongoDbSnapshotCache implements SnapshotCache {
     // `expireAt` field. So, immediately.
     collection.createIndex(
         Indexes.ascending(EXPIRE_AT_FIELD), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS));
+
+    // Create the GridFS bucket with helper class to store binaries
+    gridFSBucket = GridFSBuckets.create(database);
   }
 
   @Override
   public @NonNull Optional<SnapshotData> find(@NonNull SnapshotIdentifier id) {
-    Document query = getDocumentById(id);
-
+    Document query = createQueryById(id);
     Document result = collection.find(query).first();
 
-    if (result != null) {
-      Binary binary = result.get(SERIALIZED_PROJECTION_FIELD, Binary.class);
-      byte[] bytes = binary.getData();
+    if (result == null) {
+      return Optional.empty();
+    }
+
+    // Field ID of the binary in GridFS
+    ObjectId fileId = result.getObjectId(FILE_ID_FIELD);
+
+    byte[] bytes;
+    // Stream the GridFS file to a destination (here, a file on disk)
+    try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+      gridFSBucket.downloadToStream(fileId, out);
+      bytes = out.toByteArray();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
       String serializerId = result.getString(SNAPSHOT_SERIALIZER_ID_FIELD);
       UUID lastFactId = UUID.fromString(result.getString(LAST_FACT_ID_FIELD));
 
@@ -94,15 +127,11 @@ public class MongoDbSnapshotCache implements SnapshotCache {
 
       return Optional.of(
           new SnapshotData(bytes, SnapshotSerializerId.of(serializerId), lastFactId));
-    }
-
-    return Optional.empty();
   }
 
   private void tryUpdateExpirationDate(SnapshotIdentifier id) {
     try {
-      collection.updateOne(
-          getDocumentById(id),
+      collection.updateOne(createQueryById(id),
           Updates.set(
               EXPIRE_AT_FIELD,
               Instant.now().plus(properties.getDeleteSnapshotStaleForDays(), ChronoUnit.DAYS)));
@@ -113,34 +142,59 @@ public class MongoDbSnapshotCache implements SnapshotCache {
 
   @Override
   public void store(@NonNull SnapshotIdentifier id, @NonNull SnapshotData snapshot) {
-    Binary bytes = new Binary(BsonBinarySubType.BINARY, snapshot.serializedProjection());
+    Document doc = new Document(PROJECTION_CLASS_FIELD, id.projectionClass().getName()).append(SNAPSHOT_SERIALIZER_ID_FIELD, snapshot.snapshotSerializerId().name()).append(LAST_FACT_ID_FIELD, snapshot.lastFactId().toString()).append(EXPIRE_AT_FIELD, Instant.now().plus(properties.getDeleteSnapshotStaleForDays(), ChronoUnit.DAYS));
 
-    Document doc =
-        new Document(PROJECTION_CLASS_FIELD, id.projectionClass().getName())
-            .append(SNAPSHOT_SERIALIZER_ID_FIELD, snapshot.snapshotSerializerId().name())
-            .append(LAST_FACT_ID_FIELD, snapshot.lastFactId().toString())
-            // Document limit for binary data(16MB)
-            .append(SERIALIZED_PROJECTION_FIELD, bytes);
-
-    if (id.aggregateId() != null) {
-      doc.append(AGGREGATE_ID_FIELD, id.aggregateId().toString());
+    UUID aggregateId = id.aggregateId();
+    if (aggregateId != null) {
+      doc.append(AGGREGATE_ID_FIELD, aggregateId.toString());
     }
 
-    // Add expiration time to the document
-    doc.append(
-        EXPIRE_AT_FIELD,
-        Instant.now().plus(properties.getDeleteSnapshotStaleForDays(), ChronoUnit.DAYS));
+    Document query = createQueryById(id);
+    String binaryTittle = getBinaryTittle(id);
 
-    Document query = getDocumentById(id);
-    collection.replaceOne(query, doc, new ReplaceOptions().upsert(true));
+    try (ClientSession session = mongoClient.startSession()) {
+      session.withTransaction(() -> {
+
+        ObjectId fileId;
+        try (InputStream in = new ByteArrayInputStream(snapshot.serializedProjection())) {
+          fileId = gridFSBucket.uploadFromStream(session, binaryTittle, in);
+        } catch (IOException e) {
+          log.error("Error uploading snapshot to GridFS for id: {}", id, e);
+          throw new RuntimeException(e);
+        }
+
+        doc.append(FILE_ID_FIELD, fileId);
+
+        collection.replaceOne(session, query, doc, new ReplaceOptions().upsert(true));
+        return true;
+      }, txnOptions);
+    }
   }
 
   @Override
   public void remove(@NonNull SnapshotIdentifier id) {
-    collection.deleteOne(getDocumentById(id));
+    Document query = createQueryById(id);
+    Document result = collection.find(query).first();
+
+    if (result != null) {
+      ObjectId fileId = result.getObjectId(FILE_ID_FIELD);
+
+      try (ClientSession session = mongoClient.startSession()) {
+        session.withTransaction(() -> {
+          gridFSBucket.delete(session, fileId);
+
+          collection.deleteOne(session, query);
+          return true;
+        }, txnOptions);
+      }
+    }
   }
 
-  private Document getDocumentById(SnapshotIdentifier id) {
+  private String getBinaryTittle(SnapshotIdentifier id) {
+    return id.projectionClass().getName() + Optional.ofNullable(id.aggregateId()).map(UUID::toString).orElse("");
+  }
+
+  private Document createQueryById(SnapshotIdentifier id) {
     Document query = new Document(PROJECTION_CLASS_FIELD, id.projectionClass().getName());
 
     if (id.aggregateId() != null) {
