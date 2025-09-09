@@ -74,7 +74,7 @@ class CondensedQueryExecutor {
     HashSet<String> set = new HashSet<>();
     specs.forEach(
         s -> {
-          if (s.type() == null) {
+          if (s.type() == null || s.type().equals("*")) {
             set.add(s.ns());
           } else {
             set.add(s.ns() + ":" + s.type());
@@ -127,7 +127,9 @@ class CondensedQueryExecutor {
         || // listens to the whole namespace
         interests.contains(ns)
         || // is a catchall
-        interests.contains("*");
+        interests.contains("*")
+        || // listens to the type in any namespace
+        interests.contains("*:" + type);
   }
 
   @SuppressWarnings("WeakerAccess")
