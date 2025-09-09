@@ -114,7 +114,6 @@ public class MongoDbWriterToken implements WriterToken {
           @Override
           public void run() {
             if (alreadyClosed()) {
-              log.debug("Keep-alive cancelled for: {}", lockConfiguration.getName());
               scheduler.cancel();
             } else {
               Optional<SimpleLock> extendedLock =

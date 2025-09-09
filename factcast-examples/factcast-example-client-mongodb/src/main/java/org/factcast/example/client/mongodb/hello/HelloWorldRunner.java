@@ -15,9 +15,10 @@
  */
 package org.factcast.example.client.mongodb.hello;
 
-import com.google.common.collect.Lists;
 import com.mongodb.client.MongoDatabase;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,51 +43,38 @@ public class HelloWorldRunner implements CommandLineRunner {
 
   @Override
   public void run(String... args) throws Exception {
+
+    for (int i = 0; i < 10; i++) {
+      val factId1 = UUID.randomUUID();
+      val firstNameUuid = UUID.randomUUID();
+      Fact created =
+          Fact.builder()
+              .ns("users")
+              .type("UserCreated")
+              .version(1)
+              .id(factId1)
+              .build("{\"firstName\":\"" + firstNameUuid + "\",\"lastName\":\"Lichter\"}");
+      fc.publish(created);
+    }
+
     factus.subscribe(subscription);
 
-    val factId1 = UUID.randomUUID();
-    val firstNameUuid = UUID.randomUUID();
-    Fact created =
-        Fact.builder()
-            .ns("users")
-            .type("UserCreated")
-            .version(1)
-            .id(factId1)
-            .build("{\"firstName\":\"" + firstNameUuid + "\",\"lastName\":\"Lichter\"}");
+    ExecutorService threads = Executors.newFixedThreadPool(2);
+    for (int i = 0; i < 2; i++) {
+      threads.submit(
+          () -> {
+            log.info("Starting thread");
+            final MongoDbProjection projection = new MongoDbProjection(mongoDatabase);
+            factus.update(projection);
+            log.info("Finished update at position: {}", projection.factStreamPosition());
+            log.info("Total count users: {}", projection.findsAll().size());
+            log.info("Done");
+          });
+    }
+    threads.shutdown();
 
-    val factId2 = UUID.randomUUID();
-    Fact changed =
-        Fact.builder()
-            .ns("users")
-            .type("UserChanged")
-            .version(1)
-            .id(factId2)
-            .build("{\"firstName\":\"" + firstNameUuid + "\",\"lastName\":\"Lauch\"}");
-
-    val factId3 = UUID.randomUUID();
-    val firstNameUuid2 = UUID.randomUUID();
-    Fact created2 =
-        Fact.builder()
-            .ns("users")
-            .type("UserCreated")
-            .version(1)
-            .id(factId3)
-            .build("{\"firstName\":\"" + firstNameUuid2 + "\",\"lastName\":\"August\"}");
-
-    fc.publish(Lists.newArrayList(created, changed, created2));
-
-    final MongoDbProjection projection = new MongoDbProjection(mongoDatabase);
-    factus.update(projection);
-    log.info("Position is {}", projection.factStreamPosition());
-
-    log.info("User 1: {}", projection.findByFirstName(firstNameUuid.toString()));
-    log.info("User 2: {}", projection.findByFirstName(firstNameUuid2.toString()));
-    log.info("all users count: {}", projection.findsAll().size());
-
-    Thread.sleep(2000);
-    //    subscription.acquireWriteToken();
-
+    // Check subscribed projection
+    Thread.sleep(1000);
     log.info("Subscription position is {}", subscription.factStreamPosition());
-    log.info("User1 from subscription: {}", subscription.findByFirstName(firstNameUuid.toString()));
   }
 }

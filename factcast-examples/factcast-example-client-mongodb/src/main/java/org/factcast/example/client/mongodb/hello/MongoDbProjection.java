@@ -19,6 +19,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import java.util.List;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.factcast.example.client.mongodb.hello.events.UserChangedV1;
@@ -48,6 +49,7 @@ public class MongoDbProjection extends AbstractMongoDbManagedProjection {
     return userTable.find(new Document("firstName", firstName), UserSchema.class).first();
   }
 
+  @SneakyThrows
   @Handler
   void apply(UserCreatedV1 e) {
     userTable.insertOne(
@@ -56,6 +58,8 @@ public class MongoDbProjection extends AbstractMongoDbManagedProjection {
             .firstName(e.firstName())
             .lastName(e.lastName())
             .build());
+
+    Thread.sleep(2000); // simulate long processing
 
     log.info("UserCreated processed");
   }
