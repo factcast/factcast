@@ -118,9 +118,7 @@ abstract class AbstractMongoDbProjection implements MongoDbProjection {
 
   @Override
   public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
-    // We use maxWait as max lock duration here as parameter has this somewhat inconsistent double
-    // meaning in Factus atm.
-    final LockConfiguration lockConfiguration = getLockConfiguration(getLockKey(), maxWait);
+    final LockConfiguration lockConfiguration = getLockConfiguration(getLockKey());
     Optional<SimpleLock> lock =
         tryToAcquireLock(lockConfiguration, ZonedDateTime.now().plus(maxWait));
     this.lock = lock.orElse(null);
@@ -131,8 +129,9 @@ abstract class AbstractMongoDbProjection implements MongoDbProjection {
     return projectionKey + "_lock";
   }
 
-  private static LockConfiguration getLockConfiguration(String lockKey, Duration maxWait) {
-    return new LockConfiguration(Instant.now(), lockKey, maxWait, MIN_LEASE_DURATION_SECONDS);
+  private static LockConfiguration getLockConfiguration(String lockKey) {
+    return new LockConfiguration(
+        Instant.now(), lockKey, MAX_LEASE_DURATION_SECONDS, MIN_LEASE_DURATION_SECONDS);
   }
 
   /**
@@ -144,6 +143,7 @@ abstract class AbstractMongoDbProjection implements MongoDbProjection {
     try {
       long retryBackoffDuration = 500;
       do {
+        log.debug("Trying to acquire lock for projection: {}", projectionKey);
         Optional<SimpleLock> lock = lockProvider.lock(lockConfig);
         if (lock.isPresent()) {
           log.debug("Acquired lock for projection: {}", projectionKey);

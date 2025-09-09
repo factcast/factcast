@@ -16,6 +16,8 @@
 package org.factcast.factus.mongodb;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.factcast.factus.mongodb.AbstractMongoDbProjection.MAX_LEASE_DURATION_SECONDS;
+import static org.factcast.factus.mongodb.AbstractMongoDbProjection.MIN_LEASE_DURATION_SECONDS;
 import static org.mockito.Mockito.*;
 
 import com.mongodb.client.*;
@@ -165,8 +167,8 @@ class AbstractMongoDbManagedProjectionTest {
       verify(lockProvider, times(3)).lock(captor.capture());
       final LockConfiguration lockConfig = captor.getValue();
       assertThat(lockConfig.getName()).isEqualTo(SCOPED_NAME + "_lock");
-      assertThat(lockConfig.getLockAtLeastFor()).isEqualTo(Duration.ofSeconds(1L));
-      assertThat(lockConfig.getLockAtMostFor()).isEqualTo(maxWaitDuration);
+      assertThat(lockConfig.getLockAtLeastFor()).isEqualTo(MIN_LEASE_DURATION_SECONDS);
+      assertThat(lockConfig.getLockAtMostFor()).isEqualTo(MAX_LEASE_DURATION_SECONDS);
 
       assertThat(res).isNotNull();
     }
