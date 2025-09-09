@@ -67,7 +67,6 @@ public class MongoDbWriterToken implements WriterToken {
     startWriterTokenKeepalive();
   }
 
-  // TODO: test if this behaves like expected or if multiple threads fight over the same lock
   /**
    * Attempts to extend the lock, which will only succeed of the lock is either free or held by the
    * instance.
@@ -80,18 +79,16 @@ public class MongoDbWriterToken implements WriterToken {
     if (System.currentTimeMillis() - lastCheck < keepaliveInterval) {
       return true;
     }
-
-    //    try {
     Optional<SimpleLock> extendedLock =
         lock.extend(lockConfiguration.getLockAtMostFor(), lockConfiguration.getLockAtLeastFor());
+    log.debug(
+        "WriterToken {} validity check, when attempting to extend lock for: {}",
+        extendedLock.isPresent() ? "passed" : "failed",
+        lockConfiguration.getName());
     if (extendedLock.isPresent()) {
       this.lock = extendedLock.get();
       return true;
     }
-    //    }
-    //    catch (IllegalStateException e) {
-    //      log.debug("Failed to extend lock, it is no longer valid: {}", e.getMessage());
-    //    }
     return false;
   }
 
@@ -117,35 +114,28 @@ public class MongoDbWriterToken implements WriterToken {
           @Override
           public void run() {
             if (alreadyClosed()) {
+              log.debug("Keep-alive cancelled for: {}", lockConfiguration.getName());
               scheduler.cancel();
             } else {
-              try {
-                Optional<SimpleLock> extendedLock =
-                    lock.extend(
-                        lockConfiguration.getLockAtMostFor(),
-                        lockConfiguration.getLockAtLeastFor());
-                if (extendedLock.isPresent()) {
-                  lock = extendedLock.get();
-                  liveness.set(System.currentTimeMillis());
-                } else {
-                  // could not extend the lock.
-                  liveness = null;
-                  scheduler.cancel();
-                }
-                log.debug(
-                    "{} to extend lock for projection: {}",
-                    extendedLock.isPresent() ? "Succeeded" : "Failed",
-                    lockConfiguration.getName());
-
-                // TODO: is this exception possible here?
-              } catch (IllegalStateException e) {
-                log.debug(
-                    "Failed to extend lock during keep-alive: {}. Might have been extended manually.",
-                    e.getMessage());
+              Optional<SimpleLock> extendedLock =
+                  lock.extend(
+                      lockConfiguration.getLockAtMostFor(), lockConfiguration.getLockAtLeastFor());
+              if (extendedLock.isPresent()) {
+                lock = extendedLock.get();
+                liveness.set(System.currentTimeMillis());
+              } else {
+                // could not extend the lock.
+                liveness = null;
+                scheduler.cancel();
               }
+              log.debug(
+                  "{} to extend lock for projection: {}",
+                  extendedLock.isPresent() ? "Succeeded" : "Failed",
+                  lockConfiguration.getName());
             }
           }
         },
+        keepaliveInterval,
         keepaliveInterval);
   }
 
