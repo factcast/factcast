@@ -15,23 +15,14 @@
  */
 package org.factcast.core.snap.mongo;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.within;
-import static org.mockito.Mockito.*;
-
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.*;
+import com.mongodb.client.gridfs.GridFSBucket;
+import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.model.ReplaceOptions;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Optional;
-import java.util.UUID;
-import org.bson.BsonBinarySubType;
+import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.bson.types.Binary;
+import org.bson.types.ObjectId;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.SnapshotSerializerId;
 import org.factcast.factus.snapshot.SnapshotData;
@@ -45,12 +36,30 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.io.OutputStream;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
+import static org.mockito.Mockito.*;
+
 @ExtendWith(MockitoExtension.class)
 class MongoDbSnapshotCacheTest {
 
   @Mock private MongoClient mongoClient;
   @Mock private MongoDatabase mongoDatabase;
   @Mock private MongoCollection<Document> collection;
+  @Mock
+  private MongoCollection<GridFSFile> gridFsCollection;
+  @Mock
+  private MongoCollection<BsonDocument> gridFsChunkCollection;
+  @Mock
+  private GridFSBucket gridFSBucket;
+  @Mock
+  private ClientSession session;
 
   private MongoDbSnapshotCache underTest;
 
@@ -62,7 +71,22 @@ class MongoDbSnapshotCacheTest {
     MongoDbSnapshotProperties props = new MongoDbSnapshotProperties();
     when(mongoClient.getDatabase("db")).thenReturn(mongoDatabase);
     when(mongoDatabase.getCollection("factus_snapshot")).thenReturn(collection);
-    underTest = new MongoDbSnapshotCache(mongoClient, "db", props);
+    when(mongoDatabase.getCollection("fs.files", GridFSFile.class)).thenReturn(gridFsCollection);
+    when(gridFsCollection.withCodecRegistry(any())).thenReturn(gridFsCollection);
+    when(mongoDatabase.getCollection("fs.chunks", BsonDocument.class)).thenReturn(gridFsChunkCollection);
+    when(gridFsChunkCollection.withCodecRegistry(any())).thenReturn(gridFsChunkCollection);
+
+
+    underTest = spy(new MongoDbSnapshotCache(mongoClient, "db", props));
+
+    underTest.gridFSBucket(gridFSBucket);
+
+    lenient().when(mongoClient.startSession()).thenReturn(session);
+    lenient().doAnswer(i -> {
+      TransactionBody<Boolean> argument = i.getArgument(0);
+      argument.execute();
+      return null;
+    }).when(session).withTransaction(any(), any());
 
     verify(collection, times(2)).createIndex(any(Bson.class), any());
     verify(collection, times(1)).createIndex(any(Bson.class));
@@ -76,18 +100,22 @@ class MongoDbSnapshotCacheTest {
     void happyCase() {
       FindIterable<Document> findIterable = mock(FindIterable.class);
       UUID lastFactId = UUID.randomUUID();
+      ObjectId fileId = ObjectId.get();
       Document result =
           new Document()
               .append("projectionClass", id.projectionClass().getName())
               .append("aggregateId", id.aggregateId() != null ? id.aggregateId().toString() : null)
-              .append("snapshotSerializerId", serId.name())
-              .append(
-                  "serializedProjection",
-                  new org.bson.types.Binary(BsonBinarySubType.BINARY, "foo".getBytes()))
+              .append("snapshotSerializerId", serId.name()).append("fileId", fileId)
               .append("lastFactId", lastFactId.toString());
 
       when(collection.find(documentCaptor.capture())).thenReturn(findIterable);
       when(findIterable.first()).thenReturn(result);
+
+      doAnswer(i -> {
+        OutputStream os = i.getArgument(1);
+        os.write("foo".getBytes());
+        return null;
+      }).when(gridFSBucket).downloadToStream(eq(fileId), any(OutputStream.class));
 
       Optional<SnapshotData> found = underTest.find(id);
 
@@ -123,10 +151,12 @@ class MongoDbSnapshotCacheTest {
       final SnapshotData snap = new SnapshotData("foo".getBytes(), serId, UUID.randomUUID());
       Instant expectedExpireAt = Instant.now().plus(90, ChronoUnit.DAYS);
 
+      ObjectId fileId = ObjectId.get();
+      when(gridFSBucket.uploadFromStream(eq(session), anyString(), any())).thenReturn(fileId);
+
       underTest.store(id, snap);
 
-      verify(collection)
-          .replaceOne(keyCaptor.capture(), documentCaptor.capture(), any(ReplaceOptions.class));
+      verify(collection).replaceOne(eq(session), keyCaptor.capture(), documentCaptor.capture(), any(ReplaceOptions.class));
       Document keyDocument = keyCaptor.getValue();
       Document storedDocument = documentCaptor.getValue();
 
@@ -140,9 +170,8 @@ class MongoDbSnapshotCacheTest {
       assertThat(storedDocument.getString("projectionClass"))
           .isEqualTo(id.projectionClass().getName());
       assertThat(storedDocument.getString("snapshotSerializerId")).isEqualTo(serId.name());
-      assertThat(storedDocument.get("serializedProjection", Binary.class).getData())
-          .isEqualTo("foo".getBytes());
       assertThat(storedDocument.getString("lastFactId")).isEqualTo(snap.lastFactId().toString());
+      assertThat(storedDocument.getObjectId("fileId")).isEqualTo(fileId);
       assertThat(storedDocument.get("expireAt", Instant.class))
           .isCloseTo(expectedExpireAt, within(1, ChronoUnit.SECONDS));
     }
@@ -153,11 +182,13 @@ class MongoDbSnapshotCacheTest {
       final SnapshotData snap2 = new SnapshotData("bar".getBytes(), serId, UUID.randomUUID());
       Instant expectedExpireAt = Instant.now().plus(90, ChronoUnit.DAYS);
 
+      ObjectId fileId = ObjectId.get();
+      when(gridFSBucket.uploadFromStream(eq(session), anyString(), any())).thenReturn(fileId);
+
       underTest.store(id, snap1);
       underTest.store(id, snap2);
 
-      verify(collection, times(2))
-          .replaceOne(keyCaptor.capture(), documentCaptor.capture(), any(ReplaceOptions.class));
+      verify(collection, times(2)).replaceOne(eq(session), keyCaptor.capture(), documentCaptor.capture(), any(ReplaceOptions.class));
 
       // Validate key document
       Document keyDocument = keyCaptor.getValue();
@@ -171,8 +202,7 @@ class MongoDbSnapshotCacheTest {
       assertThat(storedDocument.getString("projectionClass"))
           .isEqualTo(id.projectionClass().getName());
       assertThat(storedDocument.getString("snapshotSerializerId")).isEqualTo(serId.name());
-      assertThat(storedDocument.get("serializedProjection", Binary.class).getData())
-          .isEqualTo("bar".getBytes());
+      assertThat(storedDocument.getObjectId("fileId")).isEqualTo(fileId);
       assertThat(storedDocument.getString("lastFactId")).isEqualTo(snap2.lastFactId().toString());
       assertThat(storedDocument.get("expireAt", Instant.class))
           .isCloseTo(expectedExpireAt, within(1, ChronoUnit.SECONDS));
@@ -184,10 +214,13 @@ class MongoDbSnapshotCacheTest {
       final SnapshotData snap = new SnapshotData("foo".getBytes(), serId, UUID.randomUUID());
       Instant expectedExpireAt = Instant.now().plus(90, ChronoUnit.DAYS);
 
+      ObjectId fileId = ObjectId.get();
+      when(gridFSBucket.uploadFromStream(eq(session), anyString(), any())).thenReturn(fileId);
+
       underTest.store(idWithoutAggregate, snap);
 
-      verify(collection)
-          .replaceOne(keyCaptor.capture(), documentCaptor.capture(), any(ReplaceOptions.class));
+      verify(collection).replaceOne(eq(session), keyCaptor.capture(), documentCaptor.capture(), any(ReplaceOptions.class));
+
       Document keyDocument = keyCaptor.getValue();
       Document storedDocument = documentCaptor.getValue();
 
@@ -200,8 +233,7 @@ class MongoDbSnapshotCacheTest {
       assertThat(storedDocument.getString("projectionClass"))
           .isEqualTo(idWithoutAggregate.projectionClass().getName());
       assertThat(storedDocument.getString("snapshotSerializerId")).isEqualTo(serId.name());
-      assertThat(storedDocument.get("serializedProjection", Binary.class).getData())
-          .isEqualTo("foo".getBytes());
+      assertThat(storedDocument.getObjectId("fileId")).isEqualTo(fileId);
       assertThat(storedDocument.getString("lastFactId")).isEqualTo(snap.lastFactId().toString());
       assertThat(storedDocument.get("expireAt", Instant.class))
           .isCloseTo(expectedExpireAt, within(1, ChronoUnit.SECONDS));
@@ -215,9 +247,17 @@ class MongoDbSnapshotCacheTest {
 
     @Test
     void happyCase() {
+      FindIterable<Document> iterable = mock(FindIterable.class);
+      when(collection.find(any(Document.class))).thenReturn(iterable);
+      Document mock = mock(Document.class);
+      when(iterable.first()).thenReturn(mock);
+      ObjectId fileId = ObjectId.get();
+      when(mock.getObjectId("fileId")).thenReturn(fileId);
+
       underTest.remove(id);
 
-      verify(collection).deleteOne(keyCaptor.capture());
+      verify(gridFSBucket).delete(session, fileId);
+      verify(collection).deleteOne(eq(session), keyCaptor.capture());
       Document capturedKeyDocument = keyCaptor.getValue();
 
       // Validate captured key document
@@ -231,9 +271,17 @@ class MongoDbSnapshotCacheTest {
     void removeSnapshotWithoutAggregateId() {
       SnapshotIdentifier idWithoutAggregate = SnapshotIdentifier.of(SnapshotProjection.class);
 
+      FindIterable<Document> iterable = mock(FindIterable.class);
+      when(collection.find(any(Document.class))).thenReturn(iterable);
+      Document mock = mock(Document.class);
+      when(iterable.first()).thenReturn(mock);
+      ObjectId fileId = ObjectId.get();
+      when(mock.getObjectId("fileId")).thenReturn(fileId);
+
       underTest.remove(idWithoutAggregate);
 
-      verify(collection).deleteOne(keyCaptor.capture());
+      verify(gridFSBucket).delete(session, fileId);
+      verify(collection).deleteOne(eq(session), keyCaptor.capture());
       Document capturedKeyDocument = keyCaptor.getValue();
 
       // Validate captured key document

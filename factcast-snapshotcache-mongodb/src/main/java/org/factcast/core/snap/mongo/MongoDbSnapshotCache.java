@@ -15,6 +15,7 @@
  */
 package org.factcast.core.snap.mongo;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.TransactionOptions;
@@ -27,6 +28,7 @@ import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.model.*;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -53,8 +55,7 @@ public class MongoDbSnapshotCache implements SnapshotCache {
   public static final String AGGREGATE_ID_FIELD = "aggregateId";
   public static final String SNAPSHOT_SERIALIZER_ID_FIELD = "snapshotSerializerId";
   public static final String LAST_FACT_ID_FIELD = "lastFactId";
-  public static final String SERIALIZED_PROJECTION_FIELD = "serializedProjection";
-  public static final String FILE_ID_FIELD = "fileID";
+  public static final String FILE_ID_FIELD = "fileId";
   public static final String EXPIRE_AT_FIELD = "expireAt";
 
   // Recommended by the docs to use Majority for gridfs operations
@@ -62,8 +63,10 @@ public class MongoDbSnapshotCache implements SnapshotCache {
 
   private final MongoDbSnapshotProperties properties;
   private final MongoCollection<Document> collection;
-  private final GridFSBucket gridFSBucket;
   private final MongoClient mongoClient;
+
+  @VisibleForTesting
+  @Setter private GridFSBucket gridFSBucket;
 
   public MongoDbSnapshotCache(
       @NonNull MongoClient mongoClient,
