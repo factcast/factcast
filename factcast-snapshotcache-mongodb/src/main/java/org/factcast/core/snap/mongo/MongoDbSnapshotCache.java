@@ -27,17 +27,6 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.model.*;
-import lombok.NonNull;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
-import org.bson.Document;
-import org.bson.types.ObjectId;
-import org.factcast.factus.serializer.SnapshotSerializerId;
-import org.factcast.factus.snapshot.SnapshotCache;
-import org.factcast.factus.snapshot.SnapshotData;
-import org.factcast.factus.snapshot.SnapshotIdentifier;
-
-import javax.validation.constraints.NotNull;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -47,6 +36,16 @@ import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import javax.validation.constraints.NotNull;
+import lombok.NonNull;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+import org.bson.Document;
+import org.bson.types.ObjectId;
+import org.factcast.factus.serializer.SnapshotSerializerId;
+import org.factcast.factus.snapshot.SnapshotCache;
+import org.factcast.factus.snapshot.SnapshotData;
+import org.factcast.factus.snapshot.SnapshotIdentifier;
 
 @SuppressWarnings("deprecation")
 @Slf4j
@@ -59,14 +58,18 @@ public class MongoDbSnapshotCache implements SnapshotCache {
   public static final String EXPIRE_AT_FIELD = "expireAt";
 
   // Recommended by the docs to use Majority for gridfs operations
-  public static final TransactionOptions txnOptions = TransactionOptions.builder().readPreference(ReadPreference.primary()).readConcern(ReadConcern.MAJORITY).writeConcern(WriteConcern.MAJORITY).build();
+  public static final TransactionOptions txnOptions =
+      TransactionOptions.builder()
+          .readPreference(ReadPreference.primary())
+          .readConcern(ReadConcern.MAJORITY)
+          .writeConcern(WriteConcern.MAJORITY)
+          .build();
 
   private final MongoDbSnapshotProperties properties;
   private final MongoCollection<Document> collection;
   private final MongoClient mongoClient;
 
-  @VisibleForTesting
-  @Setter private GridFSBucket gridFSBucket;
+  @VisibleForTesting @Setter private GridFSBucket gridFSBucket;
 
   public MongoDbSnapshotCache(
       @NonNull MongoClient mongoClient,
@@ -123,18 +126,18 @@ public class MongoDbSnapshotCache implements SnapshotCache {
       throw new RuntimeException(e);
     }
 
-      String serializerId = result.getString(SNAPSHOT_SERIALIZER_ID_FIELD);
-      UUID lastFactId = UUID.fromString(result.getString(LAST_FACT_ID_FIELD));
+    String serializerId = result.getString(SNAPSHOT_SERIALIZER_ID_FIELD);
+    UUID lastFactId = UUID.fromString(result.getString(LAST_FACT_ID_FIELD));
 
-      tryUpdateExpirationDate(id);
+    tryUpdateExpirationDate(id);
 
-      return Optional.of(
-          new SnapshotData(bytes, SnapshotSerializerId.of(serializerId), lastFactId));
+    return Optional.of(new SnapshotData(bytes, SnapshotSerializerId.of(serializerId), lastFactId));
   }
 
   private void tryUpdateExpirationDate(SnapshotIdentifier id) {
     try {
-      collection.updateOne(createQueryById(id),
+      collection.updateOne(
+          createQueryById(id),
           Updates.set(
               EXPIRE_AT_FIELD,
               Instant.now().plus(properties.getDeleteSnapshotStaleForDays(), ChronoUnit.DAYS)));
@@ -145,7 +148,13 @@ public class MongoDbSnapshotCache implements SnapshotCache {
 
   @Override
   public void store(@NonNull SnapshotIdentifier id, @NonNull SnapshotData snapshot) {
-    Document doc = new Document(PROJECTION_CLASS_FIELD, id.projectionClass().getName()).append(SNAPSHOT_SERIALIZER_ID_FIELD, snapshot.snapshotSerializerId().name()).append(LAST_FACT_ID_FIELD, snapshot.lastFactId().toString()).append(EXPIRE_AT_FIELD, Instant.now().plus(properties.getDeleteSnapshotStaleForDays(), ChronoUnit.DAYS));
+    Document doc =
+        new Document(PROJECTION_CLASS_FIELD, id.projectionClass().getName())
+            .append(SNAPSHOT_SERIALIZER_ID_FIELD, snapshot.snapshotSerializerId().name())
+            .append(LAST_FACT_ID_FIELD, snapshot.lastFactId().toString())
+            .append(
+                EXPIRE_AT_FIELD,
+                Instant.now().plus(properties.getDeleteSnapshotStaleForDays(), ChronoUnit.DAYS));
 
     UUID aggregateId = id.aggregateId();
     if (aggregateId != null) {
@@ -156,21 +165,22 @@ public class MongoDbSnapshotCache implements SnapshotCache {
     String binaryTittle = getBinaryTittle(id);
 
     try (ClientSession session = mongoClient.startSession()) {
-      session.withTransaction(() -> {
+      session.withTransaction(
+          () -> {
+            ObjectId fileId;
+            try (InputStream in = new ByteArrayInputStream(snapshot.serializedProjection())) {
+              fileId = gridFSBucket.uploadFromStream(session, binaryTittle, in);
+            } catch (IOException e) {
+              log.error("Error uploading snapshot to GridFS for id: {}", id, e);
+              throw new RuntimeException(e);
+            }
 
-        ObjectId fileId;
-        try (InputStream in = new ByteArrayInputStream(snapshot.serializedProjection())) {
-          fileId = gridFSBucket.uploadFromStream(session, binaryTittle, in);
-        } catch (IOException e) {
-          log.error("Error uploading snapshot to GridFS for id: {}", id, e);
-          throw new RuntimeException(e);
-        }
+            doc.append(FILE_ID_FIELD, fileId);
 
-        doc.append(FILE_ID_FIELD, fileId);
-
-        collection.replaceOne(session, query, doc, new ReplaceOptions().upsert(true));
-        return true;
-      }, txnOptions);
+            collection.replaceOne(session, query, doc, new ReplaceOptions().upsert(true));
+            return true;
+          },
+          txnOptions);
     }
   }
 
@@ -183,18 +193,21 @@ public class MongoDbSnapshotCache implements SnapshotCache {
       ObjectId fileId = result.getObjectId(FILE_ID_FIELD);
 
       try (ClientSession session = mongoClient.startSession()) {
-        session.withTransaction(() -> {
-          gridFSBucket.delete(session, fileId);
+        session.withTransaction(
+            () -> {
+              gridFSBucket.delete(session, fileId);
 
-          collection.deleteOne(session, query);
-          return true;
-        }, txnOptions);
+              collection.deleteOne(session, query);
+              return true;
+            },
+            txnOptions);
       }
     }
   }
 
   private String getBinaryTittle(SnapshotIdentifier id) {
-    return id.projectionClass().getName() + Optional.ofNullable(id.aggregateId()).map(UUID::toString).orElse("");
+    return id.projectionClass().getName()
+        + Optional.ofNullable(id.aggregateId()).map(UUID::toString).orElse("");
   }
 
   private Document createQueryById(SnapshotIdentifier id) {

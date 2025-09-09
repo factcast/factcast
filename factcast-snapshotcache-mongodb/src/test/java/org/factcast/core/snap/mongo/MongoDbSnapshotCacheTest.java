@@ -15,10 +15,19 @@
  */
 package org.factcast.core.snap.mongo;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
+import static org.mockito.Mockito.*;
+
 import com.mongodb.client.*;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.model.ReplaceOptions;
+import java.io.OutputStream;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
+import java.util.UUID;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -36,30 +45,16 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.io.OutputStream;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.within;
-import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 class MongoDbSnapshotCacheTest {
 
   @Mock private MongoClient mongoClient;
   @Mock private MongoDatabase mongoDatabase;
   @Mock private MongoCollection<Document> collection;
-  @Mock
-  private MongoCollection<GridFSFile> gridFsCollection;
-  @Mock
-  private MongoCollection<BsonDocument> gridFsChunkCollection;
-  @Mock
-  private GridFSBucket gridFSBucket;
-  @Mock
-  private ClientSession session;
+  @Mock private MongoCollection<GridFSFile> gridFsCollection;
+  @Mock private MongoCollection<BsonDocument> gridFsChunkCollection;
+  @Mock private GridFSBucket gridFSBucket;
+  @Mock private ClientSession session;
 
   private MongoDbSnapshotCache underTest;
 
@@ -73,20 +68,24 @@ class MongoDbSnapshotCacheTest {
     when(mongoDatabase.getCollection("factus_snapshot")).thenReturn(collection);
     when(mongoDatabase.getCollection("fs.files", GridFSFile.class)).thenReturn(gridFsCollection);
     when(gridFsCollection.withCodecRegistry(any())).thenReturn(gridFsCollection);
-    when(mongoDatabase.getCollection("fs.chunks", BsonDocument.class)).thenReturn(gridFsChunkCollection);
+    when(mongoDatabase.getCollection("fs.chunks", BsonDocument.class))
+        .thenReturn(gridFsChunkCollection);
     when(gridFsChunkCollection.withCodecRegistry(any())).thenReturn(gridFsChunkCollection);
-
 
     underTest = spy(new MongoDbSnapshotCache(mongoClient, "db", props));
 
     underTest.gridFSBucket(gridFSBucket);
 
     lenient().when(mongoClient.startSession()).thenReturn(session);
-    lenient().doAnswer(i -> {
-      TransactionBody<Boolean> argument = i.getArgument(0);
-      argument.execute();
-      return null;
-    }).when(session).withTransaction(any(), any());
+    lenient()
+        .doAnswer(
+            i -> {
+              TransactionBody<Boolean> argument = i.getArgument(0);
+              argument.execute();
+              return null;
+            })
+        .when(session)
+        .withTransaction(any(), any());
 
     verify(collection, times(2)).createIndex(any(Bson.class), any());
     verify(collection, times(1)).createIndex(any(Bson.class));
@@ -105,17 +104,21 @@ class MongoDbSnapshotCacheTest {
           new Document()
               .append("projectionClass", id.projectionClass().getName())
               .append("aggregateId", id.aggregateId() != null ? id.aggregateId().toString() : null)
-              .append("snapshotSerializerId", serId.name()).append("fileId", fileId)
+              .append("snapshotSerializerId", serId.name())
+              .append("fileId", fileId)
               .append("lastFactId", lastFactId.toString());
 
       when(collection.find(documentCaptor.capture())).thenReturn(findIterable);
       when(findIterable.first()).thenReturn(result);
 
-      doAnswer(i -> {
-        OutputStream os = i.getArgument(1);
-        os.write("foo".getBytes());
-        return null;
-      }).when(gridFSBucket).downloadToStream(eq(fileId), any(OutputStream.class));
+      doAnswer(
+              i -> {
+                OutputStream os = i.getArgument(1);
+                os.write("foo".getBytes());
+                return null;
+              })
+          .when(gridFSBucket)
+          .downloadToStream(eq(fileId), any(OutputStream.class));
 
       Optional<SnapshotData> found = underTest.find(id);
 
@@ -156,7 +159,12 @@ class MongoDbSnapshotCacheTest {
 
       underTest.store(id, snap);
 
-      verify(collection).replaceOne(eq(session), keyCaptor.capture(), documentCaptor.capture(), any(ReplaceOptions.class));
+      verify(collection)
+          .replaceOne(
+              eq(session),
+              keyCaptor.capture(),
+              documentCaptor.capture(),
+              any(ReplaceOptions.class));
       Document keyDocument = keyCaptor.getValue();
       Document storedDocument = documentCaptor.getValue();
 
@@ -188,7 +196,12 @@ class MongoDbSnapshotCacheTest {
       underTest.store(id, snap1);
       underTest.store(id, snap2);
 
-      verify(collection, times(2)).replaceOne(eq(session), keyCaptor.capture(), documentCaptor.capture(), any(ReplaceOptions.class));
+      verify(collection, times(2))
+          .replaceOne(
+              eq(session),
+              keyCaptor.capture(),
+              documentCaptor.capture(),
+              any(ReplaceOptions.class));
 
       // Validate key document
       Document keyDocument = keyCaptor.getValue();
@@ -219,7 +232,12 @@ class MongoDbSnapshotCacheTest {
 
       underTest.store(idWithoutAggregate, snap);
 
-      verify(collection).replaceOne(eq(session), keyCaptor.capture(), documentCaptor.capture(), any(ReplaceOptions.class));
+      verify(collection)
+          .replaceOne(
+              eq(session),
+              keyCaptor.capture(),
+              documentCaptor.capture(),
+              any(ReplaceOptions.class));
 
       Document keyDocument = keyCaptor.getValue();
       Document storedDocument = documentCaptor.getValue();
