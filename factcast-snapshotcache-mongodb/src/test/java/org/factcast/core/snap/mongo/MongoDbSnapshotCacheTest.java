@@ -19,6 +19,7 @@ import com.mongodb.client.*;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.model.ReplaceOptions;
+import com.mongodb.client.result.DeleteResult;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -39,6 +40,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.io.OutputStream;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -86,13 +88,20 @@ class MongoDbSnapshotCacheTest {
     when(gridFsCollection.withCodecRegistry(any())).thenReturn(gridFsCollection);
     when(gridFsCollection.withDocumentClass(any())).thenReturn(innerCollection);
     when(gridFsCollection.createIndex(any(Bson.class), any())).thenReturn("index");
-    when(gridFsCollection.createIndex(any(Bson.class))).thenReturn("index");
     when(gridFsCollection.withTimeout(anyLong(), any(TimeUnit.class))).thenReturn(gridFsCollection);
     when(gridFsCollection.withReadPreference(any())).thenReturn(gridFsCollection);
-    when(gridFsCollection.listIndexes()).thenReturn(gridFsCollection);
+    ListIndexesIterable listIndexesIterable = mock(ListIndexesIterable.class);
+    when(gridFsCollection.listIndexes()).thenReturn(listIndexesIterable);
+    doAnswer(i -> {
+        List arg = i.getArgument(0);
+        return arg;
+    }).when(listIndexesIterable).into(any());
+    when(gridFsCollection.deleteOne(any())).thenReturn(mock(DeleteResult.class));
 
     when(gridFsChunkCollection.withCodecRegistry(any())).thenReturn(gridFsChunkCollection);
     when(gridFsChunkCollection.withTimeout(anyLong(), any(TimeUnit.class))).thenReturn(gridFsChunkCollection);
+    when(gridFsChunkCollection.withReadPreference(any())).thenReturn(gridFsChunkCollection);
+    when(gridFsChunkCollection.listIndexes()).thenReturn(listIndexesIterable);
 
     underTest = spy(new MongoDbSnapshotCache(mongoClient, "db", props));
 
