@@ -104,7 +104,7 @@ public class MongoDbSnapshotCache implements SnapshotCache {
     // Create the GridFS bucket with helper class to store binaries
     gridFSBucket = GridFSBuckets.create(database);
     // Warmup the gridFS bucket by doing a dummy upload and delete (Its forbidden later in txns)
-    byte[] tiny = new byte[] { 0 };
+    byte[] tiny = new byte[] {0};
     ObjectId tmp = gridFSBucket.uploadFromStream("_warmup_", new ByteArrayInputStream(tiny));
     gridFSBucket.delete(tmp); // cleanup
   }

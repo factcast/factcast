@@ -18,19 +18,17 @@ package org.factcast.test.mongo;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.bson.Document;
 import org.factcast.test.FactCastIntegrationTestExecutionListener;
 import org.factcast.test.FactCastIntegrationTestExtension;
 import org.springframework.test.context.TestContext;
 import org.testcontainers.containers.Container;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.ToxiproxyContainer.ContainerProxy;
-
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings({"rawtypes", "resource"})
 @Slf4j
@@ -46,25 +44,28 @@ public class MongoIntegrationTestExtension implements FactCastIntegrationTestExt
             key -> {
               GenericContainer mongo =
                   new GenericContainer<>("mongo:" + config.mongoVersion())
-                          .withCommand("--replSet", "rs0", "--bind_ip_all")
+                      .withCommand("--replSet", "rs0", "--bind_ip_all")
                       .withExposedPorts(MONGO_PORT)
                       .withNetwork(FactCastIntegrationTestExecutionListener._docker_network);
               mongo.start();
 
-
               try {
-                Container.ExecResult init = mongo.execInContainer(
-                        "mongosh", "--quiet", "--eval",
-                        "rs.initiate({_id:'rs0', members:[{_id:0, host:'localhost:27017'}]})"
-                );
+                Container.ExecResult init =
+                    mongo.execInContainer(
+                        "mongosh",
+                        "--quiet",
+                        "--eval",
+                        "rs.initiate({_id:'rs0', members:[{_id:0, host:'localhost:27017'}]})");
                 if (init.getExitCode() != 0 && !init.getStderr().contains("already initialized")) {
                   throw new IllegalStateException("rs.initiate failed: " + init.getStderr());
                 }
 
-                Container.ExecResult wait = mongo.execInContainer(
-                        "mongosh", "--quiet", "--eval",
-                        "while(rs.status().myState!=1){ sleep(200); } ; 'PRIMARY'"
-                );
+                Container.ExecResult wait =
+                    mongo.execInContainer(
+                        "mongosh",
+                        "--quiet",
+                        "--eval",
+                        "while(rs.status().myState!=1){ sleep(200); } ; 'PRIMARY'");
                 if (wait.getExitCode() != 0) {
                   throw new IllegalStateException("RS never became PRIMARY: " + wait.getStderr());
                 }
@@ -73,9 +74,9 @@ public class MongoIntegrationTestExtension implements FactCastIntegrationTestExt
               }
 
               MongoProxy mongoProxy =
-                      new MongoProxy(
-                              FactCastIntegrationTestExecutionListener.createProxy(mongo, MONGO_PORT),
-                              FactCastIntegrationTestExecutionListener.client());
+                  new MongoProxy(
+                      FactCastIntegrationTestExecutionListener.createProxy(mongo, MONGO_PORT),
+                      FactCastIntegrationTestExecutionListener.client());
 
               return new Containers(
                   mongo,
