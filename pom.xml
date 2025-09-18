@@ -108,7 +108,7 @@
     <slf4j-api.version>2.0.17</slf4j-api.version>
     <!--suppress UnresolvedMavenProperty -->
     <etc>${session.executionRootDirectory}/src/etc</etc>
-    <spring-boot.version>3.5.5</spring-boot.version>
+    <spring-boot.version>3.5.6</spring-boot.version>
     <!-- whenever updating spring-grpc make sure to align grpc.version accordingly. -->
     <spring-grpc.version>3.1.0.RELEASE</spring-grpc.version>
     <grpc.version>1.63.0</grpc.version>
