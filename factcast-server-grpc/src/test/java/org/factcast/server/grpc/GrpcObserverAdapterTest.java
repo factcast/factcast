@@ -18,7 +18,6 @@ package org.factcast.server.grpc;
 import static org.assertj.core.api.Assertions.*;
 import static org.factcast.server.grpc.metrics.ServerMetrics.EVENT.BYTES_SENT;
 import static org.factcast.server.grpc.metrics.ServerMetrics.EVENT.FACTS_SENT;
-import static org.factcast.server.grpc.metrics.ServerMetrics.TAG_CLIENT_ID_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -26,6 +25,7 @@ import static org.mockito.Mockito.*;
 
 import io.grpc.stub.StreamObserver;
 import io.micrometer.core.instrument.Tags;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.function.Function;
 import lombok.NonNull;
@@ -291,12 +291,17 @@ class GrpcObserverAdapterTest {
     uut.flush();
 
     var expectedBytes =
-        f1.jsonHeader().length()
-            + f1.jsonPayload().length()
-            + f2.jsonHeader().length()
-            + f2.jsonPayload().length()
+        f1.jsonHeader().getBytes(StandardCharsets.UTF_8).length
+            + f1.jsonPayload().getBytes(StandardCharsets.UTF_8).length
+            + f2.jsonHeader().getBytes(StandardCharsets.UTF_8).length
+            + f2.jsonPayload().getBytes(StandardCharsets.UTF_8).length
             + 16; // protobuf overhead
-    verify(metrics).count(BYTES_SENT, Tags.of(TAG_CLIENT_ID_KEY, "testClient"), expectedBytes);
-    verify(metrics).count(FACTS_SENT, Tags.of(TAG_CLIENT_ID_KEY, "testClient"), 2);
+    verify(metrics)
+        .count(
+            BYTES_SENT,
+            Tags.of(ServerMetrics.MetricsTag.CLIENT_ID_KEY, "testClient"),
+            expectedBytes);
+    verify(metrics)
+        .count(FACTS_SENT, Tags.of(ServerMetrics.MetricsTag.CLIENT_ID_KEY, "testClient"), 2);
   }
 }

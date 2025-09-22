@@ -17,7 +17,6 @@ package org.factcast.server.grpc;
 
 import static org.factcast.server.grpc.metrics.ServerMetrics.EVENT.BYTES_SENT;
 import static org.factcast.server.grpc.metrics.ServerMetrics.EVENT.FACTS_SENT;
-import static org.factcast.server.grpc.metrics.ServerMetrics.TAG_CLIENT_ID_KEY;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.stub.StreamObserver;
@@ -82,7 +81,7 @@ class GrpcObserverAdapter implements FactObserver {
       keepalive = null;
     }
     this.serverMetrics = serverMetrics;
-    this.metricTags = Tags.of(TAG_CLIENT_ID_KEY, meta.clientIdAsString());
+    this.metricTags = Tags.of(ServerMetrics.MetricsTag.CLIENT_ID_KEY, meta.clientIdAsString());
   }
 
   @VisibleForTesting
@@ -189,10 +188,15 @@ class GrpcObserverAdapter implements FactObserver {
     if (!stagedFacts.isEmpty()) {
       log.trace("{} flushing batch of {} facts", id, stagedFacts.size());
 
-      serverMetrics.count(BYTES_SENT, metricTags, stagedFacts.currentBytes());
-      serverMetrics.count(FACTS_SENT, metricTags, stagedFacts.size());
+      // we know it wont change in between
+      int bytes = stagedFacts.currentBytes();
+      int facts = stagedFacts.size();
 
       notificationStreamObserver.onNext(converter.createNotificationFor(stagedFacts.popAll()));
+
+      // should be emitted AFTER sending
+      serverMetrics.count(BYTES_SENT, metricTags, bytes);
+      serverMetrics.count(FACTS_SENT, metricTags, facts);
     }
   }
 

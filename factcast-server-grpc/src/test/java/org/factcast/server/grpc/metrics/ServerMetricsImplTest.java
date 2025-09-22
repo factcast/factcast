@@ -60,7 +60,7 @@ class ServerMetricsImplTest {
     verify(meterRegistry)
         .timer(
             ServerMetricsImpl.METRIC_NAME_TIMINGS,
-            Tags.of(Tag.of(ServerMetricsImpl.TAG_NAME_KEY, OP.HANDSHAKE.op())));
+            Tags.of(Tag.of(ServerMetricsImpl.MetricsTag.NAME_KEY, OP.HANDSHAKE.op())));
   }
 
   @Test
@@ -72,7 +72,7 @@ class ServerMetricsImplTest {
             ServerMetricsImpl.METRIC_NAME_COUNTS,
             Tags.of(
                 Tag.of(
-                    ServerMetricsImpl.TAG_NAME_KEY,
+                    ServerMetricsImpl.MetricsTag.NAME_KEY,
                     ServerMetrics.EVENT.SOME_EVENT_CHANGE_ME.event())));
   }
 
@@ -92,7 +92,7 @@ class ServerMetricsImplTest {
     verify(meterRegistry)
         .timer(
             ServerMetricsImpl.METRIC_NAME_TIMINGS,
-            Tags.of(customTag, Tag.of(ServerMetricsImpl.TAG_NAME_KEY, OP.HANDSHAKE.op())));
+            Tags.of(customTag, Tag.of(ServerMetricsImpl.MetricsTag.NAME_KEY, OP.HANDSHAKE.op())));
   }
 
   @Test
@@ -112,7 +112,7 @@ class ServerMetricsImplTest {
     verify(meterRegistry)
         .timer(
             ServerMetricsImpl.METRIC_NAME_TIMINGS,
-            Tags.of(customTag, Tag.of(ServerMetricsImpl.TAG_NAME_KEY, OP.HANDSHAKE.op())));
+            Tags.of(customTag, Tag.of(ServerMetricsImpl.MetricsTag.NAME_KEY, OP.HANDSHAKE.op())));
   }
 
   @Test
@@ -130,7 +130,7 @@ class ServerMetricsImplTest {
     verify(meterRegistry)
         .timer(
             ServerMetricsImpl.METRIC_NAME_TIMINGS,
-            Tags.of(customTag, Tag.of(ServerMetricsImpl.TAG_NAME_KEY, OP.HANDSHAKE.op())));
+            Tags.of(customTag, Tag.of(ServerMetricsImpl.MetricsTag.NAME_KEY, OP.HANDSHAKE.op())));
   }
 
   @Test
@@ -174,6 +174,6 @@ class ServerMetricsImplTest {
             ServerMetricsImpl.METRIC_NAME_COUNTS,
             Tags.of(
                 customTag,
-                Tag.of(ServerMetricsImpl.TAG_NAME_KEY, EVENT.SOME_EVENT_CHANGE_ME.event())));
+                Tag.of(ServerMetricsImpl.MetricsTag.NAME_KEY, EVENT.SOME_EVENT_CHANGE_ME.event())));
   }
 }

@@ -15,9 +15,6 @@
  */
 package org.factcast.server.grpc;
 
-import static org.factcast.server.grpc.metrics.ServerMetrics.TAG_CLIENT_ID_KEY;
-import static org.factcast.server.grpc.metrics.ServerMetrics.TAG_VERSION_KEY;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.*;
 import com.google.common.hash.Hashing;
@@ -295,7 +292,9 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
           log.info("Handshake from '{}' using version {}", clientId, clientVersion);
           metrics.count(
               ServerMetrics.EVENT.CLIENT_VERSION,
-              Tags.of(Tag.of(TAG_CLIENT_ID_KEY, clientId), Tag.of(TAG_VERSION_KEY, clientVersion)));
+              Tags.of(
+                  Tag.of(ServerMetrics.MetricsTag.CLIENT_ID_KEY, clientId),
+                  Tag.of(ServerMetrics.MetricsTag.VERSION_KEY, clientVersion)));
 
           ServerConfig cfg = ServerConfig.of(PROTOCOL_VERSION, collectProperties());
           responseObserver.onNext(converter.toProto(cfg));

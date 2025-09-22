@@ -24,9 +24,6 @@ import org.factcast.core.util.SupplierWithException;
 
 public interface ServerMetrics {
 
-  String TAG_CLIENT_ID_KEY = "id";
-  String TAG_VERSION_KEY = "version";
-
   void timed(OP operation, Runnable fn);
 
   void timed(OP operation, Tags tags, Runnable fn);
@@ -51,7 +48,7 @@ public interface ServerMetrics {
 
   void count(EVENT event, Tags tags);
 
-  void count(EVENT event, Tags tags, double value);
+  void count(EVENT event, Tags tags, int incrementBy);
 
   enum OP {
     HANDSHAKE("handshake");
@@ -74,5 +71,11 @@ public interface ServerMetrics {
     EVENT(@NonNull String event) {
       this.event = event;
     }
+  }
+
+  class MetricsTag {
+    public static final String CLIENT_ID_KEY = "id";
+    public static final String VERSION_KEY = "version";
+    public static final String NAME_KEY = "name";
   }
 }
