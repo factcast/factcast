@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.nio.charset.StandardCharsets;
 import java.time.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.*;
 import lombok.*;
 import lombok.experimental.Delegate;
 import org.assertj.core.util.Lists;
@@ -29,7 +29,6 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.*;
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.*;
-import org.factcast.store.internal.tail.MemoizedFastForwardTarget;
 import org.factcast.store.test.AbstractFactStoreTest;
 import org.factcast.test.IntegrationTest;
 import org.jetbrains.annotations.Nullable;
@@ -58,9 +57,8 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
 
   @Autowired TokenStore tokenStore;
 
-  @Autowired MemoizedFastForwardTarget fastForwardTarget;
-
   @Autowired JdbcTemplate jdbcTemplate;
+  @Autowired private FastForwardTarget fastForwardTarget;
 
   @Override
   protected FactStore createStoreToTest() {
@@ -151,8 +149,6 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       // have some more facts in the database
       store.publish(
           Collections.singletonList(Fact.builder().ns("unrelated").buildWithoutPayload()));
-      // update the highwatermarks
-      fastForwardTarget.expire();
     }
 
     @Test
@@ -178,7 +174,6 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       SubscriptionRequest newtail = SubscriptionRequest.catchup(spec).from(id);
       store.subscribe(SubscriptionRequestTO.from(newtail), obs).awaitCatchup();
 
-      fastForwardTarget.expire();
       fwd.set(null);
 
       // check for empty catchup
@@ -212,7 +207,6 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       // publish unrelated stuff and update ffwd target
       store.publish(
           Collections.singletonList(Fact.builder().ns("unrelated").buildWithoutPayload()));
-      fastForwardTarget.expire();
 
       SubscriptionRequest further = SubscriptionRequest.catchup(spec).from(id2);
       store.subscribe(SubscriptionRequestTO.from(further), obs).awaitCatchup();
@@ -332,7 +326,8 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       Fact fact = Fact.builder().id(id).ns("foo").type("bar").buildWithoutPayload();
       store.publish(Collections.singletonList(fact));
 
-      assertThat(localFactStore.firstSerialAfter(LocalDate.now())).isEqualTo(1L);
+      assertThat(localFactStore.firstSerialAfter(LocalDate.now()))
+          .isEqualTo(localFactStore.latestSerial());
     }
 
     @SuppressWarnings({"DataFlowIssue", "OptionalGetWithoutIsPresent"})

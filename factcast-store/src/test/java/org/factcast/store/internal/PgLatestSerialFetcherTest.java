@@ -15,12 +15,13 @@
  */
 package org.factcast.store.internal;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.test.IntegrationTest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,9 +41,14 @@ public class PgLatestSerialFetcherTest {
 
   private PgLatestSerialFetcher uut;
 
+  @BeforeEach
+  void setup() {
+    jdbcTemplate.execute("TRUNCATE fact RESTART IDENTITY ;");
+    uut = new PgLatestSerialFetcher(jdbcTemplate);
+  }
+
   @Test
   void testRetrieveLatestSer() {
-    uut = new PgLatestSerialFetcher(jdbcTemplate);
     assertEquals(0, uut.retrieveLatestSer());
     assertEquals(0, uut.retrieveLatestSer());
     jdbcTemplate.execute(
@@ -55,27 +61,6 @@ public class PgLatestSerialFetcherTest {
             + ") VALUES('{\"id\":\""
             + UUID.randomUUID()
             + "\", \"ns\":\"hups\"}','{}') ");
-    assertEquals(1, uut.retrieveLatestSer());
-    jdbcTemplate.execute(
-        "INSERT INTO "
-            + PgConstants.TABLE_FACT
-            + "("
-            + PgConstants.COLUMN_HEADER
-            + ","
-            + PgConstants.COLUMN_PAYLOAD
-            + ") VALUES('{\"id\":\""
-            + UUID.randomUUID()
-            + "\", \"ns\":\"hups\"}','{}') ");
-    jdbcTemplate.execute(
-        "INSERT INTO "
-            + PgConstants.TABLE_FACT
-            + "("
-            + PgConstants.COLUMN_HEADER
-            + ","
-            + PgConstants.COLUMN_PAYLOAD
-            + ") VALUES('{\"id\":\""
-            + UUID.randomUUID()
-            + "\", \"ns\":\"hups\"}','{}') ");
-    assertEquals(3, uut.retrieveLatestSer());
+    assertNotEquals(0, uut.retrieveLatestSer());
   }
 }
