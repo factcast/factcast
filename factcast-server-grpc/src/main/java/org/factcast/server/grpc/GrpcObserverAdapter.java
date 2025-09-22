@@ -86,6 +86,7 @@ class GrpcObserverAdapter implements FactObserver {
   }
 
   @VisibleForTesting
+  @SuppressWarnings("java:S5803") // cascades
   GrpcObserverAdapter(
       @NonNull String id,
       @NonNull StreamObserver<MSG_Notification> observer,
@@ -100,6 +101,7 @@ class GrpcObserverAdapter implements FactObserver {
   }
 
   @VisibleForTesting
+  @SuppressWarnings("java:S5803") // cascades
   @Deprecated
   GrpcObserverAdapter(@NonNull String id, @NonNull StreamObserver<MSG_Notification> observer) {
     this(
@@ -112,6 +114,7 @@ class GrpcObserverAdapter implements FactObserver {
   }
 
   @VisibleForTesting
+  @SuppressWarnings("java:S5803") // cascades
   GrpcObserverAdapter(
       @NonNull String id,
       @NonNull StreamObserver<MSG_Notification> observer,
@@ -120,6 +123,7 @@ class GrpcObserverAdapter implements FactObserver {
   }
 
   @VisibleForTesting
+  @SuppressWarnings("java:S5803") // cascades
   GrpcObserverAdapter(
       @NonNull String id, @NonNull StreamObserver<MSG_Notification> observer, long keepalive) {
     this(
@@ -132,6 +136,7 @@ class GrpcObserverAdapter implements FactObserver {
   }
 
   @VisibleForTesting
+  @SuppressWarnings("java:S5803") // cascades
   GrpcObserverAdapter(
       @NonNull String id,
       @NonNull StreamObserver<MSG_Notification> observer,

@@ -66,11 +66,17 @@ public class NOPServerMetrics implements ServerMetrics {
   }
 
   @Override
-  public void count(EVENT event) {}
+  public void count(EVENT event) {
+    // no operation
+  }
 
   @Override
-  public void count(EVENT event, Tags tags) {}
+  public void count(EVENT event, Tags tags) {
+    // no operation
+  }
 
   @Override
-  public void count(EVENT event, Tags tags, double value) {}
+  public void count(EVENT event, Tags tags, double value) {
+    // no operation
+  }
 }
