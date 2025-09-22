@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.Tags;
 import java.util.function.*;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.experimental.UtilityClass;
 import org.factcast.core.util.RunnableWithException;
 import org.factcast.core.util.SupplierWithException;
 
@@ -73,6 +74,7 @@ public interface ServerMetrics {
     }
   }
 
+  @UtilityClass
   class MetricsTag {
     public static final String CLIENT_ID_KEY = "id";
     public static final String VERSION_KEY = "version";
