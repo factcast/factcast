@@ -133,9 +133,9 @@ For further details, see the [JDBC Properties]({{< ref "/setup/properties#jdbc-s
 
 ### MongoDB SnapshotCache
 
-For applications utilizing MongoDB, the Mongo-based SnapshotCache offers simple solution for storing snapshots in a 
+For applications utilizing MongoDB, the Mongo-based SnapshotCache offers simple solution for storing snapshots in a
 centralized MongoDB collection which can be used by multiple instances of the same application.
-The MongoDB SnapshotCache uses GridFS to store snapshot data, this means, that snapshots can be larger than 16MB. 
+The MongoDB SnapshotCache uses GridFS to store snapshot data, this means, that snapshots can be larger than 16MB.
 
 ```xml
 
@@ -145,7 +145,7 @@ The MongoDB SnapshotCache uses GridFS to store snapshot data, this means, that s
 </dependency>
 ```
 
-By default, this cache automatically deletes stale snapshots after 90 days. But chunks stored by GridFS are not 
+By default, this cache automatically deletes stale snapshots after 90 days. But chunks stored by GridFS are not
 automatically deleted, so you have to take care of that on your own.
 
 For further details, see the [Mongo Properties]({{< ref "/setup/properties#mongodb-snapshots">}}).
