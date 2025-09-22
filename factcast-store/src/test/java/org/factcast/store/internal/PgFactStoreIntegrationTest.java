@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.nio.charset.StandardCharsets;
 import java.time.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.*;
 import lombok.*;
 import lombok.experimental.Delegate;
 import org.assertj.core.util.Lists;
@@ -29,7 +29,6 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.*;
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.*;
-import org.factcast.store.internal.tail.MemoizedFastForwardTarget;
 import org.factcast.store.test.AbstractFactStoreTest;
 import org.factcast.test.IntegrationTest;
 import org.jetbrains.annotations.Nullable;
@@ -58,9 +57,8 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
 
   @Autowired TokenStore tokenStore;
 
-  @Autowired MemoizedFastForwardTarget fastForwardTarget;
-
   @Autowired JdbcTemplate jdbcTemplate;
+  @Autowired private FastForwardTarget fastForwardTarget;
 
   @Override
   protected FactStore createStoreToTest() {
@@ -151,8 +149,6 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       // have some more facts in the database
       store.publish(
           Collections.singletonList(Fact.builder().ns("unrelated").buildWithoutPayload()));
-      // update the highwatermarks
-      fastForwardTarget.expire();
     }
 
     @Test
@@ -178,7 +174,6 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       SubscriptionRequest newtail = SubscriptionRequest.catchup(spec).from(id);
       store.subscribe(SubscriptionRequestTO.from(newtail), obs).awaitCatchup();
 
-      fastForwardTarget.expire();
       fwd.set(null);
 
       // check for empty catchup
@@ -212,7 +207,6 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       // publish unrelated stuff and update ffwd target
       store.publish(
           Collections.singletonList(Fact.builder().ns("unrelated").buildWithoutPayload()));
-      fastForwardTarget.expire();
 
       SubscriptionRequest further = SubscriptionRequest.catchup(spec).from(id2);
       store.subscribe(SubscriptionRequestTO.from(further), obs).awaitCatchup();
@@ -297,24 +291,30 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
     }
 
     @Test
-    void testLastSerialBeforeNowReturns() {
-      LocalDate aWeekAgo = LocalDate.now().minusWeeks(1);
-      long firstSerial = 100L;
-      long lastSerial = 300L;
-      jdbcTemplate.update(
-          "INSERT INTO " + PgConstants.TABLE_DATE2SERIAL + " VALUES (?, ?, ?)",
-          aWeekAgo,
-          firstSerial,
-          lastSerial);
-
-      assertThat(localFactStore.lastSerialBefore(LocalDate.now())).isEqualTo(lastSerial);
-
-      // add one to the end, should not change anything
+    void testLastSerialBeforeFutureDate() {
       UUID id = UUID.randomUUID();
       Fact fact = Fact.builder().id(id).ns("foo").type("bar").buildWithoutPayload();
       store.publish(Collections.singletonList(fact));
 
-      assertThat(localFactStore.lastSerialBefore(LocalDate.now())).isEqualTo(lastSerial);
+      long ser = store.fetchById(id).get().serial();
+
+      assertThat(localFactStore.lastSerialBefore(LocalDate.now().plusWeeks(1))).isEqualTo(ser);
+    }
+
+    @Test
+    void testLastSerialBeforePastDate() {
+
+      jdbcTemplate.update(
+          "INSERT INTO " + PgConstants.TABLE_DATE2SERIAL + "(factdate,firstser) VALUES (?, ?)",
+          LocalDate.now().minusWeeks(1),
+          100L);
+
+      jdbcTemplate.update(
+          "INSERT INTO " + PgConstants.TABLE_DATE2SERIAL + "(factdate,firstser) VALUES (?, ?)",
+          LocalDate.now().minusDays(1),
+          200L);
+
+      assertThat(localFactStore.lastSerialBefore(LocalDate.now().minusDays(1))).isEqualTo(200L - 1);
     }
 
     @Test
@@ -326,7 +326,8 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       Fact fact = Fact.builder().id(id).ns("foo").type("bar").buildWithoutPayload();
       store.publish(Collections.singletonList(fact));
 
-      assertThat(localFactStore.firstSerialAfter(LocalDate.now())).isEqualTo(1L);
+      assertThat(localFactStore.firstSerialAfter(LocalDate.now()))
+          .isEqualTo(localFactStore.latestSerial());
     }
 
     @SuppressWarnings({"DataFlowIssue", "OptionalGetWithoutIsPresent"})
@@ -346,10 +347,8 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
         assertThat(rowsAfterInsert).isOne();
 
         var first = getFirstSerial(LocalDate.now());
-        var last = getLastSerial(LocalDate.now());
 
         // ser should be first & last
-        assertThat(first).isEqualTo(last);
         assertThat(first).isEqualTo(ser);
       }
       // add another
@@ -364,20 +363,10 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
         assertThat(rowsAfterInsert).isOne();
 
         var first = getFirstSerial(LocalDate.now());
-        var last = getLastSerial(LocalDate.now());
 
-        // ser should be first & last
+        // ser should be first
         assertThat(first).isEqualTo(ser);
-        assertThat(last).isEqualTo(otherSer);
       }
-    }
-
-    @Nullable
-    private Long getLastSerial(@NonNull LocalDate date) {
-      return jdbcTemplate.queryForObject(
-          "SELECT lastSer FROM " + PgConstants.TABLE_DATE2SERIAL + " WHERE factDate = ?",
-          new Object[] {date},
-          Long.class);
     }
 
     @Nullable
@@ -429,7 +418,6 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       // date2Ser should now have one row with (today,4,5)
       assertThat(getRowsInDate2Serial()).isOne();
       assertThat(getFirstSerial(today.toLocalDate())).isEqualTo(4);
-      assertThat(getLastSerial(today.toLocalDate())).isEqualTo(5);
 
       // 4 is technically wrong as first (should be corrected to 3)
       // also facts 1&2 should be accounted for after migration

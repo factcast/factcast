@@ -32,7 +32,6 @@ import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -55,34 +54,20 @@ class PgFactStreamTelemetryTest {
   @Mock ServerPipeline serverPipeline;
   @Mock JSEngineFactory ef;
   @Mock PgStoreTelemetry telemetry;
+  @Mock SubscriptionRequestTO req;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   PgConnectionSupplier connectionSupplier;
 
-  PgFactStream uut;
-
-  @BeforeEach
-  void setUp() {
-    uut =
-        new PgFactStream(
-            connectionSupplier,
-            eventBus,
-            idToSerMapper,
-            fetcher,
-            pgCatchupFactory,
-            ffwdTarget,
-            serverPipeline,
-            telemetry);
-  }
+  @InjectMocks PgFactStream uut;
 
   @Test
   void postsTelemetryOnCatchup() {
-    var req = mock(SubscriptionRequestTO.class);
     when(req.debugInfo()).thenReturn("test");
-    when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any()))
+    when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any(), any()))
         .thenReturn(mock(PgCatchup.class));
     when(ffwdTarget.highWaterMark()).thenReturn(HighWaterMark.empty());
-    uut.connect(req);
+    uut.connect();
 
     InOrder inOrder = inOrder(telemetry);
     inOrder.verify(telemetry).onConnect(req);
@@ -93,14 +78,13 @@ class PgFactStreamTelemetryTest {
   @SneakyThrows
   @Test
   void postsTelemetryOnFollow() {
-    var req = mock(SubscriptionRequestTO.class);
     when(req.continuous()).thenReturn(true);
     when(req.debugInfo()).thenReturn("test");
-    when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any()))
+    when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any(), any()))
         .thenReturn(mock(PgCatchup.class));
     when(ffwdTarget.highWaterMark()).thenReturn(HighWaterMark.empty());
 
-    uut.connect(req);
+    uut.connect();
 
     InOrder inOrder = inOrder(telemetry);
     inOrder.verify(telemetry).onConnect(req);
@@ -111,14 +95,13 @@ class PgFactStreamTelemetryTest {
   @SneakyThrows
   @Test
   void postsTelemetryOnClose() {
-    var req = mock(SubscriptionRequestTO.class);
     when(req.continuous()).thenReturn(true);
     when(req.debugInfo()).thenReturn("test");
-    when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any()))
+    when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any(), any()))
         .thenReturn(mock(PgCatchup.class));
     when(ffwdTarget.highWaterMark()).thenReturn(HighWaterMark.empty());
 
-    uut.connect(req);
+    uut.connect();
 
     uut.close();
 
