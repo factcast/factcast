@@ -102,7 +102,7 @@
     <spotless-maven-plugin.version>2.46.1</spotless-maven-plugin.version>
     <directory-maven-plugin.version>1.0</directory-maven-plugin.version>
     <nexus-staging-maven-plugin.version>1.7.0</nexus-staging-maven-plugin.version>
-    <assertj.version>3.27.5</assertj.version>
+    <assertj.version>3.27.6</assertj.version>
     <jackson.version>2.20.0</jackson.version>
     <mockito.version>5.20.0</mockito.version>
     <junit-jupiter.version>5.13.4</junit-jupiter.version>
@@ -123,7 +123,7 @@
     <mockk.version>1.14.5</mockk.version>
     <graaljs.version>24.2.2</graaljs.version>
     <redisson.version>3.51.0</redisson.version>
-    <aws-sdk.version>2.34.0</aws-sdk.version>
+    <aws-sdk.version>2.34.1</aws-sdk.version>
     <mongodb-driver.version>5.5.1</mongodb-driver.version>
     <shedlock.version>6.10.0</shedlock.version>
     <byte-buddy.version>1.17.7</byte-buddy.version>

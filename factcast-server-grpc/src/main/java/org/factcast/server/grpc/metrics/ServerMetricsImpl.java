@@ -28,8 +28,6 @@ public class ServerMetricsImpl implements ServerMetrics, InitializingBean {
 
   public static final String METRIC_NAME_COUNTS = "factcast.server.meter";
 
-  public static final String TAG_NAME_KEY = "name";
-
   private final MeterRegistry meterRegistry;
 
   public ServerMetricsImpl(MeterRegistry meterRegistry) {
@@ -37,13 +35,13 @@ public class ServerMetricsImpl implements ServerMetrics, InitializingBean {
   }
 
   private Counter counter(@NonNull EVENT op, Tags tags) {
-    var t = Tags.of(Tag.of(TAG_NAME_KEY, op.event())).and(tags);
+    var t = Tags.of(Tag.of(MetricsTag.NAME_KEY, op.event())).and(tags);
 
     return meterRegistry.counter(METRIC_NAME_COUNTS, t);
   }
 
   private Timer timer(@NonNull OP op, Tags tags) {
-    var t = Tags.of(Tag.of(TAG_NAME_KEY, op.op())).and(tags);
+    var t = Tags.of(Tag.of(MetricsTag.NAME_KEY, op.op())).and(tags);
 
     return meterRegistry.timer(METRIC_NAME_TIMINGS, t);
   }
@@ -122,13 +120,18 @@ public class ServerMetricsImpl implements ServerMetrics, InitializingBean {
 
   @Override
   public void count(@NonNull EVENT event, Tags tags) {
-    Counter counter = counter(event, tags);
-    counter.increment();
+    count(event, tags, 1);
   }
 
   @Override
   public void count(@NonNull EVENT event) {
     count(event, Tags.empty());
+  }
+
+  @Override
+  public void count(@NonNull EVENT event, Tags tags, int incrementBy) {
+    Counter counter = counter(event, tags);
+    counter.increment(incrementBy);
   }
 
   @Override
