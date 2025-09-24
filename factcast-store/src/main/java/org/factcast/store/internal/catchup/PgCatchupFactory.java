@@ -27,5 +27,11 @@ public interface PgCatchupFactory {
       @NonNull SubscriptionRequestTO request,
       @NonNull ServerPipeline pipeline,
       @NonNull AtomicLong serial,
-      @NonNull CurrentStatementHolder holder);
+      @NonNull CurrentStatementHolder holder,
+      @NonNull Phase phase);
+
+  enum Phase {
+    PHASE_1,
+    PHASE_2
+  }
 }

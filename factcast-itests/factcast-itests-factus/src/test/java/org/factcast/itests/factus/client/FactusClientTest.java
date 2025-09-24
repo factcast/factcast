@@ -90,6 +90,25 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
+  @SneakyThrows
+  void differentNamespacesWhenSubscribing() {
+    factus.publish(new StarTrekCharacterCreated("Kirk"));
+    factus.publish(new StarWarsCharacterCreated("Han"));
+    factus.publish(new StarWarsCharacterCreated("Luke"));
+    factus.publish(new IndianaJonesCharacterCreated("Indy"));
+
+    SubscribedLucasNames names = new SubscribedLucasNames();
+    final var sub = factus.subscribeAndBlock(names);
+    sub.awaitCatchup();
+    // Publish fact after catchup
+    final var factId = factus.publish(new IndianaJonesCharacterCreated("Shorty"), Fact::id);
+    factus.waitFor(names, factId, Duration.ofSeconds(2));
+    sub.close();
+
+    assertThat(names.userNames()).containsValues("Han", "Luke", "Indy", "Shorty");
+  }
+
+  @Test
   void allWaysToPublish() {
 
     factus.publish(new UserCreated(johnsId, "John"));

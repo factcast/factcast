@@ -164,6 +164,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
               resp,
               grpcRequestMetadata,
               serverExceptionLogger,
+              metrics,
               req.keepaliveIntervalInMs());
 
       final var cancelHandler = new OnCancelHandler(clientIdPrefix(), req, subRef, observer);
@@ -291,7 +292,9 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
           log.info("Handshake from '{}' using version {}", clientId, clientVersion);
           metrics.count(
               ServerMetrics.EVENT.CLIENT_VERSION,
-              Tags.of(Tag.of("id", clientId), Tag.of("version", clientVersion)));
+              Tags.of(
+                  Tag.of(ServerMetrics.MetricsTag.CLIENT_ID_KEY, clientId),
+                  Tag.of(ServerMetrics.MetricsTag.VERSION_KEY, clientVersion)));
 
           ServerConfig cfg = ServerConfig.of(PROTOCOL_VERSION, collectProperties());
           responseObserver.onNext(converter.toProto(cfg));
@@ -328,7 +331,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
     if (meta != null) {
       newId = meta.clientId().map(id -> id + "|").orElse("") + newId;
     }
-    log.debug("{}subscribing {} for {} defined as {}", clientIdPrefix(), newId, req, req.dump());
+    log.debug("{}subscribing {} for {} ", clientIdPrefix(), newId, req);
     req.debugInfo(newId);
   }
 

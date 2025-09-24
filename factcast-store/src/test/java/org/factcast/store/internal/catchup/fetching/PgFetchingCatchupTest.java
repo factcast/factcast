@@ -26,6 +26,9 @@ import lombok.SneakyThrows;
 import org.factcast.core.subscription.*;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
+import org.factcast.store.internal.PgMetrics;
+import org.factcast.store.internal.StoreMetrics;
+import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
@@ -65,6 +68,7 @@ class PgFetchingCatchupTest {
   @Mock @NonNull AtomicLong serial;
   @Mock @NonNull PgConnectionSupplier connectionSupplier;
   @Mock SingleConnectionDataSource ds;
+  @Mock PgCatchupFactory.Phase phase;
 
   @InjectMocks PgFetchingCatchup underTest;
 
@@ -85,7 +89,13 @@ class PgFetchingCatchupTest {
       var uut =
           spy(
               new PgFetchingCatchup(
-                  connectionSupplier, props, req, pipeline, serial, statementHolder));
+                  connectionSupplier,
+                  props,
+                  req,
+                  pipeline,
+                  serial,
+                  statementHolder,
+                  PgCatchupFactory.Phase.PHASE_1));
       doNothing().when(uut).fetch(any());
       uut.run();
 
@@ -104,7 +114,13 @@ class PgFetchingCatchupTest {
       var uut =
           spy(
               new PgFetchingCatchup(
-                  connectionSupplier, props, req, pipeline, serial, statementHolder));
+                  connectionSupplier,
+                  props,
+                  req,
+                  pipeline,
+                  serial,
+                  statementHolder,
+                  PgCatchupFactory.Phase.PHASE_1));
       doNothing().when(uut).fetch(any());
       uut.run();
 

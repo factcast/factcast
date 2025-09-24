@@ -1,5 +1,5 @@
 # Perform the extraction in a separate builder container
-FROM bellsoft/liberica-openjre-debian:24-cds AS builder
+FROM bellsoft/liberica-openjre-debian:25-cds AS builder
 WORKDIR /builder
 # This points to the built jar file in the target folder
 # Adjust this to 'build/libs/*.jar' if you're using Gradle
