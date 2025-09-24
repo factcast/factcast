@@ -159,6 +159,7 @@ public class PgQueryBuilder {
     return count;
   }
 
+  @SuppressWarnings("java:S3776")
   private String createWhereClause() {
     List<String> predicates = new LinkedList<>();
     factSpecs.forEach(
