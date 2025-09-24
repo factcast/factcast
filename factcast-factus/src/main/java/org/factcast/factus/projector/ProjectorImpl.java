@@ -298,9 +298,9 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       }
     }
 
-    @NonNull List<FactSpec> ret = projection.postprocess(discovered);
+    List<FactSpec> ret = projection.postprocess(discovered);
     //noinspection ConstantConditions
-    if (ret.isEmpty()) {
+    if (ret == null || ret.isEmpty()) {
       throw new InvalidHandlerDefinition(
           "No FactSpecs discovered from "
               + projection.getClass()

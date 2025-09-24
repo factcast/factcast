@@ -443,7 +443,6 @@ class ProjectorImplTest {
   static class StaticClass {}
 
   // Working handlers
-
   @Value
   static class PostProcessingProjection implements Projection {
 
