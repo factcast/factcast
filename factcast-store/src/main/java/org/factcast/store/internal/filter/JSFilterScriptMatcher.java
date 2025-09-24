@@ -71,12 +71,10 @@ public final class JSFilterScriptMatcher implements PGFactMatcher {
   public static @Nullable JSFilterScriptMatcher matches(
       @NonNull FactSpec spec, @NonNull JSEngineFactory ef) {
     FilterScript script = spec.filterScript();
-    if (script != null) {
-      boolean hasNonEmptyScript = !script.source().trim().isEmpty();
-      if (hasNonEmptyScript) {
-        return new JSFilterScriptMatcher(spec, ef);
-      }
+    if (script != null && !script.source().isBlank()) {
+      return new JSFilterScriptMatcher(spec, ef);
     }
+
     // otherwise
     return null;
   }

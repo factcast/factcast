@@ -15,12 +15,12 @@
  */
 package org.factcast.store.internal.filter;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.*;
 import java.util.function.Predicate;
 import lombok.NonNull;
-import org.assertj.core.api.Assertions;
 import org.factcast.core.*;
 import org.factcast.core.spec.*;
 import org.factcast.store.internal.PgFact;
@@ -58,9 +58,31 @@ class JSFilterScriptMatcherTest {
     String script = "function (h,p) { return p.test == 1 }";
     Predicate<PgFact> p =
         JSFilterScriptMatcher.matches(FactSpec.ns("1").filterScript(FilterScript.js(script)), ef);
-    Assertions.assertThat(p).isNotNull();
+    assertThat(p).isNotNull();
     assertTrue(p.test(PgFact.from(new TestFact().ns("1").jsonPayload("{\"test\":1}"))));
     assertFalse(p.test(PgFact.from(new TestFact().ns("1").jsonPayload("{\"test\":2}"))));
     assertFalse(p.test(PgFact.from(new TestFact().ns("1"))));
+  }
+
+  @Test
+  void skipsBlank() {
+    assertThat(
+            JSFilterScriptMatcher.matches(FactSpec.ns("1").filterScript(FilterScript.js("  ")), ef))
+        .isNull();
+  }
+
+  @Test
+  void skipsEmpty() {
+    assertThat(
+            JSFilterScriptMatcher.matches(FactSpec.ns("1").filterScript(FilterScript.js("")), ef))
+        .isNull();
+  }
+
+  @Test
+  void doesNotSkipNonEmpty() {
+    assertThat(
+            JSFilterScriptMatcher.matches(
+                FactSpec.ns("1").filterScript(FilterScript.js("  true ")), ef))
+        .isNotNull();
   }
 }

@@ -15,6 +15,7 @@
  */
 package org.factcast.core.spec;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.AssertionsForClassTypes.*;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -23,31 +24,31 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.fasterxml.jackson.databind.*;
 import java.util.*;
 import lombok.NonNull;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.event.Specification;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 class FactSpecTest {
 
   @Test
   void testMetaBothNull() {
-    Assertions.assertThrows(NullPointerException.class, () -> FactSpec.ns("foo").meta(null, null));
+    assertThrows(NullPointerException.class, () -> FactSpec.ns("foo").meta(null, null));
   }
 
   @Test
   void testMetaKeyNull() {
-    Assertions.assertThrows(NullPointerException.class, () -> FactSpec.ns("foo").meta(null, ""));
+    assertThrows(NullPointerException.class, () -> FactSpec.ns("foo").meta(null, ""));
   }
 
   @Test
   void testMetaValueNull() {
-    Assertions.assertThrows(NullPointerException.class, () -> FactSpec.ns("foo").meta("", null));
+    assertThrows(NullPointerException.class, () -> FactSpec.ns("foo").meta("", null));
   }
 
   @Test
   void testFactSpecConstructorNull() {
-    Assertions.assertThrows(NullPointerException.class, () -> new FactSpec(null));
+    assertThrows(NullPointerException.class, () -> new FactSpec(null));
   }
 
   @SuppressWarnings("static-access")
@@ -74,8 +75,10 @@ class FactSpecTest {
 
   @Test
   void shouldThrowWhenNSisEmpty() {
-    assertThatThrownBy(() -> FactSpec.ns(" ")).isInstanceOf(IllegalArgumentException.class);
-    assertThatThrownBy(() -> new FactSpec(" ")).isInstanceOf(IllegalArgumentException.class);
+    Assertions.assertThatThrownBy(() -> FactSpec.ns(" "))
+        .isInstanceOf(IllegalArgumentException.class);
+    Assertions.assertThatThrownBy(() -> new FactSpec(" "))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
@@ -190,8 +193,7 @@ class FactSpecTest {
 
   @Test
   void testThrowIfNoAnnotationSpecPresent() {
-    Assertions.assertThrows(
-        IllegalArgumentException.class, () -> FactSpec.from(Specification.class));
+    assertThrows(IllegalArgumentException.class, () -> FactSpec.from(Specification.class));
   }
 
   @Test
@@ -223,5 +225,35 @@ class FactSpecTest {
 
     org.meta("foo", "bar");
     assertThat(copy).isNotEqualTo(org);
+  }
+
+  @Test
+  void aggIdProperty() {
+    UUID id = UUID.randomUUID();
+    FactSpec factSpec = FactSpec.from(TestFactWithType.class).aggIdProperty("the.path", id);
+    assertThat(factSpec.aggIds()).contains(id);
+    Assertions.assertThat(factSpec.aggIdProperties().get("the.path")).isEqualTo(id);
+  }
+
+  @Test
+  void withNs() {
+    UUID aggId = UUID.randomUUID();
+    UUID aggId2 = UUID.randomUUID();
+    FactSpec factSpec =
+        FactSpec.from(TestFactWithType.class)
+            .aggIdProperty("the.path", aggId2)
+            .version(2)
+            .metaExists("mustExist")
+            .meta("k", "v")
+            .metaDoesNotExist("mustNotExist")
+            .filterScript(FilterScript.js("not a script"))
+            .aggId(aggId);
+
+    FactSpec ns2 = factSpec.withNs("ns2");
+    FactSpec ns = ns2.withNs("ns");
+
+    Assertions.assertThat(ns2.ns()).isEqualTo("ns2");
+    Assertions.assertThat(FactCastJson.writeValueAsPrettyString(factSpec))
+        .isEqualTo(FactCastJson.writeValueAsPrettyString(ns));
   }
 }

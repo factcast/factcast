@@ -135,6 +135,7 @@ public class FactSpec {
     fs.aggIds.addAll(aggIds);
     fs.aggIdProperties.putAll(aggIdProperties);
     fs.meta.putAll(meta);
+    fs.metaKeyExists.putAll(metaKeyExists);
     return fs;
   }
 
