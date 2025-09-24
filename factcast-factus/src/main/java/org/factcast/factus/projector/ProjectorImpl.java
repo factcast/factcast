@@ -190,7 +190,6 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
     if (dispatch == null) {
       // fallback for wildcard usage
-      // TODO is there a need to cache this?
 
       List<Map.Entry<FactSpecCoordinates, Dispatcher>> found =
           dispatchInfo.entrySet().stream()
@@ -213,6 +212,9 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       }
 
       dispatch = found.iterator().next().getValue();
+
+      // Question to reviewer: is there a need / is it safe to cache this?
+      dispatchInfo.put(coords, dispatch);
     }
     dispatch.invoke(serializer, projection, f);
     return factId;
@@ -298,7 +300,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
     @NonNull List<FactSpec> ret = projection.postprocess(discovered);
     //noinspection ConstantConditions
-    if (ret == null || ret.isEmpty()) {
+    if (ret.isEmpty()) {
       throw new InvalidHandlerDefinition(
           "No FactSpecs discovered from "
               + projection.getClass()

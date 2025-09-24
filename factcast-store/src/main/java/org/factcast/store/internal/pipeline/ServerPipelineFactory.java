@@ -42,7 +42,6 @@ public class ServerPipelineFactory {
     chain = new MetricServerPipeline(chain, metrics);
 
     // needs to be executed AFTER transformation
-    // TODO document potentially breaking change
     chain = new FilteringServerPipeline(chain, new FactFilter(subreq, jsEngineFactory));
 
     chain =

@@ -58,14 +58,14 @@ public final class JSFilterScriptMatcher implements PGFactMatcher {
   @Generated
   private static synchronized JSEngine getEngine(
       FilterScript filterScript, @NonNull JSEngineFactory ef) {
-    // TODO: currently only supports language js:
-    if ("js".equals(filterScript.languageIdentifier())) {
 
-      return ef.getOrCreateFor("var test=" + filterScript.source());
-    } else {
-      throw new IllegalArgumentException(
-          "Unsupported Script language: " + filterScript.languageIdentifier());
-    }
+    return switch (filterScript.languageIdentifier()) {
+        //  currently only supports language js
+      case "js" -> ef.getOrCreateFor("var test=" + filterScript.source());
+      default ->
+          throw new IllegalArgumentException(
+              "Unsupported Script language: " + filterScript.languageIdentifier());
+    };
   }
 
   public static @Nullable JSFilterScriptMatcher matches(

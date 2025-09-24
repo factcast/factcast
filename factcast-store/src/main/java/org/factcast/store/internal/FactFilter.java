@@ -32,6 +32,7 @@ import org.factcast.store.internal.script.JSEngineFactory;
  * @author uwe.schaefer@prisma-capacity.eu
  */
 @Slf4j
+@SuppressWarnings("java:S125")
 public class FactFilter implements PGFactMatcher {
 
   @VisibleForTesting
