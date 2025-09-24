@@ -37,7 +37,8 @@ import org.springframework.jdbc.core.PreparedStatementSetter;
 public class PgQueryBuilder {
 
   private static final String AND = " AND ";
-  public static final String CONTAINS_JSONB = " @> ?::jsonb";
+  private static final String OR = " OR ";
+  public static final String CONTAINS_JSONB = " @> ?::jsonb ";
   private final @NonNull List<FactSpec> factSpecs;
   private final CurrentStatementHolder statementHolder;
 
@@ -183,7 +184,7 @@ public class PgQueryBuilder {
           if (filterByAggregateIdProperty(spec)) {
             sb.append(AND).append("(");
 
-            if (spec.version() != 0) sb.append("(header ->> 'version')::int != ? OR ");
+            if (spec.version() != 0) sb.append("(header ->> 'version')::int != ? " + OR);
             sb.append("(true ");
 
             for (Entry<String, UUID> entry : spec.aggIdProperties().entrySet()) {
@@ -197,9 +198,9 @@ public class PgQueryBuilder {
               (key, value) ->
                   sb.append(AND + "(")
                       .append(PgConstants.COLUMN_HEADER)
-                      .append(" @> ?::jsonb OR ") // single
+                      .append(CONTAINS_JSONB + OR) // single
                       .append(PgConstants.COLUMN_HEADER)
-                      .append(" @> ?::jsonb)")); // array
+                      .append(CONTAINS_JSONB + ")")); // array
 
           Map<String, Boolean> metaKeyExists = spec.metaKeyExists();
           metaKeyExists.forEach(
@@ -210,7 +211,7 @@ public class PgQueryBuilder {
           sb.append(" )");
           predicates.add(sb.toString());
         });
-    String predicatesAsString = String.join(" OR ", predicates);
+    String predicatesAsString = String.join(OR, predicates);
     return "( " + predicatesAsString + " ) " + AND + PgConstants.COLUMN_SER + ">?";
   }
 
