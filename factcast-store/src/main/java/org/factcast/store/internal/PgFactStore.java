@@ -15,29 +15,54 @@
  */
 package org.factcast.store.internal;
 
+import static org.factcast.store.internal.lock.FactTableWriteLock.STAR_NAMESPACE_CODE;
+
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
-import java.sql.*;
 import java.sql.Date;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+import lombok.EqualsAndHashCode;
 import lombok.NonNull;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.*;
+import org.factcast.core.DuplicateFactException;
+import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.store.*;
-import org.factcast.core.subscription.*;
+import org.factcast.core.store.AbstractFactStore;
+import org.factcast.core.store.State;
+import org.factcast.core.store.StateToken;
+import org.factcast.core.store.TokenStore;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.core.subscription.transformation.*;
+import org.factcast.core.subscription.transformation.FactTransformerService;
+import org.factcast.core.subscription.transformation.TransformationRequest;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.lock.FactTableWriteLock;
-import org.factcast.store.internal.query.*;
+import org.factcast.store.internal.query.PgFactIdToSerialMapper;
+import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.registry.SchemaRegistry;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.dao.*;
-import org.springframework.jdbc.core.*;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementSetter;
+import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.annotation.*;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -64,6 +89,13 @@ public class PgFactStore extends AbstractFactStore {
 
   @NonNull private final PlatformTransactionManager platformTransactionManager;
 
+  // cheap way to assign codes to namespaces. In real implementation needs to be
+  // database table, where codes never change again.
+  // the codes must be > STAR_NAMESPACE_CODE.
+  private static final AtomicInteger ai = new AtomicInteger(STAR_NAMESPACE_CODE);
+  private static final LoadingCache<String, Integer> cache =
+      CacheBuilder.newBuilder().build(CacheLoader.from(ns -> ai.incrementAndGet()));
+
   public PgFactStore(
       @NonNull JdbcTemplate jdbcTemplate,
       @NonNull PgSubscriptionFactory subscriptionFactory,
@@ -86,6 +118,9 @@ public class PgFactStore extends AbstractFactStore {
     this.factTransformerService = factTransformerService;
     this.props = props;
     this.platformTransactionManager = platformTransactionManager;
+
+    // put fix code for star namespace
+    cache.put("*", STAR_NAMESPACE_CODE);
   }
 
   @Override
@@ -124,9 +159,22 @@ public class PgFactStore extends AbstractFactStore {
         StoreMetrics.OP.PUBLISH,
         () -> {
           try {
-            lock.aquireExclusiveTXLock();
-
             List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
+
+            // shared lock on *, to indicate we are writing to some namespaces.
+            // if this lock is exclusively taken by someone who reads from *,
+            // we need to wait until they are done
+            lock.aquireGeneralPublishLock();
+
+            // exclusively (write-lock) the namespaces we publish into
+            copiedListOfFacts.stream()
+                .map(Fact::ns)
+                .distinct()
+                .map(cache::getUnchecked)
+                // order by code to prevent dead locks
+                .sorted()
+                .forEachOrdered(lock::aquireExclusiveTXLock);
+
             int numberOfFactsToPublish = factsToPublish.size();
             log.trace("Inserting {} fact(s)", numberOfFactsToPublish);
             jdbcTemplate.batchUpdate(
@@ -265,9 +313,81 @@ public class PgFactStore extends AbstractFactStore {
     return metrics.time(
         StoreMetrics.OP.PUBLISH_IF_UNCHANGED,
         () -> {
-          lock.aquireExclusiveTXLock();
+
+          // we get the state from the tokens tore again in the super method, not sure if that is
+          // wasteful...
+          Optional<State> state = optionalToken.flatMap(tokenStore::get);
+          if (state.isPresent()) {
+
+            // check if we lock on the * namespace
+            if (state.get().specs().stream()
+                .map(FactSpec::ns)
+                .distinct()
+                .map(cache::getUnchecked)
+                .anyMatch(c -> c == STAR_NAMESPACE_CODE)) {
+              // get exclusive general publish lock
+              lock.aquireExclusiveGeneralPublishLock();
+            } else {
+              // shared lock on *, to indicate we are writing to some namespaces.
+              // if this lock is exclusively taken by someone who reads from *,
+              // we need to wait until they are done.
+              lock.aquireGeneralPublishLock();
+            }
+
+            Stream.concat(
+                    // exclusively lock all namespaces that we publish into,
+                    factsToPublish.stream()
+                        .map(Fact::ns)
+                        // to make sure the two streams are ordered
+                        .sorted()
+                        .distinct()
+                        .map(cache::getUnchecked)
+                        .map(c -> new LockPair(c, (Consumer<Integer>) lock::aquireExclusiveTXLock)),
+                    // and get a read lock for all namespace we read from in our projection
+                    state.get().specs().stream()
+                        .map(FactSpec::ns)
+                        // to make sure the two streams are ordered
+                        .sorted()
+                        .distinct()
+                        .map(cache::getUnchecked)
+                        .map(c -> new LockPair(c, (Consumer<Integer>) lock::aquireSharedTXLock)))
+                // here it is important that the exclusive locks are preserved, while the shared
+                // locks are dropped,
+                // in case of duplicate locks on the same namespace. We get that since concat on two
+                // ordered streams is ordered.
+                .distinct()
+                // after dropping duplicate locks, order by code to prevent dead locks
+                .sorted(Comparator.comparing(LockPair::code))
+                .filter(c -> c.code() != STAR_NAMESPACE_CODE)
+                .forEachOrdered(LockPair::acquireLock);
+          } else {
+            // shared lock on *, to indicate we are writing to some namespaces.
+            // if this lock is exclusively taken by someone who reads from *,
+            // we need to wait until they are done.
+            lock.aquireGeneralPublishLock();
+
+            // get exclusive locks for all namespaces we publish into
+            factsToPublish.stream()
+                .map(Fact::ns)
+                .distinct()
+                .map(cache::getUnchecked)
+                // order by code to prevent dead locks
+                .sorted()
+                .forEachOrdered(lock::aquireExclusiveTXLock);
+          }
           return super.publishIfUnchanged(factsToPublish, optionalToken);
         });
+  }
+
+  @Value
+  @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+  static class LockPair {
+    @EqualsAndHashCode.Include int code;
+    Consumer<Integer> lock;
+
+    void acquireLock() {
+      lock.accept(code);
+    }
   }
 
   @Override
