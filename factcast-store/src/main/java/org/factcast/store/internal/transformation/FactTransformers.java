@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.subscription.transformation;
+package org.factcast.store.internal.transformation;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.util.*;
@@ -22,8 +22,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.store.internal.PgFact;
 
 @RequiredArgsConstructor
 public class FactTransformers {
@@ -33,7 +33,7 @@ public class FactTransformers {
   private final RequestedVersions requested;
 
   @Nullable
-  public TransformationRequest prepareTransformation(@NonNull Fact e) {
+  public TransformationRequest prepareTransformation(@NonNull PgFact e) {
     String ns = e.ns();
     String type = e.type();
     int version = e.version();

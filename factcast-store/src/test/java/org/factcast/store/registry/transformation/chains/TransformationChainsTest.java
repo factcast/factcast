@@ -25,7 +25,7 @@ import com.google.common.collect.Sets;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.util.*;
-import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
+import org.factcast.core.subscription.MissingTransformationInformationException;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.script.graaljs.GraalJSEngineFactory;

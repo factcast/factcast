@@ -39,6 +39,7 @@ import org.factcast.factus.projection.*;
 import org.factcast.factus.projection.parameter.*;
 import org.factcast.factus.projection.tx.*;
 import org.springframework.aop.framework.Advised;
+import org.springframework.util.StringUtils;
 
 @Slf4j
 public class ProjectorImpl<A extends Projection> implements Projector<A> {
@@ -189,7 +190,6 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
     if (dispatch == null) {
       // fallback for wildcard usage
-      // TODO is there a need to cache this?
 
       List<Map.Entry<FactSpecCoordinates, Dispatcher>> found =
           dispatchInfo.entrySet().stream()
@@ -212,6 +212,9 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       }
 
       dispatch = found.iterator().next().getValue();
+
+      // Question to reviewer: is there a need / is it safe to cache this?
+      dispatchInfo.put(coords, dispatch);
     }
     dispatch.invoke(serializer, projection, f);
     return factId;
@@ -295,7 +298,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       }
     }
 
-    @NonNull List<FactSpec> ret = projection.postprocess(discovered);
+    List<FactSpec> ret = projection.postprocess(discovered);
     //noinspection ConstantConditions
     if (ret == null || ret.isEmpty()) {
       throw new InvalidHandlerDefinition(
@@ -524,6 +527,8 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       spec = filterByMetaDoesNotExist(m, spec);
       spec = filterByAggIds(m, spec);
       spec = filterByScript(m, spec);
+
+      checkFilterByAggIdProperty(m, spec);
       return spec;
     }
 
@@ -542,6 +547,60 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
         }
       }
       return spec;
+    }
+
+    /**
+     * this will only check for applicability of the FilterByAggIdProperty annotation. The actual
+     * pair needs to be created from the instance, rather than statically, as the value (the
+     * aggregate id) is dynamic.
+     */
+    @VisibleForTesting
+    static void checkFilterByAggIdProperty(@NonNull Method m, @NonNull FactSpec spec) {
+      FilterByAggIdProperty annotation = m.getAnnotation(FilterByAggIdProperty.class);
+      if (annotation != null) {
+
+        if (!Aggregate.class.isAssignableFrom(m.getClass()))
+          throw new IllegalAnnotationForTargetClassException(
+              "FilterByAggIdProperty can only be used on classes extending Aggregate, but was found on "
+                  + m.toString());
+
+        if (m.getAnnotation(HandlerFor.class) != null) {
+          log.warn(
+              "Using FilterByAggIdProperty on HandlerFor method "
+                  + m.toString()
+                  + " which means the property cannot be verified.");
+          return;
+        }
+
+        // check applicability if param is eventObject
+        Parameter[] params = Objects.requireNonNull(m.getParameters());
+        Class<?> paramType = Objects.requireNonNull(params[0]).getClass();
+        verifyPropertyExpressionAgainstClass(annotation.value(), paramType);
+      }
+    }
+
+    @VisibleForTesting
+    static void verifyPropertyExpressionAgainstClass(
+        @NonNull String value, @NonNull Class<?> paramType)
+        throws IllegalAggregateIdPropertyPathException {
+      String[] path = value.split("\\.");
+      Class<?> type = paramType;
+      for (int i = 0; i < path.length - 1; i++) {
+        try {
+          type = type.getMethod("get" + StringUtils.capitalize(path[i])).getReturnType();
+        } catch (NoSuchMethodException e) {
+          throw new IllegalAggregateIdPropertyPathException(
+              "Cannot resolve property "
+                  + path[i]
+                  + " on type "
+                  + type
+                  + " (full path='"
+                  + value
+                  + "' from "
+                  + type
+                  + ")");
+        }
+      }
     }
 
     private static FactSpec filterByMetaDoesNotExist(@NonNull Method m, @NonNull FactSpec spec) {

@@ -28,12 +28,12 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.TransformationException;
-import org.factcast.core.subscription.transformation.FactTransformerService;
-import org.factcast.core.subscription.transformation.TransformationRequest;
 import org.factcast.core.util.ExceptionHelper;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.store.internal.Pair;
+import org.factcast.store.internal.*;
+import org.factcast.store.internal.transformation.FactTransformerService;
+import org.factcast.store.internal.transformation.TransformationRequest;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.cache.TransformationCache;
 import org.factcast.store.registry.transformation.chains.TransformationChain;
@@ -71,7 +71,7 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
 
   @Override
   public Fact transform(@NonNull TransformationRequest req) throws TransformationException {
-    Fact e = req.toTransform();
+    PgFact e = req.toTransform();
     Set<Integer> targetVersions = req.targetVersions();
     int sourceVersion = e.version();
     if (targetVersions.contains(sourceVersion) || targetVersions.contains(0)) {
@@ -87,7 +87,7 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
   }
 
   @Override
-  public List<Fact> transform(@NonNull List<TransformationRequest> req)
+  public List<PgFact> transform(@NonNull List<TransformationRequest> req)
       throws TransformationException {
 
     if (req.isEmpty()) {
@@ -111,8 +111,8 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
                                     p.right().id()))
                         .collect(Collectors.toSet());
 
-                Map<UUID, Fact> found =
-                    cache.findAll(keys).stream().collect(Collectors.toMap(Fact::id, f -> f));
+                Map<UUID, PgFact> found =
+                    cache.findAll(keys).stream().collect(Collectors.toMap(PgFact::id, f -> f));
                 log.trace(
                     "batch lookup found {} out of {} pre transformed facts",
                     found.size(),
@@ -127,8 +127,8 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
                 return pairStream
                     .map(
                         c -> {
-                          Fact e = c.left().toTransform();
-                          Fact cached = found.get(e.id());
+                          PgFact e = c.left().toTransform();
+                          PgFact cached = found.get(e.id());
                           if (cached != null) {
                             return cached;
                           } else {
@@ -166,7 +166,7 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
   }
 
   @NonNull
-  public Fact doTransform(@NonNull Fact e, @NonNull TransformationChain chain) {
+  public PgFact doTransform(@NonNull PgFact e, @NonNull TransformationChain chain) {
 
     return registryMetrics.timed(
         RegistryMetrics.OP.TRANSFORMATION,
@@ -176,7 +176,7 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
             JsonNode header = FactCastJson.readTree(e.jsonHeader());
             ((ObjectNode) header).put("version", chain.toVersion());
             JsonNode transformedPayload = trans.transform(chain, input);
-            Fact transformed = Fact.of(header, transformedPayload);
+            PgFact transformed = PgFact.of(header, transformedPayload);
             cache.put(
                 TransformationCache.Key.of(transformed.id(), transformed.version(), chain.id()),
                 transformed);

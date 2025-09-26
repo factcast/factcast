@@ -22,7 +22,7 @@ import java.util.*;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.FactValidationException;
-import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
+import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
@@ -30,12 +30,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 
 @ContextConfiguration(classes = TransformationApplication.class)
-public class TransformationTest extends AbstractFactCastIntegrationTest {
+class TransformationTest extends AbstractFactCastIntegrationTest {
 
   @Autowired FactCast fc;
 
   @Test
-  public void publishAndFetchBack() {
+  void publishAndFetchBack() {
     UUID id = UUID.randomUUID();
     Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
     fc.publish(f);
@@ -48,7 +48,7 @@ public class TransformationTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  public void publishV1AndFetchBackAsV2() throws Exception {
+  void publishV1AndFetchBackAsV2() throws Exception {
 
     UUID id = UUID.randomUUID();
     Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
@@ -68,7 +68,7 @@ public class TransformationTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  public void publishV2AndFetchBackAsV1() throws Exception {
+  void publishV2AndFetchBackAsV1() throws Exception {
 
     UUID id = UUID.randomUUID();
     Fact f =
@@ -85,7 +85,7 @@ public class TransformationTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  public void downcastUsesNonSyntheticTransformation() throws Exception {
+  void downcastUsesNonSyntheticTransformation() throws Exception {
 
     UUID id = UUID.randomUUID();
     Fact f =
@@ -106,7 +106,7 @@ public class TransformationTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  public void returnsOriginalIfNoVersionSet() {
+  void returnsOriginalIfNoVersionSet() {
 
     UUID id = UUID.randomUUID();
     Fact f =
@@ -122,7 +122,7 @@ public class TransformationTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  public void returnsOriginalIfVersionSetTo0() throws Exception {
+  void returnsOriginalIfVersionSetTo0() throws Exception {
 
     UUID id = UUID.randomUUID();
     Fact f =
@@ -155,7 +155,7 @@ public class TransformationTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  public void publishV1AndFetchBackAsUnknownVersionMustFail() {
+  void publishV1AndFetchBackAsUnknownVersionMustFail() {
 
     UUID id = UUID.randomUUID();
     Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
@@ -164,14 +164,14 @@ public class TransformationTest extends AbstractFactCastIntegrationTest {
     try {
       fc.fetchByIdAndVersion(id, 999).orElse(null);
       fail("should have thrown");
-    } catch (MissingTransformationInformationException expected) {
+    } catch (TransformationException expected) {
     } catch (Exception anyOther) {
       fail("unexpected Exception", anyOther);
     }
   }
 
   @Test
-  public void validationFailsOnSchemaViolation() {
+  void validationFailsOnSchemaViolation() {
     Fact brokenFact = createTestFact(UUID.randomUUID(), 1, "{}");
     assertThrows(FactValidationException.class, () -> fc.publish(brokenFact));
   }

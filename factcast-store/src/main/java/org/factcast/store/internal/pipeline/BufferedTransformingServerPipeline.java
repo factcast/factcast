@@ -26,11 +26,11 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.Fact;
 import org.factcast.core.subscription.TransformationException;
-import org.factcast.core.subscription.transformation.FactTransformerService;
-import org.factcast.core.subscription.transformation.FactTransformers;
-import org.factcast.core.subscription.transformation.TransformationRequest;
+import org.factcast.store.internal.PgFact;
+import org.factcast.store.internal.transformation.FactTransformerService;
+import org.factcast.store.internal.transformation.FactTransformers;
+import org.factcast.store.internal.transformation.TransformationRequest;
 
 /**
  * this class is NOT Threadsafe!
@@ -57,7 +57,7 @@ public class BufferedTransformingServerPipeline extends AbstractServerPipeline {
   @RequiredArgsConstructor
   static class TransformedFactSupplier implements Supplier<Signal> {
     @Getter final TransformationRequest transformationRequest;
-    @Setter Fact resolved;
+    @Setter PgFact resolved;
 
     @Override
     public Signal.FactSignal get() {
@@ -86,7 +86,7 @@ public class BufferedTransformingServerPipeline extends AbstractServerPipeline {
       passOrBuffer(s);
     } else {
 
-      Fact fact = signal.fact();
+      PgFact fact = signal.fact();
 
       TransformationRequest transformationRequest = transformers.prepareTransformation(fact);
 
@@ -157,7 +157,7 @@ public class BufferedTransformingServerPipeline extends AbstractServerPipeline {
                   .map(TransformedFactSupplier::transformationRequest)
                   .toList();
 
-          List<Fact> transformedFacts = service.transform(requests);
+          List<PgFact> transformedFacts = service.transform(requests);
 
           if (pendingTransformations.size() != transformedFacts.size()) {
             throw new IllegalStateException(
@@ -165,7 +165,7 @@ public class BufferedTransformingServerPipeline extends AbstractServerPipeline {
           }
 
           // pass results back to TransformedFactSuppliers
-          Iterator<Fact> transformedIterator = transformedFacts.iterator();
+          Iterator<PgFact> transformedIterator = transformedFacts.iterator();
           pendingTransformations.forEach(t -> t.resolved(transformedIterator.next()));
 
           buffer.stream().map(Supplier::get).forEach(parent::process);

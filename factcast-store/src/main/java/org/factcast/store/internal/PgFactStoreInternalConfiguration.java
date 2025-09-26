@@ -31,7 +31,6 @@ import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMo
 import net.javacrumbs.shedlock.support.KeepAliveLockProvider;
 import org.factcast.core.store.*;
 import org.factcast.core.subscription.observer.FastForwardTarget;
-import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.store.*;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.catchup.fetching.PgFetchingCatchUpFactory;
@@ -44,6 +43,7 @@ import org.factcast.store.internal.query.*;
 import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.tail.PGTailIndexingConfiguration;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
+import org.factcast.store.internal.transformation.FactTransformerService;
 import org.factcast.store.registry.*;
 import org.factcast.store.registry.transformation.cache.*;
 import org.factcast.store.registry.transformation.chains.TransformationChains;
