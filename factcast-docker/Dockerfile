@@ -10,7 +10,7 @@ COPY ${JAR_FILE} factcast-server.jar
 RUN java -Djarmode=tools -jar factcast-server.jar extract --layers --destination extracted
 
 # This is the runtime container
-FROM openjdk:21-slim
+FROM openjdk:25-slim
 EXPOSE 9090
 EXPOSE 9443
 
