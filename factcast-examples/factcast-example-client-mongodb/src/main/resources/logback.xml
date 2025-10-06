@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <appender name="STDOUT"
+    class="ch.qos.logback.core.ConsoleAppender">
+    <encoder
+      class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+      <pattern>
+        %magenta(%d{HH:mm:ss.SSS}) %highlight(%-5level) %yellow(%logger{36}) [%blue(%t)] -
+        %msg%n%throwable
+      </pattern>
+    </encoder>
+  </appender>
+  <logger name="org.testcontainers" level="warn">
+    <appender-ref ref="STDOUT" />
+  </logger>
+  <root level="INFO">
+    <appender-ref ref="STDOUT" />
+  </root>
+
+  <logger name="org.factcast.factus.mongodb" level="DEBUG" />
+</configuration>
