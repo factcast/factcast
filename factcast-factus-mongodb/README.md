@@ -1,21 +1,17 @@
 ## Usage
 
-Allows to build projections using MongoDB or AWS DocumentDB.
+Allows to build projections using MongoDB/ AWS DocumentDB.
 
 ### Transactionality not supported
 
-For now, no transactionality is supported.
+For now, no transactionality is not supported.
 
 ## Prerequisites
 
-In order to use this projection provide the following:
+In order to use this projection provide either:
 
-- MongoDB client
-- The name of the mongo database in which both the collections for the projection data as well as collections to handle
-  projection state and locking will be created.
+- A MongoDB client & the name of the database
+- or the MongoDatabase itself.
 
-### AWS Permissions
+Collections for locking and keeping track of the projection state will be created automatically, if not present.
 
-When using AWS DocumentDB, the following permissions are required at the client level:
-
-- rds: TODO
