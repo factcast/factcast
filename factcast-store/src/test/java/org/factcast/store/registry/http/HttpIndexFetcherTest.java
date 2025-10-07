@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.Map;
 import lombok.SneakyThrows;
 import okhttp3.*;
+import okhttp3.MediaType;
 import okhttp3.Response.Builder;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.SchemaRegistryUnavailableException;
