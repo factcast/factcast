@@ -79,16 +79,18 @@ Only those Facts will be returned, that have a meta key-value-pair with a key of
 ```java
 
 @Handler
-@FilterByAggIdProperty("recommendedBy")
+@FilterByAggIdProperty("recommendedByUserId")
 protected void apply(UserRecommended event) {
     // ...
 }
 ```
 
 This will add the additional filter defined by the `@FilterByAggIdProperty` annotation to `FactSpec`.
-Only those Facts will be returned, that have a payload that contains a path 'recommendedBy' that has a UUID value which
+Only those Facts will be returned, that have a payload that contains a path 'recommendedByUserId' that has a UUID value
+which
 matches the current Aggregate's ID. This is the reason, this kind of filter is only valid on Aggregate projections.
-Note that you could also define a dot-separated path like 'references.recommendedBy' if that matches your EventObject.
+Note that you could also define a dot-separated path like 'references.recommendedByUserId' if that matches your
+EventObject.
 The use of Array expressions is not allowed here.
 
 This filter is particularly useful, if you want to process events that reference your Aggregate, but only if your
