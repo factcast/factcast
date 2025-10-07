@@ -228,6 +228,29 @@ class FactSpecTest {
   }
 
   @Test
+  void testCopyWithMeta() {
+    FactSpec org =
+        FactSpec.from(TestFactWithType.class)
+            .aggId(UUID.randomUUID(), UUID.randomUUID())
+            .meta("foo", "bar");
+    FactSpec copy = org.copy();
+    assertThat(copy).isEqualTo(org);
+    assertThat(copy).isNotSameAs(org);
+  }
+
+  @Test
+  void testCopyWithMetaExists() {
+    FactSpec org =
+        FactSpec.from(TestFactWithType.class)
+            .aggId(UUID.randomUUID(), UUID.randomUUID())
+            .meta("foo", "bar")
+            .metaDoesNotExist("void");
+    FactSpec copy = org.copy();
+    assertThat(copy).isEqualTo(org);
+    assertThat(copy).isNotSameAs(org);
+  }
+
+  @Test
   void aggIdProperty() {
     UUID id = UUID.randomUUID();
     FactSpec factSpec = FactSpec.from(TestFactWithType.class).aggIdProperty("the.path", id);

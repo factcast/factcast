@@ -573,20 +573,55 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
         }
 
         // check applicability if param is eventObject
-        Parameter[] params = Objects.requireNonNull(m.getParameters());
-        Class<?> paramType = Objects.requireNonNull(params[0]).getClass();
-        verifyPropertyExpressionAgainstClass(annotation.value(), paramType);
+        verifyUuidPropertyExpressionAgainstClass(
+            annotation.value(), findEventObjectParameterType(m));
       }
     }
 
     @VisibleForTesting
-    static void verifyPropertyExpressionAgainstClass(
-        @NonNull String value, @NonNull Class<?> paramType)
+    @SuppressWarnings("unchecked")
+    static <E extends EventObject> Class<E> findEventObjectParameterType(@NonNull Method m) {
+      List<Class<? extends EventObject>> found =
+          Arrays.stream(m.getParameterTypes())
+              .filter(EventObject.class::isAssignableFrom)
+              .map(p -> (Class<? extends EventObject>) p)
+              .collect(Collectors.toList());
+
+      if (found.isEmpty()) throw new NoEventObjectParameterFoundException(m);
+      else if (found.size() > 1) throw new AmbiguousObjectParameterFoundException(m);
+      return (Class<E>) found.get(0);
+    }
+
+    static class NoEventObjectParameterFoundException extends IllegalArgumentException {
+      private NoEventObjectParameterFoundException(@NonNull Method m) {
+        super("No EventObject parameter type found on method " + m);
+      }
+    }
+
+    static class AmbiguousObjectParameterFoundException extends IllegalArgumentException {
+      private AmbiguousObjectParameterFoundException(@NonNull Method m) {
+        super("Ambiguous EventObject parameter type found on method " + m);
+      }
+    }
+
+    /**
+     * resolves the path through the Object graph starting from the eventObjectType to make sure
+     * that the path is valid and the resulting return type is UUID.
+     *
+     * @param value the path in dot-notation, case-sensitive
+     * @param eventObjectType the root pojo to resolve the path on
+     * @throws IllegalAggregateIdPropertyPathException when path does not exist, or does not resolve
+     *     to UUID type
+     */
+    @VisibleForTesting
+    static void verifyUuidPropertyExpressionAgainstClass(
+        @NonNull String value, @NonNull Class<? extends EventObject> eventObjectType)
         throws IllegalAggregateIdPropertyPathException {
       String[] path = value.split("\\.");
-      Class<?> type = paramType;
-      for (int i = 0; i < path.length - 1; i++) {
+      Class<?> type = eventObjectType;
+      for (int i = 0; i <= path.length - 1; i++) {
         try {
+          // we're expecting JavaBeans-specification-type getters here
           type = type.getMethod("get" + StringUtils.capitalize(path[i])).getReturnType();
         } catch (NoSuchMethodException e) {
           throw new IllegalAggregateIdPropertyPathException(
@@ -600,6 +635,11 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
                   + type
                   + ")");
         }
+      }
+
+      if (!UUID.class.isAssignableFrom(type)) {
+        throw new IllegalAggregateIdPropertyPathException(
+            "Encountered non-UUID type at " + value + " on type " + type);
       }
     }
 

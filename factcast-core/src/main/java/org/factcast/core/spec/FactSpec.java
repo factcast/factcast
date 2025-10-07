@@ -126,6 +126,7 @@ public class FactSpec {
     FactSpec fs = FactSpec.ns(ns).type(type).version(version).filterScript(filterScript);
     fs.aggIds.addAll(aggIds);
     fs.aggIdProperties.putAll(aggIdProperties);
+    fs.metaKeyExists.putAll(metaKeyExists);
     fs.meta.putAll(meta);
     return fs;
   }
