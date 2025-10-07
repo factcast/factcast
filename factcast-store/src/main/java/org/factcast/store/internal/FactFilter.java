@@ -37,6 +37,7 @@ public class FactFilter implements PGFactMatcher {
 
   @VisibleForTesting
   @Accessors(fluent = true)
+  @Getter
   private final boolean canBeSkipped;
 
   private final List<PGFactMatcher> matchers = new LinkedList<>();
@@ -67,9 +68,5 @@ public class FactFilter implements PGFactMatcher {
   @Override
   public boolean test(PgFact input) {
     return canBeSkipped() || matchers.stream().anyMatch(m -> m.test(input));
-  }
-
-  public boolean canBeSkipped() {
-    return this.canBeSkipped;
   }
 }
