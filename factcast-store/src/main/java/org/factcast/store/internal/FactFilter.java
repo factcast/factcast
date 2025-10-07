@@ -37,6 +37,7 @@ public class FactFilter implements PGFactMatcher {
 
   @VisibleForTesting
   @Accessors(fluent = true)
+  @Getter
   private final boolean canBeSkipped;
 
   private final List<PGFactMatcher> matchers = new LinkedList<>();
