@@ -19,9 +19,9 @@ import com.google.common.annotations.VisibleForTesting;
 import java.util.concurrent.atomic.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.Fact;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.PgFact;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.*;
@@ -92,7 +92,7 @@ public class PgFetchingCatchup implements PgCatchup {
           return;
         }
 
-        Fact f = extractor.mapRow(rs, 0);
+        PgFact f = extractor.mapRow(rs, 0);
         pipeline.process(Signal.of(f));
       } catch (PSQLException psql) {
         // see #2088

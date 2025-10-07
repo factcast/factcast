@@ -25,6 +25,7 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.PgFact;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics.*;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -95,25 +96,25 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   }
 
   @Override
-  public void put(@NonNull TransformationCache.Key key, @NonNull Fact f) {
+  public void put(@NonNull TransformationCache.Key key, @NonNull PgFact f) {
     registerWrite(key, f);
   }
 
   @Override
-  public Optional<Fact> find(Key key) {
+  public Optional<PgFact> find(Key key) {
 
-    Fact factFromBuffer = buffer.get(key);
+    PgFact factFromBuffer = buffer.get(key);
     if (factFromBuffer != null) {
       registerAccess(key);
       registryMetrics.count(EVENT.TRANSFORMATION_CACHE_HIT);
       return Optional.of(factFromBuffer);
     }
 
-    List<Fact> facts =
+    List<PgFact> facts =
         jdbcTemplate.query(
             "SELECT header, payload FROM transformationcache WHERE cache_key = ?",
             new Object[] {key.id()},
-            new FactRowMapper());
+            new PgFactRowMapper());
 
     if (facts.isEmpty()) {
       registryMetrics.count(EVENT.TRANSFORMATION_CACHE_MISS);
@@ -126,15 +127,15 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   }
 
   @Override
-  public Set<Fact> findAll(Collection<Key> keysToFind) {
+  public Set<PgFact> findAll(Collection<Key> keysToFind) {
 
     ArrayList<Key> keys = Lists.newArrayList(keysToFind);
 
-    List<Fact> facts = new ArrayList<>();
+    List<PgFact> facts = new ArrayList<>();
     Iterator<Key> iterator = keys.iterator();
     while (iterator.hasNext()) {
       Key key = iterator.next();
-      Fact found = buffer.get(key);
+      PgFact found = buffer.get(key);
       if (found != null) {
         iterator.remove();
         facts.add(found);
@@ -149,7 +150,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
           namedJdbcTemplate.query(
               "SELECT header, payload FROM transformationcache WHERE cache_key IN (:ids)",
               parameters,
-              new FactRowMapper()));
+              new PgFactRowMapper()));
     }
 
     int hits = facts.size();
@@ -175,7 +176,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   }
 
   @VisibleForTesting
-  CompletableFuture<Void> registerWrite(@NonNull TransformationCache.Key key, @NonNull Fact f) {
+  CompletableFuture<Void> registerWrite(@NonNull TransformationCache.Key key, @NonNull PgFact f) {
     buffer.put(key, f);
     return flushIfNecessary();
   }

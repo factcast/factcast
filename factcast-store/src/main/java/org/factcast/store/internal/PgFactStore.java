@@ -28,10 +28,10 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.*;
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.core.subscription.transformation.*;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.*;
+import org.factcast.store.internal.transformation.*;
 import org.factcast.store.registry.SchemaRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.dao.*;
@@ -107,6 +107,7 @@ public class PgFactStore extends AbstractFactStore {
   public @NonNull Optional<Fact> fetchByIdAndVersion(@NonNull UUID id, int version)
       throws TransformationException {
     return fetchById(id)
+        .map(PgFact.class::cast)
         .map(
             value ->
                 factTransformerService.transform(

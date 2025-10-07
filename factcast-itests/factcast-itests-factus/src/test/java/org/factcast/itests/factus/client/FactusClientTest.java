@@ -31,6 +31,7 @@ import java.util.function.Supplier;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.RetryableException;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.*;
@@ -110,8 +111,6 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   @Test
   void allWaysToPublish() {
 
-    UUID johnsId = randomUUID();
-
     factus.publish(new UserCreated(johnsId, "John"));
 
     factus.publish(
@@ -143,6 +142,30 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
     assertThat(externalizedUserNames.contains("Mick")).isTrue();
     assertThat(externalizedUserNames.contains("Keith")).isTrue();
     assertThat(externalizedUserNames.contains("Brian")).isTrue();
+  }
+
+  static final UUID johnsId = randomUUID();
+
+  @ProjectionMetaData(revision = 3)
+  @NoArgsConstructor
+  static class JohnOnlyUserNames extends SnapshotUserNames {
+    @Override
+    public @NonNull List<FactSpec> postprocess(@NonNull List<FactSpec> specsAsDiscovered) {
+      specsAsDiscovered.forEach(s -> s.aggIdProperty("aggregateId", johnsId));
+      return super.postprocess(specsAsDiscovered);
+    }
+  }
+
+  @Test
+  void factSpecWithAggIdProperties() {
+    factus.publish(new UserCreated(johnsId, "John"));
+    factus.publish(
+        asList(new UserCreated(randomUUID(), "Paul"), new UserCreated(randomUUID(), "George")));
+
+    var johnOnly = factus.fetch(JohnOnlyUserNames.class);
+
+    assertThat(johnOnly.count()).isOne();
+    assertThat(johnOnly.contains("John")).isTrue();
   }
 
   void measure(String s, Runnable r) {
@@ -320,7 +343,6 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   void simpleSnapshotProjectionRoundtrip() {
     assertThat(factus.fetch(SnapshotUserNames.class)).isNotNull();
 
-    UUID johnsId = randomUUID();
     factus
         .batch()
         .add(new UserCreated(johnsId, "John"))
@@ -493,7 +515,6 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
     externalizedUserNames.clear();
 
-    UUID johnsId = randomUUID();
     factus
         .batch()
         .add(new UserCreated(johnsId, "John"))

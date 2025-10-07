@@ -24,7 +24,6 @@ import java.util.function.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.Fact;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
@@ -146,7 +145,7 @@ class PgSynchronizedQuery {
             return;
           }
         }
-        Fact f = null;
+        PgFact f = null;
         try {
           f = PgFact.from(rs);
           pipe.process(Signal.of(f));

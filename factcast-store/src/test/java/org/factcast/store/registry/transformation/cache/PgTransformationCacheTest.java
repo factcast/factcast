@@ -27,6 +27,7 @@ import nl.altindag.log.LogCaptor;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.PgFact;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.junit.jupiter.api.*;
@@ -62,7 +63,7 @@ class PgTransformationCacheTest {
   @Nested
   class WhenPuting {
     @Mock private TransformationCache.@NonNull Key key;
-    @Mock private @NonNull Fact f;
+    @Mock private @NonNull PgFact f;
     private PgTransformationCache underTest;
 
     @BeforeEach
@@ -100,8 +101,8 @@ class PgTransformationCacheTest {
   class WhenFinding {
     @Mock private TransformationCache.Key key;
     @Mock private TransformationCache.Key key2;
-    @Mock private Fact f;
-    @Mock private Fact f2;
+    @Mock private PgFact f;
+    @Mock private PgFact f2;
     private PgTransformationCache underTest;
 
     @BeforeEach
@@ -153,8 +154,8 @@ class PgTransformationCacheTest {
   class WhenFindingAll {
     @Mock private TransformationCache.Key key;
     @Mock private TransformationCache.Key key2;
-    @Mock private Fact f;
-    @Mock private Fact f2;
+    @Mock private PgFact f;
+    @Mock private PgFact f2;
     private PgTransformationCache underTest;
 
     @BeforeEach
@@ -207,7 +208,7 @@ class PgTransformationCacheTest {
   class WhenRegisteringAccess {
     private PgTransformationCache underTest;
     @Mock private TransformationCache.Key cacheKey;
-    @Mock private Fact f;
+    @Mock private PgFact f;
 
     @BeforeEach
     void setup() {
@@ -244,7 +245,7 @@ class PgTransformationCacheTest {
   class WhenRegisteringWrite {
     private PgTransformationCache underTest;
     @Mock private TransformationCache.Key cacheKey;
-    @Mock private Fact f;
+    @Mock private PgFact f;
 
     @BeforeEach
     void setup() {
@@ -301,7 +302,7 @@ class PgTransformationCacheTest {
     private PgTransformationCache underTest;
     @Mock private TransformationCache.Key cacheKey;
     @Mock private TransformationCache.Key otherCacheKey;
-    @Mock private Fact f;
+    @Mock private PgFact f;
 
     @BeforeEach
     void setup() {
@@ -377,7 +378,7 @@ class PgTransformationCacheTest {
   class WhenFlushing {
     @Mock private TransformationCache.@NonNull Key key;
     @Mock private TransformationCache.@NonNull Key key2;
-    @Mock private @NonNull Fact f;
+    @Mock private @NonNull PgFact f;
     private PgTransformationCache underTest;
 
     @BeforeEach
@@ -480,10 +481,10 @@ class PgTransformationCacheTest {
     @Test
     void insertsAll() {
 
-      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(Fact.class));
-      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(Fact.class));
+      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(PgFact.class));
+      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(PgFact.class));
       buffer.put(Mockito.mock(TransformationCache.Key.class), null);
-      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(Fact.class));
+      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(PgFact.class));
       buffer.put(Mockito.mock(TransformationCache.Key.class), null);
 
       underTest.flush();
@@ -524,10 +525,10 @@ class PgTransformationCacheTest {
     @Test
     void insertsAll() {
 
-      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(Fact.class));
-      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(Fact.class));
+      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(PgFact.class));
+      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(PgFact.class));
       buffer.put(Mockito.mock(TransformationCache.Key.class), null);
-      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(Fact.class));
+      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(PgFact.class));
       buffer.put(Mockito.mock(TransformationCache.Key.class), null);
 
       underTest.flush();
