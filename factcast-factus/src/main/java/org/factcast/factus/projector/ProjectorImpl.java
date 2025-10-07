@@ -213,7 +213,6 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
       dispatch = found.iterator().next().getValue();
 
-      // Question to reviewer: is there a need / is it safe to cache this?
       dispatchInfo.put(coords, dispatch);
     }
     dispatch.invoke(serializer, projection, f);

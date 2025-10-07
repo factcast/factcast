@@ -77,11 +77,18 @@ public class PgQueryBuilder {
 
     if (filterByAggregateIdProperty(spec)) {
       var version = spec.version();
-      if (version != 0) p.setInt(++count, version);
-      Set<Entry<String, UUID>> entries = spec.aggIdProperties().entrySet();
-      // we need to make sure we have a stable sort order
-      for (Entry<String, UUID> entry : entries) {
-        p.setObject(++count, entry.getValue());
+      if (version != 0) {
+
+        // we can only apply filtering in the database if we know precisely what version to look
+        // for, as otherwise the property might be modified by transformation
+
+        p.setInt(++count, version);
+
+        Set<Entry<String, UUID>> entries = spec.aggIdProperties().entrySet();
+        // we need to make sure we have a stable sort order
+        for (Entry<String, UUID> entry : entries) {
+          p.setObject(++count, entry.getValue());
+        }
       }
     }
     return count;
@@ -183,16 +190,20 @@ public class PgQueryBuilder {
           }
 
           if (filterByAggregateIdProperty(spec)) {
-            sb.append(AND).append("(");
 
-            if (spec.version() != 0) sb.append("(header ->> 'version')::int != ? " + OR);
-            sb.append("(true ");
+            if (spec.version() != 0) {
+              // we can only apply filtering in the database if we know precisely what version to
+              // look for, as otherwise the property might be modified by transformation
+              sb.append(AND).append("(");
+              sb.append("(header ->> 'version')::int != ? " + OR);
+              sb.append("(true ");
 
-            for (Entry<String, UUID> entry : spec.aggIdProperties().entrySet()) {
-              String exp = calculateJsonbExpressionFromPropertyPath(entry.getKey());
-              sb.append(AND).append("(").append(exp).append(" = ? )");
+              for (Entry<String, UUID> entry : spec.aggIdProperties().entrySet()) {
+                String exp = calculateJsonbExpressionFromPropertyPath(entry.getKey());
+                sb.append(AND).append("(").append(exp).append(" = ? )");
+              }
+              sb.append("))");
             }
-            sb.append("))");
           }
           Map<String, String> meta = spec.meta();
           meta.forEach(

@@ -173,7 +173,7 @@ WHERE (
     }
 
     @Test
-    void withAggIdMultipleProperties() {
+    void withAggIdMultiplePropertiesWithoutVersionInformation() {
       UUID id1 = new UUID(0, 1);
       UUID id2 = new UUID(0, 2);
       var spec1 =
@@ -187,28 +187,101 @@ WHERE (
       var underTest = new PgQueryBuilder(specs);
       var sql = underTest.createSQL();
 
+      // note that filtering cannot be done in the database, as the version is not defined.
       var expected =
           """
-            SELECT ser,
-                   header,
-                   payload,
-                   header ->> 'id'      AS id,
-                   header ->> 'aggIds'  AS aggIds,
-                   header ->> 'ns'      AS ns,
-                   header ->> 'type'    AS type,
-                   header ->> 'version' AS version
-            FROM fact
-            WHERE ((true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND
-                    ((true
-                        AND ((payload ->> 'myId')::UUID = ?)
-                        AND ((payload -> 'schnick' -> 'schnack' -> 'schnuck' ->> 'orgId')::UUID = ?)
-                        )) AND
-                    (header @> ?::jsonb OR header @> ?::jsonb)))
-              AND ser>?
-            ORDER BY ser ASC
+SELECT
+  ser,
+  header,
+  payload,
+  header ->> 'id' AS id,
+  header ->> 'aggIds' AS aggIds,
+  header ->> 'ns' AS ns,
+  header ->> 'type' AS type,
+  header ->> 'version' AS version
+FROM
+  fact
+WHERE
+  (
+    (
+      true
+      AND header @> ? :: jsonb
+      AND header @> ? :: jsonb
+      AND header @> ? :: jsonb
+      AND (
+        header @> ? :: jsonb
+        OR header @> ? :: jsonb
+      )
+    )
+  )
+  AND ser > ?
+ORDER BY
+  ser ASC
 
             """;
-      System.out.println(sql);
+      assertThat(normalized(sql)).isEqualTo(normalized(expected));
+    }
+
+    @Test
+    void withAggIdMultipleProperties() {
+      UUID id1 = new UUID(0, 1);
+      UUID id2 = new UUID(0, 2);
+      var spec1 =
+          FactSpec.ns("ns1")
+              .type("t1")
+              .meta("foo", "bar")
+              .aggId(id1)
+              .version(1)
+              .aggIdProperty("myId", id1)
+              .aggIdProperty("schnick.schnack.schnuck.orgId", id2);
+      var specs = Lists.newArrayList(spec1);
+      var underTest = new PgQueryBuilder(specs);
+      var sql = underTest.createSQL();
+
+      var expected =
+          """
+SELECT
+  ser,
+  header,
+  payload,
+  header ->> 'id' AS id,
+  header ->> 'aggIds' AS aggIds,
+  header ->> 'ns' AS ns,
+  header ->> 'type' AS type,
+  header ->> 'version' AS version
+FROM
+  fact
+WHERE
+  (
+    (
+      true
+      AND header @> ? :: jsonb
+      AND header @> ? :: jsonb
+      AND header @> ? :: jsonb
+      AND (
+        (header ->> 'version'):: int != ?
+        OR (
+          true
+          AND (
+            (payload ->> 'myId'):: UUID = ?
+          )
+          AND (
+            (
+              payload -> 'schnick' -> 'schnack' -> 'schnuck' ->> 'orgId'
+            ):: UUID = ?
+          )
+        )
+      )
+      AND (
+        header @> ? :: jsonb
+        OR header @> ? :: jsonb
+      )
+    )
+  )
+  AND ser > ?
+ORDER BY
+  ser ASC
+                    """;
       assertThat(normalized(sql)).isEqualTo(normalized(expected));
     }
 
