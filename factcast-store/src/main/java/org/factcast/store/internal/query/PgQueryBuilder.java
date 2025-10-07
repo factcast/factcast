@@ -76,26 +76,22 @@ public class PgQueryBuilder {
   private int setAggProperties(PreparedStatement p, int count, FactSpec spec) {
 
     if (filterByAggregateIdProperty(spec)) {
-      var version = spec.version();
-      if (version != 0) {
+      p.setInt(++count, spec.version());
 
-        // we can only apply filtering in the database if we know precisely what version to look
-        // for, as otherwise the property might be modified by transformation
-
-        p.setInt(++count, version);
-
-        Set<Entry<String, UUID>> entries = spec.aggIdProperties().entrySet();
-        // we need to make sure we have a stable sort order
-        for (Entry<String, UUID> entry : entries) {
-          p.setObject(++count, entry.getValue());
-        }
+      Set<Entry<String, UUID>> entries = spec.aggIdProperties().entrySet();
+      // we need to make sure we have a stable sort order
+      for (Entry<String, UUID> entry : entries) {
+        p.setObject(++count, entry.getValue());
       }
     }
     return count;
   }
 
   private boolean filterByAggregateIdProperty(FactSpec spec) {
-    return (spec.aggIdProperties() != null && !spec.aggIdProperties().isEmpty());
+    // we can only apply filtering in the database if we know precisely what version to
+    // look for, as otherwise the property might be modified by transformation
+    return (spec.aggIdProperties() != null && !spec.aggIdProperties().isEmpty())
+        && spec.version() != 0;
   }
 
   private String calculateJsonbExpressionFromPropertyPath(String key) {
@@ -190,20 +186,15 @@ public class PgQueryBuilder {
           }
 
           if (filterByAggregateIdProperty(spec)) {
+            sb.append(AND).append("(");
+            sb.append("(header ->> 'version')::int != ? " + OR);
+            sb.append("(true ");
 
-            if (spec.version() != 0) {
-              // we can only apply filtering in the database if we know precisely what version to
-              // look for, as otherwise the property might be modified by transformation
-              sb.append(AND).append("(");
-              sb.append("(header ->> 'version')::int != ? " + OR);
-              sb.append("(true ");
-
-              for (Entry<String, UUID> entry : spec.aggIdProperties().entrySet()) {
-                String exp = calculateJsonbExpressionFromPropertyPath(entry.getKey());
-                sb.append(AND).append("(").append(exp).append(" = ? )");
-              }
-              sb.append("))");
+            for (Entry<String, UUID> entry : spec.aggIdProperties().entrySet()) {
+              String exp = calculateJsonbExpressionFromPropertyPath(entry.getKey());
+              sb.append(AND).append("(").append(exp).append(" = ? )");
             }
+            sb.append("))");
           }
           Map<String, String> meta = spec.meta();
           meta.forEach(
