@@ -69,7 +69,4 @@ public class FactFilter implements PGFactMatcher {
     return canBeSkipped() || matchers.stream().anyMatch(m -> m.test(input));
   }
 
-  public boolean canBeSkipped() {
-    return this.canBeSkipped;
-  }
 }
