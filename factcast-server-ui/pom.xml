@@ -13,7 +13,7 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <properties>
     <java.version>17</java.version>
-    <vaadin.version>24.5.2</vaadin.version>
+    <vaadin.version>24.9.3</vaadin.version>
   </properties>
   <dependencyManagement>
     <dependencies>
