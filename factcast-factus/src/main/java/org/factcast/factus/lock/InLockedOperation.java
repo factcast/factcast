@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2025 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,33 +15,9 @@
  */
 package org.factcast.factus.lock;
 
-import lombok.extern.slf4j.Slf4j;
+public interface InLockedOperation {
 
-/**
- * This class is not so much for actual locking of concurrent access to factcast, but rather a
- * safeguard that makes sure that when inside of a ec.lock().attempt(), you publish to the
- * transaction and not to factus directly (which would be a mistake).
- */
-@Slf4j
-public class InLockedOperation {
-  private static final ThreadLocal<Boolean> isInLockedOperation =
-      ThreadLocal.withInitial(() -> false);
+  void runLocked(Runnable runnable);
 
-  public static void enterLockedOperation() {
-    isInLockedOperation.set(true);
-  }
-
-  public static void exitLockedOperation() {
-    isInLockedOperation.set(false);
-  }
-
-  public static void assertNotInLockedOperation() {
-    if (isInLockedOperation.get()) {
-      throw new IllegalStateException(
-          "Currently within locked operation 'Locked.attempt(...)', hence this operation is not"
-              + " allowed");
-    }
-  }
-
-  private InLockedOperation() {}
+  void assertNotInLockedOperation() throws IllegalStateException;
 }

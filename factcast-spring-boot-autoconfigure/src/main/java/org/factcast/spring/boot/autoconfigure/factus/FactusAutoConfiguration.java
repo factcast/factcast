@@ -20,16 +20,25 @@ import java.util.Set;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.FactCast;
-import org.factcast.factus.*;
-import org.factcast.factus.event.*;
-import org.factcast.factus.metrics.*;
+import org.factcast.factus.Factus;
+import org.factcast.factus.FactusImpl;
+import org.factcast.factus.event.EventConverter;
+import org.factcast.factus.event.EventSerializer;
+import org.factcast.factus.lock.InLockedOperation;
+import org.factcast.factus.lock.InLockedOperationJava1_8;
+import org.factcast.factus.metrics.FactusMetrics;
+import org.factcast.factus.metrics.FactusMetricsImpl;
 import org.factcast.factus.projection.parameter.HandlerParameterContributors;
-import org.factcast.factus.projector.*;
-import org.factcast.factus.serializer.*;
+import org.factcast.factus.projector.DefaultProjectorFactory;
+import org.factcast.factus.projector.ProjectorFactory;
+import org.factcast.factus.serializer.DefaultSnapshotSerializer;
+import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.*;
 import org.factcast.factus.utils.FactusDependency;
-import org.springframework.boot.autoconfigure.*;
-import org.springframework.boot.autoconfigure.condition.*;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureOrder;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
@@ -50,6 +59,7 @@ public class FactusAutoConfiguration {
       SnapshotSerializerSelector snapshotSerializerSelector,
       FactusMetrics factusMetrics,
       ProjectorFactory projectorFactory,
+      InLockedOperation inLockedOperation,
       /** not used but part of parameters to ensure the dependency graph can be inspected */
       @SuppressWarnings("unused") Set<FactusDependency> dependencies) {
 
@@ -59,7 +69,24 @@ public class FactusAutoConfiguration {
         eventConverter,
         new AggregateRepository(sr, snapshotSerializerSelector, factusMetrics),
         new SnapshotRepository(sr, snapshotSerializerSelector, factusMetrics),
-        factusMetrics);
+        factusMetrics,
+        inLockedOperation);
+  }
+
+  /**
+   * Still uses a thread-local. Include factcast-factus-jdk25 to replace this with a version that is
+   * safe to use with virtual threads.
+   */
+  @Bean
+  @ConditionalOnMissingBean
+  public InLockedOperation inLockedOperation() {
+    if (InLockedOperationJava1_8.isVirtualThreadSupported()) {
+      log.warn(
+          "Support for virtual threads detected! Using factus with virtual threads is "
+              + "dangerous! See README in "
+              + "'factcast-factus-jdk25' on how to fix this!");
+    }
+    return new InLockedOperationJava1_8();
   }
 
   @Bean

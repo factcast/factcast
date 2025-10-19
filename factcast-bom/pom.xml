@@ -174,6 +174,11 @@
         <artifactId>factcast-script-engine</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-factus-jdk25</artifactId>
+        <version>${project.version}</version>
+      </dependency>
       <!-- for testing only! -->
       <dependency>
         <groupId>org.factcast</groupId>

@@ -17,37 +17,32 @@ package org.factcast.factus.lock;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class InLockedOperationTest {
+class InLockedOperationJava18Test {
 
-  @InjectMocks private InLockedOperation underTest;
+  @InjectMocks private InLockedOperationJava1_8 underTest;
 
   @Test
   void initialIsFalse() {
-    InLockedOperation.assertNotInLockedOperation();
+    underTest.assertNotInLockedOperation();
   }
 
   @Test
   void failsIfLocked() {
-    try {
-      InLockedOperation.enterLockedOperation();
-      assertThrows(
-          IllegalStateException.class, () -> InLockedOperation.assertNotInLockedOperation());
-    } finally {
-      InLockedOperation.exitLockedOperation();
-    }
+    assertThrows(
+        IllegalStateException.class,
+        () -> underTest.runLocked(underTest::assertNotInLockedOperation));
   }
 
   @Test
   void doesNotFailIfUnLocked() {
-    InLockedOperation.enterLockedOperation();
-    InLockedOperation.exitLockedOperation();
+    underTest.runLocked(() -> {});
 
-    InLockedOperation.assertNotInLockedOperation();
+    underTest.assertNotInLockedOperation();
   }
 }

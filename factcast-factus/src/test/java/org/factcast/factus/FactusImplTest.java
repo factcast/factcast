@@ -15,37 +15,56 @@
  */
 package org.factcast.factus;
 
-import static java.util.UUID.fromString;
-import static java.util.UUID.randomUUID;
-import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
+import static java.util.UUID.*;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.google.common.collect.*;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import lombok.*;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
-import org.factcast.core.*;
+import org.factcast.core.Fact;
+import org.factcast.core.FactCast;
+import org.factcast.core.FactStreamPosition;
+import org.factcast.core.TestFact;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.subscription.*;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.factus.batch.*;
-import org.factcast.factus.event.*;
+import org.factcast.factus.batch.BatchAbortedException;
+import org.factcast.factus.batch.PublishBatch;
+import org.factcast.factus.event.EventConverter;
 import org.factcast.factus.event.EventObject;
-import org.factcast.factus.lock.*;
+import org.factcast.factus.event.EventSerializer;
+import org.factcast.factus.event.Specification;
+import org.factcast.factus.lock.InLockedOperation;
 import org.factcast.factus.lock.Locked;
-import org.factcast.factus.metrics.*;
+import org.factcast.factus.lock.LockedOnSpecs;
+import org.factcast.factus.metrics.FactusMetrics;
+import org.factcast.factus.metrics.FactusMetricsImpl;
 import org.factcast.factus.projection.*;
 import org.factcast.factus.projection.parameter.HandlerParameterContributors;
-import org.factcast.factus.projector.*;
-import org.factcast.factus.serializer.*;
+import org.factcast.factus.projector.Projector;
+import org.factcast.factus.projector.ProjectorFactory;
+import org.factcast.factus.projector.ProjectorImpl;
+import org.factcast.factus.serializer.SnapshotSerializer;
+import org.factcast.factus.serializer.SnapshotSerializerId;
 import org.factcast.factus.snapshot.*;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -62,6 +81,8 @@ class FactusImplTest {
   @Mock private AggregateRepository aggregateSnapshotRepository;
 
   @Mock private SnapshotRepository projectionSnapshotRepository;
+
+  @Mock private InLockedOperation inLockedOperation;
 
   @Mock SnapshotCache snapshotCache;
 
@@ -154,17 +175,12 @@ class FactusImplTest {
       // INIT
       Fact fact = toFact(new SimpleEventObject("a"));
 
-      try {
-        InLockedOperation.enterLockedOperation();
+      doThrow(new IllegalStateException()).when(inLockedOperation).assertNotInLockedOperation();
 
-        // RUN
-        assertThatThrownBy(() -> underTest.publish(fact))
-            // ASSERT
-            .isExactlyInstanceOf(IllegalStateException.class);
-
-      } finally {
-        InLockedOperation.exitLockedOperation();
-      }
+      // RUN
+      assertThatThrownBy(() -> underTest.publish(fact))
+          // ASSERT
+          .isExactlyInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -361,9 +377,8 @@ class FactusImplTest {
       underTest.update(m);
 
       // make sure m.executeUpdate actually calls the updated passed so
-      // that
-      // the prepared update happens on the projection and updates its
-      // fact stream position.
+      // that the prepared update happens on the projection and updates
+      // its fact stream position.
 
       Mockito.verify(ea, times(1)).apply(any(List.class));
       assertThat(m.factStreamPosition()).isEqualTo(FactStreamPosition.from(f2));
@@ -471,8 +486,10 @@ class FactusImplTest {
       when(fc.subscribe(any(), any()))
           .thenAnswer(
               inv -> {
-                // There must be one fact referencing this aggregate to make sure the
-                // fact position is set, so that we do not get an empty optional when doing find.
+                // There must be one fact referencing this aggregate to make sure
+                // the
+                // fact position is set, so that we do not get an empty optional
+                // when doing find.
                 AbstractFactObserver fo = inv.getArgument(1, AbstractFactObserver.class);
 
                 Fact f =
@@ -517,7 +534,8 @@ class FactusImplTest {
       assertThatThrownBy(() -> underTest.withLockOn(PersonAggregate.class, aggId))
           .isInstanceOf(IllegalArgumentException.class)
           .hasMessage(
-              "Aggregate PersonAggregate with id 40aaf918-c678-44a4-9962-ac6823a40ea5 does not exist.");
+              "Aggregate PersonAggregate with id "
+                  + "40aaf918-c678-44a4-9962-ac6823a40ea5 does not exist.");
     }
 
     @Test
@@ -661,7 +679,8 @@ class FactusImplTest {
               eventConverter,
               aggregateSnapshotRepository,
               projectionSnapshotRepository,
-              factusMetrics);
+              factusMetrics,
+              inLockedOperation);
 
       ConcatCodesProjection dummyProjection = spy(new ConcatCodesProjection());
       dummyProjection.codes("abc");

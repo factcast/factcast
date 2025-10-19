@@ -15,12 +15,9 @@
  */
 package org.factcast.factus.lock;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -37,12 +34,7 @@ import org.factcast.factus.metrics.FactusMetrics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InOrder;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Spy;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /** Component test of Locked and WithOptimisticLock. */
@@ -56,6 +48,8 @@ class LockedSnapshotProjectionTest {
   @Mock private List<FactSpec> factSpecs;
 
   @Mock private FactusMetrics factusMetrics;
+
+  @Mock private InLockedOperation inLockedOperation;
 
   @Spy private NamesSnapshotProjection namesSnapshotProjection;
 
@@ -74,8 +68,16 @@ class LockedSnapshotProjectionTest {
   @Captor private ArgumentCaptor<Optional<StateToken>> tokenCaptor;
 
   @BeforeEach
-  void mockFactCast() {
+  void prepareMocks() {
     when(fc.lock(factSpecs)).thenReturn(new LockedOperationBuilder(factStore, factSpecs));
+
+    doAnswer(
+            inv -> {
+              ((Runnable) inv.getArgument(0)).run();
+              return null;
+            })
+        .when(inLockedOperation)
+        .runLocked(any());
   }
 
   @Test

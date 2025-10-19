@@ -67,6 +67,7 @@
     <module>factcast-snapshotcache-jdbc</module>
     <module>factcast-factus-serializer-binary</module>
     <module>factcast-factus-serializer-fury</module>
+    <module>factcast-factus-jdk25</module>
   </modules>
   <scm>
     <connection>scm:git:git@github.com:factcast/factcast.git</connection>
