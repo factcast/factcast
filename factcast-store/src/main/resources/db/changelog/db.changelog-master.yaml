@@ -494,6 +494,7 @@ databaseChangeLog:
 
   - changeSet:
       id: issue4042
+      runInTransaction: false
       author: uweschaefer
       changes:
         - sqlFile:
