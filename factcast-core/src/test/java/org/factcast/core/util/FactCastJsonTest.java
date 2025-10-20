@@ -35,9 +35,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.io.*;
 import org.mockito.ArgumentMatchers;
@@ -76,6 +74,7 @@ class FactCastJsonTest {
     expectNPE(() -> FactCastJson.readValue(FactCastJson.class, (String) null));
     expectNPE(() -> FactCastJson.readValue(null, (InputStream) null));
     expectNPE(() -> FactCastJson.readValue(FactCastJson.class, (InputStream) null));
+    expectNPE(() -> FactCastJson.readValue(FactCastJson.class, (JsonNode) null));
   }
 
   static class TestClassWithValue {
@@ -85,6 +84,17 @@ class FactCastJsonTest {
   @Test
   void testReadValueWithClass() {
     assertEquals(7, FactCastJson.readValue(TestClassWithValue.class, "{\"value\":7}").value);
+  }
+
+  @Test
+  void testReadValueWithClassFromJsonNode() {
+    assertEquals(
+        7, FactCastJson.readValue(TestClassWithValue.class, readTree("{\"value\":7}")).value);
+  }
+
+  @SneakyThrows
+  private @NonNull JsonNode readTree(String json) {
+    return FactCastJson.readTree(json);
   }
 
   @Test

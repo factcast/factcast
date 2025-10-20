@@ -15,21 +15,21 @@
  */
 package org.factcast.store.internal.filter;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import java.util.*;
-import java.util.function.Predicate;
 import lombok.*;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.*;
-import org.factcast.core.util.FactCastJson;
-import org.factcast.store.internal.script.*;
+import org.factcast.store.internal.PgFact;
 
 /**
- * Matches facts against specifications.
+ * still needs to be used in order to be able to filter for all aspects of single factspec (Basic1
+ * AND JS1 AND AggIdProp1) OR (Basic2 AND JS2 AND AggIdProp2)
+ *
+ * <p>There is no way to optimize this away.
  *
  * @author uwe.schaefer@prisma-capacity.eu
  */
-public final class FactSpecMatcher implements Predicate<Fact> {
+public final class BasicMatcher implements PGFactMatcher {
 
   @NonNull final String ns;
 
@@ -41,13 +41,9 @@ public final class FactSpecMatcher implements Predicate<Fact> {
 
   final Map<String, String> meta;
 
-  final FilterScript script;
-
-  final JSEngine scriptEngine;
-
   final Map<String, Boolean> metaKeyExists;
 
-  public FactSpecMatcher(@NonNull FactSpec spec, @NonNull JSEngineFactory ef) {
+  public BasicMatcher(@NonNull FactSpec spec) {
     // opt: prevent method calls by prefetching to final fields.
     // yes, they might be inlined at some point, but making decisions based
     // on final fields should help.
@@ -56,22 +52,19 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     ns = spec.ns();
     type = spec.type();
     version = spec.version();
-    aggIds = spec.mergedAggIds();
+    aggIds = spec.aggIds();
     meta = spec.meta();
     metaKeyExists = spec.metaKeyExists();
-    script = spec.filterScript();
-    scriptEngine = getEngine(script, ef);
   }
 
   @Override
-  public boolean test(Fact t) {
+  public boolean test(PgFact t) {
     boolean match = nsMatch(t);
     match = match && typeMatch(t);
     match = match && versionMatch(t);
     match = match && aggIdMatch(t);
     match = match && metaMatch(t);
     match = match && metaKeyExistsMatch(t);
-    match = match && scriptMatch(t);
 
     return match;
   }
@@ -98,7 +91,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
   }
 
   boolean nsMatch(Fact t) {
-    return ns.equals(t.ns());
+    return ns.equals(t.ns()) || ns.equals("*");
   }
 
   boolean typeMatch(Fact t) {
@@ -106,7 +99,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
       return true;
     }
     String otherType = t.type();
-    return type.equals(otherType);
+    return type.equals(otherType) || type.equals("*");
   }
 
   boolean versionMatch(Fact t) {
@@ -124,44 +117,7 @@ public final class FactSpecMatcher implements Predicate<Fact> {
     return t.aggIds().containsAll(aggIds);
   }
 
-  @SneakyThrows
-  @Generated
-  boolean scriptMatch(Fact t) {
-    if (script == null) {
-      return true;
-    }
-    JsonNode headerNode = FactCastJson.readTree(t.jsonHeader());
-    JsonNode payloadNode = FactCastJson.readTree(t.jsonPayload());
-    return (Boolean)
-        scriptEngine.invoke(
-            "test", JSArgument.byValue(headerNode), JSArgument.byValue(payloadNode));
-  }
-
-  @SneakyThrows
-  @Generated
-  private static synchronized JSEngine getEngine(
-      FilterScript filterScript, @NonNull JSEngineFactory ef) {
-    if (filterScript == null) {
-      return null;
-    }
-
-    // TODO: currently only supports language js:
-    if ("js".equals(filterScript.languageIdentifier())) {
-
-      return ef.getOrCreateFor("var test=" + filterScript.source());
-    } else {
-      throw new IllegalArgumentException(
-          "Unsupported Script language: " + filterScript.languageIdentifier());
-    }
-  }
-
-  public static Predicate<Fact> matchesAnyOf(
-      @NonNull List<FactSpec> spec, @NonNull JSEngineFactory ef) {
-    List<FactSpecMatcher> matchers = spec.stream().map(s -> new FactSpecMatcher(s, ef)).toList();
-    return f -> matchers.stream().anyMatch(p -> p.test(f));
-  }
-
-  public static Predicate<Fact> matches(@NonNull FactSpec spec, @NonNull JSEngineFactory ef) {
-    return new FactSpecMatcher(spec, ef);
+  public static BasicMatcher matches(@NonNull FactSpec spec) {
+    return new BasicMatcher(spec);
   }
 }

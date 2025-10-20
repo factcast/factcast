@@ -88,6 +88,11 @@ public final class FactCastJson {
   }
 
   @SneakyThrows
+  public static <T> T readValue(@NonNull Class<T> class1, @NonNull JsonNode json) {
+    return reader.forType(class1).readValue(json);
+  }
+
+  @SneakyThrows
   public static <T> T readValue(@NonNull TypeReference<T> class1, @NonNull String json) {
     return reader.forType(class1).readValue(json);
   }

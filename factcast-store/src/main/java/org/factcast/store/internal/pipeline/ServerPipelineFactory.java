@@ -19,13 +19,12 @@ import lombok.Builder;
 import lombok.NonNull;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.subscription.transformation.FactTransformerService;
-import org.factcast.core.subscription.transformation.FactTransformers;
 import org.factcast.core.util.NoCoverageReportToBeGenerated;
-import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.PostQueryMatcher;
+import org.factcast.store.internal.*;
 import org.factcast.store.internal.filter.blacklist.Blacklist;
 import org.factcast.store.internal.script.JSEngineFactory;
+import org.factcast.store.internal.transformation.FactTransformerService;
+import org.factcast.store.internal.transformation.FactTransformers;
 
 @NoCoverageReportToBeGenerated("basically configuration code")
 @Builder
@@ -37,20 +36,19 @@ public class ServerPipelineFactory {
   @NonNull final JSEngineFactory jsEngineFactory;
 
   public ServerPipeline create(
-      @NonNull SubscriptionRequest subreq,
-      @NonNull SubscriptionImpl sub,
-      @NonNull PostQueryMatcher perRequestMatcher,
-      int maxBufferSize) {
+      @NonNull SubscriptionRequest subreq, @NonNull SubscriptionImpl sub, int maxBufferSize) {
 
     ServerPipeline chain = new ServerPipelineAdapter(sub);
     chain = new MetricServerPipeline(chain, metrics);
+
+    // needs to be executed AFTER transformation
+    chain = new FilteringServerPipeline(chain, new FactFilter(subreq, jsEngineFactory));
 
     chain =
         new BufferedTransformingServerPipeline(
             chain, factTransformerService, FactTransformers.createFor(subreq), maxBufferSize);
 
     chain = new BlacklistFilterServerPipeline(chain, blacklist);
-    chain = new PostQueryFilterServerPipeline(chain, perRequestMatcher);
 
     return chain;
   }

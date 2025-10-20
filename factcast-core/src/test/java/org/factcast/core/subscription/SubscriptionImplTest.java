@@ -34,7 +34,6 @@ import org.factcast.core.FactStreamPosition;
 import org.factcast.core.TestFact;
 import org.factcast.core.TestFactStreamPosition;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.core.subscription.transformation.FactTransformers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,8 +46,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class SubscriptionImplTest {
 
   @Mock private FactObserver observer;
-
-  @Mock private FactTransformers factTransformers;
 
   @InjectMocks private SubscriptionImpl uut;
 

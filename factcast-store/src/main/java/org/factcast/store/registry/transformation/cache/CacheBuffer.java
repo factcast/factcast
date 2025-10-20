@@ -27,6 +27,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.factcast.store.internal.PgFact;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 
 class CacheBuffer {
@@ -34,10 +35,10 @@ class CacheBuffer {
 
   // Currently we allow null values in the buffer, reason why we can't use ConcurrentHashMap.
   @Getter(AccessLevel.PROTECTED)
-  private final Map<TransformationCache.Key, Fact> buffer = new HashMap<>();
+  private final Map<TransformationCache.Key, PgFact> buffer = new HashMap<>();
 
   @Getter(AccessLevel.PROTECTED)
-  private final Map<TransformationCache.Key, Fact> flushingBuffer = new HashMap<>();
+  private final Map<TransformationCache.Key, PgFact> flushingBuffer = new HashMap<>();
 
   @Getter(AccessLevel.PROTECTED)
   private final AtomicLong bufferSizeMetric;
@@ -50,13 +51,13 @@ class CacheBuffer {
     this.flushingBufferSizeMetric = registryMetrics.gauge(CACHE_FLUSHING_BUFFER, new AtomicLong(0));
   }
 
-  Fact get(@NonNull TransformationCache.Key key) {
+  PgFact get(@NonNull TransformationCache.Key key) {
     synchronized (mutex) {
       return Optional.ofNullable(buffer.get(key)).orElse(flushingBuffer.get(key));
     }
   }
 
-  void put(@NonNull TransformationCache.Key cacheKey, @Nullable Fact factOrNull) {
+  void put(@NonNull TransformationCache.Key cacheKey, @Nullable PgFact factOrNull) {
     synchronized (mutex) {
       // do not override potential transformations
       // cannot use computeIfAbsent here as null values are not allowed.
