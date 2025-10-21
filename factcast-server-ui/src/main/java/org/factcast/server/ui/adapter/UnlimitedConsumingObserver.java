@@ -15,23 +15,29 @@
  */
 package org.factcast.server.ui.adapter;
 
+import java.util.List;
+import java.util.function.Consumer;
 import lombok.*;
 import lombok.extern.java.Log;
 import org.factcast.core.Fact;
 
 @Getter
 @Log
-public class UnlimitedListObserver extends AbstractListObserver {
-  final int batchSize = 1000;
-  int offset;
+public class UnlimitedConsumingObserver extends AbstractListObserver {
+  private final int batchSize = 1000;
+  private int offset;
+  private final @NonNull Consumer<List<Fact>> factConsumer;
+  private long processedFacts = 0;
 
-  public UnlimitedListObserver(int offset) {
-    this.offset = offset;
-  }
+  //  public UnlimitedConsumingObserver(int offset) {
+  //    this.offset = offset;
+  //  }
 
-  public UnlimitedListObserver(Long untilSerial, int offset) {
+  public UnlimitedConsumingObserver(
+      Long untilSerial, int offset, @NonNull Consumer<List<Fact>> factConsumer) {
     this.untilSerial = untilSerial;
     this.offset = offset;
+    this.factConsumer = factConsumer;
   }
 
   @Override
@@ -43,8 +49,13 @@ public class UnlimitedListObserver extends AbstractListObserver {
     if (offset > 0) {
       offset--;
     } else {
-      // check batch size here & push to stream if full
-      list().add(0, element);
+      processedFacts++;
+      if (list().size() >= batchSize) {
+        factConsumer.accept(list());
+        list().clear();
+      } else {
+        list().add(element);
+      }
     }
   }
 

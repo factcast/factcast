@@ -44,7 +44,6 @@ import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
-import software.amazon.awssdk.transfer.s3.S3TransferManager;
 import software.amazon.awssdk.transfer.s3.model.CompletedUpload;
 import software.amazon.awssdk.transfer.s3.model.Upload;
 import software.amazon.awssdk.transfer.s3.model.UploadRequest;
@@ -54,7 +53,6 @@ class S3ReportStoreTest {
 
   @Mock private S3AsyncClient s3Client;
   @Mock private S3Presigner s3Presigner;
-  @Mock private S3TransferManager s3TransferManager;
 
   private static final String BUCKET_NAME = "factcast-reports";
 
@@ -62,7 +60,7 @@ class S3ReportStoreTest {
 
   @BeforeEach
   void setup() {
-    uut = new S3ReportStore(s3Client, s3TransferManager, s3Presigner, BUCKET_NAME);
+    uut = new S3ReportStore(s3Client, s3Presigner, BUCKET_NAME);
   }
 
   @Nested

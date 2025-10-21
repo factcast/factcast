@@ -379,7 +379,7 @@ public class FactRepositoryImplTest {
       when(securityService.getAuthenticatedUser()).thenReturn(userMock);
       ArgumentCaptor<SubscriptionRequestTO> srCaptor =
           ArgumentCaptor.forClass(SubscriptionRequestTO.class);
-      when(fs.subscribe(srCaptor.capture(), any(UnlimitedListObserver.class)))
+      when(fs.subscribe(srCaptor.capture(), any(UnlimitedConsumingObserver.class)))
           .thenReturn(mock(Subscription.class));
 
       underTest.fetchAll(bean);
@@ -402,7 +402,7 @@ public class FactRepositoryImplTest {
       when(securityService.filterReadable(nameSpaces))
           .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
       when(securityService.getAuthenticatedUser()).thenReturn(userMock);
-      when(fs.subscribe(srCaptor.capture(), any(UnlimitedListObserver.class)))
+      when(fs.subscribe(srCaptor.capture(), any(UnlimitedConsumingObserver.class)))
           .thenReturn(mock(Subscription.class));
 
       underTest.fetchAll(bean);
@@ -459,7 +459,7 @@ public class FactRepositoryImplTest {
       when(securityService.filterReadable(nameSpaces))
           .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
       when(securityService.getAuthenticatedUser()).thenReturn(userMock);
-      when(fs.subscribe(srCaptor.capture(), any(UnlimitedListObserver.class)))
+      when(fs.subscribe(srCaptor.capture(), any(UnlimitedConsumingObserver.class)))
           .thenReturn(mock(Subscription.class));
 
       underTest.fetchAll(bean);

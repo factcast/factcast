@@ -33,9 +33,9 @@ import org.mockito.Answers;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class UnlimitedListObserverTest {
+public class UnlimitedConsumingObserverTest {
 
-  private UnlimitedListObserver underTest;
+  private UnlimitedConsumingObserver underTest;
 
   @Nested
   class WhenOnNext {
@@ -50,7 +50,7 @@ public class UnlimitedListObserverTest {
 
     @Test
     void usesOffset() {
-      underTest = new UnlimitedListObserver(27);
+      underTest = new UnlimitedConsumingObserver(27);
       assertThatCode(() -> mockFacts.forEach(underTest::onNext)).doesNotThrowAnyException();
 
       var result = underTest.list();
@@ -65,7 +65,7 @@ public class UnlimitedListObserverTest {
   class WhenFacingError {
     @Test
     void delegates() {
-      underTest = spy(new UnlimitedListObserver(2));
+      underTest = spy(new UnlimitedConsumingObserver(2));
       // first skipped for offset
       @NonNull Throwable exc = new IOException("expected - can be ignored");
       underTest.onError(exc);
@@ -77,7 +77,7 @@ public class UnlimitedListObserverTest {
   class WhenCheckingIfIsComplete {
     @Test
     void switchesToComplete() {
-      underTest = new UnlimitedListObserver(3L, 2);
+      underTest = new UnlimitedConsumingObserver(3L, 2);
       // first skipped for offset
       Fact mock1 = mock(Fact.class, Answers.RETURNS_DEEP_STUBS);
       when(mock1.header().serial()).thenReturn(1L);

@@ -18,16 +18,13 @@ package org.factcast.server.ui.port;
 import java.net.URL;
 import java.util.List;
 import lombok.NonNull;
-import org.factcast.server.ui.report.Report;
 import org.factcast.server.ui.report.ReportEntry;
+import org.factcast.server.ui.report.ReportFilterBean;
 
 public interface ReportStore {
 
-  /**
-   * Creates & Saves a report for a given user. Does throw IllegalArgumentException in case a report
-   * with the provided name does already exist for this user.
-   */
-  void save(@NonNull String userName, @NonNull Report report);
+  BatchedReportUploadStream createBatchUpload(
+      @NonNull String userName, @NonNull String reportName, @NonNull ReportFilterBean query);
 
   URL getReportDownload(@NonNull String userName, @NonNull String reportName);
 
