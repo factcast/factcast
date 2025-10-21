@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.subscription.transformation;
+package org.factcast.store.internal.transformation;
 
+import java.util.*;
+import lombok.NonNull;
+import org.factcast.core.Fact;
 import org.factcast.core.subscription.TransformationException;
 
-public class MissingTransformationInformationException extends TransformationException {
-  private static final long serialVersionUID = 1L;
+public interface FactTransformerService {
+  Fact transform(@NonNull TransformationRequest req) throws TransformationException;
 
-  public MissingTransformationInformationException(String string) {
-    super(string);
-  }
+  List<org.factcast.store.internal.PgFact> transform(@NonNull List<TransformationRequest> req)
+      throws TransformationException;
 }

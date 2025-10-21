@@ -15,4 +15,6 @@
  */
 package org.factcast.store.internal.catchup;
 
-public interface PgCatchup extends Runnable {}
+public interface PgCatchup extends Runnable {
+  void fastForward(long serialToStartFrom);
+}

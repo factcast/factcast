@@ -54,11 +54,13 @@ at [StoreMetrics.java](https://github.com/factcast/factcast/blob/main/factcast-s
 or [UIMetrics.java](https://github.com/factcast/factcast/blob/main/factcast-server-ui/src/main/java/org/factcast/server/ui/metrics/UiMetrics.java)
 respectively.
 
-At the **time of writing (0.4.3)**, the metrics exposed by the namespaces group `factcast.server` are:
+At the **time of writing (>0.9.9)**, the metrics exposed by the namespaces group `factcast.server` are:
 
-| operation | type    | description                        |
-| --------- | ------- | ---------------------------------- |
-| handshake | `timer` | Duration of the initial handshake. |
+| operation | type    | description                                            |
+| --------- | ------- | ------------------------------------------------------ |
+| handshake | `timer` | Duration of the initial handshake.                     |
+| factsSent | `meter` | Number of facts sent to subscribed clients.            |
+| bytesSent | `meter` | Amount of facts (in bytes) sent to subscribed clients. |
 
 At the **time of writing (0.7.6)**, the metrics exposed by the namespaces group `factcast.store` are:
 

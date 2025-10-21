@@ -23,7 +23,7 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
-import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
+import org.factcast.core.subscription.MissingTransformationInformationException;
 import org.factcast.store.registry.transformation.cache.PgTransformationCache;
 import org.factcast.store.registry.transformation.cache.PgTransformationStoreChangeListener;
 import org.factcast.store.registry.transformation.cache.TransformationCache;

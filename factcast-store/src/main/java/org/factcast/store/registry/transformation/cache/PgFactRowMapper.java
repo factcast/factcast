@@ -13,13 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.client.grpc;
+package org.factcast.store.registry.transformation.cache;
 
-import org.factcast.core.subscription.transformation.FactTransformers;
-import org.factcast.core.subscription.transformation.RequestedVersions;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import org.factcast.store.internal.PgFact;
+import org.springframework.jdbc.core.RowMapper;
 
-public class NullFactTransformer extends FactTransformers {
-  public NullFactTransformer() {
-    super(new RequestedVersions());
+class PgFactRowMapper implements RowMapper<PgFact> {
+
+  @Override
+  public PgFact mapRow(ResultSet rs, int rowNum) throws SQLException {
+    String header = rs.getString("header");
+    String payload = rs.getString("payload");
+
+    return PgFact.of(header, payload);
   }
 }
