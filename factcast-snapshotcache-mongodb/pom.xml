@@ -10,6 +10,7 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-snapshotcache-mongodb</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
@@ -32,10 +33,6 @@
       <scope>provided</scope>
     </dependency>
 
-    <dependency>
-      <groupId>org.factcast</groupId>
-      <artifactId>factcast-core</artifactId>
-    </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-factus</artifactId>

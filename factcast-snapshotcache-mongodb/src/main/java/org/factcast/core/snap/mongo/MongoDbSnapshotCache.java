@@ -20,34 +20,37 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
-import com.mongodb.client.ClientSession;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.*;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.model.*;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import javax.validation.constraints.NotNull;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.factcast.factus.serializer.SnapshotSerializerId;
 import org.factcast.factus.snapshot.SnapshotCache;
 import org.factcast.factus.snapshot.SnapshotData;
 import org.factcast.factus.snapshot.SnapshotIdentifier;
 
-@SuppressWarnings("deprecation")
+import javax.validation.constraints.NotNull;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
 @Slf4j
 public class MongoDbSnapshotCache implements SnapshotCache {
   public static final String PROJECTION_CLASS_FIELD = "projectionClass";
@@ -56,6 +59,8 @@ public class MongoDbSnapshotCache implements SnapshotCache {
   public static final String LAST_FACT_ID_FIELD = "lastFactId";
   public static final String FILE_ID_FIELD = "fileId";
   public static final String EXPIRE_AT_FIELD = "expireAt";
+
+  private static final ScheduledExecutorService CLEANUP_SCHEDULER = Executors.newScheduledThreadPool(1);
 
   // Recommended by the docs to use Majority for gridfs operations
   public static final TransactionOptions txnOptions =
@@ -96,10 +101,8 @@ public class MongoDbSnapshotCache implements SnapshotCache {
         "Create aggregate ID index on factus_snapshot collection returned: {}",
         aggregateIdIndexResult);
 
-    // Third index for TTL management of documents, expires the document after 0 seconds of the
-    // `expireAt` field. So, immediately.
-    collection.createIndex(
-        Indexes.ascending(EXPIRE_AT_FIELD), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS));
+    // Third index for TTL management of documents, will be used for quick lookup of expired docs to be deleted
+    collection.createIndex(Indexes.ascending(EXPIRE_AT_FIELD));
 
     // Create the GridFS bucket with helper class to store binaries
     gridFSBucket = GridFSBuckets.create(database);
@@ -107,6 +110,9 @@ public class MongoDbSnapshotCache implements SnapshotCache {
     byte[] tiny = new byte[] {0};
     ObjectId tmp = gridFSBucket.uploadFromStream("_warmup_", new ByteArrayInputStream(tiny));
     gridFSBucket.delete(tmp); // cleanup
+
+    // Schedule cleanup task
+    scheduleCleanupTask();
   }
 
   @Override
@@ -133,21 +139,9 @@ public class MongoDbSnapshotCache implements SnapshotCache {
     String serializerId = result.getString(SNAPSHOT_SERIALIZER_ID_FIELD);
     UUID lastFactId = UUID.fromString(result.getString(LAST_FACT_ID_FIELD));
 
-    tryUpdateExpirationDate(id);
+    tryUpdateExpirationDateAsync(id);
 
     return Optional.of(new SnapshotData(bytes, SnapshotSerializerId.of(serializerId), lastFactId));
-  }
-
-  private void tryUpdateExpirationDate(SnapshotIdentifier id) {
-    try {
-      collection.updateOne(
-          createQueryById(id),
-          Updates.set(
-              EXPIRE_AT_FIELD,
-              Instant.now().plus(properties.getDeleteSnapshotStaleForDays(), ChronoUnit.DAYS)));
-    } catch (Exception e) {
-      log.warn("Failed to update expiration date for snapshot with id: {}", id, e);
-    }
   }
 
   @Override
@@ -206,6 +200,52 @@ public class MongoDbSnapshotCache implements SnapshotCache {
             },
             txnOptions);
       }
+    }
+  }
+
+  private void tryUpdateExpirationDateAsync(SnapshotIdentifier id) {
+    CompletableFuture.runAsync(() -> {
+      try {
+        collection.updateOne(createQueryById(id), Updates.set(EXPIRE_AT_FIELD, Instant.now().plus(properties.getDeleteSnapshotStaleForDays(), ChronoUnit.DAYS)));
+      } catch (Exception e) {
+        log.warn("Failed to update expiration date for snapshot with id: {}", id, e);
+      }
+    });
+  }
+
+  private void scheduleCleanupTask() {
+    // Grab the next midnight
+    Instant nextMidnight = LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
+
+    // Schedule task for each midnight starting from the next one
+    CLEANUP_SCHEDULER.scheduleAtFixedRate(
+            this::cleanupOldSnapshots,
+            Duration.between(Instant.now(), nextMidnight).toMillis(),
+            Duration.ofDays(1).toMillis(),
+            java.util.concurrent.TimeUnit.MILLISECONDS);
+  }
+
+  @VisibleForTesting
+   public void cleanupOldSnapshots() {
+    try (ClientSession session = mongoClient.startSession()) {
+      session.withTransaction(
+              () -> {
+                Instant now = Instant.now();
+                // Find all documents with expireAt < now
+                Bson filter = Filters.lt(EXPIRE_AT_FIELD, now);
+                try (MongoCursor<Document> docsToDelete = collection.find(session, filter).iterator()) {
+                  while (docsToDelete.hasNext()) {
+                    Document doc = docsToDelete.next();
+                    ObjectId fileId = doc.getObjectId(FILE_ID_FIELD);
+                    gridFSBucket.delete(session, fileId);
+                    collection.deleteOne(session, Filters.eq("_id", doc.getObjectId("_id")));
+                  }
+                }
+                return true;
+              },
+              txnOptions);
+    } catch (Exception e) {
+      log.error("Error during cleanup of old snapshots", e);
     }
   }
 
