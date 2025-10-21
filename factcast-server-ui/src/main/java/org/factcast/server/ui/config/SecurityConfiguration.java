@@ -34,8 +34,7 @@ public class SecurityConfiguration {
   @Bean
   SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     return http.with(
-            VaadinSecurityConfigurer.vaadin(),
-            configurer -> configurer.loginView(LoginView.class))
+            VaadinSecurityConfigurer.vaadin(), configurer -> configurer.loginView(LoginView.class))
         .build();
   }
 }
