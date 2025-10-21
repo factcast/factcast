@@ -84,9 +84,9 @@ description: Properties you can use to configure FactCast
 
 #### MongoDB-Snapshots
 
-| Property                                          | Description                                                                                          | Default           |
-| ------------------------------------------------- | :--------------------------------------------------------------------------------------------------- | :---------------- |
-| factcast.snapshot.mongodb.deleteSnapshotStaleForDays | min number of days a snapshot is kept even though it is not read anymore. Must be a positive number. | 90                |
+| Property                                             | Description                                                                                          | Default |
+| ---------------------------------------------------- | :--------------------------------------------------------------------------------------------------- | :------ |
+| factcast.snapshot.mongodb.deleteSnapshotStaleForDays | min number of days a snapshot is kept even though it is not read anymore. Must be a positive number. | 90      |
 
 ### Snapshot Serializers
 
