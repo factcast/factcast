@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
 import org.awaitility.Awaitility;
 import org.bson.BsonDocument;
 import org.bson.Document;
@@ -160,8 +159,9 @@ class MongoDbSnapshotCacheTest {
       assertThat(found.get().snapshotSerializerId()).isEqualTo(serId);
       assertThat(found.get().lastFactId()).isEqualTo(lastFactId);
 
-      Awaitility.await().untilAsserted(() ->
-      verify(collection).updateOne(eq(documentCaptor.getValue()), any(Bson.class)));
+      Awaitility.await()
+          .untilAsserted(
+              () -> verify(collection).updateOne(eq(documentCaptor.getValue()), any(Bson.class)));
     }
 
     @Test
