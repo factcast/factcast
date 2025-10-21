@@ -41,6 +41,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import javax.validation.constraints.NotNull;
 import lombok.NonNull;
 import lombok.Setter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -109,6 +110,7 @@ public class MongoDbSnapshotCache implements SnapshotCache {
   }
 
   @Override
+  @SneakyThrows
   public @NonNull Optional<SnapshotData> find(@NonNull SnapshotIdentifier id) {
     Document query = new Document(IDENTIFIER_FIELD, getDocumentIdentifier(id));
     Document result = collection.find(query).first();
@@ -125,8 +127,6 @@ public class MongoDbSnapshotCache implements SnapshotCache {
     try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
       gridFSBucket.downloadToStream(fileId, out);
       bytes = out.toByteArray();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
     }
 
     String serializerId = result.getString(SNAPSHOT_SERIALIZER_ID_FIELD);
