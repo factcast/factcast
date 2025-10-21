@@ -66,10 +66,10 @@ workflow(
             ),
         )
         uses(
-            name = "JDK 17",
+            name = "JDK 21",
             action = SetupJava(
                 distribution = SetupJava.Distribution.Corretto,
-                javaVersion = "17",
+                javaVersion = "21",
             ),
         )
 
@@ -121,10 +121,10 @@ workflow(
         )
 
         uses(
-            name = "JDK 17",
+            name = "JDK 21",
             action = SetupJava(
                 distribution = SetupJava.Distribution.Corretto,
-                javaVersion = "17",
+                javaVersion = "21",
             ),
         )
 
