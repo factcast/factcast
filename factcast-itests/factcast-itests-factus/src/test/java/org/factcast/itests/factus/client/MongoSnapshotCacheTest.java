@@ -15,9 +15,18 @@
  */
 package org.factcast.itests.factus.client;
 
+import static java.util.UUID.randomUUID;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.factcast.core.snap.mongo.MongoDbSnapshotCache.EXPIRE_AT_FIELD;
+import static org.factcast.core.snap.mongo.MongoDbSnapshotCache.IDENTIFIER_FIELD;
+
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Updates;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
@@ -35,16 +44,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Optional;
-import java.util.UUID;
-
-import static java.util.UUID.randomUUID;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.factcast.core.snap.mongo.MongoDbSnapshotCache.EXPIRE_AT_FIELD;
-import static org.factcast.core.snap.mongo.MongoDbSnapshotCache.IDENTIFIER_FIELD;
 
 @Slf4j
 @SpringBootTest
@@ -76,17 +75,17 @@ public class MongoSnapshotCacheTest extends SnapshotCacheTest {
     assertThat(snapshot).isNotEmpty();
     assertThat(snapshot.get().serializedProjection()).isEqualTo("foo".getBytes());
 
-    Thread.sleep(100); //small wait to assure the completable future in find() is done
+    Thread.sleep(100); // small wait to assure the completable future in find() is done
 
     // Mark it as expired 30 days ago
     MongoDatabase database = mongoClient.getDatabase("factcast");
     var collection = database.getCollection("factus_snapshot");
 
-    String identifier = ScopedName.fromProjectionMetaData(id.projectionClass())
+    String identifier =
+        ScopedName.fromProjectionMetaData(id.projectionClass())
             .with(Optional.ofNullable(id.aggregateId()).map(UUID::toString).orElse("snapshot"))
             .asString();
-    Document query =
-            new Document(IDENTIFIER_FIELD, identifier);
+    Document query = new Document(IDENTIFIER_FIELD, identifier);
 
     collection.updateOne(
         query, Updates.set(EXPIRE_AT_FIELD, Instant.now().minus(30, ChronoUnit.DAYS)));

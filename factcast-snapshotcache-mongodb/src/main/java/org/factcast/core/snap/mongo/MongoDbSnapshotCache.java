@@ -88,8 +88,7 @@ public class MongoDbSnapshotCache implements SnapshotCache {
     this.collection = database.getCollection("factus_snapshot");
 
     // Index for quick lookup scoped by projection class and aggregate id
-    String identifierIndexResult =
-        collection.createIndex(Indexes.ascending(IDENTIFIER_FIELD));
+    String identifierIndexResult = collection.createIndex(Indexes.ascending(IDENTIFIER_FIELD));
     log.debug(
         "Create aggregate ID index on factus_snapshot collection returned: {}",
         identifierIndexResult);
@@ -156,7 +155,7 @@ public class MongoDbSnapshotCache implements SnapshotCache {
     }
 
     Document query = new Document(IDENTIFIER_FIELD, documentIdentifier);
-    String fileName = "filename_" +documentIdentifier;
+    String fileName = "filename_" + documentIdentifier;
 
     Document result = collection.find(query).first();
 
@@ -211,7 +210,7 @@ public class MongoDbSnapshotCache implements SnapshotCache {
         () -> {
           try {
             collection.updateOne(
-                    new Document(IDENTIFIER_FIELD, getDocumentIdentifier(id)),
+                new Document(IDENTIFIER_FIELD, getDocumentIdentifier(id)),
                 Updates.set(
                     EXPIRE_AT_FIELD,
                     Instant.now()
@@ -262,7 +261,7 @@ public class MongoDbSnapshotCache implements SnapshotCache {
   @VisibleForTesting
   String getDocumentIdentifier(SnapshotIdentifier id) {
     return ScopedName.fromProjectionMetaData(id.projectionClass())
-            .with(Optional.ofNullable(id.aggregateId()).map(UUID::toString).orElse("snapshot"))
-            .asString();
+        .with(Optional.ofNullable(id.aggregateId()).map(UUID::toString).orElse("snapshot"))
+        .asString();
   }
 }

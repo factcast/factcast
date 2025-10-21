@@ -39,7 +39,6 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.factcast.factus.projection.Aggregate;
-import org.factcast.factus.projection.ScopedName;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.factus.serializer.SnapshotSerializerId;
@@ -210,7 +209,7 @@ class MongoDbSnapshotCacheTest {
 
       // Validate key document
       assertThat(keyDocument.getString("identifier"))
-              .isEqualTo(underTest.getDocumentIdentifier(id));
+          .isEqualTo(underTest.getDocumentIdentifier(id));
 
       // Validate stored document
       assertThat(storedDocument.getString("projectionClass"))
@@ -252,7 +251,7 @@ class MongoDbSnapshotCacheTest {
       // Validate key document
       Document keyDocument = keyCaptor.getValue();
       assertThat(keyDocument.getString("identifier"))
-              .isEqualTo(underTest.getDocumentIdentifier(id));
+          .isEqualTo(underTest.getDocumentIdentifier(id));
 
       // Validate stored document
       Document storedDocument = documentCaptor.getValue();
@@ -293,7 +292,7 @@ class MongoDbSnapshotCacheTest {
 
       // Validate key document
       assertThat(keyDocument.getString("identifier"))
-              .isEqualTo(underTest.getDocumentIdentifier(idWithoutAggregate));
+          .isEqualTo(underTest.getDocumentIdentifier(idWithoutAggregate));
 
       // Validate stored document
       assertThat(storedDocument.getString("projectionClass"))
@@ -353,12 +352,12 @@ class MongoDbSnapshotCacheTest {
 
       // Validate captured key document
       assertThat(capturedKeyDocument.getString("identifier"))
-              .isEqualTo(underTest.getDocumentIdentifier(idWithoutAggregate));
+          .isEqualTo(underTest.getDocumentIdentifier(idWithoutAggregate));
     }
   }
 
   @Nested
-  class WhenCleaningOldSnapshots{
+  class WhenCleaningOldSnapshots {
     @Captor private ArgumentCaptor<Bson> docCaptor;
 
     @Test
@@ -367,17 +366,18 @@ class MongoDbSnapshotCacheTest {
       when(collection.find(eq(session), any(Bson.class))).thenReturn(iterable);
       MongoCursor cursor = mock(MongoCursor.class);
       when(iterable.iterator()).thenReturn(cursor);
-      when(cursor.hasNext()).thenReturn(true,  false);
+      when(cursor.hasNext()).thenReturn(true, false);
       ObjectId docId = ObjectId.get();
       ObjectId fileId = ObjectId.get();
-      when(cursor.next()).thenReturn(new Document().append(FILE_ID_FIELD, fileId).append("_id", docId));
+      when(cursor.next())
+          .thenReturn(new Document().append(FILE_ID_FIELD, fileId).append("_id", docId));
 
       underTest.cleanupOldSnapshots();
 
       verify(gridFSBucket).delete(session, fileId);
       verify(collection).deleteOne(eq(session), docCaptor.capture());
-        Bson capturedDoc = docCaptor.getValue();
-        assertThat(capturedDoc.toBsonDocument().getObjectId("_id").getValue()).isEqualTo(docId);
+      Bson capturedDoc = docCaptor.getValue();
+      assertThat(capturedDoc.toBsonDocument().getObjectId("_id").getValue()).isEqualTo(docId);
     }
   }
 
