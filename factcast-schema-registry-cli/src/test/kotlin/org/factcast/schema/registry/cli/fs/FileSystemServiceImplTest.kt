@@ -3,7 +3,7 @@ package org.factcast.schema.registry.cli.fs
 import com.fasterxml.jackson.databind.JsonNode
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.core.test.TestCase
-import io.kotest.core.test.TestResult
+import io.kotest.engine.test.TestResult
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe

@@ -3,7 +3,7 @@ package org.factcast.schema.registry.cli.commands
 import arrow.core.Either
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.core.test.TestCase
-import io.kotest.core.test.TestResult
+import io.kotest.engine.test.TestResult
 import io.kotest.matchers.shouldBe
 import io.mockk.clearAllMocks
 import io.mockk.every
