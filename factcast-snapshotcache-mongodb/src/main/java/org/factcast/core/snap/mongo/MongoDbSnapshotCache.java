@@ -45,6 +45,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
+import org.factcast.factus.projection.ScopedName;
 import org.factcast.factus.serializer.SnapshotSerializerId;
 import org.factcast.factus.snapshot.SnapshotCache;
 import org.factcast.factus.snapshot.SnapshotData;
@@ -52,6 +53,7 @@ import org.factcast.factus.snapshot.SnapshotIdentifier;
 
 @Slf4j
 public class MongoDbSnapshotCache implements SnapshotCache {
+  public static final String IDENTIFIER_FIELD = "identifier";
   public static final String PROJECTION_CLASS_FIELD = "projectionClass";
   public static final String AGGREGATE_ID_FIELD = "aggregateId";
   public static final String SNAPSHOT_SERIALIZER_ID_FIELD = "snapshotSerializerId";
@@ -85,21 +87,12 @@ public class MongoDbSnapshotCache implements SnapshotCache {
     MongoDatabase database = mongoClient.getDatabase(databaseName);
     this.collection = database.getCollection("factus_snapshot");
 
-    // Grouped by projection, but only contains documents that have an aggregateId set
-    String compoundIndexResult =
-        collection.createIndex(
-            Indexes.ascending(PROJECTION_CLASS_FIELD, AGGREGATE_ID_FIELD),
-            new IndexOptions().partialFilterExpression(Filters.exists(AGGREGATE_ID_FIELD)));
-    log.debug(
-        "Create compound index on factus_snapshot collection returned: {}", compoundIndexResult);
-
-    // Second index is for the projection class only, which is used for snapshots that are not
-    // related to an aggregate
-    String aggregateIdIndexResult =
-        collection.createIndex(Indexes.ascending(PROJECTION_CLASS_FIELD));
+    // Index for quick lookup scoped by projection class and aggregate id
+    String identifierIndexResult =
+        collection.createIndex(Indexes.ascending(IDENTIFIER_FIELD));
     log.debug(
         "Create aggregate ID index on factus_snapshot collection returned: {}",
-        aggregateIdIndexResult);
+        identifierIndexResult);
 
     // Third index for TTL management of documents, will be used for quick lookup of expired docs to
     // be deleted
@@ -118,7 +111,7 @@ public class MongoDbSnapshotCache implements SnapshotCache {
 
   @Override
   public @NonNull Optional<SnapshotData> find(@NonNull SnapshotIdentifier id) {
-    Document query = createQueryById(id);
+    Document query = new Document(IDENTIFIER_FIELD, getDocumentIdentifier(id));
     Document result = collection.find(query).first();
 
     if (result == null) {
@@ -147,8 +140,10 @@ public class MongoDbSnapshotCache implements SnapshotCache {
 
   @Override
   public void store(@NonNull SnapshotIdentifier id, @NonNull SnapshotData snapshot) {
+    String documentIdentifier = getDocumentIdentifier(id);
     Document doc =
-        new Document(PROJECTION_CLASS_FIELD, id.projectionClass().getName())
+        new Document(IDENTIFIER_FIELD, documentIdentifier)
+            .append(PROJECTION_CLASS_FIELD, id.projectionClass().getName())
             .append(SNAPSHOT_SERIALIZER_ID_FIELD, snapshot.snapshotSerializerId().name())
             .append(LAST_FACT_ID_FIELD, snapshot.lastFactId().toString())
             .append(
@@ -160,15 +155,23 @@ public class MongoDbSnapshotCache implements SnapshotCache {
       doc.append(AGGREGATE_ID_FIELD, aggregateId.toString());
     }
 
-    Document query = createQueryById(id);
-    String binaryTittle = getBinaryTittle(id);
+    Document query = new Document(IDENTIFIER_FIELD, documentIdentifier);
+    String fileName = "filename_" +documentIdentifier;
+
+    Document result = collection.find(query).first();
 
     try (ClientSession session = mongoClient.startSession()) {
       session.withTransaction(
           () -> {
+            if (result != null) {
+              // Delete old snapshot file
+              ObjectId oldFileId = result.getObjectId(FILE_ID_FIELD);
+              gridFSBucket.delete(session, oldFileId);
+            }
+
             ObjectId fileId;
             try (InputStream in = new ByteArrayInputStream(snapshot.serializedProjection())) {
-              fileId = gridFSBucket.uploadFromStream(session, binaryTittle, in);
+              fileId = gridFSBucket.uploadFromStream(session, fileName, in);
             } catch (IOException e) {
               log.error("Error uploading snapshot to GridFS for id: {}", id, e);
               throw new RuntimeException(e);
@@ -185,7 +188,7 @@ public class MongoDbSnapshotCache implements SnapshotCache {
 
   @Override
   public void remove(@NonNull SnapshotIdentifier id) {
-    Document query = createQueryById(id);
+    Document query = new Document(IDENTIFIER_FIELD, getDocumentIdentifier(id));
     Document result = collection.find(query).first();
 
     if (result != null) {
@@ -195,7 +198,6 @@ public class MongoDbSnapshotCache implements SnapshotCache {
         session.withTransaction(
             () -> {
               gridFSBucket.delete(session, fileId);
-
               collection.deleteOne(session, query);
               return true;
             },
@@ -209,7 +211,7 @@ public class MongoDbSnapshotCache implements SnapshotCache {
         () -> {
           try {
             collection.updateOne(
-                createQueryById(id),
+                    new Document(IDENTIFIER_FIELD, getDocumentIdentifier(id)),
                 Updates.set(
                     EXPIRE_AT_FIELD,
                     Instant.now()
@@ -257,17 +259,10 @@ public class MongoDbSnapshotCache implements SnapshotCache {
     }
   }
 
-  private String getBinaryTittle(SnapshotIdentifier id) {
-    return id.projectionClass().getName()
-        + Optional.ofNullable(id.aggregateId()).map(UUID::toString).orElse("");
-  }
-
-  private Document createQueryById(SnapshotIdentifier id) {
-    Document query = new Document(PROJECTION_CLASS_FIELD, id.projectionClass().getName());
-
-    if (id.aggregateId() != null) {
-      query.append(AGGREGATE_ID_FIELD, id.aggregateId().toString());
-    }
-    return query;
+  @VisibleForTesting
+  String getDocumentIdentifier(SnapshotIdentifier id) {
+    return ScopedName.fromProjectionMetaData(id.projectionClass())
+            .with(Optional.ofNullable(id.aggregateId()).map(UUID::toString).orElse("snapshot"))
+            .asString();
   }
 }

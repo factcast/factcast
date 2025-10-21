@@ -15,18 +15,14 @@
  */
 package org.factcast.itests.factus.client;
 
-import static java.util.UUID.randomUUID;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.factcast.core.snap.mongo.MongoDbSnapshotCache.*;
-
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Updates;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Optional;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.factcast.core.snap.mongo.MongoDbSnapshotCache;
+import org.factcast.factus.projection.ScopedName;
 import org.factcast.factus.serializer.SnapshotSerializerId;
 import org.factcast.factus.snapshot.SnapshotCache;
 import org.factcast.factus.snapshot.SnapshotData;
@@ -40,6 +36,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
+import java.util.UUID;
+
+import static java.util.UUID.randomUUID;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.factcast.core.snap.mongo.MongoDbSnapshotCache.EXPIRE_AT_FIELD;
+import static org.factcast.core.snap.mongo.MongoDbSnapshotCache.IDENTIFIER_FIELD;
+
+@Slf4j
 @SpringBootTest
 @ContextConfiguration(
     classes = {
@@ -48,8 +55,8 @@ import org.springframework.test.context.ContextConfiguration;
       MongoProjectionConfiguration.class
     })
 public class MongoSnapshotCacheTest extends SnapshotCacheTest {
-  private MongoClient mongoClient;
-  private SnapshotCache repository;
+  private final MongoClient mongoClient;
+  private final SnapshotCache repository;
 
   @Autowired
   public MongoSnapshotCacheTest(SnapshotCache repository, MongoClient mongoClient) {
@@ -58,6 +65,7 @@ public class MongoSnapshotCacheTest extends SnapshotCacheTest {
     this.mongoClient = mongoClient;
   }
 
+  @SneakyThrows
   @Test
   public void testMongoAutoClean() {
     SnapshotIdentifier id = SnapshotIdentifier.of(UserV1.class, randomUUID());
@@ -68,13 +76,18 @@ public class MongoSnapshotCacheTest extends SnapshotCacheTest {
     assertThat(snapshot).isNotEmpty();
     assertThat(snapshot.get().serializedProjection()).isEqualTo("foo".getBytes());
 
+    Thread.sleep(100); //small wait to assure the completable future in find() is done
+
+    // Mark it as expired 30 days ago
     MongoDatabase database = mongoClient.getDatabase("factcast");
     var collection = database.getCollection("factus_snapshot");
 
-    // Mark it as expired 30 days ago
+    String identifier = ScopedName.fromProjectionMetaData(id.projectionClass())
+            .with(Optional.ofNullable(id.aggregateId()).map(UUID::toString).orElse("snapshot"))
+            .asString();
     Document query =
-        new Document(PROJECTION_CLASS_FIELD, id.projectionClass().getName())
-            .append(AGGREGATE_ID_FIELD, id.aggregateId().toString());
+            new Document(IDENTIFIER_FIELD, identifier);
+
     collection.updateOne(
         query, Updates.set(EXPIRE_AT_FIELD, Instant.now().minus(30, ChronoUnit.DAYS)));
 
