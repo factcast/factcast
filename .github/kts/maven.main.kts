@@ -128,10 +128,10 @@ workflow(
         )
 
         uses(
-            name = "JDK 21",
+            name = "JDK 25",
             action = SetupJava(
                 distribution = SetupJava.Distribution.Corretto,
-                javaVersion = "21",
+                javaVersion = "25",
             ),
         )
 
