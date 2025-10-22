@@ -308,35 +308,33 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
     if (!parameters.isEmpty()) {
 
       // dup-keys can be ignored, in case another node just did the same
-      Iterables.partition(parameters, MAX_BATCH_SIZE)
-          .forEach(
-              p ->
-                  jdbcTemplate.batchUpdate(
-                      "INSERT INTO transformationcache (cache_key, header, payload) VALUES (?, ? :: JSONB, ? ::"
-                          + " JSONB) ON CONFLICT(cache_key) DO NOTHING",
-                      p));
+      jdbcTemplate.batchUpdate(
+          "INSERT INTO transformationcache (cache_key, header, payload) VALUES (?, ? :: JSONB, ? ::"
+              + " JSONB) ON CONFLICT(cache_key) DO NOTHING",
+          parameters);
+
+      jdbcTemplate.batchUpdate(
+          "/* insert */ INSERT INTO transformationcache_access(cache_key,last_access) VALUES (?,current_date) "
+              + "ON CONFLICT(cache_key) DO UPDATE SET last_access=current_date "
+              + "WHERE excluded.cache_key=? AND transformationcache_access.last_access is distinct from (current_date)",
+          parameters.stream().map(o -> new Object[] {o[0], o[0]}).toList());
     }
   }
 
   @VisibleForTesting
   void insertBufferedAccesses(Map<Key, Fact> copy) {
-    List<String> keys =
+    List<Object[]> keys =
         copy.entrySet().stream()
             .filter(e -> e.getValue() == null)
-            .map(p -> p.getKey().id())
+            .map(p -> new Object[] {p.getKey().id(), p.getKey().id()})
             .collect(Collectors.toList());
 
     if (!keys.isEmpty()) {
       jdbcTemplate.batchUpdate(
-          "INSERT INTO transformationcache_access(cache_key,last_access) VALUES (?,current_date) "
+          "/* touch */ INSERT INTO transformationcache_access(cache_key,last_access) VALUES (?,current_date) "
               + "ON CONFLICT(cache_key) DO UPDATE SET last_access=current_date "
               + "WHERE excluded.cache_key=? AND transformationcache_access.last_access is distinct from (current_date)",
-          keys,
-          MAX_BATCH_SIZE,
-          (ps, id) -> {
-            ps.setString(1, id);
-            ps.setString(2, id);
-          });
+          keys);
     }
   }
 
