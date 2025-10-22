@@ -128,7 +128,6 @@ public class Locked<I extends Projection> {
   }
 
   private I updateProjectionIfExists() {
-
     if (projectionOrNull != null) {
       factusMetrics.count(
           CountedEvent.TRANSACTION_ATTEMPTS,
