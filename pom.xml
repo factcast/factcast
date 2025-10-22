@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.9.11-SNAPSHOT</version>
+  <version>0.9.12-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>factcast</name>
   <description>factcast is a 'good enough' event store using PostgreSQL
@@ -95,6 +95,8 @@
     <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
     <maven.version>3.9.11</maven.version>
     <!-- defaults to 11, client modules will be compiled with/to 8 -->
+    <maven.compiler.source>21</maven.compiler.source>
+    <maven.compiler.target>21</maven.compiler.target>
     <maven.compiler.release>21</maven.compiler.release>
     <maven.compiler.version>3.14.1</maven.compiler.version>
     <spotless-maven-plugin.version>3.0.0</spotless-maven-plugin.version>
@@ -119,9 +121,9 @@
     <kotlin.version>2.2.20</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <mockk.version>1.14.6</mockk.version>
-    <graaljs.version>24.2.2</graaljs.version>
+    <graaljs.version>25.0.1</graaljs.version>
     <redisson.version>3.52.0</redisson.version>
-    <aws-sdk.version>2.35.10</aws-sdk.version>
+    <aws-sdk.version>2.35.11</aws-sdk.version>
     <shedlock.version>6.10.0</shedlock.version>
     <byte-buddy.version>1.17.8</byte-buddy.version>
     <skipUnitTests>false</skipUnitTests>
@@ -342,7 +344,7 @@
                   <version>3.8.1</version>
                 </requireMavenVersion>
                 <requireJavaVersion>
-                  <version>17</version>
+                  <version>21</version>
                 </requireJavaVersion>
               </rules>
             </configuration>
@@ -368,6 +370,7 @@
         <version>1.21.0</version>
         <configuration>
           <gitFlowConfig>
+            <productionBranch>main</productionBranch>
             <developmentBranch>main</developmentBranch>
           </gitFlowConfig>
         </configuration>
