@@ -18,7 +18,6 @@ package org.factcast.test.mongo;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
