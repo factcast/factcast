@@ -368,6 +368,7 @@
         <version>1.21.0</version>
         <configuration>
           <gitFlowConfig>
+            <productionBranch>main</productionBranch>
             <developmentBranch>main</developmentBranch>
           </gitFlowConfig>
         </configuration>
