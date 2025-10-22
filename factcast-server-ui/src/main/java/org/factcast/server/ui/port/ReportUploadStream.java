@@ -20,20 +20,25 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.OutputStream;
 import java.time.OffsetDateTime;
-import java.util.List;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
-public abstract class BatchedReportUploadStream {
-
+@Slf4j
+public abstract class ReportUploadStream {
   @NonNull private final JsonGenerator jsonGenerator;
   @NonNull private final OutputStream outputStream;
+  private final String reportName;
 
   @SneakyThrows
-  protected BatchedReportUploadStream(
-      @NonNull String reportName, @NonNull String queryString, @NonNull OutputStream outputStream) {
+  protected ReportUploadStream(
+      @NonNull JsonFactory jsonFactory,
+      @NonNull String reportName,
+      @NonNull String queryString,
+      @NonNull OutputStream outputStream) {
+    log.debug("Initializing report upload stream for report '{}'", reportName);
+    this.reportName = reportName;
     this.outputStream = outputStream;
-    final var jsonFactory = new JsonFactory();
     this.jsonGenerator = jsonFactory.createGenerator(outputStream);
     jsonGenerator.writeStartObject();
     jsonGenerator.writeStringField("name", reportName);
@@ -44,22 +49,26 @@ public abstract class BatchedReportUploadStream {
     jsonGenerator.writeStartArray();
   }
 
-  public void writeBatch(List<ObjectNode> batch) {
+  public void writeToBatch(ObjectNode obj) {
     try {
       // passes on to outputStream
-      for (var obj : batch) jsonGenerator.writeObject(obj);
+      jsonGenerator.writeObject(obj);
     } catch (Exception e) {
-      throw new RuntimeException("Failed to write batch to S3 report upload", e);
+      throw new RuntimeException("Failed to add fact to report upload " + reportName, e);
     }
   }
 
   public void close() {
+    log.debug("Attempting to close upload stream");
+
     try {
       jsonGenerator.writeEndArray();
+      jsonGenerator.writeEndObject();
       // TODO: maybe needs flush for file case?
       outputStream.close();
+      log.debug("Report upload stream closed successfully");
     } catch (Exception e) {
-      throw new RuntimeException("Failed to close report upload", e);
+      throw new RuntimeException("Failed to close report upload " + reportName, e);
     }
   }
 }

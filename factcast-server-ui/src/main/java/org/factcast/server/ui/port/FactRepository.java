@@ -49,5 +49,5 @@ public interface FactRepository {
   List<Fact> fetchChunk(FullFilterBean bean);
 
   /** returns number of processed facts */
-  long fetchAndProcessAll(ReportFilterBean bean, Consumer<List<Fact>> consumer);
+  long fetchAndProcessAll(ReportFilterBean bean, Consumer<Fact> consumer);
 }

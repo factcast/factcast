@@ -44,9 +44,6 @@ import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
-import software.amazon.awssdk.transfer.s3.model.CompletedUpload;
-import software.amazon.awssdk.transfer.s3.model.Upload;
-import software.amazon.awssdk.transfer.s3.model.UploadRequest;
 
 @ExtendWith(MockitoExtension.class)
 class S3ReportStoreTest {
@@ -55,6 +52,8 @@ class S3ReportStoreTest {
   @Mock private S3Presigner s3Presigner;
 
   private static final String BUCKET_NAME = "factcast-reports";
+  private static final String REPORT_NAME = "name";
+  private static final ReportFilterBean QUERY_BEAN = new ReportFilterBean(1);
 
   S3ReportStore uut;
 
@@ -70,40 +69,36 @@ class S3ReportStoreTest {
     @SneakyThrows
     void happyPath() {
       // given
-      final var report = getReport("name.events");
-      final var uploadArgumentCaptor = ArgumentCaptor.forClass(UploadRequest.class);
+      final var uploadArgumentCaptor = ArgumentCaptor.forClass(CreateMultipartUploadRequest.class);
 
-      final var fileUpload = mock(Upload.class);
-      final var completedUpload = mock(CompletedUpload.class);
-      when(s3TransferManager.upload(any(UploadRequest.class))).thenReturn(fileUpload);
-      when(fileUpload.completionFuture())
-          .thenReturn(CompletableFuture.completedFuture(completedUpload));
       objectDoesNotExist();
+      final var completedUpload = mock(CreateMultipartUploadResponse.class);
+      when(s3Client.createMultipartUpload(any(CreateMultipartUploadRequest.class)))
+          .thenReturn(CompletableFuture.completedFuture(completedUpload));
+      // TODO: why no check?
+      //      objectDoesNotExist();
 
       // when
-      assertThatCode(() -> uut.save("user", report)).doesNotThrowAnyException();
+      assertThatCode(() -> uut.createBatchUpload("user", REPORT_NAME, QUERY_BEAN))
+          .doesNotThrowAnyException();
 
       // then
-      verify(s3TransferManager).upload(uploadArgumentCaptor.capture());
+      verify(s3Client).createMultipartUpload(uploadArgumentCaptor.capture());
 
-      assertThat(uploadArgumentCaptor.getValue().putObjectRequest().bucket())
-          .isEqualTo(BUCKET_NAME);
-      assertThat(uploadArgumentCaptor.getValue().putObjectRequest().key())
-          .isEqualTo("user/name.events");
+      assertThat(uploadArgumentCaptor.getValue().bucket()).isEqualTo(BUCKET_NAME);
+      assertThat(uploadArgumentCaptor.getValue().key()).isEqualTo("user/" + REPORT_NAME);
     }
 
     @Test
     @SneakyThrows
     void reportNameAlreadyExists() {
       // given
-      final var report = getReport("name.events");
       objectExists();
 
       // expect
-      assertThatThrownBy(() -> uut.save("user", report))
+      assertThatThrownBy(() -> uut.createBatchUpload("user", REPORT_NAME, QUERY_BEAN))
           .isInstanceOf(IllegalArgumentException.class)
           .hasMessage("Report was not generated as another report with this name already exists.");
-      verifyNoInteractions(s3TransferManager);
     }
   }
 

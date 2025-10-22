@@ -31,6 +31,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.server.ui.AbstractBrowserTest;
 import org.factcast.server.ui.views.filter.FactCriteria;
+import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.RetryingTest;
 
 @Slf4j
@@ -38,7 +39,7 @@ class ReportQueryPageIntTest extends AbstractBrowserTest {
 
   final ObjectMapper om = new ObjectMapper();
 
-  @RetryingTest(maxAttempts = 3)
+  @Test //  @RetryingTest(maxAttempts = 3)
   @SneakyThrows
   void createReportHappyPath() {
     om.registerModule(new JavaTimeModule());

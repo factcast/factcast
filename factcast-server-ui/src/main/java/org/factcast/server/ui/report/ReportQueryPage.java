@@ -227,8 +227,8 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
       final long numberOfProcessedFacts =
           repo.fetchAndProcessAll(
               formBean,
-              facts -> {
-                reportUploadStream.writeBatch(processFacts(facts));
+              fact -> {
+                reportUploadStream.writeToBatch(processFact(fact));
               });
       // Close stream and complete saving
       reportUploadStream.close();
@@ -255,8 +255,8 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
     // multiple times.
   }
 
-  private List<ObjectNode> processFacts(List<Fact> dataFromStore) {
-    return dataFromStore.stream().map(e -> jsonViewPluginService.process(e).fact()).toList();
+  private ObjectNode processFact(Fact fact) {
+    return jsonViewPluginService.process(fact).fact();
   }
 
   private DataProvider<ReportEntry, Void> getReportProvider() {

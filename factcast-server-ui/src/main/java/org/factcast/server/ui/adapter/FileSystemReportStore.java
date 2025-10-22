@@ -15,6 +15,8 @@
  */
 package org.factcast.server.ui.adapter;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -27,7 +29,7 @@ import java.util.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.util.ExceptionHelper;
-import org.factcast.server.ui.port.FileBatchedReportUploadStream;
+import org.factcast.server.ui.port.FileReportUploadStream;
 import org.factcast.server.ui.port.ReportStore;
 import org.factcast.server.ui.report.*;
 
@@ -48,7 +50,7 @@ public class FileSystemReportStore implements ReportStore {
   }
 
   @Override
-  public FileBatchedReportUploadStream createBatchUpload(
+  public FileReportUploadStream createBatchUpload(
       @NonNull String userName, @NonNull String reportName, @NonNull ReportFilterBean query) {
     final var reportFilePath = Paths.get(persistenceDir, userName, reportName);
     log.info("Saving report to {}", reportFilePath);
@@ -57,11 +59,15 @@ public class FileSystemReportStore implements ReportStore {
     if (!Files.exists(reportFilePath)) {
       try {
         Files.createDirectories(reportFilePath.getParent());
-        log.info("Parent dirs created");
+        log.debug("Parent dirs created");
         final var path = Files.createFile(reportFilePath);
-        log.info("File created");
+        log.debug("File created {}", path);
         final var queryString = objectMapper.writeValueAsString(query);
-        return new FileBatchedReportUploadStream(path, reportName, queryString);
+        return new FileReportUploadStream(
+            new JsonFactory(objectMapper), path, reportName, queryString);
+      } catch (JsonProcessingException e) {
+        log.error("Failed to serialize report query", e);
+        throw new RuntimeException("Failed to serialize query", e);
       } catch (IOException e) {
         log.error("Failed to save report", e);
         throw ExceptionHelper.toRuntime(e);

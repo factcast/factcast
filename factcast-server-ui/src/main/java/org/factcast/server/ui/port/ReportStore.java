@@ -23,7 +23,7 @@ import org.factcast.server.ui.report.ReportFilterBean;
 
 public interface ReportStore {
 
-  BatchedReportUploadStream createBatchUpload(
+  ReportUploadStream createBatchUpload(
       @NonNull String userName, @NonNull String reportName, @NonNull ReportFilterBean query);
 
   URL getReportDownload(@NonNull String userName, @NonNull String reportName);

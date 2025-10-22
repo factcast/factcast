@@ -15,6 +15,7 @@
  */
 package org.factcast.server.ui.s3reportstore;
 
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -59,9 +60,13 @@ public class S3ReportStore implements ReportStore {
   public S3BatchedReportUploadStream createBatchUpload(
       @NonNull String userName, @NonNull String reportName, @NonNull ReportFilterBean query) {
     final var reportKey = getReportKey(userName, reportName);
+    if (doesObjectExist(reportKey)) {
+      throw new IllegalArgumentException(
+          "Report was not generated as another report with this name already exists.");
+    }
     final var queryString = objectMapper.writeValueAsString(query);
     return new S3BatchedReportUploadStream(
-        s3Client, bucketName, reportName, reportKey, queryString);
+        s3Client, bucketName, new JsonFactory(objectMapper), reportKey, reportName, queryString);
   }
 
   private static String getReportKey(String userName, String reportName) {
@@ -124,6 +129,15 @@ public class S3ReportStore implements ReportStore {
         throw new ReportDoesNotExistException(key);
       }
       throw e;
+    }
+  }
+
+  private boolean doesObjectExist(String key) {
+    try {
+      checkObjectExists(key);
+      return true;
+    } catch (ReportDoesNotExistException e) {
+      return false;
     }
   }
 

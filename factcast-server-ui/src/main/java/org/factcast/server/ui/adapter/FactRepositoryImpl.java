@@ -120,7 +120,7 @@ public class FactRepositoryImpl implements FactRepository {
 
   @SneakyThrows
   @Override
-  public long fetchAndProcessAll(ReportFilterBean bean, Consumer<List<Fact>> consumer) {
+  public long fetchAndProcessAll(ReportFilterBean bean, Consumer<Fact> consumer) {
     Long untilSerial = Optional.ofNullable(bean.getTo()).map(BigDecimal::longValue).orElse(null);
     final var obs = new UnlimitedConsumingObserver(untilSerial, 0, consumer);
     fetchStream(bean, obs);
