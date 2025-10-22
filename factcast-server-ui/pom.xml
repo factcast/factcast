@@ -12,7 +12,8 @@
   <artifactId>factcast-server-ui</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
   <properties>
-    <java.version>17</java.version>
+    <java.version>21</java.version>
+    <maven.compiler.release>21</maven.compiler.release>
     <vaadin.version>24.5.2</vaadin.version>
   </properties>
   <dependencyManagement>
@@ -157,6 +158,11 @@
       <groupId>com.fasterxml.jackson.datatype</groupId>
       <artifactId>jackson-datatype-jsr310</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.ow2.asm</groupId>
+      <artifactId>asm</artifactId>
+      <version>9.8</version>
+    </dependency>
   </dependencies>
   <repositories>
     <repository>
@@ -173,6 +179,13 @@
         <groupId>com.vaadin</groupId>
         <artifactId>vaadin-maven-plugin</artifactId>
         <version>${vaadin.version}</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm</artifactId>
+            <version>9.8</version>
+          </dependency>
+        </dependencies>
         <executions>
           <execution>
             <goals>
