@@ -503,3 +503,31 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
+
+  - changeSet:
+      id: issue4046_migration
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4046/migrate_transformationcache_lastaccesses.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue4076_cleanup
+      author: uweschaefer
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: t
+            sql: SELECT count_estimate('SELECT * FROM transformationcache') < 10000000;
+      comment: If you have less than 10mio transformation results, this will be executed - otherwise we kindly ask you to execute this script manually
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4046/transformationcache_drop_lastaccesses.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true

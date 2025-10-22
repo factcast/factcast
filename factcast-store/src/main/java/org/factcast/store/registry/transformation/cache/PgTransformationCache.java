@@ -17,6 +17,7 @@ package org.factcast.store.registry.transformation.cache;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.*;
+import java.sql.*;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
@@ -28,7 +29,7 @@ import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgFact;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics.*;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.*;
 import org.springframework.jdbc.core.namedparam.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -36,7 +37,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 @Slf4j
 public class PgTransformationCache implements TransformationCache, AutoCloseable {
-  private static final int MAX_BATCH_SIZE = 20_000;
+  private static final int MAX_BATCH_SIZE = 5000;
   private final JdbcTemplate jdbcTemplate;
   private final NamedParameterJdbcTemplate namedJdbcTemplate;
   private final RegistryMetrics registryMetrics;
@@ -209,10 +210,14 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
           OP.COMPACT_TRANSFORMATION_CACHE,
           () ->
               inTransactionWithLock(
-                  () ->
-                      jdbcTemplate.update(
-                          "DELETE FROM transformationcache WHERE last_access < ?",
-                          new Date(thresholdDate.toInstant().toEpochMilli()))));
+                  () -> {
+                    Timestamp d = Timestamp.from(thresholdDate.toInstant());
+                    jdbcTemplate.update(
+                        "DELETE FROM transformationcache WHERE cache_key in (SELECT cache_key FROM transformationcache_access WHERE last_access < ?)",
+                        d);
+                    jdbcTemplate.update(
+                        "DELETE FROM transformationcache_access WHERE last_access < ?", d);
+                  }));
     }
   }
 
@@ -322,15 +327,16 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
             .collect(Collectors.toList());
 
     if (!keys.isEmpty()) {
-
-      Iterables.partition(keys, MAX_BATCH_SIZE)
-          .forEach(
-              k -> {
-                SqlParameterSource parameters = new MapSqlParameterSource("ids", k);
-                namedJdbcTemplate.update(
-                    "UPDATE transformationcache SET last_access=now() WHERE cache_key IN (:ids)",
-                    parameters);
-              });
+      jdbcTemplate.batchUpdate(
+          "INSERT INTO transformationcache_access(cache_key,last_access) VALUES (?,current_date) "
+              + "ON CONFLICT(cache_key) DO UPDATE SET last_access=current_date "
+              + "WHERE excluded.cache_key=? AND transformationcache_access.last_access is distinct from (current_date)",
+          keys,
+          MAX_BATCH_SIZE,
+          (ps, id) -> {
+            ps.setString(1, id);
+            ps.setString(2, id);
+          });
     }
   }
 
