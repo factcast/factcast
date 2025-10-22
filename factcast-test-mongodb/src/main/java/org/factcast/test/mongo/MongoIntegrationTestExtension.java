@@ -18,6 +18,8 @@ package org.factcast.test.mongo;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
+
+import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -69,7 +71,7 @@ public class MongoIntegrationTestExtension implements FactCastIntegrationTestExt
                 if (wait.getExitCode() != 0) {
                   throw new IllegalStateException("RS never became PRIMARY: " + wait.getStderr());
                 }
-              } catch (Exception e) {
+              } catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);
               }
 

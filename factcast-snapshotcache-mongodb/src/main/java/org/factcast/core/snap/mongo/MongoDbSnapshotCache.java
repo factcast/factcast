@@ -168,18 +168,15 @@ public class MongoDbSnapshotCache implements SnapshotCache {
               gridFSBucket.delete(session, oldFileId);
             }
 
-            ObjectId fileId;
             try (InputStream in = new ByteArrayInputStream(snapshot.serializedProjection())) {
-              fileId = gridFSBucket.uploadFromStream(session, fileName, in);
+              ObjectId fileId = gridFSBucket.uploadFromStream(session, fileName, in);
+              doc.append(FILE_ID_FIELD, fileId);
+              collection.replaceOne(session, query, doc, new ReplaceOptions().upsert(true));
+              return true;
             } catch (IOException e) {
               log.error("Error uploading snapshot to GridFS for id: {}", id, e);
-              throw new RuntimeException(e);
+              return false;
             }
-
-            doc.append(FILE_ID_FIELD, fileId);
-
-            collection.replaceOne(session, query, doc, new ReplaceOptions().upsert(true));
-            return true;
           },
           txnOptions);
     }
