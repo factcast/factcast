@@ -486,10 +486,8 @@ class FactusImplTest {
       when(fc.subscribe(any(), any()))
           .thenAnswer(
               inv -> {
-                // There must be one fact referencing this aggregate to make sure
-                // the
-                // fact position is set, so that we do not get an empty optional
-                // when doing find.
+                // There must be one fact referencing this aggregate to make sure the
+                // fact position is set, so that we do not get an empty optional when doing find.
                 AbstractFactObserver fo = inv.getArgument(1, AbstractFactObserver.class);
 
                 Fact f =
@@ -534,8 +532,7 @@ class FactusImplTest {
       assertThatThrownBy(() -> underTest.withLockOn(PersonAggregate.class, aggId))
           .isInstanceOf(IllegalArgumentException.class)
           .hasMessage(
-              "Aggregate PersonAggregate with id "
-                  + "40aaf918-c678-44a4-9962-ac6823a40ea5 does not exist.");
+              "Aggregate PersonAggregate with id 40aaf918-c678-44a4-9962-ac6823a40ea5 does not exist.");
     }
 
     @Test
