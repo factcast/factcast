@@ -37,7 +37,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 @Slf4j
 public class PgTransformationCache implements TransformationCache, AutoCloseable {
-  private static final int MAX_BATCH_SIZE = 5000;
   private final JdbcTemplate jdbcTemplate;
   private final NamedParameterJdbcTemplate namedJdbcTemplate;
   private final RegistryMetrics registryMetrics;
@@ -74,7 +73,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
     registryMetrics.monitor(tpe, "transformation-cache");
 
-    this.maxBufferSize = bufferThreshold * 30;
+    this.maxBufferSize = bufferThreshold * 9; // the batchUpdates used only support up to 10k
     this.buffer = new CacheBuffer(registryMetrics);
   }
 
