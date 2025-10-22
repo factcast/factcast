@@ -15,20 +15,26 @@
  */
 package org.factcast.server.ui.config;
 
-import com.vaadin.flow.spring.security.VaadinWebSecurity;
+import com.vaadin.flow.spring.security.VaadinAwareSecurityContextHolderStrategyConfiguration;
+import com.vaadin.flow.spring.security.VaadinSecurityConfigurer;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.server.ui.views.LoginView;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.web.SecurityFilterChain;
 
 @Slf4j
 @Configuration
 @EnableWebSecurity
-public class SecurityConfiguration extends VaadinWebSecurity {
-  @Override
-  protected void configure(HttpSecurity http) throws Exception {
-    super.configure(http);
-    setLoginView(http, LoginView.class);
+@Import(VaadinAwareSecurityContextHolderStrategyConfiguration.class)
+public class SecurityConfiguration {
+  @Bean
+  SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    return http.with(
+            VaadinSecurityConfigurer.vaadin(), configurer -> configurer.loginView(LoginView.class))
+        .build();
   }
 }

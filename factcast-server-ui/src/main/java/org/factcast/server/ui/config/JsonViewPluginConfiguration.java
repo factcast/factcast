@@ -23,15 +23,12 @@ import org.factcast.server.ui.plugins.*;
 import org.factcast.server.ui.plugins.bundled.HeaderMetaFilterOptionsPlugin;
 import org.factcast.server.ui.plugins.bundled.HeaderMetaTimestampToDatePlugin;
 import org.factcast.server.ui.plugins.bundled.PayloadAggregateIdsFilterOptionsPlugin;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class JsonViewPluginConfiguration {
-  public static final String JSON_VIEW_PLUGIN_OBJECT_MAPPER = "jsonViewPluginObjectMapper";
-
   @Bean
   @ConditionalOnMissingBean
   public JsonViewPluginObjectMapperCustomizer jsonViewPluginObjectMapperCustomizer() {
@@ -56,30 +53,28 @@ public class JsonViewPluginConfiguration {
     return new HeaderMetaTimestampToDatePlugin();
   }
 
-  @Bean(JSON_VIEW_PLUGIN_OBJECT_MAPPER)
-  @ConditionalOnMissingBean(name = JSON_VIEW_PLUGIN_OBJECT_MAPPER)
-  public ObjectMapper jsonViewPluginObjectMapper(JsonViewPluginObjectMapperCustomizer customizer) {
-    final var om = new ObjectMapper();
-
-    customizer.customize(om);
-
-    return om;
-  }
-
   @Bean
   @ConditionalOnMissingBean
-  public JsonUtils jsonUtils(@Qualifier(JSON_VIEW_PLUGIN_OBJECT_MAPPER) ObjectMapper objectMapper) {
-    return new JsonUtils(objectMapper);
+  public JsonUtils jsonUtils(JsonViewPluginObjectMapperCustomizer customizer) {
+    return new JsonUtils(createObjectMapper(customizer));
   }
 
   @Bean
   @ConditionalOnMissingBean
   public JsonViewPluginService jsonViewPluginService(
       Optional<List<JsonViewPlugin>> plugins,
-      @Qualifier(JSON_VIEW_PLUGIN_OBJECT_MAPPER) ObjectMapper objectMapper,
+      JsonViewPluginObjectMapperCustomizer customizer,
       JsonUtils jsonUtils,
       UiMetrics uiMetrics) {
     return new JsonViewPluginServiceImpl(
-        plugins.orElse(List.of()), objectMapper, jsonUtils, uiMetrics);
+        plugins.orElse(List.of()), createObjectMapper(customizer), jsonUtils, uiMetrics);
+  }
+
+  private static ObjectMapper createObjectMapper(JsonViewPluginObjectMapperCustomizer customizer) {
+    final var om = new ObjectMapper();
+
+    customizer.customize(om);
+
+    return om;
   }
 }
