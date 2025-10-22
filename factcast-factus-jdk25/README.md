@@ -14,6 +14,6 @@ with the factus standard package, as it requires JDK 25).
 In case you use [factcast-spring-boot-autoconfigure](../factcast-spring-boot-autoconfigure), all
 you need to do is additionally adding `factcast-factus-jdk25` to your dependencies.
 
-If you create the factus instance yourself, make you use the newest version that allows you to
+If you create the factus instance yourself, make sure you use the newest version that allows you to
 specify the `InLockedOperation` in the constructor of `FactusImpl`, and use
 `InLockedOperationForVirtualThreads`.
