@@ -122,7 +122,7 @@
           <artifactId>maven-plugin-plugin</artifactId>
           <!-- Higher versions currently cause the snapshot deployment to fail. -->
           <!-- See: https://github.com/factcast/factcast/issues/2941 -->
-          <version>3.15.1</version>
+          <version>3.15.2</version>
         </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
@@ -177,7 +177,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-plugin-plugin</artifactId>
-        <version>3.15.1</version>
+        <version>3.15.2</version>
         <configuration>
           <!-- <goalPrefix>maven-archetype-plugin</goalPrefix> -->
           <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
