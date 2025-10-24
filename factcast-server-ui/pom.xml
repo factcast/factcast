@@ -14,6 +14,7 @@
   <properties>
     <java.version>21</java.version>
     <vaadin.version>24.9.3</vaadin.version>
+    <maven.compiler.release>21</maven.compiler.release>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -157,6 +158,11 @@
       <groupId>com.fasterxml.jackson.datatype</groupId>
       <artifactId>jackson-datatype-jsr310</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.ow2.asm</groupId>
+      <artifactId>asm</artifactId>
+      <version>9.8</version>
+    </dependency>
   </dependencies>
   <repositories>
     <repository>
@@ -173,6 +179,13 @@
         <groupId>com.vaadin</groupId>
         <artifactId>vaadin-maven-plugin</artifactId>
         <version>${vaadin.version}</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm</artifactId>
+            <version>9.8</version>
+          </dependency>
+        </dependencies>
         <executions>
           <execution>
             <goals>

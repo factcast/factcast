@@ -27,3 +27,5 @@ org.factcast.spring.boot.autoconfigure.store.redis.StoreNotificationRedisSubscri
 org.factcast.spring.boot.autoconfigure.server.ui.FactCastServerUIS3ReportStoreAutoConfiguration
 org.factcast.spring.boot.autoconfigure.store.PgFactStoreAutoConfiguration
 org.factcast.spring.boot.autoconfigure.store.script.engine.GraalJSScriptEngineAutoConfiguration
+org.factcast.spring.boot.autoconfigure.factus.FactusJdk25AutoConfiguration
+

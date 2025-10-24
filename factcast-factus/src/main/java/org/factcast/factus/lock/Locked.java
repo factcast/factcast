@@ -15,18 +15,27 @@
  */
 package org.factcast.factus.lock;
 
-import static org.factcast.factus.metrics.TagKeys.CLASS;
+import static org.factcast.factus.metrics.TagKeys.*;
 
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
-import java.util.*;
-import java.util.function.*;
-import java.util.stream.*;
-import lombok.*;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import lombok.Data;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
-import org.factcast.core.lock.*;
+import org.factcast.core.lock.Attempt;
+import org.factcast.core.lock.AttemptAbortedException;
+import org.factcast.core.lock.IntermediatePublishResult;
+import org.factcast.core.lock.PublishingResult;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.factus.Factus;
 import org.factcast.factus.metrics.CountedEvent;
@@ -43,6 +52,8 @@ public class Locked<I extends Projection> {
   @NonNull private final FactCast fc;
 
   @NonNull private final Factus factus;
+
+  @NonNull private final InLockedOperation inLockedOperation;
 
   private final I projectionOrNull;
 
@@ -79,36 +90,20 @@ public class Locked<I extends Projection> {
               .attempt(
                   () -> {
                     try {
-                      I updatedProjection = null;
-
-                      if (projectionOrNull != null) {
-                        factusMetrics.count(
-                            CountedEvent.TRANSACTION_ATTEMPTS,
-                            Tags.of(Tag.of(CLASS, projectionOrNull.getClass().getName())));
-                        updatedProjection = update(projectionOrNull);
-                      } else {
-
-                        factusMetrics.count(
-                            CountedEvent.TRANSACTION_ATTEMPTS,
-                            Tags.of(Tag.of(CLASS, MANUAL_FACT_SPECS)));
-                      }
+                      I updatedProjection = updateProjectionIfExists();
 
                       List<Supplier<Fact>> toPublish =
                           Collections.synchronizedList(new LinkedList<>());
                       RetryableTransactionImpl txWithLockOnSpecs =
                           createTransaction(factus, toPublish);
 
-                      try {
-                        InLockedOperation.enterLockedOperation();
-                        bodyToExecute.accept(updatedProjection, txWithLockOnSpecs);
-                        IntermediatePublishResult im =
-                            Attempt.publishUnlessEmpty(
-                                toPublish.stream().map(Supplier::get).collect(Collectors.toList()));
-                        txWithLockOnSpecs.onSuccess().ifPresent(im::andThen);
-                        return im;
-                      } finally {
-                        InLockedOperation.exitLockedOperation();
-                      }
+                      inLockedOperation.runLocked(
+                          () -> bodyToExecute.accept(updatedProjection, txWithLockOnSpecs));
+                      IntermediatePublishResult im =
+                          Attempt.publishUnlessEmpty(
+                              toPublish.stream().map(Supplier::get).collect(Collectors.toList()));
+                      txWithLockOnSpecs.onSuccess().ifPresent(im::andThen);
+                      return im;
                     } catch (LockedOperationAbortedException aborted) {
                       throw aborted;
                     } catch (Throwable e) {
@@ -130,6 +125,20 @@ public class Locked<I extends Projection> {
 
       throw LockedOperationAbortedException.wrap(e);
     }
+  }
+
+  private I updateProjectionIfExists() {
+    if (projectionOrNull != null) {
+      factusMetrics.count(
+          CountedEvent.TRANSACTION_ATTEMPTS,
+          Tags.of(Tag.of(CLASS, projectionOrNull.getClass().getName())));
+      return update(projectionOrNull);
+    }
+
+    factusMetrics.count(
+        CountedEvent.TRANSACTION_ATTEMPTS, Tags.of(Tag.of(CLASS, MANUAL_FACT_SPECS)));
+
+    return null;
   }
 
   @SuppressWarnings("unchecked")

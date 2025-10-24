@@ -54,6 +54,8 @@ class LockedAggregateTest {
 
   @InjectMocks private Locked<UserAggregate> underTest;
 
+  @Mock private InLockedOperation inLockedOperation;
+
   // further mocks needed
 
   @Mock private FactStore factStore;
@@ -65,8 +67,16 @@ class LockedAggregateTest {
   @Captor private ArgumentCaptor<Optional<StateToken>> tokenCaptor;
 
   @BeforeEach
-  void mockFactCast() {
+  void prepareMocks() {
     when(fc.lock(factSpecs)).thenReturn(new LockedOperationBuilder(factStore, factSpecs));
+
+    doAnswer(
+            inv -> {
+              ((Runnable) inv.getArgument(0)).run();
+              return null;
+            })
+        .when(inLockedOperation)
+        .runLocked(any());
   }
 
   @Test

@@ -15,35 +15,51 @@
  */
 package org.factcast.factus;
 
-import static org.factcast.factus.metrics.TagKeys.CLASS;
+import static org.factcast.factus.metrics.TagKeys.*;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import java.lang.reflect.Constructor;
-import java.time.*;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.atomic.*;
-import java.util.function.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import lombok.*;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.*;
+import org.factcast.core.Fact;
+import org.factcast.core.FactCast;
+import org.factcast.core.FactStreamPosition;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.subscription.*;
+import org.factcast.core.subscription.Subscription;
+import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.factus.batch.*;
-import org.factcast.factus.event.*;
+import org.factcast.factus.batch.DefaultPublishBatch;
+import org.factcast.factus.batch.PublishBatch;
+import org.factcast.factus.event.EventConverter;
 import org.factcast.factus.event.EventObject;
-import org.factcast.factus.lock.*;
+import org.factcast.factus.lock.InLockedOperation;
 import org.factcast.factus.lock.Locked;
-import org.factcast.factus.metrics.*;
+import org.factcast.factus.lock.LockedOnSpecs;
+import org.factcast.factus.metrics.FactusMetrics;
+import org.factcast.factus.metrics.TimedOperation;
 import org.factcast.factus.projection.*;
-import org.factcast.factus.projector.*;
-import org.factcast.factus.snapshot.*;
+import org.factcast.factus.projector.Projector;
+import org.factcast.factus.projector.ProjectorFactory;
+import org.factcast.factus.snapshot.AggregateRepository;
+import org.factcast.factus.snapshot.ProjectionAndState;
+import org.factcast.factus.snapshot.SnapshotRepository;
 
 /** Single entry point to the factus API. */
 @RequiredArgsConstructor
@@ -65,6 +81,8 @@ public class FactusImpl implements Factus {
 
   private final FactusMetrics factusMetrics;
 
+  private final InLockedOperation inLockedOperation;
+
   private final AtomicBoolean closed = new AtomicBoolean();
 
   private final Set<AutoCloseable> managedObjects =
@@ -79,7 +97,7 @@ public class FactusImpl implements Factus {
   public <T> T publish(@NonNull EventObject e, @NonNull Function<Fact, T> resultFn) {
 
     assertNotClosed();
-    InLockedOperation.assertNotInLockedOperation();
+    inLockedOperation.assertNotInLockedOperation();
 
     Fact factToPublish = eventConverter.toFact(e);
     fc.publish(factToPublish);
@@ -101,7 +119,7 @@ public class FactusImpl implements Factus {
   @Override
   public void publish(@NonNull Fact f) {
     assertNotClosed();
-    InLockedOperation.assertNotInLockedOperation();
+    inLockedOperation.assertNotInLockedOperation();
 
     fc.publish(f);
   }
@@ -110,7 +128,7 @@ public class FactusImpl implements Factus {
   public <T> T publish(@NonNull List<EventObject> e, @NonNull Function<List<Fact>, T> resultFn) {
 
     assertNotClosed();
-    InLockedOperation.assertNotInLockedOperation();
+    inLockedOperation.assertNotInLockedOperation();
 
     List<Fact> facts = e.stream().map(eventConverter::toFact).collect(Collectors.toList());
     fc.publish(facts);
@@ -145,7 +163,7 @@ public class FactusImpl implements Factus {
       @NonNull P subscribedProjection, @NonNull Duration retryWaitTime) {
 
     assertNotClosed();
-    InLockedOperation.assertNotInLockedOperation();
+    inLockedOperation.assertNotInLockedOperation();
 
     while (!closed.get()) {
       WriterToken token = subscribedProjection.acquireWriteToken(retryWaitTime);
@@ -239,7 +257,8 @@ public class FactusImpl implements Factus {
     // ugly, fix hierarchy?
     if (Aggregate.class.isAssignableFrom(projectionClass)) {
       throw new IllegalArgumentException(
-          "Method confusion: UUID aggregateId is missing as a second parameter for aggregates");
+          "Method confusion: UUID aggregateId is missing as a second parameter for "
+              + "aggregates");
     }
 
     ProjectionAndState<P> projectionAndState =
@@ -377,7 +396,8 @@ public class FactusImpl implements Factus {
                 ((FactStreamPositionAware) projection).factStreamPosition(factIdToFfwdTo);
               }
 
-              // only persist ffwd if we ever had a state or applied facts in this catchup
+              // only persist ffwd if we ever had a state or applied facts in this
+              // catchup
               if (stateOrNull != null || factStreamPosition != null) {
                 positionOfLastFactApplied.set(factIdToFfwdTo);
               }
@@ -387,7 +407,8 @@ public class FactusImpl implements Factus {
 
     List<FactSpec> factSpecs = handler.createFactSpecs();
 
-    // the sole purpose of this synchronization is to make sure that writes from the fact delivery
+    // the sole purpose of this synchronization is to make sure that writes from the fact
+    // delivery
     // thread are guaranteed to be visible when leaving the block
     //
     synchronized (projection) {
@@ -449,7 +470,7 @@ public class FactusImpl implements Factus {
   public <M extends ManagedProjection> Locked<M> withLockOn(@NonNull M managedProjection) {
     Projector<M> applier = ehFactory.create(managedProjection);
     List<FactSpec> specs = applier.createFactSpecs();
-    return new Locked<>(fc, this, managedProjection, specs, factusMetrics);
+    return new Locked<>(fc, this, inLockedOperation, managedProjection, specs, factusMetrics);
   }
 
   @Override
@@ -464,7 +485,7 @@ public class FactusImpl implements Factus {
                             aggregateClass.getSimpleName(), id)));
     Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
     List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
-    return new Locked<>(fc, this, fresh, specs, factusMetrics);
+    return new Locked<>(fc, this, inLockedOperation, fresh, specs, factusMetrics);
   }
 
   @Override
@@ -472,7 +493,7 @@ public class FactusImpl implements Factus {
     P fresh = fetch(projectionClass);
     Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
     List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
-    return new Locked<>(fc, this, fresh, specs, factusMetrics);
+    return new Locked<>(fc, this, inLockedOperation, fresh, specs, factusMetrics);
   }
 
   @Override
@@ -488,7 +509,7 @@ public class FactusImpl implements Factus {
   @Override
   public LockedOnSpecs withLockOn(@NonNull List<FactSpec> specs) {
     Preconditions.checkArgument(!specs.isEmpty(), "Argument specs must not be empty");
-    return new LockedOnSpecs(fc, this, specs, factusMetrics);
+    return new LockedOnSpecs(fc, this, inLockedOperation, specs, factusMetrics);
   }
 
   @Override
