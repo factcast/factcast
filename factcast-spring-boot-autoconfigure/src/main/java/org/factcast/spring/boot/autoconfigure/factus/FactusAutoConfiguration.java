@@ -24,8 +24,7 @@ import org.factcast.factus.Factus;
 import org.factcast.factus.FactusImpl;
 import org.factcast.factus.event.EventConverter;
 import org.factcast.factus.event.EventSerializer;
-import org.factcast.factus.lock.InLockedOperation;
-import org.factcast.factus.lock.InLockedOperationJava1_8;
+import org.factcast.factus.lock.*;
 import org.factcast.factus.metrics.FactusMetrics;
 import org.factcast.factus.metrics.FactusMetricsImpl;
 import org.factcast.factus.projection.parameter.HandlerParameterContributors;
@@ -35,10 +34,8 @@ import org.factcast.factus.serializer.DefaultSnapshotSerializer;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.*;
 import org.factcast.factus.utils.FactusDependency;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.AutoConfigureOrder;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.*;
+import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
@@ -48,6 +45,8 @@ import org.springframework.core.Ordered;
 @ConditionalOnClass(Factus.class)
 @Slf4j
 @AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
+@AutoConfigureAfter(
+    name = {"org.factcast.spring.boot.autoconfigure.factus.FactusJdk25AutoConfiguration"})
 public class FactusAutoConfiguration {
 
   @Bean(destroyMethod = "close")
@@ -78,15 +77,23 @@ public class FactusAutoConfiguration {
    * safe to use with virtual threads.
    */
   @Bean
+  // once supported by spring:
+  // @ConditionalOnJava(value = JavaVersion.TWENTY_FIVE, range = ConditionalOnJava.Range.OLDER_THAN)
   @ConditionalOnMissingBean
   public InLockedOperation inLockedOperation() {
-    if (InLockedOperationJava1_8.isVirtualThreadSupported()) {
-      log.warn(
-          "Support for virtual threads detected! Using factus with virtual threads is "
-              + "dangerous! See README in "
-              + "'factcast-factus-jdk25' on how to fix this!");
+    if (LockedUtil.isScopedValueAvailable()) {
+      // we refuse to even startup
+      log.error(
+          "Support for virtual threads & scoped values detected! You are strongly advised to include a dependency to 'factcast-factus-jdk25'. See README in "
+              + "'factcast-factus-jdk25' on the details.");
+    } else {
+      if (LockedUtil.isVirtualThreadSupported()) {
+        log.warn(
+            "Support for virtual threads detected. Please be aware, that if running on virtual Threads **illegal publish operations within locked sections can not be detected**. Please consider to run on JDK25 and include "
+                + "'factcast-factus-jdk25' in order to mitigate.");
+      }
     }
-    return new InLockedOperationJava1_8();
+    return new InLockedOperationThreadLocalImpl();
   }
 
   @Bean

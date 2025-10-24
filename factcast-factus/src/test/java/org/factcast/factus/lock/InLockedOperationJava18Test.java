@@ -25,7 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class InLockedOperationJava18Test {
 
-  @InjectMocks private InLockedOperationJava1_8 underTest;
+  @InjectMocks private InLockedOperationThreadLocalImpl underTest;
 
   @Test
   void initialIsFalse() {

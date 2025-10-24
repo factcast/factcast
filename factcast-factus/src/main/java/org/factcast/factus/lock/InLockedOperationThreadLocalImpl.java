@@ -15,19 +15,30 @@
  */
 package org.factcast.factus.lock;
 
-public class InLockedOperationForVirtualThreads implements InLockedOperation {
+import lombok.extern.slf4j.Slf4j;
 
-  private static final ScopedValue<Boolean> isInLockedOperation = ScopedValue.newInstance();
+@Slf4j
+public class InLockedOperationThreadLocalImpl implements InLockedOperation {
 
+  private static final ThreadLocal<Boolean> isInLockedOperation =
+      ThreadLocal.withInitial(() -> false);
+
+  @Override
   public void runLocked(Runnable runnable) {
-    ScopedValue.where(isInLockedOperation, Boolean.TRUE).run(runnable);
+    isInLockedOperation.set(true);
+    try {
+      runnable.run();
+    } finally {
+      isInLockedOperation.set(false);
+    }
   }
 
   public void assertNotInLockedOperation() throws IllegalStateException {
-    if (isInLockedOperation.orElse(Boolean.FALSE)) {
+    if (Boolean.TRUE.equals(isInLockedOperation.get())) {
       throw new IllegalStateException(
           "Currently within locked operation 'Locked.attempt(...)', hence this "
-              + "operation is not allowed");
+              + "operation is not"
+              + " allowed");
     }
   }
 }

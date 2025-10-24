@@ -15,6 +15,11 @@
  */
 package org.factcast.factus.lock;
 
+/**
+ * Implementations are not so used for actual locking of concurrent access to factcast, but rather
+ * are a safeguard that makes sure that when inside of a ec.lock().attempt(), you publish to the
+ * transaction and not to factus directly (which would be a mistake).
+ */
 public interface InLockedOperation {
 
   void runLocked(Runnable runnable);

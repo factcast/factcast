@@ -15,19 +15,23 @@
  */
 package org.factcast.spring.boot.autoconfigure.factus;
 
-import org.factcast.factus.lock.InLockedOperation;
-import org.factcast.factus.lock.InLockedOperationForVirtualThreads;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.AutoConfigureOrder;
+import org.factcast.factus.lock.*;
+import org.springframework.boot.autoconfigure.*;
+import org.springframework.boot.autoconfigure.condition.*;
+import org.springframework.boot.system.JavaVersion;
 import org.springframework.context.annotation.Bean;
-import org.springframework.core.Ordered;
 
 @AutoConfiguration
+// once supported by spring, replace by: @ConditionalOnJava(JavaVersion.TWENTY_FIVE)
+@ConditionalOnJava(JavaVersion.TWENTY_FOUR)
+@ConditionalOnClass(
+    name = "java.lang.ScopedValue",
+    value = InLockedOperationForVirtualThreads.class)
 // needs to come before FactusAutoConfiguration
-@AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE - 1)
+@AutoConfigureBefore(FactusAutoConfiguration.class)
 public class FactusJdk25AutoConfiguration {
-
   @Bean
+  @ConditionalOnMissingClass
   public InLockedOperation inLockedOperationForVirtualThreads() {
     return new InLockedOperationForVirtualThreads();
   }
