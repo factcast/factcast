@@ -64,9 +64,8 @@ public class S3ReportStore implements ReportStore {
       throw new IllegalArgumentException(
           "Report was not generated as another report with this name already exists.");
     }
-    final var queryString = objectMapper.writeValueAsString(query);
     return new S3BatchedReportUploadStream(
-        s3Client, bucketName, new JsonFactory(objectMapper), reportKey, reportName, queryString);
+        s3Client, bucketName, new JsonFactory(objectMapper), reportKey, reportName, query);
   }
 
   private static String getReportKey(String userName, String reportName) {

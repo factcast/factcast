@@ -23,27 +23,27 @@ import java.time.OffsetDateTime;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.server.ui.report.ReportFilterBean;
 
 @Slf4j
 public abstract class ReportUploadStream {
   @NonNull private final JsonGenerator jsonGenerator;
-  @NonNull private final OutputStream outputStream;
   private final String reportName;
 
   @SneakyThrows
   protected ReportUploadStream(
       @NonNull JsonFactory jsonFactory,
       @NonNull String reportName,
-      @NonNull String queryString,
+      @NonNull ReportFilterBean query,
       @NonNull OutputStream outputStream) {
     log.debug("Initializing report upload stream for report '{}'", reportName);
     this.reportName = reportName;
-    this.outputStream = outputStream;
     this.jsonGenerator = jsonFactory.createGenerator(outputStream);
     jsonGenerator.writeStartObject();
     jsonGenerator.writeStringField("name", reportName);
     jsonGenerator.writeStringField("generatedAt", OffsetDateTime.now().toString());
-    jsonGenerator.writeStringField("query", queryString);
+    jsonGenerator.writeFieldName("query");
+    jsonGenerator.writeObject(query);
     // Open Array for events
     jsonGenerator.writeFieldName("events");
     jsonGenerator.writeStartArray();
@@ -60,12 +60,11 @@ public abstract class ReportUploadStream {
 
   public void close() {
     log.debug("Attempting to close upload stream");
-
     try {
       jsonGenerator.writeEndArray();
       jsonGenerator.writeEndObject();
-      // TODO: maybe needs flush for file case?
-      outputStream.close();
+      jsonGenerator.flush();
+      jsonGenerator.close();
       log.debug("Report upload stream closed successfully");
     } catch (Exception e) {
       throw new RuntimeException("Failed to close report upload " + reportName, e);

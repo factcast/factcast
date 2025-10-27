@@ -62,9 +62,7 @@ public class FileSystemReportStore implements ReportStore {
         log.debug("Parent dirs created");
         final var path = Files.createFile(reportFilePath);
         log.debug("File created {}", path);
-        final var queryString = objectMapper.writeValueAsString(query);
-        return new FileReportUploadStream(
-            new JsonFactory(objectMapper), path, reportName, queryString);
+        return new FileReportUploadStream(new JsonFactory(objectMapper), path, reportName, query);
       } catch (JsonProcessingException e) {
         log.error("Failed to serialize report query", e);
         throw new RuntimeException("Failed to serialize query", e);

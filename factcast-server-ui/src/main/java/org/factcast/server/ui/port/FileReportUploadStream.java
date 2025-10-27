@@ -15,17 +15,20 @@
  */
 package org.factcast.server.ui.port;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.core.JsonFactory;
 import java.io.FileOutputStream;
 import java.nio.file.Path;
-import java.util.List;
 import lombok.NonNull;
+import org.factcast.server.ui.report.ReportFilterBean;
 
-public class FileBatchedReportUploadStream extends BatchedReportUploadStream {
+public class FileReportUploadStream extends ReportUploadStream {
 
-  public FileBatchedReportUploadStream(
-      @NonNull Path filePath, @NonNull String reportName, @NonNull String queryString) {
-    super(reportName, queryString, getFileOutputStream(filePath));
+  public FileReportUploadStream(
+      @NonNull JsonFactory jsonFactory,
+      @NonNull Path filePath,
+      @NonNull String reportName,
+      @NonNull ReportFilterBean query) {
+    super(jsonFactory, reportName, query, getFileOutputStream(filePath));
   }
 
   private static FileOutputStream getFileOutputStream(@NonNull Path path) {
@@ -37,10 +40,4 @@ public class FileBatchedReportUploadStream extends BatchedReportUploadStream {
           e);
     }
   }
-
-  @Override
-  public void writeBatch(List<ObjectNode> batch) {}
-
-  @Override
-  public void close() {}
 }

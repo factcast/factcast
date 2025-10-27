@@ -230,7 +230,7 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
               fact -> {
                 reportUploadStream.writeToBatch(processFact(fact));
               });
-      // Close stream and complete saving
+      // Finish report json and close stream
       reportUploadStream.close();
 
       log.info("Found {} entries", numberOfProcessedFacts);
