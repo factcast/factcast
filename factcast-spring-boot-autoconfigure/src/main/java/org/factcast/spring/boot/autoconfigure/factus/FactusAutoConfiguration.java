@@ -45,8 +45,7 @@ import org.springframework.core.Ordered;
 @ConditionalOnClass(Factus.class)
 @Slf4j
 @AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
-@AutoConfigureAfter(
-    name = {"org.factcast.spring.boot.autoconfigure.factus.FactusJdk25AutoConfiguration"})
+@AutoConfigureAfter(FactusJdk25AutoConfiguration.class)
 public class FactusAutoConfiguration {
 
   @Bean(destroyMethod = "close")
