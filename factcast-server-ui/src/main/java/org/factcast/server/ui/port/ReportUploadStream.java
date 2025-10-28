@@ -67,7 +67,8 @@ public abstract class ReportUploadStream {
       jsonGenerator.close();
       log.debug("Report upload stream closed successfully");
     } catch (Exception e) {
-      throw new RuntimeException("Failed to close report upload " + reportName, e);
+      log.error("Failed to close upload stream", e);
+      throw new RuntimeException(String.format("Failed to close report upload %s.", reportName), e);
     }
   }
 }
