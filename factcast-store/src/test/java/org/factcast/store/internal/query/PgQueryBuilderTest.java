@@ -119,7 +119,7 @@ class PgQueryBuilderTest {
       var sql = normalized(underTest.createSQL());
 
       var expected =
-          """
+"""
 SELECT ser, header, payload,
   header->>'id' AS id, header->>'aggIds' AS aggIds,
   header->>'ns' AS ns, header->>'type' AS type,
@@ -149,7 +149,7 @@ SELECT ser, header, payload,
       var sql = underTest.createSQL();
 
       var expected =
-          """
+"""
 SELECT ser, header, payload,
   header->>'id' AS id,
   header->>'aggIds' AS aggIds,
@@ -189,7 +189,7 @@ WHERE (
 
       // note that filtering cannot be done in the database, as the version is not defined.
       var expected =
-          """
+"""
 SELECT
   ser,
   header,
@@ -239,7 +239,7 @@ ORDER BY
       var sql = underTest.createSQL();
 
       var expected =
-          """
+"""
 SELECT
   ser,
   header,
@@ -299,7 +299,7 @@ ORDER BY
       var underTest = new PgQueryBuilder(specs);
       var sql = underTest.createSQL();
       var expected =
-          """
+"""
 SELECT ser, header, payload,
  header->>'id' AS id,
  header->>'aggIds' AS aggIds,
@@ -331,7 +331,7 @@ SELECT ser, header, payload,
       var underTest = new PgQueryBuilder(specs);
       var sql = underTest.createStateSQL();
       var expected =
-          """
+"""
 SELECT ser FROM fact
 WHERE (
 (true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR

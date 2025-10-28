@@ -79,6 +79,11 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
+      <artifactId>factcast-factus-jdk25</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
       <artifactId>factcast-grpc-lz4</artifactId>
       <optional>true</optional>
     </dependency>

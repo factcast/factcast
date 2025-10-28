@@ -60,7 +60,7 @@ public final class JSFilterScriptMatcher implements PGFactMatcher {
       FilterScript filterScript, @NonNull JSEngineFactory ef) {
 
     return switch (filterScript.languageIdentifier()) {
-        //  currently only supports language js
+      //  currently only supports language js
       case "js" -> ef.getOrCreateFor("var test=" + filterScript.source());
       default ->
           throw new IllegalArgumentException(

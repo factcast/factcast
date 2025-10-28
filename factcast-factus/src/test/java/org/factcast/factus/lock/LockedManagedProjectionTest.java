@@ -35,8 +35,9 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.store.StateToken;
 import org.factcast.factus.Factus;
 import org.factcast.factus.metrics.FactusMetrics;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -54,6 +55,8 @@ class LockedManagedProjectionTest {
 
   @Spy private NamesProjection managedProjection;
 
+  @Mock private InLockedOperation inLockedOperation;
+
   @InjectMocks private Locked<NamesProjection> underTest;
 
   // further mocks needed
@@ -69,8 +72,16 @@ class LockedManagedProjectionTest {
   @Captor private ArgumentCaptor<Optional<StateToken>> tokenCaptor;
 
   @BeforeEach
-  void mockFactCast() {
+  void prepareMocks() {
     when(fc.lock(factSpecs)).thenReturn(new LockedOperationBuilder(factStore, factSpecs));
+
+    doAnswer(
+            inv -> {
+              ((Runnable) inv.getArgument(0)).run();
+              return null;
+            })
+        .when(inLockedOperation)
+        .runLocked(any());
   }
 
   @Test

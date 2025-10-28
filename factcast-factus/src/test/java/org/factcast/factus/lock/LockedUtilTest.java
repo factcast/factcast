@@ -15,14 +15,19 @@
  */
 package org.factcast.factus.lock;
 
-/**
- * Implementations are not so used for actual locking of concurrent access to factcast, but rather
- * are a safeguard that makes sure that when inside of a ec.lock().attempt(), you publish to the
- * transaction and not to factus directly (which would be a mistake).
- */
-public interface InLockedOperation {
+import static org.assertj.core.api.Assertions.*;
 
-  void runLocked(Runnable runnable);
+import org.junit.jupiter.api.Test;
 
-  void assertNotInLockedOperation() throws IllegalStateException;
+class LockedUtilTest {
+
+  @Test
+  void isVirtualThreadSupported() {
+    assertThat(LockedUtil.isVirtualThreadSupported()).isTrue();
+  }
+
+  @Test
+  void isScopedValueAvailable() {
+    assertThat(LockedUtil.isScopedValueAvailable()).isTrue();
+  }
 }
