@@ -3,7 +3,6 @@ package org.factcast.schema.registry.cli.validation.validators.impl
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.factcast.schema.registry.cli.domain.Project
@@ -23,8 +22,6 @@ class ProjectStructureValidationServiceIntTest : StringSpec() {
     lateinit var uut: ProjectStructureValidationService
 
     init {
-        extension(SpringExtension)
-
         "validateProjectStructure - Projectfolder" {
 
             val projectFolder = ProjectFolder(dummyPath, null, emptyList())

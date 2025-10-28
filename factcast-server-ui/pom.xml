@@ -6,14 +6,14 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.9.11-SNAPSHOT</version>
+    <version>0.9.12-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-server-ui</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
   <properties>
-    <java.version>17</java.version>
-    <vaadin.version>24.5.2</vaadin.version>
+    <java.version>21</java.version>
+    <vaadin.version>24.9.3</vaadin.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -107,7 +107,7 @@
     <dependency>
       <groupId>org.vaadin.crudui</groupId>
       <artifactId>crudui</artifactId>
-      <version>7.1.0</version>
+      <version>7.2.0</version>
     </dependency>
 
     <dependency>
@@ -176,6 +176,7 @@
         <executions>
           <execution>
             <goals>
+              <goal>prepare-frontend</goal>
               <goal>build-frontend</goal>
             </goals>
             <phase>compile</phase>
