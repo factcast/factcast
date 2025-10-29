@@ -18,7 +18,6 @@ package org.factcast.server.ui.s3reportstore;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -113,7 +112,7 @@ public class S3MultipartOutputStream extends OutputStream {
                   .multipartUpload(CompletedMultipartUpload.builder().parts(parts).build())
                   .build())
           .get();
-    } catch (InterruptedException | ExecutionException e) {
+    } catch (Exception e) {
       log.error("Error while completing multipart upload: ", e);
       abortQuietly();
       throw new IOException("Completing multipart upload failed", e);
