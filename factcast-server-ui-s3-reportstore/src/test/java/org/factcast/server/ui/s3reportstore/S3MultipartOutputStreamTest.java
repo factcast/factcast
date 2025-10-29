@@ -66,16 +66,6 @@ class S3MultipartOutputStreamTest {
       assertThatThrownBy(() -> new S3MultipartOutputStream(s3, "bucket", "key", 1024))
           .isInstanceOf(IllegalArgumentException.class);
     }
-
-    @Test
-    void onFailureThrowsRuntimeException() {
-      when(s3.createMultipartUpload(any(CreateMultipartUploadRequest.class)))
-          .thenReturn(CompletableFuture.failedFuture(SdkClientException.create("failed")));
-
-      assertThatThrownBy(() -> new S3MultipartOutputStream(s3, "bucket", "key", 5 * MB))
-          .isInstanceOf(RuntimeException.class)
-          .hasMessage("Failed to initiate multipart upload");
-    }
   }
 
   @Nested

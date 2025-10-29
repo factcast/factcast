@@ -37,6 +37,7 @@ public class S3MultipartOutputStream extends OutputStream {
   private final String uploadId;
   private boolean closed = false;
 
+  @SneakyThrows
   public S3MultipartOutputStream(
       @NonNull S3AsyncClient s3, @NonNull String bucket, @NonNull String key, int partSizeBytes) {
     if (partSizeBytes < 5 * 1024 * 1024)
@@ -54,16 +55,8 @@ public class S3MultipartOutputStream extends OutputStream {
                 .contentType("application/json; charset=utf-8")
                 .checksumAlgorithm(ChecksumAlgorithm.CRC32)
                 .build());
-    try {
-      final var init = multipartUpload.get();
-      this.uploadId = init.uploadId();
-    } catch (InterruptedException e) {
-      log.error("Failed to initiate multipart upload: ", e);
-      throw new RuntimeException("Upload was interrupted", e);
-    } catch (Exception e) {
-      log.error("Failed to initiate multipart upload: ", e);
-      throw new RuntimeException("Failed to initiate multipart upload", e);
-    }
+    final var init = multipartUpload.get();
+    this.uploadId = init.uploadId();
   }
 
   @Override
@@ -115,6 +108,7 @@ public class S3MultipartOutputStream extends OutputStream {
     } catch (Exception e) {
       log.error("Error while completing multipart upload: ", e);
       abortQuietly();
+      Thread.currentThread().interrupt();
       throw new IOException("Completing multipart upload failed", e);
     }
     log.debug("Completed multipart upload");

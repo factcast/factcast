@@ -242,8 +242,10 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
       }
 
     } catch (ValidationException | IllegalArgumentException e) {
+      log.warn("Validation error during report generation", e);
       Notifications.warn(e.getMessage());
     } catch (Exception e) {
+      log.error("Error during report generation", e);
       Notifications.error(e.getMessage());
     }
     // Not re-enabling the queryReportBtn to not incentivise users to generate it

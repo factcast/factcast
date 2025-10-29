@@ -16,7 +16,6 @@
 package org.factcast.server.ui.adapter;
 
 import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -50,6 +49,7 @@ public class FileSystemReportStore implements ReportStore {
   }
 
   @Override
+  @SneakyThrows
   public FileReportUploadStream createBatchUpload(
       @NonNull String userName, @NonNull String reportName, @NonNull ReportFilterBean query) {
     final var reportFilePath = Paths.get(persistenceDir, userName, reportName);
@@ -57,19 +57,11 @@ public class FileSystemReportStore implements ReportStore {
     log.info("Usable space in partition: {} MB", getUsableSpaceInMb(persistenceDir));
 
     if (!Files.exists(reportFilePath)) {
-      try {
-        Files.createDirectories(reportFilePath.getParent());
-        log.debug("Parent dirs created");
-        final var path = Files.createFile(reportFilePath);
-        log.debug("File created {}", path);
-        return new FileReportUploadStream(new JsonFactory(objectMapper), path, reportName, query);
-      } catch (JsonProcessingException e) {
-        log.error("Failed to serialize report query", e);
-        throw new RuntimeException("Failed to serialize query", e);
-      } catch (IOException e) {
-        log.error("Failed to save report", e);
-        throw ExceptionHelper.toRuntime(e);
-      }
+      Files.createDirectories(reportFilePath.getParent());
+      log.debug("Parent dirs created");
+      final var path = Files.createFile(reportFilePath);
+      log.debug("File created {}", path);
+      return new FileReportUploadStream(new JsonFactory(objectMapper), path, reportName, query);
     } else {
       throw new IllegalArgumentException(
           "Report was not generated as another report with this name already exists.");
