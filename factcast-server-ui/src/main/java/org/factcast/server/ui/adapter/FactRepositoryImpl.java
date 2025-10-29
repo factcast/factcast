@@ -115,7 +115,8 @@ public class FactRepositoryImpl implements FactRepository {
     Long untilSerial = Optional.ofNullable(bean.getTo()).map(BigDecimal::longValue).orElse(null);
     ListObserver obs =
         new ListObserver(untilSerial, bean.getLimitOrDefault(), bean.getOffsetOrDefault());
-    return fetch(bean, obs);
+    fetch(bean, obs);
+    return obs.list();
   }
 
   @SneakyThrows
@@ -123,13 +124,12 @@ public class FactRepositoryImpl implements FactRepository {
   public long fetchAndProcessAll(ReportFilterBean bean, Consumer<Fact> consumer) {
     Long untilSerial = Optional.ofNullable(bean.getTo()).map(BigDecimal::longValue).orElse(null);
     final var obs = new UnlimitedConsumingObserver(untilSerial, 0, consumer);
-    fetchStream(bean, obs);
+    fetch(bean, obs);
     return obs.processedFacts();
   }
 
   @SneakyThrows
-  public void fetchStream(FilterBean bean, AbstractListObserver obs) {
-
+  private void fetch(FilterBean bean, AbstractListObserver obs) {
     Set<FactSpec> specs = securityService.filterReadable(bean.createFactSpecs());
 
     SpecBuilder sr = SubscriptionRequest.catchup(specs);
@@ -157,39 +157,6 @@ public class FactRepositoryImpl implements FactRepository {
         throw ExceptionHelper.toRuntime(e);
       }
     }
-  }
-
-  @SneakyThrows
-  public List<Fact> fetch(FilterBean bean, AbstractListObserver obs) {
-
-    Set<FactSpec> specs = securityService.filterReadable(bean.createFactSpecs());
-
-    SpecBuilder sr = SubscriptionRequest.catchup(specs);
-    long ser = bean.resolveFromOrZero();
-    SubscriptionRequest request = null;
-
-    if (ser > 0) {
-      request = sr.fromNullable(findIdOfSerial(ser).orElse(null));
-    } else {
-      request = sr.fromScratch();
-    }
-
-    final SubscriptionRequestTO requestTO = SubscriptionRequestTO.from(request);
-    setDebugInfo(requestTO);
-
-    try (Subscription subscription = fs.subscribe(requestTO, obs)) {
-      subscription.awaitCatchup();
-    } catch (Exception e) {
-      // in case the limit is reached, it makes no sense to stream the rest of the
-      // factstream into the ListObserver. Leaving the try-with-resources, the
-      // subscription will be closed
-
-      if (!LimitReachedException.matches(e)) {
-        // something else happened, we probably need to escalate and notify
-        throw ExceptionHelper.toRuntime(e);
-      }
-    }
-    return obs.list();
   }
 
   private void setDebugInfo(SubscriptionRequestTO req) {
