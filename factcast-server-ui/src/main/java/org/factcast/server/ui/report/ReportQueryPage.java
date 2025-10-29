@@ -226,16 +226,13 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
           reportStore.createBatchUpload(userName, fileNameField.value(), formBean);
       final long numberOfProcessedFacts =
           repo.fetchAndProcessAll(
-              formBean,
-              fact -> {
-                reportUploadStream.writeToBatch(processFact(fact));
-              });
+              formBean, fact -> reportUploadStream.writeToBatch(processFact(fact)));
       // Finish report json and close stream
       reportUploadStream.close();
 
       log.info("Found {} entries", numberOfProcessedFacts);
       if (numberOfProcessedFacts == 0) {
-        displayWarning(
+        Notifications.warn(
             "No data was found for this query and therefore report creation is skipped.");
         // no report was produced, report with same name could still be produced,
         // people will probably want to adjust their filter criteria and try again right away
@@ -244,10 +241,8 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
         reportProvider.refreshAll();
       }
 
-    } catch (ValidationException e) {
+    } catch (ValidationException | IllegalArgumentException e) {
       Notifications.warn(e.getMessage());
-    } catch (IllegalArgumentException e) {
-      displayWarning(e.getMessage());
     } catch (Exception e) {
       Notifications.error(e.getMessage());
     }
@@ -271,10 +266,5 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
           final var userReports = reportStore.listAllForUser(this.userName);
           return userReports.size();
         });
-  }
-
-  private static void displayWarning(String message) {
-    Notification notification = Notification.show(message);
-    notification.addThemeVariants(NotificationVariant.LUMO_WARNING);
   }
 }

@@ -34,7 +34,6 @@ public class S3ReportStoreConfiguration {
   @Bean
   @ConditionalOnMissingBean
   public S3AsyncClient s3Client() {
-
     return S3AsyncClient.builder()
         .multipartEnabled(true)
         .credentialsProvider(DefaultCredentialsProvider.builder().build())

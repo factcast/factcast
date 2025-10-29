@@ -18,6 +18,7 @@ package org.factcast.server.ui.s3reportstore;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +26,7 @@ import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.model.*;
 
-// TODO consider refactoring with
+// consider refactoring with
 // https://docs.aws.amazon.com/AmazonS3/latest/API/s3_example_s3_Scenario_UploadStream_section.html
 @Slf4j
 public class S3MultipartOutputStream extends OutputStream {
@@ -57,8 +58,11 @@ public class S3MultipartOutputStream extends OutputStream {
     try {
       final var init = multipartUpload.get();
       this.uploadId = init.uploadId();
+    } catch (InterruptedException e) {
+      log.error("Failed to initiate multipart upload: ", e);
+      throw new RuntimeException("Upload was interrupted", e);
     } catch (Exception e) {
-      log.error("Error while initiating multipart upload: ", e);
+      log.error("Failed to initiate multipart upload: ", e);
       throw new RuntimeException("Failed to initiate multipart upload", e);
     }
   }
@@ -99,7 +103,7 @@ public class S3MultipartOutputStream extends OutputStream {
     closed = true;
     try {
       // send final (possibly < 5 MiB) part
-      if (count > 0) upload(buf, 0, count);
+      if (count > 0) upload(buf, count);
       parts.sort(Comparator.comparingInt(CompletedPart::partNumber));
       s3.completeMultipartUpload(
               CompleteMultipartUploadRequest.builder()
@@ -109,7 +113,7 @@ public class S3MultipartOutputStream extends OutputStream {
                   .multipartUpload(CompletedMultipartUpload.builder().parts(parts).build())
                   .build())
           .get();
-    } catch (Exception e) {
+    } catch (InterruptedException | ExecutionException e) {
       log.error("Error while completing multipart upload: ", e);
       abortQuietly();
       throw new IOException("Completing multipart upload failed", e);
@@ -118,12 +122,12 @@ public class S3MultipartOutputStream extends OutputStream {
   }
 
   private void flushPart() {
-    upload(buf, 0, buf.length);
+    upload(buf, buf.length);
     count = 0;
   }
 
   @SneakyThrows
-  private void upload(byte[] bytes, int off, int len) {
+  private void upload(byte[] bytes, int len) {
     try {
       final var partNumber = nextPartNumber();
       final var upload =
@@ -136,9 +140,7 @@ public class S3MultipartOutputStream extends OutputStream {
                   .contentLength((long) len)
                   .build(),
               AsyncRequestBody.fromBytes(
-                  off == 0 && len == bytes.length
-                      ? bytes
-                      : java.util.Arrays.copyOfRange(bytes, off, off + len)));
+                  len == bytes.length ? bytes : java.util.Arrays.copyOfRange(bytes, 0, len)));
 
       final var partResponse = upload.get();
       parts.add(
@@ -159,6 +161,7 @@ public class S3MultipartOutputStream extends OutputStream {
       s3.abortMultipartUpload(
           AbortMultipartUploadRequest.builder().bucket(bucket).key(key).uploadId(uploadId).build());
     } catch (Exception ignore) {
+      // Nothing we can do here.
     }
   }
 

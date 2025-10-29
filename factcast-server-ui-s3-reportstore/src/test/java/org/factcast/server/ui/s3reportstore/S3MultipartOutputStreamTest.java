@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -80,6 +81,7 @@ class S3MultipartOutputStreamTest {
   @Nested
   class WhenWritingData {
     @BeforeEach
+    @SneakyThrows
     void setup() {
       mockCreateMultipartUploadResponse();
       uut = new S3MultipartOutputStream(s3, "bucket", "key", 5 * MB);
@@ -187,6 +189,7 @@ class S3MultipartOutputStreamTest {
   @Nested
   class WhenClosingStream {
     @BeforeEach
+    @SneakyThrows
     void setup() {
       mockCreateMultipartUploadResponse();
       uut = new S3MultipartOutputStream(s3, "bucket", "key", 5 * MB);
@@ -242,6 +245,7 @@ class S3MultipartOutputStreamTest {
   }
 
   @Test
+  @SneakyThrows
   void doNothingOnFlush() {
     mockCreateMultipartUploadResponse();
     uut = new S3MultipartOutputStream(s3, "bucket", "key", 5 * MB);
