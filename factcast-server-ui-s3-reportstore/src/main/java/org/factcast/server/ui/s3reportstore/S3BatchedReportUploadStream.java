@@ -24,7 +24,7 @@ import software.amazon.awssdk.services.s3.S3AsyncClient;
 /** Batches received facts until BUFFER_SIZE is reached and uploads it using MultiPartUpload */
 public class S3BatchedReportUploadStream extends ReportUploadStream {
 
-  private static final int BUFFER_SIZE = 10 * 1024 * 1024; // 5 MB
+  private static final int BUFFER_SIZE = 10 * 1024 * 1024; // 10 MB
 
   public S3BatchedReportUploadStream(
       @NonNull S3AsyncClient s3Client,

@@ -35,12 +35,12 @@ public class S3MultipartOutputStream extends OutputStream {
   private int count = 0;
   private final List<CompletedPart> parts = new ArrayList<>();
   private final String uploadId;
-  private int partNumber = 1;
   private boolean closed = false;
 
   public S3MultipartOutputStream(
       @NonNull S3AsyncClient s3, @NonNull String bucket, @NonNull String key, int partSizeBytes) {
-    if (partSizeBytes < 5 * 1024 * 1024) throw new IllegalArgumentException("partSize >= 5 MiB");
+    if (partSizeBytes < 5 * 1024 * 1024)
+      throw new IllegalArgumentException("partSize must be higher than 5 MiB");
     this.s3 = s3;
     this.bucket = bucket;
     this.key = key;
@@ -89,7 +89,7 @@ public class S3MultipartOutputStream extends OutputStream {
   }
 
   @Override
-  public void flush() throws IOException {
+  public void flush() {
     // no-op: we only send full parts; final partial is sent on close()
   }
 
@@ -102,16 +102,13 @@ public class S3MultipartOutputStream extends OutputStream {
       if (count > 0) upload(buf, 0, count);
       parts.sort(Comparator.comparingInt(CompletedPart::partNumber));
       s3.completeMultipartUpload(
-          CompleteMultipartUploadRequest.builder()
-              .bucket(bucket)
-              .key(key)
-              .uploadId(uploadId)
-              .multipartUpload(CompletedMultipartUpload.builder().parts(parts).build())
-              .build());
-    } catch (RuntimeException e) {
-      log.error("Error while completing multipart upload: ", e);
-      abortQuietly();
-      throw e;
+              CompleteMultipartUploadRequest.builder()
+                  .bucket(bucket)
+                  .key(key)
+                  .uploadId(uploadId)
+                  .multipartUpload(CompletedMultipartUpload.builder().parts(parts).build())
+                  .build())
+          .get();
     } catch (Exception e) {
       log.error("Error while completing multipart upload: ", e);
       abortQuietly();
@@ -125,10 +122,10 @@ public class S3MultipartOutputStream extends OutputStream {
     count = 0;
   }
 
-  // TODO: handle exception thrown by upload.get()
   @SneakyThrows
   private void upload(byte[] bytes, int off, int len) {
     try {
+      final var partNumber = nextPartNumber();
       final var upload =
           s3.uploadPart(
               UploadPartRequest.builder()
@@ -167,5 +164,9 @@ public class S3MultipartOutputStream extends OutputStream {
 
   private void ensureOpen() throws IOException {
     if (closed) throw new IOException("Stream closed");
+  }
+
+  private int nextPartNumber() {
+    return parts.size() + 1;
   }
 }
