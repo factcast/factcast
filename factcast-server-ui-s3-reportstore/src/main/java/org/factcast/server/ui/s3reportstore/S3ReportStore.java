@@ -15,10 +15,10 @@
  */
 package org.factcast.server.ui.s3reportstore;
 
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -29,30 +29,24 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.util.ExceptionHelper;
 import org.factcast.server.ui.port.ReportStore;
 import org.factcast.server.ui.report.*;
-import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
-import software.amazon.awssdk.transfer.s3.S3TransferManager;
-import software.amazon.awssdk.transfer.s3.model.*;
 
 @Slf4j
 public class S3ReportStore implements ReportStore {
 
   private final S3AsyncClient s3Client;
-  private final S3TransferManager s3TransferManager;
   private final S3Presigner s3Presigner;
   private final String bucketName;
   private final ObjectMapper objectMapper;
 
   public S3ReportStore(
       @NonNull S3AsyncClient s3Client,
-      @NonNull S3TransferManager s3TransferManager,
       @NonNull S3Presigner s3Presigner,
       @NonNull String bucketName) {
     this.s3Client = s3Client;
-    this.s3TransferManager = s3TransferManager;
     this.s3Presigner = s3Presigner;
     this.bucketName = bucketName;
     final var om = new ObjectMapper();
@@ -62,25 +56,16 @@ public class S3ReportStore implements ReportStore {
   }
 
   @Override
-  public void save(@NonNull String userName, @NonNull Report report) {
-    final var reportKey = getReportKey(userName, report.name());
+  @SneakyThrows
+  public S3BatchedReportUploadStream createBatchUpload(
+      @NonNull String userName, @NonNull String reportName, @NonNull ReportFilterBean query) {
+    final var reportKey = getReportKey(userName, reportName);
     if (doesObjectExist(reportKey)) {
       throw new IllegalArgumentException(
           "Report was not generated as another report with this name already exists.");
     }
-    try {
-      UploadRequest uploadRequest =
-          UploadRequest.builder()
-              .putObjectRequest(put -> put.bucket(bucketName).key(reportKey))
-              .requestBody(AsyncRequestBody.fromBytes(objectMapper.writeValueAsBytes(report)))
-              .build();
-
-      Upload fileUpload = s3TransferManager.upload(uploadRequest);
-      fileUpload.completionFuture().join();
-    } catch (IOException e) {
-      log.error("Failed to save report", e);
-      throw ExceptionHelper.toRuntime(e);
-    }
+    return new S3BatchedReportUploadStream(
+        s3Client, bucketName, new JsonFactory(objectMapper), reportKey, reportName, query);
   }
 
   private static String getReportKey(String userName, String reportName) {

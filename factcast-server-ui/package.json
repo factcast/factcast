@@ -96,14 +96,10 @@
     "@vaadin/polymer-legacy-adapter": "$@vaadin/polymer-legacy-adapter",
     "@vaadin/vaadin-development-mode-detector": "$@vaadin/vaadin-development-mode-detector",
     "@vaadin/vaadin-usage-statistics": "$@vaadin/vaadin-usage-statistics",
-    "@vaadin/react-components": "$@vaadin/react-components",
     "@vaadin/common-frontend": "$@vaadin/common-frontend",
-    "react-dom": "$react-dom",
     "construct-style-sheets-polyfill": "$construct-style-sheets-polyfill",
     "lit": "$lit",
     "@polymer/polymer": "$@polymer/polymer",
-    "react": "$react",
-    "react-router": "$react-router",
     "jsonc-parser": "$jsonc-parser",
     "date-fns": "$date-fns",
     "jsonpath-plus": "$jsonpath-plus",
@@ -170,6 +166,10 @@
     "@vaadin/upload": "24.9.2",
     "@vaadin/router": "2.0.0",
     "@vaadin/vertical-layout": "24.9.2",
-    "@vaadin/virtual-list": "24.9.2"
+    "@vaadin/virtual-list": "24.9.2",
+    "@vaadin/react-components": "$@vaadin/react-components",
+    "react": "$react",
+    "react-dom": "$react-dom",
+    "react-router": "$react-router"
   }
 }

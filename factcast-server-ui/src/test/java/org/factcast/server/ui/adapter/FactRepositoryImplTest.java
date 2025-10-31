@@ -23,6 +23,7 @@ import static org.mockito.Mockito.*;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
@@ -360,9 +361,10 @@ public class FactRepositoryImplTest {
   }
 
   @Nested
-  class WhenFetchingAll {
+  class WhenFetchingAndProcessingAll {
     @Mock private ReportFilterBean bean;
     @Mock private FactCastUser userMock;
+    @Mock private Consumer<Fact> processor;
 
     private final String username = "user@auth.eu";
 
@@ -379,14 +381,15 @@ public class FactRepositoryImplTest {
       when(securityService.getAuthenticatedUser()).thenReturn(userMock);
       ArgumentCaptor<SubscriptionRequestTO> srCaptor =
           ArgumentCaptor.forClass(SubscriptionRequestTO.class);
-      when(fs.subscribe(srCaptor.capture(), any(UnlimitedListObserver.class)))
+      when(fs.subscribe(srCaptor.capture(), any(UnlimitedConsumingObserver.class)))
           .thenReturn(mock(Subscription.class));
 
-      underTest.fetchAll(bean);
+      underTest.fetchAndProcessAll(bean, processor);
 
       SubscriptionRequest request = srCaptor.getValue();
       assertThat(request.specs()).containsExactlyInAnyOrderElementsOf(nameSpacesAfterFiltering);
 
+      verifyNoInteractions(processor);
       verify(securityService).filterReadable(nameSpaces);
     }
 
@@ -402,10 +405,10 @@ public class FactRepositoryImplTest {
       when(securityService.filterReadable(nameSpaces))
           .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
       when(securityService.getAuthenticatedUser()).thenReturn(userMock);
-      when(fs.subscribe(srCaptor.capture(), any(UnlimitedListObserver.class)))
+      when(fs.subscribe(srCaptor.capture(), any(UnlimitedConsumingObserver.class)))
           .thenReturn(mock(Subscription.class));
 
-      underTest.fetchAll(bean);
+      underTest.fetchAndProcessAll(bean, processor);
 
       assertThat(srCaptor.getValue().startingAfter()).isNotEmpty().hasValue(id);
     }
@@ -426,7 +429,8 @@ public class FactRepositoryImplTest {
                 return subscriptionImpl;
               });
 
-      assertThatThrownBy(() -> underTest.fetchAll(bean)).isInstanceOf(ExampleException.class);
+      assertThatThrownBy(() -> underTest.fetchAndProcessAll(bean, processor))
+          .isInstanceOf(ExampleException.class);
     }
 
     @Test
@@ -447,7 +451,7 @@ public class FactRepositoryImplTest {
 
       assertDoesNotThrow(
           () -> {
-            underTest.fetchAll(bean);
+            underTest.fetchAndProcessAll(bean, processor);
           });
     }
 
@@ -459,10 +463,10 @@ public class FactRepositoryImplTest {
       when(securityService.filterReadable(nameSpaces))
           .thenReturn(Set.copyOf(nameSpacesAfterFiltering));
       when(securityService.getAuthenticatedUser()).thenReturn(userMock);
-      when(fs.subscribe(srCaptor.capture(), any(UnlimitedListObserver.class)))
+      when(fs.subscribe(srCaptor.capture(), any(UnlimitedConsumingObserver.class)))
           .thenReturn(mock(Subscription.class));
 
-      underTest.fetchAll(bean);
+      underTest.fetchAndProcessAll(bean, processor);
 
       assertThat(srCaptor.getValue().debugInfo()).isEqualTo(username);
     }

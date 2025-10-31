@@ -15,6 +15,7 @@
  */
 package org.factcast.server.ui.adapter;
 
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -27,6 +28,7 @@ import java.util.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.util.ExceptionHelper;
+import org.factcast.server.ui.port.FileReportUploadStream;
 import org.factcast.server.ui.port.ReportStore;
 import org.factcast.server.ui.report.*;
 
@@ -47,23 +49,19 @@ public class FileSystemReportStore implements ReportStore {
   }
 
   @Override
-  public void save(@NonNull String userName, @NonNull Report report) {
-    final var reportFilePath = Paths.get(persistenceDir, userName, report.name());
+  @SneakyThrows
+  public FileReportUploadStream createBatchUpload(
+      @NonNull String userName, @NonNull String reportName, @NonNull ReportFilterBean query) {
+    final var reportFilePath = Paths.get(persistenceDir, userName, reportName);
     log.info("Saving report to {}", reportFilePath);
     log.info("Usable space in partition: {} MB", getUsableSpaceInMb(persistenceDir));
 
     if (!Files.exists(reportFilePath)) {
-      try {
-        Files.createDirectories(reportFilePath.getParent());
-        log.info("Parent dirs created");
-        Files.createFile(reportFilePath);
-        log.info("File created");
-
-        objectMapper.writeValue(reportFilePath.toFile(), report);
-      } catch (IOException e) {
-        log.error("Failed to save report", e);
-        throw ExceptionHelper.toRuntime(e);
-      }
+      Files.createDirectories(reportFilePath.getParent());
+      log.debug("Parent dirs created");
+      final var path = Files.createFile(reportFilePath);
+      log.debug("File created {}", path);
+      return new FileReportUploadStream(new JsonFactory(objectMapper), path, reportName, query);
     } else {
       throw new IllegalArgumentException(
           "Report was not generated as another report with this name already exists.");
