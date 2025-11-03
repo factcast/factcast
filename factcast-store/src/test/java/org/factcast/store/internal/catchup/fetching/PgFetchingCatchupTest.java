@@ -91,6 +91,7 @@ class PgFetchingCatchupTest {
               new PgFetchingCatchup(
                   connectionSupplier,
                   props,
+                  metrics,
                   req,
                   pipeline,
                   serial,
@@ -116,6 +117,7 @@ class PgFetchingCatchupTest {
               new PgFetchingCatchup(
                   connectionSupplier,
                   props,
+                  metrics,
                   req,
                   pipeline,
                   serial,

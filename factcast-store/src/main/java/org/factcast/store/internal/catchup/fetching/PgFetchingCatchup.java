@@ -16,12 +16,15 @@
 package org.factcast.store.internal.catchup.fetching;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.time.Duration;
 import java.util.concurrent.atomic.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgFact;
+import org.factcast.store.internal.PgMetrics;
+import org.factcast.store.internal.StoreMetrics;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.*;
@@ -38,9 +41,13 @@ import org.springframework.jdbc.core.RowCallbackHandler;
 @RequiredArgsConstructor
 public class PgFetchingCatchup implements PgCatchup {
 
+  private static final Duration FIRST_ROW_FETCHING_THRESHOLD = Duration.ofSeconds(1);
+
   @NonNull final PgConnectionSupplier connectionSupplier;
 
   @NonNull final StoreConfigurationProperties props;
+
+  @NonNull final PgMetrics metrics;
 
   @NonNull final SubscriptionRequestTO req;
 
@@ -75,13 +82,38 @@ public class PgFetchingCatchup implements PgCatchup {
   void fetch(JdbcTemplate jdbc) {
     jdbc.setFetchSize(props.getPageSize());
     jdbc.setQueryTimeout(0); // disable query timeout
-    PgQueryBuilder b = new PgQueryBuilder(req.specs(), statementHolder);
-    var extractor = new PgFactExtractor(serial);
-    String catchupSQL = b.createSQL();
-    var fromSerial = serial.get() < fastForward ? new AtomicLong(fastForward) : serial;
+    final var b = new PgQueryBuilder(req.specs(), statementHolder);
+    final var extractor = new PgFactExtractor(serial);
+    final var catchupSQL = b.createSQL();
+    final var fromSerial = serial.get() < fastForward ? new AtomicLong(fastForward) : serial;
+    final var isFromScratch = (fromSerial.get() <= 0);
+    final var rowCallbackHandler =
+        isFromScratch
+            ? createTimedRowCallbackHandler(extractor)
+            : createRowCallbackHandler(extractor);
     log.trace("{} catchup {} - facts starting with SER={}", req, phase, fromSerial.get());
-    jdbc.query(
-        catchupSQL, b.createStatementSetter(fromSerial), createRowCallbackHandler(extractor));
+    jdbc.query(catchupSQL, b.createStatementSetter(fromSerial), rowCallbackHandler);
+  }
+
+  @VisibleForTesting
+  RowCallbackHandler createTimedRowCallbackHandler(PgFactExtractor extractor) {
+    final var catchupStreamStart = metrics.timer(StoreMetrics.OP.CATCHUP_STREAM_START);
+    final var isFirstRow = new AtomicBoolean(true);
+    final var timerSample = metrics.startSample();
+    final var handler = createRowCallbackHandler(extractor);
+    return rs -> {
+      if (isFirstRow.getAndSet(false)) {
+        final var elapsed = Duration.ofNanos(timerSample.stop(catchupStreamStart));
+        logIfAboveThreshold(elapsed);
+      }
+      handler.processRow(rs);
+    };
+  }
+
+  private void logIfAboveThreshold(Duration elapsed) {
+    if (elapsed.compareTo(FIRST_ROW_FETCHING_THRESHOLD) > 0) {
+      log.info("{} catchup - took {}s to stream the first result set", req, elapsed.toSeconds());
+    }
   }
 
   @VisibleForTesting

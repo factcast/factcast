@@ -124,6 +124,10 @@ public class PgMetrics implements InitializingBean {
     return ExecutorServiceMetrics.monitor(registry, executor, name);
   }
 
+  public Sample startSample() {
+    return Timer.start();
+  }
+
   @Override
   public void afterPropertiesSet() throws Exception {
     /*

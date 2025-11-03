@@ -57,7 +57,9 @@ public class StoreMetrics {
 
     INVALIDATE_STATE_TOKEN("invalidateStateToken"),
 
-    NOTIFY_ROUNDTRIP("notifyRoundTripLatency");
+    NOTIFY_ROUNDTRIP("notifyRoundTripLatency"),
+
+    CATCHUP_STREAM_START("catchupStreamStart");
 
     @NonNull final String name;
 
