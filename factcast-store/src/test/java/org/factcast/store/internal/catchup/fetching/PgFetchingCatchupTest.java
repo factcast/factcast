@@ -15,14 +15,18 @@
  */
 package org.factcast.store.internal.catchup.fetching;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.factcast.store.internal.catchup.fetching.PgFetchingCatchup.FIRST_ROW_FETCHING_THRESHOLD;
 import static org.mockito.Mockito.*;
 
 import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Timer;
 import java.sql.*;
 import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import nl.altindag.log.LogCaptor;
 import org.factcast.core.subscription.*;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
@@ -70,7 +74,7 @@ class PgFetchingCatchupTest {
   @Mock SingleConnectionDataSource ds;
   @Mock PgCatchupFactory.Phase phase;
 
-  @InjectMocks PgFetchingCatchup underTest;
+  @Spy @InjectMocks PgFetchingCatchup underTest;
 
   @SneakyThrows
   @BeforeEach
@@ -147,6 +151,28 @@ class PgFetchingCatchupTest {
           .query(anyString(), any(PreparedStatementSetter.class), any(RowCallbackHandler.class));
       underTest.fetch(jdbc);
       verify(jdbc).setFetchSize(props.getPageSize());
+    }
+
+    @Test
+    void usesRowCallbackHandlerIfNotFromScratch() {
+      doNothing()
+          .when(jdbc)
+          .query(anyString(), any(PreparedStatementSetter.class), any(RowCallbackHandler.class));
+      doReturn(42L).when(serial).get();
+      underTest.fetch(jdbc);
+      verify(underTest).createRowCallbackHandler(any());
+      verify(underTest, never()).createTimedRowCallbackHandler(any());
+    }
+
+    @Test
+    void usesTimedRowCallbackHandlerIfFromScratch() {
+      doNothing()
+          .when(jdbc)
+          .query(anyString(), any(PreparedStatementSetter.class), any(RowCallbackHandler.class));
+      // from scratch
+      doReturn(0L).when(serial).get();
+      underTest.fetch(jdbc);
+      verify(underTest).createTimedRowCallbackHandler(any());
     }
   }
 
@@ -229,6 +255,56 @@ class PgFetchingCatchupTest {
       when(extractor.mapRow(any(), anyInt())).thenThrow(RuntimeException.class);
 
       assertThatThrownBy(() -> cbh.processRow(rs)).isInstanceOf(RuntimeException.class);
+    }
+  }
+
+  @Nested
+  class WhenCreatingTimedRowCallbackHandler {
+    @Mock PgFactExtractor extractor;
+    @Mock RowCallbackHandler wrappedCbh;
+    @Mock Timer timer;
+    @Mock Timer.Sample timerSample;
+
+    @SneakyThrows
+    @BeforeEach
+    void setup() {
+      doReturn(wrappedCbh).when(underTest).createRowCallbackHandler(extractor);
+      doNothing().when(wrappedCbh).processRow(any());
+      doReturn(timer).when(metrics).timer(StoreMetrics.OP.CATCHUP_STREAM_START);
+      doReturn(timerSample).when(metrics).startSample();
+    }
+
+    @SneakyThrows
+    @Test
+    void stopsTimerOnceAndDelegates() {
+      final var tcbh = underTest.createTimedRowCallbackHandler(extractor);
+      ResultSet rs1 = mock(ResultSet.class);
+      ResultSet rs2 = mock(ResultSet.class);
+
+      tcbh.processRow(rs1);
+      tcbh.processRow(rs2);
+
+      verify(wrappedCbh).processRow(rs1);
+      verify(wrappedCbh).processRow(rs2);
+      verify(timerSample, times(1)).stop(timer);
+    }
+
+    @SneakyThrows
+    @Test
+    void logsIfAboveThreshold() {
+      try (LogCaptor logCaptor = LogCaptor.forClass(PgFetchingCatchup.class)) {
+        final var tcbh = underTest.createTimedRowCallbackHandler(extractor);
+        final var elapsed = FIRST_ROW_FETCHING_THRESHOLD.plusSeconds(5);
+        ResultSet rs = mock(ResultSet.class);
+        when(timerSample.stop(timer)).thenReturn(elapsed.toNanos());
+
+        tcbh.processRow(rs);
+
+        assertThat(logCaptor.getInfoLogs())
+            .first()
+            .asString()
+            .contains("took " + elapsed.toSeconds() + "s to stream the first result set");
+      }
     }
   }
 }

@@ -41,7 +41,7 @@ import org.springframework.jdbc.core.RowCallbackHandler;
 @RequiredArgsConstructor
 public class PgFetchingCatchup implements PgCatchup {
 
-  private static final Duration FIRST_ROW_FETCHING_THRESHOLD = Duration.ofSeconds(1);
+  static final Duration FIRST_ROW_FETCHING_THRESHOLD = Duration.ofSeconds(1);
 
   @NonNull final PgConnectionSupplier connectionSupplier;
 
@@ -67,7 +67,7 @@ public class PgFetchingCatchup implements PgCatchup {
     try (var ds =
         connectionSupplier.getPooledAsSingleDataSource(
             ConnectionModifier.withAutoCommitDisabled(),
-            ConnectionModifier.withApplicationName(req.debugInfo())); ) {
+            ConnectionModifier.withApplicationName(req.debugInfo()))) {
       var jdbc = new JdbcTemplate(ds);
       fetch(jdbc);
     } finally {
