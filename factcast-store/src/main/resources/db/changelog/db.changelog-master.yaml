@@ -507,6 +507,7 @@ databaseChangeLog:
   - changeSet:
       id: issue4046_table_creation
       author: uweschaefer
+      runInTransaction: false
       changes:
         - sqlFile:
             encoding: utf8
@@ -518,6 +519,7 @@ databaseChangeLog:
   - changeSet:
       id: issue4046_migration
       author: uweschaefer
+      runInTransaction: false
       preConditions:
         - onFail: MARK_RAN
         - sqlCheck:
@@ -535,6 +537,7 @@ databaseChangeLog:
   - changeSet:
       id: issue4076_cleanup
       author: uweschaefer
+      runInTransaction: false
       preConditions:
         - onFail: MARK_RAN
         - sqlCheck:
@@ -552,10 +555,11 @@ databaseChangeLog:
   - changeSet:
       id: issue4076_bloat_view
       author: uweschaefer
+      runInTransaction: false
       changes:
         - sqlFile:
             encoding: utf8
-            path: factcast/issue4046/bloat_view.sql
+            path: factcast/issue4046/stats_bloat.sql
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true

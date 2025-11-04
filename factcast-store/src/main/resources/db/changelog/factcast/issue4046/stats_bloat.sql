@@ -51,4 +51,4 @@ FROM (SELECT schemaname,
                     ON cc.relnamespace = nn.oid AND nn.nspname = rs.schemaname AND nn.nspname <> 'information_schema'
                LEFT JOIN pg_index i ON indrelid = cc.oid
                LEFT JOIN pg_class c2 ON c2.oid = i.indexrelid) AS sml
-ORDER BY wastedbytes DESC
+ORDER BY wastedbytes DESC;
