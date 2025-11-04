@@ -95,7 +95,7 @@ public class PgMetrics implements InitializingBean {
   private void time(@NonNull StoreMetrics.OP operation, @NonNull Sample sample, Exception e) {
     try {
       String exceptionTagValue = mapException(e);
-      sample.stop(timer(operation, exceptionTagValue));
+      sample.stop(timerBuilder(operation, exceptionTagValue).register(registry));
     } catch (Exception exception) {
       log.warn("Failed timing operation!", exception);
     }
@@ -110,14 +110,26 @@ public class PgMetrics implements InitializingBean {
   }
 
   @NonNull
-  private Timer timer(@NonNull StoreMetrics.OP operation, @NonNull String exceptionTagValue) {
+  private Timer.Builder timerBuilder(
+      @NonNull StoreMetrics.OP operation, @NonNull String exceptionTagValue) {
     Tags tags = forOperation(operation, exceptionTagValue);
-    return Timer.builder(StoreMetrics.DURATION_METRIC_NAME).tags(tags).register(registry);
+    return Timer.builder(StoreMetrics.DURATION_METRIC_NAME).tags(tags);
   }
 
   @NonNull
   public Timer timer(@NonNull StoreMetrics.OP operation) {
-    return timer(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
+    return timerBuilder(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE).register(registry);
+  }
+
+  @NonNull
+  public Timer timer(@NonNull StoreMetrics.OP operation, boolean fromScratch) {
+    return timerBuilder(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE)
+        .tag(
+            StoreMetrics.TAG_FETCHING_MODE_KEY,
+            fromScratch
+                ? StoreMetrics.TAG_FETCHING_MODE_FROM_SCRATCH_VALUE
+                : StoreMetrics.TAG_FETCHING_MODE_FROM_SERIAL_VALUE)
+        .register(registry);
   }
 
   public ExecutorService monitor(@NonNull ExecutorService executor, @NonNull String name) {
@@ -136,7 +148,7 @@ public class PgMetrics implements InitializingBean {
      * them.
      */
     for (StoreMetrics.OP op : StoreMetrics.OP.values()) {
-      timer(op, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
+      timerBuilder(op, StoreMetrics.TAG_EXCEPTION_VALUE_NONE).register(registry);
     }
     for (StoreMetrics.EVENT e : StoreMetrics.EVENT.values()) {
       counter(e);

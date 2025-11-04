@@ -16,6 +16,7 @@
 package org.factcast.store.internal.catchup.fetching;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.micrometer.core.instrument.Timer;
 import java.time.Duration;
 import java.util.concurrent.atomic.*;
 import lombok.*;
@@ -41,7 +42,7 @@ import org.springframework.jdbc.core.RowCallbackHandler;
 @RequiredArgsConstructor
 public class PgFetchingCatchup implements PgCatchup {
 
-  private static final Duration FIRST_ROW_FETCHING_THRESHOLD = Duration.ofSeconds(1);
+  static final Duration FIRST_ROW_FETCHING_THRESHOLD = Duration.ofSeconds(1);
 
   @NonNull final PgConnectionSupplier connectionSupplier;
 
@@ -67,7 +68,7 @@ public class PgFetchingCatchup implements PgCatchup {
     try (var ds =
         connectionSupplier.getPooledAsSingleDataSource(
             ConnectionModifier.withAutoCommitDisabled(),
-            ConnectionModifier.withApplicationName(req.debugInfo())); ) {
+            ConnectionModifier.withApplicationName(req.debugInfo()))) {
       var jdbc = new JdbcTemplate(ds);
       fetch(jdbc);
     } finally {
@@ -87,23 +88,20 @@ public class PgFetchingCatchup implements PgCatchup {
     final var catchupSQL = b.createSQL();
     final var fromSerial = serial.get() < fastForward ? new AtomicLong(fastForward) : serial;
     final var isFromScratch = (fromSerial.get() <= 0);
-    final var rowCallbackHandler =
-        isFromScratch
-            ? createTimedRowCallbackHandler(extractor)
-            : createRowCallbackHandler(extractor);
+    final var timer = metrics.timer(StoreMetrics.OP.CATCHUP_STREAM_START, isFromScratch);
+    final var rowCallbackHandler = createTimedRowCallbackHandler(extractor, timer);
     log.trace("{} catchup {} - facts starting with SER={}", req, phase, fromSerial.get());
     jdbc.query(catchupSQL, b.createStatementSetter(fromSerial), rowCallbackHandler);
   }
 
   @VisibleForTesting
-  RowCallbackHandler createTimedRowCallbackHandler(PgFactExtractor extractor) {
-    final var catchupStreamStart = metrics.timer(StoreMetrics.OP.CATCHUP_STREAM_START);
+  RowCallbackHandler createTimedRowCallbackHandler(PgFactExtractor extractor, Timer timer) {
     final var isFirstRow = new AtomicBoolean(true);
     final var timerSample = metrics.startSample();
     final var handler = createRowCallbackHandler(extractor);
     return rs -> {
       if (isFirstRow.getAndSet(false)) {
-        final var elapsed = Duration.ofNanos(timerSample.stop(catchupStreamStart));
+        final var elapsed = Duration.ofNanos(timerSample.stop(timer));
         logIfAboveThreshold(elapsed);
       }
       handler.processRow(rs);

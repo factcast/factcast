@@ -33,6 +33,12 @@ public class StoreMetrics {
 
   static final String TAG_EXCEPTION_VALUE_NONE = "None";
 
+  static final String TAG_FETCHING_MODE_KEY = "mode";
+
+  static final String TAG_FETCHING_MODE_FROM_SCRATCH_VALUE = "fromScratch";
+
+  static final String TAG_FETCHING_MODE_FROM_SERIAL_VALUE = "fromSerial";
+
   public enum OP implements MetricName {
     PUBLISH("publish"),
 
