@@ -163,7 +163,7 @@ class PgFetchingCatchupTest {
 
       underTest.fetch(jdbc);
 
-      verify(metrics, times(1)).timer(StoreMetrics.OP.CATCHUP_STREAM_START, true);
+      verify(metrics, times(1)).timer(StoreMetrics.OP.RESULT_STREAM_START, true);
       verify(underTest, times(1)).createTimedRowCallbackHandler(any(), any());
     }
 
@@ -177,7 +177,7 @@ class PgFetchingCatchupTest {
 
       underTest.fetch(jdbc);
 
-      verify(metrics, times(1)).timer(StoreMetrics.OP.CATCHUP_STREAM_START, false);
+      verify(metrics, times(1)).timer(StoreMetrics.OP.RESULT_STREAM_START, false);
       verify(underTest, times(1)).createTimedRowCallbackHandler(any(), any());
     }
   }

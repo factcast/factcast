@@ -33,7 +33,7 @@ public class StoreMetrics {
 
   static final String TAG_EXCEPTION_VALUE_NONE = "None";
 
-  static final String TAG_FETCHING_MODE_KEY = "mode";
+  static final String TAG_FETCHING_MODE_KEY = "fetchingMode";
 
   static final String TAG_FETCHING_MODE_FROM_SCRATCH_VALUE = "fromScratch";
 
@@ -65,7 +65,7 @@ public class StoreMetrics {
 
     NOTIFY_ROUNDTRIP("notifyRoundTripLatency"),
 
-    CATCHUP_STREAM_START("catchupStreamStart");
+    RESULT_STREAM_START("resultStreamStart");
 
     @NonNull final String name;
 

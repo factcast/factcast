@@ -88,7 +88,7 @@ public class PgFetchingCatchup implements PgCatchup {
     final var catchupSQL = b.createSQL();
     final var fromSerial = serial.get() < fastForward ? new AtomicLong(fastForward) : serial;
     final var isFromScratch = (fromSerial.get() <= 0);
-    final var timer = metrics.timer(StoreMetrics.OP.CATCHUP_STREAM_START, isFromScratch);
+    final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
     final var rowCallbackHandler = createTimedRowCallbackHandler(extractor, timer);
     log.trace("{} catchup {} - facts starting with SER={}", req, phase, fromSerial.get());
     jdbc.query(catchupSQL, b.createStatementSetter(fromSerial), rowCallbackHandler);
