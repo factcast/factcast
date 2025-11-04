@@ -154,25 +154,31 @@ class PgFetchingCatchupTest {
     }
 
     @Test
-    void usesRowCallbackHandlerIfNotFromScratch() {
-      doNothing()
-          .when(jdbc)
-          .query(anyString(), any(PreparedStatementSetter.class), any(RowCallbackHandler.class));
-      doReturn(42L).when(serial).get();
-      underTest.fetch(jdbc);
-      verify(underTest).createRowCallbackHandler(any());
-      verify(underTest, never()).createTimedRowCallbackHandler(any());
-    }
-
-    @Test
-    void usesTimedRowCallbackHandlerIfFromScratch() {
+    void usesTimedRowCallbackHandlerFromScratch() {
       doNothing()
           .when(jdbc)
           .query(anyString(), any(PreparedStatementSetter.class), any(RowCallbackHandler.class));
       // from scratch
-      doReturn(0L).when(serial).get();
+      when(serial.get()).thenReturn(0L);
+
       underTest.fetch(jdbc);
-      verify(underTest).createTimedRowCallbackHandler(any());
+
+      verify(metrics, times(1)).timer(StoreMetrics.OP.CATCHUP_STREAM_START, true);
+      verify(underTest, times(1)).createTimedRowCallbackHandler(any(), any());
+    }
+
+    @Test
+    void usesTimedRowCallbackHandlerFromSerial() {
+      doNothing()
+          .when(jdbc)
+          .query(anyString(), any(PreparedStatementSetter.class), any(RowCallbackHandler.class));
+      // from serial
+      when(serial.get()).thenReturn(42L);
+
+      underTest.fetch(jdbc);
+
+      verify(metrics, times(1)).timer(StoreMetrics.OP.CATCHUP_STREAM_START, false);
+      verify(underTest, times(1)).createTimedRowCallbackHandler(any(), any());
     }
   }
 
@@ -270,14 +276,13 @@ class PgFetchingCatchupTest {
     void setup() {
       doReturn(wrappedCbh).when(underTest).createRowCallbackHandler(extractor);
       doNothing().when(wrappedCbh).processRow(any());
-      doReturn(timer).when(metrics).timer(StoreMetrics.OP.CATCHUP_STREAM_START);
       doReturn(timerSample).when(metrics).startSample();
     }
 
     @SneakyThrows
     @Test
     void stopsTimerOnceAndDelegates() {
-      final var tcbh = underTest.createTimedRowCallbackHandler(extractor);
+      final var tcbh = underTest.createTimedRowCallbackHandler(extractor, timer);
       ResultSet rs1 = mock(ResultSet.class);
       ResultSet rs2 = mock(ResultSet.class);
 
@@ -293,7 +298,7 @@ class PgFetchingCatchupTest {
     @Test
     void logsIfAboveThreshold() {
       try (LogCaptor logCaptor = LogCaptor.forClass(PgFetchingCatchup.class)) {
-        final var tcbh = underTest.createTimedRowCallbackHandler(extractor);
+        final var tcbh = underTest.createTimedRowCallbackHandler(extractor, timer);
         final var elapsed = FIRST_ROW_FETCHING_THRESHOLD.plusSeconds(5);
         ResultSet rs = mock(ResultSet.class);
         when(timerSample.stop(timer)).thenReturn(elapsed.toNanos());
