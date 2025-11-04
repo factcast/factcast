@@ -25,18 +25,16 @@ import io.micrometer.core.instrument.Timer.Sample;
 import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
-import lombok.NonNull;
+import javax.annotation.Nullable;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 
 @Slf4j
+@RequiredArgsConstructor
 public class PgMetrics implements InitializingBean {
 
   @NonNull private final MeterRegistry registry;
-
-  public PgMetrics(@NonNull MeterRegistry registry) {
-    this.registry = registry;
-  }
 
   @NonNull
   public Counter counter(@NonNull StoreMetrics.EVENT operation) {
@@ -59,7 +57,8 @@ public class PgMetrics implements InitializingBean {
         .register(registry);
   }
 
-  private Tags forOperation(@NonNull MetricName operation, @NonNull String exceptionTagValue) {
+  private @NonNull Tags forOperation(
+      @NonNull MetricName operation, @NonNull String exceptionTagValue) {
     return Tags.of(
         Tag.of(StoreMetrics.TAG_STORE_KEY, StoreMetrics.TAG_STORE_VALUE),
         Tag.of(StoreMetrics.TAG_OPERATION_KEY, operation.getName()),
@@ -79,7 +78,7 @@ public class PgMetrics implements InitializingBean {
     }
   }
 
-  public <T> T time(@NonNull StoreMetrics.OP operation, @NonNull Supplier<T> s) {
+  public <T> @NonNull T time(@NonNull StoreMetrics.OP operation, @NonNull Supplier<T> s) {
     Sample sample = Timer.start();
     Exception exception = null;
     try {
@@ -92,7 +91,8 @@ public class PgMetrics implements InitializingBean {
     }
   }
 
-  private void time(@NonNull StoreMetrics.OP operation, @NonNull Sample sample, Exception e) {
+  private void time(
+      @NonNull StoreMetrics.OP operation, @NonNull Sample sample, @Nullable Exception e) {
     try {
       String exceptionTagValue = mapException(e);
       sample.stop(timerBuilder(operation, exceptionTagValue).register(registry));
@@ -102,11 +102,10 @@ public class PgMetrics implements InitializingBean {
   }
 
   @NonNull
-  private static String mapException(Exception e) {
+  private static String mapException(@Nullable Exception e) {
     if (e == null) {
       return StoreMetrics.TAG_EXCEPTION_VALUE_NONE;
-    }
-    return e.getClass().getSimpleName();
+    } else return e.getClass().getSimpleName();
   }
 
   @NonNull
@@ -132,11 +131,11 @@ public class PgMetrics implements InitializingBean {
         .register(registry);
   }
 
-  public ExecutorService monitor(@NonNull ExecutorService executor, @NonNull String name) {
+  public @NonNull ExecutorService monitor(@NonNull ExecutorService executor, @NonNull String name) {
     return ExecutorServiceMetrics.monitor(registry, executor, name);
   }
 
-  public Sample startSample() {
+  public @NonNull Sample startSample() {
     return Timer.start();
   }
 
