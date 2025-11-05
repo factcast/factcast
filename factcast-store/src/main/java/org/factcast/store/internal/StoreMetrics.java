@@ -33,6 +33,12 @@ public class StoreMetrics {
 
   static final String TAG_EXCEPTION_VALUE_NONE = "None";
 
+  static final String TAG_FETCHING_MODE_KEY = "fetchingMode";
+
+  static final String TAG_FETCHING_MODE_FROM_SCRATCH_VALUE = "fromScratch";
+
+  static final String TAG_FETCHING_MODE_FROM_SERIAL_VALUE = "fromSerial";
+
   public enum OP implements MetricName {
     PUBLISH("publish"),
 
@@ -57,7 +63,9 @@ public class StoreMetrics {
 
     INVALIDATE_STATE_TOKEN("invalidateStateToken"),
 
-    NOTIFY_ROUNDTRIP("notifyRoundTripLatency");
+    NOTIFY_ROUNDTRIP("notifyRoundTripLatency"),
+
+    RESULT_STREAM_START("resultStreamStart");
 
     @NonNull final String name;
 
