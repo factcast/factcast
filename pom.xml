@@ -123,7 +123,7 @@
     <redisson.version>3.52.0</redisson.version>
     <aws-sdk.version>2.38.3</aws-sdk.version>
     <shedlock.version>6.10.0</shedlock.version>
-    <byte-buddy.version>1.17.8</byte-buddy.version>
+    <byte-buddy.version>1.18.0</byte-buddy.version>
     <skipUnitTests>false</skipUnitTests>
     <postgres.version>15</postgres.version>
     <sonar.exclusions>**/src/test/java/**/*.java</sonar.exclusions>
