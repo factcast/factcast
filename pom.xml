@@ -121,7 +121,7 @@
     <mockk.version>1.14.6</mockk.version>
     <graaljs.version>25.0.1</graaljs.version>
     <redisson.version>3.52.0</redisson.version>
-    <aws-sdk.version>2.38.3</aws-sdk.version>
+    <aws-sdk.version>2.38.4</aws-sdk.version>
     <shedlock.version>6.10.0</shedlock.version>
     <byte-buddy.version>1.18.0</byte-buddy.version>
     <skipUnitTests>false</skipUnitTests>
