@@ -15,12 +15,14 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
+import static java.util.stream.Collectors.*;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.*;
+import java.sql.*;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.stream.Collectors;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
@@ -28,7 +30,7 @@ import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgFact;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics.*;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.*;
 import org.springframework.jdbc.core.namedparam.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -36,7 +38,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 @Slf4j
 public class PgTransformationCache implements TransformationCache, AutoCloseable {
-  private static final int MAX_BATCH_SIZE = 20_000;
   private final JdbcTemplate jdbcTemplate;
   private final NamedParameterJdbcTemplate namedJdbcTemplate;
   private final RegistryMetrics registryMetrics;
@@ -73,7 +74,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
     registryMetrics.monitor(tpe, "transformation-cache");
 
-    this.maxBufferSize = bufferThreshold * 30;
+    this.maxBufferSize = bufferThreshold * 9; // the batchUpdates used only support up to 10k
     this.buffer = new CacheBuffer(registryMetrics);
   }
 
@@ -145,7 +146,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
     if (!keys.isEmpty()) {
 
       SqlParameterSource parameters =
-          new MapSqlParameterSource("ids", keys.stream().map(Key::id).collect(Collectors.toList()));
+          new MapSqlParameterSource("ids", keys.stream().map(Key::id).collect(toList()));
       facts.addAll(
           namedJdbcTemplate.query(
               "SELECT header, payload FROM transformationcache WHERE cache_key IN (:ids)",
@@ -209,10 +210,14 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
           OP.COMPACT_TRANSFORMATION_CACHE,
           () ->
               inTransactionWithLock(
-                  () ->
-                      jdbcTemplate.update(
-                          "DELETE FROM transformationcache WHERE last_access < ?",
-                          new Date(thresholdDate.toInstant().toEpochMilli()))));
+                  () -> {
+                    Timestamp d = Timestamp.from(thresholdDate.toInstant());
+                    jdbcTemplate.update(
+                        "DELETE FROM transformationcache WHERE cache_key in (SELECT cache_key FROM transformationcache_access WHERE last_access < ?)",
+                        d);
+                    jdbcTemplate.update(
+                        "DELETE FROM transformationcache_access WHERE last_access < ?", d);
+                  }));
     }
   }
 
@@ -298,39 +303,38 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
                     new Object[] {
                       p.getKey().id(), p.getValue().jsonHeader(), p.getValue().jsonPayload()
                     })
-            .collect(Collectors.toList());
+            .toList();
 
     if (!parameters.isEmpty()) {
 
       // dup-keys can be ignored, in case another node just did the same
-      Iterables.partition(parameters, MAX_BATCH_SIZE)
-          .forEach(
-              p ->
-                  jdbcTemplate.batchUpdate(
-                      "INSERT INTO transformationcache (cache_key, header, payload) VALUES (?, ? :: JSONB, ? ::"
-                          + " JSONB) ON CONFLICT(cache_key) DO NOTHING",
-                      p));
+      jdbcTemplate.batchUpdate(
+          "INSERT INTO transformationcache (cache_key, header, payload) VALUES (?, ? :: JSONB, ? ::"
+              + " JSONB) ON CONFLICT(cache_key) DO NOTHING",
+          parameters);
+
+      jdbcTemplate.batchUpdate(
+          "/* insert */ INSERT INTO transformationcache_access(cache_key,last_access) VALUES (?,current_date) "
+              + "ON CONFLICT(cache_key) DO UPDATE SET last_access=current_date "
+              + "WHERE excluded.cache_key=? AND transformationcache_access.last_access is distinct from (current_date)",
+          parameters.stream().map(o -> new Object[] {o[0], o[0]}).toList());
     }
   }
 
   @VisibleForTesting
   void insertBufferedAccesses(Map<Key, Fact> copy) {
-    List<String> keys =
+    List<Object[]> keys =
         copy.entrySet().stream()
             .filter(e -> e.getValue() == null)
-            .map(p -> p.getKey().id())
-            .collect(Collectors.toList());
+            .map(p -> new Object[] {p.getKey().id(), p.getKey().id()})
+            .collect(toList());
 
     if (!keys.isEmpty()) {
-
-      Iterables.partition(keys, MAX_BATCH_SIZE)
-          .forEach(
-              k -> {
-                SqlParameterSource parameters = new MapSqlParameterSource("ids", k);
-                namedJdbcTemplate.update(
-                    "UPDATE transformationcache SET last_access=now() WHERE cache_key IN (:ids)",
-                    parameters);
-              });
+      jdbcTemplate.batchUpdate(
+          "/* touch */ INSERT INTO transformationcache_access(cache_key,last_access) VALUES (?,current_date) "
+              + "ON CONFLICT(cache_key) DO UPDATE SET last_access=current_date "
+              + "WHERE excluded.cache_key=? AND transformationcache_access.last_access is distinct from (current_date)",
+          keys);
     }
   }
 

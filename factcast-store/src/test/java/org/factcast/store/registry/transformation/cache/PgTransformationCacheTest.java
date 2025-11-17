@@ -20,6 +20,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Lists;
+import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.util.*;
 import lombok.*;
@@ -357,8 +358,12 @@ class PgTransformationCacheTest {
 
       Mockito.verify(jdbcTemplate)
           .update(
-              "DELETE FROM transformationcache WHERE last_access < ?",
-              new Date(THRESHOLD_DATE.toInstant().toEpochMilli()));
+              "DELETE FROM transformationcache WHERE cache_key in (SELECT cache_key FROM transformationcache_access WHERE last_access < ?)",
+              Timestamp.from(THRESHOLD_DATE.toInstant()));
+      Mockito.verify(jdbcTemplate)
+          .update(
+              "DELETE FROM transformationcache_access WHERE last_access < ?",
+              Timestamp.from(THRESHOLD_DATE.toInstant()));
     }
 
     @Test
@@ -537,13 +542,19 @@ class PgTransformationCacheTest {
 
       Mockito.verify(jdbcTemplate, times(1))
           .execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
-      Mockito.verify(jdbcTemplate, times(1)).batchUpdate(matches("INSERT.*"), m.capture());
+      Mockito.verify(jdbcTemplate, times(1))
+          .batchUpdate(matches("INSERT INTO transformationcache .*"), m.capture());
+      assertThat((Collection) m.getValue()).isNotNull().hasSize(3);
+      Mockito.verify(jdbcTemplate, times(1))
+          .batchUpdate(
+              matches("/\\* insert \\*/ INSERT INTO transformationcache_access.*"), m.capture());
       assertThat((Collection) m.getValue()).isNotNull().hasSize(3);
 
-      ArgumentCaptor<MapSqlParameterSource> ids =
-          ArgumentCaptor.forClass(MapSqlParameterSource.class);
-      Mockito.verify(namedJdbcTemplate, times(1)).update(matches("UPDATE.*"), ids.capture());
-      assertThat((Collection) (ids.getValue().getValue("ids"))).isNotNull().hasSize(2);
+      ArgumentCaptor<List<Object[]>> ids = ArgumentCaptor.forClass(List.class);
+      Mockito.verify(jdbcTemplate, times(1))
+          .batchUpdate(
+              matches("/\\* touch \\*/ INSERT INTO transformationcache_access.*"), ids.capture());
+      assertThat((Collection) (ids.getValue())).isNotNull().hasSize(2);
     }
   }
 
