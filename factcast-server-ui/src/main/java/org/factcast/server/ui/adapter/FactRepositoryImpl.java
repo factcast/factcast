@@ -19,6 +19,7 @@ import io.micrometer.core.annotation.Timed;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -114,20 +115,21 @@ public class FactRepositoryImpl implements FactRepository {
     Long untilSerial = Optional.ofNullable(bean.getTo()).map(BigDecimal::longValue).orElse(null);
     ListObserver obs =
         new ListObserver(untilSerial, bean.getLimitOrDefault(), bean.getOffsetOrDefault());
-    return fetch(bean, obs);
+    fetch(bean, obs);
+    return obs.list();
   }
 
   @SneakyThrows
   @Override
-  public List<Fact> fetchAll(ReportFilterBean bean) {
+  public long fetchAndProcessAll(ReportFilterBean bean, Consumer<Fact> consumer) {
     Long untilSerial = Optional.ofNullable(bean.getTo()).map(BigDecimal::longValue).orElse(null);
-    final var obs = new UnlimitedListObserver(untilSerial, 0);
-    return fetch(bean, obs);
+    final var obs = new UnlimitedConsumingObserver(untilSerial, 0, consumer);
+    fetch(bean, obs);
+    return obs.processedFacts();
   }
 
   @SneakyThrows
-  public List<Fact> fetch(FilterBean bean, AbstractListObserver obs) {
-
+  private void fetch(FilterBean bean, AbstractListObserver obs) {
     Set<FactSpec> specs = securityService.filterReadable(bean.createFactSpecs());
 
     SpecBuilder sr = SubscriptionRequest.catchup(specs);
@@ -140,7 +142,7 @@ public class FactRepositoryImpl implements FactRepository {
       request = sr.fromScratch();
     }
 
-    final SubscriptionRequestTO requestTO = SubscriptionRequestTO.forFacts(request);
+    final SubscriptionRequestTO requestTO = SubscriptionRequestTO.from(request);
     setDebugInfo(requestTO);
 
     try (Subscription subscription = fs.subscribe(requestTO, obs)) {
@@ -155,7 +157,6 @@ public class FactRepositoryImpl implements FactRepository {
         throw ExceptionHelper.toRuntime(e);
       }
     }
-    return obs.list();
   }
 
   private void setDebugInfo(SubscriptionRequestTO req) {
