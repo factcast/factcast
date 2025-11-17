@@ -49,7 +49,7 @@ public class PgFactStoreAutoConfiguration {
     log.info(
         "A {} was detected. Deduplication eventBus. ",
         StoreNotificationSubscriber.class.getSimpleName());
-    ExecutorService listenerPool =
+    ThreadPoolExecutor listenerPool =
         new ThreadPoolExecutor(
             PgFactStoreInternalConfiguration.LISTENER_POOL_CORE_SIZE,
             PgFactStoreInternalConfiguration.LISTENER_POOL_MAX_SIZE,
@@ -57,6 +57,7 @@ public class PgFactStoreAutoConfiguration {
             TimeUnit.SECONDS,
             new LinkedBlockingQueue<>() // unbounded queue
             );
+    listenerPool.allowCoreThreadTimeOut(true);
     return new DeduplicatingEventBus(
         DeduplicatingEventBus.class.getSimpleName(),
         metrics.monitor(listenerPool, EVENTBUS_IDENTIFIER));

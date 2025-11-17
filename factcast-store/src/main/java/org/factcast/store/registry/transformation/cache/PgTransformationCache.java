@@ -298,7 +298,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
                     new Object[] {
                       p.getKey().id(), p.getValue().jsonHeader(), p.getValue().jsonPayload()
                     })
-            .collect(Collectors.toList());
+            .toList();
 
     if (!parameters.isEmpty()) {
 
@@ -319,7 +319,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
         copy.entrySet().stream()
             .filter(e -> e.getValue() == null)
             .map(p -> p.getKey().id())
-            .collect(Collectors.toList());
+            .toList();
 
     if (!keys.isEmpty()) {
 

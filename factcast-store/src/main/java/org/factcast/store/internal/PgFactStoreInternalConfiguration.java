@@ -74,8 +74,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @Import({SchemaRegistryConfiguration.class, PGTailIndexingConfiguration.class})
 public class PgFactStoreInternalConfiguration {
 
-  public static final int LISTENER_POOL_CORE_SIZE = 4;
-  public static final int LISTENER_POOL_MAX_SIZE = 32;
+  public static final int LISTENER_POOL_MAX_SIZE = 64;
+  public static final int LISTENER_POOL_CORE_SIZE = LISTENER_POOL_MAX_SIZE;
   public static final long LISTENER_POOL_KEEP_ALIVE_SECONDS = 30;
 
   /**
@@ -84,7 +84,7 @@ public class PgFactStoreInternalConfiguration {
   @Bean
   @ConditionalOnMissingBean(EventBus.class)
   public EventBus regularEventBus(@NonNull PgMetrics metrics) {
-    ExecutorService listenerPool =
+    ThreadPoolExecutor listenerPool =
         new ThreadPoolExecutor(
             LISTENER_POOL_CORE_SIZE,
             LISTENER_POOL_MAX_SIZE,
@@ -92,6 +92,7 @@ public class PgFactStoreInternalConfiguration {
             TimeUnit.SECONDS,
             new LinkedBlockingQueue<>() // unbounded queue
             );
+    listenerPool.allowCoreThreadTimeOut(true);
     return new AsyncEventBus(
         EventBus.class.getSimpleName(), metrics.monitor(listenerPool, "pg-listener"));
   }
