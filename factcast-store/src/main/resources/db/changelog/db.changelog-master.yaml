@@ -545,3 +545,21 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
+
+  - changeSet:
+      id: issue4123
+      author: uweschaefer
+      runInTransaction: false
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: t
+            sql: SELECT count_estimate('SELECT * FROM transformationcache') < 10000000;
+      comment: If you have less than 10mio transformation results, this will be executed - otherwise we kindly ask you to execute this script manually. Please consider dropping the indexes before and recreate after (see script file).
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4123/set_collation_to_cachekey.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
