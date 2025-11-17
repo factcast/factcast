@@ -105,7 +105,7 @@ public abstract class AbstractTransformationCacheTest {
 
     uut.put(TransformationCache.Key.of(fact.id(), 1, chainId), fact);
 
-    // clocks aren't synchronized so Im gonna add an hour here :)
+    // clocks aren't synchronized so Im gonna add a day here :)
     uut.compact(ZonedDateTime.now().plusDays(1));
 
     Optional<PgFact> found =

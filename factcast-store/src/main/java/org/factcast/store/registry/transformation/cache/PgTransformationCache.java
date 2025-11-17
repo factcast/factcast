@@ -15,13 +15,14 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
+import static java.util.stream.Collectors.*;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.*;
 import java.sql.*;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.stream.Collectors;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
@@ -145,7 +146,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
     if (!keys.isEmpty()) {
 
       SqlParameterSource parameters =
-          new MapSqlParameterSource("ids", keys.stream().map(Key::id).collect(Collectors.toList()));
+          new MapSqlParameterSource("ids", keys.stream().map(Key::id).collect(toList()));
       facts.addAll(
           namedJdbcTemplate.query(
               "SELECT header, payload FROM transformationcache WHERE cache_key IN (:ids)",
@@ -302,7 +303,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
                     new Object[] {
                       p.getKey().id(), p.getValue().jsonHeader(), p.getValue().jsonPayload()
                     })
-            .collect(Collectors.toList());
+            .toList();
 
     if (!parameters.isEmpty()) {
 
@@ -326,7 +327,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
         copy.entrySet().stream()
             .filter(e -> e.getValue() == null)
             .map(p -> new Object[] {p.getKey().id(), p.getKey().id()})
-            .collect(Collectors.toList());
+            .collect(toList());
 
     if (!keys.isEmpty()) {
       jdbcTemplate.batchUpdate(
