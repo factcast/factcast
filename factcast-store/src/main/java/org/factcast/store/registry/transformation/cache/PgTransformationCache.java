@@ -146,7 +146,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
     if (!keys.isEmpty()) {
 
       SqlParameterSource parameters =
-          new MapSqlParameterSource("ids", keys.stream().map(Key::id).collect(toList()));
+          new MapSqlParameterSource("ids", keys.stream().map(Key::id).toList());
       facts.addAll(
           namedJdbcTemplate.query(
               "SELECT header, payload FROM transformationcache WHERE cache_key IN (:ids)",
@@ -327,7 +327,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
         copy.entrySet().stream()
             .filter(e -> e.getValue() == null)
             .map(p -> new Object[] {p.getKey().id(), p.getKey().id()})
-            .collect(toList());
+            .toList();
 
     if (!keys.isEmpty()) {
       jdbcTemplate.batchUpdate(
