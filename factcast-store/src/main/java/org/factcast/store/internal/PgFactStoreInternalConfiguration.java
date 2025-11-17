@@ -18,7 +18,7 @@ package org.factcast.store.internal;
 import com.google.common.eventbus.*;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import javax.sql.DataSource;
 import liquibase.integration.spring.SpringLiquibase;
 import lombok.NonNull;
@@ -74,15 +74,26 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @Import({SchemaRegistryConfiguration.class, PGTailIndexingConfiguration.class})
 public class PgFactStoreInternalConfiguration {
 
+  public static final int LISTENER_POOL_CORE_SIZE = 4;
+  public static final int LISTENER_POOL_MAX_SIZE = 32;
+  public static final long LISTENER_POOL_KEEP_ALIVE_SECONDS = 30;
+
   /**
    * may be overruled by defining a @Primary DeduplicatingEventBus in PgFactStoreAutoConfiguration
    */
   @Bean
   @ConditionalOnMissingBean(EventBus.class)
   public EventBus regularEventBus(@NonNull PgMetrics metrics) {
+    ExecutorService listenerPool =
+        new ThreadPoolExecutor(
+            LISTENER_POOL_CORE_SIZE,
+            LISTENER_POOL_MAX_SIZE,
+            LISTENER_POOL_KEEP_ALIVE_SECONDS,
+            TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>() // unbounded queue
+            );
     return new AsyncEventBus(
-        EventBus.class.getSimpleName(),
-        metrics.monitor(Executors.newCachedThreadPool(), "pg-listener"));
+        EventBus.class.getSimpleName(), metrics.monitor(listenerPool, "pg-listener"));
   }
 
   @Bean
