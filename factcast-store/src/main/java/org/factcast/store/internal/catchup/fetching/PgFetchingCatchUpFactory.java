@@ -20,6 +20,7 @@ import lombok.Generated;
 import lombok.NonNull;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
@@ -31,12 +32,15 @@ public class PgFetchingCatchUpFactory implements PgCatchupFactory {
 
   @NonNull final PgConnectionSupplier connectionSupplier;
   @NonNull final StoreConfigurationProperties props;
+  @NonNull final PgMetrics metrics;
 
   public PgFetchingCatchUpFactory(
       @NonNull PgConnectionSupplier connectionSupplier,
-      @NonNull StoreConfigurationProperties props) {
+      @NonNull StoreConfigurationProperties props,
+      @NonNull PgMetrics metrics) {
     this.connectionSupplier = connectionSupplier;
     this.props = props;
+    this.metrics = metrics;
   }
 
   @Override
@@ -47,6 +51,6 @@ public class PgFetchingCatchUpFactory implements PgCatchupFactory {
       @NonNull CurrentStatementHolder holder,
       @NonNull Phase phase) {
     return new PgFetchingCatchup(
-        connectionSupplier, props, request, pipeline, serial, holder, phase);
+        connectionSupplier, props, metrics, request, pipeline, serial, holder, phase);
   }
 }

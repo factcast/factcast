@@ -25,18 +25,16 @@ import io.micrometer.core.instrument.Timer.Sample;
 import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
-import lombok.NonNull;
+import javax.annotation.Nullable;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 
 @Slf4j
+@RequiredArgsConstructor
 public class PgMetrics implements InitializingBean {
 
   @NonNull private final MeterRegistry registry;
-
-  public PgMetrics(@NonNull MeterRegistry registry) {
-    this.registry = registry;
-  }
 
   @NonNull
   public Counter counter(@NonNull StoreMetrics.EVENT operation) {
@@ -59,7 +57,8 @@ public class PgMetrics implements InitializingBean {
         .register(registry);
   }
 
-  private Tags forOperation(@NonNull MetricName operation, @NonNull String exceptionTagValue) {
+  private @NonNull Tags forOperation(
+      @NonNull MetricName operation, @NonNull String exceptionTagValue) {
     return Tags.of(
         Tag.of(StoreMetrics.TAG_STORE_KEY, StoreMetrics.TAG_STORE_VALUE),
         Tag.of(StoreMetrics.TAG_OPERATION_KEY, operation.getName()),
@@ -79,7 +78,7 @@ public class PgMetrics implements InitializingBean {
     }
   }
 
-  public <T> T time(@NonNull StoreMetrics.OP operation, @NonNull Supplier<T> s) {
+  public <T> @NonNull T time(@NonNull StoreMetrics.OP operation, @NonNull Supplier<T> s) {
     Sample sample = Timer.start();
     Exception exception = null;
     try {
@@ -92,36 +91,52 @@ public class PgMetrics implements InitializingBean {
     }
   }
 
-  private void time(@NonNull StoreMetrics.OP operation, @NonNull Sample sample, Exception e) {
+  private void time(
+      @NonNull StoreMetrics.OP operation, @NonNull Sample sample, @Nullable Exception e) {
     try {
       String exceptionTagValue = mapException(e);
-      sample.stop(timer(operation, exceptionTagValue));
+      sample.stop(timerBuilder(operation, exceptionTagValue).register(registry));
     } catch (Exception exception) {
       log.warn("Failed timing operation!", exception);
     }
   }
 
   @NonNull
-  private static String mapException(Exception e) {
+  private static String mapException(@Nullable Exception e) {
     if (e == null) {
       return StoreMetrics.TAG_EXCEPTION_VALUE_NONE;
-    }
-    return e.getClass().getSimpleName();
+    } else return e.getClass().getSimpleName();
   }
 
   @NonNull
-  private Timer timer(@NonNull StoreMetrics.OP operation, @NonNull String exceptionTagValue) {
+  private Timer.Builder timerBuilder(
+      @NonNull StoreMetrics.OP operation, @NonNull String exceptionTagValue) {
     Tags tags = forOperation(operation, exceptionTagValue);
-    return Timer.builder(StoreMetrics.DURATION_METRIC_NAME).tags(tags).register(registry);
+    return Timer.builder(StoreMetrics.DURATION_METRIC_NAME).tags(tags);
   }
 
   @NonNull
   public Timer timer(@NonNull StoreMetrics.OP operation) {
-    return timer(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
+    return timerBuilder(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE).register(registry);
   }
 
-  public ExecutorService monitor(@NonNull ExecutorService executor, @NonNull String name) {
+  @NonNull
+  public Timer timer(@NonNull StoreMetrics.OP operation, boolean fromScratch) {
+    return timerBuilder(operation, StoreMetrics.TAG_EXCEPTION_VALUE_NONE)
+        .tag(
+            StoreMetrics.TAG_FETCHING_MODE_KEY,
+            fromScratch
+                ? StoreMetrics.TAG_FETCHING_MODE_FROM_SCRATCH_VALUE
+                : StoreMetrics.TAG_FETCHING_MODE_FROM_SERIAL_VALUE)
+        .register(registry);
+  }
+
+  public @NonNull ExecutorService monitor(@NonNull ExecutorService executor, @NonNull String name) {
     return ExecutorServiceMetrics.monitor(registry, executor, name);
+  }
+
+  public @NonNull Sample startSample() {
+    return Timer.start();
   }
 
   @Override
@@ -132,7 +147,7 @@ public class PgMetrics implements InitializingBean {
      * them.
      */
     for (StoreMetrics.OP op : StoreMetrics.OP.values()) {
-      timer(op, StoreMetrics.TAG_EXCEPTION_VALUE_NONE);
+      timerBuilder(op, StoreMetrics.TAG_EXCEPTION_VALUE_NONE).register(registry);
     }
     for (StoreMetrics.EVENT e : StoreMetrics.EVENT.values()) {
       counter(e);
