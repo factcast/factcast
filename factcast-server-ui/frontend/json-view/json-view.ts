@@ -68,7 +68,7 @@ class JsonView extends LitElement {
 		super();
 
 		console.log(
-			`Facts rendered during the lifetime of this component will be logged and can be used for further processing/aggregation.`
+			`Facts rendered during the lifetime of this component will be logged and can be used for further processing/aggregation 2.`
 		);
 	}
 
