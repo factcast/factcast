@@ -66,7 +66,7 @@ workflow(
 
         run(
             name = "Test - UI",
-            command = "cd factcast-server-ui ; ../mvnw -B -Dui failsafe:integration-test failsafe:verify",
+            command = "cd factcast-server-ui ; ../mvnw -B -Dui verify",
         )
     }
 }
