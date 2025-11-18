@@ -35,4 +35,10 @@ jobs:
       run: './mvnw -B clean install -DskipTests'
     - id: 'step-4'
       name: 'Test - UI'
-      run: 'cd factcast-server-ui ; ../mvnw -B -Dui failsafe:integration-test failsafe:verify'
+      run: 'cd factcast-server-ui ; ../mvnw -B -Dui verify'
+    - id: 'step-5'
+      name: 'Commit vaadin changes'
+      uses: 'stefanzweifel/git-auto-commit-action@v6'
+      with:
+        commit_message: 'Update vaadin files'
+        file_pattern: 'factcast-server-ui/src/main/bundles/prod.bundle factcast-server-ui/package.json'
