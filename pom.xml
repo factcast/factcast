@@ -122,7 +122,7 @@
     <graaljs.version>25.0.1</graaljs.version>
     <redisson.version>3.52.0</redisson.version>
     <aws-sdk.version>2.38.9</aws-sdk.version>
-    <shedlock.version>7.0.0</shedlock.version>
+    <shedlock.version>7.1.0</shedlock.version>
     <byte-buddy.version>1.18.1</byte-buddy.version>
     <skipUnitTests>false</skipUnitTests>
     <postgres.version>15</postgres.version>
