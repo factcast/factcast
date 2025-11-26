@@ -159,13 +159,17 @@ class S3MultipartOutputStreamTest {
     @Test
     void abortUploadOnFailure() {
       final var abortUploadCaptor = ArgumentCaptor.forClass(AbortMultipartUploadRequest.class);
+      final var exception = SdkClientException.create("failed");
       when(s3.uploadPart(
               any(UploadPartRequest.class),
               any(software.amazon.awssdk.core.async.AsyncRequestBody.class)))
-          .thenThrow(SdkClientException.create("failed"));
+          .thenThrow(exception);
 
       byte[] data = new byte[6 * MB];
-      assertThatThrownBy(() -> uut.write(data, 0, data.length));
+      assertThatThrownBy(() -> uut.write(data, 0, data.length))
+          .isInstanceOf(exception.getClass())
+          .hasMessage(exception.getMessage());
+
 
       verify(s3).abortMultipartUpload(abortUploadCaptor.capture());
 
