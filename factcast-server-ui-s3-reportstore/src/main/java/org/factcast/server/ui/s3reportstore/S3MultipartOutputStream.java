@@ -30,7 +30,8 @@ import software.amazon.awssdk.services.s3.model.*;
 @Slf4j
 public class S3MultipartOutputStream extends OutputStream {
   private final S3AsyncClient s3;
-  private final String bucket, key;
+  private final String bucket;
+  private final String key;
   private final byte[] buf;
   private int count = 0;
   private final List<CompletedPart> parts = new ArrayList<>();

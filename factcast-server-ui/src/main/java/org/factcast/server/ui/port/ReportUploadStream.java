@@ -49,26 +49,19 @@ public abstract class ReportUploadStream {
     jsonGenerator.writeStartArray();
   }
 
+  @SneakyThrows
   public void writeToBatch(ObjectNode obj) {
-    try {
-      // passes on to outputStream
-      jsonGenerator.writeObject(obj);
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to add fact to report upload " + reportName, e);
-    }
+    // passes on to outputStream
+    jsonGenerator.writeObject(obj);
   }
 
+  @SneakyThrows
   public void close() {
     log.debug("Attempting to close upload stream");
-    try {
-      jsonGenerator.writeEndArray();
-      jsonGenerator.writeEndObject();
-      jsonGenerator.flush();
-      jsonGenerator.close();
-      log.debug("Report upload stream closed successfully");
-    } catch (Exception e) {
-      log.error("Failed to close upload stream", e);
-      throw new RuntimeException(String.format("Failed to close report upload %s.", reportName), e);
-    }
+    jsonGenerator.writeEndArray();
+    jsonGenerator.writeEndObject();
+    jsonGenerator.flush();
+    jsonGenerator.close();
+    log.debug("Report upload stream closed successfully");
   }
 }

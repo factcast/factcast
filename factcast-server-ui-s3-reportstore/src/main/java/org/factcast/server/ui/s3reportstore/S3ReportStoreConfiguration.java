@@ -21,6 +21,7 @@ import org.factcast.server.ui.port.ReportStore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.*;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
@@ -32,7 +33,10 @@ public class S3ReportStoreConfiguration {
   @Bean
   @ConditionalOnMissingBean
   public S3AsyncClient s3Client() {
-    return S3AsyncClient.builder().multipartEnabled(true).build();
+    return S3AsyncClient.builder()
+        .credentialsProvider(DefaultCredentialsProvider.builder().build())
+        .multipartEnabled(true)
+        .build();
   }
 
   @Bean

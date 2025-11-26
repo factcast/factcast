@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import java.io.FileOutputStream;
 import java.nio.file.Path;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.factcast.server.ui.report.ReportFilterBean;
 
 public class FileReportUploadStream extends ReportUploadStream {
@@ -31,13 +32,8 @@ public class FileReportUploadStream extends ReportUploadStream {
     super(jsonFactory, reportName, query, getFileOutputStream(filePath));
   }
 
+  @SneakyThrows
   private static FileOutputStream getFileOutputStream(@NonNull Path path) {
-    try {
-      return new FileOutputStream(path.toFile());
-    } catch (Exception e) {
-      throw new RuntimeException(
-          "Failed to create FileOutputStream for report upload to file: " + path.toAbsolutePath(),
-          e);
-    }
+    return new FileOutputStream(path.toFile());
   }
 }
