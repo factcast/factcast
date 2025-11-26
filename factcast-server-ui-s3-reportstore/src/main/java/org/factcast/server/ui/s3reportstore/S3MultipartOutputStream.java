@@ -67,7 +67,7 @@ public class S3MultipartOutputStream extends OutputStream {
   }
 
   @Override
-  public void write(byte[] b, int off, int len) throws IOException {
+  public void write(byte @NotNull [] b, int off, int len) throws IOException {
     ensureOpen();
     while (len > 0) {
       int space = buf.length - count;
