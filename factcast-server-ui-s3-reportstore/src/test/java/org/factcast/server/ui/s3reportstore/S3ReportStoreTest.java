@@ -75,8 +75,6 @@ class S3ReportStoreTest {
       final var completedUpload = mock(CreateMultipartUploadResponse.class);
       when(s3Client.createMultipartUpload(any(CreateMultipartUploadRequest.class)))
           .thenReturn(CompletableFuture.completedFuture(completedUpload));
-      // TODO: why no check?
-      //      objectDoesNotExist();
 
       // when
       assertThatCode(() -> uut.createBatchUpload("user", REPORT_NAME, QUERY_BEAN))
