@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast-itests</artifactId>
-    <version>0.9.12-SNAPSHOT</version>
+    <version>0.9.13-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-itests-factus</artifactId>
@@ -154,7 +154,7 @@
     <dependency>
       <groupId>net.javacrumbs.json-unit</groupId>
       <artifactId>json-unit-assertj</artifactId>
-      <version>5.0.0</version>
+      <version>5.1.0</version>
       <scope>test</scope>
     </dependency>
     <!-- for testing legacy redisson bucket behaviour -->
