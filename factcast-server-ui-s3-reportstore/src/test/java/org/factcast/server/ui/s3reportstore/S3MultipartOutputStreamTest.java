@@ -170,7 +170,6 @@ class S3MultipartOutputStreamTest {
           .isInstanceOf(exception.getClass())
           .hasMessage(exception.getMessage());
 
-
       verify(s3).abortMultipartUpload(abortUploadCaptor.capture());
 
       final var abortRequest = abortUploadCaptor.getValue();
