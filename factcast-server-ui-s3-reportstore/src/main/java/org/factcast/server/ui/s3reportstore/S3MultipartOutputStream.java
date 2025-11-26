@@ -102,7 +102,7 @@ public class S3MultipartOutputStream extends OutputStream {
                   .bucket(bucket)
                   .key(key)
                   .uploadId(uploadId)
-                  .multipartUpload(CompletedMultipartUpload.builder().parts(parts).build())
+                  .multipartUpload(mpu -> mpu.parts(parts))
                   .build())
           .get();
     } catch (Exception e) {
