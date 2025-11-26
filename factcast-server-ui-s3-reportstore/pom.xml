@@ -54,16 +54,6 @@
       <artifactId>s3</artifactId>
       <version>${aws-sdk.version}</version>
     </dependency>
-    <dependency>
-      <groupId>software.amazon.awssdk</groupId>
-      <artifactId>s3-transfer-manager</artifactId>
-      <version>${aws-sdk.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>software.amazon.awssdk.crt</groupId>
-      <artifactId>aws-crt</artifactId>
-      <version>0.40.1</version>
-    </dependency>
 
     <!-- Test dependencies -->
     <dependency>
