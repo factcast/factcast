@@ -28,7 +28,6 @@ import org.factcast.server.ui.report.ReportFilterBean;
 @Slf4j
 public abstract class ReportUploadStream {
   @NonNull private final JsonGenerator jsonGenerator;
-  private final String reportName;
 
   @SneakyThrows
   protected ReportUploadStream(
@@ -37,7 +36,6 @@ public abstract class ReportUploadStream {
       @NonNull ReportFilterBean query,
       @NonNull OutputStream outputStream) {
     log.debug("Initializing report upload stream for report '{}'", reportName);
-    this.reportName = reportName;
     this.jsonGenerator = jsonFactory.createGenerator(outputStream);
     jsonGenerator.writeStartObject();
     jsonGenerator.writeStringField("name", reportName);
