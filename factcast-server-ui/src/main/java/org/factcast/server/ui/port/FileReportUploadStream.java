@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2024 factcast.org
+ * Copyright © 2017-2025 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,25 @@
  */
 package org.factcast.server.ui.port;
 
-import java.net.URL;
-import java.util.List;
+import com.fasterxml.jackson.core.JsonFactory;
+import java.io.FileOutputStream;
+import java.nio.file.Path;
 import lombok.NonNull;
-import org.factcast.server.ui.report.ReportEntry;
+import lombok.SneakyThrows;
 import org.factcast.server.ui.report.ReportFilterBean;
 
-public interface ReportStore {
+public class FileReportUploadStream extends ReportUploadStream {
 
-  ReportUploadStream createBatchUpload(
-      @NonNull String userName, @NonNull String reportName, @NonNull ReportFilterBean query);
+  public FileReportUploadStream(
+      @NonNull JsonFactory jsonFactory,
+      @NonNull Path filePath,
+      @NonNull String reportName,
+      @NonNull ReportFilterBean query) {
+    super(jsonFactory, reportName, query, getFileOutputStream(filePath));
+  }
 
-  URL getReportDownload(@NonNull String userName, @NonNull String reportName);
-
-  List<ReportEntry> listAllForUser(@NonNull String userName);
-
-  void delete(@NonNull String userName, @NonNull String reportName);
+  @SneakyThrows
+  private static FileOutputStream getFileOutputStream(@NonNull Path path) {
+    return new FileOutputStream(path.toFile());
+  }
 }
