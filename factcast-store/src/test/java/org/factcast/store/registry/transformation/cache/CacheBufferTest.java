@@ -16,6 +16,8 @@
 package org.factcast.store.registry.transformation.cache;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.Mockito.mock;
 
 import java.util.*;
 import lombok.NonNull;
@@ -48,7 +50,7 @@ class CacheBufferTest {
 
     @Test
     void get() {
-      PgFact f = Mockito.mock(PgFact.class);
+      PgFact f = mock(PgFact.class);
       underTest.buffer().put(key, f);
       assertThat(underTest.get(key)).isSameAs(f);
     }
@@ -64,14 +66,14 @@ class CacheBufferTest {
 
     @Test
     void put() {
-      PgFact f = Mockito.mock(PgFact.class);
+      PgFact f = mock(PgFact.class);
       underTest.put(cacheKey, f);
       assertThat(underTest.buffer().get(cacheKey)).isSameAs(f);
     }
 
     @Test
     void putNullDoesNotHide() {
-      PgFact f = Mockito.mock(PgFact.class);
+      PgFact f = mock(PgFact.class);
       underTest.put(cacheKey, f);
       underTest.put(cacheKey, null);
       assertThat(underTest.buffer().get(cacheKey)).isSameAs(f);
@@ -88,7 +90,7 @@ class CacheBufferTest {
 
     @Test
     void size() {
-      PgFact f = Mockito.mock(PgFact.class);
+      PgFact f = mock(PgFact.class);
       assertThat(underTest.buffer()).isEmpty();
       underTest.put(cacheKey, f);
       assertThat(underTest.buffer()).hasSize(1);
@@ -141,6 +143,19 @@ class CacheBufferTest {
       assertThat(underTest.buffer()).isEmpty();
       assertThat(underTest.flushingBuffer()).isEmpty();
     }
+
+    @Test
+    void preventsConcurrentModification() {
+      underTest.put(cacheKey, factOrNull);
+      underTest.clearAfter(
+          bufferCopy -> {
+            var iterator = bufferCopy.entrySet().iterator();
+            underTest.flushingBuffer().put(mock(TransformationCache.Key.class), mock(PgFact.class));
+            underTest.buffer().put(mock(TransformationCache.Key.class), mock(PgFact.class));
+            underTest.clearAfter(c -> {});
+            assertDoesNotThrow(iterator::next);
+          });
+    }
   }
 
   @Nested
@@ -154,7 +169,7 @@ class CacheBufferTest {
 
     @Test
     void doesNotHide() {
-      PgFact f = Mockito.mock(PgFact.class);
+      PgFact f = mock(PgFact.class);
       underTest.put(key1, f);
       assertThat(underTest.buffer()).hasSize(1);
       underTest.putAllNull(Set.of(key1, key2, key3));

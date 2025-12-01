@@ -29,8 +29,7 @@ import nl.altindag.log.LogCaptor;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.internal.listen.*;
-import org.factcast.store.internal.pipeline.ServerPipeline;
-import org.factcast.store.internal.pipeline.Signal;
+import org.factcast.store.internal.pipeline.*;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.junit.jupiter.api.Nested;
@@ -62,7 +61,7 @@ class PgSynchronizedQueryTest {
 
   @Mock PgLatestSerialFetcher fetcher;
   @Mock CurrentStatementHolder statementHolder;
-  @Mock ServerPipeline pipeline;
+  @Mock BufferedTransformingServerPipeline pipeline;
   @Mock PgConnectionSupplier connectionSupplier;
 
   @SneakyThrows
@@ -331,6 +330,55 @@ class PgSynchronizedQueryTest {
       verify(pipe).process(Signal.of(exception));
       verify(rs).close();
       verify(serial, never()).set(10L);
+    }
+  }
+
+  @Nested
+  class Issue4127 {
+
+    @Test
+    @SneakyThrows
+    void exception_during_flush_must_not_forward_fsp() {
+      PgFact factToBeTransformed = mock(PgFact.class);
+      SingleConnectionDataSource ds = mock(SingleConnectionDataSource.class);
+      Connection con = Mockito.mock(Connection.class);
+      PreparedStatement p = mock(PreparedStatement.class);
+
+      when(connectionSupplier.getPooledAsSingleDataSource(anyList())).thenReturn(ds);
+      when(ds.getConnection()).thenReturn(con);
+      when(con.prepareStatement(anyString())).thenReturn(p);
+      ResultSet rs = Mockito.mock(ResultSet.class);
+      when(rs.next()).thenReturn(true, false); // one result
+      when(p.executeQuery()).thenReturn(rs);
+      when(fetcher.retrieveLatestSer()).thenReturn(5L); // serial before query
+
+      try (MockedStatic<PgFact> mockStatic = Mockito.mockStatic(PgFact.class)) {
+        mockStatic.when(() -> PgFact.from(rs)).thenReturn(factToBeTransformed);
+
+        uut =
+            new PgSynchronizedQuery(
+                "test",
+                pipeline,
+                connectionSupplier,
+                sql,
+                setter,
+                () -> true,
+                serialToContinueFrom,
+                fetcher,
+                statementHolder);
+
+        // lets assume a random exception during flush
+        doNothing().when(pipeline).process(any(Signal.FactSignal.class));
+        // the serial of the fact read
+        when(rs.getLong(PgConstants.COLUMN_SER)).thenReturn(6L);
+        doThrow(RuntimeException.class).when(pipeline).process(any(Signal.FlushSignal.class));
+
+        // act
+        uut.run(false);
+
+        // the connection MUST have been terminated, as otherwise, we'd catch up from the last FSP
+        verify(pipeline).process(any(Signal.ErrorSignal.class));
+      }
     }
   }
 }
