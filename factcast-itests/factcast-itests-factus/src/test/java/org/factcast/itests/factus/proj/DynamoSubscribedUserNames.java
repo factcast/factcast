@@ -24,8 +24,7 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 @Slf4j
 @ProjectionMetaData(revision = 1)
-public class DynamoSubscribedUserNames extends AbstractDynamoSubscribedProjection
-    implements DynamoUserNames {
+public class DynamoSubscribedUserNames extends AbstractDynamoSubscribedProjection implements DynamoUserNames {
 
   private final DynamoDbTable<DynamoUserNamesSchema> userNames;
 
