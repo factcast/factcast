@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.UUID;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import lombok.NonNull;
 import org.factcast.core.Fact;
@@ -47,5 +48,6 @@ public interface FactRepository {
 
   List<Fact> fetchChunk(FullFilterBean bean);
 
-  List<Fact> fetchAll(ReportFilterBean bean);
+  /** returns number of processed facts */
+  long fetchAndProcessAll(ReportFilterBean bean, Consumer<Fact> consumer);
 }

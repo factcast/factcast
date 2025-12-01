@@ -80,7 +80,9 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                   new PostgreSQLContainer<>("postgres:" + config.postgresVersion())
                       .withDatabaseName("fc")
                       .withUsername("fc")
-                      .withPassword(UUID.randomUUID().toString())
+                      // changed to static pwd, so that we could easily access the DB during
+                      // debugging
+                      .withPassword("fc")
                       .withNetworkAliases(dbName)
                       .withNetwork(FactCastIntegrationTestExecutionListener._docker_network);
               db.start();

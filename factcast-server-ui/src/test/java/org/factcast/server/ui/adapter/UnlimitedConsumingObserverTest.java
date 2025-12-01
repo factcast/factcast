@@ -18,24 +18,28 @@ package org.factcast.server.ui.adapter;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Consumer;
 import lombok.NonNull;
-import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class UnlimitedListObserverTest {
+public class UnlimitedConsumingObserverTest {
 
-  private UnlimitedListObserver underTest;
+  @Mock Consumer<Fact> factConsumer;
+
+  private UnlimitedConsumingObserver underTest;
 
   @Nested
   class WhenOnNext {
@@ -50,14 +54,13 @@ public class UnlimitedListObserverTest {
 
     @Test
     void usesOffset() {
-      underTest = new UnlimitedListObserver(27);
+      underTest = new UnlimitedConsumingObserver(27, factConsumer);
       assertThatCode(() -> mockFacts.forEach(underTest::onNext)).doesNotThrowAnyException();
 
-      var result = underTest.list();
-      Assertions.assertThat(result)
-          .isNotNull()
-          .hasSize(3)
-          .containsExactly(mockFacts.get(29), mockFacts.get(28), mockFacts.get(27));
+      verify(factConsumer).accept(mockFacts.get(29));
+      verify(factConsumer).accept(mockFacts.get(28));
+      verify(factConsumer).accept(mockFacts.get(27));
+      verifyNoMoreInteractions(factConsumer);
     }
   }
 
@@ -65,7 +68,7 @@ public class UnlimitedListObserverTest {
   class WhenFacingError {
     @Test
     void delegates() {
-      underTest = spy(new UnlimitedListObserver(2));
+      underTest = spy(new UnlimitedConsumingObserver(2, factConsumer));
       // first skipped for offset
       @NonNull Throwable exc = new IOException("expected - can be ignored");
       underTest.onError(exc);
@@ -77,7 +80,7 @@ public class UnlimitedListObserverTest {
   class WhenCheckingIfIsComplete {
     @Test
     void switchesToComplete() {
-      underTest = new UnlimitedListObserver(3L, 2);
+      underTest = new UnlimitedConsumingObserver(3L, 2, factConsumer);
       // first skipped for offset
       Fact mock1 = mock(Fact.class, Answers.RETURNS_DEEP_STUBS);
       when(mock1.header().serial()).thenReturn(1L);
@@ -90,13 +93,17 @@ public class UnlimitedListObserverTest {
 
       // First one skipped for offset
       underTest.onNext(mock1);
+      verifyNoInteractions(factConsumer);
       // second is taken, still under end serial
       underTest.onNext(mock2);
+      verifyNoInteractions(factConsumer);
       // third is taken, equals end serial
       assertThat(underTest.isComplete(mock3)).isFalse();
       underTest.onNext(mock3);
+      verify(factConsumer).accept(mock3);
       // fourth is above end serial
       assertThat(underTest.isComplete(mock4)).isTrue();
+      verifyNoMoreInteractions(factConsumer);
 
       // more should trigger an exception
       assertThatThrownBy(

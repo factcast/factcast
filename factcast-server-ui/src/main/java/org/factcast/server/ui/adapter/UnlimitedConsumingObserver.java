@@ -15,22 +15,28 @@
  */
 package org.factcast.server.ui.adapter;
 
+import java.util.function.Consumer;
 import lombok.*;
 import lombok.extern.java.Log;
 import org.factcast.core.Fact;
 
 @Getter
 @Log
-public class UnlimitedListObserver extends AbstractListObserver {
-  int offset;
+public class UnlimitedConsumingObserver extends AbstractListObserver {
+  private int offset;
+  private final @NonNull Consumer<Fact> factConsumer;
+  private long processedFacts = 0;
 
-  public UnlimitedListObserver(int offset) {
+  public UnlimitedConsumingObserver(int offset, @NonNull Consumer<Fact> factConsumer) {
     this.offset = offset;
+    this.factConsumer = factConsumer;
   }
 
-  public UnlimitedListObserver(Long untilSerial, int offset) {
+  public UnlimitedConsumingObserver(
+      Long untilSerial, int offset, @NonNull Consumer<Fact> factConsumer) {
     this.untilSerial = untilSerial;
     this.offset = offset;
+    this.factConsumer = factConsumer;
   }
 
   @Override
@@ -42,7 +48,8 @@ public class UnlimitedListObserver extends AbstractListObserver {
     if (offset > 0) {
       offset--;
     } else {
-      list().add(0, element);
+      processedFacts++;
+      factConsumer.accept(element);
     }
   }
 
