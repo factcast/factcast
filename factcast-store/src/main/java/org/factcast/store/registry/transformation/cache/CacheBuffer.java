@@ -84,7 +84,7 @@ class CacheBuffer {
     // while it's processing the data.
     try {
       beforeClearConsumer();
-      consumer.accept(new HashMap<>(flushingBuffer));
+      consumer.accept(Map.copyOf(flushingBuffer));
     } finally {
       afterClearConsumer();
     }
