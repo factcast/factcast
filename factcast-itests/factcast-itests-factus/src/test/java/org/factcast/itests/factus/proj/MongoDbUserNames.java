@@ -56,6 +56,7 @@ public interface MongoDbUserNames {
   class UserNamesSchema implements Serializable {
     private UUID userId;
     private String userName;
+    private boolean someBoolField;
 
     public UUID getUserId() {
       return this.userId;

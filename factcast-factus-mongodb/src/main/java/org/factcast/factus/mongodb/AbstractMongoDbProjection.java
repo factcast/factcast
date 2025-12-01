@@ -15,7 +15,6 @@
  */
 package org.factcast.factus.mongodb;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -69,7 +68,7 @@ abstract class AbstractMongoDbProjection implements MongoDbProjection {
         createLockClient(mongoDb));
   }
 
-  @VisibleForTesting
+  // Only for testing purposes.
   protected AbstractMongoDbProjection(
       @NonNull MongoDatabase mongoDb,
       @NonNull MongoCollection<Document> stateCollection,
@@ -119,10 +118,10 @@ abstract class AbstractMongoDbProjection implements MongoDbProjection {
   @Override
   public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
     final LockConfiguration lockConfiguration = getLockConfiguration(getLockKey());
-    Optional<SimpleLock> lock =
+    Optional<SimpleLock> acquiredLock =
         tryToAcquireLock(lockConfiguration, ZonedDateTime.now().plus(maxWait));
-    this.lock = lock.orElse(null);
-    return lock.map(l -> new MongoDbWriterToken(l, lockConfiguration)).orElse(null);
+    this.lock = acquiredLock.orElse(null);
+    return acquiredLock.map(l -> new MongoDbWriterToken(l, lockConfiguration)).orElse(null);
   }
 
   private String getLockKey() {
@@ -144,10 +143,10 @@ abstract class AbstractMongoDbProjection implements MongoDbProjection {
       long retryBackoffDuration = 500;
       do {
         log.debug("Trying to acquire lock for projection: {}", projectionKey);
-        Optional<SimpleLock> lock = lockProvider.lock(lockConfig);
-        if (lock.isPresent()) {
+        Optional<SimpleLock> acquiredLock = lockProvider.lock(lockConfig);
+        if (acquiredLock.isPresent()) {
           log.debug("Acquired lock for projection: {}", projectionKey);
-          return lock;
+          return acquiredLock;
         }
         Thread.sleep(retryBackoffDuration);
         retryBackoffDuration =
