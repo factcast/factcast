@@ -91,7 +91,7 @@ class PgSynchronizedQuery {
   }
 
   // the synchronized here is crucial!
-  @SuppressWarnings({"SameReturnValue", "java:51181"})
+  @SuppressWarnings({"SameReturnValue", "java:S1181"})
   public synchronized void run(boolean useIndex) {
     List<ConnectionModifier> filters =
         Lists.newArrayList(ConnectionModifier.withApplicationName(debugInfo));
