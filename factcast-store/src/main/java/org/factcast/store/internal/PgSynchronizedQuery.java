@@ -91,7 +91,7 @@ class PgSynchronizedQuery {
   }
 
   // the synchronized here is crucial!
-  @SuppressWarnings("SameReturnValue")
+  @SuppressWarnings({"SameReturnValue", "java:S1181"})
   public synchronized void run(boolean useIndex) {
     List<ConnectionModifier> filters =
         Lists.newArrayList(ConnectionModifier.withApplicationName(debugInfo));
@@ -118,8 +118,18 @@ class PgSynchronizedQuery {
         throw e;
       }
     } finally {
-      statementHolder.clear();
-      pipe.process(Signal.flush());
+      try {
+        statementHolder.clear();
+        // involves transformation & IO, so can throw exception
+        pipe.process(Signal.flush());
+      } catch (Throwable e) {
+        // this is necessary to end this subscription, so that the client can resubscribe using the
+        // FSP it received.
+        // Note that the FSP assigned to this subscription might already be ahead, so that we would
+        // run in the danger of skipping events.
+        // see #4127
+        pipe.process(Signal.of(e));
+      }
     }
   }
 
@@ -140,7 +150,7 @@ class PgSynchronizedQuery {
         if (rs.isClosed()) {
           if (!statementHolder.wasCanceled()) {
             throw new IllegalStateException(
-                "ResultSet already closed. We should not have got here. THIS IS A BUG!");
+                "ResultSet already closed. We should not have gotten here. THIS IS A BUG!");
           } else {
             return;
           }
