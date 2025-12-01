@@ -15,6 +15,7 @@
  */
 package org.factcast.server.ui.config;
 
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Optional;
@@ -76,5 +77,11 @@ public class JsonViewPluginConfiguration {
     customizer.customize(om);
 
     return om;
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  public JsonFactory jsonFactory(ObjectMapper objectMapper) {
+    return new JsonFactory(objectMapper);
   }
 }

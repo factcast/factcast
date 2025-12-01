@@ -7,6 +7,7 @@
     "@vaadin-component-factory/vcf-popup": "24.0.3",
     "@vaadin/bundles": "24.9.5",
     "@vaadin/common-frontend": "0.0.19",
+    "@vaadin/cookie-consent": "24.9.5",
     "@vaadin/polymer-legacy-adapter": "24.9.5",
     "@vaadin/react-components": "24.9.5",
     "@vaadin/vaadin-development-mode-detector": "2.0.7",
@@ -51,6 +52,7 @@
       "@vaadin-component-factory/vcf-popup": "24.0.3",
       "@vaadin/bundles": "24.9.5",
       "@vaadin/common-frontend": "0.0.19",
+      "@vaadin/cookie-consent": "24.9.5",
       "@vaadin/polymer-legacy-adapter": "24.9.5",
       "@vaadin/react-components": "24.9.5",
       "@vaadin/vaadin-development-mode-detector": "2.0.7",
@@ -89,7 +91,7 @@
       "workbox-core": "7.3.0",
       "workbox-precaching": "7.3.0"
     },
-    "hash": "e2ef5fe44e5ade8542c9bc641ed46cbacb9761786b7bd609dc67a0b8df29f4e1"
+    "hash": "af56c8eb80c9afefb6ecfc9f26c889b9ec72d7b78a3161c65ea1975f0fab6582"
   },
   "overrides": {
     "@vaadin/bundles": "$@vaadin/bundles",
@@ -170,6 +172,7 @@
     "@vaadin/tooltip": "24.9.5",
     "@vaadin/upload": "24.9.5",
     "@vaadin/vertical-layout": "24.9.5",
-    "@vaadin/virtual-list": "24.9.5"
+    "@vaadin/virtual-list": "24.9.5",
+    "@vaadin/cookie-consent": "$@vaadin/cookie-consent"
   }
 }
