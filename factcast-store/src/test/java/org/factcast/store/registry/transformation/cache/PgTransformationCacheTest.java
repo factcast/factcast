@@ -20,6 +20,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Lists;
+import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.util.*;
 import lombok.*;
@@ -27,6 +28,7 @@ import nl.altindag.log.LogCaptor;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.PgFact;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.junit.jupiter.api.*;
@@ -62,7 +64,7 @@ class PgTransformationCacheTest {
   @Nested
   class WhenPuting {
     @Mock private TransformationCache.@NonNull Key key;
-    @Mock private @NonNull Fact f;
+    @Mock private @NonNull PgFact f;
     private PgTransformationCache underTest;
 
     @BeforeEach
@@ -100,8 +102,8 @@ class PgTransformationCacheTest {
   class WhenFinding {
     @Mock private TransformationCache.Key key;
     @Mock private TransformationCache.Key key2;
-    @Mock private Fact f;
-    @Mock private Fact f2;
+    @Mock private PgFact f;
+    @Mock private PgFact f2;
     private PgTransformationCache underTest;
 
     @BeforeEach
@@ -153,8 +155,8 @@ class PgTransformationCacheTest {
   class WhenFindingAll {
     @Mock private TransformationCache.Key key;
     @Mock private TransformationCache.Key key2;
-    @Mock private Fact f;
-    @Mock private Fact f2;
+    @Mock private PgFact f;
+    @Mock private PgFact f2;
     private PgTransformationCache underTest;
 
     @BeforeEach
@@ -207,7 +209,7 @@ class PgTransformationCacheTest {
   class WhenRegisteringAccess {
     private PgTransformationCache underTest;
     @Mock private TransformationCache.Key cacheKey;
-    @Mock private Fact f;
+    @Mock private PgFact f;
 
     @BeforeEach
     void setup() {
@@ -244,7 +246,7 @@ class PgTransformationCacheTest {
   class WhenRegisteringWrite {
     private PgTransformationCache underTest;
     @Mock private TransformationCache.Key cacheKey;
-    @Mock private Fact f;
+    @Mock private PgFact f;
 
     @BeforeEach
     void setup() {
@@ -301,7 +303,7 @@ class PgTransformationCacheTest {
     private PgTransformationCache underTest;
     @Mock private TransformationCache.Key cacheKey;
     @Mock private TransformationCache.Key otherCacheKey;
-    @Mock private Fact f;
+    @Mock private PgFact f;
 
     @BeforeEach
     void setup() {
@@ -356,8 +358,12 @@ class PgTransformationCacheTest {
 
       Mockito.verify(jdbcTemplate)
           .update(
-              "DELETE FROM transformationcache WHERE last_access < ?",
-              new Date(THRESHOLD_DATE.toInstant().toEpochMilli()));
+              "DELETE FROM transformationcache WHERE cache_key in (SELECT cache_key FROM transformationcache_access WHERE last_access < ?)",
+              Timestamp.from(THRESHOLD_DATE.toInstant()));
+      Mockito.verify(jdbcTemplate)
+          .update(
+              "DELETE FROM transformationcache_access WHERE last_access < ?",
+              Timestamp.from(THRESHOLD_DATE.toInstant()));
     }
 
     @Test
@@ -377,7 +383,7 @@ class PgTransformationCacheTest {
   class WhenFlushing {
     @Mock private TransformationCache.@NonNull Key key;
     @Mock private TransformationCache.@NonNull Key key2;
-    @Mock private @NonNull Fact f;
+    @Mock private @NonNull PgFact f;
     private PgTransformationCache underTest;
 
     @BeforeEach
@@ -480,10 +486,10 @@ class PgTransformationCacheTest {
     @Test
     void insertsAll() {
 
-      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(Fact.class));
-      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(Fact.class));
+      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(PgFact.class));
+      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(PgFact.class));
       buffer.put(Mockito.mock(TransformationCache.Key.class), null);
-      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(Fact.class));
+      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(PgFact.class));
       buffer.put(Mockito.mock(TransformationCache.Key.class), null);
 
       underTest.flush();
@@ -524,10 +530,10 @@ class PgTransformationCacheTest {
     @Test
     void insertsAll() {
 
-      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(Fact.class));
-      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(Fact.class));
+      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(PgFact.class));
+      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(PgFact.class));
       buffer.put(Mockito.mock(TransformationCache.Key.class), null);
-      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(Fact.class));
+      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(PgFact.class));
       buffer.put(Mockito.mock(TransformationCache.Key.class), null);
 
       underTest.flush();
@@ -536,13 +542,19 @@ class PgTransformationCacheTest {
 
       Mockito.verify(jdbcTemplate, times(1))
           .execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
-      Mockito.verify(jdbcTemplate, times(1)).batchUpdate(matches("INSERT.*"), m.capture());
+      Mockito.verify(jdbcTemplate, times(1))
+          .batchUpdate(matches("INSERT INTO transformationcache .*"), m.capture());
+      assertThat((Collection) m.getValue()).isNotNull().hasSize(3);
+      Mockito.verify(jdbcTemplate, times(1))
+          .batchUpdate(
+              matches("/\\* insert \\*/ INSERT INTO transformationcache_access.*"), m.capture());
       assertThat((Collection) m.getValue()).isNotNull().hasSize(3);
 
-      ArgumentCaptor<MapSqlParameterSource> ids =
-          ArgumentCaptor.forClass(MapSqlParameterSource.class);
-      Mockito.verify(namedJdbcTemplate, times(1)).update(matches("UPDATE.*"), ids.capture());
-      assertThat((Collection) (ids.getValue().getValue("ids"))).isNotNull().hasSize(2);
+      ArgumentCaptor<List<Object[]>> ids = ArgumentCaptor.forClass(List.class);
+      Mockito.verify(jdbcTemplate, times(1))
+          .batchUpdate(
+              matches("/\\* touch \\*/ INSERT INTO transformationcache_access.*"), ids.capture());
+      assertThat((Collection) (ids.getValue())).isNotNull().hasSize(2);
     }
   }
 

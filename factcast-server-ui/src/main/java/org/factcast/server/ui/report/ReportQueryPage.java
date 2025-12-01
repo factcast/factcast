@@ -30,7 +30,6 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.*;
 import jakarta.annotation.security.PermitAll;
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
 import java.util.*;
 import lombok.Getter;
 import lombok.NonNull;
@@ -221,40 +220,40 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
     try {
       queryBtn.setEnabled(false);
       binder.writeBean(formBean);
-      final var queryTimestamp = OffsetDateTime.now();
       log.info("{} runs query for {}", userName, formBean);
-      // For now this will block the UI in case of long-running queries. Will be refactored in the
-      // future once the FactRepository is adapted.
-      List<Fact> dataFromStore = repo.fetchAll(formBean);
-      log.info("Found {} entries", dataFromStore.size());
-      if (!dataFromStore.isEmpty()) {
-        List<ObjectNode> processedFacts =
-            dataFromStore.stream().map(e -> jsonViewPluginService.process(e).fact()).toList();
-        trySave(processedFacts, queryTimestamp);
-      } else {
-        displayWarning(
+
+      final var reportUploadStream =
+          reportStore.createBatchUpload(userName, fileNameField.value(), formBean);
+      final long numberOfProcessedFacts =
+          repo.fetchAndProcessAll(
+              formBean, fact -> reportUploadStream.writeToBatch(processFact(fact)));
+      // Finish report json and close stream
+      reportUploadStream.close();
+
+      log.info("Found {} entries", numberOfProcessedFacts);
+      if (numberOfProcessedFacts == 0) {
+        Notifications.warn(
             "No data was found for this query and therefore report creation is skipped.");
         // no report was produced, report with same name could still be produced,
         // people will probably want to adjust their filter criteria and try again right away
         queryBtn.setEnabled(true);
+      } else {
+        reportProvider.refreshAll();
       }
-    } catch (ValidationException e) {
+
+    } catch (ValidationException | IllegalArgumentException e) {
+      log.warn("Validation error during report generation", e);
       Notifications.warn(e.getMessage());
     } catch (Exception e) {
+      log.error("Error during report generation", e);
       Notifications.error(e.getMessage());
     }
     // Not re-enabling the queryReportBtn to not incentivise users to generate it
     // multiple times.
   }
 
-  private void trySave(List<ObjectNode> processedFacts, OffsetDateTime queriedAt) {
-    try {
-      reportStore.save(
-          userName, new Report(fileNameField.value(), processedFacts, formBean, queriedAt));
-      reportProvider.refreshAll();
-    } catch (IllegalArgumentException e) {
-      displayWarning(e.getMessage());
-    }
+  private ObjectNode processFact(Fact fact) {
+    return jsonViewPluginService.process(fact).fact();
   }
 
   private DataProvider<ReportEntry, Void> getReportProvider() {
@@ -269,10 +268,5 @@ public class ReportQueryPage extends VerticalLayout implements HasUrlParameter<S
           final var userReports = reportStore.listAllForUser(this.userName);
           return userReports.size();
         });
-  }
-
-  private static void displayWarning(String message) {
-    Notification notification = Notification.show(message);
-    notification.addThemeVariants(NotificationVariant.LUMO_WARNING);
   }
 }

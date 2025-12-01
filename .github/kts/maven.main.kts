@@ -1,12 +1,12 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("io.github.typesafegithub:github-workflows-kt:3.5.0")
+@file:DependsOn("io.github.typesafegithub:github-workflows-kt:3.6.0")
 
 
 @file:Repository("https://repo.maven.apache.org/maven2/")
 @file:Repository("https://bindings.krzeminski.it")
 
-@file:DependsOn("actions:checkout:v5")
+@file:DependsOn("actions:checkout:v6")
 @file:DependsOn("actions:cache:v4")
 @file:DependsOn("actions:setup-java:v5")
 
@@ -17,6 +17,8 @@ import io.github.typesafegithub.workflows.actions.actions.SetupJava
 import io.github.typesafegithub.workflows.domain.RunnerType
 import io.github.typesafegithub.workflows.domain.triggers.PullRequest
 import io.github.typesafegithub.workflows.domain.triggers.Push
+import io.github.typesafegithub.workflows.dsl.expressions.Contexts
+import io.github.typesafegithub.workflows.dsl.expressions.Contexts.secrets
 import io.github.typesafegithub.workflows.dsl.expressions.expr
 import io.github.typesafegithub.workflows.dsl.workflow
 import io.github.typesafegithub.workflows.yaml.ConsistencyCheckJobConfig
@@ -33,6 +35,10 @@ workflow(
     sourceFile = __FILE__,
     consistencyCheckJobConfig = ConsistencyCheckJobConfig.Disabled
 ) {
+
+    val SONAR_TOKEN by Contexts.secrets
+    val SONAR  by Contexts.env
+
     job(
         id = "build",
         runsOn = RunnerType.UbuntuLatest,
@@ -66,10 +72,10 @@ workflow(
             ),
         )
         uses(
-            name = "JDK 17",
+            name = "JDK 21",
             action = SetupJava(
                 distribution = SetupJava.Distribution.Corretto,
-                javaVersion = "17",
+                javaVersion = "21",
             ),
         )
 
@@ -85,7 +91,8 @@ workflow(
 
         run(
             name = "Sonar upload",
-            command = "./mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=\${{ secrets.SONAR_TOKEN }}"
+            env = mapOf( "SONAR" to expr { SONAR_TOKEN } ,),
+            command = "./mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR"
         )
 
         run(
@@ -121,10 +128,10 @@ workflow(
         )
 
         uses(
-            name = "JDK 17",
+            name = "JDK 21",
             action = SetupJava(
                 distribution = SetupJava.Distribution.Corretto,
-                javaVersion = "17",
+                javaVersion = "21",
             ),
         )
 

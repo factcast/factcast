@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2022 factcast.org
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.subscription.transformation;
+package org.factcast.factus;
 
-import java.util.*;
-import lombok.NonNull;
-import lombok.Value;
-import org.factcast.core.Fact;
+import java.lang.annotation.*;
 
-@Value
-public class TransformationRequest {
-  @NonNull Fact toTransform;
-  Set<Integer> targetVersions;
+@Retention(RetentionPolicy.RUNTIME)
+@Target(value = ElementType.METHOD)
+public @interface FilterByAggIdProperty {
+  String value();
 }

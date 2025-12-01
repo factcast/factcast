@@ -18,7 +18,7 @@ package org.factcast.store.internal;
 import com.google.common.eventbus.*;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import javax.sql.DataSource;
 import liquibase.integration.spring.SpringLiquibase;
 import lombok.NonNull;
@@ -31,7 +31,6 @@ import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMo
 import net.javacrumbs.shedlock.support.KeepAliveLockProvider;
 import org.factcast.core.store.*;
 import org.factcast.core.subscription.observer.FastForwardTarget;
-import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.store.*;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.catchup.fetching.PgFetchingCatchUpFactory;
@@ -44,6 +43,7 @@ import org.factcast.store.internal.query.*;
 import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.tail.PGTailIndexingConfiguration;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
+import org.factcast.store.internal.transformation.FactTransformerService;
 import org.factcast.store.registry.*;
 import org.factcast.store.registry.transformation.cache.*;
 import org.factcast.store.registry.transformation.chains.TransformationChains;
@@ -74,21 +74,33 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @Import({SchemaRegistryConfiguration.class, PGTailIndexingConfiguration.class})
 public class PgFactStoreInternalConfiguration {
 
+  public static final int LISTENER_POOL_MAX_SIZE = 64;
+  public static final int LISTENER_POOL_CORE_SIZE = LISTENER_POOL_MAX_SIZE;
+  public static final long LISTENER_POOL_KEEP_ALIVE_SECONDS = 30;
+
   /**
    * may be overruled by defining a @Primary DeduplicatingEventBus in PgFactStoreAutoConfiguration
    */
   @Bean
   @ConditionalOnMissingBean(EventBus.class)
   public EventBus regularEventBus(@NonNull PgMetrics metrics) {
+    ThreadPoolExecutor listenerPool =
+        new ThreadPoolExecutor(
+            LISTENER_POOL_CORE_SIZE,
+            LISTENER_POOL_MAX_SIZE,
+            LISTENER_POOL_KEEP_ALIVE_SECONDS,
+            TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>() // unbounded queue
+            );
+    listenerPool.allowCoreThreadTimeOut(true);
     return new AsyncEventBus(
-        EventBus.class.getSimpleName(),
-        metrics.monitor(Executors.newCachedThreadPool(), "pg-listener"));
+        EventBus.class.getSimpleName(), metrics.monitor(listenerPool, "pg-listener"));
   }
 
   @Bean
   public PgCatchupFactory pgCatchupFactory(
-      StoreConfigurationProperties props, PgConnectionSupplier supp) {
-    return new PgFetchingCatchUpFactory(supp, props);
+      StoreConfigurationProperties props, PgConnectionSupplier supp, PgMetrics metrics) {
+    return new PgFetchingCatchUpFactory(supp, props, metrics);
   }
 
   @Bean

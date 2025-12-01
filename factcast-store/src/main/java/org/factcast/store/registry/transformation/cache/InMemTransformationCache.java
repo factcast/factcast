@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.LRUMap;
-import org.factcast.core.Fact;
+import org.factcast.store.internal.PgFact;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 
 @Slf4j
@@ -44,12 +44,12 @@ public class InMemTransformationCache implements TransformationCache {
   }
 
   @Override
-  public void put(@NonNull TransformationCache.Key key, @NonNull Fact f) {
+  public void put(@NonNull TransformationCache.Key key, @NonNull PgFact f) {
     cache.put(key, new FactAndAccessTime(f, System.currentTimeMillis()));
   }
 
   @Override
-  public Optional<Fact> find(@NonNull TransformationCache.Key key) {
+  public Optional<PgFact> find(@NonNull TransformationCache.Key key) {
     Optional<FactAndAccessTime> cached;
     cached = Optional.ofNullable(cache.get(key));
     cached.ifPresent(faat -> faat.accessTimeInMillis(System.currentTimeMillis()));
@@ -61,8 +61,8 @@ public class InMemTransformationCache implements TransformationCache {
   }
 
   @Override
-  public Set<Fact> findAll(Collection<Key> keys) {
-    Set<Fact> found = new HashSet<>(keys.size());
+  public Set<PgFact> findAll(Collection<Key> keys) {
+    Set<PgFact> found = new HashSet<>(keys.size());
     keys.forEach(
         k -> {
           FactAndAccessTime factAndAccessTime = cache.get(k);
@@ -139,7 +139,7 @@ public class InMemTransformationCache implements TransformationCache {
   @Data
   @AllArgsConstructor
   private static class FactAndAccessTime {
-    Fact fact;
+    PgFact fact;
 
     long accessTimeInMillis;
   }

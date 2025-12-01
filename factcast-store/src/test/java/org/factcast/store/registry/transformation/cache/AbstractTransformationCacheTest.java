@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 import org.factcast.core.Fact;
+import org.factcast.store.internal.PgFact;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,7 +46,7 @@ public abstract class AbstractTransformationCacheTest {
 
   @Test
   void testEmptyFind() {
-    Optional<Fact> fact = uut.find(TransformationCache.Key.of(UUID.randomUUID(), 1, "1"));
+    Optional<PgFact> fact = uut.find(TransformationCache.Key.of(UUID.randomUUID(), 1, "1"));
 
     assertThat(fact.isPresent()).isFalse();
 
@@ -57,12 +58,12 @@ public abstract class AbstractTransformationCacheTest {
     UUID id1 = UUID.randomUUID();
     UUID id2 = UUID.randomUUID();
     UUID id3 = UUID.randomUUID();
-    Fact fact1 = Fact.builder().ns("ns").type("type").id(id1).version(1).build("{}");
-    Fact fact2 = Fact.builder().ns("ns").type("type").id(id2).version(1).build("{}");
-    Fact fact3 = Fact.builder().ns("ns").type("type").id(id3).version(1).build("{}");
+    PgFact fact1 = PgFact.from(Fact.builder().ns("ns").type("type").id(id1).version(1).build("{}"));
+    PgFact fact2 = PgFact.from(Fact.builder().ns("ns").type("type").id(id2).version(1).build("{}"));
+    PgFact fact3 = PgFact.from(Fact.builder().ns("ns").type("type").id(id3).version(1).build("{}"));
     String chainId = "1-2-3";
 
-    uut.put(TransformationCache.Key.of(fact1.id(), 1, chainId), fact1);
+    uut.put(TransformationCache.Key.of(fact1.id(), 1, chainId), (fact1));
     uut.put(TransformationCache.Key.of(fact2.id(), 1, chainId), fact2);
     // but not fact3 !
 
@@ -80,12 +81,15 @@ public abstract class AbstractTransformationCacheTest {
 
   @Test
   void testFindAfterPut() {
-    Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}");
+    PgFact fact =
+        PgFact.from(
+            Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}"));
     String chainId = "1-2-3";
 
     uut.put(TransformationCache.Key.of(fact.id(), 1, chainId), fact);
 
-    Optional<Fact> found = uut.find(TransformationCache.Key.of(fact.id(), fact.version(), chainId));
+    Optional<PgFact> found =
+        uut.find(TransformationCache.Key.of(fact.id(), fact.version(), chainId));
 
     assertThat(found.isPresent()).isTrue();
     assertEquals(fact, found.get());
@@ -94,22 +98,25 @@ public abstract class AbstractTransformationCacheTest {
 
   @Test
   void testCompact() {
-    Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}");
+    PgFact fact =
+        PgFact.from(
+            Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}"));
     String chainId = "1-2-3";
 
     uut.put(TransformationCache.Key.of(fact.id(), 1, chainId), fact);
 
-    // clocks aren't synchronized so Im gonna add an hour here :)
-    uut.compact(ZonedDateTime.now().plusHours(1));
+    // clocks aren't synchronized so Im gonna add a day here :)
+    uut.compact(ZonedDateTime.now().plusDays(1));
 
-    Optional<Fact> found = uut.find(TransformationCache.Key.of(fact.id(), fact.version(), chainId));
+    Optional<PgFact> found =
+        uut.find(TransformationCache.Key.of(fact.id(), fact.version(), chainId));
 
     assertThat(found.isPresent()).isFalse();
   }
 
   @Test
   void testRespectsChainId() {
-    Fact fact = Fact.builder().ns("name").type("type").version(1).build("{}");
+    PgFact fact = PgFact.from(Fact.builder().ns("name").type("type").version(1).build("{}"));
 
     uut.put(TransformationCache.Key.of(fact.id(), 1, "foo"), fact);
     assertThat(uut.find(TransformationCache.Key.of(fact.id(), 1, "xoo"))).isEmpty();
@@ -122,7 +129,7 @@ public abstract class AbstractTransformationCacheTest {
 
   @Test
   void testHappyPath() {
-    Fact f = Fact.builder().ns("name").type("type").version(1).build("{}");
+    PgFact f = PgFact.from(Fact.builder().ns("name").type("type").version(1).build("{}"));
 
     uut.put(TransformationCache.Key.of(f.id(), 1, "foo"), f);
     assertThat(uut.find(TransformationCache.Key.of(f.id(), 1, "foo"))).contains(f);
@@ -130,7 +137,7 @@ public abstract class AbstractTransformationCacheTest {
 
   @Test
   void testRespectsVersion() {
-    Fact f = Fact.builder().ns("name").type("type").version(1).build("{}");
+    PgFact f = PgFact.from(Fact.builder().ns("name").type("type").version(1).build("{}"));
 
     uut.put(TransformationCache.Key.of(f.id(), 1, "foo"), f);
     assertThat(uut.find(TransformationCache.Key.of(f.id(), 2, "foo"))).isEmpty();
@@ -140,8 +147,10 @@ public abstract class AbstractTransformationCacheTest {
   void testInvalidateTransformationForMatchingNamespaceAndType() {
     String matchingNs = "namespace";
     String matchingType = "type";
-    Fact f1 = Fact.builder().ns(matchingNs).type(matchingType).version(1).build("{}");
-    Fact f2 = Fact.builder().ns(matchingNs).type(matchingType).version(2).build("{}");
+    PgFact f1 =
+        PgFact.from(Fact.builder().ns(matchingNs).type(matchingType).version(1).build("{}"));
+    PgFact f2 =
+        PgFact.from(Fact.builder().ns(matchingNs).type(matchingType).version(2).build("{}"));
     uut.put(TransformationCache.Key.of(f1.id(), 1, "foo1"), f1);
     uut.put(TransformationCache.Key.of(f2.id(), 2, "foo2"), f2);
 
@@ -154,8 +163,8 @@ public abstract class AbstractTransformationCacheTest {
   @Test
   void testInvalidateTransformationForMatchingFactId() {
     UUID matchingFactId = UUID.randomUUID();
-    Fact f1 = Fact.builder().id(matchingFactId).version(1).build("{}");
-    Fact f2 = Fact.builder().id(UUID.randomUUID()).version(2).build("{}");
+    PgFact f1 = PgFact.from(Fact.builder().id(matchingFactId).version(1).build("{}"));
+    PgFact f2 = PgFact.from(Fact.builder().id(UUID.randomUUID()).version(2).build("{}"));
     uut.put(TransformationCache.Key.of(f1.id(), 1, "foo1.1"), f1);
     uut.put(TransformationCache.Key.of(f1.id(), 2, "foo1.2"), f1);
     uut.put(TransformationCache.Key.of(f2.id(), 2, "foo2"), f2);

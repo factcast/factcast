@@ -11,7 +11,7 @@ jobs:
     steps:
     - id: 'step-0'
       name: 'Checkout'
-      uses: 'actions/checkout@v5'
+      uses: 'actions/checkout@v6'
       with:
         token: '${{ secrets.PAT }}'
     - id: 'step-1'
@@ -28,6 +28,6 @@ jobs:
       run: './mvnw -B --non-recursive spotless:apply --file pom.xml'
     - id: 'step-4'
       name: 'Commit formatting changes'
-      uses: 'stefanzweifel/git-auto-commit-action@v6'
+      uses: 'stefanzweifel/git-auto-commit-action@v7'
       with:
         commit_message: 'Apply formatter'

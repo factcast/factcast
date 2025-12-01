@@ -135,7 +135,7 @@ public class DefaultFact implements Fact, Externalizable {
   }
 
   @Override
-  public Set<UUID> aggIds() {
+  public @NonNull Set<UUID> aggIds() {
     return deserializedHeader.aggIds();
   }
 }
