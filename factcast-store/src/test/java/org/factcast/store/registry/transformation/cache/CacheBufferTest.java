@@ -16,6 +16,7 @@
 package org.factcast.store.registry.transformation.cache;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import java.util.*;
 import lombok.NonNull;
@@ -140,6 +141,17 @@ class CacheBufferTest {
       }
       assertThat(underTest.buffer()).isEmpty();
       assertThat(underTest.flushingBuffer()).isEmpty();
+    }
+
+    @Test
+    void preventsConcurrentModification() {
+      underTest.put(cacheKey, factOrNull);
+      underTest.clearAfter(
+          bufferCopy -> {
+            var iterator = bufferCopy.entrySet().iterator();
+            underTest.clearAfter(c -> {});
+            assertDoesNotThrow(iterator::next);
+          });
     }
   }
 
