@@ -53,7 +53,7 @@ workflow(
             action = CustomAction(
                 actionOwner = "stefanzweifel",
                 actionName = "git-auto-commit-action",
-                actionVersion = "v6",
+                actionVersion = "778341af668090896ca464160c2def5d1d1a3eb0", // v6.0.1
                 inputs = mapOf(
                     "commit_message" to "Apply formatter",
                 )
