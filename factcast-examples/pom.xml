@@ -16,6 +16,7 @@
     <module>factcast-example-client-basicauth</module>
     <module>factcast-example-client-spring-boot2</module>
     <module>factcast-example-client-dynamo</module>
+    <module>factcast-example-client-mongodb</module>
     <module>factcast-example-server</module>
     <module>factcast-example-server-basicauth</module>
     <module>factcast-example-tls-client</module>
