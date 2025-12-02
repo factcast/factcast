@@ -16,22 +16,30 @@
 package org.factcast.core.subscription.observer;
 
 import java.util.UUID;
+import javax.sql.DataSource;
+import lombok.NonNull;
 import lombok.Value;
 
-public interface FastForwardTarget {
-  static FastForwardTarget forTest() {
+public interface HighWaterMarkFetcher {
+  static HighWaterMarkFetcher forTest() {
     return of(null, 0);
   }
 
-  static FastForwardTarget of(UUID id, long ser) {
+  static HighWaterMarkFetcher of(UUID id, long ser) {
     return Impl.of(HighWaterMark.of(id, ser));
   }
 
   // we cannot have single getters for id and ser (race condition)
-  HighWaterMark highWaterMark();
+  @NonNull
+  HighWaterMark highWaterMark(@NonNull DataSource ds);
 
   @Value(staticConstructor = "of")
-  class Impl implements FastForwardTarget {
+  class Impl implements HighWaterMarkFetcher {
     HighWaterMark highWaterMark;
+
+    @Override
+    public HighWaterMark highWaterMark(DataSource ignored) {
+      return highWaterMark;
+    }
   }
 }

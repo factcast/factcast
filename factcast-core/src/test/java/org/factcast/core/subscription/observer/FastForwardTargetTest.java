@@ -18,8 +18,10 @@ package org.factcast.core.subscription.observer;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.UUID;
+import javax.sql.DataSource;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,7 +31,7 @@ class FastForwardTargetTest {
   class WhenForingTest {
     @Test
     void createsAnyInstance() {
-      assertThat(FastForwardTarget.forTest()).isNotNull();
+      assertThat(HighWaterMarkFetcher.forTest()).isNotNull();
     }
   }
 
@@ -37,14 +39,15 @@ class FastForwardTargetTest {
   class WhenOfing {
     private final UUID ID = UUID.randomUUID();
     private final long SER = 67;
+    @Mock DataSource ds;
 
     @Test
     void passesValues() {
-      assertThat(FastForwardTarget.of(ID, SER))
-          .extracting(f -> f.highWaterMark().targetId())
+      assertThat(HighWaterMarkFetcher.of(ID, SER))
+          .extracting(f -> f.highWaterMark(ds).targetId())
           .isEqualTo(ID);
-      assertThat(FastForwardTarget.of(ID, SER))
-          .extracting(f -> f.highWaterMark().targetSer())
+      assertThat(HighWaterMarkFetcher.of(ID, SER))
+          .extracting(f -> f.highWaterMark(ds).targetSer())
           .isEqualTo(SER);
     }
   }

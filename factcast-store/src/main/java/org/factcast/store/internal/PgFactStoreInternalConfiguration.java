@@ -30,7 +30,7 @@ import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
 import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMode;
 import net.javacrumbs.shedlock.support.KeepAliveLockProvider;
 import org.factcast.core.store.*;
-import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
 import org.factcast.store.*;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.catchup.fetching.PgFetchingCatchUpFactory;
@@ -143,10 +143,9 @@ public class PgFactStoreInternalConfiguration {
       PgConnectionSupplier connectionSupplier,
       EventBus eventBus,
       PgFactIdToSerialMapper pgFactIdToSerialMapper,
-      PgLatestSerialFetcher pgLatestSerialFetcher,
       StoreConfigurationProperties props,
       PgCatchupFactory pgCatchupFactory,
-      FastForwardTarget target,
+      HighWaterMarkFetcher hwmFetcher,
       JSEngineFactory ef,
       PgStoreTelemetry telemetry,
       ServerPipelineFactory pipelineFactory,
@@ -155,10 +154,9 @@ public class PgFactStoreInternalConfiguration {
         connectionSupplier,
         eventBus,
         pgFactIdToSerialMapper,
-        pgLatestSerialFetcher,
         props,
         pgCatchupFactory,
-        target,
+        hwmFetcher,
         pipelineFactory,
         ef,
         metrics,
@@ -189,11 +187,6 @@ public class PgFactStoreInternalConfiguration {
   public PgFactIdToSerialMapper pgFactIdToSerialMapper(
       JdbcTemplate jdbcTemplate, PgMetrics metrics, MeterRegistry registry) {
     return new PgFactIdToSerialMapper(jdbcTemplate, metrics, registry);
-  }
-
-  @Bean
-  public PgLatestSerialFetcher pgLatestSerialFetcher(JdbcTemplate jdbcTemplate) {
-    return new PgLatestSerialFetcher(jdbcTemplate);
   }
 
   @Bean

@@ -19,92 +19,181 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
-import io.micrometer.core.instrument.DistributionSummary;
 import java.sql.ResultSet;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
+import javax.sql.DataSource;
 import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.TestFactStreamPosition;
-import org.factcast.core.subscription.SubscriptionImpl;
-import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.*;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
+import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
-import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.quality.Strictness;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.ServerErrorMessage;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
+@ExtendWith(MockitoExtension.class)
 class PgFactStreamTest {
 
-  @Mock SubscriptionRequest req;
-  @Mock SubscriptionImpl sub;
-  @Mock PgSynchronizedQuery query;
-  @Mock FastForwardTarget ffwdTarget;
-  @Mock PgMetrics metrics;
-  @Mock SubscriptionRequestTO reqTo;
+  @Mock PgConnectionSupplier connectionSupplier;
+  @Mock EventBus eventBus;
   @Mock PgFactIdToSerialMapper id2ser;
-  @Mock JdbcTemplate jdbc;
-  @Mock PgLatestSerialFetcher fetcher;
-  @Mock DistributionSummary distributionSummary;
-
   @Mock PgCatchupFactory pgCatchupFactory;
-  @InjectMocks PgFactStream uut;
+  @Mock HighWaterMarkFetcher hwmFetcher;
+  @Mock ServerPipeline pipeline;
+  @Mock PgStoreTelemetry telemetry;
+  @Mock SubscriptionRequestTO reqTo;
 
-  @BeforeEach
-  void setup() {
-    MockitoAnnotations.openMocks(this);
-  }
+  @InjectMocks @Spy PgFactStream uut;
 
-  @SuppressWarnings({"unused", "UnstableApiUsage"})
   @Nested
-  class FastForward {
-
-    @Mock JdbcTemplate jdbcTemplate;
-
-    @Mock EventBus eventBus;
-
-    @Mock PgFactIdToSerialMapper idToSerMapper;
-
-    @Mock SubscriptionImpl subscription;
-
-    @Mock final AtomicBoolean disconnected = new AtomicBoolean(false);
-
-    @Mock PgLatestSerialFetcher fetcher;
-
-    @Mock PgCatchupFactory pgCatchupFactory;
-    @Mock FastForwardTarget ffwdTarget;
-    @Mock SubscriptionRequest request;
-    @Mock ServerPipeline pipeline;
-    @Mock PgStoreTelemetry telemetry;
-    @InjectMocks PgFactStream underTest;
+  class WhenConnecting {
+    @Mock SingleConnectionDataSource ds;
+    @Mock PgSynchronizedQuery pgSynchronizedQuery;
+    final HighWaterMark hwm = HighWaterMark.empty();
 
     @BeforeEach
     void setup() {
-      MockitoAnnotations.openMocks(this);
+      doReturn(ds).when(uut).createSingleDataSource(reqTo);
+      doReturn(pgSynchronizedQuery).when(uut).createPgSynchronizedQuery();
+      doNothing().when(uut).catchupAndFastForward(any(), any(), any());
+      doNothing().when(uut).follow(any(), any());
+      when(hwmFetcher.highWaterMark(ds)).thenReturn(hwm);
     }
 
     @Test
-    void noFfwdNotConnected() {
+    void catchesUpAndFollows() {
+      uut.connect();
 
-      underTest.close();
-      underTest.fastForward(HighWaterMark.of(UUID.randomUUID(), 1000));
+      verify(telemetry).onConnect(reqTo);
+      verify(uut).initializeSerialToStartAfter();
+      verify(uut).catchupAndFastForward(reqTo, hwm, ds);
+      verify(uut).follow(reqTo, pgSynchronizedQuery);
+    }
+
+    @Test
+    void sendsStreamInfoSignal() {
+      when(reqTo.streamInfo()).thenReturn(true);
+
+      uut.connect();
+
+      verify(pipeline, times(1)).process(any(Signal.FactStreamInfoSignal.class));
+    }
+  }
+
+  @Nested
+  class WhenCatchingUpAndFastForwarding {
+    @Mock DataSource ds;
+    final HighWaterMark hwm = HighWaterMark.of(UUID.randomUUID(), 66L);
+
+    @BeforeEach
+    void setup() {
+      lenient().doNothing().when(uut).catchup(anyLong(), any());
+      doNothing().when(uut).fastForward(any());
+    }
+
+    @Test
+    void nonEphemeralRequest() {
+      when(reqTo.ephemeral()).thenReturn(false);
+
+      uut.catchupAndFastForward(reqTo, hwm, ds);
+
+      assertThat(uut.serial().get()).isEqualTo(0L);
+      verify(uut).catchup(hwm.targetSer(), ds);
+    }
+
+    @Test
+    void onlyFastForwardsOnEphemeralRequest() {
+      when(reqTo.ephemeral()).thenReturn(true);
+
+      uut.catchupAndFastForward(reqTo, hwm, ds);
+
+      assertThat(uut.serial().get()).isEqualTo(hwm.targetSer());
+      verify(uut, never()).catchup(anyLong(), any());
+    }
+
+    @Test
+    void signalsCatchup() {
+      doReturn(true).when(uut).isConnected();
+
+      uut.catchupAndFastForward(reqTo, hwm, ds);
+
+      verify(telemetry).onCatchup(reqTo);
+      verify(pipeline, times(1)).process(any(Signal.CatchupSignal.class));
+    }
+  }
+
+  @Nested
+  class WhenFollowing {
+    @Mock PgSynchronizedQuery query;
+    @Mock CondensedQueryExecutor condensedExecutor;
+
+    @Test
+    void doesNothingIfNotConnected() {
+      doReturn(false).when(uut).isConnected();
+
+      uut.follow(reqTo, query);
+
+      verifyNoInteractions(telemetry);
+      verifyNoInteractions(eventBus);
+      verifyNoInteractions(pipeline);
+    }
+
+    @Test
+    void registersCondensedExecutorIfRequestIsContinuous() {
+      var maxBatchDelay = 0L;
+      doReturn(true).when(uut).isConnected();
+      doReturn(condensedExecutor).when(uut).createCondensedExecutor(reqTo, query, maxBatchDelay);
+      when(reqTo.continuous()).thenReturn(true);
+      when(reqTo.maxBatchDelayInMs()).thenReturn(maxBatchDelay);
+
+      uut.follow(reqTo, query);
+
+      verify(telemetry, times(1)).onFollow(reqTo);
+      verify(eventBus, times(1)).register(condensedExecutor);
+      verify(condensedExecutor, times(1)).trigger();
+      verifyNoInteractions(pipeline);
+    }
+
+    @Test
+    void signalsCompleteIfRequestIsNotContinuous() {
+      doReturn(true).when(uut).isConnected();
+      when(reqTo.continuous()).thenReturn(false);
+
+      uut.follow(reqTo, query);
+
+      verify(pipeline, times(1)).process(any(Signal.CompleteSignal.class));
+      verify(telemetry, times(1)).onComplete(reqTo);
+      verifyNoInteractions(eventBus);
+    }
+  }
+
+  @SuppressWarnings({"unused"})
+  @Nested
+  class FastForward {
+
+    @Test
+    void noFfwdNotConnected() {
+      uut.close();
+      uut.fastForward(HighWaterMark.of(UUID.randomUUID(), 1000));
 
       verifyNoInteractions(pipeline);
     }
@@ -112,10 +201,8 @@ class PgFactStreamTest {
     @Test
     void noFfwdIfNoTarget() {
       UUID uuid = UUID.randomUUID();
-      when(request.startingAfter()).thenReturn(Optional.of(uuid));
-      when(idToSerMapper.retrieve(uuid)).thenReturn(10L);
 
-      underTest.fastForward(HighWaterMark.empty());
+      uut.fastForward(HighWaterMark.empty());
 
       verifyNoInteractions(pipeline);
     }
@@ -123,21 +210,20 @@ class PgFactStreamTest {
     @Test
     void ffwdIfTargetAhead() {
       UUID uuid = UUID.randomUUID();
-      when(idToSerMapper.retrieve(uuid)).thenReturn(10L);
       FactStreamPosition target = TestFactStreamPosition.random();
 
       UUID targetId = UUID.randomUUID();
       long targetSer = 1000;
-      underTest.fastForward(HighWaterMark.of(targetId, targetSer));
+      uut.fastForward(HighWaterMark.of(targetId, targetSer));
 
       verify(pipeline).process(Signal.of(FactStreamPosition.of(targetId, targetSer)));
     }
 
     @Test
     void noFfwdIfTargetBehind() {
-      underTest.serial().set(10);
+      uut.serial().set(10);
 
-      underTest.fastForward(HighWaterMark.of(UUID.randomUUID(), 9));
+      uut.fastForward(HighWaterMark.of(UUID.randomUUID(), 9));
 
       verifyNoInteractions(pipeline);
     }
@@ -145,10 +231,10 @@ class PgFactStreamTest {
     @Test
     void noFfwdIfTargetBehindConsumed() {
       UUID uuid = UUID.randomUUID();
-      when(request.startingAfter()).thenReturn(Optional.empty());
-      underTest.serial().set(6);
+      // when(reqTo.startingAfter()).thenReturn(Optional.empty());
+      uut.serial().set(6);
 
-      underTest.fastForward(HighWaterMark.of(UUID.randomUUID(), 5));
+      uut.fastForward(HighWaterMark.of(UUID.randomUUID(), 5));
 
       verifyNoInteractions(pipeline);
     }
@@ -156,7 +242,7 @@ class PgFactStreamTest {
 
   @Nested
   class FactRowCallbackHandlerTest {
-    @Mock(lenient = true)
+    @Mock(strictness = Mock.Strictness.LENIENT)
     private ResultSet rs;
 
     @Mock Supplier<Boolean> isConnectedSupplier;
@@ -168,11 +254,6 @@ class PgFactStreamTest {
     @Mock CurrentStatementHolder statementHolder;
 
     @InjectMocks private PgSynchronizedQuery.FactRowCallbackHandler uut;
-
-    @BeforeEach
-    void setup() {
-      MockitoAnnotations.openMocks(this);
-    }
 
     @Test
     @SneakyThrows
@@ -296,31 +377,26 @@ class PgFactStreamTest {
 
   @Nested
   class WhenCatchingUp {
-    @BeforeEach
-    void setup() {
-      MockitoAnnotations.openMocks(this);
-    }
+    @Mock DataSource ds;
 
     @Test
     void ifDisconnected_doNothing() {
-      uut = spy(uut);
       when(uut.isConnected()).thenReturn(false);
 
-      uut.catchup(0);
+      uut.catchup(0, ds);
 
       verifyNoInteractions(pgCatchupFactory);
     }
 
     @Test
     void ifConnected_catchupTwice() {
-      uut = spy(uut);
       PgCatchup catchup1 = mock(PgCatchup.class);
       PgCatchup catchup2 = mock(PgCatchup.class);
       when(uut.isConnected()).thenReturn(true);
-      when(pgCatchupFactory.create(any(), any(), any(), any(), any()))
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any(), any()))
           .thenReturn(catchup1, catchup2);
 
-      uut.catchup(0);
+      uut.catchup(0, ds);
 
       verify(catchup1, times(1)).run();
       verify(catchup2, times(1)).run();
@@ -329,10 +405,6 @@ class PgFactStreamTest {
 
   @Nested
   class WhenInitializingSerialToStartAfter {
-    @BeforeEach
-    void setup() {
-      MockitoAnnotations.openMocks(this);
-    }
 
     @Test
     void fromScratch() {

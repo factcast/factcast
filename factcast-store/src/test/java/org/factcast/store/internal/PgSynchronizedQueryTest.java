@@ -28,11 +28,11 @@ import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
-import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -60,10 +60,11 @@ class PgSynchronizedQueryTest {
 
   @Mock AtomicLong serialToContinueFrom;
 
-  @Mock PgLatestSerialFetcher fetcher;
   @Mock CurrentStatementHolder statementHolder;
   @Mock ServerPipeline pipeline;
   @Mock PgConnectionSupplier connectionSupplier;
+
+  final HighWaterMarkFetcher fetcher = HighWaterMarkFetcher.forTest();
 
   @SneakyThrows
   @Test
@@ -151,10 +152,7 @@ class PgSynchronizedQueryTest {
     when(con.prepareStatement(anyString())).thenReturn(p);
     when(p.executeQuery()).thenThrow(exc);
 
-    assertThatThrownBy(
-            () -> {
-              uut.run(false);
-            })
+    assertThatThrownBy(() -> uut.run(false))
         // should be thrown unchanged
         .isSameAs(exc);
   }
