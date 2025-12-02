@@ -348,7 +348,6 @@ class PgSynchronizedQueryTest {
       ResultSet rs = Mockito.mock(ResultSet.class);
       when(rs.next()).thenReturn(true, false); // one result
       when(p.executeQuery()).thenReturn(rs);
-      when(fetcher.retrieveLatestSer()).thenReturn(5L); // serial before query
 
       try (MockedStatic<PgFact> mockStatic = Mockito.mockStatic(PgFact.class)) {
         mockStatic.when(() -> PgFact.from(rs)).thenReturn(factToBeTransformed);
