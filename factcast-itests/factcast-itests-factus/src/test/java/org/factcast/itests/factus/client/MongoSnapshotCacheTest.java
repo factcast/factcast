@@ -50,7 +50,7 @@ import org.springframework.test.context.ContextConfiguration;
     classes = {
       TestFactusApplication.class,
       MongoDbSnapshotCacheAutoConfiguration.class,
-            MongoClientConfiguration.class
+      MongoClientConfiguration.class
     })
 public class MongoSnapshotCacheTest extends SnapshotCacheTest {
   private final MongoClient mongoClient;

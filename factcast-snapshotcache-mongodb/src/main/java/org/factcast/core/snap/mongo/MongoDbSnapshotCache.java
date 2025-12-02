@@ -30,19 +30,6 @@ import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.Updates;
-import lombok.NonNull;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.bson.Document;
-import org.bson.conversions.Bson;
-import org.bson.types.ObjectId;
-import org.factcast.factus.projection.ScopedName;
-import org.factcast.factus.serializer.SnapshotSerializerId;
-import org.factcast.factus.snapshot.SnapshotCache;
-import org.factcast.factus.snapshot.SnapshotData;
-import org.factcast.factus.snapshot.SnapshotIdentifier;
-
-import javax.validation.constraints.NotNull;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -56,6 +43,18 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import javax.validation.constraints.NotNull;
+import lombok.NonNull;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.bson.Document;
+import org.bson.conversions.Bson;
+import org.bson.types.ObjectId;
+import org.factcast.factus.projection.ScopedName;
+import org.factcast.factus.serializer.SnapshotSerializerId;
+import org.factcast.factus.snapshot.SnapshotCache;
+import org.factcast.factus.snapshot.SnapshotData;
+import org.factcast.factus.snapshot.SnapshotIdentifier;
 
 @Slf4j
 public class MongoDbSnapshotCache implements SnapshotCache {
@@ -64,143 +63,154 @@ public class MongoDbSnapshotCache implements SnapshotCache {
   public static final String SNAPSHOT_SERIALIZER_ID_FIELD = "snapshotSerializerId";
   public static final String LAST_FACT_ID_FIELD = "lastFactId";
   public static final String EXPIRE_AT_FIELD = "expireAt";
-    public static final String METADATA_EXPIRE_AT_FIELD = "metadata." + EXPIRE_AT_FIELD;
+  public static final String METADATA_EXPIRE_AT_FIELD = "metadata." + EXPIRE_AT_FIELD;
 
-    private static final ScheduledExecutorService CLEANUP_SCHEDULER =
+  private static final ScheduledExecutorService CLEANUP_SCHEDULER =
       Executors.newScheduledThreadPool(1);
 
+  private final MongoDbSnapshotProperties properties;
+  private final MongoCollection<Document> filesCollection;
 
-    private final MongoDbSnapshotProperties properties;
-    private final MongoCollection<Document> filesCollection;
+  private GridFSBucket gridFSBucket;
 
-    private GridFSBucket gridFSBucket;
+  public MongoDbSnapshotCache(
+      @NonNull MongoClient mongoClient,
+      @NotNull String databaseName,
+      @NonNull MongoDbSnapshotProperties properties) {
+    this.properties = properties;
+    MongoDatabase database = mongoClient.getDatabase(databaseName);
 
-    public MongoDbSnapshotCache(
-            @NonNull MongoClient mongoClient,
-            @NotNull String databaseName,
-            @NonNull MongoDbSnapshotProperties properties) {
-        this.properties = properties;
-        MongoDatabase database = mongoClient.getDatabase(databaseName);
+    gridFSBucket =
+        GridFSBuckets.create(database, "factus_snapshots").withWriteConcern(WriteConcern.MAJORITY);
 
-        gridFSBucket = GridFSBuckets.create(database, "factus_snapshots").withWriteConcern(WriteConcern.MAJORITY);
+    // Create index for expiration date
+    filesCollection = database.getCollection("factus_snapshots.files");
+    filesCollection.createIndex(Indexes.ascending(METADATA_EXPIRE_AT_FIELD));
 
-        // Create index for expiration date
-        filesCollection = database.getCollection("factus_snapshots.files");
-        filesCollection.createIndex(Indexes.ascending(METADATA_EXPIRE_AT_FIELD));
-
-        // Schedule cleanup task
-        scheduleCleanupTask();
+    // Schedule cleanup task
+    scheduleCleanupTask();
   }
 
-    @VisibleForTesting
-    MongoDbSnapshotCache(
-            GridFSBucket gridFSBucket,
-            MongoCollection<Document> filesCollection,
-            @NonNull MongoDbSnapshotProperties properties) {
-        this.gridFSBucket = gridFSBucket;
-        this.filesCollection = filesCollection;
-        this.properties = properties;
-    }
+  @VisibleForTesting
+  MongoDbSnapshotCache(
+      GridFSBucket gridFSBucket,
+      MongoCollection<Document> filesCollection,
+      @NonNull MongoDbSnapshotProperties properties) {
+    this.gridFSBucket = gridFSBucket;
+    this.filesCollection = filesCollection;
+    this.properties = properties;
+  }
 
   @Override
   @SneakyThrows
   public @NonNull Optional<SnapshotData> find(@NonNull SnapshotIdentifier id) {
-      String fileName = getFileName(id);
+    String fileName = getFileName(id);
 
-      try (GridFSDownloadStream downloadStream = gridFSBucket.openDownloadStream(fileName)) {
-          GridFSFile gridFSFile = downloadStream.getGridFSFile();
-          int fileLength = (int) gridFSFile.getLength();
-          byte[] bytesToWriteTo = new byte[fileLength];
-          downloadStream.read(bytesToWriteTo);
+    try (GridFSDownloadStream downloadStream = gridFSBucket.openDownloadStream(fileName)) {
+      GridFSFile gridFSFile = downloadStream.getGridFSFile();
+      int fileLength = (int) gridFSFile.getLength();
+      byte[] bytesToWriteTo = new byte[fileLength];
+      downloadStream.read(bytesToWriteTo);
 
-          tryUpdateExpirationDateAsync(id);
+      tryUpdateExpirationDateAsync(id);
 
-          Document metadata = gridFSFile.getMetadata();
-          return Optional.of(new SnapshotData(
-                  bytesToWriteTo,
-                  SnapshotSerializerId.of(metadata.getString(SNAPSHOT_SERIALIZER_ID_FIELD)),
-                  UUID.fromString(metadata.getString(LAST_FACT_ID_FIELD))));
-      } catch (MongoGridFSException e) {
-          if (e.getMessage().contains("No file found")) {
-              return Optional.empty();
-          } else {
-              throw e;
-          }
+      Document metadata = gridFSFile.getMetadata();
+      return Optional.of(
+          new SnapshotData(
+              bytesToWriteTo,
+              SnapshotSerializerId.of(metadata.getString(SNAPSHOT_SERIALIZER_ID_FIELD)),
+              UUID.fromString(metadata.getString(LAST_FACT_ID_FIELD))));
+    } catch (MongoGridFSException e) {
+      if (e.getMessage().contains("No file found")) {
+        return Optional.empty();
+      } else {
+        throw e;
       }
+    }
   }
 
   @Override
   public void store(@NonNull SnapshotIdentifier id, @NonNull SnapshotData snapshot) {
-      String fileName = getFileName(id);
+    String fileName = getFileName(id);
 
-      Document metadata = new Document(PROJECTION_CLASS_FIELD, id.projectionClass().getName())
-              .append(SNAPSHOT_SERIALIZER_ID_FIELD, snapshot.snapshotSerializerId().name())
-              .append(LAST_FACT_ID_FIELD, snapshot.lastFactId().toString())
-              .append(EXPIRE_AT_FIELD, Instant.now().plus(properties.getDeleteSnapshotStaleForDays(), ChronoUnit.DAYS));
+    Document metadata =
+        new Document(PROJECTION_CLASS_FIELD, id.projectionClass().getName())
+            .append(SNAPSHOT_SERIALIZER_ID_FIELD, snapshot.snapshotSerializerId().name())
+            .append(LAST_FACT_ID_FIELD, snapshot.lastFactId().toString())
+            .append(
+                EXPIRE_AT_FIELD,
+                Instant.now().plus(properties.getDeleteSnapshotStaleForDays(), ChronoUnit.DAYS));
 
-      UUID aggregateId = id.aggregateId();
-      if (aggregateId != null) {
-          metadata.append(AGGREGATE_ID_FIELD, aggregateId.toString());
-      }
+    UUID aggregateId = id.aggregateId();
+    if (aggregateId != null) {
+      metadata.append(AGGREGATE_ID_FIELD, aggregateId.toString());
+    }
 
-      GridFSUploadOptions options = new GridFSUploadOptions().metadata(metadata);
+    GridFSUploadOptions options = new GridFSUploadOptions().metadata(metadata);
 
-      try (InputStream in = new ByteArrayInputStream(snapshot.serializedProjection())) {
-          ObjectId objectId = gridFSBucket.uploadFromStream(fileName, in, options);
-          tryDeleteOlderVersionsAsync(fileName, objectId);
-      } catch (IOException e) {
-          log.error("Error uploading snapshot to GridFS for id: {}", id, e);
-      }
+    try (InputStream in = new ByteArrayInputStream(snapshot.serializedProjection())) {
+      ObjectId objectId = gridFSBucket.uploadFromStream(fileName, in, options);
+      tryDeleteOlderVersionsAsync(fileName, objectId);
+    } catch (IOException e) {
+      log.error("Error uploading snapshot to GridFS for id: {}", id, e);
+    }
   }
 
-    @Override
-    public void remove(@NonNull SnapshotIdentifier id) {
-        String fileName = getFileName(id);
-        Bson query = Filters.eq("filename", fileName);
-        gridFSBucket.find(query).forEach(gridFSFile -> gridFSBucket.delete(gridFSFile.getId()));
-    }
+  @Override
+  public void remove(@NonNull SnapshotIdentifier id) {
+    String fileName = getFileName(id);
+    Bson query = Filters.eq("filename", fileName);
+    gridFSBucket.find(query).forEach(gridFSFile -> gridFSBucket.delete(gridFSFile.getId()));
+  }
 
-    @VisibleForTesting
-    void tryDeleteOlderVersionsAsync(String fileName, ObjectId keepId) {
-        CompletableFuture.runAsync(() -> {
-            try {
-                deleteOlderVersions(fileName, keepId);
-            } catch (Exception e) {
-                log.warn("Failed to remove older versions for snapshot with filename: {}", fileName, e);
-            }
-        });
-    }
-
-    @VisibleForTesting
-    void tryUpdateExpirationDateAsync(SnapshotIdentifier id) {
-        CompletableFuture.runAsync(() -> {
+  @VisibleForTesting
+  void tryDeleteOlderVersionsAsync(String fileName, ObjectId keepId) {
+    CompletableFuture.runAsync(
+        () -> {
           try {
-              updateExpirationDate(id);
+            deleteOlderVersions(fileName, keepId);
+          } catch (Exception e) {
+            log.warn("Failed to remove older versions for snapshot with filename: {}", fileName, e);
+          }
+        });
+  }
+
+  @VisibleForTesting
+  void tryUpdateExpirationDateAsync(SnapshotIdentifier id) {
+    CompletableFuture.runAsync(
+        () -> {
+          try {
+            updateExpirationDate(id);
           } catch (Exception e) {
             log.warn("Failed to update expiration date for snapshot with id: {}", id, e);
           }
         });
   }
 
-    private void deleteOlderVersions(String fileName, ObjectId keepId) {
-        Bson filter = Filters.eq("filename", fileName);
-        gridFSBucket.find(filter).forEach(gridFSFile -> {
-            if (!gridFSFile.getId().asObjectId().getValue().equals(keepId)) {
+  private void deleteOlderVersions(String fileName, ObjectId keepId) {
+    Bson filter = Filters.eq("filename", fileName);
+    gridFSBucket
+        .find(filter)
+        .forEach(
+            gridFSFile -> {
+              if (!gridFSFile.getId().asObjectId().getValue().equals(keepId)) {
                 gridFSBucket.delete(gridFSFile.getId());
-            }
-        });
-    }
+              }
+            });
+  }
 
-    private void updateExpirationDate(SnapshotIdentifier id) {
-        // Updates many, because there may be multiple versions if store() failed to delete older ones or if the executor
-        // has not yet run
-        filesCollection.updateMany(Filters.eq("filename", getFileName(id)),
-                Updates.set(
-                        METADATA_EXPIRE_AT_FIELD,
-                        Instant.now().plus(properties.getDeleteSnapshotStaleForDays(), ChronoUnit.DAYS)));
-    }
+  private void updateExpirationDate(SnapshotIdentifier id) {
+    // Updates many, because there may be multiple versions if store() failed to delete older ones
+    // or if the executor
+    // has not yet run
+    filesCollection.updateMany(
+        Filters.eq("filename", getFileName(id)),
+        Updates.set(
+            METADATA_EXPIRE_AT_FIELD,
+            Instant.now().plus(properties.getDeleteSnapshotStaleForDays(), ChronoUnit.DAYS)));
+  }
 
-    private void scheduleCleanupTask() {
+  private void scheduleCleanupTask() {
     // Grab the next midnight
     Instant nextMidnight =
         LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
@@ -215,15 +225,15 @@ public class MongoDbSnapshotCache implements SnapshotCache {
 
   @VisibleForTesting
   public void cleanupOldSnapshots() {
-      Instant now = Instant.now();
-      // Find all documents with expireAt < now
-      Bson filter = Filters.lt(METADATA_EXPIRE_AT_FIELD, now);
-      try (MongoCursor<GridFSFile> filesToDelete = gridFSBucket.find(filter).iterator()) {
-          while (filesToDelete.hasNext()) {
-              GridFSFile file = filesToDelete.next();
-              gridFSBucket.delete(file.getId());
-          }
+    Instant now = Instant.now();
+    // Find all documents with expireAt < now
+    Bson filter = Filters.lt(METADATA_EXPIRE_AT_FIELD, now);
+    try (MongoCursor<GridFSFile> filesToDelete = gridFSBucket.find(filter).iterator()) {
+      while (filesToDelete.hasNext()) {
+        GridFSFile file = filesToDelete.next();
+        gridFSBucket.delete(file.getId());
       }
+    }
   }
 
   @VisibleForTesting

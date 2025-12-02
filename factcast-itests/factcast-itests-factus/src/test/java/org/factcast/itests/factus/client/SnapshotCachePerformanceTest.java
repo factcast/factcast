@@ -15,12 +15,18 @@
  */
 package org.factcast.itests.factus.client;
 
+import static java.util.UUID.randomUUID;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.google.common.base.Stopwatch;
 import com.mongodb.client.MongoClient;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.bson.Document;
 import org.factcast.factus.serializer.SnapshotSerializerId;
 import org.factcast.factus.snapshot.SnapshotCache;
 import org.factcast.factus.snapshot.SnapshotData;
@@ -31,65 +37,59 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
-import static java.util.UUID.randomUUID;
-import static org.assertj.core.api.Assertions.assertThat;
-
 @Slf4j
 @RequiredArgsConstructor
 public abstract class SnapshotCachePerformanceTest extends AbstractFactCastIntegrationTest {
 
-    public static final SnapshotSerializerId SNAPSHOT_SERIALIZER_ID = SnapshotSerializerId.of("narf");
-    final SnapshotCache repository;
-    private MongoClient mongoClient;
+  public static final SnapshotSerializerId SNAPSHOT_SERIALIZER_ID = SnapshotSerializerId.of("narf");
+  final SnapshotCache repository;
+  private MongoClient mongoClient;
 
-    @Autowired
-    public void setMongoClient(MongoClient mongoClient) {
-        this.mongoClient = mongoClient;
-    }
+  @Autowired
+  public void setMongoClient(MongoClient mongoClient) {
+    this.mongoClient = mongoClient;
+  }
 
   @Test
   @Disabled
   public void roundTripTest() {
-      //TODO do insert, and per insert do 2 updates
-//      mongoClient.getDatabase("factcast").getCollection("factus_snapshot").deleteMany(new Document());
-      int roundTrips = 20000;
-      Stopwatch sw = Stopwatch.createStarted();
-      for (int i = 0; i < roundTrips; i++) {
-          UUID randomUUID = new UUID(i, i);
-          SnapshotIdentifier id = SnapshotIdentifier.of(UserV1.class, randomUUID);
-          repository.store(id, new SnapshotData(dummyEvent, SNAPSHOT_SERIALIZER_ID, randomUUID));
-      }
-
-      log.info("Performed {} roundtrips in {} ms", roundTrips, sw.stop().elapsed(TimeUnit.MILLISECONDS));
-  }
-
-    @Test
-    @Disabled
-    public void readTest() {
-        int roundTrips = 20000;
-        Set<SnapshotIdentifier> ids = new HashSet<>();
-        for (int i = 0; i < roundTrips; i++) {
-            UUID randomUUID = new UUID(i, i);
-            SnapshotIdentifier id = SnapshotIdentifier.of(UserV1.class, randomUUID);
-            repository.store(id, new SnapshotData(dummyEvent, SNAPSHOT_SERIALIZER_ID, randomUUID));
-            ids.add(id);
-        }
-
-        Stopwatch sw = Stopwatch.createStarted();
-        for (var id : ids) {
-            Optional<SnapshotData> found = repository.find(id);
-            assertThat(found).isPresent();
-        }
-        log.info("Performed {} reads in {} ms", ids.size(), sw.stop().elapsed(TimeUnit.MILLISECONDS));
+    // TODO do insert, and per insert do 2 updates
+    //      mongoClient.getDatabase("factcast").getCollection("factus_snapshot").deleteMany(new
+    // Document());
+    int roundTrips = 20000;
+    Stopwatch sw = Stopwatch.createStarted();
+    for (int i = 0; i < roundTrips; i++) {
+      UUID randomUUID = new UUID(i, i);
+      SnapshotIdentifier id = SnapshotIdentifier.of(UserV1.class, randomUUID);
+      repository.store(id, new SnapshotData(dummyEvent, SNAPSHOT_SERIALIZER_ID, randomUUID));
     }
 
-  private static final byte[] dummyEvent = """
+    log.info(
+        "Performed {} roundtrips in {} ms", roundTrips, sw.stop().elapsed(TimeUnit.MILLISECONDS));
+  }
+
+  @Test
+  @Disabled
+  public void readTest() {
+    int roundTrips = 20000;
+    Set<SnapshotIdentifier> ids = new HashSet<>();
+    for (int i = 0; i < roundTrips; i++) {
+      UUID randomUUID = new UUID(i, i);
+      SnapshotIdentifier id = SnapshotIdentifier.of(UserV1.class, randomUUID);
+      repository.store(id, new SnapshotData(dummyEvent, SNAPSHOT_SERIALIZER_ID, randomUUID));
+      ids.add(id);
+    }
+
+    Stopwatch sw = Stopwatch.createStarted();
+    for (var id : ids) {
+      Optional<SnapshotData> found = repository.find(id);
+      assertThat(found).isPresent();
+    }
+    log.info("Performed {} reads in {} ms", ids.size(), sw.stop().elapsed(TimeUnit.MILLISECONDS));
+  }
+
+  private static final byte[] dummyEvent =
+      """
 [ {
   "header" : {
     "id" : "99f1a9af-a4db-11f0-b56f-02cf7edc73b7",
@@ -158,5 +158,6 @@ public abstract class SnapshotCachePerformanceTest extends AbstractFactCastInteg
     "networkPointId" : "a80274a9-20e8-11f0-b517-060c638aff41"
   }
 } ]
-""".getBytes();
+"""
+          .getBytes();
 }

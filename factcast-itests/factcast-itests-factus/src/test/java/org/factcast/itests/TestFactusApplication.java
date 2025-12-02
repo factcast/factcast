@@ -42,7 +42,7 @@ import org.springframework.context.annotation.Primary;
     exclude = {
       CompositeMeterRegistryAutoConfiguration.class,
       RedissonSnapshotCacheAutoConfiguration.class,
-            MongoDbSnapshotCacheAutoConfiguration.class,
+      MongoDbSnapshotCacheAutoConfiguration.class,
       InMemorySnapshotCacheAutoConfiguration.class,
       InMemoryAndDiskSnapshotCacheAutoConfiguration.class,
     })

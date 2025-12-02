@@ -16,26 +16,12 @@
 package org.factcast.itests.factus.client;
 
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.Assertions;
-import org.factcast.ExampleSnapshotProjection;
-import org.factcast.factus.Factus;
-import org.factcast.factus.serializer.SnapshotSerializerId;
 import org.factcast.factus.snapshot.SnapshotCache;
-import org.factcast.factus.snapshot.SnapshotData;
-import org.factcast.factus.snapshot.SnapshotIdentifier;
 import org.factcast.itests.TestFactusApplication;
-import org.factcast.itests.factus.proj.UserV1;
 import org.factcast.spring.boot.autoconfigure.snap.RedissonSnapshotCacheAutoConfiguration;
-import org.junit.jupiter.api.Test;
-import org.redisson.api.RedissonClient;
-import org.redisson.client.codec.ByteArrayCodec;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
-
-import java.util.Base64;
-
-import static java.util.UUID.randomUUID;
 
 @Slf4j
 @SpringBootTest

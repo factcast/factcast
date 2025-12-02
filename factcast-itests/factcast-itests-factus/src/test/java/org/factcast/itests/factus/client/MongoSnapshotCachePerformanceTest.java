@@ -15,10 +15,7 @@
  */
 package org.factcast.itests.factus.client;
 
-import com.mongodb.ReadConcern;
-import com.mongodb.WriteConcern;
 import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoDatabase;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.snapshot.SnapshotCache;
 import org.factcast.itests.TestFactusApplication;
@@ -27,8 +24,6 @@ import org.factcast.spring.boot.autoconfigure.snap.MongoDbSnapshotCacheAutoConfi
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 @SpringBootTest
