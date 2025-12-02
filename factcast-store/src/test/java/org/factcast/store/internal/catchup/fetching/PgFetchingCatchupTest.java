@@ -99,13 +99,6 @@ class PgFetchingCatchupTest {
                   PgCatchupFactory.Phase.PHASE_1));
       doNothing().when(uut).fetch(any());
       uut.run();
-
-      // TODO #4124
-      // move this to where we create the connection
-      // verify(connectionSupplier)
-      //    .getPooledAsSingleDataSource(
-      //        ConnectionModifier.withAutoCommitDisabled(),
-      //        ConnectionModifier.withApplicationName(req.debugInfo()));
     }
 
     @SneakyThrows

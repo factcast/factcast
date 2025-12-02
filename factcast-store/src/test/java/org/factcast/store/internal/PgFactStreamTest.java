@@ -33,6 +33,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.*;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
+import org.factcast.store.internal.listen.ConnectionModifier;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
@@ -96,6 +97,20 @@ class PgFactStreamTest {
       uut.connect();
 
       verify(pipeline, times(1)).process(any(Signal.FactStreamInfoSignal.class));
+    }
+  }
+
+  @Nested
+  class WhenCreatingSingleDataSource {
+    @Test
+    void setsModifiers() {
+      when(reqTo.debugInfo()).thenReturn("foo");
+      try (var ignored = uut.createSingleDataSource(reqTo)) {
+        verify(connectionSupplier)
+            .getPooledAsSingleDataSource(
+                ConnectionModifier.withAutoCommitDisabled(),
+                ConnectionModifier.withApplicationName("foo"));
+      }
     }
   }
 

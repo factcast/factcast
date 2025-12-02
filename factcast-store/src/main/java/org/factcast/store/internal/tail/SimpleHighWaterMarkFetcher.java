@@ -46,7 +46,7 @@ public class SimpleHighWaterMarkFetcher implements HighWaterMarkFetcher {
   }
 
   @VisibleForTesting
-  protected JdbcTemplate jdbcTemplate(DataSource ds) {
+  protected JdbcTemplate jdbcTemplate(@NonNull DataSource ds) {
     return new JdbcTemplate(ds);
   }
 

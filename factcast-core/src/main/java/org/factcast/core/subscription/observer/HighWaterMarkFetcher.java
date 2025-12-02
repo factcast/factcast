@@ -38,7 +38,8 @@ public interface HighWaterMarkFetcher {
     HighWaterMark highWaterMark;
 
     @Override
-    public HighWaterMark highWaterMark(DataSource ignored) {
+    @NonNull
+    public HighWaterMark highWaterMark(@NonNull DataSource ignored) {
       return highWaterMark;
     }
   }
