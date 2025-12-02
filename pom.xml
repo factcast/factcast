@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.9.13-SNAPSHOT</version>
+  <version>0.9.14-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>factcast</name>
   <description>factcast is a 'good enough' event store using PostgreSQL
@@ -123,9 +123,9 @@
     <mockk.version>1.14.6</mockk.version>
     <graaljs.version>25.0.1</graaljs.version>
     <redisson.version>3.52.0</redisson.version>
-    <aws-sdk.version>2.39.5</aws-sdk.version>
+    <aws-sdk.version>2.39.6</aws-sdk.version>
       <mongodb-driver.version>5.5.1</mongodb-driver.version>
-    <shedlock.version>7.2.0</shedlock.version>
+    <shedlock.version>7.2.1</shedlock.version>
     <byte-buddy.version>1.18.2</byte-buddy.version>
     <skipUnitTests>false</skipUnitTests>
     <postgres.version>15</postgres.version>

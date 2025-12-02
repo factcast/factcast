@@ -9,7 +9,7 @@ It is not yet released, the API may change, the documentation is incomplete.
 [![Actions
 Status](https://github.com/factcast/factcast/actions/workflows/maven.yaml/badge.svg?branch=main)](https://github.com/factcast/factcast/actions)
 [![CodeFactor](https://www.codefactor.io/repository/github/factcast/factcast/badge)](https://www.codefactor.io/repository/github/factcast/factcast)
-[![MavenCentral](https://img.shields.io/maven-central/v/org.factcast/factcast/0.7.svg)](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.factcast%22%20v:0.7)
+[![MavenCentral](https://img.shields.io/maven-central/v/org.factcast/factcast/0.9.svg)](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.factcast%22%20v:0.9)
 ![Docker Image Version (latest semver)](https://img.shields.io/docker/v/factcast/factcast?label=dockerhub)
 <a href="https://www.apache.org/licenses/LICENSE-2.0">
 <img class="inline" src="https://img.shields.io/badge/license-ASL2-green.svg?style=flat">
