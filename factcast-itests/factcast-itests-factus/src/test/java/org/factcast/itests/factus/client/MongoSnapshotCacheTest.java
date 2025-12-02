@@ -17,8 +17,7 @@ package org.factcast.itests.factus.client;
 
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.factcast.core.snap.mongo.MongoDbSnapshotCache.EXPIRE_AT_FIELD;
-import static org.factcast.core.snap.mongo.MongoDbSnapshotCache.IDENTIFIER_FIELD;
+import static org.factcast.core.snap.mongo.MongoDbSnapshotCache.METADATA_EXPIRE_AT_FIELD;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
@@ -37,7 +36,7 @@ import org.factcast.factus.snapshot.SnapshotCache;
 import org.factcast.factus.snapshot.SnapshotData;
 import org.factcast.factus.snapshot.SnapshotIdentifier;
 import org.factcast.itests.TestFactusApplication;
-import org.factcast.itests.factus.config.MongoProjectionConfiguration;
+import org.factcast.itests.factus.config.MongoClientConfiguration;
 import org.factcast.itests.factus.proj.UserV1;
 import org.factcast.spring.boot.autoconfigure.snap.MongoDbSnapshotCacheAutoConfiguration;
 import org.junit.jupiter.api.Test;
@@ -51,7 +50,7 @@ import org.springframework.test.context.ContextConfiguration;
     classes = {
       TestFactusApplication.class,
       MongoDbSnapshotCacheAutoConfiguration.class,
-      MongoProjectionConfiguration.class
+            MongoClientConfiguration.class
     })
 public class MongoSnapshotCacheTest extends SnapshotCacheTest {
   private final MongoClient mongoClient;
@@ -79,16 +78,16 @@ public class MongoSnapshotCacheTest extends SnapshotCacheTest {
 
     // Mark it as expired 30 days ago
     MongoDatabase database = mongoClient.getDatabase("factcast");
-    var collection = database.getCollection("factus_snapshot");
+    var collection = database.getCollection("factus_snapshots.files");
 
     String identifier =
         ScopedName.fromProjectionMetaData(id.projectionClass())
             .with(Optional.ofNullable(id.aggregateId()).map(UUID::toString).orElse("snapshot"))
             .asString();
-    Document query = new Document(IDENTIFIER_FIELD, identifier);
+    Document query = new Document("filename", identifier);
 
     collection.updateOne(
-        query, Updates.set(EXPIRE_AT_FIELD, Instant.now().minus(30, ChronoUnit.DAYS)));
+        query, Updates.set(METADATA_EXPIRE_AT_FIELD, Instant.now().minus(30, ChronoUnit.DAYS)));
 
     // Should clean expired
     var repo = (MongoDbSnapshotCache) repository;
