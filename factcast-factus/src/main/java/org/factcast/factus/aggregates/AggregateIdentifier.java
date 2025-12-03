@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.projector;
+package org.factcast.factus.aggregates;
 
-import java.util.*;
+import java.util.UUID;
 import lombok.NonNull;
-import org.factcast.core.spec.FactSpec;
-import org.factcast.factus.projection.*;
 
-public interface FactSpecProvider {
+/**
+ * This is intended to be used with typed identifiers of aggregates. Users are encouraged to use
+ * FooId implements AggregateIdentifier instead of UUID directly to avoid mixups.
+ */
+public interface AggregateIdentifier {
   @NonNull
-  Collection<FactSpec> forSnapshot(@NonNull Class<? extends SnapshotProjection> clazz);
+  UUID getId();
 }

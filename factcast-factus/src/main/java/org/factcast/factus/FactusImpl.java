@@ -31,7 +31,6 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.*;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.factus.batch.*;
@@ -488,9 +487,8 @@ public class FactusImpl implements Factus {
   }
 
   @Override
-  @NonNull
-  public FactStore store() {
-    return fc.store();
+  public @NonNull FactCast factCast() {
+    return fc;
   }
 
   private void tryClose(AutoCloseable c) {

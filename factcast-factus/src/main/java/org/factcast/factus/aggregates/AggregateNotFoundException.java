@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.projector;
+package org.factcast.factus.aggregates;
 
-import java.util.*;
 import lombok.NonNull;
-import org.factcast.core.spec.FactSpec;
-import org.factcast.factus.projection.*;
 
-public interface FactSpecProvider {
-  @NonNull
-  Collection<FactSpec> forSnapshot(@NonNull Class<? extends SnapshotProjection> clazz);
+public class AggregateNotFoundException extends RuntimeException {
+  public AggregateNotFoundException(@NonNull AggregateIdentifier id) {
+    super("Aggregate not found: " + id.getId());
+  }
 }
