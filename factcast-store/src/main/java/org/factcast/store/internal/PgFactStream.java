@@ -126,7 +126,6 @@ public class PgFactStream {
   }
 
   @VisibleForTesting
-  @SuppressWarnings("java:S2245")
   void catchupAndFastForward(
       @NonNull SubscriptionRequestTO request,
       @NonNull HighWaterMark hwm,
@@ -148,6 +147,7 @@ public class PgFactStream {
   }
 
   @VisibleForTesting
+  @SuppressWarnings("java:S2245")
   void follow(@NonNull SubscriptionRequestTO request, @NonNull PgSynchronizedQuery query) {
     if (isConnected()) {
       if (request.continuous()) {

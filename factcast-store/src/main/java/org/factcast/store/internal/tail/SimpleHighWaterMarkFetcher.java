@@ -17,7 +17,7 @@ package org.factcast.store.internal.tail;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.sql.*;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import javax.sql.DataSource;
 import lombok.*;
@@ -38,8 +38,10 @@ public class SimpleHighWaterMarkFetcher implements HighWaterMarkFetcher {
   @NonNull
   public HighWaterMark highWaterMark(@NonNull DataSource ds) {
     try {
-      return Objects.requireNonNull(
-          jdbcTemplate(ds).queryForObject(PgConstants.HIGHWATER_MARK, this::extract));
+      // the rowMapper can't return null, but better safe than sorry (also makes sonar happy)
+      return Optional.ofNullable(
+              jdbcTemplate(ds).queryForObject(PgConstants.HIGHWATER_MARK, this::extract))
+          .orElse(HighWaterMark.empty());
     } catch (EmptyResultDataAccessException noFactsAtAll) {
       // ignore but resetting target to initial values, can happen in integration tests when
       // facts are wiped between runs
