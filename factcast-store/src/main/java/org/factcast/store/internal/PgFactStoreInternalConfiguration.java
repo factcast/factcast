@@ -98,9 +98,8 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
-  public PgCatchupFactory pgCatchupFactory(
-      StoreConfigurationProperties props, PgConnectionSupplier supp, PgMetrics metrics) {
-    return new PgFetchingCatchUpFactory(supp, props, metrics);
+  public PgCatchupFactory pgCatchupFactory(StoreConfigurationProperties props, PgMetrics metrics) {
+    return new PgFetchingCatchUpFactory(props, metrics);
   }
 
   @Bean

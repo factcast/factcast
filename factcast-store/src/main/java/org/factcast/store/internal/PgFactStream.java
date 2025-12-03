@@ -126,6 +126,7 @@ public class PgFactStream {
   }
 
   @VisibleForTesting
+  @SuppressWarnings("java:S2245")
   void catchupAndFastForward(
       @NonNull SubscriptionRequestTO request,
       @NonNull HighWaterMark hwm,
@@ -164,7 +165,7 @@ public class PgFactStream {
           //
           // ok, that is unlikely to be necessary, but easy to do, so...
           // distributes delay between 75% and 100% of the maxDelay
-          delayInMs = (long) (request.maxBatchDelayInMs() * (0.75 + Math.random() * 0.25));
+          delayInMs = Math.round(request.maxBatchDelayInMs() * (0.75 + Math.random() * 0.25));
           log.trace(
               "{} setting delay to {}, maxDelay was {}",
               request,
@@ -185,7 +186,6 @@ public class PgFactStream {
     }
   }
 
-  // TODO factory?
   @VisibleForTesting
   @NonNull
   CondensedQueryExecutor createCondensedExecutor(
@@ -193,7 +193,6 @@ public class PgFactStream {
     return new CondensedQueryExecutor(delayInMs, query, this::isConnected, request.specs());
   }
 
-  // TODO factory?
   @VisibleForTesting
   @NonNull
   SingleConnectionDataSource createSingleDataSource(@NonNull SubscriptionRequest request) {

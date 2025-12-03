@@ -17,6 +17,7 @@ package org.factcast.store.internal.tail;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.sql.*;
+import java.util.Objects;
 import java.util.UUID;
 import javax.sql.DataSource;
 import lombok.*;
@@ -37,7 +38,8 @@ public class SimpleHighWaterMarkFetcher implements HighWaterMarkFetcher {
   @NonNull
   public HighWaterMark highWaterMark(@NonNull DataSource ds) {
     try {
-      return jdbcTemplate(ds).queryForObject(PgConstants.HIGHWATER_MARK, this::extract);
+      return Objects.requireNonNull(
+          jdbcTemplate(ds).queryForObject(PgConstants.HIGHWATER_MARK, this::extract));
     } catch (EmptyResultDataAccessException noFactsAtAll) {
       // ignore but resetting target to initial values, can happen in integration tests when
       // facts are wiped between runs
@@ -46,12 +48,14 @@ public class SimpleHighWaterMarkFetcher implements HighWaterMarkFetcher {
   }
 
   @VisibleForTesting
+  @NonNull
   protected JdbcTemplate jdbcTemplate(@NonNull DataSource ds) {
     return new JdbcTemplate(ds);
   }
 
   @VisibleForTesting
-  protected HighWaterMark extract(ResultSet rs, int i) throws SQLException {
+  @NonNull
+  protected HighWaterMark extract(@NonNull ResultSet rs, int i) throws SQLException {
     return HighWaterMark.of(rs.getObject("targetId", UUID.class), rs.getLong("targetSer"));
   }
 }
