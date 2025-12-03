@@ -21,6 +21,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import io.micrometer.core.instrument.*;
+import java.lang.reflect.Constructor;
 import java.time.*;
 import java.util.*;
 import java.util.concurrent.atomic.*;
@@ -244,8 +245,7 @@ public class FactusImpl implements Factus {
     ProjectionAndState<P> projectionAndState =
         projectionSnapshotRepository
             .findLatest(projectionClass)
-            .orElseGet(
-                () -> ProjectionAndState.of(ReflectionUtils.instantiate(projectionClass), null));
+            .orElseGet(() -> ProjectionAndState.of(instantiate(projectionClass), null));
 
     // catchup
     P projection = projectionAndState.projectionInstance();
@@ -406,9 +406,18 @@ public class FactusImpl implements Factus {
         "Creating initial aggregate version for {} with id {}",
         aggregateClass.getSimpleName(),
         aggregateId);
-    A a = ReflectionUtils.instantiate(aggregateClass);
+    A a = instantiate(aggregateClass);
     AggregateUtil.aggregateId(a, aggregateId);
     return a;
+  }
+
+  @NonNull
+  @SneakyThrows
+  private <P extends SnapshotProjection> P instantiate(Class<P> projectionClass) {
+    log.trace("Creating initial projection version for {}", projectionClass);
+    Constructor<P> con = projectionClass.getDeclaredConstructor();
+    con.setAccessible(true);
+    return con.newInstance();
   }
 
   @Override
