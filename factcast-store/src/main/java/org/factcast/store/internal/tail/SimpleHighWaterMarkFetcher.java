@@ -38,8 +38,11 @@ public class SimpleHighWaterMarkFetcher implements HighWaterMarkFetcher {
   @NonNull
   public HighWaterMark highWaterMark(@NonNull DataSource ds) {
     try {
-      return Objects.requireNonNull(
-          jdbcTemplate(ds).queryForObject(PgConstants.HIGHWATER_MARK, this::extract));
+      HighWaterMark obj =
+          jdbcTemplate(ds).queryForObject(PgConstants.HIGHWATER_MARK, this::extract);
+      // we know the obj cannot be null here, as an empty result would have thrown
+      // an EmptyResultDataAccessException
+      return Objects.requireNonNull(obj);
     } catch (EmptyResultDataAccessException noFactsAtAll) {
       // ignore but resetting target to initial values, can happen in integration tests when
       // facts are wiped between runs
