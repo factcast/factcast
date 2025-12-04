@@ -19,7 +19,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import lombok.NonNull;
 import net.devh.boot.grpc.server.scope.GrpcRequestScope;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
 import org.factcast.grpc.api.CompressionCodecs;
 import org.factcast.server.grpc.metrics.ServerMetrics;
 import org.factcast.server.grpc.metrics.ServerMetricsImpl;
@@ -35,7 +35,7 @@ public class FactCastGrpcServerConfiguration {
       FactStore store,
       GrpcRequestMetadata grpcMetaData,
       GrpcLimitProperties props,
-      FastForwardTarget target,
+      HighWaterMarkFetcher target,
       ServerMetrics metrics) {
     return new FactStoreGrpcService(store, grpcMetaData, props, target, metrics);
   }

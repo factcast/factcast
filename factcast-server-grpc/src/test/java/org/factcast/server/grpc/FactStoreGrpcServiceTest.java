@@ -44,7 +44,7 @@ import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
-import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.EnumerateVersionsRequest;
 import org.factcast.grpc.api.StateForRequest;
@@ -73,7 +73,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 public class FactStoreGrpcServiceTest {
 
   @Mock FactStore backend;
-  @Mock FastForwardTarget ffwdTarget;
+  @Mock HighWaterMarkFetcher ffwdTarget;
 
   @Mock(lenient = true)
   GrpcLimitProperties grpcLimitProperties;

@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.micrometer.core.instrument.Timer;
 import java.time.Duration;
 import java.util.concurrent.atomic.*;
+import javax.sql.DataSource;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -44,8 +45,6 @@ public class PgFetchingCatchup implements PgCatchup {
 
   static final Duration FIRST_ROW_FETCHING_THRESHOLD = Duration.ofSeconds(1);
 
-  @NonNull final PgConnectionSupplier connectionSupplier;
-
   @NonNull final StoreConfigurationProperties props;
 
   @NonNull final PgMetrics metrics;
@@ -58,6 +57,8 @@ public class PgFetchingCatchup implements PgCatchup {
 
   @NonNull final CurrentStatementHolder statementHolder;
 
+  @NonNull final DataSource ds;
+
   @NonNull final PgCatchupFactory.Phase phase;
 
   long fastForward = 0;
@@ -65,10 +66,7 @@ public class PgFetchingCatchup implements PgCatchup {
   @SneakyThrows
   @Override
   public void run() {
-    try (var ds =
-        connectionSupplier.getPooledAsSingleDataSource(
-            ConnectionModifier.withAutoCommitDisabled(),
-            ConnectionModifier.withApplicationName(req.debugInfo()))) {
+    try {
       var jdbc = new JdbcTemplate(ds);
       fetch(jdbc);
     } finally {
