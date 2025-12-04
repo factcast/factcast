@@ -131,6 +131,18 @@ public class FactSpec {
     return fs;
   }
 
+  /**
+   * used to subscribe to changes for cache invalidation
+   *
+   * @return copy with aggIds and aggIdProperties removed
+   */
+  public FactSpec withoutAggIds() {
+    FactSpec fs = FactSpec.ns(ns).type(type).version(version).filterScript(filterScript);
+    fs.metaKeyExists.putAll(metaKeyExists);
+    fs.meta.putAll(meta);
+    return fs;
+  }
+
   public FactSpec withNs(String newNs) {
     FactSpec fs = FactSpec.ns(newNs).type(type).version(version).filterScript(filterScript);
     fs.aggIds.addAll(aggIds);

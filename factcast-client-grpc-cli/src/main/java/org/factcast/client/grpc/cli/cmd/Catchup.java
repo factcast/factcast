@@ -46,9 +46,9 @@ public class Catchup implements Command {
     ConsoleFactObserver obs = new ConsoleFactObserver(opt);
     SpecBuilder catchup = SubscriptionRequest.catchup(FactSpec.ns(ns));
     if (from == null) {
-      fc.subscribeEphemeral(catchup.fromScratch(), obs);
+      fc.subscribe(catchup.fromScratch(), obs);
     } else {
-      fc.subscribeEphemeral(catchup.from(from), obs);
+      fc.subscribe(catchup.from(from), obs);
     }
     obs.awaitTermination();
   }

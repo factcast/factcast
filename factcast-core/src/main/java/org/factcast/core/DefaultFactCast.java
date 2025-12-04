@@ -38,11 +38,21 @@ class DefaultFactCast implements FactCast {
 
   @NonNull final FactStore store;
 
+  /**
+   * scheduled for removal. Use subscribe instead.
+   *
+   * @param req
+   * @param observer
+   * @return
+   */
   @Override
   @NonNull
+  @Deprecated
   public Subscription subscribeEphemeral(
       @NonNull SubscriptionRequest req, @NonNull FactObserver observer) {
-    return store.subscribe(SubscriptionRequestTO.from(req), observer);
+    if (!req.ephemeral())
+      throw new IllegalArgumentException("requires ephemeral to be set to true.");
+    return subscribe(req, observer);
   }
 
   @Override
