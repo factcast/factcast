@@ -7,7 +7,7 @@
 @file:Repository("https://bindings.krzeminski.it")
 
 @file:DependsOn("actions:checkout:v6")
-@file:DependsOn("actions:cache:v4")
+@file:DependsOn("actions:cache:v5")
 @file:DependsOn("actions:setup-java:v5")
 
 
