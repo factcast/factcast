@@ -24,11 +24,11 @@ import java.util.function.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
-import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.postgresql.util.PSQLException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.*;
@@ -61,7 +61,7 @@ class PgSynchronizedQuery {
   @NonNull final ServerPipeline pipe;
   @NonNull final AtomicLong serialToContinueFrom;
 
-  @NonNull final PgLatestSerialFetcher latestFetcher;
+  @NonNull final HighWaterMarkFetcher hwmFetcher;
 
   @NonNull final CurrentStatementHolder statementHolder;
   private final @NonNull PgConnectionSupplier connectionSupplier;
@@ -74,12 +74,12 @@ class PgSynchronizedQuery {
       @NonNull PreparedStatementSetter setter,
       @NonNull Supplier<Boolean> isConnected,
       @NonNull AtomicLong serialToContinueFrom,
-      @NonNull PgLatestSerialFetcher fetcher,
+      @NonNull HighWaterMarkFetcher hwmFetcher,
       @NonNull CurrentStatementHolder statementHolder) {
     this.debugInfo = debugInfo;
     this.pipe = pipe;
     this.serialToContinueFrom = serialToContinueFrom;
-    latestFetcher = fetcher;
+    this.hwmFetcher = hwmFetcher;
     this.connectionSupplier = connectionSupplier;
     this.sql = sql;
     this.setter = setter;
@@ -97,7 +97,7 @@ class PgSynchronizedQuery {
         Lists.newArrayList(ConnectionModifier.withApplicationName(debugInfo));
     if (!useIndex) filters.add(ConnectionModifier.withBitmapScanDisabled());
     try (SingleConnectionDataSource ds = connectionSupplier.getPooledAsSingleDataSource(filters)) {
-      long latest = latestFetcher.retrieveLatestSer();
+      long latest = hwmFetcher.highWaterMark(ds).targetSer();
       new JdbcTemplate(ds)
           .query(
               sql,

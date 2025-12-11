@@ -26,16 +26,14 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.ServerPipelineFactory;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
-import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
-import org.factcast.store.internal.transformation.FactTransformerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -44,21 +42,17 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 @ExtendWith(MockitoExtension.class)
 class PgSubscriptionFactoryTest {
 
-  @Mock private JdbcTemplate jdbcTemplate;
   @Mock private EventBus eventBus;
   @Mock private PgFactIdToSerialMapper idToSerialMapper;
-  @Mock private PgLatestSerialFetcher fetcher;
   @Mock private PgCatchupFactory catchupFactory;
 
   @Mock private StoreConfigurationProperties props;
 
-  @Mock private FastForwardTarget target;
-  @Mock private FactTransformerService transformerService;
+  @Mock private HighWaterMarkFetcher target;
   @Mock private PgMetrics metrics;
   @Mock private PgStoreTelemetry telemetry;
 
@@ -78,7 +72,6 @@ class PgSubscriptionFactoryTest {
             connectionSupplier,
             eventBus,
             idToSerialMapper,
-            fetcher,
             props,
             catchupFactory,
             target,

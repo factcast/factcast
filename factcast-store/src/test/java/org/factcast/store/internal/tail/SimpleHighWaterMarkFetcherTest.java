@@ -15,27 +15,33 @@
  */
 package org.factcast.store.internal.tail;
 
-import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.sql.*;
 import java.util.UUID;
+import javax.sql.DataSource;
 import org.factcast.core.subscription.observer.HighWaterMark;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.*;
 
 @ExtendWith(MockitoExtension.class)
-public class SimpleFastForwardTargetTest {
+public class SimpleHighWaterMarkFetcherTest {
 
   @Mock private JdbcTemplate jdbc;
-  @InjectMocks private SimpleFastForwardTarget uut;
+  @Mock private DataSource ds;
+  @InjectMocks @Spy private SimpleHighWaterMarkFetcher uut;
+
+  @BeforeEach
+  void setup() {
+    lenient().doReturn(jdbc).when(uut).jdbcTemplate(ds);
+  }
 
   @Test
   void fetches() {
@@ -46,12 +52,12 @@ public class SimpleFastForwardTargetTest {
     when(jdbc.queryForObject(anyString(), any(RowMapper.class)))
         .thenReturn(HighWaterMark.of(id, ser), HighWaterMark.of(id, ser + 1));
 
-    HighWaterMark highWaterMark = uut.highWaterMark();
+    HighWaterMark highWaterMark = uut.highWaterMark(ds);
     assertThat(highWaterMark.targetId()).isEqualTo(id);
     assertThat(highWaterMark.targetSer()).isEqualTo(ser);
 
-    assertThat(uut.highWaterMark()).isNotSameAs(highWaterMark);
-    highWaterMark = uut.highWaterMark();
+    assertThat(uut.highWaterMark(ds)).isNotSameAs(highWaterMark);
+    highWaterMark = uut.highWaterMark(ds);
     assertThat(highWaterMark.targetId()).isEqualTo(id);
     assertThat(highWaterMark.targetSer()).isEqualTo(ser + 1);
   }
@@ -61,7 +67,7 @@ public class SimpleFastForwardTargetTest {
     when(jdbc.queryForObject(anyString(), any(RowMapper.class)))
         .thenThrow(EmptyResultDataAccessException.class);
 
-    HighWaterMark highWaterMark = uut.highWaterMark();
+    HighWaterMark highWaterMark = uut.highWaterMark(ds);
     assertThat(highWaterMark.isEmpty()).isTrue();
   }
 

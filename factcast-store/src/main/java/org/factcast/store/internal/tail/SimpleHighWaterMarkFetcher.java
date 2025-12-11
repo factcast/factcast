@@ -17,37 +17,50 @@ package org.factcast.store.internal.tail;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.sql.*;
+import java.util.Objects;
 import java.util.UUID;
+import javax.sql.DataSource;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.core.subscription.observer.HighWaterMark;
+import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
 import org.factcast.store.internal.PgConstants;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @Slf4j
 @RequiredArgsConstructor
-public class SimpleFastForwardTarget implements FastForwardTarget {
+public class SimpleHighWaterMarkFetcher implements HighWaterMarkFetcher {
   // the complexity toll of memorizing/refreshing/expiring here far exceeds its usefulness,
   // as we use it once per subscription and the query very likely is an o(1)
 
-  private final JdbcTemplate jdbc;
-
   @Override
-  public HighWaterMark highWaterMark() {
+  @NonNull
+  public HighWaterMark highWaterMark(@NonNull DataSource ds) {
     try {
-      return jdbc.queryForObject(PgConstants.HIGHWATER_MARK, this::extract);
+      HighWaterMark highWaterMark =
+          jdbcTemplate(ds).queryForObject(PgConstants.HIGHWATER_MARK, this::extract);
+      // we know the highWaterMark cannot be null here, as an empty result would have thrown
+      // an EmptyResultDataAccessException
+      @SuppressWarnings("java:S2637")
+      HighWaterMark ret = Objects.requireNonNull(highWaterMark);
+      return ret;
     } catch (EmptyResultDataAccessException noFactsAtAll) {
       // ignore but resetting target to initial values, can happen in integration tests when
-      // facts
-      // are wiped between runs
+      // facts are wiped between runs
       return HighWaterMark.empty();
     }
   }
 
   @VisibleForTesting
-  protected HighWaterMark extract(ResultSet rs, int i) throws SQLException {
+  @NonNull
+  protected JdbcTemplate jdbcTemplate(@NonNull DataSource ds) {
+    return new JdbcTemplate(ds);
+  }
+
+  @VisibleForTesting
+  @NonNull
+  protected HighWaterMark extract(@NonNull ResultSet rs, int i) throws SQLException {
     return HighWaterMark.of(rs.getObject("targetId", UUID.class), rs.getLong("targetSer"));
   }
 }
