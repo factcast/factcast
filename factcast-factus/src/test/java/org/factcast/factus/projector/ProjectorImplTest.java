@@ -37,7 +37,6 @@ import org.factcast.factus.event.EventObject;
 import org.factcast.factus.projection.*;
 import org.factcast.factus.projection.parameter.*;
 import org.factcast.factus.projection.tx.*;
-import org.factcast.factus.projector.ProjectorImpl.ReflectionTools;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -398,13 +397,13 @@ class ProjectorImplTest {
 
     @Test
     void resolveTargetFromStaticClass() {
-      assertThat(ReflectionTools.resolveTargetObject(this, StaticClass.class))
+      assertThat(ReflectionUtils.resolveTargetObject(this, StaticClass.class))
           .isInstanceOf(StaticClass.class);
     }
 
     @Test
     void resolveTargetFromNonStaticClass() {
-      assertThat(ReflectionTools.resolveTargetObject(ProjectorImplTest.this, NonStaticClass.class))
+      assertThat(ReflectionUtils.resolveTargetObject(ProjectorImplTest.this, NonStaticClass.class))
           .isInstanceOf(NonStaticClass.class);
     }
   }
@@ -418,14 +417,14 @@ class ProjectorImplTest {
     @Test
     void matchesHandlerMethods() throws NoSuchMethodException {
       Method realMethod = NonStaticClass.class.getDeclaredMethod("apply", SimpleEvent.class);
-      assertThat(underTest.isEventHandlerMethod(realMethod)).isTrue();
+      assertThat(ReflectionUtils.isEventHandlerMethod(realMethod)).isTrue();
     }
 
     @Test
     void ignoresMockitoMockProvidedMethods() throws NoSuchMethodException {
       Method realMethod =
           NonStaticClass$MockitoMock.class.getDeclaredMethod("apply", SimpleEvent.class);
-      assertThat(underTest.isEventHandlerMethod(realMethod)).isFalse();
+      assertThat(ReflectionUtils.isEventHandlerMethod(realMethod)).isFalse();
     }
   }
 
@@ -595,7 +594,7 @@ class ProjectorImplTest {
   void detectsSingleMeta() {
     FactSpec spec = FactSpec.ns("ns");
     Method m = HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithOneMeta", Fact.class);
-    ReflectionTools.addOptionalFilterInfo(m, spec);
+    ReflectionUtils.addOptionalFilterInfo(m, spec);
 
     assertThat(spec.meta()).containsEntry("foo", "bar").hasSize(1);
   }
@@ -606,7 +605,7 @@ class ProjectorImplTest {
     FactSpec spec = FactSpec.ns("ns");
     Method m =
         HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithMultiMeta", Fact.class);
-    ReflectionTools.addOptionalFilterInfo(m, spec);
+    ReflectionUtils.addOptionalFilterInfo(m, spec);
 
     assertThat(spec.meta()).containsEntry("foo", "bar").containsEntry("bar", "baz").hasSize(2);
   }
@@ -616,7 +615,7 @@ class ProjectorImplTest {
   void detectsAggId() {
     FactSpec spec = FactSpec.ns("ns");
     Method m = HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithAggId", Fact.class);
-    ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
+    ReflectionUtils.addOptionalFilterInfo(m, spec);
 
     assertThat(spec.aggIds()).containsOnly(UUID.fromString("1010a955-04a2-417b-9904-f92f88fdb67d"));
   }
@@ -627,7 +626,7 @@ class ProjectorImplTest {
     FactSpec spec = FactSpec.ns("ns");
     Method m =
         HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithMultipleAggIds", Fact.class);
-    ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
+    ReflectionUtils.addOptionalFilterInfo(m, spec);
 
     assertThat(spec.aggIds())
         .containsOnly(
@@ -641,7 +640,7 @@ class ProjectorImplTest {
     FactSpec spec = FactSpec.ns("ns");
     Method m =
         HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithOneMetaExists", Fact.class);
-    ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
+    ReflectionUtils.addOptionalFilterInfo(m, spec);
 
     assertThat(spec.metaKeyExists()).hasSize(1).containsEntry("foo", Boolean.TRUE);
   }
@@ -652,7 +651,7 @@ class ProjectorImplTest {
     FactSpec spec = FactSpec.ns("ns");
     Method m =
         HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithMultiMetaExists", Fact.class);
-    ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
+    ReflectionUtils.addOptionalFilterInfo(m, spec);
     assertThat(spec.metaKeyExists())
         .hasSize(2)
         .containsEntry("foo", Boolean.TRUE)
@@ -666,7 +665,7 @@ class ProjectorImplTest {
     Method m =
         HandlerMethodsWithAdditionalFilters.class.getMethod(
             "applyWithOneMetaDoesNotExist", Fact.class);
-    ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
+    ReflectionUtils.addOptionalFilterInfo(m, spec);
     assertThat(spec.metaKeyExists()).hasSize(1).containsEntry("foo", Boolean.FALSE);
   }
 
@@ -677,7 +676,7 @@ class ProjectorImplTest {
     Method m =
         HandlerMethodsWithAdditionalFilters.class.getMethod(
             "applyWithMultiMetaDoesNotExist", Fact.class);
-    ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
+    ReflectionUtils.addOptionalFilterInfo(m, spec);
 
     assertThat(spec.metaKeyExists())
         .hasSize(2)
@@ -691,7 +690,7 @@ class ProjectorImplTest {
     FactSpec spec = FactSpec.ns("ns");
     Method m =
         HandlerMethodsWithAdditionalFilters.class.getMethod("applyWithFilterScript", Fact.class);
-    ProjectorImpl.ReflectionTools.addOptionalFilterInfo(m, spec);
+    ReflectionUtils.addOptionalFilterInfo(m, spec);
 
     assertThat(spec.filterScript()).isEqualTo(FilterScript.js("function myfilter(e){}"));
   }
@@ -816,7 +815,7 @@ class ProjectorImplTest {
     @Test
     void determinesTypeParameter() {
       TransactionalProjection projection = spy(new TransactionalProjection());
-      assertThat(ReflectionTools.getTypeParameter(projection))
+      assertThat(ReflectionUtils.getTypeParameter(projection))
           .isSameAs(SomeTransactionInterface.class);
     }
   }
@@ -1180,25 +1179,25 @@ class ProjectorImplTest {
     @Test
     @SneakyThrows
     void failsOnEmptyParamList() {
-      assertThatThrownBy(() -> ReflectionTools.findEventObjectParameterType(methodByName("empty")))
-          .isInstanceOf(ReflectionTools.NoEventObjectParameterFoundException.class);
+      assertThatThrownBy(() -> ReflectionUtils.findEventObjectParameterType(methodByName("empty")))
+          .isInstanceOf(ReflectionUtils.NoEventObjectParameterFoundException.class);
     }
 
     @Test
     void failsOnNoEventObjectParam() {
-      assertThatThrownBy(() -> ReflectionTools.findEventObjectParameterType(methodByName("none")))
-          .isInstanceOf(ReflectionTools.NoEventObjectParameterFoundException.class);
+      assertThatThrownBy(() -> ReflectionUtils.findEventObjectParameterType(methodByName("none")))
+          .isInstanceOf(ReflectionUtils.NoEventObjectParameterFoundException.class);
     }
 
     @Test
     void failsOnMultipleEventObjectParams() {
-      assertThatThrownBy(() -> ReflectionTools.findEventObjectParameterType(methodByName("multi")))
-          .isInstanceOf(ReflectionTools.AmbiguousObjectParameterFoundException.class);
+      assertThatThrownBy(() -> ReflectionUtils.findEventObjectParameterType(methodByName("multi")))
+          .isInstanceOf(ReflectionUtils.AmbiguousObjectParameterFoundException.class);
     }
 
     @Test
     void findsType() {
-      assertThat(ReflectionTools.findEventObjectParameterType(methodByName("apply")))
+      assertThat(ReflectionUtils.findEventObjectParameterType(methodByName("apply")))
           .isSameAs(SomeEvent.class);
     }
   }
@@ -1232,7 +1231,7 @@ class ProjectorImplTest {
     void invalidPath() {
       Assertions.assertThatThrownBy(
               () -> {
-                ReflectionTools.verifyUuidPropertyExpressionAgainstClass(
+                ReflectionUtils.verifyUuidPropertyExpressionAgainstClass(
                     "a.x.y.id", SomeEvent.class);
               })
           .isInstanceOf(IllegalAggregateIdPropertyPathException.class);
@@ -1242,7 +1241,7 @@ class ProjectorImplTest {
     void notAUuid() {
       Assertions.assertThatThrownBy(
               () -> {
-                ReflectionTools.verifyUuidPropertyExpressionAgainstClass("a.b", SomeEvent.class);
+                ReflectionUtils.verifyUuidPropertyExpressionAgainstClass("a.b", SomeEvent.class);
               })
           .isInstanceOf(IllegalAggregateIdPropertyPathException.class);
     }
@@ -1251,7 +1250,7 @@ class ProjectorImplTest {
     void happyPath() {
       org.junit.jupiter.api.Assertions.assertDoesNotThrow(
           () ->
-              ReflectionTools.verifyUuidPropertyExpressionAgainstClass("a.b.id", SomeEvent.class));
+              ReflectionUtils.verifyUuidPropertyExpressionAgainstClass("a.b.id", SomeEvent.class));
     }
   }
 }

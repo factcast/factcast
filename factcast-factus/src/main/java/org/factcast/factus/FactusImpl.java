@@ -21,7 +21,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import io.micrometer.core.instrument.*;
-import java.lang.reflect.Constructor;
 import java.time.*;
 import java.util.*;
 import java.util.concurrent.atomic.*;
@@ -32,7 +31,6 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.*;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.factus.batch.*;
@@ -245,7 +243,8 @@ public class FactusImpl implements Factus {
     ProjectionAndState<P> projectionAndState =
         projectionSnapshotRepository
             .findLatest(projectionClass)
-            .orElseGet(() -> ProjectionAndState.of(instantiate(projectionClass), null));
+            .orElseGet(
+                () -> ProjectionAndState.of(ReflectionUtils.instantiate(projectionClass), null));
 
     // catchup
     P projection = projectionAndState.projectionInstance();
@@ -406,18 +405,9 @@ public class FactusImpl implements Factus {
         "Creating initial aggregate version for {} with id {}",
         aggregateClass.getSimpleName(),
         aggregateId);
-    A a = instantiate(aggregateClass);
+    A a = ReflectionUtils.instantiate(aggregateClass);
     AggregateUtil.aggregateId(a, aggregateId);
     return a;
-  }
-
-  @NonNull
-  @SneakyThrows
-  private <P extends SnapshotProjection> P instantiate(Class<P> projectionClass) {
-    log.trace("Creating initial projection version for {}", projectionClass);
-    Constructor<P> con = projectionClass.getDeclaredConstructor();
-    con.setAccessible(true);
-    return con.newInstance();
   }
 
   @Override
@@ -497,9 +487,8 @@ public class FactusImpl implements Factus {
   }
 
   @Override
-  @NonNull
-  public FactStore store() {
-    return fc.store();
+  public @NonNull FactCast factCast() {
+    return fc;
   }
 
   private void tryClose(AutoCloseable c) {
