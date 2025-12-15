@@ -207,7 +207,7 @@ class JdbcSnapshotCacheTest {
       // make sure cleanup was scheduled
       verify(timer)
           .scheduleAtFixedRate(
-              argThat(a -> StaleSnapshotsTimerTask.class.isInstance(a)),
+              argThat(StaleSnapshotsTimerTask.class::isInstance),
               eq(0L),
               eq(TimeUnit.DAYS.toMillis(1)));
     }
@@ -485,11 +485,9 @@ class JdbcSnapshotCacheTest {
   }
 
   private static JdbcSnapshotProperties getJdbcSnapshotProperties() {
-    JdbcSnapshotProperties properties =
-        new JdbcSnapshotProperties()
-            .setSnapshotTableName(TABLE_NAME)
-            .setSnapshotLastAccessedTableName(LAST_ACCESSED_TABLE_NAME);
-    return properties;
+    return new JdbcSnapshotProperties()
+        .setSnapshotTableName(TABLE_NAME)
+        .setSnapshotLastAccessedTableName(LAST_ACCESSED_TABLE_NAME);
   }
 
   private void mockSnapshotTableColumns() throws SQLException {
