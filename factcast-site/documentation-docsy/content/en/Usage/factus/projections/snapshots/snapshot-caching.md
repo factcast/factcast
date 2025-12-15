@@ -70,6 +70,7 @@ For further details, see the [Redis Properties]({{< ref "/setup/properties#redis
 For applications utilizing a JDBC storage solution, the JDBC-based SnapshotCache offers an optimal solution:
 
 ```xml
+
 <dependency>
     <groupId>org.factcast</groupId>
     <artifactId>factcast-snapshotcache-jdbc</artifactId>
@@ -88,45 +89,64 @@ You can run one of the following SQL scripts to create the necessary table:
 **PostgreSQL**
 
 ```sql
-CREATE TABLE IF NOT EXISTS factcast_snapshot(
-    projection_class VARCHAR(512),
-    aggregate_id VARCHAR(36) NULL,
-    last_fact_id VARCHAR(36),
-    bytes BYTEA,
+CREATE TABLE IF NOT EXISTS factcast_snapshot
+(
+    projection_class       VARCHAR(512),
+    aggregate_id           VARCHAR(36) NULL,
+    last_fact_id           VARCHAR(36),
+    bytes                  BYTEA,
     snapshot_serializer_id VARCHAR(128),
-    last_accessed VARCHAR,
-    PRIMARY KEY (projection_class, aggregate_id));
-CREATE INDEX IF NOT EXISTS factcast_snapshot_last_accessed_index ON factcast_snapshot(last_accessed);
+    PRIMARY KEY (projection_class, aggregate_id)
+);
+```
+
+As well as a second table to store the timestamps of the last access per snapshot
+
+```sql
+CREATE TABLE IF NOT EXISTS factcast_snapshot_last_accessed
+(
+    projection_class VARCHAR(512),
+    aggregate_id     VARCHAR(36) NULL,
+    last_accessed    TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    PRIMARY KEY (projection_class, aggregate_id)
+);
+CREATE INDEX IF NOT EXISTS factcast_snapshot_last_accessed_index ON factcast_snapshot_last_accessed USING BTREE (last_accessed);
 ```
 
 **MySQL & MariaDB**
 
 ```sql
-CREATE TABLE IF NOT EXISTS factcast_snapshot (
-    projection_class VARCHAR(512) NOT NULL,
-    aggregate_id VARCHAR(36) NULL,
-    last_fact_id VARCHAR(36) NOT NULL,
-    bytes BLOB,
+CREATE TABLE IF NOT EXISTS factcast_snapshot
+(
+    projection_class       VARCHAR(512) NOT NULL,
+    aggregate_id           VARCHAR(36)  NULL,
+    last_fact_id           VARCHAR(36)  NOT NULL,
+    bytes                  BLOB,
     snapshot_serializer_id VARCHAR(128) NOT NULL,
-    last_accessed VARCHAR(255),
+    last_accessed          VARCHAR(255),
     PRIMARY KEY (projection_class, aggregate_id)
 );
 CREATE INDEX factcast_snapshot_last_accessed_index ON factcast_snapshot (last_accessed);
 ```
+
+As well as a second table to store the timestamps of the last access per snapshot (see postgresql variant above).
 
 **Oracle**
 
 ```sql
-CREATE TABLE factcast_snapshot (
-    projection_class VARCHAR2(512) NOT NULL,
-    aggregate_id VARCHAR2(36) NULL,
-    last_fact_id VARCHAR2(36) NOT NULL,
-    bytes BLOB,
+CREATE TABLE factcast_snapshot
+(
+    projection_class       VARCHAR2(512) NOT NULL,
+    aggregate_id           VARCHAR2(36)  NULL,
+    last_fact_id           VARCHAR2(36)  NOT NULL,
+    bytes                  BLOB,
     snapshot_serializer_id VARCHAR2(128) NOT NULL,
-    last_accessed VARCHAR2(255),
+    last_accessed          VARCHAR2(255),
     PRIMARY KEY (projection_class, aggregate_id)
 );
 CREATE INDEX factcast_snapshot_last_accessed_index ON factcast_snapshot (last_accessed);
 ```
+
+As well as a second table to store the timestamps of the last access per snapshot (see postgresql variant above).
 
 For further details, see the [JDBC Properties]({{< ref "/setup/properties#jdbc-snapshots">}}).
