@@ -97,7 +97,10 @@ public class JdbcSnapshotCache implements SnapshotCache {
       createTimer()
           .scheduleAtFixedRate(
               new StaleSnapshotsTimerTask(
-                  dataSource, tableName, properties.getDeleteSnapshotStaleForDays()),
+                  dataSource,
+                  tableName,
+                  lastAccessedTableName,
+                  properties.getDeleteSnapshotStaleForDays()),
               0,
               TimeUnit.DAYS.toMillis(1));
     } else {

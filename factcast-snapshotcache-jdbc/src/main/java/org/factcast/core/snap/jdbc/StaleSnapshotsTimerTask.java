@@ -35,9 +35,18 @@ class StaleSnapshotsTimerTask extends TimerTask {
       @NonNull DataSource dataSource,
       // sanitized by the properties class
       @NonNull String tableName,
+      @NonNull String lastAccessedTableName,
       int staleForDays) {
     this.dataSource = dataSource;
-    this.statement = "DELETE FROM " + tableName + " WHERE last_accessed < ?";
+    this.statement =
+        "DELETE FROM "
+            + tableName
+            + " AS t1 WHERE EXISTS (SELECT 1 FROM "
+            + lastAccessedTableName
+            + " AS t2"
+            + " WHERE t1.projection_class = t2.projection_class"
+            + " AND t1.aggregate_id = t2.aggregate_id"
+            + " AND last_accessed < ?)";
     this.staleForDays = staleForDays;
   }
 
