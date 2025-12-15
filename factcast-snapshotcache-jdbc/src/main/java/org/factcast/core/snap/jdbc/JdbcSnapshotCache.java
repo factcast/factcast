@@ -70,11 +70,14 @@ public class JdbcSnapshotCache implements SnapshotCache {
         "DELETE FROM " + tableName + " WHERE projection_class = ? AND aggregate_id = ?";
 
     updateLastAccessedStatement =
-        "INSERT INTO "
+        "MERGE INTO "
             + lastAccessedTableName
-            + " (last_accessed, projection_class, aggregate_id) VALUES (_date, _projection_class, _aggregate_id)"
-            + " ON DUPLICATE KEY DO UPDATE SET last_accessed=_date"
-            + " WHERE projection_class=_projection_class AND aggregate_id=_aggregate_id AND last_accessed IS DISTINCT FROM (_date)";
+            + " USING (SELECT ? AS _projection_class, ? AS _aggregate_id, ? as _last_accessed)"
+            + " ON projection_class=_projection_class AND aggregate_id=_aggregate_id"
+            + " WHEN MATCHED THEN"
+            + " UPDATE SET last_accessed=_last_accessed"
+            + " WHEN NOT MATCHED THEN"
+            + " INSERT (projection_class, aggregate_id, last_accessed) VALUES (_projection_class, _aggregate_id, _last_accessed)";
 
     deleteLastAccessedStatement =
         "DELETE FROM " + lastAccessedTableName + " WHERE projection_class = ? AND aggregate_id = ?";
@@ -181,9 +184,9 @@ public class JdbcSnapshotCache implements SnapshotCache {
   protected void updateLastAccessedTime(@NonNull SnapshotIdentifier id) {
     try (Connection connection = dataSource.getConnection();
         PreparedStatement statement = connection.prepareStatement(updateLastAccessedStatement)) {
-      statement.setTimestamp(1, Timestamp.valueOf(LocalDate.now().atStartOfDay()));
-      statement.setString(2, createKeyFor(id));
-      statement.setString(3, id.aggregateId() != null ? id.aggregateId().toString() : null);
+      statement.setString(1, createKeyFor(id));
+      statement.setString(2, id.aggregateId() != null ? id.aggregateId().toString() : null);
+      statement.setTimestamp(3, Timestamp.valueOf(LocalDate.now().atStartOfDay()));
       statement.executeUpdate();
     } catch (Exception e) {
       log.error("Failed to update last accessed time for snapshot {}", id, e);

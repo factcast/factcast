@@ -13,11 +13,11 @@ snapshots. In case you are using this module, please follow the migration steps 
 
 _This only applies if you are already using `factcast-snapshotcache-jdbc` in your project._
 
-In previous versions, the `last_accessed` timestamps was stored together with the snapshot in the same table. As
-postgres copies the entire row on updates, updating the last_accessed field for every read of a snapshot causes the
-snapshot being copied frequently without any need. Therefore, the timestamps are now stored in a separate table.
+In previous versions, the `last_accessed` timestamp was stored together with the snapshot in the same table. As
+postgres copies the entire row on updates, updating the `last_accessed` field for every read of a snapshot causes the
+snapshot being copied frequently without any need. Therefore, the timestamp is now stored in a separate table.
 
-Analog to the initial creation of the snapshot table, please also create a new table for the last_accessed timestamps
+Analog to the initial creation of the snapshot table, please also create a new table for the `last_accessed` timestamps
 (as documented [here](/Usage/factus/projections/snapshots/snapshot-caching)).
 
 #### Transfer existing timestamps
