@@ -30,7 +30,7 @@ public class FactSpecProviderImpl implements FactSpecProvider {
   @Override
   public @NonNull Collection<FactSpec> forSnapshot(
       @NonNull Class<? extends SnapshotProjection> clazz) {
-    Projection p = ReflectionUtils.newInstance(clazz);
+    Projection p = ReflectionUtils.instantiate(clazz);
     return pf.create(p).createFactSpecs();
   }
 }

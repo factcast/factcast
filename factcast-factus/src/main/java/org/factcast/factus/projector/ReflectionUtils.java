@@ -28,7 +28,6 @@ import lombok.*;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.*;
-import org.factcast.core.util.ExceptionHelper;
 import org.factcast.factus.*;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.projection.*;
@@ -353,14 +352,6 @@ public class ReflectionUtils {
       return !m.getDeclaringClass().getName().contains("$MockitoMock");
     }
     return false;
-  }
-
-  public static <P extends SnapshotProjection> P newInstance(Class<P> clazz) {
-    try {
-      return clazz.getDeclaredConstructor().newInstance();
-    } catch (Exception e) {
-      throw ExceptionHelper.toRuntime(e);
-    }
   }
 
   @NonNull
