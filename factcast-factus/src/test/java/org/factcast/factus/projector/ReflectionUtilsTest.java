@@ -22,8 +22,10 @@ import com.google.common.collect.Sets;
 import java.lang.reflect.*;
 import java.util.*;
 import javax.annotation.Nullable;
-import lombok.NonNull;
+import lombok.*;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.FactStreamPosition;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.factus.*;
 import org.factcast.factus.projection.*;
 import org.factcast.factus.projection.parameter.*;
@@ -107,5 +109,20 @@ class ReflectionUtilsTest {
       public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {}
     }
     assertEquals(String.class, ReflectionUtils.getTypeParameter(new TxAware()));
+  }
+
+  static class SomeUnrelatedClass {
+    @FilterByAggIdProperty("narf")
+    public void foo() {}
+  }
+
+  @SneakyThrows
+  @Test
+  void checkFilterByAggIdProperty() {
+    Assertions.assertThatThrownBy(
+            () ->
+                ReflectionUtils.checkFilterByAggIdProperty(
+                    SomeUnrelatedClass.class.getMethod("foo"), FactSpec.ns("foo")))
+        .isInstanceOf(IllegalAnnotationForTargetClassException.class);
   }
 }

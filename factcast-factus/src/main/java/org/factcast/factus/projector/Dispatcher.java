@@ -15,7 +15,6 @@
  */
 package org.factcast.factus.projector;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.lang.reflect.*;
 import lombok.*;
 import org.factcast.core.Fact;
@@ -26,7 +25,6 @@ import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projection.parameter.HandlerParameterTransformer;
 
 @Value
-@VisibleForTesting
 class Dispatcher {
 
   @NonNull Method dispatchMethod;

@@ -130,6 +130,7 @@ public class CachedAggregateRepository<
    * @return the aggregate if found
    * @throws AggregateNotFoundException if the aggregate is not found
    */
+  @Override
   @NonNull
   public final A fetch(@NonNull I id) {
     return find(id).orElseThrow(() -> new AggregateNotFoundException(id));

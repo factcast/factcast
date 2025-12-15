@@ -212,8 +212,8 @@ public class ReflectionUtils {
     FilterByAggIdProperty annotation = m.getAnnotation(FilterByAggIdProperty.class);
     if (annotation != null) {
 
-      if (!Aggregate.class.isAssignableFrom(m.getDeclaringClass())) // FIXME add unit test
-      throw new IllegalAnnotationForTargetClassException(
+      if (!Aggregate.class.isAssignableFrom(m.getDeclaringClass()))
+        throw new IllegalAnnotationForTargetClassException(
             "FilterByAggIdProperty can only be used on classes extending Aggregate, but was found on "
                 + m.toString());
 
@@ -251,6 +251,7 @@ public class ReflectionUtils {
         ReflectionUtils.getRelevantClass(p), c -> discoverDispatchInfo(p, generalContributors));
   }
 
+  @SuppressWarnings("java:S3011")
   private Map<FactSpecCoordinates, Dispatcher> discoverDispatchInfo(
       Projection p, HandlerParameterContributors generalContributors) {
     Map<FactSpecCoordinates, Dispatcher> map = new HashMap<>();
@@ -307,6 +308,7 @@ public class ReflectionUtils {
                     }
 
                     log.debug("Discovered Event handling method {}", m.toString());
+
                     m.setAccessible(true);
                   });
         });
@@ -342,10 +344,9 @@ public class ReflectionUtils {
             "Handler methods must have at least one parameter: " + m);
       }
 
-      if (Modifier.isPublic(m.getModifiers())) {
-        if (!SuppressFactusWarnings.Warning.PUBLIC_HANDLER_METHOD.isSuppressedOn(m)) {
-          log.warn("Handler methods should not be public: " + m);
-        }
+      if (Modifier.isPublic(m.getModifiers())
+          && !SuppressFactusWarnings.Warning.PUBLIC_HANDLER_METHOD.isSuppressedOn(m)) {
+        log.warn("Handler methods should not be public: {}", m);
       }
 
       // exclude MockitoMocks
@@ -485,13 +486,13 @@ public class ReflectionUtils {
   }
 
   @VisibleForTesting
+  @SuppressWarnings({"java:S3011", "java:S1141", "ReassignedVariable"})
   static Object resolveTargetObject(Object parent, Class<?> c) {
     try {
       parent = ProjectorImpl.unwrapProxy(parent); // in case parent is wrapped by AOP
 
       Constructor<?> ctor;
       try {
-
         ctor = c.getDeclaredConstructor(parent.getClass());
         ctor.setAccessible(true);
         return ctor.newInstance(parent);
