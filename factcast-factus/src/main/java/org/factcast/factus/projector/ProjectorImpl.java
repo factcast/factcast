@@ -217,9 +217,10 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
     if (projection instanceof Aggregate) {
       UUID aggId = AggregateUtil.aggregateId((Aggregate) projection);
-      for (FactSpec factSpec : discovered) {
-        factSpec.aggId(aggId);
-      }
+      if (aggId != null)
+        for (FactSpec factSpec : discovered) {
+          factSpec.aggId(aggId);
+        }
     }
 
     List<FactSpec> ret = projection.postprocess(discovered);

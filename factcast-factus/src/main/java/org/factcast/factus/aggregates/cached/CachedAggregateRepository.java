@@ -38,7 +38,7 @@ import org.springframework.beans.factory.SmartInitializingSingleton;
 
 @Slf4j
 @RequiredArgsConstructor
-public class CachedAggregateRepository<
+public abstract class CachedAggregateRepository<
         I extends org.factcast.factus.aggregates.AggregateIdentifier, A extends Aggregate>
     implements AggregateRepository<I, A>, DisposableBean, SmartInitializingSingleton {
 
@@ -74,7 +74,7 @@ public class CachedAggregateRepository<
   /** hook to configure the caching behaviour */
   protected <K, V> CacheBuilder<@NonNull K, @NonNull V> configure(
       CacheBuilder<@NonNull K, @NonNull V> builder) {
-    return builder.maximumWeight(DEFAULT_CACHE_SIZE);
+    return builder.maximumSize(DEFAULT_CACHE_SIZE);
   }
 
   @Override
