@@ -58,7 +58,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
   @Autowired TokenStore tokenStore;
 
   @Autowired JdbcTemplate jdbcTemplate;
-  @Autowired private FastForwardTarget fastForwardTarget;
+  @Autowired private HighWaterMarkFetcher highWaterMarkFetcher;
 
   @Override
   protected FactStore createStoreToTest() {
