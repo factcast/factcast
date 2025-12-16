@@ -20,26 +20,22 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.event.Specification;
 
 /** UserBored event. Created to assert on facts that are not consumed by any projection. */
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
 @Specification(ns = "test", type = "UserBored")
 public class UserBored implements EventObject {
   UUID aggregateId;
-
-  String userName;
 
   @Override
   public Set<UUID> aggregateIds() {
     return Sets.newHashSet(aggregateId);
   }
 
-  public UserBored(String name) {
-    this(UUID.randomUUID(), name);
+  public UserBored() {
+    this(UUID.randomUUID());
   }
 }

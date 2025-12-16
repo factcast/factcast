@@ -33,6 +33,7 @@
   <modules>
     <module>factcast-bom</module>
     <module>factcast-test</module>
+    <module>factcast-test-factus</module>
     <module>factcast-test-redis</module>
     <module>factcast-test-dynamo</module>
     <module>factcast-internal-dep</module>

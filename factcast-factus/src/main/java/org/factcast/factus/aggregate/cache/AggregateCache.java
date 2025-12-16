@@ -13,12 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.aggregates;
+package org.factcast.factus.aggregate.cache;
 
+import java.util.UUID;
+import javax.annotation.Nullable;
 import lombok.NonNull;
+import org.factcast.factus.projection.Aggregate;
 
-public class AggregateNotFoundException extends RuntimeException {
-  public AggregateNotFoundException(@NonNull AggregateIdentifier id) {
-    super("Aggregate not found: " + id.getId());
-  }
+public interface AggregateCache<A extends Aggregate> {
+  @Nullable
+  A get(@NonNull UUID id);
+
+  void put(@NonNull UUID id, @NonNull A aggregate);
+
+  Class<A> aggregateType();
 }
