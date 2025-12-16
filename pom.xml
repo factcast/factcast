@@ -113,7 +113,7 @@
     <spring-grpc.version>3.1.0.RELEASE</spring-grpc.version>
     <grpc.version>1.63.0</grpc.version>
     <!-- lter versions seem to break toxi -->
-    <testcontainers.version>1.21.3</testcontainers.version>
+    <testcontainers.version>1.21.4</testcontainers.version>
     <arrow.version>2.1.1</arrow.version>
     <micronaut.version>4.7.5</micronaut.version>
     <kotlin.version>2.2.21</kotlin.version>
