@@ -17,7 +17,6 @@ package org.factcast.store.internal.catchup.fetching;
 
 import java.util.concurrent.atomic.*;
 import javax.sql.DataSource;
-import lombok.Generated;
 import lombok.NonNull;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
@@ -27,7 +26,6 @@ import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 
-@Generated
 public class PgFetchingCatchUpFactory implements PgCatchupFactory {
 
   @NonNull final StoreConfigurationProperties props;

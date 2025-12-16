@@ -38,7 +38,7 @@ public class PGTailIndexingConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public HighWaterMarkFetcher fastForwardTarget() {
+  public HighWaterMarkFetcher highWaterMarkFetcher() {
     return new SimpleHighWaterMarkFetcher();
   }
 }
