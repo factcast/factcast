@@ -35,13 +35,27 @@ import org.springframework.context.annotation.*;
 import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
-@ContextConfiguration(classes = {TestFactusApplication.class, RepoConfiguration.class})
+@ContextConfiguration(
+    classes = {TestFactusApplication.class, CachedAggregateLookupITest.ExtraConfiguration.class})
 @Slf4j
 public class CachedAggregateLookupITest extends AbstractFactCastIntegrationTest {
 
   @Autowired Factus factus;
   @Autowired FactSpecProvider fsp;
   @Autowired TestAggregateCache<User> c;
+
+  static class ExtraConfiguration {
+
+    @Bean
+    InMemorySnapshotCache inMemorySnapshotCache() {
+      return new InMemorySnapshotCache(new InMemorySnapshotProperties());
+    }
+
+    @Bean
+    TestAggregateCache<User> getUserAbstractAggregateCache(Factus factus, FactSpecProvider fsp) {
+      return new TestAggregateCache<User>(factus, fsp) {};
+    }
+  }
 
   @Test
   void caches() {
@@ -105,19 +119,5 @@ class User extends Aggregate {
   @Handler
   void apply(UserBored e) {
     bored = true;
-  }
-}
-
-@Configuration
-class RepoConfiguration {
-
-  @Bean
-  InMemorySnapshotCache inMemorySnapshotCache() {
-    return new InMemorySnapshotCache(new InMemorySnapshotProperties());
-  }
-
-  @Bean
-  TestAggregateCache<User> getUserAbstractAggregateCache(Factus factus, FactSpecProvider fsp) {
-    return new TestAggregateCache<User>(factus, fsp) {};
   }
 }
