@@ -33,7 +33,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.*;
 import org.springframework.test.context.ContextConfiguration;
-import org.testcontainers.shaded.com.google.common.cache.CacheBuilder;
 
 @SpringBootTest
 @ContextConfiguration(classes = {TestFactusApplication.class, RepoConfiguration.class})
@@ -119,10 +118,6 @@ class RepoConfiguration {
 
   @Bean
   TestAggregateCache<User> getUserAbstractAggregateCache(Factus factus, FactSpecProvider fsp) {
-    return new TestAggregateCache<User>(factus, fsp) {
-      protected CacheBuilder<UUID, User> configure(CacheBuilder<UUID, User> builder) {
-        return builder.maximumSize(DEFAULT_CACHE_SIZE); // set to 1000 at the time of writing
-      }
-    };
+    return new TestAggregateCache<User>(factus, fsp) {};
   }
 }

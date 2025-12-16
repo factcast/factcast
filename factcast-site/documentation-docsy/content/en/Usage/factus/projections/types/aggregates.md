@@ -61,8 +61,9 @@ that both calls will need to execute the following steps in order to get a fully
 Even if all these steps are carefully tuned, there is network and lots of message passing involved, so that it will take
 some time.
 
-In high throughput situations, you might also realize that you don't need full consistency on a particular aggregate and
-would be fine with a change on that aggregate arriving with some latency. This is where aggregate caches can help.
+In high throughput situations, you might also find yourself in a situation where you _don't need strict_ consistency on
+a particular aggregate and can accept a change on that aggregate arriving with some latency. This is where aggregate
+caches can help.
 
 An aggregate cache is a local cache of aggregate instances that Factus will maintain for you.
 When you request an aggregate via find/fetch, Factus will first check the cache if there is a "fresh enough" instance of
@@ -89,4 +90,4 @@ and then instead of calling `factus.fetch(User.class, id)`, you can call `factus
 are ok with a stale aggregate.
 Same goes for `find`.
 
-You can configure your aggregate cache by overriding the `configure` method.
+You can configure your AbstractAggregateCache by overriding the `configure` method.
