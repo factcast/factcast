@@ -21,7 +21,7 @@ import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 
-public class MongoProjectionConfiguration {
+public class MongoClientConfiguration {
   @Bean
   @SneakyThrows
   MongoClient mongoDbClient(
