@@ -28,6 +28,6 @@ jobs:
       run: './mvnw -B --non-recursive spotless:apply --file pom.xml'
     - id: 'step-4'
       name: 'Commit formatting changes'
-      uses: 'stefanzweifel/git-auto-commit-action@778341af668090896ca464160c2def5d1d1a3eb0'
+      uses: 'stefanzweifel/git-auto-commit-action@65c56779c90b0324ac2a7e7c31ec876b8db47914'
       with:
         commit_message: 'Apply formatter'
