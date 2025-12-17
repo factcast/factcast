@@ -38,7 +38,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class StaleSnapshotsTimerTaskTest {
 
-  private static final String CLEANUP_STATEMENT = "CLEANUP_STATEMENT";
+  private static final String TABLE_NAME = "TABLE_NAME";
+  private static final String LAST_ACCESSED_TABLE_NAME = "LAST_ACCESSED_TABLE_NAME";
   @Mock private @NonNull DataSource dataSource;
   @Mock private @NonNull Connection conn;
   @Mock private @NonNull PreparedStatement statement;
@@ -58,7 +59,7 @@ class StaleSnapshotsTimerTaskTest {
       try (LogCaptor logCaptor = LogCaptor.forClass(StaleSnapshotsTimerTask.class)) {
 
         Mockito.when(statement.executeUpdate()).thenThrow(SQLException.class);
-        new StaleSnapshotsTimerTask(dataSource, CLEANUP_STATEMENT, 90).run();
+        new StaleSnapshotsTimerTask(dataSource, TABLE_NAME, LAST_ACCESSED_TABLE_NAME, 90).run();
 
         Assertions.assertThat(logCaptor.getErrorLogs())
             .isNotEmpty()
@@ -70,7 +71,7 @@ class StaleSnapshotsTimerTaskTest {
     @Test
     void happyPath() {
 
-      new StaleSnapshotsTimerTask(dataSource, CLEANUP_STATEMENT, 90).run();
+      new StaleSnapshotsTimerTask(dataSource, TABLE_NAME, LAST_ACCESSED_TABLE_NAME, 90).run();
       Timestamp expectedTimestamp = Timestamp.valueOf(LocalDate.now().atStartOfDay().minusDays(90));
 
       InOrder inOrder = Mockito.inOrder(statement);
