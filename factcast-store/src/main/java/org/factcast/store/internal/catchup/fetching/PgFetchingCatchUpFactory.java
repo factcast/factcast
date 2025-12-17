@@ -16,29 +16,23 @@
 package org.factcast.store.internal.catchup.fetching;
 
 import java.util.concurrent.atomic.*;
-import lombok.Generated;
+import javax.sql.DataSource;
 import lombok.NonNull;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
-import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 
-@Generated
 public class PgFetchingCatchUpFactory implements PgCatchupFactory {
 
-  @NonNull final PgConnectionSupplier connectionSupplier;
   @NonNull final StoreConfigurationProperties props;
   @NonNull final PgMetrics metrics;
 
   public PgFetchingCatchUpFactory(
-      @NonNull PgConnectionSupplier connectionSupplier,
-      @NonNull StoreConfigurationProperties props,
-      @NonNull PgMetrics metrics) {
-    this.connectionSupplier = connectionSupplier;
+      @NonNull StoreConfigurationProperties props, @NonNull PgMetrics metrics) {
     this.props = props;
     this.metrics = metrics;
   }
@@ -49,8 +43,8 @@ public class PgFetchingCatchUpFactory implements PgCatchupFactory {
       @NonNull ServerPipeline pipeline,
       @NonNull AtomicLong serial,
       @NonNull CurrentStatementHolder holder,
+      @NonNull DataSource ds,
       @NonNull Phase phase) {
-    return new PgFetchingCatchup(
-        connectionSupplier, props, metrics, request, pipeline, serial, holder, phase);
+    return new PgFetchingCatchup(props, metrics, request, pipeline, serial, holder, ds, phase);
   }
 }
