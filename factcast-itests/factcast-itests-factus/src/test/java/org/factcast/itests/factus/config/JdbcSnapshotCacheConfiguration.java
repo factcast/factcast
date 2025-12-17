@@ -39,15 +39,22 @@ public class JdbcSnapshotCacheConfiguration {
       statement.execute(
           """
                             CREATE TABLE IF NOT EXISTS my_snapshot_table(projection_class VARCHAR(512), aggregate_id VARCHAR(36) NULL, last_fact_id VARCHAR(36),
-                                bytes BYTEA, snapshot_serializer_id VARCHAR(128), last_accessed VARCHAR, PRIMARY KEY (projection_class, aggregate_id));
-                            CREATE INDEX IF NOT EXISTS my_snapshot_table_index ON my_snapshot_table(last_accessed);
+                                bytes BYTEA, snapshot_serializer_id VARCHAR(128), PRIMARY KEY (projection_class, aggregate_id));
+                            """);
+      statement.execute(
+          """
+                            CREATE TABLE IF NOT EXISTS my_snapshot_table_last_accessed(projection_class VARCHAR(512), aggregate_id VARCHAR(36) NULL,
+                            last_accessed VARCHAR, PRIMARY KEY (projection_class, aggregate_id));
+                            CREATE INDEX IF NOT EXISTS my_snapshot_table_index ON my_snapshot_table_last_accessed(last_accessed);
                             """);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
 
     JdbcSnapshotProperties props =
-        new JdbcSnapshotProperties().setSnapshotTableName("my_snapshot_table");
+        new JdbcSnapshotProperties()
+            .setSnapshotTableName("my_snapshot_table")
+            .setSnapshotLastAccessedTableName("my_snapshot_table_last_accessed");
     return new JdbcSnapshotCache(props, dataSource);
   }
 }
