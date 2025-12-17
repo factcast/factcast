@@ -54,7 +54,7 @@
     <!-- you want to remove this -->
     <dependency>
       <groupId>org.testcontainers</groupId>
-      <artifactId>postgresql</artifactId>
+      <artifactId>testcontainers-postgresql</artifactId>
       <version>${testcontainers.version}</version>
     </dependency>
     <!-- /you want to remove this -->
