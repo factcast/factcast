@@ -90,7 +90,6 @@ class PgTransformationCacheTest {
 
     @Test
     void overwritesAccess() {
-      underTest.registerAccess(key);
       underTest.put(key, f);
 
       Mockito.verify(underTest).registerWrite(key, f);
@@ -129,14 +128,14 @@ class PgTransformationCacheTest {
     @Test
     void findsFlushed() {
       //noinspection OptionalGetWithoutIsPresent
-      Mockito.when(jdbcTemplate.query(anyString(), any(Object[].class), any(RowMapper.class)))
+      when(jdbcTemplate.query(any(PreparedStatementCreator.class), any(RowMapper.class)))
           .thenReturn(Collections.singletonList(f));
       assertThat(underTest.find(key)).containsSame(f);
     }
 
     @Test
     void registersMiss() {
-      Mockito.when(jdbcTemplate.query(anyString(), any(Object[].class), any(RowMapper.class)))
+      when(jdbcTemplate.query(any(PreparedStatementCreator.class), any(RowMapper.class)))
           .thenReturn(Collections.emptyList());
       assertThat(underTest.find(key)).isEmpty();
       Mockito.verify(registryMetrics).count(RegistryMetrics.EVENT.TRANSFORMATION_CACHE_MISS);
@@ -144,7 +143,7 @@ class PgTransformationCacheTest {
 
     @Test
     void registersHit() {
-      Mockito.when(jdbcTemplate.query(anyString(), any(Object[].class), any(RowMapper.class)))
+      when(jdbcTemplate.query(any(PreparedStatementCreator.class), any(RowMapper.class)))
           .thenReturn(Collections.singletonList(f));
       assertThat(underTest.find(key)).isNotEmpty();
       Mockito.verify(registryMetrics).count(RegistryMetrics.EVENT.TRANSFORMATION_CACHE_HIT);
@@ -176,32 +175,22 @@ class PgTransformationCacheTest {
     void findsBoth() {
       underTest.put(key, f);
       ArgumentCaptor<SqlParameterSource> cap = ArgumentCaptor.forClass(SqlParameterSource.class);
-      Mockito.when(namedJdbcTemplate.query(anyString(), cap.capture(), any(RowMapper.class)))
+      when(jdbcTemplate.query(any(PreparedStatementCreator.class), any(RowMapper.class)))
           .thenReturn(Collections.singletonList(f2));
 
       assertThat(underTest.findAll(Lists.newArrayList(key, key2)))
           .hasSize(2)
           .containsExactlyInAnyOrder(f, f2);
-
-      // only one key is looked for in persistent cache
-      Collection ids = (Collection) cap.getValue().getValue("ids");
-      assertThat(ids).hasSize(1).doesNotContain(key);
-
-      verify(underTest).registerAccess(Lists.newArrayList(key2));
     }
 
     @Test
     void findsAllInCache() {
       final var keysToFind = Lists.newArrayList(key, key2);
 
-      Mockito.when(
-              namedJdbcTemplate.query(
-                  anyString(), any(SqlParameterSource.class), any(RowMapper.class)))
+      when(jdbcTemplate.query(any(PreparedStatementCreator.class), any(RowMapper.class)))
           .thenReturn(Lists.newArrayList(f, f2));
 
       assertThat(underTest.findAll(keysToFind)).hasSize(2).containsExactlyInAnyOrder(f, f2);
-
-      verify(underTest).registerAccess(keysToFind);
     }
   }
 
@@ -225,18 +214,9 @@ class PgTransformationCacheTest {
     }
 
     @Test
-    void happyPath() {
-      underTest.registerAccess(cacheKey);
-      assertThat(underTest.buffer().containsKey(cacheKey)).isTrue();
-      assertThat(underTest.buffer().get(cacheKey)).isNull();
-    }
-
-    @Test
     void doesNotOverwriteWrite() {
       underTest.put(cacheKey, f);
-      underTest.registerAccess(cacheKey);
 
-      Mockito.verify(underTest).registerAccess(cacheKey);
       // the write is still there
       assertThat(underTest.buffer().get(cacheKey)).isEqualTo(f);
     }
@@ -323,7 +303,7 @@ class PgTransformationCacheTest {
     void happyPath() {
       underTest.registerWrite(cacheKey, f);
       assertThat(underTest.buffer().size()).isEqualTo(1);
-      underTest.registerAccess(otherCacheKey).get();
+      underTest.registerWrite(otherCacheKey, f);
       assertThat(underTest.buffer().size()).isZero();
 
       Mockito.verify(underTest, Mockito.times(2)).flushIfNecessary();
@@ -366,10 +346,12 @@ class PgTransformationCacheTest {
               Timestamp.from(THRESHOLD_DATE.toInstant()));
     }
 
+    @Mock private PgFact f;
+
     @Test
     void doesNotCompactIfInReadOnlyMode() {
       when(storeConfigurationProperties.isReadOnlyModeEnabled()).thenReturn(true);
-      underTest.registerAccess(TransformationCache.Key.of(UUID.randomUUID(), 1, "someChainId"));
+      underTest.registerWrite(TransformationCache.Key.of(UUID.randomUUID(), 1, "someChainId"), f);
       Assertions.assertThat(underTest.buffer().size()).isOne();
 
       underTest.compact(THRESHOLD_DATE);
@@ -414,27 +396,7 @@ class PgTransformationCacheTest {
     }
 
     @Test
-    void afterAcess() {
-      underTest.registerAccess(key);
-      assertThat(underTest.buffer().size()).isPositive();
-      underTest.flush();
-      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
-      assertThat(underTest.buffer().size()).isZero();
-    }
-
-    @Test
-    @SneakyThrows
-    void afterAcess_list() {
-      underTest.registerAccess(List.of(key, key2)).get();
-
-      assertThat(underTest.buffer().size()).isEqualTo(2);
-      assertThat(underTest.buffer().buffer().values()).allMatch(x -> x == null);
-      verify(underTest).flushIfNecessary();
-    }
-
-    @Test
     void logsException() {
-      underTest.registerAccess(key2);
       underTest.registerWrite(key, f);
       when(jdbcTemplate.batchUpdate(anyString(), any(List.class)))
           .thenThrow(IllegalArgumentException.class);
@@ -451,7 +413,7 @@ class PgTransformationCacheTest {
     void doesnotFlushInReadOnlyMode() {
       when(storeConfigurationProperties.isReadOnlyModeEnabled()).thenReturn(true);
 
-      underTest.registerAccess(key);
+      underTest.registerWrite(key, f);
       assertThat(underTest.buffer().size()).isPositive();
 
       underTest.flush();
@@ -532,9 +494,7 @@ class PgTransformationCacheTest {
 
       buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(PgFact.class));
       buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(PgFact.class));
-      buffer.put(Mockito.mock(TransformationCache.Key.class), null);
       buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(PgFact.class));
-      buffer.put(Mockito.mock(TransformationCache.Key.class), null);
 
       underTest.flush();
 
@@ -545,16 +505,6 @@ class PgTransformationCacheTest {
       Mockito.verify(jdbcTemplate, times(1))
           .batchUpdate(matches("INSERT INTO transformationcache .*"), m.capture());
       assertThat((Collection) m.getValue()).isNotNull().hasSize(3);
-      Mockito.verify(jdbcTemplate, times(1))
-          .batchUpdate(
-              matches("/\\* insert \\*/ INSERT INTO transformationcache_access.*"), m.capture());
-      assertThat((Collection) m.getValue()).isNotNull().hasSize(3);
-
-      ArgumentCaptor<List<Object[]>> ids = ArgumentCaptor.forClass(List.class);
-      Mockito.verify(jdbcTemplate, times(1))
-          .batchUpdate(
-              matches("/\\* touch \\*/ INSERT INTO transformationcache_access.*"), ids.capture());
-      assertThat((Collection) (ids.getValue())).isNotNull().hasSize(2);
     }
   }
 
