@@ -28,7 +28,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.factcast.core.util.FactCastJson;
-import org.junit.function.ThrowingRunnable;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -88,5 +87,9 @@ public abstract class AbstractCompressionPerformanceTest {
     r.run();
     long end = System.currentTimeMillis();
     LoggerFactory.getLogger(getClass()).info("{}: {}ms", title, (end - start));
+  }
+
+  interface ThrowingRunnable {
+    void run() throws Exception;
   }
 }
