@@ -38,7 +38,7 @@ jobs:
       run: 'cd factcast-server-ui ; ../mvnw -B -Dui verify'
     - id: 'step-5'
       name: 'Commit vaadin changes'
-      uses: 'stefanzweifel/git-auto-commit-action@65c56779c90b0324ac2a7e7c31ec876b8db47914'
+      uses: 'stefanzweifel/git-auto-commit-action@b811de3f2d9e17d5fa2a2e415eebf8129c596c7b'
       with:
         commit_message: 'Update vaadin files'
         file_pattern: 'factcast-server-ui/src/main/bundles/prod.bundle factcast-server-ui/package.json'
