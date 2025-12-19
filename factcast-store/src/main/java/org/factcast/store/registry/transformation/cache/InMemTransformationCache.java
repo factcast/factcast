@@ -136,6 +136,11 @@ public class InMemTransformationCache implements TransformationCache {
     }
   }
 
+  @Override
+  public void flush() {
+    // NOP
+  }
+
   @Data
   @AllArgsConstructor
   private static class FactAndAccessTime {
