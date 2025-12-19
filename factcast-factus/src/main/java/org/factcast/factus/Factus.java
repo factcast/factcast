@@ -217,10 +217,21 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
   /**
    * Internal API: subject to change - use at your own risk
    *
+   * <p>planned for removal, use factCast().store() instead.
+   *
    * @since 0.7.10
    */
   @NonNull
-  FactStore store();
+  @Deprecated
+  default FactStore store() {
+    return factCast().store();
+  }
+
+  /**
+   * @since 0.9.14
+   */
+  @NonNull
+  FactCast factCast();
 
   /**
    * @return Current time as Instant from the factstore.
@@ -230,6 +241,6 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
    */
   @NonNull
   default Instant currentTime() {
-    return Instant.ofEpochMilli(store().currentTime());
+    return Instant.ofEpochMilli(factCast().store().currentTime());
   }
 }

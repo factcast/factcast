@@ -21,6 +21,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import org.factcast.factus.aggregate.cache.AggregateCache;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.ManagedProjection;
 import org.factcast.factus.projection.SnapshotProjection;
@@ -37,7 +38,7 @@ public interface ProjectionAccessor {
    * <p>If there is no existing snapshot yet, or they are not matching (see serialVersionUID), an
    * initial one will be created.
    *
-   * @return an instance of the projectionClass in at least initial state, and (if there are any)
+   * @return an instance of the projectionClass in at least the initial state and (if there are any)
    *     with all currently published facts applied.
    */
   @NonNull
@@ -52,6 +53,26 @@ public interface ProjectionAccessor {
       @NonNull Class<A> aggregateClass, @NonNull UUID aggregateId);
 
   /**
+   * Same as fetching on a snapshot projection, but limited to one aggregateId. If no fact was
+   * found, Optional.empty will be returned.
+   *
+   * <p>Caching behavior: If the cache contains the aggregate in question, it will be returned
+   * without checking with the factstore, if there were any updates. <br>
+   * If the cache does not contain the aggregate, it will be fetched from the factstore and added to
+   * the cache.
+   */
+  @NonNull
+  default <A extends Aggregate> Optional<A> find(
+      @NonNull AggregateCache<A> cache, @NonNull UUID aggregateId) {
+    A cached = cache.get(aggregateId);
+    if (cached == null) {
+      @NonNull Optional<A> retrieved = find(cache.aggregateType(), aggregateId);
+      retrieved.ifPresent(a -> cache.put(aggregateId, a));
+      return retrieved;
+    } else return Optional.of(cached);
+  }
+
+  /**
    * shortcut to find, but returns the aggregate unwrapped. throws {@link IllegalStateException} if
    * the aggregate does not exist yet.
    */
@@ -64,6 +85,29 @@ public interface ProjectionAccessor {
                 new IllegalStateException(
                     "Aggregate of type "
                         + aggregateClass.getSimpleName()
+                        + " for id "
+                        + aggregateId
+                        + " does not exist."));
+  }
+
+  /**
+   * shortcut to find, but returns the aggregate unwrapped. throws {@link IllegalStateException} if
+   * the aggregate does not exist yet.
+   *
+   * <p>Caching behavior: If the cache contains the aggregate in question, it will be returned
+   * without checking with the factstore, if there were any updates. <br>
+   * If the cache does not contain the aggregate, it will be fetched from the factstore and added to
+   * the cache.
+   */
+  @NonNull
+  default <A extends Aggregate> A fetch(
+      @NonNull AggregateCache<A> cache, @NonNull UUID aggregateId) {
+    return find(cache, aggregateId)
+        .orElseThrow(
+            () ->
+                new IllegalStateException(
+                    "Aggregate of type "
+                        + cache.aggregateType()
                         + " for id "
                         + aggregateId
                         + " does not exist."));

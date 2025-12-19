@@ -94,4 +94,10 @@ public class FactusAutoConfiguration {
   public EventConverter eventConverter(@NonNull EventSerializer ser) {
     return new EventConverter(ser);
   }
+
+  @Bean
+  @ConditionalOnMissingBean
+  public FactSpecProvider factSpecProvider(ProjectorFactory pf) {
+    return new FactSpecProviderImpl(pf);
+  }
 }
