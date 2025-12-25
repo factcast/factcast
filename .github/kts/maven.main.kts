@@ -9,7 +9,7 @@
 @file:DependsOn("actions:checkout:v6")
 @file:DependsOn("actions:cache:v5")
 @file:DependsOn("actions:setup-java:v5")
-@file:DependsOn("codecov:codecov-action:v5")
+@file:DependsOn("codecov:codecov-action:v5@671740ac38dd9b0130fbe1cec585b89eea48d3de")
 
 
 import io.github.typesafegithub.workflows.actions.actions.Cache
