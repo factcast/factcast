@@ -9,7 +9,7 @@
 @file:DependsOn("actions:checkout:v6")
 @file:DependsOn("actions:cache:v5")
 @file:DependsOn("actions:setup-java:v5")
-@file:DependsOn("codecov:codecov-action:v5@671740ac38dd9b0130fbe1cec585b89eea48d3de")
+@file:DependsOn("codecov:codecov-action:v5")
 
 
 import io.github.typesafegithub.workflows.actions.actions.Cache
@@ -38,7 +38,7 @@ workflow(
 ) {
 
     val SONAR_TOKEN by Contexts.secrets
-    val SONAR  by Contexts.env
+    val SONAR by Contexts.env
 
     job(
         id = "build",
@@ -92,7 +92,7 @@ workflow(
 
         run(
             name = "Sonar upload",
-            env = mapOf( "SONAR" to expr { SONAR_TOKEN } ,),
+            env = mapOf("SONAR" to expr { SONAR_TOKEN }),
             command = "./mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR"
         )
 
@@ -100,9 +100,10 @@ workflow(
             name = "Test - Integration",
             command = "./mvnw -B verify -DskipUnitTests",
         )
- 	uses(
+        uses(
             name = "Codecov upload",
             action = CodecovAction(
+                _customVersion = "015f24e6818733317a2da2edd6290ab26238649a",
                 token = "${'$'}{{ secrets.CODECOV_TOKEN }}"
             ),
         )
