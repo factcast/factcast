@@ -103,7 +103,7 @@ workflow(
         uses(
             name = "Codecov upload",
             action = CodecovAction(
-                _customVersion = "015f24e6818733317a2da2edd6290ab26238649a",
+                _customVersion = "671740ac38dd9b0130fbe1cec585b89eea48d3de",
                 token = "${'$'}{{ secrets.CODECOV_TOKEN }}"
             ),
         )
