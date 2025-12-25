@@ -9,6 +9,7 @@
 @file:DependsOn("actions:checkout:v6")
 @file:DependsOn("actions:cache:v5")
 @file:DependsOn("actions:setup-java:v5")
+@file:DependsOn("codecov:codecov-action:v5")
 
 
 import io.github.typesafegithub.workflows.actions.actions.Cache
@@ -22,7 +23,7 @@ import io.github.typesafegithub.workflows.dsl.expressions.Contexts.secrets
 import io.github.typesafegithub.workflows.dsl.expressions.expr
 import io.github.typesafegithub.workflows.dsl.workflow
 import io.github.typesafegithub.workflows.yaml.ConsistencyCheckJobConfig
-
+import io.github.typesafegithub.workflows.actions.codecov.CodecovAction
 
 workflow(
     name = "Maven all in one",
@@ -98,6 +99,12 @@ workflow(
         run(
             name = "Test - Integration",
             command = "./mvnw -B verify -DskipUnitTests",
+        )
+ 	uses(
+            name = "Codecov upload",
+            action = CodecovAction(
+                token = "${'$'}{{ secrets.CODECOV_TOKEN }}"
+            ),
         )
     }
 
