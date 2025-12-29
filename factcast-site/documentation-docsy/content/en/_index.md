@@ -10,6 +10,7 @@ title = "FactCast"
 </div>
 
 [![Actions Status](https://github.com/factcast/factcast/actions/workflows/maven.yaml/badge.svg?branch=main)](https://github.com/factcast/factcast/actions)
+[![codecov](https://codecov.io/gh/factcast/factcast/graph/badge.svg?token=1RROU58AAV)](https://codecov.io/gh/factcast/factcast)
 [![CodeFactor](https://www.codefactor.io/repository/github/factcast/factcast/badge)](https://www.codefactor.io/repository/github/factcast/factcast)
 [![Maven
 Central](https://img.shields.io/maven-central/v/org.factcast/factcast/0.9.svg)](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.factcast)

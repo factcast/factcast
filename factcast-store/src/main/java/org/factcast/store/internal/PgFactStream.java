@@ -21,6 +21,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.sql.DataSource;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
@@ -32,15 +33,17 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.*;
 import org.factcast.store.internal.catchup.*;
+import org.factcast.store.internal.listen.ConnectionModifier;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
-import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.jdbc.core.PreparedStatementSetter;
+import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 /**
  * Creates and maintains a subscription.
@@ -54,9 +57,8 @@ public class PgFactStream {
   final PgConnectionSupplier connectionSupplier;
   final EventBus eventBus;
   final PgFactIdToSerialMapper idToSerMapper;
-  final PgLatestSerialFetcher fetcher;
   final PgCatchupFactory pgCatchupFactory;
-  final FastForwardTarget ffwdTarget;
+  final HighWaterMarkFetcher hwmFetcher;
   final ServerPipeline pipeline;
   final PgStoreTelemetry telemetry;
 
@@ -77,29 +79,42 @@ public class PgFactStream {
     log.debug("{} connect subscription {}", request, request.dump());
     // signal connect
     telemetry.onConnect(request);
-    PgQueryBuilder q = new PgQueryBuilder(request.specs(), statementHolder);
     initializeSerialToStartAfter();
 
-    if (request.streamInfo()) {
-      FactStreamInfo factStreamInfo = new FactStreamInfo(serial.get(), fetcher.retrieveLatestSer());
-      pipeline.process(Signal.of(factStreamInfo));
+    // using a single datasource for both fetching the hwm and catchup (#4124)
+    try (final var ds = createSingleDataSource(request)) {
+      // we need to copy and preserve the current highwatermark **before** starting the query
+      // in order not to lose facts by the ffTarget being updated after the phase 2 query, but
+      // before the sending of the ffwd signal (#3722)
+      final var initialHwm = hwmFetcher.highWaterMark(ds);
+      if (request.streamInfo()) {
+        FactStreamInfo factStreamInfo = new FactStreamInfo(serial.get(), initialHwm.targetSer());
+        pipeline.process(Signal.of(factStreamInfo));
+      }
+      catchupAndFastForward(request, initialHwm, ds);
     }
 
+    PgSynchronizedQuery query = createPgSynchronizedQuery();
+    follow(request, query);
+  }
+
+  @VisibleForTesting
+  @NotNull
+  PgSynchronizedQuery createPgSynchronizedQuery() {
+    PgQueryBuilder q = new PgQueryBuilder(request.specs(), statementHolder);
     String sql = q.createSQL();
     log.trace("created query SQL for {} - SQL={}", request.specs(), sql);
     PreparedStatementSetter setter = q.createStatementSetter(serial);
-    PgSynchronizedQuery query =
-        new PgSynchronizedQuery(
-            request.debugInfo(),
-            pipeline,
-            connectionSupplier,
-            sql,
-            setter,
-            this::isConnected,
-            serial,
-            fetcher,
-            statementHolder);
-    catchupAndFollow(request, query);
+    return new PgSynchronizedQuery(
+        request.debugInfo(),
+        pipeline,
+        connectionSupplier,
+        sql,
+        setter,
+        this::isConnected,
+        serial,
+        hwmFetcher,
+        statementHolder);
   }
 
   @VisibleForTesting
@@ -111,33 +126,34 @@ public class PgFactStream {
   }
 
   @VisibleForTesting
-  void catchupAndFollow(SubscriptionRequest request, PgSynchronizedQuery query) {
-
-    // we need to copy and preserve the current highwatermark **before** starting the query
-    // in order not to lose facts by the ffTarget being updated after the phase 2 query, but
-    // before the sending of the ffwd signal (#3722)
-    HighWaterMark atTheStartOfQuery = ffwdTarget.highWaterMark();
+  void catchupAndFastForward(
+      @NonNull SubscriptionRequestTO request,
+      @NonNull HighWaterMark hwm,
+      @NonNull DataSource datasource) {
     if (request.ephemeral()) {
       // just fast forward to the latest event published by now
-      serial.set(fetcher.retrieveLatestSer());
+      serial.set(hwm.targetSer());
     } else {
-      catchup(atTheStartOfQuery.targetSer());
+      catchup(hwm.targetSer(), datasource);
     }
-
-    fastForward(atTheStartOfQuery);
-
+    fastForward(hwm);
     // propagate catchup
     if (isConnected()) {
       log.trace("{} signaling catchup", request);
       // signal catchup
-      telemetry.onCatchup(this.request);
+      telemetry.onCatchup(request);
       pipeline.process(Signal.catchup());
     }
+  }
+
+  @VisibleForTesting
+  @SuppressWarnings("java:S2245")
+  void follow(@NonNull SubscriptionRequestTO request, @NonNull PgSynchronizedQuery query) {
     if (isConnected()) {
       if (request.continuous()) {
         log.debug("{} entering follow mode", request);
         // signal follow
-        telemetry.onFollow(this.request);
+        telemetry.onFollow(request);
         long delayInMs;
         if (request.maxBatchDelayInMs() < 1) {
           // ok, instant query after NOTIFY
@@ -147,19 +163,16 @@ public class PgFactStream {
           // in time, even if they get triggered at the same PIT, and
           // share the same latency requirements
           //
-          // ok, that is unlikely to be necessary, but easy to do,
-          // so...
-          delayInMs =
-              ((request.maxBatchDelayInMs() / 4L) * 3L)
-                  + (long) (Math.abs(Math.random() * (request.maxBatchDelayInMs() / 4.0)));
+          // ok, that is unlikely to be necessary, but easy to do, so...
+          // distributes delay between 75% and 100% of the maxDelay
+          delayInMs = Math.round(request.maxBatchDelayInMs() * (0.75 + Math.random() * 0.25));
           log.trace(
               "{} setting delay to {}, maxDelay was {}",
               request,
               delayInMs,
               request.maxBatchDelayInMs());
         }
-        condensedExecutor =
-            new CondensedQueryExecutor(delayInMs, query, this::isConnected, request.specs());
+        condensedExecutor = createCondensedExecutor(request, query, delayInMs);
         eventBus.register(condensedExecutor);
         // catchup phase 3 – make sure, we did not miss any fact due to
         // slow registration
@@ -168,9 +181,24 @@ public class PgFactStream {
         pipeline.process(Signal.complete());
         log.debug("{} completed", request);
         // signal complete
-        telemetry.onComplete(this.request);
+        telemetry.onComplete(request);
       }
     }
+  }
+
+  @VisibleForTesting
+  @NonNull
+  CondensedQueryExecutor createCondensedExecutor(
+      @NonNull SubscriptionRequest request, @NonNull PgSynchronizedQuery query, long delayInMs) {
+    return new CondensedQueryExecutor(delayInMs, query, this::isConnected, request.specs());
+  }
+
+  @VisibleForTesting
+  @NonNull
+  SingleConnectionDataSource createSingleDataSource(@NonNull SubscriptionRequest request) {
+    return connectionSupplier.getPooledAsSingleDataSource(
+        ConnectionModifier.withAutoCommitDisabled(),
+        ConnectionModifier.withApplicationName(request.debugInfo()));
   }
 
   @VisibleForTesting
@@ -195,10 +223,10 @@ public class PgFactStream {
   }
 
   @VisibleForTesting
-  void catchup(long highWaterMarkBeforeCatchup) {
+  void catchup(long highWaterMarkSerial, DataSource ds) {
     if (isConnected()) {
       pgCatchupFactory
-          .create(request, pipeline, serial, statementHolder, PgCatchupFactory.Phase.PHASE_1)
+          .create(request, pipeline, serial, statementHolder, ds, PgCatchupFactory.Phase.PHASE_1)
           .run();
     }
     if (isConnected()) {
@@ -207,8 +235,8 @@ public class PgFactStream {
       // the highwatermark BEFORE phase1 started
       PgCatchup pgCatchup =
           pgCatchupFactory.create(
-              request, pipeline, serial, statementHolder, PgCatchupFactory.Phase.PHASE_2);
-      pgCatchup.fastForward(highWaterMarkBeforeCatchup);
+              request, pipeline, serial, statementHolder, ds, PgCatchupFactory.Phase.PHASE_2);
+      pgCatchup.fastForward(highWaterMarkSerial);
       pgCatchup.run();
     }
   }
