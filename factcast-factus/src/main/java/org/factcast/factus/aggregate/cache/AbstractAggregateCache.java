@@ -67,6 +67,13 @@ public abstract class AbstractAggregateCache<A extends Aggregate>
     if (enabled.get()) cache.put(id, aggregate);
   }
 
+  /**
+   * if you consider overriding, make sure to call super.afterSingletonsInstantiated first, or - if
+   * you have a very good reason to - reimplement parts of the initialization yourself.
+   *
+   * <p>Even though the initialization is crucial, we did not want to make it final, as this makes
+   * it harder/awkward to extend in case you want a hook for initializiation,
+   */
   @SuppressWarnings("unchecked")
   @Override
   public void afterSingletonsInstantiated() {
