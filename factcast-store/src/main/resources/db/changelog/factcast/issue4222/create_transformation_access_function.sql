@@ -15,10 +15,10 @@ BEGIN
             INSERT INTO transformationcache_access
             VALUES (i, CURRENT_DATE)
             ON CONFLICT (cache_key) DO UPDATE
-                SET last_access = CURRENT_DATE
+                SET last_access = excluded.last_access
             -- avoid unnecessary transactions
-            WHERE excluded.cache_key = i
-              AND excluded.last_access < CURRENT_DATE;
+            WHERE transformationcache_access.cache_key = i
+              AND transformationcache_access.last_access < excluded.last_access;
         END LOOP;
 
     -- not possible in functions.
