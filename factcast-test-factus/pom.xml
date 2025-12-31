@@ -5,76 +5,53 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.factcast</groupId>
-    <artifactId>factcast-examples</artifactId>
+    <artifactId>factcast</artifactId>
     <version>0.9.14-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
-  <artifactId>factcast-example-client-basicauth</artifactId>
+  <artifactId>factcast-test-factus</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
   <properties>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
+    <sonar.skip>true</sonar.skip>
   </properties>
-
   <dependencyManagement>
     <dependencies>
-      <!-- note: the order is important here! -->
-      <!-- first, get all the factcast artifact's versions pinned -->
       <dependency>
         <groupId>org.factcast</groupId>
-        <artifactId>factcast-bom</artifactId>
+        <artifactId>factcast-internal-dep</artifactId>
         <version>${project.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-dependencies</artifactId>
-        <version>3.5.9</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
   <dependencies>
+
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <scope>provided</scope>
-
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
-      <artifactId>factcast-client-grpc</artifactId>
+      <artifactId>factcast-test</artifactId>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
-      <artifactId>factcast-spring-boot-autoconfigure</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter</artifactId>
+      <artifactId>factcast-factus</artifactId>
     </dependency>
   </dependencies>
   <build>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-deploy-plugin</artifactId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${maven.compiler.version}</version>
         <configuration>
-          <skip>true</skip>
+          <source>1.8</source>
+          <target>1.8</target>
         </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <goals>
-              <goal>repackage</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>
