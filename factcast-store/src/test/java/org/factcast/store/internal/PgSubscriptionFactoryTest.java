@@ -18,7 +18,6 @@ package org.factcast.store.internal;
 import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.factcast.core.subscription.MissingTransformationInformationException;
@@ -39,7 +38,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -93,9 +91,8 @@ class PgSubscriptionFactoryTest {
       doReturn(runnable).when(spyUut).connect(any(), any());
 
       spyUut.subscribe(req, observer);
-        verify(spyUut).connect(any(), any());
+      verify(spyUut).connect(any(), any());
       verify(runnable, timeout(100)).run();
-
     }
   }
 
