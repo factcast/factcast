@@ -92,10 +92,10 @@ class PgSubscriptionFactoryTest {
       final var spyUut = spy(underTest);
       doReturn(runnable).when(spyUut).connect(any(), any());
 
-      try (var cf = Mockito.mockStatic(CompletableFuture.class)) {
-        spyUut.subscribe(req, observer);
-        cf.verify(() -> CompletableFuture.runAsync(runnable, executorService));
-      }
+      spyUut.subscribe(req, observer);
+        verify(spyUut).connect(any(), any());
+      verify(runnable, timeout(100)).run();
+
     }
   }
 
