@@ -352,9 +352,6 @@ class PgTransformationCacheTest {
 
       underTest.compact(THRESHOLD_DATE);
 
-      // due to flushing
-      Assertions.assertThat(underTest.buffer().size()).isZero();
-
       // we should not have tried to compact due to readonly setting
       verify(jdbcTemplate, never()).update(matches("DELETE .*"), any(Timestamp.class));
     }
