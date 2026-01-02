@@ -575,6 +575,12 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4222/add_reference_and_cascaded_delete.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
 
 
 

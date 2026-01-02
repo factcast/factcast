@@ -30,7 +30,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.*;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -45,7 +44,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 class PgTransformationCacheITest extends AbstractTransformationCacheTest {
   @Autowired private PlatformTransactionManager platformTransactionManager;
   @Autowired private JdbcTemplate tpl;
-  @Autowired private NamedParameterJdbcTemplate namedTpl;
   @Autowired private StoreConfigurationProperties storeConfigurationProperties;
 
   int maxBufferSize = 10;
@@ -59,7 +57,6 @@ class PgTransformationCacheITest extends AbstractTransformationCacheTest {
             new PgTransformationCache(
                 platformTransactionManager,
                 tpl,
-                namedTpl,
                 registryMetrics,
                 storeConfigurationProperties,
                 maxBufferSize));

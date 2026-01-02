@@ -15,8 +15,6 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
-import static java.util.stream.Collectors.*;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.*;
 import java.sql.*;
@@ -39,7 +37,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Slf4j
 public class PgTransformationCache implements TransformationCache, AutoCloseable {
   private final JdbcTemplate jdbcTemplate;
-  private final NamedParameterJdbcTemplate namedJdbcTemplate;
   private final RegistryMetrics registryMetrics;
   private final StoreConfigurationProperties storeConfigurationProperties;
 
@@ -56,44 +53,42 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
   private final PlatformTransactionManager platformTransactionManager;
 
-  private int bufferThreshold = 1000;
+  private static final int THRESHOLD_PERCENT = 80;
 
   public final int maxBufferSize;
+  private final int bufferThreshold;
 
   public PgTransformationCache(
       PlatformTransactionManager platformTransactionManager,
       JdbcTemplate jdbcTemplate,
-      NamedParameterJdbcTemplate namedJdbcTemplate,
       RegistryMetrics registryMetrics,
       StoreConfigurationProperties storeConfigurationProperties) {
-    this.platformTransactionManager = platformTransactionManager;
-    this.jdbcTemplate = jdbcTemplate;
-    this.namedJdbcTemplate = namedJdbcTemplate;
-    this.registryMetrics = registryMetrics;
-    this.storeConfigurationProperties = storeConfigurationProperties;
-
-    registryMetrics.monitor(tpe, "transformation-cache");
-
-    this.maxBufferSize = bufferThreshold * 9; // the batchUpdates used only support up to 10k
-    this.buffer = new CacheBuffer(registryMetrics);
+    this(
+        platformTransactionManager,
+        jdbcTemplate,
+        registryMetrics,
+        storeConfigurationProperties,
+        1000);
   }
 
   @VisibleForTesting
   PgTransformationCache(
       PlatformTransactionManager platformTransactionManager,
       JdbcTemplate jdbcTemplate,
-      NamedParameterJdbcTemplate namedJdbcTemplate,
       RegistryMetrics registryMetrics,
       StoreConfigurationProperties storeConfigurationProperties,
-      int bufferThreshold) {
+      int maxBufferSize) {
     this.platformTransactionManager = platformTransactionManager;
     this.jdbcTemplate = jdbcTemplate;
-    this.namedJdbcTemplate = namedJdbcTemplate;
     this.registryMetrics = registryMetrics;
-    this.bufferThreshold = bufferThreshold;
-    this.maxBufferSize = bufferThreshold;
     this.storeConfigurationProperties = storeConfigurationProperties;
+
+    registryMetrics.monitor(tpe, "transformation-cache");
+
+    this.maxBufferSize =
+        Math.max(maxBufferSize, 9999); // the batchUpdates used only support up to 10k
     this.buffer = new CacheBuffer(registryMetrics);
+    this.bufferThreshold = (THRESHOLD_PERCENT * maxBufferSize) / 100;
   }
 
   @Override
@@ -181,22 +176,23 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
     final var size = buffer.size();
 
     if (size >= maxBufferSize) {
+      // make sure it does not exceed maxBufferSize
       flush();
       return COMPLETED_FUTURE;
     } else {
-      if (size >= bufferThreshold && tpe.getQueue().isEmpty()) {
-        return CompletableFuture.runAsync(this::flush, tpe);
-      } else {
-        return COMPLETED_FUTURE;
+      // try to do it async if not already scheduled
+      synchronized (tpe) {
+        if (size >= bufferThreshold && tpe.getQueue().isEmpty()) {
+          return CompletableFuture.runAsync(this::flush, tpe);
+        } else {
+          return COMPLETED_FUTURE;
+        }
       }
     }
   }
 
   @Override
   public void compact(@NonNull ZonedDateTime thresholdDate) {
-    // we need to flush even if we're in read only mode in order to prevent a buffer overflow
-    flush();
-
     if (!storeConfigurationProperties.isReadOnlyModeEnabled()) {
       // it is fine if flush worked in another transaction, it just has to be serialized
       registryMetrics.timed(
@@ -204,12 +200,12 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
           () ->
               inTransactionWithLock(
                   () -> {
+                    flush();
                     Timestamp d = Timestamp.from(thresholdDate.toInstant());
+                    // will cascade down to tc_access
                     jdbcTemplate.update(
                         "DELETE FROM transformationcache WHERE cache_key in (SELECT cache_key FROM transformationcache_access WHERE last_access < ?)",
                         d);
-                    jdbcTemplate.update(
-                        "DELETE FROM transformationcache_access WHERE last_access < ?", d);
                   }));
     }
   }
@@ -223,6 +219,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
       // it is fine if flush worked in another transaction, it just has to be serialized
       inTransactionWithLock(
           () ->
+              // will cascade down to tc_access
               jdbcTemplate.update(
                   "DELETE FROM transformationcache WHERE header ->> 'ns' = ? AND header ->> 'type' = ?",
                   ns,
@@ -240,6 +237,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
       // it is fine if flush worked in another transaction, it just has to be serialized
       inTransactionWithLock(
           () ->
+              // will cascade down to tc_access
               jdbcTemplate.update(
                   "DELETE FROM transformationcache WHERE cache_key LIKE ?", cacheKeySearchString));
     }
@@ -256,10 +254,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
             // we want to serialize flushing beyond instances in order to avoid parallel
             // updates/insertions/deletions causing deadlocks
             try {
-              inTransactionWithLock(
-                  () -> {
-                    insertBufferedTransformations(copy);
-                  });
+              inTransactionWithLock(() -> insertBufferedTransformations(copy));
             } catch (Exception e) {
               log.error(
                   "Could not complete batch update of transformations on transformation cache.", e);
