@@ -7,6 +7,10 @@ org.factcast.spring.boot.autoconfigure.factus.snapshot.serializer.fury.LZ4FurySn
 org.factcast.spring.boot.autoconfigure.factus.snapshot.serializer.fury.SnappyFurySnapshotSerializerAutoConfiguration
 org.factcast.spring.boot.autoconfigure.factus.snapshot.serializer.fury.UncompressedFurySnapshotSerializerAutoConfiguration
 org.factcast.spring.boot.autoconfigure.factus.snapshot.serializer.fury.DefaultFurySnapshotSerializerAutoConfiguration
+org.factcast.spring.boot.autoconfigure.factus.snapshot.serializer.fory.LZ4ForySnapshotSerializerAutoConfiguration
+org.factcast.spring.boot.autoconfigure.factus.snapshot.serializer.fory.SnappyForySnapshotSerializerAutoConfiguration
+org.factcast.spring.boot.autoconfigure.factus.snapshot.serializer.fory.UncompressedForySnapshotSerializerAutoConfiguration
+org.factcast.spring.boot.autoconfigure.factus.snapshot.serializer.fory.DefaultForySnapshotSerializerAutoConfiguration
 org.factcast.spring.boot.autoconfigure.snap.NoSnapshotCacheAutoConfiguration
 org.factcast.spring.boot.autoconfigure.snap.InMemorySnapshotCacheAutoConfiguration
 org.factcast.spring.boot.autoconfigure.snap.InMemoryAndDiskSnapshotCacheAutoConfiguration
