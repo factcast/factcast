@@ -15,18 +15,18 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Lists;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 import lombok.*;
 import nl.altindag.log.LogCaptor;
-import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgFact;
@@ -59,6 +59,28 @@ class PgTransformationCacheTest {
   @BeforeEach
   void setup() {
     when(platformTransactionManager.getTransaction(any())).thenReturn(transaction);
+  }
+
+  @Nested
+  class WhenSelectingViaFunction {
+    @Mock private Connection con;
+    @Mock private PreparedStatement ps;
+    @Mock private Array array;
+
+    @Test
+    void createsStatement() throws SQLException {
+      String[] keys = new String[] {"a", "b"};
+      when(con.prepareStatement(anyString())).thenReturn(ps);
+      when(con.createArrayOf(anyString(), any())).thenReturn(array);
+
+      PreparedStatementCreator pc = PgTransformationCache.selectViaFunction(keys);
+      PreparedStatement result = pc.createPreparedStatement(con);
+
+      assertThat(result).isSameAs(ps);
+      verify(con).prepareStatement("select * from selectTransformations( ? )");
+      verify(con).createArrayOf("varchar", keys);
+      verify(ps).setArray(1, array);
+    }
   }
 
   @Nested
@@ -348,7 +370,7 @@ class PgTransformationCacheTest {
     void doesNotCompactIfInReadOnlyMode() {
       when(storeConfigurationProperties.isReadOnlyModeEnabled()).thenReturn(true);
       underTest.registerWrite(TransformationCache.Key.of(UUID.randomUUID(), 1, "someChainId"), f);
-      Assertions.assertThat(underTest.buffer().size()).isOne();
+      assertThat(underTest.buffer().size()).isOne();
 
       underTest.compact(THRESHOLD_DATE);
 
@@ -444,7 +466,7 @@ class PgTransformationCacheTest {
       }
 
       // flush should have been triggered
-      Assertions.assertThat(wasFlushed.await(2, TimeUnit.SECONDS)).isTrue();
+      assertThat(wasFlushed.await(2, TimeUnit.SECONDS)).isTrue();
 
       // and buffer is now empty
       assertThat(underTest.buffer().buffer()).isEmpty();
@@ -614,6 +636,32 @@ class PgTransformationCacheTest {
       underTest.invalidateTransformationFor(UUID.randomUUID());
 
       verifyNoInteractions(jdbcTemplate);
+    }
+  }
+
+  @Nested
+  class WhenClosing {
+    @Mock private PgFact f;
+    private PgTransformationCache underTest;
+
+    @BeforeEach
+    void setup() {
+      underTest =
+          spy(
+              new PgTransformationCache(
+                  platformTransactionManager,
+                  jdbcTemplate,
+                  registryMetrics,
+                  storeConfigurationProperties,
+                  10));
+    }
+
+    @SneakyThrows
+    @Test
+    void shutsDownThreadPool() {
+      underTest.close();
+
+      assertThat(underTest.tpe().isShutdown()).isTrue();
     }
   }
 }

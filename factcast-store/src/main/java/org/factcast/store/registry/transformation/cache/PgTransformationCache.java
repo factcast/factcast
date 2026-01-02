@@ -28,6 +28,7 @@ import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgFact;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics.*;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.jdbc.core.*;
 import org.springframework.jdbc.core.namedparam.*;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -40,7 +41,8 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   private final RegistryMetrics registryMetrics;
   private final StoreConfigurationProperties storeConfigurationProperties;
 
-  private final ThreadPoolExecutor tpe =
+  @Getter(AccessLevel.PACKAGE)
+  final ThreadPoolExecutor tpe =
       new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
 
   private static final CompletableFuture<Void> COMPLETED_FUTURE =
@@ -106,15 +108,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
     }
 
     List<PgFact> facts =
-        jdbcTemplate.query(
-            con -> {
-              PreparedStatement ps =
-                  con.prepareStatement("select * from selectTransformations( ? )");
-              Array idArray = con.createArrayOf("varchar", new String[] {key.id()});
-              ps.setArray(1, idArray);
-              return ps;
-            },
-            new PgFactRowMapper());
+        jdbcTemplate.query(selectViaFunction(new String[] {key.id()}), new PgFactRowMapper());
 
     if (facts.isEmpty()) {
       registryMetrics.count(EVENT.TRANSFORMATION_CACHE_MISS);
@@ -145,14 +139,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
       facts.addAll(
           jdbcTemplate.query(
-              con -> {
-                PreparedStatement ps =
-                    con.prepareStatement("select * from selectTransformations( ? )");
-                Array idArray =
-                    con.createArrayOf("varchar", keys.stream().map(Key::id).toArray(String[]::new));
-                ps.setArray(1, idArray);
-                return ps;
-              },
+              selectViaFunction(keys.stream().map(Key::id).toArray(String[]::new)),
               new PgFactRowMapper()));
     }
 
@@ -162,6 +149,16 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
     registryMetrics.increase(EVENT.TRANSFORMATION_CACHE_HIT, hits);
 
     return Sets.newHashSet(facts);
+  }
+
+  @NotNull
+  static PreparedStatementCreator selectViaFunction(String[] keys) {
+    return con -> {
+      PreparedStatement ps = con.prepareStatement("select * from selectTransformations( ? )");
+      Array idArray = con.createArrayOf("varchar", keys);
+      ps.setArray(1, idArray);
+      return ps;
+    };
   }
 
   @VisibleForTesting
@@ -317,6 +314,6 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
   @Override
   public void close() throws Exception {
-    tpe.shutdown();
+    tpe.shutdownNow();
   }
 }
