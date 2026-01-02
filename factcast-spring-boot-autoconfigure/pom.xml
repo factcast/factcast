@@ -119,6 +119,11 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
+      <artifactId>factcast-factus-serializer-fory</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
       <artifactId>factcast-snapshotcache-local-memory</artifactId>
       <optional>true</optional>
     </dependency>
