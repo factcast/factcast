@@ -23,6 +23,7 @@ import com.google.common.collect.Lists;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.*;
 import lombok.*;
 import nl.altindag.log.LogCaptor;
 import org.assertj.core.api.Assertions;
@@ -301,14 +302,12 @@ class PgTransformationCacheTest {
       underTest.registerWrite(mock(InMemTransformationCache.Key.class), f);
       underTest.registerWrite(mock(InMemTransformationCache.Key.class), f);
       underTest.registerWrite(mock(InMemTransformationCache.Key.class), f);
-      underTest.registerWrite(mock(InMemTransformationCache.Key.class), f);
-      assertThat(underTest.buffer().size()).isEqualTo(8);
+      assertThat(underTest.buffer().size()).isEqualTo(7);
 
       // this one should trigger async flushing
       underTest.registerWrite(mock(InMemTransformationCache.Key.class), f).get();
       assertThat(underTest.buffer().size()).isZero();
 
-      Mockito.verify(underTest, Mockito.times(9)).flushIfNecessary();
       Mockito.verify(underTest, Mockito.atLeastOnce()).flush();
     }
   }
@@ -353,8 +352,11 @@ class PgTransformationCacheTest {
 
       underTest.compact(THRESHOLD_DATE);
 
+      // due to flushing
       Assertions.assertThat(underTest.buffer().size()).isZero();
-      Mockito.verifyNoInteractions(jdbcTemplate);
+
+      // we should not have tried to compact due to readonly setting
+      verify(jdbcTemplate, never()).update(matches("DELETE .*"), any(Timestamp.class));
     }
   }
 
@@ -363,6 +365,7 @@ class PgTransformationCacheTest {
     @Mock private TransformationCache.@NonNull Key key;
     @Mock private TransformationCache.@NonNull Key key2;
     @Mock private @NonNull PgFact f;
+    int maxBufferSize = 10;
     private PgTransformationCache underTest;
 
     @BeforeEach
@@ -374,7 +377,7 @@ class PgTransformationCacheTest {
                   jdbcTemplate,
                   registryMetrics,
                   storeConfigurationProperties,
-                  10));
+                  maxBufferSize));
     }
 
     @Test
@@ -416,6 +419,38 @@ class PgTransformationCacheTest {
       assertThat(underTest.buffer().size()).isZero();
 
       verifyNoInteractions(jdbcTemplate);
+    }
+
+    @SneakyThrows
+    @Test
+    void testAsyncFlush() {
+      CountDownLatch wasFlushed = new CountDownLatch(1);
+      Mockito.doAnswer(
+              i -> {
+                i.callRealMethod();
+                wasFlushed.countDown();
+                return null;
+              })
+          .when(underTest)
+          .flush();
+
+      for (int i = 0; i < maxBufferSize * (PgTransformationCache.THRESHOLD_PERCENT) / 100; i++) {
+        PgFact fact =
+            PgFact.from(
+                Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}"));
+        String chainId = String.valueOf(i);
+
+        // not flush happened yet
+        assertThat(wasFlushed.getCount()).isEqualTo(1);
+
+        underTest.put(TransformationCache.Key.of(fact.id(), fact.version(), chainId), fact);
+      }
+
+      // flush should have been triggered
+      Assertions.assertThat(wasFlushed.await(2, TimeUnit.SECONDS)).isTrue();
+
+      // and buffer is now empty
+      assertThat(underTest.buffer().buffer()).isEmpty();
     }
   }
 

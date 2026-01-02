@@ -53,7 +53,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
   private final PlatformTransactionManager platformTransactionManager;
 
-  private static final int THRESHOLD_PERCENT = 80;
+  static final int THRESHOLD_PERCENT = 80;
 
   public final int maxBufferSize;
   private final int bufferThreshold;
@@ -194,13 +194,13 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   @Override
   public void compact(@NonNull ZonedDateTime thresholdDate) {
     if (!storeConfigurationProperties.isReadOnlyModeEnabled()) {
-      // it is fine if flush worked in another transaction, it just has to be serialized
+      flush();
+
       registryMetrics.timed(
           OP.COMPACT_TRANSFORMATION_CACHE,
           () ->
               inTransactionWithLock(
                   () -> {
-                    flush();
                     Timestamp d = Timestamp.from(thresholdDate.toInstant());
                     // will cascade down to tc_access
                     jdbcTemplate.update(
@@ -293,17 +293,25 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
             .toList();
 
     if (!parameters.isEmpty()) {
-      // dup-keys can be ignored, in case another node just did the same
-      jdbcTemplate.batchUpdate(
-          "INSERT INTO transformationcache (cache_key, header, payload) VALUES (?, ? :: JSONB, ? ::"
-              + " JSONB) ON CONFLICT(cache_key) DO NOTHING",
-          parameters);
+      new TransactionTemplate(platformTransactionManager)
+          // will join an existing tx, or create and commit a new one
+          .execute(
+              status -> {
 
-      jdbcTemplate.batchUpdate(
-          "/* insert */ INSERT INTO transformationcache_access(cache_key,last_access) VALUES(?,current_date) "
-              + "ON CONFLICT(cache_key) DO UPDATE SET last_access=current_date "
-              + "WHERE excluded.cache_key=? AND transformationcache_access.last_access is distinct from (current_date)",
-          parameters.stream().map(o -> new Object[] {o[0], o[0]}).toList());
+                // dup-keys can be ignored, in case another node just did the same
+                jdbcTemplate.batchUpdate(
+                    "INSERT INTO transformationcache (cache_key, header, payload) VALUES (?, ? :: JSONB, ? ::"
+                        + " JSONB) ON CONFLICT(cache_key) DO NOTHING",
+                    parameters);
+
+                jdbcTemplate.batchUpdate(
+                    "INSERT INTO transformationcache_access(cache_key,last_access) VALUES(?,current_date) "
+                        + "ON CONFLICT(cache_key) DO UPDATE SET last_access=current_date "
+                        + "WHERE excluded.cache_key=? AND transformationcache_access.last_access < current_date",
+                    parameters.stream().map(o -> new Object[] {o[0], o[0]}).toList());
+
+                return null;
+              });
     }
   }
 
