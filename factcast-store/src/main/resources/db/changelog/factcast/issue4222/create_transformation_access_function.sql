@@ -20,7 +20,7 @@ BEGIN
     -- COMMIT;
 
     RETURN QUERY
-        SELECT tc.header, tc.payload
+        SELECT tc.header AS header, tc.payload AS payload
         FROM transformationcache tc
         WHERE cache_key = ANY (keys_to_query);
 END;

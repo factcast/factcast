@@ -77,7 +77,7 @@ class PgTransformationCacheTest {
       PreparedStatement result = pc.createPreparedStatement(con);
 
       assertThat(result).isSameAs(ps);
-      verify(con).prepareStatement("select * from selectTransformations( ? )");
+      verify(con).prepareStatement("select header, payload from selectTransformations( ? )");
       verify(con).createArrayOf("varchar", keys);
       verify(ps).setArray(1, array);
     }

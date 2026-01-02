@@ -154,7 +154,8 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   @NotNull
   static PreparedStatementCreator selectViaFunction(String[] keys) {
     return con -> {
-      PreparedStatement ps = con.prepareStatement("select * from selectTransformations( ? )");
+      PreparedStatement ps =
+          con.prepareStatement("select header, payload from selectTransformations( ? )");
       Array idArray = con.createArrayOf("varchar", keys);
       ps.setArray(1, idArray);
       return ps;
