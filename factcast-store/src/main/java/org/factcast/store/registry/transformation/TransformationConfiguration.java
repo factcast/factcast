@@ -61,7 +61,7 @@ public class TransformationConfiguration {
       @Autowired(required = false) SpringLiquibase unused) {
     if (props.isSchemaRegistryConfigured() && props.isPersistentTransformationCache()) {
       return new PgTransformationCache(
-          platformTransactionManager, jdbcTemplate, namedJdbcTemplate, registryMetrics, props);
+          platformTransactionManager, jdbcTemplate, registryMetrics, props);
     }
 
     // otherwise
