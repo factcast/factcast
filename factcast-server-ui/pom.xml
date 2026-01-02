@@ -173,6 +173,9 @@
         <groupId>com.vaadin</groupId>
         <artifactId>vaadin-maven-plugin</artifactId>
         <version>${vaadin.version}</version>
+        <configuration>
+          <pnpmEnable>true</pnpmEnable>
+        </configuration>
         <executions>
           <execution>
             <goals>
