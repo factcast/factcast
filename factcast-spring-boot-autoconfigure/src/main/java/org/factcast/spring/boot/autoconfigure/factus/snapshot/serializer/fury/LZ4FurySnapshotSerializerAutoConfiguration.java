@@ -17,7 +17,7 @@ package org.factcast.spring.boot.autoconfigure.factus.snapshot.serializer.fury;
 
 import net.jpountz.lz4.LZ4BlockInputStream;
 import org.factcast.factus.serializer.SnapshotSerializer;
-import org.factcast.factus.serializer.fory.LZ4FurySnapshotSerializer;
+import org.factcast.factus.serializer.fury.LZ4FurySnapshotSerializer;
 import org.springframework.boot.autoconfigure.*;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.context.annotation.Bean;

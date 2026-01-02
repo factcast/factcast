@@ -17,7 +17,7 @@ package org.factcast.spring.boot.autoconfigure.factus.snapshot.serializer.fury;
 
 import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorInputStream;
 import org.factcast.factus.serializer.SnapshotSerializer;
-import org.factcast.factus.serializer.fory.SnappyFurySnapshotSerializer;
+import org.factcast.factus.serializer.fury.SnappyFurySnapshotSerializer;
 import org.springframework.boot.autoconfigure.*;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.context.annotation.Bean;
