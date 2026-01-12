@@ -42,11 +42,9 @@ public class PgSubscriptionFactory implements AutoCloseable {
 
   final PgFactIdToSerialMapper idToSerialMapper;
 
-  final PgLatestSerialFetcher fetcher;
-
   final PgCatchupFactory catchupFactory;
 
-  final FastForwardTarget target;
+  final HighWaterMarkFetcher hwmFetcher;
   final ServerPipelineFactory pipelineFactory;
   final JSEngineFactory jsEngineFactory;
   final ExecutorService es;
@@ -57,10 +55,9 @@ public class PgSubscriptionFactory implements AutoCloseable {
       PgConnectionSupplier connectionSupplier,
       EventBus eventBus,
       PgFactIdToSerialMapper idToSerialMapper,
-      PgLatestSerialFetcher fetcher,
       StoreConfigurationProperties props,
       PgCatchupFactory catchupFactory,
-      FastForwardTarget target,
+      HighWaterMarkFetcher hwmFetcher,
       ServerPipelineFactory pipelineFactory,
       JSEngineFactory jsEngineFactory,
       PgMetrics metrics,
@@ -68,9 +65,8 @@ public class PgSubscriptionFactory implements AutoCloseable {
     this.connectionSupplier = connectionSupplier;
     this.eventBus = eventBus;
     this.idToSerialMapper = idToSerialMapper;
-    this.fetcher = fetcher;
     this.catchupFactory = catchupFactory;
-    this.target = target;
+    this.hwmFetcher = hwmFetcher;
     this.pipelineFactory = pipelineFactory;
     this.jsEngineFactory = jsEngineFactory;
     this.telemetry = telemetry;
@@ -93,9 +89,8 @@ public class PgSubscriptionFactory implements AutoCloseable {
             connectionSupplier,
             eventBus,
             idToSerialMapper,
-            fetcher,
             catchupFactory,
-            target,
+            hwmFetcher,
             pipe,
             telemetry,
             req);

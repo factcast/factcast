@@ -83,7 +83,7 @@ public class PgConcurrentTest {
     FactObserver observer = element -> l.get().countDown();
     SubscriptionRequest request =
         SubscriptionRequest.follow(FactSpec.ns("concurrenttest")).fromScratch();
-    uut.subscribeEphemeral(request, observer);
+    uut.subscribe(request, observer);
     return l;
   }
 }

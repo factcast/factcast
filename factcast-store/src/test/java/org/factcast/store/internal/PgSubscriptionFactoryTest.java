@@ -18,7 +18,6 @@ package org.factcast.store.internal;
 import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.factcast.core.subscription.MissingTransformationInformationException;
@@ -26,39 +25,32 @@ import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.ServerPipelineFactory;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
-import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
-import org.factcast.store.internal.transformation.FactTransformerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 @ExtendWith(MockitoExtension.class)
 class PgSubscriptionFactoryTest {
 
-  @Mock private JdbcTemplate jdbcTemplate;
   @Mock private EventBus eventBus;
   @Mock private PgFactIdToSerialMapper idToSerialMapper;
-  @Mock private PgLatestSerialFetcher fetcher;
   @Mock private PgCatchupFactory catchupFactory;
 
   @Mock private StoreConfigurationProperties props;
 
-  @Mock private FastForwardTarget target;
-  @Mock private FactTransformerService transformerService;
+  @Mock private HighWaterMarkFetcher target;
   @Mock private PgMetrics metrics;
   @Mock private PgStoreTelemetry telemetry;
 
@@ -78,7 +70,6 @@ class PgSubscriptionFactoryTest {
             connectionSupplier,
             eventBus,
             idToSerialMapper,
-            fetcher,
             props,
             catchupFactory,
             target,
@@ -99,10 +90,9 @@ class PgSubscriptionFactoryTest {
       final var spyUut = spy(underTest);
       doReturn(runnable).when(spyUut).connect(any(), any());
 
-      try (var cf = Mockito.mockStatic(CompletableFuture.class)) {
-        spyUut.subscribe(req, observer);
-        cf.verify(() -> CompletableFuture.runAsync(runnable, executorService));
-      }
+      spyUut.subscribe(req, observer);
+      verify(spyUut).connect(any(), any());
+      verify(runnable, timeout(100)).run();
     }
   }
 

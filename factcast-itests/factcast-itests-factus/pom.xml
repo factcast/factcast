@@ -33,6 +33,11 @@
   <dependencies>
     <dependency>
       <groupId>org.factcast</groupId>
+      <artifactId>factcast-test-factus</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
       <artifactId>factcast-test-redis</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -135,7 +140,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>testcontainers</artifactId>
-      <version>1.21.3</version>
+      <version>${testcontainers.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

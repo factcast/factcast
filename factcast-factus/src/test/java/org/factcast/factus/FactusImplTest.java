@@ -34,6 +34,7 @@ import org.factcast.core.*;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.factus.aggregate.cache.AggregateCache;
 import org.factcast.factus.batch.*;
 import org.factcast.factus.event.*;
 import org.factcast.factus.event.EventObject;
@@ -83,6 +84,160 @@ class FactusImplTest {
   @BeforeEach
   void setup() {
     when(token.isValid()).thenReturn(true);
+  }
+
+  @Nested
+  class ProjectionAccessorDefaults {
+
+    final UUID ID = randomUUID();
+
+    @SuppressWarnings("unchecked")
+    AggregateCache<Agg> cache = mock(AggregateCache.class);
+
+    @Test
+    void find_withCache_hitReturnsCached() {
+      // given
+      Agg cached = new Agg();
+      when(cache.get(ID)).thenReturn(cached);
+      // when using cache, aggregateType() is not consulted on hit; keep it simple
+
+      FactusImpl spy = spy(underTest);
+
+      // when
+      Optional<Agg> res = spy.find(cache, ID);
+
+      // then
+      assertThat(res).containsSame(cached);
+      verify(spy, never()).find(Agg.class, ID);
+      verify(cache, never()).put(any(), any());
+    }
+
+    @Test
+    void find_withCache_missFetchesAndCaches_whenPresent() {
+      // given
+      Agg loaded = new Agg();
+      when(cache.get(ID)).thenReturn(null);
+      when(cache.aggregateType()).thenReturn(Agg.class);
+
+      FactusImpl spy = spy(underTest);
+      doReturn(Optional.of(loaded)).when(spy).find(Agg.class, ID);
+
+      // when
+      Optional<Agg> res = spy.find(cache, ID);
+
+      // then
+      assertThat(res).containsSame(loaded);
+      verify(cache).put(ID, loaded);
+    }
+
+    @Test
+    void find_withCache_missReturnsEmpty_whenNotFound() {
+      // given
+      when(cache.get(ID)).thenReturn(null);
+      when(cache.aggregateType()).thenReturn(Agg.class);
+
+      FactusImpl spy = spy(underTest);
+      doReturn(Optional.empty()).when(spy).find(Agg.class, ID);
+
+      // when
+      Optional<Agg> res = spy.find(cache, ID);
+
+      // then
+      assertThat(res).isEmpty();
+      verify(cache, never()).put(any(), any());
+    }
+
+    @Test
+    void fetch_byClass_unwrapsOrThrows_successPath() {
+      // given
+      Agg a = new Agg();
+      FactusImpl spy = spy(underTest);
+      doReturn(Optional.of(a)).when(spy).find(Agg.class, ID);
+
+      // when
+      Agg res = spy.fetch(Agg.class, ID);
+
+      // then
+      assertThat(res).isSameAs(a);
+    }
+
+    @Test
+    void fetch_byClass_unwrapsOrThrows_throwsWhenEmpty() {
+      // given
+      FactusImpl spy = spy(underTest);
+      doReturn(Optional.empty()).when(spy).find(Agg.class, ID);
+
+      // then
+      assertThatThrownBy(() -> spy.fetch(Agg.class, ID))
+          .isInstanceOf(IllegalStateException.class)
+          .hasMessageContaining("Aggregate of type")
+          .hasMessageContaining("does not exist");
+    }
+
+    @Test
+    void fetch_withCache_returnsCachedOnHit() {
+      // given
+      Agg cached = new Agg();
+      when(cache.get(ID)).thenReturn(cached);
+
+      FactusImpl spy = spy(underTest);
+
+      // when
+      Agg res = spy.fetch(cache, ID);
+
+      // then
+      assertThat(res).isSameAs(cached);
+    }
+
+    @Test
+    void fetch_withCache_missLoadsCachesAndReturns() {
+      // given
+      Agg loaded = new Agg();
+      when(cache.get(ID)).thenReturn(null);
+      when(cache.aggregateType()).thenReturn(Agg.class);
+
+      FactusImpl spy = spy(underTest);
+      lenient().doReturn(Optional.of(loaded)).when(spy).find(Agg.class, ID);
+
+      // when
+      Agg res = spy.fetch(cache, ID);
+
+      // then
+      assertThat(res).isSameAs(loaded);
+      verify(cache).put(ID, loaded);
+    }
+
+    @Test
+    void fetch_withCache_missThrowsWhenNotFound() {
+      // given
+      when(cache.get(ID)).thenReturn(null);
+      when(cache.aggregateType()).thenReturn(Agg.class);
+
+      FactusImpl spy = spy(underTest);
+      lenient().doReturn(Optional.empty()).when(spy).find(cache, ID);
+
+      // then
+      assertThatThrownBy(() -> spy.fetch(cache, ID))
+          .isInstanceOf(IllegalStateException.class)
+          .hasMessageContaining("does not exist");
+      verify(cache, never()).put(any(), any());
+    }
+
+    @Test
+    void update_defaultDelegatesToTimedUpdate() throws Exception {
+      // given
+      ManagedProjection m = mock(ManagedProjection.class);
+      FactusImpl spy = spy(underTest);
+
+      // stub the timed update to do nothing
+      doNothing().when(spy).update(eq(m), any(Duration.class));
+
+      // when
+      spy.update(m);
+
+      // then
+      verify(spy).update(m, FactusConstants.FOREVER);
+    }
   }
 
   @Test
@@ -1053,6 +1208,9 @@ class FactusImplTest {
       return this;
     }
   }
+
+  // helper aggregate type for ProjectionAccessor default method tests
+  static class Agg extends Aggregate {}
 
   @SuppressWarnings("unchecked")
   @Nested
