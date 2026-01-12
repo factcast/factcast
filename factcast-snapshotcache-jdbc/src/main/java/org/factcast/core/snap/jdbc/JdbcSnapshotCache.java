@@ -84,7 +84,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
             + lastAccessedTableName
             + " USING (SELECT ? AS _projection_class, ? AS _aggregate_id, ? as _last_accessed) AS new"
             + " ON projection_class=_projection_class AND aggregate_id=_aggregate_id"
-            + " WHEN MATCHED THEN"
+            + " WHEN MATCHED AND last_accessed < _last_accessed THEN"
             + " UPDATE SET last_accessed=_last_accessed"
             + " WHEN NOT MATCHED THEN"
             + " INSERT (projection_class, aggregate_id, last_accessed) VALUES (_projection_class, _aggregate_id, _last_accessed)";
