@@ -17,6 +17,7 @@ package org.factcast.core.snap.jdbc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -448,8 +449,6 @@ class JdbcSnapshotCacheTest {
           .containsExactly(
               ScopedName.fromProjectionMetaData(TestSnapshotProjection.class).asString(), null);
 
-      // Assert removal of last accessed timestamp
-      verify(lastAccessedPreparedStatement, times(1)).executeUpdate();
       ArgumentCaptor<String> lastAccessedKeys = ArgumentCaptor.forClass(String.class);
       verify(lastAccessedPreparedStatement, times(2))
           .setString(any(Integer.class), lastAccessedKeys.capture());
@@ -458,6 +457,11 @@ class JdbcSnapshotCacheTest {
       assertThat(lastAccessedKeys.getAllValues())
           .containsExactly(
               ScopedName.fromProjectionMetaData(TestSnapshotProjection.class).asString(), null);
+
+      // Wait for async update of lastAccessed timestamp.
+      await()
+          .atMost(2, TimeUnit.SECONDS)
+          .untilAsserted(() -> verify(lastAccessedPreparedStatement, times(1)).executeUpdate());
     }
 
     @Test
