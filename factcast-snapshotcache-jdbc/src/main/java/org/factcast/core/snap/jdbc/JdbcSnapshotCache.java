@@ -72,7 +72,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
     updateLastAccessedStatement =
         "MERGE INTO "
             + lastAccessedTableName
-            + " USING (SELECT ? AS _projection_class, ? AS _aggregate_id, ? as _last_accessed)"
+            + " USING (SELECT ? AS _projection_class, ? AS _aggregate_id, ? as _last_accessed) AS new"
             + " ON projection_class=_projection_class AND aggregate_id=_aggregate_id"
             + " WHEN MATCHED THEN"
             + " UPDATE SET last_accessed=_last_accessed"

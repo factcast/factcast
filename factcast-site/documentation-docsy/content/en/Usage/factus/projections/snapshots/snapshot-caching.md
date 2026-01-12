@@ -107,7 +107,7 @@ CREATE TABLE IF NOT EXISTS factcast_snapshot_last_accessed
 (
     projection_class VARCHAR(512),
     aggregate_id     VARCHAR(36) NULL,
-    last_accessed    TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    last_accessed    DATE        NOT NULL DEFAULT CURRENT_DATE,
     PRIMARY KEY (projection_class, aggregate_id)
 );
 CREATE INDEX IF NOT EXISTS factcast_snapshot_last_accessed_index ON factcast_snapshot_last_accessed USING BTREE (last_accessed);
@@ -125,7 +125,6 @@ CREATE TABLE IF NOT EXISTS factcast_snapshot
     snapshot_serializer_id VARCHAR(128) NOT NULL,
     PRIMARY KEY (projection_class, aggregate_id)
 );
-CREATE INDEX factcast_snapshot_last_accessed_index ON factcast_snapshot (last_accessed);
 ```
 
 As well as a second table to store the timestamps of the last access per snapshot (see postgresql variant above).
@@ -142,7 +141,6 @@ CREATE TABLE factcast_snapshot
     snapshot_serializer_id VARCHAR2(128) NOT NULL,
     PRIMARY KEY (projection_class, aggregate_id)
 );
-CREATE INDEX factcast_snapshot_last_accessed_index ON factcast_snapshot (last_accessed);
 ```
 
 As well as a second table to store the timestamps of the last access per snapshot (see postgresql variant above).

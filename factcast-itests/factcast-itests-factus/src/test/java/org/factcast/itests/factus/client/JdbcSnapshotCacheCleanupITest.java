@@ -59,7 +59,7 @@ public class JdbcSnapshotCacheCleanupITest extends AbstractFactCastIntegrationTe
     jdbcTemplate.execute(
         """
                           CREATE TABLE IF NOT EXISTS factcast_snapshot_lastaccessed(projection_class VARCHAR(512), aggregate_id VARCHAR(36) NULL,
-                          last_accessed TIMESTAMP WITH TIME ZONE DEFAULT now(), PRIMARY KEY (projection_class, aggregate_id));
+                          last_accessed DATE NOT NULL DEFAULT CURRENT_DATE, PRIMARY KEY (projection_class, aggregate_id));
                           CREATE INDEX IF NOT EXISTS my_snapshot_table_index ON factcast_snapshot_lastaccessed(last_accessed);
                           """);
 
