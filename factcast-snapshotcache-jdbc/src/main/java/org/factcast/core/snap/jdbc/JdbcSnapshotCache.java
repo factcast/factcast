@@ -228,18 +228,27 @@ public class JdbcSnapshotCache implements SnapshotCache {
   @Override
   @SneakyThrows
   public void remove(@NonNull SnapshotIdentifier id) {
-    try (Connection connection = dataSource.getConnection();
-        PreparedStatement snapshotStatement = connection.prepareStatement(deleteStatement);
-        PreparedStatement lastAccessStatement =
-            connection.prepareStatement(deleteLastAccessedStatement)) {
-      final String key = createKeyFor(id);
-      final String aggId = id.aggregateId() != null ? id.aggregateId().toString() : null;
-      snapshotStatement.setString(1, key);
-      snapshotStatement.setString(2, aggId);
-      snapshotStatement.executeUpdate();
-      lastAccessStatement.setString(1, key);
-      lastAccessStatement.setString(2, aggId);
-      lastAccessStatement.executeUpdate();
+    try (Connection connection = dataSource.getConnection()) {
+      final boolean previousAutoCommit = connection.getAutoCommit();
+      connection.setAutoCommit(false);
+      try (PreparedStatement snapshotStatement = connection.prepareStatement(deleteStatement);
+          PreparedStatement lastAccessStatement =
+              connection.prepareStatement(deleteLastAccessedStatement)) {
+        final String key = createKeyFor(id);
+        final String aggId = id.aggregateId() != null ? id.aggregateId().toString() : null;
+        snapshotStatement.setString(1, key);
+        snapshotStatement.setString(2, aggId);
+        snapshotStatement.executeUpdate();
+        lastAccessStatement.setString(1, key);
+        lastAccessStatement.setString(2, aggId);
+        lastAccessStatement.executeUpdate();
+        connection.commit();
+      } catch (Exception e) {
+        connection.rollback();
+        throw e;
+      } finally {
+        connection.setAutoCommit(previousAutoCommit);
+      }
     }
   }
 }
