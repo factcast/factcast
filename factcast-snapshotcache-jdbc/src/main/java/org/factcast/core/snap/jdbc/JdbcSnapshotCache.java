@@ -20,6 +20,8 @@ import com.google.common.collect.Sets;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
 import lombok.NonNull;
@@ -40,6 +42,14 @@ public class JdbcSnapshotCache implements SnapshotCache {
   public final String deleteStatement;
   public final String deleteLastAccessedStatement;
   private final DataSource dataSource;
+
+  private final ExecutorService lastAccessedUpdateExecutor =
+      Executors.newSingleThreadExecutor(
+          r -> {
+            Thread t = new Thread(r, "JdbcSnapshotCache-lastAccessedUpdater");
+            t.setDaemon(true);
+            return t;
+          });
 
   public JdbcSnapshotCache(JdbcSnapshotProperties properties, DataSource dataSource) {
     this.dataSource = dataSource;
@@ -170,7 +180,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
                 UUID.fromString(resultSet.getString(3)));
 
         // update last accessed
-        updateLastAccessedTime(id);
+        lastAccessedUpdateExecutor.execute(() -> updateLastAccessedTime(id));
         return Optional.of(snapshot);
       }
     }
