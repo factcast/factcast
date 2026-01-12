@@ -443,25 +443,28 @@ class JdbcSnapshotCacheTest {
 
       verify(preparedStatement, times(2)).setString(any(Integer.class), string.capture());
       verify(preparedStatement, times(1)).executeQuery();
-      verify(uut, times(1)).updateLastAccessedTime(id);
-
       assertThat(string.getAllValues())
-          .containsExactly(
-              ScopedName.fromProjectionMetaData(TestSnapshotProjection.class).asString(), null);
-
-      ArgumentCaptor<String> lastAccessedKeys = ArgumentCaptor.forClass(String.class);
-      verify(lastAccessedPreparedStatement, times(2))
-          .setString(any(Integer.class), lastAccessedKeys.capture());
-      verify(lastAccessedPreparedStatement, times(1)).executeUpdate();
-
-      assertThat(lastAccessedKeys.getAllValues())
           .containsExactly(
               ScopedName.fromProjectionMetaData(TestSnapshotProjection.class).asString(), null);
 
       // Wait for async update of lastAccessed timestamp.
       await()
           .atMost(2, TimeUnit.SECONDS)
-          .untilAsserted(() -> verify(lastAccessedPreparedStatement, times(1)).executeUpdate());
+          .untilAsserted(
+              () -> {
+                verify(uut, times(1)).updateLastAccessedTime(id);
+
+                ArgumentCaptor<String> lastAccessedKeys = ArgumentCaptor.forClass(String.class);
+                verify(lastAccessedPreparedStatement, times(2))
+                    .setString(any(Integer.class), lastAccessedKeys.capture());
+                verify(lastAccessedPreparedStatement, times(1)).executeUpdate();
+                assertThat(lastAccessedKeys.getAllValues())
+                    .containsExactly(
+                        ScopedName.fromProjectionMetaData(TestSnapshotProjection.class).asString(),
+                        null);
+
+                verify(lastAccessedPreparedStatement, times(1)).executeUpdate();
+              });
     }
 
     @Test
