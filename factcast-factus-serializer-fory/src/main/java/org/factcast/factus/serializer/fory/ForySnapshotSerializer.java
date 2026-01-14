@@ -28,10 +28,10 @@ import org.factcast.factus.serializer.*;
 public class ForySnapshotSerializer implements SnapshotSerializer {
 
   private static final int BLOCKSIZE = 65536;
-  public static final Fory fury;
+  public static final Fory fory;
 
   static {
-    fury = Fory.builder().withLanguage(Language.JAVA).requireClassRegistration(false).build();
+    fory = Fory.builder().withLanguage(Language.JAVA).requireClassRegistration(false).build();
   }
 
   // acceptable coverage miss:
@@ -40,7 +40,7 @@ public class ForySnapshotSerializer implements SnapshotSerializer {
   public byte[] serialize(@NonNull SnapshotProjection a) {
     ByteArrayOutputStream baos = new ByteArrayOutputStream(BLOCKSIZE + 16);
     OutputStream os = wrap(baos);
-    os.write(fury.serialize(a));
+    os.write(fory.serialize(a));
     os.close();
     return baos.toByteArray();
   }
@@ -59,7 +59,7 @@ public class ForySnapshotSerializer implements SnapshotSerializer {
   @Override
   public <A extends SnapshotProjection> A deserialize(Class<A> type, byte[] bytes) {
     try (InputStream is = wrap(new ByteArrayInputStream(bytes))) {
-      return (A) fury.deserialize(new ForyInputStream(is));
+      return (A) fory.deserialize(new ForyInputStream(is));
     }
   }
 
