@@ -92,10 +92,8 @@
       <version>2.5</version>
     </dependency>
     <dependency>
-      <groupId>com.fasterxml.jackson.module</groupId>
+      <groupId>tools.jackson.module</groupId>
       <artifactId>jackson-module-kotlin</artifactId>
-      <!-- even though all other modules are avail for 2.13.2, this one is missing -->
-      <version>2.20.1</version>
       <scope>runtime</scope>
     </dependency>
   </dependencies>

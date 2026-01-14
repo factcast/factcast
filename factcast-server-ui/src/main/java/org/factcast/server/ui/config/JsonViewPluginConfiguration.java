@@ -15,8 +15,6 @@
  */
 package org.factcast.server.ui.config;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Optional;
 import org.factcast.server.ui.metrics.UiMetrics;
@@ -27,6 +25,9 @@ import org.factcast.server.ui.plugins.bundled.PayloadAggregateIdsFilterOptionsPl
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import tools.jackson.core.TokenStreamFactory;
+import tools.jackson.core.json.JsonFactory;
+import tools.jackson.databind.ObjectMapper;
 
 @Configuration
 public class JsonViewPluginConfiguration {
@@ -81,7 +82,9 @@ public class JsonViewPluginConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public JsonFactory jsonFactory(ObjectMapper objectMapper) {
-    return new JsonFactory(objectMapper);
+  public TokenStreamFactory jsonFactory(ObjectMapper objectMapper) {
+    //    // TODO FIXME @SB4
+    // was:     return new TokenStreamFactory(objectMapper);
+    return new JsonFactory();
   }
 }

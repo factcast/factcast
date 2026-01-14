@@ -15,21 +15,17 @@
  */
 package org.factcast.core.util;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.core.util.DefaultIndenter;
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
-import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import lombok.*;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.core.util.*;
+import tools.jackson.databind.*;
+import tools.jackson.databind.node.*;
 
 /**
  * Statically shared ObjectMapper reader & writer to be used within FactCast for Headers and
@@ -64,9 +60,11 @@ public final class FactCastJson {
   private static void initializeObjectMapper() {
     // don't even think about changing the configuration, ever.
     objectMapper = new ObjectMapper();
-    objectMapper
-        .setVisibility(PropertyAccessor.FIELD, Visibility.ANY)
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    // TODO FIXME @SB4
+    // was removed, how to replace:
+    //    objectMapper
+    // .setVisibility(PropertyAccessor.FIELD, Visibility.ANY)
+    // .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     writer = objectMapper.writer();
     reader = objectMapper.reader();
   }
@@ -105,7 +103,7 @@ public final class FactCastJson {
   public static ObjectNode toObjectNode(String json) {
     try {
       return (ObjectNode) objectMapper.readTree(json);
-    } catch (IOException e) {
+    } catch (JacksonException e) {
       throw new RuntimeException(e);
     }
   }
@@ -122,8 +120,10 @@ public final class FactCastJson {
   @Generated
   public static String writeValueAsPrettyString(Object o) {
     return objectMapper
-        .writer(
-            new DefaultPrettyPrinter().withObjectIndenter(new DefaultIndenter().withLinefeed("\n")))
+        // TODO FIXME @SB4
+        //            .writer(
+        //            new DefaultPrettyPrinter().withObjectIndenter(new
+        // DefaultIndenter().withLinefeed("\n")))
         .writeValueAsString(o);
   }
 
@@ -152,7 +152,7 @@ public final class FactCastJson {
     return objectMapper.valueToTree(object);
   }
 
-  public static JsonNode readTree(String json) throws JsonProcessingException {
+  public static JsonNode readTree(String json) throws JacksonException {
     return objectMapper.readTree(json);
   }
 

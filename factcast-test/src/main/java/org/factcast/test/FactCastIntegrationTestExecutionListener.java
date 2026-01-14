@@ -33,8 +33,8 @@ import org.springframework.test.context.TestExecutionListener;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.ToxiproxyContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.testcontainers.toxiproxy.ToxiproxyContainer;
 import org.testcontainers.utility.DockerImageName;
 
 @Slf4j
@@ -115,7 +115,7 @@ public class FactCastIntegrationTestExecutionListener implements TestExecutionLi
 
   @Value
   static class Containers {
-    PostgreSQLContainer<?> db;
+    PostgreSQLContainer db;
     GenericContainer<?> fc;
     PostgresqlProxy pgProxy;
     FactCastProxy fcProxy;
@@ -166,9 +166,11 @@ public class FactCastIntegrationTestExecutionListener implements TestExecutionLi
     toxiClient = new ToxiproxyClient(host, controlPort);
   }
 
-  public static ToxiproxyContainer.ContainerProxy createProxy(
+  public static org.testcontainers.containers.ToxiproxyContainer.ContainerProxy createProxy(
       GenericContainer<?> container, int port) {
-    return toxiProxy.getProxy(container, port);
+    //     // TODO FIXME @SB4 was:
+    // return toxiProxy.getProxy(container, port);
+    throw new UnsupportedOperationException();
   }
 
   public static ToxiproxyClient client() {

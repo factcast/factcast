@@ -15,11 +15,11 @@
  */
 package org.factcast.server.ui.s3reportstore;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import lombok.NonNull;
 import org.factcast.server.ui.port.ReportUploadStream;
 import org.factcast.server.ui.report.ReportFilterBean;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
+import tools.jackson.core.TokenStreamFactory;
 
 /** Batches received facts until BUFFER_SIZE is reached and uploads it using MultiPartUpload */
 public class S3BatchedReportUploadStream extends ReportUploadStream {
@@ -29,7 +29,7 @@ public class S3BatchedReportUploadStream extends ReportUploadStream {
   public S3BatchedReportUploadStream(
       @NonNull S3AsyncClient s3Client,
       @NonNull String bucketName,
-      @NonNull JsonFactory jsonFactory,
+      @NonNull TokenStreamFactory jsonFactory,
       @NonNull String reportKey,
       @NonNull String reportName,
       @NonNull ReportFilterBean query) {

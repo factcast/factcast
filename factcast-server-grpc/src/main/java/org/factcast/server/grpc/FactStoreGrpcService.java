@@ -29,7 +29,8 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import java.util.stream.Collectors;
-import lombok.*;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.factcast.core.Fact;
@@ -182,13 +183,12 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
   @VisibleForTesting
   void initialize(StreamObserver<?> responseObserver) {
-    if (responseObserver instanceof ServerCallStreamObserver) {
-      ((ServerCallStreamObserver) responseObserver)
-          .setOnCancelHandler(
-              () -> {
-                throw new RequestCanceledByClientException(
-                    clientIdPrefix() + "The request was canceled by the client");
-              });
+    if (responseObserver instanceof ServerCallStreamObserver observer) {
+      observer.setOnCancelHandler(
+          () -> {
+            throw new RequestCanceledByClientException(
+                clientIdPrefix() + "The request was canceled by the client");
+          });
     }
   }
 
@@ -270,8 +270,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
   private void enableResponseCompression(StreamObserver<?> responseObserver) {
     // need to be defensive not to break tests passing mocks here.
-    if (responseObserver instanceof ServerCallStreamObserver) {
-      ServerCallStreamObserver obs = (ServerCallStreamObserver) responseObserver;
+    if (responseObserver instanceof ServerCallStreamObserver obs) {
       obs.setMessageCompression(true);
       log.trace("{}enabled response compression", clientIdPrefix());
     }

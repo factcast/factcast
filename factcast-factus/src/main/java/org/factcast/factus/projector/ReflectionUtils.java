@@ -24,7 +24,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import lombok.*;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.*;
@@ -78,7 +79,7 @@ public class ReflectionUtils {
 
     List<Class<?>> eventPojoTypes =
         Arrays.stream(m.getParameterTypes())
-            .filter(org.factcast.factus.event.EventObject.class::isAssignableFrom)
+            .filter(EventObject.class::isAssignableFrom)
             .collect(Collectors.toList());
 
     if (eventPojoTypes.isEmpty()) {
@@ -134,23 +135,32 @@ public class ReflectionUtils {
 
     Map<Class<?>, String> overrides = buildNamespaceOverrides(p.getClass());
     String override = overrides.get(eventPojoType);
-    if (override != null) return fromTargetType.withNs(override);
-    else return fromTargetType;
+    if (override != null) {
+      return fromTargetType.withNs(override);
+    } else {
+      return fromTargetType;
+    }
   }
 
   @VisibleForTesting
   static Map<Class<?>, String> buildNamespaceOverrides(Class<?> p) {
-    if (p == null || !Projection.class.isAssignableFrom(p)) return new HashMap<>();
+    if (p == null || !Projection.class.isAssignableFrom(p)) {
+      return new HashMap<>();
+    }
 
     Map<Class<?>, String> ret = buildNamespaceOverrides(p.getSuperclass());
 
     OverrideNamespace single = p.getAnnotation(OverrideNamespace.class);
-    if (single != null) ret.put(single.type(), single.ns());
+    if (single != null) {
+      ret.put(single.type(), single.ns());
+    }
 
     OverrideNamespaces container = p.getAnnotation(OverrideNamespaces.class);
     if (container != null) {
       OverrideNamespace[] overrides = container.value();
-      if (overrides != null) Arrays.stream(overrides).forEach(s -> ret.put(s.type(), s.ns()));
+      if (overrides != null) {
+        Arrays.stream(overrides).forEach(s -> ret.put(s.type(), s.ns()));
+      }
     }
 
     return ret;
@@ -160,15 +170,17 @@ public class ReflectionUtils {
   static FactSpec overrideNamespaceFromMethodAnnotation(
       Method m, OverrideNamespace annotation, Class<?> eventPojoType, FactSpec fromTargetType) {
     String newNs = annotation.ns();
-    Class<? extends org.factcast.factus.event.EventObject> forType = annotation.type();
+    Class<? extends EventObject> forType = annotation.type();
 
-    if (newNs.isEmpty())
+    if (newNs.isEmpty()) {
       throw new InvalidHandlerDefinition(
           "A valid namespace must be provided for a @OverrideNamespace annotation on " + m);
+    }
 
-    if (!forType.equals(OverrideNamespace.DISCOVER) && forType != eventPojoType)
+    if (!forType.equals(OverrideNamespace.DISCOVER) && forType != eventPojoType) {
       throw new InvalidHandlerDefinition(
           "@OverrideNamespace defined for a different type than what the parameter suggests " + m);
+    }
 
     return addOptionalFilterInfo(m, fromTargetType.withNs(newNs));
   }
@@ -187,8 +199,9 @@ public class ReflectionUtils {
 
   private static FactSpec filterByScript(@NonNull Method m, @NonNull FactSpec spec) {
     FilterByScript filterByScript = m.getAnnotation(FilterByScript.class);
-    if (filterByScript != null)
-      spec = spec.filterScript(org.factcast.core.spec.FilterScript.js(filterByScript.value()));
+    if (filterByScript != null) {
+      spec = spec.filterScript(FilterScript.js(filterByScript.value()));
+    }
     return spec;
   }
 
@@ -212,10 +225,11 @@ public class ReflectionUtils {
     FilterByAggIdProperty annotation = m.getAnnotation(FilterByAggIdProperty.class);
     if (annotation != null) {
 
-      if (!Aggregate.class.isAssignableFrom(m.getDeclaringClass()))
+      if (!Aggregate.class.isAssignableFrom(m.getDeclaringClass())) {
         throw new IllegalAnnotationForTargetClassException(
             "FilterByAggIdProperty can only be used on classes extending Aggregate, but was found on "
                 + m.toString());
+      }
 
       if (m.getAnnotation(HandlerFor.class) != null) {
         log.warn(
@@ -232,16 +246,18 @@ public class ReflectionUtils {
 
   @VisibleForTesting
   @SuppressWarnings("unchecked")
-  static <E extends org.factcast.factus.event.EventObject> Class<E> findEventObjectParameterType(
-      @NonNull Method m) {
-    List<Class<? extends org.factcast.factus.event.EventObject>> found =
+  static <E extends EventObject> Class<E> findEventObjectParameterType(@NonNull Method m) {
+    List<Class<? extends EventObject>> found =
         Arrays.stream(m.getParameterTypes())
-            .filter(org.factcast.factus.event.EventObject.class::isAssignableFrom)
-            .map(p -> (Class<? extends org.factcast.factus.event.EventObject>) p)
+            .filter(EventObject.class::isAssignableFrom)
+            .map(p -> (Class<? extends EventObject>) p)
             .collect(Collectors.toList());
 
-    if (found.isEmpty()) throw new NoEventObjectParameterFoundException(m);
-    else if (found.size() > 1) throw new AmbiguousObjectParameterFoundException(m);
+    if (found.isEmpty()) {
+      throw new NoEventObjectParameterFoundException(m);
+    } else if (found.size() > 1) {
+      throw new AmbiguousObjectParameterFoundException(m);
+    }
     return (Class<E>) found.get(0);
   }
 
@@ -258,9 +274,9 @@ public class ReflectionUtils {
 
     final HandlerParameterContributors c;
 
-    if (p instanceof OpenTransactionAware<?>) {
+    if (p instanceof OpenTransactionAware<?> aware) {
 
-      Class<?> clazz = ReflectionUtils.getTypeParameter((OpenTransactionAware<?>) p);
+      Class<?> clazz = ReflectionUtils.getTypeParameter(aware);
 
       // we have a parameter contributor to add, then
       c =
@@ -272,12 +288,16 @@ public class ReflectionUtils {
                     @NonNull Class<?> type,
                     @Nullable Type genericType,
                     @NonNull Set<Annotation> annotations) {
-                  if (clazz == type)
+                  if (clazz == type) {
                     return (s, f, p) -> ((OpenTransactionAware<?>) p).runningTransaction();
-                  else return null;
+                  } else {
+                    return null;
+                  }
                 }
               });
-    } else c = generalContributors;
+    } else {
+      c = generalContributors;
+    }
 
     Collection<CallTarget> relevantClasses = ReflectionUtils.getRelevantClasses(p);
     relevantClasses.forEach(
@@ -425,7 +445,9 @@ public class ReflectionUtils {
       }
     }
     FilterByMetaDoesNotExist attribute = m.getAnnotation(FilterByMetaDoesNotExist.class);
-    if (attribute != null) spec = addFilterByMetaDoesNotExist(spec, attribute);
+    if (attribute != null) {
+      spec = addFilterByMetaDoesNotExist(spec, attribute);
+    }
     return spec;
   }
 
@@ -438,7 +460,9 @@ public class ReflectionUtils {
       }
     }
     FilterByMetaExists exists = m.getAnnotation(FilterByMetaExists.class);
-    if (exists != null) spec = addFilterByMetaExists(spec, exists);
+    if (exists != null) {
+      spec = addFilterByMetaExists(spec, exists);
+    }
     return spec;
   }
 
@@ -450,7 +474,9 @@ public class ReflectionUtils {
       }
     }
     FilterByMeta meta = m.getAnnotation(FilterByMeta.class);
-    if (meta != null) spec = addFilterByMeta(spec, meta);
+    if (meta != null) {
+      spec = addFilterByMeta(spec, meta);
+    }
     return spec;
   }
 

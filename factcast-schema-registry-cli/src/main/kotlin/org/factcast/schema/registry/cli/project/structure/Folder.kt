@@ -24,7 +24,9 @@ interface Folder {
     fun getChildren(): List<Folder>
 
     fun containedIn(whiteList: WhiteList): Boolean {
-        if (whiteList.matches(path)) return true
+        if (whiteList.matches(path)) {
+            return true
+        }
 
         return getChildren().any { it.containedIn(whiteList) }
     }

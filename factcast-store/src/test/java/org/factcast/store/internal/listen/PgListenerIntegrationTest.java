@@ -20,7 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.google.common.eventbus.*;
 import java.util.*;
 import java.util.concurrent.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
@@ -28,17 +29,14 @@ import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.internal.notification.*;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.*;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 @Slf4j
-@ContextConfiguration(classes = {PgTestConfiguration.class})
+@SpringJUnitConfig(classes = {PgTestConfiguration.class})
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
-@ExtendWith(SpringExtension.class)
 @IntegrationTest
 @SuppressWarnings("ResultOfMethodCallIgnored")
 class PgListenerIntegrationTest {

@@ -123,8 +123,6 @@
     <dependency>
       <groupId>com.fasterxml.jackson.module</groupId>
       <artifactId>jackson-module-kotlin</artifactId>
-      <!-- even though all other modules are avail for 2.13.2, this one is missing -->
-      <version>2.20.1</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
@@ -227,6 +225,10 @@
         <exclusion>
           <groupId>org.jetbrains.kotlin</groupId>
           <artifactId>kotlin-stdlib</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
         </exclusion>
       </exclusions>
     </dependency>

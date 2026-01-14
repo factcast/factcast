@@ -130,7 +130,7 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
   private List<String> getValidIndices(List<Map<String, Object>> indexesWithValidityFlag) {
     return new ArrayList<>(
         indexesWithValidityFlag.stream()
-            .filter(r -> r.get(VALID_COLUMN).equals(IS_VALID))
+            .filter(r -> IS_VALID.equals(r.get(VALID_COLUMN)))
             .map(r -> r.get(INDEX_NAME_COLUMN).toString())
             .toList());
   }
@@ -138,7 +138,7 @@ public class PGTailIndexManagerImpl implements PGTailIndexManager {
   private @NonNull List<String> getInvalidIndices(
       List<Map<String, Object>> indexesWithValidityFlag) {
     return indexesWithValidityFlag.stream()
-        .filter(r -> r.get(VALID_COLUMN).equals(IS_INVALID))
+        .filter(r -> IS_INVALID.equals(r.get(VALID_COLUMN)))
         .map(r -> r.get(INDEX_NAME_COLUMN).toString())
         .toList();
   }

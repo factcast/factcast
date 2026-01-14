@@ -15,7 +15,6 @@
  */
 package org.factcast.store.registry.transformation.chains;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +33,8 @@ public class JsTransformer implements Transformer {
   private final JSEngineFactory scriptEngineCache;
 
   @Override
-  public JsonNode transform(Transformation t, JsonNode input) throws TransformationException {
+  public tools.jackson.databind.JsonNode transform(
+      Transformation t, tools.jackson.databind.JsonNode input) throws TransformationException {
     if (t.transformationCode().isEmpty()) {
       return input;
     } else {
@@ -53,7 +53,8 @@ public class JsTransformer implements Transformer {
   }
 
   @SuppressWarnings("unchecked")
-  private JsonNode runJSTransformation(JsonNode input, String js) {
+  private tools.jackson.databind.JsonNode runJSTransformation(
+      tools.jackson.databind.JsonNode input, String js) {
     try {
       JSEngine engine = getEngine(js);
       synchronized (engine) {

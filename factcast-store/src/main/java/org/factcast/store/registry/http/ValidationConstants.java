@@ -15,7 +15,6 @@
  */
 package org.factcast.store.registry.http;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.function.*;
 import lombok.NonNull;
@@ -23,6 +22,7 @@ import okhttp3.OkHttpClient;
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.loader.SchemaLoader;
 import org.json.JSONObject;
+import tools.jackson.databind.ObjectMapper;
 
 public class ValidationConstants {
 

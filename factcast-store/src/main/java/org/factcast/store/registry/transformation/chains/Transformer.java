@@ -15,10 +15,10 @@
  */
 package org.factcast.store.registry.transformation.chains;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.registry.transformation.Transformation;
 
 public interface Transformer {
-  JsonNode transform(Transformation t, JsonNode input) throws TransformationException;
+  tools.jackson.databind.JsonNode transform(Transformation t, tools.jackson.databind.JsonNode input)
+      throws TransformationException;
 }

@@ -49,12 +49,10 @@
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-grpc-lz4</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-grpc-snappy</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
@@ -86,7 +84,8 @@
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-aop</artifactId>
+      <artifactId>spring-boot-starter-aspectj</artifactId>
+      <version>4.0.1</version>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -95,10 +94,6 @@
         <exclusion>
           <groupId>com.vaadin.external.google</groupId>
           <artifactId>android-json</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>junit</groupId>
-          <artifactId>junit</artifactId>
         </exclusion>
       </exclusions>
     </dependency>

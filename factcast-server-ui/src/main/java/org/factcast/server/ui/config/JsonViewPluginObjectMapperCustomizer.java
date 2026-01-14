@@ -15,8 +15,8 @@
  */
 package org.factcast.server.ui.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.NonNull;
+import tools.jackson.databind.ObjectMapper;
 
 @FunctionalInterface
 public interface JsonViewPluginObjectMapperCustomizer {

@@ -15,7 +15,6 @@
  */
 package org.factcast.server.ui.plugins;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +22,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.server.ui.metrics.UiMetrics;
+import tools.jackson.databind.ObjectMapper;
 
 @RequiredArgsConstructor
 @Slf4j

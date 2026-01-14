@@ -50,8 +50,9 @@ class DefaultFactCast implements FactCast {
   @Deprecated
   public Subscription subscribeEphemeral(
       @NonNull SubscriptionRequest req, @NonNull FactObserver observer) {
-    if (!req.ephemeral())
+    if (!req.ephemeral()) {
       throw new IllegalArgumentException("requires ephemeral to be set to true.");
+    }
     return subscribe(req, observer);
   }
 

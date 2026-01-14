@@ -32,10 +32,10 @@ public abstract class Aggregate implements SnapshotProjection {
   //
   // Also this is the reason, why this thing is called "aggregateId" rather
   // than "id".
-  @Getter(value = AccessLevel.PROTECTED)
+  @Getter(AccessLevel.PROTECTED)
   // the setter has package level access in order to be used from
   // AggregateUtil, while not spoiling the public interface.
-  @Setter(value = AccessLevel.PROTECTED)
+  @Setter(AccessLevel.PROTECTED)
   private UUID aggregateId;
 
   @Override

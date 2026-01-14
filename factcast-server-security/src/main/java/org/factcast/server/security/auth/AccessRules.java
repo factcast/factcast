@@ -16,11 +16,11 @@
 package org.factcast.server.security.auth;
 
 import com.google.common.annotations.VisibleForTesting;
-import jakarta.annotation.Nullable;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
+import javax.annotation.Nullable;
 import lombok.*;
 
 @Data
@@ -30,11 +30,11 @@ public class AccessRules implements Serializable {
   @Serial private static final long serialVersionUID = 42;
 
   @VisibleForTesting
-  @Getter(value = AccessLevel.PROTECTED)
+  @Getter(AccessLevel.PROTECTED)
   private List<String> include = new LinkedList<>();
 
   @VisibleForTesting
-  @Getter(value = AccessLevel.PROTECTED)
+  @Getter(AccessLevel.PROTECTED)
   private List<String> exclude = new LinkedList<>();
 
   @Nullable

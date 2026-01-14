@@ -15,7 +15,7 @@
  */
 package org.factcast.schema.registry.cli.fs
 
-import com.fasterxml.jackson.databind.JsonNode
+import tools.jackson.databind.JsonNode
 import java.io.File
 import java.nio.file.Path
 

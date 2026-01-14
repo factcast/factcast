@@ -15,14 +15,14 @@
  */
 package org.factcast.store.internal.filter;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.*;
 import javax.annotation.Nullable;
-import lombok.*;
+import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.factcast.core.spec.*;
 import org.factcast.store.internal.PgFact;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Matches facts against specifications regarding the existence of String:UUID pairs in the payload
@@ -38,8 +38,11 @@ public final class AggIdPropertyMatcher implements PGFactMatcher {
   }
 
   public static @Nullable AggIdPropertyMatcher matches(FactSpec spec) {
-    if (spec.aggIdProperties().isEmpty()) return null;
-    else return new AggIdPropertyMatcher(spec);
+    if (spec.aggIdProperties().isEmpty()) {
+      return null;
+    } else {
+      return new AggIdPropertyMatcher(spec);
+    }
   }
 
   @Override
@@ -64,7 +67,9 @@ public final class AggIdPropertyMatcher implements PGFactMatcher {
         }
       }
       // string comparison is twice as fast, compared to parsing a UUID
-      if (!v.toString().equals(payload.asText())) return false;
+      if (!v.toString().equals(payload.asString())) {
+        return false;
+      }
     }
 
     return true;
@@ -82,7 +87,10 @@ public final class AggIdPropertyMatcher implements PGFactMatcher {
    */
   @VisibleForTesting
   static String fieldName(@NonNull String k) {
-    if (!k.contains(".")) return k;
-    else return StringUtils.substringAfterLast(k, '.');
+    if (!k.contains(".")) {
+      return k;
+    } else {
+      return StringUtils.substringAfterLast(k, '.');
+    }
   }
 }

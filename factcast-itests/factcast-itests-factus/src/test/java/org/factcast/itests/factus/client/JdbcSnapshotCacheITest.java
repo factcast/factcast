@@ -18,7 +18,6 @@ package org.factcast.itests.factus.client;
 import org.factcast.factus.snapshot.SnapshotCache;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.config.JdbcSnapshotCacheConfiguration;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
@@ -28,7 +27,6 @@ import org.springframework.test.context.ContextConfiguration;
 @DirtiesContext
 public class JdbcSnapshotCacheITest extends SnapshotCacheTest {
 
-  @Autowired
   public JdbcSnapshotCacheITest(SnapshotCache repository) {
     super(repository);
   }

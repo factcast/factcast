@@ -16,8 +16,6 @@
 package org.factcast.store.internal;
 
 import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import java.sql.*;
@@ -29,6 +27,8 @@ import lombok.*;
 import org.factcast.core.*;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.event.MetaMap;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
 
 /**
  * PG Specific implementation of a Fact.
@@ -62,14 +62,14 @@ public class PgFact implements Fact {
 
     // twice as fast as going through deser.
     // note that meta is materialized lazily
-    UUID id = UUID.fromString(header.path("id").asText());
-    String ns = header.path("ns").asText();
-    String type = header.path("type").asText();
+    UUID id = UUID.fromString(header.path("id").asString());
+    String ns = header.path("ns").asString();
+    String type = header.path("type").asString();
     int version = header.path("version").asInt();
     ArrayNode aggIdsNode = (ArrayNode) header.path("aggIds");
     Set<UUID> aggIds =
         Lists.newArrayList(aggIdsNode).stream()
-            .map(n -> UUID.fromString(n.asText()))
+            .map(n -> UUID.fromString(n.asString()))
             .collect(Collectors.toSet());
     // this might be reasonable to turn to lazy, some day
     String jsonHeader = header.toString();

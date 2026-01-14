@@ -17,7 +17,7 @@ package org.factcast.store.registry.transformation.chains;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -64,11 +64,11 @@ class JsTransformerTest {
 
     var result = uut.transform(transformation, om.convertValue(data, JsonNode.class));
 
-    Assertions.assertThat(result.get("displayName").asText()).isEqualTo("Hugo 38");
+    Assertions.assertThat(result.get("displayName").asString()).isEqualTo("Hugo 38");
     Assertions.assertThat(result.get("hobbies").isArray()).isTrue();
-    Assertions.assertThat(result.get("hobbies").get(0).asText()).isEqualTo("foo");
+    Assertions.assertThat(result.get("hobbies").get(0).asString()).isEqualTo("foo");
     Assertions.assertThat(result.get("childMap").get("anotherHobbies").isArray()).isTrue();
-    Assertions.assertThat(result.get("childMap").get("anotherHobbies").get(0).asText())
+    Assertions.assertThat(result.get("childMap").get("anotherHobbies").get(0).asString())
         .isEqualTo("bar");
   }
 
@@ -96,18 +96,18 @@ class JsTransformerTest {
     when(transformation.transformationCode())
         .thenReturn(
             Optional.of(
-                "function transform(e) { \n"
-                    + "  console.log('Starting Busy Wait...'); \n"
-                    // code to do busy waiting in JS:
-                    + "  const date = Date.now();\n"
-                    + "  const milliseconds = 2000;\n"
-                    + "  let currentDate = null;\n"
-                    + "  do {\n"
-                    + "    currentDate = Date.now();\n"
-                    + "  } while (currentDate - date < milliseconds);\n"
-                    + "  console.log('Done busy waiting.'); \n"
-                    // actual transformation
-                    + "  e.x = e.y; }\n"));
+                """
+                function transform(e) {\s
+                  console.log('Starting Busy Wait...');\s
+                  const date = Date.now();
+                  const milliseconds = 2000;
+                  let currentDate = null;
+                  do {
+                    currentDate = Date.now();
+                  } while (currentDate - date < milliseconds);
+                  console.log('Done busy waiting.');\s
+                  e.x = e.y; }
+                """));
 
     var d1 = new HashMap<String, Object>();
     d1.put("y", "1");
@@ -130,8 +130,8 @@ class JsTransformerTest {
       JsonNode n1 = result1.get();
       JsonNode n2 = result2.get();
 
-      assertThat(n1.get("x").asText()).isEqualTo("1");
-      assertThat(n2.get("x").asText()).isEqualTo("2");
+      assertThat(n1.get("x").asString()).isEqualTo("1");
+      assertThat(n2.get("x").asString()).isEqualTo("2");
     } finally {
       executor.shutdown();
     }
@@ -164,10 +164,10 @@ class JsTransformerTest {
       JsonNode n1 = result1.get();
       JsonNode n2 = result2.get();
 
-      assertThat(n1.get("y").asText()).isEqualTo("1");
-      assertThat(n1.get("foo").get("bar").asText()).isEqualTo("1");
-      assertThat(n2.get("y").asText()).isEqualTo("2");
-      assertThat(n2.get("foo").get("bar").asText()).isEqualTo("2");
+      assertThat(n1.get("y").asString()).isEqualTo("1");
+      assertThat(n1.get("foo").get("bar").asString()).isEqualTo("1");
+      assertThat(n2.get("y").asString()).isEqualTo("2");
+      assertThat(n2.get("foo").get("bar").asString()).isEqualTo("2");
     } finally {
       executor.shutdown();
     }

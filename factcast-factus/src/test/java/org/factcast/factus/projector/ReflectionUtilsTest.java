@@ -16,17 +16,19 @@
 package org.factcast.factus.projector;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
 
 import com.google.common.collect.Sets;
 import java.lang.reflect.*;
 import java.util.*;
 import javax.annotation.Nullable;
-import lombok.*;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.factus.*;
+import org.factcast.factus.event.EventObject;
 import org.factcast.factus.projection.*;
 import org.factcast.factus.projection.parameter.*;
 import org.factcast.factus.projection.tx.*;
@@ -52,7 +54,7 @@ class ReflectionUtilsTest {
 
   @Test
   void testFindEventObjectParameterType() throws NoSuchMethodException {
-    class Event implements org.factcast.factus.event.EventObject {
+    class Event implements EventObject {
       @Override
       public Set<UUID> aggregateIds() {
         return Sets.newHashSet();

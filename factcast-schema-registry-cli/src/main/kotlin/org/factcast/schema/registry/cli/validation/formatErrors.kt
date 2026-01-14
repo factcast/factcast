@@ -39,7 +39,7 @@ fun formatErrors(errors: List<ProjectError>): List<String> = errors.map {
 Example ${it.examplePath} failed validation:
 ${
                 ignoreExampleErrors(it.result)?.joinToString("\n") { result ->
-                    "- ${result.asJson()?.get("instance")?.get("pointer")?.asText()}: ${result.message}"
+                    "- ${result.asJson()?.get("instance")?.get("pointer")}: ${result.message}"
                 }
             }
                 """.trimIndent()

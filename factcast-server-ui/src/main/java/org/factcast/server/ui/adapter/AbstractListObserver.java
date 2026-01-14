@@ -15,9 +15,9 @@
  */
 package org.factcast.server.ui.adapter;
 
-import jakarta.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.core.Fact;

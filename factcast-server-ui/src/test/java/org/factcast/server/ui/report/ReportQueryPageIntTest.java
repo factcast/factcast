@@ -20,8 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import java.time.OffsetDateTime;
@@ -41,8 +39,6 @@ class ReportQueryPageIntTest extends AbstractBrowserTest {
   @RetryingTest(maxAttempts = 3)
   @SneakyThrows
   void createReportHappyPath() {
-    om.registerModule(new JavaTimeModule());
-    om.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     // ARRANGE
     loginFor("/ui/report");
     assertThat(page.getByLabel("Types")).isDisabled();
@@ -88,7 +84,7 @@ class ReportQueryPageIntTest extends AbstractBrowserTest {
 
     try (final var input = download.createReadStream()) {
       final var report = om.readTree(input.readAllBytes());
-      assertThat(report.get("name").asText()).isEqualTo(id + ".json");
+      assertThat(report.get("name").asString()).isEqualTo(id + ".json");
       assertThat(report.get("events")).hasSize(4);
 
       // events are sorted from old to new
@@ -174,11 +170,11 @@ class ReportQueryPageIntTest extends AbstractBrowserTest {
 
   private void assertJsonEvent(
       JsonNode event, UUID eventId, UUID userId, String type, String firstName, String lastName) {
-    assertThat(event.get("header").get("type").asText()).isEqualTo(type);
-    assertThat(event.get("header").get("id").asText()).isEqualTo(eventId.toString());
-    assertThat(event.get("payload").get("userId").asText()).isEqualTo(userId.toString());
-    assertThat(event.get("payload").get("firstName").asText()).isEqualTo(firstName);
-    assertThat(event.get("payload").get("lastName").asText()).isEqualTo(lastName);
+    assertThat(event.get("header").get("type").asString()).isEqualTo(type);
+    assertThat(event.get("header").get("id").asString()).isEqualTo(eventId.toString());
+    assertThat(event.get("payload").get("userId").asString()).isEqualTo(userId.toString());
+    assertThat(event.get("payload").get("firstName").asString()).isEqualTo(firstName);
+    assertThat(event.get("payload").get("lastName").asString()).isEqualTo(lastName);
   }
 
   private void assertCriterion(FactCriteria criterion, String ns, String type, UUID aggId) {

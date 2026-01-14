@@ -16,7 +16,9 @@
 package org.factcast.store.internal.notification;
 
 import javax.annotation.Nullable;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.NonNull;
+import lombok.Value;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.internal.PgConstants;
@@ -43,10 +45,12 @@ public class FactInsertionNotification extends StoreNotification {
 
   @Override
   public String uniqueId() {
-    if (ser == null) return null; // no dedup wanted
-    else
+    if (ser == null) {
+      return null; // no dedup wanted
+    } else {
       // the ser is enough if it is not null
       return PgConstants.CHANNEL_FACT_INSERT + "-" + ser;
+    }
   }
 
   @Override

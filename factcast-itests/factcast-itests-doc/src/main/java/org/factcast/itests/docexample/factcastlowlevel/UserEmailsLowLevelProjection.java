@@ -68,10 +68,10 @@ public class UserEmailsLowLevelProjection {
   }
 
   private UUID extractIdFrom(JsonNode payload) {
-    return UUID.fromString(payload.get("id").asText());
+    return UUID.fromString(payload.get("id").asString());
   }
 
   private String extractEmailFrom(JsonNode payload) {
-    return payload.get("email").asText();
+    return payload.get("email").asString();
   }
 }

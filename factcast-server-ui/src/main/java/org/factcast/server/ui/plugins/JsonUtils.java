@@ -15,13 +15,10 @@
  */
 package org.factcast.server.ui.plugins;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.*;
-import com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider;
-import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 import lombok.NonNull;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.*;
 
 public class JsonUtils {
   private final ParseContext pathReturningContext;
@@ -32,8 +29,9 @@ public class JsonUtils {
     this.parseContext =
         JsonPath.using(
             Configuration.builder()
-                .jsonProvider(new JacksonJsonNodeJsonProvider(objectMapper))
-                .mappingProvider(new JacksonMappingProvider(objectMapper))
+                //     // TODO FIXME @SB4 ready for jackson3?
+                // .jsonProvider(new JacksonJsonNodeJsonProvider(objectMapper))
+                // .mappingProvider(new JacksonMappingProvider(objectMapper))
                 .options(Option.SUPPRESS_EXCEPTIONS, Option.DEFAULT_PATH_LEAF_TO_NULL)
                 .build());
 

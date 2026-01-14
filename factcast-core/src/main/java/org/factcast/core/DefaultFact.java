@@ -17,7 +17,10 @@ package org.factcast.core;
 
 import java.io.*;
 import java.util.*;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.factcast.core.util.FactCastJson;
 
 /**

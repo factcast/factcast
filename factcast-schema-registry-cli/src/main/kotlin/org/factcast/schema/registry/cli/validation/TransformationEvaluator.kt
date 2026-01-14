@@ -15,7 +15,6 @@
  */
 package org.factcast.schema.registry.cli.validation
 
-import com.fasterxml.jackson.databind.JsonNode
 import org.factcast.schema.registry.cli.domain.Event
 import org.factcast.schema.registry.cli.domain.Namespace
 import org.factcast.schema.registry.cli.domain.Transformation
@@ -25,6 +24,7 @@ import org.factcast.store.registry.transformation.TransformationKey
 import org.factcast.store.registry.transformation.chains.TransformationChain
 import org.factcast.store.registry.transformation.chains.Transformer
 import org.springframework.stereotype.Component
+import tools.jackson.databind.JsonNode
 
 @Component
 class TransformationEvaluator(

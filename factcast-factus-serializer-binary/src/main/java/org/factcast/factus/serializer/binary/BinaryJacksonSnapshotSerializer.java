@@ -15,12 +15,13 @@
  */
 package org.factcast.factus.serializer.binary;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.*;
-import lombok.*;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.SnapshotSerializer;
-import org.msgpack.jackson.dataformat.MessagePackFactory;
+import tools.jackson.databind.ObjectMapper;
 
 @RequiredArgsConstructor
 public abstract class BinaryJacksonSnapshotSerializer implements SnapshotSerializer {
@@ -30,7 +31,10 @@ public abstract class BinaryJacksonSnapshotSerializer implements SnapshotSeriali
 
   protected BinaryJacksonSnapshotSerializer(
       @NonNull BinaryJacksonSnapshotSerializerCustomizer customizer) {
-    ObjectMapper om = new ObjectMapper(new MessagePackFactory());
+    // TODO FIXME @SB4
+    // not ready for jackson3
+    // ObjectMapper om = new ObjectMapper(new MessagePackFactory());
+    ObjectMapper om = new ObjectMapper(); // MUST BE CHANGED
     customizer.accept(om);
     omMessagePack = om;
   }

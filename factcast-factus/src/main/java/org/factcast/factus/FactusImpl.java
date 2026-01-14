@@ -27,7 +27,9 @@ import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import lombok.*;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.*;
 import org.factcast.core.spec.FactSpec;
@@ -173,7 +175,7 @@ public class FactusImpl implements Factus {
     FactObserver fo =
         new AbstractFactObserver(subscribedProjection, PROGRESS_INTERVAL, factusMetrics) {
 
-          FactStreamPosition lastPositionApplied = null;
+          FactStreamPosition lastPositionApplied;
 
           @Override
           public void onNextFacts(@NonNull List<Fact> elements) {
@@ -372,8 +374,8 @@ public class FactusImpl implements Factus {
 
             FactStreamPosition factStreamPosition = positionOfLastFactApplied.get();
             if (factIdToFfwdTo.isAfter(factStreamPosition)) {
-              if (projection instanceof FactStreamPositionAware) {
-                ((FactStreamPositionAware) projection).factStreamPosition(factIdToFfwdTo);
+              if (projection instanceof FactStreamPositionAware aware) {
+                aware.factStreamPosition(factIdToFfwdTo);
               }
 
               // only persist ffwd if we ever had a state or applied facts in this catchup
@@ -449,9 +451,8 @@ public class FactusImpl implements Factus {
             .orElseThrow(
                 () ->
                     new IllegalArgumentException(
-                        String.format(
-                            "Aggregate %s with id %s does not exist.",
-                            aggregateClass.getSimpleName(), id)));
+                        "Aggregate %s with id %s does not exist."
+                            .formatted(aggregateClass.getSimpleName(), id)));
     Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
     List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
     return new Locked<>(fc, this, fresh, specs, factusMetrics);

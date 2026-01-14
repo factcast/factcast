@@ -26,6 +26,7 @@ fun JsonNode.filter(name: String) {
                 node.filter(name)
             }
         }
+
         isArray -> forEach { node -> node.filter(name) }
     }
 }

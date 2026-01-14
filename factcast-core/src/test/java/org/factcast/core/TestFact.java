@@ -15,12 +15,12 @@
  */
 package org.factcast.core;
 
-import com.fasterxml.jackson.databind.node.*;
 import java.util.*;
 import javax.annotation.Nullable;
 import lombok.*;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.event.MetaMap;
+import tools.jackson.databind.node.*;
 
 @AllArgsConstructor
 @Getter
@@ -84,7 +84,7 @@ public class TestFact implements Fact {
     String header = f.jsonHeader();
     String payload = f.jsonPayload();
     ObjectNode h = (ObjectNode) FactCastJson.readTree(header);
-    h.set("id", new TextNode(UUID.randomUUID().toString()));
+    h.set("id", new StringNode(UUID.randomUUID().toString()));
     return Fact.of(h.toString(), payload);
   }
 

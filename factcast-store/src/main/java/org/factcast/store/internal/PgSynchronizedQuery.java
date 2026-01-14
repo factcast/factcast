@@ -95,7 +95,9 @@ class PgSynchronizedQuery {
   public synchronized void run(boolean useIndex) {
     List<ConnectionModifier> filters =
         Lists.newArrayList(ConnectionModifier.withApplicationName(debugInfo));
-    if (!useIndex) filters.add(ConnectionModifier.withBitmapScanDisabled());
+    if (!useIndex) {
+      filters.add(ConnectionModifier.withBitmapScanDisabled());
+    }
     try (SingleConnectionDataSource ds = connectionSupplier.getPooledAsSingleDataSource(filters)) {
       long latest = hwmFetcher.highWaterMark(ds).targetSer();
       new JdbcTemplate(ds)

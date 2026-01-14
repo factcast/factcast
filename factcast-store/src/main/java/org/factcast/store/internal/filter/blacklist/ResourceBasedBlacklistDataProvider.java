@@ -15,8 +15,6 @@
  */
 package org.factcast.store.internal.filter.blacklist;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -32,6 +30,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -71,7 +71,7 @@ public final class ResourceBasedBlacklistDataProvider
     Resource resource = resourceLoader.getResource(path);
     if (!resource.exists()) {
       throw new FileNotFoundException(
-          String.format("Blacklist could not be found at specified location: %s", path));
+          "Blacklist could not be found at specified location: %s".formatted(path));
     }
     return resource.getInputStream();
   }

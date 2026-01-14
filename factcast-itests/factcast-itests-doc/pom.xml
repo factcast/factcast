@@ -34,7 +34,6 @@
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-test</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
@@ -68,10 +67,6 @@
         <exclusion>
           <groupId>com.vaadin.external.google</groupId>
           <artifactId>android-json</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>junit</groupId>
-          <artifactId>junit</artifactId>
         </exclusion>
       </exclusions>
     </dependency>

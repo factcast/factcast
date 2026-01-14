@@ -16,15 +16,15 @@
 package org.factcast.factus.serializer.binary;
 
 import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.databind.*;
 import java.util.function.Consumer;
+import tools.jackson.databind.ObjectMapper;
 
 public interface BinaryJacksonSnapshotSerializerCustomizer extends Consumer<ObjectMapper> {
 
   static BinaryJacksonSnapshotSerializerCustomizer defaultCustomizer() {
-    return objectMapper ->
-        objectMapper
-            .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    // TODO FIXME @SB4
+    //    return objectMapper ->
+    //        objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
+    return o -> {};
   }
 }

@@ -15,8 +15,6 @@
  */
 package org.factcast.store.internal.notification;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import java.util.UUID;
 import java.util.function.Function;
 import javax.annotation.Nullable;
@@ -25,6 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.internal.PgConstants;
 import org.postgresql.PGNotification;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Triggered from a PgNotification or by some internal behavior within the store, these
@@ -87,7 +87,7 @@ public abstract class StoreNotification {
     String json = n.getParameter();
     try {
       return initialization.apply(FactCastJson.readTree(json));
-    } catch (JsonProcessingException | NullPointerException e) {
+    } catch (JacksonException | NullPointerException e) {
       // unparseable, probably longer than 8k ?
       // fall back to informingAllSubscribers
       log.warn("Unparseable or incomplete JSON Parameter from Notification: {}.", n.getName());
@@ -109,8 +109,9 @@ public abstract class StoreNotification {
       case PgConstants.CHANNEL_FACT_TRUNCATE -> FactTruncationNotification.from(n);
       case PgConstants.CHANNEL_FACT_UPDATE -> FactUpdateNotification.from(n);
       default -> {
-        if (!n.getName().equals(PgConstants.CHANNEL_ROUNDTRIP))
+        if (!PgConstants.CHANNEL_ROUNDTRIP.equals(n.getName())) {
           log.warn("Ignored notification from unknown channel: {}", name);
+        }
         yield null;
       }
     };
@@ -125,7 +126,7 @@ public abstract class StoreNotification {
   }
 
   private static String getString(@NonNull JsonNode root, @NonNull String name) {
-    return root.get(name).asText();
+    return root.get(name).asString();
   }
 
   private static UUID getUUID(@NonNull JsonNode root, @NonNull String name) {

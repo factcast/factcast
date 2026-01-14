@@ -15,7 +15,6 @@
  */
 package org.factcast.grpc.api.conv;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.protobuf.ProtocolStringList;
 import java.time.LocalDate;
 import java.util.*;
@@ -35,6 +34,7 @@ import org.factcast.grpc.api.StateForRequest;
 import org.factcast.grpc.api.gen.FactStoreProto.*;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Type;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_OptionalFact.Builder;
+import tools.jackson.core.type.TypeReference;
 
 /**
  * Converts Protobuf messages to Java Objects and back.

@@ -15,17 +15,17 @@
  */
 package org.factcast.server.ui.port;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import java.io.FileOutputStream;
 import java.nio.file.Path;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.factcast.server.ui.report.ReportFilterBean;
+import tools.jackson.core.TokenStreamFactory;
 
 public class FileReportUploadStream extends ReportUploadStream {
 
   public FileReportUploadStream(
-      @NonNull JsonFactory jsonFactory,
+      @NonNull TokenStreamFactory jsonFactory,
       @NonNull Path filePath,
       @NonNull String reportName,
       @NonNull ReportFilterBean query) {

@@ -16,7 +16,8 @@
 package org.factcast.factus.projection.parameter;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.google.common.collect.Sets;
 import java.lang.annotation.Annotation;
@@ -188,7 +189,7 @@ class DefaultHandlerParameterContributorTest {
     Assertions.assertThat(provider).isNotNull();
     Fact fact = Fact.builder().meta("no-exactly-narf", "poit").buildWithoutPayload();
     TestProjection p = mock(TestProjection.class);
-    Assertions.assertThat(((Optional) provider.apply(mock(EventSerializer.class), fact, p)))
+    Assertions.assertThat((Optional) provider.apply(mock(EventSerializer.class), fact, p))
         .isEmpty();
   }
 
@@ -212,7 +213,7 @@ class DefaultHandlerParameterContributorTest {
     Assertions.assertThat(provider).isNotNull();
     Fact fact = Fact.builder().meta("no-exactly-narf", "poit").buildWithoutPayload();
     TestProjection p = mock(TestProjection.class);
-    Assertions.assertThat(((List) provider.apply(mock(EventSerializer.class), fact, p))).isEmpty();
+    Assertions.assertThat((List) provider.apply(mock(EventSerializer.class), fact, p)).isEmpty();
   }
 
   @Test
@@ -235,7 +236,7 @@ class DefaultHandlerParameterContributorTest {
     Assertions.assertThat(provider).isNotNull();
     Fact fact = Fact.builder().meta("no-exactly-narf", "poit").buildWithoutPayload();
     TestProjection p = mock(TestProjection.class);
-    Assertions.assertThat((provider.apply(mock(EventSerializer.class), fact, p))).isNull();
+    Assertions.assertThat(provider.apply(mock(EventSerializer.class), fact, p)).isNull();
   }
 
   @Test

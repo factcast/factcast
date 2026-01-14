@@ -15,15 +15,14 @@
  */
 package org.factcast.server.ui.port;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.OutputStream;
 import java.time.OffsetDateTime;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.server.ui.report.ReportFilterBean;
+import tools.jackson.core.*;
+import tools.jackson.databind.node.ObjectNode;
 
 @Slf4j
 public abstract class ReportUploadStream {
@@ -31,26 +30,26 @@ public abstract class ReportUploadStream {
 
   @SneakyThrows
   protected ReportUploadStream(
-      @NonNull JsonFactory jsonFactory,
+      @NonNull TokenStreamFactory jsonFactory,
       @NonNull String reportName,
       @NonNull ReportFilterBean query,
       @NonNull OutputStream outputStream) {
     log.debug("Initializing report upload stream for report '{}'", reportName);
     this.jsonGenerator = jsonFactory.createGenerator(outputStream);
     jsonGenerator.writeStartObject();
-    jsonGenerator.writeStringField("name", reportName);
-    jsonGenerator.writeStringField("generatedAt", OffsetDateTime.now().toString());
-    jsonGenerator.writeFieldName("query");
-    jsonGenerator.writeObject(query);
+    jsonGenerator.writeStringProperty("name", reportName);
+    jsonGenerator.writeStringProperty("generatedAt", OffsetDateTime.now().toString());
+    jsonGenerator.writeName("query");
+    jsonGenerator.writePOJO(query);
     // Open Array for events
-    jsonGenerator.writeFieldName("events");
+    jsonGenerator.writeName("events");
     jsonGenerator.writeStartArray();
   }
 
   @SneakyThrows
   public void writeToBatch(ObjectNode obj) {
     // passes on to outputStream
-    jsonGenerator.writeObject(obj);
+    jsonGenerator.writePOJO(obj);
   }
 
   @SneakyThrows

@@ -18,7 +18,7 @@ package org.factcast.spring.boot.autoconfigure.server.ui;
 import org.factcast.server.ui.config.SecurityConfiguration;
 import org.springframework.boot.autoconfigure.*;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
+import org.springframework.boot.security.autoconfigure.servlet.SecurityAutoConfiguration;
 import org.springframework.context.annotation.Import;
 
 @AutoConfiguration

@@ -21,7 +21,6 @@ import org.factcast.schema.registry.cli.registry.FactcastIndexCreator
 import org.factcast.schema.registry.cli.registry.StaticPageCreator
 import org.springframework.stereotype.Component
 import java.nio.file.Path
-import java.nio.file.Paths
 
 @Component
 class DistributionCreatorServiceImpl(
@@ -31,7 +30,7 @@ class DistributionCreatorServiceImpl(
     override fun createDistributable(outputPath: Path, project: Project, removedSchemaProps: Set<String>) {
         staticPageCreator.createPage(outputPath, project)
 
-        val indexPath = outputPath.resolve(Paths.get("static", "registry"))
+        val indexPath = outputPath.resolve(Path.of("static", "registry"))
         factcastIndexCreator.createFactcastIndex(indexPath, project, removedSchemaProps)
     }
 }

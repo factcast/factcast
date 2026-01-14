@@ -22,7 +22,7 @@ import lombok.*;
 import org.factcast.factus.event.MetaMap;
 
 @Getter
-@Setter(value = AccessLevel.PROTECTED)
+@Setter(AccessLevel.PROTECTED)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @EqualsAndHashCode(of = {"id"})
 public class FactHeader {
@@ -46,7 +46,9 @@ public class FactHeader {
     String s = meta.getFirst("_ser");
     if (s != null) {
       return Long.parseLong(s);
-    } else return null;
+    } else {
+      return null;
+    }
   }
 
   @Nullable
@@ -56,7 +58,9 @@ public class FactHeader {
     String s = meta.getFirst("_ts");
     if (s != null) {
       return Long.parseLong(s);
-    } else return null;
+    } else {
+      return null;
+    }
   }
 
   /**

@@ -40,8 +40,11 @@ public class FactStreamPosition {
   @Deprecated
   // for compatibility only
   public static FactStreamPosition withoutSerial(@Nullable UUID uuid) {
-    if (uuid == null) return null;
-    else return FactStreamPosition.of(uuid, -1L);
+    if (uuid == null) {
+      return null;
+    } else {
+      return FactStreamPosition.of(uuid, -1L);
+    }
   }
 
   /**

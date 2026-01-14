@@ -24,7 +24,6 @@ import org.factcast.schema.registry.cli.registry.StaticPageCreator
 import org.factcast.schema.registry.cli.registry.TemplateService
 import org.springframework.stereotype.Component
 import java.nio.file.Path
-import java.nio.file.Paths
 
 @Component
 class HugoPageCreatorImpl(
@@ -83,7 +82,7 @@ class HugoPageCreatorImpl(
             return
         }
 
-        val filePath = eventPath.resolve(Paths.get("transformations", "_index.md"))
+        val filePath = eventPath.resolve(Path.of("transformations", "_index.md"))
         val template = templateService.loadTransformationsTemplate(namespace, event)
 
         fileSystemService.writeToFile(filePath.toFile(), template)

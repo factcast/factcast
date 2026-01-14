@@ -20,13 +20,7 @@ import static org.factcast.core.TestHelper.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.annotation.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,6 +34,9 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.io.*;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.*;
+import tools.jackson.databind.node.ObjectNode;
 
 class FactCastJsonTest {
   @Test
@@ -193,12 +190,14 @@ class FactCastJsonTest {
     String someJson = "{\"meta\":{\"foo\":\"bar\",\"_ser\":78}}";
     String pretty = FactCastJson.toPrettyString(someJson);
     assertEquals(
-        "{\n"
-            + "  \"meta\" : {\n"
-            + "    \"foo\" : \"bar\",\n"
-            + "    \"_ser\" : 78\n"
-            + "  }\n"
-            + "}",
+        """
+        {
+          "meta" : {
+            "foo" : "bar",
+            "_ser" : 78
+          }
+        }\
+        """,
         pretty);
   }
 

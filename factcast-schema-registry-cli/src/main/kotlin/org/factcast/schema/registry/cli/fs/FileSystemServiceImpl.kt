@@ -81,7 +81,9 @@ class FileSystemServiceImpl : FileSystemService {
             FileUtils.copyDirectory(File(url.path), target.toFile())
         } else if (toString.startsWith("jar:")) {
             copyJarResourcesRecursively(target.toFile(), urlConnection as JarURLConnection)
-        } else throw IllegalStateException("not supported")
+        } else {
+            throw IllegalStateException("not supported")
+        }
     }
 
     override fun copyFilteredJson(from: File, to: File, removedSchemaProps: Set<String>) {

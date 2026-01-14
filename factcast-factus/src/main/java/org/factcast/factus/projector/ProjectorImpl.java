@@ -23,7 +23,10 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.*;
 import org.factcast.core.spec.*;
@@ -34,13 +37,14 @@ import org.factcast.factus.projection.*;
 import org.factcast.factus.projection.parameter.*;
 import org.factcast.factus.projection.tx.*;
 import org.springframework.aop.framework.Advised;
+import org.springframework.aop.support.AopUtils;
 
 @Slf4j
 public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
   private final Projection projection;
 
-  @Getter(value = AccessLevel.PROTECTED)
+  @Getter(AccessLevel.PROTECTED)
   private final Map<FactSpecCoordinates, Dispatcher> dispatchInfo;
 
   private final EventSerializer serializer;
@@ -128,7 +132,9 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
   private void setFactStreamPositionIfAwareButNotTransactional(
       @NonNull FactStreamPosition latestSuccessful) {
-    if (!(projection instanceof TransactionAware)) setFactStreamPositionIfAware(latestSuccessful);
+    if (!(projection instanceof TransactionAware)) {
+      setFactStreamPositionIfAware(latestSuccessful);
+    }
   }
 
   @VisibleForTesting
@@ -146,24 +152,30 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
   @VisibleForTesting
   void beginIfTransactional() {
-    if (projection instanceof TransactionAware) ((TransactionAware) projection).begin();
+    if (projection instanceof TransactionAware aware) {
+      aware.begin();
+    }
   }
 
   @VisibleForTesting
   void rollbackIfTransactional() {
-    if (projection instanceof TransactionAware) ((TransactionAware) projection).rollback();
+    if (projection instanceof TransactionAware aware) {
+      aware.rollback();
+    }
   }
 
   @VisibleForTesting
   void commitIfTransactional() {
-    if (projection instanceof TransactionAware) ((TransactionAware) projection).commit();
+    if (projection instanceof TransactionAware aware) {
+      aware.commit();
+    }
   }
 
   private void setFactStreamPositionIfAware(@NonNull FactStreamPosition latestAttempted) {
-    if (projection instanceof TransactionAware) {
-      ((TransactionAware) projection).transactionalFactStreamPosition(latestAttempted);
-    } else if (projection instanceof FactStreamPositionAware) {
-      ((FactStreamPositionAware) projection).factStreamPosition(latestAttempted);
+    if (projection instanceof TransactionAware aware1) {
+      aware1.transactionalFactStreamPosition(latestAttempted);
+    } else if (projection instanceof FactStreamPositionAware aware) {
+      aware.factStreamPosition(latestAttempted);
     }
   }
 
@@ -215,12 +227,13 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
     List<FactSpec> discovered =
         dispatchInfo.values().stream().map(d -> d.spec().copy()).collect(Collectors.toList());
 
-    if (projection instanceof Aggregate) {
-      UUID aggId = AggregateUtil.aggregateId((Aggregate) projection);
-      if (aggId != null)
+    if (projection instanceof Aggregate aggregate) {
+      UUID aggId = AggregateUtil.aggregateId(aggregate);
+      if (aggId != null) {
         for (FactSpec factSpec : discovered) {
           factSpec.aggId(aggId);
         }
+      }
     }
 
     List<FactSpec> ret = projection.postprocess(discovered);
@@ -242,13 +255,15 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
   @SneakyThrows
   @NonNull
   public static Object unwrapProxy(@NonNull Object bean) {
-    while (org.springframework.aop.support.AopUtils.isAopProxy(bean) && bean instanceof Advised) {
+    while (AopUtils.isAopProxy(bean) && bean instanceof Advised) {
       Advised advised = (Advised) bean;
       Object targetBean = Objects.requireNonNull(advised.getTargetSource().getTarget());
-      if (targetBean == bean)
+      if (targetBean == bean) {
         throw new IllegalStateException(
             "AOP gone wrong? Advised.targetSource points back to advised?!?!");
-      else bean = targetBean;
+      } else {
+        bean = targetBean;
+      }
     }
     return bean;
   }

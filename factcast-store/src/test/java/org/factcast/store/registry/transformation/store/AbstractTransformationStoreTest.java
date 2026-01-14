@@ -17,7 +17,6 @@ package org.factcast.store.registry.transformation.store;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import io.micrometer.core.instrument.Tag;
@@ -29,8 +28,11 @@ import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.*;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 public abstract class AbstractTransformationStoreTest {
   @Spy protected RegistryMetrics registryMetrics = new NOPRegistryMetrics();
 

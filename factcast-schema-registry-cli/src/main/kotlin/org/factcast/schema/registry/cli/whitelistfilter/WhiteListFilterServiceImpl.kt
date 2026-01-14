@@ -45,8 +45,8 @@ class WhiteListFilterServiceImpl : WhiteListFilterService {
             .filter {
                 try {
                     val (fromVersion, toVersion) = determineTransformationVersions(it)
-                    eventVersionsContainsVersion(filteredVersionsFolder, fromVersion) &&
-                            eventVersionsContainsVersion(filteredVersionsFolder, toVersion)
+                    eventVersionsContainsVersion(filteredVersionsFolder, fromVersion)
+                            && eventVersionsContainsVersion(filteredVersionsFolder, toVersion)
                 } catch (e: IndexOutOfBoundsException) {
                     true // on parse error, ignore transformation from white listing
                 }

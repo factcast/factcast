@@ -34,7 +34,6 @@ import org.springframework.test.context.ContextConfiguration;
     classes = {TestFactusApplication.class, RedissonSnapshotCacheAutoConfiguration.class})
 public class RedissonSnapshotCacheTest extends SnapshotCacheTest {
 
-  @Autowired
   public RedissonSnapshotCacheTest(SnapshotCache repository) {
     super(repository);
   }

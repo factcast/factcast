@@ -15,7 +15,6 @@
  */
 package org.factcast.server.ui.views;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Tag;
@@ -30,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.util.NoCoverageReportToBeGenerated;
 import org.factcast.server.ui.plugins.JsonViewEntries;
 import org.factcast.server.ui.plugins.JsonViewEntry;
+import tools.jackson.databind.ObjectMapper;
 
 @Tag("json-view")
 @JsModule("./json-view/json-view.ts")

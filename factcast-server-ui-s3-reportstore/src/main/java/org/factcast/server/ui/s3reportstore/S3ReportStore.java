@@ -15,16 +15,14 @@
  */
 package org.factcast.server.ui.s3reportstore;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.net.URL;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
-import lombok.*;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.util.ExceptionHelper;
 import org.factcast.server.ui.port.ReportStore;
@@ -33,6 +31,7 @@ import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import tools.jackson.core.json.JsonFactory;
 
 @Slf4j
 public class S3ReportStore implements ReportStore {
@@ -50,8 +49,6 @@ public class S3ReportStore implements ReportStore {
     this.s3Presigner = s3Presigner;
     this.bucketName = bucketName;
     final var om = new ObjectMapper();
-    om.registerModule(new JavaTimeModule());
-    om.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     this.objectMapper = om;
   }
 
@@ -65,11 +62,14 @@ public class S3ReportStore implements ReportStore {
           "Report was not generated as another report with this name already exists.");
     }
     return new S3BatchedReportUploadStream(
-        s3Client, bucketName, new JsonFactory(objectMapper), reportKey, reportName, query);
+        //     // TODO FIXME @SB4
+        // was: s3Client, bucketName, new TokenStreamFactory(objectMapper), reportKey, reportName,
+        // query);
+        s3Client, bucketName, new JsonFactory(), reportKey, reportName, query);
   }
 
   private static String getReportKey(String userName, String reportName) {
-    return Paths.get(userName, reportName).toString();
+    return Path.of(userName, reportName).toString();
   }
 
   @Override

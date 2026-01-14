@@ -18,11 +18,12 @@ package org.factcast.store.internal.filter.blacklist;
 import java.util.UUID;
 import lombok.Builder;
 import lombok.Data;
-import lombok.extern.jackson.Jacksonized;
 
 @Data
 @Builder
-@Jacksonized
+// TODO FIXME @SB4
+// lombok 1.18.42 seems to be tied to jackson2
+// @Jacksonized
 public class BlacklistEntry {
   private UUID id;
   private String reason;

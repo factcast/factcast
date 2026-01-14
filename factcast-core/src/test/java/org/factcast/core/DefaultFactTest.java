@@ -17,10 +17,10 @@ package org.factcast.core;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import java.io.*;
 import java.util.UUID;
 import org.junit.jupiter.api.*;
+import tools.jackson.core.exc.StreamReadException;
 
 public class DefaultFactTest {
 
@@ -37,7 +37,7 @@ public class DefaultFactTest {
   @Test
   void testUnparseableHeader() {
     Assertions.assertThrows(
-        JsonParseException.class, () -> DefaultFact.of("not json at all", "{}"));
+        StreamReadException.class, () -> DefaultFact.of("not json at all", "{}"));
   }
 
   @Test

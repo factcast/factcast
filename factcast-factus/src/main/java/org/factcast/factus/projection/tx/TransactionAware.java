@@ -15,7 +15,7 @@
  */
 package org.factcast.factus.projection.tx;
 
-import lombok.*;
+import lombok.NonNull;
 import org.factcast.core.*;
 import org.factcast.factus.projection.FactStreamPositionAware;
 

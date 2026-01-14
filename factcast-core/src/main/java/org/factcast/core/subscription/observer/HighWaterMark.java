@@ -16,12 +16,11 @@
 package org.factcast.core.subscription.observer;
 
 import java.util.UUID;
-import javax.annotation.Nullable;
-import lombok.*;
+import lombok.Value;
 
 @Value(staticConstructor = "of")
 public class HighWaterMark {
-  @Nullable UUID targetId;
+  @javax.annotation.Nullable UUID targetId;
   long targetSer;
 
   public static HighWaterMark empty() {

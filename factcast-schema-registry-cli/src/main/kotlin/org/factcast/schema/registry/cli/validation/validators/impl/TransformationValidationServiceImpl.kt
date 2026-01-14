@@ -15,7 +15,7 @@
  */
 package org.factcast.schema.registry.cli.validation.validators.impl
 
-import com.fasterxml.jackson.databind.JsonNode
+import com.github.fge.jsonschema.core.report.ListProcessingReport
 import com.google.common.annotations.VisibleForTesting
 import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.fs.FileSystemService
@@ -69,7 +69,7 @@ class TransformationValidationServiceImpl(
             .loadSchema(toVersion.schemaPath)
             .fold({ listOf(it) }) { schema ->
                 examples.mapNotNull { example ->
-                    val transformationResult: JsonNode?
+                    val transformationResult: tools.jackson.databind.JsonNode?
                     try {
                         transformationResult = transformationEvaluator.evaluate(ns, event, transformation, example)
                     } catch (e: Exception) {
@@ -81,19 +81,29 @@ class TransformationValidationServiceImpl(
                         )
                     }
 
-                    transformationResult?.let {
-                        val validationResult = schema.validate(it)
-                        if (validationResult.isSuccess) {
-                            null
-                        } else {
-                            ProjectError.TransformationValidationError(
-                                event.type,
-                                fromVersion.version,
-                                toVersion.version,
-                                validationResult
-                            )
-                        }
-                    }
+                    //     // TODO FIXME @SB4
+                    // schemavalidator ready for jackson3?
+
+//                    transformationResult?.let {
+//                        val validationResult = schema.validate(it)
+//                        if (validationResult.isSuccess) {
+//                            null
+//                        } else {
+//                            ProjectError.TransformationValidationError(
+//                                event.type,
+//                                fromVersion.version,
+//                                toVersion.version,
+//                                validationResult
+//                            )
+//                        }
+//                    }
+
+                    ProjectError.TransformationValidationError(
+                        event.type,
+                        fromVersion.version,
+                        toVersion.version,
+                        ListProcessingReport()
+                    )
                 }
             }
     }.flatten()

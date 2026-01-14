@@ -15,14 +15,15 @@
  */
 package org.factcast.core;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import java.util.*;
 import javax.annotation.Nullable;
-import lombok.*;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.factcast.core.spec.FactSpecCoordinates;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.event.*;
 import org.factcast.factus.event.EventObject;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Defines a fact to be either published or consumed. Consists of two JSON Strings: jsonHeader and

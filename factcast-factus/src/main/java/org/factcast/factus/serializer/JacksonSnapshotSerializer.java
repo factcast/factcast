@@ -15,11 +15,11 @@
  */
 package org.factcast.factus.serializer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.projection.SnapshotProjection;
+import tools.jackson.databind.ObjectMapper;
 
 public class JacksonSnapshotSerializer implements SnapshotSerializer {
 

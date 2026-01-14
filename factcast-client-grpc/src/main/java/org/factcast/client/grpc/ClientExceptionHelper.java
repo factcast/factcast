@@ -37,9 +37,7 @@ public class ClientExceptionHelper {
   public static RuntimeException from(Throwable e) {
 
     Throwable toReturn = e;
-    if (e instanceof StatusRuntimeException) {
-
-      StatusRuntimeException sre = (StatusRuntimeException) e;
+    if (e instanceof StatusRuntimeException sre) {
 
       Metadata md = sre.getTrailers();
       if (md != null) {
@@ -79,8 +77,7 @@ public class ClientExceptionHelper {
       return true;
     }
 
-    if (exception instanceof StatusRuntimeException) {
-      StatusRuntimeException runtimeException = (StatusRuntimeException) exception;
+    if (exception instanceof StatusRuntimeException runtimeException) {
       Code s = runtimeException.getStatus().getCode();
       return RETRYABLE_STATUS.contains(s) || isCausedByNetwork(runtimeException);
     }

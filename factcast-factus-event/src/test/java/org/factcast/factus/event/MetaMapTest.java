@@ -18,7 +18,6 @@ package org.factcast.factus.event;
 import static org.mockito.Mockito.*;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Collection;
 import java.util.function.BiConsumer;
 import lombok.SneakyThrows;
@@ -27,6 +26,7 @@ import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.databind.ObjectMapper;
 
 @ExtendWith(MockitoExtension.class)
 class MetaMapTest {

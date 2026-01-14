@@ -48,6 +48,7 @@ import org.factcast.store.registry.*;
 import org.factcast.store.registry.transformation.cache.*;
 import org.factcast.store.registry.transformation.chains.TransformationChains;
 import org.springframework.boot.autoconfigure.condition.*;
+import org.springframework.boot.sql.init.dependency.DependsOnDatabaseInitialization;
 import org.springframework.context.annotation.*;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -98,6 +99,7 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
+  @DependsOnDatabaseInitialization
   public PgCatchupFactory pgCatchupFactory(StoreConfigurationProperties props, PgMetrics metrics) {
     return new PgFetchingCatchUpFactory(props, metrics);
   }
@@ -163,6 +165,7 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
+  @DependsOnDatabaseInitialization
   public PgConnectionSupplier pgConnectionSupplier(DataSource ds) {
     return new PgConnectionSupplier(ds);
   }

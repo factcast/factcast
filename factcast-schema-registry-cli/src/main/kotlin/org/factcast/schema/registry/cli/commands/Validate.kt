@@ -19,8 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import picocli.CommandLine.Command
 import picocli.CommandLine.Option
-import java.nio.file.Paths
 import kotlin.system.exitProcess
+
+import java.nio.file.Path
 
 @Command(
     name = "validate",
@@ -30,7 +31,7 @@ import kotlin.system.exitProcess
 @Component
 class Validate : Runnable {
     @Option(names = ["-p", "--base-path"], description = ["The directory where your source files live"])
-    var basePath: String = Paths.get(".").toString()
+    var basePath: String = Path.of(".").toString()
 
     @Option(names = ["-w", "--white-list"], description = ["Path to an optional whitelist file."])
     var whiteList: String? = null
@@ -39,12 +40,13 @@ class Validate : Runnable {
     lateinit var commandService: CommandService
 
     override fun run() {
-        val sourceRoot = Paths.get(basePath).toAbsolutePath().normalize()
-        val whiteListPath = whiteList?.let { Paths.get(it).toAbsolutePath().normalize() }
+        val sourceRoot = Path.of(basePath).toAbsolutePath().normalize()
+        val whiteListPath = whiteList?.let { Path.of(it).toAbsolutePath().normalize() }
 
         val exitCode = commandService.validate(sourceRoot, whiteListPath)
 
-        if (exitCode != 0)
+        if (exitCode != 0) {
             exitProcess(exitCode)
+        }
     }
 }

@@ -19,8 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import picocli.CommandLine.Command
 import picocli.CommandLine.Option
-import java.nio.file.Paths
 import kotlin.system.exitProcess
+
+import java.nio.file.Path
 
 @Command(
     name = "build",
@@ -30,10 +31,10 @@ import kotlin.system.exitProcess
 @Component
 class Build : Runnable {
     @Option(names = ["-p", "--base-path"], description = ["The directory where your source files live"])
-    var basePath: String = Paths.get(".").toString()
+    var basePath: String = Path.of(".").toString()
 
     @Option(names = ["-o", "--output"], description = ["Output directory of the registry"])
-    var outputPath: String = Paths.get(".", "output").toString()
+    var outputPath: String = Path.of(".", "output").toString()
 
     @Option(names = ["-w", "--white-list"], description = ["Path to an optional whitelist file."])
     var whiteList: String? = null
@@ -55,9 +56,9 @@ class Build : Runnable {
     lateinit var commandService: CommandService
 
     override fun run() {
-        val sourceRoot = Paths.get(basePath).toAbsolutePath().normalize()
-        val outputRoot = Paths.get(outputPath).toAbsolutePath().normalize()
-        val whiteListPath = whiteList?.let { Paths.get(it).toAbsolutePath().normalize() }
+        val sourceRoot = Path.of(basePath).toAbsolutePath().normalize()
+        val outputRoot = Path.of(outputPath).toAbsolutePath().normalize()
+        val whiteListPath = whiteList?.let { Path.of(it).toAbsolutePath().normalize() }
 
         val exitCode = commandService.build(
             sourceRoot,
@@ -66,7 +67,8 @@ class Build : Runnable {
             if (schemaStripTitles) removeSchemaFields.plus("title") else removeSchemaFields
         )
 
-        if (exitCode != 0)
+        if (exitCode != 0) {
             exitProcess(exitCode)
+        }
     }
 }

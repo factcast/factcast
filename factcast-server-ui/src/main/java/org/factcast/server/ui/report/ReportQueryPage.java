@@ -15,7 +15,6 @@
  */
 package org.factcast.server.ui.report;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.button.*;
@@ -42,6 +41,7 @@ import org.factcast.server.ui.utils.*;
 import org.factcast.server.ui.views.*;
 import org.factcast.server.ui.views.filter.FilterCriteriaViews;
 import org.springframework.security.core.context.SecurityContextHolder;
+import tools.jackson.databind.node.ObjectNode;
 
 @Route(value = "ui/report", layout = MainLayout.class)
 @PageTitle("Report")

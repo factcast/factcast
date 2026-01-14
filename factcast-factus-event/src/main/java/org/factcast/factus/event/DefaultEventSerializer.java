@@ -15,10 +15,10 @@
  */
 package org.factcast.factus.event;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import tools.jackson.databind.ObjectMapper;
 
 @RequiredArgsConstructor
 public class DefaultEventSerializer implements EventSerializer {

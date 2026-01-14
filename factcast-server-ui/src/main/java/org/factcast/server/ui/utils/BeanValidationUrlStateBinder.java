@@ -15,9 +15,6 @@
  */
 package org.factcast.server.ui.utils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.ValidationException;
@@ -30,6 +27,8 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.util.NoCoverageReportToBeGenerated;
 import org.springframework.web.util.UriComponentsBuilder;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 @Slf4j
 @NoCoverageReportToBeGenerated
@@ -46,7 +45,7 @@ public class BeanValidationUrlStateBinder<T> extends BeanValidationBinder<T> {
   }
 
   private ObjectMapper createOm() {
-    return new ObjectMapper().registerModules(new JavaTimeModule());
+    return new ObjectMapper();
   }
 
   @Override
@@ -68,7 +67,7 @@ public class BeanValidationUrlStateBinder<T> extends BeanValidationBinder<T> {
       try {
         om.readerForUpdating(bean).readValue(parametersMap.get(STATE).get(0));
         readBean(bean);
-      } catch (JsonProcessingException e) {
+      } catch (JacksonException e) {
         // ignore
         log.warn("ignoring passed in parameters due to:", e);
       }

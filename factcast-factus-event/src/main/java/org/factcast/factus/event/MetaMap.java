@@ -15,15 +15,16 @@
  */
 package org.factcast.factus.event;
 
-import com.fasterxml.jackson.core.*;
-import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.annotation.*;
-import java.io.IOException;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import lombok.*;
+import lombok.NonNull;
+import lombok.SneakyThrows;
+import lombok.Value;
+import tools.jackson.core.*;
+import tools.jackson.databind.*;
+import tools.jackson.databind.annotation.*;
 
 /**
  * Multimaps as defined in guava or commons are probably a better idea to use in general. However,
@@ -143,23 +144,23 @@ public class MetaMap {
     return keySet().contains(k);
   }
 
-  static class Serializer extends JsonSerializer<MetaMap> {
+  static class Serializer extends ValueSerializer<MetaMap> {
 
     @Override
     @SneakyThrows
     public void serialize(
-        MetaMap metaMap, JsonGenerator jgen, SerializerProvider serializerProvider)
-        throws IOException {
+        MetaMap metaMap, JsonGenerator jgen, SerializationContext serializerProvider)
+        throws JacksonException {
       if (metaMap != null) {
         jgen.writeStartObject();
         for (String k : metaMap.keySet()) {
           Collection<String> values = metaMap.getAll(k);
           if (values.size() == 1) {
-            jgen.writeStringField(k, values.iterator().next());
+            jgen.writeStringProperty(k, values.iterator().next());
           } else {
             // also valid if size==0
             String[] v = values.toArray(new String[0]);
-            jgen.writeFieldName(k);
+            jgen.writeName(k);
             jgen.writeArray(v, 0, v.length);
           }
         }
@@ -168,35 +169,37 @@ public class MetaMap {
     }
   }
 
-  static class Deserializer extends JsonDeserializer<MetaMap> {
+  static class Deserializer extends ValueDeserializer<MetaMap> {
     @Override
     public MetaMap deserialize(JsonParser jp, DeserializationContext deserializationContext)
-        throws IOException {
-      MetaMap ret = new MetaMap();
+        throws JacksonException {
+      {
+        MetaMap ret = new MetaMap();
 
-      JsonNode node = jp.getCodec().readTree(jp);
-      Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
-      fields.forEachRemaining(
-          e -> {
-            String k = e.getKey();
-            JsonNode n = e.getValue();
-            if (n.isNull()) {
-              ret.set(k, null);
-            } else if (n.isTextual()) {
-              ret.add(k, n.textValue());
-            } else if (n.isNumber()) {
-              ret.add(k, n.numberValue().toString());
-            } else if (n.isBoolean()) {
-              ret.add(k, Boolean.toString(n.booleanValue()));
-            } else {
-              if (!n.isArray()) {
-                throw new IllegalStateException("expected array but got " + n);
+        JsonNode node = jp.objectReadContext().readTree(jp);
+        Iterator<Map.Entry<String, JsonNode>> fields = node.properties().iterator();
+        fields.forEachRemaining(
+            e -> {
+              String k = e.getKey();
+              JsonNode n = e.getValue();
+              if (n.isNull()) {
+                ret.set(k, null);
+              } else if (n.isString()) {
+                ret.add(k, n.asString());
+              } else if (n.isNumber()) {
+                ret.add(k, n.numberValue().toString());
+              } else if (n.isBoolean()) {
+                ret.add(k, Boolean.toString(n.booleanValue()));
+              } else {
+                if (!n.isArray()) {
+                  throw new IllegalStateException("expected array but got " + n);
+                }
+
+                n.iterator().forEachRemaining(v -> ret.add(k, v.asString()));
               }
-
-              n.iterator().forEachRemaining(v -> ret.add(k, v.textValue()));
-            }
-          });
-      return ret;
+            });
+        return ret;
+      }
     }
   }
 }

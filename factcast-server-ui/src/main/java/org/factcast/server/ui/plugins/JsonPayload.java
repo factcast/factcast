@@ -15,12 +15,12 @@
  */
 package org.factcast.server.ui.plugins;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.ParseContext;
 import java.util.List;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import tools.jackson.databind.JsonNode;
 
 @RequiredArgsConstructor
 public class JsonPayload {

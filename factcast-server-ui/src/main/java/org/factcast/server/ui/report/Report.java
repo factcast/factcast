@@ -15,10 +15,10 @@
  */
 package org.factcast.server.ui.report;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.OffsetDateTime;
 import java.util.List;
 import lombok.NonNull;
+import tools.jackson.databind.node.ObjectNode;
 
 public record Report(
     @NonNull String name,

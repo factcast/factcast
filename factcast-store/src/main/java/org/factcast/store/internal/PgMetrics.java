@@ -26,7 +26,8 @@ import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
-import lombok.*;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -105,7 +106,9 @@ public class PgMetrics implements InitializingBean {
   private static String mapException(@Nullable Exception e) {
     if (e == null) {
       return StoreMetrics.TAG_EXCEPTION_VALUE_NONE;
-    } else return e.getClass().getSimpleName();
+    } else {
+      return e.getClass().getSimpleName();
+    }
   }
 
   @NonNull

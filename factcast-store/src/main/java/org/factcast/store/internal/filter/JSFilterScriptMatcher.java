@@ -15,13 +15,13 @@
  */
 package org.factcast.store.internal.filter;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Preconditions;
 import javax.annotation.Nullable;
 import lombok.*;
 import org.factcast.core.spec.*;
 import org.factcast.store.internal.PgFact;
 import org.factcast.store.internal.script.*;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Matches facts against specifications using the contained filterScripts

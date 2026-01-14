@@ -30,7 +30,10 @@ public class ConditionalPublishRequest {
   private UUID token;
 
   public Optional<StateToken> token() {
-    if (token == null) return Optional.empty();
-    else return Optional.of(new StateToken(token));
+    if (token == null) {
+      return Optional.empty();
+    } else {
+      return Optional.of(new StateToken(token));
+    }
   }
 }
