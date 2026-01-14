@@ -33,16 +33,17 @@ public class S3MultipartOutputStream extends OutputStream {
   private final String bucket;
   private final String key;
   private final byte[] buf;
-  private int count = 0;
+  private int count;
   private final List<CompletedPart> parts = new ArrayList<>();
   private final String uploadId;
-  private boolean closed = false;
+  private boolean closed;
 
   @SneakyThrows
   public S3MultipartOutputStream(
       @NonNull S3AsyncClient s3, @NonNull String bucket, @NonNull String key, int partSizeBytes) {
-    if (partSizeBytes < 5 * 1024 * 1024)
+    if (partSizeBytes < 5 * 1024 * 1024) {
       throw new IllegalArgumentException("partSize must be higher than 5 MiB");
+    }
     this.s3 = s3;
     this.bucket = bucket;
     this.key = key;
@@ -63,7 +64,9 @@ public class S3MultipartOutputStream extends OutputStream {
   @Override
   public void write(int b) throws IOException {
     ensureOpen();
-    if (count == buf.length) flushPart();
+    if (count == buf.length) {
+      flushPart();
+    }
     buf[count++] = (byte) b;
   }
 
@@ -81,7 +84,9 @@ public class S3MultipartOutputStream extends OutputStream {
       count += toCopy;
       off += toCopy;
       len -= toCopy;
-      if (count == buf.length) flushPart();
+      if (count == buf.length) {
+        flushPart();
+      }
     }
   }
 
@@ -92,11 +97,15 @@ public class S3MultipartOutputStream extends OutputStream {
 
   @Override
   public void close() throws IOException {
-    if (closed) return;
+    if (closed) {
+      return;
+    }
     closed = true;
     try {
       // send final (possibly < 5 MiB) part
-      if (count > 0) upload(buf, count);
+      if (count > 0) {
+        upload(buf, count);
+      }
       parts.sort(Comparator.comparingInt(CompletedPart::partNumber));
       s3.completeMultipartUpload(
               CompleteMultipartUploadRequest.builder()
@@ -134,7 +143,7 @@ public class S3MultipartOutputStream extends OutputStream {
                   .contentLength((long) len)
                   .build(),
               AsyncRequestBody.fromBytes(
-                  len == bytes.length ? bytes : java.util.Arrays.copyOfRange(bytes, 0, len)));
+                  len == bytes.length ? bytes : Arrays.copyOfRange(bytes, 0, len)));
 
       final var partResponse = upload.get();
       parts.add(
@@ -160,7 +169,9 @@ public class S3MultipartOutputStream extends OutputStream {
   }
 
   private void ensureOpen() throws IOException {
-    if (closed) throw new IOException("Stream closed");
+    if (closed) {
+      throw new IOException("Stream closed");
+    }
   }
 
   private int nextPartNumber() {

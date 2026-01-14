@@ -30,8 +30,11 @@ import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 public abstract class AbstractTransformationCacheTest {
   protected TransformationCache uut;
 
@@ -63,7 +66,7 @@ public abstract class AbstractTransformationCacheTest {
     PgFact fact3 = PgFact.from(Fact.builder().ns("ns").type("type").id(id3).version(1).build("{}"));
     String chainId = "1-2-3";
 
-    uut.put(TransformationCache.Key.of(fact1.id(), 1, chainId), (fact1));
+    uut.put(TransformationCache.Key.of(fact1.id(), 1, chainId), fact1);
     uut.put(TransformationCache.Key.of(fact2.id(), 1, chainId), fact2);
     // but not fact3 !
 

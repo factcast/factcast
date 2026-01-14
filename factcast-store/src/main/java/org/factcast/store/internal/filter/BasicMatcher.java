@@ -16,7 +16,7 @@
 package org.factcast.store.internal.filter;
 
 import java.util.*;
-import lombok.*;
+import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.*;
 import org.factcast.store.internal.PgFact;
@@ -91,7 +91,7 @@ public final class BasicMatcher implements PGFactMatcher {
   }
 
   boolean nsMatch(Fact t) {
-    return ns.equals(t.ns()) || ns.equals("*");
+    return ns.equals(t.ns()) || "*".equals(ns);
   }
 
   boolean typeMatch(Fact t) {
@@ -99,7 +99,7 @@ public final class BasicMatcher implements PGFactMatcher {
       return true;
     }
     String otherType = t.type();
-    return type.equals(otherType) || type.equals("*");
+    return type.equals(otherType) || "*".equals(type);
   }
 
   boolean versionMatch(Fact t) {

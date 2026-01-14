@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import eu.rekawek.toxiproxy.model.ToxicDirection;
 import java.util.*;
 import java.util.concurrent.*;
-import lombok.*;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;

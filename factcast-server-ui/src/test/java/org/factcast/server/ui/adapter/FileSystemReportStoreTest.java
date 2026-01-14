@@ -24,7 +24,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.vaadin.flow.server.*;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.*;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Stream;
@@ -114,7 +115,7 @@ class FileSystemReportStoreTest {
     @SneakyThrows
     void happyPath() {
       final var reportName = "report.json";
-      final var filePath = Paths.get(PERSISTENCE_DIR, USER_NAME, reportName);
+      final var filePath = Path.of(PERSISTENCE_DIR, USER_NAME, reportName);
       createFile(filePath);
 
       assertThatCode(() -> uut.delete(USER_NAME, "report.json")).doesNotThrowAnyException();

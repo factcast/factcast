@@ -17,7 +17,6 @@ package org.factcast.store.internal.listen;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
@@ -255,10 +254,7 @@ class PgListenerTest {
     // first event is the general wakeup to the subscribers after startup
     assertThat(
             allNotifications.stream()
-                .anyMatch(
-                    e ->
-                        e instanceof FactInsertionNotification
-                            && ((FactInsertionNotification) e).ser() == null))
+                .anyMatch(e -> e instanceof FactInsertionNotification fin && fin.ser() == null))
         .isTrue();
     // events 2 - incl. 4 are notifies
     allNotifications.forEach(System.out::println);
@@ -324,16 +320,16 @@ class PgListenerTest {
             ArgumentMatchers.argThat(
                 n ->
                     SchemaStoreChangeNotification.class.isInstance(n)
-                        && ((SchemaStoreChangeNotification) n).ns().equals("namespace")
-                        && ((SchemaStoreChangeNotification) n).type().equals("theType")
+                        && "namespace".equals(((SchemaStoreChangeNotification) n).ns())
+                        && "theType".equals(((SchemaStoreChangeNotification) n).type())
                         && ((SchemaStoreChangeNotification) n).version() == 1));
     verify(eventBus, times(1))
         .post(
             ArgumentMatchers.argThat(
                 n ->
                     SchemaStoreChangeNotification.class.isInstance(n)
-                        && ((SchemaStoreChangeNotification) n).ns().equals("namespace")
-                        && ((SchemaStoreChangeNotification) n).type().equals("theType")
+                        && "namespace".equals(((SchemaStoreChangeNotification) n).ns())
+                        && "theType".equals(((SchemaStoreChangeNotification) n).type())
                         && ((SchemaStoreChangeNotification) n).version() == 3));
 
     // the initial one
@@ -393,17 +389,16 @@ class PgListenerTest {
             ArgumentMatchers.argThat(
                 n ->
                     TransformationStoreChangeNotification.class.isInstance(n)
-                        && ((TransformationStoreChangeNotification) n).ns().equals("namespace")
-                        && ((TransformationStoreChangeNotification) n).type().equals("theType")));
+                        && "namespace".equals(((TransformationStoreChangeNotification) n).ns())
+                        && "theType".equals(((TransformationStoreChangeNotification) n).type())));
     verify(pgListener, times(1))
         .post(
             ArgumentMatchers.argThat(
                 n ->
                     TransformationStoreChangeNotification.class.isInstance(n)
-                        && ((TransformationStoreChangeNotification) n).ns().equals("namespace")
-                        && ((TransformationStoreChangeNotification) n)
-                            .type()
-                            .equals("theOtherType")));
+                        && "namespace".equals(((TransformationStoreChangeNotification) n).ns())
+                        && "theOtherType"
+                            .equals(((TransformationStoreChangeNotification) n).type())));
   }
 
   @Test

@@ -15,7 +15,8 @@
  */
 package org.factcast.store.internal.pipeline;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import lombok.NonNull;
 import org.factcast.core.FactStreamPosition;

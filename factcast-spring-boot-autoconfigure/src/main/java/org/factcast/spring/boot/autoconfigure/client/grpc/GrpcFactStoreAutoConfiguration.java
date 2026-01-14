@@ -15,8 +15,8 @@
  */
 package org.factcast.spring.boot.autoconfigure.client.grpc;
 
+import jakarta.annotation.Nullable;
 import java.util.Optional;
-import javax.annotation.Nullable;
 import lombok.NonNull;
 import net.devh.boot.grpc.client.channelfactory.*;
 import org.factcast.client.grpc.*;

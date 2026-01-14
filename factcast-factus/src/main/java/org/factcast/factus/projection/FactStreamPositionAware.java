@@ -15,7 +15,7 @@
  */
 package org.factcast.factus.projection;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import lombok.NonNull;
 import org.factcast.core.FactStreamPosition;
 

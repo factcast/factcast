@@ -21,6 +21,7 @@ import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.sql.init.dependency.DependsOnDatabaseInitialization;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -38,6 +39,7 @@ public class PGTailIndexingConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
+  @DependsOnDatabaseInitialization
   public HighWaterMarkFetcher highWaterMarkFetcher() {
     return new SimpleHighWaterMarkFetcher();
   }

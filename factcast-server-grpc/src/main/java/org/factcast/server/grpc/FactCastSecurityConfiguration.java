@@ -56,8 +56,7 @@ public class FactCastSecurityConfiguration {
   @Bean
   AuthenticationProvider authenticationProvider(
       UserDetailsService uds, PasswordEncoder passwordEncoder) {
-    final DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-    provider.setUserDetailsService(uds);
+    final DaoAuthenticationProvider provider = new DaoAuthenticationProvider(uds);
     provider.setPasswordEncoder(passwordEncoder);
     return provider;
   }

@@ -16,14 +16,14 @@
 package org.factcast.store.registry.transformation.cache;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Lists;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.util.*;
-import lombok.*;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
@@ -129,14 +129,14 @@ class PgTransformationCacheTest {
     @Test
     void findsFlushed() {
       //noinspection OptionalGetWithoutIsPresent
-      Mockito.when(jdbcTemplate.query(anyString(), any(Object[].class), any(RowMapper.class)))
+      Mockito.when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(Object[].class)))
           .thenReturn(Collections.singletonList(f));
       assertThat(underTest.find(key)).containsSame(f);
     }
 
     @Test
     void registersMiss() {
-      Mockito.when(jdbcTemplate.query(anyString(), any(Object[].class), any(RowMapper.class)))
+      Mockito.when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(Object[].class)))
           .thenReturn(Collections.emptyList());
       assertThat(underTest.find(key)).isEmpty();
       Mockito.verify(registryMetrics).count(RegistryMetrics.EVENT.TRANSFORMATION_CACHE_MISS);
@@ -144,7 +144,7 @@ class PgTransformationCacheTest {
 
     @Test
     void registersHit() {
-      Mockito.when(jdbcTemplate.query(anyString(), any(Object[].class), any(RowMapper.class)))
+      Mockito.when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(Object[].class)))
           .thenReturn(Collections.singletonList(f));
       assertThat(underTest.find(key)).isNotEmpty();
       Mockito.verify(registryMetrics).count(RegistryMetrics.EVENT.TRANSFORMATION_CACHE_HIT);

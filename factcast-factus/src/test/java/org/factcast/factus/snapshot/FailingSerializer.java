@@ -16,9 +16,10 @@
 package org.factcast.factus.snapshot;
 
 import org.factcast.factus.projection.SnapshotProjection;
+import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.serializer.SnapshotSerializerId;
 
-class FailingSerializer implements org.factcast.factus.serializer.SnapshotSerializer {
+class FailingSerializer implements SnapshotSerializer {
 
   @Override
   public byte[] serialize(SnapshotProjection a) {

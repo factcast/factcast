@@ -15,7 +15,8 @@
  */
 package org.factcast.store.registry;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import com.google.common.eventbus.EventBus;
 import lombok.SneakyThrows;
@@ -23,7 +24,9 @@ import org.factcast.store.internal.notification.SchemaStoreChangeNotification;
 import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)

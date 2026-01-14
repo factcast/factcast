@@ -20,11 +20,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
+import jakarta.annotation.Nullable;
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import lombok.*;
 import org.factcast.core.*;
 import org.factcast.core.util.FactCastJson;
@@ -62,14 +62,14 @@ public class PgFact implements Fact {
 
     // twice as fast as going through deser.
     // note that meta is materialized lazily
-    UUID id = UUID.fromString(header.path("id").asText());
-    String ns = header.path("ns").asText();
-    String type = header.path("type").asText();
+    UUID id = UUID.fromString(header.path("id").toString());
+    String ns = header.path("ns").toString();
+    String type = header.path("type").toString();
     int version = header.path("version").asInt();
     ArrayNode aggIdsNode = (ArrayNode) header.path("aggIds");
     Set<UUID> aggIds =
         Lists.newArrayList(aggIdsNode).stream()
-            .map(n -> UUID.fromString(n.asText()))
+            .map(n -> UUID.fromString(n.toString()))
             .collect(Collectors.toSet());
     // this might be reasonable to turn to lazy, some day
     String jsonHeader = header.toString();

@@ -51,6 +51,12 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
+    <!-- TODO SB4 compiler generated javax.annotation -->
+    <dependency>
+      <groupId>javax.annotation</groupId>
+      <artifactId>javax.annotation-api</artifactId>
+      <version>1.3.2</version>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
@@ -101,8 +107,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>${maven.compiler.version}</version>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+          <release>17</release>
         </configuration>
       </plugin>
     </plugins>

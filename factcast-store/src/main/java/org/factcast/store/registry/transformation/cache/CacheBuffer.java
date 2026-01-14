@@ -19,10 +19,10 @@ import static org.factcast.store.registry.metrics.RegistryMetrics.GAUGE.CACHE_BU
 import static org.factcast.store.registry.metrics.RegistryMetrics.GAUGE.CACHE_FLUSHING_BUFFER;
 
 import com.google.common.annotations.VisibleForTesting;
+import jakarta.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
-import javax.annotation.Nullable;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;

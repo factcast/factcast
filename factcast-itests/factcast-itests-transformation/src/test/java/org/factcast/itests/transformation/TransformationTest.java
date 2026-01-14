@@ -17,7 +17,7 @@ package org.factcast.itests.transformation;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JacksonException;
 import java.util.*;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
@@ -176,11 +176,11 @@ class TransformationTest extends AbstractFactCastIntegrationTest {
     assertThrows(FactValidationException.class, () -> fc.publish(brokenFact));
   }
 
-  private String getString(Fact f, String name) throws JsonProcessingException {
-    return FactCastJson.readTree(f.jsonPayload()).path(name).asText();
+  private String getString(Fact f, String name) throws JacksonException {
+    return FactCastJson.readTree(f.jsonPayload()).path(name).toString();
   }
 
-  private boolean getBoolean(Fact f, String name) throws JsonProcessingException {
+  private boolean getBoolean(Fact f, String name) throws JacksonException {
     return FactCastJson.readTree(f.jsonPayload()).path(name).asBoolean();
   }
 }
