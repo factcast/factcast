@@ -70,15 +70,15 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
         jdbcTemplate,
         registryMetrics,
         storeConfigurationProperties,
-        1000);
+        storeConfigurationProperties.getTransformationCacheBufferSize());
   }
 
   @VisibleForTesting
   PgTransformationCache(
-      PlatformTransactionManager platformTransactionManager,
-      JdbcTemplate jdbcTemplate,
-      RegistryMetrics registryMetrics,
-      StoreConfigurationProperties storeConfigurationProperties,
+      @NonNull PlatformTransactionManager platformTransactionManager,
+      @NonNull JdbcTemplate jdbcTemplate,
+      @NonNull RegistryMetrics registryMetrics,
+      @NonNull StoreConfigurationProperties storeConfigurationProperties,
       int maxBufferSize) {
     this.platformTransactionManager = platformTransactionManager;
     this.jdbcTemplate = jdbcTemplate;
@@ -88,9 +88,9 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
     registryMetrics.monitor(tpe, "transformation-cache");
 
     this.maxBufferSize =
-        Math.max(maxBufferSize, 9999); // the batchUpdates used only support up to 10k
+        Math.min(maxBufferSize, 9999); // the batchUpdates used only support up to 10k
     this.buffer = new CacheBuffer(registryMetrics);
-    this.bufferThreshold = (THRESHOLD_PERCENT * maxBufferSize) / 100;
+    this.bufferThreshold = (THRESHOLD_PERCENT * this.maxBufferSize) / 100;
   }
 
   @Override

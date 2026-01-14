@@ -8,7 +8,6 @@ CREATE OR REPLACE FUNCTION selectTransformations(keys_to_query varchar[])
 AS
 $$
 DECLARE
-    i varchar;
 BEGIN
     UPDATE transformationcache_access
     SET last_access = CURRENT_DATE
