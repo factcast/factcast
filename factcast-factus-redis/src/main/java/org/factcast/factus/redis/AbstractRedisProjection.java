@@ -16,9 +16,9 @@
 package org.factcast.factus.redis;
 
 import com.google.common.annotations.VisibleForTesting;
+import jakarta.annotation.Nullable;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.core.FactStreamPosition;

@@ -193,12 +193,14 @@ class FactCastJsonTest {
     String someJson = "{\"meta\":{\"foo\":\"bar\",\"_ser\":78}}";
     String pretty = FactCastJson.toPrettyString(someJson);
     assertEquals(
-        "{\n"
-            + "  \"meta\" : {\n"
-            + "    \"foo\" : \"bar\",\n"
-            + "    \"_ser\" : 78\n"
-            + "  }\n"
-            + "}",
+        """
+        {
+          "meta" : {
+            "foo" : "bar",
+            "_ser" : 78
+          }
+        }\
+        """,
         pretty);
   }
 

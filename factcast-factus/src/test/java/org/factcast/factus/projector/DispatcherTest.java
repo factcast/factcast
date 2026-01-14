@@ -16,7 +16,7 @@
 package org.factcast.factus.projector;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
 
 import java.lang.reflect.Method;
 import org.factcast.core.Fact;

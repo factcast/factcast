@@ -28,11 +28,10 @@ import org.factcast.test.toxi.FactCastProxy;
 import org.factcast.test.toxi.PostgresqlProxy;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.context.TestContext;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.ToxiproxyContainer;
+import org.testcontainers.containers.*;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 @Slf4j
 public class BaseIntegrationTestExtension implements FactCastIntegrationTestExtension {
@@ -76,8 +75,8 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
             key -> {
               String dbName = "db" + config.hashCode();
 
-              PostgreSQLContainer<?> db =
-                  new PostgreSQLContainer<>("postgres:" + config.postgresVersion())
+              PostgreSQLContainer db =
+                  new PostgreSQLContainer("postgres:" + config.postgresVersion())
                       .withDatabaseName("fc")
                       .withUsername("fc")
                       // changed to static pwd, so that we could easily access the DB during
@@ -86,7 +85,7 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                       .withNetworkAliases(dbName)
                       .withNetwork(FactCastIntegrationTestExecutionListener._docker_network);
               db.start();
-              ToxiproxyContainer.ContainerProxy pgProxy =
+              org.testcontainers.containers.ToxiproxyContainer.ContainerProxy pgProxy =
                   FactCastIntegrationTestExecutionListener.createProxy(db, PG_PORT);
 
               String jdbcUrl =
@@ -116,7 +115,7 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                       .waitingFor(
                           new HostPortWaitStrategy().withStartupTimeout(Duration.ofSeconds(180)));
               fc.start();
-              ToxiproxyContainer.ContainerProxy fcProxy =
+              org.testcontainers.containers.ToxiproxyContainer.ContainerProxy fcProxy =
                   FactCastIntegrationTestExecutionListener.createProxy(fc, FC_PORT);
 
               return new FactCastIntegrationTestExecutionListener.Containers(
@@ -143,15 +142,17 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
     try (Connection con = ds.getConnection();
         Statement st = con.createStatement()) {
       st.execute(
-          "DO $$ DECLARE\n"
-              + "    r RECORD;\n"
-              + "BEGIN\n"
-              + "    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = current_schema()"
-              + " AND (NOT ((tablename like 'databasechangelog%') OR (tablename like 'qrtz%') OR"
-              + " (tablename = 'schedlock')))) LOOP\n"
-              + "        EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename);\n"
-              + "    END LOOP;\n"
-              + "END $$;");
+          """
+          DO $$ DECLARE
+              r RECORD;
+          BEGIN
+              FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = current_schema()\
+           AND (NOT ((tablename like 'databasechangelog%') OR (tablename like 'qrtz%') OR\
+           (tablename = 'schedlock')))) LOOP
+                  EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename);
+              END LOOP;
+          END $$;\
+          """);
     }
   }
 

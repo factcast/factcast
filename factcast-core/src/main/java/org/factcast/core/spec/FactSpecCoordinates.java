@@ -78,8 +78,8 @@ public class FactSpecCoordinates {
 
   @SuppressWarnings("java:S1066")
   public boolean matches(@NonNull FactSpecCoordinates key) {
-    if (key.ns.equals(ns) || key.ns.equals("*") || ns.equals("*")) {
-      if (key.type.equals(type) || key.type.equals("*") || type.equals("*")) {
+    if (key.ns.equals(ns) || "*".equals(key.ns) || "*".equals(ns)) {
+      if (key.type.equals(type) || "*".equals(key.type) || "*".equals(type)) {
         if (key.version == version || key.version == 0 || version == 0) {
           return true;
         }

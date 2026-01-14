@@ -134,12 +134,14 @@ public class TransformationChains implements TransformationStoreListener {
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   private String toString(@NonNull List<Edge> finalPath) {
-    if (finalPath.isEmpty()) return "[]";
-    else
+    if (finalPath.isEmpty()) {
+      return "[]";
+    } else {
       return "["
           + finalPath.stream().findFirst().map(Edge::fromVersion).get()
           + finalPath.stream().map(Edge::toVersion).map(s -> ", " + s).collect(Collectors.joining())
           + "]";
+    }
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")

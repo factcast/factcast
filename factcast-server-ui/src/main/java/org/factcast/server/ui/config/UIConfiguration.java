@@ -34,7 +34,7 @@ import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.context.annotation.*;
 
 @Configuration
-@Theme(value = "fcui")
+@Theme("fcui")
 @EnableVaadin("org.factcast.server.ui")
 @RequiredArgsConstructor
 @Import({JsonViewPluginConfiguration.class, FileSystemReportStoreConfiguration.class})

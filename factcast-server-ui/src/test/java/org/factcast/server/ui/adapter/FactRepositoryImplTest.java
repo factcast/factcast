@@ -37,7 +37,9 @@ import org.factcast.server.ui.report.ReportFilterBean;
 import org.factcast.server.ui.security.SecurityService;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -129,7 +131,7 @@ public class FactRepositoryImplTest {
     @Test
     void filtersIfCannotRead() {
       when(securityService.canRead(any(String.class)))
-          .thenAnswer(a -> a.getArgument(0).equals("z"));
+          .thenAnswer(a -> "z".equals(a.getArgument(0)));
       when(fs.enumerateNamespaces()).thenReturn(Set.of("z", "x", "y"));
       Assertions.assertThat(underTest.namespaces(null)).containsExactly("z");
     }

@@ -15,7 +15,8 @@
  */
 package org.factcast.spring.boot.autoconfigure.factus;
 
-import lombok.*;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.SnapshotSerializerSupplier;

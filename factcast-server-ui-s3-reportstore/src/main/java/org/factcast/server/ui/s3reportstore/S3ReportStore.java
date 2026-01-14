@@ -15,16 +15,15 @@
  */
 package org.factcast.server.ui.s3reportstore;
 
-import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.net.URL;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
-import lombok.*;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.util.ExceptionHelper;
 import org.factcast.server.ui.port.ReportStore;
@@ -50,8 +49,6 @@ public class S3ReportStore implements ReportStore {
     this.s3Presigner = s3Presigner;
     this.bucketName = bucketName;
     final var om = new ObjectMapper();
-    om.registerModule(new JavaTimeModule());
-    om.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     this.objectMapper = om;
   }
 
@@ -69,7 +66,7 @@ public class S3ReportStore implements ReportStore {
   }
 
   private static String getReportKey(String userName, String reportName) {
-    return Paths.get(userName, reportName).toString();
+    return Path.of(userName, reportName).toString();
   }
 
   @Override

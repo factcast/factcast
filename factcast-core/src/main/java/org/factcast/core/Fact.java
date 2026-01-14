@@ -16,9 +16,10 @@
 package org.factcast.core;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.annotation.Nullable;
 import java.util.*;
-import javax.annotation.Nullable;
-import lombok.*;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.factcast.core.spec.FactSpecCoordinates;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.event.*;

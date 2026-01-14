@@ -15,6 +15,7 @@
  */
 package org.factcast.core.lock;
 
+import java.io.Serial;
 import lombok.NonNull;
 
 /**
@@ -22,7 +23,7 @@ import lombok.NonNull;
  * throwables cannot be generic.
  */
 public class AttemptAbortedException extends Exception {
-  private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
   public AttemptAbortedException(@NonNull String msg) {
     super(msg);

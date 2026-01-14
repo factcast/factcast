@@ -18,7 +18,6 @@ package org.factcast.itests.factus.client;
 import org.factcast.factus.snapshot.SnapshotCache;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.spring.boot.autoconfigure.snap.InMemoryAndDiskSnapshotCacheAutoConfiguration;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 
@@ -27,7 +26,6 @@ import org.springframework.test.context.ContextConfiguration;
     classes = {TestFactusApplication.class, InMemoryAndDiskSnapshotCacheAutoConfiguration.class})
 public class InMemoryAndDiskSnapshotCacheTest extends SnapshotCacheTest {
 
-  @Autowired
   public InMemoryAndDiskSnapshotCacheTest(SnapshotCache repository) {
     super(repository);
   }

@@ -17,7 +17,7 @@ package org.factcast.factus.aggregate.cache;
 
 import java.time.Duration;
 import java.util.*;
-import lombok.*;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Factus;
 import org.factcast.factus.projection.*;
@@ -52,8 +52,12 @@ public class TestAggregateCache<A extends Aggregate> extends AbstractAggregateCa
 
     while (true) {
       long timeLeft = timeout.toMillis() - (System.currentTimeMillis() - started);
-      if (trail.contains(uuid)) return;
-      if (timeLeft <= 0) throw new InvalidationTimeoutException();
+      if (trail.contains(uuid)) {
+        return;
+      }
+      if (timeLeft <= 0) {
+        throw new InvalidationTimeoutException();
+      }
 
       synchronized (trail) {
         try {

@@ -20,8 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.postgresql.Driver;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.localstack.LocalStackContainer;
+import org.testcontainers.localstack.LocalStackContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 @Slf4j
@@ -60,16 +60,21 @@ public class ExampleUiServerWithS3Reports {
     localStackContainer =
         new LocalStackContainer(
                 DockerImageName.parse("localstack/localstack:" + S3_LOCALSTACK_VERSION))
-            .withServices(LocalStackContainer.Service.S3);
+            // TODO SB4 legit?
+            .withServices("S3");
 
     localStackContainer.start();
 
-    final var endpointConfiguration =
-        localStackContainer.getEndpointOverride(LocalStackContainer.Service.S3);
-    System.setProperty(S3Configuration.LOCAL_S_3_ENDPOINT, endpointConfiguration.toString());
-    System.setProperty(S3Configuration.LOCAL_S_3_SIGNING_REGION, localStackContainer.getRegion());
-    System.setProperty("aws.accessKeyId", localStackContainer.getAccessKey());
-    System.setProperty("aws.secretKey", localStackContainer.getSecretKey());
-    System.setProperty("aws.region", localStackContainer.getRegion());
+    // TODO SB4 restore:
+    //    final var endpointConfiguration =
+    //        localStackContainer.getEndpointOverride(LocalStackContainer.Service.S3);
+    //    System.setProperty(S3Configuration.LOCAL_S_3_ENDPOINT, endpointConfiguration.toString());
+    //    System.setProperty(S3Configuration.LOCAL_S_3_SIGNING_REGION,
+    // localStackContainer.getRegion());
+    //    System.setProperty("aws.accessKeyId", localStackContainer.getAccessKey());
+    //    System.setProperty("aws.secretKey", localStackContainer.getSecretKey());
+    //    System.setProperty("aws.region", localStackContainer.getRegion());
+
+    throw new UnsupportedOperationException();
   }
 }

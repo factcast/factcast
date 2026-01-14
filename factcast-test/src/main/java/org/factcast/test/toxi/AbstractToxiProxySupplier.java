@@ -22,16 +22,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.experimental.Delegate;
 import org.testcontainers.containers.ToxiproxyContainer;
-import org.testcontainers.containers.ToxiproxyContainer.ContainerProxy;
 
 @RequiredArgsConstructor
-public abstract class AbstractToxiProxySupplier implements Supplier<ContainerProxy> {
+public abstract class AbstractToxiProxySupplier
+    // TODO
+    implements Supplier<ToxiproxyContainer.ContainerProxy> {
   @Delegate @NonNull private ToxiproxyContainer.ContainerProxy proxy;
   @NonNull private final String name;
   @NonNull private final ToxiproxyClient client;
 
   @Override
-  public ContainerProxy get() {
+  public ToxiproxyContainer.ContainerProxy get() {
     return proxy;
   }
 

@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
-import ch.qos.logback.classic.*;
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.atomic.*;
@@ -40,7 +39,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.quality.Strictness;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.ServerErrorMessage;
-import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
@@ -159,8 +157,6 @@ class PgSynchronizedQueryTest {
   @Test
   @SneakyThrows
   void test_exception_during_query_after_cancel() {
-    LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
-    lc.getLogger(PgSynchronizedQuery.class).setLevel(Level.TRACE);
     LogCaptor logCaptor = LogCaptor.forClass(PgSynchronizedQuery.class);
 
     uut =
@@ -191,7 +187,7 @@ class PgSynchronizedQueryTest {
     // make sure suppressed exception was trace-logged
     assertThat(logCaptor.getLogs()).hasSize(1);
     assertThat(logCaptor.getLogEvents().stream())
-        .anyMatch(l -> Objects.equals(l.getLevel(), Level.TRACE.toString()))
+        .anyMatch(l -> Objects.equals(l.getLevel(), "TRACE"))
         .isNotEmpty();
   }
 

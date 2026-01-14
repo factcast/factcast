@@ -119,7 +119,7 @@ class PgFactStoreTest {
           PgFact.from(Fact.builder().ns("ns").type("type").version(1).buildWithoutPayload());
       PgFact transformedFact =
           PgFact.from(Fact.builder().ns("ns").type("type").version(27).buildWithoutPayload());
-      when(jdbcTemplate.query(anyString(), any(Object[].class), any(RowMapper.class)))
+      when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(Object[].class)))
           .thenReturn(Lists.newArrayList(factAsPublished));
       ArgumentCaptor<TransformationRequest> reqCaptor =
           ArgumentCaptor.forClass(TransformationRequest.class);

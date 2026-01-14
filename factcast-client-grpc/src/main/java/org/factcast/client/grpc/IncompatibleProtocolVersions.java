@@ -15,9 +15,11 @@
  */
 package org.factcast.client.grpc;
 
+import java.io.Serial;
+
 public class IncompatibleProtocolVersions extends IllegalStateException {
 
-  private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
   public IncompatibleProtocolVersions(String msg) {
     super(msg);

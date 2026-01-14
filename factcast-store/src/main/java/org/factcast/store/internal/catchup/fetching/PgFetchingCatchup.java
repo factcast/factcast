@@ -20,7 +20,9 @@ import io.micrometer.core.instrument.Timer;
 import java.time.Duration;
 import java.util.concurrent.atomic.*;
 import javax.sql.DataSource;
-import lombok.*;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
@@ -61,7 +63,7 @@ public class PgFetchingCatchup implements PgCatchup {
 
   @NonNull final PgCatchupFactory.Phase phase;
 
-  long fastForward = 0;
+  long fastForward;
 
   @SneakyThrows
   @Override
@@ -85,7 +87,7 @@ public class PgFetchingCatchup implements PgCatchup {
     final var extractor = new PgFactExtractor(serial);
     final var catchupSQL = b.createSQL();
     final var fromSerial = serial.get() < fastForward ? new AtomicLong(fastForward) : serial;
-    final var isFromScratch = (fromSerial.get() <= 0);
+    final var isFromScratch = fromSerial.get() <= 0;
     final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
     final var rowCallbackHandler = createTimedRowCallbackHandler(extractor, timer);
     log.trace("{} catchup {} - facts starting with SER={}", req, phase, fromSerial.get());

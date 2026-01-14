@@ -18,7 +18,6 @@ package org.factcast.server.grpc;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Lists;
@@ -62,7 +61,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.access.intercept.RunAsUserToken;
+import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContext;
@@ -234,29 +233,19 @@ public class FactStoreGrpcServiceTest {
     verifyNoMoreInteractions(stream);
   }
 
-  static class TestToken extends RunAsUserToken {
+  static class TestToken extends TestingAuthenticationToken {
 
     public TestToken(FactCastUser principal) {
-      super(
-          "GOD",
-          principal,
-          "",
-          AuthorityUtils.createAuthorityList(FactCastAuthority.AUTHENTICATED),
-          null);
+      super("GOD", principal, AuthorityUtils.createAuthorityList(FactCastAuthority.AUTHENTICATED));
     }
 
     @Serial private static final long serialVersionUID = 1L;
   }
 
-  static class TokenWithoutPrincipal extends RunAsUserToken {
+  static class TokenWithoutPrincipal extends TestingAuthenticationToken {
 
     public TokenWithoutPrincipal() {
-      super(
-          "BR0KEN",
-          null,
-          "",
-          AuthorityUtils.createAuthorityList(FactCastAuthority.AUTHENTICATED),
-          null);
+      super("BR0KEN", null, AuthorityUtils.createAuthorityList(FactCastAuthority.AUTHENTICATED));
     }
 
     @Serial private static final long serialVersionUID = 1L;

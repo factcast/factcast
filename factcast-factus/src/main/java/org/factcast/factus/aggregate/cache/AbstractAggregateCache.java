@@ -17,13 +17,15 @@ package org.factcast.factus.aggregate.cache;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.*;
+import jakarta.annotation.Nullable;
 import java.util.*;
 import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
-import lombok.*;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.*;
 import org.factcast.core.spec.*;
@@ -59,12 +61,16 @@ public abstract class AbstractAggregateCache<A extends Aggregate>
   public A get(@NonNull UUID id) {
     if (enabled.get()) {
       return cache.getIfPresent(id);
-    } else return null;
+    } else {
+      return null;
+    }
   }
 
   @Override
   public void put(@NonNull UUID id, @NonNull A aggregate) {
-    if (enabled.get()) cache.put(id, aggregate);
+    if (enabled.get()) {
+      cache.put(id, aggregate);
+    }
   }
 
   /**
@@ -121,7 +127,9 @@ public abstract class AbstractAggregateCache<A extends Aggregate>
         Set<UUID> uuids = f.header().aggIds();
         // yes, depending on the self-referencing issue and the implementation of
         // Projection::process, this might invalidate more than strictly necessary.
-        if (uuids != null) uuids.forEach(AbstractAggregateCache.this::invalidate);
+        if (uuids != null) {
+          uuids.forEach(AbstractAggregateCache.this::invalidate);
+        }
       }
 
       @Override

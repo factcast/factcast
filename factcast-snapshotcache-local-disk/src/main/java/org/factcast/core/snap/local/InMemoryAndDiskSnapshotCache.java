@@ -54,7 +54,7 @@ public class InMemoryAndDiskSnapshotCache implements SnapshotCache {
     String snapshotKey = createKeyFor(id);
     Optional<SnapshotData> snapshotOpt = Optional.ofNullable(cache.getIfPresent(snapshotKey));
 
-    if (!snapshotOpt.isPresent()) {
+    if (snapshotOpt.isEmpty()) {
       try {
         snapshotOpt = snapshotDiskRepository.findById(id);
         snapshotOpt.ifPresent(snapshot -> cache.put(snapshotKey, snapshot));

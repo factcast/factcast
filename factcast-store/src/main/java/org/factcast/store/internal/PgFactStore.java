@@ -97,8 +97,8 @@ public class PgFactStore extends AbstractFactStore {
             jdbcTemplate
                 .query(
                     PgConstants.SELECT_BY_ID,
-                    new Object[] {"{\"id\":\"" + id + "\"}"},
-                    this::extractFactFromResultSet)
+                    this::extractFactFromResultSet,
+                    "{\"id\":\"" + id + "\"}")
                 .stream()
                 .findFirst());
   }
@@ -367,7 +367,9 @@ public class PgFactStore extends AbstractFactStore {
       if (lastSer == -1) {
         // must be in the future... we'd better return max(ser) here
         return latestSerial();
-      } else return lastSer;
+      } else {
+        return lastSer;
+      }
     } catch (EmptyResultDataAccessException noFactsAtAll) {
       return 0L;
     }

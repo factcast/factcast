@@ -69,7 +69,9 @@ public interface ProjectionAccessor {
       @NonNull Optional<A> retrieved = find(cache.aggregateType(), aggregateId);
       retrieved.ifPresent(a -> cache.put(aggregateId, a));
       return retrieved;
-    } else return Optional.of(cached);
+    } else {
+      return Optional.of(cached);
+    }
   }
 
   /**

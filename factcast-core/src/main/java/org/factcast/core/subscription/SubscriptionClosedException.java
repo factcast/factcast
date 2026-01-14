@@ -15,6 +15,8 @@
  */
 package org.factcast.core.subscription;
 
+import java.io.Serial;
+
 /**
  * Signals, that a Subscription.wait* method cannot terminate normally.
  *
@@ -22,7 +24,7 @@ package org.factcast.core.subscription;
  */
 public class SubscriptionClosedException extends RuntimeException {
 
-  private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
   public SubscriptionClosedException(Throwable e) {
     super(e);

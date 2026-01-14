@@ -18,7 +18,8 @@ package org.factcast.itests.factus.client;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.snap.local.*;
 import org.factcast.factus.*;
@@ -102,8 +103,8 @@ public class CachedAggregateLookupITest extends AbstractFactCastIntegrationTest 
 
 @Getter
 class User extends Aggregate {
-  boolean bored = false;
-  boolean deleted = false;
+  boolean bored;
+  boolean deleted;
   String name;
 
   @Handler

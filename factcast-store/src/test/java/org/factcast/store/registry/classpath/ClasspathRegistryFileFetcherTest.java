@@ -31,7 +31,11 @@ class ClasspathRegistryFileFetcherTest {
         uut.fetchTransformation(new TransformationSource("1-2", "xxx", "ns", "type", 1, 2));
     assertEquals(
         StringUtils.trimAllWhitespace(
-            "function transform(event) {\n" + "    event.salutation = \"NA\"\n" + "}"),
+            """
+            function transform(event) {
+                event.salutation = "NA"
+            }\
+            """),
         StringUtils.trimAllWhitespace(transformation));
   }
 
@@ -41,18 +45,20 @@ class ClasspathRegistryFileFetcherTest {
     var s = uut.fetchSchema(new SchemaSource("x", "xxx", "ns", "type", 1));
     assertEquals(
         StringUtils.trimAllWhitespace(
-            "{\n"
-                + "  \"additionalProperties\" : true,\n"
-                + "  \"properties\" : {\n"
-                + "    \"firstName\" : {\n"
-                + "      \"type\": \"string\"\n"
-                + "    },\n"
-                + "    \"lastName\" : {\n"
-                + "      \"type\": \"string\"\n"
-                + "    }\n"
-                + "  },\n"
-                + "  \"required\": [\"firstName\", \"lastName\"]\n"
-                + "}\n"),
+            """
+            {
+              "additionalProperties" : true,
+              "properties" : {
+                "firstName" : {
+                  "type": "string"
+                },
+                "lastName" : {
+                  "type": "string"
+                }
+              },
+              "required": ["firstName", "lastName"]
+            }
+            """),
         StringUtils.trimAllWhitespace(s));
   }
 }

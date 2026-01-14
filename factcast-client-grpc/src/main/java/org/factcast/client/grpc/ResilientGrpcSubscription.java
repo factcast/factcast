@@ -42,7 +42,7 @@ public class ResilientGrpcSubscription extends AbstractSubscription {
   private final AtomicReference<FactStreamPosition> lastPosition = new AtomicReference<>();
   private final SubscriptionHolder currentSubscription = new SubscriptionHolder();
 
-  @Getter(value = AccessLevel.PACKAGE)
+  @Getter(AccessLevel.PACKAGE)
   private final AtomicReference<Throwable> onErrorCause = new AtomicReference<>();
 
   @Getter @VisibleForTesting final Resilience resilience;

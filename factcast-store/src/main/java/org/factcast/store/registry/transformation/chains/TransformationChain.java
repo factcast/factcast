@@ -58,8 +58,7 @@ public class TransformationChain implements Transformation {
     List<String> code =
         list.stream()
             .map(Transformation::transformationCode)
-            .filter(Optional::isPresent)
-            .map(Optional::get)
+            .flatMap(Optional::stream)
             .collect(Collectors.toList());
 
     sb.append(String.join(",", code));

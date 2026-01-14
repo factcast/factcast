@@ -58,10 +58,6 @@
           <groupId>com.vaadin.external.google</groupId>
           <artifactId>android-json</artifactId>
         </exclusion>
-        <exclusion>
-          <groupId>junit</groupId>
-          <artifactId>junit</artifactId>
-        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
