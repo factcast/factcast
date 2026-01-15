@@ -83,7 +83,7 @@ class JdbcSnapshotCacheTest {
       JdbcSnapshotProperties properties =
           new JdbcSnapshotProperties()
               .setSnapshotTableName("name; drop table")
-              .setSnapshotLastAccessedTableName("valid");
+              .setSnapshotAccessTableName("valid");
       assertThatThrownBy(() -> new JdbcSnapshotCache(properties, dataSource))
           .isInstanceOf(IllegalArgumentException.class)
           .hasMessageContaining("Invalid table name");
@@ -94,7 +94,7 @@ class JdbcSnapshotCacheTest {
       JdbcSnapshotProperties properties =
           new JdbcSnapshotProperties()
               .setSnapshotTableName("valid")
-              .setSnapshotLastAccessedTableName("name; drop table");
+              .setSnapshotAccessTableName("name; drop table");
       assertThatThrownBy(() -> new JdbcSnapshotCache(properties, dataSource))
           .isInstanceOf(IllegalArgumentException.class)
           .hasMessageContaining("Invalid table name");
@@ -514,7 +514,7 @@ class JdbcSnapshotCacheTest {
   private static JdbcSnapshotProperties getJdbcSnapshotProperties() {
     return new JdbcSnapshotProperties()
         .setSnapshotTableName(TABLE_NAME)
-        .setSnapshotLastAccessedTableName(LAST_ACCESSED_TABLE_NAME);
+        .setSnapshotAccessTableName(LAST_ACCESSED_TABLE_NAME);
   }
 
   private void mockSnapshotTableColumns() throws SQLException {

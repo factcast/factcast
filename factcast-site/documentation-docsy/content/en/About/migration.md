@@ -42,7 +42,7 @@ CREATE INDEX IF NOT EXISTS factcast_snapshot_last_accessed_index ON factcast_sna
 ```
 
 If your table name differs from the default one, please provide it via the new application property with the name:
-`factcast.snapshot.jdbc.snapshotLastAccessedTableName`.
+`factcast.snapshot.jdbc.snapshotAccessTableName`.
 
 #### Cleanup
 

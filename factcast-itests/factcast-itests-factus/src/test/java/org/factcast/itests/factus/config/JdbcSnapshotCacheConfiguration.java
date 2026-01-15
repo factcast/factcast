@@ -54,7 +54,7 @@ public class JdbcSnapshotCacheConfiguration {
     JdbcSnapshotProperties props =
         new JdbcSnapshotProperties()
             .setSnapshotTableName("my_snapshot_table")
-            .setSnapshotLastAccessedTableName("my_snapshot_table_last_accessed");
+            .setSnapshotAccessTableName("my_snapshot_table_last_accessed");
     return new JdbcSnapshotCache(props, dataSource);
   }
 }

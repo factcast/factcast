@@ -58,9 +58,9 @@ public class JdbcSnapshotCacheCleanupITest extends AbstractFactCastIntegrationTe
                     """);
     jdbcTemplate.execute(
         """
-                          CREATE TABLE IF NOT EXISTS factcast_snapshot_lastaccessed(projection_class VARCHAR(512), aggregate_id VARCHAR(36) NULL,
+                          CREATE TABLE IF NOT EXISTS factcast_snapshot_access(projection_class VARCHAR(512), aggregate_id VARCHAR(36) NULL,
                           last_accessed DATE NOT NULL DEFAULT CURRENT_DATE, PRIMARY KEY (projection_class, aggregate_id));
-                          CREATE INDEX IF NOT EXISTS my_snapshot_table_index ON factcast_snapshot_lastaccessed(last_accessed);
+                          CREATE INDEX IF NOT EXISTS my_snapshot_table_index ON factcast_snapshot_access(last_accessed);
                           """);
 
     SnapshotSerializerId serializerId = SnapshotSerializerId.of("serializer");
@@ -130,7 +130,7 @@ public class JdbcSnapshotCacheCleanupITest extends AbstractFactCastIntegrationTe
         snapshot.snapshotSerializerId().name());
 
     jdbcTemplate.update(
-        "INSERT INTO factcast_snapshot_lastaccessed VALUES (?, ?, ?)",
+        "INSERT INTO factcast_snapshot_access VALUES (?, ?, ?)",
         id.projectionClass().getName(),
         id.aggregateId().toString(),
         lastAccessed);

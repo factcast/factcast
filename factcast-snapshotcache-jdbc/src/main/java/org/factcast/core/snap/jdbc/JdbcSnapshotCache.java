@@ -55,7 +55,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
     this.dataSource = dataSource;
 
     String tableName = properties.getSnapshotTableName();
-    String lastAccessedTableName = properties.getSnapshotLastAccessedTableName();
+    String lastAccessedTableName = properties.getSnapshotAccessTableName();
 
     if (!tableName.matches(VALIDATION_REGEX) || !lastAccessedTableName.matches(VALIDATION_REGEX)) {
       throw new IllegalArgumentException("Invalid table name.");
