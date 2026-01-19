@@ -24,6 +24,7 @@ import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.factcast.store.internal.PgFact;
 import org.factcast.store.registry.NOPRegistryMetrics;
@@ -103,13 +104,16 @@ public abstract class AbstractTransformationCacheTest {
             Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}"));
     String chainId = "1-2-3";
 
-    uut.put(TransformationCache.Key.of(fact.id(), 1, chainId), fact);
+    TransformationCache.Key key = TransformationCache.Key.of(fact.id(), 1, chainId);
+    uut.put(key, fact);
+    uut.flush();
 
-    // clocks aren't synchronized so Im gonna add a day here :)
-    uut.compact(ZonedDateTime.now().plusDays(1));
+    // create last access stamp
+    Assertions.assertThat(uut.find(key)).isPresent();
 
-    Optional<PgFact> found =
-        uut.find(TransformationCache.Key.of(fact.id(), fact.version(), chainId));
+    uut.compact(ZonedDateTime.now().plusDays(30));
+
+    Optional<PgFact> found = uut.find(key);
 
     assertThat(found.isPresent()).isFalse();
   }

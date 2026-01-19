@@ -24,3 +24,5 @@ release.properties
 package-lock.json
 .idea
 
+**/AGENTS.md
+.junie/**
