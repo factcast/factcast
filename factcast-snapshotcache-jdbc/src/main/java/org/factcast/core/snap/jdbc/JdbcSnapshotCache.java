@@ -26,12 +26,14 @@ import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.projection.ScopedName;
 import org.factcast.factus.serializer.SnapshotSerializerId;
 import org.factcast.factus.snapshot.SnapshotCache;
 import org.factcast.factus.snapshot.SnapshotData;
 import org.factcast.factus.snapshot.SnapshotIdentifier;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 public class JdbcSnapshotCache implements SnapshotCache {
@@ -193,6 +195,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
   }
 
   /** Updates or creates the lastAccessed timestamp if it doesn't exist or equal today's' date. */
+  @Synchronized
   @VisibleForTesting
   protected void updateLastAccessedTime(@NonNull SnapshotIdentifier id) {
     try (Connection connection = dataSource.getConnection();
@@ -227,28 +230,20 @@ public class JdbcSnapshotCache implements SnapshotCache {
 
   @Override
   @SneakyThrows
+  @Transactional
   public void remove(@NonNull SnapshotIdentifier id) {
-    try (Connection connection = dataSource.getConnection()) {
-      final boolean previousAutoCommit = connection.getAutoCommit();
-      connection.setAutoCommit(false);
-      try (PreparedStatement snapshotStatement = connection.prepareStatement(deleteStatement);
-          PreparedStatement lastAccessStatement =
-              connection.prepareStatement(deleteLastAccessedStatement)) {
-        final String key = createKeyFor(id);
-        final String aggId = id.aggregateId() != null ? id.aggregateId().toString() : null;
-        snapshotStatement.setString(1, key);
-        snapshotStatement.setString(2, aggId);
-        snapshotStatement.executeUpdate();
-        lastAccessStatement.setString(1, key);
-        lastAccessStatement.setString(2, aggId);
-        lastAccessStatement.executeUpdate();
-        connection.commit();
-      } catch (Exception e) {
-        connection.rollback();
-        throw e;
-      } finally {
-        connection.setAutoCommit(previousAutoCommit);
-      }
+    try (Connection connection = dataSource.getConnection();
+        PreparedStatement snapshotStatement = connection.prepareStatement(deleteStatement);
+        PreparedStatement lastAccessStatement =
+            connection.prepareStatement(deleteLastAccessedStatement)) {
+      final String key = createKeyFor(id);
+      final String aggId = id.aggregateId() != null ? id.aggregateId().toString() : null;
+      snapshotStatement.setString(1, key);
+      snapshotStatement.setString(2, aggId);
+      snapshotStatement.executeUpdate();
+      lastAccessStatement.setString(1, key);
+      lastAccessStatement.setString(2, aggId);
+      lastAccessStatement.executeUpdate();
     }
   }
 }
