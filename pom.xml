@@ -101,7 +101,7 @@
     <spotless-maven-plugin.version>3.2.0</spotless-maven-plugin.version>
     <directory-maven-plugin.version>1.0</directory-maven-plugin.version>
     <nexus-staging-maven-plugin.version>1.7.0</nexus-staging-maven-plugin.version>
-    <assertj.version>3.27.6</assertj.version>
+    <assertj.version>3.27.7</assertj.version>
     <jackson.version>2.21.0</jackson.version>
     <mockito.version>5.21.0</mockito.version>
     <junit-jupiter.version>6.0.2</junit-jupiter.version>
