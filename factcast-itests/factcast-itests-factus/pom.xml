@@ -166,7 +166,7 @@
     <dependency>
       <groupId>org.jboss.marshalling</groupId>
       <artifactId>jboss-marshalling-river</artifactId>
-      <version>2.2.3.Final</version>
+      <version>2.3.0</version>
     </dependency>
   </dependencies>
   <build>
