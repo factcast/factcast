@@ -17,7 +17,7 @@ package org.factcast.itests.factus.client;
 
 import org.factcast.factus.snapshot.SnapshotCache;
 import org.factcast.itests.TestFactusApplication;
-import org.factcast.itests.factus.config.JdbcSnapshotCacheConfigurationForMySql;
+import org.factcast.itests.factus.config.MySqlJdbcSnapshotCacheConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
@@ -29,9 +29,9 @@ import org.testcontainers.mysql.MySQLContainer;
 
 @SpringBootTest
 @ContextConfiguration(
-    classes = {TestFactusApplication.class, JdbcSnapshotCacheConfigurationForMySql.class})
+    classes = {TestFactusApplication.class, MySqlJdbcSnapshotCacheConfiguration.class})
 @DirtiesContext
-public class JdbcSnapshotCacheWithMySqlITest extends SnapshotCacheTest {
+public class MySqlJdbcSnapshotCacheITest extends SnapshotCacheTest {
 
   @Container
   static MySQLContainer mysql =
@@ -48,7 +48,7 @@ public class JdbcSnapshotCacheWithMySqlITest extends SnapshotCacheTest {
   }
 
   @Autowired
-  public JdbcSnapshotCacheWithMySqlITest(SnapshotCache repository) {
+  public MySqlJdbcSnapshotCacheITest(SnapshotCache repository) {
     super(repository);
   }
 }

@@ -41,7 +41,8 @@ import org.factcast.factus.snapshot.SnapshotIdentifier;
 public class JdbcSnapshotCache implements SnapshotCache {
   public static final String VALIDATION_REGEX = "^\\w+$";
   public final String queryStatement;
-  public final String mergeStatement;
+  public final String agnosticMergeStatementUpdatePart;
+  public final String agnosticMergeStatementInsertPart;
   public final String updateLastAccessedStatement;
   public final String deleteStatement;
   private final DataSource dataSource;
@@ -59,15 +60,22 @@ public class JdbcSnapshotCache implements SnapshotCache {
         "SELECT bytes, snapshot_serializer_id, last_fact_id FROM "
             + tableName
             + " WHERE projection_class = ? AND aggregate_id = ?";
-    mergeStatement =
-        "MERGE INTO "
+
+    agnosticMergeStatementUpdatePart =
+        "UPDATE "
             + tableName
-            + " USING (VALUES (?, ?, ?, ?, ?, ?)) as new (_projection_class, _aggregate_id, _last_fact_id, _bytes, _snapshot_serializer_id, _last_accessed)"
-            + " ON projection_class=_projection_class AND aggregate_id=_aggregate_id"
-            + " WHEN MATCHED THEN"
-            + " UPDATE SET last_fact_id=_last_fact_id, bytes=_bytes, snapshot_serializer_id=_snapshot_serializer_id, last_accessed=_last_accessed"
-            + " WHEN NOT MATCHED THEN"
-            + " INSERT VALUES (_projection_class, _aggregate_id, _last_fact_id, _bytes, _snapshot_serializer_id, _last_accessed)";
+            + " SET last_fact_id = ?,"
+            + "    bytes = ?,"
+            + "    snapshot_serializer_id = ?,"
+            + "    last_accessed = ?"
+            + " WHERE projection_class = ?"
+            + "  AND aggregate_id = ?;";
+
+    agnosticMergeStatementInsertPart =
+        " INSERT INTO "
+            + tableName
+            + " (projection_class, aggregate_id, last_fact_id, bytes, snapshot_serializer_id, last_accessed)"
+            + " VALUES (?, ?, ?, ?, ?, ?);";
 
     deleteStatement =
         "DELETE FROM " + tableName + " WHERE projection_class = ? AND aggregate_id = ?";
@@ -185,17 +193,44 @@ public class JdbcSnapshotCache implements SnapshotCache {
   @SneakyThrows
   public void store(@NonNull SnapshotIdentifier id, @NonNull SnapshotData snapshot) {
     try (Connection connection = dataSource.getConnection();
-        PreparedStatement statement = connection.prepareStatement(mergeStatement)) {
-      statement.setString(1, createKeyFor(id));
-      statement.setString(2, id.aggregateId() != null ? id.aggregateId().toString() : null);
-      statement.setString(3, snapshot.lastFactId().toString());
-      statement.setBytes(4, snapshot.serializedProjection());
-      statement.setString(5, snapshot.snapshotSerializerId().name());
-      statement.setTimestamp(6, Timestamp.valueOf(LocalDate.now().atStartOfDay()));
-      if (statement.executeUpdate() == 0) {
-        throw new IllegalStateException(
-            "Failed to insert snapshot into database. SnapshotId: " + id);
+        PreparedStatement storeUpdate =
+            connection.prepareStatement(agnosticMergeStatementUpdatePart);
+        PreparedStatement storeInsert =
+            connection.prepareStatement(agnosticMergeStatementInsertPart)) {
+
+      connection.setAutoCommit(false);
+
+      final String lastFactId = snapshot.lastFactId().toString();
+      final byte[] bytes = snapshot.serializedProjection();
+      final String snapshotSerializerId = snapshot.snapshotSerializerId().name();
+      final Timestamp lastAccessed = Timestamp.valueOf(LocalDate.now().atStartOfDay());
+      final String projectionClass = createKeyFor(id);
+      final String aggIdOrNull = id.aggregateId() != null ? id.aggregateId().toString() : null;
+
+      // try an update?
+      storeUpdate.setString(1, lastFactId);
+      storeUpdate.setBytes(2, bytes);
+      storeUpdate.setString(3, snapshotSerializerId);
+      storeUpdate.setTimestamp(4, lastAccessed);
+      storeUpdate.setString(5, projectionClass);
+      storeUpdate.setString(6, aggIdOrNull);
+
+      if (storeUpdate.executeUpdate() == 0) {
+        // nothing to update, then insert!
+        storeInsert.setString(1, projectionClass);
+        storeInsert.setString(2, aggIdOrNull);
+        storeInsert.setString(3, lastFactId);
+        storeInsert.setBytes(4, bytes);
+        storeInsert.setString(5, snapshotSerializerId);
+        storeInsert.setTimestamp(6, lastAccessed);
+
+        if (storeInsert.executeUpdate() == 0) {
+          connection.rollback();
+          throw new IllegalStateException(
+              "Failed to insert snapshot into database. SnapshotId: " + id);
+        }
       }
+      connection.commit();
     }
   }
 

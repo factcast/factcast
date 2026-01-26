@@ -26,7 +26,7 @@ import org.springframework.context.annotation.Bean;
 @Slf4j
 @ConfigurationProperties
 @EnableConfigurationProperties
-public class JdbcSnapshotCacheConfigurationForMySql {
+public class MySqlJdbcSnapshotCacheConfiguration {
 
   @Bean
   @ConfigurationProperties(prefix = JdbcSnapshotProperties.PROPERTIES_PREFIX)
@@ -39,11 +39,6 @@ public class JdbcSnapshotCacheConfigurationForMySql {
     try (var connection = dataSource.getConnection();
         var statement = connection.createStatement()) {
 
-      // statement is taken from
-      // https://docs.factcast.org/usage/factus/projections/snapshots/snapshot-caching/
-      // Changes
-      // 1. PRIMARY KEY -> UNIQUE KEY, because: "All parts of a PRIMARY KEY must be NOT NULL; if
-      //  you need NULL in a key, use UNIQUE instead"
       statement.execute(
           """
                         CREATE TABLE IF NOT EXISTS factcast_snapshot (
@@ -56,7 +51,8 @@ public class JdbcSnapshotCacheConfigurationForMySql {
                             UNIQUE KEY (projection_class, aggregate_id)
                         );
                   """);
-      // FYI: it fails to execute multiple statements in one statement, separately it works
+      // FYI: Fails to execute multiple statements in one statement. If you really must send
+      // multiple statements in one call, you must explicitly allow it, e.g. in the JDBC URL
       statement.execute(
           """
                       CREATE INDEX factcast_snapshot_last_accessed_index ON factcast_snapshot (last_accessed);

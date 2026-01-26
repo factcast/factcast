@@ -16,7 +16,6 @@
 package org.factcast.test;
 
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Duration;
@@ -53,6 +52,7 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
   @SneakyThrows
   public void wipeExternalDataStore(TestContext ctx) {
     final DataSource dataSource = ctx.getApplicationContext().getBean(DataSource.class);
+    // there is one IT that works with MySQL
     if (isPostgres(dataSource)) {
       erasePostgres(dataSource);
     }
@@ -60,10 +60,9 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
 
   public boolean isPostgres(DataSource dataSource) {
     try (Connection c = dataSource.getConnection()) {
-      DatabaseMetaData md = c.getMetaData();
-      return "PostgreSQL".equalsIgnoreCase(md.getDatabaseProductName());
+      return "PostgreSQL".equalsIgnoreCase(c.getMetaData().getDatabaseProductName());
     } catch (Exception e) {
-      throw new RuntimeException("Failed to inspect DataSource", e);
+      throw new IllegalStateException("Failed to inspect DataSource", e);
     }
   }
 
