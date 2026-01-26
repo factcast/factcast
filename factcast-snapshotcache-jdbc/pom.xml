@@ -24,13 +24,6 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
-      <dependency>
-        <groupId>org.factcast</groupId>
-        <artifactId>factcast-internal-dep-boot</artifactId>
-        <version>${project.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
     </dependencies>
   </dependencyManagement>
   <dependencies>
@@ -42,10 +35,6 @@
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-factus</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-tx</artifactId>
     </dependency>
 
     <dependency>
