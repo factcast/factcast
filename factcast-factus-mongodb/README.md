@@ -4,7 +4,7 @@ Allows to build projections using MongoDB/ AWS DocumentDB.
 
 ### Transactionality not supported
 
-For now, no transactionality is not supported.
+Currently, transactionality is not supported.
 
 ## Prerequisites
 
