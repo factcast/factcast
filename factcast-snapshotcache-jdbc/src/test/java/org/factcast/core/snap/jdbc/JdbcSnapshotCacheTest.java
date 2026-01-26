@@ -390,12 +390,15 @@ class JdbcSnapshotCacheTest {
       assertThat(lastAccessedKeys.getAllValues())
           .containsExactly(
               ScopedName.fromProjectionMetaData(TestSnapshotProjection.class).asString(), null);
+
+      verify(connection).commit();
     }
 
     @Test
     @SneakyThrows
-    void clearSnapshot_throwsOnFailure() {
+    void clearSnapshot_rollbackOnFailure() {
       when(dataSource.getConnection()).thenReturn(connection);
+      when(connection.getAutoCommit()).thenReturn(true);
       when(connection.prepareStatement(contains(TABLE_NAME))).thenReturn(preparedStatement);
       when(connection.prepareStatement(contains(LAST_ACCESSED_TABLE_NAME)))
           .thenReturn(lastAccessedPreparedStatement);
@@ -404,6 +407,9 @@ class JdbcSnapshotCacheTest {
       assertThatThrownBy(
               () -> jdbcSnapshotCache.remove(SnapshotIdentifier.of(TestSnapshotProjection.class)))
           .isInstanceOf(SQLException.class);
+
+      verify(connection).rollback();
+      verify(connection).setAutoCommit(true);
     }
 
     @Test
