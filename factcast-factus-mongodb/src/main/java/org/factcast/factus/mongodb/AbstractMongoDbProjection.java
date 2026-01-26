@@ -135,7 +135,7 @@ abstract class AbstractMongoDbProjection implements MongoDbProjection {
 
   /**
    * Attempts to acquire the lock until retryUntil has passed. Retry interval is increasing until
-   * MAX_RETRY_INTERVAL_MILLISECONDS is reached, starting with 0,5 seconds.
+   * MAX_RETRY_INTERVAL_MILLISECONDS is reached, starting with 0.5 seconds.
    */
   private Optional<SimpleLock> tryToAcquireLock(
       @NonNull LockConfiguration lockConfig, @NonNull ZonedDateTime retryUntil) {
