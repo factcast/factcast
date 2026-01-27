@@ -40,6 +40,8 @@ public interface TransformationCache {
 
   void invalidateTransformationFor(UUID factId);
 
+  void flush();
+
   @Value
   class Key {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2022 factcast.org
+ * Copyright © 2017-2025 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.core.subscription.observer;
+package org.factcast.factus.projector;
 
-import java.util.UUID;
-import lombok.Value;
+import java.util.*;
+import lombok.NonNull;
+import org.factcast.core.spec.FactSpec;
+import org.factcast.factus.projection.*;
 
-public interface FastForwardTarget {
-  static FastForwardTarget forTest() {
-    return of(null, 0);
-  }
-
-  static FastForwardTarget of(UUID id, long ser) {
-    return Impl.of(HighWaterMark.of(id, ser));
-  }
-
-  // we cannot have single getters for id and ser (race condition)
-  HighWaterMark highWaterMark();
-
-  @Value(staticConstructor = "of")
-  class Impl implements FastForwardTarget {
-    HighWaterMark highWaterMark;
-  }
+public interface FactSpecProvider {
+  @NonNull
+  Collection<FactSpec> forSnapshot(@NonNull Class<? extends SnapshotProjection> clazz);
 }

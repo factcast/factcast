@@ -15,7 +15,7 @@
  */
 package org.factcast.store.internal.tail;
 
-import org.factcast.core.subscription.observer.FastForwardTarget;
+import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
 import org.factcast.store.IsReadAndWriteEnv;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
@@ -23,7 +23,6 @@ import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 @Configuration
 public class PGTailIndexingConfiguration {
@@ -39,7 +38,7 @@ public class PGTailIndexingConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public FastForwardTarget fastForwardTarget(JdbcTemplate jdbc) {
-    return new SimpleFastForwardTarget(jdbc);
+  public HighWaterMarkFetcher highWaterMarkFetcher() {
+    return new SimpleHighWaterMarkFetcher();
   }
 }

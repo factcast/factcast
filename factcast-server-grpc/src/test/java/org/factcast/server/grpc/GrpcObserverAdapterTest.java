@@ -26,8 +26,6 @@ import static org.mockito.Mockito.*;
 import io.grpc.stub.StreamObserver;
 import io.micrometer.core.instrument.Tags;
 import java.nio.charset.StandardCharsets;
-import java.util.UUID;
-import java.util.function.Function;
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
@@ -35,7 +33,6 @@ import org.factcast.core.FactStreamPosition;
 import org.factcast.core.TestFact;
 import org.factcast.core.TestFactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
-import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Type;
@@ -47,13 +44,11 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-@SuppressWarnings({"rawtypes", "unchecked", "deprecation"})
+@SuppressWarnings({"deprecation"})
 @ExtendWith(MockitoExtension.class)
 class GrpcObserverAdapterTest {
 
   @Mock private StreamObserver<MSG_Notification> observer;
-
-  @Mock private Function<Fact, MSG_Notification> projection;
 
   @Mock private ServerExceptionLogger serverExceptionLogger;
 
@@ -99,8 +94,6 @@ class GrpcObserverAdapterTest {
     when(mockGrpcRequestMetaData.supportsFastForward()).thenReturn(true);
     when(mockGrpcRequestMetaData.clientIdAsString()).thenReturn("testClient");
 
-    FastForwardTarget ffwd = FastForwardTarget.of(null, 112);
-
     GrpcObserverAdapter uut =
         new GrpcObserverAdapter("foo", observer, mockGrpcRequestMetaData, serverExceptionLogger);
 
@@ -108,7 +101,7 @@ class GrpcObserverAdapterTest {
     verify(observer, never()).onNext(any());
     uut.onCatchup();
     verify(observer, times(1)).onNext(any());
-    assertEquals(Type.Catchup, msg.getAllValues().get(0).getType());
+    assertEquals(Type.Catchup, msg.getAllValues().getFirst().getType());
   }
 
   @Test
@@ -118,8 +111,6 @@ class GrpcObserverAdapterTest {
     when(mockGrpcRequestMetaData.supportsFastForward()).thenReturn(true);
     when(mockGrpcRequestMetaData.clientIdAsString()).thenReturn("testClient");
 
-    FastForwardTarget ffwd = FastForwardTarget.of(new UUID(1, 1), 0);
-
     GrpcObserverAdapter uut =
         new GrpcObserverAdapter("foo", observer, mockGrpcRequestMetaData, serverExceptionLogger);
 
@@ -127,7 +118,7 @@ class GrpcObserverAdapterTest {
     verify(observer, never()).onNext(any());
     uut.onCatchup();
     verify(observer, times(1)).onNext(any());
-    assertEquals(Type.Catchup, msg.getAllValues().get(0).getType());
+    assertEquals(Type.Catchup, msg.getAllValues().getFirst().getType());
   }
 
   @Test
@@ -137,8 +128,6 @@ class GrpcObserverAdapterTest {
     when(mockGrpcRequestMetaData.supportsFastForward()).thenReturn(false);
     when(mockGrpcRequestMetaData.clientIdAsString()).thenReturn("testClient");
 
-    FastForwardTarget ffwd = FastForwardTarget.of(new UUID(10, 10), 112);
-
     GrpcObserverAdapter uut =
         new GrpcObserverAdapter("foo", observer, mockGrpcRequestMetaData, serverExceptionLogger);
 
@@ -146,7 +135,7 @@ class GrpcObserverAdapterTest {
     verify(observer, never()).onNext(any());
     uut.onCatchup();
     verify(observer, times(1)).onNext(any());
-    assertEquals(Type.Catchup, msg.getAllValues().get(0).getType());
+    assertEquals(Type.Catchup, msg.getAllValues().getFirst().getType());
   }
 
   @Test
@@ -171,7 +160,7 @@ class GrpcObserverAdapterTest {
     verify(observer).onNext(any());
     MSG_Notification notification = msg.getValue();
     assertEquals(MSG_Notification.Type.Facts, notification.getType());
-    assertEquals(f, conv.fromProto(notification.getFacts()).get(0));
+    assertEquals(f, conv.fromProto(notification.getFacts()).getFirst());
   }
 
   @Test
@@ -212,10 +201,7 @@ class GrpcObserverAdapterTest {
     uut.shutdown();
 
     // if keepalive is shutdown, reschedule should throw illegalstateexceptions
-    assertThatThrownBy(
-            () -> {
-              uut.keepalive().reschedule();
-            })
+    assertThatThrownBy(() -> uut.keepalive().reschedule())
         .isInstanceOf(IllegalStateException.class);
   }
 

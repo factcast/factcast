@@ -68,6 +68,6 @@ class CatchupTest {
             });
     cmd.runWith(fc, opt);
 
-    verify(fc).subscribeEphemeral(any(SubscriptionRequest.class), any(ConsoleFactObserver.class));
+    verify(fc).subscribe(any(SubscriptionRequest.class), any(ConsoleFactObserver.class));
   }
 }

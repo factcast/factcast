@@ -33,6 +33,7 @@
   <modules>
     <module>factcast-bom</module>
     <module>factcast-test</module>
+    <module>factcast-test-factus</module>
     <module>factcast-test-redis</module>
     <module>factcast-test-dynamo</module>
     <module>factcast-test-mongodb</module>
@@ -94,39 +95,41 @@
     <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
     <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
     <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
-    <maven.version>3.9.11</maven.version>
+    <maven.version>3.9.12</maven.version>
     <!-- defaults to 11, client modules will be compiled with/to 8 -->
     <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>21</maven.compiler.target>
     <maven.compiler.version>3.14.1</maven.compiler.version>
-    <spotless-maven-plugin.version>3.1.0</spotless-maven-plugin.version>
+    <spotless-maven-plugin.version>3.2.0</spotless-maven-plugin.version>
     <directory-maven-plugin.version>1.0</directory-maven-plugin.version>
     <nexus-staging-maven-plugin.version>1.7.0</nexus-staging-maven-plugin.version>
-    <assertj.version>3.27.6</assertj.version>
-    <jackson.version>2.20.1</jackson.version>
-    <mockito.version>5.20.0</mockito.version>
-    <junit-jupiter.version>6.0.1</junit-jupiter.version>
+    <assertj.version>3.27.7</assertj.version>
+    <jackson.version>2.21.0</jackson.version>
+    <mockito.version>5.21.0</mockito.version>
+    <junit-jupiter.version>6.0.2</junit-jupiter.version>
     <lombok.version>1.18.42</lombok.version>
     <slf4j-api.version>2.0.17</slf4j-api.version>
     <!--suppress UnresolvedMavenProperty -->
     <etc>${session.executionRootDirectory}/src/etc</etc>
-    <spring-boot.version>3.5.8</spring-boot.version>
+    <spring-boot.version>3.5.10</spring-boot.version>
     <!-- whenever updating spring-grpc make sure to align grpc.version accordingly. -->
     <spring-grpc.version>3.1.0.RELEASE</spring-grpc.version>
     <grpc.version>1.63.0</grpc.version>
     <!-- lter versions seem to break toxi -->
-    <testcontainers.version>1.21.3</testcontainers.version>
+    <!-- 2.0.3 refers to unpublioshed artifacts, so that it is not usable right
+      now -->
+    <testcontainers.version>2.0.3</testcontainers.version>
     <arrow.version>2.1.1</arrow.version>
     <micronaut.version>4.7.5</micronaut.version>
-    <kotlin.version>2.2.21</kotlin.version>
+    <kotlin.version>2.3.0</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
-    <mockk.version>1.14.7</mockk.version>
-    <graaljs.version>25.0.1</graaljs.version>
+    <mockk.version>1.14.9</mockk.version>
+    <graaljs.version>25.0.2</graaljs.version>
     <redisson.version>3.52.0</redisson.version>
-    <aws-sdk.version>2.40.9</aws-sdk.version>
-    <mongodb-driver.version>5.5.1</mongodb-driver.version>
-    <shedlock.version>7.2.2</shedlock.version>
-    <byte-buddy.version>1.18.2</byte-buddy.version>
+    <aws-sdk.version>2.41.15</aws-sdk.version>
+      <mongodb-driver.version>5.5.1</mongodb-driver.version>
+    <shedlock.version>7.5.0</shedlock.version>
+    <byte-buddy.version>1.18.4</byte-buddy.version>
     <skipUnitTests>false</skipUnitTests>
     <postgres.version>15</postgres.version>
     <sonar.exclusions>**/src/test/java/**/*.java</sonar.exclusions>
@@ -143,7 +146,7 @@
       <dependency>
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
-        <version>6.0.1</version>
+        <version>6.0.2</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -724,7 +727,7 @@
           <plugin>
             <groupId>org.sonatype.central</groupId>
             <artifactId>central-publishing-maven-plugin</artifactId>
-            <version>0.9.0</version>
+            <version>0.10.0</version>
             <extensions>true</extensions>
             <configuration>
               <publishingServerId>central</publishingServerId>
@@ -782,7 +785,7 @@
           <plugin>
             <groupId>org.openrewrite.maven</groupId>
             <artifactId>rewrite-maven-plugin</artifactId>
-            <version>6.25.0</version>
+            <version>6.28.0</version>
             <configuration>
               <activeRecipes>
                 <recipe>org.openrewrite.staticanalysis.CodeCleanup</recipe>
@@ -793,7 +796,7 @@
               <dependency>
                 <groupId>org.openrewrite.recipe</groupId>
                 <artifactId>rewrite-static-analysis</artifactId>
-                <version>2.23.0</version>
+                <version>2.26.0</version>
               </dependency>
             </dependencies>
           </plugin>

@@ -197,7 +197,7 @@
       <dependency>
         <groupId>org.postgresql</groupId>
         <artifactId>postgresql</artifactId>
-        <version>42.7.8</version>
+        <version>42.7.9</version>
       </dependency>
       <dependency>
         <groupId>com.google.guava</groupId>
@@ -232,7 +232,7 @@
       <dependency>
         <groupId>org.msgpack</groupId>
         <artifactId>jackson-dataformat-msgpack</artifactId>
-        <version>0.9.10</version>
+        <version>0.9.11</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
