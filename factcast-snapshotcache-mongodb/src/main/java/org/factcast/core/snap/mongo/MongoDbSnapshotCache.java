@@ -64,12 +64,12 @@ public class MongoDbSnapshotCache implements SnapshotCache {
   public static final String LAST_FACT_ID_FIELD = "lastFactId";
   public static final String EXPIRE_AT_FIELD = "expireAt";
   public static final String METADATA_EXPIRE_AT_FIELD = "metadata." + EXPIRE_AT_FIELD;
-    public static final String FILENAME_FIELD = "filename";
+  public static final String FILENAME_FIELD = "filename";
 
-    private static final ScheduledExecutorService CLEANUP_SCHEDULER =
+  private static final ScheduledExecutorService CLEANUP_SCHEDULER =
       Executors.newScheduledThreadPool(1);
 
-    private final MongoDbSnapshotProperties properties;
+  private final MongoDbSnapshotProperties properties;
   private final MongoCollection<Document> filesCollection;
 
   private final GridFSBucket gridFSBucket;
@@ -116,7 +116,11 @@ public class MongoDbSnapshotCache implements SnapshotCache {
       int readBytes = downloadStream.read(bytesToWriteTo);
 
       if (readBytes != fileLength) {
-          log.warn("Expected to read {} bytes but only read {} bytes for snapshot id: {}", fileLength, readBytes, id);
+        log.warn(
+            "Expected to read {} bytes but only read {} bytes for snapshot id: {}",
+            fileLength,
+            readBytes,
+            id);
       }
 
       tryUpdateExpirationDateAsync(id);
