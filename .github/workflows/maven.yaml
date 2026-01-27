@@ -19,14 +19,14 @@ jobs:
         fetch-depth: '0'
     - id: 'step-1'
       name: 'Cache - Maven Repository'
-      uses: 'actions/cache@v4'
+      uses: 'actions/cache@v5'
       with:
         path: '~/.m2/repository'
         key: '${{ runner.os }}-maven-${{ hashFiles(''**/pom.xml'') }}'
         restore-keys: '${{ runner.os }}-maven-'
     - id: 'step-2'
       name: 'Cache - Sonar cache'
-      uses: 'actions/cache@v4'
+      uses: 'actions/cache@v5'
       with:
         path: '~/.sonar/cache'
         key: '${{ runner.os }}-sonar-${{ hashFiles(''**/pom.xml'') }}'
@@ -51,6 +51,11 @@ jobs:
     - id: 'step-7'
       name: 'Test - Integration'
       run: './mvnw -B verify -DskipUnitTests'
+    - id: 'step-8'
+      name: 'Codecov upload'
+      uses: 'codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de'
+      with:
+        token: '${{ secrets.CODECOV_TOKEN }}'
   postgres-compatibility:
     runs-on: 'ubuntu-latest'
     strategy:
@@ -65,7 +70,7 @@ jobs:
         fetch-depth: '0'
     - id: 'step-1'
       name: 'Cache - Maven Repository'
-      uses: 'actions/cache@v4'
+      uses: 'actions/cache@v5'
       with:
         path: '~/.m2/repository'
         key: '${{ runner.os }}-maven-${{ hashFiles(''**/pom.xml'') }}'

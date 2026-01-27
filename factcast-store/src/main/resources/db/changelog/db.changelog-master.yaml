@@ -517,24 +517,6 @@ databaseChangeLog:
             stripComments: true
 
   - changeSet:
-      id: issue4046_migration
-      author: uweschaefer
-      runInTransaction: false
-      preConditions:
-        - onFail: MARK_RAN
-        - sqlCheck:
-            expectedResult: t
-            sql: SELECT count_estimate('SELECT * FROM transformationcache') < 10000000;
-      comment: If you have less than 10mio transformation results, this will be executed - otherwise we kindly ask you to execute this script manually. Please consider dropping the indexes before and recreate after (see script file).
-      changes:
-        - sqlFile:
-            encoding: utf8
-            path: factcast/issue4046/migrate_transformationcache_lastaccesses.sql
-            relativeToChangelogFile: true
-            splitStatements: false
-            stripComments: true
-
-  - changeSet:
       id: issue4076_bloat_view
       author: uweschaefer
       runInTransaction: false
@@ -563,3 +545,55 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
+
+  - changeSet:
+      id: issue4151_procedure
+      author: bresciamattia
+      runInTransaction: false
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4151/transformationcache_migration_procedure.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue4151_migration
+      author: bresciamattia
+      runInTransaction: false
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: t
+            sql: SELECT count_estimate('SELECT * FROM transformationcache') < 10000000;
+      comment: If you have less than 10mio transformation results, this will be executed - otherwise we kindly ask you to execute this script manually.
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4151/call_transformationcache_migration_procedure.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue4222
+      author: uweschaefer
+      runInTransaction: false
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4222/create_transformation_access_function.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4222/add_reference_and_cascaded_delete.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+
+
+

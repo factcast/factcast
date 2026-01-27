@@ -76,7 +76,6 @@ class PgFetchingCatchupTest {
 
   @Spy @InjectMocks PgFetchingCatchup underTest;
 
-  @SneakyThrows
   @BeforeEach
   void setup() {}
 
@@ -86,46 +85,36 @@ class PgFetchingCatchupTest {
     @SneakyThrows
     @Test
     void connectionHandling() {
-
       when(req.debugInfo()).thenReturn("appName");
-      when(connectionSupplier.getPooledAsSingleDataSource(any(ConnectionModifier[].class)))
-          .thenReturn(ds);
       var uut =
           spy(
               new PgFetchingCatchup(
-                  connectionSupplier,
                   props,
                   metrics,
                   req,
                   pipeline,
                   serial,
                   statementHolder,
+                  ds,
                   PgCatchupFactory.Phase.PHASE_1));
       doNothing().when(uut).fetch(any());
       uut.run();
-
-      verify(connectionSupplier)
-          .getPooledAsSingleDataSource(
-              ConnectionModifier.withAutoCommitDisabled(),
-              ConnectionModifier.withApplicationName(req.debugInfo()));
     }
 
     @SneakyThrows
     @Test
     void removesCurrentStatement() {
       when(req.debugInfo()).thenReturn("appName");
-      when(connectionSupplier.getPooledAsSingleDataSource(any(ConnectionModifier[].class)))
-          .thenReturn(ds);
       var uut =
           spy(
               new PgFetchingCatchup(
-                  connectionSupplier,
                   props,
                   metrics,
                   req,
                   pipeline,
                   serial,
                   statementHolder,
+                  ds,
                   PgCatchupFactory.Phase.PHASE_1));
       doNothing().when(uut).fetch(any());
       uut.run();

@@ -771,7 +771,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       assertThat(subscribedUserNames.names()).hasSize(1);
 
       // publish an event that is not consumed by the subscribed projection
-      var factId1 = factus.publish(new UserBored("Kenny"), Fact::id);
+      var factId1 = factus.publish(new UserBored(), Fact::id);
       assertThatThrownBy(() -> factus.waitFor(subscribedUserNames, factId1, timeout))
           .isInstanceOf(TimeoutException.class);
     }

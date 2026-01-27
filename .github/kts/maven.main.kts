@@ -1,14 +1,15 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("io.github.typesafegithub:github-workflows-kt:3.6.0")
+@file:DependsOn("io.github.typesafegithub:github-workflows-kt:3.7.0")
 
 
 @file:Repository("https://repo.maven.apache.org/maven2/")
 @file:Repository("https://bindings.krzeminski.it")
 
 @file:DependsOn("actions:checkout:v6")
-@file:DependsOn("actions:cache:v4")
+@file:DependsOn("actions:cache:v5")
 @file:DependsOn("actions:setup-java:v5")
+@file:DependsOn("codecov:codecov-action:v5")
 
 
 import io.github.typesafegithub.workflows.actions.actions.Cache
@@ -22,7 +23,7 @@ import io.github.typesafegithub.workflows.dsl.expressions.Contexts.secrets
 import io.github.typesafegithub.workflows.dsl.expressions.expr
 import io.github.typesafegithub.workflows.dsl.workflow
 import io.github.typesafegithub.workflows.yaml.ConsistencyCheckJobConfig
-
+import io.github.typesafegithub.workflows.actions.codecov.CodecovAction
 
 workflow(
     name = "Maven all in one",
@@ -37,7 +38,7 @@ workflow(
 ) {
 
     val SONAR_TOKEN by Contexts.secrets
-    val SONAR  by Contexts.env
+    val SONAR by Contexts.env
 
     job(
         id = "build",
@@ -91,13 +92,20 @@ workflow(
 
         run(
             name = "Sonar upload",
-            env = mapOf( "SONAR" to expr { SONAR_TOKEN } ,),
+            env = mapOf("SONAR" to expr { SONAR_TOKEN }),
             command = "./mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR"
         )
 
         run(
             name = "Test - Integration",
             command = "./mvnw -B verify -DskipUnitTests",
+        )
+        uses(
+            name = "Codecov upload",
+            action = CodecovAction(
+                _customVersion = "671740ac38dd9b0130fbe1cec585b89eea48d3de",
+                token = "${'$'}{{ secrets.CODECOV_TOKEN }}"
+            ),
         )
     }
 
