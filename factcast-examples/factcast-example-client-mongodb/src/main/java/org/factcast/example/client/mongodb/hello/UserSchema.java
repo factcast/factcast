@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.projection;
+package org.factcast.example.client.mongodb.hello;
 
-import org.factcast.core.util.ExceptionHelper;
+import lombok.*;
+import lombok.experimental.Accessors;
 
-public interface ManagedProjection extends Projection, FactStreamPositionAware, WriterTokenAware {
+@ToString
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Accessors(fluent = false)
+public final class UserSchema {
 
-  default void withLock(Runnable runnable) {
-    // TODO: this will try to acquire the lock forever, which is not what we expect here.
-    try (AutoCloseable token = acquireWriteToken()) {
-      if (token == null) {
-        throw new IllegalStateException("cannot acquire write token");
-      } else {
-        runnable.run();
-      }
-    } catch (Exception e) {
-      throw ExceptionHelper.toRuntime(e);
-    }
-  }
+  private String firstName;
+
+  private String lastName;
+
+  private String displayName;
 }

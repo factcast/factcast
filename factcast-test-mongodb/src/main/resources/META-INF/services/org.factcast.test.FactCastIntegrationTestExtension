@@ -1,1 +1,1 @@
-org.factcast.test.mongo.MongoIntegrationTestExtension
+org.factcast.test.mongodb.MongoDbIntegrationTestExtension

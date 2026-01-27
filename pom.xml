@@ -54,6 +54,7 @@
     <module>factcast-factus-redis</module>
     <module>factcast-factus-spring-tx</module>
     <module>factcast-factus-dynamo</module>
+    <module>factcast-factus-mongodb</module>
     <module>factcast-server-grpc</module>
     <module>factcast-server-security</module>
     <module>factcast-server-ui</module>
@@ -785,7 +786,7 @@
           <plugin>
             <groupId>org.openrewrite.maven</groupId>
             <artifactId>rewrite-maven-plugin</artifactId>
-            <version>6.28.0</version>
+            <version>6.28.1</version>
             <configuration>
               <activeRecipes>
                 <recipe>org.openrewrite.staticanalysis.CodeCleanup</recipe>
