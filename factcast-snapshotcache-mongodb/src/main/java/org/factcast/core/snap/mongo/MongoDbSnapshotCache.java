@@ -64,11 +64,12 @@ public class MongoDbSnapshotCache implements SnapshotCache {
   public static final String LAST_FACT_ID_FIELD = "lastFactId";
   public static final String EXPIRE_AT_FIELD = "expireAt";
   public static final String METADATA_EXPIRE_AT_FIELD = "metadata." + EXPIRE_AT_FIELD;
+    public static final String FILENAME_FIELD = "filename";
 
-  private static final ScheduledExecutorService CLEANUP_SCHEDULER =
+    private static final ScheduledExecutorService CLEANUP_SCHEDULER =
       Executors.newScheduledThreadPool(1);
 
-  private final MongoDbSnapshotProperties properties;
+    private final MongoDbSnapshotProperties properties;
   private final MongoCollection<Document> filesCollection;
 
   private final GridFSBucket gridFSBucket;
@@ -112,7 +113,11 @@ public class MongoDbSnapshotCache implements SnapshotCache {
       GridFSFile gridFSFile = downloadStream.getGridFSFile();
       int fileLength = (int) gridFSFile.getLength();
       byte[] bytesToWriteTo = new byte[fileLength];
-      downloadStream.read(bytesToWriteTo);
+      int readBytes = downloadStream.read(bytesToWriteTo);
+
+      if (readBytes != fileLength) {
+          log.warn("Expected to read {} bytes but only read {} bytes for snapshot id: {}", fileLength, readBytes, id);
+      }
 
       tryUpdateExpirationDateAsync(id);
 
@@ -161,7 +166,7 @@ public class MongoDbSnapshotCache implements SnapshotCache {
   @Override
   public void remove(@NonNull SnapshotIdentifier id) {
     String fileName = getFileName(id);
-    Bson query = Filters.eq("filename", fileName);
+    Bson query = Filters.eq(FILENAME_FIELD, fileName);
     gridFSBucket.find(query).forEach(gridFSFile -> gridFSBucket.delete(gridFSFile.getId()));
   }
 
@@ -178,7 +183,7 @@ public class MongoDbSnapshotCache implements SnapshotCache {
   }
 
   private void deleteOlderVersions(String fileName, ObjectId keepId) {
-    Bson filter = Filters.eq("filename", fileName);
+    Bson filter = Filters.eq(FILENAME_FIELD, fileName);
     gridFSBucket
         .find(filter)
         .forEach(
@@ -206,7 +211,7 @@ public class MongoDbSnapshotCache implements SnapshotCache {
     // or if the executor
     // has not yet run
     filesCollection.updateMany(
-        Filters.eq("filename", getFileName(id)),
+        Filters.eq(FILENAME_FIELD, getFileName(id)),
         Updates.set(
             METADATA_EXPIRE_AT_FIELD,
             Instant.now().plus(properties.getDeleteSnapshotStaleForDays(), ChronoUnit.DAYS)));
