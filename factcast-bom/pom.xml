@@ -121,6 +121,11 @@
       </dependency>
       <dependency>
         <groupId>org.factcast</groupId>
+        <artifactId>factcast-factus-mongodb</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
         <artifactId>factcast-factus-bin-snapser</artifactId>
         <version>${project.version}</version>
       </dependency>

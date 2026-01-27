@@ -188,7 +188,7 @@ class DynamoITest extends AbstractFactCastIntegrationTest {
     }
 
     @Test
-    void testTokenReleaseAfterTooManyFailures_redis() throws Exception {
+    void testTokenReleaseAfterTooManyFailures() throws Exception {
       var subscribedUserNames =
           new TxDynamoSubscribedUserNamesTokenExposedAndThrowsError(dynamoDbClient);
 
@@ -300,7 +300,7 @@ class DynamoITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    public void apply(UserCreated created) {
+    public void apply(UserDeleted created) {
       throw new IllegalArgumentException("user should be in map but wasnt");
     }
   }

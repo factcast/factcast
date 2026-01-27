@@ -13,22 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.projection;
+package org.factcast.example.client.mongodb;
 
-import org.factcast.core.util.ExceptionHelper;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-public interface ManagedProjection extends Projection, FactStreamPositionAware, WriterTokenAware {
-
-  default void withLock(Runnable runnable) {
-    // TODO: this will try to acquire the lock forever, which is not what we expect here.
-    try (AutoCloseable token = acquireWriteToken()) {
-      if (token == null) {
-        throw new IllegalStateException("cannot acquire write token");
-      } else {
-        runnable.run();
-      }
-    } catch (Exception e) {
-      throw ExceptionHelper.toRuntime(e);
-    }
+/** Requires local mongoDB to run. See README.md */
+@SpringBootApplication
+public class ExampleMongoDbClient {
+  public static void main(String[] args) {
+    SpringApplication.run(ExampleMongoDbClient.class, args);
   }
 }

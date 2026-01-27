@@ -48,6 +48,11 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
+      <artifactId>factcast-test-mongodb</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
       <artifactId>factcast-grpc-lz4</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -71,6 +76,10 @@
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-factus-dynamo</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-factus-mongodb</artifactId>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
