@@ -100,7 +100,7 @@ public class MongoDbSnapshotCache implements SnapshotCache {
     this.filesCollection = filesCollection;
     this.properties = properties;
 
-      scheduleCleanupTask();
+    scheduleCleanupTask();
   }
 
   @Override
@@ -165,17 +165,17 @@ public class MongoDbSnapshotCache implements SnapshotCache {
     gridFSBucket.find(query).forEach(gridFSFile -> gridFSBucket.delete(gridFSFile.getId()));
   }
 
-    @VisibleForTesting
-    void tryDeleteOlderVersionsAsync(String fileName, ObjectId keepId) {
-        CompletableFuture.runAsync(
-                () -> {
-                    try {
-                        deleteOlderVersions(fileName, keepId);
-                    } catch (Exception e) {
-                        log.warn("Failed to remove older versions for snapshot with filename: {}", fileName, e);
-                    }
-                });
-    }
+  @VisibleForTesting
+  void tryDeleteOlderVersionsAsync(String fileName, ObjectId keepId) {
+    CompletableFuture.runAsync(
+        () -> {
+          try {
+            deleteOlderVersions(fileName, keepId);
+          } catch (Exception e) {
+            log.warn("Failed to remove older versions for snapshot with filename: {}", fileName, e);
+          }
+        });
+  }
 
   private void deleteOlderVersions(String fileName, ObjectId keepId) {
     Bson filter = Filters.eq("filename", fileName);
@@ -189,17 +189,17 @@ public class MongoDbSnapshotCache implements SnapshotCache {
             });
   }
 
-    @VisibleForTesting
-    void tryUpdateExpirationDateAsync(SnapshotIdentifier id) {
-        CompletableFuture.runAsync(
-                () -> {
-                    try {
-                        updateExpirationDate(id);
-                    } catch (Exception e) {
-                        log.warn("Failed to update expiration date for snapshot with id: {}", id, e);
-                    }
-                });
-    }
+  @VisibleForTesting
+  void tryUpdateExpirationDateAsync(SnapshotIdentifier id) {
+    CompletableFuture.runAsync(
+        () -> {
+          try {
+            updateExpirationDate(id);
+          } catch (Exception e) {
+            log.warn("Failed to update expiration date for snapshot with id: {}", id, e);
+          }
+        });
+  }
 
   private void updateExpirationDate(SnapshotIdentifier id) {
     // Updates many, because there may be multiple versions if store() failed to delete older ones

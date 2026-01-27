@@ -22,10 +22,8 @@ import static org.factcast.core.snap.mongo.MongoDbSnapshotCache.*;
 import static org.mockito.Mockito.*;
 
 import com.mongodb.MongoGridFSException;
-import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
-import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSDownloadStream;
 import com.mongodb.client.gridfs.GridFSFindIterable;
@@ -36,11 +34,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
-
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.Updates;
 import org.awaitility.Awaitility;
-import org.bson.BsonDocument;
 import org.bson.BsonObjectId;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -331,7 +325,7 @@ class MongoDbSnapshotCacheTest {
 
       underTest.tryDeleteOlderVersionsAsync("filename", fileId1.getValue());
 
-      Awaitility.await().untilAsserted(() -> verify(gridFSBucket,times(1)).delete(fileId2));
+      Awaitility.await().untilAsserted(() -> verify(gridFSBucket, times(1)).delete(fileId2));
     }
   }
 
@@ -343,11 +337,14 @@ class MongoDbSnapshotCacheTest {
     void happyCase() {
       underTest.tryUpdateExpirationDateAsync(id);
 
-      Awaitility.await().untilAsserted(() -> {
-          verify(filesCollection).updateMany(filterCaptor.capture(), any(Bson.class));
-            Bson filter = filterCaptor.getValue();
-            assertThat(filter.toBsonDocument().get("filename").asString().getValue()).isEqualTo(underTest.getFileName(id));
-      });
+      Awaitility.await()
+          .untilAsserted(
+              () -> {
+                verify(filesCollection).updateMany(filterCaptor.capture(), any(Bson.class));
+                Bson filter = filterCaptor.getValue();
+                assertThat(filter.toBsonDocument().get("filename").asString().getValue())
+                    .isEqualTo(underTest.getFileName(id));
+              });
     }
   }
 
