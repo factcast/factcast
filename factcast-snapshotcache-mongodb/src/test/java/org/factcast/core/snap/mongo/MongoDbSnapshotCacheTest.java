@@ -18,8 +18,7 @@ package org.factcast.core.snap.mongo;
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
-import static org.factcast.core.snap.mongo.MongoDbSnapshotCache.LAST_FACT_ID_FIELD;
-import static org.factcast.core.snap.mongo.MongoDbSnapshotCache.SNAPSHOT_SERIALIZER_ID_FIELD;
+import static org.factcast.core.snap.mongo.MongoDbSnapshotCache.*;
 import static org.mockito.Mockito.*;
 
 import com.mongodb.MongoGridFSException;
@@ -37,6 +36,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
+
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Updates;
 import org.awaitility.Awaitility;
 import org.bson.BsonDocument;
 import org.bson.BsonObjectId;
@@ -61,11 +63,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class MongoDbSnapshotCacheTest {
 
-  @Mock private MongoClient mongoClient;
-  @Mock private MongoDatabase mongoDatabase;
-  @Mock private MongoCollection<GridFSFile> gridFsCollection;
-  @Mock private MongoCollection<Document> gridFsCollection2;
-  @Mock private MongoCollection<BsonDocument> gridFsChunkCollection;
+  @Mock private MongoCollection<Document> filesCollection;
   @Mock private GridFSBucket gridFSBucket;
 
   private MongoDbSnapshotCache underTest;
@@ -76,7 +74,7 @@ class MongoDbSnapshotCacheTest {
   @BeforeEach
   void setUp() {
     MongoDbSnapshotProperties props = new MongoDbSnapshotProperties();
-    underTest = spy(new MongoDbSnapshotCache(gridFSBucket, gridFsCollection2, props));
+    underTest = spy(new MongoDbSnapshotCache(gridFSBucket, filesCollection, props));
   }
 
   @Nested
@@ -305,6 +303,51 @@ class MongoDbSnapshotCacheTest {
       underTest.cleanupOldSnapshots();
 
       verify(gridFSBucket).delete(fileId);
+    }
+  }
+
+  @Nested
+  class WhenDeletingOlderVersions {
+    @Test
+    void happyCase() {
+      GridFSFindIterable iterable = mock(GridFSFindIterable.class);
+      when(gridFSBucket.find(any(Bson.class))).thenReturn(iterable);
+      GridFSFile file1 = mock(GridFSFile.class);
+      BsonObjectId fileId1 = new BsonObjectId(ObjectId.get());
+      when(file1.getId()).thenReturn(fileId1);
+      GridFSFile file2 = mock(GridFSFile.class);
+      BsonObjectId fileId2 = new BsonObjectId(ObjectId.get());
+      when(file2.getId()).thenReturn(fileId2);
+
+      doAnswer(
+              i -> {
+                Consumer<GridFSFile> consumer = i.getArgument(0);
+                consumer.accept(file1);
+                consumer.accept(file2);
+                return null;
+              })
+          .when(iterable)
+          .forEach(any());
+
+      underTest.tryDeleteOlderVersionsAsync("filename", fileId1.getValue());
+
+      Awaitility.await().untilAsserted(() -> verify(gridFSBucket,times(1)).delete(fileId2));
+    }
+  }
+
+  @Nested
+  class WhenUpdatingExpirationDate {
+    @Captor private ArgumentCaptor<Bson> filterCaptor;
+
+    @Test
+    void happyCase() {
+      underTest.tryUpdateExpirationDateAsync(id);
+
+      Awaitility.await().untilAsserted(() -> {
+          verify(filesCollection).updateMany(filterCaptor.capture(), any(Bson.class));
+            Bson filter = filterCaptor.getValue();
+            assertThat(filter.toBsonDocument().get("filename").asString().getValue()).isEqualTo(underTest.getFileName(id));
+      });
     }
   }
 
