@@ -74,20 +74,24 @@ public class MongoDbWriterToken implements WriterToken {
   @Override
   public boolean isValid() {
     if (alreadyClosed()) return false;
-    // before extending check if the lock was extended in the last 20secs
+    // before extending check if the lock was extended.
     long lastCheck = liveness.get();
     if (System.currentTimeMillis() - lastCheck < keepaliveInterval) {
       return true;
     }
-    Optional<SimpleLock> extendedLock =
-        lock.extend(lockConfiguration.getLockAtMostFor(), lockConfiguration.getLockAtLeastFor());
-    log.debug(
-        "WriterToken {} validity check, when attempting to extend lock for: {}",
-        extendedLock.isPresent() ? "passed" : "failed",
-        lockConfiguration.getName());
-    if (extendedLock.isPresent()) {
-      this.lock = extendedLock.get();
-      return true;
+    try {
+      Optional<SimpleLock> extendedLock =
+          lock.extend(lockConfiguration.getLockAtMostFor(), lockConfiguration.getLockAtLeastFor());
+      log.debug(
+          "WriterToken {} validity check, when attempting to extend lock for: {}",
+          extendedLock.isPresent() ? "passed" : "failed",
+          lockConfiguration.getName());
+      if (extendedLock.isPresent()) {
+        this.lock = extendedLock.get();
+        return true;
+      }
+    } catch (IllegalStateException e) {
+      log.warn("Failed to extend lock for projection: {}", lockConfiguration.getName());
     }
     return false;
   }
@@ -96,7 +100,6 @@ public class MongoDbWriterToken implements WriterToken {
   public void close() {
     try {
       lock.unlock();
-      // TODO: is a IllegalStateException possible here?
     } catch (IllegalStateException e) {
       log.warn("Failed to unlock, it is no longer valid: {}", e.getMessage());
     } finally {
@@ -116,26 +119,37 @@ public class MongoDbWriterToken implements WriterToken {
             if (alreadyClosed()) {
               scheduler.cancel();
             } else {
-              Optional<SimpleLock> extendedLock =
-                  lock.extend(
-                      lockConfiguration.getLockAtMostFor(), lockConfiguration.getLockAtLeastFor());
-              if (extendedLock.isPresent()) {
-                lock = extendedLock.get();
-                liveness.set(System.currentTimeMillis());
-              } else {
-                // could not extend the lock.
-                liveness = null;
-                scheduler.cancel();
+              Optional<SimpleLock> extendedLock = Optional.empty();
+              try {
+                extendedLock =
+                    lock.extend(
+                        lockConfiguration.getLockAtMostFor(),
+                        lockConfiguration.getLockAtLeastFor());
+                if (extendedLock.isPresent()) {
+                  lock = extendedLock.get();
+                  liveness.set(System.currentTimeMillis());
+                } else {
+                  // could not extend the lock.
+                  invalidateLock();
+                }
+              } catch (IllegalStateException e) {
+                invalidateLock();
+              } finally {
+                log.debug(
+                    "{} to extend lock for projection: {}",
+                    extendedLock.isPresent() ? "Succeeded" : "Failed",
+                    lockConfiguration.getName());
               }
-              log.debug(
-                  "{} to extend lock for projection: {}",
-                  extendedLock.isPresent() ? "Succeeded" : "Failed",
-                  lockConfiguration.getName());
             }
           }
         },
         keepaliveInterval,
         keepaliveInterval);
+  }
+
+  private void invalidateLock() {
+    liveness = null;
+    scheduler.cancel();
   }
 
   private boolean alreadyClosed() {

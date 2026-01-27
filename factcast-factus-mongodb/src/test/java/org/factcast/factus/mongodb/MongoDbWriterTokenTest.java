@@ -21,8 +21,10 @@ import static org.mockito.Mockito.*;
 
 import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 import net.javacrumbs.shedlock.core.LockConfiguration;
 import net.javacrumbs.shedlock.core.SimpleLock;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -31,13 +33,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class MongoDbWriterTokenTest {
 
+  private final long KEEPALIVE_INTERVAL_SECONDS = 2;
+
   @Mock SimpleLock lock;
   @Mock LockConfiguration lockConfiguration;
   MongoDbWriterToken uut;
 
   @BeforeEach
   void setUp() {
-    uut = new MongoDbWriterToken(lock, lockConfiguration, Duration.ofSeconds(2));
+    uut =
+        new MongoDbWriterToken(
+            lock, lockConfiguration, Duration.ofSeconds(KEEPALIVE_INTERVAL_SECONDS));
   }
 
   @Nested
@@ -92,21 +98,23 @@ class MongoDbWriterTokenTest {
       verifyNoInteractions(lock);
     }
 
-    // TODO: if exception is not possible can be removed
-    //  @Test
-    //  @DisplayName("isValid should return false attempt to extend lock fails")
-    //  void testIsValid_fails() {
-    //    when(lock.extend(any(Duration.class), any(Duration.class)))
-    //        .thenThrow(IllegalStateException.class);
-    //    final Duration minDuration = Duration.ofSeconds(1L);
-    //    final Duration maxDuration = Duration.ofSeconds(1L);
-    //    when(lockConfiguration.getLockAtLeastFor()).thenReturn(minDuration);
-    //    when(lockConfiguration.getLockAtMostFor()).thenReturn(maxDuration);
-    //
-    //    assertThat(uut.isValid()).isFalse();
-    //
-    //    verify(lock).extend(maxDuration, minDuration);
-    //  }
+    @Test
+    @DisplayName("isValid should return false attempt to extend lock fails")
+    void IsValidReturnsFalseWhenExtendingLockFails() {
+      // Set liveness to value smaller than the keepalive interval.
+      uut.liveness(
+          new AtomicLong(
+              System.currentTimeMillis()
+                  - Duration.ofSeconds(KEEPALIVE_INTERVAL_SECONDS + 3).toMillis()));
+      when(lock.extend(any(Duration.class), any(Duration.class)))
+          .thenThrow(IllegalStateException.class);
+      final Duration minDuration = Duration.ofSeconds(1L);
+      final Duration maxDuration = Duration.ofSeconds(1L);
+      when(lockConfiguration.getLockAtLeastFor()).thenReturn(minDuration);
+      when(lockConfiguration.getLockAtMostFor()).thenReturn(maxDuration);
+
+      assertThat(uut.isValid()).isFalse();
+    }
   }
 
   @Nested
@@ -135,6 +143,8 @@ class MongoDbWriterTokenTest {
 
   @Nested
   class WhenRefreshing {
+    private final long keepaliveIntervalPassedMillis = (KEEPALIVE_INTERVAL_SECONDS * 1000) + 500;
+
     @Test
     @DisplayName("schedules a task to extend the lock periodically")
     void schedulesTask() {
@@ -146,9 +156,26 @@ class MongoDbWriterTokenTest {
       when(lockConfiguration.getLockAtMostFor()).thenReturn(maxDuration);
 
       // wait for it
-      verify(lock, after(1000).never()).extend(any(), any());
+      verify(lock, after(KEEPALIVE_INTERVAL_SECONDS - 1).never()).extend(any(), any());
 
-      verify(lock, timeout(2500).times(1)).extend(maxDuration, minDuration);
+      // half a second after the keepalive interval passed, we expect the lock to be extended.
+      verify(lock, timeout(keepaliveIntervalPassedMillis).times(1))
+          .extend(maxDuration, minDuration);
+    }
+
+    @Test
+    @DisplayName("scheduled task expires lock if extending the lock causes an exception")
+    void expiresOnFailure() {
+      when(lock.extend(any(Duration.class), any(Duration.class)))
+          .thenThrow(new IllegalStateException());
+      final Duration minDuration = Duration.ofSeconds(1L);
+      final Duration maxDuration = Duration.ofSeconds(1L);
+      when(lockConfiguration.getLockAtLeastFor()).thenReturn(minDuration);
+      when(lockConfiguration.getLockAtMostFor()).thenReturn(maxDuration);
+
+      Awaitility.await()
+          .atMost(Duration.ofMillis(keepaliveIntervalPassedMillis))
+          .until(() -> uut.liveness() == null);
     }
   }
 }

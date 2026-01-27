@@ -74,6 +74,7 @@ class AbstractMongoDbManagedProjectionTest {
     @Captor private ArgumentCaptor<Document> filterCaptor;
     @Captor private ArgumentCaptor<Document> stateUpdateCaptor;
     @Captor private ArgumentCaptor<ReplaceOptions> optionsCaptor;
+    @Mock private FindIterable<Document> findIterable;
 
     @Test
     void returnsFactStreamPositionIfSet() {
@@ -82,7 +83,6 @@ class AbstractMongoDbManagedProjectionTest {
           new Document("projectionKey", SCOPED_NAME)
               .append("lastFactId", factId)
               .append("lastFactSerial", 2L);
-      final FindIterable<Document> findIterable = Mockito.mock(FindIterable.class);
       when(stateTable.find(ArgumentMatchers.<Document>any())).thenReturn(findIterable);
       when(findIterable.first()).thenReturn(exp);
 
@@ -93,7 +93,6 @@ class AbstractMongoDbManagedProjectionTest {
 
     @Test
     void returnsNullIfFactStreamPositionNotSet() {
-      final FindIterable<Document> findIterable = Mockito.mock(FindIterable.class);
       when(stateTable.find(ArgumentMatchers.<Document>any())).thenReturn(findIterable);
       when(findIterable.first()).thenReturn(null);
 
