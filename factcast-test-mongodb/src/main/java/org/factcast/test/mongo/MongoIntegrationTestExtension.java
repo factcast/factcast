@@ -18,11 +18,9 @@ package org.factcast.test.mongo;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
-import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -51,51 +49,51 @@ public class MongoIntegrationTestExtension implements FactCastIntegrationTestExt
   }
 
   @SneakyThrows
-    private @NotNull Containers configureContainers(MongoConfig.Config config) {
-        GenericContainer mongo =
-            new GenericContainer<>("mongo:" + config.mongoVersion())
-                .withCommand("--replSet", "rs0", "--bind_ip_all")
-                .withExposedPorts(MONGO_PORT)
-                .withNetwork(FactCastIntegrationTestExecutionListener._docker_network);
-        mongo.start();
+  private @NotNull Containers configureContainers(MongoConfig.Config config) {
+    GenericContainer mongo =
+        new GenericContainer<>("mongo:" + config.mongoVersion())
+            .withCommand("--replSet", "rs0", "--bind_ip_all")
+            .withExposedPorts(MONGO_PORT)
+            .withNetwork(FactCastIntegrationTestExecutionListener._docker_network);
+    mongo.start();
 
-        Container.ExecResult init =
-            mongo.execInContainer(
-                "mongosh",
-                "--quiet",
-                "--eval",
-                "rs.initiate({_id:'rs0', members:[{_id:0, host:'localhost:27017'}]})");
-        if (init.getExitCode() != 0 && !init.getStderr().contains("already initialized")) {
-          throw new IllegalStateException("rs.initiate failed: " + init.getStderr());
-        }
-
-        Container.ExecResult wait =
-            mongo.execInContainer(
-                "mongosh",
-                "--quiet",
-                "--eval",
-                "while(rs.status().myState!=1){ sleep(200); } ; 'PRIMARY'");
-        if (wait.getExitCode() != 0) {
-          throw new IllegalStateException("RS never became PRIMARY: " + wait.getStderr());
-        }
-
-        MongoProxy mongoProxy =
-            new MongoProxy(
-                FactCastIntegrationTestExecutionListener.createProxy(mongo, MONGO_PORT),
-                FactCastIntegrationTestExecutionListener.client());
-
-        return new Containers(
-                mongo,
-                mongoProxy,
-                MongoClients.create(
-                        "mongodb://"
-                                + mongoProxy.get().getContainerIpAddress()
-                                + ":"
-                                + mongoProxy.get().getProxyPort()
-                                + "/?replicaSet=rs0&directConnection=true"));
+    Container.ExecResult init =
+        mongo.execInContainer(
+            "mongosh",
+            "--quiet",
+            "--eval",
+            "rs.initiate({_id:'rs0', members:[{_id:0, host:'localhost:27017'}]})");
+    if (init.getExitCode() != 0 && !init.getStderr().contains("already initialized")) {
+      throw new IllegalStateException("rs.initiate failed: " + init.getStderr());
     }
 
-    @Override
+    Container.ExecResult wait =
+        mongo.execInContainer(
+            "mongosh",
+            "--quiet",
+            "--eval",
+            "while(rs.status().myState!=1){ sleep(200); } ; 'PRIMARY'");
+    if (wait.getExitCode() != 0) {
+      throw new IllegalStateException("RS never became PRIMARY: " + wait.getStderr());
+    }
+
+    MongoProxy mongoProxy =
+        new MongoProxy(
+            FactCastIntegrationTestExecutionListener.createProxy(mongo, MONGO_PORT),
+            FactCastIntegrationTestExecutionListener.client());
+
+    return new Containers(
+        mongo,
+        mongoProxy,
+        MongoClients.create(
+            "mongodb://"
+                + mongoProxy.get().getContainerIpAddress()
+                + ":"
+                + mongoProxy.get().getProxyPort()
+                + "/?replicaSet=rs0&directConnection=true"));
+  }
+
+  @Override
   public void wipeExternalDataStore(TestContext ctx) {
     final MongoConfig.Config config = discoverConfig(ctx.getTestClass());
     final MongoClient client = executions.get(config).client;
