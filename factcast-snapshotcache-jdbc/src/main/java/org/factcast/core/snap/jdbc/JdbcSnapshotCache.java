@@ -207,7 +207,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
       final String projectionClass = createKeyFor(id);
       final String aggIdOrNull = id.aggregateId() != null ? id.aggregateId().toString() : null;
 
-      // try an update?
+      // try update first...
       storeUpdate.setString(1, lastFactId);
       storeUpdate.setBytes(2, bytes);
       storeUpdate.setString(3, snapshotSerializerId);
@@ -216,7 +216,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
       storeUpdate.setString(6, aggIdOrNull);
 
       if (storeUpdate.executeUpdate() == 0) {
-        // nothing to update, then insert!
+        // nothing to update? ... then just insert!
         storeInsert.setString(1, projectionClass);
         storeInsert.setString(2, aggIdOrNull);
         storeInsert.setString(3, lastFactId);

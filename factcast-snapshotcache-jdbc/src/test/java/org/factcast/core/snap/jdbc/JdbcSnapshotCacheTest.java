@@ -75,8 +75,8 @@ class JdbcSnapshotCacheTest {
               "last_accessed");
 
       JdbcSnapshotCache uut = new JdbcSnapshotCache(new JdbcSnapshotProperties(), dataSource);
-      Timer timer = uut.createTimer();
-      assertThat(timer).isNotNull();
+      Timer createdTimer = uut.createTimer();
+      assertThat(createdTimer).isNotNull();
     }
   }
 
@@ -170,17 +170,17 @@ class JdbcSnapshotCacheTest {
               "snapshot_serializer_id",
               "last_accessed");
 
-      LogCaptor logCaptor = LogCaptor.forClass(JdbcSnapshotCache.class);
-
-      assertDoesNotThrow(
-          () ->
-              new JdbcSnapshotCache(new JdbcSnapshotProperties(), dataSource) {
-                @Override
-                protected Timer createTimer() {
-                  return timer;
-                }
-              });
-      assertThat(logCaptor.getErrorLogs()).isEmpty();
+      try (LogCaptor logCaptor = LogCaptor.forClass(JdbcSnapshotCache.class)) {
+        assertDoesNotThrow(
+            () ->
+                new JdbcSnapshotCache(new JdbcSnapshotProperties(), dataSource) {
+                  @Override
+                  protected Timer createTimer() {
+                    return timer;
+                  }
+                });
+        assertThat(logCaptor.getErrorLogs()).isEmpty();
+      }
       // make sure cleanup was scheduled
       verify(timer)
           .scheduleAtFixedRate(
@@ -207,19 +207,19 @@ class JdbcSnapshotCacheTest {
               "snapshot_serializer_id",
               "last_accessed");
 
-      LogCaptor logCaptor = LogCaptor.forClass(JdbcSnapshotCache.class);
-
-      JdbcSnapshotProperties properties = new JdbcSnapshotProperties();
-      properties.setDeleteSnapshotStaleForDays(0);
-      assertDoesNotThrow(
-          () ->
-              new JdbcSnapshotCache(properties, dataSource) {
-                @Override
-                protected Timer createTimer() {
-                  return timer;
-                }
-              });
-      assertThat(logCaptor.getErrorLogs()).isEmpty();
+      try (LogCaptor logCaptor = LogCaptor.forClass(JdbcSnapshotCache.class)) {
+        JdbcSnapshotProperties properties = new JdbcSnapshotProperties();
+        properties.setDeleteSnapshotStaleForDays(0);
+        assertDoesNotThrow(
+            () ->
+                new JdbcSnapshotCache(properties, dataSource) {
+                  @Override
+                  protected Timer createTimer() {
+                    return timer;
+                  }
+                });
+        assertThat(logCaptor.getErrorLogs()).isEmpty();
+      }
       // make sure cleanup was scheduled
       verifyNoInteractions(timer);
     }
@@ -242,19 +242,19 @@ class JdbcSnapshotCacheTest {
               "snapshot_serializer_id",
               "last_accessed");
 
-      LogCaptor logCaptor = LogCaptor.forClass(JdbcSnapshotCache.class);
-
-      JdbcSnapshotProperties properties = new JdbcSnapshotProperties();
-      properties.setDeleteSnapshotStaleForDays(2);
-      assertDoesNotThrow(
-          () ->
-              new JdbcSnapshotCache(properties, dataSource) {
-                @Override
-                protected Timer createTimer() {
-                  return timer;
-                }
-              });
-      assertThat(logCaptor.getErrorLogs()).isEmpty();
+      try (LogCaptor logCaptor = LogCaptor.forClass(JdbcSnapshotCache.class)) {
+        JdbcSnapshotProperties properties = new JdbcSnapshotProperties();
+        properties.setDeleteSnapshotStaleForDays(2);
+        assertDoesNotThrow(
+            () ->
+                new JdbcSnapshotCache(properties, dataSource) {
+                  @Override
+                  protected Timer createTimer() {
+                    return timer;
+                  }
+                });
+        assertThat(logCaptor.getErrorLogs()).isEmpty();
+      }
       // make sure cleanup was scheduled
       verify(timer).scheduleAtFixedRate(any(), eq(0L), eq(TimeUnit.DAYS.toMillis(1)));
     }
@@ -343,7 +343,7 @@ class JdbcSnapshotCacheTest {
               new byte[] {1, 2, 3}, SnapshotSerializerId.of("random"), UUID.randomUUID());
 
       when(update.executeUpdate()).thenReturn(0); // update fails
-      when(insert.executeUpdate()).thenReturn(1); // continuous with insert
+      when(insert.executeUpdate()).thenReturn(1); // continue with insert
       jdbcSnapshotCache.store(SnapshotIdentifier.of(TestSnapshotProjection.class), snap);
 
       // verify update statement
@@ -408,7 +408,11 @@ class JdbcSnapshotCacheTest {
       SnapshotIdentifier id = SnapshotIdentifier.of(TestSnapshotProjection.class);
       assertThatThrownBy(() -> jdbcSnapshotCache.store(id, snap))
           .isInstanceOf(IllegalStateException.class)
-          .hasMessageContaining("Failed to insert snapshot into database. SnapshotId: ");
+          .hasMessage("Failed to insert snapshot into database. SnapshotId: " + id);
+
+      // at least try
+      verify(update).executeUpdate();
+      verify(insert).executeUpdate();
     }
 
     @Test
@@ -465,7 +469,7 @@ class JdbcSnapshotCacheTest {
       JdbcSnapshotCache uut = spy(jdbcSnapshotCache);
       doNothing().when(uut).updateLastAccessedTime(any());
       SnapshotIdentifier id = SnapshotIdentifier.of(TestSnapshotProjection.class);
-      SnapshotData snapshot = uut.find(id).get();
+      SnapshotData snapshot = assertThat(uut.find(id)).isPresent().get().actual();
 
       assertThat(snapshot.lastFactId()).isEqualTo(lastFactId);
       assertThat(snapshot.snapshotSerializerId().name()).isEqualTo("serializerId");
