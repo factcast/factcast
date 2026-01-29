@@ -75,8 +75,8 @@ class JdbcSnapshotCacheTest {
               "last_accessed");
 
       JdbcSnapshotCache uut = new JdbcSnapshotCache(new JdbcSnapshotProperties(), dataSource);
-      Timer timer = uut.createTimer();
-      assertThat(timer).isNotNull();
+      Timer createdTimer = uut.createTimer();
+      assertThat(createdTimer).isNotNull();
     }
   }
 
@@ -170,21 +170,21 @@ class JdbcSnapshotCacheTest {
               "snapshot_serializer_id",
               "last_accessed");
 
-      LogCaptor logCaptor = LogCaptor.forClass(JdbcSnapshotCache.class);
-
-      assertDoesNotThrow(
-          () ->
-              new JdbcSnapshotCache(new JdbcSnapshotProperties(), dataSource) {
-                @Override
-                protected Timer createTimer() {
-                  return timer;
-                }
-              });
-      assertThat(logCaptor.getErrorLogs()).isEmpty();
+      try (LogCaptor logCaptor = LogCaptor.forClass(JdbcSnapshotCache.class)) {
+        assertDoesNotThrow(
+            () ->
+                new JdbcSnapshotCache(new JdbcSnapshotProperties(), dataSource) {
+                  @Override
+                  protected Timer createTimer() {
+                    return timer;
+                  }
+                });
+        assertThat(logCaptor.getErrorLogs()).isEmpty();
+      }
       // make sure cleanup was scheduled
       verify(timer)
           .scheduleAtFixedRate(
-              argThat(a -> StaleSnapshotsTimerTask.class.isInstance(a)),
+              argThat(StaleSnapshotsTimerTask.class::isInstance),
               eq(0L),
               eq(TimeUnit.DAYS.toMillis(1)));
     }
@@ -207,19 +207,19 @@ class JdbcSnapshotCacheTest {
               "snapshot_serializer_id",
               "last_accessed");
 
-      LogCaptor logCaptor = LogCaptor.forClass(JdbcSnapshotCache.class);
-
-      JdbcSnapshotProperties properties = new JdbcSnapshotProperties();
-      properties.setDeleteSnapshotStaleForDays(0);
-      assertDoesNotThrow(
-          () ->
-              new JdbcSnapshotCache(properties, dataSource) {
-                @Override
-                protected Timer createTimer() {
-                  return timer;
-                }
-              });
-      assertThat(logCaptor.getErrorLogs()).isEmpty();
+      try (LogCaptor logCaptor = LogCaptor.forClass(JdbcSnapshotCache.class)) {
+        JdbcSnapshotProperties properties = new JdbcSnapshotProperties();
+        properties.setDeleteSnapshotStaleForDays(0);
+        assertDoesNotThrow(
+            () ->
+                new JdbcSnapshotCache(properties, dataSource) {
+                  @Override
+                  protected Timer createTimer() {
+                    return timer;
+                  }
+                });
+        assertThat(logCaptor.getErrorLogs()).isEmpty();
+      }
       // make sure cleanup was scheduled
       verifyNoInteractions(timer);
     }
@@ -242,19 +242,19 @@ class JdbcSnapshotCacheTest {
               "snapshot_serializer_id",
               "last_accessed");
 
-      LogCaptor logCaptor = LogCaptor.forClass(JdbcSnapshotCache.class);
-
-      JdbcSnapshotProperties properties = new JdbcSnapshotProperties();
-      properties.setDeleteSnapshotStaleForDays(2);
-      assertDoesNotThrow(
-          () ->
-              new JdbcSnapshotCache(properties, dataSource) {
-                @Override
-                protected Timer createTimer() {
-                  return timer;
-                }
-              });
-      assertThat(logCaptor.getErrorLogs()).isEmpty();
+      try (LogCaptor logCaptor = LogCaptor.forClass(JdbcSnapshotCache.class)) {
+        JdbcSnapshotProperties properties = new JdbcSnapshotProperties();
+        properties.setDeleteSnapshotStaleForDays(2);
+        assertDoesNotThrow(
+            () ->
+                new JdbcSnapshotCache(properties, dataSource) {
+                  @Override
+                  protected Timer createTimer() {
+                    return timer;
+                  }
+                });
+        assertThat(logCaptor.getErrorLogs()).isEmpty();
+      }
       // make sure cleanup was scheduled
       verify(timer).scheduleAtFixedRate(any(), eq(0L), eq(TimeUnit.DAYS.toMillis(1)));
     }
@@ -296,34 +296,123 @@ class JdbcSnapshotCacheTest {
 
     @Test
     @SneakyThrows
-    void setSnapshot() {
+    void setSnapshotAgnosticallyViaUpdate() {
+      final PreparedStatement update = mock(PreparedStatement.class);
+
       when(dataSource.getConnection()).thenReturn(connection);
-      when(connection.prepareStatement(any())).thenReturn(preparedStatement);
+      when(connection.prepareStatement(any())).thenReturn(update);
 
       SnapshotData snap =
           new SnapshotData(
               new byte[] {1, 2, 3}, SnapshotSerializerId.of("random"), UUID.randomUUID());
 
-      when(preparedStatement.executeUpdate()).thenReturn(1);
+      when(update.executeUpdate()).thenReturn(1);
       jdbcSnapshotCache.store(SnapshotIdentifier.of(TestSnapshotProjection.class), snap);
 
       ArgumentCaptor<String> string = ArgumentCaptor.forClass(String.class);
       ArgumentCaptor<byte[]> bytes = ArgumentCaptor.forClass(byte[].class);
       ArgumentCaptor<Timestamp> timestamp = ArgumentCaptor.forClass(Timestamp.class);
 
-      verify(preparedStatement, times(4)).setString(any(Integer.class), string.capture());
+      verify(update).executeUpdate();
+      verify(update, times(4)).setString(any(Integer.class), string.capture());
       assertThat(string.getAllValues())
+          .containsExactly(
+              snap.lastFactId().toString(),
+              "random",
+              ScopedName.fromProjectionMetaData(TestSnapshotProjection.class).asString(),
+              null);
+
+      verify(update, times(1)).setTimestamp(any(Integer.class), timestamp.capture());
+      assertThat(timestamp.getValue()).isEqualTo(Timestamp.valueOf(LocalDate.now().atStartOfDay()));
+
+      verify(update, times(1)).setBytes(any(Integer.class), bytes.capture());
+      assertThat(bytes.getValue()).isEqualTo(snap.serializedProjection());
+    }
+
+    @Test
+    @SneakyThrows
+    void setSnapshotAgnosticallyViaInsert() {
+      final PreparedStatement update = mock(PreparedStatement.class);
+      final PreparedStatement insert = mock(PreparedStatement.class);
+
+      when(dataSource.getConnection()).thenReturn(connection);
+      when(connection.prepareStatement(any())).thenReturn(update, insert);
+
+      SnapshotData snap =
+          new SnapshotData(
+              new byte[] {1, 2, 3}, SnapshotSerializerId.of("random"), UUID.randomUUID());
+
+      when(update.executeUpdate()).thenReturn(0); // update fails
+      when(insert.executeUpdate()).thenReturn(1); // continue with insert
+      jdbcSnapshotCache.store(SnapshotIdentifier.of(TestSnapshotProjection.class), snap);
+
+      // verify update statement
+      verify(update).executeUpdate();
+      ArgumentCaptor<String> stringsInUpdate = ArgumentCaptor.forClass(String.class);
+      ArgumentCaptor<byte[]> bytesInUpdate = ArgumentCaptor.forClass(byte[].class);
+      ArgumentCaptor<Timestamp> timestampsInUpdate = ArgumentCaptor.forClass(Timestamp.class);
+
+      verify(update, times(4)).setString(any(Integer.class), stringsInUpdate.capture());
+      assertThat(stringsInUpdate.getAllValues())
+          .containsExactly(
+              snap.lastFactId().toString(),
+              "random",
+              ScopedName.fromProjectionMetaData(TestSnapshotProjection.class).asString(),
+              null);
+
+      verify(update, times(1)).setTimestamp(any(Integer.class), timestampsInUpdate.capture());
+      assertThat(timestampsInUpdate.getValue())
+          .isEqualTo(Timestamp.valueOf(LocalDate.now().atStartOfDay()));
+
+      verify(update, times(1)).setBytes(any(Integer.class), bytesInUpdate.capture());
+      assertThat(bytesInUpdate.getValue()).isEqualTo(snap.serializedProjection());
+
+      // verify insert statement
+      verify(insert).executeUpdate();
+      ArgumentCaptor<String> stringsInInsert = ArgumentCaptor.forClass(String.class);
+      ArgumentCaptor<byte[]> bytesInInsert = ArgumentCaptor.forClass(byte[].class);
+      ArgumentCaptor<Timestamp> timestampsInInsert = ArgumentCaptor.forClass(Timestamp.class);
+
+      verify(insert, times(4)).setString(any(Integer.class), stringsInInsert.capture());
+      assertThat(stringsInInsert.getAllValues())
           .containsExactly(
               ScopedName.fromProjectionMetaData(TestSnapshotProjection.class).asString(),
               null,
               snap.lastFactId().toString(),
               "random");
 
-      verify(preparedStatement, times(1)).setTimestamp(any(Integer.class), timestamp.capture());
-      assertThat(timestamp.getValue()).isEqualTo(Timestamp.valueOf(LocalDate.now().atStartOfDay()));
+      verify(insert, times(1)).setTimestamp(any(Integer.class), timestampsInInsert.capture());
+      assertThat(timestampsInInsert.getValue())
+          .isEqualTo(Timestamp.valueOf(LocalDate.now().atStartOfDay()));
 
-      verify(preparedStatement, times(1)).setBytes(any(Integer.class), bytes.capture());
-      assertThat(bytes.getValue()).isEqualTo(snap.serializedProjection());
+      verify(insert, times(1)).setBytes(any(Integer.class), bytesInInsert.capture());
+      assertThat(bytesInInsert.getValue()).isEqualTo(snap.serializedProjection());
+    }
+
+    @Test
+    @SneakyThrows
+    void setSnapshotFails() {
+      final PreparedStatement update = mock(PreparedStatement.class);
+      final PreparedStatement insert = mock(PreparedStatement.class);
+
+      when(dataSource.getConnection()).thenReturn(connection);
+      when(connection.prepareStatement(any())).thenReturn(update, insert);
+
+      SnapshotData snap =
+          new SnapshotData(
+              new byte[] {1, 2, 3}, SnapshotSerializerId.of("random"), UUID.randomUUID());
+
+      when(update.executeUpdate()).thenReturn(0); // update fails
+      when(insert.executeUpdate()).thenReturn(0); // and insert fails
+
+      SnapshotIdentifier id = SnapshotIdentifier.of(TestSnapshotProjection.class);
+      assertThatThrownBy(() -> jdbcSnapshotCache.store(id, snap))
+          .isInstanceOf(IllegalStateException.class)
+          .hasMessage("Failed to insert snapshot into database. SnapshotId: " + id);
+
+      // at least try
+      verify(update).executeUpdate();
+      verify(insert).executeUpdate();
     }
 
     @Test
@@ -380,7 +469,7 @@ class JdbcSnapshotCacheTest {
       JdbcSnapshotCache uut = spy(jdbcSnapshotCache);
       doNothing().when(uut).updateLastAccessedTime(any());
       SnapshotIdentifier id = SnapshotIdentifier.of(TestSnapshotProjection.class);
-      SnapshotData snapshot = uut.find(id).get();
+      SnapshotData snapshot = assertThat(uut.find(id)).isPresent().get().actual();
 
       assertThat(snapshot.lastFactId()).isEqualTo(lastFactId);
       assertThat(snapshot.snapshotSerializerId().name()).isEqualTo("serializerId");
