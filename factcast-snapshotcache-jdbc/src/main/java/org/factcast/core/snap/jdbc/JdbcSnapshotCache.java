@@ -70,14 +70,14 @@ public class JdbcSnapshotCache implements SnapshotCache {
             + "    snapshot_serializer_id = ?,"
             + "    last_accessed = ?"
             + " WHERE projection_class = ?"
-            + "  AND aggregate_id = ?;";
+            + "  AND aggregate_id = ?";
 
     // part 2 of a replacement for a "MERGE INTO" statement which is not supported by MySQL
     agnosticMergeStatementInsertPart =
         " INSERT INTO "
             + tableName
             + " (projection_class, aggregate_id, last_fact_id, bytes, snapshot_serializer_id, last_accessed)"
-            + " VALUES (?, ?, ?, ?, ?, ?);";
+            + " VALUES (?, ?, ?, ?, ?, ?)";
 
     deleteStatement =
         "DELETE FROM " + tableName + " WHERE projection_class = ? AND aggregate_id = ?";
@@ -87,12 +87,26 @@ public class JdbcSnapshotCache implements SnapshotCache {
             + tableName
             + " SET last_accessed = ? WHERE projection_class = ? AND aggregate_id = ?";
 
-    boolean snapTableExists = doesTableExist(tableName);
+    // Oracle stores metadata entries in uppercase
+    boolean snapTableExists = doesTableExist(tableName) || doesTableExist(tableName.toUpperCase());
 
     if (!snapTableExists) {
       throw new IllegalStateException("Snapshots table does not exist: " + tableName);
     } else {
-      validateColumns(tableName);
+      final Set<String> invalidColumnsForLowerCaseTable = findInvalidColumns(tableName);
+      if (!invalidColumnsForLowerCaseTable.isEmpty()) {
+        // Oracle stores metadata entries in uppercase
+        log.info(
+            "Found invalid columns, re-checking for uppercase table name: {}",
+            tableName.toUpperCase());
+        final Set<String> invalidColumnsForUpperCaseTable =
+            findInvalidColumns(tableName.toUpperCase());
+        if (!invalidColumnsForUpperCaseTable.isEmpty()) {
+          throw new IllegalStateException(
+              "Snapshot table schema is not compatible with Factus. Missing columns: "
+                  + invalidColumnsForUpperCaseTable);
+        }
+      }
     }
 
     if (properties.getDeleteSnapshotStaleForDays() > 0) {
@@ -124,7 +138,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
   }
 
   @SneakyThrows
-  public void validateColumns(String tableName) {
+  public Set<String> findInvalidColumns(String tableName) {
     try (Connection connection = dataSource.getConnection();
         ResultSet columns = connection.getMetaData().getColumns(null, null, tableName, null)) {
 
@@ -139,12 +153,11 @@ public class JdbcSnapshotCache implements SnapshotCache {
       while (columns.next()) {
         String columnName = columns.getString("COLUMN_NAME");
 
-        columnsSet.remove(columnName);
+        // Oracle stores metadata entries in uppercase
+        columnsSet.remove(columnName.toLowerCase());
       }
-      if (!columnsSet.isEmpty()) {
-        throw new IllegalStateException(
-            "Snapshot table schema is not compatible with Factus. Missing columns: " + columnsSet);
-      }
+
+      return columnsSet;
     }
   }
 

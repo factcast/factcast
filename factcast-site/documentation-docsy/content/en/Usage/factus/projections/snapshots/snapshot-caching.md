@@ -124,7 +124,8 @@ CREATE TABLE factcast_snapshot (
     bytes BLOB,
     snapshot_serializer_id VARCHAR2(128) NOT NULL,
     last_accessed VARCHAR2(255),
-    PRIMARY KEY (projection_class, aggregate_id)
+    CONSTRAINT uq_factcast_snapshot
+        UNIQUE (projection_class, aggregate_id)
 );
 CREATE INDEX factcast_snapshot_last_accessed_index ON factcast_snapshot (last_accessed);
 ```

@@ -52,7 +52,7 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
   @SneakyThrows
   public void wipeExternalDataStore(TestContext ctx) {
     final DataSource dataSource = ctx.getApplicationContext().getBean(DataSource.class);
-    // there is one IT that works with MySQL
+    // there are few ITs that work with MySQL/Oracle
     if (isPostgres(dataSource)) {
       erasePostgres(dataSource);
     }
