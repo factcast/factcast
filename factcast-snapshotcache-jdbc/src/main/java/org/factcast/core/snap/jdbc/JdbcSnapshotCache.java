@@ -61,6 +61,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
             + tableName
             + " WHERE projection_class = ? AND aggregate_id = ?";
 
+    // part 1 of a replacement for a "MERGE INTO" statement which is not supported by MySQL
     agnosticMergeStatementUpdatePart =
         "UPDATE "
             + tableName
@@ -71,6 +72,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
             + " WHERE projection_class = ?"
             + "  AND aggregate_id = ?;";
 
+    // part 2 of a replacement for a "MERGE INTO" statement which is not supported by MySQL
     agnosticMergeStatementInsertPart =
         " INSERT INTO "
             + tableName
