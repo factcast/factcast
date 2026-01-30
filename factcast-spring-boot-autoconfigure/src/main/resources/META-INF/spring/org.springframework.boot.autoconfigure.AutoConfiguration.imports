@@ -10,6 +10,7 @@ org.factcast.spring.boot.autoconfigure.factus.snapshot.serializer.fury.DefaultFu
 org.factcast.spring.boot.autoconfigure.snap.NoSnapshotCacheAutoConfiguration
 org.factcast.spring.boot.autoconfigure.snap.InMemorySnapshotCacheAutoConfiguration
 org.factcast.spring.boot.autoconfigure.snap.InMemoryAndDiskSnapshotCacheAutoConfiguration
+org.factcast.spring.boot.autoconfigure.snap.MongoDbSnapshotCacheAutoConfiguration
 org.factcast.spring.boot.autoconfigure.snap.RedissonSnapshotCacheAutoConfiguration
 org.factcast.spring.boot.autoconfigure.client.grpc.GrpcFactStoreAutoConfiguration
 org.factcast.spring.boot.autoconfigure.client.grpc.LZ4ClientAutoConfiguration
