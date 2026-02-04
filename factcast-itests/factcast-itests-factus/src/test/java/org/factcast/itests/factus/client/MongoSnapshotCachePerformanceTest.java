@@ -15,15 +15,15 @@
  */
 package org.factcast.itests.factus.client;
 
-import com.mongodb.client.MongoClient;
-import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.snapshot.SnapshotCache;
 import org.factcast.itests.TestFactusApplication;
-import org.factcast.itests.factus.config.MongoClientConfiguration;
+import org.factcast.itests.factus.config.MongoDbProjectionConfiguration;
 import org.factcast.spring.boot.autoconfigure.snap.MongoDbSnapshotCacheAutoConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
+import com.mongodb.client.MongoClient;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @SpringBootTest
@@ -31,7 +31,7 @@ import org.springframework.test.context.ContextConfiguration;
     classes = {
       TestFactusApplication.class,
       MongoDbSnapshotCacheAutoConfiguration.class,
-      MongoClientConfiguration.class
+        MongoDbProjectionConfiguration.class
     })
 public class MongoSnapshotCachePerformanceTest extends SnapshotCachePerformanceTest {
   @Autowired
