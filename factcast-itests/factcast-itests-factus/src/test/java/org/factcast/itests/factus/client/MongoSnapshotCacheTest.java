@@ -18,10 +18,16 @@ package org.factcast.itests.factus.client;
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.factcast.core.snap.mongo.MongoDbSnapshotCache.METADATA_EXPIRE_AT_FIELD;
+
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Updates;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.factcast.core.snap.mongo.MongoDbSnapshotCache;
 import org.factcast.factus.projection.ScopedName;
@@ -37,11 +43,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Updates;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @SpringBootTest
@@ -49,7 +50,7 @@ import lombok.extern.slf4j.Slf4j;
     classes = {
       TestFactusApplication.class,
       MongoDbSnapshotCacheAutoConfiguration.class,
-        MongoDbProjectionConfiguration.class
+      MongoDbProjectionConfiguration.class
     })
 public class MongoSnapshotCacheTest extends SnapshotCacheTest {
   private final MongoClient mongoClient;

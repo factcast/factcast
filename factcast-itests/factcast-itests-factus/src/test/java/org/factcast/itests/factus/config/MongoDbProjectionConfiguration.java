@@ -23,7 +23,6 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -40,7 +39,8 @@ public class MongoDbProjectionConfiguration {
   MongoClient mongoDbClient(
       @Value("${mongodb.local.host}") String url, @Value("${mongodb.local.port}") String port) {
     log.info("Creating MongoDbClient with url: {}, port: {}", url, port);
-    final var connectionString = "mongodb://" + url + ":" + port + "/?replicaSet=rs0&directConnection=true";
+    final var connectionString =
+        "mongodb://" + url + ":" + port + "/?replicaSet=rs0&directConnection=true";
     CodecRegistry pojoCodecRegistry =
         fromProviders(PojoCodecProvider.builder().automatic(true).build());
     CodecRegistry codecRegistry =
@@ -54,8 +54,7 @@ public class MongoDbProjectionConfiguration {
   }
 
   @Bean
-  MongoDatabase mongoDatabase(
-      MongoClient mongoDbClient) {
+  MongoDatabase mongoDatabase(MongoClient mongoDbClient) {
     return mongoDbClient.getDatabase("factcast_test");
   }
 
