@@ -171,7 +171,13 @@ public class MongoDbSnapshotCache implements SnapshotCache {
   public void remove(@NonNull SnapshotIdentifier id) {
     String fileName = getFileName(id);
     Bson query = Filters.eq(FILENAME_FIELD, fileName);
-    gridFSBucket.find(query).forEach(gridFSFile -> gridFSBucket.delete(gridFSFile.getId()));
+    gridFSBucket.find(query).forEach(gridFSFile -> {
+      try {
+        gridFSBucket.delete(gridFSFile.getId());
+      } catch (Exception e) {
+        log.debug("Failed to delete snapshot with filename: {}, possibly deleted by an async job before", fileName, e);
+      }
+    });
   }
 
   @VisibleForTesting
