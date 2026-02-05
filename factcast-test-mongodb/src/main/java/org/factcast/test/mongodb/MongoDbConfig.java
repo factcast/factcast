@@ -26,8 +26,6 @@ import lombok.With;
 public @interface MongoDbConfig {
   String mongoDbVersion() default Config.MONGO_DB_VERSION;
 
-  String TEST_MONGO_DB_NAME = "factcast_test";
-
   @Value
   @With
   class Config {

@@ -39,7 +39,8 @@ public class MongoDbProjectionConfiguration {
   MongoClient mongoDbClient(
       @Value("${mongodb.local.host}") String url, @Value("${mongodb.local.port}") String port) {
     log.info("Creating MongoDbClient with url: {}, port: {}", url, port);
-    final var connectionString = "mongodb://" + url + ":" + port;
+    final var connectionString =
+        "mongodb://" + url + ":" + port + "/?replicaSet=rs0&directConnection=true";
     CodecRegistry pojoCodecRegistry =
         fromProviders(PojoCodecProvider.builder().automatic(true).build());
     CodecRegistry codecRegistry =
@@ -53,9 +54,8 @@ public class MongoDbProjectionConfiguration {
   }
 
   @Bean
-  MongoDatabase mongoDatabase(
-      MongoClient mongoDbClient, @Value("${mongodb.local.db.name}") String dbName) {
-    return mongoDbClient.getDatabase(dbName);
+  MongoDatabase mongoDatabase(MongoClient mongoDbClient) {
+    return mongoDbClient.getDatabase("factcast_test");
   }
 
   @Bean

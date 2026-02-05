@@ -68,6 +68,7 @@
     <module>factcast-snapshotcache-local-memory</module>
     <module>factcast-snapshotcache-local-disk</module>
     <module>factcast-snapshotcache-jdbc</module>
+    <module>factcast-snapshotcache-mongodb</module>
     <module>factcast-factus-serializer-binary</module>
     <module>factcast-factus-serializer-fury</module>
   </modules>
