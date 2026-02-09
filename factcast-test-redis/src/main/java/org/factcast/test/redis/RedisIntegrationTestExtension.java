@@ -47,13 +47,13 @@ public class RedisIntegrationTestExtension implements FactCastIntegrationTestExt
               return new Containers(
                   redis,
                   new RedisProxy(
-                      FactCastIntegrationTestExecutionListener.createProxy(redis, REDIS_PORT),
+                      FactCastIntegrationTestExecutionListener.createProxy("redis", redis, REDIS_PORT),
                       FactCastIntegrationTestExecutionListener.client()));
             });
 
-    ContainerProxy redisProxy = container.redisProxy().get();
-    System.setProperty("spring.data.redis.host", redisProxy.getContainerIpAddress());
-    System.setProperty("spring.data.redis.port", String.valueOf(redisProxy.getProxyPort()));
+    FactCastIntegrationTestExecutionListener.ProxiedEndpoint redisProxy = container.redisProxy().get();
+    System.setProperty("spring.data.redis.host", redisProxy.host());
+    System.setProperty("spring.data.redis.port", String.valueOf(redisProxy.port()));
   }
 
   @Override

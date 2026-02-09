@@ -16,6 +16,7 @@
 package org.factcast.test;
 
 import com.google.common.collect.Lists;
+import eu.rekawek.toxiproxy.Proxy;
 import eu.rekawek.toxiproxy.ToxiproxyClient;
 import java.sql.SQLException;
 import java.util.*;
@@ -42,6 +43,10 @@ public class FactCastIntegrationTestExecutionListener implements TestExecutionLi
 
   public static final Network _docker_network = Network.newNetwork();
   public static final String TOXIPROXY_NETWORK_ALIAS = "toxiproxy";
+
+  // Testcontainers docs: toxiproxy reserves 31 ports starting at 8666
+  private static final int BASE_PROXY_PORT = 8666;
+  private static final AtomicInteger NEXT = new AtomicInteger(0);
 
   private static List<FactCastIntegrationTestExtension> extensions = new LinkedList<>();
   private static List<FactCastIntegrationTestExtension> reverseExtensions;
@@ -166,12 +171,28 @@ public class FactCastIntegrationTestExecutionListener implements TestExecutionLi
     toxiClient = new ToxiproxyClient(host, controlPort);
   }
 
-  public static org.testcontainers.containers.ToxiproxyContainer.ContainerProxy createProxy(
-      GenericContainer<?> container, int port) {
-    // TODO SB4 was:
-    // return toxiProxy.getProxy(container, port);
-    throw new UnsupportedOperationException("TODO SB4");
+  @SneakyThrows
+  public static ProxiedEndpoint createProxy(String proxyName, GenericContainer<?> container, int port) {
+    String toxiProxyHost = toxiProxy.getHost();
+    ToxiproxyClient client =
+        new ToxiproxyClient(toxiProxyHost, toxiProxy.getControlPort());
+
+    String alias = container.getNetworkAliases().stream().findFirst()
+        .orElseThrow(() -> new IllegalStateException(
+            "Target container must have a network alias: .withNetworkAliases(\"some-name\")"));
+
+    int listenPort = BASE_PROXY_PORT + NEXT.getAndIncrement();
+
+    Proxy proxy = client.createProxy(
+        proxyName,                  // arbitrary name
+        "0.0.0.0:" + listenPort,     // toxiproxy listens here (inside toxiproxy container)
+        alias + ":" + port     // target address (inside docker network)
+    );
+
+    return new ProxiedEndpoint(proxy, toxiProxyHost, toxiProxy.getMappedPort(listenPort));
   }
+
+  public record ProxiedEndpoint(Proxy proxy, String host, int port) {}
 
   public static ToxiproxyClient client() {
     return toxiClient;

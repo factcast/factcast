@@ -17,12 +17,13 @@ package org.factcast.test.dynamo;
 
 import eu.rekawek.toxiproxy.ToxiproxyClient;
 import lombok.NonNull;
+import org.factcast.test.FactCastIntegrationTestExecutionListener;
 import org.factcast.test.toxi.AbstractToxiProxySupplier;
 import org.testcontainers.containers.ToxiproxyContainer;
 
 public class DynamoProxy extends AbstractToxiProxySupplier {
   public DynamoProxy(
-      @NonNull ToxiproxyContainer.ContainerProxy proxy, @NonNull ToxiproxyClient client) {
-    super(proxy, proxy.getName(), client);
+      @NonNull FactCastIntegrationTestExecutionListener.ProxiedEndpoint proxy, @NonNull ToxiproxyClient client) {
+    super(proxy, client);
   }
 }

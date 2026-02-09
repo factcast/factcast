@@ -71,7 +71,7 @@ class ExceptionOnHandshakeTest extends AbstractFactCastIntegrationTest {
     slowConsumer.latch.await(); // wait for 3 facts to arrive
 
     // will repeatedly cause a StatusRE
-    fcProxy.toxics().timeout("to", ToxicDirection.UPSTREAM, 512);
+    fcProxy.proxy().toxics().timeout("to", ToxicDirection.UPSTREAM, 512);
 
     // should propagate exception
     Assertions.assertThatThrownBy(sub::awaitComplete).isInstanceOf(Exception.class);
@@ -81,7 +81,7 @@ class ExceptionOnHandshakeTest extends AbstractFactCastIntegrationTest {
   @Test
   @Order(2)
   void fcProxyWasReset() {
-    assertThat(fcProxy.get().toxics().getAll()).isEmpty();
+    assertThat(fcProxy.get().proxy().toxics().getAll()).isEmpty();
   }
 
   static class SlowConsumer extends LocalSubscribedProjection {

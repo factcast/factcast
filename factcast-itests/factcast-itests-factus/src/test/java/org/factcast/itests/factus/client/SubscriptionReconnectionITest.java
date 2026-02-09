@@ -80,7 +80,7 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
   void subscribeWorksWithoutAndWithLatency() {
     fetchAll();
 
-    proxy.toxics().latency("some latency", ToxicDirection.UPSTREAM, LATENCY);
+    proxy.proxy().toxics().latency("some latency", ToxicDirection.UPSTREAM, LATENCY);
 
     assertThatNoException().isThrownBy(this::fetchAll);
   }
@@ -91,9 +91,9 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
   void subscribeWithReconnect() {
     log.info(
         "Using FcProxy {} {}:{}",
-        proxy.getName(),
-        proxy.getContainerIpAddress(),
-        proxy.getProxyPort());
+        proxy.proxy().getName(),
+        proxy.host(),
+        proxy.port());
     LogCaptor logCaptor = LogCaptor.forClass(GrpcFactStore.class);
     logCaptor.setLogLevelToDebug();
 
@@ -150,7 +150,7 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
                         if (f.serial() == MAX_FACTS / 32) {
                           try {
                             // let it repeatedly fail after each 1k sent...
-                            proxy.toxics().limitData("limit", ToxicDirection.DOWNSTREAM, 1024);
+                            proxy.proxy().toxics().limitData("limit", ToxicDirection.DOWNSTREAM, 1024);
                           } catch (IOException e) {
                             throw new RuntimeException(e);
                           }

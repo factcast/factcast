@@ -60,21 +60,16 @@ public class ExampleUiServerWithS3Reports {
     localStackContainer =
         new LocalStackContainer(
                 DockerImageName.parse("localstack/localstack:" + S3_LOCALSTACK_VERSION))
-            // TODO SB4 legit?
-            .withServices("S3");
+            .withServices("s3");
 
     localStackContainer.start();
 
-    // TODO SB4 restore:
-    //    final var endpointConfiguration =
-    //        localStackContainer.getEndpointOverride(LocalStackContainer.Service.S3);
-    //    System.setProperty(S3Configuration.LOCAL_S_3_ENDPOINT, endpointConfiguration.toString());
-    //    System.setProperty(S3Configuration.LOCAL_S_3_SIGNING_REGION,
-    // localStackContainer.getRegion());
-    //    System.setProperty("aws.accessKeyId", localStackContainer.getAccessKey());
-    //    System.setProperty("aws.secretKey", localStackContainer.getSecretKey());
-    //    System.setProperty("aws.region", localStackContainer.getRegion());
-
-    throw new UnsupportedOperationException();
+        final var endpointConfiguration = localStackContainer.getEndpoint(); // one endpoint for all services in LocalStack v2+
+        System.setProperty(S3Configuration.LOCAL_S_3_ENDPOINT, endpointConfiguration.toString());
+        System.setProperty(S3Configuration.LOCAL_S_3_SIGNING_REGION,
+     localStackContainer.getRegion());
+        System.setProperty("aws.accessKeyId", localStackContainer.getAccessKey());
+        System.setProperty("aws.secretKey", localStackContainer.getSecretKey());
+        System.setProperty("aws.region", localStackContainer.getRegion());
   }
 }

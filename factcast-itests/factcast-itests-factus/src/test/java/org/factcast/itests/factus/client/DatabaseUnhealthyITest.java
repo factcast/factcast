@@ -59,7 +59,7 @@ class DatabaseUnhealthyITest extends AbstractFactCastIntegrationTest {
 
     final var userProjection = new UserProjection();
 
-    proxy.toxics().resetPeer("db-gone", ToxicDirection.UPSTREAM, 0);
+    proxy.proxy().toxics().resetPeer("db-gone", ToxicDirection.UPSTREAM, 0);
 
     assertThatThrownBy(() -> factus.update(userProjection))
         .isInstanceOf(RetryableException.class)

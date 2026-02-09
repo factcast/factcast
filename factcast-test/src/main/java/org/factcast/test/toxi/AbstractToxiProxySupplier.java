@@ -15,24 +15,25 @@
  */
 package org.factcast.test.toxi;
 
+import eu.rekawek.toxiproxy.Proxy;
 import eu.rekawek.toxiproxy.ToxiproxyClient;
 import java.util.function.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.experimental.Delegate;
+import org.factcast.test.FactCastIntegrationTestExecutionListener;
+import org.factcast.test.FactCastIntegrationTestExecutionListener.ProxiedEndpoint;
 import org.testcontainers.containers.ToxiproxyContainer;
 
 @RequiredArgsConstructor
 public abstract class AbstractToxiProxySupplier
-    // TODO
-    implements Supplier<ToxiproxyContainer.ContainerProxy> {
-  @Delegate @NonNull private ToxiproxyContainer.ContainerProxy proxy;
-  @NonNull private final String name;
+    implements Supplier<ProxiedEndpoint> {
+  @Delegate @NonNull private ProxiedEndpoint proxy;
   @NonNull private final ToxiproxyClient client;
 
   @Override
-  public ToxiproxyContainer.ContainerProxy get() {
+  public ProxiedEndpoint get() {
     return proxy;
   }
 
@@ -43,25 +44,23 @@ public abstract class AbstractToxiProxySupplier
 
   @SneakyThrows
   public void disable() {
-    client.getProxy(name).disable();
+    client.getProxy(proxy.proxy().getName()).disable();
   }
 
   @SneakyThrows
   public void enable() {
-    client.getProxy(name).enable();
+    client.getProxy(proxy.proxy().getName()).enable();
   }
 
   @Override
   public String toString() {
     return this.getClass().getSimpleName()
-        + "[ip="
-        + getContainerIpAddress()
-        + ",proxyPort="
-        + getProxyPort()
-        + ",origProxyPort="
-        + getOriginalProxyPort()
+        + "[listen="
+        + proxy().getListen()
+        + ",upstream="
+        + proxy().getUpstream()
         + ",name="
-        + getName()
+        + proxy().getName()
         + "]";
   }
 }

@@ -53,7 +53,7 @@ public class DynamoIntegrationTestExtension implements FactCastIntegrationTestEx
 
               DynamoProxy dynamoProxy =
                   new DynamoProxy(
-                      FactCastIntegrationTestExecutionListener.createProxy(dynamo, DYNAMO_PORT),
+                      FactCastIntegrationTestExecutionListener.createProxy("dynamo",dynamo, DYNAMO_PORT),
                       FactCastIntegrationTestExecutionListener.client());
               return new Containers(
                   dynamo,
@@ -68,15 +68,15 @@ public class DynamoIntegrationTestExtension implements FactCastIntegrationTestEx
                       .endpointOverride(
                           URI.create(
                               "http://"
-                                  + dynamoProxy.get().getContainerIpAddress()
+                                  + dynamoProxy.get().host()
                                   + ":"
-                                  + dynamoProxy.get().getProxyPort()))
+                                  + dynamoProxy.get().port()))
                       .build());
             });
 
-    ContainerProxy dynamoProxy = container.dynamoProxy().get();
-    System.setProperty("dynamodb.local.host", dynamoProxy.getContainerIpAddress());
-    System.setProperty("dynamodb.local.port", String.valueOf(dynamoProxy.getProxyPort()));
+    FactCastIntegrationTestExecutionListener.ProxiedEndpoint dynamoProxy = container.dynamoProxy().get();
+    System.setProperty("dynamodb.local.host", dynamoProxy.host());
+    System.setProperty("dynamodb.local.port", String.valueOf(dynamoProxy.port()));
   }
 
   @Override

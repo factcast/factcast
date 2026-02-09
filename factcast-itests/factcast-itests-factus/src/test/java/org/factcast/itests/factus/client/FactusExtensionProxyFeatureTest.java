@@ -72,7 +72,7 @@ class FactusExtensionProxyFeatureTest extends AbstractFactCastIntegrationTest {
   @Order(1)
   void factcastInteractionWithLatency() {
 
-    fcProxy.toxics().latency(UUID.randomUUID().toString(), ToxicDirection.DOWNSTREAM, LATENCY);
+    fcProxy.proxy().toxics().latency(UUID.randomUUID().toString(), ToxicDirection.DOWNSTREAM, LATENCY);
     Stopwatch sw = Stopwatch.createStarted();
     publish();
 
@@ -92,7 +92,7 @@ class FactusExtensionProxyFeatureTest extends AbstractFactCastIntegrationTest {
   @Test
   @Order(2)
   void factcastInteractionWithLatencyWasReset() {
-    assertThat(fcProxy.get().toxics().getAll()).isEmpty();
+    assertThat(fcProxy.get().proxy().toxics().getAll()).isEmpty();
   }
 
   @SneakyThrows
@@ -102,7 +102,7 @@ class FactusExtensionProxyFeatureTest extends AbstractFactCastIntegrationTest {
     redis.getBucket("foo").set("bar");
     long rtWithoutLatency = sw.stop().elapsed(TimeUnit.MILLISECONDS);
 
-    redisProxy.toxics().latency("some latency", ToxicDirection.UPSTREAM, LATENCY);
+    redisProxy.proxy().toxics().latency("some latency", ToxicDirection.UPSTREAM, LATENCY);
 
     sw = Stopwatch.createStarted();
     redis.getBucket("foo").set("bar");
