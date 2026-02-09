@@ -64,12 +64,12 @@ public class ExampleUiServerWithS3Reports {
 
     localStackContainer.start();
 
-        final var endpointConfiguration = localStackContainer.getEndpoint(); // one endpoint for all services in LocalStack v2+
-        System.setProperty(S3Configuration.LOCAL_S_3_ENDPOINT, endpointConfiguration.toString());
-        System.setProperty(S3Configuration.LOCAL_S_3_SIGNING_REGION,
-     localStackContainer.getRegion());
-        System.setProperty("aws.accessKeyId", localStackContainer.getAccessKey());
-        System.setProperty("aws.secretKey", localStackContainer.getSecretKey());
-        System.setProperty("aws.region", localStackContainer.getRegion());
+    final var endpointConfiguration =
+        localStackContainer.getEndpoint(); // one endpoint for all services in LocalStack v2+
+    System.setProperty(S3Configuration.LOCAL_S_3_ENDPOINT, endpointConfiguration.toString());
+    System.setProperty(S3Configuration.LOCAL_S_3_SIGNING_REGION, localStackContainer.getRegion());
+    System.setProperty("aws.accessKeyId", localStackContainer.getAccessKey());
+    System.setProperty("aws.secretKey", localStackContainer.getSecretKey());
+    System.setProperty("aws.region", localStackContainer.getRegion());
   }
 }

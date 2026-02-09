@@ -33,7 +33,6 @@ import org.testcontainers.containers.*;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
 import org.testcontainers.postgresql.PostgreSQLContainer;
-import eu.rekawek.toxiproxy.Proxy;
 
 @Slf4j
 public class BaseIntegrationTestExtension implements FactCastIntegrationTestExtension {

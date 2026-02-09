@@ -15,20 +15,16 @@
  */
 package org.factcast.test.toxi;
 
-import eu.rekawek.toxiproxy.Proxy;
 import eu.rekawek.toxiproxy.ToxiproxyClient;
 import java.util.function.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.experimental.Delegate;
-import org.factcast.test.FactCastIntegrationTestExecutionListener;
 import org.factcast.test.FactCastIntegrationTestExecutionListener.ProxiedEndpoint;
-import org.testcontainers.containers.ToxiproxyContainer;
 
 @RequiredArgsConstructor
-public abstract class AbstractToxiProxySupplier
-    implements Supplier<ProxiedEndpoint> {
+public abstract class AbstractToxiProxySupplier implements Supplier<ProxiedEndpoint> {
   @Delegate @NonNull private ProxiedEndpoint proxy;
   @NonNull private final ToxiproxyClient client;
 

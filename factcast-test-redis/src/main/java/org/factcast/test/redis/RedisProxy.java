@@ -19,11 +19,11 @@ import eu.rekawek.toxiproxy.ToxiproxyClient;
 import lombok.NonNull;
 import org.factcast.test.FactCastIntegrationTestExecutionListener;
 import org.factcast.test.toxi.AbstractToxiProxySupplier;
-import org.testcontainers.containers.ToxiproxyContainer;
 
 public class RedisProxy extends AbstractToxiProxySupplier {
   public RedisProxy(
-      @NonNull FactCastIntegrationTestExecutionListener.ProxiedEndpoint proxy, @NonNull ToxiproxyClient client) {
+      @NonNull FactCastIntegrationTestExecutionListener.ProxiedEndpoint proxy,
+      @NonNull ToxiproxyClient client) {
     super(proxy, client);
   }
 }

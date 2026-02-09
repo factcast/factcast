@@ -24,7 +24,6 @@ import org.factcast.test.FactCastIntegrationTestExtension;
 import org.redisson.api.RedissonClient;
 import org.springframework.test.context.TestContext;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.ToxiproxyContainer.ContainerProxy;
 
 @SuppressWarnings({"rawtypes", "resource"})
 @Slf4j
@@ -47,11 +46,13 @@ public class RedisIntegrationTestExtension implements FactCastIntegrationTestExt
               return new Containers(
                   redis,
                   new RedisProxy(
-                      FactCastIntegrationTestExecutionListener.createProxy("redis", redis, REDIS_PORT),
+                      FactCastIntegrationTestExecutionListener.createProxy(
+                          "redis", redis, REDIS_PORT),
                       FactCastIntegrationTestExecutionListener.client()));
             });
 
-    FactCastIntegrationTestExecutionListener.ProxiedEndpoint redisProxy = container.redisProxy().get();
+    FactCastIntegrationTestExecutionListener.ProxiedEndpoint redisProxy =
+        container.redisProxy().get();
     System.setProperty("spring.data.redis.host", redisProxy.host());
     System.setProperty("spring.data.redis.port", String.valueOf(redisProxy.port()));
   }

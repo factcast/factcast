@@ -26,7 +26,6 @@ import org.factcast.test.FactCastIntegrationTestExecutionListener;
 import org.factcast.test.FactCastIntegrationTestExtension;
 import org.springframework.test.context.TestContext;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.ToxiproxyContainer.ContainerProxy;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
@@ -53,7 +52,8 @@ public class DynamoIntegrationTestExtension implements FactCastIntegrationTestEx
 
               DynamoProxy dynamoProxy =
                   new DynamoProxy(
-                      FactCastIntegrationTestExecutionListener.createProxy("dynamo",dynamo, DYNAMO_PORT),
+                      FactCastIntegrationTestExecutionListener.createProxy(
+                          "dynamo", dynamo, DYNAMO_PORT),
                       FactCastIntegrationTestExecutionListener.client());
               return new Containers(
                   dynamo,
@@ -74,7 +74,8 @@ public class DynamoIntegrationTestExtension implements FactCastIntegrationTestEx
                       .build());
             });
 
-    FactCastIntegrationTestExecutionListener.ProxiedEndpoint dynamoProxy = container.dynamoProxy().get();
+    FactCastIntegrationTestExecutionListener.ProxiedEndpoint dynamoProxy =
+        container.dynamoProxy().get();
     System.setProperty("dynamodb.local.host", dynamoProxy.host());
     System.setProperty("dynamodb.local.port", String.valueOf(dynamoProxy.port()));
   }

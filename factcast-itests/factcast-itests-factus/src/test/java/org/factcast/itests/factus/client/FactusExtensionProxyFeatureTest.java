@@ -72,7 +72,10 @@ class FactusExtensionProxyFeatureTest extends AbstractFactCastIntegrationTest {
   @Order(1)
   void factcastInteractionWithLatency() {
 
-    fcProxy.proxy().toxics().latency(UUID.randomUUID().toString(), ToxicDirection.DOWNSTREAM, LATENCY);
+    fcProxy
+        .proxy()
+        .toxics()
+        .latency(UUID.randomUUID().toString(), ToxicDirection.DOWNSTREAM, LATENCY);
     Stopwatch sw = Stopwatch.createStarted();
     publish();
 

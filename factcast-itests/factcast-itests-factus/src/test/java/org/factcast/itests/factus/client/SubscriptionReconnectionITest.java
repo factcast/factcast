@@ -89,11 +89,7 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
   @Test
   @Disabled("https://github.com/factcast/factcast/issues/2749")
   void subscribeWithReconnect() {
-    log.info(
-        "Using FcProxy {} {}:{}",
-        proxy.proxy().getName(),
-        proxy.host(),
-        proxy.port());
+    log.info("Using FcProxy {} {}:{}", proxy.proxy().getName(), proxy.host(), proxy.port());
     LogCaptor logCaptor = LogCaptor.forClass(GrpcFactStore.class);
     logCaptor.setLogLevelToDebug();
 
@@ -150,7 +146,10 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
                         if (f.serial() == MAX_FACTS / 32) {
                           try {
                             // let it repeatedly fail after each 1k sent...
-                            proxy.proxy().toxics().limitData("limit", ToxicDirection.DOWNSTREAM, 1024);
+                            proxy
+                                .proxy()
+                                .toxics()
+                                .limitData("limit", ToxicDirection.DOWNSTREAM, 1024);
                           } catch (IOException e) {
                             throw new RuntimeException(e);
                           }
