@@ -16,18 +16,18 @@
 package org.factcast.spring.boot.autoconfigure.server.grpc;
 
 import net.jpountz.lz4.LZ4Compressor;
-import org.factcast.grpc.lz4.Lz4GrpcServerCodec;
+import org.factcast.grpc.lz4.Lz4GrpcCodec;
 import org.factcast.server.grpc.FactStoreGrpcService;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.context.annotation.Bean;
 
 @AutoConfiguration
-@ConditionalOnClass({FactStoreGrpcService.class, LZ4Compressor.class, Lz4GrpcServerCodec.class})
+@ConditionalOnClass({FactStoreGrpcService.class, LZ4Compressor.class, Lz4GrpcCodec.class})
 public class LZ4ServerAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean
-  public Lz4GrpcServerCodec lz4ServerCodec() {
-    return new Lz4GrpcServerCodec();
+  public Lz4GrpcCodec lz4ServerCodec() {
+    return new Lz4GrpcCodec();
   }
 }

@@ -31,7 +31,6 @@ import java.util.function.*;
 import java.util.stream.Collectors;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import net.devh.boot.grpc.server.service.GrpcService;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.*;
@@ -46,6 +45,7 @@ import org.factcast.server.grpc.metrics.*;
 import org.factcast.server.grpc.metrics.ServerMetrics.OP;
 import org.factcast.server.security.auth.*;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.grpc.server.service.GrpcService;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.context.*;
 

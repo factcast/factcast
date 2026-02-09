@@ -18,7 +18,6 @@ package org.factcast.spring.boot.autoconfigure.client.grpc;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import lombok.NonNull;
-import net.devh.boot.grpc.client.channelfactory.*;
 import org.factcast.client.grpc.*;
 import org.factcast.core.store.FactStore;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +25,8 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.*;
+import org.springframework.grpc.client.GrpcChannelBuilderCustomizer;
+import org.springframework.grpc.client.GrpcChannelFactory;
 import org.springframework.util.StringUtils;
 
 /**
@@ -64,7 +65,7 @@ public class GrpcFactStoreAutoConfiguration {
   }
 
   @Bean
-  public GrpcChannelConfigurer retryChannelConfigurer() {
-    return (channelBuilder, name) -> channelBuilder.enableRetry().maxRetryAttempts(100);
+  public GrpcChannelBuilderCustomizer retryChannelConfigurer() {
+    return (name, channelBuilder) -> channelBuilder.enableRetry().maxRetryAttempts(100);
   }
 }

@@ -18,40 +18,45 @@ package org.factcast.server.grpc;
 import java.util.Collections;
 import lombok.Generated;
 import lombok.extern.slf4j.Slf4j;
-import net.devh.boot.grpc.server.autoconfigure.GrpcServerSecurityAutoConfiguration;
-import net.devh.boot.grpc.server.security.authentication.BasicGrpcAuthenticationReader;
-import net.devh.boot.grpc.server.security.authentication.GrpcAuthenticationReader;
 import org.factcast.server.security.auth.FactCastSecurityProperties;
-import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.grpc.server.GlobalServerInterceptor;
+import org.springframework.grpc.server.security.AuthenticationProcessInterceptor;
+import org.springframework.grpc.server.security.GrpcSecurity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ProviderManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import org.springframework.security.config.Customizer;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 
 @SuppressWarnings("deprecation")
 @Slf4j
 @Generated
 @Configuration
 @EnableMethodSecurity(securedEnabled = true, proxyTargetClass = true)
-@AutoConfigureBefore(GrpcServerSecurityAutoConfiguration.class)
 public class FactCastSecurityConfiguration {
 
-  @Bean
-  GrpcAuthenticationReader authenticationReader(FactCastSecurityProperties p) {
-    if (p.isEnabled()) {
-      return new BasicGrpcAuthenticationReader();
-    }
-
-    UsernamePasswordAuthenticationToken disabled =
-        new UsernamePasswordAuthenticationToken("security_disabled", "security_disabled");
-    return (call, headers) -> disabled;
-  }
+//  @Bean
+//  GrpcAuthenticationReader authenticationReader(FactCastSecurityProperties p) {
+//    if (p.isEnabled()) {
+//      return new BasicGrpcAuthenticationReader();
+//    }
+//
+//    UsernamePasswordAuthenticationToken disabled =
+//        new UsernamePasswordAuthenticationToken("security_disabled", "security_disabled");
+//    return (call, headers) -> disabled;
+//  }
 
   @Bean
   AuthenticationProvider authenticationProvider(
@@ -65,5 +70,28 @@ public class FactCastSecurityConfiguration {
   @Bean
   AuthenticationManager authenticationManager(AuthenticationProvider p) {
     return new ProviderManager(Collections.singletonList(p));
+  }
+
+//  @Bean
+//  public SecurityFilterChain securityFilterChain(HttpSecurity http, FactCastSecurityProperties p) throws Exception {
+//    if (p.isEnabled()) {
+//      return http.httpBasic(Customizer.withDefaults())
+//          .authorizeHttpRequests((requests) -> requests.anyRequest().authenticated())
+//          .build();
+//    }
+//    return http
+//        .authorizeHttpRequests((requests) -> requests.anyRequest().permitAll())
+//        .build();
+//  }
+
+  @Bean
+  @GlobalServerInterceptor
+  AuthenticationProcessInterceptor jwtSecurityFilterChain(GrpcSecurity grpc) throws Exception {
+    return grpc
+        .authorizeRequests(requests -> requests
+            .allRequests().authenticated())
+        .httpBasic(withDefaults())
+        // .preauth(withDefaults())
+        .build();
   }
 }

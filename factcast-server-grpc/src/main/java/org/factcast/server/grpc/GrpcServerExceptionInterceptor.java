@@ -20,12 +20,12 @@ import io.grpc.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.devh.boot.grpc.server.interceptor.GrpcGlobalServerInterceptor;
 import org.factcast.core.FactValidationException;
 import org.slf4j.Logger;
+import org.springframework.grpc.server.GlobalServerInterceptor;
 
 @Slf4j
-@GrpcGlobalServerInterceptor
+@GlobalServerInterceptor
 @RequiredArgsConstructor
 public class GrpcServerExceptionInterceptor implements ServerInterceptor {
   final GrpcRequestMetadata scopedBean;

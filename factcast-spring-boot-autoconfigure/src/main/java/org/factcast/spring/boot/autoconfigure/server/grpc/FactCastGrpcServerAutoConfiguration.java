@@ -15,11 +15,11 @@
  */
 package org.factcast.spring.boot.autoconfigure.server.grpc;
 
-import net.devh.boot.grpc.server.autoconfigure.GrpcServerAutoConfiguration;
 import org.factcast.server.grpc.*;
 import org.springframework.boot.autoconfigure.*;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.context.annotation.Import;
+import org.springframework.grpc.autoconfigure.server.GrpcServerAutoConfiguration;
 
 @AutoConfiguration
 @Import({FactCastGrpcServerConfiguration.class, FactCastSecurityConfiguration.class})

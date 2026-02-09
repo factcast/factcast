@@ -15,19 +15,19 @@
  */
 package org.factcast.spring.boot.autoconfigure.server.grpc;
 
-import org.factcast.grpc.snappy.SnappycGrpcServerCodec;
+import org.factcast.grpc.snappy.SnappycGrpcCodec;
 import org.factcast.server.grpc.FactStoreGrpcService;
 import org.springframework.boot.autoconfigure.*;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.context.annotation.Bean;
 
 @AutoConfiguration
-@ConditionalOnClass({FactStoreGrpcService.class, SnappycGrpcServerCodec.class})
+@ConditionalOnClass({FactStoreGrpcService.class, SnappycGrpcCodec.class})
 @AutoConfigureBefore(FactCastGrpcServerAutoConfiguration.class)
 public class SnappycServerAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean
-  public SnappycGrpcServerCodec snappycServerCodec() {
-    return new SnappycGrpcServerCodec();
+  public SnappycGrpcCodec snappycServerCodec() {
+    return new SnappycGrpcCodec();
   }
 }

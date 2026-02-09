@@ -32,7 +32,6 @@ import lombok.Generated;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import net.devh.boot.grpc.client.security.CallCredentialsHelper;
 import org.factcast.core.DuplicateFactException;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
@@ -306,7 +305,7 @@ public class GrpcFactStore implements FactStore {
               + password
               + "\".");
     }
-    return CallCredentialsHelper.basicAuth(user, password);
+    return BasicAuthCallCredentials.of(user, password);
   }
 
   private static void logServerVersion(Map<String, String> serverProperties) {

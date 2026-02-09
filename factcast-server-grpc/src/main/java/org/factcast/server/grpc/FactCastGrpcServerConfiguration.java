@@ -17,7 +17,6 @@ package org.factcast.server.grpc;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.NonNull;
-import net.devh.boot.grpc.server.scope.GrpcRequestScope;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
 import org.factcast.grpc.api.CompressionCodecs;
@@ -25,6 +24,7 @@ import org.factcast.server.grpc.metrics.ServerMetrics;
 import org.factcast.server.grpc.metrics.ServerMetricsImpl;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.*;
+import org.springframework.grpc.server.ServerBuilderCustomizer;
 
 @Configuration
 @EnableConfigurationProperties(GrpcLimitProperties.class)
@@ -58,7 +58,8 @@ public class FactCastGrpcServerConfiguration {
 
   @Bean
   @Scope(
-      scopeName = GrpcRequestScope.GRPC_REQUEST_SCOPE_NAME,
+      // TODO constant
+      scopeName = "grpcRequest",
       proxyMode = ScopedProxyMode.TARGET_CLASS)
   GrpcRequestMetadata grpcMetaData() {
     return new GrpcRequestMetadata();
@@ -67,5 +68,10 @@ public class FactCastGrpcServerConfiguration {
   @Bean
   public ServerMetrics serverMetrics(@NonNull MeterRegistry reg) {
     return new ServerMetricsImpl(reg);
+  }
+
+  @Bean
+  public ServerBuilderCustomizer globalInterceptorCustomizer(GrpcRequestMetadataInterceptor interceptor) {
+    return serverBuilder -> serverBuilder.intercept(interceptor);
   }
 }

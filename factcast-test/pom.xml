@@ -116,7 +116,7 @@
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-api</artifactId>
-      <version>1.63.0</version>
+      <version>${grpc.version}</version>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>

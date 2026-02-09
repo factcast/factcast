@@ -22,9 +22,7 @@ import io.grpc.ServerCallHandler;
 import io.grpc.ServerInterceptor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.devh.boot.grpc.server.interceptor.GrpcGlobalServerInterceptor;
 
-@GrpcGlobalServerInterceptor
 @RequiredArgsConstructor
 @Slf4j
 public class GrpcRequestMetadataInterceptor implements ServerInterceptor {

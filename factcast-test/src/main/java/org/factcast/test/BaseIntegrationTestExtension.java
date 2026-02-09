@@ -100,7 +100,8 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                   new GenericContainer<>("factcast/factcast:" + config.factcastVersion())
                       .withExposedPorts(FC_PORT)
                       .withFileSystemBind(config.configDir(), "/config/")
-                      .withEnv("grpc_server_port", String.valueOf(FC_PORT))
+                      //.withEnv("grpc_server_port", String.valueOf(FC_PORT))
+                      .withEnv("spring_grpc_server_port", String.valueOf(FC_PORT))
                       .withEnv(
                           "factcast_security_enabled", String.valueOf(config.securityEnabled()))
                       .withEnv("factcast_grpc_bandwidth_disabled", "true")
