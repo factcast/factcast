@@ -141,7 +141,8 @@ public class PgConnectionSupplier {
   @SuppressWarnings("java:S2077")
   public SingleConnectionDataSource getPooledAsSingleDataSource(
       @NonNull List<ConnectionModifier> filterList) {
-    return new ModifiedSingleConnectionDataSource(ds.getConnection(), filterList);
+    return new ModifiedSingleConnectionDataSource(
+        new TracingConnection(ds.getConnection()), filterList);
   }
 
   static class ModifiedSingleConnectionDataSource extends SingleConnectionDataSource {
@@ -162,6 +163,7 @@ public class PgConnectionSupplier {
       var rev = new ArrayList<>(filterList);
       Collections.reverse(rev);
       rev.forEach(f -> f.beforeReturn(c));
+      // super.resetConnection();
       super.destroy();
     }
   }
