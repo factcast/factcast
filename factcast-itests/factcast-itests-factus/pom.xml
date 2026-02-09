@@ -130,6 +130,10 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
+      <artifactId>factcast-snapshotcache-mongodb</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
       <artifactId>factcast-snapshotcache-local-disk</artifactId>
     </dependency>
     <dependency>

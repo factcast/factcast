@@ -1,0 +1,12 @@
+{
+  "properties": [
+    {
+      "name": "factcast.mongodb.delete-snapshot-stale-for-days",
+      "type": "java.lang.Integer",
+      "deprecation": {
+        "replacement": "factcast.snapshot.mongodb.delete-snapshot-stale-for-days",
+        "level": "error"
+      }
+    }
+  ]
+}
