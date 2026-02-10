@@ -22,9 +22,11 @@ import org.factcast.schema.registry.cli.utils.BANNER
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Import
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean
 import picocli.CommandLine
 import picocli.CommandLine.Command
+import picocli.spring.boot.autoconfigure.PicocliAutoConfiguration
 
 
 @Command(
@@ -33,6 +35,10 @@ import picocli.CommandLine.Command
     description = ["Tool for working with the FactCast Schema Registry spec"],
     subcommands = [Validate::class, Build::class],
     mixinStandardHelpOptions = true
+)
+// This can go away as soon as picocli is SB4 compatible, or we migrated away from it
+@Import(
+    PicocliAutoConfiguration::class
 )
 @SpringBootApplication(scanBasePackages = ["org.factcast.schema.registry.cli"])
 class Application : Runnable {
