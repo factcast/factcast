@@ -20,20 +20,19 @@ import com.google.common.base.Preconditions;
 import io.grpc.Metadata;
 import java.util.*;
 import java.util.stream.*;
-import lombok.AccessLevel;
 import lombok.NonNull;
-import lombok.Setter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.grpc.api.GrpcConstants;
 import org.factcast.grpc.api.Headers;
 
 @Slf4j
+@RequiredArgsConstructor
 public class GrpcRequestMetadata {
 
   public static final String UNKNOWN = "unknown";
 
-  @Setter(AccessLevel.PROTECTED)
-  Metadata headers;
+  private final Metadata headers;
 
   int clientMaxInboundMessageSize() {
     Preconditions.checkNotNull(
@@ -60,12 +59,11 @@ public class GrpcRequestMetadata {
 
   @VisibleForTesting
   public static GrpcRequestMetadata forTest(long maxInboundMessageSize) {
-    GrpcRequestMetadata grpcRequestMetadata = new GrpcRequestMetadata();
-    grpcRequestMetadata.headers = new Metadata();
-    grpcRequestMetadata.headers.put(Headers.FAST_FORWARD, "true");
-    grpcRequestMetadata.headers.put(
-        Headers.CLIENT_MAX_INBOUND_MESSAGE_SIZE, String.valueOf(maxInboundMessageSize));
-    return grpcRequestMetadata;
+    final var headers = new Metadata();
+    headers.put(Headers.FAST_FORWARD, "true");
+    headers.put(Headers.CLIENT_MAX_INBOUND_MESSAGE_SIZE, String.valueOf(maxInboundMessageSize));
+
+    return new GrpcRequestMetadata(headers);
   }
 
   @NonNull

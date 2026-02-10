@@ -111,8 +111,8 @@
     <etc>${session.executionRootDirectory}/src/etc</etc>
     <spring-boot.version>3.5.9</spring-boot.version>
     <!-- whenever updating spring-grpc make sure to align grpc.version accordingly. -->
-    <spring-grpc.version>0.9.0</spring-grpc.version>
-    <grpc.version>1.63.0</grpc.version>
+    <spring-grpc.version>0.12.0</spring-grpc.version>
+    <grpc.version>1.76.0</grpc.version>
     <!-- lter versions seem to break toxi -->
     <!-- 2.0.3 refers to unpublioshed artifacts, so that it is not usable right
       now -->

@@ -15,37 +15,43 @@
  */
 package org.factcast.server.grpc;
 
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.grpc.Metadata;
 import io.grpc.ServerCall;
 import io.grpc.ServerCallHandler;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
-import org.mockito.InjectMocks;
+import java.util.concurrent.atomic.AtomicReference;
+import org.factcast.grpc.api.Headers;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class GrpcRequestMetadataInterceptorTest {
 
-  @Mock private GrpcRequestMetadata scopedBean;
-  @InjectMocks private GrpcRequestMetadataInterceptor underTest;
+  private final GrpcRequestMetadataInterceptor underTest = new GrpcRequestMetadataInterceptor();
 
   @Nested
   class WhenInterceptingCall {
-    @Mock private ServerCall call;
-    @Mock private ServerCallHandler next;
-
-    @BeforeEach
-    void setup() {}
+    @Mock private ServerCall<String, String> call;
 
     @Test
     void providesHeaders() {
-      Metadata headers = mock(Metadata.class);
+      Metadata headers = new Metadata();
+      headers.put(Headers.CLIENT_ID, "client-1");
+      AtomicReference<GrpcRequestMetadata> captured = new AtomicReference<>();
+      ServerCallHandler<String, String> next =
+          (call, metadata) -> {
+            captured.set(GrpcRequestMetadataInterceptor.METADATA_CTX_KEY.get());
+            return new ServerCall.Listener<>() {};
+          };
+
       underTest.interceptCall(call, headers, next);
 
-      verify(scopedBean).headers(same(headers));
+      assertThat(captured.get()).isNotNull();
+      assertThat(captured.get().clientId()).contains("client-1");
     }
   }
 }

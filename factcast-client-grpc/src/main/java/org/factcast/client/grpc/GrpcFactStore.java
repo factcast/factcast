@@ -63,7 +63,7 @@ import org.springframework.beans.factory.annotation.Value;
 public class GrpcFactStore implements FactStore {
   public static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 8, 0);
 
-  private final CompressionCodecs codecs = new CompressionCodecs();
+  private final CompressionCodecs codecs;
 
   private static final String CHANNEL_NAME = "factstore";
 
@@ -85,6 +85,7 @@ public class GrpcFactStore implements FactStore {
       @NonNull FactCastGrpcChannelFactory channelFactory,
       @NonNull @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
       @NonNull FactCastGrpcClientProperties properties,
+      @NonNull CompressionCodecs compressionCodecs,
       @Nullable String clientId) {
 
     this(
@@ -94,14 +95,19 @@ public class GrpcFactStore implements FactStore {
             prepareMetaData(properties, clientId),
             configureCredentials(credentials, properties),
             properties),
-        properties);
+        properties,
+        compressionCodecs);
   }
 
   @VisibleForTesting
-  GrpcFactStore(@NonNull GrpcStubs stubs, @NonNull FactCastGrpcClientProperties properties) {
+  GrpcFactStore(
+      @NonNull GrpcStubs stubs,
+      @NonNull FactCastGrpcClientProperties properties,
+      @NonNull CompressionCodecs compressionCodecs) {
     this.stubs = stubs;
     this.properties = properties;
     this.resilience = new Resilience(properties.getResilience());
+    this.codecs = compressionCodecs;
   }
 
   @Override

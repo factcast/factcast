@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.same;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -29,6 +30,7 @@ import io.grpc.ServerCallHandler;
 import io.grpc.Status;
 import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
+import java.util.function.Supplier;
 import org.factcast.core.FactValidationException;
 import org.factcast.server.grpc.GrpcServerExceptionInterceptor.ExceptionHandlingServerCallListener;
 import org.junit.jupiter.api.Assertions;
@@ -45,7 +47,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 
 @ExtendWith(MockitoExtension.class)
 class GrpcServerExceptionInterceptorTest {
-  @Mock private GrpcRequestMetadata grpcMetadata;
+  @Mock private GrpcRequestMetadata grpcRequestMetadata;
+  @Mock private Supplier<GrpcRequestMetadata> grpcMetadataSupplier;
   @InjectMocks private GrpcServerExceptionInterceptor underTest;
 
   @Nested
@@ -68,7 +71,13 @@ class GrpcServerExceptionInterceptorTest {
     @Mock ServerCall.Listener<Req> listener;
     @Mock ServerCall<Req, Res> serverCall;
     @Mock Metadata metadata;
-    @Mock GrpcRequestMetadata grpcMetadata;
+    @Mock GrpcRequestMetadata grpcRequestMetadata;
+    @Mock Supplier<GrpcRequestMetadata> grpcMetadataSupplier;
+
+    @BeforeEach
+    void setUp() {
+      lenient().when(grpcMetadataSupplier.get()).thenReturn(grpcRequestMetadata);
+    }
 
     @InjectMocks ExceptionHandlingServerCallListener<Req, Res> underTest;
     final ArrayIndexOutOfBoundsException ex = new ArrayIndexOutOfBoundsException("ignore me");

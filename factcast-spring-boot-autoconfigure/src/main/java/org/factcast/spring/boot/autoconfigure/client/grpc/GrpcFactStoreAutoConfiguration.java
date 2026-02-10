@@ -15,11 +15,13 @@
  */
 package org.factcast.spring.boot.autoconfigure.client.grpc;
 
+import io.grpc.CompressorRegistry;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import lombok.NonNull;
 import org.factcast.client.grpc.*;
 import org.factcast.core.store.FactStore;
+import org.factcast.grpc.api.CompressionCodecs;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.*;
@@ -49,6 +51,7 @@ public class GrpcFactStoreAutoConfiguration {
       // we need a new namespace for those client properties
       @NonNull @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
       @NonNull FactCastGrpcClientProperties properties,
+      @NonNull CompressionCodecs compressionCodecs,
       @Nullable @Value("${spring.application.name:#{null}}") String applicationName) {
 
     FactCastGrpcChannelFactory f = FactCastGrpcChannelFactory.createDefault(af);
@@ -61,11 +64,16 @@ public class GrpcFactStoreAutoConfiguration {
                         .filter(StringUtils::hasText)
                         .orElse(null));
 
-    return new GrpcFactStore(f, credentials, properties, id);
+    return new GrpcFactStore(f, credentials, properties, compressionCodecs, id);
   }
 
   @Bean
   public GrpcChannelBuilderCustomizer retryChannelConfigurer() {
     return (name, channelBuilder) -> channelBuilder.enableRetry().maxRetryAttempts(100);
+  }
+
+  @Bean
+  public CompressionCodecs compressionCodecs(CompressorRegistry compressorRegistry) {
+    return new CompressionCodecs(compressorRegistry);
   }
 }

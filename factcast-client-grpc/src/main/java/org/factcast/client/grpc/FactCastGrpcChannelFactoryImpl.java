@@ -43,6 +43,8 @@ public class FactCastGrpcChannelFactoryImpl implements FactCastGrpcChannelFactor
 
   @Override
   public void close() {
-    // TODO cf.close();
+    // TODO issue4262
+    // might not be needed at all, the outer close was not called anyway
+    //  cf.close();
   }
 }

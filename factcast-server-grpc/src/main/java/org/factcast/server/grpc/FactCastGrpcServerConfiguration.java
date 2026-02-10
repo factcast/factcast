@@ -15,7 +15,9 @@
  */
 package org.factcast.server.grpc;
 
+import io.grpc.CompressorRegistry;
 import io.micrometer.core.instrument.MeterRegistry;
+import java.util.function.Supplier;
 import lombok.NonNull;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
@@ -24,7 +26,9 @@ import org.factcast.server.grpc.metrics.ServerMetrics;
 import org.factcast.server.grpc.metrics.ServerMetricsImpl;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.*;
-import org.springframework.grpc.server.ServerBuilderCustomizer;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.grpc.server.GlobalServerInterceptor;
 
 @Configuration
 @EnableConfigurationProperties(GrpcLimitProperties.class)
@@ -33,36 +37,38 @@ public class FactCastGrpcServerConfiguration {
   @Bean
   public FactStoreGrpcService factStoreGrpcService(
       FactStore store,
-      GrpcRequestMetadata grpcMetaData,
+      Supplier<GrpcRequestMetadata> grpcMetaDataProvider,
       GrpcLimitProperties props,
       HighWaterMarkFetcher target,
-      ServerMetrics metrics) {
-    return new FactStoreGrpcService(store, grpcMetaData, props, target, metrics);
+      ServerMetrics metrics,
+      CompressionCodecs compressionCodecs) {
+    return new FactStoreGrpcService(
+        store, grpcMetaDataProvider, props, target, metrics, compressionCodecs);
   }
 
   @Bean
-  public GrpcCompressionInterceptor grpcCompressionInterceptor() {
-    return new GrpcCompressionInterceptor(new CompressionCodecs());
+  @GlobalServerInterceptor
+  public GrpcCompressionInterceptor grpcCompressionInterceptor(
+      CompressionCodecs compressionCodecs) {
+    return new GrpcCompressionInterceptor(compressionCodecs);
   }
 
   @Bean
-  public GrpcServerExceptionInterceptor grpcExceptionInterceptor(GrpcRequestMetadata m) {
+  @GlobalServerInterceptor
+  public GrpcServerExceptionInterceptor grpcExceptionInterceptor(Supplier<GrpcRequestMetadata> m) {
     return new GrpcServerExceptionInterceptor(m);
   }
 
   @Bean
-  public GrpcRequestMetadataInterceptor grpcRequestMetadataInterceptor(
-      GrpcRequestMetadata grpcMetaData) {
-    return new GrpcRequestMetadataInterceptor(grpcMetaData);
+  @Order(Ordered.HIGHEST_PRECEDENCE)
+  @GlobalServerInterceptor
+  public GrpcRequestMetadataInterceptor grpcRequestMetadataInterceptor() {
+    return new GrpcRequestMetadataInterceptor();
   }
 
   @Bean
-  @Scope(
-      // TODO constant
-      scopeName = "grpcRequest",
-      proxyMode = ScopedProxyMode.TARGET_CLASS)
-  GrpcRequestMetadata grpcMetaData() {
-    return new GrpcRequestMetadata();
+  public Supplier<GrpcRequestMetadata> grpcRequestMetadataObjectProvider() {
+    return GrpcRequestMetadataInterceptor.METADATA_CTX_KEY::get;
   }
 
   @Bean
@@ -71,8 +77,7 @@ public class FactCastGrpcServerConfiguration {
   }
 
   @Bean
-  public ServerBuilderCustomizer globalInterceptorCustomizer(
-      GrpcRequestMetadataInterceptor interceptor) {
-    return serverBuilder -> serverBuilder.intercept(interceptor);
+  public CompressionCodecs compressionCodecs(CompressorRegistry compressorRegistry) {
+    return new CompressionCodecs(compressorRegistry);
   }
 }

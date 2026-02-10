@@ -25,11 +25,13 @@ import org.factcast.client.grpc.cli.conv.Converters;
 @SuppressWarnings("ALL")
 public class Parser {
 
-  private static final String NEGOTIATION_SYSPROP_NAME = "grpc.client.factstore.negotiationType";
+  private static final String NEGOTIATION_SYSPROP_NAME =
+      "spring.grpc.client.channels.factstore.negotiation-type";
 
   private static final String BASICAUTH_SYSPROP_NAME = "grpc.client.factstore.credentials";
 
-  private static final String ADDRESS_SYSPROP_NAME = "grpc.client.factstore.address";
+  private static final String ADDRESS_SYSPROP_NAME =
+      "spring.grpc.client.channels.factstore.address";
 
   private final JCommander jc;
 

@@ -32,19 +32,20 @@ public class CompressionCodecs {
 
   private final String orderedListOfAvailableCodecsAsString;
 
+  private final CompressorRegistry compressorRegistry;
+
   // lz4c/snappyc originate from commons.compress, see dedicated modules.
   private static final String[] AVAIL_CODECS = {"lz4", "snappyc", "snappy", "gzip"};
 
-  public CompressionCodecs() {
+  public CompressionCodecs(CompressorRegistry compressorRegistry) {
+    this.compressorRegistry = compressorRegistry;
     orderedListOfAvailableCodecs =
-        Stream.of(AVAIL_CODECS)
-            .filter(CompressionCodecs::locallyAvailable)
-            .collect(Collectors.toList());
+        Stream.of(AVAIL_CODECS).filter(this::locallyAvailable).collect(Collectors.toList());
     orderedListOfAvailableCodecsAsString = String.join(",", orderedListOfAvailableCodecs);
   }
 
-  private static boolean locallyAvailable(String codec) {
-    return CompressorRegistry.getDefaultInstance().lookupCompressor(codec) != null;
+  private boolean locallyAvailable(String codec) {
+    return compressorRegistry.lookupCompressor(codec) != null;
   }
 
   public Optional<String> selectFrom(String commaSeparatedList) {

@@ -25,7 +25,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.grpc.api.CompressionCodecs;
 import org.factcast.grpc.api.Headers;
 
-// TODO configure interceptors
 @RequiredArgsConstructor
 @Slf4j
 public class GrpcCompressionInterceptor implements ServerInterceptor {

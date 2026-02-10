@@ -20,6 +20,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
 import java.util.Collections;
 import lombok.Generated;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.server.security.auth.FactCastSecurityProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.grpc.server.GlobalServerInterceptor;
@@ -28,6 +29,7 @@ import org.springframework.grpc.server.security.GrpcSecurity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -39,18 +41,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 @EnableMethodSecurity(securedEnabled = true, proxyTargetClass = true)
 public class FactCastSecurityConfiguration {
-
-  //  @Bean
-  //  GrpcAuthenticationReader authenticationReader(FactCastSecurityProperties p) {
-  //    if (p.isEnabled()) {
-  //      return new BasicGrpcAuthenticationReader();
-  //    }
-  //
-  //    UsernamePasswordAuthenticationToken disabled =
-  //        new UsernamePasswordAuthenticationToken("security_disabled", "security_disabled");
-  //    return (call, headers) -> disabled;
-  //  }
-
   @Bean
   AuthenticationProvider authenticationProvider(
       UserDetailsService uds, PasswordEncoder passwordEncoder) {
@@ -65,25 +55,24 @@ public class FactCastSecurityConfiguration {
     return new ProviderManager(Collections.singletonList(p));
   }
 
-  //  @Bean
-  //  public SecurityFilterChain securityFilterChain(HttpSecurity http, FactCastSecurityProperties
-  // p) throws Exception {
-  //    if (p.isEnabled()) {
-  //      return http.httpBasic(Customizer.withDefaults())
-  //          .authorizeHttpRequests((requests) -> requests.anyRequest().authenticated())
-  //          .build();
-  //    }
-  //    return http
-  //        .authorizeHttpRequests((requests) -> requests.anyRequest().permitAll())
-  //        .build();
-  //  }
-
   @Bean
   @GlobalServerInterceptor
-  AuthenticationProcessInterceptor jwtSecurityFilterChain(GrpcSecurity grpc) throws Exception {
+  AuthenticationProcessInterceptor authenticationProcessInterceptor(
+      GrpcSecurity grpc,
+      FactCastSecurityProperties p,
+      AuthenticationProvider authenticationProvider)
+      throws Exception {
+    if (p.isEnabled()) {
+      return grpc.authorizeRequests(requests -> requests.allRequests().authenticated())
+          .httpBasic(withDefaults())
+          .authenticationProvider(authenticationProvider)
+          .build();
+    }
+
     return grpc.authorizeRequests(requests -> requests.allRequests().authenticated())
-        .httpBasic(withDefaults())
-        // .preauth(withDefaults())
+        .authenticationExtractor(
+            (headers, attributes, method) ->
+                new UsernamePasswordAuthenticationToken("security_disabled", "security_disabled"))
         .build();
   }
 }

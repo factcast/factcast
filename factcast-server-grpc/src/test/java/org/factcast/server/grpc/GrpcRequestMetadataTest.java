@@ -24,13 +24,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class GrpcRequestMetadataTest {
 
-  @InjectMocks private GrpcRequestMetadata underTest;
+  private GrpcRequestMetadata underTest;
 
   @Nested
   class WhenCatchupingBatch {
@@ -42,7 +41,7 @@ class GrpcRequestMetadataTest {
       Metadata headers = new Metadata();
       headers.put(Headers.CLIENT_MAX_INBOUND_MESSAGE_SIZE, "127");
 
-      underTest.headers(headers);
+      underTest = new GrpcRequestMetadata(headers);
 
       assertThat(underTest.clientMaxInboundMessageSize())
           .isEqualTo(GrpcConstants.MIN_CLIENT_INBOUND_MESSAGE_SIZE);
@@ -55,7 +54,7 @@ class GrpcRequestMetadataTest {
           Headers.CLIENT_MAX_INBOUND_MESSAGE_SIZE,
           String.valueOf(GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE + 100000));
 
-      underTest.headers(headers);
+      underTest = new GrpcRequestMetadata(headers);
 
       assertThat(underTest.clientMaxInboundMessageSize())
           .isEqualTo(GrpcConstants.MAX_CLIENT_INBOUND_MESSAGE_SIZE);
@@ -64,7 +63,7 @@ class GrpcRequestMetadataTest {
     @Test
     void extractsUnset() {
       Metadata headers = new Metadata();
-      underTest.headers(headers);
+      underTest = new GrpcRequestMetadata(headers);
 
       assertThat(underTest.clientMaxInboundMessageSize())
           .isEqualTo(GrpcConstants.DEFAULT_CLIENT_INBOUND_MESSAGE_SIZE);
@@ -81,7 +80,7 @@ class GrpcRequestMetadataTest {
       Metadata headers = new Metadata();
       headers.put(Headers.FAST_FORWARD, "true");
 
-      underTest.headers(headers);
+      underTest = new GrpcRequestMetadata(headers);
 
       assertThat(underTest.supportsFastForward()).isTrue();
     }
@@ -89,7 +88,7 @@ class GrpcRequestMetadataTest {
     @Test
     void extractsUnset() {
       Metadata headers = new Metadata();
-      underTest.headers(headers);
+      underTest = new GrpcRequestMetadata(headers);
 
       assertThat(underTest.supportsFastForward()).isFalse();
     }
@@ -118,7 +117,7 @@ class GrpcRequestMetadataTest {
       Metadata headers = new Metadata();
       headers.put(Headers.CLIENT_ID, "narf");
 
-      underTest.headers(headers);
+      underTest = new GrpcRequestMetadata(headers);
 
       assertThat(underTest.clientId()).isPresent().hasValue("narf");
     }
@@ -126,7 +125,7 @@ class GrpcRequestMetadataTest {
     @Test
     void extractsUnset() {
       Metadata headers = new Metadata();
-      underTest.headers(headers);
+      underTest = new GrpcRequestMetadata(headers);
 
       assertThat(underTest.clientId()).isEmpty();
     }
@@ -134,7 +133,7 @@ class GrpcRequestMetadataTest {
     @Test
     void testGettingClientIdAsString_noneSet() {
       Metadata headers = new Metadata();
-      underTest.headers(headers);
+      underTest = new GrpcRequestMetadata(headers);
       assertThat(underTest.clientIdAsString()).isEqualTo(GrpcRequestMetadata.UNKNOWN);
     }
 
@@ -142,14 +141,14 @@ class GrpcRequestMetadataTest {
     void testGettingClientIdAsString_set() {
       Metadata headers = new Metadata();
       headers.put(Headers.CLIENT_ID, "narf");
-      underTest.headers(headers);
+      underTest = new GrpcRequestMetadata(headers);
       assertThat(underTest.clientIdAsString()).isEqualTo("narf");
     }
 
     @Test
     void testGettingClientVersionAsString_noneSet() {
       Metadata headers = new Metadata();
-      underTest.headers(headers);
+      underTest = new GrpcRequestMetadata(headers);
       assertThat(underTest.clientVersionAsString()).isEqualTo(GrpcRequestMetadata.UNKNOWN);
     }
 
@@ -157,7 +156,7 @@ class GrpcRequestMetadataTest {
     void testGettingClientVersionAsString_set() {
       Metadata headers = new Metadata();
       headers.put(Headers.CLIENT_VERSION, "3.11");
-      underTest.headers(headers);
+      underTest = new GrpcRequestMetadata(headers);
       assertThat(underTest.clientVersionAsString()).isEqualTo("3.11");
     }
   }

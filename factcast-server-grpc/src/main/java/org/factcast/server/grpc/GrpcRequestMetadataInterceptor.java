@@ -15,6 +15,8 @@
  */
 package org.factcast.server.grpc;
 
+import io.grpc.Context;
+import io.grpc.Contexts;
 import io.grpc.Metadata;
 import io.grpc.ServerCall;
 import io.grpc.ServerCall.Listener;
@@ -26,17 +28,18 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class GrpcRequestMetadataInterceptor implements ServerInterceptor {
-
-  final GrpcRequestMetadata scopedBean;
+  public static final Context.Key<GrpcRequestMetadata> METADATA_CTX_KEY =
+      Context.key("grpc-request-metadata");
 
   @Override
   public <ReqT, RespT> Listener<ReqT> interceptCall(
       ServerCall<ReqT, RespT> call, Metadata headers, ServerCallHandler<ReqT, RespT> next) {
 
-    log.trace("adding headers to request scoped GrpcRequestMetadata");
-    // makes headers accessible in service methods
-    scopedBean.headers(headers);
+    log.trace("adding headers to request grpc context");
 
-    return next.startCall(call, headers);
+    final var context =
+        Context.current().withValue(METADATA_CTX_KEY, new GrpcRequestMetadata(headers));
+
+    return Contexts.interceptCall(context, call, headers, next);
   }
 }
