@@ -139,6 +139,11 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
+      <artifactId>factcast-snapshotcache-mongodb</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
       <artifactId>factcast-server-grpc</artifactId>
       <optional>true</optional>
     </dependency>

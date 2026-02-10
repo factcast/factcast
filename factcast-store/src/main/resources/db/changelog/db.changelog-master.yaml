@@ -575,3 +575,25 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
+
+  - changeSet:
+      id: issue4222
+      author: uweschaefer
+      runInTransaction: false
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4222/create_transformation_access_function.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4222/add_reference_and_cascaded_delete.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+
+
+

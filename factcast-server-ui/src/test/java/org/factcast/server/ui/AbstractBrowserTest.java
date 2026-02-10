@@ -185,6 +185,10 @@ public abstract class AbstractBrowserTest {
         .click();
   }
 
+  protected void setSerialToNull() {
+    page.locator("#starting-serial > input").fill("");
+  }
+
   protected Locator openSerialSelector() {
     page.locator("#starting-serial > input").click();
     final var dialog = page.getByRole(AriaRole.DIALOG);

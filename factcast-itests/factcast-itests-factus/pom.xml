@@ -46,6 +46,11 @@
       <artifactId>factcast-test-dynamo</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-test-mongodb</artifactId>
+      <version>${project.version}</version>
+    </dependency>
     <!-- TODO check codecs -->
     <!-- <dependency> -->
     <!-- <groupId>org.factcast</groupId> -->
@@ -72,6 +77,10 @@
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-factus-dynamo</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-factus-mongodb</artifactId>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
@@ -122,6 +131,10 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
+      <artifactId>factcast-snapshotcache-mongodb</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
       <artifactId>factcast-snapshotcache-local-disk</artifactId>
     </dependency>
     <dependency>
@@ -167,7 +180,7 @@
     <dependency>
       <groupId>org.jboss.marshalling</groupId>
       <artifactId>jboss-marshalling-river</artifactId>
-      <version>2.2.3.Final</version>
+      <version>2.3.0</version>
     </dependency>
   </dependencies>
   <build>

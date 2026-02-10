@@ -13,7 +13,7 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <properties>
     <java.version>21</java.version>
-    <vaadin.version>24.9.9</vaadin.version>
+    <vaadin.version>24.9.11</vaadin.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -133,7 +133,7 @@
     <dependency>
       <groupId>com.microsoft.playwright</groupId>
       <artifactId>playwright</artifactId>
-      <version>1.57.0</version>
+      <version>1.58.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -173,6 +173,9 @@
         <groupId>com.vaadin</groupId>
         <artifactId>vaadin-maven-plugin</artifactId>
         <version>${vaadin.version}</version>
+        <configuration>
+          <pnpmEnable>true</pnpmEnable>
+        </configuration>
         <executions>
           <execution>
             <goals>
