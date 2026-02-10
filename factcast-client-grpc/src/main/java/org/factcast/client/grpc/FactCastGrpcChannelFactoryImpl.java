@@ -18,7 +18,6 @@ package org.factcast.client.grpc;
 import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
 import java.util.List;
-
 import lombok.NonNull;
 import org.springframework.grpc.client.ChannelBuilderOptions;
 import org.springframework.grpc.client.GrpcChannelFactory;

@@ -47,8 +47,7 @@ import org.springframework.test.context.TestPropertySource;
 class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrationTest {
   @Autowired FactCast fc;
 
-  @Autowired
-  GrpcChannelFactory grpcChannelFactory;
+  @Autowired GrpcChannelFactory grpcChannelFactory;
 
   @Autowired JdbcTemplate jdbcTemplate;
 

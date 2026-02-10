@@ -71,7 +71,8 @@ public class FactCastGrpcServerConfiguration {
   }
 
   @Bean
-  public ServerBuilderCustomizer globalInterceptorCustomizer(GrpcRequestMetadataInterceptor interceptor) {
+  public ServerBuilderCustomizer globalInterceptorCustomizer(
+      GrpcRequestMetadataInterceptor interceptor) {
     return serverBuilder -> serverBuilder.intercept(interceptor);
   }
 }

@@ -18,9 +18,8 @@ package org.factcast.client.grpc;
 import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
-import org.springframework.grpc.client.GrpcChannelFactory;
-
 import java.util.List;
+import org.springframework.grpc.client.GrpcChannelFactory;
 
 public interface FactCastGrpcChannelFactory extends AutoCloseable {
 
