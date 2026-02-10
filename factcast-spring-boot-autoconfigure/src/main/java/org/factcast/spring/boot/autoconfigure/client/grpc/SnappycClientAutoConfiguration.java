@@ -15,12 +15,10 @@
  */
 package org.factcast.spring.boot.autoconfigure.client.grpc;
 
-import io.grpc.Codec;
 import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.grpc.snappy.SnappycGrpcCodec;
 import org.springframework.boot.autoconfigure.*;
 import org.springframework.boot.autoconfigure.condition.*;
-import org.springframework.context.annotation.Bean;
 import org.springframework.grpc.autoconfigure.client.GrpcClientAutoConfiguration;
 
 /**
@@ -32,8 +30,9 @@ import org.springframework.grpc.autoconfigure.client.GrpcClientAutoConfiguration
 @ConditionalOnClass({GrpcFactStore.class, SnappycGrpcCodec.class})
 @AutoConfigureBefore({GrpcFactStoreAutoConfiguration.class, GrpcClientAutoConfiguration.class})
 public class SnappycClientAutoConfiguration {
-  @Bean
-  public Codec snappyGrpcCodec() {
-    return new SnappycGrpcCodec();
-  }
+  // TODO issue4326 re-enable with spring-grpc > 1 and SB4
+  //  @Bean
+  //  public Codec snappyGrpcCodec() {
+  //    return new SnappycGrpcCodec();
+  //  }
 }

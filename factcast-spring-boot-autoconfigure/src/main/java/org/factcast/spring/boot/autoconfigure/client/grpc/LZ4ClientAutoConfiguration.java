@@ -15,12 +15,10 @@
  */
 package org.factcast.spring.boot.autoconfigure.client.grpc;
 
-import io.grpc.Codec;
 import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.grpc.lz4.Lz4GrpcCodec;
 import org.springframework.boot.autoconfigure.*;
 import org.springframework.boot.autoconfigure.condition.*;
-import org.springframework.context.annotation.Bean;
 import org.springframework.grpc.autoconfigure.client.GrpcClientAutoConfiguration;
 import org.springframework.grpc.client.GrpcChannelFactory;
 
@@ -33,8 +31,9 @@ import org.springframework.grpc.client.GrpcChannelFactory;
 @ConditionalOnClass({Lz4GrpcCodec.class, GrpcFactStore.class, GrpcChannelFactory.class})
 @AutoConfigureBefore({GrpcFactStoreAutoConfiguration.class, GrpcClientAutoConfiguration.class})
 public class LZ4ClientAutoConfiguration {
-  @Bean
-  public Codec lz4GrpcCodec() {
-    return new Lz4GrpcCodec();
-  }
+  // TODO issue4326 re-enable with spring-grpc > 1 and SB4
+  //  @Bean
+  //  public Codec lz4GrpcCodec() {
+  //    return new Lz4GrpcCodec();
+  //  }
 }

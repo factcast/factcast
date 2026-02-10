@@ -15,13 +15,11 @@
  */
 package org.factcast.spring.boot.autoconfigure.server.grpc;
 
-import io.grpc.Codec;
 import org.factcast.grpc.lz4.Lz4GrpcCodec;
 import org.factcast.server.grpc.FactStoreGrpcService;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.*;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.grpc.autoconfigure.server.GrpcServerAutoConfiguration;
 
@@ -30,8 +28,9 @@ import org.springframework.grpc.autoconfigure.server.GrpcServerAutoConfiguration
 @Import({Lz4GrpcCodec.class})
 @AutoConfigureBefore(GrpcServerAutoConfiguration.class)
 public class LZ4ServerAutoConfiguration {
-  @Bean
-  public Codec lz4GrpcCodec() {
-    return new Lz4GrpcCodec();
-  }
+  // TODO issue4326 re-enable with spring-grpc > 1 and SB4
+  //  @Bean
+  //  public Codec lz4GrpcCodec() {
+  //    return new Lz4GrpcCodec();
+  //  }
 }
