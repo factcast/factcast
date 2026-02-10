@@ -54,7 +54,7 @@ public class SerialInputPanel extends HorizontalLayout {
     fromSerialHelperOverlay.setTarget(from.getElement());
     from.setId("starting-serial");
     from.setAutocomplete(Autocomplete.OFF);
-    from.addValueChangeListener(e -> toChangeListener());
+    from.addValueChangeListener(e -> setDefaultToFromAndUpdateEndSerial());
     toSerialHelperOverlay.setTarget(to.getElement());
     to.setId("ending-serial");
     to.setAutocomplete(Autocomplete.OFF);
@@ -139,7 +139,7 @@ public class SerialInputPanel extends HorizontalLayout {
             () -> from.setValue(null));
   }
 
-  private void toChangeListener() {
+  private void setDefaultToFromAndUpdateEndSerial() {
     if (from.getValue() == null) {
       from.setValue(BigDecimal.ZERO);
     }
