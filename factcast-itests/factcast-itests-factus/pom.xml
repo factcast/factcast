@@ -46,16 +46,17 @@
       <artifactId>factcast-test-dynamo</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.factcast</groupId>
-      <artifactId>factcast-grpc-lz4</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.factcast</groupId>
-      <artifactId>factcast-grpc-snappy</artifactId>
-      <version>${project.version}</version>
-    </dependency>
+    <!-- TODO check codecs -->
+    <!-- <dependency> -->
+    <!-- <groupId>org.factcast</groupId> -->
+    <!-- <artifactId>factcast-grpc-lz4</artifactId> -->
+    <!-- <version>${project.version}</version> -->
+    <!-- </dependency> -->
+    <!-- <dependency> -->
+    <!-- <groupId>org.factcast</groupId> -->
+    <!-- <artifactId>factcast-grpc-snappy</artifactId> -->
+    <!-- <version>${project.version}</version> -->
+    <!-- </dependency> -->
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-client-grpc</artifactId>
