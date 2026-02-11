@@ -76,6 +76,7 @@ public class PgChunkedCatchup implements PgCatchup {
 
   @VisibleForTesting
   @SneakyThrows
+  @SuppressWarnings("java:S2077")
   void fetch(DataSource ds) {
 
     try (SingleConnectionDataSource singleConnectionDataSource = createSingleDS(ds); ) {
@@ -103,6 +104,7 @@ public class PgChunkedCatchup implements PgCatchup {
 
         int matches = jdbc.update(catchupSQL, b.createStatementSetter());
         log.trace("{} catchup {} - Temp table has {} matching serials", req, phase, matches);
+        logIfAboveThreshold(Duration.ofNanos(sample.stop(timer)));
 
         if (matches > 0) {
 
@@ -124,9 +126,9 @@ order by ser ASC
 
 """
                   // don't want to mess with google formatting
-                  .replaceAll("\\$PROJECTION", PgConstants.PROJECTION_FACT)
-                  .replaceAll("\\$TMP", tempTableName)
-                  .replaceAll("\\$SIZE", Integer.toString(props.getPageSize()));
+                  .replace("$PROJECTION", PgConstants.PROJECTION_FACT)
+                  .replace("$TMP", tempTableName)
+                  .replace("$SIZE", Integer.toString(props.getPageSize()));
 
           int chunkCount = 0;
           int rowsToProcess = -1;
@@ -157,6 +159,7 @@ order by ser ASC
       } finally {
         // tmp table is not needed anymore. As we reuse the connection, it'd be good to drop it.
         try {
+
           jdbc.execute("drop table " + tempTableName);
         } catch (Exception e) {
           log.warn("{} catchup {} - while dropping tmp table:", req, phase, e);
@@ -165,6 +168,7 @@ order by ser ASC
     }
   }
 
+  @SuppressWarnings("java:S2077")
   private void createTempTable(JdbcTemplate jdbc, String tempTableName) {
     // the primary key is important here to get a btree for sorting
     jdbc.execute("create temp table " + tempTableName + " (ser bigint primary key)");
@@ -180,7 +184,7 @@ order by ser ASC
         try {
           conn.close();
         } catch (SQLException e) {
-          throw new RuntimeException(e);
+          log.error("Error closing connection", e);
         }
       }
     };
