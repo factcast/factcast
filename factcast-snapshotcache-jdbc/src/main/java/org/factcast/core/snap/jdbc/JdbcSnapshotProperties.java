@@ -27,5 +27,6 @@ public class JdbcSnapshotProperties {
   public static final String PROPERTIES_PREFIX = "factcast.snapshot.jdbc";
 
   private String snapshotTableName = "factcast_snapshot";
+  private String snapshotAccessTableName = "factcast_snapshot_access";
   private int deleteSnapshotStaleForDays = 90;
 }
