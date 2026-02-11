@@ -29,7 +29,6 @@ import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.StoreMetrics;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
-import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
@@ -83,13 +82,13 @@ public class PgFetchingCatchup implements PgCatchup {
     jdbc.setQueryTimeout(0); // disable query timeout
     final var b = new PgQueryBuilder(req.specs(), statementHolder);
     final var extractor = new PgFactExtractor(serial);
-    final var catchupSQL = b.createSQL();
+    final var catchupSQL = b.createSQL(serial.get());
     final var fromSerial = serial.get() < fastForward ? new AtomicLong(fastForward) : serial;
     final var isFromScratch = (fromSerial.get() <= 0);
     final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
     final var rowCallbackHandler = createTimedRowCallbackHandler(extractor, timer);
     log.trace("{} catchup {} - facts starting with SER={}", req, phase, fromSerial.get());
-    jdbc.query(catchupSQL, b.createStatementSetter(fromSerial), rowCallbackHandler);
+    jdbc.query(catchupSQL, b.createStatementSetter(), rowCallbackHandler);
   }
 
   @VisibleForTesting
