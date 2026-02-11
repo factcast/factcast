@@ -41,6 +41,7 @@ public class PgQueryBuilder {
   public static final String CONTAINS_JSONB = " @> ?::jsonb ";
   private final @NonNull List<FactSpec> factSpecs;
   private final CurrentStatementHolder statementHolder;
+  private String tempTableName = null;
 
   public PgQueryBuilder(@NonNull List<FactSpec> specs) {
     factSpecs = specs;
@@ -219,15 +220,29 @@ public class PgQueryBuilder {
   }
 
   public String createSQL() {
-    return "SELECT "
-        + PgConstants.PROJECTION_FACT
-        + " FROM "
-        + PgConstants.TABLE_FACT
-        + " WHERE "
-        + createWhereClause()
-        + " ORDER BY "
-        + PgConstants.COLUMN_SER
-        + " ASC";
+    if (tempTableName != null) {
+      return "INSERT INTO "
+          + tempTableName
+          + "("
+          + PgConstants.COLUMN_SER
+          + ") SELECT "
+          + PgConstants.COLUMN_SER
+          + " FROM "
+          + PgConstants.TABLE_FACT
+          + " WHERE "
+          + createWhereClause();
+      // we don't need the order by here, because it will be ordered when reading
+
+    } else
+      return "SELECT "
+          + PgConstants.PROJECTION_FACT
+          + " FROM "
+          + PgConstants.TABLE_FACT
+          + " WHERE "
+          + createWhereClause()
+          + " ORDER BY "
+          + PgConstants.COLUMN_SER
+          + " ASC";
   }
 
   public String createStateSQL() {
@@ -243,5 +258,9 @@ public class PgQueryBuilder {
             + " DESC LIMIT 1";
     log.trace("creating state SQL for {} - SQL={}", factSpecs, sql);
     return sql;
+  }
+
+  public void moveSerialsToTempTable(@NonNull String tempTableName) {
+    this.tempTableName = tempTableName;
   }
 }
