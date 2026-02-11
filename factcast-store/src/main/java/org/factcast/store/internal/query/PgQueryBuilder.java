@@ -24,6 +24,7 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.store.internal.PgConstants;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 
 /**
@@ -227,13 +228,8 @@ public class PgQueryBuilder {
         + PgConstants.TABLE_FACT
         + " WHERE "
         + createWhereClause()
-        // issue4328
-        //
-        + " AND "
-        + PgConstants.COLUMN_SER
-        + " > "
-        + serial
-        //
+        + AND
+        + createSerialCriterionFor(serial)
         + " ORDER BY "
         + PgConstants.COLUMN_SER
         + " ASC";
@@ -247,17 +243,18 @@ public class PgQueryBuilder {
             + PgConstants.TABLE_FACT
             + " WHERE "
             + createWhereClause()
-            // issue4328
-            //
-            + " AND "
-            + PgConstants.COLUMN_SER
-            + " > "
-            + serial
-            //
+            + AND
+            + createSerialCriterionFor(serial)
             + " ORDER BY "
             + PgConstants.COLUMN_SER
             + " DESC LIMIT 1";
     log.trace("creating state SQL for {} - SQL={}", factSpecs, sql);
     return sql;
+  }
+
+  @NotNull
+  // issue4328
+  private static String createSerialCriterionFor(long serial) {
+    return PgConstants.COLUMN_SER + " > " + serial;
   }
 }
